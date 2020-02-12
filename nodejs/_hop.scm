@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sun Jan  5 19:43:25 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 14:28:30 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -75,12 +75,11 @@
 (define (hopjs-process-hop %worker %this)
    (set! __js_strings (&init!))
       
-   (with-access::JsGlobalObject %this (js-object js-function-prototype 
-					 __proto__)
+   (with-access::JsGlobalObject %this (js-object js-function-prototype)
 
       (define js-urlframe-prototype
 	 (instantiateJsObject
-	    (__proto__ __proto__)
+	    (__proto__ (js-object-proto %this))
 	    (elements ($create-vector 5))))
       
       (define js-webservice
@@ -98,7 +97,7 @@
 
       (define server-prototype
 	 (instantiateJsObject
-	    (__proto__ __proto__)
+	    (__proto__ (js-object-proto %this))
 	    (elements ($create-vector 7))))
       
       (define js-server
@@ -144,7 +143,7 @@
 	 
       (define js-compiler-driver
 	 (let ((driver (instantiateJsObject
-			  (__proto__ __proto__)
+			  (__proto__ (js-object-proto %this))
 			  (elements ($create-vector 4)))))
 	    (js-bind! %this driver (& "pending")
 	       :get (js-make-function %this

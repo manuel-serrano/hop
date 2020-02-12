@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Tue Dec 17 13:04:56 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 14:58:25 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
 ;*=====================================================================*/
@@ -136,9 +136,8 @@
 				((null? super)
 				 `(with-access::JsGlobalObject %this (js-object)
 				     (let ((o (js-new0 %this js-object)))
-					(with-access::JsObject o (__proto__)
-					   (set! __proto__ '())
-					   o))))
+					(js-object-proto-set! o (js-null))
+					o)))
 				(else
 				 `(js-new-sans-construct %this ,super))))
 		    (,clazz (js-make-function %this

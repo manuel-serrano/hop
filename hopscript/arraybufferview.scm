@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Wed Feb 12 07:48:21 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 14:11:02 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -131,9 +131,10 @@
 	 (with-access::JsTypedArray obj (%data buffer frozen byteoffset bpe length)
 	    (let ((nbuffer (js-donate buffer worker %_this))
 		  (obj (class-constructor (object-class obj))))
-	       (with-access::JsTypedArray obj (__proto__ frozen buffer
+	       (with-access::JsTypedArray obj (frozen buffer
 						 %data byteoffset bpe length)
-		  (set! __proto__ (js-get js-arraybuffer (& "prototype") %this))
+		  (js-object-proto-set! obj
+		     (js-get js-arraybuffer (& "prototype") %this))
  		  (set! frozen frozen)
 		  (set! buffer nbuffer)
 		  (set! %data (with-access::JsArrayBuffer nbuffer (data) data))
@@ -341,9 +342,9 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-arraybufferview! %this)
    (unless (vector? __js_strings) (set! __js_strings (&init!)))
-   (with-access::JsGlobalObject %this (__proto__ js-function js-object)
+   (with-access::JsGlobalObject %this (js-function js-object)
       (let ((proto (instantiateJsObject
-		      (__proto__ __proto__)
+		      (__proto__ (js-object-proto %this))
 		      (elements ($create-vector 1)))))
 	 (js-init-typedarray-prototype! proto %this)
 	 
@@ -434,308 +435,308 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-typedarray! %this name::bstring bp::int proto)
    (with-access::JsGlobalObject %this (__proto__ js-function js-object)
-      (with-access::JsFunction js-function ((js-function-prototype __proto__))
-	 
-	 ;; builtin ArrayBufferview prototype
-	 (define js-typedarray-prototype
-	    (instantiateJsObject
-	       (__proto__ proto)
-	       (elements ($create-vector 1))))
-
-	 (define (js-create-from-arraybuffer this::JsTypedArray
-		    buf::JsArrayBuffer off::uint32 len::uint32)
-	    (with-access::JsTypedArray this (buffer %data length byteoffset bpe)
-	       (with-access::JsArrayBuffer buf (data)
-		  (let ((vlen (u8vector-length data)))
-		     (set! buffer buf)
-		     (set! %data data)
-		     (set! byteoffset off)
-		     (set! length len)
-		     ;; buffer
-		     (js-bind! %this this (& "buffer")
-			:value buffer
-			:configurable #f
-			:writable #f
-			:enumerable #t
-			:hidden-class #t)
-		     
-		     ;; BYTES_PER_ELEMENT
-		     (js-bind! %this this (& "BYTES_PER_ELEMENT")
-			:value (uint32->fixnum bpe)
-			:configurable #f
-			:writable #f
-			:enumerable #t
-			:hidden-class #t)
-
-		     ;; length
-		     (js-bind! %this this (& "length")
-			:value (uint32->fixnum len)
-			:configurable #f
-			:writable #f
-			:enumerable #t
-			:hidden-class #t)
-		     
-		     ;; byteLength
-		     (js-bind! %this this (& "byteLength")
-			:value (uint32->fixnum (*u32 bpe length))
-			:configurable #f
-			:writable #f
-			:enumerable #t
-			:hidden-class #t)
-		     
-		     ;; byteOffset
-		     (js-bind! %this this (& "byteOffset")
-			:value (uint32->fixnum off)
-			:configurable #f
-			:writable #f
-			:enumerable #t
-			:hidden-class #t)
-
-		     ;; set
-		     (js-bind! %this this (& "set")
-			:value (js-make-function %this js-set 2 "set")
-			:configurable #t
-			:writable #t
-			:enumerable #t
-			:hidden-class #t)
-
-		     ;; get
-		     (js-bind! %this this (& "get")
-			:value (js-make-function %this
-				  (lambda (this num)
-				     (js-get this num %this))
-				  1 "get")
-			:configurable #t
-			:writable #t
-			:enumerable #t
-			:hidden-class #t)
-		     
-		     ;; subarray
-		     (js-bind! %this this (& "subarray")
-			:value (js-make-function %this js-subarray 2 "subarray")
-			:configurable #t
-			:writable #t
-			:enumerable #t
-			:hidden-class #t)))
-	       this))
-	 
-	 (define (js-typedarray-construct this::JsTypedArray items)
-	    (cond
-	       ((null? items)
-		(js-create-from-arraybuffer this
-		   (js-new %this (js-get %this (& "ArrayBuffer") %this))
-		   #u32:0 #u32:0))
-	       ((js-number? (car items))
-		(cond
-		   ((< (car items) 0)
-		    (js-raise-range-error %this
-		       "ArrayBufferView size is not a small enough positive integer"
-		       (car items)))
-		   ((and (flonum? (car items))
-			 (>=fl (*fl (fixnum->flonum bp) (car items))
-			    1073741823.0))
-		    (js-raise-range-error %this
-		       "ArrayBufferView size is too large"
-		       (car items)))
-		   ((and (>fx bp 1) (>=fx (car items) (/fx 1073741823 bp)))
-		    (js-raise-range-error %this
-		       "ArrayBufferView size is too large"
-		       (car items)))
-		   (else
-		    (let ((len (js-touint32 (car items) %this)))
-		       (js-create-from-arraybuffer this
-			  (js-new %this (js-get %this (& "ArrayBuffer") %this)
-			     (uint32->fixnum (*u32 (fixnum->uint32 bp) len)))
-			  #u32:0 len)))))
-	       ((isa? (car items) JsArrayBuffer)
-		(with-access::JsArrayBuffer (car items) (data)
-		   (let ((len (u8vector-length data)))
-		      (cond
-			 ((or (null? (cdr items)) (not (integer? (cadr items))))
-			  (if (=fx (remainder len bp) 0)
+      
+      ;; builtin ArrayBufferview prototype
+      (define js-typedarray-prototype
+	 (instantiateJsObject
+	    (__proto__ proto)
+	    (elements ($create-vector 1))))
+      
+      (define (js-create-from-arraybuffer this::JsTypedArray
+		 buf::JsArrayBuffer off::uint32 len::uint32)
+	 (with-access::JsTypedArray this (buffer %data length byteoffset bpe)
+	    (with-access::JsArrayBuffer buf (data)
+	       (let ((vlen (u8vector-length data)))
+		  (set! buffer buf)
+		  (set! %data data)
+		  (set! byteoffset off)
+		  (set! length len)
+		  ;; buffer
+		  (js-bind! %this this (& "buffer")
+		     :value buffer
+		     :configurable #f
+		     :writable #f
+		     :enumerable #t
+		     :hidden-class #t)
+		  
+		  ;; BYTES_PER_ELEMENT
+		  (js-bind! %this this (& "BYTES_PER_ELEMENT")
+		     :value (uint32->fixnum bpe)
+		     :configurable #f
+		     :writable #f
+		     :enumerable #t
+		     :hidden-class #t)
+		  
+		  ;; length
+		  (js-bind! %this this (& "length")
+		     :value (uint32->fixnum len)
+		     :configurable #f
+		     :writable #f
+		     :enumerable #t
+		     :hidden-class #t)
+		  
+		  ;; byteLength
+		  (js-bind! %this this (& "byteLength")
+		     :value (uint32->fixnum (*u32 bpe length))
+		     :configurable #f
+		     :writable #f
+		     :enumerable #t
+		     :hidden-class #t)
+		  
+		  ;; byteOffset
+		  (js-bind! %this this (& "byteOffset")
+		     :value (uint32->fixnum off)
+		     :configurable #f
+		     :writable #f
+		     :enumerable #t
+		     :hidden-class #t)
+		  
+		  ;; set
+		  (js-bind! %this this (& "set")
+		     :value (js-make-function %this js-set 2 "set")
+		     :configurable #t
+		     :writable #t
+		     :enumerable #t
+		     :hidden-class #t)
+		  
+		  ;; get
+		  (js-bind! %this this (& "get")
+		     :value (js-make-function %this
+			       (lambda (this num)
+				  (js-get this num %this))
+			       1 "get")
+		     :configurable #t
+		     :writable #t
+		     :enumerable #t
+		     :hidden-class #t)
+		  
+		  ;; subarray
+		  (js-bind! %this this (& "subarray")
+		     :value (js-make-function %this js-subarray 2 "subarray")
+		     :configurable #t
+		     :writable #t
+		     :enumerable #t
+		     :hidden-class #t)))
+	    this))
+      
+      (define (js-typedarray-construct this::JsTypedArray items)
+	 (cond
+	    ((null? items)
+	     (js-create-from-arraybuffer this
+		(js-new %this (js-get %this (& "ArrayBuffer") %this))
+		#u32:0 #u32:0))
+	    ((js-number? (car items))
+	     (cond
+		((< (car items) 0)
+		 (js-raise-range-error %this
+		    "ArrayBufferView size is not a small enough positive integer"
+		    (car items)))
+		((and (flonum? (car items))
+		      (>=fl (*fl (fixnum->flonum bp) (car items))
+			 1073741823.0))
+		 (js-raise-range-error %this
+		    "ArrayBufferView size is too large"
+		    (car items)))
+		((and (>fx bp 1) (>=fx (car items) (/fx 1073741823 bp)))
+		 (js-raise-range-error %this
+		    "ArrayBufferView size is too large"
+		    (car items)))
+		(else
+		 (let ((len (js-touint32 (car items) %this)))
+		    (js-create-from-arraybuffer this
+		       (js-new %this (js-get %this (& "ArrayBuffer") %this)
+			  (uint32->fixnum (*u32 (fixnum->uint32 bp) len)))
+		       #u32:0 len)))))
+	    ((isa? (car items) JsArrayBuffer)
+	     (with-access::JsArrayBuffer (car items) (data)
+		(let ((len (u8vector-length data)))
+		   (cond
+		      ((or (null? (cdr items)) (not (integer? (cadr items))))
+		       (if (=fx (remainder len bp) 0)
+			   (js-create-from-arraybuffer this
+			      (car items)
+			      #u32:0 (fixnum->uint32 len))
+			   (js-raise-range-error %this
+			      "Byte offset / length is not aligned ~a"
+			      (car items))))
+		      ((or (null? (cddr items))
+			   (not (integer? (caddr items))))
+		       (let ((off (->fixnum
+				     (js-tointeger (cadr items) %this))))
+			  (cond
+			     ((not
+				 (and (=fx (remainder off bp) 0)
+				      (=fx (remainder len bp) 0)))
+			      (js-raise-range-error %this
+				 "Byte offset / lenght is not aligned ~a"
+				 (cadr items)))
+			     ((<fx off 0)
+			      (js-raise-range-error %this
+				 "Byte offset out of range ~a"
+				 (cadr items)))
+			     (else
 			      (js-create-from-arraybuffer this
 				 (car items)
-				 #u32:0 (fixnum->uint32 len))
+				 (fixnum->uint32 off)
+				 (fixnum->uint32
+				    (-fx (/fx len bp) off)))))))
+		      (else
+		       (let ((off (->fixnum
+				     (js-tointeger (cadr items) %this)))
+			     (l (->fixnum
+				   (js-tointeger (caddr items) %this))))
+			  (cond
+			     ((not (=fx (remainder off bp) 0))
 			      (js-raise-range-error %this
-				 "Byte offset / length is not aligned ~a"
-				 (car items))))
-			 ((or (null? (cddr items))
-			      (not (integer? (caddr items))))
-			  (let ((off (->fixnum
-					(js-tointeger (cadr items) %this))))
-			     (cond
-				((not
-				    (and (=fx (remainder off bp) 0)
-					 (=fx (remainder len bp) 0)))
-				 (js-raise-range-error %this
-				    "Byte offset / lenght is not aligned ~a"
-				    (cadr items)))
-				((<fx off 0)
-				 (js-raise-range-error %this
-				    "Byte offset out of range ~a"
-				    (cadr items)))
-				(else
-				 (js-create-from-arraybuffer this
-				    (car items)
-				    (fixnum->uint32 off)
-				    (fixnum->uint32
-				       (-fx (/fx len bp) off)))))))
-			 (else
-			  (let ((off (->fixnum
-					(js-tointeger (cadr items) %this)))
-				(l (->fixnum
-				      (js-tointeger (caddr items) %this))))
-			     (cond
-				((not (=fx (remainder off bp) 0))
-				 (js-raise-range-error %this
-				    "Byte offset / lenght is not aligned ~a"
-				    (cadr items)))
-				((or (>fx (*fx (-fx l off) bp) len) (<fx l 0))
-				 (js-raise-range-error %this
-				    "Length is out of range ~a"
-				    l))
-				((<fx off 0)
-				 (js-raise-range-error %this
-				    "Byte offset out of range ~a"
-				    (cadr items)))
-				(else
-				 (js-create-from-arraybuffer this
-				    (car items)
-				    (fixnum->uint32 off)
-				    (fixnum->uint32 l))))))))))
-	       ((or (js-array? (car items)) (isa? (car items) JsTypedArray))
-		(let ((len (js-get (car items) (& "length") %this)))
-		   (let* ((arr (js-typedarray-construct this (list len)))
-			  (vset (js-typedarray-set! arr)))
-		      (with-access::JsTypedArray arr (buffer)
-			 (with-access::JsArrayBuffer buffer (data)
-			    (let loop ((i 0))
-			       (if (<fx i len)
-				   (let ((v (js-get (car items) i %this)))
-				      (unless (eq? v (js-absent))
-					 (vset data i v %this))
-				      (loop (+fx i 1)))))))
-		      arr)))
+				 "Byte offset / lenght is not aligned ~a"
+				 (cadr items)))
+			     ((or (>fx (*fx (-fx l off) bp) len) (<fx l 0))
+			      (js-raise-range-error %this
+				 "Length is out of range ~a"
+				 l))
+			     ((<fx off 0)
+			      (js-raise-range-error %this
+				 "Byte offset out of range ~a"
+				 (cadr items)))
+			     (else
+			      (js-create-from-arraybuffer this
+				 (car items)
+				 (fixnum->uint32 off)
+				 (fixnum->uint32 l))))))))))
+	    ((or (js-array? (car items)) (isa? (car items) JsTypedArray))
+	     (let ((len (js-get (car items) (& "length") %this)))
+		(let* ((arr (js-typedarray-construct this (list len)))
+		       (vset (js-typedarray-set! arr)))
+		   (with-access::JsTypedArray arr (buffer)
+		      (with-access::JsArrayBuffer buffer (data)
+			 (let loop ((i 0))
+			    (if (<fx i len)
+				(let ((v (js-get (car items) i %this)))
+				   (unless (eq? v (js-absent))
+				      (vset data i v %this))
+				   (loop (+fx i 1)))))))
+		   arr)))
+	    (else
+	     (js-typedarray-construct this '()))))
+      
+      (define (%js-typedarray this . items)
+	 (js-typedarray-construct 
+	    (js-typedarray-alloc %this js-typedarray)
+	    items))
+      
+      (define (js-typedarray-alloc %this constructor::JsFunction)
+	 (let ((o (allocate-instance (string->symbol (string-append "Js" name)))))
+	    (with-access::JsTypedArray o (cmap bpe elements)
+	       (js-object-mode-set! o (js-object-default-mode))
+	       (js-object-mode-extensible-set! o #t)
+	       (set! cmap (js-not-a-cmap))
+	       (set! bpe (fixnum->uint32 bp))
+	       (set! elements '#())
+	       (js-object-proto-set! o
+		  (js-get constructor (& "prototype") %this)))
+	    o))
+      
+      (define js-typedarray
+	 (js-make-function %this %js-typedarray 1 name
+	    :__proto__ (js-object-proto js-function)
+	    :size 2
+	    :prototype js-typedarray-prototype
+	    :alloc js-typedarray-alloc
+	    :construct (lambda (this . items)
+			  (js-typedarray-construct this items))))
+      
+      (define (js-set this::JsTypedArray array offset)
+	 (let ((off (if (eq? offset (js-undefined))
+			#u32:0
+			(js-touint32 offset %this))))
+	    (cond
+	       ((isa? array JsTypedArray)
+		(with-access::JsTypedArray this ((toff byteoffset)
+						 (tlength length)
+						 (tbpe bp)
+						 (tbuffer buffer))
+		   (with-access::JsArrayBuffer tbuffer ((target data))
+		      (with-access::JsTypedArray array ((sbuffer buffer)
+							(soff byteoffset)
+							(slength length))
+			 (with-access::JsArrayBuffer sbuffer ((source data))
+			    (let ((tstart (+u32 (*u32 (fixnum->uint32 bp) off) toff)))
+			       (cond
+				  ((>=u32 tstart tlength)
+				   (js-raise-range-error %this
+				      "Offset out of range ~a"
+				      tstart))
+				  ((>u32 slength (+u32 tstart tlength))
+				   (format
+				      "Offset/length out of range ~a/~a ~~a"
+				      offset slength))
+				  (else
+				   (u8vector-copy! target
+				      (uint32->fixnum tstart)
+				      source
+				      (uint32->fixnum soff)
+				      (uint32->fixnum
+					 (-u32 (+u32 soff slength) 1)))))))))))
+	       ((js-array? array)
+		(with-access::JsTypedArray this ((toff byteoffset)
+						 (tlength length)
+						 (tbpe bp)
+						 (tbuffer buffer))
+		   (with-access::JsArrayBuffer tbuffer ((target data))
+		      (let ((tstart (+u32 (*u32 (fixnum->uint32 bp) off) toff))
+			    (slength (js-get array (& "length") %this)))
+			 (cond
+			    ((>=u32 tstart tlength)
+			     (js-raise-range-error %this
+				"Offset out of range ~a"
+				tstart))
+			    ((>fx slength
+				(uint32->fixnum (+u32 tstart tlength)))
+			     (format
+				"Offset/length out of range ~a/~a ~~a"
+				offset slength))
+			    (else
+			     (let ((ioff (uint32->fixnum off))
+				   (vset (js-typedarray-set! this)))
+				(let loop ((i 0))
+				   (when (<fx i slength)
+				      (let ((o (js-get array i %this)))
+					 (unless (eq? o (js-absent))
+					    (vset target (+fx i ioff) o %this))
+					 (loop (+fx i 1))))))))))))
 	       (else
-		(js-typedarray-construct this '()))))
-
-	 (define (%js-typedarray this . items)
-	    (js-typedarray-construct 
-	       (js-typedarray-alloc %this js-typedarray)
-	       items))
-
-	 (define (js-typedarray-alloc %this constructor::JsFunction)
-	    (let ((o (allocate-instance (string->symbol (string-append "Js" name)))))
-	       (with-access::JsTypedArray o (cmap bpe __proto__ elements)
-		  (js-object-mode-set! o (js-object-default-mode))
-		  (js-object-mode-extensible-set! o #t)
-		  (set! cmap (js-not-a-cmap))
-		  (set! bpe (fixnum->uint32 bp))
-		  (set! elements '#())
-		  (set! __proto__ (js-get constructor (& "prototype") %this)))
-	       o))
-	 
-	 (define js-typedarray
-	    (js-make-function %this %js-typedarray 1 name
-	       :__proto__ js-function-prototype
-	       :size 2
-	       :prototype js-typedarray-prototype
-	       :alloc js-typedarray-alloc
-	       :construct (lambda (this . items)
-			     (js-typedarray-construct this items))))
-
-	 (define (js-set this::JsTypedArray array offset)
-	    (let ((off (if (eq? offset (js-undefined))
-			   #u32:0
-			   (js-touint32 offset %this))))
+		(js-undefined)))))
+      
+      (define (js-subarray this::JsTypedArray beg end)
+	 (with-access::JsTypedArray this (byteoffset bpe length buffer)
+	    (let ((beg (+u32 (/u32 byteoffset bpe) (js-touint32 beg %this))))
 	       (cond
-		  ((isa? array JsTypedArray)
-		   (with-access::JsTypedArray this ((toff byteoffset)
-						    (tlength length)
-						    (tbpe bp)
-						    (tbuffer buffer))
-		      (with-access::JsArrayBuffer tbuffer ((target data))
-			 (with-access::JsTypedArray array ((sbuffer buffer)
-							   (soff byteoffset)
-							   (slength length))
-			    (with-access::JsArrayBuffer sbuffer ((source data))
-			       (let ((tstart (+u32 (*u32 (fixnum->uint32 bp) off) toff)))
-				  (cond
-				     ((>=u32 tstart tlength)
-				      (js-raise-range-error %this
-					 "Offset out of range ~a"
-					 tstart))
-				     ((>u32 slength (+u32 tstart tlength))
-				      (format
-					 "Offset/length out of range ~a/~a ~~a"
-					 offset slength))
-				     (else
-				      (u8vector-copy! target
-					 (uint32->fixnum tstart)
-					 source
-					 (uint32->fixnum soff)
-					 (uint32->fixnum
-					    (-u32 (+u32 soff slength) 1)))))))))))
-		  ((js-array? array)
-		   (with-access::JsTypedArray this ((toff byteoffset)
-						    (tlength length)
-						    (tbpe bp)
-						    (tbuffer buffer))
-		      (with-access::JsArrayBuffer tbuffer ((target data))
-			 (let ((tstart (+u32 (*u32 (fixnum->uint32 bp) off) toff))
-			       (slength (js-get array (& "length") %this)))
-			    (cond
-			       ((>=u32 tstart tlength)
-				(js-raise-range-error %this
-				   "Offset out of range ~a"
-				   tstart))
-			       ((>fx slength
-				   (uint32->fixnum (+u32 tstart tlength)))
-				(format
-				   "Offset/length out of range ~a/~a ~~a"
-				   offset slength))
-			       (else
-				(let ((ioff (uint32->fixnum off))
-				      (vset (js-typedarray-set! this)))
-				   (let loop ((i 0))
-				      (when (<fx i slength)
-					 (let ((o (js-get array i %this)))
-					    (unless (eq? o (js-absent))
-					       (vset target (+fx i ioff) o %this))
-					    (loop (+fx i 1))))))))))))
-		  (else
-		   (js-undefined)))))
-
-	 (define (js-subarray this::JsTypedArray beg end)
-	    (with-access::JsTypedArray this (byteoffset bpe length buffer)
-	       (let ((beg (+u32 (/u32 byteoffset bpe) (js-touint32 beg %this))))
-		  (cond
-		     ((<u32 beg #u32:0) (set! beg #u32:0))
-		     ((>u32 beg length) (set! beg (-u32 length bpe))))
-		  (let ((len (if (eq? end (js-undefined))
-				 length
-				 (let ((l (js-touint32 end %this)))
-				    (cond
-				       ((>u32 l length) length)
-				       ((<u32 l beg) 0)
-				       (else (-u32 l beg)))))))
-		     (%js-typedarray (js-undefined) buffer
-			(uint32->fixnum beg) (uint32->fixnum len))))))
-
-	 (js-bind! %this js-typedarray (& "from")
-	    :configurable #f :enumerable #f :value (js-not-implemented %this)
-	    :hidden-class #t)
-	    
-	 (js-bind! %this js-typedarray (& "of")
-	    :configurable #f :enumerable #f :value (js-not-implemented %this)
-	    :hidden-class #t)
-	 
-	 ;; bind the Typedarray in the global object
-	 (js-bind! %this %this (js-name->jsstring name)
-	    :configurable #f :enumerable #f :value js-typedarray
-	    :hidden-class #t)
-	 
-	 js-typedarray)))
+		  ((<u32 beg #u32:0) (set! beg #u32:0))
+		  ((>u32 beg length) (set! beg (-u32 length bpe))))
+	       (let ((len (if (eq? end (js-undefined))
+			      length
+			      (let ((l (js-touint32 end %this)))
+				 (cond
+				    ((>u32 l length) length)
+				    ((<u32 l beg) 0)
+				    (else (-u32 l beg)))))))
+		  (%js-typedarray (js-undefined) buffer
+		     (uint32->fixnum beg) (uint32->fixnum len))))))
+      
+      (js-bind! %this js-typedarray (& "from")
+	 :configurable #f :enumerable #f :value (js-not-implemented %this)
+	 :hidden-class #t)
+      
+      (js-bind! %this js-typedarray (& "of")
+	 :configurable #f :enumerable #f :value (js-not-implemented %this)
+	 :hidden-class #t)
+      
+      ;; bind the Typedarray in the global object
+      (js-bind! %this %this (js-name->jsstring name)
+	 :configurable #f :enumerable #f :value js-typedarray
+	 :hidden-class #t)
+      
+      js-typedarray))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-names ::JsTypedArray ...                           */
@@ -952,7 +953,7 @@
 ;*    js-init-dataview! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-init-dataview! %this)
-   (with-access::JsGlobalObject %this (__proto__ js-function js-object)
+   (with-access::JsGlobalObject %this (js-function js-object)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
 	 ;; host endianess
@@ -964,7 +965,7 @@
 	 ;; builtin DataView prototype
 	 (define js-dataview-prototype
 	    (instantiateJsObject
-	       (__proto__ __proto__)
+	       (__proto__ (js-object-proto %this))
 	       (elements ($create-vector 1))))
 	 
 	 (define (js-create-from-arraybuffer this::JsDataView
@@ -1175,7 +1176,7 @@
 	 
 	 (define js-dataview
 	    (js-make-function %this %js-dataview 1 "DataView"
-	       :__proto__ js-function-prototype
+	       :__proto__ (js-object-proto js-function)
 	       :prototype js-dataview-prototype
 	       :alloc js-dataview-alloc
 	       :construct (lambda (this . items)

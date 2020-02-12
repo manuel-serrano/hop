@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Dec  4 18:09:18 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 13:51:31 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
 ;*    -------------------------------------------------------------    */
@@ -62,14 +62,14 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.1       */
 ;*---------------------------------------------------------------------*/
 (define (js-init-math! %this)
-   (with-access::JsGlobalObject %this (__proto__ js-math)
+   (with-access::JsGlobalObject %this (js-math)
       ;; local constant strings
       (unless (vector? __js_strings) (set! __js_strings (&init!)))
       ;; create the math object
       (set! js-math
 	 (instantiateJsMath
 	    (cmap (instantiate::JsConstructMap))
-	    (__proto__ __proto__)
+	    (__proto__ (js-object-proto %this))
 	    (elements ($create-vector 26))))
       ;; other properties
       (js-bind! %this js-math (& "E")

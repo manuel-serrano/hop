@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Feb  9 11:08:11 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 14:32:00 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2418,10 +2418,10 @@
 		     inits)))
 	 (cond
 	    ((null? props)
-	     '(with-access::JsGlobalObject %this (__proto__ js-initial-cmap)
+	     '(with-access::JsGlobalObject %this (js-initial-cmap)
 	       (instantiateJsObject
 		  (cmap js-initial-cmap)
-		  (__proto__ __proto__))))
+		  (__proto__ (js-object-proto %this)))))
 	    ((every (match-lambda ((& (? string?)) #t) (else #f)) props)
 	     `(let ((,names (vector ,@props))
 		    (,elements (vector ,@vals)))
@@ -2449,17 +2449,15 @@
 		     (with-access::J2SDataPropertyInit i (val)
 			(maybe-function? (uncast val))))
 		inits)
-	     `(with-access::JsGlobalObject %this (__proto__)
-		 (js-object-literal-init!
-		    (instantiateJsObject
-		       (cmap ,(j2s-scheme cmap mode return conf))
-		       (__proto__ __proto__)
-		       (elements (vector ,@vals)))))
-	     `(with-access::JsGlobalObject %this (__proto__)
+	     `(js-object-literal-init!
 		 (instantiateJsObject
 		    (cmap ,(j2s-scheme cmap mode return conf))
-		    (__proto__ __proto__)
-		    (elements (vector ,@vals)))))))
+		    (__proto__ (js-object-proto %this))
+		    (elements (vector ,@vals))))
+	     `(instantiateJsObject
+		 (cmap ,(j2s-scheme cmap mode return conf))
+		 (__proto__ (js-object-proto %this))
+		 (elements (vector ,@vals))))))
    
    (define (new->jsobj loc inits)
       (let ((tmp (gensym)))

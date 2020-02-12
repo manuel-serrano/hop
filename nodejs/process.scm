@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Thu Jul  4 15:57:17 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 14:26:54 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
 ;*=====================================================================*/
@@ -116,86 +116,85 @@
                 (tick (js-get m (& "initNodeTick") %this)))
             (js-call1 %this tick (js-undefined) %process))
 	 ;; events
-	 (with-access::JsObject %process (__proto__)
-	    (let* ((e (nodejs-require-core "events" %worker %this))
-		   (em (js-get e (& "EventEmitter") %this))
-		   (proto (js-get em (& "prototype") %this))
-		   (add (js-get proto (& "addListener") %this))
-		   (rem (js-get proto (& "removeListener") %this))
-		   (remall (js-get proto (& "removeAllListeners") %this))
-		   (exitarmed #f)
-		   (sighdls '()))
-	       
-	       (set! __proto__ proto)
-	       
-	       (define (on this signame proc)
-		  (let ((sig (js-tostring signame %this)))
-		     (cond
-			((and (string=? sig "exit") (not exitarmed))
-			 (with-access::WorkerHopThread %worker (onexit)
-			    (set! onexit proc))
-			 (js-call2 %this add this signame proc))
-			((assq (string->symbol sig) signals)
-			 =>
-			 (lambda (c)
-			    (set! sighdls (cons c sighdls))
-			    (if (eq? (car c) 'SIGTERM)
-				(hop-sigterm-handler-set!
-				   (lambda (n)
-				      (js-call0 %this proc this)
-				      '(js-worker-tick %worker)))
-				(signal (cdr c)
-				   (lambda (s)
-				      (!js-callback0 "signal" %worker %this
-					 proc this))))))
-			(else
-			 (js-call2 %this add this signame proc)))))
-	       
-	       (define (remove this signame proc)
-		  (let ((sig (js-tostring signame %this)))
-		     (cond
-			((string=? sig "exit")
-			 (with-access::WorkerHopThread %worker (onexit)
-			  (set! onexit #f))
-			 (js-call2 %this rem this signame proc))
-			((assq (string->symbol sig) signals)
-			 =>
-			 (lambda (c)
-			    (set! sighdls (remq! c sighdls))
-			    (if (eq? (car c) 'SIGTERM)
-				(hop-sigterm-handler-set!
-				   hop-sigterm-default-handler)
-				(signal (cdr c) 'default))))
-			(else
-			 (js-call2 %this rem this signame proc)))))
-	       
-	       (define (removeall this signame)
-		  (let ((sig (js-tostring signame %this)))
-		     (cond
-			((string=? sig "exit")
-			 (with-access::WorkerHopThread %worker (onexit)
-			    (set! onexit #f)))
-			((assq (string->symbol sig) signals)
-			 =>
-			 (lambda (c)
-			    (set! sighdls (remq! c sighdls))
-			    (if (eq? (car c) 'SIGTERM)
-				(hop-sigterm-handler-set!
-				   hop-sigterm-default-handler)
-				(signal (cdr c) 'default))))
-			(else
-			 (js-call1 %this remall this signame)))))
-
-	       ;; on
-	       (let ((add (js-make-function %this on 2 "addListener")))
-		  (js-put! %process (& "on") add #f %this)
-		  (js-put! %process (& "addListener") add #f %this))
-	       ;; remove
-	       (let ((rem (js-make-function %this remove 2 "removeListener")))
-		  (js-put! %process (& "removeListener") rem #f %this))
-	       ;; removeALl
-	       (let ((remall (js-make-function %this removeall 1 "removeAllListeners")))
-		  (js-put! %process (& "removeAllListeners") remall #f %this))))
+	 (let* ((e (nodejs-require-core "events" %worker %this))
+		(em (js-get e (& "EventEmitter") %this))
+		(proto (js-get em (& "prototype") %this))
+		(add (js-get proto (& "addListener") %this))
+		(rem (js-get proto (& "removeListener") %this))
+		(remall (js-get proto (& "removeAllListeners") %this))
+		(exitarmed #f)
+		(sighdls '()))
+	    
+	    (js-object-proto-set! %process proto)
+	    
+	    (define (on this signame proc)
+	       (let ((sig (js-tostring signame %this)))
+		  (cond
+		     ((and (string=? sig "exit") (not exitarmed))
+		      (with-access::WorkerHopThread %worker (onexit)
+			 (set! onexit proc))
+		      (js-call2 %this add this signame proc))
+		     ((assq (string->symbol sig) signals)
+		      =>
+		      (lambda (c)
+			 (set! sighdls (cons c sighdls))
+			 (if (eq? (car c) 'SIGTERM)
+			     (hop-sigterm-handler-set!
+				(lambda (n)
+				   (js-call0 %this proc this)
+				   '(js-worker-tick %worker)))
+			     (signal (cdr c)
+				(lambda (s)
+				   (!js-callback0 "signal" %worker %this
+				      proc this))))))
+		     (else
+		      (js-call2 %this add this signame proc)))))
+	    
+	    (define (remove this signame proc)
+	       (let ((sig (js-tostring signame %this)))
+		  (cond
+		     ((string=? sig "exit")
+		      (with-access::WorkerHopThread %worker (onexit)
+			 (set! onexit #f))
+		      (js-call2 %this rem this signame proc))
+		     ((assq (string->symbol sig) signals)
+		      =>
+		      (lambda (c)
+			 (set! sighdls (remq! c sighdls))
+			 (if (eq? (car c) 'SIGTERM)
+			     (hop-sigterm-handler-set!
+				hop-sigterm-default-handler)
+			     (signal (cdr c) 'default))))
+		     (else
+		      (js-call2 %this rem this signame proc)))))
+	    
+	    (define (removeall this signame)
+	       (let ((sig (js-tostring signame %this)))
+		  (cond
+		     ((string=? sig "exit")
+		      (with-access::WorkerHopThread %worker (onexit)
+			 (set! onexit #f)))
+		     ((assq (string->symbol sig) signals)
+		      =>
+		      (lambda (c)
+			 (set! sighdls (remq! c sighdls))
+			 (if (eq? (car c) 'SIGTERM)
+			     (hop-sigterm-handler-set!
+				hop-sigterm-default-handler)
+			     (signal (cdr c) 'default))))
+		     (else
+		      (js-call1 %this remall this signame)))))
+	    
+	    ;; on
+	    (let ((add (js-make-function %this on 2 "addListener")))
+	       (js-put! %process (& "on") add #f %this)
+	       (js-put! %process (& "addListener") add #f %this))
+	    ;; remove
+	    (let ((rem (js-make-function %this remove 2 "removeListener")))
+	       (js-put! %process (& "removeListener") rem #f %this))
+	    ;; removeALl
+	    (let ((remall (js-make-function %this removeall 1 "removeAllListeners")))
+	       (js-put! %process (& "removeAllListeners") remall #f %this)))
 	 ;; stdios
 	 (let* (;; (oldstdout (js-get %process 'stdout %this))
 		;; (oldstderr (js-get %process 'stderr %this))

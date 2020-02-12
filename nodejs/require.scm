@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Feb 12 10:08:51 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 14:25:15 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -506,10 +506,10 @@
 	       #f %this))))
 
    (with-trace 'require (format "nodejs-module ~a ~a" id filename)
-      (with-access::JsGlobalObject %this (js-object __proto__ js-symbol-tostringtag js-initial-cmap)
+      (with-access::JsGlobalObject %this (js-object js-symbol-tostringtag js-initial-cmap)
 	 (let ((m (instantiateJsModule
 		     (cmap js-initial-cmap)
-		     (__proto__ __proto__))))
+		     (__proto__ (js-object-proto %this)))))
 	    (js-bind! %this m js-symbol-tostringtag
 	       :value (& "Module")
 	       :configurable #f :writable #f :enumerable #f)
@@ -711,10 +711,10 @@
    (define (constant? n)
       (or (number? n) (boolean? n) (string? n) (js-jsstring? n)))
    
-   (with-access::JsGlobalObject %this (__proto__ js-symbol-tostringtag)
+   (with-access::JsGlobalObject %this (js-symbol-tostringtag)
       (with-access::JsModule mod (evars exports default imports redirects)
 	 (let ((mod (instantiateJsObject
-		       (__proto__ __proto__))))
+		       (__proto__ (js-object-proto %this)))))
 	    (js-bind! %this mod js-symbol-tostringtag
 	       :value (js-string->jsstring "Module")
 	       :configurable #f :writable #f :enumerable #f)
@@ -824,17 +824,17 @@
 (define (nodejs-new-global-object #!key name)
    (let ((%this (js-new-global-object :size 256 :name name)))
       (js-init-require! %this)
-      (with-access::JsGlobalObject %this (js-object __proto__ js-nodejs-pcache)
+      (with-access::JsGlobalObject %this (js-object js-nodejs-pcache)
 	 ;; allocate the pcache for the nodejs modules
 	 (set! js-nodejs-pcache
 	    ((@ js-make-pcache-table __hopscript_property) 11 "nodejs"))
 	 ;; mark object non-enumerable (i.e., it contains no enumerable
 	 ;; property) in order to optimize for..in
-	 (js-object-mode-enumerable-set! __proto__ #f)
+	 (js-object-mode-enumerable-set! (js-object-proto %this) #f)
 	 ;; bind the builtin hop functions
 	 (js-init-hop-builtin! %this %this)
 	 ;; bind the v8 builtin
-	 (nodejs-init-v8-global-object! %this __proto__)
+	 (nodejs-init-v8-global-object! %this (js-object-proto %this))
 	 (nodejs-init-v8-global-object-prototype! %this %this))
       %this))
 
@@ -969,8 +969,8 @@
 	 (set! js-scope-cmap (instantiate::JsConstructMap)))
       (let ((scope (duplicate::JsGlobalObject global
 		      (cmap js-scope-cmap)
-		      (__proto__ global)
 		      (elements ($create-vector (SCOPE-ELEMENTS-LENGTH))))))
+	 (js-object-proto-set! scope global)
 	 (js-object-mode-set! scope (js-object-default-mode))
 	 (nodejs-scope-init! scope)
 	 scope)))
@@ -2245,7 +2245,7 @@
             (with-access::JsPropertyDescriptor p (name)
                (proc name))))
       
-      (with-access::JsObject obj (cmap __proto__)
+      (with-access::JsObject obj (cmap)
          (if (js-object-mapped? obj)
              (with-access::JsConstructMap cmap (props)
                 (vfor-each in-mapped-property props))

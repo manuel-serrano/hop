@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Wed Feb 12 10:15:52 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 13:26:01 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -18,10 +18,16 @@
       (define (def-default clazz)
 	 `(define (,(symbol-append 'js-instantiate- clazz '-expander) x e)
 	     
+	     (define (builtin-name id)
+		(if (eq? id '__proto__) 'proto id))
+
 	     (define builtins
 		'((mode ,(if (pair? (cddr x))
 			     (caddr x)
-			     '(js-object-default-mode)))))
+			     '(js-object-default-mode)))
+		  (__proto__ ,(if (pair? (cddr x))
+				  (caddr x)
+				  '(js-null)))))
 	     
 	     (define (builtin? f)
 		(assq (car f) builtins))
@@ -42,7 +48,8 @@
 			      (map (lambda (f)
 				      (let ((c (assq (car f) (cdr x)))
 					    (set (symbol-append
-						    'js-object- (car f)
+						    'js-object-
+						    (builtin-name (car f))
 						    '-set!)))
 					 (if (pair? c)
 					     (list set nobj (cadr c))
@@ -54,10 +61,16 @@
       (define (def-jsobject)
 	 `(define (js-instantiate-JsObject-expander x e)
 	     
+	     (define (builtin-name id)
+		(if (eq? id '__proto__) 'proto id))
+
 	     (define builtins
 		'((mode ,(if (pair? (cddr x))
 			     (caddr x)
-			     '(js-object-default-mode)))))
+			     '(js-object-default-mode)))
+		  (__proto__ ,(if (pair? (cddr x))
+				  (caddr x)
+				  '(js-null)))))
 	     
 	     (define (builtin? f)
 		(assq (car f) builtins))
@@ -177,7 +190,7 @@
 				  (map (lambda (f)
 					  (let ((c (assq (car f) (cdr x)))
 						(set (symbol-append
-							'js-object- (car f)
+							'js-object- (builtin-name (car f))
 							'-set!)))
 					     (if (pair? c)
 						 (list set nobj (cadr c))

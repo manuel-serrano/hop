@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Aug 14 13:54:47 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 13:40:20 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
 ;*=====================================================================*/
@@ -75,9 +75,9 @@
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-regexp)
 	 (let ((nobj (call-next-method)))
-	    (with-access::JsRegExp nobj (__proto__ rx)
+	    (with-access::JsRegExp nobj (rx)
 	       (with-access::JsRegExp obj ((_rx rx))
-		  (set! __proto__ (js-get js-regexp (& "prototype") %this))
+		  (js-object-proto-set! nobj (js-get js-regexp (& "prototype") %this))
 		  (set! rx (js-donate _rx worker %_this))))
 	    nobj))))
 
@@ -108,57 +108,56 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10        */
 ;*---------------------------------------------------------------------*/
 (define (js-init-regexp! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (__proto__ js-regexp js-function
+   (with-access::JsGlobalObject %this (js-regexp js-function
 					 js-regexp-prototype
 					 js-regexp-cmap
 					 js-regexp-exec-cmap
 					 js-regexp-pcache)
       ;; local constant strings
       (unless (vector? __js_strings) (set! __js_strings (&init!)))
-
+      
       ;; regexp pcache
       (set! js-regexp-pcache
 	 ((@ js-make-pcache-table __hopscript_property) 4 "regexp"))
-
-      (with-access::JsFunction js-function ((js-function-prototype __proto__))
-	 ;; default regexp cmap
-	 (set! js-regexp-cmap
+      
+      ;; default regexp cmap
+      (set! js-regexp-cmap
+	 (instantiate::JsConstructMap
+	    (methods (make-vector 1))
+	    (props `#(,(prop (& "lastIndex") (property-flags #t #f #f #f))))))
+      
+      (let ((props `#(,(prop (& "index") (property-flags #t #t #t #f))
+		      ,(prop (& "input") (property-flags #t #t #t #f)))))
+	 (set! js-regexp-exec-cmap
 	    (instantiate::JsConstructMap
-	       (methods (make-vector 1))
-	       (props `#(,(prop (& "lastIndex") (property-flags #t #f #f #f))))))
-	 
-	 (let ((props `#(,(prop (& "index") (property-flags #t #t #t #f))
-			 ,(prop (& "input") (property-flags #t #t #t #f)))))
-	    (set! js-regexp-exec-cmap
-	       (instantiate::JsConstructMap
-		  (methods (make-vector (vector-length props)))
-		  (props props))))
-	 
-	 (set! js-regexp-prototype
-	    (instantiateJsRegExp
-	       (cmap js-regexp-cmap)
-	       (__proto__ __proto__)
-	       (elements ($create-vector 10))
-	       (rx (pregexp ""))
-	       (source "")
-	       (flags #u32:0)))
-	 
-	 ;; create a HopScript regexp object constructor
-	 (set! js-regexp
-	    (js-make-function %this
-	       (%js-regexp %this) 2 "RegExp"
-	       :__proto__ js-function-prototype
-	       :prototype js-regexp-prototype
-	       :alloc js-no-alloc
-	       :construct (lambda (_ pattern uflags loc)
-			     (js-regexp-construct %this pattern uflags loc))))
-	 (init-builtin-regexp-prototype! %this js-regexp js-regexp-prototype)
-	 
-	 ;; bind Regexp in the global object
-	 (js-bind! %this %this (& "RegExp")
-	    :configurable #f :enumerable #f :value js-regexp
-	    :hidden-class #t)
-	 js-regexp)))
+	       (methods (make-vector (vector-length props)))
+	       (props props))))
+      
+      (set! js-regexp-prototype
+	 (instantiateJsRegExp
+	    (cmap js-regexp-cmap)
+	    (__proto__ (js-object-proto %this))
+	    (elements ($create-vector 10))
+	    (rx (pregexp ""))
+	    (source "")
+	    (flags #u32:0)))
+      
+      ;; create a HopScript regexp object constructor
+      (set! js-regexp
+	 (js-make-function %this
+	    (%js-regexp %this) 2 "RegExp"
+	    :__proto__ (js-object-proto js-function)
+	    :prototype js-regexp-prototype
+	    :alloc js-no-alloc
+	    :construct (lambda (_ pattern uflags loc)
+			  (js-regexp-construct %this pattern uflags loc))))
+      (init-builtin-regexp-prototype! %this js-regexp js-regexp-prototype)
+      
+      ;; bind Regexp in the global object
+      (js-bind! %this %this (& "RegExp")
+	 :configurable #f :enumerable #f :value js-regexp
+	 :hidden-class #t)
+      js-regexp))
    
 ;*---------------------------------------------------------------------*/
 ;*    %js-regexp ...                                                   */

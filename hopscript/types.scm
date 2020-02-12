@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Feb 12 07:43:37 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 13:12:36 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -153,7 +153,6 @@
 	      (%culen::uint32 (default #u32:0)))
 	   
 	   (class JsObject
-	      (__proto__ (default (js-null)))
 	      (cmap::JsConstructMap (default (js-not-a-cmap)))
 	      (elements::vector (default '#())))
 	   
@@ -531,10 +530,16 @@
 	   (js-proxy-function?::bool ::obj)
 
 	   (inline js-object-cmap ::JsObject)
+
+	   (inline js-object-proto ::JsObject)
+	   (inline js-object-proto-set! ::JsObject ::obj)
 	   
 	   (inline js-object-mode::uint32 ::object)
 	   (inline js-object-mode-set! ::object ::uint32)
 
+	   (inline js-proxy-target::JsObject ::JsProxy)
+	   (inline js-proxy-target-set! ::JsProxy ::JsObject)
+	   
 	   (inline jsindex12-max::uint32)
 	   
 	   (gencmapid::uint32))
@@ -571,8 +576,8 @@
 	 (else
 	  (let ((o (instantiate::JsObject
 		      (cmap constrmap)
-		      (__proto__ __proto__)
 		      (elements (make-vector constrsize (js-undefined))))))
+	     (js-object-proto-set! o __proto__)
 	     (js-object-mode-set! o mode)
 	     (js-object-mode-inline-set! o #f)
 	     (%object-widening-set! o '())
@@ -978,11 +983,11 @@
 ;*    js-clone ::JsGlobalObject ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (js-clone obj::JsGlobalObject)
-   (with-access::JsObject obj (__proto__ cmap elements)
+   (with-access::JsObject obj (cmap elements)
       (let ((nobj (duplicate::JsGlobalObject obj
-		     (__proto__ (js-clone __proto__))
 		     (cmap (js-clone cmap))
 		     (elements (vector-map js-clone elements)))))
+	 (js-object-proto-set! nobj (js-clone (js-object-proto obj)))
 	 (js-object-mode-set! nobj (js-object-mode obj))
 	 nobj)))
 
@@ -1231,7 +1236,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-proxy-array? obj)
    (when (js-proxy? obj)
-      (with-access::JsProxy obj ((target __proto__))
+      (let ((target (js-proxy-target obj)))
 	 (or (js-array? target)
 	     (js-proxy-array? target)))))
 
@@ -1240,7 +1245,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-proxy-function? obj)
    (when (js-proxy? obj)
-      (with-access::JsProxy obj ((target __proto__))
+      (let ((target (js-proxy-target obj)))
 	 (or (js-function? target)
 	     (js-proxy-function? target)))))
 
@@ -1249,6 +1254,18 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-cmap o)
    (with-access::JsObject o (cmap) cmap))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-proto ...                                              */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-proto o)
+   (object-widening o))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-proto-set! ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-proto-set! o p)
+   (object-widening-set! o p))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-mode ...                                               */
@@ -1267,3 +1284,16 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (jsindex12-max::uint32)
    #u32:4096)
+
+;*---------------------------------------------------------------------*/
+;*    js-proxy-target ...                                              */
+;*---------------------------------------------------------------------*/
+(define-inline (js-proxy-target o)
+   (object-widening o))
+
+;*---------------------------------------------------------------------*/
+;*    js-proxy-target-set! ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-proxy-target-set! o t)
+   (object-widening-set! o t))
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Thu Feb  6 09:17:50 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 13:48:42 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -508,12 +508,11 @@
 ;*---------------------------------------------------------------------*/
 (define (js-arguments %this::JsGlobalObject vec::vector)
    (with-access::JsGlobalObject %this (js-arguments-cmap)
-      (with-access::JsObject %this (__proto__)
-	 (instantiateJsArguments
-	    (vec vec)
-	    (cmap js-arguments-cmap)
-	    (elements (vector (vector-length vec) (js-undefined)))
-	    (__proto__ __proto__)))))
+      (instantiateJsArguments
+	 (vec vec)
+	 (cmap js-arguments-cmap)
+	 (elements (vector (vector-length vec) (js-undefined)))
+	 (__proto__ (js-object-proto %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-arguments ...                                          */
@@ -538,15 +537,13 @@
 	    (loop (+fx i 1) (cdr lst))))
       ;; build the arguments object
       (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
-	 (with-access::JsObject %this (__proto__)
-	    (let ((obj (instantiateJsArguments
-			  (vec vec)
-			  (cmap js-strict-arguments-cmap)
-			  (elements (vector (vector-length vec)
-				       strict-callee-property
-				       strict-caller-property))
-			  (__proto__ __proto__))))
-	       obj)))))
+	 (instantiateJsArguments
+	    (vec vec)
+	    (cmap js-strict-arguments-cmap)
+	    (elements (vector (vector-length vec)
+			 strict-callee-property
+			 strict-caller-property))
+	    (__proto__ (js-object-proto %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-arguments-vector ...                                   */
@@ -560,7 +557,7 @@
 	 (writable #t)
 	 (configurable #t)
 	 (enumerable #t)))
-
+   
    (let* ((len (vector-length vec)))
       ;; initialize the vector of descriptors
       (let loop ((i (-fx (vector-length vec) 1)))
@@ -569,15 +566,13 @@
 	    (loop (-fx i 1))))
       ;; build the arguments object
       (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
-	 (with-access::JsObject %this (__proto__)
-	    (let ((obj (instantiateJsArguments
-			  (vec vec)
-			  (cmap js-strict-arguments-cmap)
-			  (elements (vector (vector-length vec)
-				       strict-callee-property
-				       strict-caller-property))
-			  (__proto__ __proto__))))
-	       obj)))))
+	 (instantiateJsArguments
+	    (vec vec)
+	    (cmap js-strict-arguments-cmap)
+	    (elements (vector (vector-length vec)
+			 strict-callee-property
+			 strict-caller-property))
+	    (__proto__ (js-object-proto %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments->vector..                                           */

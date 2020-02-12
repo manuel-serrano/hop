@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Feb 12 10:07:00 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 13:37:29 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -84,8 +84,8 @@
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-string)
 	 (let ((nobj (call-next-method)))
-	    (with-access::JsString nobj (__proto__ val)
-	       (set! __proto__ (js-get js-string (& "prototype") %this))
+	    (with-access::JsString nobj (val)
+	       (js-object-proto-set! nobj (js-get js-string (& "prototype") %this))
 	       (set! val (js-donate val worker %_this)))
 	    nobj))))
 
@@ -118,134 +118,132 @@
 ;*    js-init-string! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-init-string! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (__proto__ js-string js-function
+   (with-access::JsGlobalObject %this (js-string js-function
 					 js-string-prototype
 					 js-string-pcache)
-      (with-access::JsFunction js-function ((js-function-prototype __proto__))
-
-	 ;; local constant strings
-	 (unless (vector? __js_strings) (set! __js_strings (&init!)))
+      ;; local constant strings
+      (unless (vector? __js_strings) (set! __js_strings (&init!)))
+      
+      ;; string pcache
+      (set! js-string-pcache
+	 ((@ js-make-pcache-table __hopscript_property) 38 "string"))
+      
+      ;; builtin prototype
+      (set! js-string-prototype
+	 (instantiateJsString
+	    (val (js-ascii->jsstring ""))
+	    (__proto__ (js-object-proto %this))))
+      
+      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5
+      (define (js-string-construct o::JsString . arg)
 	 
-	 ;; string pcache
-	 (set! js-string-pcache
-	    ((@ js-make-pcache-table __hopscript_property) 38 "string"))
+	 (define (set-ascii-string! str)
+	    (let ((len (instantiate::JsValueDescriptor
+			  (name (& "length"))
+			  (writable #f)
+			  (configurable #f)
+			  (enumerable #f)
+			  (value (string-length str)))))
+	       (with-access::JsString o (val elements)
+		  (set! val (js-ascii->jsstring str))
+		  (set! elements (vector len)))))
 	 
-	 ;; builtin prototype
-	 (set! js-string-prototype
-	    (instantiateJsString
-	       (val (js-ascii->jsstring ""))
-	       (__proto__ __proto__)))
-
-	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5
-	 (define (js-string-construct o::JsString . arg)
-	    
-	    (define (set-ascii-string! str)
-	       (let ((len (instantiate::JsValueDescriptor
-			     (name (& "length"))
-			     (writable #f)
-			     (configurable #f)
-			     (enumerable #f)
-			     (value (string-length str)))))
-		  (with-access::JsString o (val elements)
-		     (set! val (js-ascii->jsstring str))
-		     (set! elements (vector len)))))
-	    
-	    (with-access::JsGlobalObject %this (js-new-target)
-	       (set! js-new-target (js-undefined)))
-	    
-	    (if (null? arg)
-		;; 2
-		(set-ascii-string! "")
-		(let ((value (car arg)))
-		   (cond
-		      ((string? value)
-		       (set-ascii-string! value))
-		      ((js-jsstring? value)
-		       (js-set-string! %this o value))
-		      ((js-object? value)
-		       (js-set-string! %this o (js-cast-string %this value)))
-		      (else
-		       (let ((str (js-tojsstring value %this)))
-			  (js-set-string! %this o str)))))))
-
-	 ;; then, create a HopScript object
-	 (set! js-string
-	    (js-make-function %this
-	       (%js-string %this) 1 "String"
-	       :__proto__ js-function-prototype
-	       :prototype js-string-prototype
-	       :size 17
-	       :construct js-string-construct
-	       :alloc js-string-alloc))
+	 (with-access::JsGlobalObject %this (js-new-target)
+	    (set! js-new-target (js-undefined)))
 	 
-	 ;; fromCharCode
-	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.3.2
-	 (define (js-string-fromcharcode this . l)
-	    (js-string->jsstring
-	       (ucs2-string->utf8-string
-		  (apply ucs2-string
-		     (map (lambda (c)
-			     (integer->ucs2
-				(uint16->fixnum (js-touint16 c %this))))
-			l)))))
-	 
-	 (js-bind! %this js-string (& "fromCharCode")
-	    :value (js-make-function %this
-		      js-string-fromcharcode 1 "fromCharCode"
-		      :prototype (js-undefined))
-	    :writable #t
-	    :enumerable #f
-	    :configurable #t
-	    :hidden-class #t)
-
-	 ;; raw
-	 ;; http://www.ecma-international.org/ecma-262/6.0/#21.1.2.4
-	 (define (js-string-raw this . a)
-	    (let ((template (car a))
-		  (substitutions (cdr a)))
-	       (if (js-object? template)
-		   (let ((raw (js-get template (& "raw") %this)))
-		      (if (js-object? raw)
-			  ;; step 9
-			  (let ((literalsegments (js-get raw (& "length") %this)))
-			     (let loop ((strs '())
-					(nextindex 0)
-					(subs substitutions))
-				(if (=fx nextindex literalsegments)
-				    (js-stringlist->jsstring (reverse! strs))
-				    (let ((nextseg (js-tostring
-						      (js-get raw nextindex %this)
-						      %this)))
-				       (if (pair? subs)
-					   (loop (cons* (js-tostring (car subs) %this)
-						    nextseg
-						    strs)
-					      (+fx nextindex 1)
-					      (cdr subs))
-					   (loop (cons nextseg strs)
-					      (+fx nextindex 1)
-					      subs))))))
-			  (js-undefined)))
-		   (js-undefined))))
-		    
-	 (js-bind! %this js-string (& "raw")
-	    :value (js-make-function %this
-		      js-string-raw 1 "raw"
-		      :prototype (js-undefined))
-	    :writable #t
-	    :enumerable #f
-	    :configurable #t
-	    :hidden-class #t)
-	 
-	 ;; prototype properties
-	 (init-builtin-string-prototype! %this js-string js-string-prototype)
-	 
-	 ;; bind String in the global object
-	 (js-bind! %this %this (& "String")
-	    :configurable #f :enumerable #f :value js-string
-	    :hidden-class #t)
-
-	 js-string)))
+	 (if (null? arg)
+	     ;; 2
+	     (set-ascii-string! "")
+	     (let ((value (car arg)))
+		(cond
+		   ((string? value)
+		    (set-ascii-string! value))
+		   ((js-jsstring? value)
+		    (js-set-string! %this o value))
+		   ((js-object? value)
+		    (js-set-string! %this o (js-cast-string %this value)))
+		   (else
+		    (let ((str (js-tojsstring value %this)))
+		       (js-set-string! %this o str)))))))
+      
+      ;; then, create a HopScript object
+      (set! js-string
+	 (js-make-function %this
+	    (%js-string %this) 1 "String"
+	    :__proto__ (js-object-proto js-function)
+	    :prototype js-string-prototype
+	    :size 17
+	    :construct js-string-construct
+	    :alloc js-string-alloc))
+      
+      ;; fromCharCode
+      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.3.2
+      (define (js-string-fromcharcode this . l)
+	 (js-string->jsstring
+	    (ucs2-string->utf8-string
+	       (apply ucs2-string
+		  (map (lambda (c)
+			  (integer->ucs2
+			     (uint16->fixnum (js-touint16 c %this))))
+		     l)))))
+      
+      (js-bind! %this js-string (& "fromCharCode")
+	 :value (js-make-function %this
+		   js-string-fromcharcode 1 "fromCharCode"
+		   :prototype (js-undefined))
+	 :writable #t
+	 :enumerable #f
+	 :configurable #t
+	 :hidden-class #t)
+      
+      ;; raw
+      ;; http://www.ecma-international.org/ecma-262/6.0/#21.1.2.4
+      (define (js-string-raw this . a)
+	 (let ((template (car a))
+	       (substitutions (cdr a)))
+	    (if (js-object? template)
+		(let ((raw (js-get template (& "raw") %this)))
+		   (if (js-object? raw)
+		       ;; step 9
+		       (let ((literalsegments (js-get raw (& "length") %this)))
+			  (let loop ((strs '())
+				     (nextindex 0)
+				     (subs substitutions))
+			     (if (=fx nextindex literalsegments)
+				 (js-stringlist->jsstring (reverse! strs))
+				 (let ((nextseg (js-tostring
+						   (js-get raw nextindex %this)
+						   %this)))
+				    (if (pair? subs)
+					(loop (cons* (js-tostring (car subs) %this)
+						 nextseg
+						 strs)
+					   (+fx nextindex 1)
+					   (cdr subs))
+					(loop (cons nextseg strs)
+					   (+fx nextindex 1)
+					   subs))))))
+		       (js-undefined)))
+		(js-undefined))))
+      
+      (js-bind! %this js-string (& "raw")
+	 :value (js-make-function %this
+		   js-string-raw 1 "raw"
+		   :prototype (js-undefined))
+	 :writable #t
+	 :enumerable #f
+	 :configurable #t
+	 :hidden-class #t)
+      
+      ;; prototype properties
+      (init-builtin-string-prototype! %this js-string js-string-prototype)
+      
+      ;; bind String in the global object
+      (js-bind! %this %this (& "String")
+	 :configurable #f :enumerable #f :value js-string
+	 :hidden-class #t)
+      
+      js-string))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string-alloc ...                                              */

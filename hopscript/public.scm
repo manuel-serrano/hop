@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Feb  6 09:01:16 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 13:52:40 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -262,13 +262,13 @@
 ;*    js-new/proxy ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-new/proxy %this::JsGlobalObject p::JsProxy args::pair-nil)
-   (with-access::JsProxy p ((target __proto__) handler)
+   (with-access::JsProxy p (handler)
       (let ((ctor (js-get handler (& "construct") %this)))
 	 (if (js-function? ctor)
-	     (let ((obj (js-call2 %this ctor p target
+	     (let ((obj (js-call2 %this ctor p (js-proxy-target p)
 			   (js-vector->jsarray (list->vector args) %this))))
 		(cond
-		   ((not (js-function? target))
+		   ((not (js-function? (js-proxy-target p)))
 		    (js-raise-type-error %this
 		       "Proxy \"construct\" inconsistency"
 		       p))
@@ -1030,41 +1030,41 @@
 ;*    js-call-proxyn ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-call-proxyn %this fun this args)
-   (with-access::JsProxy fun ((target __proto__) handler)
-      (cond
-	 ((js-function? target)
-	  (let ((xfun (js-get handler (& "apply") %this)))
-	     (if (js-function? xfun)
-		 (with-access::JsFunction xfun (procedure)
-		    (js-call3% %this xfun procedure fun target
-		       this (js-vector->jsarray (list->vector args) %this)))
-		 (with-access::JsFunction target (procedure)
-		    (js-calln% %this target this args)))))
-	 ((and (js-proxy? target) (js-proxy-function? target))
-	  (with-access::JsProxy fun ((target __proto__))
-	     (js-call-proxyn %this target this args)))
-	 (else
-	  (js-raise-type-error %this "calln: not a function ~s" fun)))))
+   (with-access::JsProxy fun (handler)
+      (let ((target (js-proxy-target fun)))
+	 (cond
+	    ((js-function? target)
+	     (let ((xfun (js-get handler (& "apply") %this)))
+		(if (js-function? xfun)
+		    (with-access::JsFunction xfun (procedure)
+		       (js-call3% %this xfun procedure fun target
+			  this (js-vector->jsarray (list->vector args) %this)))
+		    (with-access::JsFunction target (procedure)
+		       (js-calln% %this target this args)))))
+	    ((and (js-proxy? target) (js-proxy-function? target))
+	     (js-call-proxyn %this (js-proxy-target fun) this args))
+	    (else
+	     (js-raise-type-error %this "calln: not a function ~s" fun))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-apply-proxy ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-apply-proxy %this fun this args)
-   (with-access::JsProxy fun ((target __proto__) handler)
-      (cond
-	 ((js-function? target)
-	  (let ((xfun (js-get handler (& "apply") %this)))
-	     (if (js-function? xfun)
-		 (with-access::JsFunction xfun (procedure)
-		    (js-call3% %this xfun procedure fun target
-		       this (js-vector->jsarray (list->vector args) %this))
-		    (with-access::JsFunction target (procedure)
-		       (js-calln% %this target this args))))))
-	 ((js-proxy? target)
-	  (with-access::JsProxy fun ((target __proto__))
-	     (js-apply-proxy %this target this args)))
-	 (else
-	  (js-raise-type-error %this "apply: not a function ~s" fun)))))
+   (with-access::JsProxy fun (handler)
+      (let ((target (js-proxy-target fun)))
+	 (cond
+	    ((js-function? target)
+	     (let ((xfun (js-get handler (& "apply") %this)))
+		(if (js-function? xfun)
+		    (with-access::JsFunction xfun (procedure)
+		       (js-call3% %this xfun procedure fun target
+			  this (js-vector->jsarray (list->vector args) %this))
+		       (with-access::JsFunction target (procedure)
+			  (js-calln% %this target this args))))))
+	    ((js-proxy? target)
+	     (js-apply-proxy %this (js-proxy-target fun) this args))
+	    (else
+	     (js-raise-type-error %this "apply: not a function ~s" fun))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-service/debug ...                                             */
@@ -1085,14 +1085,13 @@
 	 (if (not (js-object? o))
 	     (js-raise-type-error %this "instanceof: no prototype ~s" v)
 	     (let loop ((v v))
-		(with-access::JsObject v ((nv __proto__))
+		(let ((nv (js-object-proto v)))
 		   (cond
 		      ((eq? o nv)
 		       #t)
 		      ((eq? nv (js-null))
 		       (when (eq? (object-class v) JsProxy)
-			  (with-access::JsProxy v ((target __proto__))
-			     (loop target))))
+			  (loop (js-proxy-target v))))
 		      (else
 		       (loop nv)))))))))
 
@@ -1115,14 +1114,13 @@
 	     (if (not (js-object? o))
 		 (js-raise-type-error %this "instanceof: no prototype ~s" v)
 		 (let loop ((v v))
-		    (with-access::JsObject v ((nv __proto__))
+		    (let ((nv (js-object-proto v)))
 		       (cond
 			  ((eq? o nv)
 			   #t)
 			  ((eq? nv (js-null))
 			   (when (eq? (object-class v) JsProxy)
-			      (with-access::JsProxy v ((target __proto__))
-				 (loop target))))
+			      (loop (js-proxy-target v))))
 			  (else
 			   (loop nv))))))))))
 
@@ -1719,7 +1717,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-super obj loc %this)
    (if (js-object? obj)
-       (with-access::JsObject obj (__proto__)
+       (let ((__proto__ (js-object-proto obj)))
 	  (if (js-object? __proto__)
 	      __proto__
 	      (js-raise-type-error/loc %this loc
@@ -1893,11 +1891,10 @@
 ;*    eval-dummy-module ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (eval-dummy-module %this)
-   (with-access::JsGlobalObject %this (js-object __proto__)
-      (let ((obj (instantiateJsModule
-		    (__proto__ __proto__))))
-	 (js-put! obj (& "filename") (js-string->jsstring "") #f %this)
-	 obj)))
+   (let ((obj (instantiateJsModule
+		 (__proto__ (js-object-proto %this)))))
+      (js-put! obj (& "filename") (js-string->jsstring "") #f %this)
+      obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise ...                                                     */

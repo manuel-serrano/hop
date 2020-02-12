@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Mon Sep 30 17:35:13 2019 (serrano)                */
-;*    Copyright   :  2014-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 14:28:54 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
 ;*=====================================================================*/
@@ -1155,8 +1155,7 @@
 ;*---------------------------------------------------------------------*/
 (define (stat->jsobj %this proto res)
    (let ((stat (js-alist->jsobject (stat-date res %this) %this)))
-      (with-access::JsObject stat (__proto__)
-	 (set! __proto__ proto))
+      (js-object-proto-set! stat proto)
       stat))
    
 ;*---------------------------------------------------------------------*/

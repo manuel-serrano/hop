@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu Feb  6 11:10:43 2020 (serrano)                */
+/*    Last change :  Wed Feb 12 13:18:10 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -285,7 +285,7 @@ int bgl_init_jsalloc( uint32_t md ) {
       obj_t o = pool##sz.buffer[ pool##sz.idx ]; \
       pool##sz.buffer[ pool##sz.idx++ ] = 0; \
       alloc_spin_unlock( &lock##sz ); \
-      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL___proto__z00 = __proto__;  \
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); \
       ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; \
       ALLOC_STAT( inl##sz++ ); \
       return o; \
@@ -304,7 +304,7 @@ int bgl_init_jsalloc( uint32_t md ) {
       /* add the pool to the pool queue */ \
       pool_queue_add( &npool##sz ); \
       \
-      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL___proto__z00 = __proto__;  \
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); \
       ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; \
       \
       ALLOC_STAT( snd##sz++ ); \
@@ -390,10 +390,9 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mo
    BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSOBJECT_CLASS_INDEX );
    
    // fields init
-   o->BgL___proto__z00 = __proto__;
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
-   BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), BNIL );
    BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)mode );
+   BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), __proto__ );
    
    // elements initialization
    vector = (obj_t)(&(o->BgL_elementsz00) + 1);
@@ -465,13 +464,12 @@ bgl_make_jsarray_sans_init( long size, uint32_t len, obj_t constrmap, obj_t __pr
    BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSARRAY_CLASS_INDEX );
    
    // fields init
-   o->BgL___proto__z00 = __proto__;
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
    o->BgL_elementsz00 = empty_vector;
    o->BgL_lengthz00 = len;
    o->BgL_ilenz00 = 0;
    BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)mode );
-   BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), BNIL );
+   BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), __proto__ );
   
    // vector initialization
    vector = (obj_t)(&(o->BgL_vecz00) + 1);

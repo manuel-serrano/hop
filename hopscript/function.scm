@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Feb 12 08:43:20 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 13:34:20 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -116,8 +116,8 @@
 	 (with-access::JsFunction obj (procedure src elements)
 	    (if (eq? src 'builtin)
 		(let ((nobj (duplicate::JsFunction obj
-			       (__proto__ (js-get js-function (& "prototype") %this))
 			       (elements '#()))))
+		   (js-object-proto-set! nobj (js-get js-function (& "prototype") %this))
 		   (js-object-mode-set! nobj (js-object-mode obj))
 		   nobj)
 		(js-undefined))))))
@@ -195,14 +195,14 @@
    ;; pre-allocated prototype property descriptors
    (js-init-function-property! %this)
    ;; bind the builtin function prototype
-   (with-access::JsGlobalObject %this ((js-object-prototype __proto__)
-				       js-function-prototype
-				       js-function-strict-prototype
-				       js-function js-function-pcache)
+   (with-access::JsGlobalObject %this (js-function-prototype
+					 js-function-strict-prototype
+					 js-function js-function-pcache)
       (set! js-function-pcache
 	 ((@ js-make-pcache-table __hopscript_property) 5 "function"))
       
-      (let ((proc (lambda l (js-undefined))))
+      (let ((proc (lambda l (js-undefined)))
+	    (js-object-prototype (js-object-proto %this)))
 	 (set! js-function-prototype
 	    (instantiateJsFunction
 	       (procedure proc)
@@ -461,103 +461,102 @@
 					 js-function-prototype-property-ro
 					 js-function-prototype-property-null
 					 js-function-prototype-property-undefined)
-      (with-access::JsFunction js-function ((%__proto__ __proto__))
-	 (let* ((els ($create-vector (+fx size (if (eq? strict 'normal) 3 5))))
-		(cmap (if (eq? strict 'normal)
-			  (cond
-			     ((js-object? prototype)
-			      js-function-cmap)
-			     ((or (eq? prototype '())
-				  (eq? prototype (js-undefined))
-				  (eq? prototype 'bind))
-			      js-function-sans-prototype-cmap)
-			     (else
-			      js-function-writable-cmap))
-			  (cond
-			     ((js-object? prototype)
-			      js-function-strict-cmap)
-			     ((or (eq? prototype '())
-				  (eq? prototype (js-undefined)))
-			      js-function-sans-prototype-cmap)
-			     ((eq? prototype 'bind)
-			      js-function-strict-bind-cmap)
-			     (else
-			      js-function-writable-strict-cmap))))
-		(fun (INSTANTIATE-JSFUNCTION
-			(procedure procedure)
-			(method (or method procedure))
-			(construct (or construct procedure))
-			(alloc (or alloc js-not-a-constructor-alloc))
-			(arity (or arity (procedure-arity procedure)))
-			(len length)
-			(__proto__ (or __proto__ %__proto__))
-			(src src)
-			(constrsize constrsize)
-			(constrmap constrmap)
-			(maxconstrsize maxconstrsize)
-			(elements els)
-			(cmap (if shared-cmap
-				  ;; normal functions, i.e., user functions,
-				  ;; use shared-cmap
-				  cmap
-				  ;; non shared-cmap are used by builtin
-				  ;; objects, such as Date or Number to create
-				  ;; a single cmap for all their fields
-				  (duplicate::JsConstructMap cmap
-				     (%id (gencmapid)))))
-			(prototype #f)
-			(%prototype #f))))
-	    ;; the prototype property
-	    ;; the builtin "%prototype" property
-	    (with-access::JsFunction fun (%prototype (fprototype prototype))
-	       (vector-set! els 0
-		  (cond
-		     ((not prototype)
-		      ;; MS 2019-01-19
-		      ;; all default prototypes share the same cmap
-		      ;; because on method conflict a new cmap with
-		      ;; a fake transition will be created
-		      ;; see extend-mapped-object!@property.scm
-		      (let ((p (with-access::JsObject %this (__proto__)
-				  (instantiateJsObject
-				     (cmap js-function-prototype-cmap)
-				     (__proto__ __proto__)
-				     (elements (vector fun))))))
-			 (set! fprototype p)
-			 (set! %prototype p)
-			 js-function-prototype-property-rw))
-		     ((js-object? prototype)
-		      (js-bind! %this prototype (& "constructor")
-			 :value fun
-			 :configurable #t :enumerable #f :writable #t
-			 :hidden-class #t)
-		      (set! fprototype prototype)
-		      (set! %prototype prototype)
-		      js-function-prototype-property-ro)
-		     ((eq? prototype (js-undefined))
-		      (set! fprototype prototype)
-		      (set! %prototype %__proto__)
-		      js-function-prototype-property-undefined)
-		     ((null? prototype)
-		      (set! fprototype prototype)
-		      (set! %prototype prototype)
-		      js-function-prototype-property-null)
-		     ((eq? prototype 'bind)
-		      (set! fprototype (js-undefined))
-		      (set! %prototype %__proto__)
-		      js-function-prototype-property-undefined)
-		     (else
-		      (error "js-make-function" "Illegal :prototype"
-			 prototype)))))
-	    ;; length
-	    (vector-set! els 1 length)
-	    ;; name
-	    (vector-set! els 2 (js-name->jsstring name))
-	    ;; strict properties
-	    (unless (eq? strict 'normal)
-	       (vector-set! els 3 strict-arguments-property)
-	       (vector-set! els 4 strict-caller-property))
-	    fun))))
+      (let* ((%__proto__ (js-object-proto js-function))
+	     (els ($create-vector (+fx size (if (eq? strict 'normal) 3 5))))
+	     (cmap (if (eq? strict 'normal)
+		       (cond
+			  ((js-object? prototype)
+			   js-function-cmap)
+			  ((or (eq? prototype '())
+			       (eq? prototype (js-undefined))
+			       (eq? prototype 'bind))
+			   js-function-sans-prototype-cmap)
+			  (else
+			   js-function-writable-cmap))
+		       (cond
+			  ((js-object? prototype)
+			   js-function-strict-cmap)
+			  ((or (eq? prototype '())
+			       (eq? prototype (js-undefined)))
+			   js-function-sans-prototype-cmap)
+			  ((eq? prototype 'bind)
+			   js-function-strict-bind-cmap)
+			  (else
+			   js-function-writable-strict-cmap))))
+	     (fun (INSTANTIATE-JSFUNCTION
+		     (procedure procedure)
+		     (method (or method procedure))
+		     (construct (or construct procedure))
+		     (alloc (or alloc js-not-a-constructor-alloc))
+		     (arity (or arity (procedure-arity procedure)))
+		     (len length)
+		     (__proto__ (or __proto__ %__proto__))
+		     (src src)
+		     (constrsize constrsize)
+		     (constrmap constrmap)
+		     (maxconstrsize maxconstrsize)
+		     (elements els)
+		     (cmap (if shared-cmap
+			       ;; normal functions, i.e., user functions,
+			       ;; use shared-cmap
+			       cmap
+			       ;; non shared-cmap are used by builtin
+			       ;; objects, such as Date or Number to create
+			       ;; a single cmap for all their fields
+			       (duplicate::JsConstructMap cmap
+				  (%id (gencmapid)))))
+		     (prototype #f)
+		     (%prototype #f))))
+	 ;; the prototype property
+	 ;; the builtin "%prototype" property
+	 (with-access::JsFunction fun (%prototype (fprototype prototype))
+	    (vector-set! els 0
+	       (cond
+		  ((not prototype)
+		   ;; MS 2019-01-19
+		   ;; all default prototypes share the same cmap
+		   ;; because on method conflict a new cmap with
+		   ;; a fake transition will be created
+		   ;; see extend-mapped-object!@property.scm
+		   (let ((p (instantiateJsObject
+			       (cmap js-function-prototype-cmap)
+			       (__proto__ (js-object-proto %this))
+			       (elements (vector fun)))))
+		      (set! fprototype p)
+		      (set! %prototype p)
+		      js-function-prototype-property-rw))
+		  ((js-object? prototype)
+		   (js-bind! %this prototype (& "constructor")
+		      :value fun
+		      :configurable #t :enumerable #f :writable #t
+		      :hidden-class #t)
+		   (set! fprototype prototype)
+		   (set! %prototype prototype)
+		   js-function-prototype-property-ro)
+		  ((eq? prototype (js-undefined))
+		   (set! fprototype prototype)
+		   (set! %prototype %__proto__)
+		   js-function-prototype-property-undefined)
+		  ((null? prototype)
+		   (set! fprototype prototype)
+		   (set! %prototype prototype)
+		   js-function-prototype-property-null)
+		  ((eq? prototype 'bind)
+		   (set! fprototype (js-undefined))
+		   (set! %prototype %__proto__)
+		   js-function-prototype-property-undefined)
+		  (else
+		   (error "js-make-function" "Illegal :prototype"
+		      prototype)))))
+	 ;; length
+	 (vector-set! els 1 length)
+	 ;; name
+	 (vector-set! els 2 (js-name->jsstring name))
+	 ;; strict properties
+	 (unless (eq? strict 'normal)
+	    (vector-set! els 3 strict-arguments-property)
+	    (vector-set! els 4 strict-caller-property))
+	 fun)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-get ...                                    */
@@ -592,9 +591,8 @@
 	       ;; (MS, change 2019-01-18)
 	       (unless (eq? constrmap (js-not-a-cmap))
 		  (js-function-set-constrmap! owner))
-	       (with-access::JsGlobalObject %this (__proto__)
-		  (set! prototype v)
-		  (set! %prototype (if (js-object? v) v __proto__)))))))
+	       (set! prototype v)
+	       (set! %prototype (if (js-object? v) v (js-object-proto %this)))))))
    v)
 
 ;*---------------------------------------------------------------------*/
@@ -660,8 +658,7 @@
 			      (js-ascii->jsstring "]")))
 			(js-ascii->jsstring "[Function]")))))))
 	 ((js-proxy-function? this)
-	  (with-access::JsProxy this ((target __proto__))
-	     (tostring target)))
+	  (tostring (js-proxy-target this)))
 	 (else
 	  (js-raise-type-error %this "toString: not a function ~s"
 	     (js-typeof this %this)))))

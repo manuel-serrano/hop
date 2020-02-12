@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Feb 12 08:51:29 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 13:13:48 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -136,8 +136,8 @@
 	 (with-access::JsObject obj (elements)
 	    (let ((nobj (duplicate::JsObject obj
 			   (cmap js-initial-cmap)
-			   (elements (make-vector (vector-length elements)))
-			   (__proto__ (js-get js-object (& "prototype") %this)))))
+			   (elements (make-vector (vector-length elements))))))
+	       (js-object-proto-set! nobj (js-get js-object (& "prototype") %this))
 	       (js-object-mode-set! nobj (js-object-mode obj))
 	       (js-for-in obj
 		  (lambda (k %this)
@@ -293,7 +293,7 @@
       ;; the object constructor
       (with-access::JsGlobalObject %this (js-function js-object js-initial-cmap)
 	 (set! js-initial-cmap (instantiate::JsConstructMap))
-	 (with-access::JsFunction js-function ((js-function-prototype __proto__))
+	 (let ((js-function-prototype (js-object-proto js-function)))
 	    ;; the prototypes and other builtin classes
 	    (js-init-public! %this)
 	    (js-init-stringliteral! %this)
@@ -540,8 +540,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3       */
 ;*---------------------------------------------------------------------*/
 (define (js-init-object! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this ((%proto __proto__)
-				       js-object js-function)
+   (with-access::JsGlobalObject %this (js-object js-function)
+
+      (define %proto (js-object-proto %this))
       
       ;; Object.prototype
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.1
@@ -583,7 +584,7 @@
 	    (js-object-constructor %this js-object
 	       (if (pair? arg) (car arg) (js-undefined)))))
       
-      (with-access::JsObject js-function ((js-function-prototype __proto__))
+      (let ((js-function-prototype (js-object-proto js-function)))
 	 (set! js-object
 	    (js-function-set-constrmap!
 	       (js-make-function %this %js-object 1 "Object"
@@ -706,8 +707,8 @@
 	 (if (not (or (eq? o (js-null)) (js-object? o)))
 	     (js-raise-type-error %this "create: bad object ~s" o)
 	     (let ((obj (js-new0 %this js-object)))
-		(with-access::JsObject obj (__proto__ elements)
-		   (set! __proto__ o)
+		(with-access::JsObject obj (elements)
+		   (js-object-proto-set! obj o)
 		   (unless (eq? properties (js-undefined))
 		      (object-defineproperties %this this obj properties)))
 		obj)))
@@ -958,9 +959,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4       */
 ;*---------------------------------------------------------------------*/
 (define (js-init-object-prototype! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this ((obj __proto__)
-				       js-object
-				       js-symbol-tostringtag)
+   (with-access::JsGlobalObject %this (js-object js-symbol-tostringtag)
+
+      (define obj (js-object-proto %this))
       
       ;; __proto__
       (js-bind! %this obj (& "__proto__")
@@ -1077,7 +1078,7 @@
 	 (when (js-object? v)
 	    (let ((o (js-toobject %this this)))
 	       (let loop ((v v))
-		  (with-access::JsObject v ((v __proto__))
+		  (let ((v (js-object-proto v)))
 		     (unless (eq? v (js-null))
 			(or (eq? v o) (loop v))))))))
       
@@ -1352,22 +1353,23 @@
 	       (when (eq? enumerable #t)
 		  (proc name %this))))))
    
-   (with-access::JsObject obj (cmap __proto__)
+   (with-access::JsObject obj (cmap)
       (when (js-object-mode-enumerable? obj)
 	 (if (js-object-mapped? obj)
 	     (with-access::JsConstructMap cmap (props)
 		(vfor-in props))
 	     (with-access::JsObject obj (elements)
 		(vector-for-each in-property elements))))
-      (when (js-object? __proto__)
-	 (js-for-in-prototype __proto__ obj proc %this))))
+      (let ((__proto__ (js-object-proto obj)))
+	 (when (js-object? __proto__)
+	    (js-for-in-prototype __proto__ obj proc %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-no-setter? ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-object-no-setter? obj)
    (when (js-object-mode-plain? obj)
-      (with-access::JsObject obj (__proto__)
+      (let ((__proto__ (js-object-proto obj)))
 	 (or (eq? __proto__ obj)
 	     (eq? __proto__ (js-null))
 	     (js-object-no-setter? __proto__)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Feb 12 09:04:02 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 14:03:37 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1123,21 +1123,23 @@
 (define-macro (jsobject-find o base name foundinmap foundinprop notfound . loop)
 
    (define (find obj name)
-      `(with-access::JsObject ,obj (cmap __proto__)
+      `(with-access::JsObject ,obj (cmap)
 	 (if (js-object-mapped? ,obj)
 	     (jsobject-map-find ,obj ,name ,foundinmap
 		(lambda ()
 		   ,(if (pair? loop)
-			`(if (js-object? __proto__)
-			     (,(car loop) __proto__)
-			     (,notfound ,base))
+			`(let ((__proto__ (js-object-proto ,obj)))
+			    (if (js-object? __proto__)
+				(,(car loop) __proto__)
+				(,notfound ,base)))
 			`(,notfound ,base))))
 	     (jsobject-properties-find ,obj ,name ,foundinprop
 		(lambda ()
 		   ,(if (pair? loop)
-			`(if (js-object? __proto__)
-			     (,(car loop) __proto__)
-			     (,notfound ,base))
+			`(let ((__proto__ (js-object-proto ,obj)))
+			    (if (js-object? __proto__)
+				(,(car loop) __proto__)
+				(,notfound ,base)))
 			`(,notfound ,base)))))))
 
    (if (and (symbol? o) (symbol? base))
@@ -1550,7 +1552,7 @@
    (let loop ((obj o))
       (if (js-has-own-property obj p %this)
 	  #t
-	  (with-access::JsObject obj (__proto__)
+	  (let ((__proto__ (js-object-proto obj)))
 	     (unless (eq? __proto__ proto)
 		(loop __proto__))))))
 
@@ -1605,7 +1607,7 @@
    ;; JsObject x obj x JsGlobalObject -> JsPropertyDescriptor | Undefined
    (let ((desc (js-get-own-property o p %this)))
       (if (eq? desc (js-undefined))
-	  (with-access::JsObject o (__proto__)
+	  (let ((__proto__ (js-object-proto o)))
 	     (if (js-object? __proto__)
 		 (js-get-property __proto__ p %this)
 		 (js-undefined)))
@@ -2082,7 +2084,7 @@
 	  (with-access::JsAccessorDescriptor desc (set)
 	     (not (eq? set (js-undefined)))))
 	 (else
-	  (with-access::JsObject o ((proto __proto__))
+	  (let ((proto (js-object-proto o)))
 	     ;; 3
 	     (if (eq? proto (js-null))
 		 ;; 4
@@ -2310,7 +2312,7 @@
 			 (if (eq? v (js-absent))
 			     (if (js-proxy? obj)
 				 ;; see js-proxy-property-value-set!
-				 (with-access::JsProxy obj ((target __proto__))
+				 (let ((target (js-proxy-target obj)))
 				    (let loop ((obj target))
 				       (jsobject-find obj target name
 					  update-mapped-object!
@@ -2477,7 +2479,7 @@
 		(cond
 		   ((eq? v (js-absent))
 		    (if (js-proxy? obj)
-			(with-access::JsProxy obj ((target __proto__))
+			(let ((target (js-proxy-target obj)))
 			   (let loop ((obj target))
 			      (jsobject-find obj target name
 				 update-mapped-object!
@@ -3340,8 +3342,7 @@
 ;*    js-getprototypeof ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (js-getprototypeof o::JsObject %this::JsGlobalObject msg::obj)
-   (with-access::JsObject o (__proto__)
-      __proto__))
+   (js-object-proto o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-setprototypeof ...                                            */
@@ -3357,8 +3358,8 @@
       (if (not (js-object-mode-extensible? o))
 	  (js-raise-type-error %this 
 	     "Prototype of non-extensible object mutated" v)
-	  (with-access::JsObject o (__proto__ cmap)
-	     (unless (eq? __proto__ v)
+	  (with-access::JsObject o (cmap)
+	     (unless (eq? (js-object-proto o) v)
 		(js-invalidate-pmap-pcaches! %this "js-setprototypeof" "__proto__")
 		(unless (eq? cmap (js-not-a-cmap))
 		   (with-access::JsConstructMap cmap (parent single)
@@ -3370,9 +3371,10 @@
 				(%id (gencmapid))))
 			  (set! cmap
 			     (cmap-find-sibling
-				(cmap-next-proto-cmap %this cmap __proto__ v)
+				(cmap-next-proto-cmap %this cmap
+				   (js-object-proto o) v)
 				(js-object-inline-elements? o))))))
-		(set! __proto__ v))
+		(js-object-proto-set! o v))
 	     o))))
 
 ;*---------------------------------------------------------------------*/
@@ -3425,9 +3427,9 @@
 				      name value flags)))
 			     (loop parent))))))))
        ;; update the unmapped object
-       (with-access::JsObject o (__proto__ elements)
+       (with-access::JsObject o (elements)
 	  (unless (replace-vector! elements old new)
-	     (js-replace-own-property! __proto__ old new)))))
+	     (js-replace-own-property! (js-object-proto o) old new)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-seal ::JsObject ...                                           */
@@ -3492,15 +3494,16 @@
 		  (unless (js-has-upto-property owner obj name %this)
 		     (proc name %this)))))))
    
-   (with-access::JsObject obj (cmap __proto__ elements)
+   (with-access::JsObject obj (cmap elements)
       (when (js-object-mode-enumerable? obj)
 	 (if (js-object-mapped? obj)
 	     (with-access::JsConstructMap cmap (props)
 		(vfor-in props))
 	     (with-access::JsObject obj (elements)
 		(vector-for-each in-property elements))))
-      (when (js-object? __proto__)
-	 (js-for-in-prototype __proto__ owner proc %this))))
+      (let ((__proto__ (js-object-proto obj)))
+	 (when (js-object? __proto__)
+	    (js-for-in-prototype __proto__ owner proc %this)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ::object ...                                           */

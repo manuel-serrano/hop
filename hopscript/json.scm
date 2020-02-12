@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Feb 12 08:50:04 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 13:51:07 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -52,7 +52,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.12        */
 ;*---------------------------------------------------------------------*/
 (define (js-init-json! %this)
-   (with-access::JsGlobalObject %this (__proto__ js-json js-json-pcache)
+   (with-access::JsGlobalObject %this (js-json js-json-pcache)
       ;; json pcache
       (set! js-json-pcache
 	 ((@ js-make-pcache-table __hopscript_property) 2 "json"))
@@ -60,7 +60,7 @@
       (unless (vector? __js_strings) (set! __js_strings (&init!)))
       (set! js-json
 	 (instantiateJsJSON
-	    (__proto__ __proto__)))
+	    (__proto__ (js-object-proto %this))))
       ;; parse
       (js-bind! %this js-json (& "parse")
 	 :value (js-make-function %this (js-json-parse %this) 2 "parse")

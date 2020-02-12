@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Wed Feb 12 08:47:45 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 14:14:27 2020 (serrano)                */
 ;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -84,8 +84,7 @@
 (define (js-init-generator! %this::JsGlobalObject)
    (unless (vector? __js_strings) (set! __js_strings (&init!)))
    (js-init-generator-yield-cmap! %this)
-   (with-access::JsGlobalObject %this (__proto__
-					 js-function-prototype
+   (with-access::JsGlobalObject %this (js-function-prototype
 					 js-generator-prototype
 					 js-generatorfunction-prototype
 					 js-symbol-iterator
@@ -95,7 +94,7 @@
       (define js-gen-proto-proto
 	 (let ((proto (instantiateJsObject
 			 (cmap (instantiate::JsConstructMap (inline #t)))
-			 (__proto__ __proto__)
+			 (__proto__ (js-object-proto %this))
 			 (elements ($create-vector 1)))))
 	    (js-bind! %this proto js-symbol-iterator
 	       :value (js-make-function %this
@@ -121,7 +120,7 @@
       (define (js-generator-done)
 	 (instantiateJsObject
 	    (cmap js-yield-cmap)
-	    (__proto__ __proto__)
+	    (__proto__ (js-object-proto %this))
 	    (elements (vector (js-undefined) #t))))
       
       (define (js-generator-next this val exn)
@@ -138,7 +137,7 @@
 	     (with-access::JsGenerator this (%next)
 		(let ((done (instantiateJsObject
 			       (cmap js-yield-cmap)
-			       (__proto__ __proto__)
+			       (__proto__ (js-object-proto %this))
 			       (elements (vector val #t)))))
 		   (set! %next #f)
 		   done))
@@ -358,10 +357,10 @@
 (define (js-generator-yield gen val done kont %this)
    (with-access::JsGenerator gen (%next)
       (set! %next kont)
-      (with-access::JsGlobalObject %this (__proto__ js-yield-cmap)
+      (with-access::JsGlobalObject %this (js-yield-cmap)
 	 (instantiateJsObject
 	    (cmap js-yield-cmap)
-	    (__proto__ __proto__)
+	    (__proto__ (js-object-proto %this))
 	    (elements (vector val done))))))
 
 ;*---------------------------------------------------------------------*/

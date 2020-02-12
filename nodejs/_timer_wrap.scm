@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Sun Jun 23 07:49:46 2019 (serrano)                */
-;*    Copyright   :  2014-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 14:30:14 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
 ;*=====================================================================*/
@@ -44,10 +44,9 @@
 (define (hopjs-process-timer %worker %this process)
    
    (define js-timer-prototype
-      (with-access::JsGlobalObject %this (__proto__)
-	 (instantiateJsObject
-	    (__proto__ __proto__)
-	    (elements ($create-vector 1)))))
+      (instantiateJsObject
+	 (__proto__ (js-object-proto %this))
+	 (elements ($create-vector 1))))
 
    (set! __js_strings (&init!))
    (init-timer-prototype! %this js-timer-prototype)

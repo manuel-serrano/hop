@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Oct 30 06:39:22 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 13:39:00 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
 ;*=====================================================================*/
@@ -77,9 +77,9 @@
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-number)
 	 (let ((nobj (call-next-method)))
-	    (with-access::JsNumber nobj (__proto__ val)
+	    (with-access::JsNumber nobj (val)
 	       (with-access::JsNumber obj ((_val val))
-		  (set! __proto__ (js-get js-number (& "prototype") %this))
+		  (js-object-proto-set! nobj (js-get js-number (& "prototype") %this))
 		  (set! val (js-donate _val worker %_this))))
 	    nobj))))
 
@@ -109,87 +109,85 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-number! %this)
    (unless (vector? __js_strings) (set! __js_strings (&init!)))
-   (with-access::JsGlobalObject %this (__proto__ js-number js-function js-number-pcache)
-      (with-access::JsFunction js-function ((js-function-prototype __proto__))
-
-	 (set! js-number-pcache
-	    ((@ js-make-pcache-table __hopscript_property) 2 "number"))
-	 
-	 (define js-number-prototype
-	    (instantiateJsNumber
-	       (val 0)
-	       (__proto__ __proto__)))
-
-	 (define (js-number-construct this . args)
+   (with-access::JsGlobalObject %this (js-number js-function js-number-pcache)
+      (set! js-number-pcache
+	 ((@ js-make-pcache-table __hopscript_property) 2 "number"))
+      
+      (define js-number-prototype
+	 (instantiateJsNumber
+	    (val 0)
+	    (__proto__ (js-object-proto %this))))
+      
+      (define (js-number-construct this . args)
+	 (with-access::JsGlobalObject %this (js-new-target)
+	    (set! js-new-target (js-undefined)))
+	 (when (pair? args)
+	    (with-access::JsNumber this (val)
+	       (set! val (js-tonumber (car args) %this))))
+	 this)
+      
+      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.1
+      (define (%js-number this . arg)
+	 (let ((num (js-tonumber (if (pair? arg) (car arg) 0) %this)))
 	    (with-access::JsGlobalObject %this (js-new-target)
-	       (set! js-new-target (js-undefined)))
-	    (when (pair? args)
-	       (with-access::JsNumber this (val)
-		  (set! val (js-tonumber (car args) %this))))
-	    this)
-		
-	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.1
-	 (define (%js-number this . arg)
-	    (let ((num (js-tonumber (if (pair? arg) (car arg) 0) %this)))
-	       (with-access::JsGlobalObject %this (js-new-target)
-		  (if (eq? js-new-target (js-undefined))
-		      num
-		      (with-access::JsNumber this (val)
-			 (set! js-new-target (js-undefined))
-			 (set! val num)
-			 this)))))
-
-	 (define (is-integer?::bbool this arg)
-	    (cond
-	       ((js-number? arg)
-		(integer? arg))
-	       ((isa? this JsNumber)
-		(with-access::JsNumber this (val)
-		   (is-integer? this val)))
-	       (else
-		#f)))
-
-	 ;; Create a HopScript number object constructor
-	 (set! js-number
-	    (js-make-function %this %js-number 1 "Number"
-	       :__proto__ js-function-prototype
-	       :prototype js-number-prototype
-	       :construct js-number-construct
-	       :size 8
-	       :alloc js-number-alloc
-	       :shared-cmap #f))
-	 
-	 ;; other properties of the Number constructor
-	 (js-bind! %this js-number (& "POSITIVE_INFINITY")
-	    :value +inf.0
-	    :writable #f :enumerable #f :configurable #f :hidden-class #t)
-	 (js-bind! %this js-number (& "NEGATIVE_INFINITY")
-	    :value -inf.0
-	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this js-number (& "MAX_VALUE")
-	    :value (*fl 1.7976931348623157 (exptfl 10. 308.))
-	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this js-number (& "MAX_SAFE_INTEGER")
-	    :value (-fl (exptfl 2. 53.) 1.)
-	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this js-number (& "MIN_VALUE")
-	    :value 5e-324
-	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this js-number (& "MIN_SAFE_INTEGER")
-	    :value (negfl (-fl (exptfl 2. 53.) 1.))
-	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this js-number (& "NaN")
-	    :value +nan.0
-	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
-	 (js-bind! %this js-number (& "isInteger")
-	    :value (js-make-function %this is-integer? 1 "isInteger")
-	    :writable #f :configurable #f :enumerable #f :hidden-class #f)
-	 ;; bind the builtin prototype properties
-	 (init-builtin-number-prototype! %this js-number js-number-prototype)
-	 ;; bind Number in the global object
-	 (js-bind! %this %this (& "Number")
-	    :configurable #f :enumerable #f :value js-number :hidden-class #f)
-	 js-number)))
+	       (if (eq? js-new-target (js-undefined))
+		   num
+		   (with-access::JsNumber this (val)
+		      (set! js-new-target (js-undefined))
+		      (set! val num)
+		      this)))))
+      
+      (define (is-integer?::bbool this arg)
+	 (cond
+	    ((js-number? arg)
+	     (integer? arg))
+	    ((isa? this JsNumber)
+	     (with-access::JsNumber this (val)
+		(is-integer? this val)))
+	    (else
+	     #f)))
+      
+      ;; Create a HopScript number object constructor
+      (set! js-number
+	 (js-make-function %this %js-number 1 "Number"
+	    :__proto__ (js-object-proto js-function)
+	    :prototype js-number-prototype
+	    :construct js-number-construct
+	    :size 8
+	    :alloc js-number-alloc
+	    :shared-cmap #f))
+      
+      ;; other properties of the Number constructor
+      (js-bind! %this js-number (& "POSITIVE_INFINITY")
+	 :value +inf.0
+	 :writable #f :enumerable #f :configurable #f :hidden-class #t)
+      (js-bind! %this js-number (& "NEGATIVE_INFINITY")
+	 :value -inf.0
+	 :writable #f :enumerable #f :configurable #f :hidden-class #f)
+      (js-bind! %this js-number (& "MAX_VALUE")
+	 :value (*fl 1.7976931348623157 (exptfl 10. 308.))
+	 :writable #f :enumerable #f :configurable #f :hidden-class #f)
+      (js-bind! %this js-number (& "MAX_SAFE_INTEGER")
+	 :value (-fl (exptfl 2. 53.) 1.)
+	 :writable #f :enumerable #f :configurable #f :hidden-class #f)
+      (js-bind! %this js-number (& "MIN_VALUE")
+	 :value 5e-324
+	 :writable #f :enumerable #f :configurable #f :hidden-class #f)
+      (js-bind! %this js-number (& "MIN_SAFE_INTEGER")
+	 :value (negfl (-fl (exptfl 2. 53.) 1.))
+	 :writable #f :enumerable #f :configurable #f :hidden-class #f)
+      (js-bind! %this js-number (& "NaN")
+	 :value +nan.0
+	 :writable #f :enumerable #f :configurable #f :hidden-class #f)
+      (js-bind! %this js-number (& "isInteger")
+	 :value (js-make-function %this is-integer? 1 "isInteger")
+	 :writable #f :configurable #f :enumerable #f :hidden-class #f)
+      ;; bind the builtin prototype properties
+      (init-builtin-number-prototype! %this js-number js-number-prototype)
+      ;; bind Number in the global object
+      (js-bind! %this %this (& "Number")
+	 :configurable #f :enumerable #f :value js-number :hidden-class #f)
+      js-number))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-number-alloc ...                                              */

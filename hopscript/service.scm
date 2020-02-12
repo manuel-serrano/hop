@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Feb 12 10:18:59 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 13:57:58 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -253,11 +253,11 @@
 ;*    js-init-service! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-init-service! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (__proto__ js-function
+   (with-access::JsGlobalObject %this (js-function
 					 js-service-pcache
 					 js-service-prototype
 					 js-hopframe-prototype)
-      (with-access::JsFunction js-function ((js-function-prototype __proto__))
+      (let ((js-function-prototype (js-object-proto js-function)))
 
 	 ;; local constant strings initialization
 	 (unless (vector? __js_strings) (set! __js_strings (&init!)))
@@ -276,8 +276,8 @@
 		  (construct (lambda (constructor args)
 				(js-raise-type-error %this "not a constructor ~s"
 				   js-function-prototype)))
-		  (prototype __proto__)
-		  (%prototype __proto__)
+		  (prototype (js-object-proto %this))
+		  (%prototype (js-object-proto %this))
 		  (len -1)
 		  (procedure list)
 		  (method list)
@@ -360,7 +360,7 @@
 	 ;; HopFrame prototype and constructor
 	 (set! js-hopframe-prototype
 	    (instantiateJsObject
-	       (__proto__ __proto__)
+	       (__proto__ (js-object-proto %this))
 	       (elements ($create-vector 8))))
 	 
 	 (js-bind! %this js-hopframe-prototype (& "post")
@@ -1042,15 +1042,15 @@
 	 (make-file-name (hop-service-base) (js-tostring v %this)))
       v)
    
-   (with-access::JsGlobalObject %this (js-service-prototype __proto__)
+   (with-access::JsGlobalObject %this (js-service-prototype)
       (instantiateJsService
 	 (procedure proc)
 	 (method proc)
 	 (len arity)
 	 (arity arity)
 	 (worker worker)
-	 (prototype __proto__)
-	 (%prototype __proto__)
+	 (prototype (js-object-proto %this))
+	 (%prototype (js-object-proto %this))
 	 (__proto__ js-service-prototype)
 	 (alloc (lambda (_)
 		   (js-raise-type-error %this

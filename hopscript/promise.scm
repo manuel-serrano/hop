@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Wed Feb 12 10:04:42 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 14:13:59 2020 (serrano)                */
 ;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -167,11 +167,10 @@
    
    ;; builtin prototype
    (define js-promise-prototype
-      (with-access::JsGlobalObject %this (__proto__)
-	 (instantiateJsPromise
-	    (worker (js-undefined))
-	    (%this %this)
-	    (__proto__ __proto__))))
+      (instantiateJsPromise
+	 (worker (js-undefined))
+	 (%this %this)
+	 (__proto__ (js-object-proto %this))))
    
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise-constructor
    ;; http://www.ecma-international.org/ecma-262/6.0/#25.4.3.1
@@ -406,6 +405,7 @@
 			  (elements '#())
 			  (state 'pending)
 			  (%name "then-catch"))))
+		(js-object-proto-set! np (js-object-proto this))
 		(js-object-mode-set! np (js-object-default-mode))
 		(js-promise-then-catch %this this onfullfilled onrejected np)))))
       

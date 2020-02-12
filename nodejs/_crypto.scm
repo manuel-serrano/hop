@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Thu May 23 08:59:55 2019 (serrano)                */
-;*    Copyright   :  2014-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 14:29:48 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
 ;*=====================================================================*/
@@ -1123,8 +1123,7 @@
    (define decipher-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
 		      (js-new %this js-object))))
-	 (with-access::JsObject proto (__proto__)
-	    (set! __proto__ decipher-proto))
+	 (js-object-proto-set! proto decipher-proto)
 	 (js-put! proto (& "init")
 	    (js-make-function %this cipher-init 1 "init")
 	    #f %this)

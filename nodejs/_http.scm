@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Thu May 23 09:00:58 2019 (serrano)                */
-;*    Copyright   :  2014-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 14:29:20 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
 ;*=====================================================================*/
@@ -198,8 +198,7 @@
 		  :alloc js-no-alloc
 		  :construct http-parser
 		  :prototype http-parser-proto)))
-      (with-access::JsObject http (__proto__)
-	 (set! __proto__ http-proto))
+      (js-object-proto-set! http http-proto)
       (js-alist->jsobject
 	 `((HTTPParser . ,http))
 	 %this)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Wed Jan 15 06:00:10 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 13:52:02 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -91,39 +91,38 @@
 ;*    js-init-worker! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-init-worker! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (__proto__ js-worker js-worker-prototype
+   (with-access::JsGlobalObject %this (js-worker js-worker-prototype
 					 js-function)
-      (with-access::JsFunction js-function ((js-function-prototype __proto__))
-	 
-	 (define (%js-worker %this)
-	    (with-access::JsGlobalObject %this (js-worker)
-	       (lambda (this proc)
-		  (js-new %this js-worker proc))))
-
-	 ;; local constant strings
-	 (unless (vector? __js_strings) (set! __js_strings (&init!)))
-	 
-	 ;; create the builtin prototype
-	 (set! js-worker-prototype
-	    (instantiateJsWorker
-	       (__proto__ __proto__)))
-	 
-	 ;; then, Create a HopScript worker object constructor
-	 (set! js-worker
-	    (js-make-function %this (%js-worker %this) 2 "Worker"
-	       :__proto__ js-function-prototype
-	       :prototype js-worker-prototype
-	       :alloc js-no-alloc
-	       :construct (js-worker-construct %this (js-worker-load))))
-
-	 ;; prototype properties
-	 (init-builtin-worker-prototype! %this js-worker js-worker-prototype)
-	 
-	 ;; bind Worker in the global object
-	 (js-bind! %this %this (& "Worker")
-	    :configurable #f :enumerable #f :value js-worker
-	    :hidden-class #t)
-	 js-worker)))
+      
+      (define (%js-worker %this)
+	 (with-access::JsGlobalObject %this (js-worker)
+	    (lambda (this proc)
+	       (js-new %this js-worker proc))))
+      
+      ;; local constant strings
+      (unless (vector? __js_strings) (set! __js_strings (&init!)))
+      
+      ;; create the builtin prototype
+      (set! js-worker-prototype
+	 (instantiateJsWorker
+	    (__proto__ (js-object-proto %this))))
+      
+      ;; then, Create a HopScript worker object constructor
+      (set! js-worker
+	 (js-make-function %this (%js-worker %this) 2 "Worker"
+	    :__proto__ (js-object-proto js-function)
+	    :prototype js-worker-prototype
+	    :alloc js-no-alloc
+	    :construct (js-worker-construct %this (js-worker-load))))
+      
+      ;; prototype properties
+      (init-builtin-worker-prototype! %this js-worker js-worker-prototype)
+      
+      ;; bind Worker in the global object
+      (js-bind! %this %this (& "Worker")
+	 :configurable #f :enumerable #f :value js-worker
+	 :hidden-class #t)
+      js-worker))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-construct ...                                          */

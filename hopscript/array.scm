@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Feb 12 08:03:10 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 13:43:56 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -421,172 +421,171 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.4         */
 ;*---------------------------------------------------------------------*/
 (define (js-init-array! %this)
-   (with-access::JsGlobalObject %this (__proto__ js-array js-array-prototype
+   (with-access::JsGlobalObject %this (js-array js-array-prototype
 					 js-function js-array-cmap
 					 js-array-pcache)
-      (with-access::JsFunction js-function ((js-function-prototype __proto__))
-
-	 ;; local constant strings
-	 (unless (vector? __js_strings) (set! __js_strings (&init!)))
-	 
-	 ;; array pcache
-	 (set! js-array-pcache
-	    ((@ js-make-pcache-table __hopscript_property) 20 "array"))
-	 
-	 ;; default arrays cmap
-	 (set! js-array-cmap
-	    (instantiate::JsConstructMap
-	       (methods '#())
-	       (props '#())))
-	 
-	 ;; builtin prototype
-	 (set! js-array-prototype
-	    (instantiateJsArray
-	       (vec '#())
-	       (__proto__ __proto__)
-	       (cmap (js-not-a-cmap))
-	       (elements (vector
-			      ;; cannot be defined with js-bind! because
-			      ;; of bootstrap specificities
-			      (instantiate::JsValueDescriptor
-				 (name (& "length"))
-				 (value 0)
-				 (enumerable #f)
-				 (configurable #f)
-				 (writable #t))))))
-	 (js-object-mode-enumerable-set! js-array-prototype #f)
-	 (js-object-mode-hasnumeralprop-set! js-array-prototype #f)
-
-	 ;; DO NOT REMOVE !
-	 ;; when array are ready for caching this should replace
-	 ;; the old definition of js-array-prototype
-	 ;; (set! js-array-prototype
-	    ;; (instantiateJsArray
-	       ;; (vec '#())
-	       ;; (__proto__ __proto__)
-	       ;; (elements '#(0))
-	       ;; (cmap (js-descriptors->cmap
-			;; (vector
-			   ;; (instantiate::JsIndexDescriptor
-			      ;; (name 'length)
-			      ;; (configurable #f)
-	                      ;; (writable #t)))
-	                 ;; '#(#unspecified))))
-	 
-	 ;; create the array object constructor
-	 (set! js-array
-	    (js-make-function %this (%js-array %this) 1 "Array"
-	       :__proto__ js-function-prototype
-	       :prototype js-array-prototype
-	       :size 17
-	       :alloc js-array-alloc-ctor
-	       :construct (lambda (this . is)
-			     (js-array-construct %this this is))))
-	 
-	 ;; other properties of the Array constructor
-	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.5.1
-	 (js-bind! %this js-array (& "isArray")
-	    :value (js-make-function %this
-		      (lambda (this arg)
-			 (or (js-array? arg) (js-proxy-array? arg)))
-		      1 "isArray")
-	    :writable #t
+      
+      ;; local constant strings
+      (unless (vector? __js_strings) (set! __js_strings (&init!)))
+      
+      ;; array pcache
+      (set! js-array-pcache
+	 ((@ js-make-pcache-table __hopscript_property) 20 "array"))
+      
+      ;; default arrays cmap
+      (set! js-array-cmap
+	 (instantiate::JsConstructMap
+	    (methods '#())
+	    (props '#())))
+      
+      ;; builtin prototype
+      (set! js-array-prototype
+	 (instantiateJsArray
+	    (vec '#())
+	    (__proto__ (js-object-proto %this))
+	    (cmap (js-not-a-cmap))
+	    (elements (vector
+			 ;; cannot be defined with js-bind! because
+			 ;; of bootstrap specificities
+			 (instantiate::JsValueDescriptor
+			    (name (& "length"))
+			    (value 0)
+			    (enumerable #f)
+			    (configurable #f)
+			    (writable #t))))))
+      (js-object-mode-enumerable-set! js-array-prototype #f)
+      (js-object-mode-hasnumeralprop-set! js-array-prototype #f)
+      
+      ;; DO NOT REMOVE !
+      ;; when array are ready for caching this should replace
+      ;; the old definition of js-array-prototype
+      ;; (set! js-array-prototype
+      ;; (instantiateJsArray
+      ;; (vec '#())
+      ;; (__proto__ __proto__)
+      ;; (elements '#(0))
+      ;; (cmap (js-descriptors->cmap
+      ;; (vector
+      ;; (instantiate::JsIndexDescriptor
+      ;; (name 'length)
+      ;; (configurable #f)
+      ;; (writable #t)))
+      ;; '#(#unspecified))))
+      
+      ;; create the array object constructor
+      (set! js-array
+	 (js-make-function %this (%js-array %this) 1 "Array"
+	    :__proto__ (js-object-proto js-function)
+	    :prototype js-array-prototype
+	    :size 17
+	    :alloc js-array-alloc-ctor
+	    :construct (lambda (this . is)
+			  (js-array-construct %this this is))))
+      
+      ;; other properties of the Array constructor
+      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.5.1
+      (js-bind! %this js-array (& "isArray")
+	 :value (js-make-function %this
+		   (lambda (this arg)
+		      (or (js-array? arg) (js-proxy-array? arg)))
+		   1 "isArray")
+	 :writable #t
+	 :enumerable #f
+	 :hidden-class #t)
+      
+      ;; from
+      ;; http://www.ecma-international.org/ecma-262/6.0/#sec-22.1.2.1
+      (define (array-from this::obj arr mapfn T)
+	 ;; see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from
+	 ;; 1. Let C be the this value.
+	 (let ((C this)
+	       ;; 2. Let items be ToObject(arrayLike).
+	       (items (js-toobject %this arr)))
+	    ;; 3. ReturnIfAbrupt(items).
+	    (when (or (eq? arr (js-undefined)) (eq? arr '()))
+	       (js-raise-type-error %this
+		  "from requires an array-like object - not null or undefined"
+		  arr))
+	    ;; 4. If mapfn is undefined, then let mapping be false.
+	    ;; 5. a If IsCallable(mapfn) is false, throw a TypeError exception.
+	    (when (and (not (eq? mapfn (js-undefined)))
+		       (not (js-function? mapfn)))
+	       (js-raise-type-error %this
+		  "Array.from: when provided, the second argument must be a function"
+		  mapfn))
+	    ;; 5. b. If thisArg was supplied, let T be thisArg;
+	    ;; else let T be undefined.
+	    ;;  10. Let lenValue be Get(items, "length").
+	    ;; 11. Let len be ToLength(lenValue).
+	    (let ((len (js-get-length items %this)))
+	       ;; 13. If IsConstructor(C) is true, then
+	       ;; 13. a. Let A be the result of calling the [[Construct]]
+	       ;;     internal method of C with an argument list containing
+	       ;;     the single item len.
+	       ;; 14. a. Else, Let A be ArrayCreate(len).
+	       (let ((A (if (js-function? C)
+			    (js-toobject %this (js-new1 %this C len))
+			    (js-species->jsarray this (js-create-vector len) %this))))
+		  ;; 16. Let k be 0.
+		  ;; 17. Repeat, while k < len... (also steps a - h)
+		  (let loop ((k 0))
+		     (when (<fx k len)
+			(let ((kvalue (js-get items k %this)))
+			   (if (eq? mapfn (js-undefined))
+			       (js-put! A k kvalue #f %this)
+			       (let ((v (js-call2 %this mapfn T kvalue k)))
+				  (js-put! A k v #f %this)))
+			   (loop (+fx k 1)))))
+		  (js-put-length! A len #f #f %this)
+		  A))))
+      
+      (js-bind! %this js-array (& "from")
+	 :value (js-make-function %this array-from
+		   0 "from"
+		   :prototype (js-undefined))
+	 :enumerable #f
+	 :hidden-class #t)
+      
+      ;; of
+      ;; https://www.ecma-international.org/ecma-262/6.0/#sec-array.of
+      (define (array-of this::obj . items)
+	 (with-access::JsGlobalObject %this (js-array)
+	    (if (and (not (eq? this js-array)) (js-function? this))
+		(let ((arr (js-new1 %this this 0)))
+		   (let loop ((i 0)
+			      (is items))
+		      (if (null? is)
+			  arr
+			  (begin
+			     (js-put! arr (js-toname i %this) (car is) #f %this)
+			     (loop (+fx i 1) (cdr items))))))
+		(js-vector->jsarray (list->vector items) %this))))
+      
+      (js-bind! %this js-array (& "of")
+	 :value (js-make-function %this array-of
+		   0 "of"
+		   :prototype (js-undefined))
+	 :enumerable #f
+	 :hidden-class #t)
+      
+      ;; init the prototype properties
+      (init-builtin-array-prototype! %this js-array js-array-prototype)
+      
+      ;; bind Array in the global object
+      (js-bind! %this %this (& "Array")
+	 :configurable #f :enumerable #f :value js-array
+	 :hidden-class #t)
+      
+      ;; @@species
+      ;; www.ecma-international.org/ecma-262/6.0/#sec-get-array-@@species
+      (with-access::JsGlobalObject %this (js-symbol-species)
+	 (js-bind! %this js-array js-symbol-species
+	    :get (js-make-function %this (lambda (this) this)
+		    0 "get [Symbol.species]")
 	    :enumerable #f
-	    :hidden-class #t)
-
-	 ;; from
-	 ;; http://www.ecma-international.org/ecma-262/6.0/#sec-22.1.2.1
-	 (define (array-from this::obj arr mapfn T)
-	    ;; see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from
-	    ;; 1. Let C be the this value.
-	    (let ((C this)
-		  ;; 2. Let items be ToObject(arrayLike).
-		  (items (js-toobject %this arr)))
-	       ;; 3. ReturnIfAbrupt(items).
-	       (when (or (eq? arr (js-undefined)) (eq? arr '()))
-		  (js-raise-type-error %this
-		     "from requires an array-like object - not null or undefined"
-		     arr))
-	       ;; 4. If mapfn is undefined, then let mapping be false.
-	       ;; 5. a If IsCallable(mapfn) is false, throw a TypeError exception.
-	       (when (and (not (eq? mapfn (js-undefined)))
-			  (not (js-function? mapfn)))
-		  (js-raise-type-error %this
-		     "Array.from: when provided, the second argument must be a function"
-		     mapfn))
-	       ;; 5. b. If thisArg was supplied, let T be thisArg;
-	       ;; else let T be undefined.
-	       ;;  10. Let lenValue be Get(items, "length").
-	       ;; 11. Let len be ToLength(lenValue).
-	       (let ((len (js-get-length items %this)))
-		  ;; 13. If IsConstructor(C) is true, then
-		  ;; 13. a. Let A be the result of calling the [[Construct]]
-		  ;;     internal method of C with an argument list containing
-		  ;;     the single item len.
-		  ;; 14. a. Else, Let A be ArrayCreate(len).
-		  (let ((A (if (js-function? C)
-			       (js-toobject %this (js-new1 %this C len))
-			       (js-species->jsarray this (js-create-vector len) %this))))
-		     ;; 16. Let k be 0.
-		     ;; 17. Repeat, while k < len... (also steps a - h)
-		     (let loop ((k 0))
-			(when (<fx k len)
-			   (let ((kvalue (js-get items k %this)))
-			      (if (eq? mapfn (js-undefined))
-				  (js-put! A k kvalue #f %this)
-				  (let ((v (js-call2 %this mapfn T kvalue k)))
-				     (js-put! A k v #f %this)))
-			      (loop (+fx k 1)))))
-		     (js-put-length! A len #f #f %this)
-		     A))))
-   
-	 (js-bind! %this js-array (& "from")
-	    :value (js-make-function %this array-from
-		      0 "from"
-		      :prototype (js-undefined))
-	    :enumerable #f
-	    :hidden-class #t)
-
-	 ;; of
-	 ;; https://www.ecma-international.org/ecma-262/6.0/#sec-array.of
-	 (define (array-of this::obj . items)
-	    (with-access::JsGlobalObject %this (js-array)
-	       (if (and (not (eq? this js-array)) (js-function? this))
-		   (let ((arr (js-new1 %this this 0)))
-		      (let loop ((i 0)
-				 (is items))
-			 (if (null? is)
-			     arr
-			     (begin
-				(js-put! arr (js-toname i %this) (car is) #f %this)
-				(loop (+fx i 1) (cdr items))))))
-		   (js-vector->jsarray (list->vector items) %this))))
-	 
-	 (js-bind! %this js-array (& "of")
-	    :value (js-make-function %this array-of
-		      0 "of"
-		      :prototype (js-undefined))
-	    :enumerable #f
-	    :hidden-class #t)
-	 
-	 ;; init the prototype properties
-	 (init-builtin-array-prototype! %this js-array js-array-prototype)
-	 
-	 ;; bind Array in the global object
-	 (js-bind! %this %this (& "Array")
-	    :configurable #f :enumerable #f :value js-array
-	    :hidden-class #t)
-
-	 ;; @@species
-	 ;; www.ecma-international.org/ecma-262/6.0/#sec-get-array-@@species
-	 (with-access::JsGlobalObject %this (js-symbol-species)
-	    (js-bind! %this js-array js-symbol-species
-	       :get (js-make-function %this (lambda (this) this)
-		       0 "get [Symbol.species]")
-	       :enumerable #f
-	       :configurable #t))
-
-	 js-array)))
+	    :configurable #t))
+      
+      js-array))
 
 ;*---------------------------------------------------------------------*/
 ;*    *JS-ARRAY-MARK* ...                                              */
@@ -1433,9 +1432,6 @@
 		   (js-delete! o (-fx i 1) #t %this)
 		   (js-put-length! o (-fx i 1) #f #f %this)
 		   first)
-;* 		  ((eq? (js-get-property o (js-toname i %this) %this) (js-undefined)) */
-;* 		   (js-delete! o (-fx i 1) #t %this)                   */
-;* 		   (loop (+fx i 1)))                                   */
 		  ((js-absent? (js-get-property o (js-toname i %this) %this))
 		   (js-delete! o (-fx i 1) #t %this)
 		   (loop (+fx i 1)))
@@ -2212,9 +2208,9 @@
 
    ;; @@unscopable
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-22.1.3.31
-   (with-access::JsGlobalObject %this (__proto__ js-symbol-unscopables)
+   (with-access::JsGlobalObject %this (js-symbol-unscopables)
       (let ((unscopables (instantiateJsObject
-			    (__proto__ __proto__)
+			    (__proto__ (js-object-proto %this))
 			    (elements ($create-vector 7)))))
 	 (for-each (lambda (id)
 		      (js-bind! %this unscopables
@@ -2222,7 +2218,6 @@
 			 :value #t :writable #f
 			 :enumerable #f :configurable #t))
 	    '("copyWithin" "entries" "fill" "find" "findIndex" "keys" "values"))
-	 
 	 (js-bind! %this js-array-prototype js-symbol-unscopables
 	    :value unscopables
 	    :enumerable #f
@@ -2238,27 +2233,26 @@
 	     val
 	     (js-vector->jsarray (vector val) %this))) 
 
-      (with-access::JsObject origin (__proto__)
-	 (if (eq? __proto__ js-array-prototype)
-	     (js-array-construct/lengthu32 %this
-		(js-array-alloc %this)
-		(fixnum->uint32 new-len))
-	     (let ((ctor (js-get-name/cache origin (& "constructor") #f %this
-			    (js-pcache-ref js-array-pcache 13))))
-		(if (and (js-function? ctor) (not (eq? js-array ctor)))
-		    (let ((species (js-get ctor js-symbol-species %this)))
-		       (check-array
-			  (cond
-			     ((js-function? species)
-			      (js-new1 %this species 0))
-			     ((js-function? ctor)
-			      (js-new1 %this ctor 0))
-			     (else
-			      (js-raise-type-error %this
-				 "Not a constructor" ctor)))))
-		    (js-array-construct/lengthu32 %this
-		       (js-array-alloc %this)
-		       (fixnum->uint32 new-len))))))))
+      (if (eq? (js-object-proto origin) js-array-prototype)
+	  (js-array-construct/lengthu32 %this
+	     (js-array-alloc %this)
+	     (fixnum->uint32 new-len))
+	  (let ((ctor (js-get-name/cache origin (& "constructor") #f %this
+			 (js-pcache-ref js-array-pcache 13))))
+	     (if (and (js-function? ctor) (not (eq? js-array ctor)))
+		 (let ((species (js-get ctor js-symbol-species %this)))
+		    (check-array
+		       (cond
+			  ((js-function? species)
+			   (js-new1 %this species 0))
+			  ((js-function? ctor)
+			   (js-new1 %this ctor 0))
+			  (else
+			   (js-raise-type-error %this
+			      "Not a constructor" ctor)))))
+		 (js-array-construct/lengthu32 %this
+		    (js-array-alloc %this)
+		    (fixnum->uint32 new-len)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-array ...                                                    */
@@ -2484,11 +2478,11 @@
 (define (js-species->jsarray this::JsObject vec::vector %this::JsGlobalObject)
    (let ((arr (js-vector->jsarray vec %this)))
       (with-access::JsGlobalObject %this (js-symbol-species js-array-prototype)
-	 (with-access::JsObject this ((__species_proto__ __proto__))
+	 (let ((__species_proto__ (js-object-proto this)))
 	    (if (eq? __species_proto__ js-array-prototype)
 		arr
-		(with-access::JsObject arr (__proto__)
-		   (set! __proto__ __species_proto__)
+		(begin
+		   (js-object-proto-set! arr __species_proto__)
 		   arr))))))
 
 ;*---------------------------------------------------------------------*/
@@ -2640,18 +2634,17 @@
 	  (else (>=fx idx (-fx (bit-lsh 1 32) 1))))
        (js-get arr idx %this))
       (else
-       (with-access::JsObject arr (__proto__)
-	  (let loop ((o __proto__))
-	     (cond
-		((not (js-object-mode-hasnumeralprop? o))
-		 (with-access::JsObject o (__proto__)
-		    (if (eq? __proto__ '())
-			(js-undefined)
-			(loop __proto__))))
-		((js-array? o)
-		 (js-array-fixnum-ref o idx %this))
-		(else
-		 (js-get o idx %this))))))))
+       (let loop ((o (js-object-proto arr)))
+	  (cond
+	     ((not (js-object-mode-hasnumeralprop? o))
+	      (let ((__proto__ (js-object-proto o)))
+		 (if (eq? __proto__ '())
+		     (js-undefined)
+		     (loop __proto__))))
+	     ((js-array? o)
+	      (js-array-fixnum-ref o idx %this))
+	     (else
+	      (js-get o idx %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-fixnum-property ...                                       */
@@ -2663,26 +2656,27 @@
 ;*---------------------------------------------------------------------*/
 (define (js-has-fixnum-property arr::JsArray idx::long %this)
    (with-access::JsObject arr (__proto__)
-      (let loop ((o __proto__))
+      (let loop ((o (js-object-proto arr)))
 	 (cond
 	    ((not (js-object-mode-hasnumeralprop? o))
-	     (with-access::JsObject o (__proto__)
+	     (let ((__proto__ (js-object-proto o)))
 		(if (eq? __proto__ '())
 		    #f
 		    (loop __proto__))))
 	    ((js-array? o)
-	     (with-access::JsArray o (__proto__ vec ilen)
+	     (with-access::JsArray o (vec ilen)
 		(cond
 		   ((>=u32 (fixnum->uint32 idx) (js-array-length o))
-		    (unless (eq? __proto__ '())
-		       (loop __proto__)))
+		    (let ((__proto__ (js-object-proto o)))
+		       (unless (eq? __proto__ '())
+			  (loop __proto__))))
 		   ((<fx idx (vector-length vec))
 		    (not (js-absent? (vector-ref vec idx))))
 		   (else
-		    (unless (eq? __proto__ '())
-		       (loop __proto__))))))
+		    (let ((__proto__ (js-object-proto o)))
+		       (unless (eq? __proto__ '())
+			  (loop __proto__)))))))
 	    (else
-	     (js-debug-object o)
 	     (js-has-property o idx %this))))))
 
 ;*---------------------------------------------------------------------*/
@@ -3155,7 +3149,7 @@
    
    (define (js-array-property-names arr)
       (let loop ((o arr))
-	 (with-access::JsObject o (cmap __proto__ elements)
+	 (with-access::JsObject o (cmap elements)
 	    (append (if (not (eq? cmap (js-not-a-cmap)))
 			(with-access::JsConstructMap cmap (props)
 			   (map prop-name (vector->list props)))
@@ -3163,8 +3157,8 @@
 				(with-access::JsPropertyDescriptor d (name)
 				   name))
 			   (vector->list elements)))
-	       (if (js-object? __proto__)
-		   (loop __proto__)
+	       (if (js-object? (js-object-proto o))
+		   (loop (js-object-proto o))
 		   '())))))
    
    (define (sym->string n)

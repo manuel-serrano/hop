@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Sun Jun 23 06:19:26 2019 (serrano)                */
-;*    Copyright   :  2014-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 14:10:21 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
 ;*=====================================================================*/
@@ -150,104 +150,103 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-arraybuffer! %this)
    (unless (vector? __js_strings) (set! __js_strings (&init!)))
-   (with-access::JsGlobalObject %this (__proto__ js-function js-object
+   (with-access::JsGlobalObject %this (js-function js-object
 					 js-arraybuffer)
-      (with-access::JsFunction js-function ((js-function-prototype __proto__))
-	 
-	 ;; builtin ArrayBuffer prototype
-	 (define js-arraybuffer-prototype
-	    (instantiateJsObject
-	       (__proto__ __proto__)
-	       (elements ($create-vector 1))))
-
-	 (define (%js-arraybuffer this . items)
-	    (apply js-arraybuffer-construct 
-	       (js-arraybuffer-alloc %this js-arraybuffer)
-	       items))
-
-	 (set! js-arraybuffer
-	    (js-make-function %this %js-arraybuffer 1 "ArrayBuffer"
-	       :__proto__ js-function-prototype
-	       :prototype js-arraybuffer-prototype
-	       :alloc js-arraybuffer-alloc
-	       :construct (lambda (this . items)
-			     (apply js-arraybuffer-construct this items))))
-
-	 (define (js-arraybuffer-alloc %this constructor::JsFunction)
-	    (instantiateJsArrayBuffer
-	       (cmap (js-not-a-cmap))
-	       (__proto__ (js-get constructor (& "prototype") %this))))
-
-	 (define (js-arraybuffer-construct this::JsArrayBuffer . items)
-	    (with-access::JsArrayBuffer this (data)
-	       (when (pair? items)
-		  (let ((i (car items))
-			(f 0))
-
-		     ;; data
-		     (cond
-			((u8vector? i)
-			 (set! f (u8vector-length i))
-			 (set! data i))
-			((and (flonum? i) (>=fl i 1073741823.0))
-			 (js-raise-range-error %this
-			    "ArrayBufferView size is too large"
-			    i))
-			(else
-			 (let ((n (js-touint32 i %this)))
-			    (set! f (uint32->fixnum n))
-			    (set! data (make-u8vector f)))))
-			
-		     ;; byteLength
-		     (js-bind! %this this (& "byteLength")
-			:value f
-			:configurable #f
-			:writable #f
-			:enumerable #t
-			:hidden-class #t)
-		     
-		     ;; slice
-		     (define (arraybuffer-slice this::JsArrayBuffer beg end)
-			(with-access::JsArrayBuffer this (data)
-			   (let* ((l (u8vector-length data))
-				  (b (if (eq? beg (js-undefined))
-					 (js-raise-error %this
-					    "Wrong number of arguments."
-					    #f)
-					 (->fixnum (js-tointeger beg %this))))
-				  (e (if (eq? end (js-undefined))
-					 l
-					 (->fixnum (js-tointeger end %this)))))
-			      (when (< b 0) (set! b (+ l b)))
-			      (when (< e 0) (set! e (+ l e)))
-			      (set! b (min b l))
-			      (set! e (min e l))
-			      (let* ((l (max (min (- e b) l) 0))
-				     (new (%js-arraybuffer %this l)))
-				 (with-access::JsArrayBuffer new ((dst data))
-				    (let loop ((i 0))
-				       (when (<fx i l)
-					  (u8vector-set! dst i
-					     (u8vector-ref data (+fx i b)))
-					  (loop (+fx i 1))))
-				    new)))))
-		     
-		     (js-bind! %this this (& "slice")
-			:value (js-make-function %this
-				  arraybuffer-slice 2 "slice")
-			:configurable #f
-			:writable #t
-			:enumerable #t
-			:hidden-class #t)))
-	       
-	       this))
-
-	 ;; bind the ArrayBuffer in the global object
-	 (js-bind! %this %this (& "ArrayBuffer")
-	    :configurable #f :enumerable #f :value js-arraybuffer
-	    :hidden-class #t)
-
-	 js-arraybuffer)))
+      
+      ;; builtin ArrayBuffer prototype
+      (define js-arraybuffer-prototype
+	 (instantiateJsObject
+	    (__proto__ (js-object-proto %this))
+	    (elements ($create-vector 1))))
+      
+      (define (%js-arraybuffer this . items)
+	 (apply js-arraybuffer-construct 
+	    (js-arraybuffer-alloc %this js-arraybuffer)
+	    items))
+      
+      (set! js-arraybuffer
+	 (js-make-function %this %js-arraybuffer 1 "ArrayBuffer"
+	    :__proto__ (js-object-proto js-function)
+	    :prototype js-arraybuffer-prototype
+	    :alloc js-arraybuffer-alloc
+	    :construct (lambda (this . items)
+			  (apply js-arraybuffer-construct this items))))
+      
+      (define (js-arraybuffer-alloc %this constructor::JsFunction)
+	 (instantiateJsArrayBuffer
+	    (cmap (js-not-a-cmap))
+	    (__proto__ (js-get constructor (& "prototype") %this))))
+      
+      (define (js-arraybuffer-construct this::JsArrayBuffer . items)
+	 (with-access::JsArrayBuffer this (data)
+	    (when (pair? items)
+	       (let ((i (car items))
+		     (f 0))
+		  
+		  ;; data
+		  (cond
+		     ((u8vector? i)
+		      (set! f (u8vector-length i))
+		      (set! data i))
+		     ((and (flonum? i) (>=fl i 1073741823.0))
+		      (js-raise-range-error %this
+			 "ArrayBufferView size is too large"
+			 i))
+		     (else
+		      (let ((n (js-touint32 i %this)))
+			 (set! f (uint32->fixnum n))
+			 (set! data (make-u8vector f)))))
+		  
+		  ;; byteLength
+		  (js-bind! %this this (& "byteLength")
+		     :value f
+		     :configurable #f
+		     :writable #f
+		     :enumerable #t
+		     :hidden-class #t)
+		  
+		  ;; slice
+		  (define (arraybuffer-slice this::JsArrayBuffer beg end)
+		     (with-access::JsArrayBuffer this (data)
+			(let* ((l (u8vector-length data))
+			       (b (if (eq? beg (js-undefined))
+				      (js-raise-error %this
+					 "Wrong number of arguments."
+					 #f)
+				      (->fixnum (js-tointeger beg %this))))
+			       (e (if (eq? end (js-undefined))
+				      l
+				      (->fixnum (js-tointeger end %this)))))
+			   (when (< b 0) (set! b (+ l b)))
+			   (when (< e 0) (set! e (+ l e)))
+			   (set! b (min b l))
+			   (set! e (min e l))
+			   (let* ((l (max (min (- e b) l) 0))
+				  (new (%js-arraybuffer %this l)))
+			      (with-access::JsArrayBuffer new ((dst data))
+				 (let loop ((i 0))
+				    (when (<fx i l)
+				       (u8vector-set! dst i
+					  (u8vector-ref data (+fx i b)))
+				       (loop (+fx i 1))))
+				 new)))))
+		  
+		  (js-bind! %this this (& "slice")
+		     :value (js-make-function %this
+			       arraybuffer-slice 2 "slice")
+		     :configurable #f
+		     :writable #t
+		     :enumerable #t
+		     :hidden-class #t)))
+	    
+	    this))
+      
+      ;; bind the ArrayBuffer in the global object
+      (js-bind! %this %this (& "ArrayBuffer")
+	 :configurable #f :enumerable #f :value js-arraybuffer
+	 :hidden-class #t)
+      
+      js-arraybuffer))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-names ::JsArray ...                                */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Fri Jan 17 15:16:10 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 14:23:25 2020 (serrano)                */
 ;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -71,7 +71,7 @@
 
    (unless (vector? __js_strings) (set! __js_strings (&init!)))
    
-   (with-access::JsGlobalObject %this (__proto__ js-function-prototype)
+   (with-access::JsGlobalObject %this (js-function-prototype)
       
       (define (%js-map this . args)
 	 (with-access::JsGlobalObject %this (js-new-target)
@@ -94,7 +94,7 @@
       
       (define js-map-prototype
 	 (instantiateJsObject
-	    (__proto__ __proto__)
+	    (__proto__ (js-object-proto %this))
 	    (elements ($create-vector (if (eq? weak 'none) 13 5)))))
       
       (define js-map

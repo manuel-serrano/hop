@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Dec 11 06:49:00 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 13:56:32 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
 ;*=====================================================================*/
@@ -99,22 +99,21 @@
 	       rx))))
    
    (define (constant-objinit el cnsts)
-      (with-access::JsGlobalObject %this (__proto__)
-	 (let* ((cmap (vector-ref cnsts (vector-ref el 1)))
-		(vals (vector-ref el 2))
-		(obj (js-make-jsobject (vector-length vals)
-			cmap __proto__)))
-	    (with-access::JsObject obj (elements)
-	       (let loop ((i (-fx (vector-length vals) 1)))
-		  (if (<fx i 0)
-		      obj
-		      (let ((val (vector-ref vals i)))
-			 (vector-set! elements i
-			    (cond
-			       ((pair? val) (vector-ref cnsts (car val)))
-			       ((string? val) (js-string->jsstring val))
-			       (else val)))
-			 (loop (-fx i 1)))))))))
+      (let* ((cmap (vector-ref cnsts (vector-ref el 1)))
+	     (vals (vector-ref el 2))
+	     (obj (js-make-jsobject (vector-length vals)
+		     cmap (js-object-proto %this))))
+	 (with-access::JsObject obj (elements)
+	    (let loop ((i (-fx (vector-length vals) 1)))
+	       (if (<fx i 0)
+		   obj
+		   (let ((val (vector-ref vals i)))
+		      (vector-set! elements i
+			 (cond
+			    ((pair? val) (vector-ref cnsts (car val)))
+			    ((string? val) (js-string->jsstring val))
+			    (else val)))
+		      (loop (-fx i 1))))))))
 
    (let ((cnsts (if (string? str-or-vec) (string->obj str-or-vec) str-or-vec)))
       (let loop ((i 0))
@@ -124,9 +123,9 @@
 		  ((isa? el JsRegExp)
 		   ;; patch the regexp prototype
 		   (with-access::JsGlobalObject %this (js-regexp-prototype js-regexp-cmap)
-		      (with-access::JsRegExp el (__proto__ cmap)
+		      (with-access::JsRegExp el (cmap)
 			 (set! cmap js-regexp-cmap)
-			 (set! __proto__ js-regexp-prototype))))
+			 (js-object-proto-set! el js-regexp-prototype))))
 		  ((vector? el)
 		   (vector-set! cnsts i
 		      (case (vector-ref el 0)
@@ -256,11 +255,10 @@
 ;*    The cmap structure is defined in property.scm.                   */
 ;*---------------------------------------------------------------------*/
 (define (js-literal->jsobject::JsObject elements::vector names::vector %this)
-   (with-access::JsGlobalObject %this (__proto__)
-      (instantiateJsObject
-	 (cmap (js-names->cmap names #f))
-	 (__proto__ __proto__)
-	 (elements elements))))
+   (instantiateJsObject
+      (cmap (js-names->cmap names #f))
+      (__proto__ (js-object-proto %this))
+      (elements elements)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-key-name->jsstring ...                                        */
@@ -278,7 +276,7 @@
 ;*    The cmap structure is defined in property.scm.                   */
 ;*---------------------------------------------------------------------*/
 (define (js-alist->jsobject alist %this)
-   (with-access::JsGlobalObject %this (js-object __proto__)
+   (with-access::JsGlobalObject %this (js-object)
       (let* ((len (length alist))
 	     (props ($create-vector len))
 	     (methods (make-vector len #f))
@@ -288,7 +286,7 @@
 		      (methods methods)))
 	     (obj (instantiateJsObject
 		     (cmap cmap)
-		     (__proto__ __proto__)
+		     (__proto__ (js-object-proto %this))
 		     (elements ($create-vector len)))))
 	 (with-access::JsObject obj (elements)
 	    (let ((vec elements))
@@ -309,7 +307,7 @@
 ;*    js-plist->jsobject ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-plist->jsobject plist %this)
-   (with-access::JsGlobalObject %this (js-object __proto__)
+   (with-access::JsGlobalObject %this (js-object)
       (let* ((len (/fx (length plist) 2))
 	     (elements ($create-vector len))
 	     (props ($create-vector len))
@@ -322,7 +320,7 @@
 			       (props props))))
 		   (instantiateJsObject
 		      (cmap cmap)
-		      (__proto__ __proto__)
+		      (__proto__ (js-object-proto %this))
 		      (elements elements)))
 		(let* ((name (js-key-name->jsstring (car plist)))
 		       (val (js-obj->jsobject (cadr plist) %this)))
@@ -379,33 +377,32 @@
 ;*    js-socket->jsobject ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-socket->jsobject obj %this)
-   (with-access::JsGlobalObject %this (__proto__)
-      (unless (vector? __js_strings) (set! __js_strings (&init!)))
-      (let ((sock (instantiateJsWrapper
-		     (__proto__ __proto__)
-		     (data #unspecified)
-		     (obj obj))))
-	 (js-bind! %this sock (& "hostname")
-	    :value (js-string->jsstring (socket-hostname obj))
-	    :writable #f :configurable #f
-	    :hidden-class #t)
-	 (js-bind! %this sock (& "hostAddress")
-	    :value (js-string->jsstring (socket-host-address obj))
-	    :writable #f :configurable #f
-	    :hidden-class #t)
-	 (js-bind! %this sock (& "localAddress")
-	    :value (js-string->jsstring (socket-local-address obj))
-	    :writable #f :configurable #f
-	    :hidden-class #t)
-	 (js-bind! %this sock (& "port")
-	    :value (socket-port-number obj)
-	    :writable #f :configurable #f
-	    :hidden-class #t)
-	 (js-bind! %this sock (& "ssl")
-	    :value (ssl-socket? obj)
-	    :writable #f :configurable #f
-	    :hidden-class #t)
-	 sock)))
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
+   (let ((sock (instantiateJsWrapper
+		  (__proto__ (js-object-proto %this))
+		  (data #unspecified)
+		  (obj obj))))
+      (js-bind! %this sock (& "hostname")
+	 :value (js-string->jsstring (socket-hostname obj))
+	 :writable #f :configurable #f
+	 :hidden-class #t)
+      (js-bind! %this sock (& "hostAddress")
+	 :value (js-string->jsstring (socket-host-address obj))
+	 :writable #f :configurable #f
+	 :hidden-class #t)
+      (js-bind! %this sock (& "localAddress")
+	 :value (js-string->jsstring (socket-local-address obj))
+	 :writable #f :configurable #f
+	 :hidden-class #t)
+      (js-bind! %this sock (& "port")
+	 :value (socket-port-number obj)
+	 :writable #f :configurable #f
+	 :hidden-class #t)
+      (js-bind! %this sock (& "ssl")
+	 :value (ssl-socket? obj)
+	 :writable #f :configurable #f
+	 :hidden-class #t)
+      sock))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-procedure->jsobject ...                                       */
