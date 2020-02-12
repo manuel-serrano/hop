@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Feb 12 13:43:56 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 20:32:30 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2714,34 +2714,27 @@
 	      (eq? configurable #t)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-array-inline-vector-properties ...                            */
-;*    -------------------------------------------------------------    */
-;*    Returns the subset of the array properties which are stored      */
-;*    in its inline vector.                                            */
+;*    vector-fill-properties! ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-array-inline-vector-properties::pair-nil obj::JsArray %this offset::uint32)
+(define (vector-fill-properties! obj::JsArray nvec offset)
    (with-access::JsArray obj (vec ilen)
-      (if (<u32 offset ilen)
-	  (let loop ((i (-fx (uint32->fixnum ilen) 1))
-		     (acc '()))
-	     (if (<fx i (uint32->fixnum offset))
-		 acc
-		 (let ((v (vector-ref vec i)))
-		    (let ((desc (instantiate::JsValueDescriptor
-				   (name (js-toname i %this))
-				   (value v)
-				   (writable #t)
-				   (enumerable #t)
-				   (configurable #t))))
-		       (vector-set! vec i (js-absent))
-		       (loop (-fx i 1) (cons desc acc))))))
-	  '())))
+      (let loop ((i 0))
+	 (when (<fx i (uint32->fixnum ilen))
+	    (let* ((v (vector-ref vec i))
+		   (desc (instantiate::JsValueDescriptor
+			    (name (js-integer-name i))
+			    (value v)
+			    (writable #t)
+			    (enumerable #t)
+			    (configurable #t))))
+	       (vector-set! vec i (js-absent))
+	       (vector-set! nvec (+fx i offset) desc)
+	       (loop (+fx i 1)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    uninline-array! ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (uninline-array! arr::JsArray %this::JsGlobalObject
-	   #!optional (offset #u32:0))
+(define (uninline-array! arr::JsArray %this::JsGlobalObject)
    (when (js-object-mode-inline? arr)
       ;; this function switches from a fast inlined array representation
       ;; to a slow inefficient object representation
@@ -2750,13 +2743,13 @@
 	 (js-object-mode-holey-set! arr #t)
 	 (js-array-update-length-property! arr)
 	 (when (>fx (vector-length vec) 0)
-	    (tprint "uninline-array TO BE OPTIMIZED... (avoid usless lists and vectors)")
-	    (set! elements
-	       (vector-append elements
-		  (list->vector
-		     (js-array-inline-vector-properties arr %this offset))))
-	    (set! ilen offset)
-	    (js-array-mark-invalidate!))
+	    (let* ((len (vector-length elements))
+		   (nvec (make-vector (+fx len (uint32->fixnum ilen)))))
+	       (vector-copy! nvec 0 elements 0)
+	       (vector-fill-properties! arr nvec len)
+	       (set! elements nvec)
+	       (set! ilen #u32:0)
+	       (js-array-mark-invalidate!)))
 	 arr)))
 
 ;*---------------------------------------------------------------------*/
@@ -2801,28 +2794,39 @@
 		(set! ilen i))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-array-holey-vector-properties ...                             */
-;*    -------------------------------------------------------------    */
-;*    Returns the subset of the array properties which are stored      */
-;*    in its holey vector.                                             */
+;*    js-array-holey-elements-length ...                               */
 ;*---------------------------------------------------------------------*/
-(define (js-array-holey-vector-properties::pair-nil obj::JsArray %this)
+(define (js-array-holey-elements-length obj::JsArray)
    (with-access::JsArray obj (vec ilen)
       (let loop ((i (-fx (vector-length vec) 1))
-		 (acc '()))
+		 (acc 0))
 	 (if (<fx i 0)
 	     acc
 	     (let ((v (vector-ref vec i)))
 		(if (js-absent? v)
 		    (loop (-fx i 1) acc)
-		    (let ((desc (instantiate::JsValueDescriptor
-				   (name (js-toname i %this))
-				   (value v)
-				   (writable #t)
-				   (enumerable #t)
-				   (configurable #t))))
-		       (vector-set! vec i (js-absent))
-		       (loop (-fx i 1) (cons desc acc)))))))))
+		    (loop (-fx i 1) (+fx acc 1))))))))
+
+;*---------------------------------------------------------------------*/
+;*    vector-fill-holey-properties ...                                 */
+;*---------------------------------------------------------------------*/
+(define (vector-fill-holey-properties obj::JsArray nvec offset)
+   (with-access::JsArray obj (vec ilen)
+      (let loop ((i (-fx (vector-length vec) 1))
+		 (j offset))
+	 (when (>=fx i 0)
+	    (let ((v (vector-ref vec i)))
+	       (if (js-absent? v)
+		   (loop (-fx i 1) offset)
+		   (let ((desc (instantiate::JsValueDescriptor
+				  (name (js-integer-name i))
+				  (value v)
+				  (writable #t)
+				  (enumerable #t)
+				  (configurable #t))))
+		      (vector-set! vec i (js-absent))
+		      (vector-set! nvec j desc)
+		      (loop (-fx i 1) (+fx j 1)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    unholey-array! ...                                               */
@@ -2837,11 +2841,13 @@
 	 (js-array-update-length-property! arr)
 	 (set! ilen 0)
 	 (when (>fx (vector-length vec) 0)
-	    (tprint "unholey-array TO BE OPTIMIZED... (avoid usless lists and vectors)")
-	    (set! elements
-	       (vector-append elements
-		  (list->vector (js-array-holey-vector-properties arr %this))))
-	    (js-array-mark-invalidate!))
+	    (let* ((len (vector-length elements))
+		   (vlen (js-array-holey-elements-length arr))
+		   (nvec (make-vector (+fx len vlen))))
+	       (vector-copy! nvec 0 elements 0)
+	       (vector-fill-holey-properties arr nvec len)
+	       (set! elements nvec)
+	       (js-array-mark-invalidate!)))
 	 arr)))
 
 ;*---------------------------------------------------------------------*/
