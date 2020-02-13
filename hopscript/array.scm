@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Feb 13 07:53:13 2020 (serrano)                */
+;*    Last change :  Thu Feb 13 15:09:47 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2716,7 +2716,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    vector-fill-properties! ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (vector-fill-properties! obj::JsArray nvec offset)
+(define (vector-fill-properties! obj::JsArray nvec)
    (with-access::JsArray obj (vec ilen)
       (let loop ((i 0))
 	 (when (<fx i (uint32->fixnum ilen))
@@ -2728,7 +2728,7 @@
 			    (enumerable #t)
 			    (configurable #t))))
 	       (vector-set! vec i (js-absent))
-	       (vector-set! nvec (+fx i offset) desc)
+	       (vector-set! nvec i desc)
 	       (loop (+fx i 1)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -2745,8 +2745,8 @@
 	 (when (>fx (vector-length vec) 0)
 	    (let* ((len (vector-length elements))
 		   (nvec (make-vector (+fx len (uint32->fixnum ilen)))))
-	       (vector-copy! nvec 0 elements 0)
-	       (vector-fill-properties! arr nvec len)
+	       (vector-fill-properties! arr nvec)
+	       (vector-copy! nvec (uint32->fixnum ilen) elements 0)
 	       (set! elements nvec)
 	       (set! ilen #u32:0)
 	       (js-array-mark-invalidate!)))
@@ -2810,23 +2810,23 @@
 ;*---------------------------------------------------------------------*/
 ;*    vector-fill-holey-properties ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (vector-fill-holey-properties obj::JsArray nvec offset)
+(define (vector-fill-holey-properties obj::JsArray nvec end)
    (with-access::JsArray obj (vec ilen)
-      (let loop ((i (-fx (vector-length vec) 1))
-		 (j offset))
-	 (when (>=fx i 0)
-	    (let ((v (vector-ref vec i)))
+      (let loop ((i 0)
+		 (j 0))
+	 (when (<fx i end)
+	    (let ((v (vector-ref vec j)))
 	       (if (js-absent? v)
-		   (loop (-fx i 1) j)
+		   (loop i (+fx j 1))
 		   (let ((desc (instantiate::JsValueDescriptor
-				  (name (js-integer-name i))
+				  (name (js-integer-name j))
 				  (value v)
 				  (writable #t)
 				  (enumerable #t)
 				  (configurable #t))))
 		      (vector-set! vec i (js-absent))
-		      (vector-set! nvec j desc)
-		      (loop (-fx i 1) (+fx j 1)))))))))
+		      (vector-set! nvec i desc)
+		      (loop (+fx i 1) (+fx j 1)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    unholey-array! ...                                               */
@@ -2844,8 +2844,8 @@
 	    (let* ((len (vector-length elements))
 		   (vlen (js-array-holey-elements-length arr))
 		   (nvec (make-vector (+fx len vlen))))
-	       (vector-copy! nvec 0 elements 0)
-	       (vector-fill-holey-properties arr nvec len)
+	       (vector-fill-holey-properties arr nvec vlen)
+	       (vector-copy! nvec vlen elements 0)
 	       (set! elements nvec)
 	       (js-array-mark-invalidate!)))
 	 arr)))
