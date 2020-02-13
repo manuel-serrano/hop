@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Feb 12 14:32:00 2020 (serrano)                */
+;*    Last change :  Thu Feb 13 09:40:52 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2177,8 +2177,11 @@
 	 (if (isa? obj J2SRef)
 	     (with-access::J2SRef obj (hint)
 		(let ((cs (assq 'string hint))
-		      (ca (assq 'array hint)))
+		      (ca (assq 'array hint))
+		      (ns (assq 'no-string hint)))
 		   (cond
+		      ((pair? ns)
+		       #f)
 		      ((pair? cs)
 		       (if (pair? ca)
 			   (=fx (cdr cs) (cdr ca))
@@ -2201,10 +2204,9 @@
 			(get obj tmp field cache cspecs #f loc))))
 		'())
 	     ,@(if (and (canbe-string? obj) (maybe-string? obj))
-		(begin
-		   `(((js-jsstring? ,tmp)
-		      ,(or (j2s-string-ref this mode return conf)
-			   (get obj tmp field cache cspecs #f loc)))))
+		`(((js-jsstring? ,tmp)
+		   ,(or (j2s-string-ref this mode return conf)
+			(get obj tmp field cache cspecs #f loc))))
 		'())
 	     (else
 	      ,(get obj tmp field cache cspecs #f loc)))))

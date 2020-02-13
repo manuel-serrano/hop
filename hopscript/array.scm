@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Feb 12 22:24:28 2020 (serrano)                */
+;*    Last change :  Thu Feb 13 07:53:13 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2960,7 +2960,7 @@
 			     (set! length nilen)))
 		       v)
 		      ((js-object-mode-holey? o)
-		       (js-object-mode-inline-set! o #f)
+		       ;;(js-object-mode-inline-set! o #f)
 		       (vector-set! vec (uint32->fixnum idx) v)
 		       (when (>=u32 idx length)
 			  (set! length (+u32 idx #u32:1)))
@@ -3109,6 +3109,8 @@
 	 ((bignum? n) (elong->uint32 (bignum->elong n)))
 	 ((elong? n) (elong->uint32 n))
 	 ((llong? n) (llong->uint32 n)))))
+
+(define k 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    expandable-array ...                                             */
@@ -3611,7 +3613,7 @@
        (js-array-concat1 this arg %this cache)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call1 %this
-	     (js-object-get-name/cache this (& "concat") #f %this
+	     (js-get-name/cache this (& "concat") #f %this
 		(or cache (js-pcache-ref js-array-pcache 16)))
 	     this arg))))
 

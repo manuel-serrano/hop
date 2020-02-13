@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Sun Jan 26 09:56:06 2020 (serrano)                */
+;*    Last change :  Thu Feb 13 08:31:04 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
@@ -147,23 +147,44 @@
 ;*---------------------------------------------------------------------*/
 (define (hintnum-binary this op lhs rhs fix)
    (case op
-      ((+ - * / %)
+      ((+)
        (when (memq (j2s-type lhs) '(any number))
+	  (let ((hint (union-hint! (expr-hint this) (expr-hint rhs))))
+	     (add-expr-hint! lhs hint #t fix)
+	     (add-expr-hint! this hint #f fix))))
+      ((- * / %)
+       (when (memq (j2s-type lhs) '(any number))
+	  (unhint-string-ref lhs fix)
 	  (let ((hint (union-hint! (expr-hint this) (expr-hint rhs))))
 	     (add-expr-hint! lhs hint #t fix)
 	     (add-expr-hint! this hint #f fix)))
        (when (memq (j2s-type rhs) '(any number))
+	  (unhint-string-ref rhs fix)
 	  (let ((hint (union-hint! (expr-hint this) (expr-hint lhs))))
 	     (add-expr-hint! rhs hint #t fix)
 	     (add-expr-hint! this hint #f fix))))
       ((< > <= >= == === != !==)
        (when (memq (j2s-type lhs) '(any number))
+	  (unhint-string-ref lhs fix)
 	  (let ((hint (expr-hint rhs)))
 	     (add-expr-hint! lhs hint #t fix)))
        (when (memq (j2s-type rhs) '(any number))
+	  (unhint-string-ref rhs fix)
 	  (let ((hint (expr-hint lhs)))
-	     (add-expr-hint! rhs hint #t fix))))))
+	     (add-expr-hint! rhs hint #t fix))))
+      ((>> >>> << BIT_OR & ^)
+       (unhint-string-ref lhs fix)
+       (unhint-string-ref rhs fix))))
 
+;*---------------------------------------------------------------------*/
+;*    unhint-string-ref ...                                            */
+;*                                                                     */
+;*---------------------------------------------------------------------*/
+(define (unhint-string-ref expr fix)
+   (when (isa? expr J2SAccess)
+      (with-access::J2SAccess expr (obj)
+	 (add-expr-hint! obj '((no-string . 10)) #t fix))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SBinary ...                                          */
 ;*---------------------------------------------------------------------*/
