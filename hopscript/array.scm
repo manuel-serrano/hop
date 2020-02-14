@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Feb 14 09:40:24 2020 (serrano)                */
+;*    Last change :  Fri Feb 14 10:10:39 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2832,8 +2832,6 @@
 ;*    unholey-array! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (unholey-array! arr::JsArray %this::JsGlobalObject)
-   (tprint "unholey " (js-object-mode-holey? arr))
-   (js-debug-object arr)
    (when (js-object-mode-holey? arr)
       ;; this function switches from a fast holey array representation
       ;; to a slow inefficient object representation
