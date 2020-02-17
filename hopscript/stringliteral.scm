@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Feb 16 10:04:21 2020 (serrano)                */
+;*    Last change :  Mon Feb 17 11:56:50 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -529,37 +529,38 @@
 		    (s js)
 		    (stack '()))
 	    (with-access::JsStringLiteral s (left right)
-	       (with-access::JsStringLiteral left (length)
-		  (let ((len (uint32->fixnum length)))
-		     (cond
-			((string? left)
-			 (blit-buffer! left buffer i len)
-			 (if (pair? stack)
-			     (let* ((top (car stack))
-				    (ni (car top))
-				    (s (cdr top)))
-				(loop ni s (cdr stack)))
-			     (begin
-				(js-jsstring-mark-normalized! js buffer)
-				buffer)))
-			((js-jsstring-normalized? left)
-			 (with-access::JsStringLiteral left ((str left))
-			    (blit-buffer! str buffer i (string-length str))
-			    (loop (+fx i (string-length str)) right stack)))
-			((not (js-jsstring-normalized? s))
-			 (if (js-jsstring-normalized? right)
-			     (with-access::JsStringLiteral right ((str left))
-				;; write the rhs in advance
-				(let ((rlen (string-length str)))
-				   (blit-buffer! str buffer (+fx i len) rlen)
-				   (loop i left stack)))
-			     (let* ((ni (+fx i len))
-				    (nstack (cons (cons ni right) stack)))
-				(loop i left nstack))))
-			
-			(else
-			 (tprint "SHOULD NOT BE HERE, remove previous test")
-			 (loop i left stack)))))))))
+	       (cond
+		  ((string? left)
+		   (blit-buffer! left buffer i (string-length left))
+		   (if (pair? stack)
+		       (let* ((top (car stack))
+			      (ni (car top))
+			      (s (cdr top)))
+			  (loop ni s (cdr stack)))
+		       (begin
+			  (js-jsstring-mark-normalized! js buffer)
+			  buffer)))
+		  ((js-jsstring-normalized? left)
+		   (with-access::JsStringLiteral left ((str left))
+		      (blit-buffer! str buffer i (string-length str))
+		      (loop (+fx i (string-length str)) right stack)))
+		  ((not (js-jsstring-normalized? s))
+		   (with-access::JsStringLiteral s (left)
+		      (with-access::JsStringLiteral left (length)
+			 (let ((len (uint32->fixnum length)))
+			    (if (js-jsstring-normalized? right)
+				(with-access::JsStringLiteral right ((str left))
+				   ;; write the rhs in advance
+				   (let ((rlen (string-length str)))
+				      (blit-buffer! str buffer (+fx i len) rlen)
+				      (loop i left stack)))
+				(let* ((ni (+fx i len))
+				       (nstack (cons (cons ni right) stack)))
+				   (loop i left nstack)))))))
+		  
+		  (else
+		   (tprint "SHOULD NOT BE HERE, remove previous test")
+		   (loop i left stack)))))))
    
    (with-access::JsStringLiteral js (length left)
       (cond
