@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed Nov 13 10:09:37 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Mon Feb 17 08:56:59 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
 ;*=====================================================================*/
@@ -320,7 +320,7 @@
 (define (js-string->bool v expr conf)
    (if (string? v)
        (>fx (string-length v) 0)
-       `(js-jsstring->bool ,v)))
+       `(js-jsstring-toboolean ,v)))
 
 (define (js-string->jsobject v expr conf)
    `(with-access::JsGlobalObject %this (js-string)

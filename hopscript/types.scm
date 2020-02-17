@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Feb 12 13:12:36 2020 (serrano)                */
+;*    Last change :  Mon Feb 17 07:39:01 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -137,7 +137,7 @@
 	   ;; Literal strings that are not plain Scheme string
 	   ;; for the sake of concat performance
 	   (abstract-class JsStringLiteral
-	      weight::uint32
+	      length::uint32
 	      left::obj
 	      (right::obj (default #f))
 	      (pcacher (default #f)))
@@ -417,10 +417,15 @@
 
 	   (inline js-object-default-mode::uint32)
 	   (inline js-array-default-mode::uint32)
-	   (inline js-jsstring-default-mode::uint32)
 	   (inline js-function-default-mode::uint32)
+	   (inline js-jsstring-default-ascii-mode::uint32)
+	   (inline js-jsstring-normalized-ascii-mode::uint32)
+	   (inline js-jsstring-default-index-mode::uint32)
+	   (inline js-jsstring-default-utf8-mode::uint32)
+	   (inline js-jsstring-normalized-utf8-mode)
+	   
 	   (inline js-jsstring-normalized-mode::uint32)
-	   (inline js-jsstring-index-mode::uint32)
+	   (inline js-jsstring-normalized-index-mode::uint32)
 	   
 	   (inline js-object-mode-extensible?::bool ::JsObject)
 	   (inline js-object-mode-extensible-set! ::JsObject ::bool)
@@ -473,7 +478,9 @@
 	   (inline JS-OBJECT-MODE-REVOKED::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYHOLEY::uint32)
 	   (inline JS-OBJECT-MODE-JSSTRINGNORMALIZED::uint32)
+	   (inline JS-OBJECT-MODE-JSSTRINGASCII::uint32)
 	   (inline JS-OBJECT-MODE-JSSTRINGINDEX::uint32)
+	   (inline JS-OBJECT-MODE-JSSTRINGUTF8::uint32)
 
 	   (inline JS-REGEXP-FLAG-IGNORECASE::uint32)
 	   (inline JS-REGEXP-FLAG-MULTILINE::uint32)
@@ -518,7 +525,9 @@
 	   
 	   (inline js-number?::bool ::obj)
 	   (inline js-jsstring?::bool ::obj)
-	   (inline js-jsstring-index?::bool ::obj)
+	   (inline js-jsstring-ascii?::bool ::JsStringLiteral)
+	   (inline js-jsstring-index?::bool ::JsStringLiteral)
+	   (inline js-jsstring-utf8?::bool ::JsStringLiteral)
 	   (inline js-jsstring-normalized?::bool ::JsStringLiteral)
 	   (inline js-jsstring-normalized! ::JsStringLiteral)
 	   (inline js-array?::bool ::obj)
@@ -606,14 +615,33 @@
 (define-inline (js-jsstring-default-mode)
    (JS-OBJECT-MODE-JSSTRINGTAG))
 
+(define-inline (js-jsstring-default-ascii-mode)
+   (bit-oru32 (JS-OBJECT-MODE-JSSTRINGTAG)
+      (JS-OBJECT-MODE-JSSTRINGASCII)))
+
+(define-inline (js-jsstring-normalized-ascii-mode)
+   (bit-oru32 (js-jsstring-default-ascii-mode)
+      (js-jsstring-normalized-mode)))
+
+(define-inline (js-jsstring-default-index-mode)
+   (bit-oru32 (JS-OBJECT-MODE-JSSTRINGTAG)
+      (JS-OBJECT-MODE-JSSTRINGINDEX)))
+
+(define-inline (js-jsstring-default-utf8-mode)
+   (bit-oru32 (JS-OBJECT-MODE-JSSTRINGTAG)
+      (JS-OBJECT-MODE-JSSTRINGUTF8)))
+
+(define-inline (js-jsstring-normalized-utf8-mode)
+   (bit-oru32 (js-jsstring-default-utf8-mode)
+      (js-jsstring-normalized-mode)))
+
 (define-inline (js-jsstring-normalized-mode)
    (bit-oru32 (JS-OBJECT-MODE-JSSTRINGTAG)
       (JS-OBJECT-MODE-JSSTRINGNORMALIZED)))
 
-(define-inline (js-jsstring-index-mode)
-   (bit-oru32 (JS-OBJECT-MODE-JSSTRINGTAG)
-      (bit-oru32 (JS-OBJECT-MODE-JSSTRINGNORMALIZED)
-	 (JS-OBJECT-MODE-JSSTRINGINDEX))))
+(define-inline (js-jsstring-normalized-index-mode)
+   (bit-oru32 (js-jsstring-default-index-mode)
+      (js-jsstring-normalized-mode)))
 
 (define-inline (js-function-default-mode)
    (bit-oru32 (JS-OBJECT-MODE-EXTENSIBLE)
@@ -663,11 +691,17 @@
 (define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:8192)
 (define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:16384)
 
-(define-inline (JS-OBJECT-MODE-JSSTRINGNORMALIZED) #u32:8)
-(define-inline (JS-OBJECT-MODE-JSSTRINGINDEX) #u32:16)
+(define-inline (JS-OBJECT-MODE-JSSTRINGASCII) #u32:8)
+(define-inline (JS-OBJECT-MODE-JSSTRINGUTF8) #u32:16)
+(define-inline (JS-OBJECT-MODE-JSSTRINGNORMALIZED) #u32:32)
+(define-inline (JS-OBJECT-MODE-JSSTRINGINDEX) #u32:64)
+(define-inline (JS-OBJECT-MODE-JSSTRINGCACHE) #u32:128)
 
-(define-macro (JS-OBJECT-MODE-JSSTRINGNORMALIZED) #u32:8)
-(define-macro (JS-OBJECT-MODE-JSSTRINGINDEX) #u32:16)
+(define-macro (JS-OBJECT-MODE-JSSTRINGASCII) #u32:8)
+(define-macro (JS-OBJECT-MODE-JSSTRINGUTF8) #u32:16)
+(define-macro (JS-OBJECT-MODE-JSSTRINGNORMALIZED) #u32:32)
+(define-macro (JS-OBJECT-MODE-JSSTRINGINDEX) #u32:64)
+(define-macro (JS-OBJECT-MODE-JSSTRINGCACHE) #u32:128)
 
 (define-inline (js-object-mode-extensible? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
@@ -1176,11 +1210,28 @@
 	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSSTRINGTAG)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-jsstring-ascii? ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-ascii? o)
+   (not (=u32 (bit-andu32
+		 (bit-oru32 (JS-OBJECT-MODE-JSSTRINGASCII)
+		    (JS-OBJECT-MODE-JSSTRINGINDEX))
+		 (js-object-mode o))
+	   #u32:0)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-jsstring-index? ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring-index? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-JSSTRINGINDEX) (js-object-mode o))
       (JS-OBJECT-MODE-JSSTRINGINDEX)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-utf8? ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-utf8? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-JSSTRINGUTF8) (js-object-mode o))
+      (JS-OBJECT-MODE-JSSTRINGUTF8)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalized? ...                                      */

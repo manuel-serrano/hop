@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Wed Dec 18 09:20:28 2019 (serrano)                */
-;*    Copyright   :  2006-19 Manuel Serrano                            */
+;*    Last change :  Mon Feb 17 09:36:08 2020 (serrano)                */
+;*    Copyright   :  2006-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
 ;*=====================================================================*/
@@ -91,9 +91,6 @@
    (eval `(define-expander js-tonumber
 	     ,js-tonumber-expander))
    
-   (eval `(define-expander js-jsstring-append
-	     ,js-jsstring-append-expander))
-
    (eval `(define-expander &
 	     ,&-expander))
    (eval `(define-expander &with!

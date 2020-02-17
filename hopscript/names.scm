@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Sat Oct 19 07:37:03 2019 (serrano)                */
-;*    Copyright   :  2019 Manuel Serrano                               */
+;*    Last change :  Mon Feb 17 09:30:12 2020 (serrano)                */
+;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
 ;*=====================================================================*/
@@ -327,9 +327,9 @@
    (let ((n (hashtable-get js-names str)))
       (or n
 	  (let ((o (instantiate::JsStringLiteralASCII
-		      (weight (fixnum->uint32 (string-length str)))
+		      (length (fixnum->uint32 (string-length str)))
 		      (left str))))
-	     (js-object-mode-set! o (js-jsstring-normalized-mode))
+	     (js-object-mode-set! o (js-jsstring-normalized-ascii-mode))
 	     (hashtable-put! js-names str o)
 	     (js-jsstring-name-set! o o)
 	     o))))
@@ -360,10 +360,10 @@
 (define (js-index->name::JsStringLiteralIndex num::uint32)
    (let ((str (fixnum->string (uint32->fixnum num))))
       (let ((o (instantiate::JsStringLiteralIndex
-		  (weight (string-length str))
+		  (length (string-length str))
 		  (left str)
 		  (index num))))
-	 (js-object-mode-set! o (js-jsstring-index-mode))
+	 (js-object-mode-set! o (js-jsstring-normalized-index-mode))
 	 (js-jsstring-name-set! o o)
 	 o)))
 
@@ -376,9 +376,9 @@
 (define (js-integer->name::JsStringLiteralASCII num::long)
    (let* ((str (fixnum->string num))
 	  (o (instantiate::JsStringLiteralASCII
-		(weight (string-length str))
+		(length (string-length str))
 		(left str))))
-      (js-object-mode-set! o (js-jsstring-normalized-mode))
+      (js-object-mode-set! o (js-jsstring-normalized-ascii-mode))
       (js-jsstring-name-set! o o)
       o))
 
@@ -390,9 +390,9 @@
       (let ((n (hashtable-get js-names str)))
 	 (or n
 	     (let ((o (instantiate::JsStringLiteralUTF8
-			 (weight (fixnum->uint32 (string-length str)))
+			 (length (fixnum->uint32 (string-length str)))
 			 (left str))))
-		(js-object-mode-set! o (js-jsstring-normalized-mode))
+		(js-object-mode-set! o (js-jsstring-normalized-utf8-mode))
 		(hashtable-put! js-names str o)
 		(js-jsstring-name-set! o o)
 		o)))))
