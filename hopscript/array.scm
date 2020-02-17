@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Feb 13 15:09:47 2020 (serrano)                */
+;*    Last change :  Fri Feb 14 10:10:39 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2722,7 +2722,7 @@
 	 (when (<fx i (uint32->fixnum ilen))
 	    (let* ((v (vector-ref vec i))
 		   (desc (instantiate::JsValueDescriptor
-			    (name (js-integer-name i))
+			    (name (js-integer-name->jsstring i))
 			    (value v)
 			    (writable #t)
 			    (enumerable #t)
@@ -2819,7 +2819,7 @@
 	       (if (js-absent? v)
 		   (loop i (+fx j 1))
 		   (let ((desc (instantiate::JsValueDescriptor
-				  (name (js-integer-name j))
+				  (name (js-integer-name->jsstring j))
 				  (value v)
 				  (writable #t)
 				  (enumerable #t)
