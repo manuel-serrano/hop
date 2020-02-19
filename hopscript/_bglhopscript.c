@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/hopscript/_bglhopscript.c           */
+/*    serrano/prgm/project/hop/hop/hopscript/_bglhopscript.new.c       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Wed Feb 12 13:18:10 2020 (serrano)                */
+/*    Last change :  Wed Feb 19 12:21:10 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -29,12 +29,18 @@
 /*    JsObject imports                                                 */
 /*---------------------------------------------------------------------*/
 extern obj_t BGl_JsObjectz00zz__hopscript_typesz00;
+extern obj_t BGl_JsProxyz00zz__hopscript_typesz00;
 extern obj_t BGl_JsArrayz00zz__hopscript_typesz00;
 
 #define JSOBJECT_SIZE \
    sizeof( struct BgL_jsobjectz00_bgl )
 #define JSOBJECT_CLASS_INDEX \
    BGL_CLASS_INDEX( BGl_JsObjectz00zz__hopscript_typesz00 )
+
+#define JSPROXY_SIZE \
+   sizeof( struct BgL_jsproxyz00_bgl )
+#define JSPROXY_CLASS_INDEX \
+   BGL_CLASS_INDEX( BGl_JsProxyz00zz__hopscript_typesz00 )
 
 #define JSARRAY_SIZE \
    sizeof( struct BgL_jsarrayz00_bgl )
@@ -44,6 +50,8 @@ extern obj_t BGl_JsArrayz00zz__hopscript_typesz00;
 extern obj_t bgl_js_profile_allocs;
 obj_t bgl_profile_pcache_tables = BNIL;
 extern int GC_pthread_create();
+
+static obj_t jsproxy_constrmap, jsproxy_elements;
 
 /*---------------------------------------------------------------------*/
 /*    type alias                                                       */
@@ -71,10 +79,16 @@ typedef struct BgL_jspropertycachez00_bgl pcache_t;
 extern obj_t bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode );
 
 #if HOP_ALLOC_POLICY != HOP_ALLOC_CLASSIC
-static obj_t bgl_make_jsobject_sans( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode );
+static obj_t bgl_make_jsobject_sans( int constrsize, obj_t constrmap,
+				     obj_t __proto__, uint32_t mode );
+static obj_t bgl_make_jsproxy_sans( // obj_t constrmap, obj_t elements,
+				    obj_t target, obj_t handler,
+				    obj_t gcache, obj_t scache, obj_t acache,
+				    uint32_t mode );
 #endif
 
 #define POOL_SIZE( sz ) (12800 >> sz)
+#define PROXY_POOL_SIZE POOL_SIZE( 3 )
 #define WORK_NUMBER 1
 #define ALLOC_STATS 0  
 
@@ -92,6 +106,7 @@ static obj_t bgl_make_jsobject_sans( int constrsize, obj_t constrmap, obj_t __pr
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_POLICY == HOP_ALLOC_SPINLOCK
 static pthread_spinlock_t lock1, lock2, lock3, lock4, lock5, lock6;
+static pthread_spinlock_t lockproxy;
 
 #  define alloc_spin_init( x, attr ) pthread_spin_init( x, attr )
 #  define alloc_spin_lock( x ) pthread_spin_lock( x )
@@ -112,15 +127,30 @@ static pthread_spinlock_t lock1, lock2, lock3, lock4, lock5, lock6;
 #endif
 
 /*---------------------------------------------------------------------*/
-/*    alloc pools                                                      */
+/*    alloc pool types                                                 */
 /*---------------------------------------------------------------------*/
+typedef union apayload {
+   const uint32_t objsize;
+   unsigned char dummy;
+} apayload_t;
+
 typedef struct apool {
+   void (*fill_buffer)( struct apool *pool, void *arg );
    obj_t *buffer;
    const uint32_t size;
-   const uint32_t objsize;
    uint32_t idx;
+   apayload_t payload;
 } apool_t;
 
+/*---------------------------------------------------------------------*/
+/*    buffer fillers ...                                               */
+/*---------------------------------------------------------------------*/
+static void jsobject_fill_buffer( apool_t *pool, void *arg );
+static void jsproxy_fill_buffer( apool_t *pool, void *arg );
+
+/*---------------------------------------------------------------------*/
+/*    alloc pools                                                      */
+/*---------------------------------------------------------------------*/
 static int pool_queue_idx = 0;
 static int pool_queue_len = 0;
 static apool_t **pool_queue = 0;;
@@ -128,35 +158,40 @@ static apool_t **pool_queue = 0;;
 static pthread_mutex_t alloc_pool_mutex;
 static pthread_cond_t alloc_pool_cond;
 
-static HOP_ALLOC_THREAD_DECL apool_t pool1 = {
-   .objsize = 1, .idx = POOL_SIZE( 1 ), .size = POOL_SIZE( 1 ) };
-static HOP_ALLOC_THREAD_DECL apool_t npool1 = {
-   .objsize = 1, .idx = POOL_SIZE( 1 ), .size = POOL_SIZE( 1 ) };
+#define APOOL_JSOBJECT_INIT( sz ) { \
+   .fill_buffer = &jsobject_fill_buffer, \
+   .idx = POOL_SIZE( sz ), \
+   .size = POOL_SIZE( sz ), \
+   .payload = { .objsize = sz } \
+};
 
-static HOP_ALLOC_THREAD_DECL apool_t pool2 = {
-   .objsize = 2, .idx = POOL_SIZE( 2 ), .size = POOL_SIZE( 2 ) };
-static HOP_ALLOC_THREAD_DECL apool_t npool2 = {
-   .objsize = 2, .idx = POOL_SIZE( 2 ), .size = POOL_SIZE( 2 ) };
+#define APOOL_JSPROXY_INIT() { \
+   .fill_buffer = &jsproxy_fill_buffer,	\
+   .idx = PROXY_POOL_SIZE, \
+   .size = PROXY_POOL_SIZE, \
+   .payload = { .dummy = 0 } \
+};
 
-static HOP_ALLOC_THREAD_DECL apool_t pool3 = {
-   .objsize = 3, .idx = POOL_SIZE( 3 ), .size = POOL_SIZE( 3 ) };
-static HOP_ALLOC_THREAD_DECL apool_t npool3 = {
-   .objsize = 3, .idx = POOL_SIZE( 3 ), .size = POOL_SIZE( 3 ) };
+static HOP_ALLOC_THREAD_DECL apool_t pool1 = APOOL_JSOBJECT_INIT( 1 );
+static HOP_ALLOC_THREAD_DECL apool_t npool1 = APOOL_JSOBJECT_INIT( 1 );
 
-static HOP_ALLOC_THREAD_DECL apool_t pool4 = {
-   .objsize = 4, .idx = POOL_SIZE( 4 ), .size = POOL_SIZE( 4 ) };
-static HOP_ALLOC_THREAD_DECL apool_t npool4 = {
-   .objsize = 4, .idx = POOL_SIZE( 4 ), .size = POOL_SIZE( 4 ) };
+static HOP_ALLOC_THREAD_DECL apool_t pool2 = APOOL_JSOBJECT_INIT( 2 );
+static HOP_ALLOC_THREAD_DECL apool_t npool2 = APOOL_JSOBJECT_INIT( 2 );
 
-static HOP_ALLOC_THREAD_DECL apool_t pool5 = {
-   .objsize = 5, .idx = POOL_SIZE( 5 ), .size = POOL_SIZE( 5 ) };
-static HOP_ALLOC_THREAD_DECL apool_t npool5 = {
-   .objsize = 5, .idx = POOL_SIZE( 5 ), .size = POOL_SIZE( 5 ) };
+static HOP_ALLOC_THREAD_DECL apool_t pool3 = APOOL_JSOBJECT_INIT( 3 );
+static HOP_ALLOC_THREAD_DECL apool_t npool3 = APOOL_JSOBJECT_INIT( 3 );
 
-static HOP_ALLOC_THREAD_DECL apool_t pool6 = {
-   .objsize = 6, .idx = POOL_SIZE( 6 ), .size = POOL_SIZE( 6 ) };
-static HOP_ALLOC_THREAD_DECL apool_t npool6 = {
-   .objsize = 6, .idx = POOL_SIZE( 6 ), .size = POOL_SIZE( 6 ) };
+static HOP_ALLOC_THREAD_DECL apool_t pool4 = APOOL_JSOBJECT_INIT( 4 );
+static HOP_ALLOC_THREAD_DECL apool_t npool4 = APOOL_JSOBJECT_INIT( 4 );
+
+static HOP_ALLOC_THREAD_DECL apool_t pool5 = APOOL_JSOBJECT_INIT( 5 );
+static HOP_ALLOC_THREAD_DECL apool_t npool5 = APOOL_JSOBJECT_INIT( 5 );
+
+static HOP_ALLOC_THREAD_DECL apool_t pool6 = APOOL_JSOBJECT_INIT( 6 );
+static HOP_ALLOC_THREAD_DECL apool_t npool6 = APOOL_JSOBJECT_INIT( 6 );
+
+static HOP_ALLOC_THREAD_DECL apool_t poolproxy = APOOL_JSPROXY_INIT();
+static HOP_ALLOC_THREAD_DECL apool_t npoolproxy = APOOL_JSPROXY_INIT();
 
 int inl1 = 0, snd1 = 0, slow1 = 0, qsz1 = 0;
 int inl2 = 0, snd2 = 0, slow2 = 0, qsz2 = 0;
@@ -164,6 +199,8 @@ int inl3 = 0, snd3 = 0, slow3 = 0, qsz3 = 0;
 int inl4 = 0, snd4 = 0, slow4 = 0, qsz4 = 0;
 int inl5 = 0, snd5 = 0, slow5 = 0, qsz5 = 0;
 int inl6 = 0, snd6 = 0, slow6 = 0, qsz6 = 0;
+
+int inlprox = 0, sndproxy = 0, slowproxy = 0, qszproxy = 0;
 
 /*---------------------------------------------------------------------*/
 /*    static void                                                      */
@@ -183,13 +220,44 @@ pool_queue_add( apool_t *pool ) {
       }
    }
 
-   //fprintf( stderr, "pool_queue_add idx=%d len=%d\n" , pool_queue_idx, pool_queue_len );
    pool_queue[ pool_queue_idx++ ] = pool;
    pthread_cond_signal( &alloc_pool_cond );
    pthread_mutex_unlock( &alloc_pool_mutex );
 }
 
-   
+/*---------------------------------------------------------------------*/
+/*    static void                                                      */
+/*    jsobject_buffer_fill ...                                         */
+/*---------------------------------------------------------------------*/
+static void
+jsobject_fill_buffer( apool_t *pool, void *arg ) {
+   int i;
+   obj_t *buffer = pool->buffer;
+   const uint32_t size = pool->size;
+   const uint32_t objsize = pool->payload.objsize;
+
+   for( i = 0; i < size; i++ ) {
+      buffer[ i ] = bgl_make_jsobject_sans( objsize, 0L, 0L, (uint32_t)(long)arg );
+   }
+}
+     
+/*---------------------------------------------------------------------*/
+/*    static void                                                      */
+/*    jsproxy_buffer_fill ...                                          */
+/*---------------------------------------------------------------------*/
+static void
+jsproxy_fill_buffer( apool_t *pool, void *arg ) {
+   int i;
+   obj_t *buffer = pool->buffer;
+   const uint32_t size = pool->size;
+
+   for( i = 0; i < size; i++ ) {
+      buffer[ i ] =
+	 bgl_make_jsproxy_sans( //jsproxy_constrmap, jsproxy_elements,
+				0L, 0L, 0L, 0L, 0L, (uint32_t)(long)arg );
+   }
+}
+     
 /*---------------------------------------------------------------------*/
 /*    static void *                                                    */
 /*    thread_alloc_worker ...                                          */
@@ -198,10 +266,6 @@ pool_queue_add( apool_t *pool ) {
 static void *
 thread_alloc_worker( void *arg ) {
    apool_t *pool;
-   uint32_t size;
-   uint32_t objsize;
-   obj_t *buffer;
-   int i;
 
    while( 1 ) {
       pthread_mutex_lock( &alloc_pool_mutex );
@@ -212,13 +276,8 @@ thread_alloc_worker( void *arg ) {
       pool = pool_queue[ --pool_queue_idx ];
       pthread_mutex_unlock( &alloc_pool_mutex );
 
-      buffer = pool->buffer;
-      size = pool->size;
-      objsize = pool->objsize;
+      pool->fill_buffer( pool, arg );
 
-      for( i = 0; i < size; i++ ) {
-	 buffer[ i ] = bgl_make_jsobject_sans( objsize, 0L, 0L, (uint32_t)(long)arg );
-      }
       pool->idx = 0;
    }
 }
@@ -231,7 +290,7 @@ thread_alloc_worker( void *arg ) {
 /*    This function is split from BGL_INIT_JSALLOC to enable bmem      */
 /*    lock initialization without spawning the worker threads.         */
 /*---------------------------------------------------------------------*/
-void
+static void
 bgl_init_jsalloc_locks() {
    pthread_mutex_init( &alloc_pool_mutex, 0L );
    pthread_cond_init( &alloc_pool_cond, 0L );
@@ -242,6 +301,7 @@ bgl_init_jsalloc_locks() {
    alloc_spin_init( &lock4, 0L );
    alloc_spin_init( &lock5, 0L );
    alloc_spin_init( &lock6, 0L );
+   alloc_spin_init( &lockproxy, 0L );
 }
 
 /*---------------------------------------------------------------------*/
@@ -272,6 +332,25 @@ int bgl_init_jsalloc( uint32_t md ) {
    }
 
    return 0;
+#endif   
+}
+
+/*---------------------------------------------------------------------*/
+/*    int                                                              */
+/*    bgl_init_jsalloc_proxy ...                                       */
+/*---------------------------------------------------------------------*/
+int
+bgl_init_jsalloc_proxy( obj_t constrmap, obj_t elements ) {
+#if HOP_ALLOC_POLICY != HOP_ALLOC_CLASSIC
+   static int jsinit = 0;
+   int i;
+
+   if( jsinit ) return 1;
+
+   jsinit = 1;
+
+   jsproxy_constrmap = constrmap;
+   jsproxy_elements = elements;
 #endif   
 }
 
@@ -421,6 +500,142 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mo
 
    return BNANOBJECT( o );
 }
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_make_jsproxy_sans ...                                        */
+/*    -------------------------------------------------------------    */
+/*    Fast C allocation, equivalent to                                 */
+/*                                                                     */
+/*      (instantiate::JsProxy                                          */
+/*         (__proto__ __proto__)                                       */
+/*         (cmap constrmap)                                            */
+/*         (elements proxy-elements))                                  */
+/*---------------------------------------------------------------------*/
+#if HOP_ALLOC_POLICY == HOP_ALLOC_CLASSIC
+obj_t
+bgl_make_jsproxy( // obj_t constrmap, obj_t elements,
+		  obj_t target, obj_t handler,
+		  obj_t getcache, obj_t setcache, obj_t applycache,
+		  uint32_t mode ) {
+#else   
+static obj_t
+   bgl_make_jsproxy_sans( // obj_t constrmap, obj_t elements,
+		       obj_t target, obj_t handler,
+		       obj_t getcache, obj_t setcache, obj_t applycache,
+		       uint32_t mode ) {
+#endif
+   long bsize = JSPROXY_SIZE;
+   BgL_jsproxyz00_bglt o = (BgL_jsproxyz00_bglt)HOP_MALLOC( bsize );
+   int i;
+   obj_t constrmap = jsproxy_constrmap;
+   obj_t elements = jsproxy_elements;
+
+   // class initialization
+   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSPROXY_CLASS_INDEX );
+   
+   // fields init
+   BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)mode );
+   BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), target );
+   o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
+   o->BgL_elementsz00 = elements;
+   o->BgL_handlerz00 = (struct BgL_jsobjectz00_bgl *)handler;
+   o->BgL_getcachez00 = getcache;
+   o->BgL_setcachez00 = setcache;;
+   o->BgL_applycachez00 = applycache;
+   
+#if( defined( HOP_PROFILE ) )
+   {
+      long i = ( constrsize >= VECTOR_LENGTH( bgl_js_profile_allocs ) - 2
+		 ? VECTOR_LENGTH( bgl_js_profile_allocs ) -1
+		 : constrsize );
+      long cnt = BLLONG_TO_LLONG( VECTOR_REF( bgl_js_profile_allocs, i ) );
+      VECTOR_SET( bgl_js_profile_allocs, i, LLONG_TO_BLLONG( cnt + 1 ) );
+   }
+#endif
+
+   return BNANOBJECT( o );
+}
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_make_jsproxy ...                                             */
+/*    -------------------------------------------------------------    */
+/*    Fast C allocation, equivalent to                                 */
+/*                                                                     */
+/*      (instantiate::JsProxy                                          */
+/*         (__proto__ __proto__)                                       */
+/*         (cmap constrmap)                                            */
+/*         (elements proxy-elements))                                  */
+/*---------------------------------------------------------------------*/
+#if HOP_ALLOC_POLICY != HOP_ALLOC_CLASSIC
+obj_t
+bgl_make_jsproxy( // obj_t constrmap, obj_t elements,
+		  obj_t target, obj_t handler,
+		  obj_t getcache, obj_t setcache, obj_t applycache,
+		  uint32_t md ) {
+      alloc_spin_lock( &lockproxy ); 
+   if( poolproxy.idx < PROXY_POOL_SIZE ) { 
+      obj_t o = poolproxy.buffer[ poolproxy.idx ]; 
+      poolproxy.buffer[ poolproxy.idx++ ] = 0; 
+      alloc_spin_unlock( &lockproxy );
+      
+      BGL_OBJECT_WIDENING_SET( o, target );
+      ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_handlerz00 = (BgL_jsobjectz00_bglt)handler; 
+      ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_getcachez00 = getcache; 
+      ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_setcachez00 = setcache; 
+      ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_applycachez00 = applycache; 
+      ALLOC_STAT( inlproxy++ ); 
+      return o; 
+   } else if( npoolproxy.idx == 0 ) { 
+      /* swap the two pools */ 
+      obj_t *buffer = poolproxy.buffer; 
+      obj_t o = npoolproxy.buffer[ 0 ]; 
+      
+      poolproxy.buffer = npoolproxy.buffer; 
+      poolproxy.buffer[ 0 ] = 0; 
+      poolproxy.idx = 1; 
+      
+      npoolproxy.buffer = buffer; 
+      npoolproxy.idx = npoolproxy.size; 
+      
+      /* add the pool to the pool queue */ 
+      pool_queue_add( &npoolproxy ); 
+      
+      BGL_OBJECT_WIDENING_SET( o, target );
+      ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_handlerz00 = (BgL_jsobjectz00_bglt)handler; 
+      ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_getcachez00 = getcache; 
+      ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_setcachez00 = setcache; 
+      ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_applycachez00 = applycache; 
+      
+      ALLOC_STAT( sndproxy++ ); 
+      alloc_spin_unlock( &lockproxy ); 
+      return o; 
+   } else { 
+      /* initialize the two alloc pools */ 
+      if( !poolproxy.buffer ) { 
+	 poolproxy.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*PROXY_POOL_SIZE ); 
+	 poolproxy.idx = PROXY_POOL_SIZE; 
+      } 
+      if( !npoolproxy.buffer ) { 
+	 npoolproxy.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*PROXY_POOL_SIZE ); 
+	 npoolproxy.idx = PROXY_POOL_SIZE; 
+	 pool_queue_add( &npoolproxy ); 
+      } 
+      
+      /* default slow alloc */ 
+      ALLOC_STAT( slowproxy++ ); 
+      ALLOC_STAT( pool_queue_idx > qszproxy ? qszproxy = pool_queue_idx : 0 ); 
+      ALLOC_STAT( (slowproxy % 1000000 == 0) ? fprintf( stderr, "sz=%d inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", sz, inlproxy, sndproxy, slowproxy, (long)(100*(double)slowproxy/(double)(inlproxy+sndproxy)), inlproxy + sndproxy + slowproxy, qszproxy) : 0 ); 
+      alloc_spin_unlock( &lockproxy ); 
+      return bgl_make_jsproxy_sans( // constrmap, elements,
+				    target, handler,
+				    getcache, setcache, applycache, md ); 
+   } 
+}
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    static obj_t                                                     */

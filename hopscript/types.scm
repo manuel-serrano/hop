@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Feb 17 07:39:01 2020 (serrano)                */
+;*    Last change :  Tue Feb 18 18:09:06 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -36,8 +36,14 @@
 
    (extern ($js-init-jsalloc::int (::uint32)
 	      "bgl_init_jsalloc")
+	   ($js-init-jsalloc-proxy::int (::obj ::obj)
+	      "bgl_init_jsalloc_proxy")
 	   ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsobject")
+	   ($js-make-jsproxy::JsProxy (;; ::JsConstructMap ::obj
+					 ::obj ::obj
+					 ::obj ::obj ::obj ::uint32)
+	      "bgl_make_jsproxy")
 	   (macro $jsobject-elements-inline?::bool (::JsObject)
 		  "HOP_JSOBJECT_ELEMENTS_INLINEP")
 	   (macro $jsobject-vector-inline?::bool (::JsArray)

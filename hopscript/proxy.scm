@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Wed Feb 12 13:23:33 2020 (serrano)                */
+;*    Last change :  Tue Feb 18 18:01:31 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -36,8 +36,8 @@
 	   __hopscript_profile)
    
    (export (js-init-proxy! ::JsGlobalObject)
-	   (js-new-proxy ::JsGlobalObject ::obj ::obj)
-	   (js-new-proxy/caches ::JsGlobalObject ::obj ::obj
+	   (inline js-new-proxy ::JsGlobalObject ::obj ::obj)
+	   (inline js-new-proxy/caches ::JsGlobalObject ::obj ::obj
 	      ::JsPropertyCache ::JsPropertyCache ::JsPropertyCache)
 	   (js-proxy-debug-name::bstring ::JsProxy ::JsGlobalObject)
 	   (js-proxy-property-value ::JsObject ::JsProxy ::JsStringLiteral ::JsGlobalObject)
@@ -121,26 +121,29 @@
    
    (unless (vector? __js_strings) (set! __js_strings (&init!)))
 
-   (set! proxy-elements
-      (vector
-	 (instantiate::JsWrapperDescriptor
-	    (writable #t)
-	    (configurable #t)
-	    (enumerable #t)
-	    (name (& "%%proxy"))
-	    (%get js-proxy-property-value)
-	    (%set js-proxy-property-value-set!))))
+   (unless proxy-elements
+      (set! proxy-elements
+	 (vector
+	    (instantiate::JsWrapperDescriptor
+	       (writable #t)
+	       (configurable #t)
+	       (enumerable #t)
+	       (name (& "%%proxy"))
+	       (%get js-proxy-property-value)
+	       (%set js-proxy-property-value-set!))))
+      ($js-init-jsalloc-proxy proxy-cmap proxy-elements))
 
    (with-access::JsGlobalObject %this (js-function-prototype js-proxy js-proxy-pcache)
 
       (define (js-proxy-alloc %this constructor::JsFunction)
 	 ;; not used in optimized code, see below
 	 ;; js-new-proxy and js-new-proxy/caches
-	 (instantiateJsProxy
-	    (cmap proxy-cmap)
-	    (__proto__ (js-null))
-	    (elements proxy-elements)))
-
+;* 	 (instantiateJsProxy                                           */
+;* 	    (cmap proxy-cmap)                                          */
+;* 	    (__proto__ (js-null))                                      */
+;* 	    (elements proxy-elements))                                 */
+	 (js-new-proxy %this '() (class-nil JsObject)))
+	 
       (define (js-proxy-construct this::JsProxy t h)
 	 (cond
 	    ((not (js-object? h))
@@ -205,25 +208,35 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-new-proxy ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-new-proxy %this t h)
-   (instantiateJsProxy
-      (cmap proxy-cmap)
-      (__proto__ t)
-      (elements proxy-elements)
-      (handler h)))
+(define-inline (js-new-proxy %this target handler)
+;*    (instantiateJsProxy                                              */
+;*       (cmap proxy-cmap)                                             */
+;*       (elements proxy-elements)                                     */
+;*       (__proto__ t)                                                 */
+;*       (handler h))                                                  */
+   ($js-make-jsproxy ;;proxy-cmap proxy-elements
+      target handler
+      (instantiate::JsPropertyCache)
+      (instantiate::JsPropertyCache)
+      (instantiate::JsPropertyCache)
+      (js-object-default-mode)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new-proxy/caches ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-new-proxy/caches %this t h gcache scache acache)
-   (instantiateJsProxy
-      (cmap proxy-cmap)
-      (__proto__ t)
-      (elements proxy-elements)
-      (handler h)
-      (getcache gcache)
-      (setcache scache)
-      (applycache acache)))
+(define-inline (js-new-proxy/caches %this target handler gcache scache acache)
+;*    (instantiateJsProxy                                              */
+;*       (cmap proxy-cmap)                                             */
+;*       (__proto__ t)                                                 */
+;*       (elements proxy-elements)                                     */
+;*       (handler h)                                                   */
+;*       (getcache gcache)                                             */
+;*       (setcache scache)                                             */
+;*       (applycache acache))                                          */
+   ($js-make-jsproxy ;; proxy-cmap proxy-elements
+      target handler
+      gcache scache acache
+      (js-object-default-mode)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-debug-name ...                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Feb 17 11:56:50 2020 (serrano)                */
+;*    Last change :  Mon Feb 17 16:01:33 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -67,6 +67,7 @@
 	   (js-jsstring-normalize-ASCII!::bstring ::JsStringLiteral)
 	   (js-jsstring-normalize-UTF8!::bstring ::JsStringLiteral)
 	   (inline js-jsstring-append::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
+	   (inline js-jsstring-append-ascii::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (utf8-codeunit-length::long ::bstring)
 	   (js-utf8-ref ::JsStringLiteralUTF8 ::bstring ::long ::JsGlobalObject)
 	   (js-get-string ::JsStringLiteral ::obj ::obj)
@@ -1012,6 +1013,20 @@
 		(js-object-mode-set! s (js-jsstring-default-ascii-mode))
 		(object-widening-set! s #f)
 		s)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-append-ascii ...                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-append-ascii::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
+   (with-access::JsStringLiteral left ((llen length))
+      (with-access::JsStringLiteral right ((rlen length))
+	 (let ((s (instantiate::JsStringLiteralASCII
+		     (length (+u32 llen rlen))
+		     (left left)
+		     (right right))))
+	    (js-object-mode-set! s (js-jsstring-default-ascii-mode))
+	    (object-widening-set! s #f)
+	    s))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-concat ...                                           */

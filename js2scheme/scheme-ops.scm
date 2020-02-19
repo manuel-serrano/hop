@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Feb  6 10:08:43 2020 (serrano)                */
+;*    Last change :  Mon Feb 17 16:03:22 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1257,13 +1257,27 @@
 ;*---------------------------------------------------------------------*/
 (define (js-binop-add loc type lhs::J2SExpr rhs::J2SExpr
 	   mode return conf)
+
+   (define (ascii? x)
+      (match-case x
+	 ((& (and (? string?) (? (lambda (s) (eq? (string-minimal-charset s) 'ascii)))))
+	  #t)
+	 ((js-integer->jsstring ?-)
+	  #t)
+	 (else
+	  #f)))
+   
+   (define (j2s-jsstring-append x y)
+      (if (and (ascii? x) (ascii? y))
+	  `(js-jsstring-append-ascii ,x ,y)
+	  `(js-jsstring-append ,x ,y)))
    
    (define (str-append flip left right)
       (cond
 	 ((equal? left '(& "")) right)
 	 ((equal? right '(& "")) left)
-	 (flip `(js-jsstring-append ,right ,left))
-	 (else `(js-jsstring-append ,left ,right))))
+	 (flip (j2s-jsstring-append right left))
+	 (else (j2s-jsstring-append left right))))
    
    (define (add-string loc type left tl lhs right tr rhs
 	      mode return conf flip)

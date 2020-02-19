@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Mon Feb 17 08:56:59 2020 (serrano)                */
+;*    Last change :  Tue Feb 18 02:29:24 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -274,9 +274,9 @@
       ((uint32? v)
        `(& ,(llong->string (uint32->llong v))))
       ((inrange-int32? expr)
-       `(js-ascii->jsstring (fixnum->string (uint32->fixnum ,v))))
+       `(js-integer->jsstring (uint32->fixnum ,v)))
       ((m64? conf)
-       `(js-ascii->jsstring (fixnum->string (uint32->fixnum ,v))))
+       `(js-integer->jsstring (uint32->fixnum ,v)))
       (else
        `(js-ascii->jsstring (llong->string (uint32->llong ,v))))))
 
