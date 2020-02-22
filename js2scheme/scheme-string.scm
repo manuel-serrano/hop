@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Jul 12 08:53:05 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Fri Feb 21 16:50:48 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
 ;*=====================================================================*/
@@ -223,8 +223,7 @@
 	      ,(j2s-scheme obj mode return conf)
 	      ,(if (eq? (j2s-vtype expr) 'uint32)
 		   sexp
-		   `(fixnum->uint32 ,sexp))
-	      ,(j2s-scheme %this mode return conf))))
+		   `(fixnum->uint32 ,sexp)))))
       (else
        `(js-jsstring-charcodeat
 	   ,(j2s-scheme obj mode return conf)

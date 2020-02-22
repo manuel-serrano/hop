@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Feb 17 16:01:33 2020 (serrano)                */
+;*    Last change :  Fri Feb 21 16:34:05 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -78,8 +78,8 @@
 	   (js-jsstring-maybe-lastindexof ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-charcodeat ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-charcodeat-as-int32::int32 ::obj ::obj ::JsGlobalObject)
-	   (js-jsstring-charcodeatu32 ::JsStringLiteral ::uint32 ::JsGlobalObject)
-	   (js-jsstring-charcodeatu32-as-int32::int32 ::JsStringLiteral ::uint32 ::JsGlobalObject)
+	   (js-jsstring-charcodeatu32 ::JsStringLiteral ::uint32)
+	   (js-jsstring-charcodeatu32-as-int32::int32 ::JsStringLiteral ::uint32)
 	   (js-jsstring-maybe-charcodeat ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-charat ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-charat ::obj ::obj ::JsGlobalObject ::obj)
@@ -371,7 +371,10 @@
 	 (js-jsstring-normalize-UTF8! ,this) ,@args))
        (else
 	(,(symbol-append 'ascii- fun)
-	 (js-jsstring-normalize-ASCII! ,this) ,@args))))
+	 (if (js-jsstring-normalized? ,this)
+	     (with-access::JsStringLiteral ,this (left) left)
+	     (js-jsstring-normalize-ASCII! ,this))
+	 ,@args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-ascii->jsstring ...                                           */
@@ -1551,7 +1554,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.5     */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-charcodeatu32 this position::uint32 %this)
+(define (js-jsstring-charcodeatu32 this position::uint32)
    
    (define (ascii-charcodeat val::bstring)
       (if (>=u32 position (fixnum->uint32 (string-length val)))
@@ -1570,7 +1573,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.5     */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-charcodeatu32-as-int32::int32 this position::uint32 %this)
+(define (js-jsstring-charcodeatu32-as-int32::int32 this position::uint32)
    
    (define (ascii-charcodeat val::bstring)
       (if (>=u32 position (fixnum->uint32 (string-length val)))
