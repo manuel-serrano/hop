@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/function.scm              */
+;*    /tmp/HOPNEW/hop/hopscript/function.scm                           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Feb 12 13:34:20 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 14:35:25 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -39,7 +39,7 @@
 	   
 	   (js-function-debug-name::bstring ::JsFunction ::JsGlobalObject)
 	   (js-make-function::JsFunction
-	      ::JsGlobalObject ::procedure ::int ::bstring
+	      ::JsGlobalObject ::procedure ::int ::JsStringLiteral
 	      #!key
 	      method construct alloc
 	      __proto__ prototype
@@ -47,7 +47,7 @@
 	      (size 0) (constrsize 3) (maxconstrsize 100)
 	      (constrmap (js-not-a-cmap)) (shared-cmap #t))
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
-	      ::int ::bstring ::int ::int ::symbol ::int)
+	      ::int ::JsStringLiteral ::int ::int ::symbol ::int)
 	   
 	   (inline js-function-prototype-get ::obj ::JsFunction ::obj ::JsGlobalObject)
 	   
@@ -227,7 +227,7 @@
       ;; then, create the properties of the function contructor
       (set! js-function
 	 (js-make-function %this
-	    (%js-function %this) 1 "Function"
+	    (%js-function %this) 1 (& "Function")
 	    :alloc js-no-alloc
 	    :src (cons (current-loc) "Function() { /* function.scm */}")
 	    :__proto__ js-function-prototype
@@ -243,7 +243,7 @@
 			 (lambda (o v)
 			    (js-raise-type-error %this
 			       "[[ThrowTypeError]] ~a" o))
-			 1 "thrower")))
+			 1 (& "thrower"))))
 	 (set! thrower-get thrower)
 	 (set! thrower-set thrower)
 	 (set! strict-arguments-property
@@ -387,7 +387,7 @@
 (define (%js-function %this::JsGlobalObject)
    (lambda (this . args)
       (if (null? args)
-	  (js-make-function %this (lambda (this) (js-undefined)) 0 ""
+	  (js-make-function %this (lambda (this) (js-undefined)) 0 (& "")
 	     :alloc js-object-alloc)
 	  (let* ((len (length args))
 		 (formals (take args (-fx len 1)))
@@ -551,7 +551,7 @@
 	 ;; length
 	 (vector-set! els 1 length)
 	 ;; name
-	 (vector-set! els 2 (js-name->jsstring name))
+	 (vector-set! els 2 name)
 	 ;; strict properties
 	 (unless (eq? strict 'normal)
 	    (vector-set! els 3 strict-arguments-property)
@@ -599,7 +599,7 @@
 ;*    js-make-function-simple ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-make-function-simple %this::JsGlobalObject proc::procedure
-	   len::int name::bstring arity::int minlen::int strict::symbol
+	   len::int name::JsStringLiteral arity::int minlen::int strict::symbol
 	   constrsize::int)
    (js-make-function %this proc len name
       :prototype #f :__proto__ #f
@@ -664,7 +664,7 @@
 	     (js-typeof this %this)))))
 
    (js-bind! %this obj (& "toString")
-      :value (js-make-function %this tostring 0 "toString"
+      :value (js-make-function %this tostring 0 (& "toString")
 		:prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
       :hidden-class #t)
@@ -681,7 +681,7 @@
 	     (js-typeof this %this))))
    
    (js-bind! %this obj (& "source")
-      :value (js-make-function %this source 0 "source"
+      :value (js-make-function %this source 0 (& "source")
 		:prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
       :hidden-class #t)
@@ -691,7 +691,7 @@
       (js-bind! %this obj js-symbol-hasinstance
 	 :value (js-make-function %this
 		   (lambda (this o) (js-ordinary-instanceof? %this o this))
-		   1 "[Symbol.hasInstance]" :prototype (js-undefined))
+		   1 (& "[Symbol.hasInstance]") :prototype (js-undefined))
 	 :enumerable #f :writable #f :configurable #f
 	 :hidden-class #t))
    
@@ -701,7 +701,7 @@
       (js-apply-array %this this thisarg argarray))
 
    (js-bind! %this obj (& "apply")
-      :value (js-make-function %this prototype-apply 2 "apply"
+      :value (js-make-function %this prototype-apply 2 (& "apply")
 		:prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
       :hidden-class #t)
@@ -723,7 +723,7 @@
    
    (with-access::JsGlobalObject %this (js-call)
       (set! js-call
-	 (js-make-function %this call 1 "call" :prototype (js-undefined)))
+	 (js-make-function %this call 1 (& "call") :prototype (js-undefined)))
       (js-bind! %this obj (& "call")
 	 :value js-call
 	 :enumerable #f :writable #t :configurable #t
@@ -746,9 +746,10 @@
 			      %this
 			      proc
 			      (maxfx 0 (-fx len (length args)))
-			      (string-append "bound "
-				 (js-tostring (js-get this (& "name") %this)
-				    %this))
+			      (js-name->jsstring 
+				 (string-append "bound "
+				    (js-tostring (js-get this (& "name") %this)
+				       %this)))
 			      :__proto__ proto
 			      :prototype 'bind
 			      :strict 'strict
@@ -760,7 +761,8 @@
 		   fun)))))
 
    (js-bind! %this obj (& "bind")
-      :value (js-make-function %this bind 1 "bind" :prototype (js-undefined))
+      :value (js-make-function %this bind 1 (& "bind")
+		:prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
       :hidden-class #t)
    

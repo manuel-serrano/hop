@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/error.scm                 */
+;*    /tmp/HOPNEW/hop/hopscript/error.scm                              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Feb 12 13:42:45 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 14:45:46 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -306,7 +306,7 @@
 		      (lambda (o)
 			 (with-access::JsFrame o (file)
 			    (js-string->jsstring file)))
-		      0 "getFileName"
+		      0 (& "getFileName")
 		      :src "error.scm")
 	    :enumerable #t
 	    :hidden-class #t)
@@ -315,7 +315,7 @@
 		      (lambda (o)
 			 (with-access::JsFrame o (line)
 			    line))
-		      0 "getLineNumber"
+		      0 (& "getLineNumber")
 		      :src "error.scm")
 	    :enumerable #t
 	    :hidden-class #t)
@@ -324,7 +324,7 @@
 		      (lambda (o)
 			 (with-access::JsFrame o (column)
 			    column))
-		      0 "getColumnNumber"
+		      0 (& "getColumnNumber")
 		      :src "error.scm")
 	    :enumerable #t
 	    :hidden-class #t)
@@ -333,7 +333,7 @@
 		      (lambda (o)
 			 (with-access::JsFrame o (fun)
 			    (js-string->jsstring fun)))
-		      0 "getFunctionName"
+		      0 (& "getFunctionName")
 		      :src "error.scm")
 	    :enumerable #t
 	    :hidden-class #t)
@@ -342,7 +342,7 @@
 		      (lambda (o)
 			 (with-access::JsFrame o (iseval)
 			    iseval))
-		      0 "isEval"
+		      0 (& "isEval")
 		      :src "error.scm")
 	    :enumerable #t
 	    :hidden-class #t)
@@ -371,12 +371,12 @@
 				       (js-call2 %this prepare js-error
 					  err frames))
 				    (hop-stack->jsstring err stack))))
-			  0 "get"
+			  0 (& "get")
 			  :src "error.scm")
 		  :set (js-make-function %this
 			  (lambda (o v)
 			     (js-undefined))
-			  2 "set"
+			  2 (& "set")
 			  :src "error.scm")
 		  :enumerable #f
 		  :configurable #t
@@ -387,21 +387,21 @@
 	 :value (js-make-function %this
 		   (lambda (exn)
 		      (exception-notify exn))
-		   1 "notify"
+		   1 (& "notify")
 		   :src "error.scm")
 	 :enumerable #f)
       (js-bind! %this js-error-prototype (& "message")
 	 :set (js-make-function %this
 		 (lambda (o v)
 		    (js-bind! %this o (& "message") :value v :enumerable #f))
-		 1 "message"
+		 1 (& "message")
 		 :src "error.scm")
 	 :get (js-make-function %this
 		 (lambda (o)
 		    (if (isa? o JsError)
 			(with-access::JsError o (msg) msg)
 			(js-undefined)))
-		 0 "message"
+		 0 (& "message")
 		 :src "error.scm")
 	 :enumerable #f
 	 :configurable #t
@@ -410,14 +410,14 @@
 	 :set (js-make-function %this
 		 (lambda (o v)
 		    (js-bind! %this o (& "name") :value v))
-		 1 "name"
+		 1 (& "name")
 		 :src "error.scm")
 	 :get (js-make-function %this
 		 (lambda (o)
 		    (if (isa? o JsError)
 			(with-access::JsError o (name) name)
 			(js-undefined)))
-		 0 "name"
+		 0 (& "name")
 		 :src "error.scm")
 	 :enumerable #f
 	 :hidden-class #t)
@@ -425,7 +425,7 @@
       ;; then, create a HopScript object
       (set! js-error
 	 (js-make-function %this (%js-error %this) 1
-	    "Error"
+(& 	    "Error")
 	    :__proto__ js-function-prototype
 	    :prototype js-error-prototype
 	    :size 5
@@ -435,7 +435,7 @@
       (init-builtin-error-prototype! %this js-error js-error-prototype)
       (set! js-syntax-error
 	 (js-make-function %this (%js-syntax-error %this) 1
-	    "SyntaxError"
+(& 	    "SyntaxError")
 	    :__proto__ js-function-prototype
 	    :prototype (instantiateJsError
 			  (%this %this)
@@ -447,7 +447,7 @@
 	    :src "error.scm"))
       (set! js-type-error
 	 (js-make-function %this (%js-type-error %this) 1
-	    "TypeError"
+(& 	    "TypeError")
 	    :__proto__ js-function-prototype
 	    :prototype (instantiateJsError
 			  (%this %this)
@@ -459,7 +459,7 @@
 	    :src "error.scm"))
       (set! js-uri-error
 	 (js-make-function %this (%js-uri-error %this) 1
-	    "URIError"
+(& 	    "URIError")
 	    :__proto__ js-function-prototype
 	    :prototype (instantiateJsError
 			  (%this %this)
@@ -471,7 +471,7 @@
 	    :src "error.scm"))
       (set! js-eval-error
 	 (js-make-function %this (%js-eval-error %this) 1
-	    "EvalError"
+(& 	    "EvalError")
 	    :__proto__ js-function-prototype
 	    :prototype (instantiateJsError 
 			  (%this %this)
@@ -483,7 +483,7 @@
 	    :src "error.scm"))
       (set! js-range-error
 	 (js-make-function %this (%js-range-error %this) 1
-	    "RangeError"
+(& 	    "RangeError")
 	    :__proto__ js-function-prototype
 	    :prototype (instantiateJsError 
 			  (%this %this)
@@ -495,7 +495,7 @@
 	    :src "error.scm"))
       (set! js-reference-error
 	 (js-make-function %this (%js-reference-error %this) 1
-	    "ReferenceError"
+(& 	    "ReferenceError")
 	    :__proto__ js-function-prototype
 	    :prototype (instantiateJsError 
 			  (%this %this)
@@ -536,7 +536,7 @@
 	 :value (js-make-function %this
 		   (lambda (o this start-func)
 		      (capture-stack-trace this start-func))
-		   2 "captureStackTrace"
+		   2 (& "captureStackTrace")
 		   :src "error.scm")
 	 :enumerable #f
 	 :hidden-class #t)
@@ -644,7 +644,7 @@
                     (list (js-jsstring->string name4) ": " msg6)))))))
       
    (js-bind! %this obj (& "toString")
-      :value (js-make-function %this error-prototype-tostring 1 "toString"
+      :value (js-make-function %this error-prototype-tostring 1 (& "toString")
 		:src "error.scm")
       :enumerable #f
       :hidden-class #t)

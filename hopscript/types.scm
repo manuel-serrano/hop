@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/types.scm                 */
+;*    /tmp/HOPNEW/hop/hopscript/types.scm                              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Feb 18 18:09:06 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 13:54:53 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -100,7 +100,7 @@
 	      (emap::obj (default #f))
 	      (cmap::obj (default #f))
 	      (pmap::obj (default #t))
-	      (fmap::obj (default #t))
+	      (nmap::obj (default #t))
 	      (amap::obj (default #t))
 	      (index::long (default -1))
 	      (vindex::long (default (js-not-a-index)))
@@ -118,7 +118,7 @@
 	      (cntemap::uint32 (default #u32:0))
 	      (cntcmap::uint32 (default #u32:0))
 	      (cntpmap::uint32 (default #u32:0))
-	      (cntfmap::uint32 (default #u32:0))
+	      (cntnmap::uint32 (default #u32:0))
 	      (cntamap::uint32 (default #u32:0))
 	      (cntvtable::uint32 (default #u32:0)))
 	   

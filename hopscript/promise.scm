@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/promise.scm               */
+;*    /tmp/HOPNEW/hop/hopscript/promise.scm                            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Wed Feb 12 14:13:59 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 14:53:48 2020 (serrano)                */
 ;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -82,7 +82,7 @@
 			   (js-promise-async obj
 			      (lambda ()
 				 (k (scheme->response resp req %this)))))
-			1 "reply")
+			1 (& "reply"))
 		     (js-make-function %this
 			(lambda (this rej)
 			   (let ((errobj (url-path-encode
@@ -96,7 +96,7 @@
 					  (header `((Hop-Error: . ,errobj)))
 					  (value rej)
 					  (ctx %this)))))))
-			1 "reject")
+			1 (& "reject"))
 		     obj))))))
    
    (with-access::JsPromise obj (worker)
@@ -109,7 +109,11 @@
 ;*    js-init-promise! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-init-promise! %this::JsGlobalObject)
+
+   (define __string_execute_first!
+      (unless (vector? __js_strings) (set! __js_strings (&init!))))
    
+
    (define (iterable-vector this iterable::vector)
       (vector-map!
 	 (lambda (o) (if (isa? o JsPromise) o (promise-resolve this o)))
@@ -223,7 +227,7 @@
    (define js-promise
       (with-access::JsGlobalObject %this (js-function-prototype)
 	 (js-make-function %this
-	    js-promise-construct 1 "Promise"
+	    js-promise-construct 1 (& "Promise")
 	    :__proto__ js-function-prototype
 	    :prototype js-promise-prototype
 	    :construct js-promise-construct
@@ -248,21 +252,19 @@
 				  (promise-resolve promise
 				     (js-vector->jsarray it %this))
 				  js-unresolved))
-			   1 "onfullfilled")
+			   1 (& "onfullfilled"))
 			(js-make-function %this
 			   (lambda (this reason)
 			      (promise-reject promise reason))
-			   1 "onrejected")
+			   1 (& "onrejected"))
 			promise)
 		     (loop (-fx i 1)))
 		  it)))
 	 promise))
 
-   (unless (vector? __js_strings) (set! __js_strings (&init!)))
-   
    (js-bind! %this js-promise (& "all")
       :configurable #f :enumerable #f
-      :value (js-make-function %this js-promise-all 1 "all")
+      :value (js-make-function %this js-promise-all 1 (& "all"))
       :hidden-class #t)
    
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.race
@@ -277,11 +279,11 @@
 			(js-make-function %this
 			   (lambda (this result)
 			      (promise-resolve promise result))
-			   1 "onfullfilled")
+			   1 (& "onfullfilled"))
 			(js-make-function %this
 			   (lambda (this reason)
 			      (promise-reject promise reason))
-			   1 "onrejected")
+			   1 (& "onrejected"))
 			promise)
 		     (loop (+fx i 1)))
 		  it)))
@@ -289,7 +291,7 @@
 
    (js-bind! %this js-promise (& "race")
       :configurable #f :enumerable #f
-      :value (js-make-function %this js-promise-race 1 "race")
+      :value (js-make-function %this js-promise-race 1 (& "race"))
       :hidden-class #t)
    
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.reject
@@ -309,7 +311,7 @@
    
    (js-bind! %this js-promise (& "reject")
       :configurable #f :enumerable #f
-      :value (js-make-function %this promise-reject 1 "reject")
+      :value (js-make-function %this promise-reject 1 (& "reject"))
       :hidden-class #t)
 
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.resolve
@@ -332,7 +334,7 @@
    
    (js-bind! %this js-promise (& "resolve")
       :configurable #f :enumerable #f
-      :value (js-make-function %this promise-resolve 1 "resolve")
+      :value (js-make-function %this promise-resolve 1 (& "resolve"))
       :hidden-class #t)
    
    ;; prototype properties
@@ -341,7 +343,7 @@
    (with-access::JsGlobalObject %this (js-symbol-species)
       (js-bind! %this js-promise js-symbol-species
 	 :configurable #f :enumerable #f :writable #f
-	 :get (js-make-function %this (lambda (o) js-promise) 0 "@@species")
+	 :get (js-make-function %this (lambda (o) js-promise) 0 (& "@@species"))
 	 :hidden-class #t))
    
    ;; bind Promise in the global object
@@ -415,7 +417,7 @@
       :value (js-make-function %this
 		(lambda (this fail)
 		   (then-catch this (js-undefined) fail))
-		1 "catch")
+		1 (& "catch"))
       :enumerable #f
       :hidden-class #t)
    
@@ -425,7 +427,7 @@
       :value (js-make-function %this
 		(lambda (this proc fail)
 		   (then-catch this proc fail))
-		2 "then")
+		2 (& "then"))
       :enumerable #f
       :hidden-class #t))
 
@@ -444,7 +446,7 @@
 				  (begin
 				     (set! resolved #t)
 				     (js-promise-resolve o resolution))))
-			   1 "resolve" :src 'builtin))
+			   1 (& "resolve") :src 'builtin))
 	       (reject (js-make-function %this
 			  (lambda (_ reason)
 			     (if resolved
@@ -452,7 +454,7 @@
 				 (begin
 				    (set! resolved #t)
 				    (js-promise-reject o reason))))
-			  1 "reject" :src 'builtin)))
+			  1 (& "reject") :src 'builtin)))
 	    (values resolve reject)))))
 
 ;*---------------------------------------------------------------------*/

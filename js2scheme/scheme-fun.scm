@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-fun.scm            */
+;*    /tmp/HOPNEW/hop/js2scheme/scheme-fun.scm                         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Jan 31 16:59:50 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 14:38:45 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -193,7 +193,7 @@
 		  (cond
 		     (generator
 		      `(js-make-function %this ,fastid
-			  ,len ,(symbol->string! id)
+			  ,len (& ,(symbol->string! id))
 			  :src ,src
 			  :arity ,arity
 			  :minlen ,minlen
@@ -205,7 +205,7 @@
 			  :constrsize ,constrsize))
 		     (src
 		      `(js-make-function %this ,fastid
-			  ,len ,(symbol->string! id)
+			  ,len (& ,(symbol->string! id))
 			  :src ,src
 			  :arity ,arity
 			  :minlen ,minlen
@@ -218,7 +218,7 @@
 					 mode return conf #f #f))))
 		     ((eq? vararg 'arguments)
 		      `(js-make-function %this ,fastid
-			  ,len ,(symbol->string! id)
+			  ,len (& ,(symbol->string! id))
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode 
@@ -228,7 +228,7 @@
 					 mode return conf #f #f))))
 		     (method
 		      `(js-make-function %this ,fastid
-			  ,len ,(symbol->string! id)
+			  ,len (& ,(symbol->string! id))
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
@@ -240,7 +240,7 @@
 					 mode return conf #f #f))))
 		     ((or (decl-usage-has? this '(new ref)) new-target)
 		      `(js-make-function %this ,fastid
-			  ,len ,(symbol->string! id)
+			  ,len (& ,(symbol->string! id))
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
@@ -249,7 +249,7 @@
 			  :constrsize ,constrsize))
 		     (else
 		      `(js-make-function-simple %this ,fastid
-			  ,len ,(symbol->string! id)
+			  ,len (& ,(symbol->string! id))
 			  ,arity ,minlen
 			  ',mode
 			  ,constrsize))))))))
@@ -578,7 +578,7 @@
 		   (j2s-fun-prototype this) #f))
 	       ((or src prototype __proto__ method new-target)
 		`(js-make-function %this ,tmp ,len
-		    ,(symbol->string! name)
+		    (& ,(symbol->string! name))
 		    :src ,src
 		    :arity ,arity
 		    :prototype ,prototype
@@ -593,7 +593,7 @@
 		    :method ,(or tmpm (and method (jsfun->lambda method mode return conf #f #f)))))
 	       ((eq? vararg 'arguments)
 		`(js-make-function %this ,tmp ,len
-		    ,(symbol->string! name)
+		    (& ,(symbol->string! name))
 		    :arity ,arity ,
 		    :minlen minlen
 		    :strict ',mode
@@ -604,7 +604,7 @@
 		    :constrsize ,constrsize))
 	       (else
 		`(js-make-function-simple %this ,tmp ,len
-		    ,(symbol->string! name)
+		    (& ,(symbol->string! name))
 		    ,arity ,minlen ',mode ,constrsize)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -856,9 +856,9 @@
 		(instantiate::JsAccessorDescriptor
 		   (name (js-integer-name->jsstring ,indx))
 		   (get (js-make-function %this
-			   (lambda (%) ,id) 0 "get"))
+			   (lambda (%) ,id) 0 (& "get")))
 		   (set (js-make-function %this
-			   (lambda (% %v) (set! ,id %v)) 1 "set"))
+			   (lambda (% %v) (set! ,id %v)) 1 (& "set")))
 		   (%get (lambda (%) ,id))
 		   (%set (lambda (% %v) (set! ,id %v)))
 		   (configurable #t)
@@ -896,7 +896,7 @@
 		 (js-bind! %this arguments (& "callee")
 		    :value (js-make-function %this
 			      ,(j2s-profile-id (j2s-fast-id id) loc conf)
-			      0 ,(symbol->string! id))
+			      0 (& ,(symbol->string! id)))
 		    :enumerable #f)
 		 ,body))))
 	     
@@ -933,7 +933,7 @@
 	  (js-bind! %this arguments (& "callee")
 	     :value (js-make-function %this
 		       ,(j2s-profile-id (j2s-fast-id id) loc conf) 0
-		       ,(symbol->string! id))
+		       (& ,(symbol->string! id)))
 	     :enumerable #f)
 	  ,body))
    

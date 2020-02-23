@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/builtin.scm               */
+;*    /tmp/HOPNEW/hop/hopscript/builtin.scm                            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Jan 26 08:54:32 2019                          */
-;*    Last change :  Thu May 23 09:15:15 2019 (serrano)                */
-;*    Copyright   :  2019 Manuel Serrano                               */
+;*    Last change :  Sun Feb 23 14:56:19 2020 (serrano)                */
+;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop builtin JavaScript objects                                   */
 ;*                                                                     */
@@ -59,7 +59,7 @@
                            (apply ,(symbol-append '< tag '>)
 			      :%context ,%this
                               nodes)))
-                    2 ,(symbol->string tag)
+                    2 (& ,(symbol->string tag))
 		    :__proto__ ,__proto__
 		    :src "object.scm")
           :writable #t :configurable #f :enumerable #f :hidden-class #f)))
@@ -141,7 +141,7 @@
 		   (lambda (this data)
 		      (instantiate::xml-comment
 			 (data data)))
-		   1 "<!--"
+		   1 (& "<!--")
 		   :__proto__ js-function-prototype
 		   :src "object.scm")
 	 :enumerable #f :writable #f :configurable #f :hidden-class #f)

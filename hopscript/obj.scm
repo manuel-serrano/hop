@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/obj.scm                   */
+;*    /tmp/HOPNEW/hop/hopscript/obj.scm                                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul  9 17:41:45 2017                          */
-;*    Last change :  Mon May 13 10:39:18 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Sun Feb 23 15:00:12 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ScmObject binding                                                */
 ;*=====================================================================*/
@@ -125,11 +125,11 @@
 		 (lambda (this)
 		    (js-tostring this %this))
 		 0
-		 "toString"))
+		 (& "toString")))
 	     ((isSealed)
-	      (js-make-function %this (lambda (this) #t) 1 "isSealed"))
+	      (js-make-function %this (lambda (this) #t) 1 (& "isSealed")))
 	     ((isFrozen)
-	      (js-make-function %this (lambda (this) #t) 1 "isFrozen"))
+	      (js-make-function %this (lambda (this) #t) 1 (& "isFrozen")))
 	     (else
 	      (js-raise-type-error %this
 		 (format "no such field \"~a\" ~~a" name) o)))

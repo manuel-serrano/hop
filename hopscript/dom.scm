@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/dom.scm                   */
+;*    /tmp/HOPNEW/hop/hopscript/dom.scm                                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Thu May 23 09:15:08 2019 (serrano)                */
-;*    Copyright   :  2015-19 Manuel Serrano                            */
+;*    Last change :  Sun Feb 23 14:53:05 2020 (serrano)                */
+;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
 ;*=====================================================================*/
@@ -158,20 +158,20 @@
 	     (lambda (this txt)
 		(instantiate::xml-verbatim
 		   (data (js-tostring txt %this))))
-	     1 "createTextNode"))
+	     1 (& "createTextNode")))
 	 ((eq? name (& "createComment"))
 	  (js-make-function %this
 	     (lambda (this txt)
 		(instantiate::xml-comment
 		   (data (js-tostring txt %this))))
-	     1 "createComment"))
+	     1 (& "createComment")))
 	 ((eq? name (& "createElement"))
 	  (js-make-function %this
 	     (lambda (this txt)
 		(instantiate::xml-element
 		   (tag (string->symbol (js-tostring txt %this)))
 		   (body '())))
-	     1 "createElement"))
+	     1 (& "createElement")))
 	 (else
 	  (call-next-method)))))
 
@@ -223,9 +223,9 @@
 	  (js-make-function %this
 	     (lambda (this txt)
 		(js-string->jsstring (js-tostring o %this)))
-	     0 "toString"))
+	     0 (& "toString")))
 	 ((eq? name (& "inspect"))
-	  (js-make-function %this js-inspect 1 "inspect"))
+	  (js-make-function %this js-inspect 1 (& "inspect")))
 	 ((eq? name (& "nodeType"))
 	  3)
 	 ((eq? name (& "parentNode"))
@@ -260,12 +260,12 @@
 	 ((eq? name (& "nodeType"))
 	  8)
 	 ((eq? name (& "inspect"))
-	  (js-make-function %this js-inspect 1 "inspect"))
+	  (js-make-function %this js-inspect 1 (& "inspect")))
 	 ((eq? name (& "toString"))
 	  (js-make-function %this
 	     (lambda (this txt)
 		(js-string->jsstring (js-tostring o %this)))
-	     0 "toString"))
+	     0 (& "toString")))
 	 ((eq? name (& "parentNode"))
 	  (with-access::xml-comment o (parent) parent))
 	 ((eq? name (& "nextSibling"))
@@ -291,19 +291,19 @@
 	  (with-access::xml-markup o (body)
 	     body))
 	 ((eq? pname (& "inspect"))
-	  (js-make-function %this js-inspect 1 "inspect"))
+	  (js-make-function %this js-inspect 1 (& "inspect")))
 	 ((eq? pname (& "constructor"))
 	  (js-undefined))
 	 ((eq? pname (& "toString"))
 	  (js-make-function %this
 	     (lambda (this)
 		(js-string->jsstring (js-tostring o %this)))
-	     0 "toString"))
+	     0 (& "toString")))
 	 ((eq? pname (& "getElementById"))
 	  (js-make-function %this
 	     (lambda (this id)
 		(dom-get-element-by-id this (js-tostring id %this)))
-	     1 "getElementById"))
+	     1 (& "getElementById")))
 	 ((eq? pname (& "getElementsByTagName"))
 	  (js-make-function %this
 	     (lambda (this tag)
@@ -312,7 +312,7 @@
 		      (dom-get-elements-by-tag-name this
 			 (js-tostring tag %this)))
 		   %this))
-	     1 "getElementsByTagName"))
+	     1 (& "getElementsByTagName")))
 	 ((eq? pname (& "getElementsByClassName"))
 	  (js-make-function %this
 	     (lambda (this clazz)
@@ -321,17 +321,17 @@
 		      (dom-get-elements-by-class this
 			 (js-tostring clazz %this)))
 		   %this))
-	     1 "getElementsByClassName"))
+	     1 (& "getElementsByClassName")))
 	 ((eq? pname (& "appendChild"))
 	  (js-make-function %this
 	     (lambda (this child)
 		(dom-append-child! this child))
-	     1 "appendChild"))
+	     1 (& "appendChild")))
 	 ((eq? pname (& "removeChild"))
 	  (js-make-function %this
 	     (lambda (this child)
 		(dom-remove-child! this child))
-	     1 "removeChild"))
+	     1 (& "removeChild")))
 	 ((eq? pname (& "previousSibling"))
 	  (dom-previous-sibling o))
 	 ((eq? pname (& "childNodes"))

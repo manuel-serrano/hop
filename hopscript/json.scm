@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/json.scm                  */
+;*    /tmp/HOPNEW/hop/hopscript/json.scm                               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Feb 12 13:51:07 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 14:46:52 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -63,7 +63,7 @@
 	    (__proto__ (js-object-proto %this))))
       ;; parse
       (js-bind! %this js-json (& "parse")
-	 :value (js-make-function %this (js-json-parse %this) 2 "parse")
+	 :value (js-make-function %this (js-json-parse %this) 2 (& "parse"))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -73,7 +73,7 @@
 	 :value (js-make-function %this
 		   (lambda (this value replacer space)
 		      (js-json-stringify this value replacer space %this))
-		   3 "stringify")
+		   3 (& "stringify"))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f

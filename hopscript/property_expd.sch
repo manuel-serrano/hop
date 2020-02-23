@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/property_expd.sch         */
+;*    /tmp/HOPNEW/hop/hopscript/property_expd.sch                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Jan  7 14:36:17 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 13:55:42 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -39,8 +39,8 @@
 	  ((js-profile-log-cache ?cache . ?cspecs)
 	   (e `(with-access::JsPropertyCache ,cache (cntimap cntemap
 						       cntcmap cntpmap 
-						       cntamap cntvtable
-						       cntmiss src)
+						       cntamap cntnmap
+						       cntvtable cntmiss src)
 		  ,@(filter-map (lambda (c)
 				   (when (keyword? c)
 				      (let ((id (symbol-append 'cnt
@@ -186,6 +186,23 @@
 	  `(with-access::JsPropertyCache ,c (pmap) pmap))
 	 (else
 	  (error "js-pcache-pmap" "bad syntax" x)))
+      e))
+
+;*---------------------------------------------------------------------*/
+;*    js-pcache-nmap-expander ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-pcache-nmap-expander x e)
+   (e (match-case x
+	 ((js-pcache-nmap (and ?c (js-pcache-ref %pcache ?idx)))
+	  (cond-expand
+	     ((and bigloo-c (not hopjs-worker-slave))
+	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_nmapz00)" ,idx))
+	     (else
+	      `(with-access::JsPropertyCache ,c (nmap) nmap))))
+	 ((js-pcache-nmap ?c)
+	  `(with-access::JsPropertyCache ,c (nmap) nmap))
+	 (else
+	  (error "js-pcache-nmap" "bad syntax" x)))
       e))
 
 ;*---------------------------------------------------------------------*/
@@ -569,7 +586,14 @@
 			 ,tmp))
 		    ((eq? cs 'pmap)
 		     `(let ((idx (js-pcache-index ,cache)))
-			 (js-profile-log-cache ,cache :pmap #t)
+			 (js-profile-log-cache ,cache :nmap #t)
+			 (js-profile-log-index idx)
+			 (js-object-ctor-push! ,obj idx ,tmp)
+			 (set! cmap (js-pcache-cmap ,cache))
+			 ,tmp))
+		    ((eq? cs 'nmap)
+		     `(let ((idx (js-pcache-index ,cache)))
+			 (js-profile-log-cache ,cache :nmap #t)
 			 (js-profile-log-index idx)
 			 (js-object-ctor-push! ,obj idx ,tmp)
 			 (set! cmap (js-pcache-cmap ,cache))
@@ -614,6 +638,16 @@
 			      ,(if (eq? (car cs) 'cmap)
 				   (loop (cdr cs))
 				   `((@ js-object-put-name/cache-cmap+!
+					__hopscript_property)
+				     ,obj ,prop ,tmp ,throw ,%this
+				     ,cache ,loc ',cspecs))))
+			((nmap nmap+)
+			 ;; prototype property set
+			 `(if (eq? %cmap (js-pcache-nmap ,cache))
+			      ,(loop 'nmap)
+			      ,(if (eq? (car cs) 'nmap)
+				   (loop (cdr cs))
+				   `((@ js-object-put-name/cache-pmap+!
 					__hopscript_property)
 				     ,obj ,prop ,tmp ,throw ,%this
 				     ,cache ,loc ',cspecs))))
@@ -669,7 +703,7 @@
 	      (lambda (tmp)
 		 (expand-cache-specs cspecs obj prop tmp throw %this cache loc))))
 	  ((js-object-put-name/cache! ?obj ?prop ?val ?throw ?%this ?cache ?loc (? symbol?))
-	   (set-car! (last-pair x) ''(imap emap cmap pmap amap vtable))
+	   (set-car! (last-pair x) ''(imap emap cmap nmap amap vtable))
 	   (e x e))
 	  ((js-object-put-name/cache! ?obj ?prop ?val ?throw ?%this ?cache)
 	   (e (append x '(-1 '(imap emap cmap pmap amap vtable))) e))

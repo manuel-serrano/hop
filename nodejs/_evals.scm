@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/nodejs/_evals.scm                   */
+;*    /tmp/HOPNEW/hop/nodejs/_evals.scm                                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 22 13:35:17 2014                          */
-;*    Last change :  Thu May 23 09:06:50 2019 (serrano)                */
-;*    Copyright   :  2014-19 Manuel Serrano                            */
+;*    Last change :  Sun Feb 23 15:12:14 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    VM bindings                                                      */
 ;*=====================================================================*/
@@ -56,11 +56,11 @@
 			:get (js-make-function %this
 				(lambda (this)
 				   (js-get obj y %this))
-				0 s)
+				0 (js-name->jsstring s))
 			:set (js-make-function %this
 				(lambda (this v)
 				   (js-put! obj y v #f %this))
-				1 s))))
+				1 (js-name->jsstring s)))))
 	       %this))
 	 this))
 
@@ -79,7 +79,7 @@
 	    res)))
    
    (define createContext
-      (js-make-function %this %createContext 1 "createContext"))
+      (js-make-function %this %createContext 1 (& "createContext")))
    
    (define runInContext
       (js-make-function %this
@@ -92,7 +92,7 @@
 			 (%js-eval ip 'eval ctx this ctx))))
 		(js-raise-type-error %this
 		   "needs a 'context' argument. ~s" ctx)))
-	 1 "runInContext"))
+	 1 (& "runInContext")))
 
    (define runInContextVM
       (js-make-function %this
@@ -104,7 +104,7 @@
 		      (%js-eval ip 'eval ctx this ctx)))
 		(js-raise-type-error %this
 		   "needs a 'context' argument. ~s" ctx)))
-	 3 "runInContext"))
+	 3 (& "runInContext")))
 
    (define runInNewContext
       (js-make-function %this
@@ -116,7 +116,7 @@
 		     (call-with-context %this this ctx
 			(lambda (%ctx)
 			   (%js-eval ip 'eval %ctx this %ctx)))))))
-	 1 "runInNewContext"))
+	 1 (& "runInNewContext")))
 
    (define runInNewContextVM
       (js-make-function %this
@@ -127,7 +127,7 @@
 		  (call-with-context %this this ctx
 		     (lambda (%ctx)
 			(%js-eval ip 'eval %ctx this %ctx))))))
-	 3 "runInNewContext"))
+	 3 (& "runInNewContext")))
 
    (define runInThisContext
       (js-make-function %this
@@ -137,7 +137,7 @@
 		  (lambda (ip)
 		     (input-port-name-set! ip filename)
 		     (%js-eval ip 'eval %this this %this)))))
-	 1 "runInThisContext"))
+	 1 (& "runInThisContext")))
 
    (define runInThisContextVM
       (js-make-function %this
@@ -146,7 +146,7 @@
 	       (lambda (ip)
 		  (input-port-name-set! ip (js-tostring filename %this))
 		  (%js-eval ip 'eval %this this %this))))
-	 3 "runInThisContext"))
+	 3 (& "runInThisContext")))
 
    (define nodescript-proto
       (with-access::JsGlobalObject %this (js-object)
@@ -165,7 +165,7 @@
 	 (__proto__ nodescript-proto)))
 
    (set! __js_strings (&init!))
-   (let ((obj (js-make-function %this NodeScript 3 "NodeScript"
+   (let ((obj (js-make-function %this NodeScript 3 (& "NodeScript")
 		 :alloc (lambda (%this o) #unspecified)
 		 :prototype nodescript-proto
 		 :construct NodeScript)))

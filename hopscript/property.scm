@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/property.scm              */
+;*    /tmp/HOPNEW/hop/hopscript/property.scm                           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Feb 12 14:03:37 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 13:59:19 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -292,9 +292,10 @@
 
    (when js-pmap-valid
       (synchronize js-cache-table-lock
-;* 	 (tprint "--- invalidate " reason " " who " len=" js-cache-index " ---------------------------") */
-;* 	 (set! invcount (+fx 1 invcount))                              */
-;* 	 (tprint "invcount=" invcount)                                 */
+	 (when #f
+	    (tprint "--- invalidate " reason " " who " len=" js-cache-index " ---------------------------")
+	    (set! invcount (+fx 1 invcount))
+	    (tprint "invcount=" invcount))
 	 (let loop ((i (-fx js-cache-index 1)))
 	    (when (>=fx i 0)
 	       (invalidate-pcache-pmap! (vector-ref js-cache-table i))
@@ -372,7 +373,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-debug-pcache pcache #!optional (msg ""))
    (if (isa? pcache JsPropertyCache)
-       (with-access::JsPropertyCache pcache (src imap cmap pmap amap index vindex cntmiss)
+       (with-access::JsPropertyCache pcache (src imap cmap pmap nmap amap index vindex cntmiss)
 	  (cond
 	     ((isa? cmap JsConstructMap)
 	      (fprint (current-error-port) "--- " msg (typeof pcache)
@@ -390,6 +391,10 @@
 		 (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
 		    (fprint (current-error-port) "  pmap.%id=" %pid
 		       " pmap.props=" pprops)))
+	      (when (isa? nmap JsConstructMap)
+		 (with-access::JsConstructMap nmap ((%pid %id) (pprops props))
+		    (fprint (current-error-port) "  nmap.%id=" %pid
+		       " nmap.props=" pprops)))
 	      (when (isa? amap JsConstructMap)
 		 (with-access::JsConstructMap amap ((%aid %id) (aprops props))
 		    (fprint (current-error-port) "  amap.%id=" %aid
@@ -755,24 +760,26 @@
 (define (js-pcache-next-direct! pcache::JsPropertyCache o::JsObject nextmap i)
    
    (define (next-inline! pcache omap)
-      (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index owner)
+      (with-access::JsPropertyCache pcache (imap cmap emap pmap nmap amap index owner)
 	 (set! imap nextmap)
 	 (set! emap omap)
 	 (set! cmap nextmap)
-	 (set! pmap omap)
+	 (set! nmap omap)
+	 (set! pmap #f)
 	 (set! amap #t)
 	 (set! owner #f)
 	 (set! index i)))
 
    (define (next-noinline! pcache omap)
-      (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index owner)
+      (with-access::JsPropertyCache pcache (imap cmap emap pmap nmap amap index owner)
 	 (with-access::JsConstructMap omap (sibling)
 	    (if sibling
 		(set! imap sibling)
 		(set! imap #t)))
 	 (set! emap #t)
 	 (set! cmap nextmap)
-	 (set! pmap omap)
+	 (set! nmap omap)
+	 (set! pmap #f)
 	 (set! amap #t)
 	 (set! owner #f)
 	 (set! index i)))   
@@ -2348,6 +2355,70 @@
 			     (extend-object! o)
 			     ;; 8.12.4, step 8.b
 			     (reject "Read-only property"))))))))))
+
+   (define (extend-mapped-object/nmap nmap index flags)
+      (with-access::JsObject o (cmap elements)
+	 ;; follow the next map
+	 (let ((nextmap (cmap-find-sibling nmap
+			   (and (js-object-inline-elements? o)
+				(<fx index (vector-length elements))))))
+	    (with-access::JsConstructMap nextmap (ctor methods props detachcnt detachlocs)
+	       (cond
+		  ((not (js-function? v))
+		   (when (js-function? (vector-ref methods index))
+		      ;; invalidate cache method and cache
+		      (js-invalidate-cache-method! nextmap index
+			 "extend-mapped with non-function" v)
+		      (js-invalidate-pmap-pcaches! %this "extend-mapped.3" name)
+		      (reset-cmap-vtable! nextmap))
+		   (when cache
+		      (js-pcache-next-direct! cache o nextmap index)))
+		  ((eq? v (vector-ref methods index))
+		   (when cache
+		      (js-pcache-next-direct! cache o nextmap index)))
+		  ((eq? (vector-ref methods index) #f)
+		   ;; invalidate the pmap caches as it might
+		   ;; be that this function will be now be used
+		   ;; when searching for a prototype chain
+		   (js-invalidate-pmap-pcaches! %this "extend-method" name)
+		   (when cache
+		      (js-pcache-next-direct! cache o nextmap index)))
+		  ((or (>=fx detachcnt (method-invalidation-threshold))
+		       (memq loc detachlocs))
+		   ;; MS 2019-01-19
+		   ;; on method conflicts, instead of
+		   ;; invalidating all methods,
+		   ;; a new cmap is created. see
+		   ;; see the prototype initialization
+		   ;; in js-make-function@function.scm
+		   ;; invalidate cache method and cache
+		   (js-invalidate-cache-method! nextmap index
+		      "extend-mapped polymorphic threshold" name)
+		   (when (<=fx detachcnt (method-invalidation-threshold))
+		      (js-invalidate-pmap-pcaches! %this "extend-mapped.1" name))
+		   (reset-cmap-vtable! nextmap)
+		   (when cache
+		      ;; MS 9may2019 CARE INVALIDATE
+		      (js-pcache-next-direct! cache o nextmap index)))
+		  (else
+		   (let ((detachedmap (extend-cmap cmap name flags
+					 (and (js-object-inline-elements? o)
+					      (<fx index (vector-length elements))))))
+		      (set! detachcnt (+fx 1 detachcnt))
+		      ;; store the loc so that if a second methods
+		      ;; is added at the same location, a detached
+		      ;; map will not be created and a method
+		      ;; invalidation will take place.
+		      (when loc
+			 (set! detachlocs (cons loc detachlocs)))
+		      (with-access::JsConstructMap detachedmap (methods ctor %id)
+			 ;; validate cache method and don't cache
+			 (vector-set! methods index v))
+		      (set! nextmap detachedmap)
+		      v)))
+	       (js-object-push/ctor! o index v ctor)
+	       (set! cmap nextmap)
+	       v))))
    
    (define (extend-mapped-object!)
       (js-object-mode-enumerable-set! o #t)
@@ -2364,66 +2435,7 @@
 			((cmap-find-transition cmap name v flags)
 			 =>
 			 (lambda (nmap)
-			    ;; follow the next map
-			    (let ((nextmap (cmap-find-sibling nmap
-					      (and (js-object-inline-elements? o)
-						   (<fx index (vector-length elements))))))
-			       (with-access::JsConstructMap nextmap (ctor methods props detachcnt detachlocs)
-				  (cond
-				     ((not (js-function? v))
-				      (when (js-function? (vector-ref methods index))
-					 ;; invalidate cache method and cache
-					 (js-invalidate-cache-method! nextmap index
-					    "extend-mapped with non-function" v)
-					 (js-invalidate-pmap-pcaches! %this "extend-mapped.3" name)
-					 (reset-cmap-vtable! nextmap))
-				      (when cache
-					 (js-pcache-next-direct! cache o nextmap index)))
-				     ((eq? v (vector-ref methods index))
-				      (when cache
-					 (js-pcache-next-direct! cache o nextmap index)))
-				     ((eq? (vector-ref methods index) #f)
-				      ;; invalidate the pmap caches as it might
-				      ;; be that this function will be now be used
-				      ;; when searching for a prototype chain
-				      (js-invalidate-pmap-pcaches! %this "extend-method" name)
-				      (when cache
-					 (js-pcache-next-direct! cache o nextmap index)))
-				     ((or (>fx detachcnt (method-invalidation-threshold))
-					  (memq loc detachlocs))
-				      ;; MS 2019-01-19
-				      ;; on method conflicts, instead of
-				      ;; invalidating all methods,
-				      ;; a new cmap is created. see
-				      ;; see the prototype initialization
-				      ;; in js-make-function@function.scm
-				      ;; invalidate cache method and cache
-				      (js-invalidate-cache-method! nextmap index
-					 "extend-mapped polymorphic threshold" name)
-				      (js-invalidate-pmap-pcaches! %this "extend-mapped.1" name)
-				      (reset-cmap-vtable! nextmap)
-				      (when cache
-					 ;; MS 9may2019 CARE INVALIDATE
-					 (js-pcache-next-direct! cache o nextmap index)))
-				     (else
-				      (let ((detachedmap (extend-cmap cmap name flags
-							    (and (js-object-inline-elements? o)
-								 (<fx index (vector-length elements))))))
-					 (set! detachcnt (+fx 1 detachcnt))
-					 ;; store the loc so that if a second methods
-					 ;; is added at the same location, a detached
-					 ;; map will not be created and a method
-					 ;; invalidation will take place.
-					 (when loc
-					    (set! detachlocs (cons loc detachlocs)))
-					 (with-access::JsConstructMap detachedmap (methods ctor %id)
-					    ;; validate cache method and don't cache
-					    (vector-set! methods index v))
-					 (set! nextmap detachedmap)
-					 v)))
-				  (js-object-push/ctor! o index v ctor)
-				  (set! cmap nextmap)
-				  v))))
+			    (extend-mapped-object/nmap nmap index flags)))
 			(single
 			 (js-invalidate-pmap-pcaches! %this "extend-mapped.4" name)
 			 (extend-cmap! cmap name flags)
@@ -2583,7 +2595,7 @@
 		 =>
 		 (lambda (cache)
 		    (js-object-put-name/cache! o pname v throw
-		       %this cache point '(imap emap cmap pmap amap))))
+		       %this cache point '(imap emap cmap nmap pmap amap))))
 		((eq? pname (& "length"))
 		 (js-put-length! o v throw #f %this))
 		((isa? pname JsStringLiteralIndex)
@@ -2890,7 +2902,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-define %this obj id::JsStringLiteral
 	   get set src pos #!key (hidden-class #t))
-   (let ((name (string-append src ":" (integer->string pos))))
+   (let ((name (js-name->jsstring
+		  (string-append src ":" (integer->string pos)))))
       (js-bind! %this obj id
 	 :configurable #f
 	 :hidden-class hidden-class

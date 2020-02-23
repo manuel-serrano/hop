@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/property.sch              */
+;*    /tmp/HOPNEW/hop/hopscript/property.sch                           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Dec 19 08:15:34 2019 (serrano)                */
-;*    Copyright   :  2016-19 Manuel Serrano                            */
+;*    Last change :  Sun Feb 23 13:55:51 2020 (serrano)                */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*    -------------------------------------------------------------    */
@@ -49,6 +49,8 @@
    js-pcache-emap-expander)
 (define-expander js-pcache-pmap
    js-pcache-pmap-expander)
+(define-expander js-pcache-nmap
+   js-pcache-nmap-expander)
 (define-expander js-pcache-index
    js-pcache-index-expander)
 (define-expander js-pcache-vindex

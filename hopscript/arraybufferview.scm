@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/arraybufferview.scm       */
+;*    /tmp/HOPNEW/hop/hopscript/arraybufferview.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Wed Feb 12 14:11:02 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 14:51:41 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -412,7 +412,7 @@
 	  (js-raise-type-error %this "Object must be a TypedArray" this)))
    
    (js-bind! %this proto (& "includes")
-      :value (js-make-function %this js-typedarray-includes 1 "includes")
+      :value (js-make-function %this js-typedarray-includes 1 (& "includes"))
       :configurable #t
       :writable #t
       :enumerable #f)
@@ -421,7 +421,7 @@
       (for-each (lambda (id)
 		   (js-bind! %this proto (js-ascii-name->jsstring id)
 		      :value (js-make-function %this not-implemented 1
-				id)
+ 				(js-name->jsstring id))
 		      :configurable #t
 		      :writable #t
 		      :enumerable #f))
@@ -493,7 +493,7 @@
 		  
 		  ;; set
 		  (js-bind! %this this (& "set")
-		     :value (js-make-function %this js-set 2 "set")
+		     :value (js-make-function %this js-set 2 (& "set"))
 		     :configurable #t
 		     :writable #t
 		     :enumerable #t
@@ -504,7 +504,7 @@
 		     :value (js-make-function %this
 			       (lambda (this num)
 				  (js-get this num %this))
-			       1 "get")
+			       1 (& "get"))
 		     :configurable #t
 		     :writable #t
 		     :enumerable #t
@@ -512,7 +512,7 @@
 		  
 		  ;; subarray
 		  (js-bind! %this this (& "subarray")
-		     :value (js-make-function %this js-subarray 2 "subarray")
+		     :value (js-make-function %this js-subarray 2 (& "subarray"))
 		     :configurable #t
 		     :writable #t
 		     :enumerable #t
@@ -637,7 +637,7 @@
 	    o))
       
       (define js-typedarray
-	 (js-make-function %this %js-typedarray 1 name
+	 (js-make-function %this %js-typedarray 1 (js-name->jsstring name)
 	    :__proto__ (js-object-proto js-function)
 	    :size 2
 	    :prototype js-typedarray-prototype
@@ -1002,13 +1002,13 @@
 		     
 		     ;; Int8
 		     (js-bind! %this this (& "getInt8")
-			:value (js-make-function %this js-getInt8 2 "getInt8")
+			:value (js-make-function %this js-getInt8 2 (& "getInt8"))
 			:configurable #t
 			:writable #t
 			:enumerable #t
 			:hidden-class #t)
 		     (js-bind! %this this (& "setInt8")
-			:value (js-make-function %this js-setInt8 3 "setInt8")
+			:value (js-make-function %this js-setInt8 3 (& "setInt8"))
 			:configurable #t
 			:writable #t
 			:enumerable #t
@@ -1016,13 +1016,13 @@
 		     
 		     ;; Uint8
 		     (js-bind! %this this (& "getUint8")
-			:value (js-make-function %this js-getUint8 2 "getUint8")
+			:value (js-make-function %this js-getUint8 2 (& "getUint8"))
 			:configurable #t
 			:writable #t
 			:enumerable #t
 			:hidden-class #t)
 		     (js-bind! %this this (& "setUint8")
-			:value (js-make-function %this js-setUint8 3 "setUint8")
+			:value (js-make-function %this js-setUint8 3 (& "setUint8"))
 			:configurable #t
 			:writable #t
 			:enumerable #t
@@ -1030,13 +1030,13 @@
 		     
 		     ;; Int16
 		     (js-bind! %this this (& "getInt16")
-			:value (js-make-function %this js-getInt16 2 "getInt16")
+			:value (js-make-function %this js-getInt16 2 (& "getInt16"))
 			:configurable #t
 			:writable #t
 			:enumerable #t
 			:hidden-class #t)
 		     (js-bind! %this this (& "setInt16")
-			:value (js-make-function %this js-setInt16 3 "setInt16")
+			:value (js-make-function %this js-setInt16 3 (& "setInt16"))
 			:configurable #t
 			:writable #t
 			:enumerable #t
@@ -1044,13 +1044,13 @@
 		     
 		     ;; Uint16
 		     (js-bind! %this this (& "getUint16")
-			:value (js-make-function %this js-getUint16 2 "getUint16")
+			:value (js-make-function %this js-getUint16 2 (& "getUint16"))
 			:configurable #t
 			:writable #t
 			:enumerable #t
 			:hidden-class #t)
 		     (js-bind! %this this (& "setUint16")
-			:value (js-make-function %this js-setInt16 3 "setUint16")
+			:value (js-make-function %this js-setInt16 3 (& "setUint16"))
 			:configurable #t
 			:writable #t
 			:enumerable #t
@@ -1058,13 +1058,13 @@
 		     
 		     ;; Int32
 		     (js-bind! %this this (& "getInt32")
-			:value (js-make-function %this js-getInt32 2 "getInt32")
+			:value (js-make-function %this js-getInt32 2 (& "getInt32"))
 			:configurable #t
 			:writable #t
 			:enumerable #t
 			:hidden-class #t)
 		     (js-bind! %this this (& "setInt32")
-			:value (js-make-function %this js-setInt32 3 "setInt32")
+			:value (js-make-function %this js-setInt32 3 (& "setInt32"))
 			:configurable #t
 			:writable #t
 			:enumerable #t
@@ -1072,13 +1072,13 @@
 		     
 		     ;; Uint32
 		     (js-bind! %this this (& "getUint32")
-			:value (js-make-function %this js-getUint32 2 "getUint32")
+			:value (js-make-function %this js-getUint32 2 (& "getUint32"))
 			:configurable #t
 			:writable #t
 			:enumerable #t
 			:hidden-class #t)
 		     (js-bind! %this this (& "setUint32")
-			:value (js-make-function %this js-setInt32 3 "setUint32")
+			:value (js-make-function %this js-setInt32 3 (& "setUint32"))
 			:configurable #t
 			:writable #t
 			:enumerable #t
@@ -1086,13 +1086,13 @@
 		     
 		     ;; Float32
 		     (js-bind! %this this (& "getFloat32")
-			:value (js-make-function %this js-getFloat32 2 "getFloat32")
+			:value (js-make-function %this js-getFloat32 2 (& "getFloat32"))
 			:configurable #t
 			:writable #t
 			:enumerable #t
 			:hidden-class #t)
 		     (js-bind! %this this (& "setFloat32")
-			:value (js-make-function %this js-setFloat32 3 "setFloat32")
+			:value (js-make-function %this js-setFloat32 3 (& "setFloat32"))
 			:configurable #t
 			:writable #t
 			:enumerable #t
@@ -1100,13 +1100,13 @@
 		     
 		     ;; Float64
 		     (js-bind! %this this (& "getFloat64")
-			:value (js-make-function %this js-getFloat64 2 "getFloat64")
+			:value (js-make-function %this js-getFloat64 2 (& "getFloat64"))
 			:configurable #t
 			:writable #t
 			:enumerable #t
 			:hidden-class #t)
 		     (js-bind! %this this (& "setFloat64")
-			:value (js-make-function %this js-setFloat64 3 "setFloat64")
+			:value (js-make-function %this js-setFloat64 3 (& "setFloat64"))
 			:configurable #t
 			:writable #t
 			:enumerable #t
@@ -1175,7 +1175,7 @@
 	       (__proto__ (js-get constructor (& "prototype") %this))))
 	 
 	 (define js-dataview
-	    (js-make-function %this %js-dataview 1 "DataView"
+	    (js-make-function %this %js-dataview 1 (& "DataView")
 	       :__proto__ (js-object-proto js-function)
 	       :prototype js-dataview-prototype
 	       :alloc js-dataview-alloc

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/nodejs/_http.scm                    */
+;*    /tmp/HOPNEW/hop/nodejs/_http.scm                                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Wed Feb 12 14:29:20 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 15:09:10 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -143,7 +143,7 @@
 			 (begin
 			    (reset-parser! this)
 			    (js-undefined))))
-		  1 "reinitialize")
+		  1 (& "reinitialize"))
 	       #f %this)
 	    (js-put! proto (& "execute")
 	       (js-make-function %this
@@ -151,7 +151,7 @@
 		     (let ((off (->fixnum (js-tointeger offset %this)))
 			   (len (->fixnum (js-tointeger length %this))))
 			(http-parser-execute %this this buf off len)))
-		  1 "execute")
+		  1 (& "execute"))
 	       #f %this)
 	    (js-put! proto (& "finish")
 	       (js-make-function %this
@@ -161,7 +161,7 @@
 			(when (input-port? ip)
 			   (close-input-port ip)
 			   (set! ip #f))))
-		  0 "finish")
+		  0 (& "finish"))
 	       #f %this)
 	    (js-put! proto (& "pause")
 	       (js-make-function %this
@@ -169,7 +169,7 @@
 		     (with-access::JsHttpParser this (errno)
 			(set! errno 1)) 
 		     (js-undefined))
-		  0 "pause")
+		  0 (& "pause"))
 	       #f %this)
 	    (js-put! proto (& "resume")
 	       (js-make-function %this
@@ -177,7 +177,7 @@
 		     (with-access::JsHttpParser this (errno)
 			(set! errno 0) )
 		     (js-undefined))
-		  0 "resume")
+		  0 (& "resume"))
 	       #f %this)
 	    proto)))
    
@@ -194,7 +194,7 @@
 	    (__proto__ http-parser-proto)
 	    (state http-line-state))))
 
-   (let ((http (js-make-function %this http-parser 1 "HTTPParser"
+   (let ((http (js-make-function %this http-parser 1 (& "HTTPParser")
 		  :alloc js-no-alloc
 		  :construct http-parser
 		  :prototype http-parser-proto)))

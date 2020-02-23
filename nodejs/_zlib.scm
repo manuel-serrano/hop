@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/nodejs/_zlib.scm                    */
+;*    /tmp/HOPNEW/hop/nodejs/_zlib.scm                                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 27 19:12:38 2015                          */
-;*    Last change :  Thu May  2 13:44:44 2019 (serrano)                */
-;*    Copyright   :  2015-19 Manuel Serrano                            */
+;*    Last change :  Sun Feb 23 15:12:28 2020 (serrano)                */
+;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Zlib bindings                                                    */
 ;*=====================================================================*/
@@ -64,19 +64,19 @@
 		      (js-new %this js-object))))
 	 (js-put! proto (& "write")
 	    (js-make-function %this zlib-write
-	       7 "write")
+	       7 (& "write"))
 	    #f %this)
 	 (js-put! proto (& "init")
 	    (js-make-function %this zlib-init
-	       5 "init")
+	       5 (& "init"))
 	    #f %this)
 	 (js-put! proto (& "close")
 	    (js-make-function %this zlib-close
-	       0 "close")
+	       0 (& "close"))
 	    #f %this)
 	 (js-put! proto (& "reset")
 	    (js-make-function %this zlib-reset
-	       0 "reset")
+	       0 (& "reset"))
 	    #f %this)
 	 proto))
    
@@ -84,7 +84,7 @@
       (instantiateJsZlib
 	 (__proto__ zlib-proto)))
 
-   (let* ((zlib (js-make-function %this zlib 0 "Zlib"
+   (let* ((zlib (js-make-function %this zlib 0 (& "Zlib")
 		   :construct zlib
 		   :prototype zlib-proto)))
       (js-alist->jsobject

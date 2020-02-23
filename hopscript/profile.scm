@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/profile.scm               */
+;*    /tmp/HOPNEW/hop/hopscript/profile.scm                            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Wed Jan  8 09:27:37 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 14:15:58 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -34,7 +34,7 @@
 	   (js-profile-register-pcache ::JsPropertyCache)
 	   
 	   (js-profile-log-cache ::JsPropertyCache
-	      #!key imap emap cmap pmap amap vtable)
+	      #!key imap emap cmap pmap nmap amap vtable)
 	   (js-profile-log-index ::long)
 	   
 	   (js-profile-log-get ::obj loc)
@@ -175,14 +175,15 @@
 ;*    js-profile-log-cache ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-cache cache::JsPropertyCache
-	   #!key imap emap cmap pmap amap vtable)
-   (with-access::JsPropertyCache cache (cntimap cntemap cntcmap cntpmap cntamap cntvtable usage)
+	   #!key imap emap cmap pmap nmap amap vtable)
+   (with-access::JsPropertyCache cache (cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable usage)
       (when *profile-cache*
 	 (cond
 	    (imap (set! cntimap (+u32 #u32:1 cntimap)))
 	    (emap (set! cntemap (+u32 #u32:1 cntemap)))
 	    (cmap (set! cntcmap (+u32 #u32:1 cntcmap)))
 	    (pmap (set! cntpmap (+u32 #u32:1 cntpmap)))
+	    (nmap (set! cntnmap (+u32 #u32:1 cntnmap)))
 	    (amap (set! cntamap (+u32 #u32:1 cntamap)))
 	    (vtable (set! cntvtable (+u32 #u32:1 cntvtable)))))))
 
@@ -818,20 +819,22 @@
 	 (if m (string->integer (cadr m)) 100)))
 
    (define (pcache-hits::llong pc)
-      (with-access::JsPropertyCache pc (cntimap cntemap cntcmap cntpmap cntamap cntvtable)
+      (with-access::JsPropertyCache pc (cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
 	 (+llong (uint32->llong cntimap)
 	    (+llong (uint32->llong cntemap)
 	       (+llong (uint32->llong cntcmap)
 		  (+llong (uint32->llong cntpmap)
-		     (+llong (uint32->llong cntamap)
-			(uint32->llong cntvtable))))))))
+		     (+llong (uint32->llong cntnmap)
+			(+llong (uint32->llong cntamap)
+			   (uint32->llong cntvtable)))))))))
 
    (define (pcache-multi pc)
-      (with-access::JsPropertyCache pc (name usage cntimap cntemap cntcmap cntpmap cntamap cntvtable)
+      (with-access::JsPropertyCache pc (name usage cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
 	 (when (> (+ (if (>u32 cntimap 0) 1 0)
 		     (if (>u32 cntemap 0) 1 0)
 		     (if (>u32 cntcmap 0) 1 0)
 		     (if (>u32 cntpmap 0) 1 0)
+		     (if (>u32 cntnmap 0) 1 0)
 		     (if (>u32 cntamap 0) 1 0)
 		     (if (>u32 cntvtable 0) 1 0))
 		  1)
@@ -879,6 +882,9 @@
 
    (define (filecaches-pmaps filecaches)
       (filecache-sum-field filecaches 'cntpmap))
+
+   (define (filecaches-nmaps filecaches)
+      (filecache-sum-field filecaches 'cntnmap))
 
    (define (filecaches-amaps filecaches)
       (filecache-sum-field filecaches 'cntamap))
@@ -987,7 +993,7 @@
 				   (<= xpoint ypoint))))
 		       fc))))
 	 (vfor-each (lambda (i pc)
-		       (with-access::JsPropertyCache pc (point usage cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
+		       (with-access::JsPropertyCache pc (point usage cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
 			  (when (or (> (pcache-hits pc) 0) (> cntmiss *log-miss-threshold*))
 			     (display* "      { \"point\": " point)
 			     (display* ", \"usage\": \"" usage "\"")
@@ -996,6 +1002,7 @@
 			     (when (> cntemap 0) (display* ", \"emap\": " cntemap))
 			     (when (> cntcmap 0) (display* ", \"cmap\": " cntcmap))
 			     (when (> cntpmap 0) (display* ", \"pmap\": " cntpmap))
+			     (when (> cntnmap 0) (display* ", \"nmap\": " cntnmap))
 			     (when (> cntamap 0) (display* ", \"amap\": " cntamap))
 			     (when (> cntvtable 0) (display* ", \"vtable\": " cntvtable))
 			     (if (>fx i 0)
@@ -1019,9 +1026,10 @@
 							(xcntemap cntemap)
 							(xcntcmap cntcmap)
 							(xcntpmap cntpmap)
+							(xcntnmap cntnmap)
 							(xcntamap cntamap)
 							(xcntvtable cntvtable))
-			  (with-access::JsPropertyCache old (point usage cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
+			  (with-access::JsPropertyCache old (point usage cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
 			     (if (and (= point xpoint) (eq? xusage usage))
 				 (begin
 				    (set! cntmiss (+u32 cntmiss xcntmiss))
@@ -1029,6 +1037,7 @@
 				    (set! cntemap (+u32 cntemap xcntemap))
 				    (set! cntcmap (+u32 cntcmap xcntcmap))
 				    (set! cntpmap (+u32 cntpmap xcntpmap))
+				    (set! cntnmap (+u32 cntnmap xcntnmap))
 				    (set! cntamap (+u32 cntamap xcntamap))
 				    (set! cntvtable (+u32 cntvtable xcntvtable))
 				    (loop (+fx i 1) old res))
@@ -1244,9 +1253,10 @@
 						     cntemap
 						     cntcmap
 						     cntpmap
+						     cntnmap
 						     cntamap
 						     cntvtable)
-		    (> (+ cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
+		    (> (+ cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
 		       *log-miss-threshold*)))
 	    pcaches)
       (newline *profile-port*)
@@ -1295,9 +1305,10 @@
 							  cntemap
 							  cntcmap
 							  cntpmap
+							  cntnmap
 							  cntamap
 							  cntvtable)
-			 (when (> (+ cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
+			 (when (> (+ cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
 				  *log-miss-threshold*)
 			    (fprint *profile-port*
 			       (padding (number->string point) ppading 'right)
@@ -1315,6 +1326,8 @@
 			       (padding cntcmap cwidth 'right)
 			       " " 
 			       (padding cntpmap cwidth 'right)
+			       " " 
+			       (padding cntnmap cwidth 'right)
 			       " " 
 			       (padding cntamap cwidth 'right)
 			       " " 

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/arraybuffer.scm           */
+;*    /tmp/HOPNEW/hop/hopscript/arraybuffer.scm                        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Wed Feb 12 14:10:21 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 14:50:30 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -165,7 +165,7 @@
 	    items))
       
       (set! js-arraybuffer
-	 (js-make-function %this %js-arraybuffer 1 "ArrayBuffer"
+	 (js-make-function %this %js-arraybuffer 1 (& "ArrayBuffer")
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-arraybuffer-prototype
 	    :alloc js-arraybuffer-alloc
@@ -233,7 +233,7 @@
 		  
 		  (js-bind! %this this (& "slice")
 		     :value (js-make-function %this
-			       arraybuffer-slice 2 "slice")
+			       arraybuffer-slice 2 (& "slice"))
 		     :configurable #f
 		     :writable #t
 		     :enumerable #t

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-class.scm          */
+;*    /tmp/HOPNEW/hop/js2scheme/scheme-class.scm                       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Wed Feb 12 14:58:25 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 14:37:25 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -143,7 +143,7 @@
 		    (,clazz (js-make-function %this
 			       ,ctor
 			       ,length
-			       ,(symbol->string! cname)
+			       (& ,(symbol->string! cname))
 			       :src ,(when src (class-src loc this conf))
 			       :strict ',mode
 			       :alloc ,(if (or (eq? super #f) (null? super))

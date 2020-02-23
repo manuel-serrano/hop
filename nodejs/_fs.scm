@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/nodejs/_fs.scm                      */
+;*    /tmp/HOPNEW/hop/nodejs/_fs.scm                                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Thu May 23 09:00:09 2019 (serrano)                */
-;*    Copyright   :  2014-19 Manuel Serrano                            */
+;*    Last change :  Sun Feb 23 15:08:58 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
 ;*=====================================================================*/
@@ -292,7 +292,7 @@
 			(unless (js-totest options)
 			   (with-access::JsHandle this (handle)
 			      (nodejs-unref handle %worker))))
-		     3 "start")
+		     3 (& "start"))
 		  #f %this)
 	       
 	       (js-put! obj (& "stop")
@@ -304,7 +304,7 @@
 				 onstop this)))
 			(with-access::JsHandle this (handle)
 			   (nodejs-fs-poll-stop handle)))
-		     1 "stop")
+		     1 (& "stop"))
 		  #f %this)
 	       
 	       obj))))
@@ -324,39 +324,39 @@
    (set! __js_strings (&init!))
    
    (js-alist->jsobject
-      `((rename . ,(js-make-function %this rename 2 "rename"))
-	(ftruncate . ,(js-make-function %this ftruncate 2 "ftruncate"))
-	(truncate . ,(js-make-function %this truncate 2 "truncate"))
-	(chown . ,(js-make-function %this chown 3 "chown"))
-	(fchown . ,(js-make-function %this fchown 3 "fchown"))
-	(lchown . ,(js-make-function %this lchown 3 "lchown"))
-	(chmod . ,(js-make-function %this chmod 2 "chmod"))
-	(fchmod . ,(js-make-function %this fchmod 2 "fchmod"))
-	(lchmod . ,(js-make-function %this lchmod 2 "lchmod"))
-	(fstat . ,(js-make-function %this fstat 2 "fstat"))
-	(stat . ,(js-make-function %this stat 2 "stat"))
-	(lstat . ,(js-make-function %this lstat 2 "lstat"))
-	(link . ,(js-make-function %this link 3 "link"))
-	(symlink . ,(js-make-function %this symlink 4 "symlink"))
-	(readlink . ,(js-make-function %this readlink 2 "readlink"))
-	(unlink . ,(js-make-function %this unlink 2 "unlink"))
-	(rmdir . ,(js-make-function %this rmdir 2 "rmdir"))
-	(fdatasync . ,(js-make-function %this fdatasync 2 "fdatasync"))
-	(mkdir . ,(js-make-function %this mkdir 3 "mkdir"))
-	(readdir . ,(js-make-function %this readdir 1 "readdir"))
-	(Stats . ,(js-make-function %this (lambda (this) this) 0 "Stats"
+      `((rename . ,(js-make-function %this rename 2 (& "rename")))
+	(ftruncate . ,(js-make-function %this ftruncate 2 (& "ftruncate")))
+	(truncate . ,(js-make-function %this truncate 2 (& "truncate")))
+	(chown . ,(js-make-function %this chown 3 (& "chown")))
+	(fchown . ,(js-make-function %this fchown 3 (& "fchown")))
+	(lchown . ,(js-make-function %this lchown 3 (& "lchown")))
+	(chmod . ,(js-make-function %this chmod 2 (& "chmod")))
+	(fchmod . ,(js-make-function %this fchmod 2 (& "fchmod")))
+	(lchmod . ,(js-make-function %this lchmod 2 (& "lchmod")))
+	(fstat . ,(js-make-function %this fstat 2 (& "fstat")))
+	(stat . ,(js-make-function %this stat 2 (& "stat")))
+	(lstat . ,(js-make-function %this lstat 2 (& "lstat")))
+	(link . ,(js-make-function %this link 3 (& "link")))
+	(symlink . ,(js-make-function %this symlink 4 (& "symlink")))
+	(readlink . ,(js-make-function %this readlink 2 (& "readlink")))
+	(unlink . ,(js-make-function %this unlink 2 (& "unlink")))
+	(rmdir . ,(js-make-function %this rmdir 2 (& "rmdir")))
+	(fdatasync . ,(js-make-function %this fdatasync 2 (& "fdatasync")))
+	(mkdir . ,(js-make-function %this mkdir 3 (& "mkdir")))
+	(readdir . ,(js-make-function %this readdir 1 (& "readdir")))
+	(Stats . ,(js-make-function %this (lambda (this) this) 0 (& "Stats")
 		     :alloc (lambda (%this o) #unspecified)
 		     :prototype (get-process-fs-stats %this)))
-	(close . ,(js-make-function %this close 2 "close"))
-	(utimes . ,(js-make-function %this utimes 4 "utimes"))
-	(futimes . ,(js-make-function %this futimes 4 "futimes"))
-	(fsync . ,(js-make-function %this fsync 1 "fsync"))
-	(write . ,(js-make-function %this write 5 "write"))
-	(writeString . ,(js-make-function %this writeString 5 "writeString"))
+	(close . ,(js-make-function %this close 2 (& "close")))
+	(utimes . ,(js-make-function %this utimes 4 (& "utimes")))
+	(futimes . ,(js-make-function %this futimes 4 (& "futimes")))
+	(fsync . ,(js-make-function %this fsync 1 (& "fsync")))
+	(write . ,(js-make-function %this write 5 (& "write")))
+	(writeString . ,(js-make-function %this writeString 5 (& "writeString")))
 	
-	(open . ,(js-make-function %this open 4 "open"))
-	(read . ,(js-make-function %this read 6 "read"))
-	(StatWatcher . ,(js-make-function %this fs-watcher 0 "StatWatcher"
+	(open . ,(js-make-function %this open 4 (& "open")))
+	(read . ,(js-make-function %this read 6 (& "read")))
+	(StatWatcher . ,(js-make-function %this fs-watcher 0 (& "StatWatcher")
 			   :alloc (lambda (%this o) #unspecified)
 			   :construct fs-watcher)))
       %this))

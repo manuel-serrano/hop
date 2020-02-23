@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/public.scm                */
+;*    /tmp/HOPNEW/hop/hopscript/public.scm                             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Feb 17 08:56:44 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 14:47:29 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -2134,7 +2134,7 @@
 	    (filter (lambda (n)
 		       (or (isa? n xml-tilde) (isa? n xml-markup)))
 	       nodes)))
-      2 "HEAD"))
+      2 (& "HEAD")))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-html-script ...                                               */
@@ -2151,7 +2151,7 @@
 	    (filter (lambda (n)
 		       (or (isa? n xml-tilde) (isa? n xml-markup)))
 	       nodes)))
-      2 "SCRIPT"))
+      2 (& "SCRIPT")))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-parseint ...                                                  */

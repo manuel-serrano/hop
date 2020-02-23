@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/boolean.scm               */
+;*    /tmp/HOPNEW/hop/hopscript/boolean.scm                            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Feb 12 13:41:35 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 14:57:52 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -91,7 +91,7 @@
       
       ;; then, Create a HopScript string object
       (set! js-boolean
-	 (js-make-function %this %js-boolean 1 "Boolean"
+	 (js-make-function %this %js-boolean 1 (& "Boolean")
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-boolean-prototype
 	    :alloc js-boolean-alloc
@@ -157,7 +157,7 @@
 			  (js-string->jsstring "true")
 			  (js-string->jsstring "false"))))
 		0
-		"toString")
+		(& "toString"))
       :enumerable #f
       :hidden-class #t)
    ;; valueOf
@@ -165,7 +165,7 @@
       :value (js-make-function %this
 		(lambda (this)
 		   (js-cast-boolean this #f))
-		0 "valueOf")
+		0 (& "valueOf"))
       :enumerable #f
       :hidden-class #t))
       

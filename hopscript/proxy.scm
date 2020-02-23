@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/proxy.scm                 */
+;*    /tmp/HOPNEW/hop/hopscript/proxy.scm                              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Tue Feb 18 18:01:31 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 14:54:19 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -166,7 +166,7 @@
 		      (js-object-mode-revoked-set! prox #t)
 		      (js-raise-type-error %this
 			 "Not a Revocable proxy" this))))
-	    0 "revoke"
+	    0 (& "revoke")
 	    :prototype '()))
 
       ;; create a HopScript object
@@ -181,7 +181,7 @@
 	    %this))
 
       (set! js-proxy
-	 (js-make-function %this %js-proxy 2 "Proxy"
+	 (js-make-function %this %js-proxy 2 (& "Proxy")
 	    :__proto__ js-function-prototype
 	    :prototype '()
 	    :alloc js-proxy-alloc
@@ -193,7 +193,7 @@
       
       (js-bind! %this js-proxy (& "revocable")
 	 :writable #t :configurable #t :enumerable #f
-	 :value (js-make-function %this %js-revocable 2 "revocable"
+	 :value (js-make-function %this %js-revocable 2 (& "revocable")
 		   :__proto__ js-function-prototype
 		   :prototype '())
 	 :hidden-class #t)

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/nodejs/_tty_wrap.scm                */
+;*    /tmp/HOPNEW/hop/nodejs/_tty_wrap.scm                             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Mon Jun 24 08:19:24 2019 (serrano)                */
-;*    Copyright   :  2014-19 Manuel Serrano                            */
+;*    Last change :  Sun Feb 23 15:08:27 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
 ;*=====================================================================*/
@@ -45,7 +45,7 @@
 	       (js-make-function %this
 		  (lambda (this cb)
 		     (nodejs-close %worker %this process this cb))
-		  1 "close")
+		  1 (& "close"))
 	       #f %this)
 	    
 	    (js-put! obj (& "unref")
@@ -53,28 +53,28 @@
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-unref handle %worker)))
-		  0 "unref")
+		  0 (& "unref"))
 	       #f %this)
 	    
 	    (js-put! obj (& "readStart")
 	       (js-make-function %this
 		  (lambda (this)
 		     (stream-read-start %worker %this process slab this))
-		  0 "readStart")
+		  0 (& "readStart"))
 	       #f %this)
 	    
 	    (js-put! obj (& "readStop")
 	       (js-make-function %this
 		  (lambda (this)
 		     (stream-read-stop %worker %this this))
-		  0 "readStop")
+		  0 (& "readStop"))
 	       #f %this)
 	    
 	    (js-put! obj (& "writeBuffer")
 	       (js-make-function %this
 		  (lambda (this buffer)
 		     (stream-write-buffer %worker %this process this buffer))
-		  1 "writeBuffer")
+		  1 (& "writeBuffer"))
 	       #f %this)
 	    
 	    (js-put! obj (& "writeAsciiString")
@@ -83,7 +83,7 @@
 		     (stream-write-string %worker %this process this
 			(js-jsstring->string string) 0 (js-jsstring-lengthfx string)
 			"ascii" #f handle))
-		  2 "writeAsciiString")
+		  2 (& "writeAsciiString"))
 	       #f %this)
 	    
 	    (js-put! obj (& "writeUtf8String")
@@ -92,7 +92,7 @@
 		     (stream-write-string %worker %this process this
 			(js-jsstring->string string) 0 (js-jsstring-lengthfx string)
 			"utf8" #f handle))
-		  2 "writeUtf8String")
+		  2 (& "writeUtf8String"))
 	       #f %this)
 	    
 	    (js-put! obj (& "writeUcs2String")
@@ -103,7 +103,7 @@
 			(stream-write-string %worker %this process this
 			   (js-jsstring->string string) 0 (js-jsstring-lengthfx string)
 			   "ascii" #f handle)))
-		  2 "writeUcs2String")
+		  2 (& "writeUcs2String"))
 	       #f %this)
 	    
 	    (js-put! obj (& "getWindowSize")
@@ -111,7 +111,7 @@
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-tty-get-window-size %worker %this handle)))
-		  0 "getWindowSize")
+		  0 (& "getWindowSize"))
 	       #f %this)
 	    
 	    (js-put! obj (& "setRawMode")
@@ -119,7 +119,7 @@
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-tty-set-raw-mode handle)))
-		  0 "setRawMode")
+		  0 (& "setRawMode"))
 	       #f %this)
 	    
 	    obj)))
@@ -141,7 +141,7 @@
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (nodejs-stream-fd %worker hdl))
-		       0 "GetFD")
+		       0 (& "GetFD"))
 	       :writable #f :configurable #f)
 	    obj)))
    
@@ -153,7 +153,7 @@
       (with-access::JsProcess process (js-tty)
 	 (let ((obj (js-new %this js-object)))
 	    (set! js-tty
-	       (js-make-function %this TTY 0 "TTY"
+	       (js-make-function %this TTY 0 (& "TTY")
 		  :alloc (lambda (%this o) #unspecified)
 		  :prototype (get-tty-proto)
 		  :construct TTY))
@@ -161,7 +161,7 @@
 	       (js-make-function %this
 		  (lambda (this fd)
 		     (nodejs-istty %worker %this fd))
-		  1 "isTTY")
+		  1 (& "isTTY"))
 	       #f %this)
 	    
 	    (js-put! obj (& "guessHandleType")
@@ -169,7 +169,7 @@
 		  (lambda (this fd)
 		     (nodejs-guess-handle-type
 			%worker %this fd))
-		  1 "guessHandleType")
+		  1 (& "guessHandleType"))
 	       #f %this)
 	    
 	    (js-put! obj (& "TTY") js-tty #f %this)

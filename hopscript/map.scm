@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/map.scm                   */
+;*    /tmp/HOPNEW/hop/hopscript/map.scm                                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Wed Feb 12 14:23:25 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 14:54:57 2020 (serrano)                */
 ;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -98,7 +98,7 @@
 	    (elements ($create-vector (if (eq? weak 'none) 13 5)))))
       
       (define js-map
-	 (js-make-function %this %js-map 0 name
+	 (js-make-function %this %js-map 0 (js-name->jsstring name)
 	    :__proto__ js-function-prototype
 	    :prototype js-map-prototype
 	    :size 0
@@ -123,7 +123,7 @@
       (with-access::JsGlobalObject %this (js-symbol-species)
 	 (js-bind! %this js-map js-symbol-species
 	    :get (js-make-function %this (lambda (this) js-map)
-		    0 "get [Symbol.species]")
+		    0 (& "get [Symbol.species]"))
 	    :enumerable #f
 	    :configurable #t))
       
@@ -221,7 +221,7 @@
 	  (js-raise-type-error %this "Not a Map" this)))
    
    (js-bind! %this js-map-prototype (& "clear")
-      :value (js-make-function %this map-prototype-clear 0 "clear"
+      :value (js-make-function %this map-prototype-clear 0 (& "clear")
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -235,7 +235,7 @@
    ;; delete
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.delete
    (js-bind! %this js-map-prototype (& "delete")
-      :value (js-make-function %this (js-map-delete %this) 1 "delete"
+      :value (js-make-function %this (js-map-delete %this) 1 (& "delete")
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -252,7 +252,7 @@
 	  (js-raise-type-error %this "Not a Map" this)))
       
    (js-bind! %this js-map-prototype (& "entries")
-      :value (js-make-function %this js-map-entries 0 "entries"
+      :value (js-make-function %this js-map-entries 0 (& "entries")
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -274,7 +274,7 @@
 	  (js-raise-type-error %this "Not a Map" this)))
 
    (js-bind! %this js-map-prototype (& "forEach")
-      :value (js-make-function %this js-map-for-each 1 "forEach"
+      :value (js-make-function %this js-map-for-each 1 (& "forEach")
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -291,7 +291,7 @@
 	  (js-raise-type-error %this "Not a Map" this)))
 
    (js-bind! %this js-map-prototype (& "get")
-      :value (js-make-function %this js-map-get 1 "get"
+      :value (js-make-function %this js-map-get 1 (& "get")
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -299,7 +299,7 @@
    ;; has
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.has
    (js-bind! %this js-map-prototype (& "has")
-      :value (js-make-function %this (js-map-has %this) 1 "has"
+      :value (js-make-function %this (js-map-has %this) 1 (& "has")
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -313,7 +313,7 @@
 	  (js-raise-type-error %this "Not a Map" this)))
       
    (js-bind! %this js-map-prototype (& "keys")
-      :value (js-make-function %this js-map-keys 0 "keys"
+      :value (js-make-function %this js-map-keys 0 (& "keys")
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -350,7 +350,7 @@
 	  (js-raise-type-error %this "Not a Map" this)))
    
    (js-bind! %this js-map-prototype (& "set")
-      :value (js-make-function %this js-map-set 2 "set"
+      :value (js-make-function %this js-map-set 2 (& "set")
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -364,7 +364,7 @@
 	  (js-raise-type-error %this "Not a Map" this)))
    
    (js-bind! %this js-map-prototype (& "size")
-      :get (js-make-function %this js-map-size 0 "size"
+      :get (js-make-function %this js-map-size 0 (& "size")
 	      :prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -381,7 +381,7 @@
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype-@@tostringtag
    (with-access::JsGlobalObject %this (js-symbol-iterator)
       (js-bind! %this js-map-prototype js-symbol-iterator
-	 :value (js-make-function %this js-map-entries 0 "entries"
+	 :value (js-make-function %this js-map-entries 0 (& "entries")
 		   :prototype (js-undefined))
 	 :enumerable #f
 	 :configurable #t))
@@ -395,7 +395,7 @@
 	 :configurable #t))
       
    (js-bind! %this js-map-prototype (& "values")
-      :value (js-make-function %this js-map-values 0 "values"
+      :value (js-make-function %this js-map-values 0 (& "values")
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -416,7 +416,7 @@
    ;; delete
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.delete
    (js-bind! %this js-map-prototype (& "delete")
-      :value (js-make-function %this (js-map-delete %this) 1 "delete"
+      :value (js-make-function %this (js-map-delete %this) 1 (& "delete")
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -433,7 +433,7 @@
 	  (js-raise-type-error %this "Not a Map" this)))
 
    (js-bind! %this js-map-prototype (& "get")
-      :value (js-make-function %this js-map-get 1 "get"
+      :value (js-make-function %this js-map-get 1 (& "get")
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -441,7 +441,7 @@
    ;; has
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.has
    (js-bind! %this js-map-prototype (& "has")
-      :value (js-make-function %this (js-map-has %this) 1 "has"
+      :value (js-make-function %this (js-map-has %this) 1 (& "has")
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -480,7 +480,7 @@
 	  (js-raise-type-error %this "Not a Map" this)))
    
    (js-bind! %this js-map-prototype (& "set")
-      :value (js-make-function %this js-map-set 2 "set"
+      :value (js-make-function %this js-map-set 2 (& "set")
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t))

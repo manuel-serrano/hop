@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/nodejs/require.scm                  */
+;*    /tmp/HOPNEW/hop/nodejs/require.scm                               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Feb 12 14:25:15 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 15:06:42 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -563,7 +563,7 @@
 		     (else
 		      #f)))
 	       opt))
-	 3 "require" :size 4 :src "require.scm"))
+	 3 (& "require") :size 4 :src "require.scm"))
 
    (js-init-require! this)
    
@@ -572,18 +572,18 @@
       :get (js-make-function this
 	      (lambda (_)
 		 (js-string->jsstring language)) 0
-		 "lang")
+		 (& "lang"))
       :set (js-make-function this
 	      (lambda (_ val)
 		 (set! language (js-tostring val this))
 		 val)
-	      1 "lang")
+	      1 (& "lang"))
       :configurable #f :writable #t)
    
    ;; require.main
    (with-access::JsGlobalObject this (js-main js-object) 
       (js-bind! this require (& "main")
-	 :get (js-make-function this (lambda (this) js-main) 0 "main")
+	 :get (js-make-function this (lambda (this) js-main) 0 (& "main"))
 	 :configurable #f :writable #f))
    
    ;; require.resolve
@@ -594,7 +594,7 @@
 		      (if (core-module? name)
 			  (js-string->jsstring name)
 			  (js-string->jsstring (nodejs-resolve name this %module 'body)))))
-		1 "resolve")
+		1 (& "resolve"))
       :configurable #t :writable #t :enumerable #t)
 
    ;; require.cache
@@ -602,7 +602,7 @@
       (js-bind! this require (& "cache")
 	 :get (js-make-function this
 		 (lambda (this) module-cache)
-		 0 "cache")
+		 0 (& "cache"))
 	 :set (js-make-function this
 		 (lambda (this v)
 		    ;; when setting require.cache, erase the compilation
@@ -610,7 +610,7 @@
 		    (synchronize compile-mutex
 		       (set! compile-table (make-hashtable)))
 		    (set! module-cache v))
-		 1 "cache")
+		 1 (& "cache"))
 	 :configurable #f))
 
    ;; module.require
@@ -687,7 +687,7 @@
 				    path 0 loc)))
 			(js-call1 %this resolve (js-undefined)
 			   (nodejs-exports-module mod worker %this)))))
-	       2 "import")))))
+	       2 (& "import"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-import-meta ...                                           */
@@ -732,7 +732,7 @@
 				      :get (js-make-function %this
 					      (lambda (this)
 						 (vector-ref evars i))
-					      0 "get")
+					      0 (& "get"))
 				      :configurable #f :writable #f)))
 			       ((=fx idx -1)
 				;; named default
@@ -740,7 +740,7 @@
 				   :get (js-make-function %this
 					   (lambda (this)
 					      default)
-					   0 "get")
+					   0 (& "get"))
 				   :configurable #f :writable #f))
 			       ((and (not writable)
 				     (constant? (vector-ref evars idx)))
@@ -752,7 +752,7 @@
 				   :get (js-make-function %this
 					   (lambda (this)
 					      (vector-ref evars idx))
-					   0 "get")
+					   0 (& "get"))
 				   :configurable #f :writable #f)))))
 	       exports)
 	    mod))))
@@ -785,7 +785,7 @@
 				 (isa? n xml-markup)
 				 (isa? n xml-cdata)))
 		     (xml-body nodes %this)))))
-	 -1 "HEAD"))
+	 -1 (& "HEAD")))
    head)
 
 ;*---------------------------------------------------------------------*/
@@ -808,7 +808,7 @@
 	       (if (pair? tmp)
 		   (js-vector->jsarray (list->vector tmp) %this)
 		   tmp)))
-	 -1 "SCRIPT"))
+	 -1 (& "SCRIPT")))
    
    script)
 
@@ -864,7 +864,7 @@
    (js-bind! %this proto (& "__defineGetter__")
       :value (js-make-function %this
 		(lambda (this name fun) (js-bind! %this this name :get fun))
-		2 "__defineGetter__")
+		2 (& "__defineGetter__"))
       :enumerable #f
       :writable #t
       :configurable #f))
@@ -878,85 +878,85 @@
       :value (js-make-function %this
 		(lambda (this req socket)
 		   (js-undefined))
-		2 "DTRACE_HTTP_SERVER_REQUEST")
+		2 (& "DTRACE_HTTP_SERVER_REQUEST"))
       :enumerable #f :writable #f :configurable #f :hidden-class #f)
    (js-bind! %this proto (& "DTRACE_HTTP_SERVER_RESPONSE")
       :value (js-make-function %this
 		(lambda (this req socket)
 		   (js-undefined))
-		2 "DTRACE_HTTP_SERVER_RESPONSE")
+		2 (& "DTRACE_HTTP_SERVER_RESPONSE"))
       :enumerable #f :writable #f :configurable #f :hidden-class #f)
    (js-bind! %this proto (& "COUNTER_HTTP_SERVER_REQUEST")
       :value (js-make-function %this
 		(lambda (this)
 		   (js-undefined))
-		0 "COUNTER_HTTP_SERVER_REQUEST")
+		0 (& "COUNTER_HTTP_SERVER_REQUEST"))
       :enumerable #f :writable #f :configurable #f :hidden-class #f)
    (js-bind! %this proto (& "COUNTER_HTTP_SERVER_RESPONSE")
       :value (js-make-function %this
 		(lambda (this)
 		   (js-undefined))
-		0 "COUNTER_HTTP_SERVER_RESPONSE")
+		0 (& "COUNTER_HTTP_SERVER_RESPONSE"))
       :enumerable #f :writable #f :configurable #f :hidden-class #f)
    (js-bind! %this proto (& "DTRACE_HTTP_CLIENT_RESPONSE")
       :value (js-make-function %this
 		(lambda (this req socket)
 		   (js-undefined))
-		2 "DTRACE_HTTP_CLIENT_RESPONSE")
+		2 (& "DTRACE_HTTP_CLIENT_RESPONSE"))
       :enumerable #f :writable #f :configurable #f :hidden-class #f)
    (js-bind! %this proto (& "COUNTER_HTTP_CLIENT_REQUEST")
       :value (js-make-function %this
 		(lambda (this)
 		   (js-undefined))
-		0 "COUNTER_HTTP_CLIENT_REQUEST")
+		0 (& "COUNTER_HTTP_CLIENT_REQUEST"))
       :enumerable #f :writable #f :configurable #f :hidden-class #f)
    (js-bind! %this proto (& "DTRACE_HTTP_CLIENT_REQUEST")
       :value (js-make-function %this
 		(lambda (this req socket)
 		   (js-undefined))
-		2 "DTRACE_HTTP_CLIENT_REQUEST")
+		2 (& "DTRACE_HTTP_CLIENT_REQUEST"))
       :enumerable #f :writable #f :configurable #f :hidden-class #f)
    (js-bind! %this proto (& "COUNTER_HTTP_CLIENT_RESPONSE")
       :value (js-make-function %this
 		(lambda (this)
 		   (js-undefined))
-		0 "COUNTER_HTTP_CLIENT_RESPONSE")
+		0 (& "COUNTER_HTTP_CLIENT_RESPONSE"))
       :enumerable #f :writable #f :configurable #f :hidden-class #f)
    (js-bind! %this proto (& "DTRACE_NET_STREAM_END")
       :value (js-make-function %this
 		(lambda (this)
 		   (js-undefined))
-		0 "DTRACE_NET_STREAM_END")
+		0 (& "DTRACE_NET_STREAM_END"))
       :enumerable #f :writable #f :configurable #f :hidden-class #f)
    (js-bind! %this proto (& "DTRACE_NET_SOCKET_READ")
       :value (js-make-function %this
 		(lambda (this)
 		   (js-undefined))
-		0 "DTRACE_NET_SOCKET_READ")
+		0 (& "DTRACE_NET_SOCKET_READ"))
       :enumerable #f :writable #f :configurable #f :hidden-class #f)
    (js-bind! %this proto (& "DTRACE_NET_SOCKET_WRITE")
       :value (js-make-function %this
 		(lambda (this)
 		   (js-undefined))
-		0 "DTRACE_NET_SOCKET_WRITE")
+		0 (& "DTRACE_NET_SOCKET_WRITE"))
       :enumerable #f :writable #f :configurable #f :hidden-class #f)
    (js-bind! %this proto (& "DTRACE_NET_SERVER_CONNECTION")
       :value (js-make-function %this
 		(lambda (this)
 		   (js-undefined))
-		0 "DTRACE_NET_SERVER_CONNECTION")
+		0 (& "DTRACE_NET_SERVER_CONNECTION"))
       :enumerable #f :writable #f :configurable #f :hidden-class #f)
    (js-bind! %this proto (& "COUNTER_NET_SERVER_CONNECTION")
       :value (js-make-function %this
 		(lambda (this)
 		   (js-undefined))
-		0 "COUNTER_NET_SERVER_CONNECTION")
+		0 (& "COUNTER_NET_SERVER_CONNECTION"))
       :enumerable #f :writable #f :configurable #f :hidden-class #f)
    (js-bind! %this proto (& "COUNTER_NET_SERVER_CONNECTION_CLOSE")
       :value (js-make-function %this
 		(lambda (this)
 		   (js-undefined))
-		0 "COUNTER_NET_SERVER_CONNECTION_CLOSE")
+		0 (& "COUNTER_NET_SERVER_CONNECTION_CLOSE"))
       :enumerable #f :writable #f :configurable #f :hidden-class #f)
    %this)
 
@@ -2267,7 +2267,7 @@
                           :get (js-make-function %this
                                   (lambda (o)
                                      (js-get e k %this))
-                                  0 "get")
+                                  0 (& "get"))
                           :hidden-class #f))
              bindings))))
 
@@ -2293,7 +2293,7 @@
 		(%js-eval ip 'eval %this %this scope)))))
 
    (js-bind! %this scope (& "eval")
-      :value (js-make-function %this js-eval 1 "eval" :prototype (js-undefined))
+      :value (js-make-function %this js-eval 1 (& "eval") :prototype (js-undefined))
       :configurable #f :enumerable #f))
 
 ;*---------------------------------------------------------------------*/
@@ -2313,7 +2313,7 @@
    (define (js-function-construct this . args)
       (if (null? args)
 	  (js-make-function %this (lambda (this) (js-undefined))
-	     0 ""
+	     0 (& "")
 	     :alloc js-object-alloc
 	     :construct (lambda (_) (js-undefined)))
 	  (let* ((len (length args))
@@ -2329,7 +2329,7 @@
    (define js-function
       (with-access::JsGlobalObject %this (js-function-prototype)
 	 (js-make-function %this
-	    js-function-construct 1 "Function"
+	    js-function-construct 1 (& "Function")
 	    :src (cons (current-loc) "Function() { /* require.scm */ }")
 	    :__proto__ js-function-prototype
 	    :prototype js-function-prototype
@@ -2365,7 +2365,7 @@
    (define js-worker
       (with-access::JsGlobalObject %this (js-function-prototype
 					    js-worker-prototype)
-	 (js-make-function %this (%js-worker %this) 2 "JsWorker"
+	 (js-make-function %this (%js-worker %this) 2 (& "JsWorker")
 	    :__proto__ js-function-prototype
 	    :prototype js-worker-prototype
 	    :alloc js-no-alloc

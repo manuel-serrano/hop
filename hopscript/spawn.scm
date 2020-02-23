@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/spawn.scm                 */
+;*    /tmp/HOPNEW/hop/hopscript/spawn.scm                              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  7 09:04:09 2016                          */
-;*    Last change :  Mon May 13 10:40:31 2019 (serrano)                */
-;*    Copyright   :  2016-19 Manuel Serrano                            */
+;*    Last change :  Sun Feb 23 14:55:44 2020 (serrano)                */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spawn implementation as defined in                               */
 ;*                                                                     */
@@ -105,7 +105,7 @@
 ;*    fun ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define-macro (fun args body)
-   `(js-make-function %this (lambda ,args ,body) ,(length args) "fun"))
+   `(js-make-function %this (lambda ,args ,body) ,(length args) (& "fun")))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-spawn ...                                                     */
@@ -148,7 +148,7 @@
 	       
 	       (step (lambda () (invoke 7 gen (& "next") (js-undefined)))))
 	    
-	    2 "AsyncPromise"))))
+	    2 (& "AsyncPromise")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

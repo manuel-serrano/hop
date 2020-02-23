@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/lib.scm                   */
+;*    /tmp/HOPNEW/hop/hopscript/lib.scm                                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Feb 12 13:56:32 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 14:47:44 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -408,7 +408,7 @@
 ;*    js-procedure->jsobject ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-procedure->jsobject obj %this)
-   (js-make-function %this obj (procedure-arity obj) "native"))
+   (js-make-function %this obj (procedure-arity obj) (& "native")))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsobject->obj ...                                             */

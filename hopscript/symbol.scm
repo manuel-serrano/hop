@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/symbol.scm                */
+;*    /tmp/HOPNEW/hop/hopscript/symbol.scm                             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Feb 12 14:13:15 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 14:53:12 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -206,7 +206,7 @@
 			   (car args))
 			  (else
 			   (js-string->jsstring (js-tostring (car args) %this)))))))
-	    1 "Symbol"
+	    1 (& "Symbol")
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-symbol-prototype
 	    :size 17
@@ -246,7 +246,7 @@
 		   new))))
       
       (js-bind! %this js-symbol (& "for")
-	 :value (js-make-function %this js-symbol-for 1 "for")
+	 :value (js-make-function %this js-symbol-for 1 (& "for"))
 	 :writable #t
 	 :enumerable #f
 	 :configurable #t
@@ -263,7 +263,7 @@
 	     (js-raise-type-error %this "not a symbol ~a" sym)))
       
       (js-bind! %this js-symbol (& "keyFor")
-	 :value (js-make-function %this js-symbol-keyfor 1 "keyFor")
+	 :value (js-make-function %this js-symbol-keyfor 1 (& "keyFor"))
 	 :writable #t
 	 :enumerable #f
 	 :configurable #t
@@ -331,7 +331,7 @@
 	  (js-raise-type-error %this "not a symbol ~a" this))))
    
    (js-bind! %this obj (& "toString")
-      :value (js-make-function %this tostring 0 "toString")
+      :value (js-make-function %this tostring 0 (& "toString"))
       :enumerable #f
       :hidden-class #t)
    
@@ -348,7 +348,7 @@
 	  (js-raise-type-error %this "not a symbol ~a" this))))
    
    (js-bind! %this obj (& "valueOf")
-      :value (js-make-function %this valueof 0 "valueOf")
+      :value (js-make-function %this valueof 0 (& "valueOf"))
       :enumerable #f
       :hidden-class #t))
 

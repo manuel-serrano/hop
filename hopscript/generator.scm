@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/generator.scm             */
+;*    /tmp/HOPNEW/hop/hopscript/generator.scm                          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Wed Feb 12 14:14:27 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 14:54:07 2020 (serrano)                */
 ;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -100,7 +100,7 @@
 	       :value (js-make-function %this
 			 (lambda (this)
 			    this)
-			 0 "@@iterator"
+			 0 (& "@@iterator")
 			 :prototype (js-undefined))
 	       :writable #t :enumerable #f :configurable #t)
 	    proto))
@@ -166,7 +166,7 @@
 	 :value (js-make-function %this
 		   (lambda (this val)
 		      (js-generator-next this val #f))
-		   1 "next")
+		   1 (& "next"))
 	 :hidden-class #t)
       
       (js-bind! %this js-gen-proto (& "return")
@@ -174,7 +174,7 @@
 	 :value (js-make-function %this
 		   (lambda (this val)
 		      (js-generator-return this val #f))
-		   1 "return")
+		   1 (& "return"))
 	 :hidden-class #t)
       
       (js-bind! %this js-gen-proto (& "throw")
@@ -182,7 +182,7 @@
 	 :value (js-make-function %this
 		   (lambda (this val)
 		      (js-generator-next this val #t))
-		   1 "throw")
+		   1 (& "throw"))
 	 :hidden-class #t)
       
       (js-bind! %this js-gen-proto js-symbol-tostringtag
@@ -194,7 +194,7 @@
 	 :configurable #t :enumerable #f :writable #f
 	 :value (js-make-function %this
 		   js-generator-construct
-		   1 "constructor"
+		   1 (& "constructor")
 		   :alloc js-no-alloc
 		   :construct js-generator-construct)
 	 :hidden-class #t)
@@ -231,7 +231,7 @@
    (lambda (this . args)
       (if (null? args)
 	  (js-make-function %this (lambda (this) (js-undefined))
-	     0 "" :construct (lambda (_) (js-undefined)))
+	     0 (& "") :construct (lambda (_) (js-undefined)))
 	  (let* ((len (length args))
 		 (formals (take args (-fx len 1)))
 		 (body (car (last-pair args)))

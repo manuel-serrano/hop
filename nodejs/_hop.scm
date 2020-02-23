@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/nodejs/_hop.scm                     */
+;*    /tmp/HOPNEW/hop/nodejs/_hop.scm                                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Feb 12 14:28:30 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 15:13:29 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -66,7 +66,7 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (define-js name arity proc . opt)
    `(cons ',name
-       (js-make-function %this ,proc ,arity ,(symbol->string name)
+       (js-make-function %this ,proc ,arity (& ,(symbol->string name))
 	  ,@opt :src "_hop.scm")))
 		 
 ;*---------------------------------------------------------------------*/
@@ -86,7 +86,7 @@
 	 (js-make-function %this
 	    (lambda (this url args)
 	       (js-new %this js-webservice url args))
-	    2 "webService"
+	    2 (& "webService")
 	    :__proto__ js-function-prototype
 	    :prototype js-urlframe-prototype
 	    :alloc js-no-alloc
@@ -104,7 +104,7 @@
 	 (js-make-function %this
 	    (lambda (this host port auth ssl)
 	       (js-new %this host port auth))
-	    4 "Server"
+	    4 (& "Server")
 	    :__proto__ js-function-prototype
 	    :prototype server-prototype
 	    :alloc js-no-alloc
@@ -149,19 +149,19 @@
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (nodejs-compile-pending))
-		       0 "get")
+		       0 (& "get"))
 	       :writable #f
 	       :configurable #f)
 	    (js-bind! %this driver (& "addEventListener")
 	       :value (js-make-function %this
 			 js-compiler-driver-add-event-listener
-			 3 "addEventListener")
+			 3 (& "addEventListener"))
 	       :writable #f
 	       :configurable #f)
 	    (js-bind! %this driver (& "removeEventListener")
 	       :value (js-make-function %this
 			 js-compiler-driver-remove-event-listener
-			 3 "removeEventListener")
+			 3 (& "removeEventListener"))
 	       :writable #f
 	       :configurable #f)
 	    (js-bind! %this driver (& "policy")
@@ -169,13 +169,13 @@
 		       (lambda (this)
 			  (js-string->jsstring
 			     (symbol->string (hop-sofile-compile-policy))))
-		       0 "get")
+		       0 (& "get"))
 	       :set (js-make-function %this
 		       (lambda (this v)
 			  (hop-sofile-compile-policy-set!
 			     (string->symbol
 				(js-tostring v %this))))
-		       1 "set")
+		       1 (& "set"))
 	       :writable #t
 	       :configurable #f)
 	    driver))
@@ -186,28 +186,28 @@
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame success opt)
 		      (post-url this success opt %this #f))
-		   2 "post"))
+		   2 (& "post")))
       (js-bind! %this js-urlframe-prototype (& "postSync")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame opt)
 		      (post-url this #f opt %this #t))
-		   1 "postSync"))
+		   1 (& "postSync")))
       (js-bind! %this js-urlframe-prototype (& "toString")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame)
 		      (js-string->jsstring (urlframe->string this %this)))
-		   0 "toString"))
+		   0 (& "toString")))
       (js-bind! %this js-urlframe-prototype (& "getHeader")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame hd)
 		      (js-get this (& "header") %this))
-		   0 "getHeader"))
+		   0 (& "getHeader")))
       (js-bind! %this js-urlframe-prototype (& "setHeader")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame hd)
 		      (js-put! this (& "header") hd #f %this)
 		      this)
-		   1 "setHeader"))
+		   1 (& "setHeader")))
 
       (js-bind! %this server-prototype (& "addEventListener")
 	 :value (js-make-function %this
@@ -221,7 +221,7 @@
 			    (when (isa? obj server)
 			       (add-event-listener! obj
 				     (js-tostring event %this) f)))))
-		   3 "addEventListener")
+		   3 (& "addEventListener"))
 	 :enumerable #f)
       (js-bind! %this server-prototype (& "removeEventListener")
 	 :value (js-make-function %this
@@ -232,7 +232,7 @@
 			       (when (pair? f)
 				  (remove-event-listener! obj
 					(js-tostring event %this) (cdr f)))))))
-		   3 "removeEventListener")
+		   3 (& "removeEventListener"))
 	 :enumerable #f)
       (js-bind! %this server-prototype (& "port")
 	 :get (js-make-function %this
@@ -241,7 +241,7 @@
 		       (when (isa? obj server)
 			  (with-access::server obj (port)
 			     port))))
-		 0 "port")
+		 0 (& "port"))
 	 :writable #f)
       (js-bind! %this server-prototype (& "host")
 	 :get (js-make-function %this
@@ -250,7 +250,7 @@
 		       (when (isa? obj server)
 			  (with-access::server obj (host)
 			     (js-string->jsstring host)))))
-		 0 "host")
+		 0 (& "host"))
 	 :writable #f)
       (js-bind! %this server-prototype (& "authorization")
 	 :get (js-make-function %this
@@ -260,7 +260,7 @@
 			  (with-access::server obj (authorization)
 			     (when (string? authorization)
 				(js-string->jsstring authorization))))))
-		 0 "authorization")
+		 0 (& "authorization"))
 	 :writable #f)
       (js-bind! %this server-prototype (& "ssl")
 	 :get (js-make-function %this
@@ -269,7 +269,7 @@
 		       (when (isa? obj server)
 			  (with-access::server obj (ssl)
 			     ssl))))
-		 0 "ssl")
+		 0 (& "ssl"))
 	 :writable #f)
 
       (with-access::JsGlobalObject %this (js-object js-server-prototype)
@@ -317,7 +317,7 @@
 			(js-make-function %this
 			   (lambda (this args)
 			      (js-new %this js-webservice base args))
-			   1 name))))
+			   1 (js-name->jsstring name)))))
 	       
 	       ;; charset
 	       (define-js charsetConvert 3
@@ -640,7 +640,7 @@
 							     (js-promise-async p
 								(lambda ()
 								   (js-promise-reject p x))))))))))))
-			       2 "executor"))))
+			       2 (& "executor")))))
 		p))))))
 
 ;*---------------------------------------------------------------------*/
@@ -771,7 +771,7 @@
 			 (js-make-function %this
 			    (lambda (this resp)
 			       (k (scheme->response resp req %this)))
-			    1 "reply" :src 'builtin))))))
+			    1 (& "reply") :src 'builtin))))))
 	  (js-raise-type-error %this "not a request" req)))
    
    (if (js-object? req)

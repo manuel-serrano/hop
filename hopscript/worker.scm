@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/worker.scm                */
+;*    /tmp/HOPNEW/hop/hopscript/worker.scm                             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Wed Feb 12 13:52:02 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 14:47:13 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -109,7 +109,7 @@
       
       ;; then, Create a HopScript worker object constructor
       (set! js-worker
-	 (js-make-function %this (%js-worker %this) 2 "Worker"
+	 (js-make-function %this (%js-worker %this) 2 (& "Worker")
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-worker-prototype
 	    :alloc js-no-alloc
@@ -146,7 +146,7 @@
 	 :value (js-make-function %this
 		   (lambda (this data)
 		      (js-worker-post-slave-message worker data))
-		   1 "postMessage")
+		   1 (& "postMessage"))
 	 :writable #f
 	 :configurable #f
 	 :enumerable #f
@@ -157,7 +157,7 @@
 	 :value (js-make-function %this
 		   (lambda (this)
 		      (js-worker-self-terminate! worker #f))
-		   0 "close")
+		   0 (& "close"))
 	 :writable #f
 	 :configurable #f
 	 :enumerable #f
@@ -170,13 +170,13 @@
 		    (lambda (this)
 		       (with-access::WorkerHopThread thread (onmessage)
 			  onmessage))
-		    0 "onmessage")
+		    0 (& "onmessage"))
 	    :set (js-make-function %this
 		    (lambda (this v)
 		       (with-access::WorkerHopThread thread (onmessage keep-alive)
 			  (set! keep-alive #t)
 			  (set! onmessage v)))
-		    1 "onmessage")
+		    1 (& "onmessage"))
 	    :configurable #f
 	    :writable #t
 	    :enumerable #t
@@ -226,7 +226,7 @@
 			      (onexit (js-make-function %this
 					 (lambda (this process retval)
 					    (onexit thread))
-					 2 "onexit"))
+					 2 (& "onexit")))
 			      (keep-alive #f)
 			      (body (lambda ()
 				       (setup)
@@ -262,42 +262,42 @@
 		  (js-bind! %this worker (& "onmessage")
 		     :get (js-make-function %this
 			     (lambda (this) onmessage)
-			     0 "onmessage")
+			     0 (& "onmessage"))
 		     :set (js-make-function %this
 			     (lambda (this v)
 				(set! onmessage v)
 				(add-event-listener! this "message"
 				   (lambda (this e)
 				      (js-call1 %this v this e))))
-			     2 "onmessage")
+			     2 (& "onmessage"))
 		     :configurable #t
 		     :enumerable #t
 		     :hidden-class #t)
 		  (js-bind! %this worker (& "onerror")
 		     :get (js-make-function %this
 			     (lambda (this) onerror)
-			     0 "onerror")
+			     0 (& "onerror"))
 		     :set (js-make-function %this
 			     (lambda (this v)
 				(set! onerror v)
 				(add-event-listener! this "error"
 				   (lambda (this e)
 				      (js-call0 %this v this))))
-			     1 "onerror")
+			     1 (& "onerror"))
 		     :configurable #t
 		     :enumerable #t
 		     :hidden-class #t)
 		  (js-bind! %this worker (& "onexit")
 		     :get (js-make-function %this
 			     (lambda (this) onexit)
-			     0 "onexit")
+			     0 (& "onexit"))
 		     :set (js-make-function %this
 			     (lambda (this v)
 				(set! onexit v)
 				(add-event-listener! this "exit"
 				   (lambda (this e)
 				      (js-call1 %this v this e))))
-			     2 "onexit")
+			     2 (& "onexit"))
 		     :configurable #t
 		     :enumerable #t
 		     :hidden-class #t))
@@ -318,7 +318,7 @@
    (js-bind! %this obj (& "toString")
       :value (js-make-function %this
 		(lambda (this) (js-string->jsstring "[object Worker]"))
-		0 "toString")
+		0 (& "toString"))
       :writable #t
       :configurable #t
       :enumerable #f
@@ -329,7 +329,7 @@
 		(lambda (this::JsWorker data)
 		   (with-access::JsWorker this (thread)
 		      (js-worker-post-master-message this data)))
-		1 "postMessage")
+		1 (& "postMessage"))
       :writable #f
       :configurable #t
       :enumerable #f
@@ -340,7 +340,7 @@
 		(lambda (this::JsWorker)
 		   (with-access::JsWorker this (thread)
 		      (js-worker-terminate! thread #f)))
-		1 "terminate")
+		1 (& "terminate"))
       :writable #f
       :enumerable #t
       :configurable #f

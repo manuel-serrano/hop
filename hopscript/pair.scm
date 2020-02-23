@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/pair.scm                  */
+;*    /tmp/HOPNEW/hop/hopscript/pair.scm                               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Mon May 13 10:39:27 2019 (serrano)                */
-;*    Copyright   :  2014-19 Manuel Serrano                            */
+;*    Last change :  Sun Feb 23 14:50:20 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
 ;*=====================================================================*/
@@ -124,28 +124,28 @@
 		 (format "no such field \"~a\" ~~a" (js-toname prop %this)) o)))
 	 ((eq? n (& "length"))
 	  (js-make-function %this length
-	     0 "length"))
+	     0 (& "length")))
 	 ((eq? n (& "map"))
 	  (js-make-function %this
 	     (lambda (this proc)
 		(map (lambda (x) (js-call1 %this proc o x)) o))
-	     1 "map"))
+	     1 (& "map")))
 	 ((eq? n (& "forEach"))
 	  (js-make-function %this
 	     (lambda (this proc)
 		(for-each (lambda (x) (js-call1 %this proc o x)) o))
-	     1 "forEach"))
+	     1 (& "forEach")))
 	 ((eq? n (& "assoc"))
 	  (js-make-function %this
 	     (lambda (this key) (assoc o key))
-	     1 "assoc"))
+	     1 (& "assoc")))
 	 ((eq? n (& "reverse"))
 	  (js-make-function %this reverse
-	     0 "reverse"))
+	     0 (& "reverse")))
 	 ((eq? n (& "concat"))
 	  (js-make-function %this
 	     (lambda (this . l) (apply append this l))
-	     -1 "concat"))
+	     -1 (& "concat")))
 	 ((eq? n (& "keys"))
 	  (js-make-function %this
 	     (lambda (this . l)
@@ -154,12 +154,12 @@
 		       (vector "car" "cdr" "cer")
 		       (vector "car" "cdr"))
 		   %this))
-	     0 "keys"))
+	     0 (& "keys")))
 	 ((eq? n (& "toArray"))
 	  (js-make-function %this
 	     (lambda (this)
 		(js-vector->jsarray (list->vector this) %this))
-	     0 "toArray"))
+	     0 (& "toArray")))
 	 ((eq? n (& "inspect"))
 	  (js-undefined))
 	 ((eq? n (& "nodeType"))
@@ -168,7 +168,7 @@
 	  (js-make-function %this
 	     (lambda (this id)
 		(dom-get-element-by-id this (js-tostring id %this)))
-	     1 "getElementById"))
+	     1 (& "getElementById")))
 	 ((eq? n (& "getElementsByTagName"))
 	  (js-make-function %this
 	     (lambda (this tag)
@@ -176,7 +176,7 @@
 		   (list->vector
 		      (dom-get-elements-by-tag-name this (js-tostring tag %this)))
 		   %this))
-	     1 "getElementsByTagName"))
+	     1 (& "getElementsByTagName")))
 	 ((eq? n (& "getElementsByClassName"))
 	  (js-make-function %this
 	     (lambda (this tag)
@@ -184,7 +184,7 @@
 		   (list->vector
 		      (dom-get-elements-by-class this (js-tostring tag %this)))
 		   %this))
-	     1 "getElementsByClassName"))
+	     1 (& "getElementsByClassName")))
 	 ((eq? n (& "childNodes"))
 	  (js-vector->jsarray (list->vector o) %this))
 	 (else
