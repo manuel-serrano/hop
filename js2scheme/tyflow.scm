@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/tyflow.scm                */
+;*    /tmp/HOPNEW/hop/js2scheme/tyflow.scm                             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sat Dec 21 09:02:16 2019 (serrano)                */
-;*    Copyright   :  2016-19 Manuel Serrano                            */
+;*    Last change :  Sun Feb 23 18:19:40 2020 (serrano)                */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
 ;*    -------------------------------------------------------------    */
@@ -800,6 +800,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SDeclClass env::pair-nil fix::cell)
    (with-access::J2SDeclClass this (val)
+      (call-default-walker)
       (if (decl-ronly? this)
 	  (decl-vtype-set! this 'class fix)
 	  (decl-vtype-add! this 'class fix))
@@ -1826,10 +1827,31 @@
 ;*    node-type ::J2SClassElement ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SClassElement env::pair-nil fix::cell)
+   
+   (define (constructor? prop::J2SDataPropertyInit)
+      (with-access::J2SDataPropertyInit prop (name)
+	 (let loop ((name name))
+	    (cond
+	       ((isa? name J2SLiteralCnst)
+		(with-access::J2SLiteralCnst name (val)
+		   (loop val)))
+	       ((isa? name J2SLiteralValue)
+		(with-access::J2SLiteralValue name (val)
+		   (equal? val "constructor")))))))
+   
    (with-access::J2SClassElement this (prop)
+      (when (constructor? prop)
+	 (with-access::J2SDataPropertyInit prop (val)
+	    (with-access::J2SFun val (thisp)
+	       (with-access::J2SDecl thisp (utype itype vtype eloc)
+		  (unless (eq? utype 'object)
+		     (set! utype 'object)
+		     (set! itype 'object)
+		     (set! vtype 'object)
+		     (unfix! fix "constructor type"))))))
       (node-type prop env fix)
       (return 'void env '())))
-      
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-resolve! ...                                                 */
 ;*    -------------------------------------------------------------    */

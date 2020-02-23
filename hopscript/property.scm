@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Feb 23 13:59:19 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 18:18:16 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -147,6 +147,9 @@
 	   (js-object-put-name/cache! ::JsObject ::obj ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
+
+	   (js-object-put/name-cache! o::JsObject prop::JsStringLiteral v::obj
+	      throw::bool %this #!optional (point -1) (cspecs '()) (src ""))
 	   
 	   (generic js-object-put-name/cache-miss! ::JsObject ::JsStringLiteral ::obj ::bool
 	      ::JsGlobalObject
@@ -2609,6 +2612,31 @@
 		       %this cache point cspecs)))))))
       (else
        (js-put! o prop v throw %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-put/name-cache! ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-object-put/name-cache! o::JsObject prop::JsStringLiteral v::obj
+	   throw::bool %this #!optional (point -1) (cspecs '()) (src ""))
+   (let ((pname (js-jsstring-toname prop)))
+      (synchronize-name
+	 (cond
+	    ((js-name-pcachew pname)
+	     =>
+	     (lambda (cache)
+		(js-object-put-name/cache! o pname v throw
+		   %this cache point '(imap emap cmap pmap amap))))
+	    ((eq? pname (& "length"))
+	     (js-put-length! o v throw #f %this))
+	    ((isa? pname JsStringLiteralIndex)
+	     (js-put! o prop v throw %this))
+	    (else
+	     (let ((cache (instantiate::JsPropertyCache
+			     (usage 'dput)
+			     (src src))))
+		(js-name-pcachew-set! pname cache)
+		(js-object-put-name/cache! o pname v throw
+		   %this cache point cspecs)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-name/cache ...                                            */

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/utils.scm                 */
+;*    /tmp/HOPNEW/hop/js2scheme/utils.scm                              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sat Dec 21 09:33:15 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Sun Feb 23 18:19:57 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
 ;*=====================================================================*/
@@ -859,7 +859,6 @@
 (define (constructor-only?::bool decl::J2SDeclFun)
    (and (decl-usage-has? decl '(new))
 	(not (decl-usage-has? decl '(ref assig call eval instanceof)))))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    constructor-no-return? ...                                       */

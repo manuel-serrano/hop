@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-utils.scm          */
+;*    /tmp/HOPNEW/hop/js2scheme/scheme-utils.scm                       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Jan 27 11:33:54 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 18:18:51 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -733,6 +733,11 @@
 		  ,(box val tyval conf) ,mode %this))
 	     ((or (number? prop) (null? cspecs))
 	      (maybe-array-set! prop (box val tyval conf)))
+	     ((and (memq tyobj '(object global this)) (eq? typrop 'string))
+	      `(js-object-put/name-cache! ,obj ,prop
+		  ,(box val tyval conf)
+		  ,mode %this
+		  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
 	     ((maybe-string? prop typrop)
 	      `(js-put/cache! ,obj ,prop
 		  ,(box val tyval conf) ,mode %this
