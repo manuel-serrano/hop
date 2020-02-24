@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Feb 24 13:24:47 2020 (serrano)                */
+;*    Last change :  Mon Feb 24 16:54:36 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -817,6 +817,7 @@
 	 obj))
 
    (define (j2s-case-type expr test #!key
+	      (null 'false)
 	      (number 'false)
 	      (string 'false)
 	      (object 'false)
@@ -825,6 +826,7 @@
 	      (function 'false)
 	      (undefined 'false)
 	      (pair 'false)
+	      (array 'false)
 	      (symbol 'false))
       (case (j2s-type expr)
 	 ((int30 int32 uint32 fixnum integer real number) number)
@@ -835,6 +837,7 @@
 	 ((undefined) undefined)
 	 ((pair) pair)
 	 ((symbol) pair)
+	 ((array) array)
 	 (else test)))
 
    (define (j2s-unary-expr this::J2SExpr)
@@ -860,7 +863,7 @@
 			  (j2s-case-type unary 'js-number? :number 'true))
 			 ((string=? val "object")
 			  (j2s-case-type unary 'js-object-or-null?
-			     :object 'true :regexp 'true :function 'true))
+			     :object 'true :regexp 'true :null 'true :array 'true))
 			 ((string=? val "function")
 			  (j2s-case-type unary 'js-function-proxy? :function 'true))
 			 ((string=? val "string")

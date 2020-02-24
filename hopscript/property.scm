@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/property.scm                           */
+;*    serrano/prgm/project/hop/hop/hopscript/property.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Feb 23 18:18:16 2020 (serrano)                */
+;*    Last change :  Mon Feb 24 19:31:49 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -709,22 +709,24 @@
 (define (js-pcache-update-direct! pcache::JsPropertyCache i o::JsObject inlp::bool)
    
    (define (update-inline! pcache omap)
-      (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index)
+      (with-access::JsPropertyCache pcache (imap cmap emap nmap pmap amap index)
 	 (set! cmap omap)
 	 (set! imap omap)
 	 (set! pmap #t)
+	 (set! nmap #t)
 	 (set! emap #t)
 	 (set! amap #t)
 	 (set! index i)))
 
    (define (update-noinline! pcache omap)
-      (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index)
+      (with-access::JsPropertyCache pcache (imap cmap emap nmap pmap amap index)
 	 (with-access::JsConstructMap omap (sibling)
 	    (if sibling
 		(set! imap sibling)
 		(set! imap #t)))
 	 (set! cmap omap)
 	 (set! pmap #t)
+	 (set! nmap #t)
 	 (set! emap #t)
 	 (set! amap #t)
 	 (set! index i)))
@@ -745,11 +747,12 @@
    [assert (obj) (js-object? obj)]
    (with-access::JsObject o ((omap cmap))
       (unless (eq? omap (js-not-a-cmap))
-	 (with-access::JsPropertyCache pcache (imap cmap pmap emap amap index owner)
+	 (with-access::JsPropertyCache pcache (imap cmap nmap pmap emap amap index owner)
 	    (js-validate-pmap-pcache! pcache)
 	    (set! imap #t)
 	    (set! cmap #t)
 	    (set! pmap omap)
+	    (set! nmap omap)
 	    (set! emap #t)
 	    (set! amap #t)
 	    (unless (js-proxy? obj) (set! owner obj))
@@ -2966,13 +2969,13 @@
    (define (vector-delete! v i)
       (vector-copy! v i v (+fx i 1))
       (vector-shrink! v (-fx (vector-length v) 1)))
-   
+
    (let ((n (js-toname p %this))
 	 (o (js-toobject %this _o)))
       (cond
 	 ((js-object? o)
 	  (with-access::JsObject o (cmap)
-	     (if (not (eq? cmap (js-not-a-cmap)))
+	     (if (js-object-mapped? o)
 		 (jsobject-map-find o n
 		    (lambda (o i)
 		       (delete-configurable o

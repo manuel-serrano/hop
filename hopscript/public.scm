@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Feb 24 05:14:30 2020 (serrano)                */
+;*    Last change :  Mon Feb 24 16:57:11 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -747,7 +747,13 @@
       ((js-proxy? fun)
        (js-call-proxyn %this fun this args))
       (else
-       (js-raise-type-error %this "call: not a function ~s" fun))))
+       (tprint "CALLN=" (typeof fun) " " (typeof this)
+	  " " (map typeof args))
+       (js-debug-object (car args))
+       (exit 0)
+       (js-raise-type-error %this
+	  (format "call(~a): not a function ~~s" (length args))
+	   fun))))
 
 ;*---------------------------------------------------------------------*/
 ;*    gen-call/function ...                                            */
@@ -981,7 +987,7 @@
 		aux))))
       (else
        (js-raise-type-error/loc %this loc
-	  (format "call: not a function ~~s ~a" loc) fun))))
+	  (format "call(~a): not a function ~~s ~a" (length args) loc) fun))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-call-method ...                                               */
@@ -1716,8 +1722,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-object-or-null? ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-object-or-null? obj)
-   (or (js-object? obj) (eq? obj (js-null))))
+(define-inline (js-object-or-null? o)
+   (or (and (%object? o)
+	    (let ((k (object-class o)))
+	       (or (eq? k JsObject) (eq? k JsArray) (eq? k JsRegExp))))
+       (eq? o (js-null))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-super ...                                                     */

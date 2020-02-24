@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/hopscript/_bglhopscript.new.c       */
+/*    serrano/prgm/project/hop/hop/hopscript/_bglhopscript.c           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Wed Feb 19 12:21:10 2020 (serrano)                */
+/*    Last change :  Mon Feb 24 15:27:31 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -290,7 +290,7 @@ thread_alloc_worker( void *arg ) {
 /*    This function is split from BGL_INIT_JSALLOC to enable bmem      */
 /*    lock initialization without spawning the worker threads.         */
 /*---------------------------------------------------------------------*/
-static void
+void
 bgl_init_jsalloc_locks() {
    pthread_mutex_init( &alloc_pool_mutex, 0L );
    pthread_cond_init( &alloc_pool_cond, 0L );

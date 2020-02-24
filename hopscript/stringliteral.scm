@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Feb 21 16:34:05 2020 (serrano)                */
+;*    Last change :  Mon Feb 24 13:53:11 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -136,6 +136,24 @@
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
+;*    js-debug-object ::JsStringLiteral ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (js-debug-object obj::JsStringLiteral #!optional (msg ""))
+   (with-access::JsStringLiteral obj (length left right)
+      (fprint (current-error-port) "=== " msg (typeof obj)
+	 " length=" length
+	 " left=" (typeof left)
+	 " right=" (typeof right)
+	 " pcacher=" (typeof (js-name-pcacher obj))
+	 " pachew=" (typeof (js-name-pcachew obj)))
+      (when (isa? (js-name-pcacher obj) JsPropertyCache)
+	 (fprint (current-error-port) "string pcacher:")
+	 (js-debug-pcache (js-name-pcacher obj)))
+      (when (isa? (js-name-pcachew obj) JsPropertyCache)
+	 (fprint (current-error-port) "string pcachew:")
+	 (js-debug-pcache (js-name-pcachew obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-stringliteral! ...                                       */

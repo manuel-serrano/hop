@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Fri Dec  6 18:00:14 2019 (serrano)                */
-/*    Copyright   :  2014-19 Manuel Serrano                            */
+/*    Last change :  Mon Feb 24 18:03:07 2020 (serrano)                */
+/*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
 /*=====================================================================*/
@@ -226,6 +226,21 @@ assert.equal( typeof undefined, "number" );
 assert.equal( typeof this.undefined, "undefined" );
 
 assert.equal( (function() { var undefined = 3; return undefined; })(), 3 );
+
+function typeofs() {
+   const p = [ new Array( 1 ), new RegExp( "" ), null, { a: 1 } ];
+   const n = [ function( x ) { return 1 }, x => 1, undefined, "foo", 1, true ];
+   
+   for( let i = 0; i < p.length; i++ ) {
+      if( typeof( p[ i ] ) !== "object" ) return false;
+   } 
+   for( let i = 0; i < n.length; i++ ) {
+      if( typeof( n[ i ] ) === "object" ) return false;
+   } 
+   return true;
+}
+   
+assert.ok( typeofs(), "typeofs" ); 
 
 /*---------------------------------------------------------------------*/
 /*    arity                                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Feb 13 09:40:52 2020 (serrano)                */
+;*    Last change :  Mon Feb 24 15:21:09 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -799,7 +799,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-let-decl-toplevel::pair-nil d::J2SDeclInit mode return conf)
    (with-access::J2SDeclInit d (val id hint scope loc)
-      (let ((ident (j2s-profile-id (j2s-decl-scheme-id d) loc conf)))
+      (let ((ident (j2s-decl-profile-id d conf)))
 	 (cond
 	    ((or (not (isa? val J2SFun))
 		 (isa? val J2SSvc)

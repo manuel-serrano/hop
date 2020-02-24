@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/js2scheme/scheme-utils.scm                       */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-utils.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sun Feb 23 18:18:51 2020 (serrano)                */
+;*    Last change :  Mon Feb 24 14:58:56 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -44,6 +44,7 @@
 	   (j2s-scheme-id id pref)
 	   (j2s-scheme-name ::symbol)
 	   (j2s-decl-scheme-id ::J2SDecl)
+	   (j2s-decl-profile-id ::J2SDecl conf)
 	   (js-need-global? ::J2SDecl scope mode)
 	   (flatten-stmt stmt)
 	   (flatten-nodes nodes)
@@ -209,6 +210,16 @@
 				  (integer->string key) "-"))))))
 	     (set! _scmid sid)
 	     sid))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-decl-profile-id ...                                          */
+;*---------------------------------------------------------------------*/
+(define (j2s-decl-profile-id decl conf)
+   (let ((id (j2s-decl-scheme-id decl)))
+      (if (isa? decl J2SDeclFun)
+	  (with-access::J2SDecl decl (loc)
+	     (j2s-profile-id id loc conf))
+	  id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-need-global? ...                                              */

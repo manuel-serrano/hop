@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/property_expd.sch                      */
+;*    serrano/prgm/project/hop/hop/hopscript/property_expd.sch         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Feb 23 13:55:42 2020 (serrano)                */
+;*    Last change :  Mon Feb 24 14:09:30 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -759,13 +759,13 @@
 	  ,(calln %this 'f obj args)))
 
    (define (calln-miss %this obj prop args ccache ocache loc cspecs ospecs)
-      `(js-object-method-call/cache-miss %this ,obj ,prop
-	  ,(if (pair? args) `(list ,@args) ''())
-	  ,ccache ,ocache ,loc ',cspecs ',ospecs))
+      `(begin
+	  (js-object-method-call/cache-miss %this ,obj ,prop
+	     ,(if (pair? args) `(list ,@args) ''())
+	     ,ccache ,ocache ,loc ',cspecs ',ospecs)))
    
    (define (expand-cache-specs/args ccspecs ocspecs %this obj prop args ccache ocache loc)
       `(with-access::JsObject ,obj (cmap)
-	  
 	  (let ((%cmap cmap))
 	     ,(let loop ((cs ccspecs))
 		 (if (null? cs)
