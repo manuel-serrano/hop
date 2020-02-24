@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Feb 17 16:03:22 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 20:22:27 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -836,30 +836,49 @@
 	 ((pair) pair)
 	 ((symbol) pair)
 	 (else test)))
-   
+
+   (define (j2s-unary-expr this::J2SExpr)
+      (cond
+	 ((isa? this J2SUnary)
+	  (with-access::J2SUnary this (expr)
+	     expr))
+	 ((isa? this J2SParen)
+	  (with-access::J2SParen this (expr)
+	     (j2s-unary-expr expr)))
+	 (else
+	  #f)))
+      
    (define (j2s-typeof-predicate this::J2SExpr expr)
-      (when (isa? this J2SUnary)
-	 (with-access::J2SUnary this (op (unary expr))
-	    (when (eq? op 'typeof)
-	       (when (or (isa? expr J2SString) (isa? expr J2SNativeString))
-		  (with-access::J2SLiteralValue expr (val)
-		     (cond
-			((string=? val "number")
-			 (j2s-case-type unary 'js-number? :number 'true))
-			((string=? val "function")
-			 (j2s-case-type unary 'js-function-proxy? :function 'true))
-			((string=? val "string")
-			 (j2s-case-type unary 'js-jsstring? :string 'true))
-			((string=? val "undefined")
-			 (j2s-case-type unary 'js-undefined? :undefined 'true))
-			((string=? val "boolean")
-			 (j2s-case-type unary 'boolean? :boolean 'true))
-			((string=? val "pair")
-			 (j2s-case-type unary 'pair? :pair 'true))
-			((string=? val "symbol")
-			 (j2s-case-type unary 'js-symbol? :symbol 'true))
-			(else
-			 #f))))))))
+      (cond
+	 ((isa? this J2SUnary)
+	  (with-access::J2SUnary this (op (unary expr))
+	     (when (eq? op 'typeof)
+		(when (or (isa? expr J2SString) (isa? expr J2SNativeString))
+		   (with-access::J2SLiteralValue expr (val)
+		      (cond
+			 ((string=? val "number")
+			  (j2s-case-type unary 'js-number? :number 'true))
+			 ((string=? val "object")
+			  (j2s-case-type unary 'js-object? :object 'true))
+			 ((string=? val "function")
+			  (j2s-case-type unary 'js-function-proxy? :function 'true))
+			 ((string=? val "string")
+			  (j2s-case-type unary 'js-jsstring? :string 'true))
+			 ((string=? val "undefined")
+			  (j2s-case-type unary 'js-undefined? :undefined 'true))
+			 ((string=? val "boolean")
+			  (j2s-case-type unary 'boolean? :boolean 'true))
+			 ((string=? val "pair")
+			  (j2s-case-type unary 'pair? :pair 'true))
+			 ((string=? val "symbol")
+			  (j2s-case-type unary 'js-symbol? :symbol 'true))
+			 (else
+			  #f)))))))
+	 ((isa? this J2SParen)
+	  (with-access::J2SParen this ((child expr))
+	     (j2s-typeof-predicate child expr)))
+	 (else
+	  #f)))
 
    (define (equality-int32 op lhs tl rhs tr mode return conf flip::bool)
       ;; tl == int32, tr = ???
@@ -1000,13 +1019,11 @@
 	 ((j2s-typeof-predicate lhs rhs)
 	  =>
 	  (lambda (pred)
-	     (with-access::J2SUnary lhs (expr)
-		(typeof/pred expr pred))))
+	     (typeof/pred (j2s-unary-expr lhs) pred)))
 	 ((j2s-typeof-predicate rhs lhs)
 	  =>
 	  (lambda (pred)
-	     (with-access::J2SUnary rhs (expr)
-		(typeof/pred expr pred))))
+	     (typeof/pred (j2s-unary-expr rhs) pred)))
 	 ((and (is-uint32? lhs) (is-uint32? rhs))
 	  (cond
 	     ((j2s-aref-length? rhs)
