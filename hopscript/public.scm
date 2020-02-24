@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Feb 24 16:57:11 2020 (serrano)                */
+;*    Last change :  Mon Feb 24 22:41:34 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1723,9 +1723,7 @@
 ;*    js-object-or-null? ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-or-null? o)
-   (or (and (%object? o)
-	    (let ((k (object-class o)))
-	       (or (eq? k JsObject) (eq? k JsArray) (eq? k JsRegExp))))
+   (or (and (js-object? o) (not (js-function? o)))
        (eq? o (js-null))))
 
 ;*---------------------------------------------------------------------*/
