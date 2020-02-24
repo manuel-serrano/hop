@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/public.scm                             */
+;*    serrano/prgm/project/hop/hop/hopscript/public.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Feb 23 14:47:29 2020 (serrano)                */
+;*    Last change :  Mon Feb 24 05:14:30 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -192,6 +192,7 @@
 	   (inline js-eqil?::bool ::long ::obj)
 	   (inline js-eqir?::bool ::obj ::long)
 	   (inline js-null-or-undefined?::bool ::obj)
+	   (inline js-object-or-null?::bool ::obj)
 
 	   (js-super ::obj ::obj ::JsGlobalObject)
 	   
@@ -1711,6 +1712,12 @@
        (or (eq? obj (js-undefined)) (eq? obj (js-null))))
       (else
        (null-or-unspecified? obj))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-or-null? ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-or-null? obj)
+   (or (js-object? obj) (eq? obj (js-null))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-super ...                                                     */
