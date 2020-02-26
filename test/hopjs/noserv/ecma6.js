@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Tue Feb 25 16:14:40 2020 (serrano)                */
+/*    Last change :  Wed Feb 26 09:11:18 2020 (serrano)                */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 6 features                               */
@@ -141,14 +141,14 @@ function miscj() {
 
 function misck( a ) {
    // test the compilation of const scoping
-   if( a > 10 ) {
+   if( a >= 10 ) {
       const x = a + 4;
       
-      function b( y ) {
+      const b = function b( y ) {
 	 return x + y;
       }
       
-      return b( a ) === 44;
+      return b( a ) === 24;
    } else {
       return false;
    }
@@ -165,7 +165,7 @@ console.log( "   miscg()"); assert.ok( miscg(), "miscg" );
 console.log( "   misch()"); assert.ok( misch(), "misch" );
 console.log( "   misci()"); assert.ok( misci(), "misci" );
 console.log( "   miscj()"); assert.ok( miscj(), "miscj" );
-console.log( "   misck()"); assert.ok( misck(), "misck" );
+console.log( "   misck()"); assert.ok( misck( 10 ), "misck" );
 
 /*---------------------------------------------------------------------*/
 /*    mdn                                                              */

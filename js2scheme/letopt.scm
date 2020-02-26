@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Tue Dec 17 13:12:36 2019 (serrano)                */
-;*    Copyright   :  2015-19 Manuel Serrano                            */
+;*    Last change :  Wed Feb 26 10:29:44 2020 (serrano)                */
+;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
 ;*    -------------------------------------------------------------    */
@@ -232,10 +232,17 @@
       ;; the first decl
       (with-trace 'j2s-letopt "j2s-letopt!"
 	 (trace-item "" (j2s->list this))
-	 ;; mark all declarations
-	 (for-each init-decl! decls)
+	 ;; optimize recursively
+	 ;;(for-each j2s-letopt! nodes)
 	 (for-each (lambda (d)
-		      (trace-item "d=" (j2s->list d)))
+		      (when (isa? d J2SDeclInit)
+			 (with-access::J2SDeclInit d (val)
+			    (j2s-letopt! val))))
+	    decls)
+	 ;; mark all declarations
+	 (for-each (lambda (d)
+		      (trace-item "d=" (j2s->list d))
+		      (init-decl! d))
 	    decls)
 	 (if (every (lambda (d)
 		       (with-access::J2SDecl d (binder)
