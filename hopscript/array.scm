@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/array.scm                              */
+;*    serrano/prgm/project/hop/hop/hopscript/array.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Feb 23 14:46:15 2020 (serrano)                */
+;*    Last change :  Wed Feb 12 22:16:16 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2960,7 +2960,7 @@
 			     (set! length nilen)))
 		       v)
 		      ((js-object-mode-holey? o)
-		       ;;(js-object-mode-inline-set! o #f)
+		       (js-object-mode-inline-set! o #f)
 		       (vector-set! vec (uint32->fixnum idx) v)
 		       (when (>=u32 idx length)
 			  (set! length (+u32 idx #u32:1)))
@@ -3109,8 +3109,6 @@
 	 ((bignum? n) (elong->uint32 (bignum->elong n)))
 	 ((elong? n) (elong->uint32 n))
 	 ((llong? n) (llong->uint32 n)))))
-
-(define k 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    expandable-array ...                                             */
