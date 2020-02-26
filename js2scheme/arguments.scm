@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
-;*    Last change :  Sun Feb  9 10:43:58 2020 (serrano)                */
+;*    Last change :  Tue Feb 25 15:58:17 2020 (serrano)                */
 ;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
@@ -115,16 +115,10 @@
 		(unless (or (memq (j2s-type field)
 			       '(integer uint32 int32 fixnum))
 			    (get-length? parent))
-		   (when (isa? decl J2SDeclRest)
-		      (tprint "INV.1"))
 		   (arguments-invalidate! decl))))
 	    ((isa? parent J2SCall)
 	     (unless (apply? parent)
-		(when (isa? decl J2SDeclRest)
-		   (tprint "INV.2 " (j2s->list parent)))
 		(arguments-invalidate! decl)))
 	    (else
-	     (when (isa? decl J2SDeclRest)
-		   (tprint "INV.3"))
 	     (arguments-invalidate! decl))))))
    
