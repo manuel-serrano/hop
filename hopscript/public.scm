@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Feb 24 22:41:34 2020 (serrano)                */
+;*    Last change :  Fri Feb 28 13:39:41 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -324,6 +324,15 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-alloc-fast %this ctor::JsFunction)
    (with-access::JsFunction ctor (constrsize constrmap %prototype)
+      (js-make-jsobject constrsize constrmap %prototype)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-alloc-lazy ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-alloc-lazy %this ctor::JsFunction)
+   (with-access::JsFunction ctor (constrsize constrmap %prototype)
+      (when (eq? %prototype 'lazy)
+	 (js-function-alloc-prototype! %this ctor))
       (js-make-jsobject constrsize constrmap %prototype)))
 
 ;*---------------------------------------------------------------------*/

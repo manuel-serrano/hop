@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/function.scm                           */
+;*    serrano/prgm/project/hop/hop/hopscript/function.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun Feb 23 14:35:25 2020 (serrano)                */
+;*    Last change :  Fri Feb 28 10:43:18 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -46,10 +46,18 @@
 	      (strict 'normal) arity (minlen -1) src 
 	      (size 0) (constrsize 3) (maxconstrsize 100)
 	      (constrmap (js-not-a-cmap)) (shared-cmap #t))
+	   (js-make-function-strict::JsFunction
+	      ::JsGlobalObject ::procedure ::int ::JsStringLiteral
+	      #!key
+	      method construct alloc
+	      arity (minlen -1) src 
+	      (constrsize 3)
+	      (constrmap (js-not-a-cmap)))
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
 	      ::int ::JsStringLiteral ::int ::int ::symbol ::int)
 	   
 	   (inline js-function-prototype-get ::obj ::JsFunction ::obj ::JsGlobalObject)
+	   (js-function-alloc-prototype!::JsObject ::JsGlobalObject ::JsFunction)
 	   
 	   (js-apply-array ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-apply-vec ::JsGlobalObject ::obj ::obj ::vector ::uint32)
@@ -557,6 +565,67 @@
 	    (vector-set! els 3 strict-arguments-property)
 	    (vector-set! els 4 strict-caller-property))
 	 fun)))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-function-strict ...                                      */
+;*    -------------------------------------------------------------    */
+;*    specialized function constructor for regular strict functions.   */
+;*---------------------------------------------------------------------*/
+(define (js-make-function-strict %this procedure length name
+	   #!key
+	   method construct alloc
+	   arity (minlen -1) src 
+	   (constrsize 3)
+	   (constrmap (js-not-a-cmap)) )
+   (with-access::JsGlobalObject %this (js-function 
+					 js-function-cmap
+					 js-function-writable-strict-cmap
+					 js-function-prototype-cmap
+					 js-function-prototype-property-rw)
+      (let* ((els ($create-vector 5))
+	     (fun (INSTANTIATE-JSFUNCTION
+		     (procedure procedure)
+		     (method method)
+		     (construct construct)
+		     (alloc alloc)
+		     (arity arity)
+		     (len length)
+		     (__proto__ (js-object-proto js-function))
+		     (src src)
+		     (constrsize constrsize)
+		     (constrmap constrmap)
+		     (maxconstrsize 100)
+		     (elements els)
+		     (cmap js-function-writable-strict-cmap)
+		     (prototype #unspecified)
+		     (%prototype #unspecified)))
+	     (p (instantiateJsObject
+		   (cmap js-function-prototype-cmap)
+		   (__proto__ (js-object-proto %this))
+		   (elements (vector fun)))))
+	 (with-access::JsFunction fun (prototype %prototype)
+	    (set! prototype p)
+	    (set! %prototype p))
+	 (vector-set! els 0 js-function-prototype-property-rw)
+	 (vector-set! els 1 length)
+	 (vector-set! els 2 name)
+	 (vector-set! els 3 strict-arguments-property)
+	 (vector-set! els 4 strict-caller-property)
+	 fun)))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-alloc-prototype! ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-function-alloc-prototype! %this fun::JsFunction)
+   (with-access::JsGlobalObject %this (js-function-prototype-cmap)
+      (let ((p (instantiateJsObject
+		  (cmap js-function-prototype-cmap)
+		  (__proto__ (js-object-proto %this))
+		  (elements (vector fun)))))
+	 (with-access::JsFunction fun (prototype %prototype)
+	    (set! prototype p)
+	    (set! %prototype p))
+	 p)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-get ...                                    */
