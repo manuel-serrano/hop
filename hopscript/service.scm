@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/service.scm                            */
+;*    serrano/prgm/project/hop/hop/hopscript/service.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun Feb 23 14:48:21 2020 (serrano)                */
+;*    Last change :  Sat Feb 29 10:39:03 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -277,7 +277,6 @@
 				(js-raise-type-error %this "not a constructor ~s"
 				   js-function-prototype)))
 		  (prototype (js-object-proto %this))
-		  (%prototype (js-object-proto %this))
 		  (len -1)
 		  (procedure list)
 		  (method list)
@@ -1050,7 +1049,6 @@
 	 (arity arity)
 	 (worker worker)
 	 (prototype (js-object-proto %this))
-	 (%prototype (js-object-proto %this))
 	 (__proto__ js-service-prototype)
 	 (alloc (lambda (_)
 		   (js-raise-type-error %this

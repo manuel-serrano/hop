@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Feb 23 13:54:53 2020 (serrano)                */
+;*    Last change :  Sat Feb 29 09:51:07 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -225,8 +225,7 @@
 	      ;; MS 2019-01-10: two prototype fields are required,
 	      ;; see isPrototypeOf in ECMAScript specification
 	      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.6
-	      prototype
-	      %prototype)
+	      prototype)
 	   
 	   (class JsService::JsFunction
 	      (worker::obj read-only)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Feb 24 19:31:49 2020 (serrano)                */
+;*    Last change :  Sat Feb 29 10:48:34 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2634,6 +2634,7 @@
 	    ((isa? pname JsStringLiteralIndex)
 	     (js-put! o prop v throw %this))
 	    (else
+	     (unless (string? src) (tprint "PAS BON prop=" prop " src=" src))
 	     (let ((cache (instantiate::JsPropertyCache
 			     (usage 'dput)
 			     (src src))))
@@ -3266,7 +3267,7 @@
 
    (when (and (js-jsstring? name) (js-jsstring->number name))
       (js-object-mode-hasnumeralprop-set! o #t))
-   
+
    ;; 1 & 2
    (if (not (js-has-own-property o name %this))
        (cond

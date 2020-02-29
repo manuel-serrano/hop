@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Feb 28 10:49:24 2020 (serrano)                */
+;*    Last change :  Sat Feb 29 09:54:28 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -178,7 +178,14 @@
 ;*    j2s-make-function ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-make-function this::J2SDeclFun mode return conf)
-   
+
+   (define (allocator::symbol this::J2SDecl)
+      (with-access::J2SFun (declfun-fun this) (new-target)
+	 (cond
+	    (new-target 'js-object-alloc/new-target)
+	    ((decl-usage-has? this '(new get set))  'js-object-alloc)
+	    (else 'js-object-alloc-lazy))))
+      
    (define (make-function-sans-alloc this::J2SDeclFun)
       (with-access::J2SDeclFun this (loc id scope val key)
 	 (let ((val (declfun-fun this)))
@@ -198,7 +205,7 @@
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
-			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
+			  :alloc ,(allocator this)
 			  :prototype ,(j2s-fun-prototype val)
 			  :__proto__ ,(j2s-fun-__proto__ val)
 			  :construct ,fastid
@@ -209,7 +216,7 @@
 			  :src ,src
 			  :arity ,arity
 			  :minlen ,minlen
-			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
+			  :alloc ,(allocator this)
 			  :construct ,fastid
 			  :constrsize ,constrsize
 			  :method ,(if method
@@ -223,7 +230,7 @@
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
-			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
+			  :alloc ,(allocator this)
 			  :construct ,fastid
 			  :constrsize ,constrsize
 			  :method ,(when method
@@ -235,7 +242,7 @@
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
-			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
+			  :alloc ,(allocator this)
 			  :construct ,fastid
 			  :constrsize ,constrsize
 			  :method ,(when method
@@ -247,7 +254,7 @@
 			  :arity ,arity
 			  :minlen ,minlen
 			  :constrsize ,constrsize
-			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
+			  :alloc ,(allocator this)
 			  :construct ,fastid
 			  :method ,(if method
 				       (jsfun->lambda method
@@ -260,7 +267,7 @@
 			  :minlen ,minlen
 			  :strict ',mode 
 			  :constrsize ,constrsize
-			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
+			  :alloc ,(allocator this)
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
@@ -269,7 +276,7 @@
 			  ,len (& ,(symbol->string! id))
 			  :arity ,arity
 			  :minlen ,minlen
-			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
+			  :alloc ,(allocator this)
 			  :construct ,fastid
 			  :constrsize ,constrsize
 			  :method ,(if method
@@ -282,7 +289,7 @@
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
-			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
+			  :alloc ,(allocator this)
 			  :construct ,fastid
 			  :constrsize ,constrsize
 			  :method ,(when method
@@ -294,7 +301,7 @@
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
-			  :alloc ,(if new-target 'js-object-alloc/new-target 'js-object-alloc)
+			  :alloc ,(allocator this)
 			  :construct ,fastid
 			  :constrsize ,constrsize))
 		     (else
@@ -612,6 +619,14 @@
 ;*    j2sfun->scheme ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (j2sfun->scheme this::J2SFun tmp tmpm mode return conf)
+
+   (define (allocator this::J2SFun)
+      (with-access::J2SFun this (new-target)
+	 (cond
+	    ((isa? this J2SSvc) 'js-not-a-constructor-alloc)
+	    (new-target 'js-object-alloc/new-target)
+	    (else 'js-object-alloc-lazy))))
+   
    (with-access::J2SFun this (loc name params mode vararg mode generator
 				constrsize method new-target type)
       (let* ((lparams (length params))
@@ -635,10 +650,7 @@
 		    :src ,src
 		    :arity ,arity
 		    :minlen ,minlen
-		    :alloc ,(cond
-			       ((isa? this J2SSvc) 'js-not-a-constructor-alloc)
-			       (new-target 'js-object-alloc/new-target)
-			       (else 'js-object-alloc))
+		    :alloc ,(allocator this)
 		    :construct ,tmp
 		    :constrsize ,constrsize
 		    :method ,(or tmpm
@@ -653,10 +665,7 @@
 		    :__proto__ ,__proto__
 		    :strict ',mode
 		    :minlen ,minlen
-		    :alloc ,(cond
-			       ((isa? this J2SSvc) 'js-not-a-constructor-alloc)
-			       (new-target 'js-object-alloc/new-target)
-			       (else 'js-object-alloc))
+		    :alloc ,(allocator this)
 		    :constrsize ,constrsize
 		    :method ,(or tmpm (and method (jsfun->lambda method mode return conf #f #f)))))
 	       ((and (eq? vararg 'arguments)
@@ -667,10 +676,7 @@
 		    :minlen minlen
 		    :strict ',mode
 		    :construct ,tmp
-		    :alloc ,(cond
-			       ((isa? this J2SSvc) 'js-not-a-constructor-alloc)
-			       (new-target 'js-object-alloc/new-target)
-			       (else 'js-object-alloc))
+		    :alloc ,(allocator this)
 		    :constrsize ,constrsize
 		    :method ,tmp))
 	       ((eq? vararg 'arguments)
@@ -679,10 +685,7 @@
 		    :arity ,arity ,
 		    :minlen minlen
 		    :strict ',mode
-		    :alloc ,(cond
-			       ((isa? this J2SSvc) 'js-not-a-constructor-alloc)
-			       (new-target 'js-object-alloc/new-target)
-			       (else 'js-object-alloc))
+		    :alloc ,(allocator this)
 		    :constrsize ,constrsize))
 	       (else
 		`(js-make-function-simple %this ,tmp ,len
