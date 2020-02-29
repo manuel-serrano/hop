@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Feb 29 09:47:51 2020 (serrano)                */
+;*    Last change :  Sat Feb 29 18:29:59 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -349,7 +349,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-alloc-lazy %this ctor::JsFunction)
    (with-access::JsFunction ctor (constrsize constrmap prototype alloc)
-   (tprint "js-object-alloc-lazy..." (if (symbol? prototype) prototype))
       (when (eq? prototype 'lazy)
 	 (js-function-setup-prototype! %this ctor)
 	 (set! alloc js-object-alloc))
