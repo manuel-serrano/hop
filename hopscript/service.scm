@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/service.scm                            */
+;*    serrano/prgm/project/hop/hop/hopscript/service.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun Feb 23 14:48:21 2020 (serrano)                */
+;*    Last change :  Sun Mar  1 11:35:53 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -278,6 +278,7 @@
 				   js-function-prototype)))
 		  (prototype (js-object-proto %this))
 		  (%prototype (js-object-proto %this))
+		  (name (& ""))
 		  (len -1)
 		  (procedure list)
 		  (method list)
@@ -1046,6 +1047,7 @@
       (instantiateJsService
 	 (procedure proc)
 	 (method proc)
+	 (name name)
 	 (len arity)
 	 (arity arity)
 	 (worker worker)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun Mar  1 10:03:18 2020 (serrano)                */
+;*    Last change :  Sun Mar  1 11:32:39 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -200,8 +200,6 @@
    (unless (vector? __js_strings) (set! __js_strings (&init!)))
    ;; create function cmap
    (js-init-function-cmap! %this)
-   ;; pre-allocated prototype property descriptors
-   (js-init-function-property! %this)
    ;; bind the builtin function prototype
    (with-access::JsGlobalObject %this (js-function-prototype
 					 js-function-strict-prototype
@@ -219,6 +217,7 @@
 	       (cmap (instantiate::JsConstructMap))
 	       (alloc js-not-a-constructor-alloc)
 	       (src "[Function.__proto__@function.scm]")
+	       (name (& ""))
 	       (len -1)
 	       (arity -1)
 	       (prototype js-object-prototype)
@@ -252,6 +251,8 @@
 			    (js-raise-type-error %this
 			       "[[ThrowTypeError]] ~a" o))
 			 1 (& "thrower"))))
+	 ;; pre-allocated prototype property descriptors
+	 (js-init-function-property! %this thrower throwget)
 	 (set! thrower-get thrower)
 	 (set! thrower-set thrower)
 	 (set! strict-arguments-property
@@ -286,11 +287,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-init-function-property! ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (js-init-function-property! %this::JsGlobalObject)
+(define (js-init-function-property! %this::JsGlobalObject thrower %thrower)
    (with-access::JsGlobalObject %this (js-function-prototype-property-rw 
 					 js-function-prototype-property-ro
 					 js-function-prototype-property-null
-					 js-function-prototype-property-undefined)
+					 js-function-prototype-property-undefined
+					 js-function-strict-elements)
       
       (set! js-function-prototype-property-rw
 	 (instantiate::JsWrapperDescriptor
@@ -324,7 +326,45 @@
 	    (enumerable #f)
 	    (configurable #f)
 	    (writable #f)
-	    (value (js-undefined))))))
+	    (value (js-undefined))))
+
+      (set! js-function-strict-elements
+	 (vector
+	    js-function-prototype-property-rw
+	    (instantiate::JsWrapperDescriptor
+	       (name (& "length"))
+	       (enumerable #f)
+	       (configurable #f)
+	       (writable #f)
+	       (%get (lambda (obj owner propname %this)
+			(with-access::JsFunction owner (len)
+			   len)))
+	       (%set list))
+	    (instantiate::JsWrapperDescriptor
+	       (name (& "name"))
+	       (enumerable #f)
+	       (configurable #f)
+	       (writable #f)
+	       (%get (lambda (obj owner propname %this)
+			(with-access::JsFunction owner (name)
+			   name)))
+	       (%set list))
+	    (instantiate::JsAccessorDescriptor
+	       (name (& "arguments"))
+	       (get thrower)
+	       (set thrower)
+	       (%get %thrower)
+	       (%set %thrower)
+	       (enumerable #f)
+	       (configurable #f))
+	    (instantiate::JsAccessorDescriptor
+	       (name (& "caller"))
+	       (get thrower)
+	       (set thrower)
+	       (%get %thrower)
+	       (%set %thrower)
+	       (enumerable #f)
+	       (configurable #f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-function-cmap! ...                                       */
@@ -500,6 +540,7 @@
 		     (len length)
 		     (__proto__ (or __proto__ %__proto__))
 		     (src src)
+		     (name name)
 		     (constrsize constrsize)
 		     (constrmap constrmap)
 		     (maxconstrsize maxconstrsize)
@@ -543,7 +584,8 @@
 		   js-function-prototype-property-ro)
 		  ((eq? prototype (js-undefined))
 		   (set! fprototype prototype)
-		   (set! alloc js-object-alloc-lazy)
+		   (unless (eq? alloc js-not-a-constructor-alloc)
+		      (set! alloc js-object-alloc-lazy))
 		   js-function-prototype-property-undefined)
 		  ((null? prototype)
 		   (set! fprototype prototype)
@@ -578,8 +620,9 @@
 	   (constrmap (js-not-a-cmap)))
    (with-access::JsGlobalObject %this (js-function 
 					 js-function-writable-strict-cmap
-					 js-function-prototype-property-rw)
-      (let* ((els ($create-vector 5))
+					 js-function-prototype-property-rw
+					 js-function-strict-elements)
+      (let* (;;(els ($create-vector 5))
 	     (fun (INSTANTIATE-JSFUNCTION
 		     (procedure procedure)
 		     (method method)
@@ -589,20 +632,22 @@
 		     (len length)
 		     (__proto__ (js-object-proto js-function))
 		     (src src)
+		     (name name)
 		     (constrsize constrsize)
 		     (constrmap constrmap)
 		     (maxconstrsize 100)
-		     (elements els)
+		     (elements js-function-strict-elements)
+		     ;; (elements els)
 		     (cmap js-function-writable-strict-cmap)
 		     (prototype #f)
 		     (%prototype #f))))
 	 (unless (eq? alloc js-object-alloc-lazy)
 	    (js-function-setup-prototype! %this fun))
-	 (vector-set! els 0 js-function-prototype-property-rw)
-	 (vector-set! els 1 length)
-	 (vector-set! els 2 name)
-	 (vector-set! els 3 strict-arguments-property)
-	 (vector-set! els 4 strict-caller-property)
+;* 	 (vector-set! els 0 js-function-prototype-property-rw)         */
+;* 	 (vector-set! els 1 length)                                    */
+;* 	 (vector-set! els 2 name)                                      */
+;* 	 (vector-set! els 3 strict-arguments-property)                 */
+;* 	 (vector-set! els 4 strict-caller-property)                    */
 	 fun)))
 
 ;*---------------------------------------------------------------------*/
