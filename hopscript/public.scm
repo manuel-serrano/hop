@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Feb 29 18:29:59 2020 (serrano)                */
+;*    Last change :  Sun Mar  1 09:52:45 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -59,7 +59,6 @@
 
 	   (inline js-object-alloc ::JsGlobalObject ::JsFunction)
 	   (inline js-object-alloc-fast ::JsGlobalObject ::JsFunction)
-	   (js-object-alloc-slow ::JsGlobalObject ::JsFunction)
 	   (js-object-alloc-lazy ::JsGlobalObject ::JsFunction)
 	   (inline js-object-alloc/new-target ::JsGlobalObject ::JsFunction)
 	   (inline js-no-alloc ::JsGlobalObject ::JsFunction)
@@ -315,47 +314,28 @@
 ;*    js-object-alloc ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-alloc %this ctor::JsFunction)
-   (with-access::JsFunction ctor (constrsize constrmap prototype)
+   (with-access::JsFunction ctor (constrsize constrmap %prototype)
       (with-access::JsConstructMap constrmap (size)
 	 (unless (=fx size constrsize)
 	    (js-function-set-constrmap! ctor)))
-      (js-make-jsobject constrsize constrmap prototype)))
+      (js-make-jsobject constrsize constrmap %prototype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc-fast ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-alloc-fast %this ctor::JsFunction)
-   (with-access::JsFunction ctor (constrsize constrmap prototype)
-      (js-make-jsobject constrsize constrmap prototype)))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-alloc-slow ...                                         */
-;*    -------------------------------------------------------------    */
-;*    Only used when a non-object has been assigned as the function    */
-;*    prototype (see JS-FUNCTION-PROTOTYPE-SET).                       */
-;*---------------------------------------------------------------------*/
-(define (js-object-alloc-slow %this ctor::JsFunction)
-   (with-access::JsFunction ctor (constrsize constrmap prototype)
-      (with-access::JsConstructMap constrmap (size)
-	 (unless (=fx size constrsize)
-	    (js-function-set-constrmap! ctor)))
-      (with-access::JsGlobalObject %this (js-new-target)
-	 (if (js-object? prototype)
-	     (js-make-jsobject constrsize constrmap prototype)
-	     (js-make-jsobject constrsize constrmap (js-object-proto %this))))))
+   (with-access::JsFunction ctor (constrsize constrmap %prototype)
+      (js-make-jsobject constrsize constrmap %prototype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc-lazy ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-object-alloc-lazy %this ctor::JsFunction)
-   (with-access::JsFunction ctor (constrsize constrmap prototype alloc)
-      (when (eq? prototype 'lazy)
+   (with-access::JsFunction ctor (constrsize constrmap %prototype alloc)
+      (unless %prototype
 	 (js-function-setup-prototype! %this ctor)
 	 (set! alloc js-object-alloc))
-      (with-access::JsConstructMap constrmap (size)
-	 (unless (=fx size constrsize)
-	    (js-function-set-constrmap! ctor)))
-      (js-make-jsobject constrsize constrmap prototype)))
+      (js-object-alloc %this ctor)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc/new-target ...                                   */
@@ -1114,8 +1094,8 @@
 ;*    js-ordinary-instanceof? ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-ordinary-instanceof? %this v f)
-   (with-access::JsFunction f (prototype)
-      (unless (eq? prototype 'lazy)
+   (with-access::JsFunction f (%prototype prototype)
+      (when %prototype
 	 (let ((o prototype))
 	    (if (not (js-object? o))
 		(js-raise-type-error %this "instanceof: no prototype ~s" v)
@@ -1144,8 +1124,8 @@
 	     (if (js-function? h)
 		 (js-call1 %this h f v)
 		 (js-ordinary-instanceof? %this v f))))
-       (with-access::JsFunction f (prototype)
-	  (unless (eq? prototype 'lazy)
+       (with-access::JsFunction f (prototype %prototype)
+	  (when %prototype
 	     (let ((o prototype))
 		(if (not (js-object? o))
 		    (js-raise-type-error %this "instanceof: no prototype ~s" v)

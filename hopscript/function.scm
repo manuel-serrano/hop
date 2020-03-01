@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Feb 29 09:47:44 2020 (serrano)                */
+;*    Last change :  Sun Mar  1 10:03:18 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -222,6 +222,7 @@
 	       (len -1)
 	       (arity -1)
 	       (prototype js-object-prototype)
+	       (%prototype js-object-prototype)
 	       (__proto__ js-object-prototype)
 	       (elements ($create-vector 10)))))
 
@@ -512,10 +513,11 @@
 			       ;; a single cmap for all their fields
 			       (duplicate::JsConstructMap cmap
 				  (%id (gencmapid)))))
-		     (prototype #f))))
+		     (prototype #f)
+		     (%prototype #f))))
 	 ;; the prototype property
 	 ;; the builtin "%prototype" property
-	 (with-access::JsFunction fun ((fprototype prototype) alloc)
+	 (with-access::JsFunction fun (%prototype (fprototype prototype) alloc)
 	    (vector-set! els 0
 	       (cond
 		  ((not prototype)
@@ -529,8 +531,7 @@
 			       (__proto__ (js-object-proto %this))
 			       (elements (vector fun)))))
 		      (set! fprototype p)
-		      (unless (eq? alloc js-object-alloc/new-target)
-			 (set! alloc js-object-alloc-slow))
+		      (set! %prototype p)
 		      js-function-prototype-property-rw))
 		  ((js-object? prototype)
 		   (js-bind! %this prototype (& "constructor")
@@ -538,14 +539,15 @@
 		      :configurable #t :enumerable #f :writable #t
 		      :hidden-class #t)
 		   (set! fprototype prototype)
+		   (set! %prototype prototype)
 		   js-function-prototype-property-ro)
 		  ((eq? prototype (js-undefined))
 		   (set! fprototype prototype)
-		   (set! alloc js-object-alloc-slow)
+		   (set! alloc js-object-alloc-lazy)
 		   js-function-prototype-property-undefined)
 		  ((null? prototype)
 		   (set! fprototype prototype)
-		   (set! alloc js-object-alloc-slow)
+		   (set! alloc js-object-alloc-lazy)
 		   js-function-prototype-property-null)
 		  ((eq? prototype 'bind)
 		   (set! fprototype (js-undefined))
@@ -592,7 +594,8 @@
 		     (maxconstrsize 100)
 		     (elements els)
 		     (cmap js-function-writable-strict-cmap)
-		     (prototype 'lazy))))
+		     (prototype #f)
+		     (%prototype #f))))
 	 (unless (eq? alloc js-object-alloc-lazy)
 	    (js-function-setup-prototype! %this fun))
 	 (vector-set! els 0 js-function-prototype-property-rw)
@@ -607,12 +610,13 @@
 ;*---------------------------------------------------------------------*/
 (define (js-function-setup-prototype! %this fun::JsFunction)
    (with-access::JsGlobalObject %this (js-function-prototype-cmap)
-      (with-access::JsFunction fun (prototype)
+      (with-access::JsFunction fun (prototype %prototype)
 	 (let ((p (instantiateJsObject
 		     (cmap js-function-prototype-cmap)
 		     (__proto__ (js-object-proto %this))
 		     (elements (vector fun)))))
 	    (set! prototype p)
+	    (set! %prototype p)
 	    p))))
 
 ;*---------------------------------------------------------------------*/
@@ -636,7 +640,7 @@
 		      (vector-ref vec i)
 		      (loop (+fx i 1))))))))
    
-   (with-access::JsFunction owner (constrmap prototype elements cmap alloc)
+   (with-access::JsFunction owner (constrmap %prototype prototype elements cmap)
       ;; as the prototype property is not configurable,
       ;; it is always owned by the object
       (let ((desc (if (eq? cmap (js-not-a-cmap))
@@ -649,8 +653,7 @@
 	       (unless (eq? constrmap (js-not-a-cmap))
 		  (js-function-set-constrmap! owner))
 	       (set! prototype v)
-	       (unless (js-object? v)
-		  (set! alloc js-object-alloc-slow))))))
+	       (set! %prototype (if (js-object? v) v (js-object-proto %this)))))))
    v)
 
 ;*---------------------------------------------------------------------*/
@@ -797,26 +800,28 @@
 		;; force creating the true prototype before binding
 		(js-function-setup-prototype! %this this)
 		(set! alloc js-object-alloc))
-	     (let* ((proc (lambda (_ . actuals)
-			     (js-apply %this this
-				thisarg (append args actuals))))
-		    (ctor (lambda (self . actuals)
-			     (js-apply %this this
-				self (append args actuals))))
-		    (proto (js-getprototypeof this %this "getPrototypeOf")))
+	     (let* ((bproc (lambda (_ . actuals)
+			      (js-apply %this this
+				 thisarg (append args actuals))))
+		    (bctor (lambda (self . actuals)
+			      (js-apply %this this
+				 self (append args actuals))))
+		    (bproto (js-getprototypeof this %this "getPrototypeOf"))
+		    (balloc (lambda (%this ctor)
+			       (alloc %this this))))
 		(js-make-function
 		   %this
-		   proc
+		   bproc
 		   (maxfx 0 (-fx len (length args)))
 		   (js-name->jsstring 
 		      (string-append "bound "
 			 (js-tostring (js-get this (& "name") %this)
 			    %this)))
-		   :__proto__ proto
+		   :__proto__ bproto
 		   :prototype 'bind
 		   :strict 'strict
-		   :alloc (lambda (%this ctor) (alloc %this this))
-		   :construct ctor)))))
+		   :alloc balloc
+		   :construct bctor)))))
 
    (js-bind! %this obj (& "bind")
       :value (js-make-function %this bind 1 (& "bind")

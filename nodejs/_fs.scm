@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/nodejs/_fs.scm                      */
+;*    /tmp/HOPNEW/hop/nodejs/_fs.scm                                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Sat Feb 29 10:39:58 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 15:08:58 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -270,11 +270,9 @@
 
    (define (create-fs-watcher-proto)
       (with-access::JsGlobalObject %this (js-object)
-	 (with-access::JsFunction js-object (constrmap prototype)
-	    (let ((obj (js-make-jsobject 2 constrmap
-			  (if (js-object? prototype)
-			      prototype
-			      (js-object-proto %this)))))
+	 (with-access::JsFunction js-object (%prototype constrmap)
+	    (let ((obj (js-make-jsobject 2 constrmap %prototype)))
+	       
 	       (js-put! obj (& "start")
 		  (js-make-function %this
 		     (lambda (this::JsHandle path options interval)

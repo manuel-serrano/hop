@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/nodejs/_buffer.scm                  */
+;*    /tmp/HOPNEW/hop/nodejs/_buffer.scm                               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Sat Feb 29 10:41:55 2020 (serrano)                */
+;*    Last change :  Sun Feb 23 15:10:16 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -514,12 +514,10 @@
       (with-access::JsGlobalObject %this (js-slowbuffer-proto js-object)
 	 (unless js-slowbuffer-proto
 	    (set! js-slowbuffer-proto
-	       (with-access::JsFunction js-object (constrmap prototype)
+	       (with-access::JsFunction js-object (constrmap %prototype)
 		  (js-make-jsobject 25
 		     (duplicate::JsConstructMap constrmap (%id (gencmapid)))
-		     (if (js-object? prototype)
-			 prototype
-			 (js-object-proto %this))))))
+		     %prototype))))
 	 js-slowbuffer-proto))
    
    (define (slowbuffer-constr this a0)

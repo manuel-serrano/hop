@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  5 22:00:24 2018                          */
-;*    Last change :  Sat Feb 29 17:45:20 2020 (serrano)                */
+;*    Last change :  Sun Mar  1 11:17:27 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript REFLECT object.              */
@@ -67,7 +67,7 @@
 	 ((js-function? target)
 	  (with-access::JsFunction target (construct alloc)
 	     (with-access::JsFunction newtarget (prototype alloc)
-		(when (eq? prototype 'lazy)
+		(unless prototype
 		   (js-function-setup-prototype! %this newtarget)
 		   (set! alloc js-object-alloc)))
 	     (let* ((o (alloc %this newtarget))
