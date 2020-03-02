@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Feb 23 13:54:53 2020 (serrano)                */
+;*    Last change :  Sun Mar  1 11:30:42 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -215,18 +215,19 @@
 	      (construct::procedure read-only)
 	      ;; alloc cannot be read-only, see _buffer.scm
 	      alloc::procedure
-	      (constrsize::long (default 3))
-	      (maxconstrsize::long (default 100))
 	      (constrmap::JsConstructMap (default (js-not-a-cmap)))
 	      (src read-only (default #f))
-	      (len::int read-only)
-	      (arity::int read-only (default -1))
-	      (minlen::int read-only (default -1))
+	      (name read-only)
 	      ;; MS 2019-01-10: two prototype fields are required,
 	      ;; see isPrototypeOf in ECMAScript specification
 	      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.6
 	      prototype
-	      %prototype)
+	      %prototype
+	      (minlen::int read-only (default -1))
+	      (len::int read-only)
+	      (arity::int read-only (default -1))
+	      (constrsize::long (default 3))
+	      (maxconstrsize::long (default 100)))
 	   
 	   (class JsService::JsFunction
 	      (worker::obj read-only)
@@ -380,6 +381,7 @@
 	      (js-function-prototype-property-ro (default #f))
 	      (js-function-prototype-property-null (default #f))
 	      (js-function-prototype-property-undefined (default #f))
+	      (js-function-strict-elements (default #f))
 	      ;; dom elements
 	      (js-xml-markups (default #f))
 	      ;; char table

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Feb 28 13:39:41 2020 (serrano)                */
+;*    Last change :  Sun Mar  1 09:52:45 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -59,6 +59,7 @@
 
 	   (inline js-object-alloc ::JsGlobalObject ::JsFunction)
 	   (inline js-object-alloc-fast ::JsGlobalObject ::JsFunction)
+	   (js-object-alloc-lazy ::JsGlobalObject ::JsFunction)
 	   (inline js-object-alloc/new-target ::JsGlobalObject ::JsFunction)
 	   (inline js-no-alloc ::JsGlobalObject ::JsFunction)
 	   (js-not-a-constructor-alloc ::JsGlobalObject ::JsFunction)
@@ -329,11 +330,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc-lazy ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-object-alloc-lazy %this ctor::JsFunction)
-   (with-access::JsFunction ctor (constrsize constrmap %prototype)
-      (when (eq? %prototype 'lazy)
-	 (js-function-alloc-prototype! %this ctor))
-      (js-make-jsobject constrsize constrmap %prototype)))
+(define (js-object-alloc-lazy %this ctor::JsFunction)
+   (with-access::JsFunction ctor (constrsize constrmap %prototype alloc)
+      (unless %prototype
+	 (js-function-setup-prototype! %this ctor)
+	 (set! alloc js-object-alloc))
+      (js-object-alloc %this ctor)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc/new-target ...                                   */
@@ -756,10 +758,6 @@
       ((js-proxy? fun)
        (js-call-proxyn %this fun this args))
       (else
-       (tprint "CALLN=" (typeof fun) " " (typeof this)
-	  " " (map typeof args))
-       (js-debug-object (car args))
-       (exit 0)
        (js-raise-type-error %this
 	  (format "call(~a): not a function ~~s" (length args))
 	   fun))))
@@ -1096,20 +1094,21 @@
 ;*    js-ordinary-instanceof? ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-ordinary-instanceof? %this v f)
-   (with-access::JsFunction f (prototype)
-      (let ((o prototype))
-	 (if (not (js-object? o))
-	     (js-raise-type-error %this "instanceof: no prototype ~s" v)
-	     (let loop ((v v))
-		(let ((nv (js-object-proto v)))
-		   (cond
-		      ((eq? o nv)
-		       #t)
-		      ((eq? nv (js-null))
-		       (when (eq? (object-class v) JsProxy)
-			  (loop (js-proxy-target v))))
-		      (else
-		       (loop nv)))))))))
+   (with-access::JsFunction f (%prototype prototype)
+      (when %prototype
+	 (let ((o prototype))
+	    (if (not (js-object? o))
+		(js-raise-type-error %this "instanceof: no prototype ~s" v)
+		(let loop ((v v))
+		   (let ((nv (js-object-proto v)))
+		      (cond
+			 ((eq? o nv)
+			  #t)
+			 ((eq? nv (js-null))
+			  (when (eq? (object-class v) JsProxy)
+			     (loop (js-proxy-target v))))
+			 (else
+			  (loop nv))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-instanceof? ...                                      */
@@ -1125,20 +1124,21 @@
 	     (if (js-function? h)
 		 (js-call1 %this h f v)
 		 (js-ordinary-instanceof? %this v f))))
-       (with-access::JsFunction f (prototype)
-	  (let ((o prototype))
-	     (if (not (js-object? o))
-		 (js-raise-type-error %this "instanceof: no prototype ~s" v)
-		 (let loop ((v v))
-		    (let ((nv (js-object-proto v)))
-		       (cond
-			  ((eq? o nv)
-			   #t)
-			  ((eq? nv (js-null))
-			   (when (eq? (object-class v) JsProxy)
-			      (loop (js-proxy-target v))))
-			  (else
-			   (loop nv))))))))))
+       (with-access::JsFunction f (prototype %prototype)
+	  (when %prototype
+	     (let ((o prototype))
+		(if (not (js-object? o))
+		    (js-raise-type-error %this "instanceof: no prototype ~s" v)
+		    (let loop ((v v))
+		       (let ((nv (js-object-proto v)))
+			  (cond
+			     ((eq? o nv)
+			      #t)
+			     ((eq? nv (js-null))
+			      (when (eq? (object-class v) JsProxy)
+				 (loop (js-proxy-target v))))
+			     (else
+			      (loop nv)))))))))))
 
 (define (js-function-instanceof? %this v f::JsFunction)
    (when (js-object? v)

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/reflect.scm                            */
+;*    serrano/prgm/project/hop/hop/hopscript/reflect.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  5 22:00:24 2018                          */
-;*    Last change :  Sun Feb 23 14:59:41 2020 (serrano)                */
+;*    Last change :  Sun Mar  1 11:17:27 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript REFLECT object.              */
@@ -62,10 +62,14 @@
       (cond
 	 ((eq? newtarget (js-undefined))
 	  (apply js-new %this target (js-iterable->list argarray %this)))
-	 ((not (js-object? newtarget))
+	 ((not (js-function? newtarget))
 	  (js-raise-type-error %this "construct: Not an object ~s" newtarget))
 	 ((js-function? target)
 	  (with-access::JsFunction target (construct alloc)
+	     (with-access::JsFunction newtarget (prototype alloc)
+		(unless prototype
+		   (js-function-setup-prototype! %this newtarget)
+		   (set! alloc js-object-alloc)))
 	     (let* ((o (alloc %this newtarget))
 		    (t (js-apply% %this target construct o
 			  (js-iterable->list argarray %this)))

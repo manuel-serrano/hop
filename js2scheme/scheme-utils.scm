@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Feb 24 14:58:56 2020 (serrano)                */
+;*    Last change :  Sat Feb 29 15:38:29 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -748,7 +748,7 @@
 	      `(js-object-put/name-cache! ,obj ,prop
 		  ,(box val tyval conf)
 		  ,mode %this
-		  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
+		  ,(loc->point loc) ',cspecs))
 	     ((maybe-string? prop typrop)
 	      `(js-put/cache! ,obj ,prop
 		  ,(box val tyval conf) ,mode %this
