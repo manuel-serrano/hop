@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun Mar  1 11:32:39 2020 (serrano)                */
+;*    Last change :  Mon Mar  2 07:46:15 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -252,7 +252,7 @@
 			       "[[ThrowTypeError]] ~a" o))
 			 1 (& "thrower"))))
 	 ;; pre-allocated prototype property descriptors
-	 (js-init-function-property! %this thrower throwget)
+	 (js-init-function-property! %this thrower throwget throwset)
 	 (set! thrower-get thrower)
 	 (set! thrower-set thrower)
 	 (set! strict-arguments-property
@@ -287,7 +287,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-init-function-property! ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (js-init-function-property! %this::JsGlobalObject thrower %thrower)
+(define (js-init-function-property! %this::JsGlobalObject thrower %tget %tset)
    (with-access::JsGlobalObject %this (js-function-prototype-property-rw 
 					 js-function-prototype-property-ro
 					 js-function-prototype-property-null
@@ -327,7 +327,7 @@
 	    (configurable #f)
 	    (writable #f)
 	    (value (js-undefined))))
-
+      
       (set! js-function-strict-elements
 	 (vector
 	    js-function-prototype-property-rw
@@ -353,16 +353,16 @@
 	       (name (& "arguments"))
 	       (get thrower)
 	       (set thrower)
-	       (%get %thrower)
-	       (%set %thrower)
+	       (%get %tget)
+	       (%set %tset)
 	       (enumerable #f)
 	       (configurable #f))
 	    (instantiate::JsAccessorDescriptor
 	       (name (& "caller"))
 	       (get thrower)
 	       (set thrower)
-	       (%get %thrower)
-	       (%set %thrower)
+	       (%get %tget)
+	       (%set %tset)
 	       (enumerable #f)
 	       (configurable #f))))))
 
