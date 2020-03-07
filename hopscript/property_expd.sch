@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Mar  7 06:29:22 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 07:11:42 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -325,7 +325,7 @@
       e))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-jsobject-name/cache-expander ...                            */
+;*    js-get-jsobject-name/cache-expander ...                          */
 ;*---------------------------------------------------------------------*/
 (define (js-get-jsobject-name/cache-expander x e)
 
@@ -341,7 +341,7 @@
 	    (cond
 	       ((null? cs)
 		;; cache miss
-		`((@ js-object-proxy-get-name/cache-miss __hopscript_proxy)
+		`((@ js-get-proxy-name/cache-miss __hopscript_proxy)
 		  ,obj ,prop ,throw ,%this ,cache))
 	       ((eq? cs 'imap)
 		`(let ((idx (js-pcache-index ,cache)))
@@ -563,7 +563,7 @@
 	     ,(let loop ((cs cspecs))
 		 (cond
 		    ((null? cs)
-		     `((@ js-object-proxy-put-name/cache-miss! __hopscript_proxy)
+		     `((@ js-put-proxy-name/cache-miss! __hopscript_proxy)
 		       ,obj ,prop ,tmp ,throw ,%this ,cache ,loc))
 		    ((eq? cs 'imap)
 		     `(let ((idx (js-pcache-index ,cache)))
@@ -705,10 +705,13 @@
 	  ((js-put-jsobject-name/cache! ?obj ?prop ?val ?throw ?%this ?cache ?loc (? symbol?))
 	   (set-car! (last-pair x) ''(imap emap cmap nmap amap vtable))
 	   (e x e))
+	  ((js-put-jsobject-name/cache! ?obj ?prop ?val ?throw ?%this ?cache ?loc (? symbol?))
+	   (set-car! (last-pair x) ''(imap emap cmap nmap amap vtable))
+	   (e x e))
 	  ((js-put-jsobject-name/cache! ?obj ?prop ?val ?throw ?%this ?cache)
 	   (e (append x '(-1 '(imap emap cmap pmap amap vtable))) e))
 	  (else
-	   (error "js-put-jsobject-name/cache!" "bad form" x))))))
+	   (error/source "js-put-jsobject-name/cache!" "bad form" x x))))))
 	      
 ;*---------------------------------------------------------------------*/
 ;*    js-put-name/cache-expander ...                                   */
@@ -780,7 +783,7 @@
 			      ,(calln-miss %this obj prop args ccache ocache loc ccspecs ocspecs))
 			 (calln-uncachable %this ocspecs obj prop args ccache ocache loc))
 		     (case (car cs)
-			((cmap amap imap emap)
+			((amap imap emap)
 			 (loop (cdr cs)))
 			((pmap)
 			 `(if (eq? %cmap (js-pcache-pmap ,ccache))
@@ -796,6 +799,15 @@
 				    (set! function (procedure-attr (js-pcache-method ,ccache))))
 				 ((js-pcache-method ,ccache) ,obj ,@args))
 			      ,(loop (cdr cs))))
+			((cmap)
+			 (let ((idx (gensym 'idx)))
+			    `(if (eq? %cmap (js-pcache-cmap ,ccache))
+				 (let ((,idx (js-pcache-index ,ccache)))
+				    (js-profile-log-cache ,ccache :cmap #t)
+				    (js-profile-log-index ,idx)
+				    (with-access::JsObject ,obj (elements)
+				       ,(calln %this `(vector-ref elements ,idx) obj args)))
+				 ,(loop (cdr cs)))))
 			((vtable)
 			 ;; vtable method call
 			 (cond-expand

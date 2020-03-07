@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sat Mar  7 06:27:14 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 07:40:08 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -752,7 +752,7 @@
 	     ((maybe-string? prop typrop)
 	      `(js-put/cache! ,obj ,prop
 		  ,(box val tyval conf) ,mode %this
-		  ,(loc->point loc) ',cspecs ,(loc->src loc)))
+		  ,(loc->point loc) ,(loc->src loc)))
 	     (else
 	      `(js-put! ,obj ,prop ,(box val tyval conf) ,mode %this))))
 	 ((and field optim-arrayp (mightbe-number? field))

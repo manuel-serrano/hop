@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sat Mar  7 06:28:59 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 07:11:47 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -41,13 +41,13 @@
 	      ::JsPropertyCache ::JsPropertyCache ::JsPropertyCache)
 	   (js-proxy-debug-name::bstring ::JsProxy ::JsGlobalObject)
 	   (js-proxy-property-value ::JsObject ::JsProxy ::JsStringLiteral ::JsGlobalObject)
-	   (js-proxy-get ::JsProxy prop ::JsGlobalObject)
-	   (js-object-proxy-get-name/cache-miss ::JsObject
+	   (js-get-proxy ::JsProxy prop ::JsGlobalObject)
+	   (js-get-proxy-name/cache-miss ::JsObject
 	      ::obj ::bool ::JsGlobalObject ::JsPropertyCache)
-	   (js-object-proxy-put-name/cache-miss! ::JsObject ::JsStringLiteral
+	   (js-put-proxy-name/cache-miss! ::JsObject ::JsStringLiteral
 	      ::obj ::bool
 	      ::JsGlobalObject
-	      ::JsPropertyCache #!optional (point -1))
+	      ::JsPropertyCache ::long)
 	   (inline js-proxy-property-descriptor-index ::JsProxy ::obj)
 	   (inline js-proxy-typeof ::JsProxy ::JsGlobalObject)
 	   (js-call-proxy/cache-miss0 ::JsGlobalObject
@@ -373,9 +373,9 @@
 	     (js-raise-type-error %this "not a function" get))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-proxy-get ...                                                 */
+;*    js-get-proxy ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-proxy-get proxy::JsProxy prop %this::JsGlobalObject)
+(define (js-get-proxy proxy::JsProxy prop %this::JsGlobalObject)
    (js-jsproxy-get proxy prop %this))
 
 ;*---------------------------------------------------------------------*/
@@ -389,13 +389,13 @@
       (js-jsproxy-get o name %this)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-proxy-get-name/cache-miss ...                          */
+;*    js-get-proxy-name/cache-miss ...                                 */
 ;*    -------------------------------------------------------------    */
 ;*    The performance of cache misses only matters for proxy object.   */
 ;*    The purpose of this function is to favor them by eliminating the */
 ;*    cost of an expensive generic function dispatch.                  */
 ;*---------------------------------------------------------------------*/
-(define (js-object-proxy-get-name/cache-miss o::JsObject
+(define (js-get-proxy-name/cache-miss o::JsObject
 		   name::obj
 		   throw::bool %this::JsGlobalObject
 		   cache::JsPropertyCache)
@@ -404,7 +404,7 @@
        (js-get-jsobject-name/cache-miss o name throw %this cache)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-jsobject-name/cache-miss ::JsProxy ...                      */
+;*    js-get-jsobject-name/cache-miss ::JsProxy ...                    */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-jsobject-name/cache-miss proxy::JsProxy
 		  prop::obj
@@ -455,12 +455,11 @@
       (js-proxy-put! o name v throw %this)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-proxy-put-name/cache-miss! ...                         */
+;*    js-put-proxy-name/cache-miss! ...                                */
 ;*---------------------------------------------------------------------*/
-(define (js-object-proxy-put-name/cache-miss! o::JsObject prop::JsStringLiteral
-	   v::obj throw::bool
-	   %this::JsGlobalObject
-	   cache::JsPropertyCache #!optional (point -1))
+(define (js-put-proxy-name/cache-miss! o::JsObject
+	   prop::JsStringLiteral v::obj throw::bool
+	   %this::JsGlobalObject cache::JsPropertyCache point::long)
    (if (js-proxy? o)
        (js-proxy-put! o prop v throw %this)
        (js-put-jsobject-name/cache-miss! o prop v throw %this cache point)))
@@ -468,10 +467,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-put-jsobject-name/cache-miss! ::JsProxy ...                   */
 ;*---------------------------------------------------------------------*/
-(define-method (js-put-jsobject-name/cache-miss! o::JsProxy prop::JsStringLiteral
-	   v::obj throw::bool
-	   %this::JsGlobalObject
-	   cache::JsPropertyCache #!optional (point -1))
+(define-method (js-put-jsobject-name/cache-miss! o::JsProxy
+		  prop::JsStringLiteral v::obj throw::bool
+		  %this::JsGlobalObject
+		  cache::JsPropertyCache point)
    (js-proxy-put! o prop v throw %this))
 
 ;*---------------------------------------------------------------------*/
