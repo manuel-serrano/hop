@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Mar  7 07:11:42 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 08:02:33 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -557,14 +557,14 @@
 	     `(let ((,tmp ,(e val e)))
 		 ,(e (proc tmp) e)))))
 
-   (define (expand-cache-specs cspecs obj prop tmp throw %this cache loc)
+   (define (expand-cache-specs cspecs obj prop tmp throw %this cache loc cachefun)
       `(with-access::JsObject ,obj (cmap elements)
 	  (let ((%cmap cmap))
 	     ,(let loop ((cs cspecs))
 		 (cond
 		    ((null? cs)
 		     `((@ js-put-proxy-name/cache-miss! __hopscript_proxy)
-		       ,obj ,prop ,tmp ,throw ,%this ,cache ,loc))
+		       ,obj ,prop ,tmp ,throw ,%this ,cache ,loc ,cachefun))
 		    ((eq? cs 'imap)
 		     `(let ((idx (js-pcache-index ,cache)))
 			 (js-profile-log-cache ,cache :imap #t)
@@ -701,15 +701,23 @@
 	      ?cache ?loc ((kwote quote) ?cspecs))
 	   (expand-tmp e val
 	      (lambda (tmp)
-		 (expand-cache-specs cspecs obj prop tmp throw %this cache loc))))
-	  ((js-put-jsobject-name/cache! ?obj ?prop ?val ?throw ?%this ?cache ?loc (? symbol?))
-	   (set-car! (last-pair x) ''(imap emap cmap nmap amap vtable))
+		 (expand-cache-specs cspecs obj prop tmp throw %this cache loc #f))))
+	  ((js-put-jsobject-name/cache! (and (? symbol?) ?obj)
+	      ?prop ?val ?throw ?%this
+	      ?cache ?loc ((kwote quote) ?cspecs) ?cachefun)
+	   (expand-tmp e val
+	      (lambda (tmp)
+		 (expand-cache-specs cspecs obj prop tmp throw %this cache loc cachefun))))
+	  ((js-put-jsobject-name/cache! ?obj ?prop ?val ?throw ?%this ?cache ?loc .
+	      (and ?rest ((? symbol?) ?cachefun)))
+	   (set-car! rest ''(imap emap cmap nmap amap vtable))
 	   (e x e))
 	  ((js-put-jsobject-name/cache! ?obj ?prop ?val ?throw ?%this ?cache ?loc (? symbol?))
 	   (set-car! (last-pair x) ''(imap emap cmap nmap amap vtable))
+	   (set-cdr! (last-pair x) '(#f))
 	   (e x e))
 	  ((js-put-jsobject-name/cache! ?obj ?prop ?val ?throw ?%this ?cache)
-	   (e (append x '(-1 '(imap emap cmap pmap amap vtable))) e))
+	   (e (append x '(-1 '(imap emap cmap pmap amap vtable) #f)) e))
 	  (else
 	   (error/source "js-put-jsobject-name/cache!" "bad form" x x))))))
 	      

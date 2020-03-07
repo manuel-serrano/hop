@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sat Mar  7 07:11:47 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 08:02:50 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -47,7 +47,7 @@
 	   (js-put-proxy-name/cache-miss! ::JsObject ::JsStringLiteral
 	      ::obj ::bool
 	      ::JsGlobalObject
-	      ::JsPropertyCache ::long)
+	      ::JsPropertyCache ::long ::bool)
 	   (inline js-proxy-property-descriptor-index ::JsProxy ::obj)
 	   (inline js-proxy-typeof ::JsProxy ::JsGlobalObject)
 	   (js-call-proxy/cache-miss0 ::JsGlobalObject
@@ -459,10 +459,12 @@
 ;*---------------------------------------------------------------------*/
 (define (js-put-proxy-name/cache-miss! o::JsObject
 	   prop::JsStringLiteral v::obj throw::bool
-	   %this::JsGlobalObject cache::JsPropertyCache point::long)
+	   %this::JsGlobalObject cache::JsPropertyCache
+	   point::long cachefun::bool)
    (if (js-proxy? o)
        (js-proxy-put! o prop v throw %this)
-       (js-put-jsobject-name/cache-miss! o prop v throw %this cache point)))
+       (js-put-jsobject-name/cache-miss! o prop v throw %this cache
+	  point cachefun)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-jsobject-name/cache-miss! ::JsProxy ...                   */
@@ -470,7 +472,7 @@
 (define-method (js-put-jsobject-name/cache-miss! o::JsProxy
 		  prop::JsStringLiteral v::obj throw::bool
 		  %this::JsGlobalObject
-		  cache::JsPropertyCache point)
+		  cache::JsPropertyCache point cachefun)
    (js-proxy-put! o prop v throw %this))
 
 ;*---------------------------------------------------------------------*/

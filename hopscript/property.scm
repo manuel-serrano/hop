@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Mar  7 07:48:26 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 07:58:13 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -146,24 +146,29 @@
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   (js-put-jsobject-name/cache! ::JsObject ::obj ::obj ::bool
 	      ::JsGlobalObject
-	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
+	      ::JsPropertyCache
+	      #!optional (point -1) (cspecs '()) (cachefun #t))
 
 	   (js-put-jsobject/name-cache! o::JsObject prop::JsStringLiteral v::obj
-	      throw::bool %this #!optional (point -1) (cspecs '()) (src ""))
+	      throw::bool %this
+	      #!optional (point -1) (cspecs '()) (src ""))
 	   
 	   (generic js-put-jsobject-name/cache-miss! ::JsObject
 	      ::JsStringLiteral ::obj ::bool
 	      ::JsGlobalObject
-	      ::JsPropertyCache ::long)
+	      ::JsPropertyCache ::long ::bool)
 	   (js-put-jsobject-name/cache-imap+! ::JsObject ::obj ::obj ::bool
 	      ::JsGlobalObject
-	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
+	      ::JsPropertyCache
+	      #!optional (point -1) (cspecs '()) (cachefun #f))
 	   (js-put-jsobject-name/cache-cmap+! ::JsObject ::obj ::obj ::bool
 	      ::JsGlobalObject
-	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
+	      ::JsPropertyCache
+	      #!optional (point -1) (cspecs '()) (cachefun #f))
 	   (js-put-jsobject-name/cache-pmap+! ::JsObject ::obj ::obj ::bool
 	      ::JsGlobalObject
-	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
+	      ::JsPropertyCache
+	      #!optional (point -1) (cspecs '()) (cachefun #f))
 	   
 	   (generic js-delete! ::obj ::obj ::bool ::JsGlobalObject)
 	   
@@ -2608,7 +2613,7 @@
 		 =>
 		 (lambda (cache)
 		    (js-put-jsobject-name/cache! o pname v throw
-		       %this cache point '(imap emap cmap nmap pmap amap))))
+		       %this cache point '(imap emap cmap nmap pmap amap) #f)))
 		((eq? pname (& "length"))
 		 (js-put-length! o v throw #f %this))
 		((isa? pname JsStringLiteralIndex)
@@ -2619,7 +2624,7 @@
 				 (src src))))
 		    (js-name-pcachew-set! pname cache)
 		    (js-put-jsobject-name/cache! o pname v throw
-		       %this cache point cspecs)))))))
+		       %this cache point cspecs #f)))))))
       (else
        (js-put! o prop v throw %this))))
 
@@ -2636,7 +2641,7 @@
 	     =>
 	     (lambda (cache)
 		(js-put-jsobject-name/cache! o pname v throw
-		   %this cache point '(imap emap cmap pmap amap))))
+		   %this cache point '(imap emap cmap pmap amap) #f)))
 	    ((eq? pname (& "length"))
 	     (js-put-length! o v throw #f %this))
 	    ((isa? pname JsStringLiteralIndex)
@@ -2648,7 +2653,7 @@
 			     (src src))))
 		(js-name-pcachew-set! pname cache)
 		(js-put-jsobject-name/cache! o pname v throw
-		   %this cache point cspecs)))))))
+		   %this cache point cspecs #f)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-name/cache ...                                            */
@@ -2672,7 +2677,7 @@
 	   v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache
-	   #!optional (point -1) (cspecs '()))
+	   #!optional (point -1) (cspecs '()) (cachefun #t))
    ;; rewritten by macro expansion
    (js-put-jsobject-name/cache! o prop v throw %this cache point cspecs))
 
@@ -2683,11 +2688,12 @@
 		   prop::JsStringLiteral
 		   v::obj throw::bool
 		   %this::JsGlobalObject cache::JsPropertyCache
-		   point)
+		   point cachefun)
    (with-access::JsObject o (cmap)
       (let* ((%omap cmap)
 	     (tmp (js-put-jsobject! o prop v throw %this
-		     :extend #t :override #f :cache cache :loc point)))
+		     :extend #t :override #f :cache cache
+		     :loc point :cachefun cachefun)))
 	 (with-access::JsPropertyCache cache (cntmiss name (cpoint point) usage)
 	    (set! cntmiss (+u32 #u32:1 cntmiss))
 	    (set! name prop)
@@ -2711,9 +2717,10 @@
 (define (js-put-jsobject-name/cache-imap+! o::JsObject prop::JsStringLiteral
 	   v::obj throw::bool
 	   %this::JsGlobalObject
-	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
-   (js-put-jsobject-name/cache! o prop v throw %this cache point
-      '(cmap pmap amap vtable)))
+	   cache::JsPropertyCache
+	   #!optional (point -1) (cspecs '()) (cachefun #f))
+   (js-put-jsobject-name/cache! o prop v throw %this cache
+      point '(cmap pmap amap vtable) cachefun))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-jsobject-name/cache-cmap+! ...                            */
@@ -2723,12 +2730,13 @@
 (define (js-put-jsobject-name/cache-cmap+! o::JsObject prop::JsStringLiteral
 	   v::obj throw::bool
 	   %this::JsGlobalObject
-	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
+	   cache::JsPropertyCache
+	   #!optional (point -1) (cspecs '()) (cachefun #f))
    ;; WARNING: because of the caching of cache misses that uses the
    ;; pmap test to cache misses, pmap cannot be used in assigop.
    ;; see j2s-scheme@js2scheme/scheme.scm
-   (js-put-jsobject-name/cache! o prop v throw %this cache point
-      '(amap vtable)))
+   (js-put-jsobject-name/cache! o prop v throw %this cache
+      point '(amap vtable) cachefun))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-jsobject-name/cache-pmap+! ...                            */
@@ -2738,9 +2746,10 @@
 (define (js-put-jsobject-name/cache-pmap+! o::JsObject prop::JsStringLiteral
 	   v::obj throw::bool
 	   %this::JsGlobalObject
-	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
-   (js-put-jsobject-name/cache! o prop v throw %this cache point
-      '(amap vtable)))
+	   cache::JsPropertyCache
+	   #!optional (point -1) (cspecs '()) (cachefun #f))
+   (js-put-jsobject-name/cache! o prop v throw %this cache
+      point '(amap vtable) cachefun))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bind! ...                                                     */
