@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/string.scm                             */
+;*    serrano/prgm/project/hop/hop/hopscript/string.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Feb 23 14:44:48 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 06:35:18 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -253,7 +253,7 @@
       (set! js-new-target constructor)
       (instantiateJsString
 	 (val (js-ascii->jsstring ""))
-	 (__proto__ (js-object-get-name/cache constructor (& "prototype") #f
+	 (__proto__ (js-get-jsobject-name/cache constructor (& "prototype") #f
 		       %this (js-pcache-ref js-string-pcache 34))))))
 
 ;*---------------------------------------------------------------------*/

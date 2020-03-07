@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/number.scm                             */
+;*    serrano/prgm/project/hop/hop/hopscript/number.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Feb 23 14:45:13 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 06:35:08 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -203,7 +203,7 @@
 		  (size 1))))
 	 (instantiateJsNumber
 	    (cmap constrmap)
-	    (__proto__ (js-object-get-name/cache constructor
+	    (__proto__ (js-get-jsobject-name/cache constructor
 			  (& "prototype")
 			  #f %this (js-pcache-ref js-number-pcache 0)))))))
 

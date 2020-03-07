@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/nodejs/_buffer.scm                               */
+;*    serrano/prgm/project/hop/hop/nodejs/_buffer.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Sun Feb 23 15:10:16 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 06:37:11 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -279,11 +279,11 @@
    ((@ hopscript __nodejs_buffer) %this this %scope %module)
    
    (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto js-nodejs-pcache)
-      (let* ((exp (js-object-get-name/cache %module (& "exports") #f %this
+      (let* ((exp (js-get-jsobject-name/cache %module (& "exports") #f %this
 		     (js-pcache-ref js-nodejs-pcache 0)))
-	     (buf (js-object-get-name/cache exp (& "Buffer") #f %this
+	     (buf (js-get-jsobject-name/cache exp (& "Buffer") #f %this
 		     (js-pcache-ref js-nodejs-pcache 1)))
-	     (proto (js-object-get-name/cache buf (& "prototype") #f %this
+	     (proto (js-get-jsobject-name/cache buf (& "prototype") #f %this
 		       (js-pcache-ref js-nodejs-pcache 2))))
 	 
 	 (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto)

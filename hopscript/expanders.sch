@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Mon Feb 17 09:36:08 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 06:30:14 2020 (serrano)                */
 ;*    Copyright   :  2006-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -62,8 +62,8 @@
    (eval `(define-expander js-profile-log-index
 	     ,js-profile-log-index-expander))
    
-   (eval `(define-expander js-object-get-name/cache
-	     ,js-object-get-name/cache-expander))
+   (eval `(define-expander js-get-jsobject-name/cache
+	     ,js-get-jsobject-name/cache-expander))
    (eval `(define-expander js-global-object-get-name/cache
 	     ,js-global-object-get-name/cache-expander))
    
@@ -72,17 +72,17 @@
    
    (eval `(define-expander js-put-name/cache!
 	     ,js-put-name/cache-expander))
-   (eval `(define-expander js-object-put-name/cache!
-	     ,js-object-put-name/cache-expander))
+   (eval `(define-expander js-put-jsobject-name/cache!
+	     ,js-put-jsobject-name/cache-expander))
    
    (eval `(define-expander js-call/cache
 	     ,js-call/cache-expander))
    (eval `(define-expander js-method-call-name/cache
 	     ,js-method-call-name/cache-expander))
-   (eval `(define-expander js-object-method-call-name/cache
-	     ,js-object-method-call-name/cache-expander))
-   (eval `(define-expander js-non-object-method-call-name
-	     ,js-non-object-method-call-name-expander))
+   (eval `(define-expander js-method-jsobject-call-name/cache
+	     ,js-method-jsobject-call-name/cache-expander))
+   (eval `(define-expander js-method-non-jsobject-call-name
+	     ,js-method-non-jsobject-call-name-expander))
    
    (eval `(define-expander js-let-set!
 	     ,js-let-set!-expander))

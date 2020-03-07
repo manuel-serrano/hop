@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Feb  9 10:53:19 2020 (serrano)                */
+;*    Last change :  Fri Mar  6 18:06:09 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -419,7 +419,7 @@
 	   (final-class J2SCall::J2SExpr
 	      (profid::long (default -1) (info '("notraverse")))
 	      (cache (default #f) (info '("nojson" "notraverse")))
-	      (cspecs (default '(pmap vtable)) (info '("nojson" "notraverse")))
+	      (cspecs (default '(pmap cmap vtable)) (info '("nojson" "notraverse")))
 	      (fun::J2SExpr (info '("ast")))
 	      (protocol::symbol (default 'direct) (info '("notraverse")))
 	      (thisarg::pair-nil (info '("ast")))

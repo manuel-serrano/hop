@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Feb 24 13:53:11 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 06:31:23 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1308,7 +1308,7 @@
 			 (eq? p (& "localeCompare"))
 			 (eq? p (& "trim")))
 		     (with-access::JsGlobalObject %this (js-string-prototype)
-			(js-object-get/name-cache js-string-prototype prop %this)))
+			(js-get-jsobject/name-cache js-string-prototype prop %this)))
 		    (else
 		     ;; see js-get-jsobject@property.scm
 		     ;; (tprint "JS_GET_STRING: " prop " " (typeof prop))
@@ -1428,7 +1428,7 @@
 		(or cache (js-pcache-ref js-string-pcache 23))))
 	    ((js-object? this)
 	     (js-call2 %this
-		(js-object-get-name/cache this (& "indexOf") #f %this
+		(js-get-jsobject-name/cache this (& "indexOf") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 23)))
 		this search position))
 	    (else
@@ -1498,7 +1498,7 @@
 	     (js-jsstring-lastindexof this search position %this))
 	    ((js-object? this)
 	     (js-call2 %this
-		(js-object-get-name/cache this (& "lastIndexOf") #f %this
+		(js-get-jsobject-name/cache this (& "lastIndexOf") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 2)))
 		this search position))
 	    (else
@@ -1620,7 +1620,7 @@
 	     (js-jsstring-charcodeat this index %this))
 	    ((js-object? this)
 	     (js-call1 %this
-		(js-object-get-name/cache this (& "charCodeAt") #f %this
+		(js-get-jsobject-name/cache this (& "charCodeAt") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 3)))
 		this index))
 	    (else
@@ -1680,7 +1680,7 @@
 	     (js-jsstring-charat this index %this))
 	    ((js-object? this)
 	     (js-call1 %this
-		(js-object-get-name/cache this (& "charAt") #f %this
+		(js-get-jsobject-name/cache this (& "charAt") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 4)))
 		this index))
 	    (else
@@ -1726,7 +1726,7 @@
 	     (js-jsstring-substring this start end %this))
 	    ((js-object? this)
 	     (js-call2 %this
-		(js-object-get-name/cache this (& "substring") #f %this
+		(js-get-jsobject-name/cache this (& "substring") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 5)))
 		this start end))
 	    (else
@@ -1776,7 +1776,7 @@
 	     (js-jsstring-substr this start length %this))
 	    ((js-object? this)
 	     (js-call2 %this
-		(js-object-get-name/cache this (& "substr") #f %this
+		(js-get-jsobject-name/cache this (& "substr") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 6)))
 		this start length))
 	    (else
@@ -1810,7 +1810,7 @@
 	     (js-jsstring-tolowercase this))
 	    ((js-object? this)
 	     (js-call0 %this
-		(js-object-get-name/cache this (& "toLowerCase") #f %this
+		(js-get-jsobject-name/cache this (& "toLowerCase") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 7)))
 		this))
 	    (else
@@ -1842,7 +1842,7 @@
 	     (js-jsstring-tolocalelowercase this))
 	    ((js-object? this)
 	     (js-call0 %this
-		(js-object-get-name/cache this (& "toLocaleLowerCase") #f %this
+		(js-get-jsobject-name/cache this (& "toLocaleLowerCase") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 8)))
 		this))
 	    (else
@@ -1876,7 +1876,7 @@
 	     (js-jsstring-touppercase this))
 	    ((js-object? this)
 	     (js-call0 %this
-		(js-object-get-name/cache this (& "toUpperCase") #f %this
+		(js-get-jsobject-name/cache this (& "toUpperCase") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 9)))
 		this))
 	    (else
@@ -1908,7 +1908,7 @@
 	     (js-jsstring-tolocaleuppercase this))
 	    ((js-object? this)
 	     (js-call0 %this
-		(js-object-get-name/cache this (& "toLocaleUpperCase") #f %this
+		(js-get-jsobject-name/cache this (& "toLocaleUpperCase") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 10)))
 		this))
 	    (else
@@ -2512,7 +2512,7 @@
       ((isa? searchvalue JsRegExp)
        (with-access::JsRegExp searchvalue (rx flags)
 	  (with-access::JsGlobalObject %this (js-string-pcache)
-	     (let* ((lastindex (js-object-get-name/cache searchvalue
+	     (let* ((lastindex (js-get-jsobject-name/cache searchvalue
 				  (& "lastIndex")
 				  #f %this (js-pcache-ref js-string-pcache 12)))
 		    (global (js-regexp-flags-global? flags))
@@ -2530,7 +2530,7 @@
 				lastindex global
 				replacevalue %this)))))
 		(when global
-		   (js-object-put-name/cache! searchvalue (& "lastIndex") 0
+		   (js-put-jsobject-name/cache! searchvalue (& "lastIndex") 0
 		      #f %this (js-pcache-ref js-string-pcache 12)))
 		res))))
       ((js-jsstring? searchvalue)
@@ -2584,26 +2584,26 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-match-regexp this string rx %this)
    (with-access::JsGlobalObject %this (js-regexp js-array js-regexp-prototype js-string-pcache)
-      (let* ((proto (js-object-get-name/cache js-regexp (& "prototype")
+      (let* ((proto (js-get-jsobject-name/cache js-regexp (& "prototype")
 		       #f %this (js-pcache-ref js-string-pcache 14)))
-	     (exec (js-object-get-name/cache proto (& "exec")
+	     (exec (js-get-jsobject-name/cache proto (& "exec")
 		      #f %this (js-pcache-ref js-string-pcache 15))))
 	 (with-access::JsRegExp rx (flags)
 	    ;; 7
 	    (if (not (js-regexp-flags-global? flags))
 		(js-call1 %this exec rx this)
 		;; 8
-		(let ((lastindex (js-object-get-name/cache rx (& "lastIndex")
+		(let ((lastindex (js-get-jsobject-name/cache rx (& "lastIndex")
 				    #f %this (js-pcache-ref js-string-pcache 16)))
 		      (previousLastIndex 0)
 		      (a (js-null)))
 		   (set! lastindex 0)
-		   (js-object-put-name/cache! rx (& "lastIndex") lastindex
+		   (js-put-jsobject-name/cache! rx (& "lastIndex") lastindex
 		      #f %this (js-pcache-ref js-string-pcache 17))
 		   (let loop ((n 0))
 		      (let ((result (js-call1 %this exec rx this)))
 			 (set! lastindex
-			    (js-object-get-name/cache rx (& "lastIndex")
+			    (js-get-jsobject-name/cache rx (& "lastIndex")
 			       #f %this (js-pcache-ref js-string-pcache 17)))
 			 (if (eq? result (js-null))
 			     a
@@ -2611,7 +2611,7 @@
 				(if (= thisIndex previousLastIndex)
 				    (begin
 				       (set! lastindex (+ thisIndex 1))
-				       (js-object-put-name/cache! rx (& "lastIndex") lastindex
+				       (js-put-jsobject-name/cache! rx (& "lastIndex") lastindex
 					  #f %this (js-pcache-ref js-string-pcache 17))
 				       (set! previousLastIndex (+ 1 thisIndex)))
 				    (set! previousLastIndex thisIndex))
@@ -2635,9 +2635,9 @@
    (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype js-string-pcache)
       (if (js-object-mode-plain? js-regexp-prototype)
 	  (js-regexp-prototype-exec-for-match-string %this rx this)
-	  (let* ((proto (js-object-get-name/cache js-regexp (& "prototype")
+	  (let* ((proto (js-get-jsobject-name/cache js-regexp (& "prototype")
 			   #f %this (js-pcache-ref js-string-pcache 35)))
-		 (exec (js-object-get-name/cache proto (& "exec")
+		 (exec (js-get-jsobject-name/cache proto (& "exec")
 			  #f %this (js-pcache-ref js-string-pcache 36))))
 	     (js-call1 %this exec rx this)))))
    
@@ -2648,9 +2648,9 @@
    (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype js-string-pcache)
       (if (js-object-mode-plain? js-regexp-prototype)
 	  (js-regexp-prototype-exec-as-bool rx this %this)
-	  (let* ((proto (js-object-get-name/cache js-regexp (& "prototype")
+	  (let* ((proto (js-get-jsobject-name/cache js-regexp (& "prototype")
 			   #f %this (js-pcache-ref js-string-pcache 35)))
-		 (exec (js-object-get-name/cache proto (& "exec")
+		 (exec (js-get-jsobject-name/cache proto (& "exec")
 			  #f %this (js-pcache-ref js-string-pcache 36))))
 	     (js-call1 %this exec rx this)))))
    
@@ -2681,7 +2681,7 @@
 	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-string-pcache)
 	     (js-call1 %this
-		(js-object-get-name/cache this (& "match") #f %this
+		(js-get-jsobject-name/cache this (& "match") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 18)))
 		this regexp)))
 	 (else
@@ -2706,7 +2706,7 @@
 	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-string-pcache)
 	     (js-call1 %this
-		(js-object-get-name/cache this (& "naturalCompare") #f %this
+		(js-get-jsobject-name/cache this (& "naturalCompare") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 19)))
 		this that)))
 	 (else
@@ -2733,7 +2733,7 @@
 	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-string-pcache)
 	     (js-call1 %this
-		(js-object-get-name/cache this (& "localeCompare") #f %this
+		(js-get-jsobject-name/cache this (& "localeCompare") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 20)))
 		this that)))
 	 (else
@@ -2759,7 +2759,7 @@
 	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-string-pcache)
 	     (js-call0 %this
-		(js-object-get-name/cache this (& "trim") #f %this
+		(js-get-jsobject-name/cache this (& "trim") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 21)))
 		this)))
 	 (else

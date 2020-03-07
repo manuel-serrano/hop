@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sun Feb  9 10:37:24 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 06:55:22 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -608,7 +608,7 @@
 		    (or (and (string=? val "toString")
 			     (j2s-tostring this mode return conf))
 			(let ((call (if (eq? (j2s-vtype obj) 'object)
-					'js-object-method-call-name/cache
+					'js-method-jsobject-call-name/cache
 					'js-method-call-name/cache)))
 			   `(,call
 			       ,j2s-unresolved-call-workspace

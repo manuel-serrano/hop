@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sat Feb 29 15:38:29 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 06:27:14 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -619,7 +619,7 @@
 		      `(js-get-length ,obj %this ,(js-pcache cache)))
 		  (case tyobj
 		     ((object this)
-		      `(js-object-get-name/cache ,obj ,prop #f %this
+		      `(js-get-jsobject-name/cache ,obj ,prop #f %this
 			  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
 		     ((global)
 		      `(js-global-object-get-name/cache ,obj ,prop #f %this
@@ -631,14 +631,14 @@
 	      (js-get obj (box prop typrop conf) '%this))
 	     ((and (maybe-string? prop typrop) (symbol? obj))
 	      `(,(if (eq? tyobj 'object)
-		     'js-object-get/name-cache
+		     'js-get-jsobject/name-cache
 		     'js-get/name-cache)
 		,obj ,prop %this))
 	     ((maybe-string? prop typrop)
 	      (let ((tmp (gensym '%tmp)))
 		 `(let ((,tmp ,obj))
 		     (,(if (eq? tyobj 'object)
-			 'js-object-get/name-cache
+			 'js-get-jsobject/name-cache
 			 'js-get/name-cache)
 		      ,tmp ,prop %this))))
 	     (else
@@ -730,7 +730,7 @@
 		  (begin
 		     (case tyobj
 			((object global this)
-			 `(js-object-put-name/cache! ,obj ,prop
+			 `(js-put-jsobject-name/cache! ,obj ,prop
 			     ,(box val tyval conf)
 			     ,mode %this
 			     ,(js-pcache cache) ,(loc->point loc) ',cspecs))
@@ -745,7 +745,7 @@
 	     ((or (number? prop) (null? cspecs))
 	      (maybe-array-set! prop (box val tyval conf)))
 	     ((and (memq tyobj '(object global this)) (eq? typrop 'string))
-	      `(js-object-put/name-cache! ,obj ,prop
+	      `(js-put-jsobject/name-cache! ,obj ,prop
 		  ,(box val tyval conf)
 		  ,mode %this
 		  ,(loc->point loc) ',cspecs))

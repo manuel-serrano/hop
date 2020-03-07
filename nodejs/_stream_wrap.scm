@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Thu May  2 13:43:45 2019 (serrano)                */
-;*    Copyright   :  2014-19 Manuel Serrano                            */
+;*    Last change :  Sat Mar  7 06:28:07 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
 ;*=====================================================================*/
@@ -94,24 +94,24 @@
 	    (set! reqs (cons req reqs))
 	    (with-access::JsProcess process (using-domains)
 	       (if using-domains
-		   (let ((dom (js-object-get-name/cache process (& "domain") #f %this
+		   (let ((dom (js-get-jsobject-name/cache process (& "domain") #f %this
 				 (js-pcache-ref js-nodejs-pcache 3))))
-		      (js-object-put-name/cache! req (& "domain") dom #f %this
+		      (js-put-jsobject-name/cache! req (& "domain") dom #f %this
 			 (js-pcache-ref js-nodejs-pcache 4)))
-		   (js-object-put-name/cache! req (& "domain") (js-null) #f %this
+		   (js-put-jsobject-name/cache! req (& "domain") (js-null) #f %this
 		      (js-pcache-ref js-nodejs-pcache 5))))
-	    (js-object-put-name/cache! req (& "bytes") len #f %this
+	    (js-put-jsobject-name/cache! req (& "bytes") len #f %this
 	       (js-pcache-ref js-nodejs-pcache 6))
 	    (with-access::JsHandle this (handle)
 	       (set! reqs (remq req reqs))
 	       (let ((cb (lambda (status)
-			    (js-object-put-name/cache! this (& "writeQueueSize")
+			    (js-put-jsobject-name/cache! this (& "writeQueueSize")
 			       (nodejs-stream-write-queue-size handle) #f %this
 			       (js-pcache-ref js-nodejs-pcache 7))
 			    (when (<fx status 0)
 			       (js-put! process (& "_errno")
 				  (nodejs-err-name status) #f %this))
-			    (let ((oncomp (js-object-get-name/cache req
+			    (let ((oncomp (js-get-jsobject-name/cache req
 					     (& "oncomplete") #f %this
 					     (js-pcache-ref js-nodejs-pcache 8))))
 			       (js-call3 %this oncomp req status this req)
@@ -121,7 +121,7 @@
 		      (if (isa? sendhandle JsHandle)
 			  (with-access::JsHandle sendhandle ((shdl handle))
 			     (begin
-				(js-object-put-name/cache! req (& "handle")
+				(js-put-jsobject-name/cache! req (& "handle")
 				   sendhandle #f %this
 				   (js-pcache-ref js-nodejs-pcache 9))
 				(nodejs-stream-write2 %worker %this handle
@@ -130,7 +130,7 @@
 			     string offset len #f cb))
 		      (nodejs-stream-write %worker %this handle
 			 string offset len cb)))
-	       (js-object-put-name/cache! this (& "writeQueueSize")
+	       (js-put-jsobject-name/cache! this (& "writeQueueSize")
 		  (nodejs-stream-write-queue-size handle) #f %this
 		  (js-pcache-ref js-nodejs-pcache 10)))
 	    req))))

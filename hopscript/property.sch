@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/property.sch                           */
+;*    serrano/prgm/project/hop/hop/hopscript/property.sch              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Feb 23 13:55:51 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 06:30:20 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -68,8 +68,8 @@
 ;*---------------------------------------------------------------------*/
 (define-expander js-get-name/cache
    js-get-name/cache-expander)
-(define-expander js-object-get-name/cache
-   js-object-get-name/cache-expander)
+(define-expander js-get-jsobject-name/cache
+   js-get-jsobject-name/cache-expander)
 (define-expander js-global-object-get-name/cache
    js-global-object-get-name/cache-expander)
 (define-expander js-get-length
@@ -80,8 +80,8 @@
 ;*---------------------------------------------------------------------*/
 (define-expander js-put-name/cache!
    js-put-name/cache-expander)
-(define-expander js-object-put-name/cache!
-   js-object-put-name/cache-expander)
+(define-expander js-put-jsobject-name/cache!
+   js-put-jsobject-name/cache-expander)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-call-XXX ...                                                  */
@@ -110,10 +110,10 @@
    js-call/cache-expander)
 (define-expander js-method-call-name/cache
    js-method-call-name/cache-expander)
-(define-expander js-object-method-call-name/cache
-   js-object-method-call-name/cache-expander)
-(define-expander js-non-object-method-call-name
-   js-non-object-method-call-name-expander)
+(define-expander js-method-jsobject-call-name/cache
+   js-method-jsobject-call-name/cache-expander)
+(define-expander js-method-non-jsobject-call-name
+   js-method-non-jsobject-call-name-expander)
 		    
 ;*---------------------------------------------------------------------*/
 ;*    descr ...                                                        */

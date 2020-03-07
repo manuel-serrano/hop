@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Feb 29 10:48:34 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 06:26:58 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -92,7 +92,7 @@
 	   (generic js-get-own-property ::obj ::obj ::JsGlobalObject)
 	   
 	   (generic js-get-property-value ::obj ::obj ::obj ::JsGlobalObject)
-	   (js-object-get-property-value ::JsObject ::obj ::obj ::JsGlobalObject)
+	   (js-get-jsobject-property-value ::JsObject ::obj ::obj ::JsGlobalObject)
 	   
 	   (js-get-property ::JsObject ::obj ::JsGlobalObject)
 	   
@@ -106,22 +106,22 @@
 	   (js-get/debug ::obj ::obj ::JsGlobalObject loc)
 
 	   (js-get/name-cache ::obj ::obj ::JsGlobalObject)
-	   (js-object-get/name-cache ::JsObject ::obj ::JsGlobalObject)
+	   (js-get-jsobject/name-cache ::JsObject ::obj ::JsGlobalObject)
 	   (js-get-name/cache ::obj ::obj ::bool ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
-	   (js-object-get-name/cache ::JsObject ::obj
+	   (js-get-jsobject-name/cache ::JsObject ::obj
 	      ::bool ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
-	   (generic js-object-get-name/cache-miss ::JsObject ::obj
+	   (generic js-get-jsobject-name/cache-miss ::JsObject ::obj
 	      ::bool ::JsGlobalObject ::JsPropertyCache)
-	   (generic js-object-method-get-name/cache-miss ::JsObject ::JsStringLiteral
+	   (generic js-method-jsobject-get-name/cache-miss ::JsObject ::JsStringLiteral
 	      ::bool ::JsGlobalObject ::JsPropertyCache)
 	   
-	   (js-object-get-name/cache-imap+ ::JsObject ::obj ::bool
+	   (js-get-jsobject-name/cache-imap+ ::JsObject ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
-	   (js-object-get-name/cache-cmap+ ::JsObject ::obj ::bool
+	   (js-get-jsobject-name/cache-cmap+ ::JsObject ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
@@ -144,23 +144,23 @@
 	   (js-put-name/cache! ::obj ::JsStringLiteral ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
-	   (js-object-put-name/cache! ::JsObject ::obj ::obj ::bool
+	   (js-put-jsobject-name/cache! ::JsObject ::obj ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 
-	   (js-object-put/name-cache! o::JsObject prop::JsStringLiteral v::obj
+	   (js-put-jsobject/name-cache! o::JsObject prop::JsStringLiteral v::obj
 	      throw::bool %this #!optional (point -1) (cspecs '()) (src ""))
 	   
-	   (generic js-object-put-name/cache-miss! ::JsObject ::JsStringLiteral ::obj ::bool
+	   (generic js-put-jsobject-name/cache-miss! ::JsObject ::JsStringLiteral ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1))
-	   (js-object-put-name/cache-imap+! ::JsObject ::obj ::obj ::bool
+	   (js-put-jsobject-name/cache-imap+! ::JsObject ::obj ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
-	   (js-object-put-name/cache-cmap+! ::JsObject ::obj ::obj ::bool
+	   (js-put-jsobject-name/cache-cmap+! ::JsObject ::obj ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
-	   (js-object-put-name/cache-pmap+! ::JsObject ::obj ::obj ::bool
+	   (js-put-jsobject-name/cache-pmap+! ::JsObject ::obj ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
@@ -206,10 +206,10 @@
 	   
 	   (js-method-call-name/cache ::JsGlobalObject ::obj ::obj
 	      ::JsPropertyCache ::JsPropertyCache ::long ::pair-nil ::pair-nil . args)
-	   (js-object-method-call-name/cache ::JsGlobalObject ::JsObject ::obj
+	   (js-method-jsobject-call-name/cache ::JsGlobalObject ::JsObject ::obj
 	      ::JsPropertyCache ::JsPropertyCache ::long ::pair-nil ::pair-nil . args)
 	   
-	   (js-object-method-call/cache-miss ::JsGlobalObject
+	   (js-method-jsobject-call/cache-miss ::JsGlobalObject
 	      ::JsObject ::obj ::pair-nil
 	      ::JsPropertyCache ::JsPropertyCache ::long ::pair-nil ::pair-nil)
 	   
@@ -251,7 +251,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    miss-object ...                                                  */
 ;*    -------------------------------------------------------------    */
-;*    This dummy object is used by JS-OBJECT-GET-NAME/CACHE-MISS       */
+;*    This dummy object is used by JS-GET-JSOBJECT-NAME/CACHE-MISS     */
 ;*    to fill its cache on a miss.                                     */
 ;*---------------------------------------------------------------------*/
 (define miss-object #f)
@@ -1073,11 +1073,13 @@
 	    names)
 	 (for-each (lambda (k)
 		      (let ((val (js-get-jsobject fro fro k %this)))
-			 (js-put-jsobject! target k val #t #t #f %this)))
+			 (js-put-jsobject! target k val #t %this
+			    :extend #t :override #f)))
 	    (sort idx-cmp idx))
 	 (for-each (lambda (k)
 		      (let ((val (js-get-jsobject fro fro k %this)))
-			 (js-put-jsobject! target k val #t #t #f %this)))
+			 (js-put-jsobject! target k val #t %this
+			    :extend #t :override #f)))
 	    (reverse! keys))))
 
    target)
@@ -1646,12 +1648,12 @@
 ;*    js-get-property-value ::JsObject ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-property-value o::JsObject base p::obj %this::JsGlobalObject)
-   (js-object-get-property-value o base p %this))
+   (js-get-jsobject-property-value o base p %this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-get-property-value ...                                 */
+;*    js-get-jsobject-property-value ...                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-get-property-value o::JsObject base p::obj %this::JsGlobalObject)
+(define (js-get-jsobject-property-value o::JsObject base p::obj %this::JsGlobalObject)
    ;; JsObject x obj x JsGlobalObject -> value | Absent
    (jsobject-find o o (js-toname p %this)
       ;; cmap search
@@ -1800,9 +1802,9 @@
        (js-get o prop %this))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-get/name-cache ...                                     */
+;*    js-get-jsobject/name-cache ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (js-object-get/name-cache o prop %this)
+(define (js-get-jsobject/name-cache o prop %this)
    (js-jsobject-get/name-cache o prop %this))
 
 ;*---------------------------------------------------------------------*/
@@ -1819,7 +1821,7 @@
 		    ((js-name-pcacher pname)
 		     =>
 		     (lambda (cache)
-			(js-object-get-name/cache o pname #f
+			(js-get-jsobject-name/cache o pname #f
 			   %this
 			   cache -1 '(imap emap cmap pmap amap vtable omiss))))
 		    ((js-jsstring-index? pname)
@@ -1828,9 +1830,9 @@
 		     (let ((cache (instantiate::JsPropertyCache
 				     (usage 'dget)
 				     (name pname)
-				     (src "js-object-get/name-cache"))))
+				     (src "js-get-jsobject/name-cache"))))
 			(js-name-pcacher-set! pname cache)
-			(js-object-get-name/cache o pname #f
+			(js-get-jsobject-name/cache o pname #f
 			   %this
 			   cache -1 '()))))))))
       ((js-array? o)
@@ -1851,18 +1853,18 @@
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (if (js-object? obj)
-       (js-object-get-name/cache obj name throw %this cache point cspecs)
+       (js-get-jsobject-name/cache obj name throw %this cache point cspecs)
        (js-get obj name %this)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-get-name/cache ...                                     */
+;*    js-get-jsobject-name/cache ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden by a macro in property.sch                         */
 ;*---------------------------------------------------------------------*/
-(define (js-object-get-name/cache o::JsObject name::obj
+(define (js-get-jsobject-name/cache o::JsObject name::obj
 	   throw::bool %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
-   (js-object-get-name/cache o name throw %this cache point cspecs))
+   (js-get-jsobject-name/cache o name throw %this cache point cspecs))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-global-object-get-name ...                                    */
@@ -1897,16 +1899,16 @@
 		(let ((desc (vector-ref elements index)))
 		   (js-property-value o owner name desc %this))))
 	    (else
-	     (js-object-get-name/cache-miss o name throw %this cache))))))
+	     (js-get-jsobject-name/cache-miss o name throw %this cache))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-get-name/cache-miss ...                                */
+;*    js-get-jsobject-name/cache-miss ...                              */
 ;*    -------------------------------------------------------------    */
 ;*    Use a per site cache for the [[GET]] operation. The name is a    */
 ;*    static constant, so the actual value is not compared against     */
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-object-get-name/cache-miss o::JsObject
+(define-generic (js-get-jsobject-name/cache-miss o::JsObject
 		   name::obj
 		   throw::bool %this::JsGlobalObject
 		   cache::JsPropertyCache)
@@ -1962,14 +1964,14 @@
          loop)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-method-get-name/cache-miss ...                         */
+;*    js-method-jsobject-get-name/cache-miss ...                       */
 ;*    -------------------------------------------------------------    */
-;*    This function is a mix of JS-OBJECT-GET-NAME/CACHE-MISS and      */
-;*    JS-OBJECT-METHOD-CALL/CACHE-MISS. It behaves as the latter       */
+;*    This function is a mix of JS-GET-JSOBJECT-NAME/CACHE-MISS and    */
+;*    JS-METHOD-JSOBJECT-CALL/CACHE-MISS. It behaves as the latter     */
 ;*    regarding caches and misses but it returns the value as the      */
 ;*    former.                                                          */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-object-method-get-name/cache-miss o::JsObject
+(define-generic (js-method-jsobject-get-name/cache-miss o::JsObject
 		   name::JsStringLiteral
 		   throw::bool %this::JsGlobalObject
 		   cache::JsPropertyCache)
@@ -2044,30 +2046,30 @@
 	 loop)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-get-name/cache-cmap+ ...                               */
+;*    js-get-jsobject-name/cache-cmap+ ...                             */
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden in property_expd.sch                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-get-name/cache-cmap+ obj::JsObject name::JsStringLiteral
+(define (js-get-jsobject-name/cache-cmap+ obj::JsObject name::JsStringLiteral
 	   throw::bool %this::JsGlobalObject
 	   cache::JsPropertyCache
 	   #!optional (point -1) (cspecs '()))
    ;; WARNING: because of the caching of cache misses that uses the
    ;; pmap test to cache misses, pmap cannot be used in assigop.
    ;; see j2s-scheme@js2scheme/scheme.scm
-   (js-object-get-name/cache obj name throw %this cache point
+   (js-get-jsobject-name/cache obj name throw %this cache point
       '(amap vtable)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-get-name/cache-imap+ ...                               */
+;*    js-get-jsobject-name/cache-imap+ ...                             */
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden in property_expd.sch                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-get-name/cache-imap+ obj::JsObject name::JsStringLiteral
+(define (js-get-jsobject-name/cache-imap+ obj::JsObject name::JsStringLiteral
 	   throw::bool %this::JsGlobalObject
 	   cache::JsPropertyCache
 	   #!optional (point -1) (cspecs '()))
-   (js-object-get-name/cache obj name throw %this cache point
+   (js-get-jsobject-name/cache obj name throw %this cache point
       '(cmap pmap amap vtable)))
 
 ;*---------------------------------------------------------------------*/
@@ -2125,14 +2127,15 @@
 ;*    js-unresolved-put! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-unresolved-put! o::JsObject p value throw::bool loc %this::JsGlobalObject)
-   (js-put-jsobject! o p value throw #f #f %this :loc loc))
+   (js-put-jsobject! o p value throw %this :extend #f :override #f :loc loc))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-unresolved-eval-put! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-unresolved-eval-put! scope::JsObject p value throw::bool loc %this::JsGlobalObject)
    (if (eq? (js-get-own-property scope p %this) (js-undefined))
-       (js-put-jsobject! %this p value throw (not throw) #f %this :loc loc)
+       (js-put-jsobject! %this p value throw %this
+	  :extend (not throw) :override #f :loc loc)
        (js-put! scope p value throw %this)))
 
 ;*---------------------------------------------------------------------*/
@@ -2140,7 +2143,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-decl-eval-put! scope::JsObject p value throw::bool %this::JsGlobalObject)
    (if (eq? (js-get-own-property scope p %this) (js-undefined))
-       (js-put-jsobject! %this p value throw #t #f %this)
+       (js-put-jsobject! %this p value throw %this
+	  :extend #t :override #f)
        (js-put! scope p value throw %this)))
 
 ;*---------------------------------------------------------------------*/
@@ -2177,7 +2181,8 @@
 ;*       http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.9    */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put! o::JsObject p value throw %this)
-   (js-put-jsobject! o p value throw #t #f %this))
+   (js-put-jsobject! o p value throw %this
+      :extend #t :override #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-jsobject! ...                                             */
@@ -2197,10 +2202,10 @@
 ;*    At the first level, special put! form for Array, String, etc.    */
 ;*    are overriden by method of the js-put! function.                 */
 ;*---------------------------------------------------------------------*/
-(define (js-put-jsobject! o prop v
-	   throw::bool extend::bool override::bool
-	   %this::JsGlobalObject
+(define (js-put-jsobject! o prop v throw::bool %this::JsGlobalObject
 	   #!key
+	   (extend #t)
+	   (override #f)
 	   (cache #f)
 	   (loc #f)
 	   (writable #t)
@@ -2600,7 +2605,7 @@
 		((js-name-pcachew pname)
 		 =>
 		 (lambda (cache)
-		    (js-object-put-name/cache! o pname v throw
+		    (js-put-jsobject-name/cache! o pname v throw
 		       %this cache point '(imap emap cmap nmap pmap amap))))
 		((eq? pname (& "length"))
 		 (js-put-length! o v throw #f %this))
@@ -2611,15 +2616,15 @@
 				 (usage 'dput)
 				 (src src))))
 		    (js-name-pcachew-set! pname cache)
-		    (js-object-put-name/cache! o pname v throw
+		    (js-put-jsobject-name/cache! o pname v throw
 		       %this cache point cspecs)))))))
       (else
        (js-put! o prop v throw %this))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-put/name-cache! ...                                    */
+;*    js-put-jsobject/name-cache! ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (js-object-put/name-cache! o::JsObject prop::JsStringLiteral v::obj
+(define (js-put-jsobject/name-cache! o::JsObject prop::JsStringLiteral v::obj
 	   throw::bool %this #!optional (point -1) (cspecs '()) (src ""))
    (let ((pname (js-jsstring-toname prop)))
       (synchronize-name
@@ -2627,7 +2632,7 @@
 	    ((js-name-pcachew pname)
 	     =>
 	     (lambda (cache)
-		(js-object-put-name/cache! o pname v throw
+		(js-put-jsobject-name/cache! o pname v throw
 		   %this cache point '(imap emap cmap pmap amap))))
 	    ((eq? pname (& "length"))
 	     (js-put-length! o v throw #f %this))
@@ -2639,7 +2644,7 @@
 			     (usage 'dput)
 			     (src src))))
 		(js-name-pcachew-set! pname cache)
-		(js-object-put-name/cache! o pname v throw
+		(js-put-jsobject-name/cache! o pname v throw
 		   %this cache point cspecs)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -2651,31 +2656,32 @@
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (if (js-object? o)
-       (js-object-put-name/cache! o prop v throw %this cache point cspecs)
+       (js-put-jsobject-name/cache! o prop v throw %this cache point cspecs)
        (js-put! o prop v throw %this)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-put-name/cache! ...                                    */
+;*    js-put-jsobject-name/cache! ...                                  */
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden by a macro in property.sch                         */
 ;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache! o::JsObject prop::JsStringLiteral
+(define (js-put-jsobject-name/cache! o::JsObject prop::JsStringLiteral
 	   v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    ;; rewritten by macro expansion
-   (js-object-put-name/cache! o prop v throw %this cache point cspecs))
+   (js-put-jsobject-name/cache! o prop v throw %this cache point cspecs))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-put-name/cache-miss! ...                               */
+;*    js-put-jsobject-name/cache-miss! ...                             */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-object-put-name/cache-miss! o::JsObject prop::JsStringLiteral
+(define-generic (js-put-jsobject-name/cache-miss! o::JsObject prop::JsStringLiteral
 	   v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1))
    (with-access::JsObject o (cmap)
       (let* ((%omap cmap)
-	     (tmp (js-put-jsobject! o prop v throw #t #f %this :cache cache :loc point)))
+	     (tmp (js-put-jsobject! o prop v throw %this
+		     :extend #t :override #f :cache cache :loc point)))
 	 (with-access::JsPropertyCache cache (cntmiss name (cpoint point) usage)
 	    (set! cntmiss (+u32 #u32:1 cntmiss))
 	    (set! name prop)
@@ -2692,42 +2698,42 @@
 	 tmp)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-put-name/cache-imap+! ...                              */
+;*    js-put-jsobject-name/cache-imap+! ...                            */
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden in property_expd.sch                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache-imap+! o::JsObject prop::JsStringLiteral
+(define (js-put-jsobject-name/cache-imap+! o::JsObject prop::JsStringLiteral
 	   v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
-   (js-object-put-name/cache! o prop v throw %this cache point
+   (js-put-jsobject-name/cache! o prop v throw %this cache point
       '(cmap pmap amap vtable)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-put-name/cache-cmap+! ...                              */
+;*    js-put-jsobject-name/cache-cmap+! ...                            */
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden in property_expd.sch                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache-cmap+! o::JsObject prop::JsStringLiteral
+(define (js-put-jsobject-name/cache-cmap+! o::JsObject prop::JsStringLiteral
 	   v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    ;; WARNING: because of the caching of cache misses that uses the
    ;; pmap test to cache misses, pmap cannot be used in assigop.
    ;; see j2s-scheme@js2scheme/scheme.scm
-   (js-object-put-name/cache! o prop v throw %this cache point
+   (js-put-jsobject-name/cache! o prop v throw %this cache point
       '(amap vtable)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-put-name/cache-pmap+! ...                              */
+;*    js-put-jsobject-name/cache-pmap+! ...                            */
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden in property_expd.sch                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache-pmap+! o::JsObject prop::JsStringLiteral
+(define (js-put-jsobject-name/cache-pmap+! o::JsObject prop::JsStringLiteral
 	   v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
-   (js-object-put-name/cache! o prop v throw %this cache point
+   (js-put-jsobject-name/cache! o prop v throw %this cache point
       '(amap vtable)))
 
 ;*---------------------------------------------------------------------*/
@@ -3199,14 +3205,16 @@
 	  ;; 4.a
 	  (with-access::JsValueDescriptor desc
 		(value writable enumerable configurable)
-	     (js-put-jsobject! o name value #f #t #t %this
+	     (js-put-jsobject! o name value #f %this
+		:extend #t :override #t 
 		:writable (boolify writable)
 		:enumerable (boolify enumerable)
 		:configurable (boolify configurable))))
 	  ((isa? desc JsDataDescriptor)
 	   (with-access::JsDataDescriptor desc
 		 (writable enumerable configurable)
-	      (js-put-jsobject! o name (js-undefined) #f #t #t %this
+	      (js-put-jsobject! o name (js-undefined) #f %this
+		 :extend #t :override #t 
 		 :writable (boolify writable)
 		 :enumerable (boolify enumerable)
 		 :configurable (boolify configurable))))
@@ -3725,17 +3733,17 @@
 	   point::long ccspecs::pair-nil ocspecs
 	   . args)
    (if (js-object? obj)
-       (apply js-object-method-call-name/cache %this obj name
+       (apply js-method-jsobject-call-name/cache %this obj name
 	  ccache ocache point ccspecs ocspecs args)
        (let ((o (js-toobject %this obj)))
 	  (js-apply %this (js-get/name-cache o name %this) o args))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-method-call-name/cache ...                             */
+;*    js-method-jsobject-call-name/cache ...                           */
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden by a macro in property.sch                         */
 ;*---------------------------------------------------------------------*/
-(define (js-object-method-call-name/cache %this::JsGlobalObject
+(define (js-method-jsobject-call-name/cache %this::JsGlobalObject
 	   obj::JsObject name::obj
 	   ccache::JsPropertyCache ocache::JsPropertyCache
 	   point::long ccspecs::pair-nil ocspecs
@@ -3757,16 +3765,16 @@
 			 (procedure? (vector-ref vtable vindex)))
 		    (let ((m (vector-ref vtable vindex)))
 		       (apply m obj args))
-		    (js-object-method-call/cache-miss %this obj name args
+		    (js-method-jsobject-call/cache-miss %this obj name args
 		       ccache ocache point ccspecs ocspecs))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-method-call/cache-miss ...                             */
+;*    js-method-jsobject-call/cache-miss ...                           */
 ;*    -------------------------------------------------------------    */
 ;*    This function is called on a true cache miss, i.e., this call    */
 ;*    has already been filled with another method.                     */
 ;*---------------------------------------------------------------------*/
-(define (js-object-method-call/cache-miss %this::JsGlobalObject
+(define (js-method-jsobject-call/cache-miss %this::JsGlobalObject
 	   o::JsObject name::obj args::pair-nil
 	   ccache::JsPropertyCache ocache::JsPropertyCache
 	   point::long ccspecs::pair-nil ocspecs::pair-nil)
@@ -3784,11 +3792,11 @@
 	 (when (=fx vindex (js-not-a-index))
 	    (set! vindex (js-get-vindex %this)))
 	 (js-cmap-vtable-add! pmap vindex method ccache))
-      (js-object-method-call/cache-fill %this o name args
+      (js-method-jsobject-call/cache-fill %this o name args
 	 ccache ocache point ccspecs ocspecs)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-method-call/cache-fill ...                             */
+;*    js-method-jsobject-call/cache-fill ...                           */
 ;*    -------------------------------------------------------------    */
 ;*    This function is called when a ccache has to be filled, i.e.,    */
 ;*    on the first call.                                               */
@@ -3796,7 +3804,7 @@
 ;*    .call and .apply (not yet for the former) are handled by this    */
 ;*    function.                                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-object-method-call/cache-fill %this::JsGlobalObject
+(define (js-method-jsobject-call/cache-fill %this::JsGlobalObject
 	   o::JsObject name::obj args::pair-nil
 	   ccache::JsPropertyCache ocache::JsPropertyCache
 	   point::long ccspecs::pair-nil ospecs::pair-nil)
@@ -3908,7 +3916,7 @@
 			       (let ((f (funval obj el-or-desc)))
 				  (cond
 				     ((procedure? f)
-				      (error "js-object-method-call/cache-fill" "should not be here" f))
+				      (error "js-method-jsobject-call/cache-fill" "should not be here" f))
 				     ((js-function? f)
 				      (with-access::JsFunction f (len method arity)
 					 (cond

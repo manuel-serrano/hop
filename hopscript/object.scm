@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/object.scm                             */
+;*    serrano/prgm/project/hop/hop/hopscript/object.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Feb 23 14:57:27 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 06:35:35 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -201,7 +201,7 @@
       (lambda ()
 	 (let ((%this ctx))
 	    (with-access::JsGlobalObject %this (js-service-pcache)
-	       (let ((proc (js-object-get-name/cache obj (& "toResponse") #f %this
+	       (let ((proc (js-get-jsobject-name/cache obj (& "toResponse") #f %this
 			      (js-pcache-ref js-service-pcache 0))))
 		  (if (js-function? proc)
 		      (scheme->response (js-call1 %this proc obj req) req ctx)

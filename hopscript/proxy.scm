@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/proxy.scm                              */
+;*    serrano/prgm/project/hop/hop/hopscript/proxy.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sun Feb 23 14:54:19 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 06:28:59 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -275,7 +275,7 @@
    (with-access::JsProxy proxy (handler getcache)
       (proxy-check-revoked! proxy "get" %this)
       (let ((target (js-proxy-target proxy))
-	    (get (js-object-get-name/cache handler (& "get") #f %this
+	    (get (js-get-jsobject-name/cache handler (& "get") #f %this
 		    getcache -1 '(imap emap cmap pmap amap vtable))))
 	 (cond
 	    ((and (object? get) (eq? (object-class get) JsFunction3))
@@ -313,7 +313,7 @@
    (with-access::JsProxy proxy (handler setcache)
       (proxy-check-revoked! proxy "put" %this)
       (let ((target (js-proxy-target proxy))
-	    (set (js-object-get-name/cache handler (& "set") #f %this
+	    (set (js-get-jsobject-name/cache handler (& "set") #f %this
 		    setcache -1 '(imap emap cmap pmap amap vtable))))
 	 (cond
 	    ((js-function? set)
@@ -354,7 +354,7 @@
    (with-access::JsProxy proxy (handler getcache)
       (proxy-check-revoked! proxy "get" %this)
       (let ((target (js-proxy-target proxy))
-	    (get (js-object-get-name/cache handler (& "get") #f %this
+	    (get (js-get-jsobject-name/cache handler (& "get") #f %this
 		    getcache -1 '(imap emap cmap pmap amap vtable))))
 	 (cond
 	    ((and (object? get) (eq? (object-class get) JsFunction3))
@@ -401,12 +401,12 @@
 		   cache::JsPropertyCache)
    (if (js-proxy? o)
        (js-jsproxy-get o name %this)
-       (js-object-get-name/cache-miss o name throw %this cache)))
+       (js-get-jsobject-name/cache-miss o name throw %this cache)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-get-name/cache-miss ::JsProxy ...                      */
+;*    js-get-jsobject-name/cache-miss ::JsProxy ...                      */
 ;*---------------------------------------------------------------------*/
-(define-method (js-object-get-name/cache-miss proxy::JsProxy
+(define-method (js-get-jsobject-name/cache-miss proxy::JsProxy
 		  prop::obj
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache)
@@ -420,7 +420,7 @@
    (proxy-check-revoked! o "put" %this)
    (with-access::JsProxy o (handler setcache)
       (let ((target (js-proxy-target o))
-	    (set (js-object-get-name/cache handler (& "set") #f %this
+	    (set (js-get-jsobject-name/cache handler (& "set") #f %this
 		    setcache point '(imap emap cmap pmap amap vtable))))
 	 (cond
 	    ((and (object? set) (eq? (object-class set) JsFunction4))
@@ -463,12 +463,12 @@
 	   cache::JsPropertyCache #!optional (point -1))
    (if (js-proxy? o)
        (js-proxy-put! o prop v throw %this)
-       (js-object-put-name/cache-miss! o prop v throw %this cache point)))
+       (js-put-jsobject-name/cache-miss! o prop v throw %this cache point)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-put-name/cache-miss! ::JsProxy ...                     */
+;*    js-put-jsobject-name/cache-miss! ::JsProxy ...                   */
 ;*---------------------------------------------------------------------*/
-(define-method (js-object-put-name/cache-miss! o::JsProxy prop::JsStringLiteral
+(define-method (js-put-jsobject-name/cache-miss! o::JsProxy prop::JsStringLiteral
 	   v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1))
@@ -864,7 +864,7 @@
 	      (js-raise-type-error ,%this
 		 ,(format "call~a: not a function ~~s" (length args))
 		 target))
-	     ((js-object-get-name/cache handler (& "apply") #f %this
+	     ((js-get-jsobject-name/cache handler (& "apply") #f %this
 		 applycache -1 '(imap emap cmap pmap amap vtable))
 	      =>
 	      (lambda (xfun)

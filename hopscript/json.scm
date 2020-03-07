@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/json.scm                               */
+;*    serrano/prgm/project/hop/hop/hopscript/json.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Feb 23 14:46:52 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 06:35:55 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -353,7 +353,7 @@
 	  '#())))
    
    (define (str key holder stack #!optional (symbol (js-undefined)))
-      (let* ((value (js-object-get/name-cache holder key %this))
+      (let* ((value (js-get-jsobject/name-cache holder key %this))
 	     (value (toJSON value key))
 	     (value (if (js-function? rep)
 			(toVALUE (js-call2 %this rep holder key value))

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/arraybufferview.scm                    */
+;*    serrano/prgm/project/hop/hop/hopscript/arraybufferview.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Sun Feb 23 14:51:41 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 06:36:24 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -860,9 +860,9 @@
 	  length)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-get-name/cache-miss ::JsTypedArray ...                 */
+;*    js-get-jsobject-name/cache-miss ::JsTypedArray ...               */
 ;*---------------------------------------------------------------------*/
-(define-method (js-object-get-name/cache-miss o::JsTypedArray p
+(define-method (js-get-jsobject-name/cache-miss o::JsTypedArray p
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache
 		  #!optional)

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/regexp.scm                             */
+;*    serrano/prgm/project/hop/hop/hopscript/regexp.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Feb 23 14:45:27 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 06:30:39 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -655,7 +655,7 @@
 
    (with-access::JsGlobalObject %this (js-regexp-pcache)
       (with-access::JsRegExp this (rx flags)
-	 (let ((lastindex (js-object-get-name/cache this (& "lastIndex")
+	 (let ((lastindex (js-get-jsobject-name/cache this (& "lastIndex")
 			     #f %this (js-pcache-ref js-regexp-pcache 0)))
 	       (global (js-regexp-flags-global? flags)))
 	    (let* ((jss (js-tojsstring string %this))
@@ -667,7 +667,7 @@
 	       (cond
 		  ((or (<fx i 0) (>fx i len))
 		   (set! lastindex 0)
-		   (js-object-put-name/cache! this (& "lastIndex") lastindex
+		   (js-put-jsobject-name/cache! this (& "lastIndex") lastindex
 		      #f %this (js-pcache-ref js-regexp-pcache 0))
 		   (js-null))
 		  ((pregexp-match-positions rx s i)
@@ -678,7 +678,7 @@
 			 ;; 11
 			 (when global
 			    (set! lastindex e)
-			    (js-object-put-name/cache! this (& "lastIndex") lastindex
+			    (js-put-jsobject-name/cache! this (& "lastIndex") lastindex
 			       #f %this (js-pcache-ref js-regexp-pcache 0)))
 			 (let* ((n (length r))
 				(vec ($create-vector n))
@@ -714,7 +714,7 @@
 			    a))))
 		  (else
 		   (set! lastindex 0)
-		   (js-object-put-name/cache! this (& "lastIndex") lastindex
+		   (js-put-jsobject-name/cache! this (& "lastIndex") lastindex
 		      #f %this (js-pcache-ref js-regexp-pcache 0))
 		   (js-null))))))))
 
@@ -855,7 +855,7 @@
 (define (js-regexp-literal-test-string::bool this::JsRegExp str::obj %this)
    (with-access::JsGlobalObject %this (js-regexp-pcache)
       (with-access::JsRegExp this (rx flags)
-	 (let* ((lastindex (js-object-get-name/cache this (& "lastIndex")
+	 (let* ((lastindex (js-get-jsobject-name/cache this (& "lastIndex")
 			      #f %this (js-pcache-ref js-regexp-pcache 3)))
 		(global (js-regexp-flags-global? flags))
 		(s (js-jsstring->string str))
