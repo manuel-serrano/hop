@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/profile.scm                            */
+;*    serrano/prgm/project/hop/hop/hopscript/profile.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Sun Feb 23 14:15:58 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 17:36:51 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -176,7 +176,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-cache cache::JsPropertyCache
 	   #!key imap emap cmap pmap nmap amap vtable)
-   (with-access::JsPropertyCache cache (cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable usage)
+   (with-access::JsPropertyCache cache (cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
       (when *profile-cache*
 	 (cond
 	    (imap (set! cntimap (+u32 #u32:1 cntimap)))
@@ -829,7 +829,7 @@
 			   (uint32->llong cntvtable)))))))))
 
    (define (pcache-multi pc)
-      (with-access::JsPropertyCache pc (name usage cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
+      (with-access::JsPropertyCache pc (name cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
 	 (when (> (+ (if (>u32 cntimap 0) 1 0)
 		     (if (>u32 cntemap 0) 1 0)
 		     (if (>u32 cntcmap 0) 1 0)
@@ -1247,7 +1247,7 @@
 ;*---------------------------------------------------------------------*/
 (define (profile-pcache pcaches)
    (when (any (lambda (pc)
-		 (with-access::JsPropertyCache pc (point name usage
+		 (with-access::JsPropertyCache pc (point name
 						     cntmiss
 						     cntimap
 						     cntemap

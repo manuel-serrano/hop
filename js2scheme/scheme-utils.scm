@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sat Mar  7 07:40:08 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 09:17:13 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -690,6 +690,16 @@
 	   (not (type-number? typrop))
 	   (not (eq? typrop 'array))))
 
+   (define (is-lambda? val tyval)
+      ;; val is a scheme expression, we have to do a little bit of
+      ;; pattern matching to find it's a function or not
+      (when (eq? tyval 'function)
+	 (match-case val
+	    ((let ?- (js-make-function-strict . ?-)) #t)
+	    ((let ?- (js-make-function . ?-)) #t)
+	    ((let ?- (js-make-function-simple . ?-)) #t)
+	    (else #f))))
+
    (let ((propstr (match-case prop
 		     ((& ?str) str)
 		     (else #f))))
@@ -733,7 +743,9 @@
 			 `(js-put-jsobject-name/cache! ,obj ,prop
 			     ,(box val tyval conf)
 			     ,mode %this
-			     ,(js-pcache cache) ,(loc->point loc) ',cspecs))
+			     ,(js-pcache cache)
+			     ,(loc->point loc) ',cspecs
+			     ,(is-lambda? val tyval)))
 			(else
 			 `(js-put-name/cache! ,obj ,prop
 			     ,(box val tyval conf)

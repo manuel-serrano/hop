@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Mar  7 07:58:13 2020 (serrano)                */
+;*    Last change :  Sat Mar  7 09:24:19 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -46,6 +46,7 @@
 	      "bgl_make_pcache_table"))
 
    (export (js-init-property! ::JsGlobalObject)
+	   (js-debug-object-cmap-id ::JsObject)
 	   (generic js-debug-object ::obj #!optional (msg ""))
 	   (js-debug-pcache ::obj #!optional (msg ""))
 	   (js-debug-cmap ::obj #!optional (msg ""))
@@ -339,6 +340,14 @@
 	 (instantiateJsObject
 	    (__proto__ (js-null))
 	    (elements (vector (js-undefined)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-debug-object-cmap-id ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-debug-object-cmap-id o)
+   (with-access::JsObject o (cmap)
+      (with-access::JsConstructMap cmap (%id)
+	 %id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ...                                              */
@@ -1803,7 +1812,7 @@
 (define (js-get/name-cache o prop::obj %this::JsGlobalObject)
    (cond
       ((js-object? o)
-       (js-jsobject-get/name-cache o prop %this))
+       (%js-get-jsobject/name-cache o prop %this))
       (else
        (js-get o prop %this))))
 
@@ -1811,12 +1820,12 @@
 ;*    js-get-jsobject/name-cache ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (js-get-jsobject/name-cache o prop %this)
-   (js-jsobject-get/name-cache o prop %this))
+   (%js-get-jsobject/name-cache o prop %this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsobject-get/name-cache ...                                   */
+;*    %js-get-jsobject/name-cache ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-jsobject-get/name-cache o prop %this)
+(define-inline (%js-get-jsobject/name-cache o prop %this)
    (cond
       ((js-jsstring? prop)
        (if (js-jsstring-index? prop)
@@ -2188,7 +2197,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-put! o::JsObject p value throw %this)
    (js-put-jsobject! o p value throw %this
-      :extend #t :override #f))
+      :extend #t :override #f :cachefun #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-jsobject! ...                                             */
@@ -2647,7 +2656,6 @@
 	    ((isa? pname JsStringLiteralIndex)
 	     (js-put! o prop v throw %this))
 	    (else
-	     (unless (string? src) (tprint "PAS BON prop=" prop " src=" src))
 	     (let ((cache (instantiate::JsPropertyCache
 			     (usage 'dput)
 			     (src src))))
@@ -2697,8 +2705,8 @@
 	 (with-access::JsPropertyCache cache (cntmiss name (cpoint point) usage)
 	    (set! cntmiss (+u32 #u32:1 cntmiss))
 	    (set! name prop)
-	    (set! cpoint point)
-	    (set! usage 'put))
+	    (set! cpoint point))
+;* 	    (set! usage 'put))                                         */
 	 (unless (or (eq? %omap (js-not-a-cmap))
 		     (eq? prop (& "__proto__")))
 	    (with-access::JsPropertyCache cache (index vindex cntmiss)
@@ -3972,6 +3980,15 @@
 						(set! emap #t)
 						(set! cmap #t)))))))
 				  (jsapply f)))
+			      ((eq? obj o)
+			       (with-access::JsPropertyCache ccache (pmap cmap emap index)
+				  ;; invalidate the call cache and update the
+				  ;; object cache
+				  (set! cmap omap)
+				  (set! index i)
+				  (set! pmap #t)
+				  (set! emap #t)
+				  (jsapply (funval obj el-or-desc))))
 			      (else
 			       (with-access::JsPropertyCache ccache (pmap cmap emap)
 				  ;; invalidate the call cache and update the
