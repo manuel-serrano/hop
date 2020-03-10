@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.2.x/test/hopjs/noserv/es6-spread.js       */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/es6-spread.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Sun Dec 30 09:22:49 2018 (serrano)                */
-/*    Copyright   :  2014-18 Manuel Serrano                            */
+/*    Last change :  Tue Mar 10 18:14:41 2020 (serrano)                */
+/*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Spread syntax                            */
 /*=====================================================================*/
@@ -223,7 +223,7 @@ console.log( "   mdnj()"); assert.ok( mdnj(), "mdnj" );
 /*---------------------------------------------------------------------*/
 /*    kangax ...                                                       */
 /*---------------------------------------------------------------------*/
-function __createIterableObject(arr, methods) {
+function __createIterableObject(arr, methods = undefined ) {
    methods = methods || {};
    if( typeof Symbol !== 'function' || !Symbol.iterator ) {
       return {};

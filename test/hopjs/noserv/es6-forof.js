@@ -146,7 +146,7 @@ console.log( "   mdnf()"); mdnf();
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */
 /*---------------------------------------------------------------------*/
-function __createIterableObject(arr, methods) {
+function __createIterableObject(arr, methods = undefined ) {
    methods = methods || {};
    if( typeof Symbol !== 'function' || !Symbol.iterator ) {
       return {};
