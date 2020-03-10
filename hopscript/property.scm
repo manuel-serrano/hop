@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Mar  7 09:24:19 2020 (serrano)                */
+;*    Last change :  Mon Mar  9 17:55:10 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -141,10 +141,11 @@
 	   (generic js-put-length! ::obj ::obj ::bool ::obj ::JsGlobalObject)
 	   (js-put/debug! ::obj ::obj ::obj ::bool ::JsGlobalObject loc)
 	   (generic js-put/cache! ::obj ::obj ::obj ::bool ::JsGlobalObject
-	      #!optional (point -1) (cspecs '()) (src ""))
+	      #!optional (point -1) (cspecs '()) (src "") (cachefun #t))
 	   (js-put-name/cache! ::obj ::JsStringLiteral ::obj ::bool
 	      ::JsGlobalObject
-	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
+	      ::JsPropertyCache
+	      #!optional (point -1) (cspecs '()) (cachefun #t))
 	   (js-put-jsobject-name/cache! ::JsObject ::obj ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache
@@ -2575,6 +2576,12 @@
 		;; 8.12.5, step 6
 		(extend-properties-object!))))))
 
+   (unless cachefun
+      (when (isa? v JsFunction)
+	 (with-access::JsFunction v (src)
+	    (match-case src
+	       (((at crypto.js ?-) . ?-)
+		(tprint "src=" src))))))
    (check-unplain! o name)
    (let loop ((obj o))
       (jsobject-find obj o name
@@ -2605,14 +2612,14 @@
 ;*    js-put/cache! ::obj ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-put/cache! o prop v::obj throw::bool %this
-		   #!optional (point -1) (cspecs '()) (src ""))
+		   #!optional (point -1) (cspecs '()) (src "") (cachefun #t))
    (js-put! o prop v throw %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put/cache! ::JsObject ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put/cache! o::JsObject prop v::obj throw::bool %this
-		  #!optional (point -1) (cspecs '()) (src ""))
+		  #!optional (point -1) (cspecs '()) (src "") (cachefun #t))
    (cond
       ((js-jsstring? prop)
        (let ((pname (js-jsstring-toname prop)))
@@ -2633,7 +2640,7 @@
 				 (src src))))
 		    (js-name-pcachew-set! pname cache)
 		    (js-put-jsobject-name/cache! o pname v throw
-		       %this cache point cspecs #f)))))))
+		       %this cache point cspecs cachefun)))))))
       (else
        (js-put! o prop v throw %this))))
 
@@ -2671,9 +2678,9 @@
 (define (js-put-name/cache! o prop::JsStringLiteral v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache
-	   #!optional (point -1) (cspecs '()))
+	   #!optional (point -1) (cspecs '()) (cachefun #t))
    (if (js-object? o)
-       (js-put-jsobject-name/cache! o prop v throw %this cache point cspecs)
+       (js-put-jsobject-name/cache! o prop v throw %this cache point cspecs cachefun)
        (js-put! o prop v throw %this)))
 
 ;*---------------------------------------------------------------------*/
@@ -2687,7 +2694,7 @@
 	   cache::JsPropertyCache
 	   #!optional (point -1) (cspecs '()) (cachefun #t))
    ;; rewritten by macro expansion
-   (js-put-jsobject-name/cache! o prop v throw %this cache point cspecs))
+   (js-put-jsobject-name/cache! o prop v throw %this cache point cspecs cachefun))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-jsobject-name/cache-miss! ...                             */
