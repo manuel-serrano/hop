@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Feb  9 11:08:24 2020 (serrano)                */
+;*    Last change :  Mon Mar  9 18:25:23 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
@@ -140,7 +140,8 @@
 		    conf
 		    cache
 		    #f
-		    cspecs))
+		    cspecs
+		    #f))
 	     (j2s-put! loc (j2s-scheme obj mode return conf) field
 		(typeof-this obj conf)
 		(j2s-scheme field mode return conf)
@@ -151,7 +152,8 @@
 		conf
 		cache
 		#f
-		cspecs)))))
+		cspecs
+		#f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-ref-arguments-lazy? ...                                      */
