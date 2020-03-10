@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sat Mar  7 06:31:23 2020 (serrano)                */
+;*    Last change :  Sun Mar  8 06:57:14 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1508,6 +1508,8 @@
 ;*    js-jsstring-charcodeat ...                                       */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.5     */
+;*    -------------------------------------------------------------    */
+;*    See stringliteral_expd.sch                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-charcodeat this position %this)
    
@@ -1630,6 +1632,8 @@
 ;*    js-jsstring-charat ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.4     */
+;*    -------------------------------------------------------------    */
+;*    See stringliteral_expd.sch                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-charat this position %this)
 
@@ -1666,7 +1670,7 @@
 	     (if (or (< pos 0) (>= pos (js-jsstring-codeunit-length this)))
 		 (& "")
 		 (js-utf8-ref this val (->fixnum pos) %this)))))
-   
+
    (string-dispatch charat this))
 
 ;*---------------------------------------------------------------------*/

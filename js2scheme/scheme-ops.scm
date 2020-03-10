@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Feb 24 16:54:36 2020 (serrano)                */
+;*    Last change :  Sun Mar  8 07:13:04 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_scheme-ops
 
-   (include "ast.sch")
+   (include "ast.sch" "usage.sch")
 
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -977,17 +977,58 @@
 				   ,(box right tr conf)
 				   %this))))))))))
 
+   (define (char-string? exp)
+      (when (isa? exp J2SString)
+	 (with-access::J2SString exp (val)
+	    (=fx (string-length val) 1))))
+
+   (define (charat? exp)
+      (when (isa? exp J2SCall)
+	 (with-access::J2SCall exp (fun args)
+	    (when (and (isa? fun J2SAccess) (pair? args) (null? (cdr args)))
+	       (with-access::J2SAccess fun (field)
+		  (when (isa? field J2SString)
+		     (with-access::J2SString field (val)
+			(string=? val "charAt"))))))))
+
+   (define (equality-char op char charat)
+      (with-access::J2SCall charat (fun args)
+	 (with-access::J2SAccess fun (obj)
+	    (with-access::J2SString char (val)
+	       (let ((expr `(eq? ,(char->integer (string-ref val 0))
+			       (js-jsstring-charcodeat
+				  ,(j2s-scheme obj mode return conf)
+				  ,(j2s-scheme (car args) mode return conf)
+				  %this))))
+		  (if (eq? op '!==)
+		      `(not ,expr)
+		      expr))))))
+   
    (define (equality-string op lhs tl rhs tr mode return conf flip)
-      (with-tmp-flip flip lhs rhs mode return conf
-	 (lambda (left right)
-	    (if (or (type-cannot? tl '(string)) (type-cannot? tr '(string)))
-		(eq? op '!==)
-		(let ((cmp (if (and (eq? tl 'string) (eq? tr 'string))
-			       'js-jsstring=?
-			       'js-eqstring?)))
-		   (if (eq? op '!==)
-		       `(not (,cmp ,left ,right))
-		       `(,cmp ,left ,right)))))))
+      (cond
+	 ((and (eq? tl 'string)
+	       (eq? tr 'string)
+	       (or (char-string? lhs) (char-string? rhs))
+	       (or (charat? lhs) (charat? rhs))
+	       (let ((str (config-get conf :string)))
+		  (when str
+		     (with-access::J2SDecl str (escape)
+			(and (not escape)
+			     (not (decl-usage-has? str '(assig))))))))
+	  (if (char-string? lhs) 
+	      (equality-char op lhs rhs)
+	      (equality-char op rhs lhs)))
+	 (else
+	  (with-tmp-flip flip lhs rhs mode return conf
+	     (lambda (left right)
+		(if (or (type-cannot? tl '(string)) (type-cannot? tr '(string)))
+		    (eq? op '!==)
+		    (let ((cmp (if (and (eq? tl 'string) (eq? tr 'string))
+				   'js-jsstring=?
+				   'js-eqstring?)))
+		       (if (eq? op '!==)
+			   `(not (,cmp ,left ,right))
+			   `(,cmp ,left ,right)))))))))
 		
    (define (typeof-expr expr mode return conf)
       (cond
