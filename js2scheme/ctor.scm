@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Sun Feb  9 07:53:31 2020 (serrano)                */
+;*    Last change :  Tue Mar 10 14:37:15 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
@@ -161,8 +161,8 @@
 (define-walk-method (constrinit-seq! this::J2SBlock prog conf)
    
    (define (simple-expr? expr obj)
-      ;; is the expr simple enough so we are certain that there is no
-      ;; occurrence of decl involved
+      ;; is the expr simple enough so that we are certain that there
+      ;; is no occurrence of decl involved
       (cond
 	 ((isa? expr J2SArray)
 	  (with-access::J2SArray expr (exprs)
@@ -300,8 +300,8 @@
 		(set! pcache-size (+fx pcache-size 1))
 		(set! globals
 		   (cons* 
-		      `(define ,cmap (js-names->cmap
-					(vector ,@(init-names init)) #t))
+		      `(define ,cmap
+			  (js-names->cmap (vector ,@(init-names init)) #t))
 		      `(define ,offset 0)
 		      `(define ,cnt 0)
 		      globals))

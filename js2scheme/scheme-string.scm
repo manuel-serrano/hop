@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Feb 21 16:50:48 2020 (serrano)                */
+;*    Last change :  Tue Mar 10 12:38:13 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -257,8 +257,7 @@
 				(type 'regexp)
 				(index len)
 				(val rx))))
-		   (set-cdr! (last-pair cnsts)
-		      (list rx))
+		   (set-cdr! (last-pair cnsts) (list rx))
 		   ;; update j2s-totest if the name of the library function
 		   ;; JS-JSSTRING-MATCH-REGEXP-FROM-STRING changes
 		   `(js-jsstring-match-regexp-from-string

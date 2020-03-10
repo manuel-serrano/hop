@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Mar  9 17:55:10 2020 (serrano)                */
+;*    Last change :  Tue Mar 10 15:17:23 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -235,6 +235,15 @@
 	   (js-get-vindex::long ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
+;*    *js-not-a-pmap* ...                                              */
+;*---------------------------------------------------------------------*/
+(define *js-not-a-pmap*
+   (instantiate::JsConstructMap
+      (inline #f)
+      (size -100)
+      (%id -1)))
+
+;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
@@ -297,7 +306,7 @@
       (with-access::JsPropertyCache pcache (pmap emap amap)
 	 (when (object? pmap) (reset-cmap-vtable! pmap))
 	 (when (object? amap) (reset-cmap-vtable! amap))
-	 (set! pmap #t)
+	 (set! pmap (js-not-a-pmap))
 	 (set! emap #t)
 	 (set! amap #t)))
 
@@ -589,6 +598,7 @@
 	    (vector-set! pctable i
 	       (instantiate::JsPropertyCache
 		  (src src)
+		  (pmap (js-not-a-pmap))
 		  (pctable pctable)))
 	    (loop (+fx i 1))))
       (if (vector? profile-info-table)
@@ -675,7 +685,7 @@
 	    (js-validate-pmap-pcache! pcache)
 	    (set! imap #t)
 	    (set! cmap #t)
-	    (set! pmap #t)
+	    (set! pmap (js-not-a-pmap))
 	    (set! emap #t)
 	    (set! amap omap)
 	    (set! owner obj)
@@ -694,7 +704,7 @@
 	    ;; set to either a sibling or #f
 	    (set! cmap sibling))
 	 (set! imap omap)
-	 (set! pmap #t)
+	 (set! pmap (js-not-a-pmap))
 	 (set! emap #t)
 	 (set! amap #t)
 	 (set! index i)))
@@ -706,7 +716,7 @@
 		(set! imap sibling)
 		(set! imap #t)))
 	 (set! cmap omap)
-	 (set! pmap #t)
+	 (set! pmap (js-not-a-pmap))
 	 (set! emap #t)
 	 (set! amap #t)
 	 (set! index i)))
@@ -728,7 +738,7 @@
       (with-access::JsPropertyCache pcache (imap cmap emap nmap pmap amap index)
 	 (set! cmap omap)
 	 (set! imap omap)
-	 (set! pmap #t)
+	 (set! pmap (js-not-a-pmap))
 	 (set! nmap #t)
 	 (set! emap #t)
 	 (set! amap #t)
@@ -741,7 +751,7 @@
 		(set! imap sibling)
 		(set! imap #t)))
 	 (set! cmap omap)
-	 (set! pmap #t)
+	 (set! pmap (js-not-a-pmap))
 	 (set! nmap #t)
 	 (set! emap #t)
 	 (set! amap #t)
@@ -787,7 +797,7 @@
 	 (set! emap omap)
 	 (set! cmap nextmap)
 	 (set! nmap omap)
-	 (set! pmap #f)
+	 (set! pmap (js-not-a-pmap))
 	 (set! amap #t)
 	 (set! owner #f)
 	 (set! index i)))
@@ -801,7 +811,7 @@
 	 (set! emap #t)
 	 (set! cmap nextmap)
 	 (set! nmap omap)
-	 (set! pmap #f)
+	 (set! pmap (js-not-a-pmap))
 	 (set! amap #t)
 	 (set! owner #f)
 	 (set! index i)))   
@@ -2009,7 +2019,7 @@
 
    (define (invalidate-pcache! cache)
       (with-access::JsPropertyCache cache (pmap emap cmap)
-	 (set! pmap #t)
+	 (set! pmap (js-not-a-pmap))
 	 (set! emap #t)
 	 (set! cmap #t)))
    
@@ -3938,7 +3948,7 @@
 				   (isa? el-or-desc JsWrapperDescriptor))
 			       (with-access::JsPropertyCache ccache (pmap emap cmap function)
 				  (set! function #f)
-				  (set! pmap #t)
+				  (set! pmap (js-not-a-pmap))
 				  (set! emap #t)
 				  (set! cmap #t))
 			       (jsapply (js-property-value o obj name el-or-desc %this)))
@@ -3953,7 +3963,7 @@
 					    ((<fx arity 0)
 					     ;; varargs functions, currently not cached...
 					     (with-access::JsPropertyCache ccache (pmap emap cmap)
-						(set! pmap #t)
+						(set! pmap (js-not-a-pmap))
 						(set! emap #t)
 						(set! cmap #t)))
 					    ((=fx (procedure-arity method) (+fx 1 (length args)))
@@ -3983,7 +3993,7 @@
 					    (else
 					     ;; arity missmatch, never cache
 					     (with-access::JsPropertyCache ccache (pmap emap cmap)
-						(set! pmap #t)
+						(set! pmap (js-not-a-pmap))
 						(set! emap #t)
 						(set! cmap #t)))))))
 				  (jsapply f)))
@@ -3993,7 +4003,7 @@
 				  ;; object cache
 				  (set! cmap omap)
 				  (set! index i)
-				  (set! pmap #t)
+				  (set! pmap (js-not-a-pmap))
 				  (set! emap #t)
 				  (jsapply (funval obj el-or-desc))))
 			      (else
@@ -4001,13 +4011,13 @@
 				  ;; invalidate the call cache and update the
 				  ;; object cache
 				  (set! cmap #t)
-				  (set! pmap #t)
+				  (set! pmap (js-not-a-pmap))
 				  (set! emap #t)
 				  (jsapply (funval obj el-or-desc))))))))))
 	    ;; property search
 	    (lambda (obj v i)
 	       (with-access::JsPropertyCache ccache (cmap emap pmap)
-		  (set! pmap #t)
+		  (set! pmap (js-not-a-pmap))
 		  (set! emap #t)
 		  (set! cmap #t)
 		  (jsapply (js-property-value o obj name v %this))))

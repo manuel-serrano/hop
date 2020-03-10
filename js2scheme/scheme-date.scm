@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-date.scm         */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-date.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue May  1 15:52:58 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Tue Mar 10 16:09:42 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Date functions.             */
 ;*=====================================================================*/
@@ -28,7 +28,9 @@
 	   __js2scheme_scheme-fun)
    
    (export (j2s-date-new-method fun::J2SNew field args
-	      mode return::procedure conf)))
+	      mode return::procedure conf)
+	   (j2s-date-builtin-method fun::J2SAccess args
+	      expr mode return::procedure conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-date-new-method ...                                          */
@@ -41,4 +43,22 @@
 	     `(llong->flonum (/llong (current-microseconds) #l1000)))
 	    (else
 	     #f)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-date-builtin-method ...                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-date-builtin-method fun::J2SAccess args expr mode return conf)
+   (with-access::J2SAccess fun (loc obj field)
+      (when (isa? field J2SString)
+	 (with-access::J2SString field (val)
+	    (cond
+	       ((string=? val "now")
+		(case (length args)
+		   ((0)
+		    '(js-date-now))
+		   (else
+		    #f)))
+	       (else
+		#f))))))
+
 

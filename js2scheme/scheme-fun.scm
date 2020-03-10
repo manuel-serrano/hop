@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sat Feb 29 09:54:28 2020 (serrano)                */
+;*    Last change :  Tue Mar 10 17:07:24 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -358,26 +358,31 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclSvc mode return conf)
    (with-access::J2SDeclSvc this (loc id val scope)
-      (let ((scmid (j2s-decl-scheme-id this))
-	    (fastid (j2s-profile-id (j2s-fast-id id) loc conf))
-	    (fun (if (isa? val J2SFun)
-		     val
-		     (with-access::J2SMethod val (function)
-			function))))
+      (let* ((scmid (j2s-decl-scheme-id this))
+	     (fastid (j2s-profile-id (j2s-fast-id id) loc conf))
+	     (lamid (j2s-fast-id fastid))
+	     (fun (if (isa? val J2SFun)
+		      val
+		      (with-access::J2SMethod val (function)
+			 function)))
+	     (lam (jsfun->lambda fun mode return conf
+		     (j2s-fun-prototype fun) #f)))
 	 (epairify-deep loc
 	    (if (and (memq scope '(global %scope))
 		     (js-need-global? this scope mode))
 		`(begin
+		    (define ,lamid ,lam)
 		    (define ,fastid
-		       ,(jssvc->scheme fun id scmid mode return conf))
+		       ,(jssvc->scheme fun lamid id scmid mode return conf))
 		    (define ,scmid
 		       (js-bind! %this ,scope ,(j2s-scheme-name id)
 			  :configurable #f
 			  :writable #f
 			  :value ,fastid)))
 		`(begin
+		    (define ,lamid ,lam)
 		    (define ,fastid
-		       ,(jssvc->scheme fun id scmid mode return conf))
+		       ,(jssvc->scheme fun lamid id scmid mode return conf))
 		    (define ,scmid
 		       ,fastid)))))))
 
@@ -742,7 +747,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    jssvc->scheme ::J2SSvc ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (jssvc->scheme this::J2SSvc id scmid mode return conf)
+(define (jssvc->scheme this::J2SSvc lam id scmid mode return conf)
 
    (define (j2sscheme-service this tmp scmid path args arity mode return)
       
@@ -888,8 +893,8 @@
    (define (svc->scheme this)
       (with-access::J2SSvc this (name params loc path mode register import)
 	 (let ((args (j2s-scheme params mode return conf))
-	       (lam (jsfun->lambda this mode return conf
-		       (j2s-fun-prototype this) #f))
+;* 	       (lam (jsfun->lambda this mode return conf               */
+;* 		       (j2s-fun-prototype this) #f))                   */
 	       (conf (cons* :force-location #t conf)))
 	    (match-case lam
 	       ((labels (and ?bindings ((?id . ?-))) ?id)
@@ -916,8 +921,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SSvc mode return conf)
    (with-access::J2SSvc this (loc)
-      (epairify loc
-	 (jssvc->scheme this #f #f mode return conf))))
+      (let ((lam (jsfun->lambda this mode return conf
+		    (j2s-fun-prototype this) #f)))
+	 (epairify loc
+	    (jssvc->scheme this lam #f #f mode return conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jsfun-normal-vararg-body ...                                     */

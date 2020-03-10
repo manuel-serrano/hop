@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/date.scm                               */
+;*    serrano/prgm/project/hop/hop/hopscript/date.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Feb 23 14:46:42 2020 (serrano)                */
+;*    Last change :  Tue Mar 10 16:10:34 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -38,7 +38,8 @@
        (import __hopscript_arithmetic64)))
    
    (export (js-init-date! ::JsObject)
-	   (js-date->jsdate::JsDate ::date ::JsGlobalObject)))
+	   (js-date->jsdate::JsDate ::date ::JsGlobalObject)
+	   (js-date-now)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -306,14 +307,8 @@
 	 :value (js-make-function %this js-date-utc 7 (& "UTC"))
 	 :writable #t :configurable #t :enumerable #f :hidden-class #f)
       
-      ;; now
-      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.4
-      (define (js-date-now this)
-	 (let ((ns (llong->flonum (current-nanoseconds))))
-	    (roundfl (/fl ns 1000000.))))
-      
       (js-bind! %this js-date (& "now")
-	 :value (js-make-function %this js-date-now 0 (& "now"))
+	 :value (js-make-function %this (lambda (this) (js-date-now)) 0 (& "now"))
 	 :writable #t :configurable #t :enumerable #f :hidden-class #f)
       
       ;; prototype properties
@@ -1209,6 +1204,20 @@
 	      (p (-fx padding 1)))
       (string-set! buffer (+fx idx p) (digit->char (remainderfx n 10)))
       (when (>fx p 0) (loop (/fx n 10) (-fx p 1)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-now ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.4     */
+;*---------------------------------------------------------------------*/
+(define (js-date-now)
+   (cond-expand
+      ((or bint61 bint64)
+       (let ((ns (llong->fixnum (current-nanoseconds))))
+	  (/fx ns 1000000)))
+      (else
+       (let ((ns (llong->flonum (current-nanoseconds))))
+	  (roundfl (/fl ns 1000000.))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

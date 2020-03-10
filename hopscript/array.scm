@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Mar  7 06:36:07 2020 (serrano)                */
+;*    Last change :  Tue Mar 10 11:53:55 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -651,9 +651,10 @@
 (define (js-array-find-length-property arr::JsArray)
    (with-access::JsArray arr (elements)
       (when (>=fx (vector-length elements) 1)
-	 (with-access::JsPropertyDescriptor (vector-ref elements 0) (name)
-	    (when (eq? name (& "length"))
-	       (vector-ref elements 0))))))
+	 (when (isa? (vector-ref elements 0) JsPropertyDescriptor)
+	    (with-access::JsPropertyDescriptor (vector-ref elements 0) (name)
+	       (when (eq? name (& "length"))
+		  (vector-ref elements 0)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-update-ilen! ...                                        */

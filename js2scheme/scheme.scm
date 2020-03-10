@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/trashcan/scheme.scm                                      */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Mar 10 07:29:39 2020 (serrano)                */
+;*    Last change :  Tue Mar 10 14:44:18 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2847,17 +2847,39 @@
 	  ,@(map (lambda (n)
 		    (j2s-scheme n mode return conf))
 	       nodes)))
+
+   (define (node-cache node)
+      (with-access::J2SStmtExpr node (expr)
+	 (with-access::J2SAssig expr (lhs)
+	    (with-access::J2SAccess lhs (cache)
+	       cache))))
    
    (define (elements-init n offset nodes %cmap cnt pcache)
       `(with-access::JsConstructMap cmap (props)
-	  (let ((%len0 (vector-length props))
+	  (let ((%len0 -1)
 		(%cmap0 cmap))
 	     ,(elements-init-sans-cmap nodes)
 	     (when (<fx ,cnt 1000)
 		(set! ,cnt (+fx ,cnt 1))
 		(with-access::JsConstructMap cmap (props)
-		   (when (js-object-no-setter? ,n)
-		      (set! ,offset %len0)
+		   (when (and (js-object-no-setter? ,n)
+			      (=fx ,(length nodes)
+				 (-fx (with-access::JsConstructMap
+					    (js-pcache-pmap
+					       (js-pcache-ref %pcache
+						  ,(node-cache
+						      (car (last-pair nodes)))))
+					    (size)
+					 size)
+				    (with-access::JsConstructMap
+					  (js-pcache-pmap
+					     (js-pcache-ref %pcache
+						,(node-cache (car nodes))))
+					    (size)
+					 size))))
+		      (set! ,offset
+			 (js-pcache-index
+			    (js-pcache-ref %pcache ,(node-cache (car nodes)))))
 		      (set! ,%cmap cmap)
 		      (js-validate-pmap-pcache! (js-pcache-ref %pcache ,pcache))
 		      (with-access::JsPropertyCache (js-pcache-ref %pcache ,pcache) (pmap)

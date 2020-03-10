@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Mar  1 11:30:42 2020 (serrano)                */
+;*    Last change :  Tue Mar 10 15:19:30 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -99,7 +99,7 @@
 	      (imap::obj (default #f))
 	      (emap::obj (default #f))
 	      (cmap::obj (default #f))
-	      (pmap::obj (default #t))
+	      (pmap::obj (default (js-not-a-pmap)))
 	      (nmap::obj (default #t))
 	      (amap::obj (default #t))
 	      (index::long (default -1))
@@ -525,7 +525,9 @@
 	   (generic js-typedarray-set!::procedure ::JsTypedArray)
 	   
 	   *js-not-a-cmap*
+	   *js-not-a-pmap*
 	   (inline js-not-a-cmap::JsConstructMap)
+	   (inline js-not-a-pmap::JsConstructMap)
 	   (inline js-not-a-index::long)
 	   
 	   (inline js-object?::bool ::obj)
@@ -1177,10 +1179,25 @@
       (%id 0)))
 
 ;*---------------------------------------------------------------------*/
+;*    *js-not-a-pmap* ...                                              */
+;*---------------------------------------------------------------------*/
+(define *js-not-a-pmap*
+   (instantiate::JsConstructMap
+      (inline #f)
+      (size -100)
+      (%id -1)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-not-a-cmap ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-not-a-cmap::JsConstructMap)
    *js-not-a-cmap*)
+
+;*---------------------------------------------------------------------*/
+;*    js-not-a-pmap ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-not-a-pmap::JsConstructMap)
+   *js-not-a-pmap*)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-not-a-index ...                                               */

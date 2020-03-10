@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Feb  9 10:51:02 2020 (serrano)                */
+;*    Last change :  Tue Mar 10 13:02:02 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -269,14 +269,20 @@
 			     (endloc endloc)
 			     (nodes nodes))))))
 	     (let ((el (source-element)))
-		(if (eq? el 'source-map)
-		    (loop rev-ses #f)
-		    (begin
-		       (when first
-			  (source-element-mode! el)
-			  (let ((ps (source-element-plugins el conf)))
-			     (when ps (set! plugins ps))))
-		       (loop (cons el rev-ses) #f)))))))
+		(cond
+		   ((eq? el 'source-map)
+		    (loop rev-ses #f))
+		   (first
+		    (source-element-mode! el)
+		    (let ((ps (source-element-plugins el conf)))
+		       (when ps (set! plugins ps)))
+		    (loop (cons el rev-ses)
+		       (or (isa? el J2SString)
+			   (and (isa? el J2SStmtExpr)
+				(with-access::J2SStmtExpr el (expr)
+				   (isa? expr J2SString))))))
+		   (else
+		    (loop (cons el rev-ses) #f)))))))
 
    (define (source-element)
       (case (peek-token-type)

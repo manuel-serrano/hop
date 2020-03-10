@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Mar  7 06:55:22 2020 (serrano)                */
+;*    Last change :  Tue Mar 10 16:08:53 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -580,6 +580,9 @@
    (define (Json? self)
       (is-builtin-ref? self 'JSON))
 
+   (define (Date? self)
+      (is-builtin-ref? self 'Date))
+
    (define (mincspecs x y)
       (filter (lambda (c) (memq c y)) x))
    
@@ -599,6 +602,10 @@
 	     (lambda (expr) expr))
 	    ((and (Json? self)
 		  (j2s-json-builtin-method fun args this mode return conf))
+	     =>
+	     (lambda (expr) expr))
+	    ((and (Date? self)
+		  (j2s-date-builtin-method fun args this mode return conf))
 	     =>
 	     (lambda (expr) expr))
 	    ((and ccache (= (config-get conf :debug 0) 0) ccspecs)
@@ -654,6 +661,9 @@
 		;; Array builtin methods are then
 		;; handled in the call-ref-method above
 		(j2s-array-builtin-method fun args
+		   this mode return conf))
+	       ((Date)
+		(j2s-date-builtin-method fun args
 		   this mode return conf))
 	       (else
 		#f)))))
