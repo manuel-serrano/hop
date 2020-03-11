@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Mar 10 13:02:02 2020 (serrano)                */
+;*    Last change :  Wed Mar 11 07:38:15 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2953,11 +2953,22 @@
 		   (nodes (list (dialect el 'normal conf)))))
 	     el)))
 
+   (define (with-plugins fun)
+      (lambda (ps)
+	 (let ((old plugins))
+	    (set! plugins ps)
+	    (let ((v (fun)))
+	       (set! plugins old)
+	       v))))
+   
    (set! parser-controller
       (vector primary
 	 (lambda (d s) (with-tilde (lambda () (primary d s))))
 	 peek-token consume-token! consume-any!
-	 expression statement block cond-expr
+	 expression
+	 (with-plugins statement)
+	 (with-plugins block)
+	 cond-expr
 	 (lambda () (with-tilde (lambda () (cond-expr #f #f #f))))))
 
    (define (main-parser input-port conf)
