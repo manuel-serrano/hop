@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 24 02:21:25 2017                          */
-;*    Last change :  Sun Mar  8 06:46:31 2020 (serrano)                */
+;*    Last change :  Wed Mar 11 08:57:54 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    string expanders                                                 */
@@ -32,7 +32,8 @@
       (else
        `(let ((%s ,this)
 	      (%p ,position))
-	   (if (and (js-jsstring-ascii? %s) (js-jsstring-normalized? %s))
+	   (if (and (js-jsstring-ascii? %s) (js-jsstring-normalized? %s)
+		    (fixnum? %p))
 	       (with-access::JsStringLiteral %s (left)
 		  (let ((%val left))
 		     (if (and (>=fx %p 0) (<fx %p (string-length %val)))
@@ -64,7 +65,8 @@
       (else
        `(let ((%s ,this)
 	      (%p ,position))
-	   (if (and (js-jsstring-ascii? %s) (js-jsstring-normalized? %s))
+	   (if (and (js-jsstring-ascii? %s) (js-jsstring-normalized? %s)
+		    (fixnum? %p))
 	       (with-access::JsStringLiteral %s (left)
 		  (let ((%val left))
 		     (if (and (>=fx %p 0) (<fx %p (string-length %val)))
