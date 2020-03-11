@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Mar 11 07:38:15 2020 (serrano)                */
+;*    Last change :  Wed Mar 11 09:16:02 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2963,13 +2963,29 @@
    
    (set! parser-controller
       (vector primary
-	 (lambda (d s) (with-tilde (lambda () (primary d s))))
+	 (lambda (d s ps)
+	    (let ((old plugins))
+	       (set! plugins ps)
+	       (let ((v (with-tilde (lambda () (primary d s)))))
+		  (set! plugins old)
+		  v)))
 	 peek-token consume-token! consume-any!
-	 expression
+	 (lambda (i d ps)
+	    (let ((old plugins))
+	       (set! plugins ps)
+	       (let ((v (expression i d)))
+		  (set! plugins old)
+		  v)))
 	 (with-plugins statement)
 	 (with-plugins block)
-	 cond-expr
-	 (lambda () (with-tilde (lambda () (cond-expr #f #f #f))))))
+	 (lambda (i d s ps)
+	    (let ((old plugins))
+	       (set! plugins ps)
+	       (let ((v (cond-expr i d s)))
+		  (set! plugins old)
+		  v)))
+	 (with-plugins
+	    (lambda () (with-tilde (lambda () (cond-expr #f #f #f)))))))
 
    (define (main-parser input-port conf)
       (case (config-get conf :parser #f)
