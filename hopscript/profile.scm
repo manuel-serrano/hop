@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Sat Mar  7 17:36:51 2020 (serrano)                */
+;*    Last change :  Thu Mar 12 15:36:25 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -1292,12 +1292,14 @@
 	    " "
 	    (padding "pmap" cwidth 'right)
 	    " " 
+	    (padding "nmap" cwidth 'right)
+	    " " 
 	    (padding "amap" cwidth 'right)
 	    " " 
 	    (padding "vtable" cwidth 'right))
 	 (fprint *profile-port* (make-string (+ ppading 1 cwidth 1 4) #\-)
 	    "-+-"
-	    (make-string (* 7 (+ cwidth 1)) #\-))
+	    (make-string (* 8 (+ cwidth 1)) #\-))
 	 (for-each (lambda (pc)
 		      (with-access::JsPropertyCache pc (point name usage
 							  cntmiss

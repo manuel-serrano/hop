@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Mar 12 13:18:30 2020 (serrano)                */
+;*    Last change :  Thu Mar 12 15:41:53 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2401,6 +2401,8 @@
 		      (js-invalidate-cache-method! nextmap index
 			 "extend-mapped with non-function" v)
 		      (js-invalidate-pmap-pcaches! %this "extend-mapped.3" name)
+		      (when cache
+			 (js-pcache-next-direct! cache o nextmap index))
 		      (reset-cmap-vtable! nextmap))
 		   (when cache
 		      (js-pcache-next-direct! cache o nextmap index)))
@@ -2466,6 +2468,7 @@
 			((cmap-find-transition cmap name v flags)
 			 =>
 			 (lambda (nmap)
+			    ;;(tprint "extend-mapped.1 name=" name " loc=" loc " cachefun=" cachefun)
 			    (extend-mapped-object/nmap nmap index flags)))
 			(single
 			 (js-invalidate-pmap-pcaches! %this "extend-mapped.4" name)
@@ -2579,13 +2582,8 @@
 		;; 8.12.5, step 6
 		(extend-properties-object!))))))
 
-   (unless cachefun
-      (when (isa? v JsFunction)
-	 (with-access::JsFunction v (src)
-	    (match-case src
-	       (((at crypto.js ?-) . ?-)
-		(tprint "src=" src))))))
    (check-unplain! o name)
+
    (let loop ((obj o))
       (jsobject-find obj o name
 	 update-mapped-object!
@@ -2660,7 +2658,7 @@
 	     =>
 	     (lambda (cache)
 		(js-put-jsobject-name/cache! o pname v throw
-		   %this cache point '(imap emap cmap pmap amap) #f)))
+		   %this cache point '(imap emap cmap nmap pmap amap) #f)))
 	    ((eq? pname (& "length"))
 	     (js-put-length! o v throw #f %this))
 	    ((isa? pname JsStringLiteralIndex)

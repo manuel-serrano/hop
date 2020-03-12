@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Mar  9 18:15:08 2020 (serrano)                */
+;*    Last change :  Thu Mar 12 16:09:26 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -84,7 +84,7 @@
 	      #!optional (cspecs '(cmap pmap amap vtable)))
 	   (j2s-put! loc obj field tyobj prop typrop val tyval mode conf
 	      cache optimp
-	      #!optional (cspecs '(cmap pmap amap vtable)) (cachefun #t))
+	      #!optional (cspecs '(cmap pmap nmap amap vtable)) (cachefun #t))
 
 	   (inrange-positive?::bool ::J2SExpr)
 	   (inrange-positive-number?::bool ::J2SExpr)
@@ -667,7 +667,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-put! loc obj field tyobj prop typrop val tyval mode conf cache
 	   optim-arrayp
-	   #!optional (cspecs '(cmap pmap amap vtable)) (cachefun #t))
+	   #!optional (cspecs '(cmap pmap nmap amap vtable)) (cachefun #t))
 
    (define (js-put! o p v mode %this)
       (if (or (config-get conf :profile-cache #f)
