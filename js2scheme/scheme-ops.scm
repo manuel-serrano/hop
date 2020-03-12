@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Mar  8 07:13:04 2020 (serrano)                */
+;*    Last change :  Thu Mar 12 13:31:47 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2853,6 +2853,7 @@
    (let ((tmp (binop-fixnum-fixnum op type left right flip)))
       (match-case tmp
 	  ((+fx/overflow ?x 1) `(js-int53-inc ,x))
+	  ((+fx/overflow ?x -1) `(js-int53-dec ,x))
 	  ((+fx/overflow 1 ?x) `(js-int53-inc ,x))
 	  ((-fx/overflow ?x 1) `(js-int53-dec ,x))
 	  (else tmp))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Mar 11 09:16:02 2020 (serrano)                */
+;*    Last change :  Thu Mar 12 07:47:19 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -242,7 +242,9 @@
       (let ((mode (if (eq? (config-get conf :parser #f) 'eval-strict)
 		      'strict
 		      (javascript-mode node))))
-	 (when mode (set! current-mode mode))))
+	 (when mode
+	    (unless (eq? current-mode 'hopscript)
+	       (set! current-mode mode)))))
 
    (define (source-element-plugins node::J2SNode config)
       (let ((lang (javascript-language node)))

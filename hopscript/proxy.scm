@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sat Mar  7 08:02:50 2020 (serrano)                */
+;*    Last change :  Thu Mar 12 15:25:12 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -449,7 +449,7 @@
 ;*    js-put/cache! ::JsProxy ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put/cache! o::JsProxy prop v::obj throw::bool %this
-		  #!optional (point -1) (cspecs '()))
+		  #!optional (point -1) (cspecs '()) (cachefun #t))
    (let ((name (js-toname prop %this)))
       (cond-expand (profile (js-profile-log-put name -1)))
       (js-proxy-put! o name v throw %this)))

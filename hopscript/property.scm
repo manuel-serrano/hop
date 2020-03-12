@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Mar 10 15:17:23 2020 (serrano)                */
+;*    Last change :  Thu Mar 12 13:18:30 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -233,15 +233,6 @@
 	   (js-call/cache-miss8 ::JsGlobalObject ::JsPropertyCache obj this a0 a1 a2 a3 a4 a5 a6 a7)
 	   
 	   (js-get-vindex::long ::JsGlobalObject)))
-
-;*---------------------------------------------------------------------*/
-;*    *js-not-a-pmap* ...                                              */
-;*---------------------------------------------------------------------*/
-(define *js-not-a-pmap*
-   (instantiate::JsConstructMap
-      (inline #f)
-      (size -100)
-      (%id -1)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -702,7 +693,9 @@
       (with-access::JsPropertyCache pcache (imap cmap emap pmap amap index)
 	 (with-access::JsConstructMap omap (sibling)
 	    ;; set to either a sibling or #f
-	    (set! cmap sibling))
+	    (if sibling
+		(set! cmap sibling)
+		(set! cmap omap)))
 	 (set! imap omap)
 	 (set! pmap (js-not-a-pmap))
 	 (set! emap #t)

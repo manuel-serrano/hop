@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Mar 10 11:53:55 2020 (serrano)                */
+;*    Last change :  Thu Mar 12 15:24:52 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2861,7 +2861,7 @@
 ;*    js-put/cache! ::JsArray ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put/cache! o::JsArray prop v::obj throw::bool %this
-		  #!optional (point -1) (cspecs '()) (src ""))
+		  #!optional (point -1) (cspecs '()) (src "") (cachefun #t))
    (if (eq? prop (& "length"))
        (js-put-length! o v throw #f %this)
        (js-array-set! o prop v throw %this)))
