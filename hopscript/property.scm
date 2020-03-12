@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Mar 12 18:12:44 2020 (serrano)                */
+;*    Last change :  Thu Mar 12 18:20:16 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2582,13 +2582,20 @@
 		(extend-properties-object!))))))
 
    (check-unplain! o name)
-
    (let loop ((obj o))
       (jsobject-find obj o name
 	 update-mapped-object!
 	 update-properties-object!
 	 extend-object!
-	 loop)))
+	 (lambda (o)
+	    (let liip ((o o))
+	       (if (js-object-mode-plain? o)
+		   ;; skip object if it only contains plain properties
+		   (let ((__proto__ (js-object-proto o)))
+		      (if (js-object? __proto__)
+			  (liip __proto__)
+			  (extend-object! o)))
+		   (loop o)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put/debug! ...                                                */
