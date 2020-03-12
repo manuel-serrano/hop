@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Mar 12 18:20:16 2020 (serrano)                */
+;*    Last change :  Thu Mar 12 18:35:52 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -294,10 +294,11 @@
 (define (js-invalidate-pmap-pcaches! %this::JsGlobalObject reason who)
    
    (define (invalidate-pcache-pmap! pcache)
-      (with-access::JsPropertyCache pcache (pmap emap amap)
+      (with-access::JsPropertyCache pcache (pmap emap amap nmap)
 	 (when (object? pmap) (reset-cmap-vtable! pmap))
 	 (when (object? amap) (reset-cmap-vtable! amap))
 	 (set! pmap (js-not-a-pmap))
+	 (set! nmap #t)
 	 (set! emap #t)
 	 (set! amap #t)))
 
@@ -2587,15 +2588,7 @@
 	 update-mapped-object!
 	 update-properties-object!
 	 extend-object!
-	 (lambda (o)
-	    (let liip ((o o))
-	       (if (js-object-mode-plain? o)
-		   ;; skip object if it only contains plain properties
-		   (let ((__proto__ (js-object-proto o)))
-		      (if (js-object? __proto__)
-			  (liip __proto__)
-			  (extend-object! o)))
-		   (loop o)))))))
+	 loop)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put/debug! ...                                                */

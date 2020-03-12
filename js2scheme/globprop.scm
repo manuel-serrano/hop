@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sat Dec 14 17:45:49 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Thu Mar 12 18:39:43 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
 ;*                                                                     */
@@ -391,7 +391,7 @@
 			       this
 			       (let ((c (assoc val (propinfo-props %info))))
 				  (cond
-				     ((not (pair? c))
+				     ((or (not (pair? c)) (not (pair? (cdr c))))
 				      this)
 				     ((pair? (cddr c))
 				      (J2SCond (J2SRef (caddr c))
