@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Mar  6 18:06:09 2020 (serrano)                */
+;*    Last change :  Thu Mar 12 18:03:44 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -383,15 +383,15 @@
 	   
 	   (final-class J2SPrefix::J2SAssig
 	      (cache (default #f) (info '("nojson" "notraverse")))
-	      (cspecs (default '(imap emap cmap pmap amap vtable)) (info '("nojson" "notraverse")))
+	      (cspecs (default '()) (info '("nojson" "notraverse")))
 	      op::symbol)
 	   (final-class J2SPostfix::J2SAssig
 	      (cache (default #f) (info '("nojson" "notraverse")))
-	      (cspecs (default '(imap emap cmap pmap amap vtable)) (info '("nojson" "notraverse")))
+	      (cspecs (default '()) (info '("nojson" "notraverse")))
 	      op::symbol)
 	   (final-class J2SAssigOp::J2SAssig
 	      (cache (default #f) (info '("nojson" "notraverse")))
-	      (cspecs (default '(imap emap cmap pmap amap vtable)) (info '("nojson" "notraverse")))
+	      (cspecs (default '()) (info '("nojson" "notraverse")))
 	      op::symbol)
 	   
 	   (final-class J2SObjInit::J2SExpr
@@ -401,7 +401,7 @@
 	   
 	   (final-class J2SAccess::J2SExpr
 	      (cache (default #f) (info '("nojson" "notraverse")))
-	      (cspecs (default '(imap emap cmap pmap amap vtable)) (info '("nojson" "notraverse")))
+	      (cspecs (default '()) (info '("nojson" "notraverse")))
 	      (obj::J2SExpr (info '("ast")))
 	      (field::J2SExpr (info '("ast"))))
 
@@ -419,7 +419,7 @@
 	   (final-class J2SCall::J2SExpr
 	      (profid::long (default -1) (info '("notraverse")))
 	      (cache (default #f) (info '("nojson" "notraverse")))
-	      (cspecs (default '(pmap cmap vtable)) (info '("nojson" "notraverse")))
+	      (cspecs (default '()) (info '("nojson" "notraverse")))
 	      (fun::J2SExpr (info '("ast")))
 	      (protocol::symbol (default 'direct) (info '("notraverse")))
 	      (thisarg::pair-nil (info '("ast")))

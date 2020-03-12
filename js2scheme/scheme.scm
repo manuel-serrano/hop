@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Mar 10 14:44:18 2020 (serrano)                */
+;*    Last change :  Thu Mar 12 17:49:59 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -321,7 +321,7 @@
 		     ,(j2s-put! loc '%scope #f (j2s-vtype lhs)
 			 `(& ,(symbol->string id)) 'propname
 			 val tyval (strict-mode? mode) conf #f #f
-			 (is-lambda? val tyval))
+			 :cachefun (is-lambda? val tyval))
 		     ,result))
 		((pair? exports)
 		 `(begin
@@ -1355,7 +1355,8 @@
 		      (typeof-this obj conf)
 		      (j2s-scheme field mode return conf)
 		      (j2s-vtype field)
-		      name 'any (strict-mode? mode) conf #t #f #f))))
+		      name 'any (strict-mode? mode) conf #t #f
+		      :cachefun #f))))
 	    ((isa? lhs J2SWithRef)
 	     (with-access::J2SWithRef lhs (id withs expr loc)
 		(epairify loc
@@ -1367,7 +1368,8 @@
 			       ,(j2s-put! loc (car withs) #f
 				   'object
 				   `(& ,(symbol->string id)) 'propname
-				   name 'any #f conf #t #f #f)
+				   name 'any #f conf #t #f
+				   :cachefun #f)
 			       ,(liip (cdr withs))))))))
 	    (else
 	     (j2s-error "js2scheme" "Illegal lhs" this)))))
@@ -1678,7 +1680,7 @@
 		      conf
 		      #f
 		      cache
-		      (or (is-function? rhs) (is-prototype? obj))))
+		      :cachefun (or (is-function? rhs) (is-prototype? obj))))
 	     (let* ((tmp (gensym 'tmp))
 		    (access (duplicate::J2SAccess lhs (obj (J2SHopRef tmp)))))
 		(if (eq? (j2s-vtype obj) 'array)
@@ -1701,8 +1703,8 @@
 				conf
 				#f
 				cache
-				(or (is-function? rhs)
-				    (is-prototype? obj))))))))))
+				:cachefun (or (is-function? rhs)
+					      (is-prototype? obj))))))))))
 
    (with-access::J2SAssig this (loc lhs rhs)
       (let loop ((lhs lhs))
@@ -1731,9 +1733,9 @@
 			  conf
 			  cache
 			  #f
-			  cspecs
-			  (or (is-function? rhs)
-			      (is-prototype? obj))))))))
+			  :cspecs cspecs
+			  :cachefun (or (is-function? rhs)
+					(is-prototype? obj))))))))
 	    ((and (isa? lhs J2SRef)
 		  (or (not (isa? lhs J2SThis)) (isa? rhs J2SPragma)))
 	     (with-access::J2SRef lhs (decl loc type)
@@ -1768,7 +1770,7 @@
 				   `(& ,(symbol->string id)) 'propname
 				   (j2s-scheme rhs mode return conf)
 				   (j2s-vtype rhs)
-				   #f conf #f #f #f)
+				   #f conf #f #f :cachefun #f)
 			       ,(liip (cdr withs))))))))
 	    ((isa? lhs J2SUndefined)
 	     (j2s-scheme rhs mode return conf))
@@ -1898,7 +1900,7 @@
 				      (j2s-vtype field)
 				      val 'number
 				      (strict-mode? mode) conf
-				      cache #t cs #f)
+				      cache #t :cspecs cs :cachefun #f)
 				  ,tmp))))))
 	       (else
 		`(let ((,tmp ,scmlhs))
@@ -1917,7 +1919,8 @@
 					  (j2s-vtype field)
 					  val 'number
 					  (strict-mode? mode) conf
-					  cache #t cs #f)
+					  cache #t
+					  :cspecs cs :cachefun #f)
 				      ,tmp))))
 			,(let* ((tmp2 (gensym 'tmp))
 				(tref (instantiate::J2SHopRef
@@ -1936,8 +1939,8 @@
 					       val 'number
 					       (strict-mode? mode) conf
 					       cache #t
-					       (min-cspecs cs '(cmap))
-					       #f)
+					       :cspecs (min-cspecs cs '(cmap))
+					       :cachefun #f)
 					   ,tmp))))))))))))
 
    (define (rhs-cache rhs)
@@ -1992,7 +1995,8 @@
 				     (access-inc-sans-object otmp
 					prop op lhs rhs inc)))
 			      ,(j2s-put! loc otmp field 'any prop 'any 1 'any
-				  (strict-mode? mode) conf cache #t '() #f))))
+				  (strict-mode? mode) conf cache #t
+				  :cspecs '() :cachefun #f))))
 		     (let* ((ptmp (gensym 'iprop))
 			    (pvar (J2SHopRef ptmp)))
 			`(let ((,ptmp ,(j2s-scheme field mode return conf)))
@@ -2006,7 +2010,8 @@
 						pvar op lhs rhs inc)))
 				      ,(j2s-put! loc otmp field 'any pvar 'any 1 'any
 					  (strict-mode? mode)
-					  conf cache #t '() #f))))))))))
+					  conf cache #t
+					  :cspecs '() :cachefun #f))))))))))
 
    (with-access::J2SAssig this (loc lhs rhs type)
       (epairify-deep loc
@@ -2092,8 +2097,8 @@
 			  (j2s-cast vtmp #f typea typel conf) typel
 			  (strict-mode? mode) conf
 			  (and cachep cache) #t
-			  (if (mightbe-number? field) '() cspecs)
-			  #f)
+			  :cspecs (if (mightbe-number? field) '() cspecs)
+			  :cachefun #f)
 		      ,vtmp))))))
 
    (define (access-assigop/otmp obj otmp::symbol op tl::symbol lhs::J2SAccess rhs::J2SExpr)
@@ -2170,7 +2175,8 @@
       (let ((tyo (typeof-this obj conf)))
 	 (j2s-get loc tmp field tyo
 	    (j2s-property-scheme field mode return conf)
-	    (j2s-vtype field) (j2s-vtype this) conf cache optim cspecs)))
+	    (j2s-vtype field) (j2s-vtype this) conf cache optim
+	    :cspecs cspecs)))
 
    (define (canbe-array? obj)
       (memq (j2s-type obj) '(any undefined unknown object array)))
@@ -2489,7 +2495,7 @@
 					(j2s-scheme val mode return conf)
 					(j2s-vtype val)
 					(strict-mode? mode) conf #f #f
-					(is-function? val)))
+					:cachefun (is-function? val)))
 				    ((isa? name J2SUndefined)
 				     (with-access::J2SDataPropertyInit i (val)
 					(with-access::J2SSpread val (expr)

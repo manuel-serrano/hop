@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Mar 12 15:41:53 2020 (serrano)                */
+;*    Last change :  Thu Mar 12 18:12:44 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2468,7 +2468,6 @@
 			((cmap-find-transition cmap name v flags)
 			 =>
 			 (lambda (nmap)
-			    ;;(tprint "extend-mapped.1 name=" name " loc=" loc " cachefun=" cachefun)
 			    (extend-mapped-object/nmap nmap index flags)))
 			(single
 			 (js-invalidate-pmap-pcaches! %this "extend-mapped.4" name)

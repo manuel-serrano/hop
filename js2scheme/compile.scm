@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sun Feb  9 11:25:33 2020 (serrano)                */
+;*    Last change :  Thu Mar 12 18:08:13 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -248,6 +248,7 @@
       j2s-use-stage
       j2s-ronly-stage
       j2s-uninit-force-stage
+      j2s-clevel-stage
       j2s-return-stage
       j2s-cps-stage
       j2s-any-stage
@@ -262,6 +263,7 @@
 (define (j2s-debug-driver)
    (list
       j2s-syntax-stage
+      j2s-clevel-stage
       j2s-sourcemap-stage
       j2s-hopscript-stage
       j2s-loopexit-stage

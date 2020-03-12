@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Thu Mar 12 16:09:26 2020 (serrano)                */
+;*    Last change :  Thu Mar 12 17:49:44 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -81,10 +81,10 @@
 	   (js-pcache cache)
 	   
 	   (j2s-get loc obj field tyobj prop typrop tyval conf cache optimp
-	      #!optional (cspecs '(cmap pmap amap vtable)))
+	      #!key (cspecs '(cmap pmap amap vtable)))
 	   (j2s-put! loc obj field tyobj prop typrop val tyval mode conf
 	      cache optimp
-	      #!optional (cspecs '(cmap pmap nmap amap vtable)) (cachefun #t))
+	      #!key (cspecs '(cmap pmap nmap amap vtable)) (cachefun #t))
 
 	   (inrange-positive?::bool ::J2SExpr)
 	   (inrange-positive-number?::bool ::J2SExpr)
@@ -548,7 +548,7 @@
 ;*    j2s-get ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-get loc obj field tyobj prop typrop tyval conf cache
-	   optim-arrayp #!optional (cspecs '(cmap pmap amap vtable)))
+	   optim-arrayp #!key (cspecs '(cmap pmap amap vtable)))
    
    (define (js-get obj prop %this)
       (if (or (config-get conf :profile-cache #f)
@@ -667,7 +667,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-put! loc obj field tyobj prop typrop val tyval mode conf cache
 	   optim-arrayp
-	   #!optional (cspecs '(cmap pmap nmap amap vtable)) (cachefun #t))
+	   #!key (cspecs '(cmap pmap nmap amap vtable)) (cachefun #t))
 
    (define (js-put! o p v mode %this)
       (if (or (config-get conf :profile-cache #f)

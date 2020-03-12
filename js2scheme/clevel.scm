@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Sun Feb  9 07:32:48 2020 (serrano)                */
+;*    Last change :  Thu Mar 12 17:59:46 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -44,37 +44,38 @@
 (define j2s-clevel-stage
    (instantiate::J2SStageProc
       (name "clevel")
-      (comment "Cache level annotation optimization")
-      (proc j2s-clevel)
-      (optional '(:optim-clevel :cspecs))))
+      (comment "Cache level annotation")
+      (proc j2s-clevel)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-clevel ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (j2s-clevel this::obj args)
+(define (j2s-clevel this::obj conf)
    (when (isa? this J2SProgram)
-      (let loop ((log (config-get args :profile-log #f)))
-	 (cond
-	    (log
-	     (if (cache-profile-log this log args)
-		 (with-access::J2SProgram this (nodes headers decls)
-		    (let ((ptable (create-hashtable)))
-		       (propcollect* decls ptable)
-		       (propcollect* nodes ptable)
-		       (propclevel* decls ptable)
-		       (propclevel* nodes ptable)))
-		 (loop #f)))
-	    ((config-get args :cspecs #f)
-	     =>
-	     (lambda (cspecs)
-		(let ((cs (cond
-			     ((pair? cspecs)  cspecs)
-			     ((symbol? cspecs) (list cspecs))
-			     (else (error "j2s-clevel" "Illegal cspecs" cspecs)))))
-		   (cspecs-update this cs args))))
-	    (else
-	     (cspecs-update-ctor! this))))
-      this))
+      (cspecs-default! this)
+      (when (or (config-get conf :optim-clevel) (config-get conf :cspecs))
+	 (let loop ((log (config-get conf :profile-log #f)))
+	    (cond
+	       (log
+		(if (cache-profile-log this log conf)
+		    (with-access::J2SProgram this (nodes headers decls)
+		       (let ((ptable (create-hashtable)))
+			  (propcollect* decls ptable)
+			  (propcollect* nodes ptable)
+			  (propclevel* decls ptable)
+			  (propclevel* nodes ptable)))
+		    (loop #f)))
+	       ((config-get conf :cspecs #f)
+		=>
+		(lambda (cspecs)
+		   (let ((cs (cond
+				((pair? cspecs)  cspecs)
+				((symbol? cspecs) (list cspecs))
+				(else (error "j2s-clevel" "Illegal cspecs" cspecs)))))
+		      (cspecs-update this cs conf))))
+	       (else
+		(cspecs-default! this))))))
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-verb ...                                                   */
@@ -617,17 +618,69 @@
        (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
-;*    cspecs-update-ctor! ...                                          */
+;*    cspecs-default! ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (cspecs-update-ctor! this::J2SNode)
+(define-walk-method (cspecs-default! this::J2SNode)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    cspecs-update-ctor! ::J2SDeclFun ...                             */
+;*    cspecs-default! ::J2SDeclFun ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (cspecs-update-ctor! this::J2SDeclFun)
+(define-walk-method (cspecs-default! this::J2SDeclFun)
    (if (decl-usage-has? this '(new))
        (with-access::J2SDeclFun this (val c)
 	  (cspecs-update! val '(emap amap))
 	  this)
        (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    cspecs-default! ::J2SAccess ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cspecs-default! this::J2SAccess)
+   (with-access::J2SAccess this (cspecs)
+      (set! cspecs '(imap emap cmap pmap amap vtable))
+      (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    cspecs-default! ::J2SAssig ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cspecs-default! this::J2SAssig)
+   (with-access::J2SAssig this (lhs rhs)
+      (cspecs-default! rhs)
+      (if (isa? lhs J2SAccess)
+	  (with-access::J2SAccess lhs (cspecs)
+	     (set! cspecs '(imap emap cmap nmap pmap amap vtable)))
+	  (cspecs-default! lhs))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    cspecs-default! ::J2SPrefix ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cspecs-default! this::J2SPrefix)
+   (with-access::J2SPrefix this (cspecs)
+      (set! cspecs '(imap emap cmap pmap amap vtable)))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    cspecs-default! ::J2SPostfix ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cspecs-default! this::J2SPostfix)
+   (with-access::J2SPostfix this (cspecs)
+      (set! cspecs '(imap emap cmap pmap amap vtable)))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    cspecs-default! ::J2SAssigOp ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cspecs-default! this::J2SAssigOp)
+   (with-access::J2SAssigOp this (cspecs)
+      (set! cspecs '(imap emap cmap pmap amap vtable)))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    cspecs-default! ::J2SCall ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cspecs-default! this::J2SCall)
+   (with-access::J2SCall this (cspecs)
+      (set! cspecs '(pmap cmap vtable)))
+   (call-default-walker))
