@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Mar 10 15:19:30 2020 (serrano)                */
+;*    Last change :  Fri Mar 13 08:11:03 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -1184,7 +1184,7 @@
 (define *js-not-a-pmap*
    (instantiate::JsConstructMap
       (inline #f)
-      (size -100)
+      (size -200)
       (%id -1)))
 
 ;*---------------------------------------------------------------------*/

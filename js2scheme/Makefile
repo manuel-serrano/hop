@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Dec 30 06:24:34 2019 (serrano)                */
+#*    Last change :  Fri Mar 13 07:32:14 2020 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -41,7 +41,7 @@ _OBJECTS = lexer header parser html ast usage dump utils \
   syntax return loopexit symbol ronly resolve this any letfun \
   use propcache bestpractice sourcemap debug stmtassign letopt unletrec \
   cps ecmascript5 narrow constant tyflow hint range loopspec cast vector \
-  array alpha letfusion constrsize ctor propcce clevel sweep inline unthis \
+  array alpha letfusion constrsize ctor propcce cspecs sweep inline unthis \
   instanceof hintnum pce callapply multivar module checksum newtarget \
   objinit arguments procedure hop-module \
   scheme scheme-utils scheme-program \

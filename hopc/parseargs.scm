@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jan 10 08:13:59 2020 (serrano)                */
+;*    Last change :  Fri Mar 13 07:33:51 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -341,10 +341,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-globprop #t (hopc-j2s-flags))))
 	    (("-fno-globprop" (help "Disable globprop optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-globprop #f (hopc-j2s-flags))))
-	    (("-fclevel" (help "Enable property cache level optimization (-O2)"))
-	     (hopc-j2s-flags-set! (cons* :optim-clevel #t (hopc-j2s-flags))))
-	    (("-fno-clevel" (help "Disable property cache level optimization"))
-	     (hopc-j2s-flags-set! (cons* :optim-clevel #f (hopc-j2s-flags))))
+	    (("-fcspecs" (help "Enable property cache level optimization (-O2)"))
+	     (hopc-j2s-flags-set! (cons* :optim-cspecs #t (hopc-j2s-flags))))
+	    (("-fno-cspecs" (help "Disable property cache level optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-cspecs #f (hopc-j2s-flags))))
 	    (("-fcallapply" (help "Enable CALL/APPLY optimization (-O2)"))
 	     (hopc-j2s-flags-set! (cons* :optim-callapply #t (hopc-j2s-flags))))
 	    (("-fno-callapply" (help "Disable CALL/APPLY optimization"))
@@ -367,7 +367,7 @@
 	     (hopc-j2s-flags-set! (cons* :optim-method #f (hopc-j2s-flags))))
 	    (("-fprofile" ?log (help "Profile log file optimization"))
 	     (hopc-j2s-flags-set! (cons* :profile-log log (hopc-j2s-flags)))
-	     (hopc-j2s-flags-set! (cons* :optim-clevel #t (hopc-j2s-flags))))
+	     (hopc-j2s-flags-set! (cons* :optim-cspecs #t (hopc-j2s-flags))))
 	    (("--profile" (help "Profiling mode (see HOPTRACE)"))
 	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
 	     (hopc-j2s-flags-set! (cons* :profile #t (hopc-j2s-flags))))

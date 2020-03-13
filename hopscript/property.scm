@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Mar 12 18:35:52 2020 (serrano)                */
+;*    Last change :  Fri Mar 13 08:01:58 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -298,7 +298,7 @@
 	 (when (object? pmap) (reset-cmap-vtable! pmap))
 	 (when (object? amap) (reset-cmap-vtable! amap))
 	 (set! pmap (js-not-a-pmap))
-	 (set! nmap #t)
+	 (set! nmap (js-not-a-pmap))
 	 (set! emap #t)
 	 (set! amap #t)))
 
@@ -394,11 +394,11 @@
 (define (js-debug-pcache pcache #!optional (msg ""))
    (if (isa? pcache JsPropertyCache)
        (with-access::JsPropertyCache pcache (src imap cmap pmap nmap amap index vindex cntmiss)
+	  (fprint (current-error-port) "--- " msg (typeof pcache)
+	     " src=" src
+	     " index=" index " vindex=" vindex " cntmiss=" cntmiss)
 	  (cond
 	     ((isa? cmap JsConstructMap)
-	      (fprint (current-error-port) "--- " msg (typeof pcache)
-		 " src=" src
-		 " index=" index " vindex=" vindex " cntmiss=" cntmiss)
 	      (when (isa? imap JsConstructMap)
 		 (with-access::JsConstructMap imap ((%iid %id) (iprops props))
 		    (fprint (current-error-port) "  imap.%id=" %iid
@@ -407,11 +407,12 @@
 		 (with-access::JsConstructMap cmap ((%cid %id) (cprops props))
 		    (fprint (current-error-port) "  cmap.%id=" %cid
 		       " cmap.props=" cprops)))
-	      (when (isa? pmap JsConstructMap)
-		 (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
+	      (when (not (eq? pmap (js-not-a-pmap)))
+		 (with-access::JsConstructMap pmap ((%pid %id) (pprops props) (psize size))
 		    (fprint (current-error-port) "  pmap.%id=" %pid
+		       " pmap.size=" psize
 		       " pmap.props=" pprops)))
-	      (when (isa? nmap JsConstructMap)
+	      (when (not (eq? nmap (js-not-a-pmap)))
 		 (with-access::JsConstructMap nmap ((%pid %id) (pprops props))
 		    (fprint (current-error-port) "  nmap.%id=" %pid
 		       " nmap.props=" pprops)))
@@ -422,29 +423,25 @@
 		       " owner=" (typeof (js-pcache-owner pcache))))))
 	     ((isa? imap JsConstructMap)
 	      (with-access::JsConstructMap imap ((%iid %id) (iprops props))
-		 (fprint (current-error-port) "--- " msg (typeof pcache)
-		    " src=" src
-		    " index=" index " vindex=" vindex " cntmiss=" cntmiss)
 		 (fprint (current-error-port) "  imap.%id=" %iid
 		    " imap.props=" iprops)))
+	     ((isa? nmap JsConstructMap)
+	      (with-access::JsConstructMap nmap ((%pid %id) (pprops props) (psize size))
+		 (fprint (current-error-port) "  nmap.%id=" %pid
+		    " nmap.props=" pprops
+		    " nmap.size=" psize)))
 	     ((isa? pmap JsConstructMap)
-	      (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
-		 (fprint (current-error-port) "--- " msg (typeof pcache)
-		    " index=" index " vindex=" vindex 
-		    "\n  pmap.%id=" %pid
-		    " pmap.props=" pprops)))
+	      (with-access::JsConstructMap pmap ((%pid %id) (pprops props) (psize size))
+		 (fprint (current-error-port) "  pmap.%id=" %pid
+		    " pmap.props=" pprops
+		    " pmap.size=" psize)))
 	     ((isa? amap JsConstructMap)
 	      (with-access::JsConstructMap amap ((%aid %id) (aprops props))
-		 (fprint (current-error-port) "--- " msg (typeof pcache)
-		    " src=" src
-		    " index=" index " vindex=" vindex
-		    "\n  amap.%id=" %aid
+		 (fprint (current-error-port) "  amap.%id=" %aid
 		    " amap.props=" aprops
 		    " owner=" (typeof (js-pcache-owner pcache)))))
 	     (else
-	      (fprint (current-error-port) "--- " msg (typeof pcache)
-		 " src=" src
-		 " vindex=" vindex " cntmiss=" cntmiss " no map"))))
+	      (fprint (current-error-port) " no map"))))
        (fprint (current-error-port) msg (typeof pcache))))
 
 ;*---------------------------------------------------------------------*/
@@ -733,7 +730,7 @@
 	 (set! cmap omap)
 	 (set! imap omap)
 	 (set! pmap (js-not-a-pmap))
-	 (set! nmap #t)
+	 (set! nmap (js-not-a-pmap))
 	 (set! emap #t)
 	 (set! amap #t)
 	 (set! index i)))
@@ -746,7 +743,7 @@
 		(set! imap #t)))
 	 (set! cmap omap)
 	 (set! pmap (js-not-a-pmap))
-	 (set! nmap #t)
+	 (set! nmap (js-not-a-pmap))
 	 (set! emap #t)
 	 (set! amap #t)
 	 (set! index i)))

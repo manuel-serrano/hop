@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Mar  7 06:34:57 2020 (serrano)                */
+;*    Last change :  Fri Mar 13 08:26:04 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -622,32 +622,25 @@
 					 js-function-writable-strict-cmap
 					 js-function-prototype-property-rw
 					 js-function-strict-elements)
-      (let* (;;(els ($create-vector 5))
-	     (fun (INSTANTIATE-JSFUNCTION
-		     (procedure procedure)
-		     (method method)
-		     (construct construct)
-		     (alloc alloc)
-		     (arity arity)
-		     (len length)
-		     (__proto__ (js-object-proto js-function))
-		     (src src)
-		     (name name)
-		     (constrsize constrsize)
-		     (constrmap constrmap)
-		     (maxconstrsize 100)
-		     (elements js-function-strict-elements)
-		     ;; (elements els)
-		     (cmap js-function-writable-strict-cmap)
-		     (prototype #f)
-		     (%prototype #f))))
+      (let ((fun (INSTANTIATE-JSFUNCTION
+		    (procedure procedure)
+		    (method method)
+		    (construct construct)
+		    (alloc alloc)
+		    (arity arity)
+		    (len length)
+		    (__proto__ (js-object-proto js-function))
+		    (src src)
+		    (name name)
+		    (constrsize constrsize)
+		    (constrmap constrmap)
+		    (maxconstrsize 100)
+		    (elements js-function-strict-elements)
+		    (cmap js-function-writable-strict-cmap)
+		    (prototype #f)
+		    (%prototype #f))))
 	 (unless (eq? alloc js-object-alloc-lazy)
 	    (js-function-setup-prototype! %this fun))
-;* 	 (vector-set! els 0 js-function-prototype-property-rw)         */
-;* 	 (vector-set! els 1 length)                                    */
-;* 	 (vector-set! els 2 name)                                      */
-;* 	 (vector-set! els 3 strict-arguments-property)                 */
-;* 	 (vector-set! els 4 strict-caller-property)                    */
 	 fun)))
 
 ;*---------------------------------------------------------------------*/

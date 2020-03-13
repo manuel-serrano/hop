@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Mar 12 18:08:13 2020 (serrano)                */
+;*    Last change :  Fri Mar 13 07:32:24 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -36,7 +36,7 @@
 	   __js2scheme_constrsize
 	   __js2scheme_ctor
 	   __js2scheme_propcce
-	   __js2scheme_clevel
+	   __js2scheme_cspecs
 	   __js2scheme_objinit
 	   __js2scheme_constant
 	   __js2scheme_tyflow
@@ -199,7 +199,7 @@
 	  j2s-globprop-stage
 	  j2s-uninit-globprop-stage
 	  j2s-globvar-stage
-	  j2s-clevel-stage
+	  j2s-cspecs-stage
 	  j2s-method-stage
 	  j2s-return-stage
 	  j2s-newtarget-stage
@@ -248,7 +248,7 @@
       j2s-use-stage
       j2s-ronly-stage
       j2s-uninit-force-stage
-      j2s-clevel-stage
+      j2s-cspecs-stage
       j2s-return-stage
       j2s-cps-stage
       j2s-any-stage
@@ -263,7 +263,7 @@
 (define (j2s-debug-driver)
    (list
       j2s-syntax-stage
-      j2s-clevel-stage
+      j2s-cspecs-stage
       j2s-sourcemap-stage
       j2s-hopscript-stage
       j2s-loopexit-stage
@@ -529,8 +529,8 @@
 	    (set! o (cons* :optim-multivar #t o)))
 	 (unless (memq :optim-ccall o)
 	    (set! o (cons* :optim-ccall #t o)))
-	 (unless (memq :optim-clevel o)
-	    (set! o (cons* :optim-clevel #t o)))
+	 (unless (memq :optim-cspecs o)
+	    (set! o (cons* :optim-cspecs #t o)))
 	 (unless (memq :optim-callapply o)
 	    (set! o (cons* :optim-callapply #t o)))
 	 (unless (memq :optim-inline o)

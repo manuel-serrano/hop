@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Mar  7 08:02:33 2020 (serrano)                */
+;*    Last change :  Fri Mar 13 07:46:30 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -584,13 +584,6 @@
 			 (js-profile-log-index idx)
 			 (vector-set! elements idx ,tmp)
 			 ,tmp))
-		    ((eq? cs 'pmap)
-		     `(let ((idx (js-pcache-index ,cache)))
-			 (js-profile-log-cache ,cache :nmap #t)
-			 (js-profile-log-index idx)
-			 (js-object-ctor-push! ,obj idx ,tmp)
-			 (set! cmap (js-pcache-cmap ,cache))
-			 ,tmp))
 		    ((eq? cs 'nmap)
 		     `(let ((idx (js-pcache-index ,cache)))
 			 (js-profile-log-cache ,cache :nmap #t)
@@ -647,20 +640,14 @@
 			      ,(loop 'nmap)
 			      ,(if (eq? (car cs) 'nmap)
 				   (loop (cdr cs))
-				   `((@ js-put-jsobject-name/cache-pmap+!
+				   `((@ js-put-jsobject-name/cache-nmap+!
 					__hopscript_property)
 				     ,obj ,prop ,tmp ,throw ,%this
 				     ,cache ,loc ',cspecs))))
-			((pmap pmap+)
-			 ;; prototype property set
-			 `(if (eq? %cmap (js-pcache-pmap ,cache))
-			      ,(loop 'pmap)
-			      ,(if (eq? (car cs) 'pmap)
-				   (loop (cdr cs))
-				   `((@ js-put-jsobject-name/cache-pmap+!
-					__hopscript_property)
-				     ,obj ,prop ,tmp ,throw ,%this
-				     ,cache ,loc ',cspecs))))
+			((pmap)
+			 (loop (cons 'nmap (cdr cs))))
+			((pmap)
+			 (loop (cons 'nmap+ (cdr cs))))
 			((amap)
 			 ;; accessor property set
 			 `(if (eq? %cmap (js-pcache-amap ,cache))
