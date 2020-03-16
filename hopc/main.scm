@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopc/main.scm                     */
+;*    serrano/prgm/project/hop/hop/hopc/main.scm                       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Sep  6 13:59:31 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Sun Mar 15 16:36:39 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
 ;*=====================================================================*/
@@ -54,7 +54,7 @@
       (setup-client-compiler!)
       ;; setup the hop module resolvers
       (bigloo-module-extension-handler-set!
-	 (hop-module-extension-handler exp))
+	 hop-module-extension-handler)
       (bigloo-module-resolver-set!
 	 (make-hop-module-resolver (bigloo-module-resolver)))
       ;; evaluate the command line expressions

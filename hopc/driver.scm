@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Sat Dec 21 06:42:30 2019 (serrano)                */
-;*    Copyright   :  2014-19 Manuel Serrano                            */
+;*    Last change :  Sun Mar 15 16:30:25 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
 ;*=====================================================================*/
@@ -247,7 +247,7 @@
 	    ((js) (generate-js out))
 	    ((hop) (generate-hop out))
 	    ((hopscript) (generate-hopscript out))))
-      
+
       (if (string? (hopc-destination))
 	  (call-with-output-file (hopc-destination)
 	     (lambda (out) (generate out lang)))
@@ -348,8 +348,11 @@
 	       (let loop ()
 		  (let ((exp (hopc-read in)))
 		     (unless (eof-object? exp)
-			(write (obj->string exp) out)
-			(loop)))))
+			(unless (eof-object? exp)
+			   (tprint "exp...")
+			   (pp exp)
+			   (write (obj->string exp) out)
+			   (loop))))))
 	    file
 	    temp))
 

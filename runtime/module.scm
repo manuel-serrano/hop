@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/module.scm                */
+;*    serrano/prgm/project/hop/hop/runtime/module.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Wed Dec  9 14:38:02 2015 (serrano)                */
-;*    Copyright   :  2009-15 Manuel Serrano                            */
+;*    Last change :  Sun Mar 15 16:26:59 2020 (serrano)                */
+;*    Copyright   :  2009-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
 ;*=====================================================================*/
