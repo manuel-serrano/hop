@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Mar  2 12:37:54 2020 (serrano)                */
+;*    Last change :  Mon Mar 16 08:03:55 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -377,6 +377,9 @@
 	    
 	    (hop-preferred-language::bstring)
 	    (hop-preferred-language-set! ::bstring)
+
+	    (hop-enable-zeroconf::bool)
+	    (hop-enable-zeroconf-set! ::bool)
 
 	    (hop-rc-loaded)
 	    (hop-rc-loaded?)
@@ -1582,3 +1585,10 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-preferred-language
    "hop")
+
+;*---------------------------------------------------------------------*/
+;*    hop-enable-zeroconf ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-enable-zeroconf
+   (hop-zeroconf-default))
+

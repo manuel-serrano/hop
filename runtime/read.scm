@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Sep  6 13:28:08 2019 (serrano)                */
-;*    Copyright   :  2005-19 Manuel Serrano                            */
+;*    Last change :  Mon Mar 16 07:56:42 2020 (serrano)                */
+;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -74,6 +74,8 @@
 			       (module #f))
 	    (hop-unload! ::bstring)
 
+	    (hop-load-rc ::bstring)
+	    
 	    (hop-find-sofile::obj ::bstring #!key (suffix ""))
 	    (hop-sofile-path::bstring ::bstring #!key (suffix ""))
 	    
@@ -1388,4 +1390,25 @@
       (when (hashtable? *load-table*)
 	 (hashtable-remove! *load-table*
 	    (file-name-unix-canonicalize file)))))
+
+;*---------------------------------------------------------------------*/
+;*    %hop-load-rc ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (%hop-load-rc path)
+   (when (and (string? path) (file-exists? path))
+      (hop-verb 3 "loading \"" (hop-color 3 "" path) "\"...\n")
+      (hop-load path)
+      path))
+
+;*---------------------------------------------------------------------*/
+;*    hop-load-rc ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (hop-load-rc file)
+   (if (file-exists? file)
+       (%hop-load-rc file)
+       (let ((path (make-file-name (hop-rc-directory) file)))
+	  (when (file-exists? path)
+	     (%hop-load-rc path)))))
+
+
    

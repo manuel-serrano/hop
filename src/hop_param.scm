@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Sep  6 07:46:51 2019 (serrano)                */
-;*    Copyright   :  2004-19 Manuel Serrano                            */
+;*    Last change :  Mon Mar 16 08:03:56 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -94,9 +94,6 @@
 	    
 	    (hop-preload-services::pair-nil)
 	    (hop-preload-services-set! ::pair-nil)
-	    
-	    (hop-enable-zeroconf::bool)
-	    (hop-enable-zeroconf-set! ::bool)
 	    
 	    (hop-server-socket::obj)
 	    (hop-server-socket-set! ::obj)
@@ -328,12 +325,6 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-preload-services
    '())
-
-;*---------------------------------------------------------------------*/
-;*    hop-enable-zeroconf ...                                          */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-enable-zeroconf
-   (hop-zeroconf-default))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-server-socket ...                                            */

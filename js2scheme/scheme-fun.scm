@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Tue Mar 10 17:07:24 2020 (serrano)                */
+;*    Last change :  Sat Mar 14 06:27:49 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -175,6 +175,18 @@
 	  -1))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-make-function-strict-lazy ...                                */
+;*---------------------------------------------------------------------*/
+(define (j2s-make-function-strict-lazy arity)
+   (case arity
+      ((1) 'js-make-function-strict-lazy1)
+      ((2) 'js-make-function-strict-lazy2)
+      ((3) 'js-make-function-strict-lazy3)
+      ((4) 'js-make-function-strict-lazy4)
+      ((5) 'js-make-function-strict-lazy5)
+      (else 'js-make-function-strict-lazy)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-make-function ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-make-function this::J2SDeclFun mode return conf)
@@ -185,7 +197,7 @@
 	    (new-target 'js-object-alloc/new-target)
 	    ((decl-usage-has? this '(new get set))  'js-object-alloc)
 	    (else 'js-object-alloc-lazy))))
-      
+
    (define (make-function-sans-alloc this::J2SDeclFun)
       (with-access::J2SDeclFun this (loc id scope val key)
 	 (let ((val (declfun-fun this)))
@@ -196,6 +208,7 @@
 		      (arity (j2s-function-arity val conf))
 		      (minlen (if (eq? mode 'hopscript) (j2s-minlen val) -1))
 		      (len (if (eq? vararg 'rest) (-fx lparams 1) lparams))
+		      (alloc (allocator this))
 		      (src (j2s-function-src loc val conf)))
 		  (cond
 		     (generator
@@ -205,24 +218,29 @@
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
-			  :alloc ,(allocator this)
+			  :alloc ,alloc
 			  :prototype ,(j2s-fun-prototype val)
 			  :__proto__ ,(j2s-fun-__proto__ val)
 			  :construct ,fastid
 			  :constrsize ,constrsize))
 		     ((and src (eq? mode 'strict))
-		      `(js-make-function-strict %this ,fastid
-			  ,len (& ,(symbol->string! id))
-			  :src ,src
-			  :arity ,arity
-			  :minlen ,minlen
-			  :alloc ,(allocator this)
-			  :construct ,fastid
-			  :constrsize ,constrsize
-			  :method ,(if method
-				       (jsfun->lambda method
-					  mode return conf #f #f)
-				       fastid)))
+		      `(,(if (eq? alloc 'js-object-alloc-lazy)
+			     (j2s-make-function-strict-lazy arity)
+			     'js-make-function-strict)
+			%this ,fastid
+			,len (& ,(symbol->string! id))
+			:src ,src
+			
+			:minlen ,minlen
+			:constrsize ,constrsize
+			:method ,(if method
+				     (jsfun->lambda method
+					mode return conf #f #f)
+				     fastid)
+			,@(if (eq? alloc 'js-object-alloc-lazy)
+			      (if (or (< arity 1) (> arity 5))
+				  `(:arity ,arity) '())
+			      `(:arity ,arity :alloc ,alloc))))
 		     (src
 		      `(js-make-function %this ,fastid
 			  ,len (& ,(symbol->string! id))
@@ -230,36 +248,28 @@
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
-			  :alloc ,(allocator this)
-			  :construct ,fastid
-			  :constrsize ,constrsize
-			  :method ,(when method
-				      (jsfun->lambda method
-					 mode return conf #f #f))))(src
-		      `(js-make-function %this ,fastid
-			  ,len (& ,(symbol->string! id))
-			  :src ,src
-			  :arity ,arity
-			  :minlen ,minlen
-			  :strict ',mode
-			  :alloc ,(allocator this)
+			  :alloc ,alloc
 			  :construct ,fastid
 			  :constrsize ,constrsize
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
 		     ((and (eq? vararg 'arguments) (eq? mode 'strict))
-		      `(js-make-function-strict %this ,fastid
-			  ,len (& ,(symbol->string! id))
-			  :arity ,arity
-			  :minlen ,minlen
-			  :constrsize ,constrsize
-			  :alloc ,(allocator this)
-			  :construct ,fastid
-			  :method ,(if method
-				       (jsfun->lambda method
-					  mode return conf #f #f)
-				       fastid)))
+		      `(,(if (eq? alloc 'js-object-alloc-lazy)
+			     (j2s-make-function-strict-lazy arity)
+			     'js-make-function-strict)
+			%this ,fastid
+			,len (& ,(symbol->string! id))
+			:minlen ,minlen
+			:constrsize ,constrsize
+			:method ,(if method
+				     (jsfun->lambda method
+					mode return conf #f #f)
+				     fastid)
+			,@(if (eq? alloc 'js-object-alloc-lazy)
+			      (if (or (< arity 1) (> arity 5))
+				  `(:arity ,arity) '())
+			      `(:arity ,arity :alloc ,alloc))))
 		     ((eq? vararg 'arguments)
 		      `(js-make-function %this ,fastid
 			  ,len (& ,(symbol->string! id))
@@ -267,29 +277,33 @@
 			  :minlen ,minlen
 			  :strict ',mode 
 			  :constrsize ,constrsize
-			  :alloc ,(allocator this)
+			  :alloc ,alloc
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
 		     ((and method (eq? mode 'strict))
-		      `(js-make-function-strict %this ,fastid
-			  ,len (& ,(symbol->string! id))
-			  :arity ,arity
-			  :minlen ,minlen
-			  :alloc ,(allocator this)
-			  :construct ,fastid
-			  :constrsize ,constrsize
-			  :method ,(if method
-				       (jsfun->lambda method
-					  mode return conf #f #f)
-				       fastid)))
+		      `(,(if (eq? alloc 'js-object-alloc-lazy)
+			     (j2s-make-function-strict-lazy arity)
+			     'js-make-function-strict)
+			%this ,fastid
+			,len (& ,(symbol->string! id))
+			:minlen ,minlen
+			:constrsize ,constrsize
+			:method ,(if method
+				     (jsfun->lambda method
+					mode return conf #f #f)
+				     fastid)
+			,@(if (eq? alloc 'js-object-alloc-lazy)
+			      (if (or (< arity 1) (> arity 5))
+				  `(:arity ,arity) '())
+			      `(:arity ,arity :alloc ,alloc))))
 		     (method
 		      `(js-make-function %this ,fastid
 			  ,len (& ,(symbol->string! id))
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
-			  :alloc ,(allocator this)
+			  :alloc ,alloc
 			  :construct ,fastid
 			  :constrsize ,constrsize
 			  :method ,(when method
@@ -301,7 +315,7 @@
 			  :arity ,arity
 			  :minlen ,minlen
 			  :strict ',mode
-			  :alloc ,(allocator this)
+			  :alloc ,alloc
 			  :construct ,fastid
 			  :constrsize ,constrsize))
 		     (else
@@ -631,7 +645,7 @@
 	    ((isa? this J2SSvc) 'js-not-a-constructor-alloc)
 	    (new-target 'js-object-alloc/new-target)
 	    (else 'js-object-alloc-lazy))))
-   
+
    (with-access::J2SFun this (loc name params mode vararg mode generator
 				constrsize method new-target type)
       (let* ((lparams (length params))
@@ -640,7 +654,8 @@
 	     (minlen (if (eq? mode 'hopscript) (j2s-minlen this) -1))
 	     (src (j2s-function-src loc this conf))
 	     (prototype (j2s-fun-prototype this))
-	     (__proto__ (j2s-fun-__proto__ this)))
+	     (__proto__ (j2s-fun-__proto__ this))
+	     (alloc (allocator this)))
 	 (epairify-deep loc
 	    (cond
 	       ((eq? type 'procedure)
@@ -650,17 +665,21 @@
 		     (eq? mode 'strict)
 		     (not prototype)
 		     (not __proto__))
-		`(js-make-function-strict %this ,tmp ,len
-		    (& ,(symbol->string! name))
-		    :src ,src
-		    :arity ,arity
-		    :minlen ,minlen
-		    :alloc ,(allocator this)
-		    :construct ,tmp
-		    :constrsize ,constrsize
-		    :method ,(or tmpm
-				 (and method (jsfun->lambda method mode return conf #f #f))
-				 tmp)))
+		`(,(if (eq? alloc 'js-object-alloc-lazy)
+		       (j2s-make-function-strict-lazy arity)
+		       'js-make-function-strict)
+		  %this ,tmp ,len
+		  (& ,(symbol->string! name))
+		  :src ,src
+		  :minlen ,minlen
+		  :constrsize ,constrsize
+		  :method ,(or tmpm
+			       (and method (jsfun->lambda method mode return conf #f #f))
+			       tmp)
+		  ,@(if (eq? alloc 'js-object-alloc-lazy)
+			(if (or (< arity 1) (> arity 5))
+			    `(:arity ,arity) '())
+			`(:arity ,arity :alloc ,alloc))))
 	       ((or src prototype __proto__ method new-target)
 		`(js-make-function %this ,tmp ,len
 		    (& ,(symbol->string! name))
@@ -670,27 +689,31 @@
 		    :__proto__ ,__proto__
 		    :strict ',mode
 		    :minlen ,minlen
-		    :alloc ,(allocator this)
+		    :alloc ,alloc
 		    :constrsize ,constrsize
 		    :method ,(or tmpm (and method (jsfun->lambda method mode return conf #f #f)))))
 	       ((and (eq? vararg 'arguments)
 		     (eq? mode 'strict))
-		`(js-make-function-strict %this ,tmp ,len
-		    (& ,(symbol->string! name))
-		    :arity ,arity ,
-		    :minlen minlen
-		    :strict ',mode
-		    :construct ,tmp
-		    :alloc ,(allocator this)
-		    :constrsize ,constrsize
-		    :method ,tmp))
+		`(,(if (eq? alloc 'js-object-alloc-lazy)
+		       (j2s-make-function-strict-lazy arity)
+		       'js-make-function-strict)
+		  %this ,tmp ,len
+		  (& ,(symbol->string! name))
+		  :minlen minlen
+		  :strict ',mode
+		  :constrsize ,constrsize
+		  :method ,tmp
+		  ,@(if (eq? alloc 'js-object-alloc-lazy)
+			(if (or (< arity 1) (> arity 5))
+			    `(:arity ,arity) '())
+			`(:arity ,arity :alloc ,alloc))))
 	       ((eq? vararg 'arguments)
 		`(js-make-function %this ,tmp ,len
 		    (& ,(symbol->string! name))
 		    :arity ,arity ,
 		    :minlen minlen
 		    :strict ',mode
-		    :alloc ,(allocator this)
+		    :alloc ,alloc
 		    :constrsize ,constrsize))
 	       (else
 		`(js-make-function-simple %this ,tmp ,len

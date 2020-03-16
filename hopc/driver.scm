@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Sun Mar 15 16:30:25 2020 (serrano)                */
+;*    Last change :  Mon Mar 16 05:26:09 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -337,24 +337,49 @@
 	     (compile-pipe opts comp file))))
       
       (define (compile-hop in opts file temp)
-	 (compiler
-	    (append `("-fread-internal-src"
-			"--force-cc-o"
-			"-rpath" ,(make-file-path (hop-lib-directory)
-				     "hop" (hop-version))
-			"-I" ,(dirname file))
-	       opts)
-	    (lambda (out)
-	       (let loop ()
-		  (let ((exp (hopc-read in)))
-		     (unless (eof-object? exp)
-			(unless (eof-object? exp)
-			   (tprint "exp...")
-			   (pp exp)
-			   (write (obj->string exp) out)
-			   (loop))))))
-	    file
-	    temp))
+	 (let* ((mext "(lambda (exp)
+			(match-case exp
+			   ((module . ?rest)
+			    (let loop ((clauses (cdr rest))
+				       (prev rest))
+			       (cond
+				  ((null? clauses)
+				   exp)
+				  ((eq? (car clauses) '~)
+				   (set-cdr! prev (cddr clauses))
+				   (loop (cddr clauses) prev))
+				  (else
+				   (loop (cdr clauses) clauses)))))
+			   (else
+			    exp)))")
+		(options `("-extend-module"
+			     ,mext
+			     "--force-cc-o"
+			     "-rpath" ,(make-file-path (hop-lib-directory)
+					  "hop" (hop-version))
+			     "-I" ,(dirname file)))
+		(mkcomp (lambda (write)
+			   (lambda (out)
+			      (let loop ()
+				 (let ((exp (hopc-read in)))
+				    (unless (eof-object? exp)
+				       (unless (eof-object? exp)
+					  (match-case exp
+					     ((module . ?-)
+					      (write (compile-module exp) out)
+					      (loop))
+					     (else
+					      (write exp out)
+					      (loop)))))))))))
+	    (if (string? temp)
+		(compiler
+		   (append options opts)
+		   (mkcomp pp)
+		   file temp)
+		(compiler
+		   (append (cons "-fread-internal-src" options) opts)
+		   (mkcomp (lambda (exp port) (write (obj->string exp) port)))
+		   file temp))))
 
       (define (compile-scheme in opts file temp)
 	 (compiler
@@ -368,11 +393,7 @@
 	       (let loop ()
 		  (let ((exp (hopc-read in)))
 		     (unless (eof-object? exp)
-			(match-case exp
-			   ((module . ?-)
-			    (write (obj->string (compile-module exp)) out))
-			   (else
-			    (write (obj->string exp) out)))
+			(write (obj->string exp) out)
 			(loop)))))
 	    file
 	    temp))

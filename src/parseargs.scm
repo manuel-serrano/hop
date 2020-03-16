@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Oct  8 13:20:04 2019 (serrano)                */
-;*    Copyright   :  2004-19 Manuel Serrano                            */
+;*    Last change :  Mon Mar 16 07:57:11 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -19,10 +19,7 @@
    (import  hop_param
 	    hop_init)
 
-   (eval    (export hop-load-rc))
-
    (export  (parse-args::pair-nil ::pair)
-	    (hop-load-rc ::bstring)
 	    (hello-world)))
 
 ;*---------------------------------------------------------------------*/
@@ -660,15 +657,6 @@
    (print "   - rc-file: " (hop-rc-file)))
 
 ;*---------------------------------------------------------------------*/
-;*    %hop-load-rc ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (%hop-load-rc path)
-   (when (and (string? path) (file-exists? path))
-      (hop-verb 3 "loading \"" (hop-color 3 "" path) "\"...\n")
-      (hop-load path)
-      path))
-
-;*---------------------------------------------------------------------*/
 ;*    parseargs-loadrc ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (parseargs-loadrc rc-file default)
@@ -676,26 +664,18 @@
        (let ((suf (suffix rc-file)))
 	  (cond
 	     ((member suf '("hop" "scm"))
-	      (%hop-load-rc rc-file)
+	      (hop-load-rc rc-file)
 	      rc-file)
 	     ((member suf '("js"))
 	      rc-file)))
        (let ((path (make-file-name (hop-rc-directory) default)))
 	  (if (file-exists? path)
-	      (%hop-load-rc path)
+	      (hop-load-rc path)
 	      (let ((jspath (string-append (prefix path) ".js")))
 		 (if (file-exists? jspath)
 		     jspath
 		     (let ((def (make-file-name (hop-etc-directory) default)))
-			(%hop-load-rc def))))))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-load-rc ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (hop-load-rc file)
-   (let ((path (make-file-name (hop-rc-directory) file)))
-      (when (file-exists? path)
-	 (%hop-load-rc path))))
+			(hop-load-rc def))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    key-filename ...                                                 */

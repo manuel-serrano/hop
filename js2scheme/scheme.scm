@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Mar 12 17:49:59 2020 (serrano)                */
+;*    Last change :  Sat Mar 14 06:25:44 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -3041,6 +3041,7 @@
    ;; pattern matching to find it's a function or not
    (when (eq? tyval 'function)
       (match-case val
+	 ((let ?- (js-make-function-strict-lazy . ?-)) #t)
 	 ((let ?- (js-make-function-strict . ?-)) #t)
 	 ((let ?- (js-make-function . ?-)) #t)
 	 ((let ?- (js-make-function-simple . ?-)) #t)

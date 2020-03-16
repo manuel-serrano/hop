@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Mar 13 08:26:04 2020 (serrano)                */
+;*    Last change :  Sat Mar 14 06:24:39 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -49,10 +49,46 @@
 	   (js-make-function-strict::JsFunction
 	      ::JsGlobalObject ::procedure ::int ::JsStringLiteral
 	      #!key
-	      method construct alloc
+	      method alloc
 	      arity (minlen -1) src 
 	      (constrsize 3)
 	      (constrmap (js-not-a-cmap)))
+	   (js-make-function-strict-lazy::JsFunction
+	      ::JsGlobalObject ::procedure ::int ::JsStringLiteral
+	      #!key
+	      method 
+	      arity (minlen -1) src 
+	      (constrsize 3))
+	   (js-make-function-strict-lazy1::JsFunction
+	      ::JsGlobalObject ::procedure ::int ::JsStringLiteral
+	      #!key
+	      method 
+	      (minlen -1) src 
+	      (constrsize 3))
+	   (js-make-function-strict-lazy2::JsFunction
+	      ::JsGlobalObject ::procedure ::int ::JsStringLiteral
+	      #!key
+	      method 
+	      (minlen -1) src 
+	      (constrsize 3))
+	   (js-make-function-strict-lazy3::JsFunction
+	      ::JsGlobalObject ::procedure ::int ::JsStringLiteral
+	      #!key
+	      method 
+	      (minlen -1) src 
+	      (constrsize 3))
+	   (js-make-function-strict-lazy4::JsFunction
+	      ::JsGlobalObject ::procedure ::int ::JsStringLiteral
+	      #!key
+	      method 
+	      (minlen -1) src 
+	      (constrsize 3))
+	   (js-make-function-strict-lazy5::JsFunction
+	      ::JsGlobalObject ::procedure ::int ::JsStringLiteral
+	      #!key
+	      method 
+	      (minlen -1) src 
+	      (constrsize 3))
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
 	      ::int ::JsStringLiteral ::int ::int ::symbol ::int)
 	   
@@ -475,15 +511,27 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (INSTANTIATE-JSFUNCTION . attrs)
    (let ((arity (assq 'arity attrs)))
-      `(case ,(cadr arity)
-	  ,@(map (lambda (n)
-		    `((,n)
-		      (,(string->symbol (format "instantiateJsFunction~a" n))
-		       ,@attrs)))
-	     (iota 5 1))
-	  (else
-	   (instantiateJsFunction
-	      ,@attrs)))))
+      (case (cadr arity)
+	 ((1)
+	  `(instantiateJsFunction1 ,@attrs))
+	 ((2)
+	  `(instantiateJsFunction2 ,@attrs))
+	 ((3)
+	  `(instantiateJsFunction3 ,@attrs))
+	 ((4)
+	  `(instantiateJsFunction4 ,@attrs))
+	 ((5)
+	  `(instantiateJsFunction5 ,@attrs))
+	 (else
+	  `(case ,(cadr arity)
+	      ,@(map (lambda (n)
+			`((,n)
+			  (,(string->symbol (format "instantiateJsFunction~a" n))
+			   ,@attrs)))
+		 (iota 5 1))
+	      (else
+	       (instantiateJsFunction
+		  ,@attrs)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-function ...                                             */
@@ -614,7 +662,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-make-function-strict %this procedure length name
 	   #!key
-	   method construct alloc
+	   method alloc
 	   arity (minlen -1) src 
 	   (constrsize 3)
 	   (constrmap (js-not-a-cmap)))
@@ -625,7 +673,7 @@
       (let ((fun (INSTANTIATE-JSFUNCTION
 		    (procedure procedure)
 		    (method method)
-		    (construct construct)
+		    (construct procedure)
 		    (alloc alloc)
 		    (arity arity)
 		    (len length)
@@ -642,6 +690,58 @@
 	 (unless (eq? alloc js-object-alloc-lazy)
 	    (js-function-setup-prototype! %this fun))
 	 fun)))
+
+;*---------------------------------------------------------------------*/
+;*    $js-make-function-strict-lazy ...                                */
+;*    -------------------------------------------------------------    */
+;*    specialized function constructor for regular strict functions.   */
+;*---------------------------------------------------------------------*/
+(define-macro (%js-make-function-strict-lazy arity)
+   `(with-access::JsGlobalObject %this (js-function 
+					  js-function-writable-strict-cmap
+					  js-function-prototype-property-rw
+					  js-function-strict-elements)
+       (INSTANTIATE-JSFUNCTION
+	  (procedure procedure)
+	  (method method)
+	  (construct procedure)
+	  (alloc js-object-alloc-lazy)
+	  (arity ,arity)
+	  (len length)
+	  (__proto__ (js-object-proto js-function))
+	  (src src)
+	  (name name)
+	  (constrsize constrsize)
+	  (constrmap (js-not-a-cmap))
+	  (maxconstrsize 100)
+	  (elements js-function-strict-elements)
+	  (cmap js-function-writable-strict-cmap)
+	  (prototype #f)
+	  (%prototype #f))))
+
+(define (js-make-function-strict-lazy %this procedure length name
+	   #!key method arity (minlen -1) src (constrsize 3))
+   (%js-make-function-strict-lazy arity))
+
+(define (js-make-function-strict-lazy1 %this procedure length name
+	   #!key method (minlen -1) src (constrsize 3))
+   (%js-make-function-strict-lazy 1))
+
+(define (js-make-function-strict-lazy2 %this procedure length name
+	   #!key method (minlen -1) src (constrsize 3))
+   (%js-make-function-strict-lazy 2))
+
+(define (js-make-function-strict-lazy3 %this procedure length name
+	   #!key method (minlen -1) src (constrsize 3))
+   (%js-make-function-strict-lazy 3))
+
+(define (js-make-function-strict-lazy4 %this procedure length name
+	   #!key method (minlen -1) src (constrsize 3))
+   (%js-make-function-strict-lazy 4))
+
+(define (js-make-function-strict-lazy5 %this procedure length name
+	   #!key method (minlen -1) src (constrsize 3))
+   (%js-make-function-strict-lazy 5))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-setup-prototype! ...                                 */
