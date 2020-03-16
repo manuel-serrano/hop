@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Mar 14 06:24:39 2020 (serrano)                */
+;*    Last change :  Mon Mar 16 08:16:01 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -175,7 +175,7 @@
       (fprint (current-error-port) "   src=" src)))
       
 ;*---------------------------------------------------------------------*/
-;*    js-get-jsobject-name/cache-miss ...                                */
+;*    js-get-jsobject-name/cache-miss ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-jsobject-name/cache-miss o::JsFunction p::obj
 		  throw::bool %this::JsGlobalObject
