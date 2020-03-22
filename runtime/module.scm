@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Sun Mar 15 16:26:59 2020 (serrano)                */
+;*    Last change :  Thu Mar 19 15:20:24 2020 (serrano)                */
 ;*    Copyright   :  2009-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
@@ -41,7 +41,7 @@
 			       (match-case c
 				  ((<TILDE> ??- :src (quote ?import) ??-) import)
 				  (else #f)))
-			    clauses)))
+		   clauses)))
 	  (if (pair? i)
 	      (with-access::clientc (hop-clientc) (modulec)
 		 (with-trace 'module "clientc-modulec"

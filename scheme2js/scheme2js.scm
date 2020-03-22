@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/scheme2js/scheme2js.scm           */
+;*    serrano/prgm/project/hop/hop/scheme2js/scheme2js.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-12                                           */
-;*    Last change :  Wed Sep  4 17:56:44 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Fri Mar 20 08:50:28 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js/HOP.                              */
 ;*    -------------------------------------------------------------    */
@@ -201,7 +201,10 @@
 	   ;; kind: provide/replace/merge-first/merge-last
 	   configuration
 	   #!key (reader read))
-   (let ((old-configs (configs-backup)))
+   (let ((old-configs (configs-backup))
+	 (err-file (string-append out-file ".err")))
+      (when (file-exists? err-file)
+	 (delete-file err-file))
       (unwind-protect
 	 (let ((actual-file? (not (string=? "-" out-file))))
 	    ;; we need this for "verbose" outputs.
@@ -214,25 +217,25 @@
 		  ;; when debugging we usually want the
 		  ;; output even (or especially) if there was an error.
 		  (unless (or (config 'debug-stage) (not actual-file?))
-		     (delete-file out-file))
+		     (rename-file out-file err-file))
 		  (raise e))
-	       (let ((module (create-module-from-file in-file
-				module-headers
-				reader)))
+	       (let ((mod (create-module-from-file in-file
+			     module-headers
+			     reader)))
 		  ;; set the global-seed to the input-file's name (which is the
 		  ;; same as the module's name, if any was given).
 		  (unless (or (config 'statics-suffix)
 			      (string=? "-" in-file))
-		     (with-access::Compilation-Unit module (name)
+		     (with-access::Compilation-Unit mod (name)
 			(config-set! 'statics-suffix
 			   (symbol->string name))))
 		  
-		  (with-access::Compilation-Unit module (declared-module?)
-		     (when (eq? (config 'export-globals) 'module)
+		  (with-access::Compilation-Unit mod (declared-module?)
+		     (when (eq? (config 'export-globals) 'mod)
 			(config-set! 'export-globals
 			   (not declared-module?)))
 		     
-		     (when (eq? (config 'allow-unresolved) 'module)
+		     (when (eq? (config 'allow-unresolved) 'mod)
 			(config-set! 'allow-unresolved
 			   (not declared-module?))))
 		  
@@ -243,7 +246,7 @@
 					(fprintf out-p "/* scheme2js generated file ~a */\n" (current-date))
 					(when (config 'use-strict/module)
 					   (fprintf out-p "\"use strict\";\n\n"))
-					(scheme2js module in-file out-p))))
+					(scheme2js mod in-file out-p))))
 				 ((config 'source-map)
 				  (set! actual-file? #t)
 				  (set! out-file
@@ -252,7 +255,7 @@
 					(format "~a.js" (tmpfile))))
 				  (let ((tree (call-with-output-file out-file
 						 (lambda (out-p)
-						    (scheme2js module in-file out-p)))))
+						    (scheme2js mod in-file out-p)))))
 				     (call-with-input-file out-file
 					(lambda (p)
 					   (send-chars p (current-output-port))))
@@ -262,7 +265,7 @@
 				     (current-date))
 				  (when (config 'use-strict/module)
 				     (print "\"use strict\";\n"))
-				  (scheme2js module in-file (current-output-port))))))
+				  (scheme2js mod in-file (current-output-port))))))
 		     (when (config 'source-map)
 			(let* ((srcmap (string-append out-file ".map"))
 			       (files (call-with-output-file srcmap

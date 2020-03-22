@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Tue May  7 12:03:47 2019 (serrano)                */
+;*    Last change :  Thu Mar 19 16:42:40 2020 (serrano)                */
 ;*    Copyright   :  2009-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -63,11 +63,8 @@
 		      (lambda (e)
 			 (spage-init $id
 			    $(when (isa? onchange xml-tilde)
-				(with-access::xml-tilde onchange (env menv)
-				   (sexp->xml-tilde
-				      `(lambda (event)
-					  ,(xml-tilde->sexp onchange))
-				      env menv))))))
+				(sexp->xml-tilde
+				   `(lambda (event) ,onchange))))))
 		  ;; firefox workaround
 		  ~(if #f 1 2))))))
 
@@ -113,17 +110,13 @@
    
    (define (init-sptab id onselect)
       (if (isa? onselect xml-tilde)
-	  (with-access::xml-tilde onselect (env menv)
-	     (sexp->xml-tilde
-		`(add-event-listener! ,id "ready"
-		    (lambda (event)
-		       (let ((el this))
-			  (set! el.hop_add_event_listener sptab-add-event-listener!)
-			  (set! el.onselect
-			     (lambda (event)
-				,(xml-tilde->sexp onselect)))
-			  #unspecified)))
-		env menv))
+	  (sexp->xml-tilde
+	     `(add-event-listener! ,id "ready"
+		 (lambda (event)
+		    (let ((el this))
+		       (set! el.hop_add_event_listener sptab-add-event-listener!)
+		       (set! el.onselect (lambda (event) ,onselect))
+		       #unspecified))))
 	  (sexp->xml-tilde
 	     `(add-event-listener! ,id "ready"
 		 (lambda (event)
@@ -163,8 +156,9 @@
 		      (init-sptab id onselect))))))
 	 ((and (pair? body) (service? (car body)))
 	  ;; a dynamic tab (new service syntax with arguments)
-	  (<DIV> :data-hss-tag "hop-sptab" :class class  :id id
-	     
+	  (<DIV> :data-hss-tag "hop-sptab" :class class :id id
+	     :data-hop-svc (car body)
+	     :data-hop-svc-direction direction
 	     :onclick (if (pair? attr)
 			  (sexp->xml-tilde
 			     `(begin
@@ -173,7 +167,7 @@
 				    ,(apply (car body) (cdr body))
 				    (lambda (body)
 				       (<DIV> :data-hss-tag "hop-spbody"
-					  :class ,class
+					  :class ,(or class "hop-spbody")
 					  ,@attr
 					  body)))))
 			  ~(begin
@@ -182,10 +176,8 @@
 				 $(apply (car body) (cdr body))
 				 (lambda (body)
 				    (<DIV> :data-hss-tag "hop-spbody"
-				       :class $class
+				       :class $(or class "hop-spbody")
 				       body)))))
-	     :data-hop-svc (car body)
-	     :data-hop-svc-direction direction
 	     (if (null? head) "?" (car head))
 	     (init-sptab id onselect)))
 	 ((and (pair? body) (null? (cdr body)) (isa? (car body) xml-delay))

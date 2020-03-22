@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Jan  2 07:10:00 2020 (serrano)                */
+#*    Last change :  Wed Mar 18 15:18:53 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1288,6 +1288,7 @@ for p in configure.scm configure_noarch.sch configure_macosx.sch configure_andro
           -e "s|@HOPARCH@|$arch|" \
           -e "s|@BUILDID@|$buildid|" \
           -e "s|@BUILDTAG@|$buildtag|" \
+          -e "s|@BUILDARCH@|$mach|" \
           -e "s|@BIGLOO@|$bigloo|" \
           -e "s|@HOSTBIGLOO@|$hostbigloo|" \
 	  >> $configure

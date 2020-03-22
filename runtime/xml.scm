@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed Sep  4 07:27:21 2019 (serrano)                */
-;*    Copyright   :  2004-19 Manuel Serrano                            */
+;*    Last change :  Thu Mar 19 16:37:12 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -78,8 +78,9 @@
 
 	    (xml-tilde->sexp ::xml-tilde)
 	    (sexp->xml-tilde::xml-tilde expr #!optional env menv)
+	    (xml-tilde*::xml-tilde ::xml-tilde . rest)
 
-	    (<TILDE> ::obj #!key src loc env menv)
+	    (<TILDE> ::obj #!key src loc)
 	    (<DELAY> . ::obj)
 	    (<PRAGMA> . ::obj)))
 
@@ -772,7 +773,7 @@
 (define-method (xml-write-attribute attr::hop-service id p backend)
    (display (keyword->string! id) p)
    (display "='" p)
-   (with-access::hop-service p (path)
+   (with-access::hop-service attr (path)
       (display path p))
    (display "'" p))
 
@@ -1104,18 +1105,16 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
       (let* ((env (or env (current-module-clientc-import)))
 	     (menv (or menv (macroe)))
 	     (c (sexp->precompiled obj env menv)))
-	 (<TILDE> c :src obj :env env :menv menv))))
+	 (<TILDE> c :src obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TILDE> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (<TILDE> body #!key src loc env menv)
+(define (<TILDE> body #!key src loc)
    (instantiate::xml-tilde
       (body body)
       (src src)
-      (loc loc)
-      (env env)
-      (menv menv)))
+      (loc loc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <DELAY> ...                                                      */
@@ -1313,3 +1312,60 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 	     (when (and (pair? h) (string? (cadr h)))
 		(cell-set! base (cadr h))))))))
 
+;*---------------------------------------------------------------------*/
+;*    xml-tilde* ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (xml-tilde* t0::xml-tilde . rest)
+   (let ((err (filter (lambda (x) (not (isa? x xml-tilde))) rest)))
+      (when (pair? err)
+	 (bigloo-type-error "xml-tilde*" "xml-tilde" (car err))))
+   (duplicate::xml-tilde t0
+      (src (map (lambda (t)
+		   (with-access::xml-tilde t (src)
+		      src))
+	      (cons t0 rest)))
+      (%js-expression (apply string-append
+			 (cons (xml-tilde->expression t0)
+			    (append-map (lambda (t)
+					   (list ","
+					      (xml-tilde->expression t)))
+			       rest))))
+      (%js-statement (apply string-append
+			(cons (xml-tilde->statement t0)
+			   (append-map (lambda (t)
+					  (list ";"
+					     (xml-tilde->statement t)))
+			      rest))))
+      (%js-return (cond
+		     ((null? rest)
+		      (xml-tilde->return t0))
+		     ((null? (cdr rest))
+		      (string-append 
+			 (xml-tilde->statement t0)
+			 ";"
+			 (xml-tilde->return (car rest))))
+		     ((null? (cddr rest))
+		      (string-append 
+			 (xml-tilde->statement t0)
+			 ";"
+			 (xml-tilde->statement (car rest))
+			 ";"
+			 (xml-tilde->return (cadr rest))))
+		     (else
+		      (string-append
+			 (apply string-append
+			    (cons (xml-tilde->statement t0)
+			       (append
+				  (append-map (lambda (t)
+						 (list ";"
+						    (xml-tilde->statement t)))
+				     (reverse (cdr (reverse rest)))))))
+			 ";"
+			 (xml-tilde->return (car (last-pair rest)))))))
+      (%js-attribute (apply string-append
+			(cons (xml-tilde->expression t0)
+			   (append-map (lambda (t)
+					  (list ";"
+					     (xml-tilde->expression t)))
+			      rest))))))
+  

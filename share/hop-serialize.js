@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Wed Sep 11 13:16:58 2019 (serrano)                */
-/*    Copyright   :  2007-19 Manuel Serrano                            */
+/*    Last change :  Sat Mar 21 11:42:40 2020 (serrano)                */
+/*    Copyright   :  2007-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
@@ -1161,7 +1161,9 @@ function hop_bytearray_to_obj( s, extension, cset ) {
 	    definitions[ old_defining ] = res;
 
 	 for( var i = 0; i < sz; i++ ) {
-	    res[ sc_keyword2jsstring( cinfo[ i ] ) ] = read_item();
+	    var k = sc_keyword2jsstring( cinfo[ i ] );
+	    
+	    res[ k ] = read_item();
 	 }
 
 	 // consume the hash number
@@ -1275,14 +1277,14 @@ function hop_bytearray_to_obj( s, extension, cset ) {
    function read_procedure() {
       var svc = read_item();
 
-      if( svc == undefined ) {
+      if( svc === undefined ) {
 	 return undefined;
       } else {
 	 var rsc = svc.resource ? svc.resource : "/hop";
 	 if( svc.javascript) {
 	    return eval( sc_format( svc.javascript, svc.path, rsc ) );
 	 } else {
-	    return undefined;
+	    return svc;
 	 }
       }
    }

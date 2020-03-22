@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Mon May 13 19:16:29 2019 (serrano)                */
+;*    Last change :  Wed Mar 18 15:16:42 2020 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration                                                */
 ;*=====================================================================*/
@@ -41,7 +41,9 @@
 	    (hop-srfis::pair-nil)
 	    (hop-zeroconf-default)
 	    (hop-build-id)
-	    (hop-build-tag))
+	    (hop-build-tag)
+	    (hop-build-arch)
+	    (hop-so-dirname))
    
    (eval    (export hop-name)
 	    (export hop-version)
@@ -68,7 +70,9 @@
 	    (export hop-srfis)
 	    (export hop-zeroconf-default)
 	    (export hop-build-id)
-	    (export hop-build-tag)))
+	    (export hop-build-tag)
+	    (export hop-build-arch)
+	    (export hop-so-dirname)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure ...                                                */
@@ -117,6 +121,10 @@
        (print (hop-build-id)))
       ((--build-tag)
        (print (hop-build-tag)))
+      ((--build-arch)
+       (print (hop-build-arch)))
+      ((--so-dirname)
+       (print (hop-so-dirname)))
       (else
        (with-output-to-port (current-error-port)
 	  (lambda ()
@@ -141,7 +149,9 @@
 	     (print "  [--url]")
 	     (print "  [--bigloo]")
 	     (print "  [--build-id]")
-	     (print "  [--build-tag]"))))))
+	     (print "  [--build-tag]")
+	     (print "  [--build-arch]")
+	     (print "  [--so-dirname]"))))))
 	     
 ;*---------------------------------------------------------------------*/
 ;*    Name and version                                                 */
@@ -155,6 +165,10 @@
 
 (define (hop-build-id) "@BUILDID@")
 (define (hop-build-tag) "@BUILDTAG@")
+(define (hop-build-arch) "@BUILDARCH@")
+
+(define (hop-so-dirname)
+   (make-file-path (hop-version) (hop-build-id) (hop-build-arch)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Misc ...                                                         */

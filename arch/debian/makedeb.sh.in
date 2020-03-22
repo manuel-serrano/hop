@@ -4,10 +4,10 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Thu Jan  2 07:09:01 2020 (serrano)                */
+#*    Last change :  Sun Mar 22 10:13:14 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
-#*    The Shell script to build the .deb for Hop on Maemo              */
+#*    The Shell script to build the .deb for Hop on Debian/Maemo       */
 #*    -------------------------------------------------------------    */
 #*    Debug with "sh -x makedeb.sh"                                    */
 #*=====================================================================*/

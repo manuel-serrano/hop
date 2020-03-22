@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-15 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-20 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -26,8 +26,8 @@
       (trace-item "files=" files)
       (trace-item "file=" file)
       (let ((abase (if (not (string? file))
-		       (pwd)
-		       (or (find-afile file) (dirname file)))))
+		       (or (find-load-afile (pwd)) (pwd))
+		       (or (find-load-afile (dirname file)) (dirname file)))))
 	 (trace-item "abase=" abase)
 	 (or ((config 'module-resolver) mod files abase)
 	     ((bigloo-module-resolver) mod files abase)
@@ -37,19 +37,23 @@
 		(extension-resolver mod path))))))
 
 ;*---------------------------------------------------------------------*/
-;*    find-afile ...                                                   */
+;*    find-load-afile ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (find-afile file)
-   (when (string? file)
-      (let loop ((dir (dirname file)))
-	 (if (file-exists? (make-file-name dir ".afile"))
-	     dir
-	     (let ((parent (dirname dir)))
-		(unless (string=? parent dir)
-		   (if (string=? parent ".")
-		       (when (file-exists? ".afile")
-			  ".")
-		       (find-afile parent))))))))
+(define (find-load-afile dir)
+   (when (string? dir)
+      (let loop ((dir dir))
+	 (let ((afile (make-file-name dir ".afile")))
+	    (if (file-exists? afile)
+		(begin
+		   (module-load-access-file afile)
+		   dir)
+		(let ((parent (dirname dir)))
+		   (unless (string=? parent dir)
+		      (if (string=? parent ".")
+			  (when (file-exists? ".afile")
+			     (module-load-access-file ".afile")
+			     ".")
+			  (find-load-afile parent)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    config-runtime-resolver ...                                      */

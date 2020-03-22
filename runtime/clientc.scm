@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/runtime/clientc.scm               */
+;*    serrano/prgm/project/hop/hop/runtime/clientc.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Thu Jan 10 15:53:18 2019 (serrano)                */
-;*    Copyright   :  2009-19 Manuel Serrano                            */
+;*    Last change :  Thu Mar 19 14:20:40 2020 (serrano)                */
+;*    Copyright   :  2009-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
 ;*=====================================================================*/
@@ -201,16 +201,20 @@
 ;*    compile-client ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (compile-client path name output query)
-   (with-access::clientc (hop-clientc) (filec jsc jsonc htmlc)
-      (cond
-	 ((string-suffix? ".js" path)
-	  (jsc path name output query))
-	 ((string-suffix? ".json" path)
-	  (jsonc path name output query))
-	 ((string-suffix? ".html" path)
-	  (htmlc path name output query))
-	 (else
-	  (filec path output '())))))
+   (let ((f (the-loading-file)))
+      (loading-file-set! path)
+      (unwind-protect
+	 (with-access::clientc (hop-clientc) (filec jsc jsonc htmlc)
+	    (cond
+	       ((string-suffix? ".js" path)
+		(jsc path name output query))
+	       ((string-suffix? ".json" path)
+		(jsonc path name output query))
+	       ((string-suffix? ".html" path)
+		(htmlc path name output query))
+	       (else
+		(filec path output '()))))
+	 (loading-file-set! f))))
    
 ;*---------------------------------------------------------------------*/
 ;*    clientc-cached-response ...                                      */

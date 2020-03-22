@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Oct  8 13:18:18 2019 (serrano)                */
-;*    Copyright   :  2006-19 Manuel Serrano                            */
+;*    Last change :  Sat Mar 21 12:02:55 2020 (serrano)                */
+;*    Copyright   :  2006-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
 ;*=====================================================================*/
@@ -82,8 +82,11 @@
 	  obj)))
 
 (register-class-serialization! hop-service
-   (lambda (obj) obj)
-   (lambda (obj) obj))
+   (lambda (obj mode)
+      (if (eq? mode 'hop-client)
+	  obj
+	  (with-access::hop-service obj (path) path)))
+   (lambda (obj ctx) (get-service obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    procedure-serializer ...                                         */
@@ -95,11 +98,7 @@
 	     attr
 	     (error "obj->string" "cannot serialize procedure" p))))
    (lambda (o)
-      (if (isa? o hop-service)
-	  (with-access::hop-service o (args id wid path timeout ttl args)
-	     (eval `(service :path ,path :id ,id :url ,path
-		       :timeout ,timeout :ttl ,ttl ,args)))
-	  o)))
+      o))
 
 ;*---------------------------------------------------------------------*/
 ;*    for  ....                                                        */

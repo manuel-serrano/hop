@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Sun Jun  2 19:47:19 2019 (serrano)                */
-;*    Copyright   :  2007-19 Florian Loitsch, Manuel Serrano           */
+;*    Last change :  Thu Mar 19 14:58:19 2020 (serrano)                */
+;*    Copyright   :  2007-20 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -324,11 +324,11 @@
 	    (header header))
 	 
 	 (unless (string=? file "-") (close-input-port in-port))
-	 
+
 	 (prepare-module! m override-headers file-path reader)
 	 
 	 (with-access::WIP-Unit m ((module-name name))
-	    (unless (not header-sexp?)
+	    (when header-sexp?
 	       (check-module-name module-name file header)))
 	 
 	 (with-access::WIP-Unit m (top-level class-expr)
@@ -342,7 +342,7 @@
 ;*---------------------------------------------------------------------*/
 (define (create-module-from-expr expr override-headers)
    (let ((m (instantiate::Compilation-Unit
-	       (name (gensym 'module))
+	       (name (gensym 'scm2js))
 	       (top-level (list (tree-copy expr)))
 	       (exported-macros '())
 	       (exports '())
@@ -421,7 +421,7 @@
 	     (cond
 		((not (list? override))
 		 (scheme2js-error "scheme2js-module"
-				  "invalid override header"
+				  "invalid overriden header"
 				  override
 				  o-headers))
 		((not (and (symbol? (car override))
@@ -528,10 +528,10 @@
    (with-access::WIP-Unit m (header name declared-module?)
       (cond
 	 ((not header)
-	  (set! name (gensym 'module)))
+	  (set! name (gensym 'scm2js)))
 	 ((eq? (cadr header) #f) ;; can only be a override header
 	  (set! declared-module? #f)
-	  (set! name (gensym 'module)))
+	  (set! name (gensym 'scm2js)))
 	 ((not declared-module?)
 	  ;; override header provides name now.
 	  ;; -> declared module becomes true.

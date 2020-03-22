@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Mon Mar 16 05:26:09 2020 (serrano)                */
+;*    Last change :  Thu Mar 19 15:41:44 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -24,21 +24,21 @@
    (export  (jsheap::int)
 	    (js-driver->string)
 	    (js-drivers-list)
-	    (hopc-read p)
+	    (hopc-read p #!key cenv menv)
 	    (setup-client-compiler!)
 	    (compile-sources::int)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-read ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (hopc-read p)
+(define (hopc-read p #!key cenv menv)
    (if (=fx (bigloo-debug) 0)
        (begin
 	  (bigloo-debug-set! 1)
-	  (let ((v (hop-read p)))
+	  (let ((v (hop-read p :cenv cenv :menv menv)))
 	     (bigloo-debug-set! 0)
 	     v))
-       (hop-read p)))
+       (hop-read p :cenv cenv :menv menv)))
 
 ;*---------------------------------------------------------------------*/
 ;*    setup-client-compiler! ...                                       */
@@ -154,33 +154,52 @@
 		(else "-"))
 	     '())))
    
+   (define (find-location-dir exp)
+      (when (epair? exp)
+	 (match-case (cer exp)
+	    ((at ?file . ?-) (dirname file)))))
+
    (define (compile-module exp)
       (match-case exp
 	 ((module ?id . ?clauses)
 	  ;; this produces a side effect
-	  (hop-module-extension-handler exp)
+	  ;;(eval exp)
 	  ;; generate the new module clause
-	  (let ((nclauses (filter (lambda (c)
-				     (match-case c
-					((<TILDE> . ?-) #f)
-					(else #t)))
-			     clauses)))
-	     `(module ,id ,@nclauses)))
+	  (let* ((iimports '())
+		 (nclauses '()))
+	     (for-each (lambda (c)
+			  (match-case c
+			     ((<TILDE> ??- :src (quote ?import) ??-)
+			      (set! iimports (cons import iimports)))
+			     (else
+			      (set! nclauses (cons c nclauses)))))
+		clauses)
+	     (values
+		`(module ,id ,@(reverse! nclauses))
+		(hopscheme-compile-module (reverse! iimports)
+		   (find-location-dir exp)))))
 	 (else
 	  (error "hopc" "Illegal module" exp))))
    
    (define (generate-bigloo::int fname in lang)
       
       (define (generate-hop out::output-port)
-	 (let loop ()
-	    (let ((exp (hopc-read in)))
-	       (unless (eof-object? exp)
-		  (match-case exp
-		     ((module . ?-)
-		      (pp (compile-module exp) out))
-		     (else
-		      (pp exp out)))
-		  (loop)))))
+	 (let ((ofname (gensym 'filename)))
+	    (let loop ((cenv #f))
+	       (let ((exp (hopc-read in :cenv cenv)))
+		  (unless (eof-object? exp)
+		     (match-case exp
+			((module . ?-)
+			 (multiple-value-bind (mod env)
+			    (compile-module exp)
+			    (pp mod out)
+			    (pp `(define ,ofname (the-loading-file)))
+			    (pp `(loading-file-set! `(loading-file-set! (file-name-canonicalize! (make-file-name (pwd) ,fname)))))
+			    (loop env)))
+			(else
+			 (pp exp out)
+			 (loop cenv))))))
+	    (write `(loading-file-set! ,ofname))))
       
       (define (generate-hopscript out::output-port)
 	 (let ((mmap (when (and (string? fname) (file-exists? fname))
@@ -360,17 +379,22 @@
 			     "-I" ,(dirname file)))
 		(mkcomp (lambda (write)
 			   (lambda (out)
-			      (let loop ()
-				 (let ((exp (hopc-read in)))
-				    (unless (eof-object? exp)
+			      (let ((ofname (gensym 'filename)))
+				 (let loop ((cenv #f))
+				    (let ((exp (hopc-read in :cenv cenv)))
 				       (unless (eof-object? exp)
 					  (match-case exp
 					     ((module . ?-)
-					      (write (compile-module exp) out)
-					      (loop))
+					      (multiple-value-bind (mod env)
+						 (compile-module exp)
+						 (write mod out)
+						 (write `(define ,ofname (the-loading-file)) out)
+						 (write `(loading-file-set! (file-name-canonicalize! (make-file-name (pwd) ,file))) out)
+						 (loop env)))
 					     (else
 					      (write exp out)
-					      (loop)))))))))))
+					      (loop cenv))))))
+				 (write `(loading-file-set! ,ofname) out))))))
 	    (if (string? temp)
 		(compiler
 		   (append options opts)

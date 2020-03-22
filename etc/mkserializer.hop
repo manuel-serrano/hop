@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 16 07:56:29 2015                          */
-;*    Last change :  Fri Apr 26 18:22:03 2019 (serrano)                */
-;*    Copyright   :  2015-19 Manuel Serrano                            */
+;*    Last change :  Sat Mar 21 14:29:50 2020 (serrano)                */
+;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    A tool to produce the client-side HopScript class serializers    */
 ;*    -------------------------------------------------------------    */
@@ -25,6 +25,9 @@
 (define (main argv)
    (display "// generated file, don't edit (see etc/mkserializer.hop)\n\n")
    (display "var hop_class_serializers = {\n")
+   ;; hop-service
+   (printf "  ~a: { unserializer: function( a ) { return a } },\n"
+      (class-hash hop-service))
    ;; JsArguments
    (printf "  ~a: { unserializer: function( a ) { return a } },\n"
       (class-hash JsArguments))

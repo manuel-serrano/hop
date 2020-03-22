@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/xml_types.scm             */
+;*    serrano/prgm/project/hop/hop/runtime/xml_types.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Mon May 30 14:26:15 2016 (serrano)                */
-;*    Copyright   :  2010-16 Manuel Serrano                            */
+;*    Last change :  Thu Mar 19 16:36:56 2020 (serrano)                */
+;*    Copyright   :  2010-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
 ;*=====================================================================*/
@@ -95,8 +95,9 @@
 	       (%js-statement (default #f))
 	       (%js-return (default #f))
 	       (%js-attribute (default #f))
-	       (env (default #f))
-	       (menv (default #f)))
+	       )
+;* 	       (env (default #f))                                      */
+;* 	       (menv (default #f)))                                    */
 
 	    (class xml-meta::xml-markup
 	       (content::obj (default #f)))

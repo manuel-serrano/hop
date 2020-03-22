@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Thu Apr 18 07:48:47 2019 (serrano)                */
-;*    Copyright   :  2007-19 Manuel Serrano                            */
+;*    Last change :  Thu Mar 19 16:38:05 2020 (serrano)                */
+;*    Copyright   :  2007-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
 ;*=====================================================================*/
@@ -152,15 +152,12 @@
 		(set-car! (cdr onerror) nval)
 		attributes))
 	    ((isa? oval xml-tilde)
-	     (with-access::xml-tilde oval (env menv)
-		(let ((nval (sexp->xml-tilde
-			       `(begin
-				   ,(xml-tilde->sexp oval)
-				   ,(secure-javascript-attr val))
-			       env
-			       menv)))
-		   (set-car! (cdr onerror) nval)
-		   attributes)))
+	     (let ((nval (sexp->xml-tilde
+			    `(begin
+				,oval
+				,(secure-javascript-attr val)))))
+		(set-car! (cdr onerror) nval)
+		attributes))
 	    (else
 	     `(:onerror ,(secure-javascript-attr val)
 		 ,@(map (lambda (a) (xml-primitive-value a %context))

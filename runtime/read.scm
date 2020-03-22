@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Mar 16 07:56:42 2020 (serrano)                */
+;*    Last change :  Thu Mar 19 08:18:52 2020 (serrano)                */
 ;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -41,39 +41,44 @@
 	    
 	    (hop-load-afile ::bstring)
 	    
-	    (hop-read #!optional
-		      (iport::input-port (current-input-port))
-		      (charset (hop-locale))
-		      (menv #f)
-		      location)
-	    (hop-load ::bstring #!key
-		      (env (default-environment))
-		      (menv #f)
-		      (mode 'load)
-		      (charset (hop-locale))
-		      (abase #t)
-		      (afile #t)
-		      (worker-slave #f))
-
+	    (hop-read ::input-port
+	       #!key
+	       (charset (hop-locale))
+	       (cenv #f)
+	       (menv #f)
+	       location)
+	    (hop-load ::bstring
+	       #!key
+	       (env (default-environment))
+	       (cenv #f)
+	       (menv #f)
+	       (mode 'load)
+	       (charset (hop-locale))
+	       (abase #t)
+	       (afile #t)
+	       (worker-slave #f))
+	    
 	    (hop-load-once ::bstring
-			   #!key
-			   (env (default-environment))
-			   (menv #f)
-			   (mode 'load)
-			   (charset (hop-locale))
-			   (abase #t)
-			   (afile #t))
+	       #!key
+	       (env (default-environment))
+	       (cenv #f)
+	       (menv #f)
+	       (mode 'load)
+	       (charset (hop-locale))
+	       (abase #t)
+	       (afile #t))
 	    (hop-load-modified ::bstring
-			       #!key
-			       (env (default-environment))
-			       (menv #f)
-			       (mode 'load)
-			       (charset (hop-locale))
-			       (abase #t)
-			       (afile #t)
-			       (module #f))
+	       #!key
+	       (env (default-environment))
+	       (cenv #f)
+	       (menv #f)
+	       (mode 'load)
+	       (charset (hop-locale))
+	       (abase #t)
+	       (afile #t)
+	       (module #f))
 	    (hop-unload! ::bstring)
-
+	    
 	    (hop-load-rc ::bstring)
 	    
 	    (hop-find-sofile::obj ::bstring #!key (suffix ""))
@@ -391,7 +396,7 @@
 		     (kid         (or digit letter kspecial "."))
 		     (blank       (in #\Space #\Tab #a012 #a013))
 		     
-		     cycles par-open bra-open par-poses bra-poses cset menv location)
+		     cycles par-open bra-open par-poses bra-poses cset cenv menv location)
       ;; utf-8 bom
       ((bof (: #a239 #a187 #a191))
        (set! cset (charset-converter! 'UTF-8 (hop-charset)))
@@ -587,7 +592,7 @@
       (#\[
        (let ((exp (read/rp *text-grammar* (the-port)
 			   cycles par-open bra-open par-poses bra-poses
-			   cset menv)))
+			   cset cenv menv)))
 	  (if (and (pair? exp) (null? (cdr exp)))
 	      (car exp)
 	      (list 'quasiquote exp))))
@@ -657,9 +662,9 @@
 			 (input-port-position (the-port))))
 		 (expr (ignore))
 		 (src (tree-copy expr))
-		 (env (current-module-clientc-import))
-		 (js (expressionc expr env menv hop-read-javascript-string)))
-	     (econs '<TILDE> (list js :src `',src :loc `',loc :env `',env) loc))))
+		 (cenv (or cenv (current-module-clientc-import)))
+		 (js (expressionc expr cenv menv hop-read-javascript-string)))
+	     (econs '<TILDE> (list js :src `',src :loc `',loc) loc))))
       
       ;; structures
       ("#{"
@@ -742,7 +747,7 @@
 ;*    The grammar that parses texts (the [...] forms).                 */
 ;*---------------------------------------------------------------------*/
 (define *text-grammar*
-   (regular-grammar (cycles par-open bra-open par-poses bra-poses cset menv)
+   (regular-grammar (cycles par-open bra-open par-poses bra-poses cset cenv menv)
 
       ((: (* (out ",[]\\")) #\])
        (let* ((port (the-port))
@@ -782,7 +787,7 @@
 	      (item (cset (the-substring 0 (-fx (the-length) 1))))
 	      (sexp (read/rp *hop-grammar* (the-port)
 			     cycles par-open bra-open
-			     par-poses bra-poses cset menv
+			     par-poses bra-poses cset cenv menv
 			     #f))
 	      (rest (ignore)))
 	  (if (string=? item "")
@@ -822,9 +827,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-read ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (hop-read #!optional
-	   (iport::input-port (current-input-port))
+(define (hop-read iport
+	   #!key
 	   (charset (hop-locale))
+	   (cenv #f)
 	   (menv #f)
 	   location)
    (if (closed-input-port? iport)
@@ -839,7 +845,7 @@
 			       (with-access::clientc (hop-clientc) (macroe)
 				  (macroe))
 			       '())))
-		 (e (read/rp *hop-grammar* iport '() 0 0 '() '() cset menv location)))
+		 (e (read/rp *hop-grammar* iport '() 0 0 '() '() cset cenv menv location)))
 	     ((hop-read-post-hook) iport)
 	     e))))
 
@@ -942,6 +948,7 @@
 (define (hop-load file-name
 		  #!key
 		  (env (default-environment))
+		  (cenv #f)
 		  (menv #f)
 		  (mode 'load)
 		  (charset (hop-locale))
@@ -949,8 +956,8 @@
 		  (afile #t)
 		  (worker-slave #f))
    (if (hz-package-filename? file-name)
-       (hop-load-from-hz file-name env menv mode charset abase)
-       (hop-load-file file-name env menv mode charset abase 'eval afile worker-slave)))
+       (hop-load-from-hz file-name env cenv menv mode charset abase)
+       (hop-load-file file-name env cenv menv mode charset abase 'eval afile worker-slave)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-dir ...                                                       */
@@ -963,7 +970,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-from-hz ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (hop-load-from-hz fname env menv mode charset abase)
+(define (hop-load-from-hz fname env cenv menv mode charset abase)
    (with-trace 'read "hop-load-from-hz"
       (trace-item "fname=" fname)
       (trace-item "abase=" abase)
@@ -974,7 +981,7 @@
 	 ;; load the .hop source file
 	 (let ((base (basename dir)))
 	    (let ((fname (string-append (make-file-name dir base) ".hop")))
-	       (hop-load-file fname env menv mode charset abase 'eval #f #f))))))
+	       (hop-load-file fname env cenv menv mode charset abase 'eval #f #f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    so-arch-directory ...                                            */
@@ -1015,24 +1022,29 @@
 			(else
 			 (loop (cdr paths))))))))))
 
+   (define (soprecompiled sopath)
+      (cond
+	 ((more-recent? sopath)
+	  sopath)
+	 ((more-recent? (errfile sopath))
+	  (cons 'error (errfile sopath)))
+	 (else
+	  #f)))
+
    ;; check the path directory first
    (when (hop-sofile-enable)
       (let* ((dir (dirname path))
-	     (base (prefix (basename path)))
-	     (file (string-append base
+	     (base (prefix (basename path))))
+	 (or (soprecompiled 
+		(make-file-path dir "libs" (hop-so-dirname)
+		   (string-append base (so-suffix))))
+	     (soprecompiled 
+		(make-file-path dir ".libs" (hop-so-dirname)
+		   (string-append base
 		      (cond-expand
 			 (bigloo-unsafe "_u")
 			 (else "_s"))
-		      "-" (hop-version) (so-suffix)))
-	     (sopath (make-file-path dir ".libs"
-			(hop-version) (hop-build-id) (so-arch-directory)
-			file)))
-	 (cond
-	    ((more-recent? sopath)
-	     sopath)
-	    ((more-recent? (errfile sopath))
-	     (cons 'error (errfile sopath)))
-	    (else
+		      "-" (hop-version) (so-suffix))))
 	     ;; if not found check the user global libs repository
 	     (let ((sopath (hop-sofile-path path :suffix suffix)))
 		(cond
@@ -1046,7 +1058,7 @@
 			(let ((sopath (make-file-name dir
 					 (string-append base (so-suffix)))))
 			   (when (file-exists? sopath)
-			      sopath)))))))))))
+			      sopath))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-soname ...                                                   */
@@ -1070,7 +1082,7 @@
 ;*    The C code generation imposes the variable traceid not to        */
 ;*    be inlined.                                                      */
 ;*---------------------------------------------------------------------*/
-(define (hop-load-file fname env menv mode charset abase traceid::symbol afile ws)
+(define (hop-load-file fname env cenv menv mode charset abase traceid::symbol afile ws)
 
    (define (hop-eval-path path)
       (let ((apath (cond
@@ -1105,7 +1117,10 @@
 				   ;; always read the first expression
 				   ;; in debug mod to enforce location inside
 				   ;; the module clause
-				   (let ((e (hop-read port charset menv loc)))
+				   (let ((e (hop-read port
+					       :charset charset
+					       :cenv cenv :menv menv
+					       :location loc)))
 				      (when (epair? e)
 					 ($env-set-trace-location denv (cer e)))
 				      (if (eof-object? e)
@@ -1125,7 +1140,10 @@
 			       ((include)
 				(let loop ((res '())
 					   (loc #t))
-				   (let ((e (hop-read port charset menv loc)))
+				   (let ((e (hop-read port
+					       :charset charset
+					       :cenv cenv :menv menv
+					       :location loc)))
 				      (when (epair? e)
 					 ($env-set-trace-location denv (cer e)))
 				      (if (eof-object? e)
@@ -1138,7 +1156,10 @@
 					     (loop (cons val res) #f))))))
 			       ((module force-module)
 				(let loop ((loc #t))
-				   (let ((e (hop-read port charset menv loc)))
+				   (let ((e (hop-read port
+					       :charset charset
+					       :cenv cenv :menv menv
+					       :location loc)))
 				      (when (epair? e)
 					 ($env-set-trace-location denv (cer e)))
 				      (if (eof-object? e)
@@ -1176,14 +1197,18 @@
 		    ;; a compiled file has been found, try to load that one
 		    (with-trace 'read "hop-load-path-compiled"
 		       (trace-item "sopath=" sopath)
-		       (let ((loadval (dynamic-load sopath)))
-			  (trace-item "sovalue=" loadval)
-			  (if (eq? mode 'load)
-			      loadval
-			      (or loadval
-				  ;; the dynamic load didn't produced the expected
-				  ;; value, load with eval
-				  (hop-eval-path path))))))
+		       (let ((f (the-loading-file)))
+			  (loading-file-set! path)
+			  (let ((loadval (unwind-protect
+					    (dynamic-load sopath)
+					    (loading-file-set! f))))
+			     (trace-item "sovalue=" loadval)
+			     (if (eq? mode 'load)
+				 loadval
+				 (or loadval
+				     ;; the dynamic load didn't produced the
+				     ;; expected value, load with eval
+				     (hop-eval-path path)))))))
 		   (else
 		    (hop-eval-path path))))
 	     (hop-eval-path path))))
@@ -1198,7 +1223,7 @@
 	 (else
 	  (let ((loader (hop-find-loader path)))
 	     (if (procedure? loader)
-		 (loader path env menv mode charset abase traceid afile)
+		 (loader path env cenv menv mode charset abase traceid afile)
 		 (hop-load-path path)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1231,7 +1256,7 @@
 ;*    is #t and if the file has changed since the last load, it is     */
 ;*    reloaded.                                                        */
 ;*---------------------------------------------------------------------*/
-(define (%hop-load file env menv charset modifiedp abase mode afile module)
+(define (%hop-load file env cenv menv charset modifiedp abase mode afile module)
    
    (define (load-file f::bstring cv::condvar)
       ;; the file has to be loaded
@@ -1264,7 +1289,7 @@
 		  (cons 'loaded (file-modification-time f))))
 	    (when modifiedp
 	       (reload-dependencies file '()))
-	    (hop-load f :mode mode :env env :menv menv
+	    (hop-load f :mode mode :env env :cenv cenv :menv menv
 	       :charset charset :abase abase :afile afile)
 	    (synchronize *load-mutex*
 	       (condition-variable-signal! cv)))))
@@ -1275,7 +1300,8 @@
 			(hashtable-get *dependency-table* file))))
 	    (when (pair? deps)
 	       (for-each (lambda (entry)
-			    (hop-load-modified (car entry) :env env :menv menv
+			    (hop-load-modified (car entry) :env env
+			       :cenv cenv :menv menv
 			       :mode mode :charset charset :abase abase
 			       :afile afile)
 			    (reload-dependencies (car entry) (cons file stack)))
@@ -1359,12 +1385,13 @@
 (define (hop-load-once file
 		       #!key
 		       (env (default-environment))
+		       (cenv #f)
 		       (menv #f)
 		       (charset (hop-locale))
 		       (mode 'load)
 		       (abase #t)
 		       (afile #t))
-   (%hop-load file env menv charset #f abase mode afile #f))
+   (%hop-load file env cenv menv charset #f abase mode afile #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-modified ...                                            */
@@ -1372,13 +1399,14 @@
 (define (hop-load-modified file
 			   #!key
 			   (env (default-environment))
+			   (cenv #f)
 			   (menv #f)
 			   (charset (hop-locale))
 			   (mode 'load)
 			   (abase #t)
 			   (afile #t)
 			   (module #f))
-   (%hop-load file env menv charset #t abase mode afile module))
+   (%hop-load file env cenv menv charset #t abase mode afile module))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-unload! ...                                                  */
