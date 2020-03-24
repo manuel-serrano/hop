@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Thu Mar 19 16:42:40 2020 (serrano)                */
+;*    Last change :  Mon Mar 23 14:19:21 2020 (serrano)                */
 ;*    Copyright   :  2009-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -157,7 +157,7 @@
 	 ((and (pair? body) (service? (car body)))
 	  ;; a dynamic tab (new service syntax with arguments)
 	  (<DIV> :data-hss-tag "hop-sptab" :class class :id id
-	     :data-hop-svc (car body)
+	     :data-hop-svc (service-path (car body))
 	     :data-hop-svc-direction direction
 	     :onclick (if (pair? attr)
 			  (sexp->xml-tilde
@@ -191,7 +191,7 @@
 		:onclick ~(begin
 			     (stop-event-propagation event #f)
 			     (spage-push-service this $svc))
-		:data-hop-svc svc
+		:data-hop-svc (service-path (car body))
 		(if (null? head) "?" (car head))
 		(init-sptab id onselect))))
 	 (else

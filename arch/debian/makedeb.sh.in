@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Sun Mar 22 10:13:14 2020 (serrano)                */
+#*    Last change :  Tue Mar 24 10:24:14 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Debian/Maemo       */
@@ -19,14 +19,14 @@ VERSION=@VERSION@    # Hop major version e.g. VERSION=2.4.0
 MINOR=@MINOR@        # Hop minor release e.g. MINOR=-pre1
 BIGLOOVERSION=@BIGLOOREQUIRED@
 
-REPOSITORY=$$HOME/prgm/distrib
+REPOSITORY=$HOME/prgm/distrib
 ICONS="hop-16x16.png hop-26x26.png hop-40x40.png hop-64x64.png"
 AUTHOR=Manuel.Serrano@inria.fr
 LICENSE=gpl
 TMP=`pwd`/build.hop
 BASEDIR=`dirname $0`
 MAEMODIR=$BASEDIR/maemo
-HOPPREFIX=/opt/bigloo
+HOPPREFIX=`bigloo -eval "(begin (print (dirname (bigloo-config 'library-directory))) (exit 0))"`
 PREFIX=/usr
 HOPUSER=hop
 HOPCONFIGUREOPT=
@@ -49,6 +49,12 @@ while : ; do
     --minor=*)
       MINOR="`echo $1 | sed 's/^[^=]*=//'`";
       shift;;
+    --repodir)
+      shift
+      REPOSITORY=$1;;
+    -O)
+      shift
+      TMP=`pwd`/build.hop;;
     *)
       HOPCONFIGUREOPT="$1 $HOPCONFIGUREOPT";;
 
@@ -201,15 +207,14 @@ fi
 #*    Start creating the .deb                                          */
 #*---------------------------------------------------------------------*/
 (cd $TMP/hop-$VERSION &&
- dh_make -c $LICENSE -s -e $AUTHOR -f ../hop-$VERSION.tar.gz <<EOF
-
-EOF
-)
+ dh_make -y -c $LICENSE -s -e $AUTHOR -f ../hop-$VERSION.tar.gz) || exit $?
 
 # debian specific
+mkdir -p $TMP/hop-$VERSION/debian
+
 for p in control rules postinst postrm; do
-  if [ -f $BASEDIR/debian/$p.in ]; then
-    cat $BASEDIR/debian/$p.in \
+  if [ -f $BASEDIR/$p.in ]; then
+    cat $BASEDIR/$p.in \
       | sed -e "s/@HOPVERSION@/$VERSION/g" \
             -e "s/@HOPUSER@/$HOPUSER/g" \
             -e "s/@HOPCONFIGUREOPT@/$HOPCONFIGUREOPT/g" \
@@ -222,7 +227,7 @@ for p in control rules postinst postrm; do
             -e "s/@BIGLOOVERSION@/$BIGLOOVERSION/g" > \
       $TMP/hop-$VERSION/debian/$p;
   else
-    cp $BASEDIR/debian/$p $TMP/hop-$VERSION/debian;
+    cp $BASEDIR/$p $TMP/hop-$VERSION/debian;
   fi
 done
 

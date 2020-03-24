@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sat Mar 21 11:42:40 2020 (serrano)                */
+/*    Last change :  Mon Mar 23 15:44:08 2020 (serrano)                */
 /*    Copyright   :  2007-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -1405,9 +1405,9 @@ function hop_tilde_unserialize( obj ) {
 /*---------------------------------------------------------------------*/
 /*    hop_service_unserialize ...                                      */
 /*---------------------------------------------------------------------*/
-function hop_service_unserialize( obj ) {
-   return obj.path;
-}
+/* function hop_service_unserialize( obj ) {                           */
+/*    return obj.path;                                                 */
+/* }                                                                   */
 
 /*---------------------------------------------------------------------*/
 /*    hop_builtin_class_unserializer ...                               */
@@ -1424,8 +1424,8 @@ hop_builtin_class_register_unserializer(
    sc_jsstring2symbol( "xml-empty-element" ), hop_dom_unserialize );
 hop_builtin_class_register_unserializer( 
    sc_jsstring2symbol( "xml-tilde" ), hop_tilde_unserialize );
-hop_builtin_class_register_unserializer( 
-   sc_jsstring2symbol( "hop-service" ), hop_service_unserialize );
+/* hop_builtin_class_register_unserializer(                            */
+/*    sc_jsstring2symbol( "hop-service" ), hop_service_unserialize );  */
 
 /*---------------------------------------------------------------------*/
 /*    hop_custom_object_regexp ...                                     */
