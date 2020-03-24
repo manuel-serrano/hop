@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Tue Mar 24 10:24:14 2020 (serrano)                */
+#*    Last change :  Tue Mar 24 10:56:25 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Debian/Maemo       */
@@ -253,12 +253,9 @@ EOF
 fi
 
 # The changelog file
-/bin/rm -f $TMP/hop-$VERSION/debian/changelog
-cat $TMP/hop-$VERSION/ChangeLog | grep -v "^[ \\t]*[.]$$" > \
-   $TMP/hop-$VERSION/debian/changelog
-cat $BASEDIR/debian/changelog.in | sed "s/@HOPVERSION@/$VERSION/g" > \
-   $TMP/hop-$VERSION/debian/changelog
+cp $BASEDIR/changelog $TMP/hopdac-$VERSION/debian/changelog
 
+# build the package
 (cd $TMP/hop-$VERSION && dpkg-buildpackage -r$fakeroot)
 
 # adjust the package file name
