@@ -1,11 +1,11 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    .../prgm/project/hop/2.4.x/arch/debian/debian/postinst.in        */
+#*    serrano/prgm/project/hop/hop/arch/debian/postinst.in             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Dec 18 10:55:54 2007                          */
-#*    Last change :  Fri Jul 20 07:06:26 2012 (serrano)                */
-#*    Copyright   :  2007-12 Manuel Serrano                            */
+#*    Last change :  Tue Mar 24 17:08:55 2020 (serrano)                */
+#*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Add the HOP desktop entries from the configuration files         */
 #*=====================================================================*/
@@ -81,7 +81,7 @@ else
   # questioning below
   export LD_LIBRARY_PATH=@HOPPREFIX@/lib:$LD_LIBRARY_PATH
 
-  if @HOPPREFIX@/bin/hop --eval '(begin (display "Start Hop automatically? (Y/n) ") (flush-output-port (current-output-port)) (exit (let ((c (read))) (if (memq c (map string->symbol (list "y" "Y" "yes"))) 0 1))))'; then
+  if @HOPPREFIX@/bin/hop --no-server --eval '(begin (display "Start Hop automatically? (Y/n) ") (flush-output-port (current-output-port)) (exit (let ((c (read))) (if (memq c (map string->symbol (list "y" "Y" "yes"))) 0 1))))'; then
     init=true
   else
     init=false
