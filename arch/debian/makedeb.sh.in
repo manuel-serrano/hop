@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Tue Mar 24 10:56:25 2020 (serrano)                */
+#*    Last change :  Tue Mar 24 11:19:34 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Debian/Maemo       */
@@ -54,7 +54,7 @@ while : ; do
       REPOSITORY=$1;;
     -O)
       shift
-      TMP=`pwd`/build.hop;;
+      TMP=$1/build.hop;;
     *)
       HOPCONFIGUREOPT="$1 $HOPCONFIGUREOPT";;
 
@@ -267,9 +267,4 @@ if [ "$MINOR " != " " ]; then
   done
 fi
 
-#*---------------------------------------------------------------------*/
-#*    Copy the deb file                                                */
-#*---------------------------------------------------------------------*/
-if [ -d $REPOSITORY/$debianversion ]; then
-  cp $TMP/hop_"$VERSION"*.deb $REPOSITORY/$debianversion
-fi
+echo "Done. .deb files generated in directory $TMP dir"

@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Mon May 27 08:41:13 2019 (serrano)                */
-#*    Copyright   :  2006-19 Manuel Serrano                            */
+#*    Last change :  Tue Mar 24 16:24:20 2020 (serrano)                */
+#*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
 #*=====================================================================*/
@@ -283,25 +283,25 @@ install-native-libs:
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR)\
-                LIBDIR=$(DESTDIR)$(HOPLIBDIR)\
+                LIBDIR=$(HOPLIBDIR)\
                 LIB=lib$(TARGETNAME)_s-$(LIBVERSION) && \
         $(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
-                LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
+                LIBDIR=$(HOPLIBDIR) \
                 LIB=lib$(TARGETNAME)_es-$(LIBVERSION) && \
         $(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
-                LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
+                LIBDIR=$(HOPLIBDIR) \
                 LIB=lib$(TARGETNAME)_u-$(LIBVERSION) && \
         $(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
-                LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
+                LIBDIR=$(HOPLIBDIR) \
                 LIB=lib$(TARGETNAME)_eu-$(LIBVERSION)
 
 install-jvm:
