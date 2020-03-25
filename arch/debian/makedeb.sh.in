@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Wed Mar 25 16:59:05 2020 (serrano)                */
+#*    Last change :  Wed Mar 25 19:00:39 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Debian/Maemo       */
@@ -32,6 +32,7 @@ HOPUSER=hop
 HOPCONFIGUREOPT=
 
 fakeroot=fakeroot
+postinstall=yes
 
 while : ; do
   case $1 in
@@ -55,6 +56,9 @@ while : ; do
     -O)
       shift
       BUILDDIR=$1;;
+    --no-install)
+      shift
+      postinstall=no;;
     *)
       HOPCONFIGUREOPT="$1 $HOPCONFIGUREOPT";;
 
@@ -202,7 +206,6 @@ if [ "$debian " = "maemo " ]; then
   fi
 fi
 
-
 #*---------------------------------------------------------------------*/
 #*    Start creating the .deb                                          */
 #*---------------------------------------------------------------------*/
@@ -258,4 +261,14 @@ fi
 # build the package
 (cd $BUILDDIR/hop-$VERSION && dpkg-buildpackage -r$fakeroot)
 
-echo "Done. .deb files generated in directory \"$BUILDDIR\""
+# install the packages
+if [ "$postinstall " = "yes " ]; then
+  pkgs=`grep Package: $BUILDDIR/hop-$VERSION/debian/control | awk -F: '{print $2}' | sed 's/^ //g'`
+  arch=`dpkg --print-architecture`
+  
+  for p in $pkgs; do
+    sudo dpkg -i $BUILDDIR/$p-$version-1_$arch.deb
+  done
+fi
+
+echo "Done generating .deb files in directory \"$BUILDDIR\""
