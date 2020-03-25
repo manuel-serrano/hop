@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Tue Mar 24 11:19:34 2020 (serrano)                */
+#*    Last change :  Tue Mar 24 17:24:09 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Debian/Maemo       */
@@ -267,4 +267,4 @@ if [ "$MINOR " != " " ]; then
   done
 fi
 
-echo "Done. .deb files generated in directory $TMP dir"
+echo "Done. .deb files generated in directory $TMP"

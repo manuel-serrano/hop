@@ -118,6 +118,7 @@ git.*.tgz
 arch/android/makeapk.sh
 arch/android/androidemo/config.hop
 arch/debian/makedeb.sh
+arch/debian/changelog
 
 # testing
 test/hopjs/TEST
