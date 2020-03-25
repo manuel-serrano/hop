@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Wed Mar 25 14:07:55 2020 (serrano)                */
+#*    Last change :  Wed Mar 25 16:29:52 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Debian/Maemo       */
@@ -152,10 +152,7 @@ for p in hop; do
 done
 
 # copyright
-cp $BUILDDIR/hop-$VERSION/LICENSE $BUILDDIR/hop-$VERSION/copyright
-
-# changelog
-git log -n 20 --pretty=format:"hopdac ($version-1) unstable; urgency=low%n%n  * %s%n%n -- %an <%ae>  %cD%n" > $BUILDDIR/arch/debian/changelog
+cp $BUILDDIR/hop-$VERSION/LICENSE $BUILDDIR/hop-$VERSION/arch/debian/copyright
 
 #*---------------------------------------------------------------------*/
 #*    Create the .tar.gz file used for building the package            */
@@ -212,10 +209,13 @@ fi
 (cd $BUILDDIR/hop-$VERSION &&
  dh_make -y -c $LICENSE -s -e $AUTHOR -f ../hop-$VERSION.tar.gz) || exit $?
 
+# changelog
+git log -n 20 --pretty=format:"hop ($VERSION-1) unstable; urgency=low%n%n  * %s%n%n -- %an <%ae>  %cD%n" > $BUILDDIR/hop-$VERSION/debian/changelog || exit 1
+
 # debian specific
 mkdir -p $BUILDDIR/hop-$VERSION/debian
 
-for p in control rules postinst postrm; do
+for p in control rules postinst postrm compat; do
   if [ -f $BASEDIR/$p.in ]; then
     cat $BASEDIR/$p.in \
       | sed -e "s/@HOPVERSION@/$VERSION/g" \
@@ -254,9 +254,6 @@ EOF
           -e "s|@PREFIX@|$PREFIX|g" > \
     $BUILDDIR/hop-$VERSION/maemo/hop.service
 fi
-
-# The changelog file
-cp $BASEDIR/changelog $BUILDDIR/hopdac-$VERSION/debian/changelog
 
 # build the package
 (cd $BUILDDIR/hop-$VERSION && dpkg-buildpackage -r$fakeroot)
