@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Wed Mar 25 14:02:43 2020 (serrano)                */
+#*    Last change :  Wed Mar 25 14:07:55 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Debian/Maemo       */
@@ -54,7 +54,7 @@ while : ; do
       REPOSITORY=$1;;
     -O)
       shift
-      BUILDDIR=$1/build.hop;;
+      BUILDDIR=$1;;
     *)
       HOPCONFIGUREOPT="$1 $HOPCONFIGUREOPT";;
 
