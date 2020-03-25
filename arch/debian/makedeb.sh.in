@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Wed Mar 25 16:29:52 2020 (serrano)                */
+#*    Last change :  Wed Mar 25 16:59:05 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Debian/Maemo       */
@@ -258,13 +258,4 @@ fi
 # build the package
 (cd $BUILDDIR/hop-$VERSION && dpkg-buildpackage -r$fakeroot)
 
-# adjust the package file name
-if [ "$MINOR " != " " ]; then
-  minor=`echo $MINOR | sed -e "s/-//"`
-  for p in $BUILDDIR/hop_"$VERSION"_*.deb; do
-    np=`echo $p | sed -e "s/${VERSION}/${VERSION}${minor}/"`
-    mv $p $np
-  done
-fi
-
-echo "Done. .deb files generated in directory $BUILDDIR"
+echo "Done. .deb files generated in directory \"$BUILDDIR\""
