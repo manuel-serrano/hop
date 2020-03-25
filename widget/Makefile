@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon May 27 08:43:28 2019 (serrano)                */
+#*    Last change :  Wed Mar 25 08:33:42 2020 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -105,6 +105,14 @@ predistrib-clean:
 #*---------------------------------------------------------------------*/
 #*    Explicit dependencies                                            */
 #*---------------------------------------------------------------------*/
+colorchooser.o: colorchooser.hop
+colorchooser.scm: colorchooser.hop
+
+spinbutton.o: spinbutton.hop
+spinbutton.scm: spinbutton.hop
+
+gauge.o: gauge.hop
+gauge.scm: gauge.hop
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/
