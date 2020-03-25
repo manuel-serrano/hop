@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Mar 24 10:55:16 2020 (serrano)                */
+#*    Last change :  Wed Mar 25 14:03:30 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1714,8 +1714,6 @@ cat $and.in \
         -e "s|@MINOR@|$minorversion|" \
 	>> $and  
 chmod a+rx $and
-
-git log -n 20 --pretty=format:"hopdac ($version-1) unstable; urgency=low%n%n  * %s%n%n -- %an <%ae>  %cD%n" > arch/debian/changelog
 
 #*---------------------------------------------------------------------*/
 #*    Summary                                                          */
