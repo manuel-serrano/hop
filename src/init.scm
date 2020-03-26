@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Tue Oct  8 13:18:59 2019 (serrano)                */
-;*    Copyright   :  2005-19 Manuel Serrano                            */
+;*    Last change :  Thu Mar 26 14:44:41 2020 (serrano)                */
+;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
 ;*=====================================================================*/
@@ -145,7 +145,7 @@
 	 (else
 	  ;; a regular file
 	  (let ((lm (date->rfc2822-date
-		       (seconds->date (file-modification-time abspath)))))
+		       (seconds->gmtdate (file-modification-time abspath)))))
 	     (http-get-file req lm #f))))))
 
 ;*---------------------------------------------------------------------*/
@@ -272,7 +272,7 @@
 	     (with-access::cache-entry ce (value)
 		value)
 	     (let ((lm (date->rfc2822-date
-			  (seconds->date (file-modification-time abspath)))))
+			  (seconds->gmtdate (file-modification-time abspath)))))
 		(cond
 		   ((and im (string<=? lm im))
 		    ;; not modified
