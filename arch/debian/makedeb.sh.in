@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Thu Mar 26 09:38:02 2020 (serrano)                */
+#*    Last change :  Thu Mar 26 18:44:58 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Debian/Maemo       */
@@ -216,7 +216,7 @@ fi
  dh_make -y -c $LICENSE -s -e $AUTHOR -f ../hop-$VERSION.tar.gz) || exit $?
 
 # changelog
-git log -n 20 --pretty=format:"hop ($VERSION-1) unstable; urgency=low%n%n  * %s%n%n -- %an <%ae>  %cD%n" > $BUILDDIR/hop-$VERSION/debian/changelog || exit 1
+cp $BUILDDIR/hop-$VERSION/ChangeLog $BUILDDIR/hop-$VERSION/debian/changelog
 
 # debian specific
 mkdir -p $BUILDDIR/hop-$VERSION/debian

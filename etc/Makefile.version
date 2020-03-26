@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/etc/Makefile.version              */
+#*    serrano/prgm/project/hop/hop/etc/Makefile.version                */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:38:36 2006                          */
-#*    Last change :  Thu Jun 29 08:38:47 2017 (serrano)                */
-#*    Copyright   :  2006-17 Manuel Serrano                            */
+#*    Last change :  Thu Mar 26 18:44:24 2020 (serrano)                */
+#*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    This Makefile interfaces with version managers.                  */
 #*=====================================================================*/
@@ -64,7 +64,7 @@ clone:
         fi
 
 log:
-	@ $(VM-LOG) | $(BIGLOO) -i $(BUILDETCDIR)/hglog.scm --stdin
+	@ $(VM-LOG)
 
 buildid:
 	@ $(VM-ID)
