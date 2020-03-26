@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Wed Mar 25 19:19:03 2020 (serrano)                */
+#*    Last change :  Thu Mar 26 09:38:02 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Debian/Maemo       */
@@ -32,6 +32,7 @@ HOPUSER=hop
 HOPCONFIGUREOPT=
 
 fakeroot=fakeroot
+sign=
 postinstall=yes
 
 while : ; do
@@ -59,6 +60,8 @@ while : ; do
     --no-postinstall)
       shift
       postinstall=no;;
+    --no-sign)
+      sign=--no-sign;;
     *)
       HOPCONFIGUREOPT="$1 $HOPCONFIGUREOPT";;
 
@@ -259,7 +262,7 @@ EOF
 fi
 
 # build the package
-(cd $BUILDDIR/hop-$VERSION && dpkg-buildpackage -r$fakeroot)
+(cd $BUILDDIR/hop-$VERSION && dpkg-buildpackage -r$fakeroot $sign)
 
 # install the packages
 if [ "$postinstall " = "yes " ]; then
