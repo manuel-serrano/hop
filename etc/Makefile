@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/etc/Makefile                      */
+#*    serrano/prgm/project/hop/hop/etc/Makefile                        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sun Jan  6 07:33:58 2019 (serrano)                */
-#*    Copyright   :  2006-19 Manuel Serrano                            */
+#*    Last change :  Thu Mar 26 19:29:52 2020 (serrano)                */
+#*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
 #*=====================================================================*/
@@ -38,7 +38,10 @@ POPULATION	= Makefile Makefile.weblet Makefile.library \
                   hopjs-parse.el hopjs-macro.el 
 
 install:
-	cp Makefile.hopconfig $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
+	cat Makefile.hopconfig \
+          | sed -e "s|$(BUILDBINDIR)|$(HOPBINDIR)|g" \
+          | sed -e "s|$(BUILDLIBDIR)|$(HOPLIBDIR)|g" \
+          > $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
 	chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
 	cp hoprc.hop $(DESTDIR)$(HOPETCDIR)/hoprc.hop
 	chmod $(MODFILE) $(DESTDIR)$(HOPETCDIR)/hoprc.hop
