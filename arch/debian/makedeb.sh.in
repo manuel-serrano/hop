@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Wed Mar 25 19:00:39 2020 (serrano)                */
+#*    Last change :  Wed Mar 25 19:19:03 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Debian/Maemo       */
@@ -26,7 +26,7 @@ LICENSE=gpl
 BUILDDIR=`pwd`/build.hop
 BASEDIR=`dirname $0`
 MAEMODIR=$BASEDIR/maemo
-HOPPREFIX=`bigloo -eval "(begin (print (dirname (bigloo-config 'library-directory))) (exit 0))"`
+HOPPREFIX=`bigloo -eval "(begin (print (dirname (bigloo-config 'ld-library-dir))) (exit 0))"`
 PREFIX=/usr
 HOPUSER=hop
 HOPCONFIGUREOPT=
@@ -56,7 +56,7 @@ while : ; do
     -O)
       shift
       BUILDDIR=$1;;
-    --no-install)
+    --no-postinstall)
       shift
       postinstall=no;;
     *)
@@ -263,11 +263,18 @@ fi
 
 # install the packages
 if [ "$postinstall " = "yes " ]; then
-  pkgs=`grep Package: $BUILDDIR/hop-$VERSION/debian/control | awk -F: '{print $2}' | sed 's/^ //g'`
+  pkgs=`grep Package: $BUILDDIR/hop-$VERSION/debian/control | awk -F: '{print $2}' | tr -d '\n'`
   arch=`dpkg --print-architecture`
   
-  for p in $pkgs; do
-    sudo dpkg -i $BUILDDIR/$p-$version-1_$arch.deb
+  for p in `echo $pkgs`; do
+    if [ -f $BUILDDIR/${p}_$VERSION-1_$arch.deb ]; then
+      sudo dpkg -i $BUILDDIR/${p}_$VERSION-1_$arch.deb
+    elif [ -f $BUILDDIR/${p}_$VERSION-1_all.deb ]; then
+      sudo dpkg -i $BUILDDIR/${p}_$VERSION-1_all.deb
+    else
+      echo "*** ERROR: cannot find .deb file for package $p"
+      exit 1
+    fi
   done
 fi
 
