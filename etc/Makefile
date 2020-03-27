@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Mar 26 20:19:51 2020 (serrano)                */
+#*    Last change :  Fri Mar 27 10:18:32 2020 (serrano)                */
 #*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -41,6 +41,7 @@ install:
 	cat Makefile.hopconfig \
           | sed -e "s|$(BUILDDIR)/bin|$(HOPBINDIR)|g" \
                 -e "s|$(BUILDDIR)/lib|$(HOPLIBDIR)|g" \
+                -e "s|$(BUILDDIR)/share|$(HOPSHAREDIR)/$(HOPRELEASE)|g" \
                 -e "s|hopc.sh|hopc|g" \
                 -e "s|hop.sh|hop|g" \
           > $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig

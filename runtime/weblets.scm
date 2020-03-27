@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Tue Oct  8 13:18:47 2019 (serrano)                */
-;*    Copyright   :  2004-19 Manuel Serrano                            */
+;*    Last change :  Fri Mar 27 09:29:20 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
 ;*=====================================================================*/
@@ -57,31 +57,53 @@
 	    (get-weblets-zeroconf::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
+;*    weblet-version-rx ...                                            */
+;*---------------------------------------------------------------------*/
+(define weblet-version-rx
+   (pregexp "[0-9]+.[0-9]+.[0-9]+(?:[-][0-9]+)?"))
+   
+;*---------------------------------------------------------------------*/
 ;*    find-weblets-in-directory ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (find-weblets-in-directory dir)
-
+   
+   (define (versions dir)
+      ;; scans dir to find version sub-directories to find ordered
+      ;; version numbers
+      (sort (lambda (x y) (>fx (string-natural-compare3 x y) 0))
+	 (filter! (lambda (f) (pregexp-match weblet-version-rx f))
+	    (directory->list dir))))
+   
+   (define (search pred lst)
+      (when (pair? lst)
+	 (or (pred (car lst)) (search pred (cdr lst)))))
+   
    (define (get-weblet-details dir name)
-      (let* ((infos (get-weblet-info (make-file-name dir name)))
-	     (main (assoc 'main infos))
-	     (prefix (make-file-name dir name)))
+      (let* ((infos (get-weblet-info dir))
+	     (main (assoc 'main infos)))
 	 (if main
-	     (let ((weblet (make-file-name prefix (cadr main))))
+	     (let ((weblet (make-file-name dir (cadr main))))
 		(when (file-exists? weblet)
-		   `((weblet ,weblet) (prefix ,prefix) (name ,name) ,@infos)))
-	     (let* ((base (make-file-name prefix name))
-		    (weblet (string-append base ".hop")))
+		   `((weblet ,weblet) (prefix ,dir) (name ,name) ,@infos)))
+	     (let ((weblet (make-file-name dir (string-append name ".hop"))))
 		(if (file-exists? weblet)
-		    `((weblet ,weblet) (prefix ,prefix) (name ,name) ,@infos)
-		    (let ((weblet (string-append base ".js")))
-		       (when (file-exists? weblet)
-			  `((weblet ,weblet) (prefix ,prefix) (name ,name) ,@infos))))))))
+		    `((weblet ,weblet) (prefix ,dir) (name ,name) ,@infos)
+		    (let ((weblet (make-file-name dir (string-append name ".js"))))
+		       (if (file-exists? weblet)
+			   `((weblet ,weblet) (prefix ,dir) (name ,name) ,@infos)
+			   (if (file-exists? (make-file-name dir name))
+			       (get-weblet-details (make-file-name dir name)  name)
+			       (search (lambda (v)
+					  (get-weblet-details
+					     (make-file-name dir v) name))
+				  (versions dir))))))))))
    
    (let loop ((files (directory->list dir))
 	      (res '()))
       (if (null? files)
 	  res
-	  (let ((web (get-weblet-details dir (car files))))
+	  (let* ((name (car files))
+		 (web (get-weblet-details (make-file-name dir name) name)))
 	     (if web
 		 (loop (cdr files) (cons web res))
 		 (loop (cdr files) res))))))
