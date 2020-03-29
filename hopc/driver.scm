@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Thu Mar 19 15:41:44 2020 (serrano)                */
+;*    Last change :  Sun Mar 29 06:47:58 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -184,22 +184,26 @@
    (define (generate-bigloo::int fname in lang)
       
       (define (generate-hop out::output-port)
-	 (let ((ofname (gensym 'filename)))
-	    (let loop ((cenv #f))
-	       (let ((exp (hopc-read in :cenv cenv)))
-		  (unless (eof-object? exp)
-		     (match-case exp
-			((module . ?-)
-			 (multiple-value-bind (mod env)
-			    (compile-module exp)
-			    (pp mod out)
-			    (pp `(define ,ofname (the-loading-file)))
-			    (pp `(loading-file-set! `(loading-file-set! (file-name-canonicalize! (make-file-name (pwd) ,fname)))))
-			    (loop env)))
-			(else
-			 (pp exp out)
-			 (loop cenv))))))
-	    (write `(loading-file-set! ,ofname))))
+	 (let loop ((cenv #f))
+	    (let ((exp (hopc-read in :cenv cenv)))
+	       (unless (eof-object? exp)
+		  (match-case exp
+		     ((module . ?-)
+		      (multiple-value-bind (mod env)
+			 (compile-module exp)
+			 (pp mod out)
+			 (pp `(define the-loading-file
+				 (let ((file (hop-sofile-rebase ,(sobase-path fname))))
+				    (lambda ()
+				       file)))
+			    out)
+			 (pp `(define (the-loading-dir)
+				 (dirname (the-loading-file)))
+			    out)
+			 (loop env)))
+		     (else
+		      (pp exp out)
+		      (loop cenv)))))))
       
       (define (generate-hopscript out::output-port)
 	 (let ((mmap (when (and (string? fname) (file-exists? fname))
@@ -379,22 +383,26 @@
 			     "-I" ,(dirname file)))
 		(mkcomp (lambda (write)
 			   (lambda (out)
-			      (let ((ofname (gensym 'filename)))
-				 (let loop ((cenv #f))
-				    (let ((exp (hopc-read in :cenv cenv)))
-				       (unless (eof-object? exp)
-					  (match-case exp
-					     ((module . ?-)
-					      (multiple-value-bind (mod env)
-						 (compile-module exp)
-						 (write mod out)
-						 (write `(define ,ofname (the-loading-file)) out)
-						 (write `(loading-file-set! (file-name-canonicalize! (make-file-name (pwd) ,file))) out)
-						 (loop env)))
-					     (else
-					      (write exp out)
-					      (loop cenv))))))
-				 (write `(loading-file-set! ,ofname) out))))))
+			      (let loop ((cenv #f))
+				 (let ((exp (hopc-read in :cenv cenv)))
+				    (unless (eof-object? exp)
+				       (match-case exp
+					  ((module . ?-)
+					   (multiple-value-bind (mod env)
+					      (compile-module exp)
+					      (write mod out)
+					      (write `(define the-loading-file
+							 (let ((file (hop-sofile-rebase ,(sobase-path fname))))
+							    (lambda ()
+							       file)))
+						 out)
+					      (write `(define (the-loading-dir)
+							 (dirname (the-loading-file)))
+						 out)
+					      (loop env)))
+					  (else
+					   (write exp out)
+					   (loop cenv))))))))))
 	    (if (string? temp)
 		(compiler
 		   (append options opts)
@@ -667,3 +675,12 @@
 	       (bigloo-warning-set! oldw)
 	       (bigloo-debug-set! oldd))))))
 
+;*---------------------------------------------------------------------*/
+;*    sobase-path ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    Compute the file name relative to the sobase directory.          */
+;*---------------------------------------------------------------------*/
+(define (sobase-path path)
+   (if (hopc-sobase)
+       (make-file-name (relative-file-name (hopc-sobase) (pwd)) path)
+       path))

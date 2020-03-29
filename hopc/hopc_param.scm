@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Apr 21 15:55:52 2019 (serrano)                */
-;*    Copyright   :  2004-19 Manuel Serrano                            */
+;*    Last change :  Sun Mar 29 06:33:07 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
 ;*=====================================================================*/
@@ -87,6 +87,9 @@
 
 	    (hopc-libs-dir::obj)
 	    (hopc-libs-dir-set! ::obj)
+
+	    (hopc-sobase::obj)
+	    (hopc-sobase-set! ::bstring)
 
 	    (hopc-optim-level::int)
 	    (hopc-optim-level-set! ::int)
@@ -299,6 +302,12 @@
 ;*    hopc-libs-dir ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-libs-dir
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-sobase ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-sobase
    #f)
 
 ;*---------------------------------------------------------------------*/

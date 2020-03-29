@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Thu Mar 19 15:20:24 2020 (serrano)                */
+;*    Last change :  Sun Mar 29 11:55:19 2020 (serrano)                */
 ;*    Copyright   :  2009-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
@@ -67,18 +67,22 @@
 	 (trace-item "module=" module)
 	 (trace-item "files=" files)
 	 (trace-item "abase=" abase)
-	 (if (pair? files)
+	 (cond
+	    ((pair? files)
 	     (hop-module-afile-resolver module
 		(if (string? abase)
 		    (map (lambda (f) (make-file-name abase f)) files)
-		    files))
+		    files)))
+	    ((not abase)
+	     '())
+	    (else
 	     (let ((rfiles (resolver module files (find-afile abase))))
 		(trace-item "rfiles=" rfiles " abase=" abase)
 		(if (pair? rfiles)
 		    (hop-module-afile-resolver module rfiles)
 		    (let ((f (or (hop-module-path-resolver module ".")
 				 (hop-module-path-resolver module abase))))
-		       (if f (list f) '()))))))))
+		       (if f (list f) '())))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-afile ...                                                   */

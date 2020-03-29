@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Thu Mar 19 08:18:52 2020 (serrano)                */
+;*    Last change :  Sun Mar 29 06:37:38 2020 (serrano)                */
 ;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -83,6 +83,7 @@
 	    
 	    (hop-find-sofile::obj ::bstring #!key (suffix ""))
 	    (hop-sofile-path::bstring ::bstring #!key (suffix ""))
+	    (hop-sofile-rebase::bstring ::bstring)
 	    
 	    (read-error msg obj port)
 	    (read-error/location msg obj fname loc)))
@@ -867,12 +868,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    loading-file-set! ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (loading-file-set! file-name)
+(define (loading-file-set! filename)
    (let ((t (current-thread)))
-      (if (isa? t hopthread)
-	  (with-access::hopthread t (%loading-file)
-	     (set! %loading-file file-name))
-	  (set! *the-loading-file* file-name))))
+      (when filename
+	 (if (isa? t hopthread)
+	     (with-access::hopthread t (%loading-file)
+		(set! %loading-file filename))
+	     (set! *the-loading-file* filename)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    the-loading-dir ...                                              */
@@ -945,7 +947,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-load ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (hop-load file-name
+(define (hop-load filename
 		  #!key
 		  (env (default-environment))
 		  (cenv #f)
@@ -955,9 +957,9 @@
 		  (abase #t)
 		  (afile #t)
 		  (worker-slave #f))
-   (if (hz-package-filename? file-name)
-       (hop-load-from-hz file-name env cenv menv mode charset abase)
-       (hop-load-file file-name env cenv menv mode charset abase 'eval afile worker-slave)))
+   (if (hz-package-filename? filename)
+       (hop-load-from-hz filename env cenv menv mode charset abase)
+       (hop-load-file filename env cenv menv mode charset abase 'eval afile worker-slave)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-dir ...                                                       */
@@ -1075,7 +1077,35 @@
       (hop-sofile-directory)
       (hop-version) (hop-build-id) (so-arch-directory)
       (hop-soname path suffix)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    hop-current-sobase ...                                           */
+;*---------------------------------------------------------------------*/
+(define hop-current-sobase #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-sobase-dir ...                                               */
+;*    -------------------------------------------------------------    */
+;*    Search upward the "libs" dir. Its parent will the sobase.        */
+;*---------------------------------------------------------------------*/
+(define (hop-sobase-dir dir)
+   ;; search upward the "libs" direction in dir
+   (if (string=? dir "/")
+       dir
+       (let ((base (basename dir))
+	     (dir (dirname dir)))
+	  (if (string=? base "libs")
+	      dir
+	      (hop-sobase-dir dir)))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-sofile-rebase ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hop-sofile-rebase file)
+   (if hop-current-sobase
+       (make-file-name hop-current-sobase file)
+       file))
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-file ...                                                */
 ;*    -------------------------------------------------------------    */
@@ -1197,18 +1227,22 @@
 		    ;; a compiled file has been found, try to load that one
 		    (with-trace 'read "hop-load-path-compiled"
 		       (trace-item "sopath=" sopath)
-		       (let ((f (the-loading-file)))
-			  (loading-file-set! path)
-			  (let ((loadval (unwind-protect
-					    (dynamic-load sopath)
-					    (loading-file-set! f))))
-			     (trace-item "sovalue=" loadval)
-			     (if (eq? mode 'load)
-				 loadval
-				 (or loadval
-				     ;; the dynamic load didn't produced the
-				     ;; expected value, load with eval
-				     (hop-eval-path path)))))))
+		       (with-loading-file path
+			  (lambda ()
+			     (let ((obase hop-current-sobase))
+				(set! hop-current-sobase
+				   (hop-sobase-dir (dirname sopath)))
+				(let ((lv (unwind-protect
+					     (dynamic-load sopath)
+					     (set! hop-current-sobase obase))))
+				   (trace-item "sovalue=" lv)
+				   (if (eq? mode 'load)
+				       lv
+				       (or lv
+					   ;; the dynamic load didn't produced
+					   ;; the expected value,
+					   ;; load with eval
+					   (hop-eval-path path)))))))))
 		   (else
 		    (hop-eval-path path))))
 	     (hop-eval-path path))))

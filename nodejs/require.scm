@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/nodejs/require.scm                               */
+;*    serrano/prgm/project/hop/hop/nodejs/require.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Feb 23 15:06:42 2020 (serrano)                */
+;*    Last change :  Sun Mar 29 07:32:50 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1766,9 +1766,26 @@
 		   (else
 		    (values #f #f)))))))
 
+   (define (read-module-name filename)
+      (call-with-input-file filename
+	 (lambda (proc)
+	    (match-case (read proc)
+	       ((module ?mod . ?-) mod)
+	       (else #f)))))
+	 
+   (define (compiled-module filename)
+      (let ((mod (read-module-name filename)))
+	 (when mod
+	    (eval-find-module mod))))
+   
    (define (hop-load/cache filename worker-slave)
       (let loop ((sopath (find-new-sofile filename worker-slave)))
 	 (cond
+	    ((compiled-module filename)
+	     =>
+	     (lambda (mod)
+		(call-with-eval-module mod
+		   (lambda () (eval 'hopscript)))))
 	    ((and (string? sopath) (hop-sofile-enable))
 	     (hop-dynamic-load sopath))
 	    ((or (not (symbol? sopath)) (not (eq? sopath 'error)))

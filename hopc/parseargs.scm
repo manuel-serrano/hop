@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Mar 13 07:33:51 2020 (serrano)                */
+;*    Last change :  Sun Mar 29 06:32:51 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -196,6 +196,8 @@
 	     (hopc-source-language-set! (string->symbol lang)))
 	    (("--libs-dir" ?DIR (help "Generate libs-dir directive (main only)"))
 	     (hopc-libs-dir-set! DIR))
+	    (("--sobase" ?DIR (help "Set the base directory for shared libs (default (pwd))"))
+	     (hopc-sobase-set! DIR))
 	    (section "JavaScript dialect and features")
 	    (("--js-worker" (help "Enable JavaScript workers"))
 	     (hopc-js-worker-set! #t))
