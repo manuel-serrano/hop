@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Mar 16 08:03:55 2020 (serrano)                */
+;*    Last change :  Mon Mar 30 05:59:14 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -466,7 +466,7 @@
 ;*    hop-sofile-directory ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-sofile-directory
-   (make-file-path (hop-rc-directory) "libs"))
+   (make-file-path (hop-rc-directory) "so"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-file ...                                                  */

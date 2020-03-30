@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Sat Mar 21 10:59:37 2020 (serrano)                */
+/*    Last change :  Mon Mar 30 12:18:20 2020 (serrano)                */
 /*    Copyright   :  2006-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -100,8 +100,8 @@ function hop_add( id, e, insert ) {
 	    } else {
 	       console.log( "*** ERROR: hop_add -- illegal child node", e );
 	       sc_error( "dom-append-child!",
-			 "illegal child node (" + (typeof e) + ")",
-			 e );
+		  "illegal child node (" + sc_typeof( e ) + ")",
+		  e );
 	    }
 	 }
       }

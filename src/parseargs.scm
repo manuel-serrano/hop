@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Mar 16 07:57:11 2020 (serrano)                */
+;*    Last change :  Mon Mar 30 05:49:03 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -57,7 +57,7 @@
 	 (webdav #unspecified)
 	 (zeroconf #unspecified)
 	 (clear-cache #f)
-	 (clear-libs #f)
+	 (clear-so #f)
 	 (setuser #f)
 	 (clientc-source-map #f)
 	 (clientc-arity-check #f)
@@ -66,7 +66,7 @@
 	 (clientc-compress #f)
 	 (clientc-inlining #t)
 	 (clientc-use-strict #t)
-	 (libs-dir #f)
+	 (sofile-dir #f)
 	 (cache-dir #f))
       
       (bigloo-debug-set! 0)
@@ -102,15 +102,11 @@
 	     (hop-rc-directory-set! dir)
 	     (unless cache-dir
 		(hop-cache-directory-set! (make-file-name dir "cache")))
-	     (unless libs-dir
-		(hop-sofile-directory-set! (make-file-path dir "libs"))))
+	     (unless sofile-dir
+		(hop-sofile-directory-set! (make-file-path dir "so"))))
 	    (("--cache-dir" ?dir (help "Set cache directory"))
 	     (set! cache-dir #t)
 	     (hop-cache-directory-set! dir))
-	    (("--libs-dir" ?dir
-		(help (format "Set libs directory (~a)" (hop-sofile-directory))))
-	     (set! libs-dir #t)
-	     (hop-sofile-directory-set! dir))
 	    (("--icons-dir" ?dir (help "Set Hop icons directory"))
 	     (hop-icons-directory-set! dir))
 	    (("--no-cache" (help "Disable server caching"))
@@ -120,13 +116,18 @@
 	    (("--no-clear-cache" (help "Don't clear any cache"))
 	     (hop-hss-clear-cache-set! #f)
 	     (hop-clientc-clear-cache-set! #f))
-	    (("--clear-libs" (help "Clear libs (sofiles) directory"))
-	     (set! clear-libs #t))
-	    (("--no-clear-libs" (help "Don't clear libs"))
-	     (set! clear-libs #f))
-	    (("--no-sofile" (help "Disable loading pre-compiled file"))
+	    (("--so-dir" ?dir (help (format "Set libs directory (~a)" (hop-sofile-directory))))
+	     (set! sofile-dir #t)
+	     (hop-sofile-directory-set! dir))
+	    (("--display-so-dir"  (help "Display default so dir"))
+	     (print (dirname (hop-sofile-path "dummy.hop"))))
+	    (("--clear-so" (help "Clear sofiles directory"))
+	     (set! clear-so #t))
+	    (("--no-clear-so" (help "Don't clear libs"))
+	     (set! clear-so #f))
+	    (("--no-so" (help "Disable loading pre-compiled file"))
 	     (hop-sofile-enable-set! #f))
-	    (("--sofile-policy" ?policy (help "Sofile compile policy [none, aot, nte, nte1, nte+]"))
+	    (("--so-policy" ?policy (help "Sofile compile policy [none, aot, nte, nte1, nte+]"))
 	     (hop-sofile-compile-policy-set! (string->symbol policy)))
 	    (("--autoload" (help "Enable autoload (default)"))
 	     (set! autoloadp #t))
@@ -460,7 +461,7 @@
 		(load-mime-types (make-file-name p ".mime.types"))))))
       
       ;; clear sofiles
-      (when clear-libs
+      (when clear-so
 	 (let ((dir (dirname (hop-sofile-path "dummy.so"))))
 	    (delete-path dir)))
       

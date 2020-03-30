@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Mon Mar 23 15:44:08 2020 (serrano)                */
+/*    Last change :  Mon Mar 30 12:22:46 2020 (serrano)                */
 /*    Copyright   :  2007-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -1136,6 +1136,8 @@ function hop_bytearray_to_obj( s, extension, cset ) {
       cinfo = read_item();
       sz--;
       
+      console.log( "read_object key=", key, " sz=", sz,  "clazz=", clazz,
+	 " cinfo=", cinfo );
       if( clazz ) {
 	 res = sc_class_allocator( clazz )();
 	 fields = sc_class_all_fields( clazz );
@@ -1390,7 +1392,22 @@ function hop_dom_unserialize( obj ) {
    }
    
    if( "id" in obj ) el.id = obj.id;
-   if( obj.body ) obj.body.forEach( n => { if( n ) dom_add_child( el, n ); } );
+   if( obj.body ) {
+      obj.body.forEach( n => { 
+	    if( n ) {
+	       if( n instanceof Object && "__class__" in n ) {
+		  if( n.__class__ in hop_builtin_class_unserializer ) {
+		     var c = hop_builtin_class_unserializer[ n.__class__ ]( n );
+		     dom_add_child( el, c );
+		  } else {
+		     dom_add_child( el, n );
+		  }
+	       } else {
+		  dom_add_child( el, n );
+	       }
+	    }
+	 } );
+   }
    
    return el;
 }

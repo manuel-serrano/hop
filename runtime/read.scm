@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun Mar 29 06:37:38 2020 (serrano)                */
+;*    Last change :  Mon Mar 30 05:30:49 2020 (serrano)                */
 ;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1038,8 +1038,18 @@
       (let* ((dir (dirname path))
 	     (base (prefix (basename path))))
 	 (or (soprecompiled 
+		(make-file-path dir "so" (hop-so-dirname)
+		   (string-append base (so-suffix))))
+	     (soprecompiled 
 		(make-file-path dir "libs" (hop-so-dirname)
 		   (string-append base (so-suffix))))
+	     (soprecompiled 
+		(make-file-path dir ".so" (hop-so-dirname)
+		   (string-append base
+		      (cond-expand
+			 (bigloo-unsafe "_u")
+			 (else "_s"))
+		      "-" (hop-version) (so-suffix))))
 	     (soprecompiled 
 		(make-file-path dir ".libs" (hop-so-dirname)
 		   (string-append base
@@ -1094,7 +1104,7 @@
        dir
        (let ((base (basename dir))
 	     (dir (dirname dir)))
-	  (if (string=? base "libs")
+	  (if (string=? base "so")
 	      dir
 	      (hop-sobase-dir dir)))))
 
@@ -1229,6 +1239,7 @@
 		       (trace-item "sopath=" sopath)
 		       (with-loading-file path
 			  (lambda ()
+			     (hop-verb 2 "loading \"" (hop-color 4 "" sopath) "\"\n")
 			     (let ((obase hop-current-sobase))
 				(set! hop-current-sobase
 				   (hop-sobase-dir (dirname sopath)))
@@ -1244,8 +1255,11 @@
 					   ;; load with eval
 					   (hop-eval-path path)))))))))
 		   (else
+		    (hop-verb 2 "loading \"" (hop-color 5 "" path) "\"\n")
 		    (hop-eval-path path))))
-	     (hop-eval-path path))))
+	     (begin
+		(hop-verb 2 "loading \"" (hop-color 5 "" path) "\"\n")
+		(hop-eval-path path)))))
    
    (let ((path (find-file/path fname (hop-path))))
       (cond
