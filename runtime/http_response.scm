@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Oct  8 13:17:40 2019 (serrano)                */
-;*    Copyright   :  2004-19 Manuel Serrano                            */
+;*    Last change :  Tue Mar 31 05:46:42 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -806,7 +806,6 @@
 		     (input-timeout-set! in timeout))
 		  (with-handler
 		     (lambda (e)
-			(exception-notify e)
 			(if (isa? e &http-redirection)
 			    (multiple-value-bind (rhost rport ruser rpath)
 			       (redirect e)
@@ -819,7 +818,9 @@
 				      rpath)
 				     (else
 				      (make-file-name (dirname path) rpath)))))
-			    (raise e)))
+			    (begin
+			       (exception-notify e)
+			       (raise e))))
 		     (set! header (cons (cons connection: connection) header))
 		     (let ((auth (if (and (isa? req http-server-request)
 					  (with-access::http-server-request req (authorization)
