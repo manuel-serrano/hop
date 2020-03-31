@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Mon Feb 17 09:30:12 2020 (serrano)                */
+;*    Last change :  Tue Mar 31 16:51:41 2020 (serrano)                */
 ;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -245,9 +245,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-toname p %this)
    (cond
-      ((and (object? p)
-	    (or (eq? (object-class p) JsStringLiteralASCII)
-		(js-jsstring? p)))
+      ((js-jsstring? p)
        (js-jsstring-toname p))
       ((fixnum? p)
        (js-integer-name->jsstring p))
