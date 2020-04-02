@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Wed Feb 12 13:26:01 2020 (serrano)                */
+;*    Last change :  Thu Apr  2 13:51:16 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -200,9 +200,11 @@
 		    (e nx e))))))
       
       (define (def clazz)
-	 (if (eq? clazz 'JsObject)
-	     (def-jsobject)
-	     (def-default clazz)))
+	 (cond
+	    ((eq? clazz 'JsObject)
+	     (def-jsobject))
+	    (else
+	     (def-default clazz))))
 
       (e (def (cadr x)) e)))
 

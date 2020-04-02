@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun Mar  1 11:35:53 2020 (serrano)                */
+;*    Last change :  Wed Apr  1 16:28:16 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -771,7 +771,7 @@
 	     (unless (eq? a (js-undefined))
 		(set! authorization (js-tostring a %this)))
 	     (unless (js-totest y)
-		(when (js-in? %this (& "asynchronous") opt)
+		(when (js-in? opt (& "asynchronous") %this)
 		   (set! asynchronous #f)))
 	     (when (js-totest c)
 		(set! scheme 'https))
@@ -957,10 +957,10 @@
 		   (vecks '()))
 		;; first step
 		(for-each (lambda (arg)
-			     (let ((k (js-string->jsstring (car arg)))
+			     (let ((k (js-name->jsstring (car arg)))
 				   (val (js-string->jsstring (cdr arg))))
 				(cond
-				   ((not (js-in? ctx k obj))
+				   ((not (js-in? obj k ctx))
 				    (js-put! obj k val #f ctx))
 				   (else
 				    (let ((old (js-get obj k ctx)))

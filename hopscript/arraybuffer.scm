@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/arraybuffer.scm                        */
+;*    serrano/prgm/project/hop/hop/hopscript/arraybuffer.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */

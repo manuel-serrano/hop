@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/symbol.scm                             */
+;*    serrano/prgm/project/hop/hop/hopscript/symbol.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */

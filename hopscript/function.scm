@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon Mar 16 08:16:01 2020 (serrano)                */
+;*    Last change :  Thu Apr  2 13:54:10 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -317,6 +317,16 @@
       (js-bind! %this %this (& "Function")
 	 :value js-function
 	 :configurable #f :enumerable #f)
+
+      ;; init function allocation
+      (with-access::JsGlobalObject %this (js-function 
+					    js-function-writable-strict-cmap
+					    js-function-prototype-property-rw
+					    js-function-strict-elements)
+	 ($js-init-jsalloc-function (js-not-a-cmap)
+	    js-function-writable-strict-cmap
+	    js-function-strict-elements js-object-alloc-lazy
+	    100 (js-function-default-mode)))
       ;; return the js-function object
       js-function))
 
@@ -697,31 +707,58 @@
 ;*    specialized function constructor for regular strict functions.   */
 ;*---------------------------------------------------------------------*/
 (define-macro (%js-make-function-strict-lazy arity)
-   `(with-access::JsGlobalObject %this (js-function 
-					  js-function-writable-strict-cmap
-					  js-function-prototype-property-rw
-					  js-function-strict-elements)
-       (INSTANTIATE-JSFUNCTION
-	  (procedure procedure)
-	  (method method)
-	  (construct procedure)
-	  (alloc js-object-alloc-lazy)
-	  (arity ,arity)
-	  (len length)
-	  (__proto__ (js-object-proto js-function))
-	  (src src)
-	  (name name)
-	  (constrsize constrsize)
-	  (constrmap (js-not-a-cmap))
-	  (maxconstrsize 100)
-	  (elements js-function-strict-elements)
-	  (cmap js-function-writable-strict-cmap)
-	  (prototype #f)
-	  (%prototype #f))))
+;*    `(with-access::JsGlobalObject %this (js-function                 */
+;* 					  js-function-writable-strict-cmap */
+;* 					  js-function-prototype-property-rw */
+;* 					  js-function-strict-elements) */
+;*        (INSTANTIATE-JSFUNCTION                                      */
+;* 	  (procedure procedure)                                        */
+;* 	  (method method)                                              */
+;* 	  (construct procedure)                                        */
+;* 	  (alloc js-object-alloc-lazy)                                 */
+;* 	  (arity ,arity)                                               */
+;* 	  (len length)                                                 */
+;* 	  (__proto__ (js-object-proto js-function))                    */
+;* 	  (src src)                                                    */
+;* 	  (name name)                                                  */
+;* 	  (constrsize constrsize)                                      */
+;* 	  (constrmap (js-not-a-cmap))                                  */
+;* 	  (maxconstrsize 100)                                          */
+;* 	  (elements js-function-strict-elements)                       */
+;* 	  (cmap js-function-writable-strict-cmap)                      */
+;* 	  (prototype #f)                                               */
+;* 	  (%prototype #f))))                                           */
+   `(with-access::JsGlobalObject %this (js-function)
+      ($js-make-jsfunction
+	 ,(string->symbol (format "JsFunction~a" arity))
+	 procedure method procedure
+	 ,arity length minlen constrsize
+	 (js-object-proto js-function)
+	 src name)))
 
 (define (js-make-function-strict-lazy %this procedure length name
 	   #!key method arity (minlen -1) src (constrsize 3))
-   (%js-make-function-strict-lazy arity))
+   (with-access::JsGlobalObject %this (js-function 
+					 js-function-writable-strict-cmap
+					 js-function-prototype-property-rw
+					 js-function-strict-elements)
+      (INSTANTIATE-JSFUNCTION
+	 (procedure procedure)
+	 (method method)
+	 (construct procedure)
+	 (alloc js-object-alloc-lazy)
+	 (arity arity)
+	 (len length)
+	 (__proto__ (js-object-proto js-function))
+	 (src src)
+	 (name name)
+	 (constrsize constrsize)
+	 (constrmap (js-not-a-cmap))
+	 (maxconstrsize 100)
+	 (elements js-function-strict-elements)
+	 (cmap js-function-writable-strict-cmap)
+	 (prototype #f)
+	 (%prototype #f))))
 
 (define (js-make-function-strict-lazy1 %this procedure length name
 	   #!key method (minlen -1) src (constrsize 3))

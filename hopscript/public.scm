@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Mar  8 18:26:56 2020 (serrano)                */
+;*    Last change :  Wed Apr  1 16:27:15 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -150,9 +150,6 @@
 	   (js-instanceof?::bool ::JsGlobalObject v f)
 	   (js-instanceof?/debug::bool ::JsGlobalObject loc v f)
 	   
-	   (js-in?::bool ::JsGlobalObject f obj)
-	   (js-in?/debug::bool ::JsGlobalObject loc f obj)
-
 	   (inline js-make-let::bchar)
 	   (inline js-let-ref ::obj ::obj ::obj ::JsGlobalObject)
 	   
@@ -1183,21 +1180,6 @@
 			(js-call1 %this h f v)
 			(js-ordinary-instanceof? %this v f))))
 	      (js-ordinary-instanceof? %this v f)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-in? ...                                                       */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.7       */
-;*---------------------------------------------------------------------*/
-(define (js-in? %this field obj)
-   (if (not (js-object? obj))
-       (js-raise-type-error %this "in: not an object ~s" obj)
-       (js-has-property obj field %this)))
-
-(define (js-in?/debug %this loc field obj)
-   (if (not (js-object? obj))
-       (js-raise-type-error/loc %this loc "in: not an object ~s" obj)
-       (js-has-property obj field %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-let ...                                                  */

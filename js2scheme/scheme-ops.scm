@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Mar 12 13:31:47 2020 (serrano)                */
+;*    Last change :  Wed Apr  1 16:21:47 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -455,9 +455,15 @@
 ;*    j2s-in? ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-in? loc id obj conf)
+   
+   (define (toname id)
+      (match-case id
+	 ((& ?-) id)
+	 (else `(js-toname ,id %this))))
+   
    (if (> (config-get conf :debug 0) 0)
-       `(js-in?/debug %this ',loc ,id ,obj)
-       `(js-in? %this ,id ,obj)))
+       `(js-in?/debug ,obj ,(toname id) %this ',loc)
+       `(js-in? ,obj ,(toname id) %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-binop ...                                                     */

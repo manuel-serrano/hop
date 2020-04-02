@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Mar 13 08:11:03 2020 (serrano)                */
+;*    Last change :  Thu Apr  2 13:44:59 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -38,12 +38,20 @@
 	      "bgl_init_jsalloc")
 	   ($js-init-jsalloc-proxy::int (::obj ::obj)
 	      "bgl_init_jsalloc_proxy")
+	   ($js-init-jsalloc-function::int (::JsConstructMap ::JsConstructMap
+					      ::obj ::obj
+					      ::long ::uint32)
+	      "bgl_init_jsalloc_function")
 	   ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsobject")
-	   ($js-make-jsproxy::JsProxy (;; ::JsConstructMap ::obj
-					 ::obj ::obj
-					 ::obj ::obj ::obj ::uint32)
+	   ($js-make-jsproxy::JsProxy (::obj ::obj ::obj ::obj ::obj ::uint32)
 	      "bgl_make_jsproxy")
+	   ($js-make-jsfunction::JsFunction (::class
+						  ::procedure ::procedure
+						  ::procedure
+						  ::long ::long ::long ::long
+						  ::obj ::obj ::obj)
+	      "bgl_make_jsfunction")
 	   (macro $jsobject-elements-inline?::bool (::JsObject)
 		  "HOP_JSOBJECT_ELEMENTS_INLINEP")
 	   (macro $jsobject-vector-inline?::bool (::JsArray)
@@ -226,8 +234,8 @@
 	      (minlen::int read-only (default -1))
 	      (len::int read-only)
 	      (arity::int read-only (default -1))
-	      (constrsize::long (default 3))
-	      (maxconstrsize::long (default 100)))
+	      (constrsize::int (default 3))
+	      (maxconstrsize::int (default 100)))
 	   
 	   (class JsService::JsFunction
 	      (worker::obj read-only)

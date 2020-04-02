@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Mar 13 08:01:58 2020 (serrano)                */
+;*    Last change :  Wed Apr  1 16:32:36 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -88,6 +88,9 @@
 	   (generic js-properties-name::vector ::obj ::bool ::JsGlobalObject)
 	   (generic js-properties-symbol::vector ::obj ::JsGlobalObject)
 	   
+	   (js-in?::bool ::obj ::JsStringLiteral ::JsGlobalObject)
+	   (js-in?/debug::bool ::obj ::JsStringLiteral ::JsGlobalObject loc)
+
 	   (generic js-has-property::bool ::obj ::obj ::JsGlobalObject)
 	   (generic js-has-own-property::bool ::obj ::obj ::JsGlobalObject)
 	   (generic js-get-own-property ::obj ::obj ::JsGlobalObject)
@@ -1528,6 +1531,38 @@
 		     (when (isa? n JsSymbolLiteral)
 			n))
 	 (js-properties-names o #f %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-in? ...                                                       */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.7       */
+;*---------------------------------------------------------------------*/
+(define (js-in? obj name %this)
+   (cond
+      ((not (js-object? obj))
+       (js-raise-type-error %this "in: not an object ~s" obj))
+      ((eq? (object-class obj) JsObject)
+       (let loop ((obj obj))
+	  (jsobject-find obj obj name
+	     ;; cmap search
+	     (lambda (owner i) #t)
+	     ;; property search
+	     (lambda (owner d i) #t)
+	     ;; failure
+	     (lambda (o) #f)
+	     ;; prototype search
+	     (lambda (__proto__)
+		(if (and (js-object? __proto__)
+			 (eq? (object-class __proto__) JsObject))
+		    (loop __proto__)
+		    (js-has-property __proto__ name %this))))))
+      (else
+       (js-has-property obj name %this))))
+
+(define (js-in?/debug obj name %this loc)
+   (if (not (js-object? obj))
+       (js-raise-type-error/loc %this loc "in: not an object ~s" obj)
+       (js-has-property obj name %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ...                                              */
