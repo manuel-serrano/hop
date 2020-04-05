@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Apr  5 09:18:05 2020 (serrano)                */
+;*    Last change :  Sun Apr  5 13:18:41 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -361,14 +361,13 @@
 					    js-property-descriptor-getter-cmap)
 	 (set! js-property-descriptor-value-cmap
 	    (make-cmap #f
-	       `#(,(prop (& "writable") (property-flags #t #t #t #t))
-		  ,(prop (& "enumerable") (property-flags #t #t #t #t))
+	       `#(,(prop (& "enumerable") (property-flags #t #t #t #t))
 		  ,(prop (& "configurable") (property-flags #t #t #t #t))
-		  ,(prop (& "value") (property-flags #t #t #t #t)))))
+		  ,(prop (& "value") (property-flags #t #t #t #t))
+		  ,(prop (& "writable") (property-flags #t #t #t #t)))))
 	 (set! js-property-descriptor-getter-cmap
 	    (make-cmap #f
-	       `#(,(prop (& "writable") (property-flags #t #t #t #t))
-		  ,(prop (& "enumerable") (property-flags #t #t #t #t))
+	       `#(,(prop (& "enumerable") (property-flags #t #t #t #t))
 		  ,(prop (& "configurable") (property-flags #t #t #t #t))
 		  ,(prop (& "get") (property-flags #t #t #t #t))
 		  ,(prop (& "set") (property-flags #t #t #t #t))))))))
@@ -1284,15 +1283,15 @@
 	   #!key writable enumerable configurable value get set)
    (with-access::JsGlobalObject %this (js-property-descriptor-value-cmap
 					 js-property-descriptor-getter-cmap)
-      (if value
-	  (instantiateJsObject
-	     (cmap js-property-descriptor-value-cmap)
-	     (__proto__ (js-object-proto %this))
-	     (elements (vector writable enumerable configurable value)))
+      (if (eq? writable #unspecified)
 	  (instantiateJsObject
 	     (cmap js-property-descriptor-getter-cmap)
 	     (__proto__ (js-object-proto %this))
-	     (elements (vector writable enumerable configurable get set))))))
+	     (elements (vector enumerable configurable get set)))
+	  (instantiateJsObject
+	     (cmap js-property-descriptor-value-cmap)
+	     (__proto__ (js-object-proto %this))
+	     (elements (vector enumerable configurable value writable))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-from-property-descriptor ...                                  */
@@ -1332,7 +1331,7 @@
 	       (js-or (js-get desc (& "configurable") %this) #f) #f %this)
 	    obj)))
 
-   (define (from-desc  desc)
+   (define (from-desc desc)
       (with-access::JsPropertyDescriptor desc (enumerable configurable)
 	 (cond
 	    ((isa? desc JsValueDescriptor)
@@ -1340,21 +1339,24 @@
 	     (with-access::JsValueDescriptor desc (writable value)
 		(js-property-descriptor %this
 		   :writable writable
-		   :enumerable enumerable :configurable configurable
+		   :enumerable enumerable
+		   :configurable configurable
 		   :value value)))
 	    ((isa? desc JsAccessorDescriptor)
 	     ;; 4
 	     (with-access::JsAccessorDescriptor desc (get set)
 		(js-property-descriptor %this
-		   :writable set
-		   :enumerable enumerable :configurable configurable
+		   :writable #unspecified
+		   :enumerable enumerable
+		   :configurable configurable
 		   :get (or get (js-undefined))
 		   :set (or set (js-undefined)))))
 	    ((isa? desc JsWrapperDescriptor)
 	     (with-access::JsWrapperDescriptor desc (writable %get)
 		(js-property-descriptor %this
 		   :writable writable
-		   :enumerable enumerable :configurable configurable
+		   :enumerable enumerable
+		   :configurable configurable
 		   :value (%get owner owner propname %this)))))))
 
    (cond
@@ -1748,6 +1750,7 @@
 			 :value (vector-ref elements i)))))))
       ;; prototype search
       (lambda (owner d i)
+	 (tprint "proto search o=" (typeof o) " ow=" (typeof owner))
 	 (js-from-property-descriptor %this o d o))
       ;; not found
       (lambda (o) (js-undefined))))
