@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Apr  3 12:56:22 2020 (serrano)                */
+;*    Last change :  Sun Apr  5 09:18:05 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1731,7 +1731,6 @@
 ;*    This must be overriden for all its subclasses!                   */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-own-property-descriptor o::JsObject p::obj %this::JsGlobalObject)
-   [assert (o) (eq? (object-class o) JsObject)]
    (jsobject-find o o (js-toname p %this)
       ;; cmap search
       (lambda (owner i)
