@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Mar 10 16:08:53 2020 (serrano)                */
+;*    Last change :  Fri Apr  3 12:24:27 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -30,6 +30,7 @@
 	   __js2scheme_scheme-string
 	   __js2scheme_scheme-regexp
 	   __js2scheme_scheme-math
+	   __js2scheme_scheme-object
 	   __js2scheme_scheme-json
 	   __js2scheme_scheme-date
 	   __js2scheme_scheme-array
@@ -139,6 +140,8 @@
 	("call" ,j2s-call3 any (any any any any) %this #t)
 	;; math
 	("toFixed" js-maybe-tofixed any (any) %this #t)
+	;; object
+	("hasOwnProperty" js-has-own-property any (any) %this #f ,j2s-object-plain?)
 	)))
 
 ;*---------------------------------------------------------------------*/
@@ -386,6 +389,15 @@
 	  #t)))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-object-plain? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-object-plain? mode return conf)
+   (let ((object (config-get conf :object)))
+      (if (isa? object J2SDeclExtern)
+	  (decl-only-call? object)
+	  #t)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-string-plain? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-string-plain? mode return conf)
@@ -583,6 +595,9 @@
    (define (Date? self)
       (is-builtin-ref? self 'Date))
 
+   (define (Object? self)
+      (is-builtin-ref? self 'Object))
+
    (define (mincspecs x y)
       (filter (lambda (c) (memq c y)) x))
    
@@ -606,6 +621,10 @@
 	     (lambda (expr) expr))
 	    ((and (Date? self)
 		  (j2s-date-builtin-method fun args this mode return conf))
+	     =>
+	     (lambda (expr) expr))
+	    ((and (Object? self)
+		  (j2s-object-builtin-method fun args this mode return conf))
 	     =>
 	     (lambda (expr) expr))
 	    ((and ccache (= (config-get conf :debug 0) 0) ccspecs)

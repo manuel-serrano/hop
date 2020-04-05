@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Apr  2 13:44:59 2020 (serrano)                */
+;*    Last change :  Fri Apr  3 07:24:27 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -235,7 +235,7 @@
 	      (len::int read-only)
 	      (arity::int read-only (default -1))
 	      (constrsize::int (default 3))
-	      (maxconstrsize::int (default 100)))
+	      (maxconstrsize::int read-only (default 100)))
 	   
 	   (class JsService::JsFunction
 	      (worker::obj read-only)
@@ -421,7 +421,9 @@
 	      (js-yield-cmap (default (class-nil JsConstructMap)))
 	      (js-regexp-cmap (default (class-nil JsConstructMap)))
 	      (js-regexp-exec-cmap (default (class-nil JsConstructMap)))
-	      (js-scope-cmap (default (class-nil JsConstructMap))))
+	      (js-scope-cmap (default (class-nil JsConstructMap)))
+	      (js-property-descriptor-value-cmap (default (class-nil JsConstructMap)))
+	      (js-property-descriptor-getter-cmap (default (class-nil JsConstructMap))))
 
 	   (class JsResponse
 	      (%this::JsGlobalObject read-only)

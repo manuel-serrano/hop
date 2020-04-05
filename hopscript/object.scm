@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Mar  7 06:35:35 2020 (serrano)                */
+;*    Last change :  Fri Apr  3 12:27:50 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -627,13 +627,7 @@
       ;; getOwnPropertyDescriptor
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.3
       (define (getownpropertydescriptor this o p)
-	 (let* ((o (if (isa? o object)
-		       o
-		       ;; This is not compatible with the recent semantics.
-		       ;; https://www.ecma-international.org/ecma-262/#sec-object.getownpropertydescriptor
-		       (js-cast-object o %this "getOwnPropertyDescriptor")))
-		(desc (js-get-own-property o p %this)))
-	    (js-from-property-descriptor %this o desc o)))
+	 (js-get-own-property-descriptor o p %this))
       
       (js-bind! %this js-object (& "getOwnPropertyDescriptor")
 	 :value (js-make-function %this
@@ -647,7 +641,7 @@
       ;; getOwnPropertyDescriptors
       ;; https://www.ecma-international.org/ecma-262/8.0/#sec-object.getownpropertydescriptors
       (define (getownpropertydescriptors this o p)
-	 (let* ((o (if (isa? o object)
+	 (let* ((o (if (js-object? o)
 		       o
 		       (js-cast-object o %this "getOwnPropertyDescriptors")))
 		(keys (js-properties-names o #f %this))
@@ -1113,9 +1107,12 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.5     */
 ;*---------------------------------------------------------------------*/
-(define (js-object-prototype-hasownproperty this v %this)
+(define-inline (js-object-prototype-hasownproperty this v %this)
    ;; the conversion ToPropertyKey is implemented by js-has-own-property
-   (js-has-own-property (js-toobject %this this) v %this))
+   (let ((obj (js-toobject-fast this %this)))
+      (if (eq? (object-class obj) JsObject)
+	  (js-has-own-property-jsobject obj v %this)
+	  (js-has-own-property obj v %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-extensible? ::JsObject ...                                    */

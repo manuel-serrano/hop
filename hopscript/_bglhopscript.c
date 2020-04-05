@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu Apr  2 13:20:52 2020 (serrano)                */
+/*    Last change :  Fri Apr  3 07:34:28 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -428,9 +428,8 @@ bgl_init_jsalloc_function( BgL_jsconstructmapz00_bglt constrmap,
    jsinit = 1;
 
    jsfunction_constrmap = constrmap;
-   jsfunction_elements = elements;
-   jsfunction_constrmap = constrmap;
    jsfunction_cmap = cmap;
+   jsfunction_elements = elements;
    jsfunction_alloc = alloc;
    jsfunction_maxconstrsize = maxconstrsize;
    jsfunction_mode = mode;

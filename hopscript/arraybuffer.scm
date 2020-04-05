@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Sun Feb 23 14:50:30 2020 (serrano)                */
+;*    Last change :  Fri Apr  3 17:28:15 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -291,6 +291,24 @@
 		(enumerable #t)
 		(writable (not frozen))
 		(configurable (not frozen))))
+	    (else
+	     (call-next-method))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-own-property-descriptor ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-own-property-descriptor o::JsArrayBuffer p %this::JsGlobalObject)
+   (with-access::JsArrayBuffer o (frozen)
+      (let ((i::uint32 (js-toindex p)))
+	 (cond
+	    ((not (js-isindex? i))
+	     (call-next-method))
+	    ((<uint32 i (js-arraybuffer-length o))
+	     (js-property-descriptor %this
+		:value (js-arraybuffer-ref o (uint32->fixnum i))
+		:enumerable #t
+		:writable (not frozen)
+		:configurable (not frozen)))
 	    (else
 	     (call-next-method))))))
 

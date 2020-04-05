@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Thu Apr  2 13:43:01 2020 (serrano)                */
+;*    Last change :  Fri Apr  3 17:34:32 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -521,6 +521,12 @@
 	     (let ((desc (js-call2 %this get o target p)))
 		(proxy-check-property-getown target p %this desc))
 	     (js-get-own-property target p %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-own-property-descriptor ::JsProxy ...                     */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-own-property-descriptor o::JsProxy p::obj %this)
+   (js-from-property-descriptor %this o (js-get-own-property o p %this) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ::JsProxy ...                                          */

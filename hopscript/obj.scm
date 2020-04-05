@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/obj.scm                                */
+;*    serrano/prgm/project/hop/hop/hopscript/obj.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul  9 17:41:45 2017                          */
-;*    Last change :  Sun Feb 23 15:00:12 2020 (serrano)                */
+;*    Last change :  Fri Apr  3 17:33:53 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ScmObject binding                                                */
@@ -104,6 +104,25 @@
 	     (configurable #f)
 	     (name n)
 	     (value (js-undefined))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-own-property-descriptor ::object ...                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-own-property-descriptor o::object p::obj %this::JsGlobalObject)
+   (let* ((n (js-toname p %this))
+	  (k (object-class o))
+	  (f (find-class-field k n)))
+      (if f
+	  (js-property-descriptor %this
+	     :writable (class-field-mutable? f)
+	     :enumerable #t
+	     :configurable #f
+	     :value (js-obj->jsobject ((class-field-accessor f) o) %this))
+	  (js-property-descriptor %this
+	     :writable #f
+	     :enumerable #f
+ 	     :configurable #f
+	     :value (js-undefined)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::object ...                                              */

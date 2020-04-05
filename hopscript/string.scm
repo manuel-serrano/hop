@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Mar  7 06:35:18 2020 (serrano)                */
+;*    Last change :  Fri Apr  3 17:36:17 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -747,6 +747,12 @@
 		   (else
 		    (utf8-get-own-property val index)))))
 	  (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-own-property-descriptor ::JsString ...                    */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-own-property-descriptor o::JsString p::obj %this)
+   (js-from-property-descriptor %this o (js-get-own-property o p %this) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-property-value ::JsString ...                             */

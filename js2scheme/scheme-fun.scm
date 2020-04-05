@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sat Mar 14 06:27:49 2020 (serrano)                */
+;*    Last change :  Fri Apr  3 07:43:16 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -223,14 +223,13 @@
 			  :__proto__ ,(j2s-fun-__proto__ val)
 			  :construct ,fastid
 			  :constrsize ,constrsize))
-		     ((and src (eq? mode 'strict))
+		     ((and src (memq mode '(strict hopscript)))
 		      `(,(if (eq? alloc 'js-object-alloc-lazy)
 			     (j2s-make-function-strict-lazy arity)
 			     'js-make-function-strict)
 			%this ,fastid
 			,len (& ,(symbol->string! id))
 			:src ,src
-			
 			:minlen ,minlen
 			:constrsize ,constrsize
 			:method ,(if method
@@ -254,7 +253,8 @@
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
-		     ((and (eq? vararg 'arguments) (eq? mode 'strict))
+		     ((and (eq? vararg 'arguments)
+			   (memq mode '(strict hopscript)))
 		      `(,(if (eq? alloc 'js-object-alloc-lazy)
 			     (j2s-make-function-strict-lazy arity)
 			     'js-make-function-strict)
@@ -281,7 +281,7 @@
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
-		     ((and method (eq? mode 'strict))
+		     ((and method (memq mode '(strict hopscript)))
 		      `(,(if (eq? alloc 'js-object-alloc-lazy)
 			     (j2s-make-function-strict-lazy arity)
 			     'js-make-function-strict)
@@ -662,7 +662,7 @@
 		(jsfun->lambda this mode return conf
 		   (j2s-fun-prototype this) #f))
 	       ((and (or src prototype __proto__ method new-target)
-		     (eq? mode 'strict)
+		     (memq mode '(strict hopscript))
 		     (not prototype)
 		     (not __proto__))
 		`(,(if (eq? alloc 'js-object-alloc-lazy)
@@ -693,7 +693,7 @@
 		    :constrsize ,constrsize
 		    :method ,(or tmpm (and method (jsfun->lambda method mode return conf #f #f)))))
 	       ((and (eq? vararg 'arguments)
-		     (eq? mode 'strict))
+		     (memq mode '(strict hopscript)))
 		`(,(if (eq? alloc 'js-object-alloc-lazy)
 		       (j2s-make-function-strict-lazy arity)
 		       'js-make-function-strict)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Feb 23 14:53:12 2020 (serrano)                */
+;*    Last change :  Fri Apr  3 17:36:43 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -145,6 +145,12 @@
 ;*    js-get-own-property ::JsSymbolLiteral ...                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-own-property o::JsSymbolLiteral p %this)
+   (js-undefined))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-own-property-descriptor ::JsSymbolLiteral ...             */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-own-property-descriptor o::JsSymbolLiteral p %this)
    (js-undefined))
 
 ;*---------------------------------------------------------------------*/

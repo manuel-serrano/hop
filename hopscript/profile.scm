@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Thu Mar 12 15:36:25 2020 (serrano)                */
+;*    Last change :  Fri Apr  3 17:52:04 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -130,9 +130,9 @@
 			(when (string-contains trc "hopscript:alloc")
 			   (profile-allocs trc))
 			(when (string-contains trc "hopscript:call")
-			   (profile-calls trc symtable))
+			   (profile-calls trc (or symtable '())))
 			(when (string-contains trc "hopscript:symtable")
-			   (profile-symtable trc symtable conf))
+			   (profile-symtable trc (or symtable '()) conf))
 			(when (string-contains trc "hopscript:cmap")
 			   (profile-cmaps trc))
 			(profile-report-end trc conf)
@@ -742,6 +742,7 @@
 	    (profile-config conf)
 	    (display ",\n" )
 	    (display "\"run\": {\n")
+	    (printf "  \"HOPTRACE\": ~s,\n" (getenv "HOPTRACE"))
 	    (printf "  \"commandline\": \"~( )\",\n" (command-line))
 	    (printf "  \"date\": ~s\n  }\n}\n" (date))))))
 
@@ -1412,7 +1413,8 @@
 	    (map cons counts locations))))
    
    (cond
-      ((string-contains trc "format:fprofile")
+      ((or (string-contains trc "format:fprofile")
+	   (string-contains trc "format:json"))
        (with-output-to-port *profile-port*
 	  (lambda ()
 	     (print "\"calls\": [")

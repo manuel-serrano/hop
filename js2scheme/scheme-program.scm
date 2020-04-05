@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Jan 26 07:14:52 2020 (serrano)                */
+;*    Last change :  Fri Apr  3 12:25:30 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -237,6 +237,7 @@
 		      :string (j2s-find-extern-decl headers 'String)
 		      :regexp (j2s-find-extern-decl headers 'RegExp)
 		      :math (j2s-find-extern-decl headers 'Math)
+		      :object (j2s-find-extern-decl headers 'Object)
 		      :program this
 		      conf))
 	     (scmheaders (j2s-scheme headers mode return conf))
@@ -679,6 +680,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-call-locations this::J2SCall vec)
    (with-access::J2SCall this (profid loc)
+      (call-default-walker)
       (when (>=fx profid 0)
 	 (match-case loc
 	    ((at ?- ?point)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Apr  1 16:32:36 2020 (serrano)                */
+;*    Last change :  Fri Apr  3 12:56:22 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -69,6 +69,9 @@
 	   (js-object-literal-spread-assign! ::JsObject ::obj ::JsGlobalObject)
 
 	   (js-object-unmap! ::JsObject)
+
+	   (js-property-descriptor ::JsGlobalObject 
+	      #!key writable enumerable configurable value get set)
 	   
 	   (inline js-is-accessor-descriptor?::bool obj)
 	   (inline js-is-data-descriptor?::bool obj)
@@ -93,7 +96,9 @@
 
 	   (generic js-has-property::bool ::obj ::obj ::JsGlobalObject)
 	   (generic js-has-own-property::bool ::obj ::obj ::JsGlobalObject)
+	   (js-has-own-property-jsobject::bool ::JsObject ::obj ::JsGlobalObject)
 	   (generic js-get-own-property ::obj ::obj ::JsGlobalObject)
+	   (generic js-get-own-property-descriptor ::obj ::obj ::JsGlobalObject)
 	   
 	   (generic js-get-property-value ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-get-jsobject-property-value ::JsObject ::obj ::obj ::JsGlobalObject)
@@ -339,12 +344,34 @@
 ;*    js-init-property! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-init-property! %this)
+   
+   (define (make-cmap inline props)
+      (instantiate::JsConstructMap
+	 (inline inline)
+	 (methods (make-vector (vector-length props)))
+	 (props props)))
+
    (unless (vector? __js_strings)
       (set! __js_strings (&init!))
       (set! miss-object
 	 (instantiateJsObject
 	    (__proto__ (js-null))
-	    (elements (vector (js-undefined)))))))
+	    (elements (vector (js-undefined)))))
+      (with-access::JsGlobalObject %this (js-property-descriptor-value-cmap
+					    js-property-descriptor-getter-cmap)
+	 (set! js-property-descriptor-value-cmap
+	    (make-cmap #f
+	       `#(,(prop (& "writable") (property-flags #t #t #t #t))
+		  ,(prop (& "enumerable") (property-flags #t #t #t #t))
+		  ,(prop (& "configurable") (property-flags #t #t #t #t))
+		  ,(prop (& "value") (property-flags #t #t #t #t)))))
+	 (set! js-property-descriptor-getter-cmap
+	    (make-cmap #f
+	       `#(,(prop (& "writable") (property-flags #t #t #t #t))
+		  ,(prop (& "enumerable") (property-flags #t #t #t #t))
+		  ,(prop (& "configurable") (property-flags #t #t #t #t))
+		  ,(prop (& "get") (property-flags #t #t #t #t))
+		  ,(prop (& "set") (property-flags #t #t #t #t))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object-cmap-id ...                                      */
@@ -1251,6 +1278,23 @@
 	     (not (isa? obj JsAccessorDescriptor)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-property-descriptor ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-property-descriptor %this::JsGlobalObject 
+	   #!key writable enumerable configurable value get set)
+   (with-access::JsGlobalObject %this (js-property-descriptor-value-cmap
+					 js-property-descriptor-getter-cmap)
+      (if value
+	  (instantiateJsObject
+	     (cmap js-property-descriptor-value-cmap)
+	     (__proto__ (js-object-proto %this))
+	     (elements (vector writable enumerable configurable value)))
+	  (instantiateJsObject
+	     (cmap js-property-descriptor-getter-cmap)
+	     (__proto__ (js-object-proto %this))
+	     (elements (vector writable enumerable configurable get set))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-from-property-descriptor ...                                  */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.10.4       */
@@ -1267,56 +1311,59 @@
                           (writable #t)
                           (enumerable #t)
                           (configurable #t))))
-;          (js-invalidate-pcaches-pmap! %this p)
          (js-define-own-property o p newdesc throw %this)))
    
-   (define (from-object obj desc)
-      ;; proxy getOwnPropertyDescriptor returns regular objects
-      ;; as property descriptors
-      (js-put! obj (& "value")
-	 (js-get desc (& "value") %this) #f %this)
-      (js-put! obj (& "get")
-	 (js-get desc (& "get") %this) #f %this)
-      (js-put! obj (& "set")
-	 (js-get desc (& "set") %this) #f %this)
-      (js-put! obj (& "writable")
-	 (js-or (js-get desc (& "writable") %this) #f) #f %this)
-      (js-put! obj (& "enumerable")
-	 (js-or (js-get desc (& "enumerable") %this) #f) #f %this)
-      (js-put! obj (& "configurable")
-	 (js-or (js-get desc (& "configurable") %this) #f) #f %this)
-      obj)
+   (define (from-object desc)
+      (with-access::JsGlobalObject %this (js-object)
+	 (let ((obj (js-new %this js-object)))
+	    ;; proxy getOwnPropertyDescriptor returns regular objects
+	    ;; as property descriptors
+	    (js-put! obj (& "value")
+	       (js-get desc (& "value") %this) #f %this)
+	    (js-put! obj (& "get")
+	       (js-get desc (& "get") %this) #f %this)
+	    (js-put! obj (& "set")
+	       (js-get desc (& "set") %this) #f %this)
+	    (js-put! obj (& "writable")
+	       (js-or (js-get desc (& "writable") %this) #f) #f %this)
+	    (js-put! obj (& "enumerable")
+	       (js-or (js-get desc (& "enumerable") %this) #f) #f %this)
+	    (js-put! obj (& "configurable")
+	       (js-or (js-get desc (& "configurable") %this) #f) #f %this)
+	    obj)))
 
-   (define (from-desc obj desc)
-      (cond
-	 ((isa? desc JsValueDescriptor)
-	  ;; 3
-	  (with-access::JsValueDescriptor desc (writable value)
-	     (js-put! obj (& "value") value #f %this)
-	     (js-put! obj (& "writable") writable #f %this)))
-	 ((isa? desc JsAccessorDescriptor)
-	  ;; 4
-	  (with-access::JsAccessorDescriptor desc (get set)
-	     (js-put! obj (& "get") (or get (js-undefined)) #f %this)
-	     (js-put! obj (& "set") (or set (js-undefined)) #f %this)))
-	 ((isa? desc JsWrapperDescriptor)
-	  (with-access::JsWrapperDescriptor desc (%get writable)
-	     (js-put! obj (& "value") (%get owner owner propname %this) #f %this)
-	     (js-put! obj (& "writable") writable #f %this))))
+   (define (from-desc  desc)
       (with-access::JsPropertyDescriptor desc (enumerable configurable)
-	 ;; 5
-	 (js-put! obj (& "enumerable") enumerable #f %this)
-	 ;; 6
-	 (js-put! obj (& "configurable") configurable #f %this))
-      obj)
+	 (cond
+	    ((isa? desc JsValueDescriptor)
+	     ;; 3
+	     (with-access::JsValueDescriptor desc (writable value)
+		(js-property-descriptor %this
+		   :writable writable
+		   :enumerable enumerable :configurable configurable
+		   :value value)))
+	    ((isa? desc JsAccessorDescriptor)
+	     ;; 4
+	     (with-access::JsAccessorDescriptor desc (get set)
+		(js-property-descriptor %this
+		   :writable set
+		   :enumerable enumerable :configurable configurable
+		   :get (or get (js-undefined))
+		   :set (or set (js-undefined)))))
+	    ((isa? desc JsWrapperDescriptor)
+	     (with-access::JsWrapperDescriptor desc (writable %get)
+		(js-property-descriptor %this
+		   :writable writable
+		   :enumerable enumerable :configurable configurable
+		   :value (%get owner owner propname %this)))))))
 
-   (if (eq? desc (js-undefined))
-       desc
-       (with-access::JsGlobalObject %this (js-object)
-	  (let ((obj (js-new %this js-object)))
-	     (if (js-object? desc)
-		 (from-object obj desc)
-		 (from-desc obj desc))))))
+   (cond
+      ((eq? desc (js-undefined))
+       desc)
+      ((js-object? desc)
+       (from-object desc))
+      (else
+       (from-desc desc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-to-property-descriptor ...                                    */
@@ -1598,16 +1645,22 @@
    (not (eq? (js-get-own-property o p %this) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-has-own-property ::JsObject ...                               */
+;*    js-has-own-property-jsobject ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (js-has-own-property o::JsObject p::obj %this)
-   (jsobject-find o o (js-toname p %this)
+(define (js-has-own-property-jsobject o::JsObject p::obj %this)
+   (jsobject-find o o (if (js-jsname? p) p (js-toname p %this))
       ;; cmap search
       (lambda (owner i) #t)
       ;; prototype search
       (lambda (owner d i) #t)
       ;; not found
       (lambda (o) #f)))
+
+;*---------------------------------------------------------------------*/
+;*    js-has-own-property ::JsObject ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-own-property o::JsObject p::obj %this)
+   (js-has-own-property-jsobject o p %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-upto-property ...                                         */
@@ -1659,6 +1712,44 @@
       ;; prototype search
       (lambda (owner d i)
 	 d)
+      ;; not found
+      (lambda (o) (js-undefined))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-own-property-descriptor ...                               */
+;*---------------------------------------------------------------------*/
+(define-generic (js-get-own-property-descriptor o::obj p::obj %this::JsGlobalObject)
+   ;; This is not compatible with the recent semantics.
+   ;; https://www.ecma-international.org/ecma-262/#sec-object.getownpropertydescriptor
+   (let ((o (js-cast-object o %this "getOwnPropertyDescriptor")))
+      (let ((desc (js-get-own-property o p %this)))
+	 (js-from-property-descriptor %this o desc o))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-own-property-descriptor ::JsObject ...                    */
+;*    -------------------------------------------------------------    */
+;*    This must be overriden for all its subclasses!                   */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-own-property-descriptor o::JsObject p::obj %this::JsGlobalObject)
+   [assert (o) (eq? (object-class o) JsObject)]
+   (jsobject-find o o (js-toname p %this)
+      ;; cmap search
+      (lambda (owner i)
+	 (with-access::JsObject owner (cmap elements)
+	    (if (isa? (vector-ref elements i) JsPropertyDescriptor)
+		(js-from-property-descriptor %this o
+		   (vector-ref elements i) o)
+		(with-access::JsConstructMap cmap (props)
+		   (let ((name (prop-name (vector-ref props i)))
+			 (flags (prop-flags (vector-ref props i))))
+		      (js-property-descriptor %this
+			 :writable (flags-writable? flags)
+			 :enumerable (flags-enumerable? flags)
+			 :configurable (flags-configurable? flags)
+			 :value (vector-ref elements i)))))))
+      ;; prototype search
+      (lambda (owner d i)
+	 (js-from-property-descriptor %this o d o))
       ;; not found
       (lambda (o) (js-undefined))))
 

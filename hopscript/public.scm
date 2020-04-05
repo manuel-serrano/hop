@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Apr  1 16:27:15 2020 (serrano)                */
+;*    Last change :  Fri Apr  3 07:33:15 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -171,6 +171,7 @@
 	   (js-tojsstring-safe::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-tojsstring::JsStringLiteral ::obj ::JsGlobalObject)
 	   
+	   (inline js-toobject-fast::JsObject ::obj ::JsGlobalObject)
 	   (js-toobject::obj ::JsGlobalObject ::obj)
 	   (js-toobject/debug::obj ::JsGlobalObject loc ::obj)
 	   
@@ -328,7 +329,7 @@
 ;*    js-object-alloc-lazy ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-object-alloc-lazy %this ctor::JsFunction)
-   (with-access::JsFunction ctor (constrsize constrmap %prototype alloc)
+   (with-access::JsFunction ctor (constrmap %prototype alloc)
       (unless %prototype
 	 (js-function-setup-prototype! %this ctor)
 	 (set! alloc js-object-alloc))
@@ -1511,7 +1512,13 @@
 	  (js-new1 %this js-string o)))
       (else
        #f)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    js-toobject-fast ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-toobject-fast o %this::JsGlobalObject)
+   (if (js-object? o) o (js-toobject %this o)))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-toobject ...                                                  */
 ;*    -------------------------------------------------------------    */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Mar 12 15:24:52 2020 (serrano)                */
+;*    Last change :  Fri Apr  3 17:31:26 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2565,6 +2565,42 @@
 			   (enumerable #t)
 			   (writable (not frozen))
 			   (configurable (not frozen)))))))
+	    (else
+	     (call-next-method))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-own-property-descriptor ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-own-property-descriptor o::JsArray p %this::JsGlobalObject)
+   (with-access::JsArray o (vec ilen length)
+      (let ((i::uint32 (js-toindex p))
+	    (frozen (js-object-mode-frozen? o)))
+	 (cond
+	    ((<u32 i ilen)
+	     ;; fast zone
+	     (js-property-descriptor %this
+		:value (u32vref vec i)
+		:enumerable #t
+		:writable (not frozen)
+		:configurable (not frozen)))
+	    ;; MS: 23 feb 2017
+	    ((not (js-isindex? i))
+	     (set! p (js-toname p %this))
+	     (if (eq? p (& "length"))
+		 (js-array-update-length-property! o)
+		 (call-next-method)))
+	    ((and (js-object-mode-holey? o)
+		  (<u32 i (fixnum->uint32 (vector-length vec))))
+	     (if (>=u32 i length)
+		 (js-undefined)
+		 (let ((v (u32vref vec i)))
+		    (if (js-absent? v)
+			(call-next-method)
+			(js-property-descriptor %this
+			   :value v
+			   :enumerable #t
+			   :writable (not frozen)
+			   :configurable (not frozen))))))
 	    (else
 	     (call-next-method))))))
 
