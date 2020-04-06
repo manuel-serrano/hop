@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Sat Jan  4 17:51:25 2020 (serrano)                */
+/*    Last change :  Mon Apr  6 09:06:30 2020 (serrano)                */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Proxy objects                            */
@@ -70,6 +70,12 @@ function miscc() {
       }
    } );
    const o4 = Object.create( o3 );
+   
+   #:tprint( "o4 created..." );
+   #:js-debug-object( o4 );
+   #:tprint( "--------------" );
+   #:tprint( "foo=", o4.foo )
+   #:tprint( "hux=", o4.hux )
 
    return o4.foo === 5 && o4.hux === 10;
 }   
@@ -267,7 +273,7 @@ function misco() {
    // test 1
    function test1() {
       console.log( "      misco.test1..." );
-      const h = { get: function() { return 19; } };
+      const h = { get: function( ... rest ) { return 19; } };
       const p = new Proxy( {}, h );
       return test( p ) === 19;
    }
@@ -292,7 +298,7 @@ function misco() {
    function test4() {
       console.log( "      misco.test4..." );
       const h = { get: 3 };
-      h.get = function() { return 2; };
+      h.get = function( ... rest ) { return 2; };
       
       const p = new Proxy( {}, h );
       return test( p ) === 2;
@@ -355,7 +361,7 @@ function misco() {
    // test 7
    function test7() {
       console.log( "      misco.test7..." );
-      const p = new Proxy( {}, { get: function() { return 4; } } );
+      const p = new Proxy( {}, { get: function( ... rest ) { return 4; } } );
       const o = { __proto__: p, y: 18 };
       
       return test( o ) === 4;
@@ -513,7 +519,7 @@ function kangaxe() {
    var passed = false;
    var proxied = { };
    var proxy = new Proxy(proxied, {
-      get: function () {
+      get: function ( ... rest ) {
     	 passed = true;
     	 return 4;
       }
@@ -574,7 +580,7 @@ function kangaxh() {
    // property is a non-writable, non-configurable own data property.
    var proxied = {};
    var proxy = new Proxy(proxied, {
-      set: function () {
+      set: function ( ... rest ) {
     	 passed = true;
     	 return true;
       }
@@ -626,7 +632,7 @@ function kangaxk() {
    // non-configurable own property of the target object.
    var proxied = {};
    var proxy = new Proxy(proxied, {
-      has: function () {
+      has: function ( ... rest ) {
     	 passed = true;
     	 return false;
       }
@@ -668,7 +674,7 @@ function kangaxm() {
    Object.defineProperty(proxied, "foo", { value: 2, writable: true, enumerable: true });
    try {
       delete new Proxy(proxied, {
-    	 deleteProperty: function () {
+    	 deleteProperty: function ( ... rest ) {
       	    passed = true;
       	    return true;
     	 }
@@ -702,7 +708,7 @@ function kangaxo() {
    // own property of the target object.
    var proxied = {};
    var proxy = new Proxy(proxied, {
-      getOwnPropertyDescriptor: function () {
+      getOwnPropertyDescriptor: function ( ... rest ) {
     	 passed = true;
     	 return undefined;
       }
@@ -771,7 +777,7 @@ function kangaxq() {
    // A property cannot be added, if the target object is not extensible.
    var proxied = Object.preventExtensions({});
    var proxy = new Proxy(proxied, {
-      defineProperty: function() {
+      defineProperty: function( ... rest ) {
     	 passed = true;
     	 return true;
       }
@@ -785,7 +791,7 @@ function kangaxq() {
    try {
       Object.defineProperty(
     	 new Proxy({ bar: true }, {
-      	    defineProperty: function () {
+      	    defineProperty: function ( ... rest ) {
                return true;
       	    }
     	 }),
@@ -815,7 +821,7 @@ function kangaxs() {
    // must return the same value as [[GetPrototypeOf]] applied to the proxy object's target object.
    try {
       Object.getPrototypeOf(new Proxy(Object.preventExtensions({}), {
-    	 getPrototypeOf: function () {
+    	 getPrototypeOf: function ( ... rest ) {
       	    passed = true;
       	    return {};
     	 }
@@ -850,7 +856,7 @@ function kangaxu() {
    try {
       Object.setPrototypeOf(
     	 new Proxy(Object.preventExtensions({}), {
-      	    setPrototypeOf: function () {
+      	    setPrototypeOf: function ( ... rest ) {
                passed = true;
                return true;
       	    }
@@ -919,7 +925,7 @@ function kangaxy() {
    // if [[IsExtensible]] applied to the proxy object's target object is false.
    try {
       Object.preventExtensions(new Proxy({}, {
-    	 preventExtensions: function () {
+    	 preventExtensions: function ( ... rest ) {
       	    passed = true;
       	    return true;
     	 }
@@ -948,7 +954,7 @@ function kangaxA() {
    // The Type of each result List element is either String or Symbol.
    try {
       Object.keys(new Proxy({}, {
-    	 ownKeys: function () {
+    	 ownKeys: function ( ... rest ) {
       	    passed = true;
       	    return [2];
     	 }}));
@@ -959,7 +965,7 @@ function kangaxA() {
    Object.defineProperty(proxied, "foo", { value: 2, writable: true, enumerable: true });
    try {
       Object.keys(new Proxy(proxied, {
-    	 ownKeys: function () {
+    	 ownKeys: function ( ... rest ) {
       	    return [];
     	 }}));
       return false;
@@ -993,14 +999,14 @@ function kangaxB() {
 function kangaxC() {
    var passed = false;
    new Proxy(function(){}, {
-      apply: function () { passed = true; }
+      apply: function ( ... rest ) { passed = true; }
    })();
    // A Proxy exotic object only has a [[Call]] internal method if the
    // initial value of its [[ProxyTarget]] internal slot is an object
    // that has a [[Call]] internal method.
    try {
       new Proxy({}, {
-    	 apply: function () {}
+    	 apply: function ( ... rest ) {}
       })();
       return false;
    } catch(e) {}
@@ -1047,7 +1053,7 @@ function kangaxE() {
 }
 
 function kangaxF() {
-   var obj = Proxy.revocable({}, { get: function() { return 5; } });
+   var obj = Proxy.revocable({}, { get: function( ... rest ) { return 5; } });
    var passed = (obj.proxy.foo === 5);
    obj.revoke();
    try {

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Apr  3 07:24:27 2020 (serrano)                */
+;*    Last change :  Mon Apr  6 07:30:16 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -46,11 +46,10 @@
 	      "bgl_make_jsobject")
 	   ($js-make-jsproxy::JsProxy (::obj ::obj ::obj ::obj ::obj ::uint32)
 	      "bgl_make_jsproxy")
-	   ($js-make-jsfunction::JsFunction (::class
-						  ::procedure ::procedure
-						  ::procedure
-						  ::long ::long ::long ::long
-						  ::obj ::obj ::obj)
+	   ($js-make-jsfunction::JsFunction (::procedure ::procedure
+					       ::procedure
+					       ::long ::long ::long ::long
+					       ::obj ::obj ::obj)
 	      "bgl_make_jsfunction")
 	   (macro $jsobject-elements-inline?::bool (::JsObject)
 		  "HOP_JSOBJECT_ELEMENTS_INLINEP")
@@ -241,11 +240,11 @@
 	      (worker::obj read-only)
 	      (svc::obj read-only))
 	   
-	   (final-class JsFunction1::JsFunction)
-	   (final-class JsFunction2::JsFunction)
-	   (final-class JsFunction3::JsFunction)
-	   (final-class JsFunction4::JsFunction)
-	   (final-class JsFunction5::JsFunction)
+;* 	   (final-class JsFunction1::JsFunction)                       */
+;* 	   (final-class JsFunction2::JsFunction)                       */
+;* 	   (final-class JsFunction3::JsFunction)                       */
+;* 	   (final-class JsFunction4::JsFunction)                       */
+;* 	   (final-class JsFunction5::JsFunction)                       */
 	   
 	   (class JsHopFrame::JsObject
 	      (%this read-only)
@@ -565,6 +564,10 @@
 	   
 	   (inline js-object-mode::uint32 ::object)
 	   (inline js-object-mode-set! ::object ::uint32)
+
+	   (inline js-object-function-tag?::bool ::obj)
+	   
+	   (inline js-function-arity::int ::JsFunction)
 
 	   (inline js-proxy-target::JsObject ::JsProxy)
 	   (inline js-proxy-target-set! ::JsProxy ::JsObject)
@@ -1366,10 +1369,23 @@
    (object-header-size-set! o (uint32->fixnum p)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-object-function-tag? ...                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-function-tag? o)
+   (=u32 (JS-OBJECT-MODE-JSFUNCTIONTAG)
+      (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSFUNCTIONTAG))))
+
+;*---------------------------------------------------------------------*/
 ;*    jsindex12-max ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (jsindex12-max::uint32)
    #u32:4096)
+
+;*---------------------------------------------------------------------*/
+;*    js-function-arity ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (js-function-arity o)
+   (with-access::JsFunction o (arity) arity))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-target ...                                              */

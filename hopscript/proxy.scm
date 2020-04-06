@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Fri Apr  3 17:34:32 2020 (serrano)                */
+;*    Last change :  Mon Apr  6 08:09:53 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -205,11 +205,6 @@
 ;*    js-new-proxy ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-new-proxy %this target handler)
-;*    (instantiateJsProxy                                              */
-;*       (cmap proxy-cmap)                                             */
-;*       (elements proxy-elements)                                     */
-;*       (__proto__ t)                                                 */
-;*       (handler h))                                                  */
    ($js-make-jsproxy ;;proxy-cmap proxy-elements
       target handler
       (instantiate::JsPropertyCache)
@@ -221,14 +216,6 @@
 ;*    js-new-proxy/caches ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-new-proxy/caches %this target handler gcache scache acache)
-;*    (instantiateJsProxy                                              */
-;*       (cmap proxy-cmap)                                             */
-;*       (__proto__ t)                                                 */
-;*       (elements proxy-elements)                                     */
-;*       (handler h)                                                   */
-;*       (getcache gcache)                                             */
-;*       (setcache scache)                                             */
-;*       (applycache acache))                                          */
    ($js-make-jsproxy ;; proxy-cmap proxy-elements
       target handler
       gcache scache acache
@@ -274,13 +261,12 @@
 	    (get (js-get-jsobject-name/cache handler (& "get") #f %this
 		    getcache -1 '(imap emap cmap pmap amap vtable))))
 	 (cond
-	    ((and (object? get) (eq? (object-class get) JsFunction3))
-	     (with-access::JsFunction get (procedure)
-		(check target
-		   (js-call3% %this get procedure handler target prop obj))))
 	    ((js-function? get)
-	     (check target
-		(js-call4 %this get handler target prop obj proxy)))
+	     (with-access::JsFunction get (procedure)
+		(check target 
+		   (if (=fx (js-function-arity get) 3)
+		       (procedure handler target prop)
+		       (js-call3% %this get procedure handler target prop obj)))))
 	    ((eq? get (js-undefined))
 	     ;; the difference with JS-GET is here...
 	     (js-get-jsobject target obj prop %this))
@@ -353,13 +339,12 @@
 	    (get (js-get-jsobject-name/cache handler (& "get") #f %this
 		    getcache -1 '(imap emap cmap pmap amap vtable))))
 	 (cond
-	    ((and (object? get) (eq? (object-class get) JsFunction3))
+	    ((js-function? get)
 	     (with-access::JsFunction get (procedure)
 		(check proxy target
-		   (procedure handler target prop))))
-	    ((js-function? get)
-	     (check proxy target
-		(js-call3 %this get handler target prop proxy)))
+		   (if (=fx (js-function-arity get) 3)
+		       (procedure handler target prop)
+		       (js-call3% %this get procedure handler target prop proxy)))))
 	    ((eq? get (js-undefined))
 	     (js-get-jsobject target proxy (js-toname prop %this) %this))
 	    ((js-proxy? get)
@@ -419,7 +404,7 @@
 	    (set (js-get-jsobject-name/cache handler (& "set") #f %this
 		    setcache point '(imap emap cmap pmap amap vtable))))
 	 (cond
-	    ((and (object? set) (eq? (object-class set) JsFunction4))
+	    ((and (js-function? set) (=fx (js-function-arity set) 4))
 	     (unless (js-object-mode-plain? target)
 		(proxy-check-property-value target target prop %this v (& "set")))
 	     (with-access::JsFunction set (procedure)
@@ -480,7 +465,7 @@
    (with-access::JsProxy o ( handler)
       (let ((target (js-proxy-target o))
 	    (delete (js-get-jsobject handler handler (& "deleteProperty") %this)))
-	 (if (js-function? delete)
+	 (if (or (js-function? delete) (js-proxy? delete))
 	     (let ((r (js-call2 %this delete o target p)))
 		(proxy-check-property-delete target p %this r))
 	     (js-delete! target p throw %this)))))
@@ -492,7 +477,7 @@
    (with-access::JsProxy o (handler)
       (let ((target (js-proxy-target o))
 	    (has (js-get-jsobject handler handler (& "has") %this)))
-	 (if (js-function? has)
+	 (if (or (js-function? has) (js-proxy? has))
 	     (let ((v (js-call2 %this has o target p)))
 		(or v (proxy-check-property-has target p %this v)))
 	     (js-has-property target p %this)))))
@@ -505,7 +490,7 @@
    (with-access::JsProxy o (handler)
       (let ((target (js-proxy-target o))
 	    (has (js-get-jsobject handler handler (& "has") %this)))
-	 (if (js-function? has)
+	 (if (or (js-function? has) (js-proxy? has))
 	     (js-call2 %this has o target p)
 	     (js-has-own-property target p %this)))))
 
@@ -517,7 +502,7 @@
    (with-access::JsProxy o (handler)
       (let ((target (js-proxy-target o))
 	    (get (js-get-jsobject handler handler (& "getOwnPropertyDescriptor") %this)))
-	 (if (js-function? get)
+	 (if (or (js-function? get) (js-proxy? get))
 	     (let ((desc (js-call2 %this get o target p)))
 		(proxy-check-property-getown target p %this desc))
 	     (js-get-own-property target p %this)))))
@@ -544,11 +529,13 @@
    (with-access::JsProxy o (handler)
       (let ((target (js-proxy-target o))
 	    (def (js-get-jsobject handler handler (& "defineProperty") %this)))
-	 (if (js-function? def)
+	 (cond
+	    ((or (js-function? def) (js-proxy? def))
 	     (let ((v (js-call3 %this def o target p
 			 (js-from-property-descriptor %this p desc target))))
-		(proxy-check-property-defprop target o p %this desc v))
-	     (js-define-own-property target p desc throw %this)))))
+		(proxy-check-property-defprop target o p %this desc v)))
+	    (else
+	     (js-define-own-property target p desc throw %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-getprototypeof ::JsProxy ...                                  */
@@ -558,7 +545,7 @@
    (with-access::JsProxy o (handler)
       (let ((target (js-proxy-target o))
 	    (get (js-get-jsobject handler handler (& "getPrototypeOf") %this)))
-	 (if (js-function? get)
+	 (if (or (js-function? get) (js-proxy? get))
 	     (let ((v (js-call1 %this get o target)))
 		(proxy-check-property-getproto target o %this msg v))
 	     (js-getprototypeof target %this msg)))))
@@ -571,7 +558,7 @@
    (with-access::JsProxy o (handler)
       (let ((target (js-proxy-target o))
 	    (set (js-get-jsobject handler handler (& "setPrototypeOf") %this)))
-	 (if (js-function? set)
+	 (if (or (js-function? set) (js-proxy? set))
 	     (let ((r (js-call2 %this set o target v)))
 		(proxy-check-property-setproto target o v %this msg r)
 		o)
@@ -585,7 +572,7 @@
    (with-access::JsProxy o (handler)
       (let ((target (js-proxy-target o))
 	    (ise (js-get-jsobject handler handler (& "isExtensible") %this)))
-	 (if (js-function? ise)
+	 (if (or (js-function? ise) (js-proxy? ise))
 	     (let ((r (js-call1 %this ise o target)))
 		(proxy-check-is-extensible target o %this r))
 	     (js-extensible? target %this)))))
@@ -598,7 +585,7 @@
    (with-access::JsProxy o ( handler)
       (let ((target (js-proxy-target o))
 	    (p (js-get-jsobject handler handler (& "preventExtensions") %this)))
-	 (if (js-function? p)
+	 (if (or (js-function? p) (js-proxy? p))
 	     (let ((r (js-call1 %this p o target)))
 		(proxy-check-preventext target o %this r))
 	     (js-preventextensions target %this)))))
@@ -611,7 +598,7 @@
    (with-access::JsProxy o (handler)
       (let ((target (js-proxy-target o))
 	    (ownk (js-get-jsobject handler handler (& "ownKeys") %this)))
-	 (if (js-function? ownk)
+	 (if (or (js-function? ownk) (js-proxy? ownk))
 	     (let ((r (js-call1 %this ownk o target)))
 		(proxy-check-ownkeys target o %this r))
 	     (js-ownkeys target %this)))))

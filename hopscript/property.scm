@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Apr  5 13:18:41 2020 (serrano)                */
+;*    Last change :  Mon Apr  6 08:05:48 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1357,7 +1357,9 @@
 		   :writable writable
 		   :enumerable enumerable
 		   :configurable configurable
-		   :value (%get owner owner propname %this)))))))
+		   :value (%get owner owner propname %this))))
+	    (else
+	     (error "js-from-property-descriptor" "Illegal descriptor" desc)))))
 
    (cond
       ((eq? desc (js-undefined))
@@ -1406,7 +1408,10 @@
 	     ((js-has-property obj (& "value") %this)
 	      (let ((writable (if (js-has-property obj (& "writable") %this)
 				  (js-toboolean (js-get obj (& "writable") %this))
-				  (js-undefined))))
+				  ;; MS care 6ar2020
+				  ;; (js-undefined)
+				  #f
+				  )))
 		 (instantiate::JsValueDescriptor
 		    (name name)
 		    (value (js-get obj (& "value") %this))
@@ -3824,18 +3829,17 @@
 	      ,(let ((call (symbol-append 'js-call
 			      (string->symbol (integer->string largs)))))
 		  `(,call ,%this ,obj ,this ,@args)))
-	     ((and (eq? (object-class ,obj)
-		      ,(symbol-append 'JsFunction
-			  (string->symbol (integer->string (+fx largs 1))))))
+	     ((and (js-object-function-tag? ,obj)
+		   (=fx (js-function-arity ,obj) ,(+fx largs 1)))
 	      (with-access::JsFunction ,obj (procedure)
 		 (set! owner ,obj)
 		 (set! method procedure)
 		 (procedure ,this ,@args)))
-	     ((eq? (object-class ,obj) JsProxy)
+	     ((js-proxy? ,obj)
 	      ,(let ((call (symbol-append 'js-call-proxy/cache-miss
 			      (string->symbol (integer->string largs)))))
 		  `(,call ,%this ,obj ,this ,@args)))
-	     ((and (js-function? ,obj)
+	     ((and (js-object-function-tag? ,obj)
 		   (with-access::JsFunction ,obj (procedure arity)
 		      (and (>=fx arity 0)
 			   (correct-arity? procedure ,(+fx largs 1)))))

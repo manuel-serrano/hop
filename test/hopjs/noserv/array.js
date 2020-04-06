@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Wed Oct 23 14:39:41 2019 (serrano)                */
-/*    Copyright   :  2014-19 Manuel Serrano                            */
+/*    Last change :  Mon Apr  6 08:31:18 2020 (serrano)                */
+/*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
 /*=====================================================================*/
@@ -371,7 +371,7 @@ function optimInObject() {
    const a = new Array( 10 );
    a[ 0 ] = 10;
    
-   a.fill = function() { }
+   a.fill = function( x ) { }
    
    a.fill( 20 );
    
@@ -382,7 +382,7 @@ function optimInProto() {
    const a = new Array( 10 );
    a[ 0 ] = 10;
    
-   Array.prototype.fill = function() { }
+   Array.prototype.fill = function( x ) { }
    
    a.fill( 20 );
    

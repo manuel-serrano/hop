@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/es6-map.js      */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/es6-map.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Feb 25 11:33:29 2019                          */
-/*    Last change :  Tue Feb 26 08:16:36 2019 (serrano)                */
-/*    Copyright   :  2019 Manuel Serrano                               */
+/*    Last change :  Mon Apr  6 08:41:13 2020 (serrano)                */
+/*    Copyright   :  2019-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 MAP object.                              */
 /*=====================================================================*/
@@ -256,7 +256,7 @@ function kangaxh() {
    var map = new Map();
    map.set(-0, "foo");
    var k;
-   map.forEach(function (value, key) {
+   map.forEach(function (value, key, m) {
       k = 1 / key;
    });
    return k === Infinity && map.get(+0) == "foo";

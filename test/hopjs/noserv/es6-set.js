@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Feb 25 11:33:29 2019                          */
-/*    Last change :  Wed Feb 27 07:48:55 2019 (serrano)                */
-/*    Copyright   :  2019 Manuel Serrano                               */
+/*    Last change :  Mon Apr  6 08:41:27 2020 (serrano)                */
+/*    Copyright   :  2019-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 MAP object.                              */
 /*=====================================================================*/
@@ -83,7 +83,7 @@ function mdnd() {
    const set1 = new Set();
    
    set1.add({x: 10, y: 20}).add({x: 20, y: 30});
-   set1.forEach(function(point){
+   set1.forEach(function(point, key, s){
       if (point.x > 10) {
     	 set1.delete(point);
       }
@@ -368,7 +368,7 @@ function kangaxh() {
    var set = new Set();
    set.add(-0);
    var k;
-   set.forEach(function (value) {
+   set.forEach(function (value, key, m) {
       k = 1 / value;
    });
    return k === Infinity && set.has(+0);

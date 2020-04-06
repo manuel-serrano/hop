@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Thu Mar 12 18:11:39 2020 (serrano)                */
+;*    Last change :  Mon Apr  6 07:43:25 2020 (serrano)                */
 ;*    Copyright   :  2006-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -148,16 +148,6 @@
 	     ,js-instantiate-JsFunction-expander))
    (eval `(define-expander instantiateJsService
 	     ,js-instantiate-JsService-expander))
-   (eval `(define-expander instantiateJsFunction1
-	     ,js-instantiate-JsFunction1-expander))
-   (eval `(define-expander instantiateJsFunction2
-	     ,js-instantiate-JsFunction2-expander))
-   (eval `(define-expander instantiateJsFunction3
-	     ,js-instantiate-JsFunction3-expander))
-   (eval `(define-expander instantiateJsFunction4
-	     ,js-instantiate-JsFunction4-expander))
-   (eval `(define-expander instantiateJsFunction5
-	     ,js-instantiate-JsFunction5-expander))
    (eval `(define-expander instantiateJsHopFrame
 	     ,js-instantiate-JsHopFrame-expander))
    (eval `(define-expander instantiateJsServer

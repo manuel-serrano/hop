@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Fri May 17 07:47:31 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Mon Apr  6 07:44:09 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Companion macros                                                 */
 ;*=====================================================================*/
@@ -48,11 +48,6 @@
 (define-instantiate-sans JsSymbol)
 (define-instantiate-sans JsFunction)
 (define-instantiate-sans JsService)
-(define-instantiate-sans JsFunction1)
-(define-instantiate-sans JsFunction2)
-(define-instantiate-sans JsFunction3)
-(define-instantiate-sans JsFunction4)
-(define-instantiate-sans JsFunction5)
 (define-instantiate-sans JsHopFrame)
 (define-instantiate-sans JsServer)
 (define-instantiate-sans JsNumber)

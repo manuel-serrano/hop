@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Apr  3 07:33:15 2020 (serrano)                */
+;*    Last change :  Mon Apr  6 07:28:23 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -241,19 +241,19 @@
 ;*    js-new/function ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-new/function %this::JsGlobalObject f::JsFunction args::pair-nil)
-   (with-access::JsFunction f (construct alloc)
-      (case (length args)
-	 ((0)
-	  (js-new0 %this f))
-	 ((1)
-	  (js-new1 %this f (car args)))
-	 ((2)
-	  (js-new2 %this f (car args) (cadr args)))
-	 ((3)
-	  (js-new3 %this f (car args) (cadr args) (caddr args)))
-	 ((4)
-	  (js-new4 %this f (car args) (cadr args) (caddr args) (cadddr args)))
-	 (else
+   (case (length args)
+      ((0)
+       (js-new0 %this f))
+      ((1)
+       (js-new1 %this f (car args)))
+      ((2)
+       (js-new2 %this f (car args) (cadr args)))
+      ((3)
+       (js-new3 %this f (car args) (cadr args) (caddr args)))
+      ((4)
+       (js-new4 %this f (car args) (cadr args) (caddr args) (cadddr args)))
+      (else
+       (with-access::JsFunction f (construct alloc)
 	  (let* ((o (alloc %this f))
 		 (r (js-apply% %this f construct o args)))
 	     (if (js-object? r) r o))))))

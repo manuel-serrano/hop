@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/call.sch                */
+;*    serrano/prgm/project/hop/hop/hopscript/call.sch                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  7 18:28:45 2017                          */
-;*    Last change :  Sat May  6 06:32:31 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Mon Apr  6 07:39:13 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js-call expansion                                                */
 ;*=====================================================================*/
@@ -14,8 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (js-call0 %this fun this)
    (if (symbol? fun)
-       `(if (and (object? ,fun) (eq? (object-class ,fun) JsFunction1))
-	    (with-access::JsFunction1 ,fun (procedure)
+       `(if (and (js-function? ,fun) (=fx (js-function-arity ,fun) 1))
+	    (with-access::JsFunction ,fun (procedure)
 	       (procedure ,this))
 	    ((@ js-call0 __hopscript_public) ,%this ,fun ,this))
        (let ((fsym (gensym 'fun)))
@@ -29,8 +29,8 @@
    (if (symbol? fun)
        (let ((t0 (gensym 'a0)))
 	  `(let ((,t0 ,a0))
-	      (if (and (object? ,fun) (eq? (object-class ,fun) JsFunction2))
-		  (with-access::JsFunction2 ,fun (procedure)
+	      (if (and (js-function? ,fun) (=fx (js-function-arity ,fun) 2))
+		  (with-access::JsFunction ,fun (procedure)
 		     (procedure ,this ,t0))
 		  ((@ js-call1 __hopscript_public) ,%this ,fun ,this ,t0))))
        (let ((fsym (gensym 'fun)))
@@ -46,8 +46,8 @@
 	     (t1 (gensym 'a1)))
 	  `(let* ((,t0 ,a0)
 		  (,t1 ,a1))
-	      (if (and (object? ,fun) (eq? (object-class ,fun) JsFunction3))
-		   (with-access::JsFunction3 ,fun (procedure)
+	      (if (and (js-function? ,fun) (=fx (js-function-arity ,fun) 3))
+		   (with-access::JsFunction ,fun (procedure)
 		      (procedure ,this ,t0 ,t1))
 		   ((@ js-call2 __hopscript_public)
 		    ,%this ,fun ,this ,t0 ,t1))))
@@ -66,8 +66,8 @@
 	  `(let* ((,t0 ,a0)
 		  (,t1 ,a1)
 		  (,t2 ,a2))
-	      (if (and (object? ,fun) (eq? (object-class ,fun) JsFunction4))
-		  (with-access::JsFunction4 ,fun (procedure)
+	      (if (and (js-function? ,fun) (=fx (js-function-arity ,fun) 4))
+		  (with-access::JsFunction ,fun (procedure)
 		     (procedure ,this ,t0 ,t1 ,t2))
 		  ((@ js-call3 __hopscript_public)
 		   ,%this ,fun ,this ,t0 ,t1 ,t2))))
@@ -88,30 +88,14 @@
 		  (,t1 ,a1)
 		  (,t2 ,a2)
 		  (,t3 ,a3))
-	      (if (and (object? ,fun) (eq? (object-class ,fun) JsFunction5))
-		  (with-access::JsFunction5 ,fun (procedure)
+	      (if (and (js-function? ,fun) (=fx (js-function-arity ,fun) 5))
+		  (with-access::JsFunction ,fun (procedure)
 		     (procedure ,this ,t0 ,t1 ,t2 ,t3))
 		  ((@ js-call4 __hopscript_public)
 		   ,%this ,fun ,this ,t0 ,t1 ,t2 ,t3))))
        (let ((fsym (gensym 'fun)))
 	  `(let ((,fsym ,fun))
 	      (js-call4 ,%this ,fsym ,this ,a0 ,a1 ,a2 ,a3)))))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-call ...                                                      *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-macro (js-call %this fun this . args)                       */
-;*    (match-case args                                                 */
-;*       (() `(js-call0 ,%this ,fun ,this))                            */
-;*       ((?a0) `(js-call1 ,%this ,fun ,this ,a0))                     */
-;*       ((?a0 ?a1) `(js-call2 ,%this ,fun ,this ,a0 ,a1))             */
-;*       ((?a0 ?a1 ?a2) `(js-call3 ,%this ,fun ,this ,a0 ,a1 ,a2))     */
-;*       ((?a0 ?a1 ?a2 ?a3) `(js-call4 ,%this ,fun ,this ,a0 ,a1 ,a2 ,a3)) */
-;*       ((?a0 ?a1 ?a2 ?a3 ?a4) `(js-call5 ,%this ,fun ,this ,a0 ,a1 ,a2 ,a3 ,a4)) */
-;*       ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5) `(js-call6 ,%this ,fun ,this ,a0 ,a1 ,a2 ,a3 ,a4 ,a5)) */
-;*       ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6) `(js-call7 ,%this ,fun ,this ,a0 ,a1 ,a2 ,a3 ,a4 ,a5 ,a6)) */
-;*       ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7) `(js-call8 ,%this ,fun ,this ,a0 ,a1 ,a2 ,a3 ,a4 ,a5 ,a6 ,a7)) */
-;*       (else `(js-calln ,%this ,fun ,this ,@args))))                 */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-call-method ...                                               */
