@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Apr  3 17:51:47 2020 (serrano)                */
+;*    Last change :  Mon Apr  6 17:08:57 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -47,7 +47,7 @@
    (print "      nodejs:compile,")
    (print "      hopscript:cache[num] (*), hopscript:uncache,")
    (print "      hopscript:alloc[num], hopscript:call, hopscript:hint[num] (*)")
-   (print "      hopscript:function[num]")
+   (print "      hopscript:function[num] hopscript:symtable")
    (print "      hopscript:fprofile (alias of \"hopscript:cache hopscript:call format:fprofile\")")
    (print "      format:json, format:fprofile, format:memviz, srcfile=path, logfile=path")
    (print "   - HOPCFLAGS: hopc compilation flags")
