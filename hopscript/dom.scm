@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Fri Apr  3 17:32:54 2020 (serrano)                */
+;*    Last change :  Tue Apr  7 05:21:17 2020 (serrano)                */
 ;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -581,7 +581,7 @@
 (define-method (js-get-own-property-descriptor o::xml-markup p::obj %this::JsGlobalObject)
    (let ((n (js-toname p %this)))
       (if (js-has-property o n %this)
-	  (js-property-descriptor %this
+	  (js-property-descriptor %this #t
 	     :writable #t
 	     :value (js-get o n %this)
 	     :enumerable #t

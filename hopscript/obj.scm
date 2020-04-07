@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul  9 17:41:45 2017                          */
-;*    Last change :  Fri Apr  3 17:33:53 2020 (serrano)                */
+;*    Last change :  Tue Apr  7 05:20:59 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ScmObject binding                                                */
@@ -113,12 +113,12 @@
 	  (k (object-class o))
 	  (f (find-class-field k n)))
       (if f
-	  (js-property-descriptor %this
+	  (js-property-descriptor %this #t
 	     :writable (class-field-mutable? f)
 	     :enumerable #t
 	     :configurable #f
 	     :value (js-obj->jsobject ((class-field-accessor f) o) %this))
-	  (js-property-descriptor %this
+	  (js-property-descriptor %this #t
 	     :writable #f
 	     :enumerable #f
  	     :configurable #f

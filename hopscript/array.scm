@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Apr  3 17:31:26 2020 (serrano)                */
+;*    Last change :  Tue Apr  7 05:20:23 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2578,7 +2578,7 @@
 	 (cond
 	    ((<u32 i ilen)
 	     ;; fast zone
-	     (js-property-descriptor %this
+	     (js-property-descriptor %this #t
 		:value (u32vref vec i)
 		:enumerable #t
 		:writable (not frozen)
@@ -2596,7 +2596,7 @@
 		 (let ((v (u32vref vec i)))
 		    (if (js-absent? v)
 			(call-next-method)
-			(js-property-descriptor %this
+			(js-property-descriptor %this #t
 			   :value v
 			   :enumerable #t
 			   :writable (not frozen)

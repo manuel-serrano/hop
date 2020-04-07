@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Fri Apr  3 17:28:15 2020 (serrano)                */
+;*    Last change :  Tue Apr  7 05:20:02 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -304,7 +304,7 @@
 	    ((not (js-isindex? i))
 	     (call-next-method))
 	    ((<uint32 i (js-arraybuffer-length o))
-	     (js-property-descriptor %this
+	     (js-property-descriptor %this #t
 		:value (js-arraybuffer-ref o (uint32->fixnum i))
 		:enumerable #t
 		:writable (not frozen)
