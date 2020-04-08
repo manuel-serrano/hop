@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Apr  7 05:20:23 2020 (serrano)                */
+;*    Last change :  Tue Apr  7 08:10:46 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -479,8 +479,7 @@
 	    :prototype js-array-prototype
 	    :size 17
 	    :alloc js-array-alloc-ctor
-	    :construct (lambda (this . is)
-			  (js-array-construct %this this is))))
+	    :construct (lambda (this . is) (js-array-construct %this this is))))
       
       ;; other properties of the Array constructor
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.5.1
@@ -509,7 +508,7 @@
 	    ;; 4. If mapfn is undefined, then let mapping be false.
 	    ;; 5. a If IsCallable(mapfn) is false, throw a TypeError exception.
 	    (when (and (not (eq? mapfn (js-undefined)))
-		       (not (js-function? mapfn)))
+		       (not (js-procedure? mapfn)))
 	       (js-raise-type-error %this
 		  "Array.from: when provided, the second argument must be a function"
 		  mapfn))
@@ -1054,7 +1053,7 @@
    (define (array-prototype-tostring this::obj)
       (let* ((o (js-toobject %this this))
 	     (func (js-get this (& "join") %this)))
-	 (if (js-function? func)
+	 (if (js-procedure? func)
 	     (js-call1 %this func this (js-undefined))
 	     (js-tojsstring this %this))))
    
@@ -2133,7 +2132,7 @@
       
       (let* ((o (js-toobject %this this))
 	     (len::uint32 (js-get-lengthu32 o %this)))
-	 (if (not (js-function? proc))
+	 (if (not (js-procedure? proc))
 	     (js-raise-type-error %this "Not a procedure ~s" proc)
 	     ;; find the accumulator init value
 	     (if (null? init)
@@ -2173,7 +2172,7 @@
       
       (let* ((o (js-toobject %this this))
 	     (len::uint32 (js-get-lengthu32 o %this)))
-	 (if (not (js-function? proc))
+	 (if (not (js-procedure? proc))
 	     (js-raise-type-error %this "Not a procedure ~s" proc)
 	     ;; find the accumulator init value
 	     (if (null? init)
@@ -3353,8 +3352,8 @@
    (define (js-default-array-accessor-property! desc)
       (js-default-array-property! desc)
       (with-access::JsAccessorDescriptor desc (get set)
-	 (unless (js-function? get) (set! get (js-undefined)))
-	 (unless (js-function? set) (set! set (js-undefined)))))
+	 (unless (js-procedure? get) (set! get (js-undefined)))
+	 (unless (js-procedure? set) (set! set (js-undefined)))))
    
    (define (js-default-array-generic-property! desc)
       (cond
@@ -3499,12 +3498,12 @@
       (cond
 	 ((not (js-array? o))
 	  (let ((len (js-get-lengthu32 o %this)))
-	     (if (not (js-function? proc))
+	     (if (not (js-procedure? proc))
 		 (js-raise-type-error %this "Not a procedure ~s" proc)
 		 (array-iterator this o len proc t #u32:0 %this))))
 	 (else
 	  [%assert-array! o "array-prototype-iterator"]
-	  (if (not (js-function? proc))
+	  (if (not (js-procedure? proc))
 	      (js-raise-type-error %this "Not a procedure ~s" proc)
 	      (with-access::JsArray o (length vec ilen)
 		 (if (js-array-inlined? o)
@@ -3992,7 +3991,7 @@
 		(loop (+u32 i 1)))
 	     a)))
    
-   (define (vector-map this o len::uint32 proc::JsFunction thisarg i::uint32 %this)
+   (define (vector-map this o len::uint32 proc thisarg i::uint32 %this)
       (with-access::JsArray o (vec ilen length)
 	 (let ((v (js-create-vector (vector-length vec)))
 	       (l length))
@@ -4010,7 +4009,7 @@
 		  (else
 		   (let ((val (vector-ref vec (uint32->fixnum i))))
 		      (vector-set! v (uint32->fixnum i)
-			 (js-call3 %this proc thisarg val
+			 ((@ js-call3 __hopscript_public) %this proc thisarg val
 			    (js-uint32-tointeger i) o))
 		      (loop (+u32 i 1)))))))))
    
@@ -4412,7 +4411,7 @@
       (cond
 	 ((eq? comparefn (js-undefined))
 	  default-compare)
-	 ((not (js-function? comparefn))
+	 ((not (js-procedure? comparefn))
 	  (js-raise-type-error %this
 	     "sort: argument not a function ~s" comparefn))
 	 (else
@@ -4588,7 +4587,7 @@
 
    (define (return it res)
       (let ((ret (js-get it (& "return") %this)))
-	 (if (js-function? ret)
+	 (if (js-procedure? ret)
 	     (js-call0 %this ret it)
 	     (js-undefined)))
       res)
@@ -4597,7 +4596,7 @@
        value
        (with-access::JsGlobalObject %this (js-symbol-iterator)
 	  (let ((proc (js-get value js-symbol-iterator %this)))
-	     (if (js-function? proc)
+	     (if (js-procedure? proc)
 		 (let* ((vec (make-vector size (js-absent)))
 			(res (js-vector->jsarray vec %this))
 			(it (js-call0 %this proc value)))

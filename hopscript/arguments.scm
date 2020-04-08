@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Fri Apr  3 17:27:33 2020 (serrano)                */
+;*    Last change :  Wed Apr  8 08:26:02 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -334,8 +334,8 @@
 ;*    function1->proc ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (function1->proc fun %this::JsGlobalObject)
-   (if (js-function? fun)
-       (with-access::JsFunction fun (procedure)
+   (if (js-procedure? fun)
+       (with-access::JsProcedure fun (procedure)
 	  (if (correct-arity? procedure 2)
 	      (lambda (this v owner pname %this)
 		 (procedure this v))
@@ -368,7 +368,7 @@
 	      (with-access::JsAccessorDescriptor desc ((dset set))
 		 (when (isa? ismapped JsAccessorDescriptor)
 		    (with-access::JsAccessorDescriptor ismapped (set %set)
-		       (if (js-function? dset)
+		       (if (js-procedure? dset)
 			   (begin
 			      (set! set dset)
 			      (set! %set (function1->proc dset %this)))
@@ -381,7 +381,7 @@
 		       (cond
 			  ((isa? ismapped JsAccessorDescriptor)
 			   (with-access::JsAccessorDescriptor ismapped (set)
-			      (when (js-function? set)
+			      (when (js-procedure? set)
 				 (js-call1 %this set o value))))
 			  ((isa? ismapped JsValueDescriptor)
 			   (with-access::JsValueDescriptor ismapped
@@ -508,7 +508,7 @@
 		       (js-strict-arguments-vector %this vec)
 		       (js-arguments %this vec))))
 	  (vector-shrink! vec 0)
-	  target)))
+	  arg)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments ...                                                 */
@@ -663,7 +663,7 @@
 (define-method (js-for-of o::JsArguments proc close %this)
    (with-access::JsGlobalObject %this (js-symbol-iterator)
       (let ((fun (js-get o js-symbol-iterator %this)))
-	 (if (js-function? fun)
+	 (if (js-procedure? fun)
 	     (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
 	     (with-access::JsArguments o (vec)
 		(let ((len (minfx (vector-length vec)

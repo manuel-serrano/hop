@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Apr  3 12:27:50 2020 (serrano)                */
+;*    Last change :  Wed Apr  8 08:31:09 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -203,7 +203,7 @@
 	    (with-access::JsGlobalObject %this (js-service-pcache)
 	       (let ((proc (js-get-jsobject-name/cache obj (& "toResponse") #f %this
 			      (js-pcache-ref js-service-pcache 0))))
-		  (if (js-function? proc)
+		  (if (js-procedure? proc)
 		      (scheme->response (js-call1 %this proc obj req) req ctx)
 		      (let ((rep (call-next-method)))
 			 (if (isa? rep http-response-hop)
@@ -546,14 +546,10 @@
       
       ;; Object.prototype
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.1
-      (define (%js-object this . value)
-	 (cond
-	    ((null? value)
-	     (js-new %this js-object (js-undefined)))
-	    ((or (eq? (car value) (js-null)) (eq? (car value) (js-undefined)))
-	     (js-new %this js-object (car value)))
-	    (else
-	     (js-toobject %this (car value)))))
+      (define (%js-object this value)
+	 (if (or (null? value) (eq? value (js-undefined)))
+	     (js-new %this js-object (js-undefined))
+	     (js-toobject %this value)))
 
       ;; Object.constructor
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.2.1
@@ -1000,9 +996,10 @@
 		       (js-string->jsstring "[object")
 		       (js-jsstring-append tag
 			  (js-string->jsstring "]")))
-		    (let* ((clazz (if (js-function? obj)
-				      JsFunction
-				      (object-class obj)))
+		    (let* ((clazz (cond
+				     ((js-function? obj) JsFunction)
+				     ((js-procedure? obj) JsProcedure)
+				     (else (object-class obj))))
 			   (name (symbol->string! (class-name clazz))))
 		       (cond
 			  ((not (string-prefix? "Js" name))
@@ -1293,7 +1290,7 @@
 	 (if (null? fields)
 	     (err)
 	     (let ((proc (js-get o (car fields) %this)))
-		(if (js-function? proc)
+		(if (js-procedure? proc)
 		    (let ((r (js-call0 %this proc o)))
 		       (if (not (js-object? r))
 			   r

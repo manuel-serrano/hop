@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/worker.scm                             */
+;*    serrano/prgm/project/hop/hop/hopscript/worker.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sun Feb 23 14:47:13 2020 (serrano)                */
+;*    Last change :  Wed Apr  8 08:24:08 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -398,7 +398,7 @@
       (with-access::WorkerHopThread thread (onmessage %this)
 	 (js-worker-push-thunk! thread "post-master-message"
 	    (lambda ()
-	       (when (js-function? onmessage)
+	       (when (js-procedure? onmessage)
 		  (let ((e (instantiate::MessageEvent
 			      (name "message")
 			      (target this)

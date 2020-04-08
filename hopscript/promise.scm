@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/promise.scm                            */
+;*    serrano/prgm/project/hop/hop/hopscript/promise.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Sun Feb 23 14:53:48 2020 (serrano)                */
+;*    Last change :  Tue Apr  7 18:05:49 2020 (serrano)                */
 ;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -77,13 +77,13 @@
 	    (lambda ()
 	       (with-access::WorkerHopThread worker (%this)
 		  (js-promise-then-catch %this obj 
-		     (js-make-function %this
+		     (js-make-procedure %this
 			(lambda (this resp)
 			   (js-promise-async obj
 			      (lambda ()
 				 (k (scheme->response resp req %this)))))
-			1 (& "reply"))
-		     (js-make-function %this
+			2)
+		     (js-make-procedure %this
 			(lambda (this rej)
 			   (let ((errobj (url-path-encode
 					    (obj->string rej 'hop-client))))
@@ -96,7 +96,7 @@
 					  (header `((Hop-Error: . ,errobj)))
 					  (value rej)
 					  (ctx %this)))))))
-			1 (& "reject"))
+			2)
 		     obj))))))
    
    (with-access::JsPromise obj (worker)
@@ -150,12 +150,12 @@
 	    ((js-get iterable js-symbol-iterator %this)
 	     =>
 	     (lambda (iterator)
-		(if (not (js-function? iterator))
+		(if (not (js-procedure? iterator))
 		    (err "Promise.all is not a function")
 		    (let ((it (js-call0 %this iterator iterable)))
 		       (let loop ((acc '()))
 			  (let ((next (js-get it (& "next") %this)))
-			     (if (js-function? next)
+			     (if (js-procedure? next)
 				 (let* ((v (js-call0 %this next it))
 					(done (js-get v (& "done") %this))
 					(val (js-get v (& "value") %this)))
@@ -180,7 +180,7 @@
    ;; http://www.ecma-international.org/ecma-262/6.0/#25.4.3.1
    (define (js-promise-construct o executor)
       (cond
-	 ((not (js-function? executor))
+	 ((not (js-procedure? executor))
 	  (js-raise-type-error %this "argument not a procedure ~a"
 	     (typeof executor)))
 	 ((not (isa? o JsPromise))
@@ -365,8 +365,8 @@
 (define (js-promise-then-catch %this::JsGlobalObject this::JsPromise proc fail np)
    (with-access::JsPromise this (thens catches state val worker %name)
       ;; .5 & .6
-      (let ((fullfill (cons np (if (js-function? proc) proc 'identity)))
-	    (reject (cons np (if (js-function? fail) fail 'thrower))))
+      (let ((fullfill (cons np (if (js-procedure? proc) proc 'identity)))
+	    (reject (cons np (if (js-procedure? fail) fail 'thrower))))
 	 (case state
 	    ((pending)
 	     ;; .7
@@ -521,7 +521,7 @@
 	 (cond
 	    ((eq? handler 'identity)
 	     ;; .4
-	     (if (js-function? resolver)
+	     (if (js-procedure? resolver)
 		 (js-call1 %this resolver (js-undefined) argument)
 		 argument))
 	    ((eq? handler 'thrower)
@@ -580,7 +580,7 @@
 		;; resolve .9.a
 		(js-reject o e))
 	     (let ((then (js-get resolution (& "then") %this)))
-		(if (not (js-function? then))
+		(if (not (js-procedure? then))
 		    ;; resolve .11
 		    (js-fullfill o resolution)
 		    ;; resolve .12

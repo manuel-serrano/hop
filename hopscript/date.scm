@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Mar 10 16:10:34 2020 (serrano)                */
+;*    Last change :  Wed Apr  8 08:27:30 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -484,7 +484,7 @@
 	 (if (and (js-number? tv) (not (integer? tv)))
 	     (js-null)
 	     (let ((p (js-get o (& "toISOString") %this)))
-		(if (js-function? p)
+		(if (js-procedure? p)
 		    (js-call0 %this p o)
 		    (js-raise-type-error %this
 		       "toJSON: argument not a function ~s" p))))))

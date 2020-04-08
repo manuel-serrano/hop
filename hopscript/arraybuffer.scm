@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Tue Apr  7 05:20:02 2020 (serrano)                */
+;*    Last change :  Wed Apr  8 08:26:10 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -357,7 +357,7 @@
 		    (if (js-is-accessor-descriptor? desc)
 			;; 5
 			(with-access::JsAccessorDescriptor desc ((setter set))
-			   (if (js-function? setter)
+			   (if (js-procedure? setter)
 			       (js-call1 %this setter o v)
 			       (js-undefined)))
 			(let ((newdesc (instantiate::JsValueDescriptor

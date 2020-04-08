@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/websocket.scm                          */
+;*    serrano/prgm/project/hop/hop/hopscript/websocket.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Sun Feb 23 14:59:20 2020 (serrano)                */
+;*    Last change :  Wed Apr  8 08:34:09 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -525,12 +525,8 @@
       (let ((g (gensym)))
 	 (js-worker-push-thunk! worker "ws-listener"
 	    (lambda ()
-	       ;;(with-access::WorkerHopThread worker (%this)
-	       (when (js-function? (cdr action))
-		  (with-handler
-		     (lambda (e)
-			(exception-notify e))
-		     (js-call1 %this (cdr action) this evt))))))))
+	       (when (js-procedure? (cdr action))
+		  (js-call1 %this (cdr action) this evt)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-websocket-listener! ...                                     */

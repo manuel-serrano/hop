@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/set.scm                                */
+;*    serrano/prgm/project/hop/hop/hopscript/set.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Sun Feb 23 14:55:20 2020 (serrano)                */
+;*    Last change :  Wed Apr  8 08:33:51 2020 (serrano)                */
 ;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -152,16 +152,16 @@
 
       (define (close-iterator iter)
 	 (let ((return (js-get iter (& "return") %this)))
-	    (when (js-function? return)
+	    (when (js-procedure? return)
 	       (js-call0 %this return iter))))
       
       (with-access::JsGlobalObject %this (js-symbol-iterator)
 	 (let ((i (js-get iterable js-symbol-iterator %this)))
-	    (if (js-function? i)
+	    (if (js-procedure? i)
 		(let ((iter (js-call0 %this i iterable)))
 		   (if (js-object? iter)
 		       (let ((next (js-get iter (& "next") %this)))
-			  (if (not (js-function? next))
+			  (if (not (js-procedure? next))
 			      (js-raise-type-error %this
 				 "Illegal IteratorValue ~a" next)
 			      (with-handler
@@ -284,7 +284,7 @@
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.foreach
    (define (js-set-for-each this fn . thisarg)
       (if (isa? this JsMap)
-	  (if (js-function? fn)
+	  (if (js-procedure? fn)
 	      (let ((t (if (pair? thisarg) (car thisarg) (js-undefined))))
 		 (with-access::JsMap this (vec)
 		    (let loop ((i 0))

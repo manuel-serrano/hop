@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Apr  6 07:30:16 2020 (serrano)                */
+;*    Last change :  Tue Apr  7 05:47:09 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -42,6 +42,9 @@
 					      ::obj ::obj
 					      ::long ::uint32)
 	      "bgl_init_jsalloc_function")
+	   ($js-init-jsalloc-procedure::int (::JsConstructMap
+					       ::uint32)
+	      "bgl_init_jsalloc_procedure")
 	   ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsobject")
 	   ($js-make-jsproxy::JsProxy (::obj ::obj ::obj ::obj ::obj ::uint32)
@@ -51,6 +54,8 @@
 					       ::long ::long ::long ::long
 					       ::obj ::obj ::obj)
 	      "bgl_make_jsfunction")
+	   ($js-make-jsprocedure::JsProcedure (::procedure ::long ::obj)
+	      "bgl_make_jsprocedure")
 	   (macro $jsobject-elements-inline?::bool (::JsObject)
 		  "HOP_JSOBJECT_ELEMENTS_INLINEP")
 	   (macro $jsobject-vector-inline?::bool (::JsArray)
@@ -215,9 +220,13 @@
 
 	   (final-class JsSymbolLiteral
 	      val::JsStringLiteral)
-	   
-	   (class JsFunction::JsObject
-	      (procedure::procedure read-only)
+
+	   (class JsProcedure::JsObject
+	      ;; see js-call@public.scm for arity documentation
+	      (arity::int read-only (default -1))
+	      (procedure::procedure read-only))
+	      
+	   (class JsFunction::JsProcedure
 	      (method::procedure read-only)
 	      (construct::procedure read-only)
 	      ;; alloc cannot be read-only, see _buffer.scm
@@ -232,19 +241,12 @@
 	      %prototype
 	      (minlen::int read-only (default -1))
 	      (len::int read-only)
-	      (arity::int read-only (default -1))
 	      (constrsize::int (default 3))
 	      (maxconstrsize::int read-only (default 100)))
 	   
 	   (class JsService::JsFunction
 	      (worker::obj read-only)
 	      (svc::obj read-only))
-	   
-;* 	   (final-class JsFunction1::JsFunction)                       */
-;* 	   (final-class JsFunction2::JsFunction)                       */
-;* 	   (final-class JsFunction3::JsFunction)                       */
-;* 	   (final-class JsFunction4::JsFunction)                       */
-;* 	   (final-class JsFunction5::JsFunction)                       */
 	   
 	   (class JsHopFrame::JsObject
 	      (%this read-only)
@@ -435,6 +437,8 @@
 	   (inline js-object-default-mode::uint32)
 	   (inline js-array-default-mode::uint32)
 	   (inline js-function-default-mode::uint32)
+	   (inline js-procedure-default-mode::uint32)
+	   (inline js-procedure-hopscript-mode::uint32)
 	   (inline js-jsstring-default-ascii-mode::uint32)
 	   (inline js-jsstring-normalized-ascii-mode::uint32)
 	   (inline js-jsstring-default-index-mode::uint32)
@@ -480,6 +484,7 @@
 	   (js-object-elements-inline?::bool ::JsObject)
 	   
 	   (inline JS-OBJECT-MODE-JSSTRINGTAG::uint32)
+	   (inline JS-OBJECT-MODE-JSPROCEDURETAG::uint32)
 	   (inline JS-OBJECT-MODE-JSFUNCTIONTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYTAG::uint32)
 	   (inline JS-OBJECT-MODE-EXTENSIBLE::uint32)
@@ -493,6 +498,7 @@
 	   (inline JS-OBJECT-MODE-HASNUMERALPROP::uint32)
 	   (inline JS-OBJECT-MODE-PLAIN::uint32)
 	   (inline JS-OBJECT-MODE-REVOKED::uint32)
+	   (inline JS-OBJECT-MODE-HOPSCRIPT::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYHOLEY::uint32)
 	   (inline JS-OBJECT-MODE-JSSTRINGNORMALIZED::uint32)
 	   (inline JS-OBJECT-MODE-JSSTRINGASCII::uint32)
@@ -552,6 +558,8 @@
 	   (inline js-array?::bool ::obj)
 	   (inline js-function?::bool ::obj)
 	   (inline js-function-proxy?::bool ::obj)
+	   (inline js-procedure?::bool ::obj)
+	   (inline js-callable?::bool ::obj)
 	   (inline js-symbol?::bool ::obj)
 	   (inline js-proxy?::bool ::obj)
 	   (js-proxy-array?::bool ::obj)
@@ -568,7 +576,9 @@
 	   (inline js-object-function-tag?::bool ::obj)
 	   
 	   (inline js-function-arity::int ::JsFunction)
-
+	   (inline js-procedure-arity::int ::JsProcedure)
+	   (inline js-procedure-hopscript-mode?::bool ::JsProcedure)
+	   
 	   (inline js-proxy-target::JsObject ::JsProxy)
 	   (inline js-proxy-target-set! ::JsProxy ::JsObject)
 	   
@@ -672,8 +682,22 @@
 	 (bit-oru32 (JS-OBJECT-MODE-INLINE)
 	    (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
 	       (bit-oru32 (JS-OBJECT-MODE-JSFUNCTIONTAG)
+		  (bit-oru32 (JS-OBJECT-MODE-JSPROCEDURETAG)
+		     (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
+			(JS-OBJECT-MODE-HASNUMERALPROP)))))))))
+
+(define-inline (js-procedure-default-mode)
+   (bit-oru32 (JS-OBJECT-MODE-EXTENSIBLE)
+      (bit-oru32 (JS-OBJECT-MODE-PLAIN)
+	 (bit-oru32 (JS-OBJECT-MODE-INLINE)
+	    (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
+	       (bit-oru32 (JS-OBJECT-MODE-JSPROCEDURETAG)
 		  (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
 		     (JS-OBJECT-MODE-HASNUMERALPROP))))))))
+
+(define-inline (js-procedure-hopscript-mode)
+   (bit-oru32 (js-procedure-default-mode)
+      (JS-OBJECT-MODE-HOPSCRIPT)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Object header tag (max size 1<<15)                               */
@@ -693,9 +717,11 @@
 (define-inline (JS-OBJECT-MODE-SEALED) #u32:1024)
 (define-inline (JS-OBJECT-MODE-FROZEN) #u32:2048)
 (define-inline (JS-OBJECT-MODE-REVOKED) #u32:4096)
+(define-inline (JS-OBJECT-MODE-HOPSCRIPT) #u32:4096)
+(define-inline (JS-OBJECT-MODE-JSPROCEDURETAG) #u32:8192)
 ;; WARNING: must be the two last constants (see js-array?)
-(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:8192)
-(define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:16384)
+(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:16384)
+(define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:32768)
 
 (define-macro (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1)
 (define-macro (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:2)
@@ -710,9 +736,11 @@
 (define-macro (JS-OBJECT-MODE-SEALED) #u32:1024)
 (define-macro (JS-OBJECT-MODE-FROZEN) #u32:2048)
 (define-macro (JS-OBJECT-MODE-REVOKED) #u32:4096)
+(define-macro (JS-OBJECT-MODE-HOPSCRIPT) #u32:4096)
+(define-macro (JS-OBJECT-MODE-JSPROCEDURETAG) #u32:8192)
 ;; WARNING: must be the two last constants (see js-array?)
-(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:8192)
-(define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:16384)
+(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:16384)
+(define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:32768)
 
 (define-inline (JS-OBJECT-MODE-JSSTRINGASCII) #u32:8)
 (define-inline (JS-OBJECT-MODE-JSSTRINGUTF8) #u32:16)
@@ -1308,6 +1336,24 @@
    (and (%object? o) (or (js-function? o) (js-proxy-function? o))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-procedure? ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-procedure? o)
+   (and (%object? o)
+	(=u32 (JS-OBJECT-MODE-JSPROCEDURETAG)
+	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSPROCEDURETAG)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-callable? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (js-callable? o)
+   (and (%object? o)
+	(not (=u32 #u32:0
+		(bit-andu32 (js-object-mode o)
+		   (bit-oru32 (JS-OBJECT-MODE-JSFUNCTIONTAG)
+		      (JS-OBJECT-MODE-JSPROCEDURETAG)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-symbol? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-symbol? o)
@@ -1386,6 +1432,20 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function-arity o)
    (with-access::JsFunction o (arity) arity))
+
+;*---------------------------------------------------------------------*/
+;*    js-procedure-arity ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-procedure-arity o)
+   (with-access::JsProcedure o (arity)
+      arity))
+
+;*---------------------------------------------------------------------*/
+;*    js-procedure-hopscript-mode? ...                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (js-procedure-hopscript-mode? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-HOPSCRIPT) (js-object-mode o))
+      (JS-OBJECT-MODE-HOPSCRIPT)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-target ...                                              */

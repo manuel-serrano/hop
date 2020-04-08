@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/lib.scm                                */
+;*    serrano/prgm/project/hop/hop/hopscript/lib.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Sun Feb 23 14:47:44 2020 (serrano)                */
+;*    Last change :  Wed Apr  8 08:30:29 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -299,7 +299,7 @@
 			 (vector-set! props i
 			    (prop name (property-flags-default)))
 			 (vector-set! vec i val)
-			 (when (js-function? val)
+			 (when (js-procedure? val)
 			    (vector-set! methods i #t))
 			 (loop (+fx i 1) (cdr alist))))))))))
 
@@ -326,7 +326,7 @@
 		       (val (js-obj->jsobject (cadr plist) %this)))
 		   (vector-set! props i (prop name (property-flags-default)))
 		   (vector-set! elements i val)
-		   (when (js-function? val) (vector-set! methods i #t))
+		   (when (js-procedure? val) (vector-set! methods i #t))
 		   (loop (+fx i 1) (cddr plist))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -444,7 +444,7 @@
    (with-access::JsGlobalObject %this (js-symbol-iterator)
       (let ((fun (js-get o js-symbol-iterator %this))
 	    (acc '()))
-	 (if (js-function? fun)
+	 (if (js-procedure? fun)
 	     (begin
 		(js-for-of-iterator (js-call0 %this fun o) o
 		   (lambda (e %this) (set! acc (cons e acc))) #f %this)

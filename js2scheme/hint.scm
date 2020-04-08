@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Dec 23 07:24:12 2019 (serrano)                */
-;*    Copyright   :  2016-19 Manuel Serrano                            */
+;*    Last change :  Tue Apr  7 10:05:37 2020 (serrano)                */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
 ;*=====================================================================*/
@@ -75,11 +75,12 @@
 (define (j2s-known-type ty)
    (cond
       ((memq ty
-	  '(integer real number bool string
-	    regexp array date arguments function class object promise
+	  '(any unknown
+	    integer real number bool string
+	    regexp array date arguments function arrow procedure
+	    class object promise
 	    null undefined void
-	    any unknown
-	    cmap scmstring procedure tilde pair no-string no-integer))
+	    cmap scmstring tilde pair no-string no-integer))
        ty)
       ((memq ty '(index indexof length)) 'integer)
       ((memq ty '(ureal1 real1 real4)) 'real)

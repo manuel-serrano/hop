@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.2.x/test/hopjs/serv/asyncSrvRsp2.js       */
+/*    serrano/prgm/project/hop/hop/test/hopjs/serv/asyncSrvRsp2.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Mar  1 07:13:49 2016                          */
-/*    Last change :  Mon Jun  4 19:20:23 2018 (serrano)                */
-/*    Copyright   :  2016-18 Manuel Serrano                            */
+/*    Last change :  Wed Apr  8 08:12:20 2020 (serrano)                */
+/*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing asynchronous responses                                   */
 /*=====================================================================*/
@@ -13,11 +13,12 @@
 var assert = require( "assert" );
 
 service bar( arg ) {
-   console.log( "bar ", arg );
+   console.log( ">>> bar ", arg );
    return new Promise( (resolve, reject) => {
       for( let i = 0; i < 1000000; i++ ) {
 	 ;
       }
+      console.log( "<<< bar resolve ", arg );
       resolve( arg );
    } )
 }
@@ -28,6 +29,7 @@ function test() {
    function call( i ) {
       bar( i ).post()
 	 .then( function( v ) {
+	    console.log( "--- bar received ", v );
 	    pending -= 1;
 	    if( pending == 0 ) process.exit( 0 );
 	 } )

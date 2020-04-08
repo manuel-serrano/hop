@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Mar  7 06:35:55 2020 (serrano)                */
+;*    Last change :  Wed Apr  8 08:30:13 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -133,7 +133,7 @@
 		      (js-raise-syntax-error %this msg #f
 			 (if (string? fname) (js-string->jsstring fname) ip)
 			 loc))
-      :reviver (when (js-function? reviver)
+      :reviver (when (js-procedure? reviver)
 		  (lambda (this key val)
 		     (let ((res (js-call2 %this reviver this key val)))
 			(unless (eq? res (js-undefined))
@@ -163,7 +163,7 @@
 	 (if (js-object? value)
 	     (let ((tojson (js-get-name/cache value (& "toJSON") #f %this
 			      (js-pcache-ref js-json-pcache 0))))
-		(if (js-function? tojson)
+		(if (js-procedure? tojson)
 		    (toVALUE (js-call1 %this tojson value key))
 		    (toVALUE value)))
 	     value)))
@@ -266,7 +266,7 @@
    
    (define rep
       (cond
-	 ((js-function? replacer) replacer)
+	 ((js-procedure? replacer) replacer)
 	 ((js-array? replacer) replacer)
 	 ((isa? replacer JsTypedArray) replacer)
 	 ((isa? replacer JsArrayBufferView) replacer)
@@ -355,7 +355,7 @@
    (define (str key holder stack #!optional (symbol (js-undefined)))
       (let* ((value (js-get-jsobject/name-cache holder key %this))
 	     (value (toJSON value key))
-	     (value (if (js-function? rep)
+	     (value (if (js-procedure? rep)
 			(toVALUE (js-call2 %this rep holder key value))
 			value))
 	     (mind gap))
@@ -389,7 +389,7 @@
 	    (else
 	     (set! gap (string-append gap indent))
 	     (cond
-		((js-function? value)
+		((js-procedure? value)
 		 (js-undefined))
 		((or (js-array? value) (js-proxy-array? value))
 		 (let ((res (lst holder value mind "[" "]"
@@ -398,7 +398,7 @@
 				     (js-ascii->jsstring "null"))))))
 		    (set! gap mind)
 		    res))
-		((and (js-object? rep) (not (js-function? rep)))
+		((and (js-object? rep) (not (js-procedure? rep)))
 		 (let ((res (lst holder value mind "{" "}"
 			       (lambda (i)
 				  (let ((k (js-get rep i %this)))

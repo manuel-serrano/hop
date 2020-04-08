@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/error.scm                              */
+;*    serrano/prgm/project/hop/hop/hopscript/error.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Feb 23 14:45:46 2020 (serrano)                */
+;*    Last change :  Wed Apr  8 08:27:37 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -362,7 +362,7 @@
 			  (lambda (o)
 			     (let ((prepare (js-get js-error
 					       (& "prepareStackTrace") %this)))
-				(if (js-function? prepare)
+				(if (js-procedure? prepare)
 				    (let ((frames (js-vector->jsarray
 						     (list->vector
 							(filter-map hop-frame->js-frame

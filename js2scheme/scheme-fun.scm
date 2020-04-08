@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Mon Apr  6 08:15:41 2020 (serrano)                */
+;*    Last change :  Tue Apr  7 05:28:55 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -150,19 +150,36 @@
 ;*---------------------------------------------------------------------*/
 (define (declfun-fun this::J2SDeclFun)
    (with-access::J2SDeclFun this (val)
-      (if (isa? val J2SFun)
-	  val
-	  (with-access::J2SMethod val (function) function))))
+      (cond
+	 ((isa? val J2SFun)
+	  val)
+	 ((isa? val J2SMethod) 
+	  (with-access::J2SMethod val (function) function))
+	 (else
+	  (error "declfun-fun" "bad val" (j2s->list val))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-function-arity ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-function-arity this::J2SFun conf)
-   (with-access::J2SFun this (vararg params argumentsp)
+   
+   (define (mandatory params)
+      (let ((len 0))
+	 (for-each (lambda (p)
+		      (when (or (not (isa? p J2SDeclInit))
+				(with-access::J2SDeclInit p (val)
+				   (nodefval? val)))
+			 (set! len (+fx len 1))))
+	    params)
+	 len))
+   
+   (with-access::J2SFun this (vararg params argumentsp name)
       (cond
 	 ((not vararg)
+	  (tprint name "... not vararg " (+fx 1 (length params)))
 	  (+fx 1 (length params)))
 	 ((eq? vararg 'arguments)
+	  (tprint name "... arguments")
 	  (if (config-get conf :optim-arguments)
 	      (with-access::J2SDeclArguments argumentsp (alloc-policy)
 		 (if (eq? alloc-policy 'lazy)
@@ -170,9 +187,11 @@
 		     -2048))
 	      -1))
 	 ((eq? vararg 'rest)
-	  -2049)
+	  (tprint name "... rest")
+	  (-fx -2049 (mandatory params)))
 	 (else
-	  -1))))
+	  (tprint name "... mandatory" (mandatory params))
+	  (negfx (+fx (mandatory params) 1))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-make-function ...                                            */
@@ -419,7 +438,6 @@
 	    (type-ident a vtype conf))))
 		    
    (define (fixarg-lambda fun id body)
-      ;; FIXARG-LAMBDA HERE
       (with-access::J2SFun fun (idgen idthis thisp params rtype loc)
 	 (let ((args (map j2s-type-scheme params)))
 	    (lambda-or-labels rtype idgen
@@ -650,6 +668,14 @@
 	       ((eq? type 'procedure)
 		(jsfun->lambda this mode return conf
 		   (j2s-fun-prototype this) #f))
+	       ((isa? this J2SArrow)
+		`(,(if (eq? mode 'hopscript)
+		       'js-make-procedure-hopscript
+		       'js-make-procedure)
+		  %this
+		  ,(jsfun->lambda this mode return conf
+		      (j2s-fun-prototype this) #f)
+		  ,arity))
 	       ((and (or src prototype __proto__ method new-target)
 		     (memq mode '(strict hopscript))
 		     (not prototype)
@@ -972,7 +998,7 @@
       (with-access::J2SDeclArguments argumentsp (argid alloc-policy mode)
 	 (if (eq? alloc-policy 'lazy)
 	     `(let* ((%len (vector-length ,argid))
-		     (arguments `',mode)
+		     (arguments ',mode)
 		     ,@(map (lambda (p i)
 			       (list (j2s-decl-scheme-id p)
 				  `(if (<fx ,i %len)

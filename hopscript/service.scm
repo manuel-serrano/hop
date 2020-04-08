@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Apr  1 16:28:16 2020 (serrano)                */
+;*    Last change :  Wed Apr  8 08:15:07 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -595,11 +595,11 @@
    (define (post-server-async this success failure %this host port auth scheme)
       (with-access::JsHopFrame this (path)
 	 (with-access::JsGlobalObject %this (worker)
-	    (let ((callback (when (js-function? success)
+	    (let ((callback (when (js-procedure? success)
 			       (lambda (x)
 				  (js-call1 %this success %this
 				     (ms-scheme->js x)))))
-		  (fail (if (js-function? failure)
+		  (fail (if (js-procedure? failure)
 			    (lambda (obj)
 			       (js-call1 %this failure %this obj))
 			    exception-notify)))
@@ -628,7 +628,7 @@
       (cond
 	 ((not async)
 	  (post-server-sync this %this host port auth scheme))
-	 ((or (js-function? success) (js-function? failure))
+	 ((or (js-procedure? success) (js-procedure? failure))
 	  (post-server-async this success failure %this host port auth scheme))
 	 (else
 	  (post-server-promise this %this host port auth scheme))))
@@ -649,13 +649,13 @@
    (define (post-websocket-async this::JsHopFrame srv::JsWebSocket
 	      success failure)
       (with-access::JsHopFrame this (path)
-	 (let ((callback (when (js-function? success)
+	 (let ((callback (when (js-procedure? success)
 			    (lambda (x)
 			       (js-worker-push-thunk! (js-current-worker) path
 				  (lambda ()
 				     (js-call1 %this success %this
 					(ms-scheme->js x)))))))
-	       (fail (when (js-function? failure)
+	       (fail (when (js-procedure? failure)
 			(lambda (obj)
 			   (js-worker-push-thunk! (js-current-worker) path
 			      (lambda ()
@@ -690,7 +690,7 @@
 	       (cond
 		  ((not async)
 		   (post-websocket-sync this srv))
-		  ((or (js-function? success) (js-function? failure))
+		  ((or (js-procedure? success) (js-procedure? failure))
 		   (post-websocket-async this srv success failure))
 		  (else
 		   (post-websocket-promise this srv)))))))
@@ -704,7 +704,7 @@
 		   host port authorization (if ssl 'https 'http)))))
 	 ((isa? srv JsWebSocket)
 	  (post-websocket this success fail-or-opt %this async srv))
-	 ((or (js-function? fail-or-opt) (not (js-object? fail-or-opt)))
+	 ((or (js-procedure? fail-or-opt) (not (js-object? fail-or-opt)))
 	  (post-server this success fail-or-opt %this async
 	     "localhost" (hop-default-port) #f (hop-default-scheme)))
 	 (else
@@ -738,7 +738,7 @@
 	 (scheme 'http)
 	 (worker (js-current-worker)))
       (cond
-	 ((js-function? opt)
+	 ((js-procedure? opt)
 	  (set! fail
 	     (if asynchronous
 		 (lambda (obj)
@@ -777,7 +777,7 @@
 		(set! scheme 'https))
 	     (unless (eq? s (js-undefined))
 		(set! scheme (string->symbol (js-tostring s %this))))
-	     (when (js-function? f)
+	     (when (js-procedure? f)
 		(set! failjs f)
 		(set! fail
 		   (lambda (obj)
@@ -851,11 +851,11 @@
 		  2 (& "executor")))))
 
       (if asynchronous
-	  (if (js-function? success)
+	  (if (js-procedure? success)
 	      (spawn-thread)
 	      (spawn-promise))
 	  (post-request
-	     (if (js-function? success)
+	     (if (js-procedure? success)
 		 (lambda (x) (js-call1 %this success %this (scheme->js x)))
 		 scheme->js)))))      
 
@@ -873,7 +873,7 @@
 (define (js-create-service %this::JsGlobalObject proc path loc register import worker::WorkerHopThread)
    
    (define (source::bstring proc)
-      (if (js-function? proc)
+      (if (js-procedure? proc)
 	  (with-access::JsFunction proc (src)
 	     (match-case src
 		(((at ?path ?-) . ?-) path)
@@ -907,7 +907,7 @@
 			     -1 worker
 			     (instantiate::hop-service
 				(ctx %this)
-				(proc (if (js-function? proc)
+				(proc (if (js-procedure? proc)
 					  (lambda (this . args)
 					     (js-apply %this proc this args))
 					  (lambda (this . args)

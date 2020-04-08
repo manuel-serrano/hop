@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  7 18:28:45 2017                          */
-;*    Last change :  Mon Apr  6 07:39:13 2020 (serrano)                */
+;*    Last change :  Tue Apr  7 07:25:39 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js-call expansion                                                */
@@ -14,8 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (js-call0 %this fun this)
    (if (symbol? fun)
-       `(if (and (js-function? ,fun) (=fx (js-function-arity ,fun) 1))
-	    (with-access::JsFunction ,fun (procedure)
+       `(if (and (js-procedure? ,fun) (=fx (js-procedure-arity ,fun) 1))
+	    (with-access::JsProcedure ,fun (procedure)
 	       (procedure ,this))
 	    ((@ js-call0 __hopscript_public) ,%this ,fun ,this))
        (let ((fsym (gensym 'fun)))
@@ -29,8 +29,8 @@
    (if (symbol? fun)
        (let ((t0 (gensym 'a0)))
 	  `(let ((,t0 ,a0))
-	      (if (and (js-function? ,fun) (=fx (js-function-arity ,fun) 2))
-		  (with-access::JsFunction ,fun (procedure)
+	      (if (and (js-procedure? ,fun) (=fx (js-procedure-arity ,fun) 2))
+		  (with-access::JsProcedure ,fun (procedure)
 		     (procedure ,this ,t0))
 		  ((@ js-call1 __hopscript_public) ,%this ,fun ,this ,t0))))
        (let ((fsym (gensym 'fun)))
@@ -46,8 +46,8 @@
 	     (t1 (gensym 'a1)))
 	  `(let* ((,t0 ,a0)
 		  (,t1 ,a1))
-	      (if (and (js-function? ,fun) (=fx (js-function-arity ,fun) 3))
-		   (with-access::JsFunction ,fun (procedure)
+	      (if (and (js-procedure? ,fun) (=fx (js-procedure-arity ,fun) 3))
+		   (with-access::JsProcedure ,fun (procedure)
 		      (procedure ,this ,t0 ,t1))
 		   ((@ js-call2 __hopscript_public)
 		    ,%this ,fun ,this ,t0 ,t1))))
@@ -66,8 +66,8 @@
 	  `(let* ((,t0 ,a0)
 		  (,t1 ,a1)
 		  (,t2 ,a2))
-	      (if (and (js-function? ,fun) (=fx (js-function-arity ,fun) 4))
-		  (with-access::JsFunction ,fun (procedure)
+	      (if (and (js-procedure? ,fun) (=fx (js-procedure-arity ,fun) 4))
+		  (with-access::JsProcedure ,fun (procedure)
 		     (procedure ,this ,t0 ,t1 ,t2))
 		  ((@ js-call3 __hopscript_public)
 		   ,%this ,fun ,this ,t0 ,t1 ,t2))))
@@ -88,8 +88,8 @@
 		  (,t1 ,a1)
 		  (,t2 ,a2)
 		  (,t3 ,a3))
-	      (if (and (js-function? ,fun) (=fx (js-function-arity ,fun) 5))
-		  (with-access::JsFunction ,fun (procedure)
+	      (if (and (js-procedure? ,fun) (=fx (js-procedure-arity ,fun) 5))
+		  (with-access::JsProcedure ,fun (procedure)
 		     (procedure ,this ,t0 ,t1 ,t2 ,t3))
 		  ((@ js-call4 __hopscript_public)
 		   ,%this ,fun ,this ,t0 ,t1 ,t2 ,t3))))

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/js2scheme/tyflow.scm                             */
+;*    serrano/prgm/project/hop/hop/js2scheme/tyflow.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Feb 23 18:19:40 2020 (serrano)                */
+;*    Last change :  Tue Apr  7 10:03:27 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -232,9 +232,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    unfix! ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (unfix! fix reason)
-   (tprint "--- UNFIX (" (cell-ref fix) ") reason=" reason)
-   (cell-set! fix (+fx 1 (cell-ref fix))))
+;* (define (unfix! fix reason)                                         */
+;*    (tprint "--- UNFIX (" (cell-ref fix) ") reason=" reason)         */
+;*    (cell-set! fix (+fx 1 (cell-ref fix))))                          */
 
 (define-macro (unfix! fix reason)
    `(cell-set! ,fix (+fx 1 (cell-ref ,fix))))
@@ -258,17 +258,20 @@
 	 (set! vtype (tyflow-type ty)))))
 
 ;*---------------------------------------------------------------------*/
+;*    subtype? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (subtype? t1 t2)
+   (or (eq? t1 t2)
+       (and (memq t1 '(index length indexof)) (memq t2 '(integer number)))
+       (and (eq? t1 'integer) (eq? t2 'number))
+       (and (eq? t1 'function) (eq? t2 'arrow))))
+
+;*---------------------------------------------------------------------*/
 ;*    decl-vtype-add! ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    Add a new type to a variable declaration.                        */
 ;*---------------------------------------------------------------------*/
 (define (decl-vtype-add! decl::J2SDecl ty::symbol fix::cell)
-   
-   (define (subtype? t1 t2)
-      (or (eq? t1 t2)
-	  (and (memq t1 '(index length indexof)) (memq t2 '(integer number)))
-	  (and (eq? t1 'integer) (eq? t2 'number))))
-
    (with-access::J2SDecl decl (vtype id loc)
       (unless (or (eq? ty 'unknown) (subtype? ty vtype) (eq? vtype 'any))
 	 (unfix! fix (format "J2SDecl.add(~a, ~a) vtype=~a/~a" id loc vtype ty))
@@ -280,12 +283,6 @@
 ;*    Add a new initial type to a variable declaration.                */
 ;*---------------------------------------------------------------------*/
 (define (decl-itype-add! decl::J2SDecl ty::symbol fix::cell)
-   
-   (define (subtype? t1 t2)
-      (or (eq? t1 t2)
-	  (and (memq t1 '(index length indexof)) (memq t2 '(integer number)))
-	  (and (eq? t1 'integer) (eq? t2 'number))))
-
    (with-access::J2SDecl decl (itype id)
       (unless (or (eq? ty 'unknown) (subtype? ty itype) (eq? itype 'any))
 	 (unfix! fix (format "J2SDecl.itype(~a) vtype=~a/~a" id itype ty))
@@ -314,6 +311,8 @@
 (define (merge-types left::symbol right::symbol)
    (cond
       ((eq? left right) left)
+      ((and (eq? left 'arrow) (eq? right 'function)) 'arrow)
+      ((and (eq? left 'function) (eq? right 'arrow)) 'arrow)
       ((eq? left 'unknown) right)
       ((eq? right 'unknown) left)
       ((and (type-integer? left) (type-integer? right)) 'integer)
@@ -1031,7 +1030,8 @@
 	    (multiple-value-bind (_ envf _)
 	       (node-type body fenv fix)
 	       (set! %info envf)))
-	 (expr-type-add! this env fix 'function))))
+	 (expr-type-add! this env fix
+	    (if (isa? this J2SArrow) 'arrow 'function)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type-fun-decl ::J2SFun ...                                  */
@@ -1604,7 +1604,7 @@
 		(let ((tyr (merge-types type tye)))
 		   (unless (eq? tyr type)
 		      (unfix! fix
-			 (format "J2SReturn(~a) e=~a ~a/~a" loc tye tyr rtype))
+			 (format "J2SReturn(~a) e=~a ~a/~a" loc tye tyr type))
 		      (set! type tyr))))
 	     (values 'void enve (list this)))
 	    ((isa? from J2SExpr)
@@ -1879,6 +1879,7 @@
       (or (eq? type typ)
 	  (and (memq type '(date array)) (eq? typ 'object))
 	  (and (eq? typ 'number) (memq type '(integer index real)))
+	  (and (eq? typ 'function) (memq type '(function arrow)))
 	  (and (eq? type 'bool))))
    
    (with-access::J2SBinary this (loc op)

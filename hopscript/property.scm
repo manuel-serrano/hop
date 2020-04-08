@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Apr  7 05:13:10 2020 (serrano)                */
+;*    Last change :  Tue Apr  7 11:40:17 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -384,38 +384,42 @@
 ;*    js-debug-object ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-debug-object obj #!optional (msg ""))
-   (if (js-object? obj)
-       (with-access::JsObject obj (cmap elements)
-	  (if (not (js-object-mapped? obj))
-	      (with-access::JsConstructMap cmap (%id props)
-		 (fprint (current-error-port) "=== " msg (typeof obj) " UNMAPPED"
-		    " length=" (vector-length elements)
-		    "\n   prop.names="
-		    (map (lambda (d)
-			    (with-access::JsPropertyDescriptor d (name)
-			       name))
-		       (vector->list elements))
-		    "\n   props="
-		    (map (lambda (p) (format "~s" p))
-		       (vector->list elements))))
-	      (with-access::JsConstructMap cmap (%id props methods size)
-		 (fprint (current-error-port) "===" msg (typeof obj) " MAPPED"
-		    " length=" (vector-length elements)
-		    " plain=" (js-object-mode-plain? obj)
-		    " inline=" (js-object-inline-elements? obj)
-		    " size=" size
-		    " extensible=" (js-object-mode-extensible? obj)
-		    " mlengths=" (vector-length methods)
-		    "\n   cmap.%id=" %id
-		    "\n   elements=" (vector-map
-					(lambda (v)
-					   (if (js-object? v)
-					       (typeof v)
-					       v))
-					elements)
-		    "\n   prop.names=" (vector-map prop-name props)
-		    "\n   cmap.props=" props))))
-       (fprint (current-error-port) msg (typeof obj))))
+   (fprint (current-error-port) msg (typeof obj)))
+
+;*---------------------------------------------------------------------*/
+;*    js-debug-object ::JsObject ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (js-debug-object obj::JsObject #!optional (msg ""))
+   (with-access::JsObject obj (cmap elements)
+      (if (not (js-object-mapped? obj))
+	  (with-access::JsConstructMap cmap (%id props)
+	     (fprint (current-error-port) "=== " msg (typeof obj) " UNMAPPED"
+		" length=" (vector-length elements)
+		"\n   prop.names="
+		(map (lambda (d)
+			(with-access::JsPropertyDescriptor d (name)
+			   name))
+		   (vector->list elements))
+		"\n   props="
+		(map (lambda (p) (format "~s" p))
+		   (vector->list elements))))
+	  (with-access::JsConstructMap cmap (%id props methods size)
+	     (fprint (current-error-port) "===" msg (typeof obj) " MAPPED"
+		" length=" (vector-length elements)
+		" plain=" (js-object-mode-plain? obj)
+		" inline=" (js-object-inline-elements? obj)
+		" size=" size
+		" extensible=" (js-object-mode-extensible? obj)
+		" mlengths=" (vector-length methods)
+		"\n   cmap.%id=" %id
+		"\n   elements=" (vector-map
+				    (lambda (v)
+				       (if (js-object? v)
+					   (typeof v)
+					   v))
+				    elements)
+		"\n   prop.names=" (vector-map prop-name props)
+		"\n   cmap.props=" props)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-pcache ...                                              */
@@ -3967,7 +3971,11 @@
    (define (jsapply method)
       (if (procedure? method)
 	  (apply method args)
-	  (apply js-calln %this method o args)))
+	  (case (length args)
+	     ((1) (js-call1 %this method o (car args)))
+	     ((2) (js-call2 %this method o (car args) (cadr args)))
+	     ((3) (js-call3 %this method o (car args) (cadr args) (caddr args)))
+	     (else (apply js-calln %this method o args)))))
 
    (define (funval obj el-or-desc)
       (let loop ((el-or-desc el-or-desc))

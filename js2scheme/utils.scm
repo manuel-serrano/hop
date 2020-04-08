@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/js2scheme/utils.scm                              */
+;*    serrano/prgm/project/hop/hop/js2scheme/utils.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sun Feb 23 18:19:57 2020 (serrano)                */
+;*    Last change :  Tue Apr  7 10:12:59 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -303,6 +303,7 @@
       ((regexp) 'JsRegExp)
       ((array) 'JsArray)
       ((function) 'JsFunction)
+      ((arrow) 'JsProcedure)
       ((date) 'JsDate)
       ((string) 'obj)
       ((null) 'nil)
@@ -502,6 +503,7 @@
 			((js-array?) 'array)
 			((js-object?) 'object)
 			((js-function?) 'function)
+			((js-procedure?) 'arrow)
 			((boolean?) 'bool)
 			((js-undefined?) 'undefined)
 			((js-null?) 'null)

@@ -21,7 +21,7 @@ basedir=$pwd
 hop=$BUILDBINDIR/hop.sh
 test=
 stoponfailure=no
-gflags="--so-policy none -g --clear-so"
+gflags="--so-policy none -g --clear-so --clear-cache"
 rflags="--so-policy nte+ --clear-so"
 oflags="--no-zeroconf"
 

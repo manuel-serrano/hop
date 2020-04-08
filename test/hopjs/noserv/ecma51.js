@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Mon Feb 24 22:40:47 2020 (serrano)                */
+/*    Last change :  Tue Apr  7 18:30:52 2020 (serrano)                */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -232,9 +232,11 @@ function typeofs() {
    const n = [ function( x ) { return 1 }, x => 1, undefined, "foo", 1, true ];
    
    for( let i = 0; i < p.length; i++ ) {
+      console.log( "p=", i, typeof( p[ i ] ) );
       if( typeof( p[ i ] ) !== "object" ) return false;
    } 
    for( let i = 0; i < n.length; i++ ) {
+      console.log( "n=", i, typeof( n[ i ] ), n[ i ] );
       if( typeof( n[ i ] ) === "object" ) return false;
    } 
    return true;

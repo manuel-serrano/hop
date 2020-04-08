@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Tue Apr  7 05:21:25 2020 (serrano)                */
+;*    Last change :  Wed Apr  8 08:26:20 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -929,7 +929,7 @@
 		    (if (js-is-accessor-descriptor? desc)
 			;; 5
 			(with-access::JsAccessorDescriptor desc ((setter set))
-			   (if (js-function? setter)
+			   (if (js-procedure? setter)
 			       (js-call1 %this setter o v)
 			       (js-undefined)))
 			(let ((newdesc (instantiate::JsValueDescriptor
@@ -1428,7 +1428,7 @@
 (define-method (js-for-of o::JsTypedArray proc close %this)
    (with-access::JsGlobalObject %this (js-symbol-iterator)
       (let ((fun (js-get o js-symbol-iterator %this)))
-	 (if (js-function? fun)
+	 (if (js-procedure? fun)
 	     (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
 	     (with-access::JsTypedArray o (length %data)
 		(let ((vref (js-typedarray-ref o)))
