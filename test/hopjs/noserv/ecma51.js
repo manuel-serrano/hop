@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Tue Apr  7 18:30:52 2020 (serrano)                */
+/*    Last change :  Thu Apr  9 10:59:59 2020 (serrano)                */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -13,6 +13,8 @@ var assert = require( "assert" );
 /*---------------------------------------------------------------------*/
 /*    for                                                              */
 /*---------------------------------------------------------------------*/
+console.log( "for..." );
+
 function ForGee() {
    this.gee_a = 10;
    this.gee_b = 20;
@@ -66,6 +68,8 @@ assert.ok( "forlbl", "forlbl" );
 /*---------------------------------------------------------------------*/
 /*    value of an assignment                                           */
 /*---------------------------------------------------------------------*/
+console.log( "assignment value..." );
+
 var val = (function() {
    var _ = function(a){ return 4;};
 
@@ -80,6 +84,8 @@ assert.strictEqual( val instanceof Function, true, "instanceof" );
 /*---------------------------------------------------------------------*/
 /*    function assignments                                             */
 /*---------------------------------------------------------------------*/
+console.log( "function assignments..." );
+
 function Ffoo1() { Ffoo1 = 5; }
 
 Ffoo1();
@@ -121,6 +127,8 @@ assert.strictEqual( Ffoo5_aux, 6, "mutable function.4" );
 /*---------------------------------------------------------------------*/
 /*    switches                                                         */
 /*---------------------------------------------------------------------*/
+console.log( "switches..." );
+
 function swfoo1( xxx ) {
    switch( xxx ) {
       case 1:
@@ -149,6 +157,8 @@ assert.strictEqual( swfoo2( false ), 2, "swfoo2" );
 /*---------------------------------------------------------------------*/
 /*    variables and parameters                                         */
 /*---------------------------------------------------------------------*/
+console.log( "variables and parameters..." );
+
 function foo1( zzz ) {
    "use strict";
    zzz = 45;
@@ -220,6 +230,7 @@ assert.strictEqual( bar6( 1, 2 ), 23, "arguments.__proto__" );
 /*---------------------------------------------------------------------*/
 /*    undefined                                                        */
 /*---------------------------------------------------------------------*/
+console.log( "undefined..." );
 var undefined = 3;
 
 assert.equal( typeof undefined, "number" );
@@ -247,44 +258,53 @@ assert.ok( typeofs(), "typeofs" );
 /*---------------------------------------------------------------------*/
 /*    arity                                                            */
 /*---------------------------------------------------------------------*/
+console.log( "arity..." );
+
 function foo6(a,b,c,d,e,f) { return a; };
 function foo7(a,b,c,d,e,f,g) { return a; };
 function foo8(a,b,c,d,e,f,g,h) { return a; };
 function foo9(a,b,c,d,e,f,g,h,i) { return a; };
 function foo11(a,b,c,d,e,f,g,h,i,j,k) { return a; };
 
+console.log( "foo11" );
 assert.equal( foo11( 1 ), 1 );
 assert.equal( foo11( 1, 2, 3, 4, 5, 6 ), 1 );
 assert.equal( foo11( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ), 1 );
 assert.equal( foo11( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ), 1 );
 assert.equal( foo11( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ), 1 );
 
+console.log( "foo11.apply" );
 assert.equal( foo11.apply( this, [1]), 1 );
 assert.equal( foo11.apply( this, [1, 2, 3, 4, 5, 6]), 1 );
 assert.equal( foo11.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 1 );
 assert.equal( foo11.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 1 );
 assert.equal( foo11.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]), 1 );
 
+console.log( "foo8.apply" );
 assert.equal( foo8.apply( this, [1]), 1 );
 assert.equal( foo8.apply( this, [1, 2, 3, 4, 5, 6]), 1 );
 assert.equal( foo8.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 1 );
 assert.equal( foo8.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 1 );
 assert.equal( foo8.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]), 1 );
 
+console.log( "foo7" );
 assert.equal( foo7( 1, 2, 3, 4, 5, 6), 1 );
 assert.equal( foo7( 1, 2, 3, 4, 5, 6, 7), 1 );
 assert.equal( foo7( 1, 2, 3, 4, 5, 6, 7, 8), 1 );
 assert.equal( foo7( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), 1 );
 
+console.log( "foo8" );
 assert.equal( foo8( 1, 2, 3, 4, 5, 6, 7), 1 );
 assert.equal( foo8( 1, 2, 3, 4, 5, 6, 7, 8), 1 );
 assert.equal( foo8( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), 1 );
 
+console.log( "foo9" );
 assert.equal( foo9( 1, 2, 3, 4, 5, 6, 7), 1 );
 assert.equal( foo9( 1, 2, 3, 4, 5, 6, 7, 8), 1 );
 assert.equal( foo9( 1, 2, 3, 4, 5, 6, 7, 8, 9), 1 );
 assert.equal( foo9( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), 1 );
 
+console.log( "foo6.apply" );
 assert.equal( foo6.apply( this, [1]), 1 );
 assert.equal( foo6.apply( this, [1, 2, 3, 4, 5, 6]), 1 );
 assert.equal( foo6.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 1 );
@@ -295,24 +315,28 @@ function bar11(a,b,c,d,e,f,g,h,i,j,k) { if( arguments.length >= 0 ) return a; };
 function bar8(a,b,c,d,e,f,g,h) { if( arguments.length >= 0 ) return a; };
 function bar7(a,b,c,d,e,f) { if( arguments.length >= 0 ) return a; };
 
+console.log( "bar11" );
 assert.equal( bar11( 1 ), 1, "arguments.length" );
 assert.equal( bar11( 1, 2, 3, 4, 5, 6 ), 1 );
 assert.equal( bar11( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ), 1 );
 assert.equal( bar11( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ), 1 );
 assert.equal( bar11( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ), 1 );
 
+console.log( "bar11.apply" );
 assert.equal( bar11.apply( this, [1]), 1 );
 assert.equal( bar11.apply( this, [1, 2, 3, 4, 5, 6]), 1 );
 assert.equal( bar11.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 1 );
 assert.equal( bar11.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 1 );
 assert.equal( bar11.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]), 1 );
 
+console.log( "bar8.apply" );
 assert.equal( bar8.apply( this, [1]), 1 );
 assert.equal( bar8.apply( this, [1, 2, 3, 4, 5, 6]), 1 );
 assert.equal( bar8.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 1 );
 assert.equal( bar8.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 1 );
 assert.equal( bar8.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]), 1 );
 
+console.log( "bar7.apply" );
 assert.equal( bar7.apply( this, [1]), 1 );
 assert.equal( bar7.apply( this, [1, 2, 3, 4, 5, 6]), 1 );
 assert.equal( bar7.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 1 );
@@ -322,6 +346,8 @@ assert.equal( bar7.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]), 1 
 /*---------------------------------------------------------------------*/
 /*    function call                                                    */
 /*---------------------------------------------------------------------*/
+console.log( "call..." );
+
 var o = {name: "toto", f: function() { return this.name }}
 
 assert.ok( o.f() === "toto" );
@@ -334,6 +360,8 @@ assert.ok( ((function () { return o })()).f() === "toto" );
 /*---------------------------------------------------------------------*/
 /*    typing                                                           */
 /*---------------------------------------------------------------------*/
+console.log( "typing..." );
+
 function typing( z, data )  {
    if( z > 3 ) {
       data = true;
@@ -352,6 +380,8 @@ assert.ok( typing( 20 ) === 1, "typing" );
 /*---------------------------------------------------------------------*/
 /*    access                                                           */
 /*---------------------------------------------------------------------*/
+console.log( "access..." );
+
 var t = [ 'a' ];
 var i = '0';
 
@@ -362,6 +392,8 @@ assert.ok( t[ i ] === 'a', "string access" );
 /*---------------------------------------------------------------------*/
 /*    constuctor                                                       */
 /*---------------------------------------------------------------------*/
+console.log( "ctor..." );
+
 function ctor() {
    this.a = 1; this.b = 2; this.c = 3; this.d = 4; this.e = 5; this.f = this.a;
 }
@@ -375,6 +407,8 @@ assert.ok( o.f === o.a, "ctor" );
 /*---------------------------------------------------------------------*/
 /*    constructor ...                                                  */
 /*---------------------------------------------------------------------*/
+console.log( "CTOR..." );
+
 function CTOR( x ) {
    this.x = x;
    this.y = x;
@@ -406,6 +440,8 @@ assert.ok( !p2.writable && !p2.enumerable && p2.configurable );
 /*---------------------------------------------------------------------*/
 /*    assignop                                                         */
 /*---------------------------------------------------------------------*/
+console.log( "assignop..." );
+
 var x = 0;
 var a = [1,2,3,4,5];
 a[ x++ ] += 3;;
@@ -426,6 +462,8 @@ assert.equal( y, "foo1" );
 /*---------------------------------------------------------------------*/
 /*    literal with prototype                                           */
 /*---------------------------------------------------------------------*/
+console.log( "literal..." );
+
 function protoLit( CNT, m ) {
    function fun( i ) {
       return this.x + i;
@@ -443,6 +481,8 @@ assert.ok( protoLit( 20000, 1 ) === 12345, "literal with __proto__" );
 /*---------------------------------------------------------------------*/
 /*    Compilation failure                                              */
 /*---------------------------------------------------------------------*/
+console.log( "compilation failure..." );
+
 (function() {
    function bar() {
       return "ok";
@@ -459,6 +499,8 @@ assert.ok( protoLit( 20000, 1 ) === 12345, "literal with __proto__" );
 /*---------------------------------------------------------------------*/
 /*    binding                                                          */
 /*---------------------------------------------------------------------*/
+console.log( "binding..." );
+
 var Reference = exports.Reference = function Reference() {
    return Reference;
 }
@@ -468,6 +510,8 @@ assert.ok( Reference );
 /*---------------------------------------------------------------------*/
 /*    method call                                                      */
 /*---------------------------------------------------------------------*/
+console.log( "method call..." );
+
 function illmet() {
    let o = new Object();
    let b = o.bar;
@@ -483,6 +527,8 @@ assert.ok( illmet(), "illegal method" );
 /*---------------------------------------------------------------------*/
 /*    apply                                                            */
 /*---------------------------------------------------------------------*/
+console.log( "apply..." );
+
 function Foo( a, b, c ) {
    return a + b + c;
 }
@@ -496,6 +542,8 @@ assert.ok( Foo.apply( null, [ 1, 2, 3, 4 ] ) === 24, "apply" );
 /*---------------------------------------------------------------------*/
 /*    seal and freeze                                                  */
 /*---------------------------------------------------------------------*/
+console.log( "seal and freeze..." );
+
 function testSeal() {
    var o1 = { a: 10 };
    
@@ -577,6 +625,8 @@ assert.ok( testFreeze(), "freeze" );
 /*---------------------------------------------------------------------*/
 /*    for-in-of                                                        */
 /*---------------------------------------------------------------------*/
+console.log( "for-in-of..." );
+
 function forinarr( a ) {
    let r = 0;
 
@@ -608,6 +658,8 @@ assert.ok( testforinof(), "for in/of" );
 /*---------------------------------------------------------------------*/
 /*    forin                                                            */
 /*---------------------------------------------------------------------*/
+console.log( "forin..." );
+
 function testforin() {
    var a = [1, 2];
    var p = { "1": 20, __proto__: Array };
@@ -627,6 +679,8 @@ assert.ok( testforin(), "for in" );
 /*---------------------------------------------------------------------*/
 /*    Global this                                                      */
 /*---------------------------------------------------------------------*/
+console.log( "global this..." );
+
 assert.ok( function() {
    return function( _global_ ) {
       return typeof( _global_ ) === "object";

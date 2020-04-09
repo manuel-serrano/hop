@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Apr  7 05:47:09 2020 (serrano)                */
+;*    Last change :  Thu Apr  9 16:09:46 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -51,7 +51,7 @@
 	      "bgl_make_jsproxy")
 	   ($js-make-jsfunction::JsFunction (::procedure ::procedure
 					       ::procedure
-					       ::long ::long ::long ::long
+					       ::long ::long ::long
 					       ::obj ::obj ::obj)
 	      "bgl_make_jsfunction")
 	   ($js-make-jsprocedure::JsProcedure (::procedure ::long ::obj)
@@ -239,7 +239,6 @@
 	      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.6
 	      prototype
 	      %prototype
-	      (minlen::int read-only (default -1))
 	      (len::int read-only)
 	      (constrsize::int (default 3))
 	      (maxconstrsize::int read-only (default 100)))

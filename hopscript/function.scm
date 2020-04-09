@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Apr  7 05:49:37 2020 (serrano)                */
+;*    Last change :  Thu Apr  9 10:52:39 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -37,7 +37,7 @@
 	   thrower-get
 	   thrower-set
 	   
-	   (js-function-debug-name::bstring ::JsFunction ::JsGlobalObject)
+	   (js-function-debug-name::bstring ::JsProcedure ::JsGlobalObject)
 	   (js-make-function::JsFunction
 	      ::JsGlobalObject ::procedure ::int ::JsStringLiteral
 	      #!key
@@ -64,14 +64,14 @@
 	   (inline js-make-procedure-hopscript::JsProcedure ::JsGlobalObject ::procedure
 	      ::int)
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
-	      ::int ::JsStringLiteral ::int ::int ::symbol ::int)
+	      ::int ::JsStringLiteral ::int ::symbol ::int)
 	   
 	   (inline js-function-prototype-get ::obj ::JsFunction ::obj ::JsGlobalObject)
 	   (js-function-setup-prototype!::JsObject ::JsGlobalObject ::JsFunction)
 	   
 	   (js-apply-array ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-apply-vec ::JsGlobalObject ::obj ::obj ::vector ::uint32)
-	   (js-function-apply-vec ::JsGlobalObject ::JsFunction ::obj ::vector ::uint32)
+	   (js-function-apply-vec ::JsGlobalObject ::JsProcedure ::obj ::vector ::uint32)
 	   (js-function-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-maybe-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-maybe-call0 ::JsGlobalObject ::obj ::obj ::obj)
@@ -474,25 +474,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-function-debug-name ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (js-function-debug-name::bstring obj::JsFunction %this)
-   (with-access::JsFunction obj (src)
-      (with-access::JsGlobalObject %this (js-function-pcache)
-	 (let ((pname (js-get-property obj (& "name") %this)))
-	    (cond
-	       ((isa? pname JsValueDescriptor)
-		(let ((name (js-property-value obj obj (& "name") pname %this)))
-		   (cond
-		      ((js-jsstring? name)
-		       (js-jsstring->string name))
-		      ((number? name)
-		       name)
-		      ((pair? src)
-		       (format "~a:~a" (cadr (car src)) (caddr (car src))))
-		      (else "function"))))
-	       ((pair? src)
-		(format "~a:~a" (cadr (car src)) (caddr (car src))))
-	       (else
-		"function"))))))
+(define (js-function-debug-name::bstring obj::JsProcedure %this)
+   (if (js-function? obj)
+       (with-access::JsFunction obj (src name)
+	  (with-access::JsGlobalObject %this (js-function-pcache)
+	     (cond
+		((js-jsstring? name)
+		 (js-jsstring->string name))
+		((number? name)
+		 name)
+		((pair? src)
+		 (format "~a:~a" (cadr (car src)) (caddr (car src))))
+		(else "function"))))
+       "procedure"))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-function ...                                             */
@@ -694,7 +688,7 @@
 		  #!key method arity (minlen -1) src (constrsize 3))
    (with-access::JsGlobalObject %this (js-function)
       ($js-make-jsfunction procedure method procedure
-	 arity length minlen constrsize
+	 arity length constrsize
 	 (js-object-proto js-function)
 	 src name)))
 
@@ -783,11 +777,11 @@
 ;*    js-make-function-simple ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-make-function-simple %this::JsGlobalObject proc::procedure
-	   len::int name::JsStringLiteral arity::int minlen::int strict::symbol
+	   len::int name::JsStringLiteral arity::int strict::symbol
 	   constrsize::int)
    (js-make-function %this proc len name
       :prototype #f :__proto__ #f
-      :arity arity :strict strict :minlen minlen
+      :arity arity :strict strict
       :src #f
       :alloc js-object-alloc
       :construct proc :constrsize constrsize))
@@ -1108,36 +1102,36 @@
 	 ((1)
 	  (js-call1 %this this thisarg (vector-ref vec 0)))
 	 ((2)
-	  (js-call1 %this this thisarg (vector-ref vec 0)
+	  (js-call2 %this this thisarg (vector-ref vec 0)
 	     (vector-ref vec 1)))
 	 ((3)
-	  (js-call1 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
+	  (js-call3 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
 	     (vector-ref vec 2)))
 	 ((4)
-	  (js-call1 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
+	  (js-call4 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
 	     (vector-ref vec 2) (vector-ref vec 3)))
 	 ((5)
-	  (js-call1 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
+	  (js-call5 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
 	     (vector-ref vec 2) (vector-ref vec 3) (vector-ref vec 4)))
 	 ((6)
-	  (js-call1 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
+	  (js-call6 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
 	     (vector-ref vec 2) (vector-ref vec 3) (vector-ref vec 4)
 	     (vector-ref vec 5)))
 	 ((7)
-	  (js-call1 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
+	  (js-call7 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
 	     (vector-ref vec 2) (vector-ref vec 3) (vector-ref vec 4)
 	     (vector-ref vec 5) (vector-ref vec 6)))
 	 ((8)
-	  (js-call1 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
+	  (js-call8 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
 	     (vector-ref vec 2) (vector-ref vec 3) (vector-ref vec 4)
 	     (vector-ref vec 5) (vector-ref vec 6) (vector-ref vec 7)))
 	 ((9)
-	  (js-call1 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
+	  (js-call9 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
 	     (vector-ref vec 2) (vector-ref vec 3) (vector-ref vec 4)
 	     (vector-ref vec 5) (vector-ref vec 6) (vector-ref vec 7)
 	     (vector-ref vec 8)))
 	 ((10)
-	  (js-call1 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
+	  (js-call10 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
 	     (vector-ref vec 2) (vector-ref vec 3) (vector-ref vec 4)
 	     (vector-ref vec 5) (vector-ref vec 6) (vector-ref vec 7)
 	     (vector-ref vec 8) (vector-ref vec 9)))

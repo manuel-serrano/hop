@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Tue Apr  7 05:28:55 2020 (serrano)                */
+;*    Last change :  Thu Apr  9 06:52:42 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -163,35 +163,45 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-function-arity this::J2SFun conf)
    
-   (define (mandatory params)
-      (let ((len 0))
+   (define (count-params params)
+      (let ((opt 0)
+	    (req 0))
 	 (for-each (lambda (p)
-		      (when (or (not (isa? p J2SDeclInit))
-				(with-access::J2SDeclInit p (val)
-				   (nodefval? val)))
-			 (set! len (+fx len 1))))
+		      (if (or (not (isa? p J2SDeclInit))
+			      (with-access::J2SDeclInit p (val)
+				 (nodefval? val)))
+			  (set! req (+fx req 1))
+			  (set! opt (+fx opt 1))))
 	    params)
-	 len))
+	 (values req opt)))
    
    (with-access::J2SFun this (vararg params argumentsp name)
-      (cond
-	 ((not vararg)
-	  (tprint name "... not vararg " (+fx 1 (length params)))
-	  (+fx 1 (length params)))
-	 ((eq? vararg 'arguments)
-	  (tprint name "... arguments")
-	  (if (config-get conf :optim-arguments)
-	      (with-access::J2SDeclArguments argumentsp (alloc-policy)
-		 (if (eq? alloc-policy 'lazy)
-		     -2047
-		     -2048))
-	      -1))
-	 ((eq? vararg 'rest)
-	  (tprint name "... rest")
-	  (-fx -2049 (mandatory params)))
-	 (else
-	  (tprint name "... mandatory" (mandatory params))
-	  (negfx (+fx (mandatory params) 1))))))
+      (multiple-value-bind (req opt)
+	 (count-params params)
+	 (cond
+	    ((eq? vararg 'arguments)
+	     (if (config-get conf :optim-arguments)
+		 (with-access::J2SDeclArguments argumentsp (alloc-policy)
+		    (if (eq? alloc-policy 'lazy)
+			-2047
+			-2048))
+		 -1))
+	    ((eq? vararg 'rest)
+	     (with-access::J2SDeclRest (car (last-pair params)) (alloc-policy)
+		(let ((offset (cond
+				 ((and (eq? alloc-policy 'lazy) (=fx opt 0))
+				  2049)
+				 ((=fx opt 0)
+				  3049)
+				 ((eq? alloc-policy 'lazy)
+				  4049)
+				 (else
+				  5049))))
+		   (negfx (+fx offset (-fx req 1))))))
+	    ((=fx opt 0)
+	     (+fx req 1))
+	    (else
+	     (negfx (+fx req 1)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-make-function ...                                            */
@@ -213,7 +223,6 @@
 	       (let* ((fastid (j2s-profile-id (j2s-fast-id id) loc conf))
 		      (lparams (length params))
 		      (arity (j2s-function-arity val conf))
-		      (minlen (if (eq? mode 'hopscript) (j2s-minlen val) -1))
 		      (len (if (eq? vararg 'rest) (-fx lparams 1) lparams))
 		      (alloc (allocator this))
 		      (src (j2s-function-src loc val conf)))
@@ -223,7 +232,6 @@
 			  ,len (& ,(symbol->string! id))
 			  :src ,src
 			  :arity ,arity
-			  :minlen ,minlen
 			  :strict ',mode
 			  :alloc ,alloc
 			  :prototype ,(j2s-fun-prototype val)
@@ -237,7 +245,6 @@
 			%this ,fastid 
 			,len (& ,(symbol->string! id))
 			:src ,src
-			:minlen ,minlen
 			:constrsize ,constrsize
 			:method ,(if method
 				     (jsfun->lambda method
@@ -252,7 +259,6 @@
 			  ,len (& ,(symbol->string! id))
 			  :src ,src
 			  :arity ,arity
-			  :minlen ,minlen
 			  :strict ',mode
 			  :alloc ,alloc
 			  :construct ,fastid
@@ -267,7 +273,6 @@
 			     'js-make-function-strict)
 			%this ,fastid
 			,len (& ,(symbol->string! id))
-			:minlen ,minlen
 			:constrsize ,constrsize
 			:method ,(if method
 				     (jsfun->lambda method
@@ -281,7 +286,6 @@
 		      `(js-make-function %this ,fastid
 			  ,len (& ,(symbol->string! id))
 			  :arity ,arity
-			  :minlen ,minlen
 			  :strict ',mode 
 			  :constrsize ,constrsize
 			  :alloc ,alloc
@@ -294,7 +298,6 @@
 			     'js-make-function-strict)
 			%this ,fastid
 			,len (& ,(symbol->string! id))
-			:minlen ,minlen
 			:constrsize ,constrsize
 			:method ,(if method
 				     (jsfun->lambda method
@@ -308,7 +311,6 @@
 		      `(js-make-function %this ,fastid
 			  ,len (& ,(symbol->string! id))
 			  :arity ,arity
-			  :minlen ,minlen
 			  :strict ',mode
 			  :alloc ,alloc
 			  :construct ,fastid
@@ -320,7 +322,6 @@
 		      `(js-make-function %this ,fastid
 			  ,len (& ,(symbol->string! id))
 			  :arity ,arity
-			  :minlen ,minlen
 			  :strict ',mode
 			  :alloc ,alloc
 			  :construct ,fastid
@@ -328,7 +329,7 @@
 		     (else
 		      `(js-make-function-simple %this ,fastid
 			  ,len (& ,(symbol->string! id))
-			  ,arity ,minlen
+			  ,arity
 			  ',mode
 			  ,constrsize))))))))
 
@@ -658,7 +659,6 @@
       (let* ((lparams (length params))
 	     (len (if (eq? vararg 'rest) (-fx lparams 1) lparams))
 	     (arity (j2s-function-arity this conf))
-	     (minlen (if (eq? mode 'hopscript) (j2s-minlen this) -1))
 	     (src (j2s-function-src loc this conf))
 	     (prototype (j2s-fun-prototype this))
 	     (__proto__ (j2s-fun-__proto__ this))
@@ -686,7 +686,6 @@
 		  %this ,tmp ,len
 		  (& ,(symbol->string! name))
 		  :src ,src
-		  :minlen ,minlen
 		  :constrsize ,constrsize
 		  :method ,(or tmpm
 			       (and method (jsfun->lambda method mode return conf #f #f))
@@ -703,7 +702,6 @@
 		    :prototype ,prototype
 		    :__proto__ ,__proto__
 		    :strict ',mode
-		    :minlen ,minlen
 		    :alloc ,alloc
 		    :constrsize ,constrsize
 		    :method ,(or tmpm (and method (jsfun->lambda method mode return conf #f #f)))))
@@ -714,7 +712,6 @@
 		       'js-make-function-strict)
 		  %this ,tmp ,len
 		  (& ,(symbol->string! name))
-		  :minlen minlen
 		  :strict ',mode
 		  :constrsize ,constrsize
 		  :method ,tmp
@@ -726,14 +723,13 @@
 		`(js-make-function %this ,tmp ,len
 		    (& ,(symbol->string! name))
 		    :arity ,arity ,
-		    :minlen minlen
 		    :strict ',mode
 		    :alloc ,alloc
 		    :constrsize ,constrsize))
 	       (else
 		`(js-make-function-simple %this ,tmp ,len
 		    (& ,(symbol->string! name))
-		    ,arity ,minlen ',mode ,constrsize)))))))
+		    ,arity ',mode ,constrsize)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SFun ...                                          */

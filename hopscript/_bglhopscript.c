@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Tue Apr  7 13:19:47 2020 (serrano)                */
+/*    Last change :  Thu Apr  9 16:10:13 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -122,7 +122,7 @@ static obj_t bgl_make_jsproxy_sans( obj_t target, obj_t handler,
 #if HOP_ALLOC_JSFUNCTION_POLICY != HOP_ALLOC_CLASSIC
 static obj_t bgl_make_jsfunction_sans( obj_t procedure, obj_t method,
 				       obj_t construct,
-				       long arity, long len, long minlen,
+				       long arity, long len,
 				       long constrsize,
 				       obj_t __proto__, obj_t src, obj_t name );
 #endif
@@ -346,7 +346,7 @@ jsfunction_fill_buffer( apool_t *pool, void *arg ) {
 
    for( i = 0; i < size; i++ ) {
       buffer[ i ] =
-	 bgl_make_jsfunction_sans( 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L );
+	 bgl_make_jsfunction_sans( 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L );
    }
 #endif   
 }
@@ -804,7 +804,7 @@ bgl_make_jsproxy( obj_t target, obj_t handler,
 #endif
 
 BGL_MAKE_JSFUNCTION_SANS( obj_t procedure, obj_t method, obj_t construct,
-			  long arity, long len, long minlen, long constrsize,
+			  long arity, long len, long constrsize,
 			  obj_t __proto__, obj_t src, obj_t name ) {
    BgL_jsfunctionz00_bglt o = (BgL_jsfunctionz00_bglt)HOP_MALLOC( JSFUNCTION_SIZE );
 
@@ -832,7 +832,6 @@ BGL_MAKE_JSFUNCTION_SANS( obj_t procedure, obj_t method, obj_t construct,
       o->BgL_constructz00 = construct;
       o->BgL_arityz00 = arity;
       o->BgL_lenz00 = len;
-      o->BgL_minlenz00 = minlen;
       o->BgL_srcz00 = src;
       o->BgL_namez00 = name;
       o->BgL_constrsiza7eza7 = constrsize;
@@ -865,7 +864,7 @@ BGL_MAKE_JSFUNCTION_SANS( obj_t procedure, obj_t method, obj_t construct,
 #if HOP_ALLOC_JSFUNCTION_POLICY != HOP_ALLOC_CLASSIC
 obj_t
 bgl_make_jsfunction( obj_t procedure, obj_t method, obj_t construct,
-		     long arity, long len, long minlen, long constrsize,
+		     long arity, long len, long constrsize,
 		     obj_t __proto__, obj_t src, obj_t name ) {
    alloc_spin_lock( &lockfunction );
 
@@ -880,7 +879,6 @@ bgl_make_jsfunction( obj_t procedure, obj_t method, obj_t construct,
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_constructz00 = construct;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_arityz00 = arity;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_lenz00 = len;
-      ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_minlenz00 = minlen;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_srcz00 = src;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_namez00 = name;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_constrsiza7eza7 = constrsize;
@@ -908,7 +906,6 @@ bgl_make_jsfunction( obj_t procedure, obj_t method, obj_t construct,
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_constructz00 = construct;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_arityz00 = arity;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_lenz00 = len;
-      ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_minlenz00 = minlen;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_srcz00 = src;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_namez00 = name;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_constrsiza7eza7 = constrsize;
@@ -937,7 +934,7 @@ bgl_make_jsfunction( obj_t procedure, obj_t method, obj_t construct,
       ALLOC_STAT( (slowfunction % 1000000 == 0) ? fprintf( stderr, "sz=%d inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", sz, inlfunction, sndfunction, slowfunction, (long)(100*(double)slowfunction/(double)(inlfunction+sndfunction)), inlfunction + sndfunction + slowfunction, qszfunction) : 0 ); 
       alloc_spin_unlock( &lockfunction ); 
       return bgl_make_jsfunction_sans( procedure, method, construct,
-				       arity, len, minlen, constrsize,
+				       arity, len, constrsize,
 				       __proto__, src, name );
    } 
 }

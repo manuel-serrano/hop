@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Mar  7 06:30:20 2020 (serrano)                */
+;*    Last change :  Thu Apr  9 07:16:09 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -86,26 +86,26 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-call-XXX ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-expander js-call
-   js-call-expander)
-(define-expander js-call1
-   js-call-expander)
-(define-expander js-call2
-   js-call-expander)
-(define-expander js-call3
-   js-call-expander)
-(define-expander js-call4
-   js-call-expander)
-(define-expander js-call/function
-   js-call/function-expander)
-(define-expander js-call1/function
-   js-call/function-expander)
-(define-expander js-call2/function
-   js-call/function-expander)
-(define-expander js-call3/function
-   js-call/function-expander)
-(define-expander js-call4/function
-   js-call/function-expander)
+;* (define-expander js-call                                            */
+;*    js-call-expander)                                                */
+;* (define-expander js-call1                                           */
+;*    js-call-expander)                                                */
+;* (define-expander js-call2                                           */
+;*    js-call-expander)                                                */
+;* (define-expander js-call3                                           */
+;*    js-call-expander)                                                */
+;* (define-expander js-call4                                           */
+;*    js-call-expander)                                                */
+;* (define-expander js-call/function                                   */
+;*    js-call/function-expander)                                       */
+;* (define-expander js-call1/function                                  */
+;*    js-call/function-expander)                                       */
+;* (define-expander js-call2/function                                  */
+;*    js-call/function-expander)                                       */
+;* (define-expander js-call3/function                                  */
+;*    js-call/function-expander)                                       */
+;* (define-expander js-call4/function                                  */
+;*    js-call/function-expander)                                       */
 (define-expander js-call/cache
    js-call/cache-expander)
 (define-expander js-method-call-name/cache
