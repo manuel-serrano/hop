@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Wed Apr  8 08:34:09 2020 (serrano)                */
+;*    Last change :  Fri Apr 10 08:00:04 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -515,7 +515,7 @@
    (lambda (evt)
       (js-worker-push-thunk! worker "ws-listener"
 	 (lambda ()
-	    (js-call1 %this proc this evt)))))
+	    (js-call1-procedure proc this evt)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    action->listener ...                                             */
@@ -526,7 +526,7 @@
 	 (js-worker-push-thunk! worker "ws-listener"
 	    (lambda ()
 	       (when (js-procedure? (cdr action))
-		  (js-call1 %this (cdr action) this evt)))))))
+		  (js-call1-jsprocedure %this (cdr action) this evt)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-websocket-listener! ...                                     */

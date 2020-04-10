@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Apr  3 12:25:30 2020 (serrano)                */
+;*    Last change :  Fri Apr 10 09:17:50 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -64,8 +64,9 @@
 		   ,@globals
 		   ,@esimports
 		   ,esexports
-		   ,@(filter fundef? body)
-		   ,@(exit-body (filter nofundef? body) conf)))
+		   ,(exit-body
+			(append (filter fundef? body) (filter nofundef? body))
+			conf)))
 	    '(&end!)
 	    ;; for dynamic loading
 	    'hopscript)))
@@ -101,8 +102,9 @@
 		   ,@globals
 		   ,@esimports
 		   ,esexports
-		   ,@(filter fundef? body)
-		   ,@(exit-body (filter nofundef? body) conf)))
+		   ,(exit-body
+			(append (filter fundef? body) (filter nofundef? body))
+			conf)))
 	    '(&end!)
 	    ;; for dynamic loading
 	    'hopscript)))
@@ -140,8 +142,9 @@
 		   ,@globals
 		   ,@esimports
 		   ,esexports
-		   ,@(filter fundef? body)
-		   ,@(exit-body (filter nofundef? body) conf))))))
+		   ,(exit-body
+		       (append (filter fundef? body) (filter nofundef? body))
+		       conf))))))
    
    (define (j2s-let-globals globals)
       ;; transforms a list of (define id var) into a list of (id var)
@@ -180,9 +183,11 @@
 				 ,@(j2s-expr-headers scmheaders)
 				 ,@esimports
 				 ,esexports
-				 (let ()
-				    ,@(filter fundef? body)
-				    ,@(exit-body (filter nofundef? body) conf)))))))
+				 ,(exit-body
+				     (append
+					(filter fundef? body)
+					(filter nofundef? body))
+				     conf))))))
 	    `(,jsmod
 		;; (&begin!) must not be a constant! (_do not_ use quote)
 		,`(define __js_strings (&begin!))
@@ -336,7 +341,7 @@
 		   (hop-ssl-port-set! -1)
 		   (bigloo-library-path-set! ',(bigloo-library-path))
 		   (set! !process (nodejs-process %worker %this))
-		   ,@(exit-body (filter nofundef? body) conf))
+		   ,(exit-body (filter nofundef? body) conf))
 		(&end!))))))
 
 ;*---------------------------------------------------------------------*/
@@ -596,9 +601,10 @@
 ;*    exit-body ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (exit-body body conf)
-   (if (config-get conf :return-as-exit)
-       `((bind-exit (%jsexit) ,@body))
-       body))
+   (cond
+      ((not (pair? body)) '(js-undefined))
+      ((config-get conf :return-as-exit) `(bind-exit (%jsexit) ,@body))
+      (else `(begin ,@body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %cnst-table ...                                                  */

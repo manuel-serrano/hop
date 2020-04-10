@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Apr  9 16:09:46 2020 (serrano)                */
+;*    Last change :  Fri Apr 10 07:09:50 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -477,27 +477,33 @@
 	   (inline js-object-mode-hasnumeralprop?::bool ::JsObject)
 	   (inline js-object-mode-hasnumeralprop-set! ::JsObject ::bool)
 
-	   (inline js-object-mode-revoked?::bool ::JsObject)
-	   (inline js-object-mode-revoked-set! ::JsObject ::bool)
+	   (inline js-proxy-mode-revoked?::bool ::JsObject)
+	   (inline js-proxy-mode-revoked-set! ::JsObject ::bool)
 
+	   (inline js-procedure-hopscript-mode?::bool ::JsProcedure)
+	   (inline js-procedure-hopscript-mode-set! ::JsProcedure ::bool)
+	   
 	   (js-object-elements-inline?::bool ::JsObject)
 	   
 	   (inline JS-OBJECT-MODE-JSSTRINGTAG::uint32)
-	   (inline JS-OBJECT-MODE-JSPROCEDURETAG::uint32)
 	   (inline JS-OBJECT-MODE-JSFUNCTIONTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYTAG::uint32)
+	   (inline JS-OBJECT-MODE-JSOBJECTTAG::uint32)
+	   (inline JS-OBJECT-MODE-JSPROCEDURETAG::uint32)
+	   
 	   (inline JS-OBJECT-MODE-EXTENSIBLE::uint32)
 	   (inline JS-OBJECT-MODE-SEALED::uint32)
 	   (inline JS-OBJECT-MODE-FROZEN::uint32)
 	   (inline JS-OBJECT-MODE-INLINE::uint32)
 	   (inline JS-OBJECT-MODE-GETTER::uint32)
 	   (inline JS-OBJECT-MODE-HASINSTANCE::uint32)
-	   (inline JS-OBJECT-MODE-JSOBJECTTAG::uint32)
 	   (inline JS-OBJECT-MODE-ENUMERABLE::uint32)
 	   (inline JS-OBJECT-MODE-HASNUMERALPROP::uint32)
 	   (inline JS-OBJECT-MODE-PLAIN::uint32)
-	   (inline JS-OBJECT-MODE-REVOKED::uint32)
-	   (inline JS-OBJECT-MODE-HOPSCRIPT::uint32)
+	   
+	   (inline JS-OBJECT-MODE-JSPROXYREVOKED::uint32)
+	   (inline JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT::uint32)
+	   
 	   (inline JS-OBJECT-MODE-JSARRAYHOLEY::uint32)
 	   (inline JS-OBJECT-MODE-JSSTRINGNORMALIZED::uint32)
 	   (inline JS-OBJECT-MODE-JSSTRINGASCII::uint32)
@@ -574,9 +580,8 @@
 
 	   (inline js-object-function-tag?::bool ::obj)
 	   
-	   (inline js-function-arity::int ::JsFunction)
 	   (inline js-procedure-arity::int ::JsProcedure)
-	   (inline js-procedure-hopscript-mode?::bool ::JsProcedure)
+	   (inline js-procedure-procedure::procedure ::JsProcedure)
 	   
 	   (inline js-proxy-target::JsObject ::JsProxy)
 	   (inline js-proxy-target-set! ::JsProxy ::JsObject)
@@ -696,7 +701,7 @@
 
 (define-inline (js-procedure-hopscript-mode)
    (bit-oru32 (js-procedure-default-mode)
-      (JS-OBJECT-MODE-HOPSCRIPT)))
+      (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Object header tag (max size 1<<15)                               */
@@ -706,6 +711,14 @@
 (define-inline (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1)
 (define-inline (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:2)
 (define-inline (JS-OBJECT-MODE-JSOBJECTTAG) #u32:4)
+(define-inline (JS-OBJECT-MODE-JSPROCEDURETAG) #u32:8192)
+
+(define-macro (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1)
+(define-macro (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:2)
+(define-macro (JS-OBJECT-MODE-JSOBJECTTAG) #u32:4)
+(define-macro (JS-OBJECT-MODE-JSPROCEDURETAG) #u32:8192)
+
+;; common objects attributes
 (define-inline (JS-OBJECT-MODE-INLINE) #u32:8)
 (define-inline (JS-OBJECT-MODE-GETTER) #u32:16)
 (define-inline (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
@@ -715,16 +728,7 @@
 (define-inline (JS-OBJECT-MODE-EXTENSIBLE) #u32:512)
 (define-inline (JS-OBJECT-MODE-SEALED) #u32:1024)
 (define-inline (JS-OBJECT-MODE-FROZEN) #u32:2048)
-(define-inline (JS-OBJECT-MODE-REVOKED) #u32:4096)
-(define-inline (JS-OBJECT-MODE-HOPSCRIPT) #u32:4096)
-(define-inline (JS-OBJECT-MODE-JSPROCEDURETAG) #u32:8192)
-;; WARNING: must be the two last constants (see js-array?)
-(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:16384)
-(define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:32768)
 
-(define-macro (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1)
-(define-macro (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:2)
-(define-macro (JS-OBJECT-MODE-JSOBJECTTAG) #u32:4)
 (define-macro (JS-OBJECT-MODE-INLINE) #u32:8)
 (define-macro (JS-OBJECT-MODE-GETTER) #u32:16)
 (define-macro (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
@@ -734,13 +738,20 @@
 (define-macro (JS-OBJECT-MODE-EXTENSIBLE) #u32:512)
 (define-macro (JS-OBJECT-MODE-SEALED) #u32:1024)
 (define-macro (JS-OBJECT-MODE-FROZEN) #u32:2048)
-(define-macro (JS-OBJECT-MODE-REVOKED) #u32:4096)
-(define-macro (JS-OBJECT-MODE-HOPSCRIPT) #u32:4096)
-(define-macro (JS-OBJECT-MODE-JSPROCEDURETAG) #u32:8192)
+
+;; per type attributes
+(define-inline (JS-OBJECT-MODE-JSPROXYREVOKED) #u32:4096)
+(define-inline (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT) #u32:4096)
 ;; WARNING: must be the two last constants (see js-array?)
+(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:16384)
+(define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:32768)
+
+(define-macro (JS-OBJECT-MODE-JSPROXYREVOKED) #u32:4096)
+(define-macro (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT) #u32:4096)
 (define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:16384)
 (define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:32768)
 
+;; string types and attributed
 (define-inline (JS-OBJECT-MODE-JSSTRINGASCII) #u32:8)
 (define-inline (JS-OBJECT-MODE-JSSTRINGUTF8) #u32:16)
 (define-inline (JS-OBJECT-MODE-JSSTRINGNORMALIZED) #u32:32)
@@ -853,15 +864,25 @@
 	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-HASNUMERALPROP))
 	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-HASNUMERALPROP))))))
 
-(define-inline (js-object-mode-revoked? o)
-   (=u32 (bit-andu32 (JS-OBJECT-MODE-REVOKED) (js-object-mode o))
-      (JS-OBJECT-MODE-REVOKED)))
+(define-inline (js-proxy-mode-revoked? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-JSPROXYREVOKED) (js-object-mode o))
+      (JS-OBJECT-MODE-JSPROXYREVOKED)))
 
-(define-inline (js-object-mode-revoked-set! o flag)
+(define-inline (js-proxy-mode-revoked-set! o flag)
    (js-object-mode-set! o
       (if flag
-	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-REVOKED))
-	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-REVOKED))))))
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-JSPROXYREVOKED))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-JSPROXYREVOKED))))))
+
+(define-inline (js-procedure-hopscript-mode? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT) (js-object-mode o))
+      (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT)))
+
+(define-inline (js-procedure-hopscript-mode-set! o flag)
+   (js-object-mode-set! o
+      (if flag
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT))))))
 
 (define (js-object-elements-inline? o)
    ;; only used for debugging
@@ -1332,7 +1353,7 @@
 ;*    js-function-proxy? ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function-proxy? o)
-   (and (%object? o) (or (js-function? o) (js-proxy-function? o))))
+   (and (%object? o) (or (js-procedure? o) (js-proxy-function? o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-procedure? ...                                                */
@@ -1380,7 +1401,7 @@
 (define (js-proxy-function? obj)
    (when (js-proxy? obj)
       (let ((target (js-proxy-target obj)))
-	 (or (js-function? target)
+	 (or (js-procedure? target)
 	     (js-proxy-function? target)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1427,24 +1448,16 @@
    #u32:4096)
 
 ;*---------------------------------------------------------------------*/
-;*    js-function-arity ...                                            */
-;*---------------------------------------------------------------------*/
-(define-inline (js-function-arity o)
-   (with-access::JsFunction o (arity) arity))
-
-;*---------------------------------------------------------------------*/
 ;*    js-procedure-arity ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-procedure-arity o)
-   (with-access::JsProcedure o (arity)
-      arity))
+   (with-access::JsProcedure o (arity) arity))
 
 ;*---------------------------------------------------------------------*/
-;*    js-procedure-hopscript-mode? ...                                 */
+;*    js-procedure-procedure ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-procedure-hopscript-mode? o)
-   (=u32 (bit-andu32 (JS-OBJECT-MODE-HOPSCRIPT) (js-object-mode o))
-      (JS-OBJECT-MODE-HOPSCRIPT)))
+(define-inline (js-procedure-procedure o)
+   (with-access::JsProcedure o (procedure) procedure))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-target ...                                              */

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Mar 25 14:03:30 2020 (serrano)                */
+#*    Last change :  Fri Apr 10 14:21:43 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1118,8 +1118,8 @@ fi
 
 mkmf=etc/Makefile.hopconfig
 
-bglcloselibs_u=
-bglcloselibs_s=
+bglcloselibs_u="-lbigloo_s-$""(RELEASE) "
+bglcloselibs_s="-lbigloo_u-$""(RELEASE) "
 
 for p in $bglcloselibs; do
   bglcloselibs_u="$bglcloselibs_u -lbigloo$p""_u-$""(RELEASE)";
@@ -1245,6 +1245,7 @@ cat $mkmf.in \
         -e "s|@HOPGCCLOSELIB@|$bigloogc|" \
         -e "s|@BGLCLOSELIBS_U@|$bglcloselibs_u $bglextracloselibs|" \
         -e "s|@BGLCLOSELIBS_S@|$bglcloselibs_s $bglextracloselibs|" \
+        -e "s|@BGLCLOSELIBS@|$bglcloselibs_version|" \
 	-e "s|@BGLMACH@|$mach|" \
 	-e "s|@BGLARCH@|$arch|" \
         -e "s|@BUILDID@|$buildid|" \

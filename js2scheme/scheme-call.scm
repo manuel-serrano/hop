@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Apr  9 15:53:09 2020 (serrano)                */
+;*    Last change :  Fri Apr 10 08:57:55 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -990,7 +990,7 @@
 			,@self
 			,@(j2s-scheme args mode return conf)))
 		   ((memq (j2s-type fun) '(arrow function))
-		    `(,(symbol-append call '/jsprocedure)
+		    `(,(symbol-append call '-jsprocedure)
 		      ,j2s-unresolved-call-workspace
 		      ,(j2s-scheme fun mode return conf)
 		      ,@self

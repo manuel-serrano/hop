@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Apr  7 11:40:17 2020 (serrano)                */
+;*    Last change :  Fri Apr 10 07:58:06 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3830,7 +3830,7 @@
 			      (string->symbol (integer->string largs)))))
 		  `(,call ,%this ,obj ,this ,@args)))
 	     ((and (js-object-function-tag? ,obj)
-		   (=fx (js-function-arity ,obj) ,(+fx largs 1)))
+		   (=fx (js-procedure-arity ,obj) ,(+fx largs 1)))
 	      (with-access::JsFunction ,obj (procedure)
 		 (set! owner ,obj)
 		 (set! method procedure)

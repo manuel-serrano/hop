@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Mar 30 05:30:49 2020 (serrano)                */
+;*    Last change :  Fri Apr 10 15:19:08 2020 (serrano)                */
 ;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1041,6 +1041,9 @@
 		(make-file-path dir "so" (hop-so-dirname)
 		   (string-append base (so-suffix))))
 	     (soprecompiled 
+		(make-file-path (hop-sofile-directory)
+		   (string-append base (so-suffix))))
+	     (soprecompiled 
 		(make-file-path dir "libs" (hop-so-dirname)
 		   (string-append base (so-suffix))))
 	     (soprecompiled 
@@ -1057,6 +1060,10 @@
 			 (bigloo-unsafe "_u")
 			 (else "_s"))
 		      "-" (hop-version) (so-suffix))))
+	     ;; check in the user specified sofile-directory
+	     (soprecompiled 
+		(make-file-path (hop-sofile-directory)
+		   (hop-soname path "")))
 	     ;; if not found check the user global libs repository
 	     (let ((sopath (hop-sofile-path path :suffix suffix)))
 		(cond

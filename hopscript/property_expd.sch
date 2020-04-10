@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Apr  9 07:16:57 2020 (serrano)                */
+;*    Last change :  Fri Apr 10 07:39:58 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -1075,88 +1075,6 @@
 ;* 	  ((?- ?%this ?fun ?this . ?args)                              */
 ;* 	   (let ((f (gensym '%f)))                                     */
 ;* 	      (e `(let ((,f ,fun)) (js-call ,%this ,f ,this ,@args)) e))) */
-;* 	  (else                                                        */
-;* 	   (error "js-call" "wrong form" x))))))                       */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-call-function-expander ...                                    *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (js-call/function-expander x e)                             */
-;*                                                                     */
-;*    (define (call/tmp %this fun this args)                           */
-;*       (let ((len (length args)))                                    */
-;* 	 (case len                                                     */
-;* 	    ((0)                                                       */
-;* 	     `(if (=fx (js-function-arity ,fun) 1)                     */
-;* 		  (with-access::JsFunction ,fun (procedure)            */
-;* 		     (procedure ,this ,@args))                         */
-;* 		  ((@ js-call0/function __hopscript_public)            */
-;* 		   ,%this ,fun ,this ,@args)))                         */
-;* 	    ((1)                                                       */
-;* 	     `(if (=fx (js-function-arity ,fun) 2)                     */
-;* 		  (with-access::JsFunction ,fun (procedure)            */
-;* 		     (procedure ,this ,@args))                         */
-;* 		  ((@ js-call1/function __hopscript_public)            */
-;* 		   ,%this ,fun ,this ,@args)))                         */
-;* 	    ((2)                                                       */
-;* 	     `(if (=fx (js-function-arity ,fun) 3)                     */
-;* 		  (with-access::JsFunction ,fun (procedure)            */
-;* 		     (procedure ,this ,@args))                         */
-;* 		  ((@ js-call2/function __hopscript_public)            */
-;* 		   ,%this ,fun ,this ,@args)))                         */
-;* 	    ((3)                                                       */
-;* 	     `(if (=fx (js-function-arity ,fun) 4)                     */
-;* 		  (with-access::JsFunction ,fun (procedure)            */
-;* 		     (procedure ,this ,@args))                         */
-;* 		  ((@ js-call3/function __hopscript_public)            */
-;* 		   ,%this ,fun ,this ,@args)))                         */
-;* 	    ((4)                                                       */
-;* 	     `(if (=fx (js-function-arity ,fun) 5)                     */
-;* 		  (with-access::JsFunction ,fun (procedure)            */
-;* 		     (procedure ,this ,@args))                         */
-;* 		  ((@ js-call4/function __hopscript_public)            */
-;* 		   ,%this ,fun ,this ,@args)))                         */
-;* 	    ((5)                                                       */
-;* 	     `((@ js-call5/function __hopscript_public) ,%this ,fun ,this ,@args)) */
-;* 	    ((6)                                                       */
-;* 	     `((@ js-call6/function __hopscript_public) ,%this ,fun ,this ,@args)) */
-;* 	    ((7)                                                       */
-;* 	     `((@ js-call7/function __hopscript_public) ,%this ,fun ,this ,@args)) */
-;* 	    ((8)                                                       */
-;* 	     `((@ js-call8/function __hopscript_public) ,%this ,fun ,this ,@args)) */
-;* 	    ((9)                                                       */
-;* 	     `((@ js-call9/function __hopscript_public) ,%this ,fun ,this ,@args)) */
-;* 	    ((10)                                                      */
-;* 	     `((@ js-call10/function __hopscript_public) ,%this ,fun ,this ,@args)) */
-;* 	    (else                                                      */
-;* 	     `((@ js-calln/function __hopscript_public) ,%this ,fun ,this ,@args))))) */
-;*                                                                     */
-;*    (define (call %this fun this args)                               */
-;*       (let* ((tmps (map (lambda (a)                                 */
-;* 			   (match-case a                               */
-;* 			      ((uint32->fixnum (? symbol?)) #f)        */
-;* 			      ((int32->fixnum (? symbol?)) #f)         */
-;* 			      ((& ?-) #f)                              */
-;* 			      ((?- . ?-) (gensym '%a))                 */
-;* 			      (else #f)))                              */
-;* 		      args))                                           */
-;* 	     (bdgs (filter-map (lambda (t o) (when t (list t o))) tmps args))) */
-;* 	 (if (pair? bdgs)                                              */
-;* 	     `(let ,bdgs                                               */
-;* 		 ,(call/tmp %this fun this                             */
-;* 		     (map (lambda (t a) (or t a)) tmps args)))         */
-;* 	     (call/tmp %this fun this args))))                         */
-;*                                                                     */
-;*    (cond-expand                                                     */
-;*       ((or no-macro-cache no-macro-cache-call)                      */
-;*        (map (lambda (x) (e x e)) x))                                */
-;*       (else                                                         */
-;*        (match-case x                                                */
-;* 	  ((?- ?%this (and (? symbol?) ?fun) ?this . ?args)            */
-;* 	   (e (call %this fun this args) e))                           */
-;* 	  ((?- ?%this ?fun ?this . ?args)                              */
-;* 	   (let ((f (gensym '%f)))                                     */
-;* 	      (e `(let ((,f ,fun)) (js-call/function ,%this ,f ,this ,@args)) e))) */
 ;* 	  (else                                                        */
 ;* 	   (error "js-call" "wrong form" x))))))                       */
 ;*                                                                     */

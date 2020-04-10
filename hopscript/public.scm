@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Apr  9 07:11:01 2020 (serrano)                */
+;*    Last change :  Fri Apr 10 07:30:59 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -66,11 +66,6 @@
 	   
 	   (inline js-function-set-constrmap!::JsFunction ::JsFunction)
 	   
-	   (js-apply ::JsGlobalObject fun::obj this ::pair-nil)
-	   (js-apply-service% ::procedure obj args::pair-nil ::int)
-	   (js-apply-rest% ::JsGlobalObject ::procedure this ::pair-nil ::int ::int)
-	   (js-apply% ::JsGlobalObject ::JsProcedure ::procedure obj ::pair-nil)
-
 	   (js-call0% ::JsGlobalObject ::JsProcedure ::procedure this)
 	   (js-call1% ::JsGlobalObject ::JsProcedure ::procedure this a0)
 	   (js-call2% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1)
@@ -84,44 +79,56 @@
 	   (js-call10% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
 	   (js-calln% ::JsGlobalObject ::JsProcedure ::procedure this ::pair-nil)
 	   
-	   (js-call0 ::JsGlobalObject ::obj this)
-	   (js-call1 ::JsGlobalObject ::obj this a0)
-	   (js-call2 ::JsGlobalObject ::obj this a0 a1)
-	   (js-call3 ::JsGlobalObject ::obj this a0 a1 a2)
-	   (js-call4 ::JsGlobalObject ::obj this a0 a1 a2 a3)
-	   (js-call5 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4)
-	   (js-call6 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5)
-	   (js-call7 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6)
-	   (js-call8 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7)
-	   (js-call9 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8)
-	   (js-call10 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   (inline js-call0-jsprocedure ::JsGlobalObject ::JsProcedure this)
+	   (inline js-call1-jsprocedure ::JsGlobalObject ::JsProcedure this a0)
+	   (inline js-call2-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1)
+	   (inline js-call3-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2)
+	   (inline js-call4-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3)
+	   (inline js-call5-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4)
+	   (inline js-call6-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5)
+	   (inline js-call7-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6)
+	   (inline js-call8-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7)
+	   (inline js-call9-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+	   (inline js-call10-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   (inline js-calln-jsprocedure ::JsGlobalObject ::JsProcedure this . args)
+	   
+	   (js-call0-procedure fun::procedure this)
+	   (js-call1-procedure fun::procedure this a0)
+	   (js-call2-procedure fun::procedure this a0 a1)
+	   (js-call3-procedure fun::procedure this a0 a1 a2)
+	   (js-call4-procedure fun::procedure this a0 a1 a2 a3)
+	   (js-call5-procedure fun::procedure this a0 a1 a2 a3 a4)
+	   (js-call6-procedure fun::procedure this a0 a1 a2 a3 a4 a5)
+	   (js-call7-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6)
+	   (js-call8-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7)
+	   (js-call9-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+	   (js-call10-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   (js-calln-procedure fun::procedure this . args)
+	   
+	   (js-call0-obj ::JsGlobalObject ::obj this)
+	   (js-call1-obj ::JsGlobalObject ::obj this a0)
+	   (js-call2-obj ::JsGlobalObject ::obj this a0 a1)
+	   (js-call3-obj ::JsGlobalObject ::obj this a0 a1 a2)
+	   (js-call4-obj ::JsGlobalObject ::obj this a0 a1 a2 a3)
+	   (js-call5-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4)
+	   (js-call6-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5)
+	   (js-call7-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6)
+	   (js-call8-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7)
+	   (js-call9-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+	   (js-call10-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   
+	   (inline js-call0 ::JsGlobalObject ::obj this)
+	   (inline js-call1 ::JsGlobalObject ::obj this a0)
+	   (inline js-call2 ::JsGlobalObject ::obj this a0 a1)
+	   (inline js-call3 ::JsGlobalObject ::obj this a0 a1 a2)
+	   (inline js-call4 ::JsGlobalObject ::obj this a0 a1 a2 a3)
+	   (inline js-call5 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4)
+	   (inline js-call6 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5)
+	   (inline js-call7 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6)
+	   (inline js-call8 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7)
+	   (inline js-call9 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+	   (inline js-call10 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
 	   (js-calln ::JsGlobalObject ::obj this . args)
-	   
-	   (inline js-call0/jsprocedure ::JsGlobalObject ::JsProcedure this)
-	   (inline js-call1/jsprocedure ::JsGlobalObject ::JsProcedure this a0)
-	   (inline js-call2/jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1)
-	   (inline js-call3/jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2)
-	   (inline js-call4/jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3)
-	   (inline js-call5/jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4)
-	   (inline js-call6/jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5)
-	   (inline js-call7/jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6)
-	   (inline js-call8/jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7)
-	   (inline js-call9/jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
-	   (inline js-call10/jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
-	   (inline js-calln/jsprocedure ::JsGlobalObject ::JsProcedure this . args)
-	   
-	   (js-call0/procedure fun::procedure this)
-	   (js-call1/procedure fun::procedure this a0)
-	   (js-call2/procedure fun::procedure this a0 a1)
-	   (js-call3/procedure fun::procedure this a0 a1 a2)
-	   (js-call4/procedure fun::procedure this a0 a1 a2 a3)
-	   (js-call5/procedure fun::procedure this a0 a1 a2 a3 a4)
-	   (js-call6/procedure fun::procedure this a0 a1 a2 a3 a4 a5)
-	   (js-call7/procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6)
-	   (js-call8/procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7)
-	   (js-call9/procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
-	   (js-call10/procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
-	   (js-calln/procedure fun::procedure this . args)
 	   
 	   (js-call0/debug ::JsGlobalObject loc fun::obj this)
 	   (js-call1/debug ::JsGlobalObject loc fun::obj this a0)
@@ -142,6 +149,11 @@
 	   (js-call-method3 ::JsGlobalObject val prop ::obj ::obj ::obj)
 	   (js-call-method4 ::JsGlobalObject val prop ::obj ::obj ::obj ::obj)
 	   (js-call-methodn ::JsGlobalObject val prop . args)
+
+	   (js-apply-service% ::procedure obj args::pair-nil ::int)
+	   (js-apply-rest% ::JsGlobalObject ::procedure this ::pair-nil ::int ::int)
+	   (js-apply% ::JsGlobalObject ::JsProcedure ::procedure obj ::pair-nil)
+	   (js-apply ::JsGlobalObject fun::obj this ::pair-nil)
 
 	   (js-service/debug ::obj ::obj ::procedure)
 
@@ -239,33 +251,6 @@
    (unless (vector? __js_strings) (set! __js_strings (&init!))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-apply-rest% ...                                               */
-;*---------------------------------------------------------------------*/
-(define (js-apply-rest% %this proc::procedure obj args::pair-nil len::int n::int)
-   (if (<=fx n (+fx len 1))
-       (apply proc obj
-	  (append args (js-rest-args %this (-fx (+fx len 1) n))))
-       (apply proc obj
-	  (append (take args len)
-	     (list
-		(js-vector->jsarray
-		   (apply vector (drop args len)) %this))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-apply-service% ...                                            */
-;*---------------------------------------------------------------------*/
-(define (js-apply-service% proc::procedure obj args::pair-nil arity::int)
-   (let ((len (length args)))
-      (cond
-	 ((=fx arity len)
-	  (apply proc obj args))
-	 ((<fx arity len)
-	  (apply proc obj (take args arity)))
-	 (else
-	  (let ((rest (make-list (-fx arity len) (js-undefined))))
-	     (apply proc obj (append args rest)))))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-rest-args ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-rest-args %this num)
@@ -335,7 +320,7 @@
    (define arity (gensym 'arity))
    (define parity (gensym 'parity))
    (define required (gensym 'required))
-
+   
    (define (call-missing-rest i offset vec)
       ;; missing required rest call
       `((,(negfx (+fx offset i)))
@@ -356,15 +341,15 @@
       ;; ok rest call
       `((,(negfx (+fx offset i)))
 	(,procedure ,this ,@(take args i) ,(vec (drop args i)))))
-	
+   
    (define (call-ok-rest-array i)
       (call-ok-rest i 3049
 	 (lambda (args) `(js-vector->jsarray (vector ,@args) %this))))
-
+   
    (define (call-ok-rest-vector i)
       (call-ok-rest i 2049
 	 (lambda (args) `(vector ,@args))))
-	 
+   
    (define (call-opt-missing i)
       ;; missing required arguments
       `((,(negfx i))
@@ -385,7 +370,7 @@
 			     (js-undefined)))
 		       (apply ,procedure ,this ,@args
 			  (vector-ref optionals (-fx ,parity ,n))))))))))
-
+   
    (define (call-opt-too-many i)
       `((,(negfx i))
 	;; ok or too many required arguments
@@ -406,7 +391,7 @@
 				    (js-raise-arity-error %this ,fun ,(-fx n 1))
 				    (,procedure ,this ,@args
 				       ,@(make-list (-fx a n)
-					   '(js-undefined))))))))
+					    '(js-undefined))))))))
 		 (iota (-fx 10 i) (+fx i 1)))
 	      (else
 	       (if (<fx ,parity 0)
@@ -427,7 +412,7 @@
 	(if (js-procedure-hopscript-mode? ,fun)
 	    (js-raise-arity-error %this ,fun ,(-fx n 1))
 	    (,procedure ,this ,@args ,@(make-list (-fx i n) '(js-undefined))))))
-
+   
    (define (call-many-arguments-opt-norest)
       ;; many argument + optional arguments
       `(let ((,required ,arity))
@@ -450,7 +435,7 @@
 		  (js-raise-arity-error %this ,fun ,(-fx n 1))
 		  (apply ,procedure ,this
 		     (take (list ,@args) ,parity)))))))
-
+   
    (define (rest-argument-empty arity)
       `(cond
 	  ((>fx ,arity -3049) '#())
@@ -509,7 +494,7 @@
 				(list
 				   ,(rest-argument arity
 				       `(drop ,l (-fx ,parity 2)))))))))))))
-			
+   
    (define (call-many-arguments)
       ;; dyamic call sequence for many arguments
       `(cond
@@ -531,44 +516,38 @@
 		  ,(call-many-arguments-opt-norest)
 		  ;; rest argument
 		  ,(call-many-arguments-opt-rest))))))
-
+   
    `(with-access::JsProcedure ,fun (arity)
        (let ((,arity arity))
-	  (cond
-	     ((=fx ,n ,arity)
-	      (,procedure ,this ,@args))
-	     ((and (>fx ,arity 0) (=fx ,n (procedure-arity ,procedure)))
-	      (,procedure ,this ,@args))
-	     (else
-	      (case ,arity
-		 ;; missing rest call (rest allocated in an array)
-		 ,@(map call-missing-rest-array (reverse (iota (-fx 10 n) n)))
-		 ;; ok rest call (rest allocated in an array)
-		 ,@(map call-ok-rest-array (reverse (iota n 0)))
-		 ;; missing rest call (rest allocated in an vector)
-		 ,@(map call-missing-rest-vector (reverse (iota (-fx 10 n) n)))
-		 ;; ok rest call (rest allocated in an vector)
-		 ,@(map call-ok-rest-vector (reverse (iota n 0)))
-		 ((-2048)
-		  ;; eager "arguments" call
-		  (,procedure ,this (vector ,@args)))
-		 ((-2047)
-		  ;; lazy "arguments" call
-		  (js-call-with-stack-vector
-		     (vector ,@args)
-		     (lambda (v) (,procedure ,this v))))
-		 ;; opt missing required arguments
-		 ,@(map call-opt-missing (reverse (iota (-fx 10 (-fx n 1)) n)))
-		 ;; opt ok or too many arguments
-		 ,@(map call-opt-too-many (reverse (iota (-fx n 1) 1)))
-		 ;; fix too many arguments
-		 ,@(map call-fix-too-many (iota (-fx n 1) 1))
-		 ;; ok call (to avoid holes)
-		 ((,n) (,procedure ,this ,@args))
-		 ;; fix missing arguments
-		 ,@(map call-fix-missing (iota (-fx 10 n) (+fx n 1)))
-		 ;; dynamic dispatch
-		 (else ,(call-many-arguments))))))))
+	  (case ,arity
+	     ;; missing rest call (rest allocated in an array)
+	     ,@(map call-missing-rest-array (reverse (iota (-fx 10 n) n)))
+	     ;; ok rest call (rest allocated in an array)
+	     ,@(map call-ok-rest-array (reverse (iota n 0)))
+	     ;; missing rest call (rest allocated in an vector)
+	     ,@(map call-missing-rest-vector (reverse (iota (-fx 10 n) n)))
+	     ;; ok rest call (rest allocated in an vector)
+	     ,@(map call-ok-rest-vector (reverse (iota n 0)))
+	     ((-2048)
+	      ;; eager "arguments" call
+	      (,procedure ,this (vector ,@args)))
+	     ((-2047)
+	      ;; lazy "arguments" call
+	      (js-call-with-stack-vector
+		 (vector ,@args)
+		 (lambda (v) (,procedure ,this v))))
+	     ;; opt missing required arguments
+	     ,@(map call-opt-missing (reverse (iota (-fx 10 (-fx n 1)) n)))
+	     ;; opt ok or too many arguments
+	     ,@(map call-opt-too-many (reverse (iota (-fx n 1) 1)))
+	     ;; fix too many arguments
+	     ,@(map call-fix-too-many (iota (-fx n 1) 1))
+	     ;; direct call
+	     ((,n) (,procedure ,this ,@args))
+	     ;; fix missing arguments
+	     ,@(map call-fix-missing (iota (-fx 10 n) (+fx n 1)))
+	     ;; dynamic dispatch
+	     (else ,(call-many-arguments))))))
 
 (define (js-call0% %this fun::JsProcedure procedure this)
    (gen-calln fun procedure this))
@@ -732,190 +711,82 @@
 		 (js-calln-many% %this fun procedure this args n)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-apply% ...                                                    */
+;*    gen-call-jsprocedure ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (js-apply% %this fun::JsProcedure proc::procedure obj args::pair-nil)
-   (match-case args
-      (()
-       (js-call0% %this fun proc obj))
-      ((?a0)
-       (js-call1% %this fun proc obj a0))
-      ((?a0 ?a1)
-       (js-call2% %this fun proc obj a0 a1))
-      ((?a0 ?a1 ?a2)
-       (js-call3% %this fun proc obj a0 a1 a2))
-      ((?a0 ?a1 ?a2 ?a3)
-       (js-call4% %this fun proc obj a0 a1 a2 a3))
-      ((?a0 ?a1 ?a2 ?a3 ?a4)
-       (js-call5% %this fun proc obj a0 a1 a2 a3 a4))
-      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5)
-       (js-call6% %this fun proc obj a0 a1 a2 a3 a4 a5))
-      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6)
-       (js-call7% %this fun proc obj a0 a1 a2 a3 a4 a5 a6))
-      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7)
-       (js-call8% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7))
-      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7 ?a8)
-       (js-call9% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7 a8))
-      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7 ?a8 ?a9)
-       (js-call10% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
-      (else
-       (apply js-calln% %this fun proc obj args))))
-
-;*---------------------------------------------------------------------*/
-;*    js-apply ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (js-apply %this fun obj args::pair-nil)
-   (cond
-      ((js-procedure? fun)
-       (with-access::JsProcedure fun (procedure)
-	  (js-calln% %this fun procedure obj args)))
-      ((and (js-proxy? fun) (js-proxy-function? fun))
-       (js-apply-proxy %this fun obj args))
-      (else
-       (js-raise-type-error %this "apply: argument not a function ~s" fun))))
-
-;*---------------------------------------------------------------------*/
-;*    gen-call ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-macro (gen-call %this fun this . args)
-   `(cond
-       ((js-procedure? ,fun)
-	(with-access::JsProcedure ,fun (procedure arity)
-	   (if (=fx arity ,(+fx (length args) 1))
-	       (procedure ,this ,@args)
-	       (,(string->symbol (format "js-call~a%" (length args)))
-		,%this ,fun procedure ,this ,@args))))
-       ((js-proxy? ,fun)
-	(,(string->symbol (format "js-call-proxy/cache-miss~a" (length args)))
-	 ,%this ,fun ,this ,@args))
-       ((procedure? fun)
-	(,fun ,@args))
-       (else
-	(js-raise-type-error ,%this
-	   ,(format "call~a: not a function ~~s" (length args)) ,fun))))
-
-(define (js-call0 %this fun this)
-   (gen-call %this fun this))
-
-(define (js-call1 %this fun this a0)
-   (gen-call %this fun this a0))
-
-(define (js-call2 %this fun this a0 a1)
-   (gen-call %this fun this a0 a1))
-
-(define (js-call3 %this fun this a0 a1 a2)
-   (gen-call %this fun this a0 a1 a2))
-
-(define (js-call4 %this fun this a0 a1 a2 a3)
-   (gen-call %this fun this a0 a1 a2 a3))
-
-(define (js-call5 %this fun this a0 a1 a2 a3 a4)
-   (gen-call %this fun this a0 a1 a2 a3 a4))
-
-(define (js-call6 %this fun this a0 a1 a2 a3 a4 a5)
-   (gen-call %this fun this a0 a1 a2 a3 a4 a5))
-
-(define (js-call7 %this fun this a0 a1 a2 a3 a4 a5 a6)
-   (gen-call %this fun this a0 a1 a2 a3 a4 a5 a6))
-
-(define (js-call8 %this fun this a0 a1 a2 a3 a4 a5 a6 a7)
-   (gen-call %this fun this a0 a1 a2 a3 a4 a5 a6 a7))
-
-(define (js-call9 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
-   (gen-call %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8))
-
-(define (js-call10 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
-   (gen-call %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
-
-(define (js-calln %this fun this . args)
-   (cond
-      ((js-procedure? fun)
-       (with-access::JsProcedure fun (procedure)
-	  (js-calln% %this fun procedure this args)))
-      ((js-proxy? fun)
-       (js-call-proxyn %this fun this args))
-      (else
-       (js-raise-type-error %this
-	  (format "call(~a): not a function ~~s" (length args))
-	  fun))))
-
-;*---------------------------------------------------------------------*/
-;*    gen-call/jsprocedure ...                                         */
-;*---------------------------------------------------------------------*/
-(define-inline (js-call0/jsprocedure %this fun this)
+(define-inline (js-call0-jsprocedure %this fun this)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 1)
 	  (procedure this)
 	  (js-call0% %this fun procedure this))))
 
-(define-inline (js-call1/jsprocedure %this fun this a0)
+(define-inline (js-call1-jsprocedure %this fun this a0)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 2)
 	  (procedure this a0)
 	  (js-call1% %this fun procedure this a0))))
 
-(define-inline (js-call2/jsprocedure %this fun this a0 a1)
+(define-inline (js-call2-jsprocedure %this fun this a0 a1)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 3)
 	  (procedure this a0 a1)
 	  (js-call2% %this fun procedure this a0 a1))))
 
-(define-inline (js-call3/jsprocedure %this fun this a0 a1 a2)
+(define-inline (js-call3-jsprocedure %this fun this a0 a1 a2)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 4)
 	  (procedure this a0 a1 a2)
 	  (js-call3% %this fun procedure this a0 a1 a2))))
 
-(define-inline (js-call4/jsprocedure %this fun this a0 a1 a2 a3)
+(define-inline (js-call4-jsprocedure %this fun this a0 a1 a2 a3)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 5)
 	  (procedure this a0 a1 a2 a3)
 	  (js-call4% %this fun procedure this a0 a1 a2 a3))))
 
-(define-inline (js-call5/jsprocedure %this fun this a0 a1 a2 a3 a4)
+(define-inline (js-call5-jsprocedure %this fun this a0 a1 a2 a3 a4)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 6)
 	  (procedure this a0 a1 a2 a3 a4)
 	  (js-call5% %this fun procedure this a0 a1 a2 a3 a4))))
 
-(define-inline (js-call6/jsprocedure %this fun this a0 a1 a2 a3 a4 a5)
+(define-inline (js-call6-jsprocedure %this fun this a0 a1 a2 a3 a4 a5)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 7)
 	  (procedure this a0 a1 a2 a3 a4 a5)
 	  (js-call6% %this fun procedure this a0 a1 a2 a3 a4 a5))))
 
-(define-inline (js-call7/jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6)
+(define-inline (js-call7-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 8)
 	  (procedure this a0 a1 a2 a3 a4 a5 a6)
 	  (js-call7% %this fun procedure this a0 a1 a2 a3 a4 a5 a6))))
 
-(define-inline (js-call8/jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7)
+(define-inline (js-call8-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 9)
 	  (procedure this a0 a1 a2 a3 a4 a5 a6 a7)
 	  (js-call8% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7))))
 
-(define-inline (js-call9/jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+(define-inline (js-call9-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 10)
 	  (procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	  (js-call9% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8))))
 
-(define-inline (js-call10/jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+(define-inline (js-call10-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
    (with-access::JsProcedure fun (procedure arity)
       (if (=fx arity 11)
 	  (procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
 	  (js-call10% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))))
 
-(define-inline (js-calln/jsprocedure %this fun this . args)
+(define-inline (js-calln-jsprocedure %this fun this . args)
    (with-access::JsProcedure fun (procedure)
       (js-calln% %this fun procedure this args)))
 
 ;*---------------------------------------------------------------------*/
-;*    gen-call/procedure ...                                           */
+;*    gen-call-procedure ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-macro (gen-call/procedure proc this . args)
+(define-macro (gen-call-procedure proc this . args)
    (let ((n (+fx 1 (length args))))
       `(let ((arity (procedure-arity ,proc)))
 	  (cond
@@ -931,40 +802,40 @@
 	     (else
 	      (js-undefined))))))
    
-(define (js-call0/procedure proc this)
-   (gen-call/procedure proc this))
+(define (js-call0-procedure proc this)
+   (gen-call-procedure proc this))
 
-(define (js-call1/procedure proc this a0)
-   (gen-call/procedure proc this a0))
+(define (js-call1-procedure proc this a0)
+   (gen-call-procedure proc this a0))
 
-(define (js-call2/procedure proc this a0 a1)
-   (gen-call/procedure proc this a0 a1))
+(define (js-call2-procedure proc this a0 a1)
+   (gen-call-procedure proc this a0 a1))
 
-(define (js-call3/procedure proc this a0 a1 a2)
-   (gen-call/procedure proc this a0 a1 a2))
+(define (js-call3-procedure proc this a0 a1 a2)
+   (gen-call-procedure proc this a0 a1 a2))
 
-(define (js-call4/procedure proc this a0 a1 a2 a3)
-   (gen-call/procedure proc this a0 a1 a2 a3))
+(define (js-call4-procedure proc this a0 a1 a2 a3)
+   (gen-call-procedure proc this a0 a1 a2 a3))
 
-(define (js-call5/procedure proc this a0 a1 a2 a3 a4)
-   (gen-call/procedure proc this a0 a1 a2 a3 a4))
+(define (js-call5-procedure proc this a0 a1 a2 a3 a4)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4))
 
-(define (js-call6/procedure proc this a0 a1 a2 a3 a4 a5)
-   (gen-call/procedure proc this a0 a1 a2 a3 a4 a5))
+(define (js-call6-procedure proc this a0 a1 a2 a3 a4 a5)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4 a5))
 
-(define (js-call7/procedure proc this a0 a1 a2 a3 a4 a5 a6)
-   (gen-call/procedure proc this a0 a1 a2 a3 a4 a5 a6))
+(define (js-call7-procedure proc this a0 a1 a2 a3 a4 a5 a6)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4 a5 a6))
 
-(define (js-call8/procedure proc this a0 a1 a2 a3 a4 a5 a6 a7)
-   (gen-call/procedure proc this a0 a1 a2 a3 a4 a5 a6 a7))
+(define (js-call8-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7))
 
-(define (js-call9/procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8)
-   (gen-call/procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8))
+(define (js-call9-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8))
 
-(define (js-call10/procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
-   (gen-call/procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
+(define (js-call10-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
 
-(define (js-calln/procedure proc this . args)
+(define (js-calln-procedure proc this . args)
    ;; this protocol only support fix arity
    (let ((n (+fx 1 (length args)))
 	 (arity (procedure-arity proc)))
@@ -978,6 +849,127 @@
 		   (js-undefined)))))
 	 (else
 	  (apply proc this (take args (-fx arity 1)))))))
+
+;*---------------------------------------------------------------------*/
+;*    gen-call-obj ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-macro (gen-call-obj %this fun this . args)
+   `(cond
+       ((js-procedure? ,fun)
+	(with-access::JsProcedure ,fun (procedure)
+	   (,(string->symbol (format "js-call~a%" (length args)))
+	    ,%this ,fun procedure ,this ,@args)))
+       ((js-proxy? ,fun)
+	(,(string->symbol (format "js-call-proxy/cache-miss~a" (length args)))
+	 ,%this ,fun ,this ,@args))
+       ((procedure? fun)
+	(,fun ,@args))
+       (else
+	(js-raise-type-error ,%this
+	   ,(format "call~a: not a function ~~s" (length args)) ,fun))))
+
+(define (js-call0-obj %this fun this)
+   (gen-call-obj %this fun this))
+
+(define (js-call1-obj %this fun this a0)
+   (gen-call-obj %this fun this a0))
+
+(define (js-call2-obj %this fun this a0 a1)
+   (gen-call-obj %this fun this a0 a1))
+
+(define (js-call3-obj %this fun this a0 a1 a2)
+   (gen-call-obj %this fun this a0 a1 a2))
+
+(define (js-call4-obj %this fun this a0 a1 a2 a3)
+   (gen-call-obj %this fun this a0 a1 a2 a3))
+
+(define (js-call5-obj %this fun this a0 a1 a2 a3 a4)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4))
+
+(define (js-call6-obj %this fun this a0 a1 a2 a3 a4 a5)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4 a5))
+
+(define (js-call7-obj %this fun this a0 a1 a2 a3 a4 a5 a6)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4 a5 a6))
+
+(define (js-call8-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7))
+
+(define (js-call9-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8))
+
+(define (js-call10-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
+
+;*---------------------------------------------------------------------*/
+;*    js-callXXX ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-call0 %this fun this)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 1))
+       ((js-procedure-procedure fun) this)
+       (js-call0-obj %this fun this)))
+
+(define-inline (js-call1 %this fun this a0)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 2))
+       ((js-procedure-procedure fun) this a0)
+       (js-call1-obj %this fun this a0)))
+
+(define-inline (js-call2 %this fun this a0 a1)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 3))
+       ((js-procedure-procedure fun) this a0 a1)
+       (js-call2-obj %this fun this a0 a1)))
+
+(define-inline (js-call3 %this fun this a0 a1 a2)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 4))
+       ((js-procedure-procedure fun) this a0 a1 a2)
+       (js-call3-obj %this fun this a0 a1 a2)))
+
+(define-inline (js-call4 %this fun this a0 a1 a2 a3)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 5))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3)
+       (js-call4-obj %this fun this a0 a1 a2 a3)))
+
+(define-inline (js-call5 %this fun this a0 a1 a2 a3 a4)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 6))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4)
+       (js-call5-obj %this fun this a0 a1 a2 a3 a4)))
+
+(define-inline (js-call6 %this fun this a0 a1 a2 a3 a4 a5)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 7))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5)
+       (js-call6-obj %this fun this a0 a1 a2 a3 a4 a5)))
+
+(define-inline (js-call7 %this fun this a0 a1 a2 a3 a4 a5 a6)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 8))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5 a6)
+       (js-call7-obj %this fun this a0 a1 a2 a3 a4 a5 a6)))
+
+(define-inline (js-call8 %this fun this a0 a1 a2 a3 a4 a5 a6 a7)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 9))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5 a6 a7)
+       (js-call8-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7)))
+
+(define-inline (js-call9 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 10))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+       (js-call9-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)))
+
+(define-inline (js-call10 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 11))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+       (js-call10-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)))
+
+(define (js-calln %this fun this . args)
+   (cond
+      ((js-procedure? fun)
+       (with-access::JsProcedure fun (procedure)
+	  (js-calln% %this fun procedure this args)))
+      ((js-proxy? fun)
+       (js-call-proxyn %this fun this args))
+      (else
+       (js-raise-type-error %this
+	  (format "call(~a): not a function ~~s" (length args))
+	  fun))))
 
 ;*---------------------------------------------------------------------*/
 ;*    gen-call/debug ...                                               */
@@ -1090,6 +1082,76 @@
 (define (js-call-methodn %this val prop . args)
    (let ((o (js-toobject %this val)))
       (js-calln %this (js-get o prop %this) o args)))
+
+;*---------------------------------------------------------------------*/
+;*    js-apply-rest% ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-apply-rest% %this proc::procedure obj args::pair-nil len::int n::int)
+   (if (<=fx n (+fx len 1))
+       (apply proc obj
+	  (append args (js-rest-args %this (-fx (+fx len 1) n))))
+       (apply proc obj
+	  (append (take args len)
+	     (list
+		(js-vector->jsarray
+		   (apply vector (drop args len)) %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-apply-service% ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-apply-service% proc::procedure obj args::pair-nil arity::int)
+   (let ((len (length args)))
+      (cond
+	 ((=fx arity len)
+	  (apply proc obj args))
+	 ((<fx arity len)
+	  (apply proc obj (take args arity)))
+	 (else
+	  (let ((rest (make-list (-fx arity len) (js-undefined))))
+	     (apply proc obj (append args rest)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-apply% ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (js-apply% %this fun::JsProcedure proc::procedure obj args::pair-nil)
+   (match-case args
+      (()
+       (js-call0% %this fun proc obj))
+      ((?a0)
+       (js-call1% %this fun proc obj a0))
+      ((?a0 ?a1)
+       (js-call2% %this fun proc obj a0 a1))
+      ((?a0 ?a1 ?a2)
+       (js-call3% %this fun proc obj a0 a1 a2))
+      ((?a0 ?a1 ?a2 ?a3)
+       (js-call4% %this fun proc obj a0 a1 a2 a3))
+      ((?a0 ?a1 ?a2 ?a3 ?a4)
+       (js-call5% %this fun proc obj a0 a1 a2 a3 a4))
+      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5)
+       (js-call6% %this fun proc obj a0 a1 a2 a3 a4 a5))
+      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6)
+       (js-call7% %this fun proc obj a0 a1 a2 a3 a4 a5 a6))
+      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7)
+       (js-call8% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7))
+      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7 ?a8)
+       (js-call9% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7 a8))
+      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7 ?a8 ?a9)
+       (js-call10% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
+      (else
+       (apply js-calln% %this fun proc obj args))))
+
+;*---------------------------------------------------------------------*/
+;*    js-apply ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (js-apply %this fun obj args::pair-nil)
+   (cond
+      ((js-procedure? fun)
+       (with-access::JsProcedure fun (procedure)
+	  (js-calln% %this fun procedure obj args)))
+      ((and (js-proxy? fun) (js-proxy-function? fun))
+       (js-apply-proxy %this fun obj args))
+      (else
+       (js-raise-type-error %this "apply: argument not a function ~s" fun))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new/function ...                                              */

@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Mon Jul  1 11:35:50 2019 (serrano)                */
-#*    Copyright   :  2004-19 Manuel Serrano                            */
+#*    Last change :  Fri Apr 10 14:20:39 2020 (serrano)                */
+#*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autoconf Makefile skeleton for HOP.                          */
 #*=====================================================================*/
@@ -87,13 +87,9 @@ BHOPCFLAGS	= @BHOPCFLAGS@
 #*---------------------------------------------------------------------*/
 #*    Linking                                                          */
 #*---------------------------------------------------------------------*/
-BGLCLOSELIBS_S	= $(BIGLOOPTHLIBS) \
-                  $(BIGLOOSSLLIBS) \
-                  @BGLCLOSELIBS_S@
+BGLCLOSELIBS_S	= $(BIGLOOPTHLIBS) $(BIGLOOSSLLIBS) @BGLCLOSELIBS_S@
 
-BGLCLOSELIBS_U	= $(BIGLOOPTHLIBU) \
-                  $(BIGLOOSSLLIBU) \
-                  @BGLCLOSELIBS_U@
+BGLCLOSELIBS_U	= $(BIGLOOPTHLIBU) $(BIGLOOSSLLIBU) @BGLCLOSELIBS_U@
 
 #*---------------------------------------------------------------------*/
 #*    Build                                                            */

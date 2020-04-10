@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Tue Apr  7 07:57:20 2020 (serrano)                */
+;*    Last change :  Fri Apr 10 07:33:11 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -159,7 +159,7 @@
 	    (lambda (this)
 	       (let ((prox (js-get this (& "proxy") %this)))
 		  (if (js-proxy? prox)
-		      (js-object-mode-revoked-set! prox #t)
+		      (js-proxy-mode-revoked-set! prox #t)
 		      (js-raise-type-error %this
 			 "Not a Revocable proxy" this))))
 	    0 (& "revoke")
@@ -264,7 +264,7 @@
 	    ((js-procedure? get)
 	     (with-access::JsProcedure get (procedure)
 		(check target 
-		   (if (=fx (js-function-arity get) 3)
+		   (if (=fx (js-procedure-arity get) 3)
 		       (procedure handler target prop)
 		       (js-call3 %this get handler target prop obj)))))
 	    ((eq? get (js-undefined))
@@ -341,7 +341,7 @@
 	    ((js-procedure? get)
 	     (with-access::JsFunction get (procedure)
 		(check proxy target
-		   (if (=fx (js-function-arity get) 3)
+		   (if (=fx (js-procedure-arity get) 3)
 		       (procedure handler target prop)
 		       (js-call3 %this get handler target prop proxy)))))
 	    ((eq? get (js-undefined))
@@ -403,7 +403,7 @@
 	    (set (js-get-jsobject-name/cache handler (& "set") #f %this
 		    setcache point '(imap emap cmap pmap amap vtable))))
 	 (cond
-	    ((and (js-procedure? set) (=fx (js-function-arity set) 4))
+	    ((and (js-procedure? set) (=fx (js-procedure-arity set) 4))
 	     (unless (js-object-mode-plain? target)
 		(proxy-check-property-value target target prop %this v (& "set")))
 	     (with-access::JsFunction set (procedure)
@@ -606,7 +606,7 @@
 ;*    proxy-check-revoked! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (proxy-check-revoked! o::JsProxy action %this::JsGlobalObject)
-   (when (js-object-mode-revoked? o)
+   (when (js-proxy-mode-revoked? o)
       (js-raise-type-error %this
 	 (format "Cannot perform \"~s\" on a revoked proxy" action)
 	 (js-string->jsstring (typeof o)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Apr  9 10:52:39 2020 (serrano)                */
+;*    Last change :  Fri Apr 10 08:11:18 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -71,7 +71,6 @@
 	   
 	   (js-apply-array ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-apply-vec ::JsGlobalObject ::obj ::obj ::vector ::uint32)
-	   (js-function-apply-vec ::JsGlobalObject ::JsProcedure ::obj ::vector ::uint32)
 	   (js-function-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-maybe-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-maybe-call0 ::JsGlobalObject ::obj ::obj ::obj)
@@ -1003,36 +1002,43 @@
        (let ((n (js-arguments-length argarray %this)))
 	  (case n
 	     ((0)
-	      (js-call0 %this this thisarg))
+	      (js-call0-jsprocedure %this this thisarg))
 	     ((1)
-	      (js-call1 %this this thisarg (js-arguments-ref argarray 0 %this)))
+	      (js-call1-jsprocedure %this this thisarg
+		 (js-arguments-ref argarray 0 %this)))
 	     ((2)
-	      (js-call2 %this this thisarg (js-arguments-ref argarray 0 %this)
+	      (js-call2-jsprocedure %this this thisarg
+		 (js-arguments-ref argarray 0 %this)
 		 (js-arguments-ref argarray 1 %this)))
 	     ((3)
-	      (js-call3 %this this thisarg (js-arguments-ref argarray 0 %this)
+	      (js-call3-jsprocedure %this this thisarg
+		 (js-arguments-ref argarray 0 %this)
 		 (js-arguments-ref argarray 1 %this)
 		 (js-arguments-ref argarray 2 %this)))
 	     ((4)
-	      (js-call4 %this this thisarg (js-arguments-ref argarray 0 %this)
+	      (js-call4-jsprocedure %this this thisarg
+		 (js-arguments-ref argarray 0 %this)
 		 (js-arguments-ref argarray 1 %this)
 		 (js-arguments-ref argarray 2 %this)
 		 (js-arguments-ref argarray 3 %this)))
 	     ((5)
-	      (js-call5 %this this thisarg (js-arguments-ref argarray 0 %this)
+	      (js-call5-jsprocedure %this this thisarg
+		 (js-arguments-ref argarray 0 %this)
 		 (js-arguments-ref argarray 1 %this)
 		 (js-arguments-ref argarray 2 %this)
 		 (js-arguments-ref argarray 3 %this)
 		 (js-arguments-ref argarray 4 %this)))
 	     ((6)
-	      (js-call6 %this this thisarg (js-arguments-ref argarray 0 %this)
+	      (js-call6-jsprocedure %this this thisarg
+		 (js-arguments-ref argarray 0 %this)
 		 (js-arguments-ref argarray 1 %this)
 		 (js-arguments-ref argarray 2 %this)
 		 (js-arguments-ref argarray 3 %this)
 		 (js-arguments-ref argarray 4 %this)
 		 (js-arguments-ref argarray 5 %this)))
 	     ((7)
-	      (js-call7 %this this thisarg (js-arguments-ref argarray 0 %this)
+	      (js-call7-jsprocedure %this this thisarg
+		 (js-arguments-ref argarray 0 %this)
 		 (js-arguments-ref argarray 1 %this)
 		 (js-arguments-ref argarray 2 %this)
 		 (js-arguments-ref argarray 3 %this)
@@ -1040,7 +1046,8 @@
 		 (js-arguments-ref argarray 5 %this)
 		 (js-arguments-ref argarray 6 %this)))
 	     ((8)
-	      (js-call8 %this this thisarg (js-arguments-ref argarray 0 %this)
+	      (js-call8-jsprocedure %this this thisarg
+		 (js-arguments-ref argarray 0 %this)
 		 (js-arguments-ref argarray 1 %this)
 		 (js-arguments-ref argarray 2 %this)
 		 (js-arguments-ref argarray 3 %this)
@@ -1049,7 +1056,8 @@
 		 (js-arguments-ref argarray 6 %this)
 		 (js-arguments-ref argarray 7 %this)))
 	     ((9)
-	      (js-call9 %this this thisarg (js-arguments-ref argarray 0 %this)
+	      (js-call9-jsprocedure %this this thisarg
+		 (js-arguments-ref argarray 0 %this)
 		 (js-arguments-ref argarray 1 %this)
 		 (js-arguments-ref argarray 2 %this)
 		 (js-arguments-ref argarray 3 %this)
@@ -1059,7 +1067,8 @@
 		 (js-arguments-ref argarray 7 %this)
 		 (js-arguments-ref argarray 8 %this)))
 	     ((10)
-	      (js-call10 %this this thisarg (js-arguments-ref argarray 0 %this)
+	      (js-call10-jsprocedure %this this
+		 thisarg (js-arguments-ref argarray 0 %this)
 		 (js-arguments-ref argarray 1 %this)
 		 (js-arguments-ref argarray 2 %this)
 		 (js-arguments-ref argarray 3 %this)
@@ -1092,49 +1101,51 @@
 		(iota n)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-function-apply-vec ...                                        */
+;*    js-procedure-apply-vec ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-function-apply-vec %this this thisarg vec::vector ilen::uint32)
+(define (js-procedure-apply-vec %this this thisarg vec::vector ilen::uint32)
    (let ((n (uint32->fixnum ilen)))
       (case n
 	 ((0)
-	  (js-call0 %this this thisarg))
+	  (js-call0-jsprocedure %this this thisarg))
 	 ((1)
-	  (js-call1 %this this thisarg (vector-ref vec 0)))
+	  (js-call1-jsprocedure %this this thisarg (vector-ref vec 0)))
 	 ((2)
-	  (js-call2 %this this thisarg (vector-ref vec 0)
+	  (js-call2-jsprocedure %this this thisarg (vector-ref vec 0)
 	     (vector-ref vec 1)))
 	 ((3)
-	  (js-call3 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
-	     (vector-ref vec 2)))
+	  (js-call3-jsprocedure %this this thisarg (vector-ref vec 0)
+	     (vector-ref vec 1) (vector-ref vec 2)))
 	 ((4)
-	  (js-call4 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
-	     (vector-ref vec 2) (vector-ref vec 3)))
+	  (js-call4-jsprocedure %this this thisarg (vector-ref vec 0)
+	     (vector-ref vec 1) (vector-ref vec 2) (vector-ref vec 3)))
 	 ((5)
-	  (js-call5 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
-	     (vector-ref vec 2) (vector-ref vec 3) (vector-ref vec 4)))
+	  (js-call5-jsprocedure %this this thisarg (vector-ref vec 0)
+	     (vector-ref vec 1) (vector-ref vec 2) (vector-ref vec 3)
+	     (vector-ref vec 4)))
 	 ((6)
-	  (js-call6 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
-	     (vector-ref vec 2) (vector-ref vec 3) (vector-ref vec 4)
-	     (vector-ref vec 5)))
+	  (js-call6-jsprocedure %this this thisarg (vector-ref vec 0)
+	     (vector-ref vec 1) (vector-ref vec 2) (vector-ref vec 3)
+	     (vector-ref vec 4) (vector-ref vec 5)))
 	 ((7)
-	  (js-call7 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
-	     (vector-ref vec 2) (vector-ref vec 3) (vector-ref vec 4)
-	     (vector-ref vec 5) (vector-ref vec 6)))
+	  (js-call7-jsprocedure %this this thisarg (vector-ref vec 0)
+	     (vector-ref vec 1) (vector-ref vec 2) (vector-ref vec 3)
+	     (vector-ref vec 4) (vector-ref vec 5) (vector-ref vec 6)))
 	 ((8)
-	  (js-call8 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
-	     (vector-ref vec 2) (vector-ref vec 3) (vector-ref vec 4)
-	     (vector-ref vec 5) (vector-ref vec 6) (vector-ref vec 7)))
+	  (js-call8-jsprocedure %this this thisarg (vector-ref vec 0)
+	     (vector-ref vec 1) (vector-ref vec 2) (vector-ref vec 3)
+	     (vector-ref vec 4) (vector-ref vec 5) (vector-ref vec 6)
+	     (vector-ref vec 7)))
 	 ((9)
-	  (js-call9 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
-	     (vector-ref vec 2) (vector-ref vec 3) (vector-ref vec 4)
-	     (vector-ref vec 5) (vector-ref vec 6) (vector-ref vec 7)
-	     (vector-ref vec 8)))
+	  (js-call9-jsprocedure %this this thisarg (vector-ref vec 0)
+	     (vector-ref vec 1) (vector-ref vec 2) (vector-ref vec 3)
+	     (vector-ref vec 4) (vector-ref vec 5) (vector-ref vec 6)
+	     (vector-ref vec 7) (vector-ref vec 8)))
 	 ((10)
-	  (js-call10 %this this thisarg (vector-ref vec 0) (vector-ref vec 1)
-	     (vector-ref vec 2) (vector-ref vec 3) (vector-ref vec 4)
-	     (vector-ref vec 5) (vector-ref vec 6) (vector-ref vec 7)
-	     (vector-ref vec 8) (vector-ref vec 9)))
+	  (js-call10-jsprocedure %this this thisarg (vector-ref vec 0)
+	     (vector-ref vec 1) (vector-ref vec 2) (vector-ref vec 3)
+	     (vector-ref vec 4) (vector-ref vec 5) (vector-ref vec 6)
+	     (vector-ref vec 7) (vector-ref vec 8) (vector-ref vec 9)))
 	 (else
 	  (js-apply %this this thisarg (vector->sublist vec n))))))
 
@@ -1144,7 +1155,7 @@
 (define (js-apply-vec %this this thisarg vec::vector ilen::uint32)
    (cond
       ((js-procedure? this)
-       (js-function-apply-vec %this this thisarg vec ilen))
+       (js-procedure-apply-vec %this this thisarg vec ilen))
       ((js-function-proxy? this)
        (js-calln %this this thisarg
 	  (vector->sublist vec (uint32->fixnum ilen))))
