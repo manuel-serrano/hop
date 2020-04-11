@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Apr 10 08:57:55 2020 (serrano)                */
+;*    Last change :  Sat Apr 11 08:09:50 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1050,6 +1050,8 @@
       (let loop ((fun fun))
 	 (epairify loc
 	    (cond
+	       ((eq? protocol 'spread)
+		(j2s-scheme-call-spread this mode return conf))
 	       ((eq? (j2s-vtype fun) 'procedure)
 		(case protocol
 		   ((procedure-this)
@@ -1060,8 +1062,6 @@
 		    (call-scheme-nothis this fun args))
 		   (else
 		    (call-scheme this fun args))))
-	       ((eq? protocol 'spread)
-		(j2s-scheme-call-spread this mode return conf))
 	       ((isa? fun J2SAccess)
 		(call-method this cache cspecs fun args))
 	       ((isa? fun J2SParen)

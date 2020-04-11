@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 27 07:35:02 2019                          */
-;*    Last change :  Thu Jan  9 18:27:50 2020 (serrano)                */
+;*    Last change :  Sat Apr 11 08:13:06 2020 (serrano)                */
 ;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Procedure optimization.                                          */
@@ -684,17 +684,19 @@
 	 (cond
 	    ((node-procedure-info? %info)
 	     (when (pair? (node-procedure-info-vals %info))
-		(if (node-procedure-info-optimizablep %info)
+		(cond
+		   ((node-procedure-info-optimizablep %info)
 		    (set! protocol
 		       (if (correct-arities? (node-procedure-info-vals %info)
 			      (length args))
 			   'procedure-this
-			   'procedure-this-arity))
+			   'procedure-this-arity)))
+		   ((not (eq? protocol 'spread))
 		    (set! protocol
 		       (if (correct-arities? (node-procedure-info-vals %info)
 			      (length args))
 			   'function
-			   'function-arity)))))
+			   'function-arity))))))
 	    ((fun-procedure-info? %info)
 	     (when (fun-procedure-info-optimizablep %info)
 		(set! protocol

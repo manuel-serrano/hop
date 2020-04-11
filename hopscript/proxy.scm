@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Fri Apr 10 07:33:11 2020 (serrano)                */
+;*    Last change :  Sat Apr 11 06:20:42 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -151,6 +151,10 @@
 	    (else
 	     (with-access::JsProxy this (handler id)
 		(js-proxy-target-set! this t)
+		(when (js-procedure? t)
+		   ;; mark proxy targetting function to enable
+		   ;; fast js-proxy-function? predicate (see types.scm)
+		   (js-proxy-mode-function-set! this #t))
 		(set! handler h))))
 	 this)
 
@@ -205,21 +209,27 @@
 ;*    js-new-proxy ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-new-proxy %this target handler)
-   ($js-make-jsproxy ;;proxy-cmap proxy-elements
-      target handler
-      (instantiate::JsPropertyCache)
-      (instantiate::JsPropertyCache)
-      (instantiate::JsPropertyCache)
-      (js-object-default-mode)))
+   (let ((o ($js-make-jsproxy
+	       target handler
+	       (instantiate::JsPropertyCache)
+	       (instantiate::JsPropertyCache)
+	       (instantiate::JsPropertyCache)
+	       (js-object-default-mode))))
+      (when (js-function-proxy? target)
+	 (js-proxy-mode-function-set! o #t))
+      o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new-proxy/caches ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-new-proxy/caches %this target handler gcache scache acache)
-   ($js-make-jsproxy ;; proxy-cmap proxy-elements
-      target handler
-      gcache scache acache
-      (js-object-default-mode)))
+   (let ((o ($js-make-jsproxy
+	       target handler
+	       gcache scache acache
+	       (js-object-default-mode))))
+      (when (js-function-proxy? target)
+	 (js-proxy-mode-function-set! o #t))
+      o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-debug-name ...                                          */

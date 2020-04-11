@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Apr 10 07:09:50 2020 (serrano)                */
+;*    Last change :  Sat Apr 11 06:17:00 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -480,6 +480,9 @@
 	   (inline js-proxy-mode-revoked?::bool ::JsObject)
 	   (inline js-proxy-mode-revoked-set! ::JsObject ::bool)
 
+	   (inline js-proxy-mode-function?::bool ::JsObject)
+	   (inline js-proxy-mode-function-set! ::JsObject ::bool)
+
 	   (inline js-procedure-hopscript-mode?::bool ::JsProcedure)
 	   (inline js-procedure-hopscript-mode-set! ::JsProcedure ::bool)
 	   
@@ -502,6 +505,7 @@
 	   (inline JS-OBJECT-MODE-PLAIN::uint32)
 	   
 	   (inline JS-OBJECT-MODE-JSPROXYREVOKED::uint32)
+	   (inline JS-OBJECT-MODE-JSPROXYFUNCTION::uint32)
 	   (inline JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT::uint32)
 	   
 	   (inline JS-OBJECT-MODE-JSARRAYHOLEY::uint32)
@@ -568,7 +572,7 @@
 	   (inline js-symbol?::bool ::obj)
 	   (inline js-proxy?::bool ::obj)
 	   (js-proxy-array?::bool ::obj)
-	   (js-proxy-function?::bool ::obj)
+	   (inline js-proxy-function?::bool ::obj)
 
 	   (inline js-object-cmap ::JsObject)
 
@@ -740,13 +744,16 @@
 (define-macro (JS-OBJECT-MODE-FROZEN) #u32:2048)
 
 ;; per type attributes
-(define-inline (JS-OBJECT-MODE-JSPROXYREVOKED) #u32:4096)
+(define-inline (JS-OBJECT-MODE-JSPROXYREVOKED) #u32:1024)
+;; JSPROXYFUNCTION but not be included in js-object-default-mode
+(define-inline (JS-OBJECT-MODE-JSPROXYFUNCTION) #u32:4096)
 (define-inline (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT) #u32:4096)
 ;; WARNING: must be the two last constants (see js-array?)
 (define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:16384)
 (define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:32768)
 
-(define-macro (JS-OBJECT-MODE-JSPROXYREVOKED) #u32:4096)
+(define-macro (JS-OBJECT-MODE-JSPROXYREVOKED) #u32:1024)
+(define-macro (JS-OBJECT-MODE-JSPROXYFUNCTION) #u32:4096)
 (define-macro (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT) #u32:4096)
 (define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:16384)
 (define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:32768)
@@ -873,6 +880,16 @@
       (if flag
 	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-JSPROXYREVOKED))
 	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-JSPROXYREVOKED))))))
+
+(define-inline (js-proxy-mode-function? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-JSPROXYFUNCTION) (js-object-mode o))
+      (JS-OBJECT-MODE-JSPROXYFUNCTION)))
+
+(define-inline (js-proxy-mode-function-set! o flag)
+   (js-object-mode-set! o
+      (if flag
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-JSPROXYFUNCTION))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-JSPROXYFUNCTION))))))
 
 (define-inline (js-procedure-hopscript-mode? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT) (js-object-mode o))
@@ -1353,7 +1370,11 @@
 ;*    js-function-proxy? ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function-proxy? o)
-   (and (%object? o) (or (js-procedure? o) (js-proxy-function? o))))
+   (and (%object? o)
+	(>u32 (bit-andu32 (js-object-mode o)
+		 (bit-oru32 (JS-OBJECT-MODE-JSFUNCTIONTAG)
+		    (JS-OBJECT-MODE-JSPROXYFUNCTION)))
+	   #u32:0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-procedure? ...                                                */
@@ -1389,20 +1410,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-array? ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-proxy-array? obj)
-   (when (js-proxy? obj)
-      (let ((target (js-proxy-target obj)))
+(define (js-proxy-array? o)
+   (when (js-proxy? o)
+      (let ((target (js-proxy-target o)))
 	 (or (js-array? target)
 	     (js-proxy-array? target)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy-function? ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-proxy-function? obj)
-   (when (js-proxy? obj)
-      (let ((target (js-proxy-target obj)))
-	 (or (js-procedure? target)
-	     (js-proxy-function? target)))))
+(define-inline (js-proxy-function? o)
+   (and (%object? o)
+	(>u32 (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSPROXYFUNCTION))
+	   #u32:0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-cmap ...                                               */

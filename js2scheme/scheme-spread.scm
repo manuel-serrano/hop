@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-spread.scm       */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-spread.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  6 16:35:12 2018                          */
-;*    Last change :  Mon Mar 18 11:10:07 2019 (serrano)                */
-;*    Copyright   :  2018-19 Manuel Serrano                            */
+;*    Last change :  Sat Apr 11 09:45:54 2020 (serrano)                */
+;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions to deal with spread syntax.                    */
 ;*=====================================================================*/
@@ -22,7 +22,8 @@
 	   __js2scheme_stage
 	   __js2scheme_scheme
 	   __js2scheme_scheme-utils
-	   __js2scheme_scheme-cast)
+	   __js2scheme_scheme-cast
+	   __js2scheme_scheme-arguments)
 
    (export (spread->array-expr::J2SExpr loc exprs::pair copy?::bool)
 	   (j2s-spread->expr-list exprs mode return conf)))
@@ -154,6 +155,13 @@
 	  `(jsstring->list
 	      ,(j2s-scheme expr mode return conf)
 	      %this))
+	 ((arguments)
+	  (if (j2s-ref-arguments-lazy? expr)
+	      `(vector->list
+		  ,(j2s-ref-arguments-argid expr))
+	      `(js-iterable->list
+		  ,(j2s-scheme expr mode return conf)
+		  %this)))
 	 (else
 	  `(js-iterable->list
 	      ,(j2s-scheme expr mode return conf)

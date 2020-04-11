@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Mon Apr  6 09:06:30 2020 (serrano)                */
+/*    Last change :  Sat Apr 11 06:44:32 2020 (serrano)                */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Proxy objects                            */
@@ -71,12 +71,6 @@ function miscc() {
    } );
    const o4 = Object.create( o3 );
    
-   #:tprint( "o4 created..." );
-   #:js-debug-object( o4 );
-   #:tprint( "--------------" );
-   #:tprint( "foo=", o4.foo )
-   #:tprint( "hux=", o4.hux )
-
    return o4.foo === 5 && o4.hux === 10;
 }   
 

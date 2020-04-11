@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Tue Mar 10 18:14:41 2020 (serrano)                */
+/*    Last change :  Sat Apr 11 07:59:04 2020 (serrano)                */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Spread syntax                            */
@@ -111,6 +111,21 @@ function misci() {
    return equal( t, { '0': 'a', '1': 'b', '2': 'c', '3': 'd' } );
 }
 
+function miscj(target, prop, receiver) {
+   function foo( a, b, c ) {
+      return b;
+   }
+   return foo(... arguments) === prop;
+}
+
+function misck(target, prop, receiver) {
+   function foo( a, b, c ) {
+      return b;
+   }
+   var x = arguments;
+   return foo(... x) === prop;
+}
+
 console.log( "misc" );
 console.log( "   misca()"); assert.ok( misca(), "misca" );
 console.log( "   miscb()"); assert.ok( miscb(), "miscb" );
@@ -121,6 +136,8 @@ console.log( "   miscf()"); assert.ok( miscf(), "miscf" );
 console.log( "   miscg()"); assert.ok( miscg(), "miscg" );
 console.log( "   misch()"); assert.ok( misch(), "misch" );
 console.log( "   misci()"); assert.ok( misci(), "misci" );
+console.log( "   miscj()"); assert.ok( miscj(), "misci" );
+console.log( "   misck()"); assert.ok( misck(), "misci" );
 	    
 /*---------------------------------------------------------------------*/
 /*    mdn ...                                                          */

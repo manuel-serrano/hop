@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Apr  7 10:03:27 2020 (serrano)                */
+;*    Last change :  Fri Apr 10 18:06:47 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -442,19 +442,22 @@
 ;*    node-type ::J2SNode ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SNode env::pair-nil fix::cell)
-   (return 'any '() '()))
+   (with-trace 'j2s-tyflow "node-type ::J2SNode"
+      (return 'any '() '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SExpr ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SExpr env::pair-nil fix::cell)
-   (call-next-method))
+   (with-trace 'j2s-tyflow "node-type ::J2SExpr"
+      (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SNull ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SNull env::pair-nil fix::cell)
-   (expr-type-add! this env fix 'null))
+   (with-trace 'j2s-tyflow "node-type ::J2SNull"
+      (expr-type-add! this env fix 'null)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SUndefined ...                                     */
@@ -629,10 +632,11 @@
 		       (return tyr (env-merge envn envr) (append bk bk bks)))
 		    (loop (cdr nodes) tyn envn (append bk bks)))))))
 
-   (with-access::J2SSequence this (exprs)
-      (multiple-value-bind (tye env bk)
-	 (node-type* exprs env fix)
-	 (expr-type-add! this env fix tye bk))))
+   (with-trace 'j2s-tyflow "node-type ::J2SSequence"
+      (with-access::J2SSequence this (exprs)
+	 (multiple-value-bind (tye env bk)
+	    (node-type* exprs env fix)
+	    (expr-type-add! this env fix tye bk)))))
       
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SBindExit ...                                      */
@@ -1534,17 +1538,21 @@
 ;*    node-type ::J2SStmtExpr ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SStmtExpr env::pair-nil fix::cell)
-   (with-access::J2SStmtExpr this (expr)
-      (multiple-value-bind (typ env bk)
-	 (node-type expr env fix)
-	 (return typ env bk))))
+   (with-trace 'j2s-tyflow "node-type ::J2SStmtExpr"
+      (with-access::J2SStmtExpr this (expr loc)
+	 (trace-item "loc=" loc)
+	 (multiple-value-bind (typ env bk)
+	    (node-type expr env fix)
+	    (return typ env bk)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SSeq ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SSeq env::pair-nil fix::cell)
-   (with-access::J2SSeq this (nodes)
-      (node-type-seq nodes env fix 'void)))
+   (with-trace 'j2s-tyflow "node-type ::J2SSeq"
+      (with-access::J2SSeq this (nodes loc)
+	 (trace-item "loc=" loc)
+	 (node-type-seq nodes env fix 'void))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SLabel ...                                         */
@@ -1556,21 +1564,23 @@
 ;*    node-type ::J2SLetBlock ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SLetBlock env::pair-nil fix::cell)
-   (with-access::J2SLetBlock this (decls nodes)
-      (let ((ienv (map (lambda (d::J2SDecl)
-			  (with-access::J2SDecl d (utype vtype)
-			     (if (eq? utype 'unknown)
-				 (cons d vtype)
-				 (cons d utype))))
-		     decls)))
-	 (multiple-value-bind (_ denv bk)
-	    (node-type-seq decls (append ienv env) fix 'void)
-	    (multiple-value-bind (typ benv bks)
-	       (node-type-seq nodes denv fix 'void)
-	       (let ((nenv (filter (lambda (d)
-				      (not (memq (car d) decls)))
-			      benv)))
-		  (return typ nenv (append bk bks))))))))
+   (with-trace 'j2s-tyflow "node-type ::J2SLetBlock"
+      (with-access::J2SLetBlock this (decls nodes loc)
+	 (trace-item "loc=" loc)
+	 (let ((ienv (map (lambda (d::J2SDecl)
+			     (with-access::J2SDecl d (utype vtype)
+				(if (eq? utype 'unknown)
+				    (cons d vtype)
+				    (cons d utype))))
+			decls)))
+	    (multiple-value-bind (_ denv bk)
+	       (node-type-seq decls (append ienv env) fix 'void)
+	       (multiple-value-bind (typ benv bks)
+		  (node-type-seq nodes denv fix 'void)
+		  (let ((nenv (filter (lambda (d)
+					 (not (memq (car d) decls)))
+				 benv)))
+		     (return typ nenv (append bk bks)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SWith ...                                          */
@@ -1587,31 +1597,32 @@
 ;*    node-type ::J2SReturn ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SReturn env::pair-nil fix::cell)
-   (with-access::J2SReturn this (expr from loc)
-      (multiple-value-bind (tye enve bke)
-	 (node-type expr env fix)
-	 (cond
-	    ((isa? from J2SFun)
-	     (with-access::J2SFun from (rtype)
-		(let ((tyr (merge-types rtype tye)))
-		   (unless (eq? tyr rtype)
-		      (unfix! fix
-			 (format "J2SReturn(~a) e=~a ~a/~a" loc tye tyr rtype))
-		      (set! rtype tyr)))
-		(values 'void enve (list this))))
-	    ((isa? from J2SBindExit)
-	     (with-access::J2SBindExit from (type loc)
-		(let ((tyr (merge-types type tye)))
-		   (unless (eq? tyr type)
-		      (unfix! fix
-			 (format "J2SReturn(~a) e=~a ~a/~a" loc tye tyr type))
-		      (set! type tyr))))
-	     (values 'void enve (list this)))
-	    ((isa? from J2SExpr)
-	     (expr-type-add! from env fix tye)
-	     (values 'void enve (list this)))
-	    (else
-	     (values 'void enve (list this)))))))
+   (with-trace 'j2sreturn "node-type ::J2SReturn"
+      (with-access::J2SReturn this (expr from loc)
+	 (multiple-value-bind (tye enve bke)
+	    (node-type expr env fix)
+	    (cond
+	       ((isa? from J2SFun)
+		(with-access::J2SFun from (rtype)
+		   (let ((tyr (merge-types rtype tye)))
+		      (unless (eq? tyr rtype)
+			 (unfix! fix
+			    (format "J2SReturn(~a) e=~a ~a/~a" loc tye tyr rtype))
+			 (set! rtype tyr)))
+		   (values 'void enve (list this))))
+	       ((isa? from J2SBindExit)
+		(with-access::J2SBindExit from (type loc)
+		   (let ((tyr (merge-types type tye)))
+		      (unless (eq? tyr type)
+			 (unfix! fix
+			    (format "J2SReturn(~a) e=~a ~a/~a" loc tye tyr type))
+			 (set! type tyr))))
+		(values 'void enve (list this)))
+	       ((isa? from J2SExpr)
+		(expr-type-add! from env fix tye)
+		(values 'void enve (list this)))
+	       (else
+		(values 'void enve (list this))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SReturnYield ...                                   */
@@ -1673,18 +1684,20 @@
 		(node-type-test rhs nenvt nenve)))
 	  (node-type-one-test test envt enve)))
 
-   (with-access::J2SIf this (test then else)
-      (multiple-value-bind (tyi env bki)
-	 (node-type test env fix)
-	 (multiple-value-bind (envt enve)
-	    (node-type-test test env env)
-	    (multiple-value-bind (tyt envt bkt)
-	       (node-type then envt fix)
-	       (multiple-value-bind (tye enve bke)
-		  (node-type else enve fix)
-		  (let ((bk (append bki bke bkt)))
-		     (return (merge-types tyt tye)
-			(env-merge envt enve) bk))))))))
+   (with-trace 'j2s-tyflow "node-type ::J2SIf"
+      (with-access::J2SIf this (test then else loc)
+	 (trace-item "loc=" loc)
+	 (multiple-value-bind (tyi env bki)
+	    (node-type test env fix)
+	    (multiple-value-bind (envt enve)
+	       (node-type-test test env env)
+	       (multiple-value-bind (tyt envt bkt)
+		  (node-type then envt fix)
+		  (multiple-value-bind (tye enve bke)
+		     (node-type else enve fix)
+		     (let ((bk (append bki bke bkt)))
+			(return (merge-types tyt tye)
+			   (env-merge envt enve) bk)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SSwitch ...                                        */
@@ -1729,60 +1742,72 @@
 ;*    node-type ::J2SWhile ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SWhile env::pair-nil fix::cell)
-   (with-access::J2SWhile this (test body)
-      (let loop ((env env)
-		 (i 0))
-	 (let ((ofix (cell-ref fix)))
-	    (multiple-value-bind (typ envb bk)
-	       (node-type-seq (list test body) env fix 'void)
-	       (if (=fx ofix (cell-ref fix))
-		   (return typ envb (filter-breaks bk this))
-		   (loop (env-merge env envb) (+fx i 1))))))))
+   (with-trace 'j2s-tyflow "node-type ::J2SWhile"
+      (with-access::J2SWhile this (test body loc)
+	 (trace-item "loc=" loc)
+	 (let loop ((env env)
+		    (i 0))
+	    (let ((ofix (cell-ref fix)))
+	       (trace-item "while seq loc=" loc)
+	       (multiple-value-bind (typ envb bk)
+		  (node-type-seq (list test body) env fix 'void)
+		  (if (=fx ofix (cell-ref fix))
+		      (return typ envb (filter-breaks bk this))
+		      (loop (env-merge env envb) (+fx i 1)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SDo ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SDo env::pair-nil fix::cell)
-   (with-access::J2SDo this (test body)
-      (let loop ((env env))
-	 (let ((ofix (cell-ref fix)))
-	    (multiple-value-bind (typ envb bk)
-	       (node-type-seq (list body test) env fix 'void)
-	       (if (=fx ofix (cell-ref fix))
-		   (return typ (env-merge env envb) (filter-breaks bk this))
-		   (loop (env-merge env envb))))))))
+   (with-trace 'j2s-tyflow "node-type ::J2SDo"
+      (with-access::J2SDo this (test body loc)
+	 (trace-item "loc=" loc)
+	 (let loop ((env env))
+	    (let ((ofix (cell-ref fix)))
+	       (trace-item "while seq loc=" loc)
+	       (multiple-value-bind (typ envb bk)
+		  (node-type-seq (list body test) env fix 'void)
+		  (if (=fx ofix (cell-ref fix))
+		      (return typ (env-merge env envb) (filter-breaks bk this))
+		      (loop (env-merge env envb)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SFor ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SFor env::pair-nil fix::cell)
-   (with-access::J2SFor this (init test incr body)
-      (let loop ((env env))
-	 (let ((ofix (cell-ref fix)))
-	    (multiple-value-bind (typ envb bk)
-	       (node-type-seq (list init test body incr) env fix 'void)
-	       (if (=fx ofix (cell-ref fix))
-		   (return typ (env-merge env envb) (filter-breaks bk this))
-		   (loop (env-merge env envb))))))))
+   (with-trace 'j2s-tyflow "node-type ::J2SFor"
+      (with-access::J2SFor this (init test incr body loc)
+	 (trace-item "loc=" loc)
+	 (let loop ((env env))
+	    (let ((ofix (cell-ref fix)))
+	       (trace-item "for seq loc=" loc)
+	       (multiple-value-bind (typ envb bk)
+		  (node-type-seq (list init test body incr) env fix 'void)
+		  (if (=fx ofix (cell-ref fix))
+		      (return typ (env-merge env envb) (filter-breaks bk this))
+		      (loop (env-merge env envb)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SForIn ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SForIn env::pair-nil fix::cell)
-   (with-access::J2SForIn this (lhs obj body op)
-      (let ((decl (if (isa? lhs J2SRef)
-		      (with-access::J2SRef lhs (decl) decl)
-		      (with-access::J2SGlobalRef lhs (decl) decl)))
-	    (ty (if (eq? op 'in) 'string 'any)))
-	 (decl-vtype-add! decl ty fix)
-	 (expr-type-add! lhs env fix ty '())
-	 (let loop ((env (extend-env env decl ty)))
-	    (let ((ofix (cell-ref fix)))
-	       (multiple-value-bind (typ envb bk)
-		  (node-type-seq (list obj body) env fix 'void)
-		  (if (=fx ofix (cell-ref fix))
-		      (return typ envb (filter-breaks bk this))
-		      (loop (env-merge env envb)))))))))
+   (with-trace 'j2s-tyflow "node-type ::J2SForIn"
+      (with-access::J2SForIn this (lhs obj body op loc)
+	 (trace-item "loc=" loc)
+	 (let ((decl (if (isa? lhs J2SRef)
+			 (with-access::J2SRef lhs (decl) decl)
+			 (with-access::J2SGlobalRef lhs (decl) decl)))
+	       (ty (if (eq? op 'in) 'string 'any)))
+	    (decl-vtype-add! decl ty fix)
+	    (expr-type-add! lhs env fix ty '())
+	    (let loop ((env (extend-env env decl ty)))
+	       (let ((ofix (cell-ref fix)))
+		  (trace-item "for seq loc=" loc)
+		  (multiple-value-bind (typ envb bk)
+		     (node-type-seq (list obj body) env fix 'void)
+		     (if (=fx ofix (cell-ref fix))
+			 (return typ envb (filter-breaks bk this))
+			 (loop (env-merge env envb))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2STry ...                                           */

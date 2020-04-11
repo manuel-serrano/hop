@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Apr  8 08:30:29 2020 (serrano)                */
+;*    Last change :  Sat Apr 11 09:49:32 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -33,7 +33,8 @@
 	   __hopscript_number
 	   __hopscript_regexp
 	   __hopscript_arraybuffer
-	   __hopscript_arraybufferview)
+	   __hopscript_arraybufferview
+	   __hopscript_arguments)
 
    (export 
 	   (js-constant-init ::obj ::obj ::JsGlobalObject)
@@ -425,6 +426,8 @@
        (jsarray->list obj %this))
       ((js-jsstring? obj)
        (js-jsstring->list obj %this))
+      ((isa? obj JsArguments)
+       (js-arguments->list obj %this))
       (else
        (error "js-iterable->list"
 	  (format "not implemented yet \"~a\"" (typeof obj)) obj))))
