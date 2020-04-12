@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Sun Dec 15 05:58:07 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Sun Apr 12 16:09:16 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
 ;*=====================================================================*/
@@ -23,7 +23,8 @@
 	   __js2scheme_stage
 	   __js2scheme_parser
 	   __js2scheme_scheme
-	   __js2scheme_scheme-utils)
+	   __js2scheme_scheme-utils
+	   __js2scheme_scheme-constant)
 
    (export j2s-hopscript-stage
 	   (generic j2s-hopscript-header::J2SProgram ::J2SProgram ::obj)))
@@ -45,13 +46,13 @@
       (with-access::J2SProgram ast (headers path loc)
 	 (let* ((id (basename path))
 		(path (or (config-get conf :module-path #f) path)))
-	    (set! headers (hopscript-header id path loc conf)))))
+	    (set! headers (hopscript-header id path loc ast conf)))))
    ast)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscript-header ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (hopscript-header::pair id path loc conf)
+(define (hopscript-header::pair id path loc prog conf)
    
    (define (js-def-extern js bind writable expr
 	      #!key (type 'unknown) (hidden-class #t) (scope '%scope))
@@ -86,7 +87,7 @@
 	 (js-def-extern 'GLOBAL #t #f '%this :type 'object)
 	 (js-def-extern 'module #t #t '%module :type 'object :hidden-class #f)
 	 (js-def-extern 'exports #t #t
-	    '(js-get %module (& "exports") %scope))
+	    `(js-get %module ,(& "exports" prog) %scope))
 	 (js-def-extern 'require #t #f
 	    (instantiate::J2SRef
 	       (loc loc)
@@ -98,17 +99,17 @@
 	 (js-def-extern 'Worker #t #t
 	    '(nodejs-worker %this %scope %module))
 	 (js-def-extern '__filename #t #f
-	    '(js-get %module (& "filename") %scope)
+	    `(js-get %module ,(& "filename" prog) %scope)
 	    :type 'string)
 	 (js-def-extern '__dirname #t #f
-	    '(js-string->jsstring
+	    `(js-string->jsstring
 	      (dirname
 		 (js-jsstring->string
-		    (js-get %module (& "filename") %scope))))
+		    (js-get %module ,(& "filename" prog) %scope))))
 	    :type 'string)
 	 (js-def-extern '%__GLOBAL #f #f
 	    ;; this will not be compiled as a global (see scheme.scm)
-	    '(js-put! GLOBAL (& "global") GLOBAL #f %this))
+	    `(js-put! GLOBAL ,(& "global" prog) GLOBAL #f %this))
 	 (js-def-extern 'process #t #t '(nodejs-process %worker %this)
 	    :type 'object)
 	 (js-def-extern 'Object #t #t
@@ -143,20 +144,20 @@
 		,(unless (string=? path "buffer")
 		    `(nodejs-bind-export! %this %scope
 			(nodejs-require-core "buffer" %worker %this)
-			(& "Buffer")))
+			,(& "Buffer" prog)))
 		,(unless (string=? path "timers")
 		    `(nodejs-bind-export! %this %scope
 			(nodejs-require-core "timers" %worker %this)
-			(& "clearImmediate")
-			(& "clearInterval")
-			(& "clearTimeout")
-			(& "setImmediate")
-			(& "setInterval")
-			(& "setTimeout")))
+			,(& "clearImmediate" prog)
+			,(& "clearInterval" prog)
+			,(& "clearTimeout" prog)
+			,(& "setImmediate" prog)
+			,(& "setInterval" prog)
+			,(& "setTimeout" prog)))
 		,(unless (string=? path "console")
 		    `(nodejs-bind-export! %this %this
 			%scope
-			(& "console")))))
+			,(& "console" prog)))))
 	 (instantiate::J2SUndefined
 	    (type 'undefined)
 	    (loc loc)))))

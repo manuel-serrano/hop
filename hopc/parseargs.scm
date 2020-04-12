@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Apr  6 17:08:57 2020 (serrano)                */
+;*    Last change :  Sat Apr 11 13:47:52 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -404,6 +404,15 @@
 		(lambda (ip)
 		   (hopc-j2s-flags-set!
 		      (cons* :cspecs (read ip) (hopc-j2s-flags))))))
+	    (("--tls" (help "Thread local storage"))
+	     (cond-expand
+		(enable-tls
+		 (hopc-j2s-flags-set!
+		    (cons* :tls #t (hopc-j2s-flags))))
+		(else
+		 (error "hopc"
+		    "thread local storage not supported by architecture"
+		    #f))))
 	    (else
 	     (if (string=? else "--")
 		 (begin

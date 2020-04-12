@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sat Apr 11 06:20:42 2020 (serrano)                */
+;*    Last change :  Sun Apr 12 17:09:59 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -349,7 +349,7 @@
 		    getcache -1 '(imap emap cmap pmap amap vtable))))
 	 (cond
 	    ((js-procedure? get)
-	     (with-access::JsFunction get (procedure)
+	     (with-access::JsProcedure get (procedure)
 		(check proxy target
 		   (if (=fx (js-procedure-arity get) 3)
 		       (procedure handler target prop)

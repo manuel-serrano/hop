@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/js2scheme/scheme-class.scm                       */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-class.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sun Feb 23 14:37:25 2020 (serrano)                */
+;*    Last change :  Sun Apr 12 15:32:36 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -15,7 +15,8 @@
 (module __js2scheme_scheme-class
 
    (include "ast.sch"
-	    "usage.sch")
+	    "usage.sch"
+	    "context.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -26,20 +27,21 @@
 	   __js2scheme_stage
 	   __js2scheme_scheme
 	   __js2scheme_scheme-fun
-	   __js2scheme_scheme-utils)
+	   __js2scheme_scheme-utils
+	   __js2scheme_scheme-constant)
 
-   (export (j2s-scheme-super ::J2SCall mode return conf)))
+   (export (j2s-scheme-super ::J2SCall mode return ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclClass ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SDeclClass mode return conf)
+(define-method (j2s-scheme this::J2SDeclClass mode return ctx)
    "declclass not implemented yet")
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SClass ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SClass mode return conf)
+(define-method (j2s-scheme this::J2SClass mode return ctx)
    
    (define (constructor? prop::J2SDataPropertyInit)
       (with-access::J2SDataPropertyInit prop (name)
@@ -65,21 +67,21 @@
 	 ((isa? name J2SString)
 	  (with-access::J2SString name (val)
 	     (let ((str (string-for-read val)))
-		`(& ,val))))
+		(& val (context-program ctx)))))
 	 ((isa? name J2SNumber)
 	  (with-access::J2SNumber name (val)
 	     (if (fixnum? val)
 		 `(js-integer-name->jsstring ,val)
-		 `(js-toname ,(j2s-scheme val mode return conf) %this))))
+		 `(js-toname ,(j2s-scheme val mode return ctx) %this))))
 	 ((isa? name J2SPragma)
-	  `(js-toname ,(j2s-scheme name mode return conf) %this))
+	  `(js-toname ,(j2s-scheme name mode return ctx) %this))
 	 ((isa? name J2SLiteralCnst)
-	  `(js-toname ,(j2s-scheme name mode return conf) %this))
+	  `(js-toname ,(j2s-scheme name mode return ctx) %this))
 	 ((isa? name J2SLiteralValue)
 	  (with-access::J2SLiteralValue name (val)
-	     `(js-toname ,(j2s-scheme val mode return conf) %this)))
+	     `(js-toname ,(j2s-scheme val mode return ctx) %this)))
 	 (else
-	  `(js-toname ,(j2s-scheme name mode return conf) %this))))
+	  `(js-toname ,(j2s-scheme name mode return ctx) %this))))
    
    (define (bind-class-method obj prop)
       (cond
@@ -87,15 +89,15 @@
 	  (with-access::J2SDataPropertyInit prop (name val)
 	     (unless (constructor? prop)
 		`(js-bind! %this ,obj ,(j2s-propname name)
-		    :value ,(j2s-scheme val mode return conf)
+		    :value ,(j2s-scheme val mode return ctx)
 		    :writable #t :enumerable #f :configurable #t))))
 	 ((isa? prop J2SAccessorPropertyInit)
 	  (with-access::J2SAccessorPropertyInit prop (name get set)
 	     `(js-bind! %this ,obj ,(j2s-propname name)
 		 :get ,(when get
-			  (j2s-scheme get mode return conf))
+			  (j2s-scheme get mode return ctx))
 		 :set ,(when set
-			  (j2s-scheme set mode return conf))
+			  (j2s-scheme set mode return ctx))
 		 :writable #t :enumerable #f :configurable #t)))
 	 (else
 	  #f)))
@@ -118,8 +120,10 @@
 	  (proc '()))
 	 (else
 	  (let ((superid (gensym 'super)))
-	     `(let* ((,superid ,(j2s-scheme super mode return conf))
-		     (%super (js-get ,superid (& "prototype") %this))
+	     `(let* ((,superid ,(j2s-scheme super mode return ctx))
+		     (%super (js-get ,superid
+				,(& "prototype" (context-program ctx))
+				%this))
 		     (%superctor ,superid))
 		 ,(proc superid))))))
    
@@ -143,8 +147,8 @@
 		    (,clazz (js-make-function %this
 			       ,ctor
 			       ,length
-			       (& ,(symbol->string! cname))
-			       :src ,(when src (class-src loc this conf))
+			       ,(& cname (context-program ctx))
+			       :src ,(when src (class-src loc this ctx))
 			       :strict ',mode
 			       :alloc ,(if (or (eq? super #f) (null? super))
 					   'js-object-alloc/new-target
@@ -175,7 +179,7 @@
 		      (with-access::J2SDataPropertyInit prop (val)
 			 (with-access::J2SFun val (constrsize params thisp)
 			    (make-class name super elements
-			       (ctor->lambda val name mode return conf #f #t super)
+			       (ctor->lambda val name mode return ctx #f #t super)
 			       (+fx 1 (length params))
 			       (length params) constrsize
 			       src loc)))))
@@ -237,7 +241,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    ctor->lambda ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (ctor->lambda val::J2SFun name mode return conf proto ctor-only super)
+(define (ctor->lambda val::J2SFun name mode return ctx proto ctor-only super)
 
    (define (check-body-instance body)
       (with-access::J2SFun val (new-target loc)
@@ -290,17 +294,17 @@
 	    (else
 	     (set! body (J2SBlock (check-body-instance body)))))))
    
-      (jsfun->lambda val mode return conf proto ctor-only))
+      (jsfun->lambda val mode return ctx proto ctor-only))
 
 ;*---------------------------------------------------------------------*/
 ;*    class-src ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (class-src loc val::J2SClass conf)
+(define (class-src loc val::J2SClass ctx)
    (with-access::J2SClass val (src loc endloc)
       (when src
 	 (match-case loc
 	    ((at ?path ?start)
-	     (let ((m (config-get-mmap conf path)))
+	     (let ((m (config-get-mmap (context-conf ctx) path)))
 		`'(,loc . ,(when (mmap? m)
 			      (match-case endloc
 				 ((at ?file ?end)
@@ -316,7 +320,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-super ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (j2s-scheme-super this::J2SCall mode return conf)
+(define (j2s-scheme-super this::J2SCall mode return ctx)
    (with-access::J2SCall this (loc fun this args protocol cache)
       (let* ((len (length args))
 	     (call (if (>=fx len 11)
@@ -329,7 +333,7 @@
 	     (let ((,tmp (,call ,j2s-unresolved-call-workspace
 			    %superctor
 			    %nothis
-			    ,@(j2s-scheme args mode return conf))))
+			    ,@(j2s-scheme args mode return ctx))))
 		(set! this %nothis)
 		,tmp)))))
    

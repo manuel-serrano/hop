@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sat Apr 11 06:00:41 2020 (serrano)                */
+;*    Last change :  Sat Apr 11 13:49:08 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_scheme-program
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "context.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -23,15 +24,16 @@
 	   __js2scheme_stmtassign
 	   __js2scheme_compile
 	   __js2scheme_stage
+	   __js2scheme_checksum
 	   __js2scheme_scheme
 	   __js2scheme_scheme-fun
 	   __js2scheme_scheme-utils
-	   __js2scheme_checksum))
+	   __js2scheme_scheme-constant))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SProgram ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SProgram mode return conf)
+(define-method (j2s-scheme this::J2SProgram mode return ctx)
    
    (define (j2s-master-module module cnsttable esexports esimports scmheaders  body)
       (with-access::J2SProgram this (pcache-size call-size cnsts globals loc)
@@ -41,17 +43,18 @@
 	    `(%define-cnst-table ,(length cnsts))
 	    `(%define-pcache ,pcache-size)
 	    `(define %pcache
-		(js-make-pcache-table ,pcache-size ,(config-get conf :filename)
-		   ,@(if (config-get conf :profile-cache #f)
-			 (list `',(j2s-profile-cache this conf))
+		(js-make-pcache-table ,pcache-size
+		   ,(context-get ctx :filename)
+		   ,@(if (context-get ctx :profile-cache #f)
+			 (list `',(j2s-profile-cache this))
 			 '())))
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
-	    (when (config-get conf :profile-call #f)
+	    (when (context-get ctx :profile-call #f)
 	       `(define %call-log (make-vector ,call-size #l0)))
-	    (when (config-get conf :profile-cmap #f)
+	    (when (context-get ctx :profile-cmap #f)
 	       `(define %cmap-log (make-vector ,call-size '())))
-	    (when (config-get conf :profile-call #f)
+	    (when (context-get ctx :profile-call #f)
 	       `(define %call-locations ',(call-locations this)))
 	    (epairify-deep loc
 	       `(define (hopscript %this this %scope %module)
@@ -64,7 +67,7 @@
 		   ,@globals
 		   ,@esimports
 		   ,esexports
-		   ,@(exit-body conf
+		   ,@(exit-body ctx
 			(filter fundef? body) (filter nofundef? body))))
 	    '(&end!)
 	    ;; for dynamic loading
@@ -84,15 +87,15 @@
 		   (define js-integer-names (js-get-js-integer-names))
 		   (define %pcache
 		      (js-make-pcache-table ,pcache-size
-			 ,(config-get conf :filename)
-			 ,@(if (config-get conf :profile-cache #f)
-			       (list `',(j2s-profile-cache this conf))
+			 ,(context-get ctx :filename)
+			 ,@(if (context-get ctx :profile-cache #f)
+			       (list `',(j2s-profile-cache this))
 			       '())))
-		   ,@(if (config-get conf :profile-call #f)
+		   ,@(if (context-get ctx :profile-call #f)
 			 `((define %call-log (make-vector ,call-size #l0))
 			   (define %call-locations ',(call-locations this)))
 			 '())
-		   ,@(if (config-get conf :profile-cmap #f)
+		   ,@(if (context-get ctx :profile-cmap #f)
 			 `((define %cmap-log (make-vector ,call-size '())))
 			 '())
 		   (define %worker (js-current-worker))
@@ -101,14 +104,14 @@
 		   ,@globals
 		   ,@esimports
 		   ,esexports
-		   ,@(exit-body conf
+		   ,@(exit-body ctx
 			(filter fundef? body) (filter nofundef? body))))
 	    '(&end!)
 	    ;; for dynamic loading
 	    'hopscript)))
    
    (define (j2s-module module cnsttable esexports esimports scmheaders body)
-      (if (config-get conf :worker-slave)
+      (if (context-get ctx :worker-slave)
 	  (j2s-slave-module module cnsttable esexports esimports scmheaders body)
 	  (j2s-master-module module cnsttable esexports esimports scmheaders body)))
 
@@ -121,15 +124,15 @@
 		   (%define-pcache ,pcache-size)	       
 		   (define %pcache
 		      (js-make-pcache-table ,pcache-size
-			 ,(config-get conf :filename)
-			 ,@(if (config-get conf :profile-cache #f)
-			       (list `',(j2s-profile-cache this conf))
+			 ,(context-get ctx :filename)
+			 ,@(if (context-get ctx :profile-cache #f)
+			       (list `',(j2s-profile-cache this))
 			       '())))
-		   ,@(if (config-get conf :profile-call #f)
+		   ,@(if (context-get ctx :profile-call #f)
 			 `((define %call-log (make-vector ,call-size #l0))
 			   (define %call-locations ',(call-locations this)))
 			 '())
-		   ,@(if (config-get conf :profile-cmap #f)
+		   ,@(if (context-get ctx :profile-cmap #f)
 			 `((define %cmap-log (make-vector ,call-size '())))
 			 '())
 		   (define %worker (js-current-worker))
@@ -140,7 +143,7 @@
 		   ,@globals
 		   ,@esimports
 		   ,esexports
-		   ,@(exit-body conf
+		   ,@(exit-body ctx
 			(filter fundef? body) (filter nofundef? body)))))))
    
    (define (j2s-let-globals globals)
@@ -180,7 +183,7 @@
 				 ,@(j2s-expr-headers scmheaders)
 				 ,@esimports
 				 ,esexports
-				 ,@(exit-body conf
+				 ,@(exit-body ctx
 				      (filter fundef? body)
 				      (filter nofundef? body)))))))
 	    `(,jsmod
@@ -191,24 +194,24 @@
 		(hop-sofile-compile-policy-set! 'static)
 		(define %pcache
 		   (js-make-pcache-table ,pcache-size
-		      ,(config-get conf :filename)
-		      ,@(if (config-get conf :profile-cache #f)
-			    (list `',(j2s-profile-cache this conf))
+		      ,(context-get ctx :filename)
+		      ,@(if (context-get ctx :profile-cache #f)
+			    (list `',(j2s-profile-cache this))
 			    '())))
-		,@(if (config-get conf :profile-call #f)
+		,@(if (context-get ctx :profile-call #f)
 		      `((define %call-log (make-vector ,call-size #l0)))
 		      '())
-		,@(if (config-get conf :profile-cmap #f)
+		,@(if (context-get ctx :profile-cmap #f)
 		      `((define %cmap-log (make-vector ,call-size '())))
 		      '())
-		,@(if (config-get conf :profile-call #f)
+		,@(if (context-get ctx :profile-call #f)
 		      `((define %call-locations ',(call-locations this)))
 		      '())
 		(hopjs-standalone-set! #t)
 		(define %source ,path)
 		(define %resource (dirname %source))
-		,@(if (config-get conf :libs-dir #f)
-		      `((hop-sofile-directory-set! ,(config-get conf :libs-dir #f)))
+		,@(if (context-get ctx :libs-dir #f)
+		      `((hop-sofile-directory-set! ,(context-get ctx :libs-dir #f)))
 		      '())
 		(define (main args)
 		   (bigloo-library-path-set! ',(bigloo-library-path))
@@ -219,12 +222,12 @@
 		      (js-main-worker! ,name ,(absolute path) #f
 			 nodejs-new-global-object nodejs-new-module)
 		      (js-worker-push-thunk! %worker "nodejs-toplevel"
-			 ,(if (config-get conf :function-nice-name #f)
+			 ,(if (context-get ctx :function-nice-name #f)
 			      (let ((id (string->symbol "#")))
 				 `(let ((,id ,thunk))
 				     ,id))
 			      thunk))
-		      ,(profilers this conf)
+		      ,(profilers this ctx)
 		      ,(js-wait-worker '%worker)))
 		(&end!)))))
 
@@ -233,28 +236,31 @@
 					 cnsts loc)
       (let* ((esimports (j2s-module-imports this))
 	     (esexports (j2s-module-exports this))
-	     (conf (cons* :array (j2s-find-extern-decl headers 'Array)
+	     (nctx (compiler-context-set! ctx
+		      :array (j2s-find-extern-decl headers 'Array)
 		      :string (j2s-find-extern-decl headers 'String)
 		      :regexp (j2s-find-extern-decl headers 'RegExp)
 		      :math (j2s-find-extern-decl headers 'Math)
 		      :object (j2s-find-extern-decl headers 'Object)
-		      :program this
-		      conf))
-	     (scmheaders (j2s-scheme headers mode return conf))
-	     (scmdecls (j2s-scheme decls mode return conf))
+		      :program this))
+	     (scmheaders (j2s-scheme headers mode return nctx))
+	     (scmdecls (j2s-scheme decls mode return nctx))
 	     (scmclos (filter-map (lambda (d)
-				     (j2s-scheme-closure d mode return conf))
+				     (j2s-scheme-closure d mode return nctx))
 			 decls))
-	     (scmnodes (j2s-scheme nodes mode return conf))
-	     (cnsttable (%cnst-table cnsts mode return conf)))
+	     (scmnodes (j2s-scheme nodes mode return nctx))
+	     (cnsttable (%cnst-table cnsts mode return nctx)))
 	 (cond
-	    ((and main (not (config-get conf :worker #t)))
+	    ((and main (context-get nctx :tls))
+	     (tprint "not implemented yet")
+	     (exit 0))
+	    ((and main (not (context-get nctx :worker #t)))
 	     (j2s-main-sans-worker-module this name
 		cnsttable
 		(flatten-nodes (append scmheaders scmdecls scmclos))
  		esexports esimports
 		(flatten-nodes scmnodes)
-		conf))
+		nctx))
 	    (else
 	     (let ((body (flatten-nodes (append scmdecls scmclos scmnodes))))
 		(cond
@@ -280,29 +286,34 @@
 ;*    j2s-main-sans-worker-module ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (j2s-main-sans-worker-module this name cnsttable toplevel
-	   esexports esimports body conf)
+	   esexports esimports body ctx)
    (with-access::J2SProgram this (mode pcache-size call-size %this path globals
-				    cnsts loc name)
+				    cnsts loc name strings)
       (let ((module (js-module/main loc name)))
 	 (epairify-deep loc
 	    `(,module 
 		;;; (&begin!) must not be a constant! (_do not_ use quote)
 		,@(filter fundef? globals)
 		,@(filter fundef? body)
-		(define __js_strings (&begin!))
+		(define __js_strings
+		   (&jsstring-init
+		      ,(obj->string
+			  (apply vector
+			     (map (lambda (e) (&string (car e)))
+				(reverse! strings))))))
 		(%define-cnst-table ,(length cnsts))
 		(%define-pcache ,pcache-size)
 		(define %pcache
 		   (js-make-pcache-table ,pcache-size
-		      ,(config-get conf :filename)
-		      ,@(if (config-get conf :profile-cache #f)
-			    (list `',(j2s-profile-cache this conf))
+		      ,(context-get ctx :filename)
+		      ,@(if (context-get ctx :profile-cache #f)
+			    (list `',(j2s-profile-cache this))
 			    '())))
-		,@(if (config-get conf :profile-call #f)
+		,@(if (context-get ctx :profile-call #f)
 		      `((define %call-log (make-vector ,call-size #l0))
 			(define %call-locations ',(call-locations this)))
 		      '())
-		,@(if (config-get conf :profile-cmap #f)
+		,@(if (context-get ctx :profile-cmap #f)
 		      `((define %cmap-log (make-vector ,call-size '())))
 		      '())
 		(hop-sofile-compile-policy-set! 'static)
@@ -315,7 +326,7 @@
 		   (with-access::JsGlobalObject %this (js-object)
 		      (js-new0 %this js-object)))
 		(define %worker
-		   (js-main-worker! ,name ,(absolute path) #f
+		   (js-main-no-worker! ,name ,(absolute path) #f
 		      nodejs-new-global-object nodejs-new-module))
 		(define %module
 		   (nodejs-new-module ,(basename path) ,(absolute path)
@@ -325,19 +336,17 @@
 		,esexports
 		,@(filter nofundef? globals)
 		,@toplevel
-		,@(if (config-get conf :libs-dir #f)
-		      `((hop-sofile-directory-set! ,(config-get conf :libs-dir #f)))
+		,@(if (context-get ctx :libs-dir #f)
+		      `((hop-sofile-directory-set! ,(context-get ctx :libs-dir #f)))
 		      '())
 		(define (main args)
-		   ,`(define __js_strings (&init!))
-		   ,(profilers this conf)
+		   ,(profilers this ctx)
 		   (hopscript-install-expanders!)
 		   (hop-port-set! -1)
 		   (hop-ssl-port-set! -1)
 		   (bigloo-library-path-set! ',(bigloo-library-path))
 		   (set! !process (nodejs-process %worker %this))
-		   ,@(exit-body conf (filter nofundef? body)))
-		(&end!))))))
+		   ,@(exit-body ctx (filter nofundef? body))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-module-imports ...                                           */
@@ -506,9 +515,9 @@
 	 (with-access::J2SDecl decl ((w writable) loc)
 	    (cond
 	       ((isa? from J2SProgram)
-		`(vector (& ,(symbol->string alias)) (cons ,index ,(redirect-index this id from loc)) ,w))
+		`(vector ,(& alias this) (cons ,index ,(redirect-index this id from loc)) ,w))
 	       (else
-		`(vector (& ,(symbol->string alias)) ,index ,w))))))
+		`(vector ,(& alias this) ,index ,w))))))
    
    (with-access::J2SProgram this (exports imports path checksum)
       (let ((idx (j2sprogram-get-export-index this))
@@ -558,24 +567,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    profilers ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (profilers this conf)
-   (when (or (config-get conf :profile-call #f)
-	     (config-get conf :profile-cmap #f)
-	     (config-get conf :profile-cache #f)
-	     (config-get conf :profile-hint #f)
-	     (config-get conf :profile-alloc #f))
-      `(js-profile-init ',(cons* :hash (j2ssum this) (filter-config conf))
+(define (profilers this ctx)
+   (when (or (context-get ctx :profile-call #f)
+	     (context-get ctx :profile-cmap #f)
+	     (context-get ctx :profile-cache #f)
+	     (context-get ctx :profile-hint #f)
+	     (context-get ctx :profile-alloc #f))
+      `(js-profile-init ',(cons* :hash (j2ssum this)
+			     (filter-config (context-conf ctx)))
 	  ,(cond
-	      ((and (config-get conf :profile-call #f)
-		    (config-get conf :profile-cmap #f))
+	      ((and (context-get ctx :profile-call #f)
+		    (context-get ctx :profile-cmap #f))
 	       '(vector %source %call-log %cmap-log %call-locations))
-	      ((config-get conf :profile-call #f)
+	      ((context-get ctx :profile-call #f)
 	       '(vector %source %call-log #f %call-locations))
-	      ((config-get conf :profile-cmap #f)
+	      ((context-get ctx :profile-cmap #f)
 	       '(vector %source #f %cmap-log %call-locations))
 	      (else
 	       #f))
-	  ,(when (config-get conf :profile-symbols #f)
+	  ,(when (context-get ctx :profile-symbols #f)
 	      `',(profile-symbols this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -587,7 +597,9 @@
       (cond
 	 ((null? conf)
 	  (reverse! res))
-	 ((or (number? (cadr conf)) (string? (cadr conf)) (boolean? (cadr conf)))
+	 ((or (number? (cadr conf))
+	      (string? (cadr conf))
+	      (boolean? (cadr conf)))
 	  (loop (cddr conf) (cons* (cadr conf) (car conf) res)))
 	 (else
 	  (loop (cddr conf) res)))))
@@ -595,14 +607,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    exit-body ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (exit-body conf . body)
+(define (exit-body ctx . body)
    (cond
       ((not (pair? body))
        '())
-      ((config-get conf :module-main)
+      ((context-get ctx :module-main)
        `((define (%jsexit n) (exit n))
 	 ,@(apply append body)))
-      ((config-get conf :return-as-exit)
+      ((context-get ctx :return-as-exit)
        `((bind-exit (%jsexit) ,@(apply append body))))
       (else
        (apply append body))))
@@ -610,13 +622,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    %cnst-table ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (%cnst-table cnsts mode return conf)
+(define (%cnst-table cnsts mode return ctx)
    
    (define (%cnst-table-debug cnsts)
       `(js-constant-init (js-cnst-table)
 	  (vector
 	     ,@(map (lambda (n)
-		       (let ((s (j2s-scheme n mode return conf)))
+		       (let ((s (j2s-scheme n mode return ctx)))
 			  (if (isa? n J2SRegExp)
 			      (with-access::J2SRegExp n (loc val flags inline)
 				 (if inline
@@ -664,7 +676,7 @@
    
    ;; this must be executed after the code is compiled as this
    ;; compilation might change or add new constants.
-   (if (>fx (config-get conf :debug 0) 0)
+   (if (>fx (context-get ctx :debug 0) 0)
        (%cnst-table-debug cnsts)
        (%cnst-table-intext cnsts)))
 
@@ -814,7 +826,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-profile-cache ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (j2s-profile-cache this::J2SProgram conf)
+(define (j2s-profile-cache this::J2SProgram)
    (with-access::J2SProgram this (pcache-size)
       (let ((profile-info-table (make-vector pcache-size '#(-1 "" get))))
 	 (let loop ((i (-fx pcache-size 1)))

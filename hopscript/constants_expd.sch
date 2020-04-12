@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 28 15:09:08 2019                          */
-;*    Last change :  Mon Jul  8 12:47:56 2019 (serrano)                */
-;*    Copyright   :  2019 Manuel Serrano                               */
+;*    Last change :  Sun Apr 12 13:07:06 2020 (serrano)                */
+;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript constant expanders                                     */
 ;*    -------------------------------------------------------------    */
@@ -148,6 +148,9 @@
 			       (cons (cons str (cons cnst len)) &cnsts))
 			    (e `(vector-ref __js_strings ,len) e))
 			 cnst))))))
+      ((& (and ?str (? string?)) ?idx)
+       ;; new form (>= 12 apr 2020)
+       (e `(vector-ref __js_strings ,idx) e))
       ((& strings)
        (&name-expander x e))
       (else

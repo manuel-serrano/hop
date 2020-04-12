@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Thu Mar 12 17:49:44 2020 (serrano)                */
+;*    Last change :  Sun Apr 12 12:57:23 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -15,7 +15,8 @@
 (module __js2scheme_scheme-utils
    
    (include "ast.sch"
-	    "usage.sch")
+	    "usage.sch"
+	    "context.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -25,6 +26,7 @@
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_scheme-cast
+	   __js2scheme_scheme-constant
 	   __js2scheme_scheme)
    
    (export j2s-unresolved-put-workspace
@@ -42,7 +44,7 @@
 	   (j2s-fast-id id)
 	   (j2s-fast-constructor-id id)
 	   (j2s-scheme-id id pref)
-	   (j2s-scheme-name ::symbol)
+	   (j2s-scheme-name ::symbol ::struct)
 	   (j2s-decl-scheme-id ::J2SDecl)
 	   (j2s-decl-profile-id ::J2SDecl conf)
 	   (js-need-global? ::J2SDecl scope mode)
@@ -57,12 +59,12 @@
 	   (maybe-number? expr::J2SNode)
 	   (mightbe-number?::bool field::J2SExpr)
 	   
-	   (utype-ident ident utype conf #!optional compound)
-	   (vtype-ident ident vtype conf #!optional compound)
-	   (type-ident ident type conf)
+	   (utype-ident ident utype ::pair-nil #!optional compound)
+	   (vtype-ident ident vtype ::pair-nil #!optional compound)
+	   (type-ident ident type ::pair-nil)
 	   (j2s-number val conf)
 	   (j2s-error proc msg obj #!optional str)
-	   (is-fixnum? expr::J2SExpr conf)
+	   (is-fixnum? expr::J2SExpr ::struct)
 	   (is-number? expr::J2SExpr)
 	   (is-integer? expr::J2SExpr)
 	   (is-int30? expr::J2SExpr)
@@ -72,10 +74,10 @@
 	   (is-uint53? expr::J2SExpr)
 	   (is-string? expr::J2SExpr)
 
-	   (j2s-jsstring val loc)
-	   (j2s-string->jsstring ::bstring)
+	   (j2s-jsstring val loc ::struct)
+	   (j2s-string->jsstring ::bstring ::struct)
 	   
-	   (j2s-unresolved name throw cache loc)
+	   (j2s-unresolved name throw cache loc ::struct)
 	   (js-not expr)
 	   
 	   (js-pcache cache)
@@ -97,9 +99,9 @@
 	   (inrange-uint32-number?::bool ::J2SExpr)
 	   (inrange-int53?::bool ::J2SExpr)
 
-	   (box ::obj ::symbol ::pair-nil #!optional proc::obj)
-	   (box32 ::obj ::symbol ::pair-nil  #!optional proc::obj)
-	   (box64 ::obj ::symbol ::pair-nil #!optional proc::obj)
+	   (box ::obj ::symbol ::struct #!optional proc::obj)
+	   (box32 ::obj ::symbol ::struct  #!optional proc::obj)
+	   (box64 ::obj ::symbol ::struct #!optional proc::obj)
 
 	   (expr-asuint32 expr::J2SExpr)
 	   (uncast::J2SExpr ::J2SExpr)
@@ -107,8 +109,8 @@
 	   (cancall?::bool ::J2SNode)
 	   (optimized-ctor ::J2SNode)
 
-	   (with-tmp-flip flip lhs rhs mode return conf gen::procedure)
-	   (with-tmp lhs rhs mode return conf gen::procedure)))
+	   (with-tmp-flip flip lhs rhs mode return ::struct gen::procedure)
+	   (with-tmp lhs rhs mode return ::struct gen::procedure)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
@@ -161,8 +163,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-profile-id ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (j2s-profile-id id loc conf)
-   (if (config-get conf :profile-ident #f)
+(define (j2s-profile-id id loc ctx)
+   (if (context-get ctx :profile-ident #f)
        (string->symbol (format "~a<@~a:~a@>" id (cadr loc) (caddr loc)))
        id))
 
@@ -192,8 +194,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-name ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (j2s-scheme-name id)
-   `(& ,(symbol->string! id)))
+(define (j2s-scheme-name id ctx)
+   (& id (context-program ctx)))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-decl-scheme-id ...                                           */
@@ -475,8 +477,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    is-fixnum? ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (is-fixnum? expr::J2SExpr conf)
-   (if (m64? conf)
+(define (is-fixnum? expr::J2SExpr ctx)
+   (if (m64? (context-conf ctx))
        (or (type-integer? (j2s-vtype expr)) (type-int53? (j2s-vtype expr)))
        (or (type-int30? (j2s-vtype expr)) (eq? (j2s-vtype expr) 'ufixnum))))
 
@@ -502,25 +504,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (j2s-jsstring val loc)
-   (epairify loc (j2s-string->jsstring val)))
+(define (j2s-jsstring val loc ctx)
+   (epairify loc (j2s-string->jsstring val ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (j2s-unresolved name throw cache loc)
+(define (j2s-unresolved name throw cache loc ctx)
    (cond
       ((eq? name 'undefined)
        `(js-undefined))
       (cache
        `(js-global-object-get-name/cache ,j2s-unresolved-get-workspace
-	   (& ,(symbol->string name))
+	   ,(& name (context-program ctx))
 	   ,(if (pair? throw) `',throw throw)
 	   %this
 	   ,(js-pcache cache) ,(loc->point loc)))
       (else
        `(js-global-object-get-name ,j2s-unresolved-get-workspace
-	   (& ,(symbol->string name))
+	   ,(& name (context-program ctx))
 	   ,(if (pair? throw) `',throw throw)
 	   %this))))
 
@@ -535,8 +537,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string->jsstring ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (j2s-string->jsstring val::bstring)
-   `(& ,val))
+(define (j2s-string->jsstring val::bstring ctx)
+   (& val (context-program ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache ...                                                    */
@@ -547,14 +549,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-get ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (j2s-get loc obj field tyobj prop typrop tyval conf cache
+(define (j2s-get loc obj field tyobj prop typrop tyval ctx cache
 	   optim-arrayp #!key (cspecs '(cmap pmap amap vtable)))
+
+   (define conf (context-conf ctx))
    
    (define (js-get obj prop %this)
       (if (or (config-get conf :profile-cache #f)
 	      (> (config-get conf :debug 0) 0))
-	  `(js-get/debug ,(box obj tyobj conf) ,prop %this ',loc)
-	  `(js-get ,(box obj tyobj conf) ,prop %this)))
+	  `(js-get/debug ,(box obj tyobj ctx) ,prop %this ',loc)
+	  `(js-get ,(box obj tyobj ctx) ,prop %this)))
    
    (define (maybe-string? prop typrop)
       (and (not (number? prop))
@@ -574,20 +578,20 @@
 	     ((and (string? prop) (string=? prop "length"))
 	      (if (eq? tyval 'uint32)
 		  `(js-array-length ,obj)
-		  (box `(js-array-length ,obj) 'uint32 conf)))
+		  (box `(js-array-length ,obj) 'uint32 ctx)))
 	     ((mightbe-number? field)
 	      `(js-array-ref ,obj ,prop %this))
 	     (else
 	      `(js-array-noindex-ref ,obj ,prop %this))))))
    
    (let ((propstr (match-case prop
-		     ((& ?str) str)
+		     ((& ?str . ?-) str)
 		     (else #f))))
       (cond
 	 ((> (config-get conf :debug 0) 0)
 	  (if (string? propstr)
 	      `(js-get/debug ,obj ,prop %this ',loc)
-	      `(js-get/debug ,obj ,(box prop typrop conf) %this ',loc)))
+	      `(js-get/debug ,obj ,(box prop typrop ctx) %this ',loc)))
 	 ((equal? propstr "__proto__")
 	  `(js-getprototypeof ,obj %this "j2scheme"))
 	 ((eq? tyobj 'array)
@@ -628,7 +632,7 @@
 		      `(js-get-name/cache ,obj ,prop #f %this
 			  ,(js-pcache cache) ,(loc->point loc) ',cspecs)))))
 	     ((memq typrop '(int32 uint32))
-	      (js-get obj (box prop typrop conf) '%this))
+	      (js-get obj (box prop typrop ctx) '%this))
 	     ((and (maybe-string? prop typrop) (symbol? obj))
 	      `(,(if (eq? tyobj 'object)
 		     'js-get-jsobject/name-cache
@@ -648,7 +652,7 @@
 	      (if (eq? tyval 'uint32)
 		  `(js-get-lengthu32 ,obj %this #f)
 		  `(js-get-length ,obj %this #f))
-	      `(js-get ,(box obj tyobj conf) ,prop %this)))
+	      `(js-get ,(box obj tyobj ctx) ,prop %this)))
 	 ((and field optim-arrayp (mightbe-number? field))
 	  (let ((o (gensym '%obj))
 		(p (gensym '%prop)))
@@ -658,17 +662,19 @@
 		     ,(js-array-get o p typrop)
 		     ,(js-get o p '%this)))))
 	 ((memq typrop '(int32 uint32))
-	  (js-get obj (box prop typrop conf) '%this))
+	  (js-get obj (box prop typrop ctx) '%this))
 	 (else
 	  (js-get obj prop '%this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-put! ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (j2s-put! loc obj field tyobj prop typrop val tyval mode conf cache
+(define (j2s-put! loc obj field tyobj prop typrop val tyval mode ctx cache
 	   optim-arrayp
 	   #!key (cspecs '(cmap pmap nmap amap vtable)) (cachefun #t))
 
+   (define conf (context-conf ctx))
+   
    (define (js-put! o p v mode %this)
       (if (or (config-get conf :profile-cache #f)
 	      (> (config-get conf :debug 0) 0))
@@ -692,36 +698,36 @@
 	   (not (eq? typrop 'array))))
 
    (let ((propstr (match-case prop
-		     ((& ?str) str)
+		     ((& ?str . ?-) str)
 		     (else #f))))
       (cond
 	 ((> (config-get conf :debug 0) 0)
 	  (if (string? propstr)
 	      `(js-put/debug! ,obj ,prop
-		  ,(box val tyval conf) ,mode %this ',loc)
-	      `(js-put/debug! ,obj ,(box prop typrop conf)
-		  ,(box val tyval conf) ,mode %this ',loc)))
+		  ,(box val tyval ctx) ,mode %this ',loc)
+	      `(js-put/debug! ,obj ,(box prop typrop ctx)
+		  ,(box val tyval ctx) ,mode %this ',loc)))
 	 ((equal? propstr "__proto__")
-	  `(js-setprototypeof ,obj ,(box val tyval conf) %this "js2scheme"))
+	  `(js-setprototypeof ,obj ,(box val tyval ctx) %this "js2scheme"))
 	 ((eq? tyobj 'array)
 	  (case typrop
 	     ((uint32)
 	      `(js-array-index-set! ,obj ,prop
-		  ,(box val tyval conf) ,(strict-mode? mode) %this))
+		  ,(box val tyval ctx) ,(strict-mode? mode) %this))
 	     ((int32)
 	      `(js-array-fixnum-set! ,obj (int32->fixnum ,prop)
-		  ,(box val tyval conf) ,(strict-mode? mode) %this))
+		  ,(box val tyval ctx) ,(strict-mode? mode) %this))
 	     ((string)
 	      `(js-array-string-set! ,obj ,prop
-		  ,(box val tyval conf) ,(strict-mode? mode) %this))
+		  ,(box val tyval ctx) ,(strict-mode? mode) %this))
 	     (else
 	      (if (or (not field) (mightbe-number? field))
-		  `(js-array-set! ,obj ,prop ,(box val tyval conf)
+		  `(js-array-set! ,obj ,prop ,(box val tyval ctx)
 		      ,(strict-mode? mode) %this)
-		  `(js-array-noindex-set! ,obj ,prop ,(box val tyval conf)
+		  `(js-array-noindex-set! ,obj ,prop ,(box val tyval ctx)
 		      ,(strict-mode? mode) %this)))))
 	 ((eq? tyobj 'arguments)
-	  `(js-put! ,obj ,prop ,(box val tyval conf) ,mode %this))
+	  `(js-put! ,obj ,prop ,(box val tyval ctx) ,mode %this))
 	 ((and cache cspecs)
 	  (cond
 	     ((string? propstr)
@@ -732,45 +738,45 @@
 		     (case tyobj
 			((object global this)
 			 `(js-put-jsobject-name/cache! ,obj ,prop
-			     ,(box val tyval conf)
+			     ,(box val tyval ctx)
 			     ,mode %this
 			     ,(js-pcache cache)
 			     ,(loc->point loc) ',cspecs
 			     ,cachefun))
 			(else
 			 `(js-put-name/cache! ,obj ,prop
-			     ,(box val tyval conf)
+			     ,(box val tyval ctx)
 			     ,mode %this
 			     ,(js-pcache cache) ,(loc->point loc)
 			     ',cspecs
 			     ,cachefun))))))
 	     ((memq typrop '(int32 uint32))
-	      `(maybe-array-set! ,obj ,(box prop typrop conf)
-		  ,(box val tyval conf) ,mode %this))
+	      `(maybe-array-set! ,obj ,(box prop typrop ctx)
+		  ,(box val tyval ctx) ,mode %this))
 	     ((or (number? prop) (null? cspecs))
-	      (maybe-array-set! prop (box val tyval conf)))
+	      (maybe-array-set! prop (box val tyval ctx)))
 	     ((and (memq tyobj '(object global this)) (eq? typrop 'string))
 	      `(js-put-jsobject/name-cache! ,obj ,prop
-		  ,(box val tyval conf)
+		  ,(box val tyval ctx)
 		  ,mode %this
 		  ,(loc->point loc) ',cspecs))
 	     ((maybe-string? prop typrop)
 	      `(js-put/cache! ,obj ,prop
-		  ,(box val tyval conf) ,mode %this
+		  ,(box val tyval ctx) ,mode %this
 		  ,(loc->point loc) ,(loc->src loc)))
 	     (else
-	      `(js-put! ,obj ,prop ,(box val tyval conf) ,mode %this))))
+	      `(js-put! ,obj ,prop ,(box val tyval ctx) ,mode %this))))
 	 ((and field optim-arrayp (mightbe-number? field))
-	  (maybe-array-set! (box prop typrop conf) (box val tyval conf)))
+	  (maybe-array-set! (box prop typrop ctx) (box val tyval ctx)))
 	 (else
 	  (cond
 	     ((string? propstr)
-	      (js-put! obj prop (box val tyval conf) mode '%this))
+	      (js-put! obj prop (box val tyval ctx) mode '%this))
 	     ((and optim-arrayp (memq typrop '(int32 uint32)))
-	      (maybe-array-set! (box prop typrop conf) (box val tyval conf)))
+	      (maybe-array-set! (box prop typrop ctx) (box val tyval ctx)))
 	     (else
-	      (js-put! obj (box prop typrop conf)
-		  (box val tyval conf) mode '%this)))))))
+	      (js-put! obj (box prop typrop ctx)
+		  (box val tyval ctx) mode '%this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ranges                                                           */
@@ -952,56 +958,57 @@
 ;*---------------------------------------------------------------------*/
 ;*    box ...                                                          */
 ;*---------------------------------------------------------------------*/
-(define (box val type conf #!optional proc::obj)
-   (if (m64? conf)
-       (box64 val type conf proc)
-       (box32 val type conf proc)))
+(define (box val type ctx #!optional proc::obj)
+   (let ((conf (context-conf ctx)))
+      (if (m64? conf)
+	  (box64 val type ctx proc)
+	  (box32 val type ctx proc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    box32 ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define (box32 val type::symbol conf #!optional proc::obj)
-
-   (case type
-      ((int32)
-       (if (int32? val)
-	   (if (and (>=llong (int32->llong val) (conf-min-int conf))
-		    (<=llong (int32->llong val) (conf-max-int conf)))
-	       (cond-expand
-		  (bint30
-		   (if (and (>=llong (int32->llong val)
-			       (negllong (bit-lshllong #l1 29)))
-			    (<llong (int32->llong val)
-			       (bit-lshllong #l1 29)))
-		       (int32->fixnum val)
-		       `(int32->fixnum ,val)))
-		  (else
-		   (int32->fixnum val))))
-	   `(overflowfx (int32->fixnum ,val))))
-      ((uint32)
-       (if (uint32? val)
-	   (if (<=llong (uint32->llong val) (conf-max-int conf))
-	       (uint32->fixnum val)
-	       (uint32->flonum val))
-	   `(if (<u32 ,val ,(llong->uint32 (conf-max-int conf)))
-		(uint32->fixnum ,val)
-		(uint32->flonum ,val))))
-      ((integer int53)
-       (if (fixnum? val)
-	   (if (and (>=llong (fixnum->llong val) (conf-min-int conf))
-		    (<=llong (fixnum->llong val) (conf-max-int conf)))
-	       val
-	       (fixnum->flonum val))
-	   `(overflowfx ,val)))
-      ((real number)
-       val)
-      (else
-       (if (not proc) val (proc val)))))
+(define (box32 val type::symbol ctx #!optional proc::obj)
+   (let ((conf (context-conf ctx)))
+      (case type
+	 ((int32)
+	  (if (int32? val)
+	      (if (and (>=llong (int32->llong val) (conf-min-int conf))
+		       (<=llong (int32->llong val) (conf-max-int conf)))
+		  (cond-expand
+		     (bint30
+		      (if (and (>=llong (int32->llong val)
+				  (negllong (bit-lshllong #l1 29)))
+			       (<llong (int32->llong val)
+				  (bit-lshllong #l1 29)))
+			  (int32->fixnum val)
+			  `(int32->fixnum ,val)))
+		     (else
+		      (int32->fixnum val))))
+	      `(overflowfx (int32->fixnum ,val))))
+	 ((uint32)
+	  (if (uint32? val)
+	      (if (<=llong (uint32->llong val) (conf-max-int conf))
+		  (uint32->fixnum val)
+		  (uint32->flonum val))
+	      `(if (<u32 ,val ,(llong->uint32 (conf-max-int conf)))
+		   (uint32->fixnum ,val)
+		   (uint32->flonum ,val))))
+	 ((integer int53)
+	  (if (fixnum? val)
+	      (if (and (>=llong (fixnum->llong val) (conf-min-int conf))
+		       (<=llong (fixnum->llong val) (conf-max-int conf)))
+		  val
+		  (fixnum->flonum val))
+	      `(overflowfx ,val)))
+	 ((real number)
+	  val)
+	 (else
+	  (if (not proc) val (proc val))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    box64 ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define (box64 val type::symbol conf #!optional proc::obj)
+(define (box64 val type::symbol ctx #!optional proc::obj)
    (case type
       ((int32) (if (int32? val) (int32->fixnum val) `(int32->fixnum ,val)))
       ((uint32) (if (uint32? val) (uint32->fixnum val) `(uint32->fixnum ,val)))
@@ -1103,7 +1110,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-tmp-flip ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (with-tmp-flip flip lhs rhs mode return conf gen::procedure)
+(define (with-tmp-flip flip lhs rhs mode return ctx gen::procedure)
 
    (define (ultrasimple? expr)
       (cond
@@ -1158,14 +1165,15 @@
 	     ((js-utf8->jsstring (? string?)) #t)
 	     (else #f))))
    
-   (let* ((scmlhs (j2s-scheme lhs mode return conf))
-	  (scmrhs (j2s-scheme rhs mode return conf))
+   (let* ((scmlhs (j2s-scheme lhs mode return ctx))
+	  (scmrhs (j2s-scheme rhs mode return ctx))
 	  (ultrasimplelhs (ultrasimple? lhs))
 	  (ultrasimplerhs (ultrasimple? rhs))
 	  (simplelhs (simple? lhs))
 	  (simplerhs (simple? rhs))
 	  (testl (or (atom? scmlhs) (and (symbol? scmlhs) simplerhs)))
-	  (testr (or (atom? scmrhs) (and (symbol? scmrhs) simplelhs))))
+	  (testr (or (atom? scmrhs) (and (symbol? scmrhs) simplelhs)))
+	  (conf (context-conf ctx)))
       (cond
 	 ((and ultrasimplelhs ultrasimplerhs)
 	  (gen scmlhs scmrhs))
@@ -1201,6 +1209,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    with-tmp ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (with-tmp lhs rhs mode return conf gen::procedure)
-   (with-tmp-flip #f lhs rhs mode return conf gen))
+(define (with-tmp lhs rhs mode return ctx gen::procedure)
+   (with-tmp-flip #f lhs rhs mode return ctx gen))
 

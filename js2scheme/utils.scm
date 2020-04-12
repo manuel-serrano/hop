@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Tue Apr  7 10:12:59 2020 (serrano)                */
+;*    Last change :  Sun Apr 12 15:21:25 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -29,8 +29,8 @@
 	   
 	   (j2s-expression-src loc ::pair-nil ::bstring)
 	   
-	   (m64? conf)
-	   (u32? conf)
+	   (m64? ::pair-nil)
+	   (u32? ::pair-nil)
 	   (conf-max-int::llong ::pair-nil)
 	   (conf-min-int::llong ::pair-nil)
 	   

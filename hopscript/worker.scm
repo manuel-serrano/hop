@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Wed Apr  8 08:24:08 2020 (serrano)                */
+;*    Last change :  Sat Apr 11 14:04:30 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -38,6 +38,7 @@
 	   (js-worker-construct ::JsGlobalObject ::procedure)
 	   
  	   (js-main-worker!::WorkerHopThread ::bstring ::bstring ::bool ::procedure ::procedure)
+ 	   (js-main-no-worker!::WorkerHopThread ::bstring ::bstring ::bool ::procedure ::procedure)
 	   (js-current-worker::WorkerHopThread)
 	   (js-main-worker?::bool ::WorkerHopThread)
 
@@ -549,6 +550,42 @@
 			   (js-worker-loop %worker)))))
 	    (thread-start-joinable! %worker)
 	    (condition-variable-wait! condv mutex))))
+   
+   (values %worker %global %module))
+
+;*---------------------------------------------------------------------*/
+;*    js-main-no-worker! ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Initialize the main worker in js-no-worker mode                  */
+;*---------------------------------------------------------------------*/
+(define (js-main-no-worker! name path keep-alive ctor ctormod)
+   
+   (define (setup-worker! %worker)
+      (set! %global (ctor :name name))
+      (with-access::JsGlobalObject %global (js-object worker)
+	 (set! worker %worker)
+	 (set! %module (ctormod (basename path) path %worker %global))
+	 (with-access::WorkerHopThread %worker (%this module-cache)
+	    ;; module-cache is used in src/main to check
+	    ;; where the worker is running or not
+	    (set! module-cache (js-new0 %this js-object))
+	    (set! %this %global)
+	    (js-put! module-cache (js-string->jsstring path) %module #f %this))))
+   
+   (unless %worker
+      ($js-init-jsalloc (js-object-default-mode))
+      (set! %global-constructor ctor)
+      (set! %worker
+	 (instantiate::WorkerHopThread
+	    (name (string-append "%worker@" name))
+	    (onexit #f)
+	    (keep-alive keep-alive)
+	    (body (lambda ()
+		     (error "js-main-no-worker"
+			"Cannot execute main worker in --js-no-worker mode"
+			#f)))))
+      (setup-worker! %worker)
+      (js-worker-init! %worker))
    
    (values %worker %global %module))
 

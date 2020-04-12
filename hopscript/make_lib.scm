@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Tue Apr  7 05:54:04 2020 (serrano)                */
+;*    Last change :  Sat Apr 11 13:53:49 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
@@ -23,7 +23,6 @@
 	   __hopscript_property
 	   __hopscript_profile
 	   __hopscript_public
-	   __hopscript_call
 	   __hopscript_lib
 	   __hopscript_object
 	   __hopscript_builtin

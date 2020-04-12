@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Mar 12 18:03:44 2020 (serrano)                */
+;*    Last change :  Sun Apr 12 16:06:26 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -53,6 +53,7 @@
 	      (decls::pair-nil (default '()) (info '("ast")))
 	      (headers::pair-nil (default '()) (info '("ast")))
 	      (globals::pair-nil (default '()) (info '("ast")))
+	      (strings::pair-nil (default '()) (info '("nojson" "notraverse")))
 	      (direct-eval::bool (default #t))
 	      (source-map (default #f))
 	      (imports::pair-nil (default '()))

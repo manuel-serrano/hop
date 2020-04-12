@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Tue Mar 10 14:37:15 2020 (serrano)                */
+;*    Last change :  Sun Apr 12 16:11:12 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
@@ -25,7 +25,8 @@
 	   __js2scheme_stage
 	   __js2scheme_syntax
 	   __js2scheme_utils
-	   __js2scheme_type-hint)
+	   __js2scheme_type-hint
+	   __js2scheme_scheme-constant)
 
    (export j2s-ctor-stage))
 
@@ -277,7 +278,7 @@
 				       (when (and (isa? obj J2SThis)
 						  (isa? field J2SString))
 					  (with-access::J2SString field (val)
-					     `(& ,val))))))))))
+					     (& val prog))))))))))
 	 inits))
    
    (multiple-value-bind (init rest ref)

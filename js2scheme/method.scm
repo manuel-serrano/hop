@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Jan 31 17:07:09 2020 (serrano)                */
+;*    Last change :  Sun Apr 12 16:12:57 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -29,7 +29,8 @@
 	   __js2scheme_utils
 	   __js2scheme_alpha
 	   __js2scheme_use
-	   __js2scheme_node-size)
+	   __js2scheme_node-size
+	   __js2scheme_scheme-constant)
 
    (export j2s-method-stage))
 
@@ -56,8 +57,8 @@
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes decls)
 	 (let ((log (make-cell '())))
-	    (for-each (lambda (d) (method! d conf log)) decls)
-	    (for-each (lambda (n) (method! n conf log)) nodes)
+	    (for-each (lambda (d) (method! d this conf log)) decls)
+	    (for-each (lambda (n) (method! n this conf log)) nodes)
 	    (when (>=fx (config-get conf :verbose 0) 3)
 	       (display " " (current-error-port))
 	       (fprintf (current-error-port) "(~(, ))"
@@ -70,13 +71,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    method! ::J2SNode ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (method! this::J2SNode conf log)
+(define-walk-method (method! this::J2SNode prog conf log)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    method! ::J2SAssig ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (method! this::J2SAssig conf log)
+(define-walk-method (method! this::J2SAssig prog conf log)
    (with-access::J2SAssig this (lhs rhs)
       (when (isa? rhs J2SFun)
 	 (with-access::J2SFun rhs (thisp loc body generator name)
@@ -89,16 +90,16 @@
 			(set! rhs
 			   (instantiate::J2SMethod 
 			      (loc loc)
-			      (function (prof-fun rhs conf))
+			      (function (prof-fun rhs prog conf))
 			      (method met)))))))))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    method! ::J2SDeclFun ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (method! this::J2SDeclFun conf log)
+(define-walk-method (method! this::J2SDeclFun prog conf log)
    (with-access::J2SDeclFun this (val id)
-      (set! val (method! val conf log))
+      (set! val (method! val prog conf log))
       (with-access::J2SFun val (thisp loc body generator)
 	 (with-access::J2SDecl thisp (usecnt)
 	    (cond
@@ -117,14 +118,14 @@
 		   (set! val
 		      (instantiate::J2SMethod
 			 (loc loc)
-			 (function (prof-fun val conf))
+			 (function (prof-fun val prog conf))
 			 (method met))))))))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    prof-fun ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (prof-fun val::J2SFun conf)
+(define (prof-fun val::J2SFun prog conf)
    (with-access::J2SFun val (body name)
       (when (config-get conf :profile-method #f)
 	 (with-access::J2SBlock body (loc endloc)
@@ -133,7 +134,7 @@
 		  (J2SStmtExpr
 		     (J2SPragma
 			`(js-profile-log-method-function
-			    (& ,(symbol->string name)) ',loc)))
+			    ,(& name prog) ',loc)))
 		  body))))
       val))
 
