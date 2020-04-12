@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr 12 08:09:48 2020                          */
-;*    Last change :  Sun Apr 12 17:08:29 2020 (serrano)                */
+;*    Last change :  Sun Apr 12 19:16:50 2020 (serrano)                */
 ;*    Copyright   :  2020 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme compilation context                                       */
@@ -18,6 +18,7 @@
 ;*---------------------------------------------------------------------*/
 (define-struct context conf
    program
+   %vectors
    array string regexp math object)
 
 ;*---------------------------------------------------------------------*/
@@ -26,6 +27,7 @@
 (define (compiler-context conf)
    (let ((ctx (make-context #f)))
       (context-conf-set! ctx conf)
+      (context-%vectors-set! ctx '())
       ctx))
 
 ;*---------------------------------------------------------------------*/

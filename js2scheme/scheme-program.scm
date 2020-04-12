@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sat Apr 11 13:49:08 2020 (serrano)                */
+;*    Last change :  Sun Apr 12 19:09:30 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -165,14 +165,14 @@
 			(else expr)))
 	 headers))
    
-   (define (j2s-main-module/workers name cnsttable esexports esimports scmheaders body)
+   (define (j2s-main-worker-module name cnsttable esexports esimports scmheaders body)
       (with-access::J2SProgram this (pcache-size call-size path
 				       globals cnsts loc)
 	 (let* ((jsmod (js-module/main loc name))
 		(jsthis `(with-access::JsGlobalObject %this (js-object)
 			    (js-new0 %this js-object)))
 		(thunk `(lambda ()
-			   (let ((_ (set! __js_strings (&init!)))
+			   (let ((_ (set! __js_strings ,(j2s-jsstring-init this)))
 				 (%cnst-table ,cnsttable)
 				 (%scope (nodejs-new-scope-object %this))
 				 (this ,jsthis)
@@ -188,7 +188,7 @@
 				      (filter nofundef? body)))))))
 	    `(,jsmod
 		;; (&begin!) must not be a constant! (_do not_ use quote)
-		,`(define __js_strings (&begin!))
+		(define __js_strings #f)
 		(%define-cnst-table ,(length cnsts))
 		(%define-pcache ,pcache-size)
 		(hop-sofile-compile-policy-set! 'static)
@@ -228,8 +228,7 @@
 				     ,id))
 			      thunk))
 		      ,(profilers this ctx)
-		      ,(js-wait-worker '%worker)))
-		(&end!)))))
+		      ,(js-wait-worker '%worker)))))))
 
    (with-access::J2SProgram this (module main nodes headers decls
 					 mode name pcache-size call-size
@@ -274,7 +273,7 @@
 		       body))
 		   (main
 		    ;; generate a main hopscript module 
-		    (j2s-main-module/workers name cnsttable
+		    (j2s-main-worker-module name cnsttable
 		       esexports esimports scmheaders body))
 		   (else
 		    ;; generate the module clause
@@ -282,6 +281,17 @@
 		       (j2s-module mod cnsttable esexports esimports scmheaders
 			  body))))))))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-init ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-init prog)
+   (with-access::J2SProgram prog (strings)
+      `(&jsstring-init
+	  ,(obj->string
+	      (apply vector
+		 (map (lambda (e) (&string (car e)))
+		    (reverse! strings)))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    j2s-main-sans-worker-module ...                                  */
 ;*---------------------------------------------------------------------*/
@@ -295,12 +305,7 @@
 		;;; (&begin!) must not be a constant! (_do not_ use quote)
 		,@(filter fundef? globals)
 		,@(filter fundef? body)
-		(define __js_strings
-		   (&jsstring-init
-		      ,(obj->string
-			  (apply vector
-			     (map (lambda (e) (&string (car e)))
-				(reverse! strings))))))
+		(define __js_strings ,(j2s-jsstring-init this))
 		(%define-cnst-table ,(length cnsts))
 		(%define-pcache ,pcache-size)
 		(define %pcache

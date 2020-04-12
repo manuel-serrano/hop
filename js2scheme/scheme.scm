@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Apr 12 08:48:26 2020 (serrano)                */
+;*    Last change :  Sun Apr 12 19:17:39 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -58,9 +58,7 @@
       (proc (lambda (ast conf)
 	       (j2s-scheme ast 'normal comp-return
 		  (compiler-context
-		     (cons* :%vectors '()
-			:debug-client (bigloo-debug)
-			conf)))))))
+		     (cons* :debug-client (bigloo-debug) conf)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-eval-stage ...                                        */
@@ -72,9 +70,7 @@
       (proc (lambda (ast conf)
 	       (j2s-scheme ast 'normal (lambda (x) x)
 		  (compiler-context
-		     (cons* :%vectors '()
-			:debug-client (bigloo-debug)
-			conf)))))))
+		     (cons* :debug-client (bigloo-debug) conf)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    comp-return ...                                                  */
