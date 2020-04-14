@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue Mar 10 12:38:13 2020 (serrano)                */
+;*    Last change :  Tue Apr 14 07:19:46 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_scheme-string
 
-   (include "ast.sch")
+   (include "ast.sch" "context.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -27,21 +27,21 @@
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-fun)
 
-   (export (j2s-string-ref ::J2SAccess mode return conf)
-	   (j2s-jsstring-replace-regexp obj args mode return conf)
-	   (j2s-jsstring-replace-string obj args mode return conf)
-	   (j2s-jsstring-replace obj args mode return conf)
-	   (j2s-jsstring-maybe-replace obj args mode return conf)
-	   (j2s-jsstring-charcodeat obj args mode return conf)
-	   (j2s-jsstring-match-string obj args mode return conf)
-	   (j2s-jsstring-match-regexp obj args mode return conf)
-	   (j2s-jsstring-substr obj args mode return conf)
-	   (j2s-jsstring-maybe-substr obj args mode return conf)))
+   (export (j2s-string-ref ::J2SAccess mode return ::struct)
+	   (j2s-jsstring-replace-regexp obj args mode return ::struct)
+	   (j2s-jsstring-replace-string obj args mode return ::struct)
+	   (j2s-jsstring-replace obj args mode return ::struct)
+	   (j2s-jsstring-maybe-replace obj args mode return ::struct)
+	   (j2s-jsstring-charcodeat obj args mode return ::struct)
+	   (j2s-jsstring-match-string obj args mode return ::struct)
+	   (j2s-jsstring-match-regexp obj args mode return ::struct)
+	   (j2s-jsstring-substr obj args mode return ::struct)
+	   (j2s-jsstring-maybe-substr obj args mode return ::struct)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-ref ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (j2s-string-ref this::J2SAccess mode return conf)
+(define (j2s-string-ref this::J2SAccess mode return ctx)
 
    (define (literal-ascii? obj)
       (cond
@@ -53,8 +53,8 @@
 	  (with-access::J2SString obj (val)
 	     (eq? (string-minimal-charset val) 'ascii)))))
    
-   (define (jsstring-ref type obj index mode return conf)
-      (let ((str (j2s-scheme obj mode return conf)))
+   (define (jsstring-ref type obj index mode return ctx)
+      (let ((str (j2s-scheme obj mode return ctx)))
 	 (if (literal-ascii? obj)
 	     `(js-ascii-ref ,str ,index %this)
 	     `(js-jsstring-ref ,str ,index %this))))
@@ -63,25 +63,25 @@
       (cond
 	 ((eq? (j2s-vtype field) 'uint32)
 	  (jsstring-ref type obj
-	     (j2s-scheme field mode return conf)
-	     mode return conf))
+	     (j2s-scheme field mode return ctx)
+	     mode return ctx))
 	 ((eq? (j2s-vtype field) 'int32)
 	  (jsstring-ref type obj
-	     `(int32->uint32 ,(j2s-scheme field mode return conf))
-	     mode return conf))
+	     `(int32->uint32 ,(j2s-scheme field mode return ctx))
+	     mode return ctx))
 	 ((memq (j2s-vtype field) '(integer bint))
 	  (jsstring-ref type obj
-	     `(fixnum->uint32 ,(j2s-scheme field mode return conf))
-	     mode return conf))
+	     `(fixnum->uint32 ,(j2s-scheme field mode return ctx))
+	     mode return ctx))
 	 ((j2s-field-length? field)
 	  (let ((x `(js-jsstring-codeunit-length
-		       ,(j2s-scheme obj mode return conf))))
+		       ,(j2s-scheme obj mode return ctx))))
 	     (if (eq? type 'uint32)
 		 x
-		 (js-uint32-tointeger x conf))))
+		 (js-uint32-tointeger x (context-conf ctx)))))
 	 ((maybe-number? field)
-	  `(js-string-ref ,(j2s-scheme obj mode return conf)
-	      ,(j2s-scheme field mode return conf)
+	  `(js-string-ref ,(j2s-scheme obj mode return ctx)
+	      ,(j2s-scheme field mode return ctx)
 	      %this))
 	 (else
 	  #f))))
@@ -89,7 +89,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-replace-regexp ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (j2s-jsstring-replace-regexp obj args mode return conf)
+(define (j2s-jsstring-replace-regexp obj args mode return ctx)
    
    (define (literal-regexp obj)
       (when (isa? obj J2SLiteralCnst)
@@ -104,9 +104,9 @@
    
    (define (tmp obj kont)
       (if (isa? obj J2SRef)
-	  (kont (j2s-scheme obj mode return conf))
+	  (kont (j2s-scheme obj mode return ctx))
 	  (let ((tmp (gensym 'obj)))
-	     `(let ((,tmp ,(j2s-scheme obj mode return conf)))
+	     `(let ((,tmp ,(j2s-scheme obj mode return ctx)))
 		 ,(kont tmp)))))
    
    (define (fun1? obj)
@@ -121,26 +121,26 @@
 	    ((fun1? replacevalue)
 	     `(js-jsstring-replace-regexp-fun1 ,tmp
 		 ,rx 0 ,global
-		 ,(jsfun->lambda replacevalue mode return conf #f #f)
+		 ,(jsfun->lambda replacevalue mode return ctx #f #f)
 		 ,@(map (lambda (arg)
 			   (j2s-scheme arg
-			      mode return conf))
+			      mode return ctx))
 		      (cddr args))))
 	    ((eq? (j2s-type replacevalue) 'string)
 	     `(js-jsstring-replace-regexp-string ,tmp
 		 ,rx 0 ,global
-		 ,(j2s-scheme replacevalue mode return conf)
+		 ,(j2s-scheme replacevalue mode return ctx)
 		 ,@(map (lambda (arg)
 			   (j2s-scheme arg
-			      mode return conf))
+			      mode return ctx))
 		      (cddr args))))
 	    (else
 	     `(js-jsstring-replace-regexp ,tmp
 		 ,rx 0 ,global
-		 ,(j2s-scheme replacevalue mode return conf)
+		 ,(j2s-scheme replacevalue mode return ctx)
 		 ,@(map (lambda (arg)
 			   (j2s-scheme arg
-			      mode return conf))
+			      mode return ctx))
 		      (cddr args)))))))
 
    (if (literal-regexp (uncast (car args)))
@@ -152,7 +152,7 @@
 		(tmp obj
 		   (lambda (tmp)
 		      (replace tmp `(js-cnst-table-ref ,index) global))))))
-       (let ((regexp (j2s-scheme (uncast (car args)) mode return conf)))
+       (let ((regexp (j2s-scheme (uncast (car args)) mode return ctx)))
 	  (tmp obj
 	     (lambda (tmp)
 		`(with-access::JsRegExp ,regexp (rx flags)
@@ -181,70 +181,70 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-replace-string ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (j2s-jsstring-replace-string obj args mode return conf)
+(define (j2s-jsstring-replace-string obj args mode return ctx)
    `(js-jsstring-replace-string
-       ,(j2s-scheme obj mode return conf)
+       ,(j2s-scheme obj mode return ctx)
        ,(string-replace-need22 (cadr args))
        ,@(map (lambda (arg)
-		 (j2s-scheme arg mode return conf))
+		 (j2s-scheme arg mode return ctx))
 	    args)))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-replace ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (j2s-jsstring-replace obj args mode return conf)
+(define (j2s-jsstring-replace obj args mode return ctx)
    `(js-jsstring-replace
-       ,(j2s-scheme obj mode return conf)
+       ,(j2s-scheme obj mode return ctx)
        ,(string-replace-need22 (cadr args))
        ,@(map (lambda (arg)
-		 (j2s-scheme arg mode return conf))
+		 (j2s-scheme arg mode return ctx))
 	    args)))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-maybe-replace ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (j2s-jsstring-maybe-replace obj args mode return conf)
+(define (j2s-jsstring-maybe-replace obj args mode return ctx)
    `(js-jsstring-maybe-replace
-       ,(j2s-scheme obj mode return conf)
+       ,(j2s-scheme obj mode return ctx)
        ,(string-replace-need22 (cadr args))
        ,@(map (lambda (arg)
-		 (j2s-scheme arg mode return conf))
+		 (j2s-scheme arg mode return ctx))
 	    args)))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring-charcodeat ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (j2s-jsstring-charcodeat obj args mode return conf)
+(define (j2s-jsstring-charcodeat obj args mode return ctx)
    (match-case args
       (((and ?pos (? expr-asuint32)) ?%this)
        (let* ((expr (expr-asuint32 pos))
-	      (sexp (j2s-scheme expr mode return conf)))
+	      (sexp (j2s-scheme expr mode return ctx)))
 	  `(js-jsstring-charcodeatu32
-	      ,(j2s-scheme obj mode return conf)
+	      ,(j2s-scheme obj mode return ctx)
 	      ,(if (eq? (j2s-vtype expr) 'uint32)
 		   sexp
 		   `(fixnum->uint32 ,sexp)))))
       (else
        `(js-jsstring-charcodeat
-	   ,(j2s-scheme obj mode return conf)
+	   ,(j2s-scheme obj mode return ctx)
 	   ,@(map (lambda (arg)
-		     (j2s-scheme arg mode return conf))
+		     (j2s-scheme arg mode return ctx))
 		args)))))
        
 ;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring-match-string ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (j2s-jsstring-match-string obj args mode return conf)
+(define (j2s-jsstring-match-string obj args mode return ctx)
    (let ((str (if (isa? (car args) J2SLiteralCnst)
 		  (with-access::J2SLiteralCnst (car args) (val) val)
 		  (car args))))
       (if (not (isa? str J2SString))
 	  `(js-jsstring-maybe-match
-	      ,(j2s-scheme obj mode return conf)
-	      ,(j2s-scheme (car args) mode return conf)
+	      ,(j2s-scheme obj mode return ctx)
+	      ,(j2s-scheme (car args) mode return ctx)
 	      %this
 	      #f)
-	  (with-access::J2SProgram (config-get conf :program) (cnsts)
+	  (with-access::J2SProgram (context-get ctx :program) (cnsts)
 	     (with-access::J2SString str (loc val)
 		(let* ((len (length cnsts))
 		       (rx (instantiate::J2SRegExp
@@ -261,53 +261,53 @@
 		   ;; update j2s-totest if the name of the library function
 		   ;; JS-JSSTRING-MATCH-REGEXP-FROM-STRING changes
 		   `(js-jsstring-match-regexp-from-string
-		       ,(j2s-scheme obj mode return conf)
-		       ,(j2s-scheme (car args) mode return conf)
-		       ,(j2s-scheme cnst mode return conf)
+		       ,(j2s-scheme obj mode return ctx)
+		       ,(j2s-scheme (car args) mode return ctx)
+		       ,(j2s-scheme cnst mode return ctx)
 		       %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring-match-regexp ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (j2s-jsstring-match-regexp obj args mode return conf)
+(define (j2s-jsstring-match-regexp obj args mode return ctx)
    (let ((rx (if (isa? (car args) J2SLiteralCnst)
 		 (with-access::J2SLiteralCnst (car args) (val) val)
 		 (car args))))
       (if (not (isa? rx J2SRegExp))
 	  `(js-jsstring-maybe-match
-	      ,(j2s-scheme obj mode return conf)
-	      ,(j2s-scheme (car args) mode return conf)
+	      ,(j2s-scheme obj mode return ctx)
+	      ,(j2s-scheme (car args) mode return ctx)
 	      %this
 	      #f)
 	  (with-access::J2SRegExp rx (flags)
 	     (if (string-index flags #\g)
 		 `(js-jsstring-maybe-match
-		     ,(j2s-scheme obj mode return conf)
-		     ,(j2s-scheme (car args) mode return conf)
+		     ,(j2s-scheme obj mode return ctx)
+		     ,(j2s-scheme (car args) mode return ctx)
 		     %this
 		     #f)
 		 `(js-regexp-prototype-exec 
-		     ,(j2s-scheme (car args) mode return conf)
-		     ,(j2s-scheme obj mode return conf)
+		     ,(j2s-scheme (car args) mode return ctx)
+		     ,(j2s-scheme obj mode return ctx)
 		     %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring-substr ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (j2s-jsstring-substr obj args mode return conf)
+(define (j2s-jsstring-substr obj args mode return ctx)
    `(js-jsstring-substr
-       ,(j2s-scheme obj mode return conf)
-       ,(j2s-scheme (car args) mode return conf)
+       ,(j2s-scheme obj mode return ctx)
+       ,(j2s-scheme (car args) mode return ctx)
        (js-undefined)
        %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring-maybe-substr ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (j2s-jsstring-maybe-substr obj args mode return conf)
+(define (j2s-jsstring-maybe-substr obj args mode return ctx)
    `(js-jsstring-maybe-substr
-       ,(j2s-scheme obj mode return conf)
-       ,(j2s-scheme (car args) mode return conf)
+       ,(j2s-scheme obj mode return ctx)
+       ,(j2s-scheme (car args) mode return ctx)
        (js-undefined)
        ,@(cdr args)))
 
