@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Apr 13 08:26:11 2020 (serrano)                */
+;*    Last change :  Tue Apr 14 10:17:11 2020 (serrano)                */
 ;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1009,7 +1009,7 @@
    
    (define (errfile file)
       (string-append file ".err"))
-
+   
    (define (find-in-unix-path file)
       (let ((env (getenv "HOP_LIBS_PATH")))
 	 (when (string? env)
@@ -1023,7 +1023,7 @@
 			 (cons 'error (errfile path)))
 			(else
 			 (loop (cdr paths))))))))))
-
+   
    (define (soprecompiled sopath)
       (cond
 	 ((more-recent? sopath)
@@ -1032,38 +1032,53 @@
 	  (cons 'error (errfile sopath)))
 	 (else
 	  #f)))
-
+   
+   (define (find-in-sodir dir base)
+      (tprint "hop-find-sofile dir=" dir " base=" base)
+      (tprint "   checking0: base=" base
+	 (make-file-path dir "so" (hop-so-dirname)
+	    (hop-soname path "")))
+      (tprint "   checking2: "
+	 (make-file-path (hop-sofile-directory)
+	    (hop-soname path "")))
+      (or (soprecompiled 
+	     (make-file-path dir "so" (hop-so-dirname)
+		(hop-soname path "")))
+	  (soprecompiled 
+	     (make-file-path (hop-sofile-directory)
+		(hop-soname path "")))))
+   
+   (define (find-in-dir dir base)
+      (or (soprecompiled 
+	     (make-file-path dir "so" (hop-so-dirname)
+		(string-append base (so-suffix))))
+	  (soprecompiled 
+	     (make-file-path (hop-sofile-directory)
+		(string-append base (so-suffix))))
+	  (soprecompiled 
+	     (make-file-path dir "libs" (hop-so-dirname)
+		(string-append base (so-suffix))))
+	  (soprecompiled 
+	     (make-file-path dir ".so" (hop-so-dirname)
+		(string-append base
+		   (cond-expand
+		      (bigloo-unsafe "_u")
+		      (else "_s"))
+		   "-" (hop-version) (so-suffix))))
+	  (soprecompiled 
+	     (make-file-path dir ".libs" (hop-so-dirname)
+		(string-append base
+		   (cond-expand
+		      (bigloo-unsafe "_u")
+		      (else "_s"))
+		   "-" (hop-version) (so-suffix))))))
+   
    ;; check the path directory first
    (when (hop-sofile-enable)
       (let* ((dir (dirname path))
 	     (base (prefix (basename path))))
-	 (or (soprecompiled 
-		(make-file-path dir "so" (hop-so-dirname)
-		   (string-append base (so-suffix))))
-	     (soprecompiled 
-		(make-file-path (hop-sofile-directory)
-		   (string-append base (so-suffix))))
-	     (soprecompiled 
-		(make-file-path dir "libs" (hop-so-dirname)
-		   (string-append base (so-suffix))))
-	     (soprecompiled 
-		(make-file-path dir ".so" (hop-so-dirname)
-		   (string-append base
-		      (cond-expand
-			 (bigloo-unsafe "_u")
-			 (else "_s"))
-		      "-" (hop-version) (so-suffix))))
-	     (soprecompiled 
-		(make-file-path dir ".libs" (hop-so-dirname)
-		   (string-append base
-		      (cond-expand
-			 (bigloo-unsafe "_u")
-			 (else "_s"))
-		      "-" (hop-version) (so-suffix))))
-	     ;; check in the user specified sofile-directory
-	     (soprecompiled 
-		(make-file-path (hop-sofile-directory)
-		   (hop-soname path "")))
+	 (or (find-in-dir dir base)
+	     (find-in-sodir dir base)
 	     ;; if not found check the user global libs repository
 	     (let ((sopath (hop-sofile-path path :suffix suffix)))
 		(cond
@@ -1075,7 +1090,8 @@
 		    (or (find-in-unix-path (hop-soname path suffix))
 			(find-in-unix-path path)
 			(let ((sopath (make-file-name dir
-					 (string-append base (so-suffix)))))
+					 (string-append base
+					    (so-suffix)))))
 			   (when (file-exists? sopath)
 			      sopath))))))))))
 
@@ -1090,10 +1106,16 @@
 ;*    hop-sofile-path ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (hop-sofile-path path #!key (suffix ""))
-   (make-file-path
-      (hop-sofile-directory)
-      (hop-version) (hop-build-id) (so-arch-directory)
-      (hop-soname path suffix)))
+   (if (eq? (hop-sofile-compile-target) 'sodir)
+       (make-file-path
+	  (hop-sofile-directory)
+	  (hop-version) (hop-build-id) (so-arch-directory)
+	  (hop-soname path suffix))
+       (let ((dir (make-file-path
+		     (dirname path)
+		     "so" (hop-version) (hop-build-id) (so-arch-directory))))
+	  (make-directories dir)
+	  (make-file-name dir (basename path)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-current-sobase ...                                           */

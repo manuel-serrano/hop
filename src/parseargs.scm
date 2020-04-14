@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Mar 30 15:11:48 2020 (serrano)                */
+;*    Last change :  Tue Apr 14 09:56:21 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -131,6 +131,12 @@
 	     (hop-sofile-compile-policy-set! (string->symbol policy)))
 	    (("--sofile-policy" ?policy (help "Deprecated, use \"--so-policy\" instead"))
 	     (hop-sofile-compile-policy-set! (string->symbol policy)))
+	    (("--so-target" ?loc
+		(help
+		   (format "Location for generated so file [sodir, src] [~s]"
+		      (hop-sofile-compile-target))))
+	     (hop-sofile-compile-target-set! (string->symbol loc)))
+	    
 	    (("--autoload" (help "Enable autoload (default)"))
 	     (set! autoloadp #t))
 	    (("--no-autoload" (help "Disable autoload"))
@@ -349,7 +355,9 @@
 		   ((or (string=? val "false") (string=? val "#f")) #f)
 		   ((string->number val) => (lambda (val) val))
 		   (else val))))
-	    (("--js-modules-dir" ?dir (help "Set default node_modules dir"))
+	    (("--js-modules-dir" ?dir
+		(help (format "Set default node_modules dir [~a]"
+			 (nodejs-modules-directory))))
 	     (nodejs-modules-directory-set! dir))
 	    (("--js-commonjs-export" (help "Automatic commonjs modules export"))
 	     (nodejs-compiler-options-add! :commonjs-export #t))

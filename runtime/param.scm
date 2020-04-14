@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Mar 30 05:59:14 2020 (serrano)                */
+;*    Last change :  Tue Apr 14 10:55:05 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -48,6 +48,9 @@
 
 	    (hop-sofile-compile-policy::symbol)
 	    (hop-sofile-compile-policy-set! ::symbol)
+
+	    (hop-sofile-compile-target::symbol)
+	    (hop-sofile-compile-target-set! ::symbol)
 
 	    (hop-sofile-max-workers::int)
 	    (hop-sofile-max-workers-set! ::int)
@@ -455,6 +458,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-sofile-compile-policy
    'nte)
+
+;*---------------------------------------------------------------------*/
+;*    hop-sofile-compile-target ...                                    */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-sofile-compile-target
+   'sodir)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-sofile-max-workers ...                                       */
