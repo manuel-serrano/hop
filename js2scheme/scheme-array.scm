@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Apr 12 19:16:21 2020 (serrano)                */
+;*    Last change :  Tue Apr 14 07:25:38 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -283,7 +283,7 @@
 		       ,(j2s-scheme obj mode return ctx))))
 	     (if (eq? type 'uint32)
 		 x
-		 (js-uint32-tointeger x ctx))))
+		 (js-uint32-tointeger x (context-conf ctx)))))
 	 (else
 	  #f))))
 
