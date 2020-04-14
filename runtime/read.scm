@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Apr 14 10:17:11 2020 (serrano)                */
+;*    Last change :  Tue Apr 14 11:20:55 2020 (serrano)                */
 ;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1034,13 +1034,6 @@
 	  #f)))
    
    (define (find-in-sodir dir base)
-      (tprint "hop-find-sofile dir=" dir " base=" base)
-      (tprint "   checking0: base=" base
-	 (make-file-path dir "so" (hop-so-dirname)
-	    (hop-soname path "")))
-      (tprint "   checking2: "
-	 (make-file-path (hop-sofile-directory)
-	    (hop-soname path "")))
       (or (soprecompiled 
 	     (make-file-path dir "so" (hop-so-dirname)
 		(hop-soname path "")))
@@ -1113,9 +1106,10 @@
 	  (hop-soname path suffix))
        (let ((dir (make-file-path
 		     (dirname path)
-		     "so" (hop-version) (hop-build-id) (so-arch-directory))))
+		     "so" (hop-version) (hop-build-id) (so-arch-directory)))
+	     (base (prefix (basename path))))
 	  (make-directories dir)
-	  (make-file-name dir (basename path)))))
+	  (make-file-name dir (string-append base suffix (so-suffix))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-current-sobase ...                                           */

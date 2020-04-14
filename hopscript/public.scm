@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Apr 13 11:31:21 2020 (serrano)                */
+;*    Last change :  Tue Apr 14 11:53:42 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1138,7 +1138,7 @@
       ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7 ?a8 ?a9)
        (js-call10% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
       (else
-       (apply js-calln% %this fun proc obj args))))
+       (js-calln% %this fun proc obj args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-apply ...                                                     */

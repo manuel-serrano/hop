@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Apr 14 09:43:05 2020 (serrano)                */
+;*    Last change :  Tue Apr 14 11:55:44 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1645,7 +1645,6 @@
 (define (find-new-sofile filename::bstring worker-slave)
    (let ((sopath (hop-find-sofile filename
 		    :suffix (if worker-slave "_w" ""))))
-      (tprint "find-new-sofile filename=" filename " sopath=" sopath)
       (if (string? sopath)
 	  (when (>= (file-modification-time sopath)
 		   (file-modification-time filename))

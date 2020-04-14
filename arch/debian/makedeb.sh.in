@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Thu Mar 26 18:44:58 2020 (serrano)                */
+#*    Last change :  Tue Apr 14 15:06:28 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Debian/Maemo       */
@@ -31,6 +31,7 @@ PREFIX=/usr
 HOPUSER=hop
 HOPCONFIGUREOPT=
 
+debformat="3.0 (quilt)"
 fakeroot=fakeroot
 sign=
 postinstall=yes
@@ -260,6 +261,9 @@ EOF
           -e "s|@PREFIX@|$PREFIX|g" > \
     $BUILDDIR/hop-$VERSION/maemo/hop.service
 fi
+
+mkdir -p debian/source
+echo $debformat > debian/source/format
 
 # build the package
 (cd $BUILDDIR/hop-$VERSION && dpkg-buildpackage -r$fakeroot $sign)
