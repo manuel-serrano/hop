@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 27 07:35:02 2019                          */
-;*    Last change :  Sat Apr 11 08:13:06 2020 (serrano)                */
+;*    Last change :  Mon Apr 13 18:59:36 2020 (serrano)                */
 ;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Procedure optimization.                                          */
@@ -650,16 +650,16 @@
 ;*    annotate-procedure ::J2SFun ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (annotate-procedure this::J2SFun conf)
-   (with-access::J2SFun this (%info loc mode params name rtype type)
+   (with-access::J2SFun this (%info loc mode params name rtype type id)
       (when (and (fun-procedure-info-optimizablep %info)
 		 (not (fun-procedure-info-escapep %info)))
 	 (when (>=fx (config-get conf :verbose 0) 3)
 	    (fprintf (current-error-port) " ~a@~a" name (caddr loc)))
-	 (set! type 'procedure)
-	 (when (and (pair? (fun-procedure-info-retvals %info))
-		    (with-access::J2SFun (car (fun-procedure-info-retvals %info)) (%info)
-		       (fun-procedure-info-optimizablep %info)))
-	    (set! rtype 'procedure)))
+	 (set! type 'procedure))
+      (when (and (pair? (fun-procedure-info-retvals %info))
+		 (with-access::J2SFun (car (fun-procedure-info-retvals %info)) (%info)
+		    (fun-procedure-info-optimizablep %info)))
+	 (set! rtype 'procedure))
       (for-each (lambda (p)
 		   (with-access::J2SDecl p (vtype %info id)
 		      (when (and (node-procedure-info-optimizablep %info)

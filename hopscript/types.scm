@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Apr 11 06:17:00 2020 (serrano)                */
+;*    Last change :  Mon Apr 13 11:29:56 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -566,7 +566,7 @@
 	   (inline js-jsstring-normalized! ::JsStringLiteral)
 	   (inline js-array?::bool ::obj)
 	   (inline js-function?::bool ::obj)
-	   (inline js-function-proxy?::bool ::obj)
+	   (inline js-procedure-proxy?::bool ::obj)
 	   (inline js-procedure?::bool ::obj)
 	   (inline js-callable?::bool ::obj)
 	   (inline js-symbol?::bool ::obj)
@@ -1367,12 +1367,12 @@
 	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSFUNCTIONTAG)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-function-proxy? ...                                           */
+;*    js-procedure-proxy? ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-function-proxy? o)
+(define-inline (js-procedure-proxy? o)
    (and (%object? o)
 	(>u32 (bit-andu32 (js-object-mode o)
-		 (bit-oru32 (JS-OBJECT-MODE-JSFUNCTIONTAG)
+		 (bit-oru32 (JS-OBJECT-MODE-JSPROCEDURETAG)
 		    (JS-OBJECT-MODE-JSPROXYFUNCTION)))
 	   #u32:0)))
 

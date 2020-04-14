@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/nodejs/_hop.scm                                  */
+;*    serrano/prgm/project/hop/hop/nodejs/_hop.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sun Feb 23 15:13:29 2020 (serrano)                */
+;*    Last change :  Mon Apr 13 11:14:10 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -513,7 +513,7 @@
 	 (body #f)
 	 (scheme "http"))
       (cond
-	 ((js-function? opt)
+	 ((js-procedure? opt)
 	  (set! fail (fail->handler opt)))
 	 ((not (eq? opt (js-undefined)))
 	  (let ((h (js-get opt (& "hostname") %this))
@@ -545,7 +545,7 @@
 	     (unless (eq? m (js-undefined))
 		(set! method (string->symbol
 				(string-upcase (js-tostring m %this)))))
-	     (when (js-function? f)
+	     (when (js-procedure? f)
 		(set! fail (fail->handler f)))
 	     (when (js-object? r)
 		(set! header
@@ -593,12 +593,12 @@
       (cond
 	 ((not asynchronous)
 	  (post 
-	     (if (js-function? success)
+	     (if (js-procedure? success)
 		 (lambda (x)
 		    (js-call1 %this success %this (scheme->js x)))
 		 scheme->js)
 	     fail))
-	 ((js-function? success)
+	 ((js-procedure? success)
 	  (thread-start!
 	     (instantiate::hopthread
 		(name "post-url")
@@ -607,12 +607,9 @@
 			    (lambda (x)
 			       (js-worker-exec (js-current-worker) "post" #t
 				  (lambda ()
-				     (if (js-function? success)
-					 (js-call1 %this success %this
-					    (scheme->js x))
-					 (scheme->js x)))))
+				     (js-call1-jsprocedure %this success %this
+					(scheme->js x)))))
 			    (lambda (x)
-			       (tprint "IN POST-URL " x)
 			       (js-worker-exec (js-current-worker) "post" #t
 				  (lambda ()
 				     (fail x)))))))))

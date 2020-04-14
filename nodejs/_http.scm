@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/nodejs/_http.scm                                 */
+;*    serrano/prgm/project/hop/hop/nodejs/_http.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Sun Feb 23 15:09:10 2020 (serrano)                */
+;*    Last change :  Mon Apr 13 11:15:21 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -1030,8 +1030,8 @@
 	    (tprint "http-on-body offset=" offset
 	       " off=" off " (" (+fx offset (-fx off shift))
 	       ") length=" length " shift=" shift))
-	 (when (js-function? cb)
-	    (js-call3 %this cb parser buffer (+fx offset (-fx off shift))
+	 (when (js-procedure? cb)
+	    (js-call3-jsprocedure %this cb parser buffer (+fx offset (-fx off shift))
 	       length)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1041,8 +1041,8 @@
    (when (>fx debug-parser 0)
       (tprint "http-on-message-complete"))
    (let ((cb (js-get parser (& "onMessageComplete") %this)))
-      (when (js-function? cb)
-	 (js-call0 %this cb parser))))
+      (when (js-procedure? cb)
+	 (js-call0-jsprocedure %this cb parser))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-needs-eof? ...                                              */
@@ -1093,11 +1093,11 @@
       (let ((cb (js-get parser (& "onHeaders") %this))
 	    (jsheaders (headers->jsheaders %this parser))
 	    (jsurl (js-string->jsstring url)))
-	 (when (and (pair? headers) (js-function? cb))
-	    (js-call2 %this cb parser jsheaders jsurl))
+	 (when (and (pair? headers) (js-procedure? cb))
+	    (js-call2-jsprocedure %this cb parser jsheaders jsurl))
 	 (unless (memq 'trailer flags)
 	    (let ((cb (js-get parser (& "onHeadersComplete") %this)))
-	       (when (js-function? cb)
+	       (when (js-procedure? cb)
 		  (with-access::JsGlobalObject %this (js-object)
 		     (let ((info (js-new0 %this js-object)))
 			;; upgrade

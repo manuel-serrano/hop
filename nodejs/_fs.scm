@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/nodejs/_fs.scm                                   */
+;*    serrano/prgm/project/hop/hop/nodejs/_fs.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Sun Feb 23 15:08:58 2020 (serrano)                */
+;*    Last change :  Mon Apr 13 11:13:24 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -182,16 +182,16 @@
 			      (js-put! obj (& "errno") 20 #f %this)
 			      (js-put! obj (& "code") (js-string->jsstring "ENOTDIR") #f %this)
 			      obj))))
-		(if (js-function? cb)
+		(if (js-procedure? cb)
 		    (js-worker-push-thunk! %worker "readdir"
 		       (lambda ()
-			  (js-call2 %this cb this exn (js-undefined))))
+			  (js-call2-jsprocedure %this cb this exn (js-undefined))))
 		    (js-raise exn)))
 	     (let ((r (js-vector->jsarray (list->vector (map! js-string->jsstring l))  %this)))
-		(if (js-function? cb)
+		(if (js-procedure? cb)
 		    (js-worker-push-thunk! %worker "readdir"
 		       (lambda ()
-			  (js-call2 %this cb this #f r)))
+			  (js-call2-jsprocedure %this cb this #f r)))
 		    r)))))
    
    (define (fstat this fd callback)
@@ -228,7 +228,7 @@
    
    (define (mkdir this path mode callback)
       (if (eq? callback (js-undefined))
-	  (if (js-function? mode)
+	  (if (js-procedure? mode)
 	      (nodejs-mkdir %worker %this process path #o777 mode)
 	      (nodejs-mkdir %worker %this process path mode #f))
 	  (nodejs-mkdir %worker %this process path mode callback)))
@@ -299,7 +299,7 @@
 		  (js-make-function %this
 		     (lambda (this)
 			(let ((onstop (js-get this (& "onstop") %this)))
-			   (when (js-function? onstop)
+			   (when (js-procedure? onstop)
 			      (!js-callback0 'fs-watcher %worker %this
 				 onstop this)))
 			(with-access::JsHandle this (handle)

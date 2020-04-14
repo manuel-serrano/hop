@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  1 08:50:34 2019                          */
 ;*    Last change :  Wed Jun  5 19:57:02 2019 (serrano)                */
-;*    Copyright   :  2019 Manuel Serrano                               */
+;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript name expanders                                         */
 ;*    -------------------------------------------------------------    */

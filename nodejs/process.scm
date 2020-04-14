@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/nodejs/process.scm                               */
+;*    serrano/prgm/project/hop/hop/nodejs/process.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sun Feb 23 15:09:36 2020 (serrano)                */
+;*    Last change :  Mon Apr 13 11:16:49 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -107,8 +107,8 @@
 	    (js-make-function %this
 	       (lambda (this exn)
 		  (let ((fatal (js-get %process (& "_fatalException") %this)))
-		     (if (js-function? fatal)
-			 (js-call1 %this fatal %process exn)
+		     (if (js-procedure? fatal)
+			 (js-call1-jsprocedure %this fatal %process exn)
 			 (raise exn))))
 	       1 (& "fatalException") :src "process.scm"))
 	 ;; init tick machinery
@@ -620,11 +620,11 @@
 			   (set! call (domain-call this)))
 			(let ((tdc (js-get this (& "_tickDomainCallback") %this))
 			      (ndt (js-get this (& "_nextDomainTick") %this)))
-			   (unless (js-function? tdc)
+			   (unless (js-procedure? tdc)
 			      (error "_usingDomains"
 				 "process._tickDomainCallback assigned to non-function"
 				 tdc))
-			   (unless (js-function? ndt)
+			   (unless (js-procedure? ndt)
 			      (error "_usingDomains"
 				 "process._nextDomainTick assigned to non-function"
 				 ndt))

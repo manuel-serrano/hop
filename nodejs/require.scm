@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Mar 29 07:32:50 2020 (serrano)                */
+;*    Last change :  Mon Apr 13 08:31:08 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -159,8 +159,8 @@
 	       (let* ((exp (nodejs-require-module lang worker %ctxthis %ctxmodule))
 		      (key (js-get js-symbol (& "compiler") %ctxthis))
 		      (comp (js-get exp key %ctxthis)))
-		  (if (js-function? comp)
-		      (let ((obj (js-call1 %ctxthis comp (js-undefined)
+		  (if (js-procedure? comp)
+		      (let ((obj (js-call1-jsprocedure %ctxthis comp (js-undefined)
 				    (js-string->jsstring ifile))))
 			 (when (js-object? obj)
 			    (let* ((ty (js-tostring (js-get obj (& "type") %ctxthis) %ctxthis))
@@ -543,7 +543,7 @@
 		      (with-access::JsGlobalObject this (js-symbol)
 			 (let* ((key (js-get js-symbol (& "compiler") this))
 				(comp (js-get lang key this)))
-			    (if (js-function? comp)
+			    (if (js-procedure? comp)
 				comp
 				(js-raise-error this
 				   "Wrong language object"
@@ -1131,7 +1131,8 @@
 	 (trace-item "filename=" filename)
 	 (let ((key (if worker-slave
 			(string-append filename "_w")
-			filename)))
+			filename))
+	       (tgt #f))
 	    (or (hashtable-get compile-table key)
 		(let* ((mod (gensym (string->symbol (basename filename))))
 		       (expr (compile src mod))
@@ -1139,17 +1140,19 @@
 		   (when (eq? nodejs-debug-compile 'yes)
 		      (unless (directory? "/tmp/HOP")
 			 (make-directory "/tmp/HOP"))
-		      (let ((tgt (make-file-name "/tmp/HOP"
-				    (string-append
-				       (string-replace (prefix filename) #\/ #\_)
-				       ".scm"))))
+		      (set! tgt (make-file-name "/tmp/HOP"
+				   (string-append
+				      (string-replace (prefix filename) #\/ #\_)
+				      ".scm")))
 			 (call-with-output-file tgt
 			    (lambda (op)
-			       (for-each (lambda (e) (pp e op)) expr)))))
+			       (for-each (lambda (e) (pp e op)) expr))))
 		   (trace-item "thread=" (current-thread))
 		   (trace-item "expr=" (format "~s" expr))
 		   (unwind-protect
 		      (begin
+			 (hop-verb 2 "loading \"" (hop-color 7 "" filename) "\""
+			    (if tgt (format " (~s)\n" tgt "\n")))
 			 ;; evaluate the module clause first
 			 (eval! (car expr))
 			 (let ((nexpr (map (lambda (x)
@@ -1601,7 +1604,7 @@
 		      (trace-item "sopath=" sopath)
 		      (trace-item "sopathtmp=" sopathtmp)
 		      (trace-item "cmd=" cmd)
-		      (debug-compile-trace "nodejs-socompile:" filename sopath)
+		      (debug-compile-trace "nodejs-socompile" filename sopath)
 		      (hop-verb 3 (hop-color -2 -2 " COMPILE") " "
 			 (format "~( )\n"
 			    (map (lambda (s)
@@ -1910,8 +1913,8 @@
       (cond
 	 ((core-module? path)
 	  (nodejs-core-module path worker %this))
-	 ((js-function? compiler)
-	  (let ((obj (js-call2 %this compiler (js-undefined)
+	 ((js-procedure? compiler)
+	  (let ((obj (js-call2-jsprocedure %this compiler (js-undefined)
 			path compiler-options)))
 	     (when (js-object? obj)
 		(let ((ty (js-tostring (js-get obj (& "type") %this) %this))

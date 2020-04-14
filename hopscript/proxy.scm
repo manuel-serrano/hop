@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Sun Apr 12 17:09:59 2020 (serrano)                */
+;*    Last change :  Mon Apr 13 11:31:15 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -215,7 +215,7 @@
 	       (instantiate::JsPropertyCache)
 	       (instantiate::JsPropertyCache)
 	       (js-object-default-mode))))
-      (when (js-function-proxy? target)
+      (when (js-procedure-proxy? target)
 	 (js-proxy-mode-function-set! o #t))
       o))
 
@@ -227,7 +227,7 @@
 	       target handler
 	       gcache scache acache
 	       (js-object-default-mode))))
-      (when (js-function-proxy? target)
+      (when (js-procedure-proxy? target)
 	 (js-proxy-mode-function-set! o #t))
       o))
 

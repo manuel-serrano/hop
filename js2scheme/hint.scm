@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Tue Apr  7 10:05:37 2020 (serrano)                */
+;*    Last change :  Mon Apr 13 12:38:50 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -817,6 +817,7 @@
       ((array) 'js-array?)
       ((object) 'js-object?)
       ((function) 'js-function?)
+      ((arrow) 'js-procedure?)
       ((bool) 'boolean?)
       ((undefined) 'js-undefined?)
       ((null) 'js-null?)

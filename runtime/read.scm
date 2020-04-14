@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Apr 10 15:19:08 2020 (serrano)                */
+;*    Last change :  Mon Apr 13 08:26:11 2020 (serrano)                */
 ;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1479,7 +1479,9 @@
 ;*---------------------------------------------------------------------*/
 (define (%hop-load-rc path)
    (when (and (string? path) (file-exists? path))
-      (hop-verb 3 "loading \"" (hop-color 3 "" path) "\"...\n")
+      (when (<=fx (hop-verbose) 1)
+	 ;; when (hop-verbose) >= 2 loaded file are always displayed
+	 (hop-verb 1 "loading \"" (hop-color 3 "" path) "\"...\n"))
       (hop-load path)
       path))
 

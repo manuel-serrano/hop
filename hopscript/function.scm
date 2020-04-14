@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Apr 10 08:11:18 2020 (serrano)                */
+;*    Last change :  Mon Apr 13 11:31:11 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -1156,7 +1156,7 @@
    (cond
       ((js-procedure? this)
        (js-procedure-apply-vec %this this thisarg vec ilen))
-      ((js-function-proxy? this)
+      ((js-procedure-proxy? this)
        (js-calln %this this thisarg
 	  (vector->sublist vec (uint32->fixnum ilen))))
       (else

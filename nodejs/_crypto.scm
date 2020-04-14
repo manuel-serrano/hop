@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/nodejs/_crypto.scm                               */
+;*    serrano/prgm/project/hop/hop/nodejs/_crypto.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Sun Feb 23 15:10:03 2020 (serrano)                */
+;*    Last change :  Mon Apr 13 11:12:48 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -679,7 +679,7 @@
 	  (let ((buf (js-string->jsslowbuffer
 			(ssl-rand-bytes (js-tointeger size %this))
 			%this)))
-	     (if (js-function? cb)
+	     (if (js-procedure? cb)
 		 (!js-callback2 "randomBytes" %worker %this
 		    cb this (js-undefined) buf)
 		 buf)))))
@@ -695,7 +695,7 @@
 	  (let ((buf (js-string->jsslowbuffer
 			(ssl-rand-pseudo-bytes size)
 			%this)))
-	     (if (js-function? cb)
+	     (if (js-procedure? cb)
 		 (!js-callback2 "pseudoRandomBytes" %worker %this
 		    cb this (js-undefined) buf)
 		 buf)))))
@@ -1159,7 +1159,7 @@
       (with-access::JsGlobalObject %this (js-object)
 	 (with-handler
 	    (lambda (err)
-	       (if (js-function? callback)
+	       (if (js-procedure? callback)
 		   (let ((obj (js-new %this js-object)))
 		      (js-put! obj (& "ondone") callback #f %this)
 		      (js-call2 %this callback obj err (js-undefined)))
@@ -1171,7 +1171,7 @@
 			   iterations
 			   keylen)
 			(js-undefined))))
-	       (if (js-function? callback)
+	       (if (js-procedure? callback)
 		   (let ((obj (js-new %this js-object)))
 		      (js-put! obj (& "ondone") callback #f %this)
 		      (js-call2 %this callback obj (js-undefined) r))

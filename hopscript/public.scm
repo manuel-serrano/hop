@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Apr 11 06:54:32 2020 (serrano)                */
+;*    Last change :  Mon Apr 13 11:31:21 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -859,7 +859,7 @@
 	(with-access::JsProcedure ,fun (procedure)
 	   (,(string->symbol (format "js-call~a%" (length args)))
 	    ,%this ,fun procedure ,this ,@args)))
-       ((js-function-proxy? ,fun)
+       ((js-procedure-proxy? ,fun)
 	(,(string->symbol (format "js-call-proxy/cache-miss~a" (length args)))
 	 ,%this ,fun ,this ,@args))
        ((procedure? fun)
@@ -964,7 +964,7 @@
       ((js-procedure? fun)
        (with-access::JsProcedure fun (procedure)
 	  (js-calln% %this fun procedure this args)))
-      ((js-function-proxy? fun)
+      ((js-procedure-proxy? fun)
        (js-call-proxyn %this fun this args))
       (else
        (js-raise-type-error %this
@@ -985,7 +985,7 @@
 			  ,%this ,fun procedure ,this ,@args)))
 		 ($env-pop-trace env)
 		 aux))))
-       ((js-function-proxy? ,fun)
+       ((js-procedure-proxy? ,fun)
 	(with-access::JsProxy ,fun ((target __proto__))
 	   (let ((env (current-dynamic-env))
 		 (name (js-proxy-debug-name ,fun %this)))
@@ -1041,7 +1041,7 @@
 	     (let ((aux (js-calln% %this fun procedure this args)))
 		($env-pop-trace env)
 		aux))))
-      ((js-function-proxy? fun)
+      ((js-procedure-proxy? fun)
        (with-access::JsProcedure fun (procedure)
 	  (let ((env (current-dynamic-env))
 		(name (js-proxy-debug-name fun %this)))
@@ -1148,7 +1148,7 @@
       ((js-procedure? fun)
        (with-access::JsProcedure fun (procedure)
 	  (js-calln% %this fun procedure obj args)))
-      ((js-function-proxy? fun)
+      ((js-procedure-proxy? fun)
        (js-apply-proxy %this fun obj args))
       (else
        (js-raise-type-error %this "apply: argument not a function ~s" fun))))

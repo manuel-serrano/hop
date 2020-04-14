@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Fri Apr  3 12:58:02 2020 (serrano)                */
+;*    Last change :  Mon Apr 13 07:51:37 2020 (serrano)                */
 ;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -327,8 +327,6 @@
 ;*    js-ascii-toname-unsafe ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-ascii-toname-unsafe::JsStringLiteralASCII str::bstring)
-   (when (eq? js-names #unspecified)
-      (tprint "STR=" str " th=" (current-thread)))
    (let ((n (hashtable-get js-names str)))
       (or n
 	  (let ((o (instantiate::JsStringLiteralASCII

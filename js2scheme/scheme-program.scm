@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Apr 12 19:09:30 2020 (serrano)                */
+;*    Last change :  Mon Apr 13 07:48:24 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -39,7 +39,7 @@
       (with-access::J2SProgram this (pcache-size call-size cnsts globals loc)
 	 (list module
 	    ;; (&begin!) must not be a constant! (_do not_ use quote)
-	    `(define __js_strings (&begin!))
+	    `(define __js_strings #f)
 	    `(%define-cnst-table ,(length cnsts))
 	    `(%define-pcache ,pcache-size)
 	    `(define %pcache
@@ -58,7 +58,7 @@
 	       `(define %call-locations ',(call-locations this)))
 	    (epairify-deep loc
 	       `(define (hopscript %this this %scope %module)
-		   (define __js_strings (&init!))
+		   (define __js_strings ,(j2s-jsstring-init this))
 		   (define js-string-names (js-get-js-string-names))
 		   (define js-integer-names (js-get-js-integer-names))
 		   (define %worker (js-current-worker))
@@ -69,7 +69,6 @@
 		   ,esexports
 		   ,@(exit-body ctx
 			(filter fundef? body) (filter nofundef? body))))
-	    '(&end!)
 	    ;; for dynamic loading
 	    'hopscript)))
    
@@ -77,12 +76,12 @@
       (with-access::J2SProgram this (pcache-size call-size cnsts globals loc)
 	 (list (append module `((option (register-srfi! 'hopjs-worker-slave))))
 	    ;; (&begin!) must not be a constant! (_do not_ use quote)
-	    `(define __js_strings (&begin!))
+	    `(define __js_strings #f)
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
 	    (epairify-deep loc
 	       `(define (hopscript %this this %scope %module)
-		   (define __js_strings (&init!))
+		   (define __js_strings ,(j2s-jsstring-init this))
 		   (define js-string-names (js-get-js-string-names))
 		   (define js-integer-names (js-get-js-integer-names))
 		   (define %pcache
@@ -106,7 +105,6 @@
 		   ,esexports
 		   ,@(exit-body ctx
 			(filter fundef? body) (filter nofundef? body))))
-	    '(&end!)
 	    ;; for dynamic loading
 	    'hopscript)))
    
@@ -119,32 +117,32 @@
       (with-access::J2SProgram this (globals loc pcache-size call-size cnsts)
 	 (epairify-deep loc
 	    `(lambda (%this this %scope %module)
-		(&with!
-		   (%define-cnst-table ,(length cnsts))
-		   (%define-pcache ,pcache-size)	       
-		   (define %pcache
-		      (js-make-pcache-table ,pcache-size
-			 ,(context-get ctx :filename)
-			 ,@(if (context-get ctx :profile-cache #f)
-			       (list `',(j2s-profile-cache this))
-			       '())))
-		   ,@(if (context-get ctx :profile-call #f)
-			 `((define %call-log (make-vector ,call-size #l0))
-			   (define %call-locations ',(call-locations this)))
-			 '())
-		   ,@(if (context-get ctx :profile-cmap #f)
-			 `((define %cmap-log (make-vector ,call-size '())))
-			 '())
-		   (define %worker (js-current-worker))
-		   (define %source (or (the-loading-file) "/"))
-		   (define %resource (dirname %source))
-		   (define %cnst-table ,cnsttable)
-		   ,@scmheaders
-		   ,@globals
-		   ,@esimports
-		   ,esexports
-		   ,@(exit-body ctx
-			(filter fundef? body) (filter nofundef? body)))))))
+		(define __js_strings ,(j2s-jsstring-init this))
+		(%define-cnst-table ,(length cnsts))
+		(%define-pcache ,pcache-size)	       
+		(define %pcache
+		   (js-make-pcache-table ,pcache-size
+		      ,(context-get ctx :filename)
+		      ,@(if (context-get ctx :profile-cache #f)
+			    (list `',(j2s-profile-cache this))
+			    '())))
+		,@(if (context-get ctx :profile-call #f)
+		      `((define %call-log (make-vector ,call-size #l0))
+			(define %call-locations ',(call-locations this)))
+		      '())
+		,@(if (context-get ctx :profile-cmap #f)
+		      `((define %cmap-log (make-vector ,call-size '())))
+		      '())
+		(define %worker (js-current-worker))
+		(define %source (or (the-loading-file) "/"))
+		(define %resource (dirname %source))
+		(define %cnst-table ,cnsttable)
+		,@scmheaders
+		,@globals
+		,@esimports
+		,esexports
+		,@(exit-body ctx
+		     (filter fundef? body) (filter nofundef? body))))))
    
    (define (j2s-let-globals globals)
       ;; transforms a list of (define id var) into a list of (id var)
@@ -187,7 +185,7 @@
 				      (filter fundef? body)
 				      (filter nofundef? body)))))))
 	    `(,jsmod
-		;; (&begin!) must not be a constant! (_do not_ use quote)
+		;;(define __js_strings ,(j2s-jsstring-init this))
 		(define __js_strings #f)
 		(%define-cnst-table ,(length cnsts))
 		(%define-pcache ,pcache-size)
