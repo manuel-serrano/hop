@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Apr 11 13:47:52 2020 (serrano)                */
+;*    Last change :  Tue Apr 14 15:52:14 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -44,7 +44,7 @@
    (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
    (print "      j2s:stage, j2s:type, j2s:type+, j2s:hint, j2s:range, j2s:usage, j2s:key,")
    (print "      j2s:loc, j2s:cache, j2s:dump, j2s:info, j2s:size, j2s:tail")
-   (print "      nodejs:compile,")
+   (print "      j2s:profid, nodejs:compile,")
    (print "      hopscript:cache[num] (*), hopscript:uncache,")
    (print "      hopscript:alloc[num], hopscript:call, hopscript:hint[num] (*)")
    (print "      hopscript:function[num] hopscript:symtable")

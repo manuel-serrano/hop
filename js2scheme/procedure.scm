@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 27 07:35:02 2019                          */
-;*    Last change :  Mon Apr 13 18:59:36 2020 (serrano)                */
+;*    Last change :  Tue Apr 14 16:23:23 2020 (serrano)                */
 ;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Procedure optimization.                                          */
@@ -44,7 +44,9 @@
       (name "procedure")
       (comment "Procedure optimization")
       (proc j2s-procedure!)
-      (optional :optim-procedure)))
+      (optional (lambda (conf)
+		   (and (config-get conf :optim-procedure #f)
+			(not (config-get conf :profile-call #f)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-procedure! ...                                               */

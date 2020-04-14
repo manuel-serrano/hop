@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Feb  9 11:20:26 2020 (serrano)                */
+;*    Last change :  Tue Apr 14 15:51:13 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -908,7 +908,7 @@
 ;*    j2s->list ::J2SCall ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCall)
-   (with-access::J2SCall this (fun thisarg args loc protocol)
+   (with-access::J2SCall this (fun thisarg args loc protocol profid)
       `(,@(call-next-method)
 	  ,@(dump-loc loc)
 	  ,@(dump-type this)
@@ -916,6 +916,10 @@
 	  ,@(dump-info this)
 	  ,@(dump-range this)
 	  ,@(dump-protocol protocol)
+	  ,@(if (or (>= (bigloo-debug) 2)
+		  (string-contains (or (getenv "HOPTRACE") "") "j2s:profid"))
+		`(:profid ,profid)
+		'())
 	  ,(j2s->list fun)
 	  ,@(dump-cache this)
 	  ,@(if (pair? thisarg) `(:thisarg ,@(map j2s->list thisarg)) '())
