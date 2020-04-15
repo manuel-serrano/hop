@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/letfusion.scm           */
+;*    serrano/prgm/project/hop/hop/js2scheme/letfusion.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 27 13:16:54 2016                          */
-;*    Last change :  Sun Aug  5 19:55:57 2018 (serrano)                */
-;*    Copyright   :  2016-18 Manuel Serrano                            */
+;*    Last change :  Wed Apr 15 11:47:25 2020 (serrano)                */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let fusion merges J2SBlock with variable decarations and         */
 ;*    J2SLetBlock.                                                     */
@@ -54,7 +54,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-letfusion! this::J2SBlock args)
    (call-default-walker)
-   (with-access::J2SBlock this (nodes)
+   (with-access::J2SBlock this (nodes loc endloc)
       ;; check the pattern (j2sblock decl decl ... decl j2sletblock)
       (let loop ((lnodes nodes)
 		 (vdecls '()))
@@ -73,8 +73,10 @@
 				   (set! scope 'letblock)))
 		      decls)))
 	     (with-access::J2SLetBlock (car lnodes) (nodes)
-		(set! nodes (append nodes (cdr lnodes))))
-	     (car lnodes))
+		(duplicate::J2SLetBlock (car lnodes)
+		   (nodes (append nodes (cdr lnodes)))
+		   (loc loc)
+		   (endloc endloc))))
 	    (else
 	     this)))))
 
