@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Dec 18 10:55:54 2007                          */
-#*    Last change :  Tue Mar 24 17:08:55 2020 (serrano)                */
+#*    Last change :  Wed Apr 15 07:50:36 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Add the HOP desktop entries from the configuration files         */
@@ -73,8 +73,10 @@ fi
 #*---------------------------------------------------------------------*/
 #*    init script                                                      */
 #*---------------------------------------------------------------------*/
-if [ "@DEBIAN@ " = "maemo " ]; then
+if [ "@YESORNO@ " = "yes " ]; then
   init=true
+if [ "@YESORNO@ " = "no " ]; then
+  init=false
 else
   # MS 20 jul 2012, don't understand why ldconfig is not sufficient, it appears,
   # that it is also needed to adjust LD_LIBRARY_PATH for the init script 

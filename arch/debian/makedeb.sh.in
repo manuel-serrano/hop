@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Tue Apr 14 15:06:28 2020 (serrano)                */
+#*    Last change :  Wed Apr 15 07:58:39 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Debian/Maemo       */
@@ -35,6 +35,7 @@ debformat="3.0 (quilt)"
 fakeroot=fakeroot
 sign=
 postinstall=yes
+yesorno=$YESORNO
 
 while : ; do
   case $1 in
@@ -63,6 +64,10 @@ while : ; do
       postinstall=no;;
     --no-sign)
       sign=--no-sign;;
+    --yes-or-no=no)
+      yesorno=no;;
+    --yes-or-no=yes)
+      yesorno=yes;;
     *)
       HOPCONFIGUREOPT="$1 $HOPCONFIGUREOPT";;
 
@@ -234,7 +239,8 @@ for p in control rules postinst postrm compat; do
             -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
             -e "s|@PREFIX@|$PREFIX|g" \
             -e "s/@MAEMOHASLOCATION@/$maemohaslocation/g" \
-            -e "s/@BIGLOOVERSION@/$BIGLOOVERSION/g" > \
+            -e "s/@BIGLOOVERSION@/$BIGLOOVERSION/g" \
+            -e "s/@YESORNO@/$yesorno/g" > \
       $BUILDDIR/hop-$VERSION/debian/$p;
   else
     cp $BASEDIR/$p $BUILDDIR/hop-$VERSION/debian;
