@@ -4,7 +4,7 @@ ${var hop = require( "hop" )}
 
 ### Hop command ###
 
-    ,(html-string-encode (system->string (format "~a/hop --help" (hop-bin-directory))))
+    ,(html-string-encode (system->string (format "../bin/hop.sh --help")))
 
 
 ### Unix environments ###
