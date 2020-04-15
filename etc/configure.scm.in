@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Wed Mar 18 15:16:42 2020 (serrano)                */
+;*    Last change :  Wed Apr 15 14:02:38 2020 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration                                                */
 ;*=====================================================================*/
@@ -101,6 +101,8 @@
        (print (hop-contribs-directory)))
       ((--webletsdir)
        (print (hop-weblets-directory)))
+      ((--node_modules)
+       (print (hop-lib-directory) "/hop/" (hop-version) "/node_modules"))
       ((--library-path)
        (print (hop-library-path)))
       ((--mimetypes)
@@ -142,6 +144,7 @@
 	     (print "  [--docdir]")
 	     (print "  [--contribsdir]")
              (print "  [--webletsdir]")
+             (print "  [--node_modules]")
 	     (print "  [--library-path]")
              (print "  [--mimetypes]")
              (print "  [--javascript-mime-type]")
