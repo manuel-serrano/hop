@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Fri Apr 10 14:20:39 2020 (serrano)                */
+#*    Last change :  Thu Apr 16 12:05:23 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autoconf Makefile skeleton for HOP.                          */
@@ -116,6 +116,7 @@ HOPLIBDIR	= @LIBDIR@
 HOPSHAREDIR	= @SHAREDIR@
 HOPMANDIR	= @MANDIR@
 HOPWEBLETSDIR	= @WEBLETSDIR@
+HOPNMODULESDIR  = @NMODULESDIR@
 HOPCONTRIBSDIR	= @CONTRIBSDIR@
 HOPDOCDIR	= @DOCDIR@
 

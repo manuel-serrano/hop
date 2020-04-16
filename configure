@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Apr 10 14:21:43 2020 (serrano)                */
+#*    Last change :  Thu Apr 16 12:06:01 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -101,6 +101,7 @@ sharedir=$prefix/share/hop
 mansec=man1
 mandir=$prefix/man/$mansec
 webletsdir=
+nodemodulesdir=
 contribsdir=$prefix/share/hop/contribs
 docdir=$prefix/share/doc/hop/$version
 buildlibdir=$PWD/lib/hop/$version
@@ -625,18 +626,6 @@ fi
 case $backend in
   "native")
      break;;
-  "jvm")
-     etcdir=/resource/etc
-     libdir=/resource/lib
-     webletsdir=/resource/lib/weblets
-     contribsdir=/resource/share/contribs
-     docdir=/resource/share/doc/hop
-     sharedir=/resource/share
-     hopc="java -jar $PWD/bin/hopc.jar"
-     hop="java -jar $PWD/bin/hop.jar"
-     break;;
-  "dotnet")
-     break;;
   *)
       echo "*** Configure error, Illegal backend $backend" >&2;
       echo "see configure --help" >&2;
@@ -968,6 +957,13 @@ jvmziplibs=
 jvminits=
 
 #*---------------------------------------------------------------------*/
+#*    NODEMODULES dir                                                  */
+#*---------------------------------------------------------------------*/
+if [ "$nodemodulesdir " = " " ]; then
+  nodemodulesdir=$libdir/hop/$version/node_modules;
+fi
+
+#*---------------------------------------------------------------------*/
 #*    Weblets dir                                                      */
 #*---------------------------------------------------------------------*/
 if [ "$webletsdir " = " " ]; then
@@ -1230,6 +1226,7 @@ cat $mkmf.in \
         -e "s|@PREFIX@|$prefix|" \
         -e "s|@ETCDIR@|$etcdir|" \
         -e "s|@WEBLETSDIR@|$webletsdir|" \
+        -e "s|@NMODULESDIR@|$nodemodulesdir|" \
         -e "s|@CONTRIBSDIR@|$contribsdir|" \
         -e "s|@DOCDIR@|$docdir|" \
         -e "s|@DOCURL@|$docurl|" \
@@ -1274,6 +1271,7 @@ for p in configure.scm configure_noarch.sch configure_macosx.sch configure_andro
           -e "s|@SHAREDIR@|$sharedir/$version|" \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
+          -e "s|@NMODULESDIR@|$nodemodulesdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@DOCDIR@|$docdir|" \
           -e "s|@DOCURL@|$docurl|" \
@@ -1313,6 +1311,7 @@ for p in nodejs.sch; do
           -e "s|@SHAREDIR@|$sharedir/$version|" \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
+          -e "s|@NMODULESDIR@|$nodemodulesdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@DOCDIR@|$docdir|" \
           -e "s|@DOCURL@|$docurl|" \
@@ -1345,6 +1344,7 @@ for script in test/nodejs/TEST test/nodejs/HOP.exe test/hopjs/TEST; do
           -e "s|@SHAREDIR@|$sharedir/$version|g" \
           -e "s|@ETCDIR@|$etcdir|g" \
           -e "s|@WEBLETSDIR@|$webletsdir|g" \
+          -e "s|@NMODULESDIR@|$nodemodulesdir|g" \
           -e "s|@CONTRIBSDIR@|$contribsdir|g" \
           -e "s|@BUILDDIR@|$PWD|g" \
           -e "s|@BUILDLIBDIR@|$buildlibdir|g" \
@@ -1383,6 +1383,7 @@ for file in etc/hopjs-config.el; do
           -e "s|@SHAREDIR@|$sharedir/$version|" \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
+          -e "s|@NMODULESDIR@|$nodemodulesdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@BUILDDIR@|$PWD|" \
           -e "s|@BUILDLIBDIR@|$buildlibdir|" \
@@ -1407,6 +1408,7 @@ cat etc/hoprc.hop.in \
         -e "s|@SHAREDIR@|$sharedir/$version|" \
         -e "s|@ETCDIR@|$etcdir|" \
         -e "s|@WEBLETSDIR@|$webletsdir|" \
+        -e "s|@NMODULESDIR@|$nodemodulesdir|" \
         -e "s|@CONTRIBSDIR@|$contribsdir|" \
         -e "s|@DOCDIR@|$docdir|" \
         -e "s|@DOCURL@|$docurl|" \
@@ -1425,6 +1427,7 @@ cat etc/hopshrc.hop.in \
         -e "s|@SHAREDIR@|$sharedir/$version|" \
         -e "s|@ETCDIR@|$etcdir|" \
         -e "s|@WEBLETSDIR@|$webletsdir|" \
+        -e "s|@NMODULESDIR@|$nodemodulesdir|" \
         -e "s|@CONTRIBSDIR@|$contribsdir|" \
         -e "s|@DOCDIR@|$docdir|" \
         -e "s|@DOCURL@|$docurl|" \
@@ -1648,6 +1651,7 @@ for init in hop-autoconf.js hop-boot.js; do
           -e "s|@DOCDIR@|$docdir|" \
           -e "s|@DOCURL@|$docurl|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
+          -e "s|@NMODULESDIR@|$nodemodulesdir|" \
           -e "s|@LOCEVENT@|$locevent|" \
           -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
           -e "s|@BUILDID@|$buildid|" \
@@ -1698,6 +1702,8 @@ cat $deb.in \
   | sed -e "s|#!/bin/sh||" \
         -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
         -e "s|@VERSION@|$version|" \
+        -e "s|@WEBLETSDIR@|$webletsdir|" \
+        -e "s|@NMODULESDIR@|$nodemodulesdir|" \
         -e "s|@MINOR@|$minorversion|" \
 	>> $deb  
 chmod a+rx $deb
@@ -1752,6 +1758,7 @@ echo "  lib directory......................... $libdir"
 echo "  share directory....................... $sharedir"
 echo "  man directory......................... $mandir"
 echo "  weblets directory..................... $webletsdir"
+echo "  node_modules directory................ $nodemodulesdir"
 echo "  contribs directory.................... $contribsdir"
 echo "  doc directory......................... $docdir"
 echo "  doc official url...................... $docurl"

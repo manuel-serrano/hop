@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Dec 18 10:55:54 2007                          */
-#*    Last change :  Wed Apr 15 10:52:00 2020 (serrano)                */
+#*    Last change :  Thu Apr 16 12:09:28 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Add the HOP desktop entries from the configuration files         */
@@ -62,6 +62,13 @@ if [ "$search" != "@HOPPREFIX@/lib" ]; then
 fi
 
 ldconfig
+
+#*---------------------------------------------------------------------*/
+#*    so files                                                         */
+#*    -------------------------------------------------------------    */
+#*    Touch so files to ensure that they are newer than the sources.   */
+#*---------------------------------------------------------------------*/
+find @NODEMODULESDIR@ -name '*.so' -exec /bin/touch {} \;
 
 #*---------------------------------------------------------------------*/
 #*    Add Hop user                                                     */

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Wed Apr 15 07:58:39 2020 (serrano)                */
+#*    Last change :  Thu Apr 16 12:08:40 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Debian/Maemo       */
@@ -18,6 +18,8 @@
 VERSION=@VERSION@    # Hop major version e.g. VERSION=2.4.0
 MINOR=@MINOR@        # Hop minor release e.g. MINOR=-pre1
 BIGLOOVERSION=@BIGLOOREQUIRED@
+
+NODEMODULESDIR=@NMODULESDIR@
 
 REPOSITORY=$HOME/prgm/distrib
 ICONS="hop-16x16.png hop-26x26.png hop-40x40.png hop-64x64.png"
@@ -240,6 +242,7 @@ for p in control rules postinst postrm compat; do
             -e "s|@PREFIX@|$PREFIX|g" \
             -e "s/@MAEMOHASLOCATION@/$maemohaslocation/g" \
             -e "s/@BIGLOOVERSION@/$BIGLOOVERSION/g" \
+            -e "s|@NODEMODULESDIR@|$NODEMODULESDIR|" \
             -e "s/@YESORNO@/$yesorno/g" > \
       $BUILDDIR/hop-$VERSION/debian/$p;
   else
