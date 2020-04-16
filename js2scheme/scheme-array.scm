@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue Apr 14 07:25:38 2020 (serrano)                */
+;*    Last change :  Thu Apr 16 18:45:17 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -246,7 +246,7 @@
 		 ,(j2s-scheme field mode return ctx)
 		 %this))
 	    (else
-	     (case (j2s-etype field ctx)
+	     (case (j2s-etype field (context-conf ctx))
 		((string)
 		 `(js-array-string-ref ,(j2s-scheme obj mode return ctx)
 		     ,(j2s-scheme field mode return ctx)
