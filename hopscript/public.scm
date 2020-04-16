@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Apr 14 11:53:42 2020 (serrano)                */
+;*    Last change :  Wed Apr 15 19:19:18 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -266,6 +266,7 @@
    (with-access::JsProcedure fun (arity procedure)
       (let ((minlen (negfx
 		       (cond
+			  ((>fx arity -2049) (-fx (negfx arity) 1))
 			  ((>fx arity -3049) (+fx arity 2049))
 			  ((>fx arity -4049) (+fx arity 3049))
 			  ((>fx arity -5049) (+fx arity 4049))
@@ -307,6 +308,22 @@
       (#unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified)
       (#unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified)))
 
+;*---------------------------------------------------------------------*/
+;*    evprocedure-arity ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (evprocedure-arity::long proc::procedure)
+   (let ((a (procedure-arity proc)))
+      (if (=fx a -5)
+	  ;; might be an eval procedure
+	  (let ((attr (procedure-attr proc)))
+	     (if (and (struct? attr) (eq? (struct-key attr) 'user))
+		 ;; awful hack that must be changed
+		 ;; see the "user" struct int
+		 ;; bigloo:runtime/Eval/evaluate_comp.scm
+		 (struct-ref attr 0)
+		 a))
+	  a)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    gen-calln ...                                                    */
 ;*    -------------------------------------------------------------    */
@@ -352,8 +369,8 @@
    
    (define (call-opt-missing i)
       ;; missing required arguments
-      `((,(negfx i))
-	(let ((,parity (procedure-arity ,procedure)))
+      `((,(negfx (+fx 1024 i)))
+	(let ((,parity (evprocedure-arity ,procedure)))
 	   (if (js-procedure-hopscript-mode? ,fun)
 	       (js-raise-arity-error %this ,fun ,(-fx n 1))
 	       (case ,parity
@@ -366,15 +383,15 @@
 		  (else
 		   (if (<fx ,parity 0)
 		       (apply ,procedure ,this ,@args
-			  (make-list (-fx (-fx (negfx ,parity) 1) ,n)
+			  (make-list (-fx (negfx ,parity) ,n)
 			     (js-undefined)))
 		       (apply ,procedure ,this ,@args
 			  (vector-ref optionals (-fx ,parity ,n))))))))))
-   
-   (define (call-opt-too-many i)
-      `((,(negfx i))
-	;; ok or too many required arguments
-	(let ((,parity (procedure-arity ,procedure)))
+
+   (define (call-opt-ok-or-too-many i)
+      `((,(negfx (+fx 1024 i)))
+	;; too many required arguments
+	(let ((,parity (evprocedure-arity ,procedure)))
 	   (case ,parity
 	      ;; no need to generate [1.. i-1] because parity > -arity
 	      ,@(map (lambda (a)
@@ -398,6 +415,16 @@
 		   (,procedure ,this ,@args)
 		   (apply ,procedure ,this ,@args
 		      (make-list (-fx ,parity ,n) (js-undefined)))))))))
+
+   (define (call-scheme-vararg-missing i)
+      ;; missing scheme var args
+      `((,(negfx i))
+	(,procedure ,this ,@args ,@(make-list (-fx i (+fx n 1)) '(js-undefined)))))
+   
+   (define (call-scheme-vararg-ok i)
+      ;; ok scheme var args
+      `((,(negfx i))
+	(,procedure ,this ,@args)))
    
    (define (call-fix-too-many i)
       ;; too many fix arguments
@@ -494,7 +521,14 @@
 				(list
 				   ,(rest-argument arity
 				       `(drop ,l (-fx ,parity 2)))))))))))))
-   
+
+   (define (call-many-arguments-scheme-varargs)
+      `(let ((,required (-fx (negfx ,parity) 1)))
+	  (if (>=fx ,n (negfx ,parity))
+	      (,procedure ,this ,@args)
+	      (apply ,procedure ,this ,@args
+		 (make-list (-fx ,n ,required) (js-undefined))))))
+	  
    (define (call-many-arguments)
       ;; dyamic call sequence for many arguments
       `(cond
@@ -511,11 +545,17 @@
 	  (else
 	   ;; optional arguments
 	   (let ((,parity (procedure-arity ,procedure)))
-	      (if (>fx ,arity -2049)
+	      (cond
+		 ((>fx ,arity 1024)
+		  ;; scheme var args
+		  (let ((,parity (evprocedure-arity ,procedure)))
+		     ,(call-many-arguments-scheme-varargs)))
+		 ((>fx ,arity -2049)
 		  ;; no rest argument
-		  ,(call-many-arguments-opt-norest)
+		  ,(call-many-arguments-opt-norest))
+		 (else
 		  ;; rest argument
-		  ,(call-many-arguments-opt-rest))))))
+		  ,(call-many-arguments-opt-rest)))))))
    
    `(with-access::JsProcedure ,fun (arity)
        (let ((,arity arity))
@@ -537,9 +577,15 @@
 		 (vector ,@args)
 		 (lambda (v) (,procedure ,this v))))
 	     ;; opt missing required arguments
-	     ,@(map call-opt-missing (reverse (iota (-fx 10 (-fx n 1)) n)))
+	     ,@(map call-opt-missing (reverse (iota (-fx 10 n) n)))
 	     ;; opt ok or too many arguments
-	     ,@(map call-opt-too-many (reverse (iota (-fx n 1) 1)))
+	     ,@(map call-opt-ok-or-too-many (reverse (iota n 0)))
+	     ;; scheme missing var args
+	     ,@(map call-scheme-vararg-missing (reverse (iota (-fx 10 n) (+fx n 1))))
+	     ;; scheme ok var args
+	     ,@(map call-scheme-vararg-ok (reverse (iota n 1)))
+	     ;; arguments without optimization
+	     ((0) (,procedure ,this ,@args))
 	     ;; fix too many arguments
 	     ,@(map call-fix-too-many (iota (-fx n 1) 1))
 	     ;; direct call
@@ -980,7 +1026,7 @@
 	(let ((env (current-dynamic-env))
 	      (name (js-function-debug-name ,fun %this)))
 	   ($env-push-trace env name loc)
-	   (with-access::JsProcedure ,fun (procedure)
+	   (with-access::JsProcedure ,fun (procedure arity)
 	      (let ((aux (,(string->symbol (format "js-call~a%" (length args)))
 			  ,%this ,fun procedure ,this ,@args)))
 		 ($env-pop-trace env)

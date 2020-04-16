@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/trashcan/arity.js                                        */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/call.js           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Apr  8 15:44:36 2020                          */
-/*    Last change :  Thu Apr  9 12:58:31 2020 (serrano)                */
+/*    Last change :  Thu Apr 16 06:57:19 2020 (serrano)                */
 /*    Copyright   :  2020 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing function calls                                           */
@@ -373,9 +373,9 @@ assert.ok( F3opt2() === 4, "F3opt2.direct.1" );
 console.log( "F3opt2.direct.2..." );
 assert.ok( F3opt2( 1 ) === 4, "F3opt2.direct.2" );
 console.log( "F3opt2.direct.3..." );
-assert.ok( F3opt2( 1, 2 ) === 4, "F3opt2.direct.2" );
+assert.ok( F3opt2( 1, 2 ) === 4, "F3opt2.direct.3" );
 console.log( "F3opt2.direct.4..." );
-assert.ok( F3opt2( 1, 2, 3 ) === 3, "F3opt2.direct.3" );
+assert.ok( F3opt2( 1, 2, 3 ) === 3, "F3opt2.direct.4" );
 console.log( "F3opt2.funcall.1..." );
 assert.ok( ({ fun: F3opt2 }).fun() === 4, "F3opt2.funcall.1" );
 console.log( "F3opt2.funcall.2..." );
@@ -383,7 +383,7 @@ assert.ok( ({ fun: F3opt2 }).fun( 1 ) === 4, "F3opt2.funcall.2" );
 console.log( "F3opt2.funcall.3..." );
 assert.ok( ({ fun: F3opt2 }).fun( 1, 2 ) === 4, "F3opt2.funcall.3" );
 console.log( "F3opt2.funcall.4..." );
-assert.ok( ({ fun: F3opt2 }).fun( 1, 2, 3 ) === 3, "F3opt2.funcall.3" );
+assert.ok( ({ fun: F3opt2 }).fun( 1, 2, 3 ) === 3, "F3opt2.funcall.4" );
 console.log( "F3opt2.apply.1..." );
 assert.ok( F3opt2.apply( undefined, [] ) === 4, "F3opt2.apply.1" );
 console.log( "F3opt2.apply.2..." );
@@ -391,7 +391,7 @@ assert.ok( F3opt2.apply( undefined, [ 1 ] ) === 4, "F3opt2.apply.2" );
 console.log( "F3opt2.apply.3..." );
 assert.ok( F3opt2.apply( undefined, [ 1, 2 ] ) === 4, "F3opt2.apply.3" );
 console.log( "F3opt2.apply.4..." );
-assert.ok( F3opt2.apply( undefined, [ 1, 2, 3 ] ) === 3, "F3opt2.apply.3" );
+assert.ok( F3opt2.apply( undefined, [ 1, 2, 3 ] ) === 3, "F3opt2.apply.4" );
 console.log( "F3opt2.call.1..." );
 assert.ok( F3opt2.call( undefined, undefined ) === 4, "F3opt2.call.1" );
 console.log( "F3opt2.call.2..." );
@@ -399,7 +399,57 @@ assert.ok( F3opt2.call( undefined, 1 ) === 4, "F3opt2.call.2" );
 console.log( "F3opt2.call.3..." );
 assert.ok( F3opt2.call( undefined, 1, 2 ) === 4, "F3opt2.call.3" );
 console.log( "F3opt2.call.4..." );
-assert.ok( F3opt2.call( undefined, 1, 2, 3 ) === 3, "F3opt2.call.3" );
+assert.ok( F3opt2.call( undefined, 1, 2, 3 ) === 3, "F3opt2.call.4" );
+console.log( "" );
+
+/*---------------------------------------------------------------------*/
+/*    F4opt                                                            */
+/*---------------------------------------------------------------------*/
+function F4opt( x, y, z, t = 5 ) {
+   return t;
+}
+
+console.log( "testing arity 4 (optionals)" );
+console.log( "F4opt.direct.1..." );
+assert.ok( F4opt() === 5, "F4opt.direct.1" );
+console.log( "F4opt.direct.2..." );
+assert.ok( F4opt( 1 ) === 5, "F4opt.direct.2" );
+console.log( "F4opt.direct.3..." );
+assert.ok( F4opt( 1, 2 ) === 5, "F4opt.direct.3" );
+console.log( "F4opt.direct.4..." );
+assert.ok( F4opt( 1, 2, 3 ) === 5, "F4opt.direct.4" );
+console.log( "F4opt.direct.5..." );
+assert.ok( F4opt( 1, 2, 3, 4 ) === 4, "F4opt.direct.5" );
+console.log( "F4opt.funcall.1..." );
+assert.ok( ({ fun: F4opt }).fun() === 5, "F4opt.funcall.1" );
+console.log( "F4opt.funcall.2..." );
+assert.ok( ({ fun: F4opt }).fun( 1 ) === 5, "F4opt.funcall.2" );
+console.log( "F4opt.funcall.3..." );
+assert.ok( ({ fun: F4opt }).fun( 1, 2 ) === 5, "F4opt.funcall.3" );
+console.log( "F4opt.funcall.4..." );
+assert.ok( ({ fun: F4opt }).fun( 1, 2, 3 ) === 5, "F4opt.funcall.4" );
+console.log( "F4opt.funcall.5..." );
+assert.ok( ({ fun: F4opt }).fun( 1, 2, 3, 4 ) === 4, "F4opt.funcall.5" );
+console.log( "F4opt.apply.1..." );
+assert.ok( F4opt.apply( undefined, [] ) === 5, "F4opt.apply.1" );
+console.log( "F4opt.apply.2..." );
+assert.ok( F4opt.apply( undefined, [ 1 ] ) === 5, "F4opt.apply.2" );
+console.log( "F4opt.apply.3..." );
+assert.ok( F4opt.apply( undefined, [ 1, 2 ] ) === 5, "F4opt.apply.3" );
+console.log( "F4opt.apply.4..." );
+assert.ok( F4opt.apply( undefined, [ 1, 2, 3 ] ) === 5, "F4opt.apply.4" );
+console.log( "F4opt.apply.5..." );
+assert.ok( F4opt.apply( undefined, [ 1, 2, 3, 4 ] ) === 4, "F4opt.apply.5" );
+console.log( "F4opt.call.1..." );
+assert.ok( F4opt.call( undefined, undefined ) === 5, "F4opt.call.1" );
+console.log( "F4opt.call.2..." );
+assert.ok( F4opt.call( undefined, 1 ) === 5, "F4opt.call.2" );
+console.log( "F4opt.call.3..." );
+assert.ok( F4opt.call( undefined, 1, 2 ) === 5, "F4opt.call.3" );
+console.log( "F4opt.call.4..." );
+assert.ok( F4opt.call( undefined, 1, 2, 3 ) === 5, "F4opt.call.4" );
+console.log( "F4opt.call.5..." );
+assert.ok( F4opt.call( undefined, 1, 2, 3, 4 ) === 4, "F4opt.call.5" );
 console.log( "" );
 
 /*---------------------------------------------------------------------*/
@@ -410,35 +460,34 @@ const F4optrest = ( a = 0, ... b ) => a + b.reduce( (x,y) => x+y, 0 );
 console.log( "testing optional + rest " );
 
 console.log( "F4optrest.direct.1..." );
-assert.ok( F4optrest() === 0, "F4optrest()" );
+assert.ok( F4optrest() === 0, "F4optrest.direct.1" );
 console.log( "F4optrest.direct.2..." );
-assert.ok( F4optrest( 1 ) === 1, "F4optrest( 1 )" );
+assert.ok( F4optrest( 1 ) === 1, "F4optrest.direct.2" );
 console.log( "F4optrest.direct.3..." );
-assert.ok( F4optrest( 1, 2 ) === 3, "F4optrest( 1, 2 )" );
+assert.ok( F4optrest( 1, 2 ) === 3, "F4optrest.direct.3" );
 console.log( "F4optrest.direct.4..." );
-assert.ok( F4optrest( 1, 2, 3 ) === 6, "F4optrest( 1, 2, 3 )" );
+assert.ok( F4optrest( 1, 2, 3 ) === 6, "F4optrest.direct.4" );
 console.log( "F4optrest.funcall.1..." );
-assert.ok( ({ fun: F4optrest }).fun() === 0, "F4optrest()" );
+assert.ok( ({ fun: F4optrest }).fun() === 0, "F4optrest.funcall.1" );
 console.log( "F4optrest.funcall.2..." );
-assert.ok( ({ fun: F4optrest }).fun( 1 ) === 1, "F4optrest( 1 )" );
+assert.ok( ({ fun: F4optrest }).fun( 1 ) === 1, "F4optrest.funcall.2" );
 console.log( "F4optrest.funcall.3..." );
-assert.ok( ({ fun: F4optrest }).fun( 1, 2 ) === 3, "F4optrest( 1, 2 )" );
+assert.ok( ({ fun: F4optrest }).fun( 1, 2 ) === 3, "F4optrest.funcall.3" );
 console.log( "F4optrest.funcall.4..." );
-assert.ok( ({ fun: F4optrest }).fun( 1, 2, 3 ) === 6, "F4optrest( 1, 2, 3 )" );
+assert.ok( ({ fun: F4optrest }).fun( 1, 2, 3 ) === 6, "F4optrest.funcall.4" );
 console.log( "F4optrest.apply.1..." );
-assert.ok( F4optrest.apply(undefined) === 0, "F4optrest()" );
+assert.ok( F4optrest.apply(undefined) === 0, "F4optrest.apply.1" );
 console.log( "F4optrest.apply.2..." );
-assert.ok( F4optrest.apply(undefined, [1] ) === 1, "F4optrest( 1 )" );
+assert.ok( F4optrest.apply(undefined, [1] ) === 1, "F4optrest.apply.2" );
 console.log( "F4optrest.apply.3..." );
-assert.ok( F4optrest.apply(undefined, [1, 2] ) === 3, "F4optrest( 1, 2 )" );
+assert.ok( F4optrest.apply(undefined, [1, 2] ) === 3, "F4optrest.apply.3" );
 console.log( "F4optrest.apply.4..." );
-assert.ok( F4optrest.apply( undefined, [1, 2, 3] ) === 6, "F4optrest( 1, 2, 3 )" );
+assert.ok( F4optrest.apply( undefined, [1, 2, 3] ) === 6, "F4optrest.apply.4" );
 console.log( "F4optrest.call.1..." );
-assert.ok( F4optrest.call(undefined) === 0, "F4optrest()" );
+assert.ok( F4optrest.call(undefined) === 0, "F4optrest.call.1" );
 console.log( "F4optrest.call.2..." );
-assert.ok( F4optrest.call(undefined, 1 ) === 1, "F4optrest( 1 )" );
+assert.ok( F4optrest.call(undefined, 1 ) === 1, "F4optrest.call.2" );
 console.log( "F4optrest.call.3..." );
-assert.ok( F4optrest.call(undefined, 1, 2 ) === 3, "F4optrest( 1, 2 )" );
+assert.ok( F4optrest.call(undefined, 1, 2 ) === 3, "F4optrest.call.3" );
 console.log( "F4optrest.call.4..." );
-assert.ok( F4optrest.call( undefined, 1, 2, 3 ) === 6, "F4optrest( 1, 2, 3 )" );
-
+assert.ok( F4optrest.call( undefined, 1, 2, 3 ) === 6, "F4optrest.call.4" );

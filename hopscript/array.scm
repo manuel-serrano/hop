@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Apr  7 08:10:46 2020 (serrano)                */
+;*    Last change :  Wed Apr 15 18:29:14 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1979,7 +1979,7 @@
    ;; http://www.ecma-international.org/ecma-262/7.0/#sec-indexed-collections#sec-array.prototype.find
    (define (array-prototype-find this::obj proc t)
 
-      (define (vector-find this o::JsArray len::uint32 proc::JsFunction t i::uint32 %this)
+      (define (vector-find this o::JsArray len::uint32 proc::JsProcedure t i::uint32 %this)
 	 (with-access::JsArray o (vec ilen)
 	    (let loop ((i i))
 	       (cond
@@ -1994,7 +1994,7 @@
 			 (else
 			  (loop (+u32 i 1))))))))))
 
-      (define (array-find this o::JsArray len::uint32 proc::JsFunction t i::uint32 %this)
+      (define (array-find this o::JsArray len::uint32 proc::JsProcedure t i::uint32 %this)
 	 (let loop ((i i))
 	    (if (>=u32 i len)
 		(js-undefined)
@@ -2017,7 +2017,7 @@
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-array.prototype.findindex
    (define (array-prototype-find-index this::obj proc t)
 
-      (define (vector-find-idx this o::JsArray len::uint32 proc::JsFunction t i::uint32 %this)
+      (define (vector-find-idx this o::JsArray len::uint32 proc::JsProcedure t i::uint32 %this)
 	 (with-access::JsArray o (vec ilen)
 	    (let loop ((i i))
 	       (cond
@@ -2033,7 +2033,7 @@
 			 (else
 			  (loop (+u32 i 1))))))))))
 
-      (define (array-find-idx this o::JsArray len::uint32 proc::JsFunction t i::uint32 %this)
+      (define (array-find-idx this o::JsArray len::uint32 proc::JsProcedure t i::uint32 %this)
 	 (let loop ((i i))
 	    (if (>=u32 i len)
 		-1
@@ -3599,7 +3599,7 @@
       (let ((fun (js-get-jsobject-name/cache o js-symbol-iterator #f %this
 		    (js-pcache-ref js-array-pcache 19))))
 	 (if (and (js-function? fun)
-		  (with-access::JsFunction fun (elements)
+		  (with-access::JsProcedure fun (elements)
 		     (not (eq? (vector-ref elements 2) (& "@@iterator")))))
 	     (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
 	     (with-access::JsArray o (length vec ilen)
@@ -4415,7 +4415,7 @@
 	  (js-raise-type-error %this
 	     "sort: argument not a function ~s" comparefn))
 	 (else
-	  (with-access::JsFunction comparefn (proc)
+	  (with-access::JsProcedure comparefn (proc)
 	     (make-compare comparefn)))))
    
    (define (vector-sort this cmp)

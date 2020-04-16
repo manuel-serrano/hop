@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Apr 12 12:26:08 2020 (serrano)                */
+;*    Last change :  Wed Apr 15 17:21:05 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -32,7 +32,8 @@
    (export (j2s-scheme-closure ::J2SDecl mode return ::struct)
 	   (jsfun->lambda ::J2SFun mode return ::struct proto ::bool)
 	   (j2sfun->scheme ::J2SFun tmp tmpm mode return ::struct)
-	   (j2s-fun-prototype ::J2SFun)))
+	   (j2s-fun-prototype ::J2SFun)
+	   (j2s-function-arity ::J2SFun ::struct)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclFun ...                                      */
@@ -187,7 +188,7 @@
 		    (if (eq? alloc-policy 'lazy)
 			-2047
 			-2048))
-		 -1))
+		 0))
 	    ((eq? vararg 'rest)
 	     (with-access::J2SDeclRest (car (last-pair params)) (alloc-policy)
 		(let ((offset (cond
@@ -203,7 +204,7 @@
 	    ((=fx opt 0)
 	     (+fx req 1))
 	    (else
-	     (negfx (+fx req 1)))))))
+	     (negfx (+fx req 1024)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-make-function ...                                            */

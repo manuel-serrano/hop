@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon Apr 13 11:31:11 2020 (serrano)                */
+;*    Last change :  Thu Apr 16 08:28:11 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -156,7 +156,65 @@
    (if (eq? (js-toname p %this) (& "prototype"))
        (with-access::JsFunction o (prototype) prototype)
        (call-next-method)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    js-get-jsobject-name/cache-miss ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-jsobject-name/cache-miss o::JsProcedure p::obj
+		  throw::bool %this::JsGlobalObject
+		  cache::JsPropertyCache)
+   (cond
+      ((eq? (js-toname p %this) (& "length"))
+       (js-get-length o %this cache))
+      ((eq? (js-toname p %this) (& "prototype"))
+       (js-undefined))
+      (else
+       (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get ::JsFunction ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (js-get o::JsFunction p %this)
+   (if (eq? (js-toname p %this) (& "prototype"))
+       (with-access::JsFunction o (prototype) prototype)
+       (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    js-get ::JsProcedure ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (js-get o::JsProcedure p %this)
+   (cond
+      ((eq? (js-toname p %this) (& "length"))
+       (if (js-function? o)
+	   (call-next-method)
+	   (js-get-length o %this)))
+      ((eq? (js-toname p %this) (& "prototype"))
+       (js-undefined))
+      (else
+       (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-length ::JsProcedure ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-length o::JsProcedure %this::JsGlobalObject #!optional cache)
+   (with-access::JsProcedure o (arity)
+      (cond
+	 ((js-function? o) (call-next-method))
+	 ((>fx arity 0) (-fx arity 1))
+	 ((>fx arity -1024) (- (negfx arity) 1))
+	 ((>fx arity -2049) (+fx arity 2049))
+	 ((>fx arity -3049) (+fx arity 3049))
+	 ((>fx arity -4049) (+fx arity 4049))
+	 (else (+fx arity 5049)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-length ::JsFunction ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-length o::JsFunction %this::JsGlobalObject #!optional cache)
+   (if cache
+       (js-get-name/cache o (& "length") #f %this cache)
+       (js-get o (& "length") %this)))
+
 ;*---------------------------------------------------------------------*/
 ;*    throwers                                                         */
 ;*---------------------------------------------------------------------*/
@@ -476,15 +534,14 @@
 (define (js-function-debug-name::bstring obj::JsProcedure %this)
    (if (js-function? obj)
        (with-access::JsFunction obj (src name)
-	  (with-access::JsGlobalObject %this (js-function-pcache)
-	     (cond
-		((js-jsstring? name)
-		 (js-jsstring->string name))
-		((number? name)
-		 name)
-		((pair? src)
-		 (format "~a:~a" (cadr (car src)) (caddr (car src))))
-		(else "function"))))
+	  (cond
+	     ((js-jsstring? name)
+	      (js-jsstring->string name))
+	     ((number? name)
+	      name)
+	     ((pair? src)
+	      (format "~a:~a" (cadr (car src)) (caddr (car src))))
+	     (else "function")))
        "procedure"))
 
 ;*---------------------------------------------------------------------*/
@@ -936,7 +993,7 @@
 		   bproc
 		   (maxfx 0 (-fx len (length args)))
 		   (js-name->jsstring 
-		      (string-append "bound "
+		      (string-append "bind:"
 			 (js-tostring (js-get this (& "name") %this)
 			    %this)))
 		   :__proto__ bproto

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sun Apr 12 15:32:36 2020 (serrano)                */
+;*    Last change :  Wed Apr 15 17:20:26 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -180,7 +180,7 @@
 			 (with-access::J2SFun val (constrsize params thisp)
 			    (make-class name super elements
 			       (ctor->lambda val name mode return ctx #f #t super)
-			       (+fx 1 (length params))
+			       (j2s-function-arity val ctx)
 			       (length params) constrsize
 			       src loc)))))
 		  (super
