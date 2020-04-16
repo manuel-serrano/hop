@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Apr 16 08:28:11 2020 (serrano)                */
+;*    Last change :  Thu Apr 16 13:32:59 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -153,6 +153,7 @@
 (define-method (js-get-jsobject-name/cache-miss o::JsFunction p::obj
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache)
+   ;;(tprint "js-get-jsobject-name ::JsFunction o=" (typeof o) " p=" p)
    (if (eq? (js-toname p %this) (& "prototype"))
        (with-access::JsFunction o (prototype) prototype)
        (call-next-method)))
@@ -163,9 +164,12 @@
 (define-method (js-get-jsobject-name/cache-miss o::JsProcedure p::obj
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache)
+   ;;(tprint "js-get-jsobject-name ::JsProcedure o=" (typeof o) " p=" p)
    (cond
       ((eq? (js-toname p %this) (& "length"))
-       (js-get-length o %this cache))
+       (if (js-function? p)
+	   (call-next-method)
+	   (js-get-length-jsprocedure o)))
       ((eq? (js-toname p %this) (& "prototype"))
        (js-undefined))
       (else
@@ -175,6 +179,7 @@
 ;*    js-get ::JsFunction ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsFunction p %this)
+   ;;(tprint "js-get ::JsFunction o=" (typeof o) " p=" p)
    (if (eq? (js-toname p %this) (& "prototype"))
        (with-access::JsFunction o (prototype) prototype)
        (call-next-method)))
@@ -183,11 +188,12 @@
 ;*    js-get ::JsProcedure ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsProcedure p %this)
+   ;; (tprint "js-get ::JsProcedure o=" (typeof o) " p=" p)
    (cond
       ((eq? (js-toname p %this) (& "length"))
        (if (js-function? o)
 	   (call-next-method)
-	   (js-get-length o %this)))
+	   (js-get-length-jsprocedure o)))
       ((eq? (js-toname p %this) (& "prototype"))
        (js-undefined))
       (else
@@ -197,23 +203,24 @@
 ;*    js-get-length ::JsProcedure ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-length o::JsProcedure %this::JsGlobalObject #!optional cache)
+   ;; (tprint "js-get-length ::JsProcedure o=" (typeof o))
+   (if (js-function? o)
+       (call-next-method)
+       (js-get-length-jsprocedure o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-length-jsprocedure ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-get-length-jsprocedure o::JsProcedure)
+   ;;(tprint "js-get-length-jsprocedure...")
    (with-access::JsProcedure o (arity)
       (cond
-	 ((js-function? o) (call-next-method))
 	 ((>fx arity 0) (-fx arity 1))
 	 ((>fx arity -1024) (- (negfx arity) 1))
 	 ((>fx arity -2049) (+fx arity 2049))
 	 ((>fx arity -3049) (+fx arity 3049))
 	 ((>fx arity -4049) (+fx arity 4049))
 	 (else (+fx arity 5049)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-get-length ::JsFunction ...                                   */
-;*---------------------------------------------------------------------*/
-(define-method (js-get-length o::JsFunction %this::JsGlobalObject #!optional cache)
-   (if cache
-       (js-get-name/cache o (& "length") #f %this cache)
-       (js-get o (& "length") %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    throwers                                                         */

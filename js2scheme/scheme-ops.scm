@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Apr 13 11:31:38 2020 (serrano)                */
+;*    Last change :  Thu Apr 16 15:15:30 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -661,8 +661,8 @@
    
    (with-tmp lhs rhs mode return ctx
       (lambda (left right)
-	 (let ((tl (j2s-etype lhs ctx))
-	       (tr (j2s-etype rhs ctx))
+	 (let ((tl (j2s-etype lhs (context-conf ctx)))
+	       (tr (j2s-etype rhs (context-conf ctx)))
 	       (op (case o
 		      ((!=) '==)
 		      ((!==) '===)
@@ -1889,8 +1889,8 @@
       (lambda (left right)
 	 (let ((tlv (j2s-vtype lhs))
 	       (trv (j2s-vtype rhs))
-	       (tl (j2s-etype lhs ctx))
-	       (tr (j2s-etype rhs ctx)))
+	       (tl (j2s-etype lhs (context-conf ctx)))
+	       (tr (j2s-etype rhs (context-conf ctx))))
 	    (epairify loc
 	       (cond
 		  ((and (eq? tlv 'int32) (eq? trv 'int32))
