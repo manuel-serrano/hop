@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Apr 16 15:15:30 2020 (serrano)                */
+;*    Last change :  Thu Apr 16 16:09:32 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1019,7 +1019,7 @@
 	       (eq? tr 'string)
 	       (or (char-string? lhs) (char-string? rhs))
 	       (or (charat? lhs) (charat? rhs))
-	       (let ((str (context-get ctx :string)))
+	       (let ((str (context-string ctx)))
 		  (when str
 		     (with-access::J2SDecl str (escape)
 			(and (not escape)
