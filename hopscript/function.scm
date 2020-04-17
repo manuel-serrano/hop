@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Apr 17 10:47:47 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 15:09:27 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -38,7 +38,7 @@
 	   thrower-set
 	   
 	   (js-function-debug-name::bstring ::JsProcedure ::JsGlobalObject)
-	   (js-function-arity ::long ::long ::symbol)
+	   (js-function-arity ::long ::long #!optional (protocol 'fix))
 	   (js-make-function::JsFunction
 	      ::JsGlobalObject ::procedure ::int ::JsStringLiteral
 	      #!key
@@ -986,11 +986,12 @@
 		    (balloc (lambda (%this ctor)
 			       (alloc %this this))))
 		(js-make-function %this bproc
-		   (js-function-arity 0 -1 'scheme)
+		   (maxfx 0 (-fx len (length args)))
 		   (js-name->jsstring 
 		      (string-append "bind:"
 			 (js-tostring (js-get this (& "name") %this)
 			    %this)))
+		   :arity (js-function-arity 0 -1 'scheme)
 		   :__proto__ bproto
 		   :prototype 'bind
 		   :strict 'strict
@@ -998,9 +999,8 @@
 		   :construct bctor)))))
 
    (js-bind! %this obj (& "bind")
-      :value (js-make-function %this bind
-		(js-function-arity 1 -1 'scheme)
-		(& "bind")
+      :value (js-make-function %this bind 1 (& "bind")
+		:arity (js-function-arity 1 1 'scheme)
 		:prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
       :hidden-class #t)

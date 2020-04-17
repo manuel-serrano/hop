@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 17 07:59:14 2020                          */
-;*    Last change :  Fri Apr 17 09:30:31 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 15:07:20 2020 (serrano)                */
 ;*    Copyright   :  2020 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript function arity.                                       */
@@ -15,7 +15,50 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-function-arity ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-function-arity req opt protocol)
+(define-macro (js-function-arity req opt . protocol)
+   (if (and (integer? req) (integer? opt))
+       (if (null? protocol)
+	   (if (=fx opt 0)
+	       (+ req 1)
+	       (error "js-function-arity" "illegal optional for fix args" opt))
+	   (match-case (car protocol)
+	      (((kwote quote) arguments-lazy)
+	       -2047)
+	      (((kwote quote) arguments-eager)
+	       -2047)
+	      (((kwote quote) arguments-eager)
+	       -2048)
+	      (((kwote quote) arguments)
+	       0)
+	      (((kwote quote) rest-lazy)
+	       (let ((offset (if (=fx opt 0) 2049 4049)))
+		  (negfx (+fx offset (-fx req 1)))))
+	      (((kwote quote) scheme)
+	       (cond
+		  ((=fx opt 0)
+		   (+fx req 1))
+		  ((=fx opt -1)
+		   (negfx (+fx 1 req)))
+		  (else
+		   (negfx (+fx (+fx 1 req) opt)))))
+	      (((kwote quote) optional)
+	       (if (=fx opt 0)
+		   (+fx req 1)
+		   (negfx (+fx req 1024))))
+	      (((kwote quote) fix)
+	       (if (=fx opt 0)
+		   (+fx req 1)
+		   (error "js-function-arity" "illegal optional for fix args" opt)))
+	      (((kwote quote) ?-)
+	       (error "js-function-arity" "illegal protocol" (car protocol)))
+	      (else
+	       `((@ js-function-arity __hopscript_function)
+		 ,req ,opt ,@protocol))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-arity ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-function-arity req opt #!optional (protocol 'fix))
    (case protocol
       ((arguments-lazy)
        -2047)
@@ -41,6 +84,10 @@
        (if (=fx opt 0)
 	   (+fx req 1)
 	   (negfx (+fx req 1024))))
+      ((fix)
+       (if (=fx opt 0)
+	   (+fx req 1)
+	   (error "js-function-arity" "illegal optional for fix args" opt)))
       (else
        (error "js-function-arity" "Unknown protocol" protocol))))
 
