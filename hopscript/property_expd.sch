@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Apr 17 09:06:37 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 10:13:55 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -885,15 +885,15 @@
 	  ((?- ?%this ?obj (& "toString" . ?-))
 	   (e `(js-tojsstring-safe ,obj ,%this) e))
 	  ((?- ?%this ?obj ?prop)
-	   (e `(js-call-method0 ,%this ,obj ,prop ,@args) e))
+	   (e `(js-call-method0 ,%this ,obj ,prop) e))
 	  ((?- ?%this ?obj ?prop ?a0)
-	   (e `(js-call-method1 ,%this ,obj ,prop ,@args) e))
+	   (e `(js-call-method1 ,%this ,obj ,prop ,a0) e))
 	  ((?- ?%this ?obj ?prop ?a0 ?a1)
-	   (e `(js-call-method2 ,%this ,obj ,prop ,@args) e))
+	   (e `(js-call-method2 ,%this ,obj ,prop ,a0 ,a1) e))
 	  ((?- ?%this ?obj ?prop ?a0 ?a1 ?a2)
-	   (e `(js-call-method3 ,%this ,obj ,prop ,@args) e))
+	   (e `(js-call-method3 ,%this ,obj ,prop ,a0 ,a1 ,a2) e))
 	  ((?- ?%this ?obj ?prop ?a0 ?a1 ?a2 ?a3)
-	   (e `(js-call-method4 ,%this ,obj ,prop ,@args) e))
+	   (e `(js-call-method4 ,%this ,obj ,prop ,a0 ,a1 ,a2 ,a3) e))
 	  ((?- ?%this ?obj ?prop . ?args)
 	   (e `(js-call-methodn ,%this ,obj ,prop ,@args) e))
 	  (else
