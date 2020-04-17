@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Apr 17 08:24:59 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 10:31:39 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -936,7 +936,10 @@
 	 (let* ((len (length args))
 		(call (if (>=fx len 11)
 			  'js-calln
-			  (string->symbol (format "js-call~a" len)))))
+			  (string->symbol (format "js-call~a" len))))
+		(packargs (if (>=fx len 11)
+			      (lambda (expr) `(list ,@expr))
+			      (lambda (expr) expr))))
 	    (case protocol
 	       ((function)
 		(cond
@@ -946,13 +949,14 @@
 		      ',loc
 		      ,(j2s-scheme fun mode return ctx)
 		      ,@self
-		      ,@(j2s-scheme args mode return ctx)))
+		      ,@(packargs (j2s-scheme args mode return ctx))))
 		   ((and (context-get ctx :profile-call #f) (>=fx profid 0))
 		    (let* ((f (gensym '%fun-profile))
 			   (call `(,call ,j2s-unresolved-call-workspace
 				     ,f
 				     ,@self
-				     ,@(j2s-scheme args mode return ctx))))
+				     ,@(packargs
+					  (j2s-scheme args mode return ctx)))))
 		       `(let ((,f ,(j2s-scheme fun mode return ctx)))
 			   ,(when (and (isa? fun J2SAccess)
 				       (context-get ctx :profile-cmap #f))
@@ -962,7 +966,8 @@
 			   ,(funcall-profile profid f call))))
 		   (else
 		    `(with-access::JsFunction ,(j2s-scheme fun mode return ctx) (procedure)
-			(procedure ,@self ,@(j2s-scheme args mode return ctx))))))
+			(procedure ,@self
+			   ,@(packargs (j2s-scheme args mode return ctx)))))))
 	       (else
 		(cond
 		   ((> (context-get ctx :debug 0) 0)
@@ -971,13 +976,14 @@
 		      ',loc
 		      ,(j2s-scheme fun mode return ctx)
 		      ,@self
-		      ,@(j2s-scheme args mode return ctx)))
+		      ,@(packargs (j2s-scheme args mode return ctx))))
 		   ((and (context-get ctx :profile-call #f) (>=fx profid 0))
 		    (let* ((f (gensym '%fun-profile))
 			   (call `(,call ,j2s-unresolved-call-workspace
 				     ,f
 				     ,@self
-				     ,@(j2s-scheme args mode return ctx))))
+				     ,@(packargs
+					  (j2s-scheme args mode return ctx)))))
 		       `(let ((,f ,(j2s-scheme fun mode return ctx)))
 			   ,(when (and (isa? fun J2SAccess)
 				       (context-get ctx :profile-cmap #f))
@@ -991,18 +997,18 @@
 			,(js-pcache cache)
 			,(j2s-scheme fun mode return ctx)
 			,@self
-			,@(j2s-scheme args mode return ctx)))
+			,@(packargs (j2s-scheme args mode return ctx))))
 		   ((memq (j2s-type fun) '(arrow function))
 		    `(,(symbol-append call '-jsprocedure)
 		      ,j2s-unresolved-call-workspace
 		      ,(j2s-scheme fun mode return ctx)
 		      ,@self
-		      ,@(j2s-scheme args mode return ctx)))
+		      ,@(packargs (j2s-scheme args mode return ctx))))
 		   (else
 		    `(,call ,j2s-unresolved-call-workspace
 			,(j2s-scheme fun mode return ctx)
 			,@self
-			,@(j2s-scheme args mode return ctx)))))))))
+			,@(packargs (j2s-scheme args mode return ctx))))))))))
 
    (define (call-eval-function fun args)
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.1.1
@@ -1042,9 +1048,11 @@
 
    (define (call-scheme-this-arity this fun thisarg args)
       (let ((len (length args)))
-	 `(,(if (>=fx len 11)
-		'js-calln/procedure
-		(string->symbol (format "js-call~a/procedure" len)))
+	 `(js-calln/procedure
+	     ,(j2s-scheme fun mode return ctx)
+	     ,@(j2s-scheme thisarg mode return ctx)
+	     (list ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))
+	 `(,(string->symbol (format "js-call~a/procedure" len))
 	   ,(j2s-scheme fun mode return ctx)
 	   ,@(j2s-scheme thisarg mode return ctx)
 	   ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args))))

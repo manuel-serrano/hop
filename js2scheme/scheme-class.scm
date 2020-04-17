@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Wed Apr 15 17:20:26 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 10:28:48 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -323,19 +323,26 @@
 (define (j2s-scheme-super this::J2SCall mode return ctx)
    (with-access::J2SCall this (loc fun this args protocol cache)
       (let* ((len (length args))
-	     (call (if (>=fx len 11)
-		       'js-calln
-		       (string->symbol (format "js-call~a" len))))
 	     (ctor (gensym 'ctor))
 	     (tmp (gensym 'tmp)))
-	 `(with-access::JsGlobalObject %this (js-new-target)
-	     (set! js-new-target new-target)
-	     (let ((,tmp (,call ,j2s-unresolved-call-workspace
-			    %superctor
-			    %nothis
-			    ,@(j2s-scheme args mode return ctx))))
-		(set! this %nothis)
-		,tmp)))))
+	 (if (>=fx len 11)
+	     `(with-access::JsGlobalObject %this (js-new-target)
+		 (set! js-new-target new-target)
+		 (let ((,tmp (js-calln ,j2s-unresolved-call-workspace
+				%superctor
+				%nothis
+				(list ,@(j2s-scheme args mode return ctx)))))
+		    (set! this %nothis)
+		    ,tmp))
+	     (let ((call (string->symbol (format "js-call~a" len))))
+		`(with-access::JsGlobalObject %this (js-new-target)
+		    (set! js-new-target new-target)
+		    (let ((,tmp (,call ,j2s-unresolved-call-workspace
+				   %superctor
+				   %nothis
+				   ,@(j2s-scheme args mode return ctx))))
+		       (set! this %nothis)
+		       ,tmp)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    need-super-check? ...                                            */

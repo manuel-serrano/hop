@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Apr 17 08:30:56 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 10:30:31 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -90,7 +90,7 @@
 	   (inline js-call8-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (inline js-call9-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (inline js-call10-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
-	   (inline js-calln-jsprocedure ::JsGlobalObject ::JsProcedure this . args)
+	   (inline js-calln-jsprocedure ::JsGlobalObject ::JsProcedure this args)
 	   
 	   (js-call0-procedure fun::procedure this)
 	   (js-call1-procedure fun::procedure this a0)
@@ -103,7 +103,7 @@
 	   (js-call8-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (js-call9-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (js-call10-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
-	   (js-calln-procedure fun::procedure this . args)
+	   (js-calln-procedure fun::procedure this args)
 	   
 	   (js-call0-obj ::JsGlobalObject ::obj this)
 	   (js-call1-obj ::JsGlobalObject ::obj this a0)
@@ -141,7 +141,7 @@
 	   (js-call8/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (js-call9/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (js-call10/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
-	   (js-calln/debug ::JsGlobalObject loc fun::obj this . args)
+	   (js-calln/debug ::JsGlobalObject loc fun::obj this args)
 
 	   (js-call-method0 ::JsGlobalObject val prop)
 	   (js-call-method1 ::JsGlobalObject val prop ::obj)
@@ -825,7 +825,7 @@
 	  (procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
 	  (js-call10% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))))
 
-(define-inline (js-calln-jsprocedure %this fun this . args)
+(define-inline (js-calln-jsprocedure %this fun this args)
    (with-access::JsProcedure fun (procedure)
       (js-calln% %this fun procedure this args)))
 
@@ -881,7 +881,7 @@
 (define (js-call10-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
    (gen-call-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
 
-(define (js-calln-procedure proc this . args)
+(define (js-calln-procedure proc this args)
    ;; this protocol only support fix arity
    (let ((n (+fx 1 (length args)))
 	 (arity (procedure-arity proc)))
@@ -1077,7 +1077,7 @@
 (define (js-call10/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
    (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
 
-(define (js-calln/debug %this loc fun this . args)
+(define (js-calln/debug %this loc fun this args)
    (cond
       ((js-procedure? fun)
        (with-access::JsProcedure fun (procedure)
