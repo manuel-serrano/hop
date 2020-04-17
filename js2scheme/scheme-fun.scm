@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Wed Apr 15 17:21:05 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 07:40:13 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -16,8 +16,9 @@
 
    (include "ast.sch"
 	    "usage.sch"
-	    "context.sch")
-   
+	    "context.sch"
+	    "../hopscript/arity.sch")
+
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_utils
@@ -163,6 +164,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-function-arity ...                                           */
+;*    -------------------------------------------------------------    */
+;*    See js-function-arity                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-function-arity this::J2SFun ctx)
    
@@ -186,25 +189,18 @@
 	     (if (context-get ctx :optim-arguments)
 		 (with-access::J2SDeclArguments argumentsp (alloc-policy)
 		    (if (eq? alloc-policy 'lazy)
-			-2047
-			-2048))
-		 0))
+			(js-function-arity req opt 'arguments-lazy)
+			(js-function-arity req opt 'arguments-eager)))
+		 (js-function-arity req opt 'arguments)))
 	    ((eq? vararg 'rest)
 	     (with-access::J2SDeclRest (car (last-pair params)) (alloc-policy)
-		(let ((offset (cond
-				 ((and (eq? alloc-policy 'lazy) (=fx opt 0))
-				  2049)
-				 ((=fx opt 0)
-				  3049)
-				 ((eq? alloc-policy 'lazy)
-				  4049)
-				 (else
-				  5049))))
-		   (negfx (+fx offset (-fx req 1))))))
+		(if (eq? alloc-policy 'lazy)
+		    (js-function-arity req opt 'rest-lazy)
+		    (js-function-arity req opt 'rest))))
 	    ((=fx opt 0)
 	     (+fx req 1))
 	    (else
-	     (negfx (+fx req 1024)))))))
+	     (js-function-arity req opt 'optional))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-make-function ...                                            */

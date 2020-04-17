@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Apr 16 13:32:59 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 07:38:47 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -18,7 +18,7 @@
    
    (library hop js2scheme)
    
-   (include "types.sch" "stringliteral.sch" "property.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch" "arity.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic
@@ -38,6 +38,7 @@
 	   thrower-set
 	   
 	   (js-function-debug-name::bstring ::JsProcedure ::JsGlobalObject)
+	   (js-function-arity ::long ::long ::symbol)
 	   (js-make-function::JsFunction
 	      ::JsGlobalObject ::procedure ::int ::JsStringLiteral
 	      #!key
@@ -153,7 +154,6 @@
 (define-method (js-get-jsobject-name/cache-miss o::JsFunction p::obj
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache)
-   ;;(tprint "js-get-jsobject-name ::JsFunction o=" (typeof o) " p=" p)
    (if (eq? (js-toname p %this) (& "prototype"))
        (with-access::JsFunction o (prototype) prototype)
        (call-next-method)))
@@ -164,7 +164,6 @@
 (define-method (js-get-jsobject-name/cache-miss o::JsProcedure p::obj
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache)
-   ;;(tprint "js-get-jsobject-name ::JsProcedure o=" (typeof o) " p=" p)
    (cond
       ((eq? (js-toname p %this) (& "length"))
        (if (js-function? p)
@@ -176,25 +175,16 @@
        (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get ::JsFunction ...                                          */
-;*---------------------------------------------------------------------*/
-(define-method (js-get o::JsFunction p %this)
-   ;;(tprint "js-get ::JsFunction o=" (typeof o) " p=" p)
-   (if (eq? (js-toname p %this) (& "prototype"))
-       (with-access::JsFunction o (prototype) prototype)
-       (call-next-method)))
-
-;*---------------------------------------------------------------------*/
 ;*    js-get ::JsProcedure ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsProcedure p %this)
-   ;; (tprint "js-get ::JsProcedure o=" (typeof o) " p=" p)
    (cond
       ((eq? (js-toname p %this) (& "length"))
        (if (js-function? o)
 	   (call-next-method)
 	   (js-get-length-jsprocedure o)))
-      ((eq? (js-toname p %this) (& "prototype"))
+      ((and (eq? (js-toname p %this) (& "prototype"))
+	    (eq? (object-class o) JsProcedure))
        (js-undefined))
       (else
        (call-next-method))))
@@ -203,7 +193,6 @@
 ;*    js-get-length ::JsProcedure ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-length o::JsProcedure %this::JsGlobalObject #!optional cache)
-   ;; (tprint "js-get-length ::JsProcedure o=" (typeof o))
    (if (js-function? o)
        (call-next-method)
        (js-get-length-jsprocedure o)))
@@ -212,7 +201,6 @@
 ;*    js-get-length-jsprocedure ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-get-length-jsprocedure o::JsProcedure)
-   ;;(tprint "js-get-length-jsprocedure...")
    (with-access::JsProcedure o (arity)
       (cond
 	 ((>fx arity 0) (-fx arity 1))
@@ -819,7 +807,7 @@
 		  (if (eq? name prop)
 		      (vector-ref vec i)
 		      (loop (+fx i 1))))))))
-   
+
    (with-access::JsFunction owner (constrmap %prototype prototype elements cmap)
       ;; as the prototype property is not configurable,
       ;; it is always owned by the object
@@ -995,10 +983,8 @@
 		    (bproto (js-getprototypeof this %this "getPrototypeOf"))
 		    (balloc (lambda (%this ctor)
 			       (alloc %this this))))
-		(js-make-function
-		   %this
-		   bproc
-		   (maxfx 0 (-fx len (length args)))
+		(js-make-function %this bproc
+		   (js-function-arity 0 -1 'scheme)
 		   (js-name->jsstring 
 		      (string-append "bind:"
 			 (js-tostring (js-get this (& "name") %this)
@@ -1010,7 +996,9 @@
 		   :construct bctor)))))
 
    (js-bind! %this obj (& "bind")
-      :value (js-make-function %this bind 1 (& "bind")
+      :value (js-make-function %this bind
+		(js-function-arity 1 -1 'scheme)
+		(& "bind")
 		:prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
       :hidden-class #t)

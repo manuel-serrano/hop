@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Apr 10 07:58:06 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 09:00:55 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3886,6 +3886,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-method-call-name/cache ...                                    */
+;*    -------------------------------------------------------------    */
+;*    !!! Overriden by a macro in property.sch                         */
 ;*---------------------------------------------------------------------*/
 (define (js-method-call-name/cache %this::JsGlobalObject obj::obj name::obj
 	   ccache::JsPropertyCache ocache::JsPropertyCache
@@ -3895,6 +3897,7 @@
        (apply js-method-jsobject-call-name/cache %this obj name
 	  ccache ocache point ccspecs ocspecs args)
        (let ((o (js-toobject %this obj)))
+	  (tprint "js-method-call-name/cache APPLYING " (typeof o) " name=" name)
 	  (js-apply %this (js-get/name-cache o name %this) o args))))
 
 ;*---------------------------------------------------------------------*/
@@ -3975,7 +3978,7 @@
 	     ((1) (js-call1 %this method o (car args)))
 	     ((2) (js-call2 %this method o (car args) (cadr args)))
 	     ((3) (js-call3 %this method o (car args) (cadr args) (caddr args)))
-	     (else (apply js-calln %this method o args)))))
+	     (else (js-calln %this method o args)))))
 
    (define (funval obj el-or-desc)
       (let loop ((el-or-desc el-or-desc))

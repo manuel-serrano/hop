@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Mar  7 06:35:08 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 08:01:55 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -267,7 +267,8 @@
       (js-jsnumber-tostring (js-cast-number this typeof %this) radix %this))
 
    (js-bind! %this obj (& "toString")
-      :value (js-make-function %this js-number-tostring 2 (& "toString"))
+      :value (js-make-function %this js-number-tostring
+		(js-function-arity 0 1 'scheme) (& "toString"))
       :writable #t
       :configurable #t
       :enumerable #f
@@ -279,7 +280,8 @@
       (js-number-tostring this radix))
 
    (js-bind! %this obj (& "toLocaleString")
-      :value (js-make-function %this js-number-tolocalestring 2 (& "toLocaleString"))
+      :value (js-make-function %this js-number-tolocalestring
+		(js-function-arity 0 1 'scheme) (& "toLocaleString"))
       :writable #t
       :configurable #t
       :enumerable #f

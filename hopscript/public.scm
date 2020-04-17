@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Apr 15 19:19:18 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 08:30:56 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -128,7 +128,7 @@
 	   (inline js-call8 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (inline js-call9 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (inline js-call10 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
-	   (js-calln ::JsGlobalObject ::obj this . args)
+	   (js-calln ::JsGlobalObject ::obj this args)
 	   
 	   (js-call0/debug ::JsGlobalObject loc fun::obj this)
 	   (js-call1/debug ::JsGlobalObject loc fun::obj this a0)
@@ -1005,7 +1005,7 @@
        ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
        (js-call10-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)))
 
-(define (js-calln %this fun this . args)
+(define (js-calln %this fun this args)
    (cond
       ((js-procedure? fun)
        (with-access::JsProcedure fun (procedure)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sun Apr 12 09:39:44 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 08:24:59 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1128,7 +1128,8 @@
 		 ,(j2s-scheme obj mode return ctx)
 		 ,(if (pair? args)
 		      (j2s-scheme (car args) mode return ctx)
-		      10) %this))
+		      10)
+		 %this))
 	    ((int53 bint)
 	     (if (pair? args)
 		 `(js-string->jsstring
