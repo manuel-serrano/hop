@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Apr 17 10:15:48 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 14:55:17 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -169,7 +169,8 @@
       ;; then, create a HopScript object
       (set! js-string
 	 (js-make-function %this
-	    (%js-string %this) (js-function-arity 0 -1 'scheme) (& "String")
+	    (%js-string %this) 1 (& "String")
+	    :arity (js-function-arity 0 -1 'scheme)
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-string-prototype
 	    :size 17
@@ -189,8 +190,8 @@
       
       (js-bind! %this js-string (& "fromCharCode")
 	 :value (js-make-function %this
-		   js-string-fromcharcode
-		   (js-function-arity 0 -1 'scheme) (& "fromCharCode")
+		   js-string-fromcharcode 1 (& "fromCharCode")
+		   :arity (js-function-arity 0 -1 'scheme)
 		   :prototype (js-undefined))
 	 :writable #t
 	 :enumerable #f
@@ -228,8 +229,8 @@
 		(js-undefined))))
       
       (js-bind! %this js-string (& "raw")
-	 :value (js-make-function %this
-		   js-string-raw (js-function-arity 0 -1 'scheme) (& "raw")
+	 :value (js-make-function %this js-string-raw 1 (& "raw")
+		   :arity (js-function-arity 0 -1 'scheme)
 		   :prototype (js-undefined))
 	 :writable #t
 	 :enumerable #f
@@ -428,8 +429,8 @@
 		       (cdr rest))))))))
    
    (js-bind! %this obj (& "concat")
-      :value (js-make-function %this concat
-		(js-function-arity 0 -1 'scheme) (& "concat")
+      :value (js-make-function %this concat 1 (& "concat")
+		:arity (js-function-arity 0 -1 'scheme)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -442,8 +443,8 @@
 	    (js-cast-string-normalize! %this this) searchstr position %this)))
 
    (js-bind! %this obj (& "indexOf")
-      :value (js-make-function %this indexof
-		(js-function-arity 1 1 'optional) (& "indexOf")
+      :value (js-make-function %this indexof 1 (& "indexOf")
+		:arity (js-function-arity 1 1 'optional)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -456,8 +457,8 @@
 	    (js-cast-string-normalize! %this this) searchstr position %this)))
    
    (js-bind! %this obj (& "lastIndexOf")
-      :value (js-make-function %this last-indexof
-		(js-function-arity 1 1 'optional) (& "lastIndexOf")
+      :value (js-make-function %this last-indexof 1 (& "lastIndexOf")
+		:arity (js-function-arity 1 1 'optional)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Apr  8 08:31:09 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 14:54:03 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -497,6 +497,7 @@
 			       nodes))
 			 (apply <HTML> :idiom "javascript" nodes)))
 		  1 (& "HTML")
+		  :arity (js-function-arity 1 -1 'scheme)
 		  :src "object.scm"))
 	    
 	    (js-bind! %this %this (& "HTML")
@@ -614,6 +615,7 @@
       
       (js-bind! %this js-object (& "setPrototypeOf")
 	 :value (js-make-function %this setprototypeof 1 (& "setPrototypeOf")
+		   :arity (js-function-arity 2 0 'scheme)
 		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
@@ -628,6 +630,7 @@
       (js-bind! %this js-object (& "getOwnPropertyDescriptor")
 	 :value (js-make-function %this
 		   getownpropertydescriptor 2 (& "getOwnPropertyDescriptor")
+		   :arity (js-function-arity 2 0 'scheme)
 		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
@@ -654,6 +657,7 @@
       (js-bind! %this js-object (& "getOwnPropertyDescriptors")
 	 :value (js-make-function %this
 		   getownpropertydescriptors 1 (& "getOwnPropertyDescriptors")
+		   :arity (js-function-arity 2 0 'scheme)
 		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
@@ -670,6 +674,7 @@
       (js-bind! %this js-object (& "getOwnPropertyNames")
 	 :value (js-make-function %this
 		   getownpropertynames 1 (& "getOwnPropertyNames")
+		   :arity 2
 		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
@@ -685,6 +690,7 @@
       (js-bind! %this js-object (& "getOwnPropertySymbols")
 	 :value (js-make-function %this
 		   getownpropertysymbols 1 (& "getOwnPropertySymbols")
+		   :arity 2
 		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
@@ -766,6 +772,7 @@
 
       (js-bind! %this js-object (& "assign")
 	 :value (js-make-function %this assign 2 (& "assign")
+		   :arity (js-function-arity 1 -1 'scheme)
 		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
@@ -934,8 +941,9 @@
       ;; keys
       ;; https://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.14
       (js-bind! %this js-object (& "keys")
-	 :value (js-make-function %this (lambda (this obj)
-					   (js-ownkeys obj %this))
+	 :value (js-make-function %this
+		   (lambda (this obj)
+		      (js-ownkeys obj %this))
 		   1 (& "keys")
 		   :src "object.scm")
 	 :writable #t
@@ -960,12 +968,12 @@
 	 :get (js-make-function %this
 		 (lambda (o)
 		    (js-getprototypeof o %this "__proto__"))
-		 1 (& "get")
+		 0 (& "get")
 		 :src "object.scm")
 	 :set (js-make-function %this
 		 (lambda (o v)
 		    (js-setprototypeof o v %this "__proto__"))
-		 2 (& "set")
+		 1 (& "set")
 		 :src "object.scm")
 	 :hidden-class #f)
       

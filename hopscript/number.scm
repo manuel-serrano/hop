@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Apr 17 08:01:55 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 14:58:24 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -268,7 +268,8 @@
 
    (js-bind! %this obj (& "toString")
       :value (js-make-function %this js-number-tostring
-		(js-function-arity 0 1 'scheme) (& "toString"))
+		2 (& "toString")
+		:arity (js-function-arity 0 1 'scheme))
       :writable #t
       :configurable #t
       :enumerable #f
@@ -281,7 +282,8 @@
 
    (js-bind! %this obj (& "toLocaleString")
       :value (js-make-function %this js-number-tolocalestring
-		(js-function-arity 0 1 'scheme) (& "toLocaleString"))
+		2 (& "toLocaleString")
+		:arity (js-function-arity 0 1 'scheme))
       :writable #t
       :configurable #t
       :enumerable #f
