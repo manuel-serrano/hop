@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Apr 17 10:31:39 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 10:53:37 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -938,7 +938,7 @@
 			  'js-calln
 			  (string->symbol (format "js-call~a" len))))
 		(packargs (if (>=fx len 11)
-			      (lambda (expr) `(list ,@expr))
+			      (lambda (expr) `((list ,@expr)))
 			      (lambda (expr) expr))))
 	    (case protocol
 	       ((function)
