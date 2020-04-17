@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Apr  8 08:33:58 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 10:15:48 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -169,7 +169,7 @@
       ;; then, create a HopScript object
       (set! js-string
 	 (js-make-function %this
-	    (%js-string %this) 1 (& "String")
+	    (%js-string %this) (js-function-arity 0 -1 'scheme) (& "String")
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-string-prototype
 	    :size 17
@@ -189,7 +189,8 @@
       
       (js-bind! %this js-string (& "fromCharCode")
 	 :value (js-make-function %this
-		   js-string-fromcharcode 1 (& "fromCharCode")
+		   js-string-fromcharcode
+		   (js-function-arity 0 -1 'scheme) (& "fromCharCode")
 		   :prototype (js-undefined))
 	 :writable #t
 	 :enumerable #f
@@ -228,7 +229,7 @@
       
       (js-bind! %this js-string (& "raw")
 	 :value (js-make-function %this
-		   js-string-raw 1 (& "raw")
+		   js-string-raw (js-function-arity 0 -1 'scheme) (& "raw")
 		   :prototype (js-undefined))
 	 :writable #t
 	 :enumerable #f
@@ -427,7 +428,8 @@
 		       (cdr rest))))))))
    
    (js-bind! %this obj (& "concat")
-      :value (js-make-function %this concat 1 (& "concat")
+      :value (js-make-function %this concat
+		(js-function-arity 0 -1 'scheme) (& "concat")
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -440,7 +442,8 @@
 	    (js-cast-string-normalize! %this this) searchstr position %this)))
 
    (js-bind! %this obj (& "indexOf")
-      :value (js-make-function %this indexof 1 (& "indexOf")
+      :value (js-make-function %this indexof
+		(js-function-arity 1 1 'optional) (& "indexOf")
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -453,7 +456,8 @@
 	    (js-cast-string-normalize! %this this) searchstr position %this)))
    
    (js-bind! %this obj (& "lastIndexOf")
-      :value (js-make-function %this last-indexof 1 (& "lastIndexOf")
+      :value (js-make-function %this last-indexof
+		(js-function-arity 1 1 'optional) (& "lastIndexOf")
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
