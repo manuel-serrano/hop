@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Apr 17 15:09:27 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 18:13:45 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -166,7 +166,7 @@
 		  cache::JsPropertyCache)
    (cond
       ((eq? (js-toname p %this) (& "length"))
-       (if (js-function? p)
+       (if (js-function? o)
 	   (call-next-method)
 	   (js-get-length-jsprocedure o)))
       ((eq? (js-toname p %this) (& "prototype"))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Apr 17 15:06:31 2020 (serrano)                */
+;*    Last change :  Fri Apr 17 18:10:54 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -673,8 +673,8 @@
       
       (js-bind! %this js-object (& "getOwnPropertyNames")
 	 :value (js-make-function %this
-		   getownpropertynames 2 (& "getOwnPropertyNames")
-		   :arity (js-function-arity 2 0 'fix)
+		   getownpropertynames 1 (& "getOwnPropertyNames")
+		   :arity (js-function-arity 2 0)
 		   :src "object.scm")
 	 :writable #t
 	 :configurable #t
