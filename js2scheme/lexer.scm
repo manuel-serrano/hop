@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Sat Apr 18 06:28:24 2020 (serrano)                */
+;*    Last change :  Sat Apr 18 07:55:57 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -312,7 +312,7 @@
        (read/rp j2s-template-grammar (the-port)))
       
       ;; hopscript pragma
-      ((: (or "#:" "%")
+      ((: "#:"
 	  (: (* digit)
 	     (or letter special)
 	     (* (or letter special digit (in "'`")))))
