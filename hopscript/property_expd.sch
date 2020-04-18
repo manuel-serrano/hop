@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Apr 17 10:13:55 2020 (serrano)                */
+;*    Last change :  Sat Apr 18 17:26:06 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -750,7 +750,7 @@
       (let* ((len (length args))
 	     (call (string->symbol
 		      (format "js-call~a" (if (>=fx len 11) "n" len)))))
-	 `(,call ,%this ,m ,obj ,@args)))
+	 `(,call ,%this ,m ,obj ,@(if (>=fx len 11) `((list ,@args)) args))))
    
    (define (calln-uncachable %this ocspecs obj prop args ccache ocache loc)
       `(let ((f (js-get-jsobject-name/cache ,obj ,prop #f ,%this ,ocache ,loc ',ocspecs)))
