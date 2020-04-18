@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 17 07:59:14 2020                          */
-;*    Last change :  Fri Apr 17 15:07:20 2020 (serrano)                */
+;*    Last change :  Sat Apr 18 06:36:10 2020 (serrano)                */
 ;*    Copyright   :  2020 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript function arity.                                       */
@@ -38,7 +38,7 @@
 		  ((=fx opt 0)
 		   (+fx req 1))
 		  ((=fx opt -1)
-		   (negfx (+fx 1 req)))
+		   (negfx (+fx (+fx 1 req) 1)))
 		  (else
 		   (negfx (+fx (+fx 1 req) opt)))))
 	      (((kwote quote) optional)
@@ -77,7 +77,7 @@
 	  ((=fx opt 0)
 	   (+fx req 1))
 	  ((=fx opt -1)
-	   (negfx (+fx 1 req)))
+	   (negfx (+fx (+fx 1 req) 1)))
 	  (else
 	   (negfx (+fx (+fx 1 req) opt)))))
       ((optional)

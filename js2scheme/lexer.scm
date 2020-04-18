@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/lexer.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/lexer.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Oct  9 11:09:39 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Sat Apr 18 06:28:24 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
 ;*=====================================================================*/
@@ -312,7 +312,7 @@
        (read/rp j2s-template-grammar (the-port)))
       
       ;; hopscript pragma
-      ((: #\# #\:
+      ((: (or "#:" "%")
 	  (: (* digit)
 	     (or letter special)
 	     (* (or letter special digit (in "'`")))))
