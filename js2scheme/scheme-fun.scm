@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Apr 17 07:40:13 2020 (serrano)                */
+;*    Last change :  Sat Apr 18 08:18:12 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -198,7 +198,7 @@
 		    (js-function-arity req opt 'rest-lazy)
 		    (js-function-arity req opt 'rest))))
 	    ((=fx opt 0)
-	     (+fx req 1))
+	     (js-function-arity req opt))
 	    (else
 	     (js-function-arity req opt 'optional))))))
 

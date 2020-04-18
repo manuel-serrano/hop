@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 17 07:59:14 2020                          */
-;*    Last change :  Sat Apr 18 06:36:10 2020 (serrano)                */
+;*    Last change :  Sat Apr 18 08:21:59 2020 (serrano)                */
 ;*    Copyright   :  2020 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript function arity.                                       */
@@ -53,7 +53,9 @@
 	       (error "js-function-arity" "illegal protocol" (car protocol)))
 	      (else
 	       `((@ js-function-arity __hopscript_function)
-		 ,req ,opt ,@protocol))))))
+		 ,req ,opt ,@protocol))))
+       ;; only used in scheme-fun.scm
+       `((begin js-function-arity) ,req ,opt ,@protocol)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-arity ...                                            */
