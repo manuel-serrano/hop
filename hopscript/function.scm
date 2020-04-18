@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Apr 17 18:13:45 2020 (serrano)                */
+;*    Last change :  Sat Apr 18 06:23:33 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -958,9 +958,10 @@
    
    (with-access::JsGlobalObject %this (js-call)
       (set! js-call
-	 (js-make-function %this call
-	    (js-function-arity 1 -1 'scheme)
-	    (& "call") :prototype (js-undefined)))
+	 (js-make-function %this call 1
+	    (& "call")
+	    :arity (js-function-arity 1 -1 'scheme)
+	    :prototype (js-undefined)))
       (js-bind! %this obj (& "call")
 	 :value js-call
 	 :enumerable #f :writable #t :configurable #t
