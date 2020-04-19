@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sat Dec 14 18:06:24 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Sun Apr 19 06:59:08 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
 ;*    closed functions, ronly literal objects, ...)                    */
@@ -362,6 +362,12 @@
 		   ((&&) (J2SBool (and lval rval)))
 		   ((OR) (J2SBool (or lval rval)))
 		   (else this)))))
+	 ((and (isa? (unparen lhs) J2SString) (isa? (unparen rhs) J2SString))
+	   (with-access::J2SString (unparen lhs) ((lval val))
+	      (with-access::J2SString (unparen rhs) ((rval val))
+		 (let ((ns (duplicate::J2SString (unparen lhs)
+			      (val (string-append lval rval)))))
+		    (constant! ns env nesting conf)))))
 	 (else
 	  this))))
        

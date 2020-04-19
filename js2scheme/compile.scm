@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Mar 13 07:32:24 2020 (serrano)                */
+;*    Last change :  Sun Apr 19 08:10:27 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -542,7 +542,17 @@
 	    (set! o (cons* :optim-tyflow #t o))))
 ;* 		     (unless (memq :optim-cce o)                       */
 ;* 			(set! o (cons* :optim-cce #t o)))              */
-      
+
+      (when (memq :optim-size o)
+	 (set! o
+	    (cons* :optim-hint #f
+	       :optim-inline #f
+	       :optim-method #f
+	       :optim-loopspec #f
+	       :optim-ctor #f
+	       :optim-size #t
+	       o)))
+	 
       (unless (memq :filename o)
 	 (set! o (cons* :filename filename o)))
 

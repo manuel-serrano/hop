@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Apr 18 06:23:33 2020 (serrano)                */
+;*    Last change :  Sun Apr 19 08:45:27 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -697,41 +697,6 @@
 	    (js-function-setup-prototype! %this fun))
 	 fun)))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    $js-make-function-strict-lazy ...                                *} */
-;* {*    -------------------------------------------------------------    *} */
-;* {*    specialized function constructor for regular strict functions.   *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-macro (%js-make-function-strict-lazy arity)                 */
-;* {*    `(with-access::JsGlobalObject %this (js-function                 *} */
-;* {* 					  js-function-writable-strict-cmap *} */
-;* {* 					  js-function-prototype-property-rw *} */
-;* {* 					  js-function-strict-elements) *} */
-;* {*        (instantiateJsFunction                                      *} */
-;* {* 	  (procedure procedure)                                        *} */
-;* {* 	  (method method)                                              *} */
-;* {* 	  (construct procedure)                                        *} */
-;* {* 	  (alloc js-object-alloc-lazy)                                 *} */
-;* {* 	  (arity ,arity)                                               *} */
-;* {* 	  (len length)                                                 *} */
-;* {* 	  (__proto__ (js-object-proto js-function))                    *} */
-;* {* 	  (src src)                                                    *} */
-;* {* 	  (name name)                                                  *} */
-;* {* 	  (constrsize constrsize)                                      *} */
-;* {* 	  (constrmap (js-not-a-cmap))                                  *} */
-;* {* 	  (maxconstrsize 100)                                          *} */
-;* {* 	  (elements js-function-strict-elements)                       *} */
-;* {* 	  (cmap js-function-writable-strict-cmap)                      *} */
-;* {* 	  (prototype #f)                                               *} */
-;* {* 	  (%prototype #f))))                                           *} */
-;*    `(with-access::JsGlobalObject %this (js-function)                */
-;*       ($js-make-jsfunction                                          */
-;* 	 ,(string->symbol (format "JsFunction~a" arity))               */
-;* 	 procedure method procedure                                    */
-;* 	 ,arity length minlen constrsize                               */
-;* 	 (js-object-proto js-function)                                 */
-;* 	 src name)))                                                   */
-
 ;*---------------------------------------------------------------------*/
 ;*    js-make-function-strict-lazy ...                                 */
 ;*---------------------------------------------------------------------*/
@@ -748,17 +713,6 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-make-procedure %this procedure arity)
    
-;*    (define ($js-make-procedure proc arity proto)                    */
-;*       (let ((o (instantiate::JsProcedure                            */
-;* 		  (procedure procedure)                                */
-;* 		  (arity arity))))                                     */
-;* 	 (js-object-mode-set! o                                        */
-;* 	    (if hopscript-modep                                        */
-;* 		(js-procedure-hopscript-mode)                          */
-;* 		(js-procedure-default-mode)))                          */
-;* 	 (js-object-proto-set! o  (js-object-proto js-function))       */
-;* 	 o))                                                           */
-
    (define ($js-make-procedure proc arity proto)
       ($js-make-jsprocedure proc arity proto))
 

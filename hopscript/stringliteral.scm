@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Apr  7 18:28:46 2020 (serrano)                */
+;*    Last change :  Sun Apr 19 08:03:24 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -67,6 +67,7 @@
 	   (js-jsstring-normalize-ASCII!::bstring ::JsStringLiteral)
 	   (js-jsstring-normalize-UTF8!::bstring ::JsStringLiteral)
 	   (inline js-jsstring-append::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
+	   (js-jsstring-append-no-inline::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (inline js-jsstring-append-ascii::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (utf8-codeunit-length::long ::bstring)
 	   (js-utf8-ref ::JsStringLiteralUTF8 ::bstring ::long ::JsGlobalObject)
@@ -1034,6 +1035,12 @@
 		(js-object-mode-set! s (js-jsstring-default-ascii-mode))
 		(object-widening-set! s #f)
 		s)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-append-no-inline ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-append-no-inline::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
+   (js-jsstring-append left right))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append-ascii ...                                     */

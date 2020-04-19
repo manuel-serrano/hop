@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Thu Apr 16 12:05:23 2020 (serrano)                */
+#*    Last change :  Sun Apr 19 08:38:47 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autoconf Makefile skeleton for HOP.                          */
@@ -72,9 +72,12 @@ BJVMFLAGS	= @BCFLAGS@ -jvm $(EFLAGS)
 BLJVMFLAGS      = @BLFLAGS@ -jvm-purify -unsafe
 BEJVMFLAGS	= -jvm-jar
 BHFLAGS		= @BHFLAGS@ -q -mkaddheap -mkaddlib $(EFLAGS)
+BHFLAGS		= @BHFLAGS@ -q -mkaddheap -mkaddlib $(EFLAGS)
 BJFLAGS		= -j
 CCFLAGS		= @CCFLAGS@
-HFLAGS		= @HFLAGS@ --reset-bigloo-options --bigloo=$(BIGLOO) --bigloo-lib-dir=$(BIGLOOLIBDIR) --share-dir $(BUILDSHAREDIR) $(EFLAGS) --
+HCOMMONFLAGS    = --reset-bigloo-options --bigloo=$(BIGLOO) --bigloo-lib-dir=$(BIGLOOLIBDIR) --share-dir $(BUILDSHAREDIR) $(EFLAGS) --
+HFLAGS		= @HFLAGS@ $(HCOMMONFLAGS)
+HSFLAGS		= @HSFLAGS@ $(HCOMMONFLAGS)
 
 BIGLOOPTHLIBS	= @BIGLOOPTHLIBS@
 BIGLOOPTHLIBU	= @BIGLOOPTHLIBU@

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Apr 17 10:53:37 2020 (serrano)                */
+;*    Last change :  Sun Apr 19 08:47:27 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -934,9 +934,13 @@
    (define (call-unknown-function protocol fun self::pair-nil args)
       (with-access::J2SCall this (loc cache profid)
 	 (let* ((len (length args))
-		(call (if (>=fx len 11)
-			  'js-calln
-			  (string->symbol (format "js-call~a" len))))
+		(call (cond
+			 ((>=fx len 11)
+			  'js-calln)
+			 ((context-get ctx :optim-size)
+			  (string->symbol (format "js-call~a-obj" len)))
+			 (else
+			  (string->symbol (format "js-call~a" len)))))
 		(packargs (if (>=fx len 11)
 			      (lambda (expr) `((list ,@expr)))
 			      (lambda (expr) expr))))
@@ -998,7 +1002,8 @@
 			,(j2s-scheme fun mode return ctx)
 			,@self
 			,@(packargs (j2s-scheme args mode return ctx))))
-		   ((memq (j2s-type fun) '(arrow function))
+		   ((and (memq (j2s-type fun) '(arrow function))
+			 (not (context-get ctx :optim-size)))
 		    `(,(symbol-append call '-jsprocedure)
 		      ,j2s-unresolved-call-workspace
 		      ,(j2s-scheme fun mode return ctx)

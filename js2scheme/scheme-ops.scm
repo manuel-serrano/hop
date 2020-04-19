@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Apr 16 16:09:32 2020 (serrano)                */
+;*    Last change :  Sun Apr 19 08:12:01 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1339,9 +1339,13 @@
 	  #f)))
    
    (define (j2s-jsstring-append x y)
-      (if (and (ascii? x) (ascii? y))
-	  `(js-jsstring-append-ascii ,x ,y)
-	  `(js-jsstring-append ,x ,y)))
+      (cond
+	 ((and (ascii? x) (ascii? y))
+	  `(js-jsstring-append-ascii ,x ,y))
+	 ((context-get ctx :optim-size)
+	  `(js-jsstring-append-no-inline ,x ,y))
+	 (else
+	  `(js-jsstring-append ,x ,y))))
    
    (define (str-append flip left right)
       (cond
@@ -1385,58 +1389,104 @@
 		  (js-real->jsstring ,right))))
 	 (else
 	  (str-append flip left `(js-toprimitive-for-string ,right %this)))))
-   
-   (define (add loc type lhs rhs mode return ctx)
+
+   (define (fast-add tl tr loc type lhs rhs mode return ctx)
       (with-tmp lhs rhs mode return ctx
 	 (lambda (left right)
-	    (let ((tl (j2s-vtype lhs))
-		  (tr (j2s-vtype rhs)))
-	       (cond
-		  ((eq? tl 'string)
-		   (add-string loc type left tl lhs right tr rhs
-		      mode return ctx #f))
-		  ((eq? tr 'string)
-		   (add-string loc type right tr rhs left tl lhs
-		      mode return ctx #t))
-		  ((eq? tl 'int32)
-		   (binop-int32-xxx '+ type lhs tl left rhs tr right ctx #f))
-		  ((eq? tr 'int32)
-		   (binop-int32-xxx '+ type rhs tr right lhs tl left ctx #t))
-		  ((eq? tl 'uint32)
-		   (binop-uint32-xxx '+ type lhs tl left rhs tr right ctx #f))
-		  ((eq? tr 'uint32)
-		   (binop-uint32-xxx '+ type rhs tr right lhs tl left ctx #t))
-		  ((eq? tl 'integer)
-		   (binop-integer-xxx '+ type lhs tl left rhs tr right ctx #f))
-		  ((eq? tr 'integer)
-		   (binop-integer-xxx '+ type rhs tr right lhs tl left ctx #t))
-		  ((eq? tl 'bint)
-		   (binop-bint-xxx '+ type lhs tl left rhs tr right ctx #f))
-		  ((eq? tr 'bint)
-		   (binop-bint-xxx '+ type rhs tr right lhs tl left ctx #t))
-		  ((eq? tl 'int53)
-		   (binop-int53-xxx '+ type lhs tl left rhs tr right ctx #f))
-		  ((eq? tr 'int53)
-		   (binop-int53-xxx '+ type rhs tr right lhs tl left ctx #t))
-		  ((eq? tl 'real)
-		   (binop-real-xxx '+ type lhs tl left rhs tr right ctx #f))
-		  ((eq? tr 'real)
-		   (binop-real-xxx '+ type rhs tr right lhs tl left ctx #t))
-		  (else
-		   (if-fixnums? left tl right tr
-		      (binop-fixnum-fixnum/ctx ctx '+ type
-			 (asfixnum left tl)
-			 (asfixnum right tr)
+	    (cond
+	       ((eq? tl 'string)
+		(add-string loc type left tl lhs right tr rhs
+		   mode return ctx #f))
+	       ((eq? tr 'string)
+		(add-string loc type right tr rhs left tl lhs
+		   mode return ctx #t))
+	       ((eq? tl 'int32)
+		(binop-int32-xxx '+ type lhs tl left rhs tr right ctx #f))
+	       ((eq? tr 'int32)
+		(binop-int32-xxx '+ type rhs tr right lhs tl left ctx #t))
+	       ((eq? tl 'uint32)
+		(binop-uint32-xxx '+ type lhs tl left rhs tr right ctx #f))
+	       ((eq? tr 'uint32)
+		(binop-uint32-xxx '+ type rhs tr right lhs tl left ctx #t))
+	       ((eq? tl 'integer)
+		(binop-integer-xxx '+ type lhs tl left rhs tr right ctx #f))
+	       ((eq? tr 'integer)
+		(binop-integer-xxx '+ type rhs tr right lhs tl left ctx #t))
+	       ((eq? tl 'bint)
+		(binop-bint-xxx '+ type lhs tl left rhs tr right ctx #f))
+	       ((eq? tr 'bint)
+		(binop-bint-xxx '+ type rhs tr right lhs tl left ctx #t))
+	       ((eq? tl 'int53)
+		(binop-int53-xxx '+ type lhs tl left rhs tr right ctx #f))
+	       ((eq? tr 'int53)
+		(binop-int53-xxx '+ type rhs tr right lhs tl left ctx #t))
+	       ((eq? tl 'real)
+		(binop-real-xxx '+ type lhs tl left rhs tr right ctx #f))
+	       ((eq? tr 'real)
+		(binop-real-xxx '+ type rhs tr right lhs tl left ctx #t))
+	       (else
+		(if-fixnums? left tl right tr
+		   (binop-fixnum-fixnum/ctx ctx '+ type
+		      (asfixnum left tl)
+		      (asfixnum right tr)
+		      #f)
+		   (if-flonums? left tl right tr
+		      (binop-flonum-flonum (real-op '+ lhs rhs #f) type
+			 (asreal left tl)
+			 (asreal right tr)
 			 #f)
-		      (if-flonums? left tl right tr
-			 (binop-flonum-flonum (real-op '+ lhs rhs #f) type
-			    (asreal left tl)
-			    (asreal right tr)
-			    #f)
-			 (binop-any-any '+ type
-			    (box left tl ctx)
-			    (box right tr ctx)
-			    #f)))))))))
+		      (binop-any-any '+ type
+			 (box left tl ctx)
+			 (box right tr ctx)
+			 #f))))))))
+
+   (define (is-binary-string-add? x)
+      (when (isa? x J2SBinary)
+	 (with-access::J2SBinary x (op type)
+	    (and (eq? op '+) (eq? type 'string)))))
+
+   (define (j2s-scheme-as-string expr::J2SExpr mode return ctx)
+      (let ((x (j2s-scheme expr mode return ctx)))
+	 (if (eq? (j2s-type expr) 'string)
+	     x
+	     `(js-toprimitive-for-string ,x %this))))
+   
+   (define (small-add tl tr loc type lhs rhs mode return ctx)
+      ;; when optimizing code size, avoid deep nested calls generated
+      ;; for long string concatenation that forces register allocation
+      ;; to cleanup a lot of the temporaries
+      (if (is-binary-string-add? lhs)
+	  (let* ((%str (gensym '%str))
+		 (target (list %str '__dummy__)))
+	     `(let (,target)
+		 ,@(let loop ((expr lhs))
+		      (if (is-binary-string-add? expr)
+			  (with-access::J2SBinary expr (lhs rhs loc)
+			     (let ((lx (loop lhs)))
+				(with-access::J2SExpr lhs ((lloc loc))
+				   (append lx
+				      `((set! ,%str
+					   (js-jsstring-append-no-inline ,%str
+					      ,(j2s-scheme-as-string rhs mode return ctx))))))))
+			  (begin
+			     (set-cdr! target
+				(list (j2s-scheme-as-string expr mode return ctx)))
+			     '())))
+		 ,(fast-add 'string 'string loc 'string
+		     (instantiate::J2SHopRef
+			(loc loc)
+			(id %str)
+			(type 'string))
+		     rhs mode return ctx)))
+	  (fast-add tl tr loc type lhs rhs mode return ctx)))
+   
+   (define (add loc type lhs rhs mode return ctx)
+      (let ((tl (j2s-vtype lhs))
+	    (tr (j2s-vtype rhs)))
+	 (if (and (or (eq? tl 'string) (eq? tr 'string))
+		  (context-get ctx :optim-size))
+	     (small-add tl tr loc type lhs rhs mode return ctx)
+	     (fast-add tl tr loc type lhs rhs mode return ctx))))
    
    (if (type-number? type)
        (js-arithmetic-addsub loc '+ type lhs rhs mode return ctx)

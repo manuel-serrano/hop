@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Apr 16 12:06:01 2020 (serrano)                */
+#*    Last change :  Sun Apr 19 08:39:03 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1170,6 +1170,8 @@ else
   mkmfhop=$hop
 fi
 
+hsflags="`echo $hflags | sed 's/[-]O[^ ]*//g'`-Os"
+
 cat $mkmf.in \
   | sed -e "s|@RELEASE@|$version|" \
         -e "s|@BRANCH@|$branch|" \
@@ -1201,6 +1203,7 @@ cat $mkmf.in \
         -e "s|@BLDFLAGS@|$bldflags|" \
         -e "s|@BHFLAGS@|$bhflags|" \
         -e "s|@HFLAGS@|$hflags|" \
+        -e "s|@HSFLAGS@|$hsflags|" \
         -e "s|@BTFLAGS@|$btflags|" \
         -e "s|@BCFLAGSRTS@|$bcflagsrts|" \
         -e "s|@BSCM2JSFLAGS@|$bscm2jsflags|" \
