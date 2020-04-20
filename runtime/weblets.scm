@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Fri Mar 27 09:29:20 2020 (serrano)                */
+;*    Last change :  Mon Apr 20 06:27:44 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -308,12 +308,9 @@
       (autoload path (autoload-prefix url)))
    
    (define (warn name opath npath)
-      (when (> (bigloo-warning) 1)
+      (when (>= (bigloo-warning) 1)
 	 (warning name
-		  (format
-		   "autoload already installed on:\n  ~a\nignoring:\n  ~a"
-		   opath
-		   npath))))
+	    (format "autoload already installed, ignoring \"~a\"" npath))))
 
    (define (maybe-autoload x)
       (let ((cname (assq 'name x)))

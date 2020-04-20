@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:32:41 2019                          */
-;*    Last change :  Sun Dec  8 05:35:28 2019 (serrano)                */
-;*    Copyright   :  2019 Manuel Serrano                               */
+;*    Last change :  Mon Apr 20 06:02:59 2020 (serrano)                */
+;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function macros for js2scheme                                    */
 ;*=====================================================================*/
