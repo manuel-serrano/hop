@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu Apr  9 16:10:13 2020 (serrano)                */
+/*    Last change :  Mon Apr 20 13:36:54 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -136,7 +136,7 @@ static obj_t bgl_make_jsprocedure_sans( obj_t procedure, long arity, obj_t __pro
 #define JSFUNCTION_POOLSZ POOLSZ( 4 )
 #define JSPROCEDURE_POOLSZ POOLSZ( 4 )
 #define WORK_NUMBER 1
-#define ALLOC_STATS 0  
+#define ALLOC_STATS 0
 
 /*---------------------------------------------------------------------*/
 /*    stat                                                             */
@@ -270,7 +270,7 @@ int inl4 = 0, snd4 = 0, slow4 = 0, qsz4 = 0;
 int inl5 = 0, snd5 = 0, slow5 = 0, qsz5 = 0;
 int inl6 = 0, snd6 = 0, slow6 = 0, qsz6 = 0;
 
-int inlprox = 0, sndproxy = 0, slowproxy = 0, qszproxy = 0;
+int inlproxy = 0, sndproxy = 0, slowproxy = 0, qszproxy = 0;
 int inlfunction = 0, sndfunction = 0, slowfunction = 0, qszfunction = 0;
 int inlprocedure = 0, sndprocedure = 0, slowprocedure = 0, qszprocedure = 0;
 
@@ -778,7 +778,7 @@ bgl_make_jsproxy( obj_t target, obj_t handler,
       /* default slow alloc */ 
       ALLOC_STAT( slowproxy++ ); 
       ALLOC_STAT( pool_queue_idx > qszproxy ? qszproxy = pool_queue_idx : 0 ); 
-      ALLOC_STAT( (slowproxy % 1000000 == 0) ? fprintf( stderr, "sz=%d inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", sz, inlproxy, sndproxy, slowproxy, (long)(100*(double)slowproxy/(double)(inlproxy+sndproxy)), inlproxy + sndproxy + slowproxy, qszproxy) : 0 ); 
+      ALLOC_STAT( (slowproxy % 1000000 == 0) ? fprintf( stderr, "inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", inlproxy, sndproxy, slowproxy, (long)(100*(double)slowproxy/(double)(inlproxy+sndproxy)), inlproxy + sndproxy + slowproxy, qszproxy) : 0 ); 
       alloc_spin_unlock( &lockproxy ); 
       return bgl_make_jsproxy_sans( target, handler,
 				    getcache, setcache, applycache, md ); 
@@ -931,7 +931,7 @@ bgl_make_jsfunction( obj_t procedure, obj_t method, obj_t construct,
       /* default slow alloc */ 
       ALLOC_STAT( slowfunction++ ); 
       ALLOC_STAT( pool_queue_idx > qszfunction ? qszfunction = pool_queue_idx : 0 ); 
-      ALLOC_STAT( (slowfunction % 1000000 == 0) ? fprintf( stderr, "sz=%d inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", sz, inlfunction, sndfunction, slowfunction, (long)(100*(double)slowfunction/(double)(inlfunction+sndfunction)), inlfunction + sndfunction + slowfunction, qszfunction) : 0 ); 
+      ALLOC_STAT( (slowfunction % 1000000 == 0) ? fprintf( stderr, "inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", inlfunction, sndfunction, slowfunction, (long)(100*(double)slowfunction/(double)(inlfunction+sndfunction)), inlfunction + sndfunction + slowfunction, qszfunction) : 0 ); 
       alloc_spin_unlock( &lockfunction ); 
       return bgl_make_jsfunction_sans( procedure, method, construct,
 				       arity, len, constrsize,
@@ -1045,7 +1045,7 @@ bgl_make_jsprocedure( obj_t procedure, long arity, obj_t __proto__ ) {
       /* default slow alloc */ 
       ALLOC_STAT( slowprocedure++ ); 
       ALLOC_STAT( pool_queue_idx > qszprocedure ? qszprocedure = pool_queue_idx : 0 ); 
-      ALLOC_STAT( (slowprocedure % 1000000 == 0) ? fprintf( stderr, "sz=%d inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", sz, inlprocedure, sndprocedure, slowprocedure, (long)(100*(double)slowprocedure/(double)(inlprocedure+sndprocedure)), inlprocedure + sndprocedure + slowprocedure, qszprocedure) : 0 ); 
+      ALLOC_STAT( (slowprocedure % 1000000 == 0) ? fprintf( stderr, "inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", inlprocedure, sndprocedure, slowprocedure, (long)(100*(double)slowprocedure/(double)(inlprocedure+sndprocedure)), inlprocedure + sndprocedure + slowprocedure, qszprocedure) : 0 ); 
       alloc_spin_unlock( &lockprocedure ); 
       return bgl_make_jsprocedure_sans( procedure, arity, __proto__ );
    } 

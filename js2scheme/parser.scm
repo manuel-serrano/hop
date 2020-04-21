@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Mar 12 07:47:19 2020 (serrano)                */
+;*    Last change :  Tue Apr 21 11:26:03 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -339,7 +339,7 @@
    (define (repl-element)
       (case (peek-token-type)
 	 ((function) (function-declaration))
-	 ((ID) (if (eq? (token-value (peek-token-type)) 'service)
+	 ((ID) (if (eq? (token-value (peek-token)) 'service)
 		   (service-declaration)
 		   (statement)))
 	 ((class) (class-declaration))

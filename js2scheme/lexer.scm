@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Sat Apr 18 07:55:57 2020 (serrano)                */
+;*    Last change :  Tue Apr 21 10:58:20 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -334,8 +334,6 @@
       ((: id_start (* id_part))
        (let ((symbol (the-symbol)))
 	  (cond
-;* 	     ((and (eq? symbol 'service) (not (eq? lang 'javascript))) */
-;* 	      (token symbol symbol (the-length)))                      */
 	     ((getprop symbol 'reserved)
 	      (token symbol symbol (the-length)))
 	     ((and *JS-care-future-reserved* (getprop symbol 'future-reserved))
@@ -367,9 +365,6 @@
 			(cond
 			   ((getprop symbol 'reserved)
 			    (token symbol symbol (the-length)))
-;* 			   ((and (eq? symbol 'service)                 */
-;* 				 (not (eq? lang 'javascript)))         */
-;* 			    (token symbol symbol (the-length)))        */
 			   ((and *JS-care-future-reserved*
 				 (getprop symbol 'future-reserved))
 			    (token symbol symbol (the-length)))

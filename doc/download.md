@@ -7,6 +7,77 @@ ${ var cfg = require( doc.BUILDDIR + "/doc/doc.json" ) }
 
 ${doc.include( "./license.md" )}
 
+## Binary distributions ##
+
+Precompiled Hop.js distributions are available.
+
+### Debian/Raspberry ###
+
+A Debian/Raspberry repository is available. To use it, add the following
+to your `apt` path:
+
+     deb ftp://ftp-sop.inria.fr/indes/fp/Hop/debian squeeze hop
+
+
+## Source code installation ##
+
+${<div class="row">
+  <div class="col-xs-8">
+This is the file you should download if you want to build the Hop stable
+version from the sources.
+  </div>
+  <div class="col-xs-4">
+    <xml.downloadButton
+       class="warning"
+       title="Stable"
+       icon="glyphicon-download"
+       href=${cfg.urlbase + "/hop-" + cfg.version + ".tar.gz"}/>
+  </div>
+</div>}
+
+${<div class="row">
+  <div class="col-xs-8">
+Compiling Hop.js requires the Bigloo compiler.
+  </div>
+  <div class="col-xs-4">
+    <xml.downloadButton
+       class="danger"
+       title="Stable"
+       icon="glyphicon-download"
+       href=${cfg.bglurlbase + "/bigloo-" + cfg.bglversion + ".tar.gz"}/>
+  </div>
+</div>}
+
+#### Bigloo installation ####
+
+To configure and install the Bigloo compiler that is needed to compile
+Hop, use the following:
+
+```shell
+./configure --abort-missing && make && sudo make install
+```
+
+#### Hop installation ####
+
+To configure and install Hop, execute the following:
+
+```shell
+./configure && make && sudo make install
+```
+
+Optionally, to compile and install the documentation:
+
+```shell
+make doc && sudo make install
+```
+
+To test the installation:
+
+```shell
+make test
+```
+
+
 ## Docker installation ##
 
 ${<div class="row">
@@ -89,7 +160,6 @@ copied to the local disk with:
 
 `docker cp hop:/usr/local/share/hop/${cfg.branch}/hop.docker .`
 
-
 ### Accessing the documentation and the Emacs mode ###
 
 The complete Hop documentation is embedded inside the Docker image in the
@@ -113,77 +183,6 @@ the documentation could be access at the URL:
 The Emacs mode can be copied to the host disk with:
 
 `docker cp hop:/usr/local/share/hop/site-lisp/hopjs.el .`
-
-
-## Binary distributions ##
-
-Precompiled Hop.js distributions are available.
-
-### Debian/Raspberry ###
-
-A Debian/Raspberry repository is available. To use it, add the following
-to your `apt` path:
-
-     deb ftp://ftp-sop.inria.fr/indes/fp/Hop/debian squeeze hop
-
-
-## Source code installation ##
-
-${<div class="row">
-  <div class="col-xs-8">
-This is the file you should download if you want to build the Hop stable
-version from the sources.
-  </div>
-  <div class="col-xs-4">
-    <xml.downloadButton
-       class="warning"
-       title="Stable"
-       icon="glyphicon-download"
-       href=${cfg.urlbase + "/hop-" + cfg.version + ".tar.gz"}/>
-  </div>
-</div>}
-
-${<div class="row">
-  <div class="col-xs-8">
-Compiling Hop.js requires the Bigloo compiler.
-  </div>
-  <div class="col-xs-4">
-    <xml.downloadButton
-       class="danger"
-       title="Stable"
-       icon="glyphicon-download"
-       href=${cfg.bglurlbase + "/bigloo" + cfg.bglversion + ".tar.gz"}/>
-  </div>
-</div>}
-
-#### Bigloo installation ####
-
-To configure and install the Bigloo compiler that is needed to compile
-Hop, use the following:
-
-```shell
-./configure --abort-missing && make && sudo make install
-```
-
-#### Hop installation ####
-
-To configure and install Hop, execute the following:
-
-```shell
-./configure && make && sudo make install
-```
-
-Optionally, to compile and install the documentation:
-
-```shell
-make doc && sudo make install
-```
-
-To test the installation:
-
-```shell
-make test
-```
 
 ## Git ##
 

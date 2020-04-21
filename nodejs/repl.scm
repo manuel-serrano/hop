@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct  6 08:22:43 2013                          */
-;*    Last change :  Sat May  4 15:08:09 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Tue Apr 21 14:17:39 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS like REPL                                                 */
 ;*=====================================================================*/
@@ -68,23 +68,24 @@
 		  (signal sigint intrhdl))
 	       ;; and we loop until eof
 	       (newline)
-	       (let luup ()
-		  (with-handler
-		     (lambda (e)
-			(repl-error-handler e)
-			(luup))
-		     (let liip ()
-			(prompt)
-			(let ((exp (jsread-and-compile)))
-			   (if (null? exp)
-			       (quit)
-			       (let ((v (js-worker-exec %worker "repl" #f
-					   (lambda ()
-					      (with-handler
-						 repl-error-handler
-						 (let ((v ((eval exp) %this %this %this module)))
-						    (jsprint v %this)))))))
-				  (liip))))))))
+	       (let ((console (nodejs-require-core "console" %worker %this)))
+		  (let luup ()
+		     (with-handler
+			(lambda (e)
+			   (repl-error-handler e)
+			   (luup))
+			(let liip ()
+			   (prompt)
+			   (let ((exp (jsread-and-compile)))
+			      (if (null? exp)
+				  (quit)
+				  (let ((v (js-worker-exec %worker "repl" #f
+					      (lambda ()
+						 (with-handler
+						    repl-error-handler
+						    (let ((v ((eval exp) %this %this %this module)))
+						       (jsprint v console %this)))))))
+				     (liip)))))))))
 	    (loop))
 	 (if (procedure? old-intrhdl)
 	     (signal sigint old-intrhdl)
@@ -107,9 +108,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    jsprint ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (jsprint exp %this)
-   (let* ((console (js-get %this (& "console") %this))
-	  (log (js-get console (& "log") %this)))
+(define (jsprint exp console %this)
+   (let ((log (js-get console (& "log") %this)))
       (js-call1 %this log console exp)))
 
 ;*---------------------------------------------------------------------*/
@@ -120,6 +120,7 @@
       :parser 'repl
       :driver (j2s-eval-driver)
       :driver-name "j2s-eval-driver"
+      :commonjs-export #f
       :filename "repl.js"))   
 
 ;*---------------------------------------------------------------------*/
