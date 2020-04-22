@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Apr 19 08:39:03 2020 (serrano)                */
+#*    Last change :  Wed Apr 22 18:19:44 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1697,6 +1697,22 @@ done
 #*---------------------------------------------------------------------*/
 # debian
 deb=arch/debian/makedeb.sh
+rm -f $deb 2> /dev/null
+echo "#!/bin/sh" > $deb
+echo "#* Automatically generated file (don't edit) */" >> $deb
+
+cat $deb.in \
+  | sed -e "s|#!/bin/sh||" \
+        -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
+        -e "s|@VERSION@|$version|" \
+        -e "s|@WEBLETSDIR@|$webletsdir|" \
+        -e "s|@NMODULESDIR@|$nodemodulesdir|" \
+        -e "s|@MINOR@|$minorversion|" \
+	>> $deb  
+chmod a+rx $deb
+ 
+# homebrew
+deb=arch/homebrew/makebrew.sh
 rm -f $deb 2> /dev/null
 echo "#!/bin/sh" > $deb
 echo "#* Automatically generated file (don't edit) */" >> $deb
