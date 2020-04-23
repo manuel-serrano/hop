@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/Makefile                          */
+#*    serrano/prgm/project/hop/hop/Makefile                            */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Sep 12 10:51:30 2018 (serrano)                */
+#*    Last change :  Thu Apr 23 11:38:11 2020 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -412,7 +412,7 @@ distrib-native: distrib-tmp
            ./configure && \
            $(MAKE) predistrib && \
            $(MAKE) distclean) && \
-          tar cvfz hop-$$distrib.tar.gz --exclude .hg --exclude .git -C $(HOPTMPDIR) hop-$$distrib; \
+          tar cvfz hop-$$distrib.tar.gz --exclude .hg --exclude .git --exclude arch/debian/makedeb.sh --exclude arch/homebrew/makebrew.sh -C $(HOPTMPDIR) hop-$$distrib; \
           if [ $(HOPDISTRIBDIR) != "." ]; then \
             if [ $(HOPDISTRIBDIR) != "" ]; then \
               $(RM) -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.tar.gz && \

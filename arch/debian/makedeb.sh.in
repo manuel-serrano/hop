@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Thu Apr 23 09:15:33 2020 (serrano)                */
+#*    Last change :  Thu Apr 23 11:30:23 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Debian/Maemo       */
@@ -95,6 +95,11 @@ tar xfz $REPOSITORY/hop-$VERSION$MINOR.tar.gz -C $BUILDDIR
 if [ "$MINOR " != " " ]; then
   mv $BUILDDIR/hop-$VERSION$MINOR $BUILDDIR/hop-$VERSION
 fi
+
+#*---------------------------------------------------------------------*/
+#*    pre-configuration needed for generating debian files             */
+#*---------------------------------------------------------------------*/
+(cd $BUILDDIR/hop-$VERSION; ./configure --prefix $(HOPPREFIX))
 
 #*---------------------------------------------------------------------*/
 #*    The maemo configuration                                          */
@@ -285,7 +290,7 @@ if [ "$postinstall " = "yes " ]; then
   
   for p in `echo $pkgs`; do
     if [ -f $BUILDDIR/${p}_$VERSION-1_$arch.deb ]; then
-      sudo dpkg -i $BUILDDIR/${p}_$VERSION-1_$arch.deb
+      sudo bash -c "export HOP_YESORNO=$HOP_YESORNO; dpkg -i $BUILDDIR/${p}_$VERSION-1_$arch.deb"
     elif [ -f $BUILDDIR/${p}_$VERSION-1_all.deb ]; then
       sudo dpkg -i $BUILDDIR/${p}_$VERSION-1_all.deb
     else
