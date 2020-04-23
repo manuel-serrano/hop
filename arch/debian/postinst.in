@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Dec 18 10:55:54 2007                          */
-#*    Last change :  Thu Apr 16 12:09:28 2020 (serrano)                */
+#*    Last change :  Thu Apr 23 05:50:06 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Add the HOP desktop entries from the configuration files         */
@@ -49,9 +49,6 @@ if [ "@DEBIAN@ " = "maemo " ]; then
   fi
 fi
 
-#* echo $home_entry | cat - $home_conf > $path/home_conf.tmp           */
-#* mv $path/home_conf.tmp $home_conf                                   */
-
 #*---------------------------------------------------------------------*/
 #*    ldconfig                                                         */
 #*---------------------------------------------------------------------*/
@@ -80,9 +77,9 @@ fi
 #*---------------------------------------------------------------------*/
 #*    init script                                                      */
 #*---------------------------------------------------------------------*/
-if [ "@YESORNO@ " = "yes " ]; then
+if [ "$HOP_YESORNO " = "yes " ]; then
   init=true
-elif [ "@YESORNO@ " = "no " ]; then
+elif [ "$HOP_YESORNO " = "no " ]; then
   init=false
 else
   # MS 20 jul 2012, don't understand why ldconfig is not sufficient, it appears,

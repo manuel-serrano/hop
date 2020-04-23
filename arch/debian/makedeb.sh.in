@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Thu Apr 16 12:08:40 2020 (serrano)                */
+#*    Last change :  Thu Apr 23 05:50:34 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Debian/Maemo       */
@@ -37,7 +37,7 @@ debformat="3.0 (quilt)"
 fakeroot=fakeroot
 sign=
 postinstall=yes
-yesorno=$YESORNO
+HOP_YESORNO=ask
 
 while : ; do
   case $1 in
@@ -67,9 +67,9 @@ while : ; do
     --no-sign)
       sign=--no-sign;;
     --yes-or-no=no)
-      yesorno=no;;
+      HOP_YESORNO=no;;
     --yes-or-no=yes)
-      yesorno=yes;;
+      HOP_YESORNO=yes;;
     *)
       HOPCONFIGUREOPT="$1 $HOPCONFIGUREOPT";;
 
@@ -242,8 +242,7 @@ for p in control rules postinst postrm compat; do
             -e "s|@PREFIX@|$PREFIX|g" \
             -e "s/@MAEMOHASLOCATION@/$maemohaslocation/g" \
             -e "s/@BIGLOOVERSION@/$BIGLOOVERSION/g" \
-            -e "s|@NODEMODULESDIR@|$NODEMODULESDIR|" \
-            -e "s/@YESORNO@/$yesorno/g" > \
+            -e "s|@NODEMODULESDIR@|$NODEMODULESDIR|g" >
       $BUILDDIR/hop-$VERSION/debian/$p;
   else
     cp $BASEDIR/$p $BUILDDIR/hop-$VERSION/debian;
@@ -281,6 +280,8 @@ echo $debformat > debian/source/format
 if [ "$postinstall " = "yes " ]; then
   pkgs=`grep Package: $BUILDDIR/hop-$VERSION/debian/control | awk -F: '{print $2}' | tr -d '\n'`
   arch=`dpkg --print-architecture`
+
+  export HOP_YESORNO
   
   for p in `echo $pkgs`; do
     if [ -f $BUILDDIR/${p}_$VERSION-1_$arch.deb ]; then
