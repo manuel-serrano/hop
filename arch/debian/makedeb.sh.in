@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Thu Apr 23 11:57:07 2020 (serrano)                */
+#*    Last change :  Thu Apr 23 12:11:26 2020 (serrano)                */
 #*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Shell script to build the .deb for Hop on Debian/Maemo       */
@@ -99,7 +99,7 @@ fi
 #*---------------------------------------------------------------------*/
 #*    pre-configuration needed for generating debian files             */
 #*---------------------------------------------------------------------*/
-(cd $BUILDDIR/hop-$VERSION; ./configure --prefix=$HOPPREFIX)
+#* (cd $BUILDDIR/hop-$VERSION; ./configure --prefix=$HOPPREFIX)        */
 
 #*---------------------------------------------------------------------*/
 #*    The maemo configuration                                          */
