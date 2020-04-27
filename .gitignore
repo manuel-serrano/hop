@@ -123,6 +123,7 @@ arch/homebrew/makebrew.sh
 
 # testing
 test/hopjs/TEST
+test/nodejs/TEST
 
 # Mercurial/GIT compatibility
 .hg
