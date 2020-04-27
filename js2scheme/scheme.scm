@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme.scm                */
+;*    /tmp/OFAOT/smi/hop/js2scheme/scheme.scm                          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Apr 12 19:17:39 2020 (serrano)                */
+;*    Last change :  Mon Apr 27 10:45:05 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -78,7 +78,8 @@
 (define (comp-return x)
    (match-case x
       ((begin . ?rest)
-       `(begin ,@(filter pair? rest)))
+       (let ((inv (reverse rest)))
+	  `(begin ,@(reverse (filter pair? (cdr inv))) ,(car inv))))
       (else
        x)))
 

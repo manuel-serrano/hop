@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-utils.scm          */
+;*    /tmp/OFAOT/smi/hop/js2scheme/scheme-utils.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sun Apr 12 12:57:23 2020 (serrano)                */
+;*    Last change :  Mon Apr 27 10:54:07 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -993,14 +993,14 @@
 	      `(if (<u32 ,val ,(llong->uint32 (conf-max-int conf)))
 		   (uint32->fixnum ,val)
 		   (uint32->flonum ,val))))
-	 ((integer int53)
+	 ((int53)
 	  (if (fixnum? val)
 	      (if (and (>=llong (fixnum->llong val) (conf-min-int conf))
 		       (<=llong (fixnum->llong val) (conf-max-int conf)))
 		  val
 		  (fixnum->flonum val))
 	      `(overflowfx ,val)))
-	 ((real number)
+	 ((integer real number)
 	  val)
 	 (else
 	  (if (not proc) val (proc val))))))
