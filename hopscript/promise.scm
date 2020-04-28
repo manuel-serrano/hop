@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Tue Apr  7 18:05:49 2020 (serrano)                */
+;*    Last change :  Tue Apr 28 18:40:11 2020 (serrano)                */
 ;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -416,7 +416,9 @@
    (js-bind! %this obj (& "catch")
       :value (js-make-function %this
 		(lambda (this fail)
-		   (then-catch this (js-undefined) fail))
+		   (then-catch this
+		      (js-make-procedure %this (lambda (this v) v) 2)
+		      fail))
 		1 (& "catch"))
       :enumerable #f
       :hidden-class #t)
@@ -560,9 +562,12 @@
 	    (with-handler
 	       (lambda (e)
 		  (js-call1 %this reject (js-undefined) e))
-	       (js-call2 %this then thenable resolve reject)))))
+	       (begin
+		  (js-debug-object then)
+		  (js-call2 %this then thenable resolve reject))))))
 
    (with-access::JsPromise o (%this worker)
+      (js-debug-object o)
       (cond
 	 ((eq? o resolution)
 	  ;; resolve .6

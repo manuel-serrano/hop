@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.1.x/test/hopjs/noserv/es6-promise.js      */
+/*    .../prgm/project/hop/hop/test/hopjs/noserv/es6-promise.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 19 11:16:33 2015                          */
-/*    Last change :  Wed Aug 29 09:32:45 2018 (serrano)                */
-/*    Copyright   :  2015-18 Manuel Serrano                            */
+/*    Last change :  Tue Apr 28 19:40:08 2020 (serrano)                */
+/*    Copyright   :  2015-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 promises.                                            */
 /*=====================================================================*/
@@ -75,6 +75,14 @@ p.then( function( o ) {
    assert.check( o2, 12 );
 } )
 
+var cp = new Promise( function( res, rej ) {
+   res( 1 );
+} ).then( v => { return v + 1 ; } )
+   .catch( e => { ; } )
+   .then( v => { return v + 1 ; } )
+   .then( v => { return v + 1 ; } )
+   .then( v => assert.check( v, 3 ) );
+  
 /*---------------------------------------------------------------------*/
 /*    mdn                                                              */
 /*---------------------------------------------------------------------*/
