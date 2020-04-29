@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Apr 22 18:19:44 2020 (serrano)                */
+#*    Last change :  Wed Apr 29 17:43:05 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -411,15 +411,19 @@ while : ; do
       arch=android;;
 
     --apache-felix=*)
-      felix="`echo $1 | sed 's/^[^=]*=//'`";
+      felix="`echo $1 | sed 's/^[^=]*=//'`"
       link=felix;
       hopsrfis="$hopsrfis boot-from-java"
       ;;
 
     --closure=*)
-      closure="`echo $1 | sed 's/^[^=]*=//'`";
+      closure="`echo $1 | sed 's/^[^=]*=//'`"
       ;;
 
+    --alloc=*)
+      alloc="`echo $1 | sed 's/^[^=]*=//'`"
+      ;;
+    
     --license=free)
       license=free;;
       
@@ -499,7 +503,7 @@ while : ; do
       echo "   --macosx.................... prepares the production of a MacOSX bundle" >&2;
       echo "   --apache-felix=path......... path to felix.jar" >&2;
       echo "" >&2;
-      echo "Configuration settings:" >&2;
+      echo "Misc settings:" >&2;
       echo "   --devel..................... enables devel mode (safe but not debug)" >&2;
       echo "   --debug[2].................. enables Bigloo debug mode" >&2;
       echo "   --pmem[2]................... enables memory profiling mode" >&2;
@@ -507,6 +511,8 @@ while : ; do
       echo "   --optimize.................. enables Bigloo optimization mode (default)" >&2;
       echo "   --closure=comp.............. path to closure compiler" >&2;
       echo "" >&2;
+      echo "Experimental features:" >&2;
+      echo "   --alloc=classic|worker...... allocator method [worker]" >&2
       echo "License:" >&2;
       echo "   --license=[license]......... select Hop license (see LICENSE)" >&2;
       exit 255;
@@ -654,6 +660,10 @@ if [ "$ccflags " = " " ]; then
     ccflags=`echo $ccflags | sed 's/[-]O[0-9]//'`
   fi
   ccflags="$ccflags -I$bigloolibdir \$(CPICFLAGS) \$(CNANFLAGS)"
+fi
+
+if [ "$alloc " = "classic " ]; then
+  ccflags="$ccflags -DHOP_ALLOC_POLICY=1"
 fi
 
 if [ ! -f $bigloolibdir/Makefile.config ]; then

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Tue Apr 28 18:40:11 2020 (serrano)                */
+;*    Last change :  Wed Apr 29 07:09:28 2020 (serrano)                */
 ;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -477,7 +477,12 @@
 	       (set! state 'rejected)
 	       ;; hopscript extension
 	       (if (null? reactions)
-		   reason
+		   (begin
+		      (when (isa? reason &exception)
+			 (exception-notify reason))
+		      (warning "UnhandledPromiseRejectionWarning: " reason
+			 " -- " %name)
+		      reason)
 		   ;; reject .7
 		   (js-promise-trigger-reactions worker reactions reason)))))))
 
@@ -562,12 +567,9 @@
 	    (with-handler
 	       (lambda (e)
 		  (js-call1 %this reject (js-undefined) e))
-	       (begin
-		  (js-debug-object then)
-		  (js-call2 %this then thenable resolve reject))))))
+	       (js-call2 %this then thenable resolve reject)))))
 
    (with-access::JsPromise o (%this worker)
-      (js-debug-object o)
       (cond
 	 ((eq? o resolution)
 	  ;; resolve .6

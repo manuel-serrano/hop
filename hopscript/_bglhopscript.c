@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Mon Apr 20 13:36:54 2020 (serrano)                */
+/*    Last change :  Wed Apr 29 17:41:08 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -87,12 +87,14 @@ typedef struct BgL_jspropertycachez00_bgl pcache_t;
 #define HOP_ALLOC_TLS 2
 #define HOP_ALLOC_SPINLOCK 3
 
-#if BGL_HAS_THREAD_LOCALSTORAGE == 1
-#  define HOP_ALLOC_POLICY HOP_ALLOC_TLS
-#elif BGL_HAVE_SPINLOCK
-#  define HOP_ALLOC_POLICY HOP_ALLOC_SPINLOCK
-#else
-#  define HOP_ALLOC_POLICY HOP_ALLOC_CLASSIC
+#if( !defined( HOP_ALLOC_POLICY ) )
+#  if BGL_HAS_THREAD_LOCALSTORAGE == 1
+#    define HOP_ALLOC_POLICY HOP_ALLOC_TLS
+#  elif BGL_HAVE_SPINLOCK
+#    define HOP_ALLOC_POLICY HOP_ALLOC_SPINLOCK
+#  else
+#    define HOP_ALLOC_POLICY HOP_ALLOC_CLASSIC
+#  endif
 #endif
 
 /* #undef HOP_ALLOC_POLICY                                             */
