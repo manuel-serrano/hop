@@ -20,7 +20,7 @@ if [ "$basedir " = ". " ]; then
   basedir=`pwd`
 fi
 
-targetdir=$HOME/prgm/project/hop/hopbrew/Formula
+targetdir=$HOME/prgm/utils/hopbrew/Formula
 
 while : ; do
   case $1 in
