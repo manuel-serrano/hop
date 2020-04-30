@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Apr 29 17:43:05 2020 (serrano)                */
+#*    Last change :  Thu Apr 30 16:11:50 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1124,8 +1124,8 @@ fi
 
 mkmf=etc/Makefile.hopconfig
 
-bglcloselibs_u="-lbigloo_s-$""(RELEASE) "
-bglcloselibs_s="-lbigloo_u-$""(RELEASE) "
+bglcloselibs_u="-lbigloo_u-$""(RELEASE) "
+bglcloselibs_s="-lbigloo_s-$""(RELEASE) "
 
 for p in $bglcloselibs; do
   bglcloselibs_u="$bglcloselibs_u -lbigloo$p""_u-$""(RELEASE)";
