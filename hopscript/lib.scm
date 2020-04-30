@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Sat Apr 11 09:49:32 2020 (serrano)                */
+;*    Last change :  Thu Apr 30 10:47:02 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -400,7 +400,7 @@
 	 :writable #f :configurable #f
 	 :hidden-class #t)
       (js-bind! %this sock (& "ssl")
-	 :value (ssl-socket? obj)
+	 :value (cond-expand (enable-ssl (ssl-socket? obj)) (else #f))
 	 :writable #f :configurable #f
 	 :hidden-class #t)
       sock))
