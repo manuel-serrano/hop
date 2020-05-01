@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Apr 14 11:55:44 2020 (serrano)                */
+;*    Last change :  Fri May  1 06:39:22 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1152,7 +1152,7 @@
 		   (unwind-protect
 		      (begin
 			 (hop-verb 2 "loading \"" (hop-color 7 "" filename) "\""
-			    (if tgt (format " (~s)\n" tgt "\n")))
+			    (if tgt (format " (~s)\n" tgt) "\n"))
 			 ;; evaluate the module clause first
 			 (eval! (car expr))
 			 (let ((nexpr (map (lambda (x)
@@ -1228,6 +1228,7 @@
 	     (values (car old) (cdr old))
 	     (multiple-value-bind (proc mod)
 		(dynamic-load sopath)
+		(hop-verb 2 "loading \"" (hop-color 5 "" sopath) "\"\n")
 		(let ((v (cond
 			    ((procedure? proc)
 			     proc)
