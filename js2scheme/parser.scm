@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Apr 21 11:26:03 2020 (serrano)                */
+;*    Last change :  Sat May  2 08:30:08 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -81,7 +81,7 @@
 	 ((at ?fname ?loc)
 	  (raise
 	     (instantiate::&io-parse-error
-		(proc "hopscript")
+		(proc "hopc")
 		(msg (if (eq? (token-tag token) 'BAD) (cadr token) msg))
 		(obj (if (eq? (token-tag token) 'BAD) (cddr token) (token-value token)))
 		(fname fname)
@@ -89,7 +89,7 @@
 	 (else
 	  (raise
 	     (instantiate::&io-parse-error
-		(proc "hopscript")
+		(proc "hopc")
 		(msg (if (eq? (token-tag token) 'BAD) (cadr token) msg))
 		(obj (if (eq? (token-tag token) 'BAD) (cddr token) (token-value token))))))))
    

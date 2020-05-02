@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri May  1 06:39:22 2020 (serrano)                */
+;*    Last change :  Sat May  2 15:07:05 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -628,7 +628,8 @@
 (define (nodejs-import-module::JsModule worker::WorkerHopThread
 	   %this::JsGlobalObject %module::JsObject
 	   path::bstring checksum::long loc)
-   (let ((mod (nodejs-load-module path worker %this %module
+   (let* ((respath (nodejs-resolve path %this %module 'import))
+	  (mod (nodejs-load-module respath worker %this %module
 		 :commonjs-export #t)))
       (with-access::JsModule mod ((mc checksum))
 	 (if (or (=fx checksum 0) (=fx checksum mc) (=fx mc 0))

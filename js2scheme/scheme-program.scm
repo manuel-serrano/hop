@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Apr 13 07:48:24 2020 (serrano)                */
+;*    Last change :  Sat May  2 14:52:57 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -435,13 +435,13 @@
 			 (+fx idx (length nres))
 			 (append nres res)
 			 (cons iprgm stack))))))))
-
+   
    (define (import-module im)
-      (with-access::J2SImport im (respath iprgm loc names iprgm)
-	 (with-access::J2SProgram iprgm (mode path exports)
+      (with-access::J2SImport im (path iprgm loc names iprgm)
+	 (with-access::J2SProgram iprgm (mode exports)
 	    (if (eq? mode 'hop)
 		`(nodejs-import-module-hop %worker %this %module
-		    ,respath
+		    ,path
 		    ,(j2s-program-checksum! iprgm)
 		    ',loc
 		    ',(list->vector
@@ -451,7 +451,7 @@
 				       (cons alias vtype))))
 			    exports)))
 		`(nodejs-import-module %worker %this %module
-		    ,respath
+		    ,path
 		    ,(j2s-program-checksum! iprgm)
 		    ',loc)))))
 
