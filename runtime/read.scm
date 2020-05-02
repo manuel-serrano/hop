@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Apr 14 11:20:55 2020 (serrano)                */
+;*    Last change :  Sat May  2 15:54:16 2020 (serrano)                */
 ;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1025,6 +1025,8 @@
 			 (loop (cdr paths))))))))))
    
    (define (soprecompiled sopath)
+      (tprint "soprecompiled sopath=" sopath " path=" path " "
+	 (more-recent? sopath))
       (cond
 	 ((more-recent? sopath)
 	  sopath)
