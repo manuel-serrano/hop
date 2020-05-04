@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Apr 23 11:38:11 2020 (serrano)                */
+#*    Last change :  Mon May  4 07:12:41 2020 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -226,6 +226,9 @@ install-debian: hop-dirs
 	mkdir -p $(DESTDIR)/etc/init.d
 	$(INSTALL) $(BUILDDIR)/arch/debian/init.d/hop $(DESTDIR)/etc/init.d \
 	  && chmod u+rx $(DESTDIR)/etc/init.d/hop
+	mkdir -p $(DESTDIR)/etc/logrotate.d
+	$(INSTALL) $(BUILDDIR)/arch/debian/logrotate.d/hop $(DESTDIR)/etc/logrotate.d \
+	  && chmod u+rx $(DESTDIR)/etc/logrotate.d/hop
 
 install-doc:
 	$(MAKE) -C doc install
