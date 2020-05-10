@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    .../prgm/project/hop/3.1.x/arch/android/hopdroid/Makefile        */
+#*    serrano/prgm/project/hop/hop/arch/android/hopdroid/Makefile      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Sun Jul 17 14:24:38 2016 (serrano)                */
-#*    Copyright   :  2006-16 Manuel Serrano                            */
+#*    Last change :  Sun May 10 15:28:37 2020 (serrano)                */
+#*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopdroid library.                      */
 #*=====================================================================*/
@@ -70,6 +70,8 @@ build: $(BACKEND)
 native: heap-c lib-c
 jvm: heap-jvm lib-jvm
 dotnet: heap-jvm lib-dotnet
+
+install: install-native
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */
