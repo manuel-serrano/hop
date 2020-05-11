@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/arch/android/Makefile             */
+#*    serrano/prgm/project/hop/hop/arch/android/Makefile               */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sat Jan 13 07:24:05 2018 (serrano)                */
-#*    Copyright   :  2010-18 Manuel Serrano                            */
+#*    Last change :  Sun May 10 14:49:14 2020 (serrano)                */
+#*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
 #*=====================================================================*/
@@ -23,7 +23,7 @@ do: build
 ANDROIDBUILDDIR = $(HOPTMPDIR)/build.hop.android
 ANDROIDROOT = /opt/android
 ANDROIDSDK = $(ANDROIDROOT)/android-sdk-linux
-ANDROIDNDK = $(ANDROIDROOT)/android-ndk-r9d
+ANDROIDNDK = $(ANDROIDROOT)/android-ndk-r21b
 ANDROIDTOOLCHAIN = $(ANDROIDROOT)/toolchain
 ANDROIDSDKVERSION = 21
 ANDROIDACTIONMODE = debug
@@ -31,6 +31,7 @@ ANDROIDHOST = -d
 ANDROIDDIR= $(BUILDDIR)/arch/android
 
 ANDROIDANT = ant
+ANDROIDCC= $(ANDROIDTOOLCHAIN)/bin/arm-linux-androideabi-gcc
 
 # hop androin configuration
 ANDROIDHOPPORT = 8080
@@ -445,19 +446,19 @@ $(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR)
 	$(RM) -rf $@
 	cp -r $(ANDROIDDIR)/src $@
 
-apk.bigloo: $(ANDROIDBUILDDIR)/bigloo$(RELEASE)
+apk.bigloo: $(ANDROIDBUILDDIR)/bigloo-$(RELEASE)
 	$(MAKE) apk.bigloo.configure
-	$(MAKE) -C $(ANDROIDBUILDDIR)/bigloo$(RELEASE)
-	$(MAKE) -C $(ANDROIDBUILDDIR)/bigloo$(RELEASE) install DESTDIR=$(ANDROIDBUILDDIR)
+	$(MAKE) -C $(ANDROIDBUILDDIR)/bigloo-$(RELEASE)
+	$(MAKE) -C $(ANDROIDBUILDDIR)/bigloo-$(RELEASE) install DESTDIR=$(ANDROIDBUILDDIR)
 
 apk.bigloo.configure:
-	(cd $(ANDROIDBUILDDIR)/bigloo$(RELEASE); \
+	(cd $(ANDROIDBUILDDIR)/bigloo-$(RELEASE); \
          ./configure --os-android \
             --android-adb=adb \
-            --cc=$(ANDROIDTOOLCHAIN)/bin/arm-linux-androideabi-gcc \
-            --cpicflags=-pie \
-            --cflags="-pie -fPIE -DBGL_GC_ROOTS" \
-            --lflags=-fPIE \
+            --cc=$(ANDROIDCC) \
+            --cpicflags=-fPIC \
+            --cflags="-fPIC -DBGL_GC_ROOTS" \
+            --lflags=-fPIC \
             --libuvconfigureopt="--host=arm-linux-androideabi" \
             --stack-check=no \
             --prefix=$(ANDROIDHOPPREFIX) \
@@ -465,9 +466,9 @@ apk.bigloo.configure:
             --disable-doc --disable-pcre --disable-unistring --disable-gmp \
             $(BIGLOOCONFIGUREOPT))
 
-$(ANDROIDBUILDDIR)/bigloo$(RELEASE): $(REPOSITORY)/bigloo$(RELEASE).tar.gz
+$(ANDROIDBUILDDIR)/bigloo-$(RELEASE): $(REPOSITORY)/bigloo-$(RELEASE).tar.gz
 	mkdir -p $(ANDROIDBUILDDIR)
-	(cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/bigloo$(RELEASE))
+	(cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/bigloo-$(RELEASE))
 	(cd $(ANDROIDBUILDDIR); tar xvf $< 2> /dev/null > /dev/null)
 
 apk.hop: $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
