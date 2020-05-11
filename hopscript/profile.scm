@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Fri Apr  3 17:52:04 2020 (serrano)                */
+;*    Last change :  Mon May 11 15:56:07 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -1344,13 +1344,22 @@
 
    (define (find-def sym symtable)
       (let ((entry (find (lambda (entry)
-			    (and (eq? (cadr entry) 'fun) (eq? (caddr entry) sym)))
+			    (and (eq? (cadr entry) 'fun)
+				 (eq? (caddr entry) sym)))
 		      symtable)))
+	 (when entry (car entry))))
+
+   (define (find-def-by-loc loc symtable)
+      (let ((entry (find (lambda (entry)
+			    (and (eq? (cadr entry) 'fun)
+				 (eq? (car entry) loc)))
+		      symtable)))
+	 (unless entry (tprint "CANNOT FIND fun loc=" loc))
 	 (when entry (car entry))))
    
    (define (get-target loc symtable)
       (let ((c (assq loc symtable)))
-	 (if (pair? c) (find-def (caddr c) symtable) -1)))
+	 (if (pair? c) (find-def-by-loc (cadddr c) symtable) -1)))
    
    (define (print-call-counts-json counts locations)
       (let ((sep "\n      "))
