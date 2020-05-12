@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Tue May 12 12:03:59 2020 (serrano)                */
+#*    Last change :  Tue May 12 15:59:51 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -337,7 +337,7 @@ $(ANDROIDBUILDDIR)/assets/etc:
 	rm -rf $@
 	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/etc $(ANDROIDBUILDDIR)/assets
 	mkdir -p $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
-	#cp -r $(ANDROIDDIR)/splash $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
+	cp -r $(ANDROIDDIR)/splash $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
 
 $(ANDROIDBUILDDIR)/assets/share:
 	mkdir -p $(ANDROIDBUILDDIR)/assets
@@ -463,6 +463,7 @@ apk.bigloo.configure:
             --stack-check=no \
             --prefix=$(ANDROIDHOPPREFIX) \
             --build-bindir=$(HOPBINDIR) \
+            --customlibuv=yes \
             --disable-doc --disable-pcre --disable-unistring --disable-gmp \
             $(BIGLOOCONFIGUREOPT))
 

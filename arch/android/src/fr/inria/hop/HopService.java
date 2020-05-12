@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hop/2.4.x/arch/android/src/fr/inria/hop/HopService.java      */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopService.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Fri Apr 19 08:48:44 2013 (serrano)                */
-/*    Copyright   :  2012-13 Manuel Serrano                            */
+/*    Last change :  Tue May 12 15:34:12 2020 (serrano)                */
+/*    Copyright   :  2012-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
 /*=====================================================================*/
@@ -195,8 +195,8 @@ public class HopService extends Service {
 	 PendingIntent.getActivity(
 	    this, 0, new Intent( this, HopService.class ), 0 );
 
-      notification.setLatestEventInfo(
-	 this, getText( R.string.hopversion ), text, contentIntent );
+/*       notification.setLatestEventInfo(                              */
+/* 	 this, getText( R.string.hopversion ), text, contentIntent );  */
 
       // Send the notification.
       if( notify ) {
