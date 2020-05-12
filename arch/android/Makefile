@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun May 10 14:49:14 2020 (serrano)                */
+#*    Last change :  Tue May 12 12:03:59 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -326,18 +326,18 @@ assets.weblet:
 assets.post-install:
 	find $(ANDROIDBUILDDIR)/assets/lib/ -name '*.a' -exec rm {} \;
 	find $(ANDROIDBUILDDIR)/assets/lib/ -name '*.heap' -exec rm {} \;
-	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libhop*_u-*.so' -exec rm {} \;
-	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libjs2scheme*_u-*.so' -exec rm {} \;
-	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libnodejs*_u-*.so' -exec rm {} \;
-	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libscheme2js*_u-*.so' -exec rm {} \;
-	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libbigloo*_s-*.so.keep' -exec rm {} \;
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libhop*_[su]-*.so' -exec rm {} \;
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libjs2scheme*_[su]-*.so' -exec rm {} \;
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libnodejs*_[su]-*.so' -exec rm {} \;
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libscheme2js*_[su]-*.so' -exec rm {} \;
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libbigloo*_[su]-*.so.keep' -exec rm {} \;
 
 $(ANDROIDBUILDDIR)/assets/etc:
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
 	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/etc $(ANDROIDBUILDDIR)/assets
 	mkdir -p $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
-	cp -r $(ANDROIDDIR)/splash $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
+	#cp -r $(ANDROIDDIR)/splash $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
 
 $(ANDROIDBUILDDIR)/assets/share:
 	mkdir -p $(ANDROIDBUILDDIR)/assets
@@ -482,6 +482,7 @@ apk.hop.configure:
             --bigloo=$(HOPBINDIR)/bigloo \
             --bigloolibdir=$(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE) \
             --android \
+            --link=static \
             --hopc=$(HOPBINDIR)/hopc \
             --hop=$(HOPBINDIR)/hop \
             --prefix=$(ANDROIDHOPPREFIX) \
