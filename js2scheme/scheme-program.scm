@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sat May  2 14:52:57 2020 (serrano)                */
+;*    Last change :  Mon May 11 15:46:39 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -761,8 +761,8 @@
       (if (isa? fun J2SRef)
 	  (with-access::J2SRef fun (decl)
 	     (if (isa? decl J2SDeclFun)
-		 (with-access::J2SDecl decl (id)
-		    (cons (list (caddr loc) 'call id)
+		 (with-access::J2SDecl decl (id (target loc))
+		    (cons (list (caddr loc) 'call id (caddr target))
 		       (call-default-walker)))
 		 (call-default-walker)))
 	  (call-default-walker))))

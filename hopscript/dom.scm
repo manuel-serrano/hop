@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Tue Apr  7 05:21:17 2020 (serrano)                */
+;*    Last change :  Thu May  7 13:59:44 2020 (serrano)                */
 ;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -236,6 +236,9 @@
 	  (dom-previous-sibling o))
 	 ((eq? name (& "childNodes"))
 	  (js-empty-vector->jsarray %this))
+	 ((eq? name (& "innerHTML"))
+	  (with-access::xml-verbatim o (data)
+	     (js-string->jsstring data)))
 	 (else
 	  (js-undefined)))))
 

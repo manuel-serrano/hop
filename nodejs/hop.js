@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Mon Apr 13 08:12:58 2020 (serrano)                */
+/*    Last change :  Tue May  5 15:08:53 2020 (serrano)                */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -227,6 +227,7 @@ exports.config = hop.modulesDir + "/config";
 exports.user = hop.modulesDir + "/user";
 exports.hss = hop.modulesDir + "/hss";
 exports.markdown = hop.modulesDir + "/markdown";
+exports.texinfo = hop.modulesDir + "/texinfo";
 exports.syslog = hop.modulesDir + "/syslog";
 exports.systime = hop.modulesDir + "/systime";
 exports.hopc = hop.modulesDir + "/hopc";
