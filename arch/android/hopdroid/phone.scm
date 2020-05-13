@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
 ;*    Last change :  Sun Jul 17 06:35:32 2016 (serrano)                */
-;*    Copyright   :  2010-16 Manuel Serrano                            */
+;*    Copyright   :  2010-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
 ;*=====================================================================*/

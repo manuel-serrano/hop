@@ -3,10 +3,12 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed May 13 07:45:06 2020 (serrano)                */
+#*    Last change :  Wed May 13 18:28:56 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
+#*    -------------------------------------------------------------    */
+#*    Tested May 2020 with Android ndk r21b                            */
 #*=====================================================================*/
 
 do: build
@@ -21,21 +23,24 @@ do: build
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
 ANDROIDBUILDDIR = $(HOPTMPDIR)/build.hop.android
-ANDROIDROOT = /opt/android
-ANDROIDSDK = $(ANDROIDROOT)/android-sdk-linux
-ANDROIDNDK = $(ANDROIDROOT)/android-ndk-r21b
-ANDROIDTOOLCHAIN = $(ANDROIDROOT)/toolchain
-ANDROIDSDKVERSION = 21
 ANDROIDACTIONMODE = debug
 ANDROIDHOST = -d
 ANDROIDDIR= $(BUILDDIR)/arch/android
 
 ANDROIDLINK = dynamic
+ANDROIDTARGET = armv7a-linux-androideabi26
 
-ANDROIDANT = ant
-ANDROIDCC= $(ANDROIDTOOLCHAIN)/bin/arm-linux-androideabi-gcc
+#*---------------------------------------------------------------------*/
+#*    Android sdk                                                      */
+#*---------------------------------------------------------------------*/
+ANDROIDNDK = $(shell echo "$$ANDROIDNDK")
+ANDROIDSDK = $(shell echo "$$ANDROIDSDK")
 
-# hop androin configuration
+ANDROIDCC=$(ANDROIDNDK)/toolschains/llvm/prebuilt/linux-$(shell uname -m)
+
+#*---------------------------------------------------------------------*/
+#*    hopdroid configuration                                           */
+#*---------------------------------------------------------------------*/
 ANDROIDHOPPORT = 8080
 ANDROIDHOPTHREADS = 6
 ANDROIDHOPZEROCONF = true
@@ -75,11 +80,13 @@ HOPARGS =
 HOPMINOR = -$(HOPDEVEL)1
 HOPFULLNAME = hop-$(HOPRELEASE)$(HOPMINOR)
 
+JAVAC = javac -target 1.7 -source 1.7 
+
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
 ANDROID_BUILD = Android.mk.in build.xml.in project.properties.in hop.keystore \
-  AndroidManifest.xml.in local.properties.in ant.properties.in proguard.cfg \
+  AndroidManifest.xml.in proguard.cfg \
   README.md
 
 ANDROID_JNI = jni/Android.mk jni/termExec.cpp
@@ -196,7 +203,7 @@ POPDIRS = hopdroid androidemo
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-build:
+build: /tmp/droidcc.sh
 	$(MAKE) -C hopdroid build
 	$(MAKE) -C androidemo build
 
@@ -238,7 +245,7 @@ install-weblet:
 $(ANDROIDBUILDDIR):
 	mkdir -p $(ANDROIDBUILDDIR)
 
-$(ANDROIDBUILDDIR)/AndroidManifest.xml $(ANDROIDBUILDDIR)/project.properties $(ANDROIDBUILDDIR)/build.xml $(ANDROIDBUILDDIR)/Android.mk $(ANDROIDBUILDDIR)/local.properties $(ANDROIDBUILDDIR)/ant.properties:
+$(ANDROIDBUILDDIR)/AndroidManifest.xml $(ANDROIDBUILDDIR)/project.properties $(ANDROIDBUILDDIR)/build.xml $(ANDROIDBUILDDIR)/Android.mk $(ANDROIDBUILDDIR)/local.properties
 	cat $< \
           | sed -e "s|@HOPVERSION@|$(HOPRELEASE)|" \
                 -e "s|@HOPDEBUG@|$(ANDROIDHOPDEBUG)|" \
@@ -256,7 +263,6 @@ $(ANDROIDBUILDDIR)/project.properties: $(ANDROIDDIR)/project.properties.in $(AND
 $(ANDROIDBUILDDIR)/build.xml: $(ANDROIDDIR)/build.xml.in $(ANDROIDBUILDDIR)
 $(ANDROIDBUILDDIR)/Android.mk: $(ANDROIDDIR)/Android.mk.in $(ANDROIDBUILDDIR)
 $(ANDROIDBUILDDIR)/local.properties: $(ANDROIDDIR)/local.properties.in $(ANDROIDBUILDDIR)
-$(ANDROIDBUILDDIR)/ant.properties: $(ANDROIDDIR)/ant.properties.in $(ANDROIDBUILDDIR)
 
 #*---------------------------------------------------------------------*/
 #*    res                                                              */
@@ -384,26 +390,13 @@ rename-afiles:
         done
 
 ndk-build: $(ANDROIDBUILDDIR)/assets
-	$(ANDROIDNDK)/ndk-build -C $(ANDROIDBUILDDIR) V=1 || exit 1
+	$(ANDROIDNDK)/ndk-build -C $(ANDROIDBUILDDIR) V=1
 
-ndk-ant: $(HOPTMPDIR)/antandroid.sh $(ANDROIDBUILDDIR)/src/fr/inria/hop/Hop.java
-	(cd $(ANDROIDBUILDDIR) && $(HOPTMPDIR)/antandroid.sh) || exit 1
-
-#*---------------------------------------------------------------------*/
-#*    HOPTMPDIR/antandroid.sh ...                                      */
-#*---------------------------------------------------------------------*/
-$(HOPTMPDIR)/antandroid.sh:
-	echo "#!/bin/sh" > $@
-	echo "$(ANDROIDANT) -Dbuild.compiler.fulldepend=true -Dbuild.compiler.compilerarg="-Xlint:unchecked" $(ANDROIDACTIONMODE) <<EOF" >> $@
-	echo "hophop" >> $@
-	echo "hophop" >> $@
-	echo "" >> $@
-	echo "EOF" >> $@
-	echo "" >> $@
-	echo "if [ \"$$""? \" != \"0 \" ]; then" >> $@
-	echo "  exit 1" >> $@
-	echo "fi" >> $@
-	chmod a+rx $@
+apk-build:
+	./buildapk.sh \
+           --androidsdk=$(ANDROIDSDK) \
+           --androidndk=$(ANDROIDNDK) \
+           $(HOPAPKNAME)
 
 #*---------------------------------------------------------------------*/
 #*    apk                                                              */
@@ -416,11 +409,11 @@ apk: apk.bigloo
 
 apk-sans-bigloo: apk.common apk.res apk.jni apk.src apk.hop
 	$(MAKE) ndk-build
-	$(MAKE) ndk-ant
+	$(MAKE) apk-build
 
 apk-sans-hop: apk.common apk.res apk.jni apk.src
 	$(MAKE) ndk-build
-	$(MAKE) ndk-ant
+	$(MAKE) apk-build
 
 install.apk:
 	adb $(ANDROIDHOST) install $(ANDROIDBUILDDIR)/bin/$(HOPAPKNAME)-debug.apk
@@ -452,7 +445,7 @@ $(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR)
 	$(RM) -rf $@
 	cp -r $(ANDROIDDIR)/src $@
 
-apk.bigloo: $(ANDROIDBUILDDIR)/bigloo-$(RELEASE)
+apk.bigloo: $(ANDROIDBUILDDIR)/bigloo-$(RELEASE) /tmp/droidcc.sh
 	$(MAKE) apk.bigloo.configure
 	$(MAKE) -C $(ANDROIDBUILDDIR)/bigloo-$(RELEASE)
 	$(MAKE) -C $(ANDROIDBUILDDIR)/bigloo-$(RELEASE) install DESTDIR=$(ANDROIDBUILDDIR)
@@ -461,7 +454,7 @@ apk.bigloo.configure:
 	(cd $(ANDROIDBUILDDIR)/bigloo-$(RELEASE); \
          ./configure --os-android \
             --android-adb=adb \
-            --cc=$(ANDROIDCC) \
+            --cc=/tmp/droidcc.sh \
             --cpicflags=-fPIC \
             --cflags="-fPIC -DBGL_GC_ROOTS" \
             --lflags=-fPIC \
@@ -498,8 +491,6 @@ apk.hop.configure:
             --bigloo-pcre=no --bigloo-unistring=no \
             $(HOPCONFIGUREOPT))
 
-
-
 $(ANDROIDBUILDDIR)/$(HOPFULLNAME): $(REPOSITORY)/$(HOPFULLNAME).tar.gz
 	(cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME))
 	(cd $(ANDROIDBUILDDIR); tar xvf $<)
@@ -507,3 +498,11 @@ $(ANDROIDBUILDDIR)/$(HOPFULLNAME): $(REPOSITORY)/$(HOPFULLNAME).tar.gz
 apk-clean:
 	rm -rf $(ANDROIDBUILDDIR)
 	rm -f $(HOPTMPDIR)/antandroid.sh
+
+#*---------------------------------------------------------------------*/
+#*    droidcc ...                                                      */
+#*---------------------------------------------------------------------*/
+/tmp/droidcc.sh:
+	@echo "#!/bin/bash" > $@
+	@echo "exec $(ANDROIDCC) -target $(ANDROIDTARGET) \"$$@\"" >> $@
+	@chmod a+rx /tmp/droidcc.sh
