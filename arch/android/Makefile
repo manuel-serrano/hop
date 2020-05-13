@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed May 13 07:23:55 2020 (serrano)                */
+#*    Last change :  Wed May 13 07:45:06 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -29,6 +29,8 @@ ANDROIDSDKVERSION = 21
 ANDROIDACTIONMODE = debug
 ANDROIDHOST = -d
 ANDROIDDIR= $(BUILDDIR)/arch/android
+
+ANDROIDLINK = dynamic
 
 ANDROIDANT = ant
 ANDROIDCC= $(ANDROIDTOOLCHAIN)/bin/arm-linux-androideabi-gcc
@@ -323,9 +325,13 @@ assets.weblet:
 	  make -C $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets/`basename $(ANDROIDWEBLET)` -f $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets/`basename $(ANDROIDWEBLET)`/arch/android/Makefile.hopdac prepare-android-weblet; \
         fi
 
-assets.post-install:
-	find $(ANDROIDBUILDDIR)/assets/lib/ -name '*.a' -exec rm {} \;
+assets.post-install: assets.post-install.$(ANDROIDLINK)
 	find $(ANDROIDBUILDDIR)/assets/lib/ -name '*.heap' -exec rm {} \;
+
+assets.post-install.dynamic:
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name '*.a' -exec rm {} \;
+
+assets.post-install.static:
 	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libhop*_[su]-*.so' -exec rm {} \;
 	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libjs2scheme*_[su]-*.so' -exec rm {} \;
 	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libnodejs*_[su]-*.so' -exec rm {} \;
@@ -483,6 +489,7 @@ apk.hop.configure:
             --bigloo=$(HOPBINDIR)/bigloo \
             --bigloolibdir=$(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE) \
             --android \
+            --link=$(ANDROIDLINK) \
             --hopc=$(HOPBINDIR)/hopc \
             --hop=$(HOPBINDIR)/hop \
             --prefix=$(ANDROIDHOPPREFIX) \
@@ -491,7 +498,6 @@ apk.hop.configure:
             --bigloo-pcre=no --bigloo-unistring=no \
             $(HOPCONFIGUREOPT))
 
-#* --link=static \                                                     */
 
 
 $(ANDROIDBUILDDIR)/$(HOPFULLNAME): $(REPOSITORY)/$(HOPFULLNAME).tar.gz
