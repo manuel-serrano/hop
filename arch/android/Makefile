@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Tue May 12 15:59:51 2020 (serrano)                */
+#*    Last change :  Wed May 13 07:23:55 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -483,7 +483,6 @@ apk.hop.configure:
             --bigloo=$(HOPBINDIR)/bigloo \
             --bigloolibdir=$(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE) \
             --android \
-            --link=static \
             --hopc=$(HOPBINDIR)/hopc \
             --hop=$(HOPBINDIR)/hop \
             --prefix=$(ANDROIDHOPPREFIX) \
@@ -491,6 +490,9 @@ apk.hop.configure:
             --disable-doc \
             --bigloo-pcre=no --bigloo-unistring=no \
             $(HOPCONFIGUREOPT))
+
+#* --link=static \                                                     */
+
 
 $(ANDROIDBUILDDIR)/$(HOPFULLNAME): $(REPOSITORY)/$(HOPFULLNAME).tar.gz
 	(cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME))
