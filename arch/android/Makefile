@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Thu May 14 14:31:45 2020 (serrano)                */
+#*    Last change :  Thu May 14 14:34:06 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -22,7 +22,7 @@ do: build
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-ANDROIDBUILDDIR = $(HOPTMPDIR)/build.hop.android
+ANDROIDBUILDDIR = $(HOPTMPDIR)/build.$(HOPAPKNAME).android
 ANDROIDACTIONMODE = debug
 ANDROIDHOST = -d
 ANDROIDDIR= $(BUILDDIR)/arch/android
