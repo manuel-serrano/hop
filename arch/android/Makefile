@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Thu May 14 08:51:34 2020 (serrano)                */
+#*    Last change :  Thu May 14 12:38:26 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -90,6 +90,7 @@ JAVAC = javac -target 1.7 -source 1.7
 config:
 	@echo "hopapkname=$(HOPAPKNAME)"
 	@echo "hopapp=$(HOPAPP)"
+	@echo "weblet=$(ANDROIDWEBLET)"
 	@echo ""
 	@echo "androidsdk=$(ANDROIDSDK)"
 	@echo "androidndk=$(ANDROIDNDK)"
