@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="fr.inria.@HOPAPP@"
+      package="fr.inria.hop"
       android:versionCode="2"
       android:versionName="@HOPVERSION@">
     <uses-sdk android:minSdkVersion="19"
@@ -11,7 +11,7 @@
                  android:debuggable="@HOPDEBUG@"
                  android:icon="@drawable/logo">
 
-        <activity android:name="fr.inria.@HOPAPP@.HopLauncher"
+        <activity android:name="fr.inria.hop.HopLauncher"
                   android:launchMode="singleTop"
                   android:configChanges="keyboard|keyboardHidden|orientation|screenLayout"
                   android:label="@string/activity_@HOPAPP@">
@@ -21,7 +21,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="fr.inria.@HOPAPP@.HopSettings"
+        <activity android:name="fr.inria.hop.HopSettings"
                   android:label="@string/activity_settings"
                   android:noHistory="true"> 
             <intent-filter>
@@ -29,13 +29,13 @@
             </intent-filter>
         </activity>
    
-        <receiver android:name="fr.inria.@HOPAPP@.HopSms">
+        <receiver android:name="fr.inria.hop.HopSms">
             <intent-filter>
 	        <action android:name="android.provider.Telephony.SMS_RECEIVED" />
 	    </intent-filter>
 	</receiver>
 
-        <receiver android:name="fr.inria.@HOPAPP@.HopBootReceiver"
+        <receiver android:name="fr.inria.hop.HopBootReceiver"
                   android:enabled="true"
                   android:exported="true"
                   android:label="HopBootReceiver">
@@ -46,7 +46,7 @@
             </intent-filter>
         </receiver>
 
-        <service android:name="fr.inria.@HOPAPP@.HopService"/>
+        <service android:name="fr.inria.hop.HopService"/>
     </application>
     <supports-screens android:largeScreens="true" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
