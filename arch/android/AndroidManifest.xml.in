@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="fr.inria.hop"
+      package="fr.inria.@HOPAPP@"
       android:versionCode="2"
       android:versionName="@HOPVERSION@">
     <uses-sdk android:minSdkVersion="19"
@@ -11,17 +11,17 @@
                  android:debuggable="@HOPDEBUG@"
                  android:icon="@drawable/logo">
 
-        <activity android:name="fr.inria.hop.HopLauncher"
+        <activity android:name="fr.inria.@HOPAPP@.HopLauncher"
                   android:launchMode="singleTop"
                   android:configChanges="keyboard|keyboardHidden|orientation|screenLayout"
-                  android:label="@string/activity_hop">
+                  android:label="@string/activity_@HOPAPP@">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity android:name="fr.inria.hop.HopSettings"
+        <activity android:name="fr.inria.@HOPAPP@.HopSettings"
                   android:label="@string/activity_settings"
                   android:noHistory="true"> 
             <intent-filter>
@@ -29,13 +29,13 @@
             </intent-filter>
         </activity>
    
-        <receiver android:name="fr.inria.hop.HopSms">
+        <receiver android:name="fr.inria.@HOPAPP@.HopSms">
             <intent-filter>
 	        <action android:name="android.provider.Telephony.SMS_RECEIVED" />
 	    </intent-filter>
 	</receiver>
 
-        <receiver android:name="fr.inria.hop.HopBootReceiver"
+        <receiver android:name="fr.inria.@HOPAPP@.HopBootReceiver"
                   android:enabled="true"
                   android:exported="true"
                   android:label="HopBootReceiver">
@@ -46,7 +46,7 @@
             </intent-filter>
         </receiver>
 
-        <service android:name="fr.inria.hop.HopService"/>
+        <service android:name="fr.inria.@HOPAPP@.HopService"/>
     </application>
     <supports-screens android:largeScreens="true" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
