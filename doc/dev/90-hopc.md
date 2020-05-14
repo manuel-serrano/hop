@@ -32,28 +32,28 @@ In the compiler terminology, a _driver_ is the compiler entity that controls
 how stages flow one from the other. The compiler exports a list of
 builtin drivers. This list can be obtained with:
 
-```shell
-% hopc --js-drivers-list
+```shell[:@shell]
+$ hopc --js-drivers-list
 ```
 
 A particular builtin driver can be selected with:
 
-```shell
-% hopc --js-driver DRIVER-NAME
+```shell[:@shell]
+$ hopc --js-driver DRIVER-NAME
 ```
 
 The list and order of compilation stages that correspond to that driver
 are obtained with:
 
-```shell
-% hopc --js-driver DRIVER-NAME --js-show-driver
+```shell[:@shell]
+$ hopc --js-driver DRIVER-NAME --js-show-driver
 ```
 
 Custom drivers can be used to compile a source file by explicitly listing
 the stages to use. Example:
 
-```shell
-% hopc --js-driver syntax,hopscript-header,loopexit,bestpractice,symbol,this,read-only,return,property,scheme foo.js -v2
+```shell[:@shell]
+$ hopc --js-driver syntax,hopscript-header,loopexit,bestpractice,symbol,this,read-only,return,property,scheme foo.js -v2
 ```
 
 Note that when the option `-v2` or higher is used on the command line, the
@@ -75,8 +75,8 @@ and accepting connections on port `8888` and let us assume that it implements
 a compilation stage accessible with a service named `js2http`, then
 a source compilation can be obtained with:
 
-```shell
-% hopc --js-driver syntax,hopscript-header,loopexit,bestpractice,symbol,this,read-only,return,property,http://localhost:8888/hop/js2http,scheme foo.js -v2
+```shell[:@shell]
+$ hopc --js-driver syntax,hopscript-header,loopexit,bestpractice,symbol,this,read-only,return,property,http://localhost:8888/hop/js2http,scheme foo.js -v2
 ```
 
 The service invoked by the compiler will receive one object with two 
@@ -112,7 +112,7 @@ _interned_ ast.
 A compilation *must* return an interned ast, so the simplest possible
 compilation stage is:
 
-```hopscript
+```hopscript[:@hop]
 const hopc = require( hop.hopc );
 
 service js2http( { ast, config } ) {
@@ -139,7 +139,7 @@ a json file and read it again for its return value.
 
 ${ <span class="label label-info">js2json.js</span> }
 
-```hopscript
+```hopscript[:@hop]
 ${ doc.include( doc.BUILDDIR + "/doc/dev/js2json.js" ) }
 ```
 
@@ -164,7 +164,7 @@ new methods to a walker. Methods are named after class names. For
 instance, the following declares a custom walker for the nodes that
 correspond to JavaScript object accesses:
 
-```hopscript
+```hopscript[:@hop]
 const w = new hopc.HopcAstWalker();
 w.J2SAccess = function( node ) {
    console.log( "an access ", node.loc );
@@ -180,7 +180,7 @@ ${ doc.include( doc.BUILDDIR + "/examples/js2http/README.md" ) }
 
 ${ <span class="label label-info">js2http/js2http.js</span> }
 
-```hopscript
+```hopscript[:@hop]
 ${ doc.include( doc.BUILDDIR + "/examples/js2http/js2http.js", 17 ) }
 ```
 

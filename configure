@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Apr 30 16:11:50 2020 (serrano)                */
+#*    Last change :  Thu May 14 14:38:50 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1453,6 +1453,7 @@ rm -f $docjson 2> /dev/null
 cat $docjson.in \
   | sed -e "s|@VERSION@|$version$minorversion|" \
 	-e "s|@BRANCH@|$version|" \
+	-e "s|@DATE@|$date|" \
 	-e "s|@BIGLOOVERSION@|$bglversion|" \
 	>> $docjson
 

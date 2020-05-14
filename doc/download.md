@@ -13,11 +13,30 @@ Precompiled Hop.js distributions are available.
 
 ### Debian/Raspberry ###
 
-A Debian/Raspberry repository is available. To use it, add the following
+A repository is available. To use it, add the following
 to your `apt` path:
 
-     deb ftp://ftp-sop.inria.fr/indes/fp/Hop/debian squeeze hop
+```shell[:@config]
+deb [trusted=yes] http://hop.inria.fr/linux/Debian buster hop
+```
 
+### Ubuntu ###
+
+An Ubuntu repository is available. To use it, add the following
+to your `apt` path:
+
+```shell[:@config]
+deb [trusted=yes] http://hop.inria.fr/linux/Ubuntu focal hop
+```
+
+### Homebrew ###
+
+Homebrew users (MacOS X), can use the pre-built version by using:
+
+```shell[:@shell]
+$ brew tap homebrew/hop https://gitlab.inria.fr/mserrano/hopbrew.git
+$ brew install homebrew/hop/bigloo-latest
+```
 
 ## Source code installation ##
 
@@ -53,28 +72,28 @@ Compiling Hop.js requires the Bigloo compiler.
 To configure and install the Bigloo compiler that is needed to compile
 Hop, use the following:
 
-```shell
-./configure --abort-missing && make && sudo make install
+```shell[:@shell]
+$ ./configure --abort-missing && make && sudo make install
 ```
 
 #### Hop installation ####
 
 To configure and install Hop, execute the following:
 
-```shell
-./configure && make && sudo make install
+```shell[:@shell]
+$ ./configure && make && sudo make install
 ```
 
 Optionally, to compile and install the documentation:
 
-```shell
-make doc && sudo make install
+```shell[:@shell]
+$ make doc && sudo make install
 ```
 
 To test the installation:
 
-```shell
-make test
+```shell[:@shell]
+$ make test
 ```
 
 
@@ -97,13 +116,15 @@ following command to generate the Docker image:
 </div>}
 
 
-`docker build -f hop-${cfg.version}.dockerfile -t hop .`
+```shell[:@shell]
+docker build -f hop-${cfg.version}.dockerfile -t hop .
+```
 
 ${ <span class="label label-warning">Note:</span> } If you already have
 installed Hop within docker, you might find useful to remove the old
 image first. This can be achieved with:
 
-```shell
+```shell[:@shell]
 $ docker container prune
 $ docker rmi `docker images | grep hop | awk '{print $3}'`
 ```
@@ -134,21 +155,23 @@ Docker almost as simple as running it natively as it automatically
 associates the host disk and the Docker image disk as needed by the
 Hop application. For instance, it can be used as:
 
-    $ mkdir -p $HOME/.config/hop
-    $ cat > $HOME/.config/hop/hoprc.js << EOF
-    hop = require( "hop" );
-    var user = require( hop.user );
-    user.add( { name: "anonymous", services: "*", directories: "*" } );
-    EOF
-    $ cat > /tmp/hello.js << EOF
-    console.log( "Hello World!" );
-    
-    service hello() {
-      return <html>Hello World!</html>'
-    }
-    EOF
-    $ hop-${cfg.version}.docker -p 8888 /tmp/hello.js
-    $ firefox http://localhost:8888/hop/hello
+```shell[:@shell]
+$ mkdir -p $HOME/.config/hop
+$ cat > $HOME/.config/hop/hoprc.js << EOF
+hop = require( "hop" );
+var user = require( hop.user );
+user.add( { name: "anonymous", services: "*", directories: "*" } );
+EOF
+$ cat > /tmp/hello.js << EOF
+console.log( "Hello World!" );
+
+service hello() {
+  return <html>Hello World!</html>'
+}
+EOF
+$ hop-${cfg.version}.docker -p 8888 /tmp/hello.js
+$ firefox http://localhost:8888/hop/hello
+```
 
 ${ <span class="label label-warning">Note:</span> } On Windows,
 `hop-${cfg.version}.docker` has to be executed from within the Bash
@@ -158,7 +181,9 @@ The `hop${cfg.version}.docker` file is shipped with the Docker image.
 In addition to be downloaded from the Hop ftp repository, it can be
 copied to the local disk with:
 
-`docker cp hop:/usr/local/share/hop/${cfg.branch}/hop.docker .`
+```shell[:@shell]
+docker cp hop:/usr/local/share/hop/${cfg.branch}/hop.docker .
+```
 
 ### Accessing the documentation and the Emacs mode ###
 
@@ -169,12 +194,16 @@ directory:
 
 It can be copied to the host disk with:
 
-`docker cp hop:/usr/local/share/doc/hop/${cfg.branch} .`
+```shell[:@shell]
+docker cp hop:/usr/local/share/doc/hop/${cfg.branch} .
+```
 
 It can also be accessed via Hop. For instance, on a Linux host, if Hop
 is executed with
 
-`hop.docker -p 9999`
+```shell[:@shell]
+hop.docker -p 9999
+```
 
 the documentation could be access at the URL:
 
@@ -182,7 +211,9 @@ the documentation could be access at the URL:
 
 The Emacs mode can be copied to the host disk with:
 
-`docker cp hop:/usr/local/share/hop/site-lisp/hopjs.el .`
+```shell[:@shell]
+docker cp hop:/usr/local/share/hop/site-lisp/hopjs.el .
+```
 
 ## Git ##
 
