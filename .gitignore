@@ -120,6 +120,9 @@ arch/android/androidemo/config.hop
 arch/debian/makedeb.sh
 arch/debian/changelog
 arch/homebrew/makebrew.sh
+arch/android/splash/splash.html
+arch/android/androidemo/etc/weblet.info
+arch/android/androidemo/etc/androidemo.wiki
 
 # testing
 test/hopjs/TEST
