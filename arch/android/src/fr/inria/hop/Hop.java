@@ -1,11 +1,10 @@
-// -*- java -*-
 /*=====================================================================*/
-/*    .../hop/3.1.x/arch/android/src/fr/inria/hop/Hop.java.in          */
+/*    .../hopdac/hopdac/arch/android/src/fr/inria/hop/Hop.java         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sat Jul  2 10:15:23 2016 (serrano)                */
-/*    Copyright   :  2010-16 Manuel Serrano                            */
+/*    Last change :  Sun Jan 14 10:07:14 2018 (serrano)                */
+/*    Copyright   :  2010-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
 /*=====================================================================*/
@@ -20,6 +19,9 @@ import android.os.*;
 import android.util.Log;
 import android.content.*;
 import android.widget.TextView;
+import android.content.res.*;
+import android.content.Context;
+import android.preference.*;
 
 import java.io.*;
 import java.net.*;
@@ -41,15 +43,18 @@ public class Hop extends Thread {
    final static int HOP_RESTART = 5;
 
    // global variables
-   static String root = "/data/data/fr.inria.hop/assets";
-   static String verbose = "";
-   static String debug = "";
-   static boolean zeroconf = false;
+   static String root = HopConfig.ROOT;
+   static String debug = HopConfig.DEBUG;
+   static String maxthreads = HopConfig.MAXTHREADS;
+   static String url = HopConfig.APP;
+   static boolean zeroconf = true;
    static boolean webdav = false;
    static boolean jobs = false;
 
-   static String port = "@HOPPORT@";
-   static String maxthreads = "@HOPTHREADS@";
+   // see setHopActivityParams
+   static String port;
+   static String rcdir;
+   static String args;
 
    // instance variables
    private boolean killed = false;
@@ -58,18 +63,34 @@ public class Hop extends Thread {
    FileDescriptor HopFd;
    final int[] currentpid = new int[ 1 ];
    boolean log = false;
-   String extra = "";
-
+   
    HopService service;
    
    // constructor
-   public Hop( HopService s, String args ) {
+   public Hop( HopService s ) {
       super();
 
       service = s;
-      extra = args;
+      currentpid[ 0 ] = 0;
    }
 
+   // prefs fetch compatible with the hopdac encoding (using S: as prefix)
+   static String getPrefString( SharedPreferences sp, String key, String def ) {
+      String tmp = sp.getString( key, "" );
+
+      return (tmp.length() <= 2) ? def : tmp.substring( 2 );
+   }
+
+   // setHopActivityParams
+   static void setHopActivityParams( Activity activity ) {
+      Resources res = activity.getResources();
+      SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences( activity );
+      port = getPrefString( sp, HopConfig.APP + "-port", HopConfig.PORT );
+      rcdir = HOME().getAbsolutePath() + "/"
+	 + getPrefString( sp, HopConfig.APP + "-rcdir", ".config/" + HopConfig.APP );
+      args = getPrefString( sp, HopConfig.ARGS, "" );
+   }
+   
    // HOME
    public static File HOME() {
       if( _HOME == null ) {
@@ -94,12 +115,6 @@ public class Hop extends Thread {
       return HOME().exists();
    }
 
-   // startWithArg
-   public void startWithArg( String arg ) {
-      extra = arg;
-      start();
-   }
-
    // run hop
    public void run() {
       final int[] pid = new int[ 1 ];
@@ -107,26 +122,25 @@ public class Hop extends Thread {
 
       String cmd = "export HOME=" + HOME().getAbsolutePath() + "; "
 	 + "export LD_LIBRARY_PATH="
-	 + root + "/lib/bigloo/@BIGLOOVERSION@:"
-	 + root + "/lib/hop/@HOPVERSION@:$LD_LIBRARY_PATH;"
+	 + root + "/lib/bigloo/" + HopConfig.BIGLOORELEASE + ":"
+	 + root + "/lib/hop/" + HopConfig.HOPRELEASE + ":$LD_LIBRARY_PATH;"
 	 + "exec " + root + HOP + " " + HOPARGS
 	 + " -p " + port
-	 + " " + verbose
 	 + " " + debug
 	 + " --max-threads " + maxthreads
 	 + (zeroconf ? " -z" : " --no-zeroconf")
 	 + (webdav ? " -d" : "")
 	 + (jobs ? " --jobs" : " --no-jobs")
-	 + " " + extra;
+	 + " --rc-dir " + rcdir
+	 + " " + args;
 
-      Log.i( "Hop", "executing [" + sh + " -c " + cmd + "]");
+      Log.d( "Hop", "========================================================================" );
+      Log.i( "Hop", "hopdac exec [" + sh + " -c \"" + cmd + "\"]");
       HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
-      Log.i( "Hop", "Hop process started, pid=" + pid[ 0 ] + ", HopFd=" +  HopFd );
-
-      extra = "";
-      
+      Log.v( "Hop", "Hop process started, pid=" + pid[ 0 ] + ", HopFd=" +  HopFd );
       synchronized( currentpid ) {
 	 currentpid[ 0 ] = pid[ 0 ];
+	 currentpid.notifyAll();
       }
 
       // background threads
@@ -139,17 +153,24 @@ public class Hop extends Thread {
 		      + " (HOP_RESTART=" + HOP_RESTART + ")" );
 
 	       synchronized( currentpid ) {
-		  currentpid[ 0 ] = 0;
+		  currentpid[ 0 ] = -1;
 
 		  if( result == HOP_RESTART ) {
 		     HopLauncher.hop_resuscitate = true;
 		  } else {
 		     // the process has stopped unexpectidly
-		     if( !inkill && service.handler != null ) {
-			Log.d( "Hop", "hop stopped unexpectidly" );
+		     if( result == 6 ) {
+			Log.e( "Hop", "hop suicide" );
 			service.handler.sendMessage(
 			   android.os.Message.obtain(
-			      service.handler, HopLauncher.MSG_HOP_FAILED, result ) );
+			      service.handler, HopLauncher.MSG_KILL_HOP_SERVICE, result ) );
+		     } else {
+			if( !inkill && service.handler != null ) {
+			   Log.e( "Hop", "hop stopped unexpectidly" );
+			   service.handler.sendMessage(
+			      android.os.Message.obtain(
+				 service.handler, HopLauncher.MSG_HOP_FAILED, result ) );
+			}
 		     }
 		  }
 	       }
@@ -161,14 +182,13 @@ public class Hop extends Thread {
 	    FileInputStream fin = new FileInputStream( HopFd );
 	    
 	    public void run() {
-	       byte[] buffer = new byte[ 255 ];
+	       byte[] buffer = new byte[ 8192 ];
 	       int l;
 
 	       try {
 		  for( l = fin.read( buffer ); l > 0; l = fin.read( buffer ) ) {
 		     if( service.handler != null ) {
 			String s = new String( buffer, 0, l );
-			if( HopLauncher.hop_log ) Log.v( "HopConsole", s );
 			service.queue.put( s );
 			service.handler.sendEmptyMessage( HopLauncher.MSG_HOP_OUTPUT_AVAILABLE );
 		     }
@@ -177,7 +197,7 @@ public class Hop extends Thread {
 		  Log.e( "Hop", "Error in the thread logger: " + e );
 		  if( !inkill ) {
 		     synchronized( currentpid ) {
-			if( currentpid[ 0 ] != 0 ) {
+			if( currentpid[ 0 ] > 0 ) {
 			   Log.e( "Hop", "process exception (pid=" + pid[ 0 ]
 				  + ") exception="
 				  +  e.getClass().getName(), e );
@@ -187,7 +207,11 @@ public class Hop extends Thread {
 	       }
 	    }
 	 } );
-   
+
+      // MS WARNING: this should be improved as there is a potential deadlock on
+      // boot. If the logger queue is fulled, the main thread might be blocked
+      // waiting Hop to start, which could never be completed because of the logger
+      // thread being stuck.
       watcher.start();
       logger.start();
    }
@@ -208,7 +232,7 @@ public class Hop extends Thread {
    
    // kill
    public void kill() {
-      Log.d( "Hop", ">>> kill..." );
+      Log.d( "Hop", ">>> kill..." + currentpid );
       
       synchronized( currentpid ) {
 	 if( currentpid[ 0 ] != 0 ) {
@@ -225,9 +249,47 @@ public class Hop extends Thread {
    }
 
    // isRunning()
-   public boolean isRunning() {
-      Log.e( "Hop", "isRunning killed=" + killed + " pid=" + currentpid[ 0 ] );
-      return !killed && currentpid[ 0 ] != 0;
+   public boolean isRunning( int timeout ) {
+      while( true ) {
+	 synchronized( currentpid ) {
+	    Log.d( "Hop", "isRunning currentpid=" + currentpid[ 0 ] );
+	    if( currentpid[ 0 ] > 0 ) {
+	       try {
+		  URL pingURL = new URL( "http://localhost:" + port + "/hop" );
+		  HttpURLConnection conn = (HttpURLConnection)pingURL.openConnection();
+
+		  conn.setRequestMethod( "HEAD" );
+
+		  Log.d( "Hop", "HEAD " + pingURL.toString() );
+
+		  conn.setConnectTimeout( 100 * timeout );
+	 
+		  int status = conn.getResponseCode();
+		  conn.disconnect();
+
+		  Log.d( "Hop", "isRunning status=" + status );
+		  return (status == HttpURLConnection.HTTP_OK)
+		     || (status == HttpURLConnection.HTTP_NOT_FOUND)
+		     || (status == HttpURLConnection.HTTP_UNAUTHORIZED);
+	       } catch( Exception e ) {
+		  Log.d( "Hop", "isRunning exn=" + e.toString() + " tmt=" + timeout );
+		  return false;
+	       }
+	    } else if( currentpid[ 0 ] == -1 ) {
+	       return false;
+	    } else {
+	       try {
+		  currentpid.wait( timeout );
+
+		  if( currentpid[ 0 ] <= 0 ) {
+		     return false;
+		  }
+	       } catch( Exception e ) {
+		  return false;
+	       }
+	    }
+	 }
+      }
    }
 
    // emergencyExit

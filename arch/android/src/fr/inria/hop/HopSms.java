@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hop/2.2.x/arch/android/src/fr/inria/hop/HopSms.java          */
+/*    .../weblets/hopdac/arch/android/src/fr/inria/hop/HopSms.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Mon Oct 25 10:50:24 2010 (serrano)                */
-/*    Copyright   :  2010 Manuel Serrano                               */
+/*    Last change :  Sat Jul 16 08:00:03 2016 (serrano)                */
+/*    Copyright   :  2010-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    SMS receiver                                                     */
 /*=====================================================================*/
@@ -25,20 +25,22 @@ import android.util.Log;
 public class HopSms extends BroadcastReceiver {
    
    @Override public void onReceive( Context context, Intent intent ) {
-      Bundle bundle = intent.getExtras();
-      SmsMessage[] msgs = null;
+      if( HopService.lasthopdroid != null ) {
+	 Bundle bundle = intent.getExtras();
+	 SmsMessage[] msgs = null;
       
-      if( bundle != null ) {
-	 Object[] pdus = (Object[])bundle.get( "pdus" );
-	 msgs = new SmsMessage[ pdus.length ];
+	 if( bundle != null ) {
+	    Object[] pdus = (Object[])bundle.get( "pdus" );
+	    msgs = new SmsMessage[ pdus.length ];
 	 
-	 for( int i = 0; i < msgs.length; i++ ) {
-	    String sms = "(\"";
-	    msgs[ i ] = SmsMessage.createFromPdu( (byte[])pdus[ i ] );
-	    sms += msgs[ i ].getOriginatingAddress() + "\" \""
-	       + msgs[ i ].getMessageBody().toString() + "\")";
-	    
-	    HopDroid.hopPushEvent( "sms-received", sms );
+	    for( int i = 0; i < msgs.length; i++ ) {
+	       String sms = "(\"";
+	       msgs[ i ] = SmsMessage.createFromPdu( (byte[])pdus[ i ] );
+	       sms += msgs[ i ].getOriginatingAddress() + "\" \""
+		  + msgs[ i ].getMessageBody().toString() + "\")";
+
+	       HopService.lasthopdroid.pushEvent( "sms-received", sms );
+	    }
 	 }
       }
    }

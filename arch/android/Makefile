@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed May 13 18:28:56 2020 (serrano)                */
+#*    Last change :  Thu May 14 06:58:44 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -36,7 +36,7 @@ ANDROIDTARGET = armv7a-linux-androideabi26
 ANDROIDNDK = $(shell echo "$$ANDROIDNDK")
 ANDROIDSDK = $(shell echo "$$ANDROIDSDK")
 
-ANDROIDCC=$(ANDROIDNDK)/toolschains/llvm/prebuilt/linux-$(shell uname -m)
+ANDROIDCC=$(ANDROIDNDK)/toolchains/llvm/prebuilt/linux-$(shell uname -m)/bin/clang
 
 #*---------------------------------------------------------------------*/
 #*    hopdroid configuration                                           */
@@ -245,7 +245,7 @@ install-weblet:
 $(ANDROIDBUILDDIR):
 	mkdir -p $(ANDROIDBUILDDIR)
 
-$(ANDROIDBUILDDIR)/AndroidManifest.xml $(ANDROIDBUILDDIR)/project.properties $(ANDROIDBUILDDIR)/build.xml $(ANDROIDBUILDDIR)/Android.mk $(ANDROIDBUILDDIR)/local.properties
+$(ANDROIDBUILDDIR)/AndroidManifest.xml $(ANDROIDBUILDDIR)/project.properties $(ANDROIDBUILDDIR)/build.xml $(ANDROIDBUILDDIR)/Android.mk:
 	cat $< \
           | sed -e "s|@HOPVERSION@|$(HOPRELEASE)|" \
                 -e "s|@HOPDEBUG@|$(ANDROIDHOPDEBUG)|" \
@@ -262,7 +262,6 @@ $(ANDROIDBUILDDIR)/AndroidManifest.xml: $(ANDROIDDIR)/AndroidManifest.xml.in $(A
 $(ANDROIDBUILDDIR)/project.properties: $(ANDROIDDIR)/project.properties.in $(ANDROIDBUILDDIR)
 $(ANDROIDBUILDDIR)/build.xml: $(ANDROIDDIR)/build.xml.in $(ANDROIDBUILDDIR)
 $(ANDROIDBUILDDIR)/Android.mk: $(ANDROIDDIR)/Android.mk.in $(ANDROIDBUILDDIR)
-$(ANDROIDBUILDDIR)/local.properties: $(ANDROIDDIR)/local.properties.in $(ANDROIDBUILDDIR)
 
 #*---------------------------------------------------------------------*/
 #*    res                                                              */
@@ -424,9 +423,7 @@ click.apk:
 uninstall.apk:
 	adb $(ANDROIDHOST) uninstall fr.inria.hop
 
-apk.common: $(ANDROIDBUILDDIR)/local.properties \
-  $(ANDROIDBUILDDIR)/ant.properties \
-  $(ANDROIDBUILDDIR)/build.xml \
+apk.common: $(ANDROIDBUILDDIR)/build.xml \
   $(ANDROIDBUILDDIR)/Android.mk \
   $(ANDROIDBUILDDIR)/AndroidManifest.xml \
   $(ANDROIDBUILDDIR)/project.properties
@@ -502,7 +499,7 @@ apk-clean:
 #*---------------------------------------------------------------------*/
 #*    droidcc ...                                                      */
 #*---------------------------------------------------------------------*/
-/tmp/droidcc.sh:
+/tmp/droidcc.sh: Makefile
 	@echo "#!/bin/bash" > $@
-	@echo "exec $(ANDROIDCC) -target $(ANDROIDTARGET) \"$$@\"" >> $@
+	@echo "exec $(ANDROIDCC) -target $(ANDROIDTARGET) \"\$$@\"" >> $@
 	@chmod a+rx /tmp/droidcc.sh

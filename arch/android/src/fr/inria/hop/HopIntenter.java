@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jul  5 09:42:40 2016                          */
-/*    Last change :  Mon Jul 11 21:08:05 2016 (serrano)                */
-/*    Copyright   :  2016 Manuel Serrano                               */
+/*    Last change :  Sat Dec 30 08:18:23 2017 (serrano)                */
+/*    Copyright   :  2016-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Spawn Hop service (not the Hop process).                         */
 /*=====================================================================*/
@@ -52,15 +52,16 @@ public class HopIntenter implements HopStage {
 	       hopservice.handler = handler;
 	       hopservice.queue = queue;
 	       hopservice.hopdroid.activity = activity;
-	       hopconnected = true;
 	       hopservice.onConnect();
-		  
-	       if( hopservice.waitHop( 4000 ) ) {
+
+	       if( hopservice.waitHop( 8000 ) ) {
 		  Log.d( "HopIntenter", "Hop ready..." );
+		  hopconnected = true;
 		  handler.sendEmptyMessage( HopLauncher.MSG_HOP_START  );
 	       } else {
-		  Log.d( "HopIntenter", "Hop fail..." );
-		  handler.sendEmptyMessage( HopLauncher.MSG_HOP_FAIL );
+		  Log.d( "HopIntenter", "Hop cannot start..." );
+		  hopconnected = false;
+		  handler.sendEmptyMessage( HopLauncher.MSG_HOP_CANNOT );
 	       }
 	    } catch( Exception e ) {
 	       Log.e( "HopIntenter", "error while connecting to service: " +
@@ -99,7 +100,6 @@ public class HopIntenter implements HopStage {
 
    public void exec() {
       Log.d( "HopIntenter", "exec" );
-      
       hopintent = new Intent( activity.getApplicationContext(), HopService.class );
       if( !HopService.isBackground() ) {
 	 activity.startService( hopintent );

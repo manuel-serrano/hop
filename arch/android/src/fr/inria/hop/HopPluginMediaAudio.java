@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Sun Dec 30 12:44:45 2012 (serrano)                */
-/*    Copyright   :  2011-12 Manuel Serrano                            */
+/*    Last change :  Mon Aug 15 07:42:58 2016 (serrano)                */
+/*    Copyright   :  2011-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
 /*    -------------------------------------------------------------    */
@@ -154,7 +154,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 	    if( cur.moveToFirst() ) {
 	       int i = cur.getColumnIndex( Artists.ARTIST );
 	       do {
-		  // Log.d( "HopPluginMediaAudio", "querying artist: [" + cur.getString( i ) + "]");
+		  Log.d( "HopPluginMediaAudio", "querying artist: [" + cur.getString( i ) + "]");
 		  op.write( "\"".getBytes() );
 		  op.write( escapeBytes( cur.getString( i ) ) );
 		  op.write( "\" ".getBytes() );
@@ -173,8 +173,8 @@ public class HopPluginMediaAudio extends HopPlugin {
 			     MEDIA_LOOKUP_PROJECTION,
 			     Media.ALBUM + "=?",
 			     new String[] { album },
-			     Media.DATA + " ASC" );
-      // Log.d( "HopPluginMediaAudio", "querying album: " + album + "..." );
+			     Media.DATA + " DESC" );
+      Log.d( "HopPluginMediaAudio", "querying album: " + album + "..." );
       synchronized( op ) {
 	 if( cur == null ) {
 	    op.write( "()".getBytes() );
@@ -224,7 +224,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 
    private void queryArtistAlbum( OutputStream op, String artist )
       throws IOException {
-      // Log.d( "HopPluginMediaAudio", "querying ArtistAlbum: [" + artist + "]");
+      Log.d( "HopPluginMediaAudio", "querying ArtistAlbum: [" + artist + "]");
       ContentResolver cr = hopdroid.service.getContentResolver();
 
       // get the artist first
@@ -246,7 +246,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 				      null,
 				      null );
 
-	       // Log.d( "HopPluginMediaAudio", "queryArtistAlbum, cur=" + (cur == null ? "null" : cur.getCount()) + " artistid=" + artistid );
+	       Log.d( "HopPluginMediaAudio", "queryArtistAlbum, cur=" + (cur == null ? "null" : cur.getCount()) + " artistid=" + artistid );
 	       
 	       if( cur == null ) {
 		  op.write( "()".getBytes() );
@@ -258,7 +258,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 
 		  if( cur.moveToFirst() ) {
 		     do {
-			// Log.d( "HopPluginMediaAudio", "queryArtistAlbum, ALBUM=" + cur.getString( j ) + " ART=" + cur.getString( a ) );
+			Log.d( "HopPluginMediaAudio", "queryArtistAlbum, ALBUM=" + cur.getString( j ) + " ART=" + cur.getString( a ) );
 			op.write( "(album: \"".getBytes() );
 			op.write( escapeBytes( cur.getString( j )) );
 			op.write( "\"".getBytes() );
@@ -298,7 +298,8 @@ public class HopPluginMediaAudio extends HopPlugin {
 
    private void queryGenreArtists( OutputStream op, String genre )
       throws IOException {
-      // Log.d( "hopPluginMediaAudio", "queryGenreArists genre=\"" + genre + "\"" );
+      Log.d( "HopPluginMediaAudio", "queryGenreArists genre=\"" + genre + "\"" );
+      
       if( genre.equals( "<all>" ) ) {
 	 queryArtists( op );
       } else {
@@ -308,11 +309,10 @@ public class HopPluginMediaAudio extends HopPlugin {
 				Genres.NAME + "=?",
 				new String[] { genre },
 				null );
-	 // Log.d( "hopPluginMediaAudio", "queryGenreArtist genre=\"" + genre + "\"" );
 	 synchronized( op ) {
 	    if( cur == null || cur.getCount() == 0 ) {
 	       cur.close();
-	       // Log.d( "hopPluginMediaAudio", "cur null.1" );
+	       //Log.d( "HopPluginMediaAudio", "cur null.1" );
 	       op.write( "()".getBytes() );
 	       if( cur != null ) cur.close();
 	    } else {
@@ -332,7 +332,7 @@ public class HopPluginMediaAudio extends HopPlugin {
 			do {
 			   String artist = c.getString( j );
 		     
-			   // Log.d( "hopPluginMediaAudio", "artist=" + artist );
+			   //Log.d( "HopPluginMediaAudio", "artist=" + artist );
 
 			   if( !artist.equals( cartist ) ) {
 			      op.write( "\"".getBytes() );
