@@ -2,7 +2,6 @@
 <resources>
    <string name="hop">hop</string>
    <string name="preferences">Preferences</string>
-   <string name="hopversion">Hop @HOPVERSION@</string>
    <string name="hopurl">@HOPURL@</string>
    <string name="hopport">@HOPPORT@</string>
    <string name="hopthreads">@HOPTHREADS@</string>
@@ -12,7 +11,7 @@
    <string name="hopdebug">@HOPDEBUGLEVEL@</string>
    <string name="hopzeroconf">@HOPZEROCONF@</string>
    <string name="hoproot">@HOPPREFIX@</string>
-   
+
    <!-- Application configuration -->
    <string name="hopapp">@HOPAPP@</string>
    <string name="hopargs">@HOPARGS@</string>
@@ -26,14 +25,12 @@
    <string name="activity_hopversion">Hop @HOPVERSION@</string>
    <string name="activity_settings">Hop Settings</string>
 
-   <!-- Main UI -->
-   <string name="ui_scroll">Enable console scrolling</string>
    <!-- Option menu -->
    <string name="menu_quit">Quit</string>
    <string name="menu_settings">Settings</string>
    <string name="menu_restart">Restart</string>
    <string name="menu_info">Info</string>
-   <string name="menu_clear">Clear console</string>
+   <string name="menu_reload">Reload</string>
    <string name="menu_detach">Detach</string>
  
    <!-- Preference dialog -->

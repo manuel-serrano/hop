@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:29:16 2010                          */
-/*    Last change :  Fri Apr 19 09:08:41 2013 (serrano)                */
-/*    Copyright   :  2010-13 Manuel Serrano                            */
+/*    Last change :  Wed Dec 28 07:51:43 2016 (serrano)                */
+/*    Copyright   :  2010-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Music Player                                             */
 /*    -------------------------------------------------------------    */
@@ -21,6 +21,7 @@ import android.app.*;
 import android.content.*;
 import android.os.*;
 import android.util.Log;
+import android.util.Base64;
 import android.media.*;
 import android.net.*;
 
@@ -39,6 +40,8 @@ public class HopPluginMusicPlayer extends HopPlugin {
    static final int MPLAYER_STATE_STOP = 4;
    static final int MPLAYER_STATE_CLOSE = 5;
 
+   static final String DEVNULL = "/dev/null";
+
    // instance variables
    MediaPlayer mplayer = null;
    int mplayerstate = MPLAYER_STATE_UNSPECIFIED;
@@ -52,13 +55,23 @@ public class HopPluginMusicPlayer extends HopPlugin {
       Log.v( "HopPluginMusicPlayer", "init mplayer=" + mplayer );
    }
 
+   private void resetSrc( MediaPlayer mp ) {
+      try {
+	 datasrc = DEVNULL;
+	 mp.setDataSource( datasrc );
+	 mp.prepare();
+      } catch( Exception e ) {
+	 ;
+      }
+   }
+   
    // create a media player
    private MediaPlayer make_mediaplayer() {
-      MediaPlayer mplayer = new MediaPlayer();
-      mplayer.setWakeMode( hopdroid.service, PowerManager.PARTIAL_WAKE_LOCK );
+      MediaPlayer player = new MediaPlayer();
+      player.setWakeMode( hopdroid.service, PowerManager.PARTIAL_WAKE_LOCK );
       Log.v( "HopPluginMusicPlayer", "********** make mediaplayer..." );
       
-      mplayer.setOnPreparedListener( new MediaPlayer.OnPreparedListener() {
+      player.setOnPreparedListener( new MediaPlayer.OnPreparedListener() {
 	    public void onPrepared( MediaPlayer mp ) {
 	       mp.start();
 	       Log.v( "HopPlugingMusicPlayer", "prepared..." );
@@ -78,18 +91,27 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    }
 	 } );
 
-      mplayer.setOnErrorListener( new MediaPlayer.OnErrorListener() {
+      player.setOnErrorListener( new MediaPlayer.OnErrorListener() {
 	    public boolean onError( MediaPlayer mp, int what, int extra ) {
-	       Log.v( "HopPluginMusicPlayer", "mediaplayer error: " +
-		      what + " " + extra
-		      + ", error playing \"" + datasrc + "\"" );
-	       hopdroid.pushEvent( "androidmusic-error",
-				   "\"error playing \\\"" + datasrc + "\\\"\"" );
+	       if( datasrc != DEVNULL ) {
+		  Log.v( "HopPluginMusicPlayer", "mediaplayer error: " +
+			 what + " (" + strerror( what ) + ") " +
+			 extra + " (" + strerror( extra ) + ") " +
+			 ", error playing \"" + datasrc + "\"" );
+		  mp.reset();
+		  mp.release();
+		  mplayer = null;
+		  resetSrc( mp );
+
+		  hopdroid.pushEvent( "androidmusic-error",
+				      "\"error playing \\\"" + datasrc + "\\\"\"" );
+
+	       } 
 	       return false;
 	    }
 	 } );
 
-      mplayer.setOnInfoListener( new MediaPlayer.OnInfoListener() {
+      player.setOnInfoListener( new MediaPlayer.OnInfoListener() {
 	    public boolean onInfo( MediaPlayer mp, int what, int extra ) {
 	       Log.v( "HopPluginMusicPlayer", "mediaplayer info: " +
 		      what + " " + extra );
@@ -100,21 +122,113 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    }
 	 } );
 
-      mplayer.setOnCompletionListener( new MediaPlayer.OnCompletionListener() {
+      player.setOnCompletionListener( new MediaPlayer.OnCompletionListener() {
 	    public void onCompletion( MediaPlayer mp ) {
 	       hopdroid.pushEvent( "androidmusic-state", "ended" );
 	       ended = true;
+	       resetSrc( mp );
 	    }
 	 } );
 
-      mplayer.setOnSeekCompleteListener( new MediaPlayer.OnSeekCompleteListener() {
+      player.setOnSeekCompleteListener( new MediaPlayer.OnSeekCompleteListener() {
 	    public void onSeekComplete( MediaPlayer mp ) {
 	       Log.v( "HopPluginMusicPlayer", "mediaplayer seek complete" );
 	       ended = true;
+	       resetSrc( mp);
 	    }
 	 } );
 
-      return mplayer;
+      return player;
+   }
+
+   // strerror
+   private static String strerror( int extra ) {
+      switch( extra ) {
+	 case android.media.MediaPlayer.MEDIA_ERROR_UNKNOWN: return "MEDIA_ERROR_UNKNOWN";
+	 case android.media.MediaPlayer.MEDIA_ERROR_SERVER_DIED: return "MEDIA_ERROR_SERVER_DIED";
+	 case android.media.MediaPlayer.MEDIA_ERROR_IO: return "MEDIA_ERROR_IO";
+	 case android.media.MediaPlayer.MEDIA_ERROR_MALFORMED: return "MEDIA_ERROR_MALFORMED";
+	 case android.media.MediaPlayer.MEDIA_ERROR_UNSUPPORTED: return "MEDIA_ERROR_UNSUPPORTED";
+	 case android.media.MediaPlayer.MEDIA_ERROR_TIMED_OUT: return "MEDIA_ERROR_TIMED_OUT";
+	 case -2147483648: return "MEDIA_ERROR_SYSTEM";
+	 default: return "???";
+      }
+   }
+
+/*    static byte[] B( String s ) {                                    */
+/*       return s.getBytes();                                          */
+/*    }                                                                */
+/*                                                                     */
+/*    static String readLine( InputStream in, byte[] buf ) throws Exception { */
+/*       int i = 0;                                                    */
+/*       int s = 0;                                                    */
+/*                                                                     */
+/*       while( i < buf.length ) {                                     */
+/* 	 buf[ i ] = (byte)in.read();                                   */
+/*                                                                     */
+/* 	 if( buf[ i ] == '\n' ) {                                      */
+/* 	    if( s == 1 ) {                                             */
+/* 	       return new String( buf, 0, i - 1 );                     */
+/* 	    } else {                                                   */
+/* 	       s = 0;                                                  */
+/* 	    }                                                          */
+/* 	 }                                                             */
+/* 	                                                               */
+/* 	 if( buf[ i ] == '\r' ) s = 1;                                 */
+/* 	 i++;                                                          */
+/*       }                                                             */
+/*                                                                     */
+/*       return null;                                                  */
+/*    }                                                                */
+/*                                                                     */
+/*    static String readChars( InputStream in, byte[] buf, int z ) throws Exception { */
+/*       int i = 0;                                                    */
+/*       int s = 0;                                                    */
+/*                                                                     */
+/*       while( i < z ) {                                              */
+/* 	 buf[ i ] = (byte)in.read();                                   */
+/* 	 i++;                                                          */
+/*       }                                                             */
+/*                                                                     */
+/*       return new String( buf, 0, z );                               */
+/*    }                                                                */
+
+   // flacStartOffset
+   protected long flacStartOffset( String path ) {
+      RandomAccessFile in = null;
+      try {
+	 in = new RandomAccessFile( path, "r" );
+	 byte state = 0;
+	 final byte[] buffer = new byte[ 1 ];
+	 long o = 0;
+      
+	 while( true ) {
+	    int sz = in.read( buffer, 0, 1 );
+	    if( sz == 1 ) {
+	       switch( state ) {
+		  case 0:
+		     if( buffer[ 0 ] == 'f' ) state++; break;
+		  case 1:
+		     if( buffer[ 0 ] == 'L' ) state++; else state = 0; break;
+		  case 2:
+		     if( buffer[ 0 ] == 'a' ) state++; else state = 0; break;
+		  case 3:
+		     if( buffer[ 0 ] == 'C' ) return o - 3; else state = 0;
+	       }
+	       o++;
+	    } else {
+	       return -1;
+	    }
+	 }
+      } catch( Exception e ) {
+	 return -1;
+      } finally {
+	 try {
+	    if( in != null ) in.close();
+	 } catch( Exception _e ) {
+	    ;
+	 }
+      }
    }
    
    // music player
@@ -153,7 +267,9 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    // stop
 	    if( mplayer != null ) {
 	       Log.v( "HopPluginMusicPlayer", "mediaplayer set stop" );
-	       mplayer.stop();
+	       if( mplayer.isPlaying() ) {
+		  mplayer.stop();
+	       }
 	       mplayerstate = MPLAYER_STATE_STOP;	       
 	       hopdroid.pushEvent( "androidmusic-state", "stop" );
 	    }
@@ -184,7 +300,21 @@ public class HopPluginMusicPlayer extends HopPlugin {
 	    File file = new File( datasrc );
 
 	    if( file.exists() ) {
-	       mplayer.setDataSource( hopdroid.service, Uri.fromFile( file ) );
+	       
+	       if( datasrc.indexOf( ".flac" ) > 0 ) {
+		  long offset = flacStartOffset( datasrc );
+		  FileInputStream fin = new FileInputStream( file );
+		  Log.v( "HopPluginMusicPlayer", "flac offset=" + offset );
+
+		  try {
+		     mplayer.setDataSource( fin.getFD(), offset, file.length() );
+		  } finally {
+		     fin.close();
+		  }
+	       } else {
+		  mplayer.setDataSource( hopdroid.service, Uri.fromFile( file ) );
+	       }
+
 	       mplayer.prepare();
 	    } else {
 	       mplayer.setDataSource( datasrc );

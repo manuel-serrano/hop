@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/src/Makefile                      */
+#*    serrano/prgm/project/hop/hop/src/Makefile                        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Wed Feb 26 17:44:22 2014 (serrano)                */
+#*    Last change :  Tue May 12 18:38:34 2020 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -71,8 +71,11 @@ $(BUILDBINDIR)/$(EXEC): .afile .etags $(OBJECTS)
 link.dynamic:
 	@ $(call link,$(BIGLOO),$(BCFLAGS) $(BLDFLAGS),$(BCFLAGSDEV),$(OBJECTS),-o,$(DEST))
 
-link.static:
+link.static-bigloo:
 	@ $(call link,$(BIGLOO),$(BCFLAGS),$(BCFLAGSDEV),-static-all-bigloo $(OBJECTS),-o,$(DEST))
+
+link.static:
+	@ $(call link,$(BIGLOO),$(BCFLAGS),$(BCFLAGSDEV),-static-all-bigloo -ldopt -static $(OBJECTS),-o,$(DEST))
 
 link.library:
 	echo "***ERROR: link.library not currently supported!"

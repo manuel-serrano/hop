@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="hopstyle" parent="android:Theme.DeviceDefault"> 
+<!--
     <style name="hopstyle" parent="android:Theme.Holo"> 
+-->
 <!--
     <style name="hopstyle">
 -->
@@ -10,11 +13,10 @@
         <item name="android:foreground">#00ff00</item>
         <item name="android:textColor">#00ff00</item>
 -->
-        <item name="android:windowTitleSize">56px</item>
+        <item name="android:windowTitleSize">48px</item>
         <item name="android:textColor">#fff</item>
     </style>
 
     <color name="noScrollColor">#f00</color>
     <color name="scrollColor">#FFBF30</color>
-
 </resources>

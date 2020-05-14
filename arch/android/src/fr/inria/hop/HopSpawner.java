@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hopdac/arch/android/src/fr/inria/hop/HopIntenter.java        */
+/*    .../hopdac/arch/android/src/fr/inria/hop/HopSpawner.java         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jul  5 09:42:40 2016                          */
-/*    Last change :  Sat Dec 30 08:18:23 2017 (serrano)                */
-/*    Copyright   :  2016-17 Manuel Serrano                            */
+/*    Last change :  Tue Jul  5 10:01:31 2016 (serrano)                */
+/*    Copyright   :  2016 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Spawn Hop service (not the Hop process).                         */
 /*=====================================================================*/
@@ -27,47 +27,38 @@ import java.net.*;
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
-public class HopIntenter implements HopStage {
+public class HopSpawner implements HopStage {
    Handler handler;
    Intent hopintent = null;
    HopService hopservice = null;
    boolean hopconnected = false;
-   ArrayBlockingQueue<String> queue;
-   
    Activity activity;
+   final ArrayBlockingQueue<String> queue =
+      new ArrayBlockingQueue<String>( 10 );
+   
 
-   public HopIntenter( Activity act, Handler hdl, ArrayBlockingQueue<String> q ) {
+   public HopSpawner( Activity act, Handler hdl ) {
       super();
       activity = act;
       handler = hdl;
-      queue = q;
    }
    
    final ServiceConnection hopconnection = new ServiceConnection() {
 	 public void onServiceConnected( ComponentName className, IBinder service ) {
-	    Log.d( "HopIntenter", "onServiceConnected" );
+	    Log.d( "HopSpawner", "onServiceConnected" );
 	    hopservice = ((HopService.HopBinder)service).getService();
 
 	    try {
 	       hopservice.handler = handler;
 	       hopservice.queue = queue;
 	       hopservice.hopdroid.activity = activity;
+	       hopconnected = true;
 	       hopservice.onConnect();
-
-	       if( hopservice.waitHop( 8000 ) ) {
-		  Log.d( "HopIntenter", "Hop ready..." );
-		  hopconnected = true;
-		  handler.sendEmptyMessage( HopLauncher.MSG_HOP_START  );
-	       } else {
-		  Log.d( "HopIntenter", "Hop cannot start..." );
-		  hopconnected = false;
-		  handler.sendEmptyMessage( HopLauncher.MSG_HOP_CANNOT );
-	       }
 	    } catch( Exception e ) {
-	       Log.e( "HopIntenter", "error while connecting to service: " +
+	       Log.e( "HopLauncher", "error while connecting to service: " +
 		      e.toString() );
 	       e.printStackTrace();
-	       Log.e( "HopIntenter", "killing background hop because of error..." );
+	       Log.e( "HopLauncher", "killing background hop because of error..." );
 	       hopconnected = false;
 	       activity.unbindService( hopconnection );
 	       HopService.emergencyExit();
@@ -81,35 +72,21 @@ public class HopIntenter implements HopStage {
 	 }
       };
    
-   void raise( String stage, int kmsg, Exception e ) {
-      String msg = e.getMessage();
-      
-      Log.e( stage, e.toString() );
-      e.printStackTrace();
-      
-      if( msg == null ) msg = e.getClass().getName();
-      
-      handler.sendMessage( android.os.Message.obtain( handler, kmsg, e ) );
-   }
-
-   void raise( String stage, int kmsg, String msg ) {
-      Log.e( stage, msg );
-      
-      handler.sendMessage( android.os.Message.obtain( handler, kmsg, msg ) );
-   }
-
    public void exec() {
-      Log.d( "HopIntenter", "exec" );
+      Log.d( "HopSpawner", "exec" );
+      
       hopintent = new Intent( activity.getApplicationContext(), HopService.class );
       if( !HopService.isBackground() ) {
 	 activity.startService( hopintent );
       }
 
+      Log.d( "HopSpawner", "<<< binding activity" );
       activity.bindService( hopintent, hopconnection, Context.BIND_AUTO_CREATE );
+      Log.d( "HopSpawner", "<<< activity bound" );
    }
 
    public void abort() {
-      Log.d( "HopIntenter", "abort" );
+      Log.d( "HopSpawner", "abort" );
 
       activity.unbindService( hopconnection );
    }

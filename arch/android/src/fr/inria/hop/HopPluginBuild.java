@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.4.x/arch/android/src/fr/inria/hop/HopPluginBuild.java      */
+/*    .../hopdac/arch/android/src/fr/inria/hop/HopPluginBuild.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Wed Feb  6 10:14:38 2013 (serrano)                */
-/*    Copyright   :  2010-13 Manuel Serrano                            */
+/*    Last change :  Wed Jul  6 10:51:10 2016 (serrano)                */
+/*    Copyright   :  2010-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the BUILD info                                               */
 /*=====================================================================*/
@@ -37,7 +37,6 @@ public class HopPluginBuild extends HopPlugin {
       switch( HopDroid.read_int( ip ) ) {
 	 // sdk version
 	 case (byte)'v':
-	    Log.d( "HopPluginBuild", "sdk=" + android.os.Build.VERSION.RELEASE );
 	    op.write( "\"".getBytes() );
 	    op.write( android.os.Build.VERSION.RELEASE.getBytes() );
 	    op.write( "\"".getBytes() );
@@ -45,7 +44,6 @@ public class HopPluginBuild extends HopPlugin {
 	    
 	 // model
 	 case (byte)'m':
-	    Log.d( "HopPluginBuild", "model=" + android.os.Build.MODEL );
 	    op.write( "\"".getBytes() );
 	    op.write( android.os.Build.MODEL.getBytes() );
 	    op.write( "\"".getBytes() );
@@ -53,7 +51,6 @@ public class HopPluginBuild extends HopPlugin {
 	    
 	 // product
 	 case (byte)'p':
-	    Log.d( "HopPluginBuild", "product=" + android.os.Build.PRODUCT );
 	    op.write( "\"".getBytes() );
 	    op.write( android.os.Build.PRODUCT.getBytes() );
 	    op.write( "\"".getBytes() );
