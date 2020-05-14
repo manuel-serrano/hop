@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Thu May 14 19:13:12 2020 (serrano)                */
+#*    Last change :  Thu May 14 20:14:26 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -491,11 +491,6 @@ apk.bigloo.configure:
             --stack-check=no \
             --prefix=$(ANDROIDHOPPREFIX) \
             --build-bindir=$(HOPBINDIR) \
-            --library=mail \
-            --library=calendar \
-            --library=text \
-            --library=phone \
-            --library=hopdroid \
             --customlibuv=yes \
             --disable-doc --disable-pcre --disable-unistring --disable-gmp \
             $(BIGLOOCONFIGUREOPT))
@@ -521,6 +516,11 @@ apk.hop.configure:
             --hop=$(HOPBINDIR)/hop \
             --prefix=$(ANDROIDHOPPREFIX) \
             --libdir=$(ANDROIDHOPPREFIX)/lib \
+            --library=mail \
+            --library=calendar \
+            --library=text \
+            --library=phone \
+            --library=hopdroid \
             --disable-doc \
             --bigloo-pcre=no --bigloo-unistring=no \
             $(HOPCONFIGUREOPT))
