@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Thu May 14 15:19:59 2020 (serrano)                */
+#*    Last change :  Thu May 14 15:25:48 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -86,7 +86,7 @@ JAVAC = javac -target 1.7 -source 1.7
 -include $(CONFIG)
 
 # weblets should invoke this makefile with command line such as
-# $(MAKE) -C $(HOPDIR)/arch/android $(MAKECMDGOALS) CONFIG=$(HOPDACDIR)/Makefile.hopdac
+# $(MAKE) -C $(HOPDIR)/arch/android $(MAKECMDGOALS) CONFIG=$(HOPDACDIR)/Makefile.android
 config:
 	@echo "hopapkname=$(HOPAPKNAME)"
 	@echo "hopapp=$(HOPAPP)"
@@ -358,7 +358,7 @@ $(ANDROIDBUILDDIR)/assets: \
 assets.weblet:
 	if [ "$(ANDROIDWEBLET) " != " " ]; then \
           cp -r $(ANDROIDWEBLET) $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets; \
-	  make -C $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets/`basename $(ANDROIDWEBLET)`/arch/android -f Makefile.hopdac prepare-android-weblet; \
+	  make -C $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets/`basename $(ANDROIDWEBLET)`/arch/android -f Makefile.android prepare-android-weblet; \
         fi
 
 assets.post-install: assets.post-install.$(ANDROIDLINK)
