@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Thu May 14 06:58:44 2020 (serrano)                */
+#*    Last change :  Thu May 14 08:51:34 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -29,12 +29,13 @@ ANDROIDDIR= $(BUILDDIR)/arch/android
 
 ANDROIDLINK = dynamic
 ANDROIDTARGET = armv7a-linux-androideabi26
+ANDROIDSDKVERSION = 21
 
 #*---------------------------------------------------------------------*/
 #*    Android sdk                                                      */
 #*---------------------------------------------------------------------*/
-ANDROIDNDK = $(shell echo "$$ANDROIDNDK")
 ANDROIDSDK = $(shell echo "$$ANDROIDSDK")
+ANDROIDNDK = $(shell echo "$$ANDROIDNDK")
 
 ANDROIDCC=$(ANDROIDNDK)/toolchains/llvm/prebuilt/linux-$(shell uname -m)/bin/clang
 
@@ -75,12 +76,40 @@ PLUGINPREFS = false
 REPOSITORY = $(DISTRIBDIR)
 
 HOPAPKNAME = hop
-HOPAPP = hopdac
+HOPAPP = hop
 HOPARGS = 
 HOPMINOR = -$(HOPDEVEL)1
 HOPFULLNAME = hop-$(HOPRELEASE)$(HOPMINOR)
 
 JAVAC = javac -target 1.7 -source 1.7 
+
+-include $(CONFIG)
+
+# weblets should invoke this makefile with command line such as
+# $(MAKE) -C $(HOPDIR)/arch/android $(MAKECMDGOALS) CONFIG=$(HOPDACDIR)/Makefile.hopdac
+config:
+	@echo "hopapkname=$(HOPAPKNAME)"
+	@echo "hopapp=$(HOPAPP)"
+	@echo ""
+	@echo "androidsdk=$(ANDROIDSDK)"
+	@echo "androidndk=$(ANDROIDNDK)"
+	@echo ""
+	@echo "pluginbuild=$(PLUGINBUILD)"
+	@echo "pluginlocale=$(PLUGINLOCALE)"
+	@echo "pluginvibrate=$(PLUGINVIBRATE)"
+	@echo "pluginmusicplayer=$(PLUGINMUSICPLAYER)"
+	@echo "pluginmediaaudio=$(PLUGINMEDIAAUDIO)"
+	@echo "pluginsensor=$(PLUGINSENSOR)"
+	@echo "pluginbattery=$(PLUGINBATTERY)"
+	@echo "pluginsms=$(PLUGINSMS)"
+	@echo "pluginwifi=$(PLUGINWIFI)"
+	@echo "pluginconnectivity=$(PLUGINCONNECTIVITY)"
+	@echo "plugincontact=$(PLUGINCONTACT)"
+	@echo "pluginzeroconf=$(PLUGINZEROCONF)"
+	@echo "pluginsystem=$(PLUGINSYSTEM)"
+	@echo "plugintts=$(PLUGINTTS)"
+	@echo "plugincall=$(PLUGINCALL)"
+	@echo "pluginprefs=$(PLUGINPREFS)"
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -155,7 +184,7 @@ ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java \
   HopAndroidAudioRecorder.java HopPluginBuild.java HopPluginConnectivity.java \
   HopSettings.java HopPluginZeroconf.java HopZeroconf.java HopJmDns.java \
   HopNsdManager.java HopPluginSystem.java HopStage.java HopIntenter.java \
-  HopConfig.java
+  HopConfig.java HopSpawner.java
 
 JMDNS_JAVA = JmDNS.java ServiceInfo.java JmmDNS.java ServiceListener.java \
   NetworkTopologyDiscovery.java ServiceTypeListener.java \
@@ -193,7 +222,7 @@ ANDROID_JMDNS_JAVA = $(JMDNS_JAVA) \
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION = Makefile makeapk.sh.in \
+POPULATION = Makefile makeapk.sh.in buildapk.sh \
   $(ANDROID_BUILD) $(ANDROID_JNI) $(ANDROID_RES) \
   $(ANDROID_JAVA:%=src/fr/inria/hop/%) \
   $(ANDROID_JMDNS_JAVA:%=src/javax/jmdns/%)
@@ -392,10 +421,11 @@ ndk-build: $(ANDROIDBUILDDIR)/assets
 	$(ANDROIDNDK)/ndk-build -C $(ANDROIDBUILDDIR) V=1
 
 apk-build:
-	./buildapk.sh \
+	(hopdir=`pwd`; cd $(ANDROIDBUILDDIR); \
+           $$hopdir/buildapk.sh \
            --androidsdk=$(ANDROIDSDK) \
            --androidndk=$(ANDROIDNDK) \
-           $(HOPAPKNAME)
+           $(HOPAPKNAME))
 
 #*---------------------------------------------------------------------*/
 #*    apk                                                              */
@@ -415,7 +445,7 @@ apk-sans-hop: apk.common apk.res apk.jni apk.src
 	$(MAKE) apk-build
 
 install.apk:
-	adb $(ANDROIDHOST) install $(ANDROIDBUILDDIR)/bin/$(HOPAPKNAME)-debug.apk
+	adb $(ANDROIDHOST) install $(ANDROIDBUILDDIR)/bin/$(HOPAPKNAME).apk
 
 click.apk:
 	adb $(ANDROIDHOST) shell monkey -p fr.inria.hop 1
@@ -503,3 +533,10 @@ apk-clean:
 	@echo "#!/bin/bash" > $@
 	@echo "exec $(ANDROIDCC) -target $(ANDROIDTARGET) \"\$$@\"" >> $@
 	@chmod a+rx /tmp/droidcc.sh
+
+#*---------------------------------------------------------------------*/
+#*    splash                                                           */
+#*---------------------------------------------------------------------*/
+splash/splash.html: splash/splash.js splash/hop.svgz
+	hop --no-server $< > $@
+
