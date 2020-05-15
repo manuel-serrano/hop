@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  manuel serrano                                    */
 #*    Creation    :  Wed May 13 18:51:59 2020                          */
-#*    Last change :  Thu May 14 08:45:08 2020 (serrano)                */
+#*    Last change :  Fri May 15 09:17:04 2020 (serrano)                */
 #*    Copyright   :  2020 manuel serrano                               */
 #*    -------------------------------------------------------------    */
 #*    build the Android APK after ndk-build                            */
@@ -89,9 +89,9 @@ ZIPALIGN=$ANDROIDSDK/build-tools/$ANDROIDBUILDTOOLSVERSION/zipalign
 #*---------------------------------------------------------------------*/
 $AAPT package -f -m -J src -M AndroidManifest.xml -S res -I $ANDROIDCP
 
-$javac -classpath $ANDROIDCP -sourcepath 'src' -d 'bin' -target 1.7 -source 1.7 `find src -name "*.java"` 
+$javac -classpath $ANDROIDCP -sourcepath 'src' -d 'bin' -target 1.7 -source 1.7 `find src -name "*.java"`  || exit 1
 
-$DX --dex --output=classes.dex bin
+$DX --dex --output=classes.dex bin || exit 1
 
 /bin/rm -f $apkname.apk.unaligned 
 $AAPT package -f -M AndroidManifest.xml -S res -I $ANDROIDCP -F $apkname.apk.unaligned 

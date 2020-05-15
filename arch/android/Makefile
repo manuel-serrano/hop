@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Thu May 14 20:14:26 2020 (serrano)                */
+#*    Last change :  Fri May 15 09:16:47 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -427,6 +427,7 @@ apk-build:
            $$hopdir/buildapk.sh \
            --androidsdk=$(ANDROIDSDK) \
            --androidndk=$(ANDROIDNDK) \
+           --javac=$(JAVAC) \
            $(HOPAPKNAME))
 
 #*---------------------------------------------------------------------*/
