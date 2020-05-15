@@ -72,7 +72,14 @@ If only the `apk` file has be to regenerated:
 
     $ make apk-sans-hop
 
-For additional configuration, check `arch/android/Makefile`.
+When preparing an `apk` for an old Android version (api-level < 22), 
+static linking must be forced. 
+
+    $ make ANDROIDLINK=static
+
+For additional configuration, check `arch/android/Makefile`, in particular
+the variables `ANDROIDTARGET` and `ANDROIDSDKVERSION` that control
+the targetted Android version.
 
 
 Installing
