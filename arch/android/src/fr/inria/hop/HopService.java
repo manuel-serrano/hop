@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../hopdac/arch/android/src/fr/inria/hop/HopService.java         */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopService.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Tue May 12 15:40:05 2020 (serrano)                */
+/*    Last change :  Fri May 15 10:27:21 2020 (serrano)                */
 /*    Copyright   :  2012-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -213,17 +213,31 @@ public class HopService extends Service {
    private Notification statusNotification( boolean notify ) {
       // Set the icon, scrolling text and timestamp
       CharSequence text = getText( R.string.hopservicestarted );
-      Notification notification =
-	 new Notification( R.drawable.hopicon, text, System.currentTimeMillis());
-      notification.flags = Notification.FLAG_NO_CLEAR;
-
       PendingIntent contentIntent =
 	 PendingIntent.getActivity(
 	    this, 0, new Intent( this, HopService.class ), 0 );
-
+/*       Notification notification =                                   */
+/* 	 new Notification( R.drawable.hopicon, text, System.currentTimeMillis()); */
+/* {*       NotificationCompat.Builder builder =                          *} */
+/* {* 	 new NotificationCompat.Builder( this ) ;                      *} */
+/* {*       Notification notification = builder.setContentIntent( contentIntent ) *} */
+/* {* 	 .setSmallIcon( R.drawable.hopicon )                           *} */
+/* {* 	 .setTicker( text )                                            *} */
+/* {* 	 .setWhen( System.currentTimeMillis() )                        *} */
+/* {* 	 .setAutoCancel( true ).setContentTitle( HopConfig.HOPRELEASE ) *} */
+/* {* 	 .setContentText( text ).build();                              *} */
+/*       notification.flags = Notification.FLAG_NO_CLEAR;              */
+/*                                                                     */
+/*       Log.d( "HopService", "statusNotification" );                  */
 /*       notification.setLatestEventInfo(                              */
 /* 	 this, HopConfig.HOPRELEASE, text, contentIntent );            */
 
+      Notification.Builder builder =
+	 new Notification.Builder( getApplicationContext() )
+	 .setContentIntent( contentIntent )
+	 .setSmallIcon( R.drawable.hopicon )
+	 .setContentTitle( HopConfig.HOPRELEASE );
+      Notification notification = builder.build();
       // Send the notification.
       if( notify ) {
 	 mNM.notify( NOTIFICATION, notification );
