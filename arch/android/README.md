@@ -1,5 +1,49 @@
+Android Packaging
+-----------------
+
+_15 May 2020_
+
+
+This document explains how to compile Hop for Android devices and how
+to package it in an `apk` file.
+
+In this document we explain how to build a package that contains a
+full Hop installation _and_ an Hop application that we will executed
+within an Android HTML application.
+
+
 Requirements
 ============
+
+Complete Android `sdk` and `ndk` toolkit are needed. Check the Bigloo
+Android [cross compilation
+instructions](http://www-sop.inria.fr/indes/fp/Bigloo/cross.html) for
+installing the needed packages.
+
+To build the Hop `apk` you will only need the following Android tools:
+
+  * `ndk-build`
+  * `aapt`
+  * `dx`
+  * `zipalign`
+  
+The Makefiles Hop are sufficient to build the package. That is, `ant`,
+`cmake`, or `gradle` or _not needed_.
+
+The Android port is **experimental** and incomplete. The restrictions
+are:
+
+  * On older Android version API <= 21, only static libraries are supported.
+ Only more recent versions support dynamic linking and dynamic loading.
+  * The Hop packaging procedure generates `apk` that can only be execued
+ on one target archiecture. That is, a single `apk` cannot contain binary
+ code for, let us say, arm5, x86, and arm64.
+  * Each Hop application must be packaged with its own private Hop version.
+ This waste storage space on the device.
+  * Hop application can access to device feature via a plugin mecanism. For
+ instance, phone apps can access to the messaging service (sms), phone 
+ facilities, multmedia resources, etc. Not all Android API are currently
+ supported and additional plugins should be implemented.
 
 
 
