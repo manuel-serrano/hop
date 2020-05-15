@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon May  4 16:12:49 2020 (serrano)                */
+#*    Last change :  Fri May 15 13:53:59 2020 (serrano)                */
 #*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Doc Makefile                                                     */
@@ -68,8 +68,8 @@ LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html \
 
 WIDGET_TARGETS=widget.html tree.html spage.html
 
-DEV_TARGETS=dev.html 00-command.html 01-rcfile.html 10-edit.html 20-cross.html \
-  30-https.html 90-hopc.html
+DEV_TARGETS=dev.html 00-command.html 01-rcfile.html 10-edit.html \
+  20-cross.html 25-android.html 30-https.html 90-hopc.html
 
 INTF_TARGETS=intf.html 01-nodejs.html 10-scheme.html 20-language.html
 
@@ -242,6 +242,8 @@ hss/fontifier.css: ../node_modules/fontifier/hss/fontifier.hss
 
 hss/doc.css: hss/doc.hss
 	cp $< $@
+
+25-android.html: ../arch/android/README.md
 
 favicon.png: ../share/icons/hop/favicon-16x16.png
 	cp $< $@

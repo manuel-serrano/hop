@@ -18,9 +18,7 @@ are:
 
 The file hopjs.el is installed into the directory:
 
-```shell[:@shell]
-INSTALL_PREFIX/share/hop/site-lisp/hopjs.el
-```
+    INSTALL_PREFIX/share/hop/site-lisp/hopjs.el
 
 To use it, proceeds as follows:
 
