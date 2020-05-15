@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/doc/hss/doc.hss                   */
+/*    serrano/prgm/project/hop/hop/doc/hss/doc.hss                     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Fri Oct 12 10:26:51 2018 (serrano)                */
-/*    Copyright   :  2015-18 Manuel Serrano                            */
+/*    Last change :  Thu May 14 14:40:23 2020 (serrano)                */
+/*    Copyright   :  2015-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
 /*=====================================================================*/
@@ -26,8 +26,9 @@
 /*---------------------------------------------------------------------*/
 /*    body                                                             */
 /*---------------------------------------------------------------------*/
-body {
+body.hop {
   position: relative;
+  background-color: #fafafa;
   color: #222;
 }
 
@@ -48,7 +49,7 @@ p.danger {
 /*---------------------------------------------------------------------*/
 /*    title                                                            */
 /*---------------------------------------------------------------------*/
-.jumbotron {
+.hop .jumbotron {
   margin-top: 40px;
   position: fixed;
   top: 0px;
@@ -57,6 +58,8 @@ p.danger {
   z-index: 1;
   transition: 0.5s all;
   border-bottom: 4px solid white;
+  opacity: 0.90;
+  background-color: #33393f;
 }
 
 .jumbotron svg {
@@ -70,6 +73,14 @@ p.danger {
 .jumbotron p.version {
   text-align: left;
   padding-top: 60px;
+}
+
+.jumbotron p .date {
+    font-size: 70%;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    color: #777;
 }
 
 [scrolled="yes"] .jumbotron {
@@ -317,7 +328,7 @@ h4.ext-function:before {
 }
 
 nav.sidebar {
-  background-color: #f7f7f7;
+  background-color: #ffffff;
   border-radius: 4px;
   border: 1px solid #ccc;
   width: 20em;
@@ -329,7 +340,7 @@ nav.sidebar {
 
 nav.noaffix {
   position: fixed;
-  top: 310px
+  top: 270px
 }
 
 nav.sidebar a {
@@ -429,8 +440,9 @@ pre code {
   font-family: monospace;
 }
 
-pre.fontifier-prog {
-  background-color: #fafafa;
+body.hop pre, pre.fontifier-prog {
+    background-color: #ffffff;
+    border-radius: 0;
 }
 
 pre.fontifier-prog span.ebnf-tag {
@@ -443,6 +455,13 @@ pre.fontifier-prog span.ebnf-tag {
 p.warning {
   margin-top: 3ex;
   border-left: 4px solid #f0ad4e;
+  padding-left: 4px;
+  margin-top: 1ex;
+}
+
+p.danger {
+  margin-top: 3ex;
+  border-left: 4px solid #d9534f;
   padding-left: 4px;
   margin-top: 1ex;
 }
@@ -528,21 +547,29 @@ body.home h2 {
   font-size: 200%;
 }
 
-body.home pre {
-  background: inherit;
-  border: none;
-  border-left: 2px solid #1467E6;
-  border-radius: 0;
-  color: #000;
-  margin-left: 1em;
+body.hop pre {
+    border: none;
+    border-radius: 0;
+    color: #000;
+    margin-left: 0;
+    border: 1px solid #d2d2d2;
+    border-left: 2px solid #666666;
 }
 
-body.home pre#shell {
-  border-color: #22BA5A;
+body.hop pre.hop, body.hop pre.hopscript {
+    border-left-color: #faab02;
 }
 
-body.home pre#config {
-  border-color: #D85023;
+body.hop pre.ebnf {
+    border-left-color: #22ba5a;
+}
+
+body.hop pre.shell {
+    border-left-color: #1467E6;
+}
+
+body.hop pre.config {
+  border-left-color: #D85023;
 }
 
 body.home pre.homeprog .fontifier-prog-string,
@@ -571,15 +598,14 @@ body.home pre#prog4 .fontifier-prog-server {
   margin-right: 1px;
 }
 
-body.home code {
+body.hop code {
   background-color: #efefef;
   border: 1px solid #d2d2d2;
   border-radius: 1px;
-/*   color: #1a75f9;                                                   */
-  color: #D85023;
+  color: #1467E6;
 }
 
-body.home pre code {
+body.hop pre code {
   background-color: inherit;
   border: none;
 }

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Fri Apr  5 18:15:49 2019 (serrano)                */
-/*    Copyright   :  2015-19 Manuel Serrano                            */
+/*    Last change :  Thu May 14 14:39:58 2020 (serrano)                */
+/*    Copyright   :  2015-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
 /*=====================================================================*/
@@ -43,6 +43,9 @@ function title( attrs, ... subtitle ) {
              <span class="label label-default lbl-lg">
               version ${attrs.version ? attrs.version : config.version}
 	     </span>
+	     <span class="label date lbl-lg"> 
+	       ${attrs.date ? attrs.date : config.date}
+ 	     </span>
 	   </p>
 	 </div>
        </div>

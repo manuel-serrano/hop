@@ -20,7 +20,7 @@ In particular, the `hoprc.js` is the only file where the function
 For the example sake here is how to declare an `hoprc.js` with two
 users `hopjs` and `anonymous`.
 
-```hopscript
+```hopscript[:@hopscript]
 hop = require( "hop" );
 var user = require( hop.user );
 var config = require( hop.config );
@@ -37,13 +37,13 @@ user.add( { name: "anonymous",
           } );	  
 ```
 
-${ <span class="label label-warning">Note:</span> } The anonymous user
+${ <span class="label label-danger">Note:</span> } The anonymous user
 is the user on which all non-authentified request are
 identified. Declaring an anonymous user in the `hoprc.js` file is
 mandatory. Without such a declaration, the server will raise an error
 for each new web request it will receive. The anonymous might have no
 permissions granted, as in the example above, but it must
-exist. [:@warning]
+exist. [:@danger]
 
 The `rcfile.js` can be generated automatically using the Hop
 wizard (`http://localhost:8080/hop/wizard`).

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Apr 30 16:11:50 2020 (serrano)                */
+#*    Last change :  Fri May 15 13:46:18 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1453,6 +1453,7 @@ rm -f $docjson 2> /dev/null
 cat $docjson.in \
   | sed -e "s|@VERSION@|$version$minorversion|" \
 	-e "s|@BRANCH@|$version|" \
+	-e "s|@DATE@|$date|" \
 	-e "s|@BIGLOOVERSION@|$bglversion|" \
 	>> $docjson
 
@@ -1737,20 +1738,6 @@ cat $deb.in \
 	>> $deb  
 chmod a+rx $deb
  
-# android
-and=arch/android/makeapk.sh
-rm -f $and 2> /dev/null
-echo "#!/bin/sh" > $and
-echo "#* Automatically generated file (don't edit) */" >> $and
-
-cat $and.in \
-  | sed -e "s|#!/bin/sh||" \
-        -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
-        -e "s|@VERSION@|$hopversion|" \
-        -e "s|@MINOR@|$minorversion|" \
-	>> $and  
-chmod a+rx $and
-
 #*---------------------------------------------------------------------*/
 #*    Summary                                                          */
 #*---------------------------------------------------------------------*/

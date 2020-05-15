@@ -157,11 +157,11 @@ An other interesting option is:
 
 to see all available options. Once the configuration is completed, run :
 
-     make (or make -j)
+     make # or make -j
 
 then run
 
-     make install (or  sudo make install)
+     make install # or  sudo make install
 
 
 #### Test the hop.js build ####
@@ -246,9 +246,8 @@ hop.js syntax is a superset of JavaScript.
 
 Most source files can be edited with a JavaScript editor.
 Some editors may have trouble with the extended syntax :
- the service keyword,
- the ~{} and ${} blocks,
- the <> tags.
+ the service keyword, the `~{}` and `\${}` blocks,
+ the `<>` tags.
 
 First, look at your editor preferences for a possible support of non
 standard extensions. Emacs is known to provide extensive support for
@@ -281,7 +280,7 @@ Most common issues:
   to start with a fresh source directory to build bigloo or hop.
 	
   - wrong user preference files. Many things have changed since
-  hop-2.5.x. We advise you to delete the ~/.config/hop directory where
+  hop-2.5.x. We advise you to delete the `~/.config/hop` directory where
   user preferences and cached data are stored, then follow the startup
   procedure once again.
 

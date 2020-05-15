@@ -7,7 +7,7 @@ Hop is:
   - a single code runs on the client and the server.
 * A compliant JavaScript implementation:
   - EcmaScript 5.1 compliant;
-  - EcmaScript 6 features;
+  - EcmaScript 6 features (modules, `async`/`await`, proxy objects, ...);
   - Nodejs compatibility.
 * An extended JavaScript:
   - builtin **HTML**: native HTML syntax support and multitier dom.
@@ -21,7 +21,7 @@ automatically invoked when HTTP requests are received. Functions and
 services are almost syntactically similar but the latter are defined using
 the `service` keyword:
 
-```hopscript[:prog1@homeprog]
+```hopscript[:prog1@hopscript]
 service hello() {
   return "hello world";
 }
@@ -29,8 +29,8 @@ service hello() {
 
 To run this program put this code in the file ${<tt>hello.js</tt>} and execute:
 
-```sh[:shell@homeprog]
-hop -p 8080 hello.js
+```sh[:@shell]
+$ hop -p 8080 hello.js
 ```
 
 You can now browse ${<tt>http://localhost:8080/hop/hello</tt>}.
@@ -39,7 +39,7 @@ You can now browse ${<tt>http://localhost:8080/hop/hello</tt>}.
 Hop extends JavaScript with the geniune HTML. if we want to modify
 our service to make it return an HTML document, we can use:
 
-```hopscript[:prog2@homeprog]
+```hopscript[:prog2@hopscript]
 service hello() {
   return <html><div>hello world</div></html>;
 }
@@ -48,7 +48,7 @@ service hello() {
 Hop is multitier. That is client-side codes are also implemented in Hop. The
 `\~{` mark switches from server-side context to client-side context:
 
-```hopscript[:prog3@homeprog]
+```hopscript[:prog3@hopscript]
 service hello() {
   return <html><div onclick=~{ alert( "world" ) }>hello</div></html>;
 }
@@ -57,7 +57,7 @@ service hello() {
 Hop client-side code and server-side can also be mixed using the
 `\${` mark:
 
-```hopscript[:prog4@homeprog]
+```hopscript[:prog4@hopscript]
 service hello( { name: who } ) {
   return <html><div onclick=~{ alert( "Hi " + ${who} + "!") }>hello</div></html>;
 }
@@ -71,8 +71,8 @@ allowed to execute any Hop.js service, the declaration `services: "\*"`, and
 download any file readable from the server process, the declaration
 `directories: "\*"`:
 
-```sh[:config@homeprog]
-mkdir -p $HOME/.config/hop && cat > $HOME/.config/hop/hoprc.js << EOF
+```sh[:config@config]
+$ mkdir -p $HOME/.config/hop && cat > $HOME/.config/hop/hoprc.js << EOF
 hop = require( "hop" );
 var user = require( hop.user );
 var config = require( hop.config );

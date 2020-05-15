@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Fri Apr  5 16:17:47 2019 (serrano)                */
-/*    Copyright   :  2015-19 Manuel Serrano                            */
+/*    Last change :  Thu May 14 14:36:22 2020 (serrano)                */
+/*    Copyright   :  2015-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
 /*=====================================================================*/
@@ -175,7 +175,7 @@ function compileSection( page ) {
 	   favicon=${favicon}
            rts=${false}/>
 
-     <body data-spy="scroll" data-target="#navbar" class=${title}
+     <body data-spy="scroll" data-target="#navbar" class=${"hop" + " " + title}
            onscroll=~{
 	      var top = (window.pageYOffset || document.scrollTop)-(document.clientTop||0);
 	      if( top > 180 ) {
@@ -191,6 +191,7 @@ function compileSection( page ) {
        
        <docxml.title title=${doc.title}
 		     version=${doc.version}
+		     date=${doc.date}
 		     logo=${doc.logo}
 		     root=${ROOT}>
           ${title}
@@ -249,12 +250,13 @@ function compileChapter( json ) {
 	   favicon=${favicon}
            rts=${false}/>
 
-     <body data-spy="scroll" data-target="#navbar">
+     <body data-spy="scroll" data-target="#navbar" class="hop">
        <docxml.navbar title=${chapter.title} key=${chapter.key}>
          ${chapters}
        </docxml.navbar>
        <docxml.title title=${doc.title}
 		     version=${doc.version}
+		     date=${doc.date}
 		     logo=${doc.logo}
 		     root=${ROOT}>
           ${chapter.title}
@@ -301,12 +303,22 @@ function compileMain( content ) {
 	   favicon=${favicon}
            rts=${false}/>
 
-     <body class="home" data-spy="scroll" data-target="#navbar">
+     <body class="hop home" data-spy="scroll" data-target="#navbar"
+           onscroll=~{
+	      var top = (window.pageYOffset || document.scrollTop)-(document.clientTop||0);
+	      if( top > 180 ) {
+		 document.body.setAttribute( "scrolled", "yes" );
+	      } else {
+		 document.body.setAttribute( "scrolled", "no" );
+	      }
+	   } >
+       ~{ $('body').scrollspy( { target: '#navbar' }) }
        <docxml.navbar title=${doc.title} key="home">
          ${chapters}
        </docxml.navbar>
        <docxml.title title=${doc.title}
 		     version=${doc.version}
+		     date=${doc.date}
 		     logo=${doc.logo}
 		     root=${ROOT}/>
 
@@ -334,12 +346,13 @@ function compileLibrary( content ) {
 	   favicon=${favicon}
            rts=${false}/>
 
-     <body class="library" data-spy="scroll" data-target="#navbar">
+     <body classf="hop library" data-spy="scroll" data-target="#navbar">
        <docxml.navbar title=${doc.title} key="home">
          ${chapters}
        </docxml.navbar>
        <docxml.title title=${doc.title}
 		     version=${doc.version}
+		     date=${doc.date}
 		     logo=${doc.logo}
 		     root=${ROOT}/>
 
@@ -373,13 +386,23 @@ function compileIdx( json ) {
 	   favicon=${favicon}
            rts=${false}/>
 
-     <body data-spy="scroll" data-target="#navbar">
+     <body class="hop" data-spy="scroll" data-target="#navbar"
+           onscroll=~{
+	      var top = (window.pageYOffset || document.scrollTop)-(document.clientTop||0);
+	      if( top > 180 ) {
+		 document.body.setAttribute( "scrolled", "yes" );
+	      } else {
+		 document.body.setAttribute( "scrolled", "no" );
+	      }
+	   } >
+       ~{ $('body').scrollspy( { target: '#navbar' }) }
        <docxml.navbar title=${chapter.title}
                       key=${chapter.key}>
          ${chapters}
        </docxml.navbar>
        <docxml.title title=${doc.title}
 		     version=${doc.version}
+		     date=${doc.date}
 		     logo=${doc.logo}
 		     root=${ROOT}>
           ${chapter.title}
