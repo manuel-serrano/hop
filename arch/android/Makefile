@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Fri May 15 19:15:54 2020 (serrano)                */
+#*    Last change :  Fri May 15 20:06:46 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -94,6 +94,8 @@ config:
 	@echo "hopapkname=$(HOPAPKNAME)"
 	@echo "hopapp=$(HOPAPP)"
 	@echo "weblet=$(ANDROIDWEBLET)"
+	@echo "androidManifest=$(ANDROIDMANIFEST)"
+	@echo "res=$(ANDROIDRES)"
 	@echo ""
 	@echo "androidsdk=$(ANDROIDSDK)"
 	@echo "androidndk=$(ANDROIDNDK)"
