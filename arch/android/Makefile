@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Fri May 15 17:55:41 2020 (serrano)                */
+#*    Last change :  Fri May 15 19:15:54 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -52,7 +52,10 @@ ANDROIDHOPDEBUGLEVEL = -g0
 ANDROIDHOPVERBOSELEVEL = -v
 ANDROIDHOPPREFIX = /data/data/fr.inria.hop/assets
 
-ANDROIDWEBLET = 
+ANDROIDWEBLET =
+ANDROIDRES = $(ANDROIDDIR)/res
+ANDROIDMANIFEST = $(ANDROIDDIR)/AndroidManifest.xml
+ANDROIDSPLASH = $(ANDROIDDIR)/splash
 
 # Plugins
 PLUGINBUILD = true
@@ -289,16 +292,16 @@ $(ANDROIDBUILDDIR)/AndroidManifest.xml $(ANDROIDBUILDDIR)/project.properties $(A
                 -e "s|@HOPAPP@|$(HOPAPP)|" \
                 -e "s|@HOPURL@|$(ANDROIDHOPURL)|" > $@ || exit 1
 
-$(ANDROIDBUILDDIR)/AndroidManifest.xml: $(ANDROIDDIR)/AndroidManifest.xml.in $(ANDROIDBUILDDIR)
+$(ANDROIDBUILDDIR)/AndroidManifest.xml: $(ANDROIDMANIFEST).in $(ANDROIDBUILDDIR)
 $(ANDROIDBUILDDIR)/project.properties: $(ANDROIDDIR)/project.properties.in $(ANDROIDBUILDDIR)
 $(ANDROIDBUILDDIR)/Android.mk: $(ANDROIDDIR)/Android.mk.in $(ANDROIDBUILDDIR)
 
 #*---------------------------------------------------------------------*/
 #*    res                                                              */
 #*---------------------------------------------------------------------*/
-$(ANDROIDBUILDDIR)/res: res $(ANDROIDBUILDDIR)
+$(ANDROIDBUILDDIR)/res: $(ANDROIDRES) $(ANDROIDBUILDDIR)
 	$(RM) -rf $@
-	cp -r $(ANDROIDDIR)/res $@
+	cp -r $(ANDROIDRES) $@
 
 $(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/values/plugins.xml $(ANDROIDBUILDDIR)/res/xml/preferences.xml $(ANDROIDBUILDDIR)/src/fr/inria/hop/Hop.java:
 	rm -f $@.in
@@ -375,12 +378,12 @@ assets.post-install.static:
 	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libscheme2js*_[su]-*.so' -exec rm {} \;
 	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libbigloo*_[su]-*.so.keep' -exec rm {} \;
 
-$(ANDROIDBUILDDIR)/assets/etc:
+$(ANDROIDBUILDDIR)/assets/etc: splash/splash.html
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
 	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/etc $(ANDROIDBUILDDIR)/assets
 	mkdir -p $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
-	cp -r $(ANDROIDDIR)/splash $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
+	cp -r $(ANDROIDSPLASH) $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
 
 $(ANDROIDBUILDDIR)/assets/share:
 	mkdir -p $(ANDROIDBUILDDIR)/assets
