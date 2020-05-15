@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hopdac/arch/android/src/fr/inria/hop/HopConfigurer.java      */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopConfigurer.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  8 15:35:26 2010                          */
-/*    Last change :  Tue Jul  5 18:09:14 2016 (serrano)                */
-/*    Copyright   :  2010-16 Manuel Serrano                            */
+/*    Last change :  Fri May 15 18:31:07 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Configuring Hop                                                  */
 /*=====================================================================*/
@@ -18,6 +18,8 @@ import android.app.Activity;
 import android.util.Log;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.res.*;
+import android.content.Context;
 import android.os.*;
 
 import java.util.*;
@@ -47,15 +49,20 @@ public class HopConfigurer implements HopStage {
    }
 
    // is hop already configured
-   public static boolean configured( File home ) {
-      File path = new File( home, ".config/hopdac/wizard.hop" );
+   public static boolean configured( Context context, File home ) {
+      final Resources res = context.getResources();
+      String app = res.getString( R.string.hopapp );
+      File path = new File( home, ".config/" + app + "/wizard.hop" );
       return path.exists();
    }
 
-   // hopdacrc
-   void hopdacrc() throws Exception {
-      File rcdir = new File( home, ".config/hopdac" );
+   // hopapprc
+   void hopapprc( Context context ) throws Exception {
+      final Resources res = context.getResources();
+      String app = res.getString( R.string.hopapp );
+      File rcdir = new File( home, ".config/" + app );
 
+      Log.i( "HopConfigurer", "hopapprc rcdir=" + rcdir );
       synchronized( abort ) {
 	 if( !abort ) {
 	    if( !rcdir.isDirectory() ) {
@@ -70,7 +77,7 @@ public class HopConfigurer implements HopStage {
 	       Log.i( "HopConfigurer", "generating " +  out );
 	       out.write( (";; generated file, HopConfigurer " + new Date() + "\n").getBytes() );
 	       out.write( ";; anonymous user\n".getBytes() );
-	       out.write( "(add-user! \"anonymous\" :services '(public hopdac) :directories '*)\n".getBytes() );
+	       out.write( ("(add-user! \"anonymous\" :services '(public " + app + ") :directories '*)\n").getBytes() );
 	    } finally {
 	       out.close();
 	    }
@@ -103,14 +110,15 @@ public class HopConfigurer implements HopStage {
       handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_CONFIGURE_FAIL, e ) );
    }
       
-   public void exec() {
-      Log.d( "HopConfigurer", "exec configured(" + home + ")=" + configured( home ) );
+   public void exec( Context context ) {
+      Log.d( "HopConfigurer", "exec configured(" + home + ")=" + configured( context, home ) );
 
-      if( !configured( home ) ) {
+      if( !configured( context, home ) ) {
 	 try {
-	    this.hopdacrc();
+	    this.hopapprc( context );
 	    handler.sendEmptyMessage( HopLauncher.MSG_STATE_NEXT );
 	 } catch( Exception e ) {
+	    Log.e( "HopConfigurer", "Cannot configure " + e.toString() );
 	    raise( e );
 	 }
       } else {

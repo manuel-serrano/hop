@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hopdac/arch/android/src/fr/inria/hop/HopLauncher.java        */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopLauncher.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun Jan 14 10:26:43 2018 (serrano)                */
-/*    Copyright   :  2010-18 Manuel Serrano                            */
+/*    Last change :  Fri May 15 18:00:54 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
 /*=====================================================================*/
@@ -371,69 +371,10 @@ public class HopLauncher extends Activity {
 	 exec = false;
       }
       if( exec ) {
-	 currentStage.exec();
+	 currentStage.exec( getApplicationContext() );
       }
    }
    
-/*                                                                     */
-/*                                                                     */
-/*       Log.v( "hopLauncher", "webview=" + webview );                 */
-/*                                                                     */
-/*       // loadPreferences                                            */
-/*       loadPreferences();                                            */
-/*                                                                     */
-/*       try {                                                         */
-/* 	 // now that the activity is fully initialized, it's possible  */
-/* 	 // to get the disk location of the package                    */
-/* 	 String apk = activity.getApplicationInfo().sourceDir;         */
-/* 	 Hop.root = activity.getApplicationInfo().dataDir + "/assets"; */
-/*                                                                     */
-/* 	 if( !HopInstaller.installed( Hop.root ) ) {                   */
-/*                                                                     */
-/* 	    // The install scheduler is a mere thread that waits for   */
-/* 	    // the  installer to complete. It then notifies the application. */
-/* 	    Thread installscheduler = new Thread( new Runnable () {    */
-/* 		  public void run() {                                  */
-/* 		     Log.v( "HopLauncher", "waiting installer" );      */
-/* 		     // wait for the installer to complete the installation */
-/* 		     try {                                             */
-/* 			hopinstaller.join();                           */
-/* 		     } catch( Exception e ) {                          */
-/* 			HopUiUtils.failExit( activity, "HopLauncher", " failed:", e ); */
-/* 		     }                                                 */
-/*                                                                     */
-/* 		     Log.v( "HopLauncher", "installation complete" );  */
-/*                                                                     */
-/* 		     if( !HopConfigurer.configured( Hop.HOME() ) ) {   */
-/* 			Log.v( "HopLauncher", "progress=" + progress ); */
-/* 			handler.sendEmptyMessage( MSG_CONFIGURE );     */
-/* 			configure();                                   */
-/* 		     } else {                                          */
-/* 			cleanupProgressBar();                          */
-/* 			handler.sendEmptyMessage( MSG_START_HOP_SERVICE ); */
-/* 		     }                                                 */
-/* 		  }                                                    */
-/* 	       } );                                                    */
-/*                                                                     */
-/* 	    // the installation progress bar                           */
-/* 	    startProgressBar();                                        */
-/*                                                                     */
-/* 	    // start the installed and the installscheduler            */
-/* 	    hopinstaller = new HopInstaller( handler, progress, apk, Hop.root ); */
-/* 	    hopinstaller.start();                                      */
-/* 	    installscheduler.start();                                  */
-/* 	 } else {                                                      */
-/* 	    if( !HopConfigurer.configured( Hop.HOME() ) ) {            */
-/* 	       configure();                                            */
-/* 	    } else {                                                   */
-/* 	       handler.sendEmptyMessage( MSG_START_HOP_SERVICE );      */
-/* 	    }                                                          */
-/* 	 }                                                             */
-/*       } catch( Exception e ) {                                      */
-/* 	 HopUiUtils.failExit( activity, "HopLauncher", " failed", e ); */
-/*       }                                                             */
-/*    }                                                                */
-/*                                                                     */
    @Override public boolean onCreateOptionsMenu( Menu menu ) {
       Log.d( "HopLauncher", "onCreateOptionsMenu" );
       MenuInflater inflater = getMenuInflater();

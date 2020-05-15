@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hopdac/arch/android/src/fr/inria/hop/HopSpawner.java         */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopSpawner.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jul  5 09:42:40 2016                          */
-/*    Last change :  Tue Jul  5 10:01:31 2016 (serrano)                */
-/*    Copyright   :  2016 Manuel Serrano                               */
+/*    Last change :  Fri May 15 18:05:53 2020 (serrano)                */
+/*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Spawn Hop service (not the Hop process).                         */
 /*=====================================================================*/
@@ -72,7 +72,7 @@ public class HopSpawner implements HopStage {
 	 }
       };
    
-   public void exec() {
+   public void exec( Context context ) {
       Log.d( "HopSpawner", "exec" );
       
       hopintent = new Intent( activity.getApplicationContext(), HopService.class );

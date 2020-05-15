@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Fri May 15 09:16:47 2020 (serrano)                */
+#*    Last change :  Fri May 15 17:55:41 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -115,7 +115,7 @@ config:
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
-ANDROID_BUILD = Android.mk.in build.xml.in project.properties.in hop.keystore \
+ANDROID_BUILD = Android.mk.in project.properties.in hop.keystore \
   AndroidManifest.xml.in proguard.cfg \
   README.md
 
@@ -275,7 +275,7 @@ install-weblet:
 $(ANDROIDBUILDDIR):
 	mkdir -p $(ANDROIDBUILDDIR)
 
-$(ANDROIDBUILDDIR)/AndroidManifest.xml $(ANDROIDBUILDDIR)/project.properties $(ANDROIDBUILDDIR)/build.xml $(ANDROIDBUILDDIR)/Android.mk:
+$(ANDROIDBUILDDIR)/AndroidManifest.xml $(ANDROIDBUILDDIR)/project.properties $(ANDROIDBUILDDIR)/Android.mk:
 	cat $< \
           | sed -e "s|@HOPVERSION@|$(HOPRELEASE)|" \
                 -e "s|@HOPDEBUG@|$(ANDROIDHOPDEBUG)|" \
@@ -291,7 +291,6 @@ $(ANDROIDBUILDDIR)/AndroidManifest.xml $(ANDROIDBUILDDIR)/project.properties $(A
 
 $(ANDROIDBUILDDIR)/AndroidManifest.xml: $(ANDROIDDIR)/AndroidManifest.xml.in $(ANDROIDBUILDDIR)
 $(ANDROIDBUILDDIR)/project.properties: $(ANDROIDDIR)/project.properties.in $(ANDROIDBUILDDIR)
-$(ANDROIDBUILDDIR)/build.xml: $(ANDROIDDIR)/build.xml.in $(ANDROIDBUILDDIR)
 $(ANDROIDBUILDDIR)/Android.mk: $(ANDROIDDIR)/Android.mk.in $(ANDROIDBUILDDIR)
 
 #*---------------------------------------------------------------------*/
@@ -346,6 +345,8 @@ $(ANDROIDBUILDDIR)/res/xml/preferences.xml: \
 #*---------------------------------------------------------------------*/
 #*    assets                                                           */
 #*---------------------------------------------------------------------*/
+.PHONY: $(ANDROIDBUILDDIR)/assets
+
 $(ANDROIDBUILDDIR)/assets: \
   $(ANDROIDBUILDDIR)/assets/etc \
   $(ANDROIDBUILDDIR)/assets/bin \
@@ -363,9 +364,9 @@ assets.weblet:
 
 assets.post-install: assets.post-install.$(ANDROIDLINK)
 	find $(ANDROIDBUILDDIR)/assets/lib/ -name '*.heap' -exec rm {} \;
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name '*.a' -exec rm {} \;
 
 assets.post-install.dynamic:
-	find $(ANDROIDBUILDDIR)/assets/lib/ -name '*.a' -exec rm {} \;
 
 assets.post-install.static:
 	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libhop*_[su]-*.so' -exec rm {} \;
@@ -456,8 +457,7 @@ click.apk:
 uninstall.apk:
 	adb $(ANDROIDHOST) uninstall fr.inria.hop
 
-apk.common: $(ANDROIDBUILDDIR)/build.xml \
-  $(ANDROIDBUILDDIR)/Android.mk \
+apk.common: $(ANDROIDBUILDDIR)/Android.mk \
   $(ANDROIDBUILDDIR)/AndroidManifest.xml \
   $(ANDROIDBUILDDIR)/project.properties
 

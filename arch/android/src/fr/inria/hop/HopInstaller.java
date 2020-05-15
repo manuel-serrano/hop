@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hopdac/arch/android/src/fr/inria/hop/HopInstaller.java       */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopInstaller.java      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Sat Dec 30 10:03:00 2017 (serrano)                */
-/*    Copyright   :  2010-17 Marcos Dione & Manuel Serrano             */
+/*    Last change :  Fri May 15 18:07:25 2020 (serrano)                */
+/*    Copyright   :  2010-20 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
 /*=====================================================================*/
@@ -18,6 +18,7 @@ import android.app.Activity;
 import android.util.Log;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.Context;
 import android.os.*;
 
 import java.util.*;
@@ -264,7 +265,7 @@ public class HopInstaller implements HopStage {
       handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_INSTALL_FAIL, e ) );
    }
       
-   public void exec() {
+   public void exec( Context context ) {
       Log.d( "HopInstaller", "exec installed=" + installed( root ) );
       if( !installed( root ) ) {
 	 try {

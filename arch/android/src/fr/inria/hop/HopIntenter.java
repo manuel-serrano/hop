@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hopdac/arch/android/src/fr/inria/hop/HopIntenter.java        */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopIntenter.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jul  5 09:42:40 2016                          */
-/*    Last change :  Sat Dec 30 08:18:23 2017 (serrano)                */
-/*    Copyright   :  2016-17 Manuel Serrano                            */
+/*    Last change :  Fri May 15 18:06:36 2020 (serrano)                */
+/*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Spawn Hop service (not the Hop process).                         */
 /*=====================================================================*/
@@ -98,9 +98,9 @@ public class HopIntenter implements HopStage {
       handler.sendMessage( android.os.Message.obtain( handler, kmsg, msg ) );
    }
 
-   public void exec() {
+   public void exec( Context context ) {
       Log.d( "HopIntenter", "exec" );
-      hopintent = new Intent( activity.getApplicationContext(), HopService.class );
+      hopintent = new Intent( context, HopService.class );
       if( !HopService.isBackground() ) {
 	 activity.startService( hopintent );
       }
