@@ -120,26 +120,25 @@ find the location on our disk of the Android sdk and ndk:
 Second create the directory
 that will contain our weblet source files. Normally you already have this.
 
-    $ mkdir hopand; cd hopand
+    $ mkdir hopdemo; cd hopdemo
 	
 We create a simple service for the demonstration:
 
-    $ cat > hopand.hop <<EOF
-    (module hopand)
+    $ cat > hopdemo.hop <<EOF
+    (module hopdemo)
     
-    (define-service (hopand #!optional (dir "/mnt/sdcard/home"))
-       (let ((dir (or dir (pwd))))
-          (<HTML>
-             (<DIV> dir)
-             (<UL>
-                (<LI> (<A> :href (hopand (dirname dir)) ".."))
-                (map (lambda (path)
-                        (<LI>
-                           (if (directory? path)
-                               (<A> :href (hopand path) (basename path))
-                               (<A> :href path
-							       (basename path) " " (file-size path)))))
-                   (directory->path-list dir))))))
+    (define-service (hopdemo #!optional (dir "/mnt/sdcard/home"))
+       (<HTML>
+          (<DIV> dir)
+          (<UL>
+             (<LI> (<A> :href (hopdemo (dirname dir)) ".."))
+             (map (lambda (path)
+                     (<LI>
+                        (if (directory? path)
+                            (<A> :href (hopdemo path) (basename path))
+                            (<A> :href path
+				       (basename path) " " (file-size path)))))
+                (directory->path-list dir)))))
     EOF
 
 We now create the directory for the Android package:
@@ -155,7 +154,7 @@ configuration:
     ANDROIDWEBLET = $(shell realpath $$PWD/../..)
     
     HOPAPKVERSION = 1.0.0
-    HOPAPP = hopand
+    HOPAPP = hopdemo
     HOPAPKNAME = $(HOPAPP)-$(HOPAPKVERSION)
 
     # the list of hopdroid plugins the application will need
@@ -202,7 +201,7 @@ We can now build our `apk` with the following:
 
     $ make -f Makefile.android
 
-This generate a file name `/tmp/build.hopand-1.0.0.android/hopand-1.0.0.apk`
+This generate a file name `/tmp/build.hopdemo-1.0.0.android/hopdemo-1.0.0.apk`
 that can be installed on the device as explained earlier.
 
 Customizing a Custom Application
