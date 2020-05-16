@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Thu May 14 14:40:23 2020 (serrano)                */
+/*    Last change :  Sat May 16 09:20:41 2020 (serrano)                */
 /*    Copyright   :  2015-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -558,6 +558,10 @@ body.hop pre {
 
 body.hop pre.hop, body.hop pre.hopscript {
     border-left-color: #faab02;
+}
+
+body.hop pre.scheme {
+    border-left-color: #f91a03;
 }
 
 body.hop pre.ebnf {

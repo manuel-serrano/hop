@@ -122,24 +122,58 @@ that will contain our weblet source files. Normally you already have this.
 
     $ mkdir hopdemo; cd hopdemo
 	
-We create a simple service for the demonstration:
+We create a simple service for the demonstration `hopdemo.js`:
 
-    $ cat > hopdemo.hop <<EOF
-    (module hopdemo)
-    
-    (define-service (hopdemo #!optional (dir "/mnt/sdcard/home"))
-       (<HTML>
-          (<DIV> dir)
-          (<UL>
-             (<LI> (<A> :href (hopdemo (dirname dir)) ".."))
-             (map (lambda (path)
-                     (<LI>
-                        (if (directory? path)
-                            (<A> :href (hopdemo path) (basename path))
-                            (<A> :href path
-				       (basename path) " " (file-size path)))))
-                (directory->path-list dir)))))
-    EOF
+```hopscript
+const fs = require( "fs" );
+const path = require( "path" );
+
+service hopdemo( arg ) {
+   const dir = (arg && arg.dir) || "/mnt/sdcard/home";
+   return <html>
+     <head>
+       <style>body { font-size: 200% }</style>
+     </head>
+     <body>
+       <div> ${dir} </div>
+       <ul> 
+       	 <li><a href=${hopdemo( { dir: path.dirname( dir ) } )}>..</a></li>
+       	 ${ fs.readdirSync( dir )
+	       .map( p => {
+		  const fp = path.join( dir, p );
+		  if( fs.lstatSync( fp ).isDirectory() ) {
+		     return <li><a href=${hopdemo( { dir: fp } )}> ${p} </a></li>;
+		  } else {
+		     return <li><a href=${fp}>${p} (${fs.lstatSync( fp ).size})</a></li>
+		  }
+	       } ) }
+       </ul>
+     </body>
+   </html>
+}
+```
+
+Of course, it's also possible to define the same weblet in Scheme. The
+file should be `hopdemo.hop`:
+
+```scheme
+(module hopdemo)
+
+(define-service (hopdemo #!optional (dir "/mnt/sdcard/home"))
+   (<HTML>
+      (<HEAD> (<STYLE> [body { font-size: 200% }]))
+      (<DIV> dir)
+      (<UL>
+         (<LI> (<A> :href (hopdemo (dirname dir)) ".."))
+         (map (lambda (path)
+                 (<LI>
+                    (if (directory? path)
+                        (<A> :href (hopdemo path) (basename path))
+                        (<A> :href path (basename path) " " (file-size path)))))
+            (directory->path-list dir)))))
+```
+
+In the rest of this document we focus on the JavaScript backend.
 
 We now create the directory for the Android package:
 
