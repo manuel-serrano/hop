@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Mon Apr 13 11:13:24 2020 (serrano)                */
+;*    Last change :  Sat May 16 09:03:37 2020 (serrano)                */
 ;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -171,7 +171,7 @@
       (nodejs-lchmod %worker %this process path mod cb))
    
    (define (readdir this jspath cb)
-      (let* ((path (js-jsstring->string jspath))
+      (let* ((path (js-tostring jspath %this))
 	     (l (directory->list path)))
 	 (if (and (null? l) (not (directory? path)))
 	     (let ((exn (with-access::JsGlobalObject %this (js-error)
