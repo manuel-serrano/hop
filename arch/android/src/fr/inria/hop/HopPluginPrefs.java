@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hopdac/arch/android/src/fr/inria/hop/HopPluginPrefs.java     */
+/*    .../hop/arch/android/src/fr/inria/hop/HopPluginPrefs.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul 17 13:19:20 2016                          */
-/*    Last change :  Sat Jan 13 06:23:07 2018 (serrano)                */
-/*    Copyright   :  2016-18 Manuel Serrano                            */
+/*    Last change :  Sun May 17 10:27:00 2020 (serrano)                */
+/*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android preferences plugins                                      */
 /*=====================================================================*/

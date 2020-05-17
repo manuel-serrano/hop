@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../weblets/hopdac/arch/android/src/fr/inria/hop/HopSms.java     */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopSms.java            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Sat Jul 16 08:00:03 2016 (serrano)                */
-/*    Copyright   :  2010-16 Manuel Serrano                            */
+/*    Last change :  Sun May 17 10:26:44 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    SMS receiver                                                     */
 /*=====================================================================*/
