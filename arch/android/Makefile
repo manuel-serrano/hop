@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sat May 16 17:39:35 2020 (serrano)                */
+#*    Last change :  Sun May 17 10:44:50 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -493,7 +493,7 @@ $(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR)
            cat $$p | sed 's|fr.inria.hop;|fr.inria.$(HOPAPP);|g' > $$p.__tmp; \
            mv $$p.__tmp $$p; \
         done
-	mv src/fr/inria/hop src/fr/inria/$(HOPAPP)
+	mv $(ANDROIDBUILDDIR)/src/fr/inria/hop $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP)
 
 apk.bigloo: $(ANDROIDBUILDDIR)/bigloo-$(RELEASE) /tmp/droidcc.sh
 	$(MAKE) apk.bigloo.configure
