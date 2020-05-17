@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun May 17 11:27:59 2020 (serrano)                */
+#*    Last change :  Sun May 17 12:02:51 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -294,6 +294,7 @@ $(ANDROIDBUILDDIR)/AndroidManifest.xml $(ANDROIDBUILDDIR)/project.properties $(A
                 -e "s|@HOPZEROCONF@|$(ANDROIDHOPZEROCONF)|" \
                 -e "s|@HOPAPKNAME@|$(HOPAPKNAME)|" \
                 -e "s|@HOPAPP@|$(HOPAPP)|" \
+                -e "s|@HOPAPPVERSION@|$(HOPAPPVERSION)|" \
                 -e "s|@HOPURL@|$(ANDROIDHOPURL)|" > $@ || exit 1
 
 $(ANDROIDBUILDDIR)/AndroidManifest.xml: $(ANDROIDMANIFEST).in $(ANDROIDBUILDDIR)
@@ -321,6 +322,7 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/values/plugins.
                 -e "s|@HOPPREFIX@|$(ANDROIDHOPPREFIX)|" \
                 -e "s|@HOPAPP@|$(HOPAPP)|" \
                 -e "s|@HOPARGS@|$(HOPARGS)|" \
+                -e "s|@HOPAPPVERSION@|$(HOPAPPVERSION)|" \
                 -e "s|@HOPURL@|$(ANDROIDHOPURL)|" \
                 -e "s|@PLUGINBUILD@|$(PLUGINBUILD)|" \
                 -e "s|@PLUGINLOCALE@|$(PLUGINLOCALE)|" \
