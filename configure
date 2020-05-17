@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri May 15 13:46:18 2020 (serrano)                */
+#*    Last change :  Sun May 17 16:50:53 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -980,31 +980,6 @@ if [ "$webletsdir " = " " ]; then
   webletsdir=$libdir/hop/$version/weblets;
 fi
 
-# Hop librairies
-for p in scheme2js hopscheme hop hopwidget js2scheme hopscript nodejs; do
-  elib="$buildlibdir/$p"_es-$version.zip;
-  slib="$buildlibdir/$p"_s-$version.zip;
-  jvmziplibs="$elib $slib $jvmziplibs";
-done
-
-# Bigloo libraries
-for p in web multimedia sqlite ssl calendar mail text; do
-  elib="$bigloolibdir/bigloo$p"_es-$bglversion.zip;
-  slib="$bigloolibdir/bigloo$p"_s-$bglversion.zip;
-  jvmziplibs="$elib $slib $jvmziplibs";
-  jvminits="$bigloolibdir/$p"".init $jvminits";
-done
-
-#pth
-elib="$bigloolibdir/bigloopthread"_es-$bglversion.zip;
-slib="$bigloolibdir/bigloopthread"_s-$bglversion.zip;
-jvmziplibs="$elib $slib $jvmziplibs";
-jvminits="$bigloolibdir/pthread.init $jvminits";
-
-slib="$bigloolibdir/bigloo_s.zip";
-jvmziplibs="$slib $jvmziplibs";
-jvminits="$bigloolibdir/pthread.init $jvminits";
-
 #*---------------------------------------------------------------------*/
 #*    Srfis                                                            */
 #*---------------------------------------------------------------------*/
@@ -1557,6 +1532,9 @@ if [ "$arch " = "android " ]; then
   mkdir -p lib
   mkdir -p hopdroid/o
 
+  hopsrfis="$hopsrfis enable-hopdroid"
+  libraries="$libraries hopdroid"
+  
   rm -f $init 2> /dev/null
   echo ";* Automatically generated file (don't edit) */" > $init
  
