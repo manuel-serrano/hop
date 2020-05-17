@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun May 17 11:02:58 2020 (serrano)                */
+#*    Last change :  Sun May 17 11:07:27 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -477,11 +477,11 @@ apk.jni: $(ANDROIDBUILDDIR)/jni
 $(ANDROIDBUILDDIR)/jni: jni $(ANDROIDBUILDDIR)
 	cp -r $< $@
 	for p in `find $(ANDROIDBUILDDIR)/jni -name '*.cpp' -print`; do \
-           cat $$p | sed 's|fr/inria/hop|fr/inria/$(HOPAPP)|g' > $$p.__tmp; \
+           cat $$p | sed 's|fr/inria/hop"|fr/inria/$(HOPAPP)"|g' > $$p.__tmp; \
            mv $$p.__tmp $$p; \
         done
 	for p in `find $(ANDROIDBUILDDIR)/jni -name '*.c' -print`; do \
-           cat $$p | sed 's|fr/inria/hop|fr/inria/$(HOPAPP)|g' > $$p.__tmp; \
+           cat $$p | sed 's|fr/inria/hop"|fr/inria/$(HOPAPP)"|g' > $$p.__tmp; \
            mv $$p.__tmp $$p; \
         done
 
