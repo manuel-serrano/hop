@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri May 15 18:00:54 2020 (serrano)                */
+/*    Last change :  Sun May 17 12:26:05 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -66,7 +66,6 @@ public class HopLauncher extends Activity {
    private static String WIFI_SLEEP_POLICY = null;
    private static int WIFI_SLEEP_POLICY_NEVER = -1;
 
-   private static final String BOOT_PAGE = "<!DOCTYPE html><html><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8'><meta name='viewport' content='width=device-width, height=device-height, initial-scale=1, maximum-scale=1, user-scalable=no'></head><body style='background-color: #222; color: #eee'>Hopdac booting...</body></html>";
    // ui elements
    WebView webview;
    
@@ -262,6 +261,8 @@ public class HopLauncher extends Activity {
    private void initUI() {
       Log.d( "HopLauncher", "initUI" );
 
+      final String BOOT_PAGE = "<!DOCTYPE html><html><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8'><meta name='viewport' content='width=device-width, height=device-height, initial-scale=1, maximum-scale=1, user-scalable=no'></head><body style='background-color: #222; color: #eee'>" + getApplicationContext().getString( R.string.hopapp ) + " booting...</body></html>";
+      
       // remove title bar
       this.requestWindowFeature( Window.FEATURE_NO_TITLE );
 

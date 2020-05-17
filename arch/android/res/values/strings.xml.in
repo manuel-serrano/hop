@@ -14,6 +14,7 @@
 
    <!-- Application configuration -->
    <string name="hopapp">@HOPAPP@</string>
+   <string name="hopappversion">@HOPAPPVERSION@</string>
    <string name="hopargs">@HOPARGS@</string>
    
    <!-- Configuration constants -->
@@ -21,7 +22,7 @@
    <string name="bigloorelease">@BIGLOOVERSION@</string>
 
    <!-- Activities -->
-   <string name="activity_hop">Hop</string>
+   <string name="activity_hop">@HOPAPP@</string>
    <string name="activity_hopversion">Hop @HOPVERSION@</string>
    <string name="activity_settings">Hop Settings</string>
 

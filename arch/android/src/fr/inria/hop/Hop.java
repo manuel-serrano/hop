@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sun May 17 10:26:04 2020 (serrano)                */
+/*    Last change :  Sun May 17 10:47:19 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -135,7 +135,7 @@ public class Hop extends Thread {
 	 + " " + args;
 
       Log.d( "Hop", "========================================================================" );
-      Log.i( "Hop", res.getString( R.string.hopapp ) + " exec [" + sh + " -c \"" + cmd + "\"]");
+      Log.i( "Hop", HopConfig.APP + " exec [" + sh + " -c \"" + cmd + "\"]");
       HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
       Log.v( "Hop", "Hop process started, pid=" + pid[ 0 ] + ", HopFd=" +  HopFd );
       synchronized( currentpid ) {

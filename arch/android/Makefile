@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sat May 16 17:39:35 2020 (serrano)                */
+#*    Last change :  Sun May 17 12:02:51 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -50,7 +50,7 @@ ANDROIDHOPURL = http://hop.inria.fr
 ANDROIDHOPCONSOLELOG = false
 ANDROIDHOPDEBUGLEVEL = -g0
 ANDROIDHOPVERBOSELEVEL = -v
-ANDROIDHOPPREFIX = /data/data/fr.inria.hop/assets
+ANDROIDHOPPREFIX = /data/data/fr.inria.$(HOPAPP)/assets
 
 ANDROIDWEBLET =
 ANDROIDRES = $(ANDROIDDIR)/res
@@ -294,6 +294,7 @@ $(ANDROIDBUILDDIR)/AndroidManifest.xml $(ANDROIDBUILDDIR)/project.properties $(A
                 -e "s|@HOPZEROCONF@|$(ANDROIDHOPZEROCONF)|" \
                 -e "s|@HOPAPKNAME@|$(HOPAPKNAME)|" \
                 -e "s|@HOPAPP@|$(HOPAPP)|" \
+                -e "s|@HOPAPPVERSION@|$(HOPAPPVERSION)|" \
                 -e "s|@HOPURL@|$(ANDROIDHOPURL)|" > $@ || exit 1
 
 $(ANDROIDBUILDDIR)/AndroidManifest.xml: $(ANDROIDMANIFEST).in $(ANDROIDBUILDDIR)
@@ -321,6 +322,7 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/values/plugins.
                 -e "s|@HOPPREFIX@|$(ANDROIDHOPPREFIX)|" \
                 -e "s|@HOPAPP@|$(HOPAPP)|" \
                 -e "s|@HOPARGS@|$(HOPARGS)|" \
+                -e "s|@HOPAPPVERSION@|$(HOPAPPVERSION)|" \
                 -e "s|@HOPURL@|$(ANDROIDHOPURL)|" \
                 -e "s|@PLUGINBUILD@|$(PLUGINBUILD)|" \
                 -e "s|@PLUGINLOCALE@|$(PLUGINLOCALE)|" \
@@ -477,11 +479,11 @@ apk.jni: $(ANDROIDBUILDDIR)/jni
 $(ANDROIDBUILDDIR)/jni: jni $(ANDROIDBUILDDIR)
 	cp -r $< $@
 	for p in `find $(ANDROIDBUILDDIR)/jni -name '*.cpp' -print`; do \
-           cat $$p | sed 's|fr/inria/hop|fr/inria/$(HOPAPP)|g' > $$p.__tmp; \
+           cat $$p | sed 's|fr/inria/hop/|fr/inria/$(HOPAPP)/|g' > $$p.__tmp; \
            mv $$p.__tmp $$p; \
         done
 	for p in `find $(ANDROIDBUILDDIR)/jni -name '*.c' -print`; do \
-           cat $$p | sed 's|fr/inria/hop|fr/inria/$(HOPAPP)|g' > $$p.__tmp; \
+           cat $$p | sed 's|fr/inria/hop/|fr/inria/$(HOPAPP)/|g' > $$p.__tmp; \
            mv $$p.__tmp $$p; \
         done
 
@@ -490,10 +492,13 @@ $(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR)
 	$(RM) -rf $@
 	cp -r $(ANDROIDDIR)/src $@
 	for p in `find $(ANDROIDBUILDDIR)/src -name '*.java' -print`; do \
-           cat $$p | sed 's|fr.inria.hop;|fr.inria.$(HOPAPP);|g' > $$p.__tmp; \
+           cat $$p \
+               | sed -e 's|fr.inria.hop;|fr.inria.$(HOPAPP);|g' \
+                     -e 's|fr.inria.hop[.]|fr.inria.$(HOPAPP).|g' \
+               > $$p.__tmp; \
            mv $$p.__tmp $$p; \
         done
-	mv src/fr/inria/hop src/fr/inria/$(HOPAPP)
+	mv $(ANDROIDBUILDDIR)/src/fr/inria/hop $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP)
 
 apk.bigloo: $(ANDROIDBUILDDIR)/bigloo-$(RELEASE) /tmp/droidcc.sh
 	$(MAKE) apk.bigloo.configure
