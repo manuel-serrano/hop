@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun May 17 10:50:27 2020 (serrano)                */
+#*    Last change :  Sun May 17 10:54:21 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -492,7 +492,7 @@ $(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR)
 	for p in `find $(ANDROIDBUILDDIR)/src -name '*.java' -print`; do \
            cat $$p \
                | sed -e 's|fr.inria.hop;|fr.inria.$(HOPAPP);|g' \
-                     -e 's|fr.inria.hop"|fr.inria.$(HOPAPP)"|g' \
+                     -e 's|fr.inria.hop[.]|fr.inria.$(HOPAPP)/"|g' \
                > $$p.__tmp; \
            mv $$p.__tmp $$p; \
         done
