@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  manuel serrano                                    */
 #*    Creation    :  Wed May 13 18:51:59 2020                          */
-#*    Last change :  Fri May 15 09:17:04 2020 (serrano)                */
+#*    Last change :  Sun May 17 08:50:55 2020 (serrano)                */
 #*    Copyright   :  2020 manuel serrano                               */
 #*    -------------------------------------------------------------    */
 #*    build the Android APK after ndk-build                            */
@@ -87,15 +87,21 @@ ZIPALIGN=$ANDROIDSDK/build-tools/$ANDROIDBUILDTOOLSVERSION/zipalign
 #*---------------------------------------------------------------------*/
 #*    Apk production                                                   */
 #*---------------------------------------------------------------------*/
-$AAPT package -f -m -J src -M AndroidManifest.xml -S res -I $ANDROIDCP
+echo "$AAPT package -f -m -J src -M AndroidManifest.xml -S res -I $ANDROIDCP"
+$AAPT package -f -m -J src -M AndroidManifest.xml -S res -I $ANDROIDCP || exit 1
 
+echo "$javac -classpath $ANDROIDCP -sourcepath 'src' -d 'bin' -target 1.7 -source 1.7 `find src -name "*.java"`"
 $javac -classpath $ANDROIDCP -sourcepath 'src' -d 'bin' -target 1.7 -source 1.7 `find src -name "*.java"`  || exit 1
 
+echo "$DX --dex --output=classes.dex bin"
 $DX --dex --output=classes.dex bin || exit 1
 
 /bin/rm -f $apkname.apk.unaligned 
-$AAPT package -f -M AndroidManifest.xml -S res -I $ANDROIDCP -F $apkname.apk.unaligned 
-$AAPT add $apkname.apk.unaligned classes.dex
+echo "$AAPT package -f -M AndroidManifest.xml -S res -I $ANDROIDCP -F $apkname.apk.unaligned "
+$AAPT package -f -M AndroidManifest.xml -S res -I $ANDROIDCP -F $apkname.apk.unaligned || exit 1
+
+echo "$AAPT add $apkname.apk.unaligned classes.dex"
+$AAPT add $apkname.apk.unaligned classes.dex || exit 1
 
 rm -rf lib
 cp -r libs lib
@@ -108,9 +114,11 @@ for p in `find assets -type f -print`; do
   $AAPT add $apkname.apk.unaligned $p
 done
 
-jarsigner -keystore $androidkeystore -storepass 'android' $apkname.apk.unaligned androiddebugkey
+echo "jarsigner -keystore $androidkeystore -storepass 'android' $apkname.apk.unaligned androiddebugkey"
+jarsigner -keystore $androidkeystore -storepass 'android' $apkname.apk.unaligned androiddebugkey || exit 1
 
 /bin/rm -f $apkname.apk
-$ZIPALIGN -f 4 $apkname.apk.unaligned $apkname.apk
+echo "$ZIPALIGN -f 4 $apkname.apk.unaligned $apkname.apk"
+$ZIPALIGN -f 4 $apkname.apk.unaligned $apkname.apk || exit 1
 
 /bin/rm -f $apkname.apk.unaligned

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hopdac/hopdac/arch/android/src/fr/inria/hop/Hop.java         */
+/*    .../project/hop/hop/arch/android/src/fr/inria/hop/Hop.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sun Jan 14 10:07:14 2018 (serrano)                */
-/*    Copyright   :  2010-18 Manuel Serrano                            */
+/*    Last change :  Sun May 17 10:26:04 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
 /*=====================================================================*/
@@ -74,7 +74,7 @@ public class Hop extends Thread {
       currentpid[ 0 ] = 0;
    }
 
-   // prefs fetch compatible with the hopdac encoding (using S: as prefix)
+   // prefs fetch compatible with the hop encoding (using S: as prefix)
    static String getPrefString( SharedPreferences sp, String key, String def ) {
       String tmp = sp.getString( key, "" );
 
@@ -135,7 +135,7 @@ public class Hop extends Thread {
 	 + " " + args;
 
       Log.d( "Hop", "========================================================================" );
-      Log.i( "Hop", "hopdac exec [" + sh + " -c \"" + cmd + "\"]");
+      Log.i( "Hop", res.getString( R.string.hopapp ) + " exec [" + sh + " -c \"" + cmd + "\"]");
       HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
       Log.v( "Hop", "Hop process started, pid=" + pid[ 0 ] + ", HopFd=" +  HopFd );
       synchronized( currentpid ) {

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hopdac/arch/android/src/fr/inria/hop/HopUiUtils.java         */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopUiUtils.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  1 09:13:38 2010                          */
-/*    Last change :  Fri Jul 15 15:06:17 2016 (serrano)                */
-/*    Copyright   :  2010-16 Manuel Serrano                            */
+/*    Last change :  Sun May 17 10:26:50 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    UI Utility functions                                             */
 /*=====================================================================*/
