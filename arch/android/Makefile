@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun May 17 11:16:47 2020 (serrano)                */
+#*    Last change :  Sun May 17 11:27:59 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -50,7 +50,7 @@ ANDROIDHOPURL = http://hop.inria.fr
 ANDROIDHOPCONSOLELOG = false
 ANDROIDHOPDEBUGLEVEL = -g0
 ANDROIDHOPVERBOSELEVEL = -v
-ANDROIDHOPPREFIX = /data/data/fr.inria.hop/assets
+ANDROIDHOPPREFIX = /data/data/fr.inria.$(HOPAPP)/assets
 
 ANDROIDWEBLET =
 ANDROIDRES = $(ANDROIDDIR)/res
