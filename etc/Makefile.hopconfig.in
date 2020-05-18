@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Mon May 18 07:54:08 2020 (serrano)                */
+#*    Last change :  Mon May 18 08:52:54 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autoconf Makefile skeleton for HOP.                          */
@@ -69,6 +69,7 @@ FFLAGS		= @FFLAGS@
 BLFLAGS         = @BLFLAGS@ $(BLIBFLAGS)
 BHFLAGS		= @BHFLAGS@ -q -mkaddheap -mkaddlib $(EFLAGS)
 BHFLAGS		= @BHFLAGS@ -q -mkaddheap -mkaddlib $(EFLAGS)
+BJFLAGS		= -j
 CCFLAGS		= @CCFLAGS@
 HCOMMONFLAGS    = --reset-bigloo-options --bigloo=$(BIGLOO) --bigloo-lib-dir=$(BIGLOOLIBDIR) --share-dir $(BUILDSHAREDIR) $(EFLAGS) --
 HFLAGS		= @HFLAGS@ $(HCOMMONFLAGS)

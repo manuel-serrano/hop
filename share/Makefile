@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Tue Apr 16 05:33:50 2019 (serrano)                */
-#*    Copyright   :  2004-19 Manuel Serrano                            */
+#*    Last change :  Mon May 18 08:50:49 2020 (serrano)                */
+#*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -17,6 +17,8 @@ do: build
 #*---------------------------------------------------------------------*/
 -include ../etc/Makefile.hopconfig
 -include ../etc/Makefile.version
+-include $(BIGLOOLIBDIR)/Makefile.config
+-include $(BIGLOOLIBDIR)/Makefile.misc
 
 #*---------------------------------------------------------------------*/
 #*    Client-side runtime library                                      */

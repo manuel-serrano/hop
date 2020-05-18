@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon May 18 07:46:45 2020 (serrano)                */
+#*    Last change :  Mon May 18 08:39:52 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1045,7 +1045,6 @@ if [ "$arch " = "android " ]; then
   bcflags="$bcflags -srfi enable-hopdroid";
   bglcloselibs="$bglcloselibs phone";
 fi
-  
 
 #*---------------------------------------------------------------------*/
 #*    Create directories                                               */
