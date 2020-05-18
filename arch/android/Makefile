@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun May 17 12:02:51 2020 (serrano)                */
+#*    Last change :  Mon May 18 11:26:25 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -74,6 +74,8 @@ PLUGINSYSTEM = false
 PLUGINTTS = false
 PLUGINCALL = false
 PLUGINPREFS = false
+
+APKCUSTOM =
 
 # global configuration
 REPOSITORY = $(DISTRIBDIR)
@@ -449,7 +451,7 @@ apk-build:
 apk: apk.bigloo
 	$(MAKE) apk-sans-bigloo
 
-apk-sans-bigloo: apk.common apk.res apk.jni apk.src apk.hop
+apk-sans-bigloo: apk.common apk.res apk.jni apk.src apk.hop apk.custom
 	$(MAKE) ndk-build
 	$(MAKE) apk-build
 
@@ -558,6 +560,11 @@ $(ANDROIDBUILDDIR)/$(HOPFULLNAME): $(REPOSITORY)/$(HOPFULLNAME).tar.gz
 apk-clean:
 	rm -rf $(ANDROIDBUILDDIR)
 	rm -f $(HOPTMPDIR)/antandroid.sh
+
+apk.custom: apk.hop
+	if [ "$(APKCUSTOM) " != " " ]; then
+	   $(MAKE) $(APKCUSTOM); \
+	fi
 
 #*---------------------------------------------------------------------*/
 #*    droidcc ...                                                      */
