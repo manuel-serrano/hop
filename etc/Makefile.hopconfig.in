@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Sun Apr 19 08:38:47 2020 (serrano)                */
+#*    Last change :  Mon May 18 08:52:54 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autoconf Makefile skeleton for HOP.                          */
@@ -40,7 +40,6 @@ UNZIP		= @UNZIP@
 JAR		= @JAR@
 FLASHCC		= @FLASHCC@
 GZIP		= @GZIP@
-JAVAC		= @JAVAC@
 CLOSURE		= @CLOSURE@
 
 MODFILE		= 644
@@ -68,9 +67,6 @@ BCFLAGSDEV	= @BCFLAGSDEV@
 BCFLAGSRTS	= @BCFLAGSRTS@
 FFLAGS		= @FFLAGS@
 BLFLAGS         = @BLFLAGS@ $(BLIBFLAGS)
-BJVMFLAGS	= @BCFLAGS@ -jvm $(EFLAGS)
-BLJVMFLAGS      = @BLFLAGS@ -jvm-purify -unsafe
-BEJVMFLAGS	= -jvm-jar
 BHFLAGS		= @BHFLAGS@ -q -mkaddheap -mkaddlib $(EFLAGS)
 BHFLAGS		= @BHFLAGS@ -q -mkaddheap -mkaddlib $(EFLAGS)
 BJFLAGS		= -j
@@ -91,7 +87,6 @@ BHOPCFLAGS	= @BHOPCFLAGS@
 #*    Linking                                                          */
 #*---------------------------------------------------------------------*/
 BGLCLOSELIBS_S	= $(BIGLOOPTHLIBS) $(BIGLOOSSLLIBS) @BGLCLOSELIBS_S@
-
 BGLCLOSELIBS_U	= $(BIGLOOPTHLIBU) $(BIGLOOSSLLIBU) @BGLCLOSELIBS_U@
 
 #*---------------------------------------------------------------------*/
@@ -130,17 +125,6 @@ HOPDEMOSDIR	= $(HOPSHAREDIR)/demos
 #*    Runtime system                                                   */
 #*---------------------------------------------------------------------*/
 RTSCONFIG	= @RTSCONFIG@
-
-#*---------------------------------------------------------------------*/
-#*    JVM zips                                                         */
-#*---------------------------------------------------------------------*/
-JVMZIPLIBS	= @JVMZIPLIBS@
-JVMINITS	= @JVMINITS@
-
-#*---------------------------------------------------------------------*/
-#*    Apache Felix                                                     */
-#*---------------------------------------------------------------------*/
-FELIX_JAR       = @FELIX_JAR@
 
 #*---------------------------------------------------------------------*/
 #*    REPOSITORY                                                       */

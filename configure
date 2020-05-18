@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri May 15 13:46:18 2020 (serrano)                */
+#*    Last change :  Mon May 18 08:39:52 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -157,7 +157,6 @@ done
 
 arch=noarch
 mach=
-felix=
 
 echo "configuring with [$*]..." > config.status
 
@@ -410,12 +409,6 @@ while : ; do
       installspecific=install-android;
       arch=android;;
 
-    --apache-felix=*)
-      felix="`echo $1 | sed 's/^[^=]*=//'`"
-      link=felix;
-      hopsrfis="$hopsrfis boot-from-java"
-      ;;
-
     --closure=*)
       closure="`echo $1 | sed 's/^[^=]*=//'`"
       ;;
@@ -482,7 +475,7 @@ while : ; do
       echo "   --bigloo-prce=yes|no........ enable/disable libunistring" >&2;
       echo "   --bigloo-unistring=yes|no... enable/disable pcre" >&2;
       echo "   --backend=backend........... the execution platform [native,jvm,dotnet]" >&2;
-      echo "   --link=method............... the link method [static,dynamic,library,felix]" >&2;
+      echo "   --link=method............... the link method [static,dynamic,library]" >&2;
       echo "   --afile=afile............... the Bigloo afile tool" >&2;
       echo "   --btags=btags............... the Bigloo btags tool" >&2;
       echo "   --bdepend=bdepend........... the Bigloo dependence tool" >&2;
@@ -498,10 +491,8 @@ while : ; do
       echo "   --bhflags=args.............. the heap options" >&2;
       echo "   --hflags=args............... the hopc options" >&2;
       echo "   --ccflags=args.............. the C compilation options" >&2;
-      echo "   --macosx.................... prepares the production of a MacOSX bundle" >&2;
       echo "   --android................... prepares the production of an Android apk" >&2;
       echo "   --macosx.................... prepares the production of a MacOSX bundle" >&2;
-      echo "   --apache-felix=path......... path to felix.jar" >&2;
       echo "" >&2;
       echo "Misc settings:" >&2;
       echo "   --devel..................... enables devel mode (safe but not debug)" >&2;
@@ -961,12 +952,6 @@ if [ $? != "0" ]; then
 fi
 
 #*---------------------------------------------------------------------*/
-#*    Jvm zip libs                                                     */
-#*---------------------------------------------------------------------*/
-jvmziplibs=
-jvminits=
-
-#*---------------------------------------------------------------------*/
 #*    NODEMODULES dir                                                  */
 #*---------------------------------------------------------------------*/
 if [ "$nodemodulesdir " = " " ]; then
@@ -980,31 +965,6 @@ if [ "$webletsdir " = " " ]; then
   webletsdir=$libdir/hop/$version/weblets;
 fi
 
-# Hop librairies
-for p in scheme2js hopscheme hop hopwidget js2scheme hopscript nodejs; do
-  elib="$buildlibdir/$p"_es-$version.zip;
-  slib="$buildlibdir/$p"_s-$version.zip;
-  jvmziplibs="$elib $slib $jvmziplibs";
-done
-
-# Bigloo libraries
-for p in web multimedia sqlite ssl calendar mail text; do
-  elib="$bigloolibdir/bigloo$p"_es-$bglversion.zip;
-  slib="$bigloolibdir/bigloo$p"_s-$bglversion.zip;
-  jvmziplibs="$elib $slib $jvmziplibs";
-  jvminits="$bigloolibdir/$p"".init $jvminits";
-done
-
-#pth
-elib="$bigloolibdir/bigloopthread"_es-$bglversion.zip;
-slib="$bigloolibdir/bigloopthread"_s-$bglversion.zip;
-jvmziplibs="$elib $slib $jvmziplibs";
-jvminits="$bigloolibdir/pthread.init $jvminits";
-
-slib="$bigloolibdir/bigloo_s.zip";
-jvmziplibs="$slib $jvmziplibs";
-jvminits="$bigloolibdir/pthread.init $jvminits";
-
 #*---------------------------------------------------------------------*/
 #*    Srfis                                                            */
 #*---------------------------------------------------------------------*/
@@ -1012,21 +972,6 @@ for srfi in $hopsrfis; do
     bcflags="$bcflags -srfi $srfi";
     bhflags="$bhflags -srfi $srfi";
 done
-
-#*---------------------------------------------------------------------*/
-#*    Apache Felix                                                     */
-#*---------------------------------------------------------------------*/
-if [ "$felix " != " " ]; then
-   if [ ! -f "$felix" ]; then
-      echo "*** Configure error, Apache Felix not found in $felix" >&2;
-      exit 1;
-   fi
-
-   if [ "$backend " != "jvm " ]; then
-      echo "*** Configure error, Apache Felix requires the jvm backend" >&2;
-      exit 1;
-   fi
-fi
 
 #*---------------------------------------------------------------------*/
 #*    closure (optional)                                               */
@@ -1091,6 +1036,15 @@ if [ "$buildid " = " " ]; then
 fi  
 
 buildid=`$bigloo -s -eval "(begin (print (md5sum-string \"$buildid $buildtag $bigloolibdir\")) (exit 1))"`
+
+#*---------------------------------------------------------------------*/
+#*    OS specific                                                      */
+#*---------------------------------------------------------------------*/
+if [ "$arch " = "android " ]; then
+  hopsrfis="$hopsrfis enable-hopdroid"
+  bcflags="$bcflags -srfi enable-hopdroid";
+  bglcloselibs="$bglcloselibs phone";
+fi
 
 #*---------------------------------------------------------------------*/
 #*    Create directories                                               */
@@ -1220,8 +1174,6 @@ cat $mkmf.in \
         -e "s|@BHOPCFLAGS@|$bhopcflags|" \
         -e "s|@BLFLAGS@|$blflags|" \
         -e "s|@FFLAGS@|$fflags|" \
-        -e "s|@JVMZIPLIBS@|$jvmziplibs|" \
-        -e "s|@JVMINITS@|$jvminits|" \
         -e "s|@CCFLAGS@|$ccflags $ccflagsprofile $ccflagsdebug|" \
         -e "s|@BCFLAGSDEV@|$bcflagsdev|" \
         -e "s|@BUILDDIR@|$PWD|" \
@@ -1755,6 +1707,7 @@ echo "  bigloo................................ $bigloo ($bglversion)"
 echo "  backend............................... $backend"
 echo "  link.................................. $link"
 echo "  devel mode............................ $devmode"
+echo "  arch.................................. $arch"
 echo 
 echo "Optional features:"
 echo "  multi-threading....................... $threads"
