@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon May 18 19:35:23 2020 (serrano)                */
+#*    Last change :  Mon May 18 20:40:09 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1519,10 +1519,16 @@ if [ "$arch " = "android " ]; then
   echo "" >> $init
   chmod a-w $init
   
-  cat node_modules/hopdroid/Makefile.in \
+  cat node_modules/hopdroid/lib/Makefile.in \
       | sed -e "s|@HOPDROIDCLOSELIBS_S@|-lhopdroid_s-$version|" \
             -e "s|@HOPDROIDCLOSELIBS_U@|-lhopdroid_u-$version|" \
-      >> node_modules/hopdroid/Makefile
+      > node_modules/hopdroid/lib/Makefile
+  chmod a-w $init
+else
+  cat node_modules/hopdroid/lib/Makefile.in \
+      | sed -e "s|@HOPDROIDCLOSELIBS_S@||" \
+            -e "s|@HOPDROIDCLOSELIBS_U@||" \
+      > node_modules/hopdroid/lib/Makefile
   chmod a-w $init
 fi
   
