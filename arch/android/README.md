@@ -252,12 +252,37 @@ can be given. For that, create a `AndroidManifest.xml.in` (pay
 attention to the `.xml.in` suffix) file and extend your `Makefile.config` 
 file as follows:
 
-    $ echo "ANDROIDMANIFEST=AndroidManifest.xml.in` >> Makefile.config
+    $ echo "ANDROIDMANIFEST=PROJDIR/AndroidManifest.xml.in` >> Makefile.config
 
 Check the Hop orginal `arch/android/AndroidManifest.xml.in` to create
 your. This file follows the Android syntax and semantics but in addition
 the _@-keywords_, e.g., `@HOPVERSION@`, will be replaced
 by their actual values during the package construction.
+
+** Note **: As `make` rely n a sort of lazy evaluation, if you define 
+`ANDROIDMANIFEST` as `$$PWD/AndroidManifest.xml.in`, the environment
+variable will `PWD` be evaluated on the hop directory and not the directory
+containing your project, which will yield to ignoring your configuration. There
+are two options for solving that problem:
+
+  1. use an absolute file name for `ANDROIDMANIFEST`;
+  2. force an eager evaluation of the variable by passing it to 
+ the sub `make` command with:
+  
+    apk: 
+        $(MAKE) -C $(HOPDIR)/arch/android apk \
+            ANDROIDWEBLET=$(ANDROIDWEBLET) \
+            ANDROIDMANIFEST=$(ANDROIDMANIFEST) \
+            CONFIG=$(ANDROIDWEBLET)/arch/android/Makefile.config
+
+
+The icons and other graphical elements of an Android application are
+stored in the `res` directory. Hop uses a set of default icons that
+can be changed by providing a replacement directory. For that, extend
+the `Makefile.config` file as follows:
+
+    $ echo "ANDROIDRES=PROJDIR/res` >> Makefile.config
+
 
 
 Debugging
