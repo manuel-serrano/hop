@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Tue May 12 18:38:34 2020 (serrano)                */
+#*    Last change :  Mon May 18 07:51:43 2020 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hop                                     */
 #*=====================================================================*/
@@ -57,8 +57,6 @@ build:  o $(BACKEND)
 
 native: $(BUILDBINDIR)/$(EXEC)
 
-jvm: $(CLASS_DIR) $(BUILDBINDIR)/$(EXEC).jar
-
 o: 
 	mkdir -p $@
 
@@ -81,80 +79,6 @@ link.library:
 	echo "***ERROR: link.library not currently supported!"
 	exit 1
 
-$(BUILDBINDIR)/$(EXEC).jar: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib META-INF/MANIFEST.MF
-	@ $(MAKE) jar.$(LINK) DEST=$@
-	@ $(call done,$@)
-
-jar.dynamic: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib
-	$(JAR) $(DEST) META-INF/MANIFEST.MF -C o/class_s .
-
-jar.felix: .afile .etags .jfile $(BGL_CLASSES) jvm-stdlibs jvm-share jvm-etc jvm-lib 
-	@ $(MAKE) -C $(BUILDDIR)/arch/felix
-	$(JAR) $(DEST) META-INF/MANIFEST.MF -C o/class_s .
-
-jvm-stdlibs: o/class_s/lib/hop/$(HOPRELEASE)
-	for p in $(JVMZIPLIBS); do \
-          if [ -f $$p ]; then \
-             $(UNZIP) -d o/class_s -o -u $$p; \
-          else \
-             echo "Warning: Can't find zip file $$p..."; \
-          fi; \
-        done
-	for p in $(JVMINITS); do \
-          if [ -f $$p ]; then \
-             cp $$p o/class_s/lib/hop/$(HOPRELEASE); \
-          else \
-             echo "Warning: Can't find init file $$p..."; \
-          fi; \
-        done
-
-jvm-share:
-	$(RM) -rf o/class_s/share
-	(cd ../share && $(MAKE) hop.js) && cp -r ../share o/class_s
-	cp -r ../scheme2js/runtime/*.js o/class_s/share
-
-jvm-etc:
-	mkdir -p o/class_s/etc
-	cp ../etc/hoprc.hop o/class_s/etc
-	$(MAKE) -s jvm-list SRC=.. DIR=etc DEST=o/class_s
-
-jvm-list:
-	ls $(SRC)/$(DIR) > $(DEST)/$(DIR)/.list
-	for p in `ls $(SRC)/$(DIR)`; do \
-	  if [ -d $(SRC)/$(DIR)/$$p ]; then \
-            $(MAKE) jvm-list SRC=$(SRC)/$(DIR) DIR=$$p DEST=$(DEST)/$(DIR) || (echo "*** ERROR: $$p"; exit 1); \
-          fi \
-        done
-
-jvm-lib: o/class_s/lib/hop/$(HOPRELEASE)
-	cp -r ../weblets o/class_s/lib
-	$(MAKE) -s jvm-list SRC=.. DIR=weblets DEST=o/class_s/lib
-	cp -f $(BUILDLIBDIR)/*.init $<
-
-
-o/class_s/lib/hop/$(HOPRELEASE):
-	mkdir -p $@
-
-META-INF/MANIFEST.MF: META-INF
-	@ $(MAKE) manifest.$(LINK) DEST=$@
-
-manifest.dynamic:
-	@ echo "Manifest-Version: 1.0" > $(DEST)
-	@ echo "Main-Class: bigloo/hop/main" >> $(DEST)
-	@ echo "Created-By: Hop $(VERSION)" >> $(DEST)
-
-manifest.felix:
-	@ $(MAKE) manifest.dynamic
-	@ echo "Bundle-Name: Hop controller" >> $(DEST)
-	@ echo "Bundle-Description: Manages a Hop instance." >> $(DEST)
-	@ echo "Bundle-Vendor: INRIA" >> $(DEST)
-	@ echo "Bundle-Version: 0.1" >> $(DEST)
-	@ echo "Bundle-Activator: bigloo.hop.HopActivator" >> $(DEST)
-	@ echo "Import-Package: org.osgi.framework" >> $(DEST)
-
-META-INF:
-	mkdir -p $@
-
 #*---------------------------------------------------------------------*/
 #*    SUFFIXES                                                         */
 #*---------------------------------------------------------------------*/
@@ -166,9 +90,6 @@ META-INF:
 #*---------------------------------------------------------------------*/
 o/%.o: %.scm .afile
 	@ $(call compile,$(BIGLOO),$(BCFLAGS),-c,$< -o $@)
-
-$(CLASS_DIR)/%.class: %.scm .afile
-	@ $(call compile,$(BIGLOO),$(BJVMFLAGS),-c,$< -o $@)
 
 o/main.o: main.scm
 	@ $(call compile2,$(BIGLOO),$(BCFLAGS),$(BCFLAGSDEV),-c,$< -o $@)
@@ -182,9 +103,6 @@ ude:
 
 .afile: $(SOURCES)
 	@ $(AFILE) -o .afile $(SOURCES) 
-
-.jfile: $(SOURCES)
-	@ $(JFILE) -o .jfile -pbase bigloo.hop $(SOURCES)
 
 .etags: .afile
 	@ $(BTAGS) -o .etags $(SOURCES)
