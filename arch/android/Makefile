@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Mon May 18 11:26:25 2020 (serrano)                */
+#*    Last change :  Mon May 18 13:23:24 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -562,7 +562,7 @@ apk-clean:
 	rm -f $(HOPTMPDIR)/antandroid.sh
 
 apk.custom: apk.hop
-	if [ "$(APKCUSTOM) " != " " ]; then
+	if [ "$(APKCUSTOM) " != " " ]; then \
 	   $(MAKE) $(APKCUSTOM); \
 	fi
 
