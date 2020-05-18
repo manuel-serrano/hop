@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon May 18 07:29:01 2020 (serrano)                */
+#*    Last change :  Mon May 18 07:46:45 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -491,7 +491,6 @@ while : ; do
       echo "   --bhflags=args.............. the heap options" >&2;
       echo "   --hflags=args............... the hopc options" >&2;
       echo "   --ccflags=args.............. the C compilation options" >&2;
-      echo "   --macosx.................... prepares the production of a MacOSX bundle" >&2;
       echo "   --android................... prepares the production of an Android apk" >&2;
       echo "   --macosx.................... prepares the production of a MacOSX bundle" >&2;
       echo "" >&2;
@@ -1044,8 +1043,7 @@ buildid=`$bigloo -s -eval "(begin (print (md5sum-string \"$buildid $buildtag $bi
 if [ "$arch " = "android " ]; then
   hopsrfis="$hopsrfis enable-hopdroid"
   bcflags="$bcflags -srfi enable-hopdroid";
-  bglcloselibs="$bglcloselibs phone hopdroid";
-  
+  bglcloselibs="$bglcloselibs phone";
 fi
   
 
