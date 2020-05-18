@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon May 18 08:39:52 2020 (serrano)                */
+#*    Last change :  Mon May 18 19:35:23 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1517,6 +1517,12 @@ if [ "$arch " = "android " ]; then
             -e "s|@BRANCH@|$branch|" \
       >> $init
   echo "" >> $init
+  chmod a-w $init
+  
+  cat node_modules/hopdroid/Makefile.in \
+      | sed -e "s|@HOPDROIDCLOSELIBS_S@|-lhopdroid_s-$version|" \
+            -e "s|@HOPDROIDCLOSELIBS_U@|-lhopdroid_u-$version|" \
+      >> node_modules/hopdroid/Makefile
   chmod a-w $init
 fi
   
