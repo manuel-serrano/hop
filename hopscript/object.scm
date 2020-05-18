@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Apr 17 18:10:54 2020 (serrano)                */
+;*    Last change :  Mon May 18 11:46:57 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -1266,7 +1266,6 @@
 	       (flags-enumerable? flags)
 	       #f
 	       (flags-accessor? flags)))))
-   
    
    (js-object-mode-extensible-set! o #f)
    (js-object-mode-frozen-set! o #t)
