@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon May 18 08:50:49 2020 (serrano)                */
+#*    Last change :  Mon May 18 09:02:17 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -365,10 +365,9 @@ predistrib-clean:
 .PHONY: clean predistrib-clean devclean
 
 clean:
-	$(RM) hop_u.js hop_s.js 
-	$(RM) hopjs_u.js hopjs_s.js 
-	$(RM) hop-runtime.sch 
-#* 	$(RM) hopjs-serialize.js                                       */
+	$(RM) -f hop_u.js hop_s.js 
+	$(RM) -f hopjs_u.js hopjs_s.js 
+	$(RM) -f hop-runtime.sch 
 
 devclean:
 	$(RM) hop-exception.js hop-debug.js hop-builtin-serializers.js
