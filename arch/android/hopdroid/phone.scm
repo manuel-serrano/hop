@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Tue May 19 11:07:26 2020 (serrano)                */
+;*    Last change :  Tue May 19 12:17:27 2020 (serrano)                */
 ;*    Copyright   :  2010-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -66,14 +66,17 @@
 (define (android-init! p::androidphone)
    ;; android-mutex is already acquired
    (with-access::androidphone p (%sock-plugin %sock-event %event-table %event-thread app)
+      (tprint "android-init sock-plugin=" %sock-plugin)
       (unless %sock-plugin
 	 ;; hopdroid sockets
 	 (set! %sock-plugin
 	    (make-client-socket (format "\000~a-plugin:~a" app (hop-port))
 	       0 :domain 'unix))
+      (tprint "android-init.2 sock-plugin=" %sock-plugin)
 	 (set! %sock-event
 	    (make-client-socket (format "\000~a-event:~a" app (hop-port))
 	       0 :domain 'unix))
+      (tprint "android-init.3 sock-plugin=" %sock-plugin " " %sock-event)
 	 ;; hopdroid event table
 	 (set! %event-table (make-hashtable 8))
 	 ;; start the event listener thread
