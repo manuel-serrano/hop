@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.1.x/arch/android/hopdroid/phone.scm       */
+;*    serrano/prgm/project/hop/hop/arch/android/hopdroid/phone.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Sun Jul 17 06:35:32 2016 (serrano)                */
+;*    Last change :  Tue May 19 11:07:26 2020 (serrano)                */
 ;*    Copyright   :  2010-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -148,6 +148,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (add-event-listener! p::androidphone event proc . capture)
    (with-access::androidphone p (protocol %mutex %event-table %sock-event)
+      (android-init! p)
       (synchronize %mutex
 	 ;; register the listener
 	 (synchronize event-mutex
