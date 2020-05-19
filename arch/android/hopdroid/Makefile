@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Sun May 10 15:28:37 2020 (serrano)                */
+#*    Last change :  Tue May 19 13:46:58 2020 (serrano)                */
 #*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopdroid library.                      */
@@ -36,7 +36,7 @@ HOPCLOSELIBS_EU = -lhopdroid_u-$(HOPRELEASE)
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_BGL_OBJECTS = phone music mpd multimedia tts wifi zeroconf system prefs
+_BGL_OBJECTS = music mpd multimedia tts wifi zeroconf system prefs
 
 _OBJECTS = $(_BGL_OBJECTS)
 
@@ -49,14 +49,15 @@ BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 BGL_DOTNET_OBJ = $(_OBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj)
 BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make_lib.obj
 
-SOURCES = $(_OBJECTS:%=%.scm)
+SOURCES_IN = (_OBJECTS:%=%.scm)
+SOURCES = $(SOURCES_IN) phone.scm
 
 INCLUDES =
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
-POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile
+POPULATION = phone.scm.in $(SOURCES_IN) $(INCLUDES) make_lib.scm Makefile
 
 include ../../../etc/Makefile.library
 

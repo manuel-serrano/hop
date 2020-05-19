@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Tue May 19 12:17:27 2020 (serrano)                */
+;*    Last change :  Tue May 19 13:38:51 2020 (serrano)                */
 ;*    Copyright   :  2010-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -20,7 +20,7 @@
 	   __hopdroid-zeroconf)
    
    (export (class androidphone::phone
-	      (app::bstring read-only (default "hopdroid"))
+	      (app::bstring read-only (default "@HOPAPP@"))
 	      (sdk::bstring read-only (get get-android-sdk))
 	      (model::bstring read-only (get get-android-model))
 	      (product::bstring read-only (get get-android-product))
