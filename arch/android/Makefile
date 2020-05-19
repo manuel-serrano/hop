@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Mon May 18 13:23:24 2020 (serrano)                */
+#*    Last change :  Tue May 19 07:29:02 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -407,7 +407,9 @@ rename-jsgz:
           fi \
         done
 
-$(ANDROIDBUILDDIR)/assets/bin: $(ANDROIDBUILDDIR)/assets/bin
+$(ANDROIDBUILDDIR)/assets/bin: $(ANDROIDBUILDDIR)/assets/bin/hop
+
+$(ANDROIDBUILDDIR)/assets/bin/hop:
 	mkdir -p $@
 	cp $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/bin/hop $@
 
