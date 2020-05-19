@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Tue May 19 14:49:11 2020 (serrano)                */
+#*    Last change :  Tue May 19 14:50:23 2020 (serrano)                */
 #*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopdroid library.                      */
@@ -43,13 +43,7 @@ _OBJECTS = $(_BGL_OBJECTS)
 OBJECTS = $(_OBJECTS:%=o/%.o) o/phone.o
 EOBJECTS = o/make_lib.o
 
-BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class)
-BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
-
-BGL_DOTNET_OBJ = $(_OBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj)
-BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make_lib.obj
-
-SOURCES_IN = $(_OBJECTS:%=%.scm)
+SOURCES_IN = $(_BGL_OBJECTS:%=%.scm)
 SOURCES = $(SOURCES_IN) phone.scm
 
 INCLUDES =
