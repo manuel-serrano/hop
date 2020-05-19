@@ -48,6 +48,7 @@ hopscript/bglhopscript.h
 
 node_modules/hopc/lib/ast.js
 node_modules/hopc/lib/walk.js
+node_modules/hopdroid/lib/Makefile
 
 # scheme2js tools and generated files
 scheme2js/runtime/runtime-interface.js
