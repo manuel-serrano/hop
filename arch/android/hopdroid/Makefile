@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Tue May 19 14:23:10 2020 (serrano)                */
+#*    Last change :  Tue May 19 14:49:11 2020 (serrano)                */
 #*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopdroid library.                      */
@@ -40,7 +40,7 @@ _BGL_OBJECTS = music mpd multimedia tts wifi zeroconf system prefs
 
 _OBJECTS = $(_BGL_OBJECTS)
 
-OBJECTS = $(_OBJECTS:%=o/%.o)
+OBJECTS = $(_OBJECTS:%=o/%.o) o/phone.o
 EOBJECTS = o/make_lib.o
 
 BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class)
