@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon Apr 20 06:01:03 2020 (serrano)                */
+;*    Last change :  Mon May 18 07:11:57 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -1114,7 +1114,7 @@
 ;*    js-function-apply-vec ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-function-apply-vec %this this thisarg vec::vector ilen::uint32)
-   (with-access::JsFunction this (arity procedure)
+   (with-access::JsProcedure this (arity procedure)
       (let ((n (uint32->fixnum ilen)))
 	 (cond
 	    ((=fx arity (+fx 1 n))

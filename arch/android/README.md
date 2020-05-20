@@ -114,8 +114,8 @@ We detail these steps in the following. First, let's ensure that we
 have properly defined the two environment variables needed to 
 find the location on our disk of the Android sdk and ndk:
 
-    $ ANDROIDSDK=.../android-sdk-linux
-    $ ANDROIDNDK=.../android-ndk-r21b
+    $ export ANDROIDSDK=.../android-sdk-linux
+    $ export ANDROIDNDK=.../android-ndk-r21b
 
 Second create the directory
 that will contain our weblet source files. Normally you already have this.
@@ -154,7 +154,7 @@ service hopdemo( arg ) {
 ```
 
 Of course, it's also possible to define the same weblet in Scheme. The
-file should be `hopdemo.hop`:
+source file should be `hopdemo.hop`:
 
 ```scheme
 (module hopdemo)
@@ -165,11 +165,11 @@ file should be `hopdemo.hop`:
       (<DIV> dir)
       (<UL>
          (<LI> (<A> :href (hopdemo (dirname dir)) ".."))
-         (map (lambda (path)
+         (map (lambda (p)
                  (<LI>
-                    (if (directory? path)
-                        (<A> :href (hopdemo path) (basename path))
-                        (<A> :href path (basename path) " " (file-size path)))))
+                    (if (directory? p)
+                        (<A> :href (hopdemo p) (basename p))
+                        (<A> :href p (basename p) " " (file-size p)))))
             (directory->path-list dir)))))
 ```
 
@@ -183,7 +183,7 @@ Then we create the Makefile needed to build the `apk`. For convenience,
 we split it in two files. First a Makefile containing only the application
 configuration:
 
-    $ cat > Makefile.conf <<EOF
+    $ cat > Makefile.config <<EOF
     HOPDIR = $$HOME/prgm/project/hop/hop
     ANDROIDWEBLET = $(shell realpath $$PWD/../..)
     
@@ -215,14 +215,18 @@ Second the Makefile to build the application.
     include Makefile.config
     
     apk: 
-    	$(MAKE) -C $(HOPDIR)/arch/android apk ANDROIDWEBLET=$(ANDROIDWEBLET) CONFIG=$(ANDROIDWEBLET)/arch/android/Makefile.config
+        $(MAKE) -C $(HOPDIR)/arch/android apk \
+            ANDROIDWEBLET=$(ANDROIDWEBLET) \
+            CONFIG=$(ANDROIDWEBLET)/arch/android/Makefile.config
     
     apk-sans-bigloo: doit
     apk-sans-hop: doit
     install-apk: doit
     
     doit:
-    	$(MAKE) -C $(HOPDIR)/arch/android $(MAKECMDGOALS) ANDROIDWEBLET=$(ANDROIDWEBLET) CONFIG=$(ANDROIDWEBLET)/arch/android/Makefile.config
+        $(MAKE) -C $(HOPDIR)/arch/android $(MAKECMDGOALS) \
+            ANDROIDWEBLET=$(ANDROIDWEBLET) \
+            CONFIG=$(ANDROIDWEBLET)/arch/android/Makefile.config
     
     prepare-android-weblet:
     	find . -name '*.o' -exec /bin/rm {} \;
@@ -240,6 +244,46 @@ that can be installed on the device as explained earlier.
 
 Customizing a Custom Application
 --------------------------------
+
+The procedure shown before builds standard packages with default Hop
+Android configurations. This default configuration can be customized
+in two ways. An altnerative [Manifest](https://developer.android.com/guide/topics/manifest/manifest-intro)
+can be given. For that, create a `AndroidManifest.xml.in` (pay
+attention to the `.xml.in` suffix) file and extend your `Makefile.config` 
+file as follows:
+
+    $ echo "ANDROIDMANIFEST=PROJDIR/AndroidManifest.xml.in` >> Makefile.config
+
+Check the Hop orginal `arch/android/AndroidManifest.xml.in` to create
+your. This file follows the Android syntax and semantics but in addition
+the _@-keywords_, e.g., `@HOPVERSION@`, will be replaced
+by their actual values during the package construction.
+
+** Note **: As `make` rely n a sort of lazy evaluation, if you define 
+`ANDROIDMANIFEST` as `$$PWD/AndroidManifest.xml.in`, the environment
+variable will `PWD` be evaluated on the hop directory and not the directory
+containing your project, which will yield to ignoring your configuration. There
+are two options for solving that problem:
+
+  1. use an absolute file name for `ANDROIDMANIFEST`;
+  2. force an eager evaluation of the variable by passing it to 
+ the sub `make` command with:
+  
+    apk: 
+        $(MAKE) -C $(HOPDIR)/arch/android apk \
+            ANDROIDWEBLET=$(ANDROIDWEBLET) \
+            ANDROIDMANIFEST=$(ANDROIDMANIFEST) \
+            CONFIG=$(ANDROIDWEBLET)/arch/android/Makefile.config
+
+
+The icons and other graphical elements of an Android application are
+stored in the `res` directory. Hop uses a set of default icons that
+can be changed by providing a replacement directory. For that, extend
+the `Makefile.config` file as follows:
+
+    $ echo "ANDROIDRES=PROJDIR/res` >> Makefile.config
+
+
 
 Debugging
 ---------
