@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed May 20 09:03:14 2020 (serrano)                */
+;*    Last change :  Wed May 20 09:18:11 2020 (serrano)                */
 ;*    Copyright   :  2010-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -266,6 +266,7 @@
 					(hashtable-get %event-table name)))
 			      (phones '()))
 			   (let liip ((procs procs))
+			      (tprint "android-event-listener procs=" procs)
 			      (when (pair? procs)
 				 (with-handler
 				    (lambda (e)
