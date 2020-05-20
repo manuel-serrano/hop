@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed May 20 11:49:50 2020 (serrano)                */
+;*    Last change :  Wed May 20 13:45:44 2020 (serrano)                */
 ;*    Copyright   :  2010-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -271,13 +271,10 @@
 					   (hashtable-get %event-table name)))
 				 (phones '()))
 			      (let liip ((procs procs))
-				 (tprint "android-event-listener procs=" procs)
 				 (when (pair? procs)
 				    (let* ((proc (car procs))
 					   (evt (get-phone-event p name args)))
-				       (tprint ">>> android-event-listener proc=" proc)
 				       (proc evt)
-				       (tprint "<<< android-event-listener proc=" proc)
 				       (with-access::androidevent evt (stopped)
 					  (unless stopped
 					     (liip (cdr procs))))))))))))
