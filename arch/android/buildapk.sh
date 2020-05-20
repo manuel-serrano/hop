@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  manuel serrano                                    */
 #*    Creation    :  Wed May 13 18:51:59 2020                          */
-#*    Last change :  Sun May 17 08:50:55 2020 (serrano)                */
+#*    Last change :  Wed May 20 08:38:53 2020 (serrano)                */
 #*    Copyright   :  2020 manuel serrano                               */
 #*    -------------------------------------------------------------    */
 #*    build the Android APK after ndk-build                            */
@@ -122,3 +122,5 @@ echo "$ZIPALIGN -f 4 $apkname.apk.unaligned $apkname.apk"
 $ZIPALIGN -f 4 $apkname.apk.unaligned $apkname.apk || exit 1
 
 /bin/rm -f $apkname.apk.unaligned
+
+echo "done...$apkname.apk"
