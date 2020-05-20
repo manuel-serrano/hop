@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed May 20 08:32:43 2020 (serrano)                */
+/*    Last change :  Wed May 20 13:10:36 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -676,10 +676,11 @@ public class HopDroid extends Thread {
 	 Integer i = (Integer)eventtable.get( event );
 
 	 Log.i( "HopDroid", "pushEvent event=[" + event + "] value=["
-		+ value + "]" );
+		+ value + "] i=" + i );
 	 if( (i != null) && (i > 0) ) {
 	    try {
 	       final OutputStream op = eventclient.getOutputStream();
+	       Log.i( "HopDroid", "pushEvent event=[" + event + "] op=" + op );
 
 	       if( op != null ) {
 		  op.write( "\"".getBytes() );
