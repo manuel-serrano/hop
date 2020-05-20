@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Wed May 20 13:45:44 2020 (serrano)                */
+;*    Last change :  Wed May 20 17:16:20 2020 (serrano)                */
 ;*    Copyright   :  2010-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -255,16 +255,11 @@
 	 (exception-notify e)
 	 #f)
       (with-access::androidphone p (%sock-event %event-table)
-	 (tprint "android-event-listener socket=" %sock-event " table="
-	    (typeof %event-table))
 	 (let ((ip (socket-input %sock-event)))
-	    (tprint "android-event-listener ip=" ip)
 	    (let loop ()
 	       (let ((name (read ip)))
-		  (tprint "android-event-listener name=" name)
 		  (unless (eof-object? name)
 		     (let ((args (read ip)))
-			(tprint "android-event-listener args=" args)
 			(set! phone-events '())
 			(unless (eof-object? args)
 			   (let ((procs (synchronize event-mutex
