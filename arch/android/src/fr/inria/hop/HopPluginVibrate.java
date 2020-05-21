@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:47:19 2010                          */
-/*    Last change :  Thu May 21 08:40:44 2020 (serrano)                */
+/*    Last change :  Thu May 21 08:58:44 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Vibrator                                                 */
@@ -61,7 +61,7 @@ public class HopPluginVibrate extends HopPlugin {
 	    
 	    if( vibrator == null ) vibrator = make_vibrator();
 	    
-	    Lod.d( "HopPluginVibrate", "vibrate ms=" + ms );
+	    Log.d( "HopPluginVibrate", "vibrate ms=" + ms );
 	    vibrator.vibrate( ms );
 	    
 	 case (byte) 'p':
@@ -71,7 +71,7 @@ public class HopPluginVibrate extends HopPlugin {
 	    
 	    if( vibrator == null ) vibrator = make_vibrator();
 
-	    Lod.d( "HopPluginVibrate", "vibrate vibs[] repeat=" + repeat );
+	    Log.d( "HopPluginVibrate", "vibrate vibs[] repeat=" + repeat );
 	    vibrator.vibrate( vibs, repeat );
       }
    }
