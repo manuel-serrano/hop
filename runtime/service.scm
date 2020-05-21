@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Mar 21 12:02:55 2020 (serrano)                */
+;*    Last change :  Thu May 21 09:25:53 2020 (serrano)                */
 ;*    Copyright   :  2006-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -128,13 +128,13 @@
 				(else ((class-field-accessor f) obj))))
 			(key (symbol->keyword (class-field-name f))))
 		     (set! args (cons* key val args)))))))
-      (cons* ':__class__ (string->symbol (typeof obj)) args)))
+      (cons* :__class__ (string->symbol (typeof obj)) args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-plist->object ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hop-plist->object plist)
-   (let ((c (memq ':__class__ plist)))
+   (let ((c (memq :__class__ plist)))
       (if (pair? c)
 	  (let* ((obj (allocate-instance (cadr c)))
 		 (klass (object-class obj))

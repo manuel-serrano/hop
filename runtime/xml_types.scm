@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Thu Mar 19 16:36:56 2020 (serrano)                */
+;*    Last change :  Thu May 21 09:59:24 2020 (serrano)                */
 ;*    Copyright   :  2010-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
@@ -87,8 +87,8 @@
 	    
 	    (class xml-tilde::xml
 	       (lang read-only (default 'hop))
-	       (body read-only)
-	       (parent (default #f))
+	       (body read-only (info '(serialize: #f)))
+	       (parent (default #f) (info '(serialize: #f)))
 	       (src read-only (default #f))
 	       (loc::obj read-only (default #f))
 	       (%js-expression (default #f))

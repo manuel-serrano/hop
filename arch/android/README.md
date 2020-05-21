@@ -284,6 +284,38 @@ the `Makefile.config` file as follows:
     $ echo "ANDROIDRES=PROJDIR/res` >> Makefile.config
 
 
+Some projects rely on particular libraries that needs to be installed
+after Hop but before the Androd application. This is the purpose of
+`APKCUSTOM` make variable. It can be assigned to an application goal
+that will be executed by the Android make invocation. Example:
+
+    $ echo "APKCUSTOM=custom-proj-compile-and-install` >> Makefile.config
+
+
+
+Using the hopdroid package
+--------------------------
+
+The `hopdroid` [package](./hopdroid.html) enables JavaScript programs
+to access device specific features. Example:
+
+```hopscript
+const hopdroid = require( hop.hopdroid );
+const phone = new hopdroid.phone();
+
+service hopdemo() {
+   console.log( "phone=", phone.model, phone.product, phone.sdk );
+   return <html>
+     <head>
+       <style>body { font-size: 200% }</style>
+     </head>
+     <body>
+       <div> ${phone.model}, ${phone.product}, ${phone.sdk} </div>
+     </body>
+   </html>;
+}
+
+```
 
 Debugging
 ---------

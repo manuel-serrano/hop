@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri May 15 13:53:59 2020 (serrano)                */
+#*    Last change :  Mon May 18 12:38:02 2020 (serrano)                */
 #*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Doc Makefile                                                     */
@@ -61,7 +61,7 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
 
 API_TARGETS=api.html 00-hop.html 10-dom.html 20-websocket.html \
   hss.html config.html user.html 01-html.html syslog.html \
-  systime.html
+  systime.html hopdroid.html
 
 LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html \
   01-es.html 03-react.html 01-module.html 10-xml.html markdown.html cpp.html
@@ -86,10 +86,12 @@ VPATH=api lang dev widget intf \
   ../node_modules/tree/doc \
   ../node_modules/spage/doc \
   ../node_modules/hss/doc \
+  ../node_modules/hopdroid/doc \
   ../node_modules/config/doc \
   ../node_modules/user/doc \
   ../node_modules/markdown/doc \
   ../node_modules/syslog/doc \
+  ../node_modules/texinfo/doc \
   ../node_modules/systime/doc \
   ../node_modules/cpp/doc
 
