@@ -150,7 +150,7 @@ The currently supported value for the character encoding are:
 
 <arguments>
 ^  access  ^   type                  ^  current value           ^  short description                  ^
-|   r/w    |  xml-backend or symbol  |  ++,(xml-backend-id (hop-xml-backend))++  | The default xml-backend.            |
+|   r/w    |  xml-backend or symbol  |  ++,(with-access::xml-backend (hop-xml-backend) (id) id)++  | The default xml-backend.            |
 </arguments>
 
 This parameter controls the default XML backend used when compiling

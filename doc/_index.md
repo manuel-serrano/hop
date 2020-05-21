@@ -1,7 +1,7 @@
-Hop: a multitier JavaScript
----------------------------
+Hop.js: a multitier JavaScript
+------------------------------
 
-Hop is:
+Hop.js (aka Hop) is:
 
 * A multitier JavaScript:
   - a single code runs on the client and the server.
@@ -15,6 +15,13 @@ Hop is:
   - native **websockets**.
 * A builtin **multi-threaded** web server.
 
+Hop also supports the 
+[Scheme](http://www-sop.inria.fr/indes/fp/Bigloo/doc/r5rs.html) 
+programming language. With Hop.js, JavaScript and Scheme are fully 
+interoperable and applications can mix both language. This
+page mostly describes the JavaScript layer. The Scheme layer
+is described on a dedicated [page](http://hop.inria.fr/hop/doc?lang=hop).
+
 Hop programs execute in the context of a builtin web server. They
 define services, which are _super_ JavaScript functions that get
 automatically invoked when HTTP requests are received. Functions and
@@ -27,13 +34,13 @@ service hello() {
 }
 ```
 
-To run this program put this code in the file ${<tt>hello.js</tt>} and execute:
+To run this program put this code in the file `hello` and execute:
 
 ```sh[:@shell]
 $ hop -p 8080 hello.js
 ```
 
-You can now browse ${<tt>http://localhost:8080/hop/hello</tt>}.
+You can now browse `http://localhost:8080/hop/hello`.
 
 
 Hop extends JavaScript with the geniune HTML. if we want to modify
@@ -65,8 +72,8 @@ service hello( { name: who } ) {
 
 By default Hop.js only accepts to serve authenticated requests. Before
 executing any programs _users_ must be declared. These declarations go
-into the ${<tt>$HOME/.config/hop/hoprc.js</tt>} file. The following declare a
-user named ${<tt>hopjs</tt>} whose password is ${<tt>inria</tt>} and that is
+into the `$HOME/.config/hop/hoprc.js` file. The following declare a
+user named `hopjs` whose password is `inria` and that is
 allowed to execute any Hop.js service, the declaration `services: "\*"`, and
 download any file readable from the server process, the declaration
 `directories: "\*"`:
