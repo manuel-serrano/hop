@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sat May 23 13:55:08 2020 (serrano)                */
+#*    Last change :  Sat May 23 21:12:46 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -570,7 +570,7 @@ apk.custom: apk.hop
 	   $(MAKE) -C $(APKCUSTOMDIR) -f Makefile.android $(APKCUSTOM) \
                HOPBINDIR=$(HOPBINDIR) \
                ANDROIDBUILDDIR=$(ANDROIDBUILDDIR) \
-               ANDROIDHOPPREF=$(ANDROIDHOPPREFIX);
+               ANDROIDHOPPREF=$(ANDROIDHOPPREFIX); \
 	fi
 
 #*---------------------------------------------------------------------*/
