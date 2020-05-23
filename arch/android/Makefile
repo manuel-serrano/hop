@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sat May 23 11:25:51 2020 (serrano)                */
+#*    Last change :  Sat May 23 12:20:15 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -76,6 +76,7 @@ PLUGINCALL = false
 PLUGINPREFS = false
 
 APKCUSTOM =
+APKCUSTOMDIR =
 
 # global configuration
 REPOSITORY = $(DISTRIBDIR)
@@ -566,7 +567,7 @@ apk-clean:
 
 apk.custom: apk.hop
 	if [ "$(APKCUSTOM) " != " " ]; then \
-	   $(MAKE) -C $(ANDROIDWEBLET) $(APKCUSTOM); \
+	   $(MAKE) -C $(APKCUSTOMDIR) $(APKCUSTOM); \
 	fi
 
 #*---------------------------------------------------------------------*/
