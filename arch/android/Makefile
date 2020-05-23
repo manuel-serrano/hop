@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Tue May 19 13:44:24 2020 (serrano)                */
+#*    Last change :  Sat May 23 11:25:51 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -88,7 +88,7 @@ HOPFULLNAME = hop-$(HOPRELEASE)$(HOPMINOR)
 
 JAVAC = javac -target 1.7 -source 1.7 
 
--include $(CONFIG)
+include $(CONFIG)
 
 # weblets should invoke this makefile with command line such as
 # $(MAKE) -C $(HOPDIR)/arch/android $(MAKECMDGOALS) CONFIG=$(HOPDACDIR)/Makefile.android
@@ -566,7 +566,7 @@ apk-clean:
 
 apk.custom: apk.hop
 	if [ "$(APKCUSTOM) " != " " ]; then \
-	   $(MAKE) $(APKCUSTOM); \
+	   $(MAKE) -C $(ANDROIDWEBLET) $(APKCUSTOM); \
 	fi
 
 #*---------------------------------------------------------------------*/
