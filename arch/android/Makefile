@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sat May 23 21:12:46 2020 (serrano)                */
+#*    Last change :  Sun May 24 07:54:13 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -53,6 +53,7 @@ ANDROIDHOPVERBOSELEVEL = -v
 ANDROIDHOPPREFIX = /data/data/fr.inria.$(HOPAPP)/assets
 
 ANDROIDWEBLET =
+ANDROIDMODULE =
 ANDROIDRES = $(ANDROIDDIR)/res
 ANDROIDMANIFEST = $(ANDROIDDIR)/AndroidManifest.xml
 ANDROIDSPLASH = $(ANDROIDDIR)/splash
@@ -97,6 +98,7 @@ config:
 	@echo "hopapkname=$(HOPAPKNAME)"
 	@echo "hopapp=$(HOPAPP)"
 	@echo "weblet=$(ANDROIDWEBLET)"
+	@echo "module=$(ANDROIDMODULE)"
 	@echo "androidManifest=$(ANDROIDMANIFEST)"
 	@echo "res=$(ANDROIDRES)"
 	@echo ""
@@ -366,12 +368,19 @@ $(ANDROIDBUILDDIR)/assets: \
   $(ANDROIDBUILDDIR)/assets/share
 	$(MAKE) rename-afiles
 	$(MAKE) assets.weblet
+	$(MAKE) assets.module
 	$(MAKE) assets.post-install
 
 assets.weblet:
 	if [ "$(ANDROIDWEBLET) " != " " ]; then \
           cp -r $(ANDROIDWEBLET) $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets; \
 	  make -C $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets/`basename $(ANDROIDWEBLET)`/arch/android -f Makefile.android prepare-android-weblet; \
+        fi
+
+assets.module:
+	if [ "$(ANDROIDMODULE) " != " " ]; then \
+          cp -r $(ANDROIDMODULE) $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/node_modules; \n
+	  make -C $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/node_modules/`basename $(ANDROIDMODULE)`/arch/android -f Makefile.android prepare-android-module; \
         fi
 
 assets.post-install: assets.post-install.$(ANDROIDLINK)
