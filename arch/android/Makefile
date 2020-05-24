@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun May 24 15:00:44 2020 (serrano)                */
+#*    Last change :  Sun May 24 15:19:56 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -580,7 +580,7 @@ apk-clean:
 	rm -rf $(ANDROIDBUILDDIR)
 	rm -f $(HOPTMPDIR)/antandroid.sh
 
-apk.custom: apk.hop
+apk.custom: apk.hop $(ANDROIDBUILDDIR)/assets
 	if [ "$(APKCUSTOM) " != " " ]; then \
 	   $(MAKE) -C $(APKCUSTOMDIR) -f Makefile.android $(APKCUSTOM) \
                HOPBINDIR=$(HOPBINDIR) \
