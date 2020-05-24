@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun May 24 16:24:15 2020 (serrano)                */
+;*    Last change :  Sun May 24 16:27:55 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -86,7 +86,7 @@
 	     (set! rc-file file))
 	    (("--rc-dir" ?dir (help "Set rc directory"))
 	     (hop-rc-directory-set! dir))
-	    (("--lib-dir" ?dir (help "Set hop lib-dir"))
+	    (("--lib-dir=?dir" (help "Set hop lib-dir"))
 	     (set! lib-dir dir))
 	    (("-L" ?dir (help "Add Hop library path"))
 	     (bigloo-library-path-set! (cons dir (bigloo-library-path))))
