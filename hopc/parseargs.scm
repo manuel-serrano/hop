@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Apr 19 08:05:22 2020 (serrano)                */
+;*    Last change :  Sun May 24 16:24:15 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -67,7 +67,8 @@
 	 (login #f)
 	 (command-string #f)
 	 (ecmascriptv 2017)
-	 (source-map #t))
+	 (source-map #t)
+	 (lib-dir #f))
       (bind-exit (stop)
 	 (args-parse (cdr args)
 	    ((("-h" "--help") (help "This message"))
@@ -85,6 +86,8 @@
 	     (set! rc-file file))
 	    (("--rc-dir" ?dir (help "Set rc directory"))
 	     (hop-rc-directory-set! dir))
+	    (("--lib-dir" ?dir (help "Set hop lib-dir"))
+	     (set! lib-dir dir))
 	    (("-L" ?dir (help "Add Hop library path"))
 	     (bigloo-library-path-set! (cons dir (bigloo-library-path))))
 	    (("--share-dir" ?dir (help "Set hopc share directory"))
@@ -423,6 +426,14 @@
 		       (append (hopc-bigloo-options) (cdr rest)))
 		    (stop #t))
 		 (hopc-sources-set! (append (hopc-sources) (list else)))))))
+      ;; hop-lib-dir
+      (hopc-bigloo-options-set!
+	 (append (hopc-bigloo-options)
+	    `("-L"
+		,(if lib-dir
+		     lib-dir
+		     (make-file-path (hop-lib-directory)
+			"hop" (hop-version))))))
       ;; ecmascript version
       (j2s-compile-options-set!
 	 (append
