@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue May 19 14:01:25 2020 (serrano)                */
+#*    Last change :  Sun May 24 19:13:46 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1438,6 +1438,44 @@ init=lib/hop/$version/hop.init
 
 rm -f $init 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $init
+
+cat etc/hop.init.in \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
+    >> $init
+echo "" >> $init
+
+# lib/hop_config.sch
+config=lib/hop/$version/hop_config.sch
+
+rm -f $config 2> /dev/null
+echo ";* Automatically generated file (don't edit) */" > $config
+echo ";; Hop release number" >> $config
+echo "$version" >> $config
+echo "" >> $config
+cat etc/hop_config.sch.in \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
+          -e "s|@BIGLOO@|$bigloo|" \
+          -e "s|@URL@|$url|" \
+          -e "s|@BINDIR@|$bindir|" \
+          -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@LIBRARY-PATH@|$libdir/hop/$version|" \
+          -e "s|@SHAREDIR@|$sharedir/$version|" \
+          -e "s|@ETCDIR@|$etcdir|" \
+          -e "s|@CONTRIBSDIR@|$contribsdir|" \
+          -e "s|@DOCDIR@|$docdir|" \
+          -e "s|@WEBLETSDIR@|$webletsdir|" \
+          -e "s|@NODE_MODULES@|$nodemodulesdir|" \
+          -e "s|@BUILD-ID@|$buildid|" \
+          -e "s|@BUILD-TAG@|$buildtag|" \
+          -e "s|@BUILD-ARCH@|$mach|" \
+          -e "s|@MIMETYPES@|$mimetypes|" \
+          -e "s|@JAVASCRIPT-MIME-TYPE@|$jsmimetype|" \
+          -e "s|@CSS-MIME-TYPE@|$cssmimetype|" \
+    >> $config
+echo "" >> $config
 
 cat etc/hop.init.in \
     | sed -e "s|@VERSION@|$version|" \

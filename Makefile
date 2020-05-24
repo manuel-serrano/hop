@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon May  4 07:12:41 2020 (serrano)                */
+#*    Last change :  Sun May 24 19:12:08 2020 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -150,7 +150,7 @@ install-share: hop-dirs
 install-weblets: hop-dirs
 	$(MAKE) -C weblets install
 
-install-quick: hop-dirs install-init
+install-quick: hop-dirs install-init install-config
 	$(MAKE) -C runtime install && \
 	$(MAKE) -C widget install && \
 	$(MAKE) -C scheme2js install && \
@@ -182,7 +182,11 @@ install-init: hop-dirs
 	$(INSTALL) $(BUILDLIBDIR)/hopscript.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscript.init && \
         chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscript.init;
 	$(INSTALL) $(BUILDLIBDIR)/nodejs.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/nodejs.init && \
-        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/nodejs.init;
+        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/nodejs.init
+
+install-config: hop-dirs
+	$(INSTALL) $(BUILDLIBDIR)/hop_config.sch $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop_config.sch && \
+        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop_config.sch
 
 hop-dirs:
 	if [ ! -d $(DESTDIR)$(HOPBINDIR) ]; then \
