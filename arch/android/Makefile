@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun May 24 08:28:17 2020 (serrano)                */
+#*    Last change :  Sun May 24 08:46:12 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -390,7 +390,7 @@ assets.post-install: assets.post-install.$(ANDROIDLINK)
 	find $(ANDROIDBUILDDIR)/assets/lib/ -name '*.heap' -exec rm {} \;
 	find $(ANDROIDBUILDDIR)/assets/lib/ -name '*.a' -exec rm {} \;
 	for w in $(ANDROID_UNUSED_WEBLETS); do \
-          rm -rf $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets/$w; \
+          rm -rf $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets/$$w; \
         done
 
 assets.post-install.dynamic:
