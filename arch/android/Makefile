@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun May 24 08:04:19 2020 (serrano)                */
+#*    Last change :  Sun May 24 08:28:17 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -382,7 +382,7 @@ assets.weblet:
 
 assets.module:
 	if [ "$(ANDROIDMODULE) " != " " ]; then \
-          cp -r $(ANDROIDMODULE) $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/node_modules; \n
+          cp -r $(ANDROIDMODULE) $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/node_modules; \
 	  make -C $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/node_modules/`basename $(ANDROIDMODULE)`/arch/android -f Makefile.android prepare-android-module; \
         fi
 
