@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun May 24 07:54:13 2020 (serrano)                */
+#*    Last change :  Sun May 24 08:04:19 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -89,6 +89,9 @@ HOPMINOR = -$(HOPDEVEL)1
 HOPFULLNAME = hop-$(HOPRELEASE)$(HOPMINOR)
 
 JAVAC = javac -target 1.7 -source 1.7 
+
+# list of weblets to be removed before device installation
+ANDROID_UNUSED_WEBLETS = color doc home hzbuilder test trace webfilter weblets wiki workbench
 
 include $(CONFIG)
 
@@ -386,6 +389,9 @@ assets.module:
 assets.post-install: assets.post-install.$(ANDROIDLINK)
 	find $(ANDROIDBUILDDIR)/assets/lib/ -name '*.heap' -exec rm {} \;
 	find $(ANDROIDBUILDDIR)/assets/lib/ -name '*.a' -exec rm {} \;
+	for w in $(ANDROID_UNUSED_WEBLETS); do \
+          rm -rf $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets/$w; \
+        done
 
 assets.post-install.dynamic:
 
