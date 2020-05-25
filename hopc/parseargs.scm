@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun May 24 16:27:55 2020 (serrano)                */
+;*    Last change :  Mon May 25 07:20:28 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -68,7 +68,8 @@
 	 (command-string #f)
 	 (ecmascriptv 2017)
 	 (source-map #t)
-	 (lib-dir #f))
+	 (lib-dir (make-file-path (hop-lib-directory) "hop" (hop-version)))
+	 (configs '()))
       (bind-exit (stop)
 	 (args-parse (cdr args)
 	    ((("-h" "--help") (help "This message"))
@@ -169,7 +170,8 @@
 	     (hopc-access-file-set! file))
 	    (("--mkheap" (help "Build a js heap file"))
 	     (hopc-jsheap-set! #t))
-
+	    (("--configure" ?config (help "Report hopc configuration"))
+	     (set! configs (cons config configs)))
 	    (section "Code generation")
 	    (("-m32" (help "Generate 32-bit code"))
 	     (hopc-long-size-set! 32))
@@ -428,12 +430,7 @@
 		 (hopc-sources-set! (append (hopc-sources) (list else)))))))
       ;; hop-lib-dir
       (hopc-bigloo-options-set!
-	 (append (hopc-bigloo-options)
-	    `("-L"
-		,(if lib-dir
-		     lib-dir
-		     (make-file-path (hop-lib-directory)
-			"hop" (hop-version))))))
+	 (append (hopc-bigloo-options) `("-L" lib-dir)))
       ;; ecmascript version
       (j2s-compile-options-set!
 	 (append
@@ -457,6 +454,12 @@
 	 (hopc-long-size-set! (bigloo-config 'elong-size)))
       (unless (fixnum? (hopc-int-size))
 	 (hopc-int-size-set! (bigloo-config 'int-size)))
+
+      ;; config report
+      (when (pair? configs)
+	 (hopc-configure configs lib-dir)
+	 (exit 0))
+      
       exprs))
 
 ;*---------------------------------------------------------------------*/
@@ -469,3 +472,19 @@
 	  (hop-load path :menv #unspecified))))      
 
 
+;*---------------------------------------------------------------------*/
+;*    hopc-configure ...                                               */
+;*---------------------------------------------------------------------*/
+(define (hopc-configure configs lib-dir)
+   (call-with-input-file (make-file-name lib-dir "hopc_config.sch")
+      (lambda (ip)
+	 (let ((version (read ip))
+	       (configs (read ip)))
+	    (for-each (lambda (c)
+			 (let ((c (assq c configs)))
+			    (if (pair? c)
+				(print (cdr c))
+				(error "hopc"
+				   (format "Unknown key \"~a\"" c)
+				   configs))))
+	       configs)))))
