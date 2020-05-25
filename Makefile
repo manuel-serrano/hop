@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sun May 24 19:12:08 2020 (serrano)                */
+#*    Last change :  Mon May 25 07:29:17 2020 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -185,8 +185,8 @@ install-init: hop-dirs
         chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/nodejs.init
 
 install-config: hop-dirs
-	$(INSTALL) $(BUILDLIBDIR)/hop_config.sch $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop_config.sch && \
-        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop_config.sch
+	$(INSTALL) $(BUILDLIBDIR)/hopc_config.sch $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopc_config.sch && \
+        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopc_config.sch
 
 hop-dirs:
 	if [ ! -d $(DESTDIR)$(HOPBINDIR) ]; then \

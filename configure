@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun May 24 19:13:46 2020 (serrano)                */
+#*    Last change :  Mon May 25 07:28:36 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1446,15 +1446,15 @@ cat etc/hop.init.in \
     >> $init
 echo "" >> $init
 
-# lib/hop_config.sch
-config=lib/hop/$version/hop_config.sch
+# lib/hopc_config.sch
+config=lib/hop/$version/hopc_config.sch
 
 rm -f $config 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $config
 echo ";; Hop release number" >> $config
-echo "$version" >> $config
+echo "\"$version\"" >> $config
 echo "" >> $config
-cat etc/hop_config.sch.in \
+cat etc/hopc_config.sch.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
           -e "s|@BIGLOO@|$bigloo|" \

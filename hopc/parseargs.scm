@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon May 25 07:20:28 2020 (serrano)                */
+;*    Last change :  Mon May 25 07:29:57 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -430,7 +430,7 @@
 		 (hopc-sources-set! (append (hopc-sources) (list else)))))))
       ;; hop-lib-dir
       (hopc-bigloo-options-set!
-	 (append (hopc-bigloo-options) `("-L" lib-dir)))
+	 (append (hopc-bigloo-options) `("-L" ,lib-dir)))
       ;; ecmascript version
       (j2s-compile-options-set!
 	 (append
@@ -475,16 +475,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    hopc-configure ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (hopc-configure configs lib-dir)
+(define (hopc-configure keys lib-dir)
    (call-with-input-file (make-file-name lib-dir "hopc_config.sch")
       (lambda (ip)
-	 (let ((version (read ip))
-	       (configs (read ip)))
-	    (for-each (lambda (c)
-			 (let ((c (assq c configs)))
+	 (let ((version (eval (read ip)))
+	       (configs (eval (read ip))))
+	    (for-each (lambda (k)
+			 (let ((c (assq (string->symbol k) configs)))
 			    (if (pair? c)
 				(print (cdr c))
 				(error "hopc"
-				   (format "Unknown key \"~a\"" c)
+				   (format "Unknown key \"~a\"" k)
 				   configs))))
-	       configs)))))
+	       keys)))))
