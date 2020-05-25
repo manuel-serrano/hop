@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Apr 14 10:55:05 2020 (serrano)                */
+;*    Last change :  Mon May 25 08:15:39 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -457,7 +457,7 @@
 ;*    hop-sofile-compile-policy ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-sofile-compile-policy
-   'nte)
+   (hop-sofile-compile-default-policy))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-sofile-compile-target ...                                    */

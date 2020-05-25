@@ -64,3 +64,8 @@
 (define (hop-configure-cache-directory)
    #f)
 
+;*---------------------------------------------------------------------*/
+;*    hop-sofile-compile-default-policy ...                            */
+;*---------------------------------------------------------------------*/
+(define (hop-sofile-compile-default-policy) 
+   'none)
