@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Mon May 25 08:46:56 2020 (serrano)                */
+#*    Last change :  Mon May 25 09:01:54 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -395,6 +395,11 @@ assets.post-install: assets.post-install.$(ANDROIDLINK)
         done
 
 assets.post-install.dynamic:
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libhop*_u-*.so' -exec rm {} \;
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libjs2scheme*_u-*.so' -exec rm {} \;
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libnodejs*_u-*.so' -exec rm {} \;
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libscheme2js*_u-*.so' -exec rm {} \;
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libbigloo*_u-*.so.keep' -exec rm {} \;
 
 assets.post-install.static:
 	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libhop*_[su]-*.so' -exec rm {} \;
