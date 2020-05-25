@@ -1,16 +1,36 @@
 Android Packaging
 =================
 
-_15 May 2020_
+_22 May 2020_
 
 
 This document explains how to compile Hop for Android devices and how
 to package it in an `apk` file. We _also_ show how to build an Hop
 application that runs inside an HTML container on the devices.
 
+Disclaimer
+----------
+
+Developping for the Android platform is hard. It requires skills,
+practices, and experience. Debugging is generally difficult, error
+messages and exception handling is rudimentary, and development cycle
+slow. Hop tries it best to simplify the process but it cannot hide
+all the complexity of the Android environment. At the very least, 
+you will have to understand how to create your own application
+[manifest](https://developer.android.com/guide/topics/manifest/manifest-intro)
+and how to customize the application 
+[layout](https://developer.android.com/guide/topics/resources/layout-resource).
+
+Only a tiny subset of Android features are currently available in Hop.
+These documented in this page. The Hop Scheme layer is generally more
+advanced because bindings are first created in Scheme and then ported
+to JavaScript.
 
 Requirements
 ------------
+
+The development method used by Hop requires the devices to be 
+in [developper mode](https://developer.android.com/studio/debug/dev-options).
 
 Complete Android `sdk` and `ndk` toolkits are needed. Check the Bigloo
 Android [cross compilation instructions](http://www-sop.inria.fr/indes/fp/Bigloo/cross.html) for
@@ -316,6 +336,25 @@ service hopdemo() {
 }
 
 ```
+
+Simulating
+----------
+
+Hop Android applications can be executed out-of-device. The whole Android
+API exists and can be executed but it delivers fake values and fake
+behaviour. This simulation mode can be of great help for developping an
+application because it lets programmers develop the application on
+their regular development platform and install it on the phone only
+when the application is mostly operational.
+
+To use the simulator, spawn your application as usual on you development
+machine. Then, within a browser running on the same machine, access
+the file `/hop/hopdroid/simulator`. This page will let you control the
+state of the simulated phone. 
+
+Note: the simulator only supports _one_ phone object at a time. That
+is, the simulator will only let you access the state of the last created
+simulated phone.
 
 Debugging
 ---------

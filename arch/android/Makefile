@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun May 24 15:53:18 2020 (serrano)                */
+#*    Last change :  Mon May 25 08:46:56 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -26,10 +26,11 @@ ANDROIDBUILDDIR = $(HOPTMPDIR)/build.$(HOPAPKNAME).android
 ANDROIDACTIONMODE = debug
 ANDROIDHOST = -d
 ANDROIDDIR= $(BUILDDIR)/arch/android
-
-ANDROIDLINK = dynamic
+ANDROIDKEYSTORE = $(ANDROIDDIR)/hop.keystore
 ANDROIDTARGET = armv7a-linux-androideabi26
 ANDROIDSDKVERSION = 21
+
+ANDROIDLINK = dynamic
 
 #*---------------------------------------------------------------------*/
 #*    Android sdk                                                      */
@@ -458,6 +459,7 @@ apk-build:
            --androidsdk=$(ANDROIDSDK) \
            --androidndk=$(ANDROIDNDK) \
            --javac=$(JAVAC) \
+           --androidkeystore=$(ANDROIDKEYSTORE) \
            $(HOPAPKNAME))
 
 #*---------------------------------------------------------------------*/
