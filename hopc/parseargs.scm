@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon May 25 07:29:57 2020 (serrano)                */
+;*    Last change :  Mon May 25 08:09:57 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -430,7 +430,7 @@
 		 (hopc-sources-set! (append (hopc-sources) (list else)))))))
       ;; hop-lib-dir
       (hopc-bigloo-options-set!
-	 (append (hopc-bigloo-options) `("-L" ,lib-dir)))
+	 (append `("-L" ,lib-dir) (hopc-bigloo-options)))
       ;; ecmascript version
       (j2s-compile-options-set!
 	 (append
