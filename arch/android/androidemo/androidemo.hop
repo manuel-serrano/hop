@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../project/hop/2.6.x/arch/android/androidemo/androidemo.hop     */
+;*    .../project/hop/hop/arch/android/androidemo/androidemo.hop       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  2 07:33:54 2010                          */
-;*    Last change :  Fri Feb 21 13:24:33 2014 (serrano)                */
-;*    Copyright   :  2010-14 Manuel Serrano                            */
+;*    Last change :  Mon May 25 07:47:11 2020 (serrano)                */
+;*    Copyright   :  2010-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Android Demonstration                                        */
 ;*=====================================================================*/
@@ -58,16 +58,16 @@ END:VCARD"))
 ;*---------------------------------------------------------------------*/
 ;*    server listener                                                  */
 ;*---------------------------------------------------------------------*/
-(add-event-listener! (instantiate::androidphone) "sms-delivered"
+(add-event-listener! (instantiate::androidphone) "smsdelivered"
    (lambda (e)
-      (hop-event-broadcast! "sms-delivered" #t)))
-(add-event-listener! (instantiate::androidphone) "sms-sent"
+      (hop-event-broadcast! "smsdelivered" #t)))
+(add-event-listener! (instantiate::androidphone) "smssent"
    (lambda (e)
-      (hop-event-broadcast! "sms-sent" #t)))
-(add-event-listener! (instantiate::androidphone) "sms-received"
+      (hop-event-broadcast! "smssent" #t)))
+(add-event-listener! (instantiate::androidphone) "smsreceived"
    (lambda (e::event)
       (let ((val e.value))
-	 (hop-event-broadcast! "sms-received" val)
+	 (hop-event-broadcast! "smsreceived" val)
 	 (locale-set! "fr")
 	 (tts-speak atts (cadr val)))))
 (add-event-listener! (instantiate::androidphone) "battery"
@@ -250,13 +250,13 @@ Android phone. This demonstration does not use any HTML5 facility.")
 (define (<ANDROIDEMO:TELEPHONY>)
    (list
     (<DIV> :id "sms-send"
-       ~(add-event-listener! server "sms-sent"
+       ~(add-event-listener! server "smssent"
 	   (lambda (e)
 	      (innerHTML-set! "sms-status" "sent")))
-       ~(add-event-listener! server "sms-delivered"
+       ~(add-event-listener! server "smsdelivered"
 	   (lambda (e)
 	      (innerHTML-set! "sms-status" "delivered")))
-       ~(add-event-listener! server "sms-received"
+       ~(add-event-listener! server "smsreceived"
 	   (lambda (e)
 	      (innerHTML-set! "sms-received-no" (car e.value))
 	      (innerHTML-set! "sms-received-text" (cadr e.value))))
