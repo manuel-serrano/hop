@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/OFAOT/smi/hop/js2scheme/scheme.scm                          */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Apr 27 10:45:05 2020 (serrano)                */
+;*    Last change :  Tue May 26 12:23:53 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -711,9 +711,10 @@
 	  (j2s-scheme expr mode return ctx))
 	 ((isa? from J2SBindExit)
 	  (with-access::J2SBindExit from (lbl)
-	     (epairify loc
-		`(,lbl
-		    ,(j2s-scheme expr mode return ctx)))))
+	     (let ((val (j2s-scheme expr mode return ctx)))
+		(if lbl
+		    (epairify loc `(,lbl ,val))
+		    val))))
 	 (else
 	  (epairify loc
 	     `(%return
