@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Mon May 25 09:01:54 2020 (serrano)                */
+#*    Last change :  Wed May 27 16:19:08 2020 (serrano)                */
 #*    Copyright   :  2010-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -81,7 +81,7 @@ APKCUSTOM =
 APKCUSTOMDIR =
 
 # global configuration
-REPOSITORY = $(DISTRIBDIR)
+REPOSITORY = $(shell if [ "$$REPODIR " = " " ]; then echo $(DISTRIBDIR); else echo $$REPODIR; fi)
 
 HOPAPKNAME = hop
 HOPAPP = hop

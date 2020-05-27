@@ -62,7 +62,12 @@ are:
  facilities, multmedia resources, etc. Not all Android API are currently
  supported and additional plugins should be implemented.
 
-
+In addition, you will need the 
+ [Bigloo](http://www-sop.inria.fr/indes/fp/Bigloo/download.html) 
+and 
+ [Hop](http://hop.inria.fr/home/download.html)
+source file distributions. In the rest, we assume that these
+files are stored in the `repodir` directory
 
 Default Build
 -------------
@@ -70,7 +75,8 @@ Default Build
 To build a full hop+bigloo stack and to produce an `apk` file:
 
     $ cd arch/android
-    $ make apk
+	$ export REPOSITORY=repodir
+    $ make apk 
 
 This will use the android sdk and ndk pointed by the environment variables
 `$ANDROIDSDK` and `$ANDROIDNDK`. The default configuration can be 
