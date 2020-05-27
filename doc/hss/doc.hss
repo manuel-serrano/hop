@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Sat May 16 09:20:41 2020 (serrano)                */
+/*    Last change :  Wed May 27 13:23:10 2020 (serrano)                */
 /*    Copyright   :  2015-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -219,7 +219,10 @@ body.download h2:before,
 body.download h3:before,
 h1.nonumber:before,
 h2.nonumber:before,
-h3.nonumber:before {
+h3.nonumber:before,
+[data-toc=no] h1:before,
+[data-toc=no] h2:before,
+[data-toc=no] h3:before {
   content: none;
 }
 
@@ -641,6 +644,49 @@ code .h1, code .h2, code .h3, code .h4 {
 
 .idx-letter > * {
   border-bottom: 1px solid #ccc;
+}
+
+/*---------------------------------------------------------------------*/
+/*    bibentry                                                         */
+/*---------------------------------------------------------------------*/
+.bibentry {
+    margin-top: 2ex;
+}
+
+.bibentry .title {
+    font-weight: bold;
+}
+
+.bibentry .title:before {
+    content: " -- ";
+    font-weight: normal;
+}
+
+.bibentry .booktitle:before {
+    content: " -- ";
+    font-weight: normal;
+}
+
+.bibentry .download {
+    margin-left: 2em;
+}
+
+.bibentry .download a:before {
+    content: "[ ";
+}
+
+.bibentry .download a:after {
+    content: " ]";
+}
+
+.bibentry .abstract {
+    margin-left: 4em;
+    font-size: 85%;
+    text-align: justify;
+}
+
+body.bib pre {
+    border-left-color: #999;
 }
 
 /*---------------------------------------------------------------------*/

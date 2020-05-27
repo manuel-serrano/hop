@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon May 18 12:38:02 2020 (serrano)                */
+#*    Last change :  Wed May 27 11:50:49 2020 (serrano)                */
 #*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Doc Makefile                                                     */
@@ -55,7 +55,7 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   dev/js2json.js intf/intf.json intf/01-nodejs.md intf/10-scheme.md \
   intf/scheme.bnf \
   intf/20-language.md license.md _index.md \
-  nodejs.md download.md \
+  nodejs.md download.md bib.md \
   hss/doc.hss \
   html-idx.json mdn-idx.json mdn.js node-idx.json node.js
 
@@ -73,7 +73,7 @@ DEV_TARGETS=dev.html 00-command.html 01-rcfile.html 10-edit.html \
 
 INTF_TARGETS=intf.html 01-nodejs.html 10-scheme.html 20-language.html
 
-ALL_TARGETS=index.html download.html \
+ALL_TARGETS=index.html download.html bib.html \
   $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS) $(INTF_TARGETS) \
   idx.html
 
@@ -114,7 +114,7 @@ builddoc: $(ALL_TARGETS) \
 clean:
 	$(RM) $(API_TARGETS) $(LANG_TARGETS) $(WIDGET_TARGETS) $(DEV_TARGETS)
 	$(RM) $(INTF_TARGETS)
-	$(RM) license.html index.html download.html dev.html
+	$(RM) license.html index.html download.html bib.html dev.html
 	$(RM) 00-command.html 10-edit.html
 	$(RM) idx.json idx.html
 	$(RM) -f hss/markdown.hss hss/fontifier.hss
@@ -234,6 +234,7 @@ node-idx.json: node.js
 #*    dependencies                                                     */
 #*---------------------------------------------------------------------*/
 download.html: license.md ../INSTALL.md
+bib.html: hop.bib
 lang.html: _lang.md
 
 hss/markdown.css: ../node_modules/markdown/hss/markdown.hss
