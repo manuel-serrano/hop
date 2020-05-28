@@ -11,12 +11,12 @@
    "chapters": [ 
       { "name": "Home", "icon": "glyphicon-home", "href": "index.html" },
       { "name": "Download", "icon": "glyphicon-cloud-download", "href": "download.html" },
-      { "name": "Bibliography", "icon": "glyphicon-comment", "href": "bib.html", "toc": false },
       { "name": "Dev", "icon": "glyphicon-cog", "href": "dev.html", "json": "dev/dev.json" },
       { "name": "Lang", "icon": "glyphicon-blackboard", "href": "lang.html", "json": "lang/lang.json" },
       { "name": "Api", "icon": "glyphicon-book", "href": "api.html", "json": "api/api.json" },
       { "name": "Widget", "icon": "glyphicon-sound-stereo", "href": "widget.html", "json": "widget/widget.json" },
       { "name": "Interface", "icon": "glyphicon-duplicate", "href": "intf.html", "json": "intf/intf.json" },
-      { "name": "Index", "icon": "glyphicon-list", "href": "idx.html" }
+      { "name": "Index", "icon": "glyphicon-list", "href": "idx.html" },
+      { "name": "Bib", "icon": "glyphicon-comment", "href": "bib.html", "toc": false }
    ]
 }
