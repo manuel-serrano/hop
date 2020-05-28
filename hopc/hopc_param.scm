@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopc/hopc_param.scm               */
+;*    serrano/prgm/project/hop/hop/hopc/hopc_param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Apr 22 09:04:45 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Sun May 24 16:25:01 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
 ;*=====================================================================*/
@@ -41,6 +41,8 @@
 	    (hopc-destination-set! ::obj)
 	    (hopc-temp::obj)
 	    (hopc-temp-set! ::obj)
+
+	    (hopc-pipe-filesize-threshold::elong)
 
 	    (hopc-share-directory::bstring)
 	    (hopc-share-directory-set! ::bstring)
@@ -83,6 +85,12 @@
 	    (hopc-source-language::symbol)
 	    (hopc-source-language-set! ::symbol)
 
+	    (hopc-libs-dir::obj)
+	    (hopc-libs-dir-set! ::obj)
+
+	    (hopc-sobase::obj)
+	    (hopc-sobase-set! ::bstring)
+
 	    (hopc-optim-level::int)
 	    (hopc-optim-level-set! ::int)
 
@@ -100,6 +108,11 @@
 	    
 	    (hopc-js-module-main::obj)
 	    (hopc-js-module-main-set! ::obj)
+
+	    (hopc-source-ast::obj)
+	    (hopc-source-ast-set! ::obj)
+	    (hopc-source-ast-file::obj)
+	    (hopc-source-ast-file-set! ::obj)
 	    
 	    (hopc-js-header::obj)
 	    (hopc-js-header-set! ::obj)
@@ -118,6 +131,9 @@
 
 	    (hopc-j2s-flags::pair-nil)
 	    (hopc-j2s-flags-set! ::pair-nil)
+
+	    (hopc-j2s-plugins::bool)
+	    (hopc-j2s-plugins-set! ::bool)
 
 	    (hop-max-threads::int))
 	    
@@ -139,7 +155,7 @@
 ;*    hopc-bigloo-options ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-bigloo-options
-   `("-L" ,(make-file-path (hop-lib-directory) "hop" (hop-version))))
+   '())
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-bigloo-O-options ...                                        */
@@ -188,6 +204,15 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-temp
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-pipe-filesize-threshold ...                                 */
+;*    -------------------------------------------------------------    */
+;*    The file size threshold above which ast transmitted via          */
+;*    temporary files (otherwise serialized on Bigloo stdin).          */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-pipe-filesize-threshold
+   #e65536)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-share-directory ...                                         */
@@ -274,6 +299,18 @@
    'auto)
 
 ;*---------------------------------------------------------------------*/
+;*    hopc-libs-dir ...                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-libs-dir
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-sobase ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-sobase
+   #f)
+
+;*---------------------------------------------------------------------*/
 ;*    hopc-optim-level ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-optim-level
@@ -310,6 +347,18 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-js-module-main
    #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-source-ast ...                                              */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-source-ast
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-source-ast-file ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-source-ast-file
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-js-header ...                                               */
@@ -355,6 +404,14 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-j2s-flags
    '())
+
+;*---------------------------------------------------------------------*/
+;*    hopc-j2s-plugins ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Enable/disable j2s plugins                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-j2s-plugins
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-max-threads ...                                              */

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/src/main.scm                      */
+;*    serrano/prgm/project/hop/hop/src/main.scm                        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Jun  7 13:09:28 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Tue Jan  7 15:48:04 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -46,13 +46,7 @@
    (signal sigterm
       (lambda (n)
 	 (unless (current-thread)
-	    ((hop-sigterm-handler) n))))
-   (when (<fx (bigloo-debug) 3)
-      (signal sigsegv
-	 (lambda (n)
-	    (fprint (current-error-port) "Segmentation violation")
-	    (display-trace-stack (get-trace-stack) (current-error-port))
-	    (exit 2)))))
+	    ((hop-sigterm-handler) n)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js initialization ...                                            */
@@ -60,6 +54,8 @@
 (define jsmutex (make-mutex))
 (define jscondv (make-condition-variable))
 (define jsinit #f)
+
+(define lock (make-spinlock))
 
 ;*---------------------------------------------------------------------*/
 ;*    main ...                                                         */
@@ -93,7 +89,6 @@
 	 (hop-filter-add! service-filter)
 	 (hop-init args files exprs)
 	 ;; adjust the actual hop-port before executing client code
-	 (hop-port-set! (socket-port-number (hop-server-socket)))
 	 ;; js rc load
 	 (if (hop-javascript)
 	     (set! jsworker (javascript-init args files exprsjs))
@@ -103,7 +98,6 @@
 	 ;; prepare the regular http handling
 	 (init-http!)
 	 (when (hop-enable-webdav) (init-webdav!))
-	 (when (hop-enable-fast-server-event) (init-flash!))
 	 ;; close filter installation
 	 (unless (hop-javascript)
 	    (hop-filters-close!))
@@ -115,7 +109,7 @@
 	 (when (hop-enable-zeroconf) (init-zeroconf!))
 	 ;; create the scheduler (unless the rc file has already created one)
 	 (unless (isa? (hop-scheduler) scheduler)
-	    (set-scheduler!))
+	    (hop-scheduler-set! (make-hop-scheduler)))
 	 ;; start the hop scheduler loop (i.e. the hop main loop)
 	 (with-handler
 	    (lambda (e)
@@ -123,21 +117,15 @@
 	       (fprint (current-error-port)
 		  "An error has occurred in the Hop main loop, exiting...")
 	       (exit 1))
-	    (let ((serv (hop-server-socket)))
-	       ;; fast server event socket
-	       (hop-fast-server-event-port-set! (socket-port-number serv))
+	    (let ((serv (hop-server-socket))
+		  (servs (hop-server-ssl-socket)))
 	       ;; ready to now say hello
 	       (hello-world)
-	       ;; tune the server socket
-	       (socket-option-set! serv :TCP_NODELAY #t)
-	       ;; start the job (a la cron background tasks) scheduler
-	       (when (hop-enable-jobs)
-		  (job-start-scheduler!))
 	       ;; when needed, start the HOP repl
 	       (when (eq? (hop-enable-repl) 'scm)
 		  (hop-repl (hop-scheduler)))
 	       ;; when needed, start a loop for server events
-	       (hop-event-server (hop-scheduler))
+	       (hop-event-init!)
 	       (when (hop-run-server)
 		  ;; preload all the forced services
 		  (for-each (lambda (svc)
@@ -146,7 +134,7 @@
 				      (req (instantiate::http-server-request
 					      (path path)
 					      (abspath path)
-					      (port (hop-port))
+					      (port (hop-default-port))
 					      (connection 'close))))
 				  (with-handler
 				     (lambda (err)
@@ -165,7 +153,25 @@
 			   (users-close!)
 			   (hop-filters-close!))))
 		  ;; start the main loop
-		  (scheduler-accept-loop (hop-scheduler) serv #t))
+		  (cond
+		     ((and serv servs)
+		      (cond-expand
+			 (enable-threads 
+			  (thread-start!
+			     (instantiate::hopthread
+				(body (lambda ()
+					 (scheduler-accept-loop
+					    (make-hop-scheduler)
+					    servs #t)))))
+			  (scheduler-accept-loop (hop-scheduler) serv #t))
+			 (else
+			  (error "hop"
+			     "Thread support missing for running both http and https servers"
+			     servs))))
+		     (serv
+		      (scheduler-accept-loop (hop-scheduler) serv #t))
+		     (servs
+		      (scheduler-accept-loop (hop-scheduler) servs #t))))
 	       (if jsworker
 		   (if (thread-join! jsworker) 0 1)
 		   0))))))
@@ -178,11 +184,11 @@
    (when (pair? files)
       (let ((req (instantiate::http-server-request
 		    (host "localhost")
-		    (port (hop-port)))))
+		    (port (hop-default-port)))))
 	 ;; set a dummy request
 	 (thread-request-set! #unspecified req)
 	 ;; preload the user files
-	 (for-each (lambda (f) (load-command-line-weblet f #f)) files)
+	 (for-each (lambda (f) (load-command-line-weblet f #f #f #f)) files)
 	 ;; unset the dummy request
 	 (thread-request-set! #unspecified #unspecified)))
    ;; evaluate the user expressions
@@ -204,26 +210,29 @@
 ;*    javascript-init ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (javascript-init args files exprs)
-   (let* ((%global (nodejs-new-global-object))
-	  (%worker (js-init-main-worker! %global
-		      ;; keep-alive
-		      (or (hop-run-server) (eq? (hop-enable-repl) 'js))
-		      nodejs-new-global-object)))
+   ;; install the hopscript expanders
+   (hopscript-install-expanders!)
+   (multiple-value-bind (%worker %global %module)
+      (js-main-worker! "main"
+	 (make-file-name (pwd) (if (pair? files) (car files) "."))
+	 (or (hop-run-server) (eq? (hop-enable-repl) 'js))
+	 nodejs-new-global-object nodejs-new-module)
       ;; js loader
-      (hop-loader-add! "js" (lambda (path . test) (nodejs-load path %worker)))
+      (hop-loader-add! "js"
+	 (lambda (path . test)
+	    (js-worker-exec %worker "hop-loader" #t
+	       (lambda ()
+		  (nodejs-load path path %global %module %worker)))))
       ;; profiling
       (when (hop-profile)
-	 (js-profile-init `(:server #t) #f))
+	 (js-profile-init `(:server #t) #f #f))
       ;; rc.js file
       (when (string? (hop-rc-loaded))
-	 (javascript-rc %worker %global))
+	 (javascript-rc %global %module %worker))
       ;; hss extension
-      (when (hop-javascript) (javascript-init-hss %worker %global))
-      ;; create the repl JS module
-      (let ((path (file-name-canonicalize!
-		     (make-file-name (pwd) (car args)))))
-	 (nodejs-module "repl" path %worker %global))
-      ;; push the user expressions
+      (when (hop-javascript)
+	 (javascript-init-hss %worker %global))
+      ;; push user expressions
       (when (pair? exprs)
 	 (js-worker-push-thunk! %worker "cmdline"
 	    (lambda ()
@@ -243,20 +252,27 @@
       (when (pair? files)
 	 (let ((req (instantiate::http-server-request
 		       (host "localhost")
-		       (port (hop-port)))))
+		       (port (hop-default-port)))))
 	    ;; set a dummy request
 	    (thread-request-set! #unspecified req)
 	    ;; preload the user files
-	    (for-each (lambda (f) (load-command-line-weblet f %worker)) files)
+	    (for-each (lambda (f)
+			 (load-command-line-weblet f %global %module %worker))
+	       files)
 	    ;; unset the dummy request
 	    (thread-request-set! #unspecified #unspecified)))
-      ;; install the hopscript expanders
-      (hopscript-install-expanders!)
-      ;; start the javascript loop
-      (hop-hopscript-worker (hop-scheduler) %global %worker)
       ;; start the JS repl loop
       (when (eq? (hop-enable-repl) 'js)
-	 (hopscript-repl (hop-scheduler) %global %worker))
+	 (js-worker-push-thunk! %worker "repl"
+	    (lambda ()
+	       (hopscript-repl (hop-scheduler) %global %worker))))
+      ;; start the javascript loop
+      (with-access::WorkerHopThread %worker (mutex condv module-cache)
+	 (synchronize mutex
+	    ;; module-cache is #f until the worker is initialized and running
+	    ;; (see hopscript/worker.scm)
+	    (unless module-cache
+	       (condition-variable-wait! condv mutex))))
       ;; return the worker for the main loop to join
       %worker))
 
@@ -265,7 +281,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Load the hoprc.js in a sandboxed environment.                    */
 ;*---------------------------------------------------------------------*/
-(define (javascript-rc %worker %global)
+(define (javascript-rc %global %module %worker)
    
    (define (load-rc path)
       (hop-rc-file-set! path)
@@ -274,7 +290,7 @@
       ;; set the preferred language
       (hop-preferred-language-set! "hopscript")
       ;; force the module initialization
-      (js-worker-push-thunk! %worker "hss"
+      (js-worker-push-thunk! %worker "rc"
 	 (lambda ()
 	    (let ((path (if (and (>fx (string-length path) 0)
 				 (char=? (string-ref path 0) (file-separator)))
@@ -284,7 +300,7 @@
 	       (let ((oldload (hop-rc-loaded)))
 		  (hop-rc-loaded! #f)
 		  (unwind-protect
-		     (nodejs-load path %worker)
+		     (nodejs-load path path %global %module %worker)
 		     (hop-rc-loaded! oldload)))))))
 
    (let ((path (string-append (prefix (hop-rc-loaded)) ".js")))
@@ -298,63 +314,64 @@
 ;*    javascript-init-hss ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (javascript-init-hss %worker %global)
-   (let ((mod (nodejs-module "hss" "hss" %worker %global))
-	 (scope (nodejs-new-scope-object %global))
-	 (exp (call-with-input-string "false"
+   (let ((exp (call-with-input-string "false"
 		 (lambda (in)
 		    (j2s-compile in :driver (j2s-plain-driver)
 		       :driver-name "j2s-plain-driver"
 		       :parser 'repl
 		       :verbose 0
-		       :filename "repl.js")))))
+		       :hopscript-header #f
+		       :filename "javascript-init-hss")))))
       ;; force the module initialization
       (js-worker-push-thunk! %worker "hss"
 	 (lambda ()
-	    ((eval! exp) %global %global scope mod)
-	    (hop-hss-foreign-eval-set!
-	       (lambda (ip)
-		  (js-put! mod 'filename
-		     (js-string->jsstring (input-port-name ip)) #f
-		     %global)
-		  (%js-eval-hss ip %global %worker scope)))))))
-   
+	    (let ((mod (nodejs-new-module "hss" "hss" %worker %global))
+		  (scope (nodejs-new-scope-object %global)))
+	       (js-put! scope (& "module") mod #f scope)
+	       (call-with-input-string "false"
+		  (lambda (in)
+		     (%js-eval in 'repl %global %global scope)))
+	       (hop-hss-foreign-eval-set!
+		  (lambda (ip)
+		     (js-worker-exec %worker "hss" #t
+			(lambda ()
+			   (js-put! mod (& "filename")
+			      (js-string->jsstring (input-port-name ip)) #f
+			      %global)
+			   (%js-eval-hss ip %global %worker scope))))))))))
+
 ;*---------------------------------------------------------------------*/
-;*    set-scheduler! ...                                               */
+;*    make-hop-scheduler ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (set-scheduler!)
+(define (make-hop-scheduler)
    (cond-expand
       (enable-threads
        (case (hop-scheduling)
 	  ((nothread)
-	   (hop-scheduler-set!
-	      (instantiate::nothread-scheduler)))
+	   (instantiate::nothread-scheduler))
 	  ((queue)
-	   (hop-scheduler-set!
-	      (instantiate::queue-scheduler
-		 (size (hop-max-threads)))))
+	   (instantiate::queue-scheduler
+	      (size (hop-max-threads))))
 	  ((one-to-one)
-	   (hop-scheduler-set!
-	      (instantiate::one-to-one-scheduler
-		 (size (hop-max-threads)))))
+	   (instantiate::one-to-one-scheduler
+	      (size (hop-max-threads))))
 	  ((pool)
-	   (hop-scheduler-set!
-	      (instantiate::pool-scheduler
-		 (size (hop-max-threads)))))
+	   (instantiate::pool-scheduler
+	      (size (hop-max-threads))))
 	  ((accept-many)
-	   (hop-scheduler-set!
-	      (instantiate::accept-many-scheduler
-		 (size (hop-max-threads)))))
+	   (instantiate::accept-many-scheduler
+	      (size (hop-max-threads))))
 	  (else
 	   (error "hop" "Unknown scheduling policy" (hop-scheduling)))))
       (else
        (unless (eq? (hop-scheduling) 'nothread)
 	  (warning "hop" "Threads disabled, forcing \"nothread\" scheduler."))
-       (hop-scheduler-set! (instantiate::nothread-scheduler)))))
+       (instantiate::nothread-scheduler))))
 
 ;*---------------------------------------------------------------------*/
 ;*    load-command-line-weblet ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (load-command-line-weblet f %worker)
+(define (load-command-line-weblet f %global %module %worker)
 
    (define (load-hop-directory path)
       (let ((src (string-append (basename path) ".hop")))
@@ -374,7 +391,8 @@
 		   (cmain (assq 'main obj)))
 	       (when (pair? cmain)
 		  (load-command-line-weblet
-		     (make-file-name (dirname pkg) (cdr cmain)) %worker)
+		     (make-file-name (dirname pkg) (cdr cmain))
+		     %global %module %worker)
 		  #t)))))
 
    (let ((path (cond
@@ -405,7 +423,7 @@
 	     (with-access::WorkerHopThread %worker (%this prerun)
 		(js-worker-push-thunk! %worker "nodejs-load"
 		   (lambda ()
-		      (nodejs-load path %worker))))))
+		      (nodejs-load path path %global %module %worker))))))
 	 ((string=? (basename path) "package.json")
 	  (load-package path))
 	 (else
@@ -439,9 +457,12 @@
 		  (error "hop-repl"
 		     "HOP REPL cannot be spawned without multi-threading"
 		     scd)
-		  (spawn0 scd
-		     (stage-repl
-			(lambda () (repljs %global %worker))))))
+		  (multiple-value-bind (%worker %global %module)
+		     (js-main-worker! "repl" (pwd) #f
+			nodejs-new-global-object nodejs-new-module)
+		     (js-worker-exec %worker "repl" #t
+			(lambda ()
+			   (repljs %global %worker))))))
 	   (repljs %global %worker))
        (error "hop-repl"
 	  "not enough threads to start a REPL (see --threads-max option)"
@@ -455,29 +476,3 @@
       (debug-thread-info-set! thread "stage-repl")
       (hop-verb 1 "Entering repl...\n")
       (begin (repl) (exit 0))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-event-server ...                                             */
-;*---------------------------------------------------------------------*/
-(define (hop-event-server scd)
-   (hop-event-init!)
-   (when (and (hop-enable-fast-server-event)
-	      (not (=fx (hop-fast-server-event-port) (hop-port)))
-	      (>fx (with-access::scheduler scd (size) size) 1))
-      ;; run an event server socket in a separate thread
-      (let ((serv (make-server-socket (hop-fast-server-event-port)
-		     :name (hop-server-listen-addr))))
-	 (scheduler-accept-loop scd serv #f))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-hopscript-worker ...                                         */
-;*---------------------------------------------------------------------*/
-(define (hop-hopscript-worker scd %global %worker)
-   (if (>fx (hop-max-threads) 2)
-       (with-access::WorkerHopThread %worker (mutex condv)
-	  (synchronize mutex
-	     (thread-start-joinable! %worker)
-	     (condition-variable-wait! condv mutex)))
-       (error "hop-repl"
-	  "not enough threads to start the main worker (see --threads-max option)"
-	  (hop-max-threads))))

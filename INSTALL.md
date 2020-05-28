@@ -59,6 +59,7 @@ required to get full functionality or enhanced compatibility with Node.js):
 Important notice: the openssl version shiped with OSX is too old and
 deprecated by Apple, please install openssl 1.0.2 or a newer version.
 
+
 ##### Macports #####
 
 Tools and libs installed using macports are located in
@@ -79,6 +80,7 @@ autocofiguration tool work as expected.
 
     export PKG_CONFIG_PATH=/opt/local/lib/pkgconfig:/usr/lib/pkgconfig
 
+
 ##### Brew #####
 
 The setting for brew is
@@ -93,16 +95,17 @@ If you use another package manager such fink, or if you install
 libraries from sources, please change above paths and install commands
 accordingly.
 
+
 ### Install bigloo ###
 
 Hop.js requires that bigloo (a scheme compiler and runtime) is
 installed on the target machine. bigloo can be downloaded from
-<ftp://ftp-sop.inria.fr/indes/fp/Bigloo/bigloo4.3a.tar.gz> (or a newer
+<ftp://ftp-sop.inria.fr/indes/fp/Bigloo/bigloo4.3c.tar.gz> (or a newer
 version).
 
-    tar xvf bigloo4.3a.tar.gz
+    tar xvf bigloo4.3c.tar.gz
 
-and cd to the build directory (bigloo4.3a) .
+and cd to the build directory (bigloo4.3c) .
 
 Run the configure script:
 
@@ -154,11 +157,11 @@ An other interesting option is:
 
 to see all available options. Once the configuration is completed, run :
 
-     make (or make -j)
+     make # or make -j
 
 then run
 
-     make install (or  sudo make install)
+     make install # or  sudo make install
 
 
 #### Test the hop.js build ####
@@ -243,9 +246,8 @@ hop.js syntax is a superset of JavaScript.
 
 Most source files can be edited with a JavaScript editor.
 Some editors may have trouble with the extended syntax :
- the service keyword,
- the ~{} and ${} blocks,
- the <> tags.
+ the service keyword, the `~{}` and `\${}` blocks,
+ the `<>` tags.
 
 First, look at your editor preferences for a possible support of non
 standard extensions. Emacs is known to provide extensive support for
@@ -278,7 +280,7 @@ Most common issues:
   to start with a fresh source directory to build bigloo or hop.
 	
   - wrong user preference files. Many things have changed since
-  hop-2.5.x. We advise you to delete the ~/.config/hop directory where
+  hop-2.5.x. We advise you to delete the `~/.config/hop` directory where
   user preferences and cached data are stored, then follow the startup
   procedure once again.
 

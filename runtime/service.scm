@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/service.scm               */
+;*    serrano/prgm/project/hop/hop/runtime/service.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sun Jan  1 10:47:47 2017 (serrano)                */
-;*    Copyright   :  2006-17 Manuel Serrano                            */
+;*    Last change :  Thu May 21 09:25:53 2020 (serrano)                */
+;*    Copyright   :  2006-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
 ;*=====================================================================*/
@@ -55,11 +55,11 @@
 	    (get-all-services ::http-request)
 	    (gen-service-url::bstring #!key (prefix "") (public #f))
 	    (hop-service-path? ::bstring)
-	    (hop-apply-nice-url::bstring ::bstring ::pair-nil)
-	    (hop-apply-url::bstring ::bstring ::pair-nil)
-	    (hop-apply-service-url::bstring ::hop-service ::pair-nil)
+	    (hop-apply-nice-url::bstring ::bstring ::pair-nil #!optional (ctx 'hop-to-hop))
+	    (hop-apply-url::bstring ::bstring ::pair-nil #!optional (ctx 'hop-to-hop))
 	    (hop-request-service-name::bstring ::http-request)
 	    (service-invoke ::hop-service ::http-request ::obj)
+	    (service-parse-request ::hop-service ::http-request)
 	    (procedure->service::procedure ::procedure)
 	    (service-filter ::http-request)
 	    (register-service!::hop-service ::hop-service)
@@ -82,8 +82,11 @@
 	  obj)))
 
 (register-class-serialization! hop-service
-   (lambda (obj) obj)
-   (lambda (obj) obj))
+   (lambda (obj mode)
+      (if (eq? mode 'hop-client)
+	  obj
+	  (with-access::hop-service obj (path) path)))
+   (lambda (obj ctx) (get-service obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    procedure-serializer ...                                         */
@@ -95,11 +98,7 @@
 	     attr
 	     (error "obj->string" "cannot serialize procedure" p))))
    (lambda (o)
-      (if (isa? o hop-service)
-	  (with-access::hop-service o (args id wid path timeout ttl args)
-	     (eval `(service :path ,path :id ,id :url ,path
-		       :timeout ,timeout :ttl ,ttl ,args)))
-	  o)))
+      o))
 
 ;*---------------------------------------------------------------------*/
 ;*    for  ....                                                        */
@@ -129,13 +128,13 @@
 				(else ((class-field-accessor f) obj))))
 			(key (symbol->keyword (class-field-name f))))
 		     (set! args (cons* key val args)))))))
-      (cons* ':__class__ (string->symbol (typeof obj)) args)))
+      (cons* :__class__ (string->symbol (typeof obj)) args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-plist->object ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hop-plist->object plist)
-   (let ((c (memq ':__class__ plist)))
+   (let ((c (memq :__class__ plist)))
       (if (pair? c)
 	  (let* ((obj (allocate-instance (cadr c)))
 		 (klass (object-class obj))
@@ -293,7 +292,7 @@
 ;*    When at least one argument is not a string, it falls back to     */
 ;*    hop-apply-url.                                                   */
 ;*---------------------------------------------------------------------*/
-(define (hop-apply-nice-url base vals)
+(define (hop-apply-nice-url base vals #!optional (ctx 'hop-to-hop))
    
    (define (all-keyword-string? vals)
       (cond
@@ -322,23 +321,16 @@
 				(url-path-encode (cadr vals)))))
 		       (cons str strs))))))
       (else
-       (hop-apply-url base vals))))
+       (hop-apply-url base vals ctx))))
        
 ;*---------------------------------------------------------------------*/
 ;*    hop-apply-url ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (hop-apply-url base vals)
+(define (hop-apply-url base vals #!optional (ctx 'hop-to-hop))
    (let ((o (if (vector? vals) (vector->list vals) vals)))
       (string-append base
 	 "?hop-encoding=hop"
-	 "&vals=" (url-path-encode (obj->string o 'hop-to-hop)))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-apply-service-url ...                                        */
-;*---------------------------------------------------------------------*/
-(define (hop-apply-service-url svc vals)
-   (with-access::hop-service svc (path)
-      (hop-apply-url path vals)))
+	 "&vals=" (url-path-encode (obj->string o ctx)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-pack-cgi-arguments ::obj ...                             */
@@ -528,7 +520,7 @@
    
    (define (multipart-dir)
       (let ((dir (make-file-path (hop-cache-directory)
-		    (integer->string (hop-port))
+		    (integer->string (hop-default-port))
 		    (hop-upload-directory))))
 	 (unless (directory? dir) (make-directories dir))
 	 dir))
@@ -674,7 +666,10 @@
 ;*    service-handler ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (service-handler svc req)
-   (service-invoke svc req (service-parse-request svc req)))
+   (with-access::hop-service svc (handler path)
+      (if handler
+	  (handler svc req)
+	  (service-invoke svc req (service-parse-request svc req)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    procedure->service ...                                           */
@@ -783,8 +778,7 @@
 		     (abspath abspath)
 		     (method 'GET))))
 	  (let ((svc (autoload-filter req)))
-	     (or svc
-		 (error "get-service" "service not found" abspath))))))
+	     (or svc (error "get-service" "service not found" abspath))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    service-exists? ...                                              */
@@ -809,7 +803,7 @@
 		   (when (hop-force-reload-service)
 		      (set! svc (force-reload-service svc)))
 		   (set! service svc)
-		   (with-access::hop-service svc (ttl path id wid)
+		   (with-access::hop-service svc (ttl path id wid ctx)
 		      (cond
 			 ((service-expired? svc)
 			  (mark-service-path-expired! path)
@@ -822,13 +816,13 @@
 			     ((>fx ttl 0)
 			      (unwind-protect
 				 (scheme->response
-				    (service-handler svc req) req)
+				    (service-handler svc req) req ctx)
 				 (if (=fx ttl 1)
 				     (unregister-service! svc)
 				     (set! ttl (-fx ttl 1)))))
 			     (else
 			      (scheme->response
-				 (service-handler svc req) req))))
+				 (service-handler svc req) req ctx))))
 			 (else
 			  (service-denied req id)))))
 		  (else

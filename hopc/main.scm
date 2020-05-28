@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopc/main.scm                     */
+;*    serrano/prgm/project/hop/hop/hopc/main.scm                       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Oct  3 09:57:42 2017 (serrano)                */
-;*    Copyright   :  2004-17 Manuel Serrano                            */
+;*    Last change :  Thu Mar 19 18:20:11 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
 ;*=====================================================================*/
@@ -20,6 +20,8 @@
 	    hopc_param
 	    hopc_driver)
 
+   (with    hop_param)
+   
    (eval    (library hop))
 
    (main    main))
@@ -28,6 +30,9 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
+   ;; not debug by default
+   (bigloo-warning-set! 0)
+   (bigloo-debug-set! 0)
    ;; set the Hop cond-expand identification
    (register-srfi! 'hopc)
    (for-each register-eval-srfi! (hop-srfis))
@@ -48,8 +53,15 @@
       ;; setup the client-side compiler
       (setup-client-compiler!)
       ;; setup the hop module resolvers
-      (bigloo-module-extension-handler-set!
-	 (hop-module-extension-handler exp))
+;*       (bigloo-module-extension-handler-set!                         */
+;* 	 (lambda (exp)                                                 */
+;* 	    (let ((m (eval-module)))                                   */
+;* 	       (tprint "bigloo-module-extension-handler exp=" exp " m==" (typeof m)) */
+;* 	       (when (evmodule? m)                                     */
+;* 		  (let ((e (hop-module-extension-handler exp)))        */
+;* 		     (tprint "bmeh-set! e=" e)                         */
+;* 		     (evmodule-extension-set! m e)))                   */
+;* 	       exp)))                                                  */
       (bigloo-module-resolver-set!
 	 (make-hop-module-resolver (bigloo-module-resolver)))
       ;; evaluate the command line expressions

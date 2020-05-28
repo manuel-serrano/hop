@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../arch/android/src/fr/inria/hop/HopPluginVibrate.java          */
+/*    .../hop/arch/android/src/fr/inria/hop/HopPluginVibrate.java      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:47:19 2010                          */
-/*    Last change :  Tue Jun 26 17:24:39 2012 (serrano)                */
-/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    Last change :  Thu May 21 13:41:21 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Vibrator                                                 */
 /*=====================================================================*/
@@ -69,7 +69,7 @@ public class HopPluginVibrate extends HopPlugin {
 	    int repeat = HopDroid.read_int32( ip );
 	    
 	    if( vibrator == null ) vibrator = make_vibrator();
-	    
+
 	    vibrator.vibrate( vibs, repeat );
       }
    }

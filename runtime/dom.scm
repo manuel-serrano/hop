@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/dom.scm                   */
+;*    serrano/prgm/project/hop/hop/runtime/dom.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Fri Jun 10 08:35:33 2016 (serrano)                */
-;*    Copyright   :  2005-16 Manuel Serrano                            */
+;*    Last change :  Mon Jul  1 08:29:14 2019 (serrano)                */
+;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
 ;*=====================================================================*/
@@ -627,7 +627,7 @@
 	  (append-map loop obj))
 	 ((isa? obj xml-markup)
 	  (with-access::xml-markup obj (body)
-	     (let ((c (xml-primitive-value (dom-get-attribute obj "data-hss-tag"))))
+	     (let ((c (dom-get-attribute obj "data-hss-tag")))
 		(if (and (string? c) (string=? c name))
 		    (cons obj (loop body))
 		    (loop body)))))
@@ -660,7 +660,7 @@
 	  (append-map loop obj))
 	 ((isa? obj xml-markup)
 	  (with-access::xml-markup obj (body tag)
-	     (let ((c (xml-primitive-value (dom-get-attribute obj "class"))))
+	     (let ((c (dom-get-attribute obj "class")))
 		(if (and (string? c) (string-in? c name))
 		    (cons obj (loop body))
 		    (loop body)))))

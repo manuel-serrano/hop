@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.4.x/arch/android/src/fr/inria/hop/HopPluginSms.java        */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopPluginSms.java      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Thu Jun 28 16:25:43 2012 (serrano)                */
-/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    Last change :  Sun May 17 14:23:16 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with SMS                                                 */
 /*=====================================================================*/
@@ -38,7 +38,7 @@ public class HopPluginSms extends HopPlugin {
       super( h, n );
    }
 
-   // sensor manager
+   // SMS manager
    protected void server( final InputStream ip, final OutputStream op )
       throws IOException {
       
@@ -89,7 +89,7 @@ public class HopPluginSms extends HopPlugin {
       }
    }
 
-   // initRecievers
+   // initReceivers
    private void initReceivers() {
       if( sent_receiver == null ) {
 	 sent_receiver = new BroadcastReceiver() {

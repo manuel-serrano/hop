@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/svg.scm                   */
+;*    serrano/prgm/project/hop/hop/runtime/svg.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Thu Nov 19 10:55:34 2015 (serrano)                */
-;*    Copyright   :  2007-15 Manuel Serrano                            */
+;*    Last change :  Thu Apr 18 07:50:19 2019 (serrano)                */
+;*    Copyright   :  2007-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
 ;*=====================================================================*/
@@ -111,14 +111,16 @@
 ;*    Standards SVG elements                                           */
 ;*---------------------------------------------------------------------*/
 (define-tag <SVG> ((id #unspecified)
+		   (%context #f)
 		   (xmlns "http://www.w3.org/2000/svg")
 		   (attributes)
 		   body)
    (instantiate::xml-element
       (tag 'svg)
-      (id (xml-make-id (xml-primitive-value id) 'svg))
-      (attributes `(:xmlns ,(xml-primitive-value xmlns)
-		      ,@(map xml-primitive-value attributes)))
+      (id (xml-make-id (xml-primitive-value id %context) 'svg))
+      (attributes `(:xmlns ,(xml-primitive-value xmlns %context)
+		      ,@(map (lambda (a) (xml-primitive-value a %context))
+			   attributes)))
       (body body)))
 
 ;; misc
@@ -523,6 +525,7 @@
 ;*    SVG:IMG ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-tag <SVG:IMG> ((id #f)
+		       (%context #t)
 		       (class #f)
 		       (width #f)
 		       (height #f)
@@ -531,8 +534,8 @@
 		       (prefix #t boolean)
 		       (display "-moz-inline-box; -moz-box-orient:vertical; display: inline-block")
 		       (attrs))
-   (set! src (xml-primitive-value src))
-   (set! style (xml-primitive-value style))
+   (set! src (xml-primitive-value src %context))
+   (set! style (xml-primitive-value style %context))
    (cond
       ((not (string? src))
        (error "<SVG:IMG>" "Illegal image src" src))

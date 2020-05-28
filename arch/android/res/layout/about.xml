@@ -14,7 +14,7 @@
              android:textSize="30px"
              android:textStyle="bold"
              android:layout_height="wrap_content"
-             android:text="@string/hopversion"/>
+             android:text="@string/hoprelease"/>
    <TextView android:layout_width="wrap_content"
              android:layout_height="wrap_content"
              android:textSize="24px"

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/date.js         */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/date.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Tue Jan 17 09:09:12 2017 (serrano)                */
-/*    Copyright   :  2014-17 Manuel Serrano                            */
+/*    Last change :  Mon Oct  7 08:44:23 2019 (serrano)                */
+/*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing Date                                                     */
 /*=====================================================================*/
@@ -321,20 +321,23 @@ assert.ok( d.getTime() === 2015, "year" );
 /*---------------------------------------------------------------------*/
 var date = new Date();
 var date2 = new Date( date );
-var date3 = new Date( d.getTime() );
+
 date.setDate( 2.9 );
 
-assert.ok( date.getDate() == 2 );
+assert.ok( date.getDate() == 2, "getDate" );
 
 var invalid = new Date( undefined );
-assert.ok( isNaN( invalid ) );
-assert.ok( invalid != invalid.valueOf() );
+assert.ok( isNaN( invalid ), "isNaN" );
+assert.ok( invalid != invalid.valueOf(), "invalid.valueOf" );
 
 var date1 = new Date();
 var date2 = new Date( date1 );
 var date3 = new Date( date1.getTime() );
 
-assert.ok( date2.getTime() === date3.getTime() );
+assert.ok( date2.getTime() === date3.getTime(), "getTime" );
+
+var date4 = new Date( 6.54321 );
+assert.ok( date4.valueOf() === 6, "valueOf" );
 
 /*---------------------------------------------------------------------*/
 /*    utc                                                              */

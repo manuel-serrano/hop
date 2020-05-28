@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/public.scm              */
+;*    serrano/prgm/project/hop/hop/hopscript/public.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu May  3 20:24:25 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Fri Apr 17 10:30:31 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
 ;*=====================================================================*/
@@ -16,10 +16,7 @@
 
    (option (set! *compiler-debug-trace* 0))
 
-   (extern ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
-	      "bgl_make_jsobject"))
-
-   (include "types.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch" "array.sch")
    
    (library hop js2scheme)
    
@@ -30,19 +27,20 @@
 	   __hopscript_function
 	   __hopscript_error
 	   __hopscript_string
-	   __hopscript_stringliteral
 	   __hopscript_boolean
 	   __hopscript_number
 	   __hopscript_property
 	   __hopscript_private
 	   __hopscript_worker
 	   __hopscript_array
-	   __hopscript_json)
+	   __hopscript_json
+	   __hopscript_proxy)
 
    (with   __hopscript_stringliteral
            __hopscript_expanders)
 
-   (export (js-new ::JsGlobalObject f . args)
+   (export (js-init-public! %this::JsGlobalObject)
+	   (js-new ::JsGlobalObject f . args)
 	   (js-new/debug ::JsGlobalObject loc f . args)
 	   (js-new0 ::JsGlobalObject f)
 	   (js-new1 ::JsGlobalObject f a0)
@@ -59,29 +57,78 @@
 	   
 	   (js-new-sans-construct ::JsGlobalObject f)
 
-	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
-
-	   (inline js-object-alloc ::JsFunction)
-	   (inline js-object-alloc-fast ::JsFunction)
-	   (inline js-object-alloc-super-fast ::JsFunction)
-	   (inline js-instance-alloc ::JsFunction)
+	   (inline js-object-alloc ::JsGlobalObject ::JsFunction)
+	   (inline js-object-alloc-fast ::JsGlobalObject ::JsFunction)
+	   (js-object-alloc-lazy ::JsGlobalObject ::JsFunction)
+	   (inline js-object-alloc/new-target ::JsGlobalObject ::JsFunction)
+	   (inline js-no-alloc ::JsGlobalObject ::JsFunction)
+	   (js-not-a-constructor-alloc ::JsGlobalObject ::JsFunction)
 	   
-	   (js-apply ::JsGlobalObject fun::obj this ::pair-nil)
-	   (js-apply-service% ::procedure obj args::pair-nil ::int)
-	   (js-apply-rest% ::JsGlobalObject ::procedure this ::pair-nil ::int ::int)
+	   (inline js-function-set-constrmap!::JsFunction ::JsFunction)
 	   
-	   (js-call0 ::JsGlobalObject fun::obj this)
-	   (js-call1 ::JsGlobalObject fun::obj this a0)
-	   (js-call2 ::JsGlobalObject fun::obj this a0 a1)
-	   (js-call3 ::JsGlobalObject fun::obj this a0 a1 a2)
-	   (js-call4 ::JsGlobalObject fun::obj this a0 a1 a2 a3)
-	   (js-call5 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4)
-	   (js-call6 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4 a5)
-	   (js-call7 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4 a5 a6)
-	   (js-call8 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4 a5 a6 a7)
-	   (js-call9 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8)
-	   (js-call10 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
-	   (js-calln ::JsGlobalObject fun::obj this . args)
+	   (js-call0% ::JsGlobalObject ::JsProcedure ::procedure this)
+	   (js-call1% ::JsGlobalObject ::JsProcedure ::procedure this a0)
+	   (js-call2% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1)
+	   (js-call3% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2)
+	   (js-call4% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2 a3)
+	   (js-call5% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2 a3 a4)
+	   (js-call6% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2 a3 a4 a5)
+	   (js-call7% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2 a3 a4 a5 a6)
+	   (js-call8% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2 a3 a4 a5 a6 a7)
+	   (js-call9% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+	   (js-call10% ::JsGlobalObject ::JsProcedure ::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   (js-calln% ::JsGlobalObject ::JsProcedure ::procedure this ::pair-nil)
+	   
+	   (inline js-call0-jsprocedure ::JsGlobalObject ::JsProcedure this)
+	   (inline js-call1-jsprocedure ::JsGlobalObject ::JsProcedure this a0)
+	   (inline js-call2-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1)
+	   (inline js-call3-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2)
+	   (inline js-call4-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3)
+	   (inline js-call5-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4)
+	   (inline js-call6-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5)
+	   (inline js-call7-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6)
+	   (inline js-call8-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7)
+	   (inline js-call9-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+	   (inline js-call10-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   (inline js-calln-jsprocedure ::JsGlobalObject ::JsProcedure this args)
+	   
+	   (js-call0-procedure fun::procedure this)
+	   (js-call1-procedure fun::procedure this a0)
+	   (js-call2-procedure fun::procedure this a0 a1)
+	   (js-call3-procedure fun::procedure this a0 a1 a2)
+	   (js-call4-procedure fun::procedure this a0 a1 a2 a3)
+	   (js-call5-procedure fun::procedure this a0 a1 a2 a3 a4)
+	   (js-call6-procedure fun::procedure this a0 a1 a2 a3 a4 a5)
+	   (js-call7-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6)
+	   (js-call8-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7)
+	   (js-call9-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+	   (js-call10-procedure fun::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   (js-calln-procedure fun::procedure this args)
+	   
+	   (js-call0-obj ::JsGlobalObject ::obj this)
+	   (js-call1-obj ::JsGlobalObject ::obj this a0)
+	   (js-call2-obj ::JsGlobalObject ::obj this a0 a1)
+	   (js-call3-obj ::JsGlobalObject ::obj this a0 a1 a2)
+	   (js-call4-obj ::JsGlobalObject ::obj this a0 a1 a2 a3)
+	   (js-call5-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4)
+	   (js-call6-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5)
+	   (js-call7-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6)
+	   (js-call8-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7)
+	   (js-call9-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+	   (js-call10-obj ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   
+	   (inline js-call0 ::JsGlobalObject ::obj this)
+	   (inline js-call1 ::JsGlobalObject ::obj this a0)
+	   (inline js-call2 ::JsGlobalObject ::obj this a0 a1)
+	   (inline js-call3 ::JsGlobalObject ::obj this a0 a1 a2)
+	   (inline js-call4 ::JsGlobalObject ::obj this a0 a1 a2 a3)
+	   (inline js-call5 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4)
+	   (inline js-call6 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5)
+	   (inline js-call7 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6)
+	   (inline js-call8 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7)
+	   (inline js-call9 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+	   (inline js-call10 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	   (js-calln ::JsGlobalObject ::obj this args)
 	   
 	   (js-call0/debug ::JsGlobalObject loc fun::obj this)
 	   (js-call1/debug ::JsGlobalObject loc fun::obj this a0)
@@ -94,7 +141,7 @@
 	   (js-call8/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (js-call9/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (js-call10/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
-	   (js-calln/debug ::JsGlobalObject loc fun::obj this . args)
+	   (js-calln/debug ::JsGlobalObject loc fun::obj this args)
 
 	   (js-call-method0 ::JsGlobalObject val prop)
 	   (js-call-method1 ::JsGlobalObject val prop ::obj)
@@ -103,41 +150,52 @@
 	   (js-call-method4 ::JsGlobalObject val prop ::obj ::obj ::obj ::obj)
 	   (js-call-methodn ::JsGlobalObject val prop . args)
 
+	   (js-apply-service% ::procedure obj args::pair-nil ::int)
+	   (js-apply-rest% ::JsGlobalObject ::procedure this ::pair-nil ::int ::int)
+	   (js-apply% ::JsGlobalObject ::JsProcedure ::procedure obj ::pair-nil)
+	   (js-apply ::JsGlobalObject fun::obj this ::pair-nil)
+
 	   (js-service/debug ::obj ::obj ::procedure)
 
 	   (js-ordinary-instanceof?::bool ::JsGlobalObject v f)
+	   (js-object-function-instanceof?::bool ::JsGlobalObject ::JsObject ::JsFunction)
+	   (js-function-instanceof?::bool ::JsGlobalObject v ::JsFunction)
 	   (js-instanceof?::bool ::JsGlobalObject v f)
 	   (js-instanceof?/debug::bool ::JsGlobalObject loc v f)
 	   
-	   (js-in?::bool ::JsGlobalObject f obj)
-	   (js-in?/debug::bool ::JsGlobalObject loc f obj)
-
 	   (inline js-make-let::bchar)
 	   (inline js-let-ref ::obj ::obj ::obj ::JsGlobalObject)
 	   
 	   (js-raise-reference-error/loc ::JsGlobalObject loc ::bstring obj . args)
 	   (inline js-totest::bool ::obj)
+	   (inline js-totest-likely-object::bool ::obj)
 	   (js-toboolean::bool ::obj)
+	   (js-toboolean-no-boolean::bool ::obj)
 	   (generic js-tonumber ::obj ::JsGlobalObject)
+	   (macro js-tointeger obj %this)
 	   (generic js-tointeger ::obj ::JsGlobalObject)
 	   (js-touint16::uint16 ::obj ::JsGlobalObject)
 	   
-	   (js-toindex::uint32 ::obj)
+	   (generic js-toindex::uint32 ::obj)
 	   (inline js-isindex?::bool ::uint32)
 	   (inline js-index?::bool ::obj)
-	   
+
 	   (generic js-tostring::bstring ::obj ::JsGlobalObject)
-	   (js-tostring-safe::bstring ::obj ::JsGlobalObject)
-	   (js-tojsstring::obj ::obj ::JsGlobalObject)
+	   (js-tojsstring-safe::JsStringLiteral ::obj ::JsGlobalObject)
+	   (js-tojsstring::JsStringLiteral ::obj ::JsGlobalObject)
 	   
+	   (inline js-toobject-fast::JsObject ::obj ::JsGlobalObject)
 	   (js-toobject::obj ::JsGlobalObject ::obj)
 	   (js-toobject/debug::obj ::JsGlobalObject loc ::obj)
 	   
+	   (js-toprimitive-for-string::JsStringLiteral ::obj ::JsGlobalObject)
 	   (generic js-toprimitive ::obj ::symbol ::JsGlobalObject)
 	   
 	   (inline js-equal?::bool ::obj ::obj ::JsGlobalObject)
+	   (inline js-equal-fixnum?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-equal-sans-flonum?::bool ::obj ::obj ::JsGlobalObject)
 	   (js-equality?::bool ::obj ::obj ::JsGlobalObject)
+	   (js-same-value-zero?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-strict-equal?::bool ::obj ::obj)
 	   (inline js-strict-equal-no-string?::bool ::obj ::obj)
 	   (js-eq?::bool ::obj ::obj)
@@ -145,8 +203,9 @@
 	   (inline js-eqstring?::bool ::obj ::obj)
 	   (inline js-eqil?::bool ::long ::obj)
 	   (inline js-eqir?::bool ::obj ::long)
+	   (inline js-null-or-undefined?::bool ::obj)
+	   (inline js-object-or-null?::bool ::obj)
 
-	   (js-check-class-instance ::obj ::obj ::JsGlobalObject)
 	   (js-super ::obj ::obj ::JsGlobalObject)
 	   
 	   (%js-eval-hss ::input-port ::JsGlobalObject ::obj ::obj)
@@ -169,267 +228,906 @@
 	   (generic js-cast-object obj ::JsGlobalObject ::bstring)
 	   (generic js-inspect ::obj ::int)
 
+	   (js-typeof ::obj ::JsGlobalObject)
+
 	   (js-html-head ::JsGlobalObject)
-	   (js-html-script ::JsGlobalObject)))
+	   (js-html-script ::JsGlobalObject)
+
+	   (js-parseint ::obj ::obj ::JsGlobalObject)
+	   (js-parseint-string ::obj)
+	   (js-parseint-any ::obj ::JsGlobalObject)
+	   (js-parseint-string-uint32 ::obj ::uint32)
+	   (js-parsefloat ::obj ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-make-jsobject ...                                             */
+;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-make-jsobject constrsize constrmap __proto__)
-   (let ((mode (js-object-default-mode)))
-      (cond-expand
-	 (bigloo-c
-	  ($js-make-jsobject constrsize constrmap __proto__ mode))
-	 (else
-	  (instantiateJsObject
-	     (cmap constrmap)
-	     (__proto__ __proto__)
-	     (elements (make-vector constrsize (js-undefined)))
-	     (mode mode))))))
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
-;*    js-new/function ...                                              */
+;*    js-init-public! ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-new/function %this::JsGlobalObject f::JsFunction args::pair-nil)
-   (with-access::JsFunction f (construct arity alloc name)
-      (case (length args)
-	 ((0)
-	  (js-new0 %this f))
-	 ((1)
-	  (js-new1 %this f (car args)))
-	 ((2)
-	  (js-new2 %this f (car args) (cadr args)))
-	 ((3)
-	  (js-new3 %this f (car args) (cadr args) (caddr args)))
-	 ((4)
-	  (js-new4 %this f (car args) (cadr args) (caddr args) (cadddr args)))
-	 (else
-	  (let* ((o (alloc f))
-		 (r (js-apply% %this f construct o args)))
-	     (if (isa? r JsObject) r o))))))
+(define (js-init-public! %this::JsGlobalObject)
+   (unless (vector? __js_strings) (set! __js_strings (&init!))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-new ...                                                       */
+;*    js-rest-args ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-rest-args %this num)
+   (let loop ((num num))
+      (if (=fx num 0)
+	  (list (js-vector->jsarray '#() %this))
+	  (cons (js-undefined) (loop (-fx num 1))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-raise-arity-error ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-raise-arity-error %this fun::JsProcedure n)
+   (with-access::JsProcedure fun (arity procedure)
+      (let ((minlen (negfx
+		       (cond
+			  ((>fx arity -2049) (-fx (negfx arity) 1))
+			  ((>fx arity -3049) (+fx arity 2049))
+			  ((>fx arity -4049) (+fx arity 3049))
+			  ((>fx arity -5049) (+fx arity 4049))
+			  (else (+fx arity 5049))))))
+	 (if (js-function? fun)
+	     (with-access::JsFunction fun (arity len src)
+		(let* ((name (js-get fun (& "name") %this))
+		       (m (format "~a: wrong number of arguments ~a provided, ~a expected"
+			     (if (js-jsstring? name) (js-jsstring->string name) "")
+			     n
+			     (cond
+				((>fx arity 0) arity)
+				((>fx arity -2049) (format ">= ~a" minlen))
+				(else (format "[~a..~a]" minlen (procedure-arity procedure)))))))
+		   (if (pair? src)
+		       (js-raise-type-error/loc %this (car src) m fun)
+		       (js-raise-type-error %this m fun))))
+	     (let ((m (format "~a: wrong number of arguments ~a provided, ~a expected"
+			 n
+			 (cond
+			    ((>fx arity 0) arity)
+			    ((>fx arity -2049) (format ">= ~a" minlen))
+			    (else (format "[~a..~a]" minlen (procedure-arity procedure)))))))
+		(js-raise-type-error %this m fun))))))
+
+;*---------------------------------------------------------------------*/
+;*    optionals ...                                                    */
+;*---------------------------------------------------------------------*/
+(define optionals
+   '#(()
+      (#unspecified)
+      (#unspecified #unspecified)
+      (#unspecified #unspecified #unspecified)
+      (#unspecified #unspecified #unspecified #unspecified)
+      (#unspecified #unspecified #unspecified #unspecified #unspecified)
+      (#unspecified #unspecified #unspecified #unspecified #unspecified #unspecified)
+      (#unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified)
+      (#unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified)
+      (#unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified)
+      (#unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified)))
+
+;*---------------------------------------------------------------------*/
+;*    evprocedure-arity ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (evprocedure-arity::long proc::procedure)
+   (let ((a (procedure-arity proc)))
+      (if (=fx a -5)
+	  ;; might be an eval procedure
+	  (let ((attr (procedure-attr proc)))
+	     (if (and (struct? attr) (eq? (struct-key attr) 'user))
+		 ;; awful hack that must be changed
+		 ;; see the "user" struct int
+		 ;; bigloo:runtime/Eval/evaluate_comp.scm
+		 (struct-ref attr 0)
+		 a))
+	  a)))
+   
+;*---------------------------------------------------------------------*/
+;*    gen-calln ...                                                    */
 ;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.2.2       */
+;*    JsProcedure and JsFunction have the same calling protocol.       */
+;*    How to call the function is a combination of the                 */
+;*    JavaScript ARITY and Scheme ARITY.                               */
 ;*---------------------------------------------------------------------*/
-(define (js-new %this f . args)
-   (if (isa? f JsFunction)
-       (js-new/function %this f args)
-       (js-raise-type-error %this "new: object is not a function ~s" f)))
+(define-macro (gen-calln fun procedure this . args)
+   
+   (define n (+fx 1 (length args)))
+   (define arity (gensym 'arity))
+   (define parity (gensym 'parity))
+   (define required (gensym 'required))
+   
+   (define (call-missing-rest i offset vec)
+      ;; missing required rest call
+      `((,(negfx (+fx offset i)))
+	(let ((,parity (procedure-arity ,procedure)))
+	   (if (js-procedure-hopscript-mode? ,fun)
+	       (js-raise-arity-error %this ,fun ,(-fx n 1))
+	       (,procedure ,this ,@args
+		  ,@(make-list (-fx (+fx i 1) n) '(js-undefined))
+		  ,vec)))))
+   
+   (define (call-missing-rest-array i)
+      (call-missing-rest i 3049 '(js-empty-vector->jsarray %this)))
+   
+   (define (call-missing-rest-vector i)
+      (call-missing-rest i 2049 ''#()))
+   
+   (define (call-ok-rest i offset vec)
+      ;; ok rest call
+      `((,(negfx (+fx offset i)))
+	(,procedure ,this ,@(take args i) ,(vec (drop args i)))))
+   
+   (define (call-ok-rest-array i)
+      (call-ok-rest i 3049
+	 (lambda (args) `(js-vector->jsarray (vector ,@args) %this))))
+   
+   (define (call-ok-rest-vector i)
+      (call-ok-rest i 2049
+	 (lambda (args) `(vector ,@args))))
+   
+   (define (call-opt-missing i)
+      ;; missing required arguments
+      `((,(negfx (+fx 1024 i)))
+	(let ((,parity (evprocedure-arity ,procedure)))
+	   (if (js-procedure-hopscript-mode? ,fun)
+	       (js-raise-arity-error %this ,fun ,(-fx n 1))
+	       (case ,parity
+		  ;; no need to generate [1.. i-1] because parity > -arity
+		  ,@(map (lambda (a)
+			    `((,a)
+			      (,procedure ,this ,@args
+				 ,@(make-list (-fx a n) '(js-undefined)))))
+		     (iota (-fx 10 i) (+fx i 1)))
+		  (else
+		   (if (<fx ,parity 0)
+		       (apply ,procedure ,this ,@args
+			  (make-list (-fx (negfx ,parity) ,n)
+			     (js-undefined)))
+		       (apply ,procedure ,this ,@args
+			  (vector-ref optionals (-fx ,parity ,n))))))))))
 
-;*---------------------------------------------------------------------*/
-;*    js-new/debug ...                                                 */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.2.2       */
-;*---------------------------------------------------------------------*/
-(define (js-new/debug %this loc f . args)
-   (if (isa? f JsFunction)
-       (js-new/function %this f args)
-       (js-raise-type-error/loc %this loc "new: object is not a function ~s" f)))
+   (define (call-opt-ok-or-too-many i)
+      `((,(negfx (+fx 1024 i)))
+	;; too many required arguments
+	(let ((,parity (evprocedure-arity ,procedure)))
+	   (case ,parity
+	      ;; no need to generate [1.. i-1] because parity > -arity
+	      ,@(map (lambda (a)
+			`((,a)
+			  ,(cond
+			      ((<fx a n)
+			       `(if (js-procedure-hopscript-mode? ,fun)
+				    (js-raise-arity-error %this ,fun ,(-fx n 1))
+				    (,procedure ,this ,@(take args (-fx a 1)))))
+			      ((=fx a n)
+			       `(,procedure ,this ,@args))
+			      (else
+			       `(if (js-procedure-hopscript-mode? ,fun)
+				    (js-raise-arity-error %this ,fun ,(-fx n 1))
+				    (,procedure ,this ,@args
+				       ,@(make-list (-fx a n)
+					    '(js-undefined))))))))
+		 (iota (-fx 10 i) (+fx i 1)))
+	      (else
+	       (if (<fx ,parity 0)
+		   (,procedure ,this ,@args)
+		   (apply ,procedure ,this ,@args
+		      (make-list (-fx ,parity ,n) (js-undefined)))))))))
 
-;*---------------------------------------------------------------------*/
-;*    js-object-alloc ...                                              */
-;*---------------------------------------------------------------------*/
-(define-inline (js-object-alloc ctor::JsFunction)
-   (with-access::JsFunction ctor (constrsize constrmap %prototype)
-      (if (not constrmap)
-	  (set! constrmap
-	     (instantiate::JsConstructMap (ctor ctor) (size constrsize)))
- 	  (with-access::JsConstructMap constrmap (size)
-	     (unless (=fx size constrsize)
-		(set! constrmap (instantiate::JsConstructMap (ctor ctor) (size constrsize))))))
-      (js-make-jsobject constrsize constrmap %prototype)))
+   (define (call-scheme-vararg-missing i)
+      ;; missing scheme var args
+      `((,(negfx i))
+	(,procedure ,this ,@args ,@(make-list (-fx i (+fx n 1)) '(js-undefined)))))
+   
+   (define (call-scheme-vararg-ok i)
+      ;; ok scheme var args
+      `((,(negfx i))
+	(,procedure ,this ,@args)))
+   
+   (define (call-fix-too-many i)
+      ;; too many fix arguments
+      `((,i)
+	(if (js-procedure-hopscript-mode? ,fun)
+	    (js-raise-arity-error %this ,fun ,(-fx n 1))
+	    (,procedure ,this ,@(take args (-fx i 1))))))
+   
+   (define (call-fix-missing i)
+      ;; missing fix arguments
+      `((,i)
+	(if (js-procedure-hopscript-mode? ,fun)
+	    (js-raise-arity-error %this ,fun ,(-fx n 1))
+	    (,procedure ,this ,@args ,@(make-list (-fx i n) '(js-undefined))))))
+   
+   (define (call-many-arguments-opt-norest)
+      ;; many argument + optional arguments
+      `(let ((,required ,arity))
+	  (cond
+	     ((=fx ,n ,parity)
+	      (,procedure ,this ,@args))
+	     ((<fx ,required ,n)
+	      ;; required arguments missing
+	      (if (js-procedure-hopscript-mode? ,fun)
+		  (js-raise-arity-error %this ,fun ,(-fx n 1))
+		  (apply ,procedure ,this
+		     ,@args (make-list (-fx ,parity ,n)
+			       (js-undefined)))))
+	     ((<fx ,n ,parity)
+	      (apply ,procedure ,this
+		 ,@args (make-list (-fx ,parity ,n)
+			   (js-undefined))))
+	     (else
+	      (if (js-procedure-hopscript-mode? ,fun)
+		  (js-raise-arity-error %this ,fun ,(-fx n 1))
+		  (apply ,procedure ,this
+		     (take (list ,@args) ,parity)))))))
+   
+   (define (rest-argument-empty arity)
+      `(cond
+	  ((>fx ,arity -3049) '#())
+	  ((>fx ,arity -4049) (js-empty-vector->jsarray %this))
+	  ((>fx ,arity -5049) '#())
+	  (else (js-empty-vector->jsarray %this))))
+   
+   (define (rest-argument arity args)
+      `(cond
+	  ((>fx ,arity -3049) (list->vector ,args))
+	  ((>fx ,arity -4049) (js-vector->jsarray (list->vector ,args) %this))
+	  ((>fx ,arity -5049) (list->vector ,args))
+	  (else (js-vector->jsarray (list->vector ,args) %this))))
+   
+   (define (call-many-arguments-opt-rest)
+      ;; many argument + optional arguments + rest
+      `(if (=fx ,(+fx n 1) ,parity)
+	   (,procedure ,this ,@args ,(rest-argument-empty arity))
+	   (let ((,required (negfx
+			       (cond
+				  ((>fx ,arity -3049) (+fx ,arity 2049))
+				  ((>fx ,arity -4049) (+fx ,arity 3049))
+				  ((>fx ,arity -5049) (+fx ,arity 4049))
+				  (else (+fx ,arity 5049))))))
+	      (cond
+		 ((and (>=fx ,required ,n) (js-procedure-hopscript-mode? ,fun))
+		  ;; required arguments missing
+		  (js-raise-arity-error %this ,fun ,(-fx n 1)))
+		 ((<fx ,n ,parity)
+		  ;; arguments missing
+		  (apply ,procedure ,this
+		     ,@args
+		     (append
+			(make-list (-fx ,parity ,(+fx n 1)) (js-undefined))
+			(list ,(rest-argument-empty arity)))))
+		 ((<fx ,parity 0)
+		  ;; this schema does not support optional and rest
+		  ;; arguments for interpreted procedure
+		  ,(let ((l (gensym 'args)))
+		      `(let ((,l (list ,@args)))
+			  (if (<=fx ,n ,required)
+			      (apply ,procedure ,this
+				 (append ,l
+				    (make-list (-fx ,required ,(-fx n 1))
+				       (js-undefined))
+				    (list ,(rest-argument-empty arity))))
+			      (append (take ,l ,required)
+				 (list ,(rest-argument arity
+					   `(drop ,l ,required))))))))
+		 (else
+		  ,(let ((l (gensym 'args)))
+		      `(let ((,l (list ,@args)))
+			  (apply ,procedure ,this
+			     (append
+				(take ,l (-fx ,parity 2))
+				(list
+				   ,(rest-argument arity
+				       `(drop ,l (-fx ,parity 2)))))))))))))
 
-;*---------------------------------------------------------------------*/
-;*    js-object-alloc-fast ...                                         */
-;*---------------------------------------------------------------------*/
-(define-inline (js-object-alloc-fast ctor::JsFunction)
-   (with-access::JsFunction ctor (constrsize constrmap %prototype)
-      (with-access::JsConstructMap constrmap (size)
-	 (unless (=fx size constrsize)
-	    (set! constrmap
-	       (instantiate::JsConstructMap (ctor ctor) (size constrsize)))))
-      (js-make-jsobject constrsize constrmap %prototype)))
+   (define (call-many-arguments-scheme-varargs)
+      `(let ((,required (-fx (negfx ,parity) 1)))
+	  (if (>=fx ,n (negfx ,parity))
+	      (,procedure ,this ,@args)
+	      (apply ,procedure ,this ,@args
+		 (make-list (-fx ,n ,required) (js-undefined))))))
+	  
+   (define (call-many-arguments)
+      ;; dyamic call sequence for many arguments
+      `(cond
+	  ((>fx ,arity 0)
+	   (if (js-procedure-hopscript-mode? ,fun)
+	       (js-raise-arity-error %this ,fun ,(-fx n 1))
+	       ;; fixed number of arguments
+	       (if (>fx ,arity ,n)
+		   ;; missing arguments
+		   (apply ,procedure ,this ,@args 
+		      (make-list (-fx ,arity ,n) (js-undefined)))
+		   ;; too many arguments
+		   (apply ,procedure ,this (take (list ,@args) ,arity)))))
+	  (else
+	   ;; optional arguments
+	   (let ((,parity (procedure-arity ,procedure)))
+	      (cond
+		 ((>fx ,arity 1024)
+		  ;; scheme var args
+		  (let ((,parity (evprocedure-arity ,procedure)))
+		     ,(call-many-arguments-scheme-varargs)))
+		 ((>fx ,arity -2049)
+		  ;; no rest argument
+		  ,(call-many-arguments-opt-norest))
+		 (else
+		  ;; rest argument
+		  ,(call-many-arguments-opt-rest)))))))
+   
+   `(with-access::JsProcedure ,fun (arity)
+       (let ((,arity arity))
+	  (case ,arity
+	     ;; missing rest call (rest allocated in an array)
+	     ,@(map call-missing-rest-array (reverse (iota (-fx 10 n) n)))
+	     ;; ok rest call (rest allocated in an array)
+	     ,@(map call-ok-rest-array (reverse (iota n 0)))
+	     ;; missing rest call (rest allocated in an vector)
+	     ,@(map call-missing-rest-vector (reverse (iota (-fx 10 n) n)))
+	     ;; ok rest call (rest allocated in an vector)
+	     ,@(map call-ok-rest-vector (reverse (iota n 0)))
+	     ((-2048)
+	      ;; eager "arguments" call
+	      (,procedure ,this (vector ,@args)))
+	     ((-2047)
+	      ;; lazy "arguments" call
+	      (js-call-with-stack-vector
+		 (vector ,@args)
+		 (lambda (v) (,procedure ,this v))))
+	     ;; opt missing required arguments
+	     ,@(map call-opt-missing (reverse (iota (-fx 10 n) n)))
+	     ;; opt ok or too many arguments
+	     ,@(map call-opt-ok-or-too-many (reverse (iota n 0)))
+	     ;; scheme missing var args
+	     ,@(map call-scheme-vararg-missing (reverse (iota (-fx 10 n) (+fx n 1))))
+	     ;; scheme ok var args
+	     ,@(map call-scheme-vararg-ok (reverse (iota n 1)))
+	     ;; arguments without optimization
+	     ((0) (,procedure ,this ,@args))
+	     ;; fix too many arguments
+	     ,@(map call-fix-too-many (iota (-fx n 1) 1))
+	     ;; direct call
+	     ((,n) (,procedure ,this ,@args))
+	     ;; fix missing arguments
+	     ,@(map call-fix-missing (iota (-fx 10 n) (+fx n 1)))
+	     ;; dynamic dispatch
+	     (else ,(call-many-arguments))))))
 
-;*---------------------------------------------------------------------*/
-;*    js-object-alloc-super-fast ...                                   */
-;*---------------------------------------------------------------------*/
-(define-inline (js-object-alloc-super-fast ctor::JsFunction)
-   (with-access::JsFunction ctor (constrsize constrmap %prototype)
-      (js-make-jsobject constrsize constrmap %prototype)))
+(define (js-call0% %this fun::JsProcedure procedure this)
+   (gen-calln fun procedure this))
 
-;*---------------------------------------------------------------------*/
-;*    js-instance-alloc ...                                            */
-;*---------------------------------------------------------------------*/
-(define-inline (js-instance-alloc ctor::JsFunction)
-   (let ((obj (js-object-alloc ctor)))
-      (js-object-mode-instance-set! obj #t)
-      obj))
+(define (js-call1% %this fun::JsProcedure procedure this a0)
+   (gen-calln fun procedure this a0))
 
-;*---------------------------------------------------------------------*/
-;*    js-new-return ...                                                */
-;*---------------------------------------------------------------------*/
-(define (js-new-return f r o)
-   [assert (r o) (or (isa? r JsObject) (isa? o JsObject))]
-   (with-access::JsFunction f (constrsize)
-      (if (isa? r JsObject)
-	  (with-access::JsObject r (elements)
-	     (when (vector? elements)
-		(set! constrsize (vector-length elements)))
-	     r)
-	  (with-access::JsObject o (elements)
-	     (when (vector? elements)
-		(set! constrsize (vector-length elements)))
-	     o))))
+(define (js-call2% %this fun::JsProcedure procedure this a0 a1)
+   (gen-calln fun procedure this a0 a1))
 
-;*---------------------------------------------------------------------*/
-;*    js-new-return-fast ...                                           */
-;*---------------------------------------------------------------------*/
-(define-inline (js-new-return-fast ctor o)
-   (with-access::JsFunction ctor (constrsize)
-      (with-access::JsObject o (elements)
-	 (when (vector? elements)
-	    (set! constrsize (vector-length elements)))
-	 o)))
+(define (js-call3% %this fun::JsProcedure procedure this a0 a1 a2)
+   (gen-calln fun procedure this a0 a1 a2))
 
-;*---------------------------------------------------------------------*/
-;*    js-new-sans-construct ...                                        */
-;*---------------------------------------------------------------------*/
-(define (js-new-sans-construct %this ctor)
-   ;; used to initialize classes
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (name alloc)
-	  (let ((o (alloc ctor)))
-	     ;; CARE ARITY
-	     (js-new-return ctor o o)))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
+(define (js-call4% %this fun::JsProcedure procedure this a0 a1 a2 a3)
+   (gen-calln fun procedure this a0 a1 a2 a3))
 
-;*---------------------------------------------------------------------*/
-;*    js-newXXX ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (js-new0 %this ctor)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (constructor construct name alloc)
-	  (if constructor
-	      (constructor ctor (js-null))
-	      (let ((o (alloc ctor)))
-		 ;; CARE ARITY
-		 (let ((r (js-call0% %this ctor construct o)))
-		    (js-new-return ctor r o)))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
+(define (js-call5% %this fun::JsProcedure procedure this a0 a1 a2 a3 a4)
+   (gen-calln fun procedure this a0 a1 a2 a3 a4))
 
-(define (js-new1 %this ctor a0)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (constructor construct alloc name)
-	  (if constructor
-	      (constructor ctor a0)
-	      (let ((o (alloc ctor)))
-		 ;; CARE ARITY
-		 (let ((r (js-call1% %this ctor construct o a0)))
-		    (js-new-return ctor r o)))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
+(define (js-call6% %this fun::JsProcedure procedure this a0 a1 a2 a3 a4 a5)
+   (gen-calln fun procedure this a0 a1 a2 a3 a4 a5))
 
-(define (js-new2 %this ctor a0 a1)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (constructor construct alloc name)
-	  (if constructor
-	      (constructor ctor a0 a1)
-	      (let ((o (alloc ctor)))
-		 ;; CARE ARITY
-		 (let ((r (js-call2% %this ctor construct o a0 a1)))
-		    (js-new-return ctor r o)))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
+(define (js-call7% %this fun::JsProcedure procedure this a0 a1 a2 a3 a4 a5 a6)
+   (gen-calln fun procedure this a0 a1 a2 a3 a4 a5 a6))
 
-(define (js-new3 %this ctor a0 a1 a2)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (constructor construct alloc name)
-	  (let ((o (alloc ctor)))
-	     ;; CARE ARITY
-	     (let ((r (js-call3% %this ctor construct o a0 a1 a2)))
-		(js-new-return ctor r o))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
+(define (js-call8% %this fun::JsProcedure procedure this a0 a1 a2 a3 a4 a5 a6 a7)
+   (gen-calln fun procedure this a0 a1 a2 a3 a4 a5 a6 a7))
 
-(define (js-new4 %this ctor a0 a1 a2 a3)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (construct alloc name)
-	  (let ((o (alloc ctor)))
-	     ;; CARE ARITY
-	     (let ((r (js-call4% %this ctor construct o a0 a1 a2 a3)))
-		(js-new-return ctor r o))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
+(define (js-call9% %this fun::JsProcedure procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+   (gen-calln fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8))
 
-(define (js-new5 %this ctor a0 a1 a2 a3 a4)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (construct alloc name)
-	  (let ((o (alloc ctor)))
-	     ;; CARE ARITY
-	     (let ((r (js-call5% %this ctor construct o a0 a1 a2 a3 a4)))
-		(js-new-return ctor r o))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
+(define (js-call10% %this fun::JsProcedure procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+   (gen-calln fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
 
-(define (js-new6 %this ctor a0 a1 a2 a3 a4 a5)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (construct alloc name)
-	  (let ((o (alloc ctor)))
-	     ;; CARE ARITY
-	     (let ((r (js-call6% %this ctor construct o a0 a1 a2 a3 a4 a5)))
-		(js-new-return ctor r o))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
+(define (js-calln-many% %this fun procedure this args n)
 
-(define (js-new7 %this ctor a0 a1 a2 a3 a4 a5 a6)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (construct alloc name)
-	  (let ((o (alloc ctor)))
-	     ;; CARE ARITY
-	     (let ((r (js-call7% %this ctor construct o a0 a1 a2 a3 a4 a5 a6)))
-		(js-new-return ctor r o))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
-
-(define (js-new8 %this ctor a0 a1 a2 a3 a4 a5 a6 a7)
-   (if (isa? ctor JsFunction)
-       (with-access::JsFunction ctor (construct alloc name)
-	  (let ((o (alloc ctor)))
-	     ;; CARE ARITY
-	     (let ((r (js-call8% %this ctor construct o a0 a1 a2 a3 a4 a5 a6 a7)))
-		(js-new-return ctor r o))))
-       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
-
-;*---------------------------------------------------------------------*/
-;*    js-apply ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (js-apply %this fun obj args::pair-nil)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "apply: argument not a function ~s" fun)
-       (with-access::JsFunction fun (procedure rest)
-	  (js-apply% %this fun procedure obj args))))
-
-;*---------------------------------------------------------------------*/
-;*    js-apply% ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (js-apply% %this fun::JsFunction proc::procedure obj args::pair-nil)
-   (with-access::JsFunction fun (arity rest len minlen name)
-      (let ((n (+fx 1 (length args))))
+   (define (rest-argument-empty arity)
+      (cond
+	  ((>fx arity -3049) '#())
+	  ((>fx arity -4049) (js-empty-vector->jsarray %this))
+	  ((>fx arity -5049) '#())
+	  (else (js-empty-vector->jsarray %this))))
+   
+   (define (rest-argument arity args)
+      (cond
+	  ((>fx arity -3049) (list->vector args))
+	  ((>fx arity -4049) (js-vector->jsarray (list->vector args) %this))
+	  ((>fx arity -5049) (list->vector args))
+	  (else (js-vector->jsarray (list->vector args) %this))))
+   
+   (define (calln-many-opt-norest arity)
+      ;; many argument + optional arguments
+      (let ((required arity)
+	    (parity (procedure-arity procedure)))
 	 (cond
-	    ((=fx arity n)
-	     (apply proc obj args))
-	    ((>fx arity n)
-	     (if (and (>=fx minlen 0) (>fx minlen (-fx n 1)))
+	    ((=fx n parity)
+	     (apply procedure this args))
+	    ((<fx required n)
+	     ;; required arguments missing
+	     (if (js-procedure-hopscript-mode? fun)
 		 (js-raise-arity-error %this fun (-fx n 1))
-		 (let ((rest (make-list (-fx arity n) (js-undefined))))
-		    (apply proc obj (append args rest)))))
-	    ((>=fx arity 0)
-	     (if (>=fx minlen 0)
-		 (js-raise-arity-error %this fun (-fx n 1))
-		 (apply proc obj (take args (-fx arity 1)))))
-	    (rest
-	     (js-apply-rest% %this proc obj args len n))
+		 (apply procedure this
+		    (append args
+		       (make-list (-fx parity n) (js-undefined))))))
+	    ((<fx n parity)
+	     (apply procedure this
+		(append args
+		   (make-list (-fx parity n) (js-undefined)))))
 	    (else
-	     (let ((-arity (-fx (negfx arity) 1)))
-		(if (<=fx -arity n)
-		    (apply proc obj args)
-		    (let ((rest (make-list (-fx -arity n) (js-undefined))))
-		       (apply proc obj (append args rest))))))))))
+	     (if (js-procedure-hopscript-mode? fun)
+		 (js-raise-arity-error %this fun (-fx n 1))
+		 (apply procedure this (take args parity)))))))
+
+   (define (calln-many-opt-rest arity)
+      (let ((parity (procedure-arity procedure)))
+	 (if (=fx (+fx n 1) parity)
+	     (apply procedure this
+		(append args (list (rest-argument-empty arity))))
+	     (let ((required (negfx
+				(cond
+				   ((>fx arity -3049) (+fx arity 2049))
+				   ((>fx arity -4049) (+fx arity 3049))
+				   ((>fx arity -5049) (+fx arity 4049))
+				   (else (+fx arity 5049))))))
+		(cond
+		   ((and (>=fx required n) (js-procedure-hopscript-mode? fun))
+		    ;; required arguments missing
+		    (js-raise-arity-error %this fun (-fx n 1)))
+		   ((<fx n parity)
+		    ;; arguments missing
+		    (apply procedure this
+		       (append args
+			  (make-list (-fx parity (+fx n 1)) (js-undefined))
+			  (list (rest-argument-empty arity)))))
+		   ((<fx parity 0)
+		    ;; this schema does not support optional and rest
+		    ;; arguments for interpreted procedure
+		    (if (<=fx n required)
+			(apply procedure this
+			   (append args
+			      (make-list (-fx required (-fx n 1))
+				 (js-undefined))
+			      (list (rest-argument-empty arity))))
+			(apply procedure this
+			   (append (take args required)
+			      (list (rest-argument arity
+				       (drop args required)))))))
+		   (else
+		    (apply procedure this
+		       (append (take args (-fx parity 2))
+			  (list (rest-argument arity
+				   (drop args (-fx parity 2))))))))))))
+   
+   (with-access::JsProcedure fun (arity)
+      (let ((arity arity))
+	 (cond
+	    ((>fx arity 0)
+	     (if (js-procedure-hopscript-mode? fun)
+		 (js-raise-arity-error %this fun (-fx n 1))
+		 (if (>fx arity n)
+		     ;; missing arguments
+		     (apply procedure this
+			(append args
+			   (make-list (-fx arity n) (js-undefined))))
+		     ;; too many
+		     (apply procedure this (take args (-fx arity 1))))))
+	    ((>fx arity -2049)
+	     (calln-many-opt-norest arity))
+	    (else
+	     (calln-many-opt-rest arity))))))
+
+(define (js-calln% %this fun procedure this args)
+   (with-access::JsProcedure fun (arity)
+      (let ((n (+fx 1 (length args))))
+	 (if (=fx n arity)
+	     (apply procedure this args)
+	     (match-case args
+		(()
+		 (js-call0% %this fun procedure this))
+		((?a0)
+		 (js-call1% %this fun procedure this a0))
+		((?a0 ?a1)
+		 (js-call2% %this fun procedure this a0 a1))
+		((?a0 ?a1 ?a2)
+		 (js-call3% %this fun procedure this a0 a1 a2))
+		((?a0 ?a1 ?a2 ?a3)
+		 (js-call4% %this fun procedure this a0 a1 a2 a3))
+		((?a0 ?a1 ?a2 ?a3 ?a4)
+		 (js-call5% %this fun procedure this a0 a1 a2 a3 a4))
+		((?a0 ?a1 ?a2 ?a3 ?a4 ?a5)
+		 (js-call6% %this fun procedure this a0 a1 a2 a3 a4 a5))
+		((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6)
+		 (js-call7% %this fun procedure this a0 a1 a2 a3 a4 a5 a6))
+		((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7)
+		 (js-call8% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7))
+		((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7 ?a8)
+		 (js-call9% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8))
+		((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7 ?a8 ?a9)
+		 (js-call10% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
+		(else
+		 (js-calln-many% %this fun procedure this args n)))))))
+
+;*---------------------------------------------------------------------*/
+;*    gen-call-jsprocedure ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-call0-jsprocedure %this fun this)
+   (with-access::JsProcedure fun (procedure arity)
+      (if (=fx arity 1)
+	  (procedure this)
+	  (js-call0% %this fun procedure this))))
+
+(define-inline (js-call1-jsprocedure %this fun this a0)
+   (with-access::JsProcedure fun (procedure arity)
+      (if (=fx arity 2)
+	  (procedure this a0)
+	  (js-call1% %this fun procedure this a0))))
+
+(define-inline (js-call2-jsprocedure %this fun this a0 a1)
+   (with-access::JsProcedure fun (procedure arity)
+      (if (=fx arity 3)
+	  (procedure this a0 a1)
+	  (js-call2% %this fun procedure this a0 a1))))
+
+(define-inline (js-call3-jsprocedure %this fun this a0 a1 a2)
+   (with-access::JsProcedure fun (procedure arity)
+      (if (=fx arity 4)
+	  (procedure this a0 a1 a2)
+	  (js-call3% %this fun procedure this a0 a1 a2))))
+
+(define-inline (js-call4-jsprocedure %this fun this a0 a1 a2 a3)
+   (with-access::JsProcedure fun (procedure arity)
+      (if (=fx arity 5)
+	  (procedure this a0 a1 a2 a3)
+	  (js-call4% %this fun procedure this a0 a1 a2 a3))))
+
+(define-inline (js-call5-jsprocedure %this fun this a0 a1 a2 a3 a4)
+   (with-access::JsProcedure fun (procedure arity)
+      (if (=fx arity 6)
+	  (procedure this a0 a1 a2 a3 a4)
+	  (js-call5% %this fun procedure this a0 a1 a2 a3 a4))))
+
+(define-inline (js-call6-jsprocedure %this fun this a0 a1 a2 a3 a4 a5)
+   (with-access::JsProcedure fun (procedure arity)
+      (if (=fx arity 7)
+	  (procedure this a0 a1 a2 a3 a4 a5)
+	  (js-call6% %this fun procedure this a0 a1 a2 a3 a4 a5))))
+
+(define-inline (js-call7-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6)
+   (with-access::JsProcedure fun (procedure arity)
+      (if (=fx arity 8)
+	  (procedure this a0 a1 a2 a3 a4 a5 a6)
+	  (js-call7% %this fun procedure this a0 a1 a2 a3 a4 a5 a6))))
+
+(define-inline (js-call8-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7)
+   (with-access::JsProcedure fun (procedure arity)
+      (if (=fx arity 9)
+	  (procedure this a0 a1 a2 a3 a4 a5 a6 a7)
+	  (js-call8% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7))))
+
+(define-inline (js-call9-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+   (with-access::JsProcedure fun (procedure arity)
+      (if (=fx arity 10)
+	  (procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+	  (js-call9% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8))))
+
+(define-inline (js-call10-jsprocedure %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+   (with-access::JsProcedure fun (procedure arity)
+      (if (=fx arity 11)
+	  (procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+	  (js-call10% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))))
+
+(define-inline (js-calln-jsprocedure %this fun this args)
+   (with-access::JsProcedure fun (procedure)
+      (js-calln% %this fun procedure this args)))
+
+;*---------------------------------------------------------------------*/
+;*    gen-call-procedure ...                                           */
+;*---------------------------------------------------------------------*/
+(define-macro (gen-call-procedure proc this . args)
+   (let ((n (+fx 1 (length args))))
+      `(let ((arity (procedure-arity ,proc)))
+	  (cond
+	     ((=fx arity ,n)
+	      (,proc ,this ,@args))
+	     ((>fx arity ,n)
+	      (apply ,proc ,this ,@args
+		 (make-list (-fx arity ,n) (js-undefined))))
+	     ,@(map (lambda (i)
+		       `((=fx arity ,i)
+			 (,proc ,this ,@(take args (-fx i 1)))))
+		(iota (length args) 1))
+	     (else
+	      (js-undefined))))))
+   
+(define (js-call0-procedure proc this)
+   (gen-call-procedure proc this))
+
+(define (js-call1-procedure proc this a0)
+   (gen-call-procedure proc this a0))
+
+(define (js-call2-procedure proc this a0 a1)
+   (gen-call-procedure proc this a0 a1))
+
+(define (js-call3-procedure proc this a0 a1 a2)
+   (gen-call-procedure proc this a0 a1 a2))
+
+(define (js-call4-procedure proc this a0 a1 a2 a3)
+   (gen-call-procedure proc this a0 a1 a2 a3))
+
+(define (js-call5-procedure proc this a0 a1 a2 a3 a4)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4))
+
+(define (js-call6-procedure proc this a0 a1 a2 a3 a4 a5)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4 a5))
+
+(define (js-call7-procedure proc this a0 a1 a2 a3 a4 a5 a6)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4 a5 a6))
+
+(define (js-call8-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7))
+
+(define (js-call9-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8))
+
+(define (js-call10-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+   (gen-call-procedure proc this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
+
+(define (js-calln-procedure proc this args)
+   ;; this protocol only support fix arity
+   (let ((n (+fx 1 (length args)))
+	 (arity (procedure-arity proc)))
+      (cond
+	 ((=fx arity n)
+	  (apply proc this args))
+	 ((>fx arity n)
+	  (apply proc this
+	     (append args
+		(make-list (-fx arity n)
+		   (js-undefined)))))
+	 (else
+	  (apply proc this (take args (-fx arity 1)))))))
+
+;*---------------------------------------------------------------------*/
+;*    gen-call-obj ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-macro (gen-call-obj %this fun this . args)
+   `(cond
+       ((js-procedure? ,fun)
+	(with-access::JsProcedure ,fun (procedure)
+	   (,(string->symbol (format "js-call~a%" (length args)))
+	    ,%this ,fun procedure ,this ,@args)))
+       ((js-procedure-proxy? ,fun)
+	(,(string->symbol (format "js-call-proxy/cache-miss~a" (length args)))
+	 ,%this ,fun ,this ,@args))
+       ((procedure? fun)
+	(,fun ,@args))
+       (else
+	(js-raise-type-error ,%this
+	   ,(format "call~a: not a function ~~s" (length args)) ,fun))))
+
+(define (js-call0-obj %this fun this)
+   (gen-call-obj %this fun this))
+
+(define (js-call1-obj %this fun this a0)
+   (gen-call-obj %this fun this a0))
+
+(define (js-call2-obj %this fun this a0 a1)
+   (gen-call-obj %this fun this a0 a1))
+
+(define (js-call3-obj %this fun this a0 a1 a2)
+   (gen-call-obj %this fun this a0 a1 a2))
+
+(define (js-call4-obj %this fun this a0 a1 a2 a3)
+   (gen-call-obj %this fun this a0 a1 a2 a3))
+
+(define (js-call5-obj %this fun this a0 a1 a2 a3 a4)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4))
+
+(define (js-call6-obj %this fun this a0 a1 a2 a3 a4 a5)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4 a5))
+
+(define (js-call7-obj %this fun this a0 a1 a2 a3 a4 a5 a6)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4 a5 a6))
+
+(define (js-call8-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7))
+
+(define (js-call9-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8))
+
+(define (js-call10-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+   (gen-call-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
+
+;*---------------------------------------------------------------------*/
+;*    js-callXXX ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-call0 %this fun this)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 1))
+       ((js-procedure-procedure fun) this)
+       (js-call0-obj %this fun this)))
+
+(define-inline (js-call1 %this fun this a0)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 2))
+       ((js-procedure-procedure fun) this a0)
+       (js-call1-obj %this fun this a0)))
+
+(define-inline (js-call2 %this fun this a0 a1)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 3))
+       ((js-procedure-procedure fun) this a0 a1)
+       (js-call2-obj %this fun this a0 a1)))
+
+(define-inline (js-call3 %this fun this a0 a1 a2)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 4))
+       ((js-procedure-procedure fun) this a0 a1 a2)
+       (js-call3-obj %this fun this a0 a1 a2)))
+
+(define-inline (js-call4 %this fun this a0 a1 a2 a3)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 5))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3)
+       (js-call4-obj %this fun this a0 a1 a2 a3)))
+
+(define-inline (js-call5 %this fun this a0 a1 a2 a3 a4)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 6))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4)
+       (js-call5-obj %this fun this a0 a1 a2 a3 a4)))
+
+(define-inline (js-call6 %this fun this a0 a1 a2 a3 a4 a5)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 7))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5)
+       (js-call6-obj %this fun this a0 a1 a2 a3 a4 a5)))
+
+(define-inline (js-call7 %this fun this a0 a1 a2 a3 a4 a5 a6)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 8))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5 a6)
+       (js-call7-obj %this fun this a0 a1 a2 a3 a4 a5 a6)))
+
+(define-inline (js-call8 %this fun this a0 a1 a2 a3 a4 a5 a6 a7)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 9))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5 a6 a7)
+       (js-call8-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7)))
+
+(define-inline (js-call9 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 10))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+       (js-call9-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)))
+
+(define-inline (js-call10 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 11))
+       ((js-procedure-procedure fun) this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+       (js-call10-obj %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)))
+
+(define (js-calln %this fun this args)
+   (cond
+      ((js-procedure? fun)
+       (with-access::JsProcedure fun (procedure)
+	  (js-calln% %this fun procedure this args)))
+      ((js-procedure-proxy? fun)
+       (js-call-proxyn %this fun this args))
+      (else
+       (js-raise-type-error %this
+	  (format "call(~a): not a function ~~s" (length args))
+	  fun))))
+
+;*---------------------------------------------------------------------*/
+;*    gen-call/debug ...                                               */
+;*---------------------------------------------------------------------*/
+(define-macro (gen-call/debug %this loc fun this . args)
+   `(cond
+       ((js-procedure? ,fun)
+	(let ((env (current-dynamic-env))
+	      (name (js-function-debug-name ,fun %this)))
+	   ($env-push-trace env name loc)
+	   (with-access::JsProcedure ,fun (procedure arity)
+	      (let ((aux (,(string->symbol (format "js-call~a%" (length args)))
+			  ,%this ,fun procedure ,this ,@args)))
+		 ($env-pop-trace env)
+		 aux))))
+       ((js-procedure-proxy? ,fun)
+	(with-access::JsProxy ,fun ((target __proto__))
+	   (let ((env (current-dynamic-env))
+		 (name (js-proxy-debug-name ,fun %this)))
+	      ($env-push-trace env name loc)
+	      (let ((aux (,(string->symbol (format "js-call-proxy/cache-miss~a" (length args)))
+			  ,%this ,fun ,this ,@args)))
+		 ($env-pop-trace env)
+		 aux))))
+       (else
+	(js-raise-type-error/loc %this loc
+	   (format "call~a: not a function ~~s ~a" ,(length args) ,loc) ,fun))))
+
+(define (js-call0/debug %this loc fun this)
+   (gen-call/debug %this loc fun this))
+
+(define (js-call1/debug %this loc fun this a0)
+   (gen-call/debug %this loc fun this a0))
+
+(define (js-call2/debug %this loc fun this a0 a1)
+   (gen-call/debug %this loc fun this a0 a1))
+
+(define (js-call3/debug %this loc fun this a0 a1 a2)
+   (gen-call/debug %this loc fun this a0 a1 a2))
+
+(define (js-call4/debug %this loc fun this a0 a1 a2 a3)
+   (gen-call/debug %this loc fun this a0 a1 a2 a3))
+
+(define (js-call5/debug %this loc fun this a0 a1 a2 a3 a4)
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4))
+
+(define (js-call6/debug %this loc fun this a0 a1 a2 a3 a4 a5)
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5))
+
+(define (js-call7/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6)
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6))
+
+(define (js-call8/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7)
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7))
+
+(define (js-call9/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8))
+
+(define (js-call10/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+   (gen-call/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
+
+(define (js-calln/debug %this loc fun this args)
+   (cond
+      ((js-procedure? fun)
+       (with-access::JsProcedure fun (procedure)
+	  (let ((env (current-dynamic-env))
+		(name (js-function-debug-name fun %this)))
+	     ($env-push-trace env name loc)
+	     (let ((aux (js-calln% %this fun procedure this args)))
+		($env-pop-trace env)
+		aux))))
+      ((js-procedure-proxy? fun)
+       (with-access::JsProcedure fun (procedure)
+	  (let ((env (current-dynamic-env))
+		(name (js-proxy-debug-name fun %this)))
+	     ($env-push-trace env name loc)
+	     (let ((aux (js-call-proxyn %this fun this args)))
+		($env-pop-trace env)
+		aux))))
+      (else
+       (js-raise-type-error/loc %this loc
+	  (format "call(~a): not a function ~~s ~a" (length args) loc) fun))))
+
+;*---------------------------------------------------------------------*/
+;*    js-call-method ...                                               */
+;*    -------------------------------------------------------------    */
+;*    These functions are used when a method is invoked on a           */
+;*    non-object value.                                                */
+;*---------------------------------------------------------------------*/
+(define (js-call-method0 %this val prop)
+   (let ((o (js-toobject %this val)))
+      (js-call0 %this (js-get o prop %this) o)))
+
+(define (js-call-method1 %this val prop a0)
+   (let ((o (js-toobject %this val)))
+      (js-call1 %this (js-get o prop %this) o a0)))
+
+(define (js-call-method2 %this val prop a0 a1)
+   (let ((o (js-toobject %this val)))
+      (js-call2 %this (js-get o prop %this) o a0 a1)))
+      
+(define (js-call-method3 %this val prop a0 a1 a2)
+   (let ((o (js-toobject %this val)))
+      (js-call3 %this (js-get o prop %this) o a0 a1 a2)))
+      
+(define (js-call-method4 %this val prop a0 a1 a2 a3)
+   (let ((o (js-toobject %this val)))
+      (js-call4 %this (js-get o prop %this) o a0 a1 a2 a3)))
+      
+(define (js-call-methodn %this val prop . args)
+   (let ((o (js-toobject %this val)))
+      (js-calln %this (js-get o prop %this) o args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-apply-rest% ...                                               */
@@ -459,385 +1157,314 @@
 	     (apply proc obj (append args rest)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-rest-args ...                                                 */
+;*    js-apply% ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-rest-args %this num)
-   (let loop ((num num))
-      (if (=fx num 0)
-	  (list (js-vector->jsarray '#() %this))
-	  (cons (js-undefined) (loop (-fx num 1))))))
+(define (js-apply% %this fun::JsProcedure proc::procedure obj args::pair-nil)
+   (match-case args
+      (()
+       (js-call0% %this fun proc obj))
+      ((?a0)
+       (js-call1% %this fun proc obj a0))
+      ((?a0 ?a1)
+       (js-call2% %this fun proc obj a0 a1))
+      ((?a0 ?a1 ?a2)
+       (js-call3% %this fun proc obj a0 a1 a2))
+      ((?a0 ?a1 ?a2 ?a3)
+       (js-call4% %this fun proc obj a0 a1 a2 a3))
+      ((?a0 ?a1 ?a2 ?a3 ?a4)
+       (js-call5% %this fun proc obj a0 a1 a2 a3 a4))
+      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5)
+       (js-call6% %this fun proc obj a0 a1 a2 a3 a4 a5))
+      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6)
+       (js-call7% %this fun proc obj a0 a1 a2 a3 a4 a5 a6))
+      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7)
+       (js-call8% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7))
+      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7 ?a8)
+       (js-call9% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7 a8))
+      ((?a0 ?a1 ?a2 ?a3 ?a4 ?a5 ?a6 ?a7 ?a8 ?a9)
+       (js-call10% %this fun proc obj a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
+      (else
+       (js-calln% %this fun proc obj args))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-raise-arity-error ...                                         */
+;*    js-apply ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-raise-arity-error %this fun n)
-   (with-access::JsFunction fun (name minlen arity rest len src)
-      (let ((m (format "~a: wrong number of arguments ~a provided, ~a expected"
-		  (if (string? name) name "")
-		  n
-		  (cond
-		     ((or (<fx minlen 0) (and (=fx minlen len) (not rest))) len)
-		     (rest (format ">= ~a" minlen))
-		     (else (format "[~a..~a]" minlen len))))))
-	 (if (pair? src)
-	     (js-raise-type-error/loc %this (car src) m fun)
-	     (js-raise-type-error %this m fun)))))
+(define (js-apply %this fun obj args::pair-nil)
+   (cond
+      ((js-procedure? fun)
+       (with-access::JsProcedure fun (procedure)
+	  (js-calln% %this fun procedure obj args)))
+      ((js-procedure-proxy? fun)
+       (js-apply-proxy %this fun obj args))
+      (else
+       (js-raise-type-error %this "apply: argument not a function ~s" fun))))
 
 ;*---------------------------------------------------------------------*/
-;*    gen-calln ...                                                    */
+;*    js-new/function ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-macro (gen-calln . args)
-   (let ((n (+fx 1 (length args))))
-      `(with-access::JsFunction fun (arity len rest minlen src name)
-	  (case arity
-	     ((-1)
-	      (if (not rest)
-		  (proc this ,@args)
-		  (case len
-		     ((0)
-		      (proc this (js-vector->jsarray (vector ,@args) %this)))
-		     ,@(map (lambda (i)
-			       `((,i)
-				 ,(if (<=fx n i)
-				      `(if (and (<=fx ,n minlen) (>=fx minlen 0))
-					   (js-raise-arity-error %this fun ,(-fx n 1))
-					   (proc this ,@args ,@(make-list (-fx (+fx i 1) n) '(js-undefined))
-					      (js-vector->jsarray '#() %this)))
-				      `(proc this ,@(take args i)
-					  (js-vector->jsarray (vector ,@(drop args i)) %this)))))
-			(iota 10 1))
-		     (else
-		      (cond
-			 ((and (<=fx ,n minlen) (>=fx minlen 0))
-			  (js-raise-arity-error %this fun ,(-fx n 1)))
-			 ((<=fx ,(-fx n 1) len)
-			  (apply proc this ,@args
-			     (js-rest-args %this (-fx (+fx len 1) ,n))))
-			 (else
-			  (let ((args (list ,@args)))
-			     (apply proc this
-				(append (take args len)
-				   (list
-				      (js-vector->jsarray
-					 (apply vector (drop args len)) %this)))))))))))
-	     ,@(map (lambda (i)
-		       `((,i) 
-			 ,(cond
-			     ((=fx i n)
-			      `(proc this ,@args))
-			     ((<fx i n)
-			      `(if (>=fx minlen 0)
-				   (js-raise-arity-error %this fun ,(-fx n 1))
-				   (proc this ,@(take args (-fx i 1)))))
-			     (else
-			      `(if (or (>fx ,n minlen) (<fx minlen 0))
-				   (proc this ,@args
-				      ,@(make-list (-fx i n) '(js-undefined)))
-				   (js-raise-arity-error %this fun ,(-fx n 1)))))))
-		(iota 10 1))
-	     (else
-	      (cond
-		 ((<fx arity 0)
-		  (let ((min (-fx (negfx arity) 1)))
-		     (apply proc this ,@args
-			(make-list (-fx min ,n) (js-undefined)))))
-		 ((=fx arity ,n)
-		  (proc this ,@args))
-		 ((>=fx minlen 0)
-		  (js-raise-arity-error %this fun ,(-fx n 1)))
-		 (else
-		  (apply proc this ,@args
-		     (make-list (-fx arity ,n) (js-undefined))))))))))
+(define (js-new/function %this::JsGlobalObject f::JsFunction args::pair-nil)
+   (case (length args)
+      ((0)
+       (js-new0 %this f))
+      ((1)
+       (js-new1 %this f (car args)))
+      ((2)
+       (js-new2 %this f (car args) (cadr args)))
+      ((3)
+       (js-new3 %this f (car args) (cadr args) (caddr args)))
+      ((4)
+       (js-new4 %this f (car args) (cadr args) (caddr args) (cadddr args)))
+      (else
+       (with-access::JsFunction f (construct alloc)
+	  (let* ((o (alloc %this f))
+		 (r (js-apply% %this f construct o args)))
+	     (if (js-object? r) r o))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-calln ...                                                     */
+;*    js-new/proxy ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-call0% %this fun::JsFunction proc::procedure this)
-   (gen-calln))
-(define (js-call1% %this fun::JsFunction proc::procedure this a0)
-   (gen-calln a0))
-(define (js-call2% %this fun::JsFunction proc::procedure this a0 a1)
-   (gen-calln a0 a1))
-(define (js-call3% %this fun::JsFunction proc::procedure this a0 a1 a2)
-   (gen-calln a0 a1 a2))
-(define (js-call4% %this fun::JsFunction proc::procedure this a0 a1 a2 a3)
-   (gen-calln a0 a1 a2 a3))
-(define (js-call5% %this fun::JsFunction proc::procedure this a0 a1 a2 a3 a4)
-   (gen-calln a0 a1 a2 a3 a4))
-(define (js-call6% %this fun::JsFunction proc::procedure this a0 a1 a2 a3 a4 a5)
-   (gen-calln a0 a1 a2 a3 a4 a5))
-(define (js-call7% %this fun::JsFunction proc::procedure this a0 a1 a2 a3 a4 a5 a6)
-   (gen-calln a0 a1 a2 a3 a4 a5 a6))
-(define (js-call8% %this fun::JsFunction proc::procedure this a0 a1 a2 a3 a4 a5 a6 a7)
-   (gen-calln a0 a1 a2 a3 a4 a5 a6 a7))
-(define (js-call9% %this fun::JsFunction proc::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
-   (gen-calln a0 a1 a2 a3 a4 a5 a6 a7 a8))
-(define (js-call10% %this fun::JsFunction proc::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
-   (gen-calln a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
-
-(define (js-call0 %this fun this)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call0: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call0% %this fun procedure this))))
-(define (js-call1 %this fun this a0)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call1: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call1% %this fun procedure this a0))))
-(define (js-call2 %this fun this a0 a1)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call2: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call2% %this fun procedure this a0 a1))))
-(define (js-call3 %this fun this a0 a1 a2)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call3: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call3% %this fun procedure this a0 a1 a2))))
-(define (js-call4 %this fun this a0 a1 a2 a3)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call4: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call4% %this fun procedure this a0 a1 a2 a3))))
-(define (js-call5 %this fun this a0 a1 a2 a3 a4)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call5: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call5% %this fun procedure this a0 a1 a2 a3 a4))))
-(define (js-call6 %this fun this a0 a1 a2 a3 a4 a5)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call6: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call6% %this fun procedure this a0 a1 a2 a3 a4 a5))))
-(define (js-call7 %this fun this a0 a1 a2 a3 a4 a5 a6)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call7: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call7% %this fun procedure this a0 a1 a2 a3 a4 a5 a6))))
-(define (js-call8 %this fun this a0 a1 a2 a3 a4 a5 a6 a7)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call8: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call8% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7))))
-(define (js-call9 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call9: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call9% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8))))
-(define (js-call10 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call10: not a function ~s" fun)
-       (with-access::JsFunction fun (procedure)
-	  (js-call10% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))))
-
-(define (js-calln% %this fun this args)
-   (with-access::JsFunction fun (procedure arity minlen rest len)
-      (let ((n (+fx 1 (length args))))
-	 (cond
-	    ((=fx arity n)
-	     (apply procedure this args))
-	    ((>fx arity n)
-	     (if (>fx minlen 0)
-		 (js-raise-type-error %this
-		    "wrong number of arguments" (cons (length args) minlen))
-		 (apply procedure this
-		    (append args
-		       (make-list (-fx arity n)
-			  (js-undefined))))))
-	    ((>=fx arity 0)
-	     (if (>fx minlen 0)
-		 (js-raise-type-error %this
-		    "wrong number of arguments" (cons (length args) minlen))
-		 (apply procedure this (take args (-fx arity 1)))))
-	    (else
-	     (cond
-		((and (<=fx (-fx n 1) minlen) (>fx minlen 0))
-		 (js-raise-type-error %this
-		    "wrong number of arguments" (cons (length args) minlen)))
-		((<=fx (-fx n 1) len)
-		 (if (not rest)
-		     (apply procedure this
-			(append args (make-list (-fx (negfx arity) (+fx n 1)))))
-		     (apply procedure this
-			(append args (js-rest-args %this (-fx (+fx len 1) n))))))
-		((not rest)
-		 (apply procedure this args))
-		(else
-		 (apply procedure this
-		    (append (take args len)
-		       (list
-			  (js-vector->jsarray
-			     (apply vector (drop args len)) %this)))))))))))
-
-(define (js-calln %this fun this . args)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error %this "call: not a function ~s" fun)
-       (js-calln% %this fun this args)))
-
-(define (js-call0/debug %this loc fun this)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call0: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call0% %this fun procedure this)))
-		($env-pop-trace env)
-		aux)))))
-(define (js-call1/debug %this loc fun this a0)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call1: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure (fname name))
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call1% %this fun procedure this a0)))
-		($env-pop-trace env)
-		aux)))))
-(define (js-call2/debug %this loc fun this a0 a1)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call2: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call2% %this fun procedure this a0 a1)))
-		($env-pop-trace env)
-		aux)))))
-(define (js-call3/debug %this loc fun this a0 a1 a2)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call3: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call3% %this fun procedure this a0 a1 a2)))
-		($env-pop-trace env)
-		aux)))))
-(define (js-call4/debug %this loc fun this a0 a1 a2 a3)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call4: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call4% %this fun procedure this a0 a1 a2 a3)))
-		($env-pop-trace env)
-		aux)))))
-(define (js-call5/debug %this loc fun this a0 a1 a2 a3 a4)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call5: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call5% %this fun procedure this a0 a1 a2 a3 a4)))
-		($env-pop-trace env)
-		aux)))))
-(define (js-call6/debug %this loc fun this a0 a1 a2 a3 a4 a5)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call6: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call6% %this fun procedure this a0 a1 a2 a3 a4 a5)))
-		($env-pop-trace env)
-		aux)))))
-(define (js-call7/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call7: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call7% %this fun procedure this a0 a1 a2 a3 a4 a5 a6)))
-		($env-pop-trace env)
-		aux)))))
-(define (js-call8/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call8: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call8% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7)))
-		($env-pop-trace env)
-		aux)))))
-(define (js-call9/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call9: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call9% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)))
-		($env-pop-trace env)
-		aux)))))
-(define (js-call10/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call10: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-call10% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)))
-		($env-pop-trace env)
-		aux)))))
-(define (js-calln/debug %this loc fun this . args)
-   (if (not (isa? fun JsFunction))
-       (js-raise-type-error/loc %this loc
-	  (format "call: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure)
-	  (let ((env (current-dynamic-env))
-		(name (js-function-debug-name fun)))
-	     ($env-push-trace env name loc)
-	     (let ((aux (js-calln% %this fun this args)))
-		($env-pop-trace env)
-		aux)))))
+(define (js-new/proxy %this::JsGlobalObject p::JsProxy args::pair-nil)
+   (with-access::JsProxy p (handler)
+      (let ((ctor (js-get handler (& "construct") %this)))
+	 (if (js-function? ctor)
+	     (let ((obj (js-call2 %this ctor p (js-proxy-target p)
+			   (js-vector->jsarray (list->vector args) %this))))
+		(cond
+		   ((not (js-function? (js-proxy-target p)))
+		    (js-raise-type-error %this
+		       "Proxy \"construct\" inconsistency"
+		       p))
+		   ((not (js-object? obj))
+		    (js-raise-type-error %this
+		       "Proxy \"construct\" result not an object"
+		       obj))
+		   (else
+		    obj)))
+	     (js-raise-type-error %this "new: constructor is not a function ~s" p)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-call-method ...                                               */
+;*    js-new ...                                                       */
 ;*    -------------------------------------------------------------    */
-;*    This function is used when a method is invoked on a non-object   */
-;*    value.                                                           */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.2.2       */
 ;*---------------------------------------------------------------------*/
-(define (js-call-method0 %this val prop)
-   (let ((o (js-toobject %this val)))
-      (js-call0 %this (js-get o prop %this) o)))
+(define (js-new %this f . args)
+   (cond
+      ((js-function? f)
+       (js-new/function %this f args))
+      ((js-proxy? f)
+       (js-new/proxy %this f args))
+      (else
+       (js-raise-type-error %this "new: constructor is not a function ~s" f))))
 
-(define (js-call-method1 %this val prop a0)
-   (let ((o (js-toobject %this val)))
-      (js-call1 %this (js-get o prop %this) o a0)))
+;*---------------------------------------------------------------------*/
+;*    js-new/debug ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.2.2       */
+;*---------------------------------------------------------------------*/
+(define (js-new/debug %this loc f . args)
+   (cond
+      ((js-function? f)
+       (js-new/function %this f args))
+      ((js-proxy? f)
+       (js-new/proxy %this f args))
+      (else
+       (js-raise-type-error/loc %this loc "new: constructor is not a function ~s" f))))
 
-(define (js-call-method2 %this val prop a0 a1)
-   (let ((o (js-toobject %this val)))
-      (js-call2 %this (js-get o prop %this) o a0 a1)))
-      
-(define (js-call-method3 %this val prop a0 a1 a2)
-   (let ((o (js-toobject %this val)))
-      (js-call3 %this (js-get o prop %this) o a0 a1 a2)))
-      
-(define (js-call-method4 %this val prop a0 a1 a2 a3)
-   (let ((o (js-toobject %this val)))
-      (js-call4 %this (js-get o prop %this) o a0 a1 a2 a3)))
-      
-(define (js-call-methodn %this val prop . args)
-   (let ((o (js-toobject %this val)))
-      (js-calln% %this (js-get o prop %this) o args)))
-      
+;*---------------------------------------------------------------------*/
+;*    js-object-alloc ...                                              */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-alloc %this ctor::JsFunction)
+   (with-access::JsFunction ctor (constrsize constrmap %prototype)
+      (with-access::JsConstructMap constrmap (size)
+	 (unless (=fx size constrsize)
+	    (js-function-set-constrmap! ctor)))
+      (js-make-jsobject constrsize constrmap %prototype)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-alloc-fast ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-alloc-fast %this ctor::JsFunction)
+   (with-access::JsFunction ctor (constrsize constrmap %prototype)
+      (js-make-jsobject constrsize constrmap %prototype)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-alloc-lazy ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-object-alloc-lazy %this ctor::JsFunction)
+   (with-access::JsFunction ctor (constrmap %prototype alloc)
+      (unless %prototype
+	 (js-function-setup-prototype! %this ctor)
+	 (set! alloc js-object-alloc))
+      (js-object-alloc %this ctor)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-alloc/new-target ...                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-alloc/new-target %this ctor::JsFunction)
+   (with-access::JsGlobalObject %this (js-new-target)
+      (set! js-new-target ctor)
+      (js-object-alloc %this ctor)))
+
+;*---------------------------------------------------------------------*/
+;*    js-no-alloc ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    This is used by functions that allocate ad-hoc constructors.     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-no-alloc %this ctor::JsFunction)
+   (js-undefined))
+
+;*---------------------------------------------------------------------*/
+;*    js-not-a-constructor-alloc ...                                   */
+;*    -------------------------------------------------------------    */
+;*    Used by functions that are not allowed to be used in NEW expr.   */
+;*---------------------------------------------------------------------*/
+(define (js-not-a-constructor-alloc %this ctor::JsFunction)
+   (js-raise-type-error %this "~s not a constructor"
+      (js-function-debug-name ctor %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-set-constrmap! ...                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-function-set-constrmap! ctor::JsFunction)
+   (with-access::JsFunction ctor (constrmap constrsize)
+      (set! constrmap
+	 (instantiate::JsConstructMap
+	    (ctor ctor)
+	    (size constrsize)
+	    (inline #t)))
+      ctor))
+   
+;*---------------------------------------------------------------------*/
+;*    js-new-return ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-new-return f r o)
+   [assert (r o) (or (js-object? r) (js-object? o))]
+   (with-access::JsFunction f (constrsize)
+      (if (js-object? r)
+	  (with-access::JsObject r (elements)
+	     (when (vector? elements)
+		(set! constrsize (vector-length elements)))
+	     r)
+	  (with-access::JsObject o (elements)
+	     (when (vector? elements)
+		(set! constrsize (vector-length elements)))
+	     o))))
+
+;*---------------------------------------------------------------------*/
+;*    js-new-return-fast ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-new-return-fast ctor o)
+   (with-access::JsFunction ctor (constrsize)
+      (with-access::JsObject o (elements)
+	 (when (vector? elements)
+	    (set! constrsize (vector-length elements)))
+	 o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-new-sans-construct ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-new-sans-construct %this ctor)
+   ;; used to initialize classes
+   (cond
+      ((js-function? ctor)
+       (with-access::JsFunction ctor (name alloc)
+	  (let ((o (alloc %this ctor)))
+	     (with-access::JsGlobalObject %this (js-new-target)
+		(set! js-new-target (js-undefined)))
+	     (js-new-return ctor o o))))
+      ((js-proxy? ctor)
+       (js-new/proxy %this ctor '()))
+      (else
+       (js-raise-type-error %this "new: object is not a function ~s" ctor))))
+
+;*---------------------------------------------------------------------*/
+;*    js-newXXX ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-macro (gen-new %this ctor . args)
+   `(cond
+       ((js-function? ,ctor)
+	(with-access::JsFunction ,ctor (src construct alloc)
+	   (let ((o (alloc %this ,ctor)))
+	      (let ((r (gen-calln ,ctor construct o ,@args)))
+		 (js-new-return ,ctor r o)))))
+       ((js-proxy? ,ctor)
+	(js-new/proxy ,%this ,ctor (list ,@args)))
+       (else
+	(js-raise-type-error ,%this "new: object is not a function ~s" ,ctor))))
+
+(define (js-new0 %this ctor)
+   (gen-new %this ctor))
+(define (js-new1 %this ctor a0)
+   (gen-new %this ctor a0))
+(define (js-new2 %this ctor a0 a1)
+   (gen-new %this ctor a0 a1))
+(define (js-new3 %this ctor a0 a1 a2)
+   (gen-new %this ctor a0 a1 a2))
+(define (js-new4 %this ctor a0 a1 a2 a3)
+   (gen-new %this ctor a0 a1 a2 a3))
+(define (js-new5 %this ctor a0 a1 a2 a3 a4)
+   (gen-new %this ctor a0 a1 a2 a3 a4))
+(define (js-new6 %this ctor a0 a1 a2 a3 a4 a5)
+   (gen-new %this ctor a0 a1 a2 a3 a4 a5))
+(define (js-new7 %this ctor a0 a1 a2 a3 a4 a5 a6)
+   (gen-new %this ctor a0 a1 a2 a3 a4 a5 a6))
+(define (js-new8 %this ctor a0 a1 a2 a3 a4 a5 a6 a7)
+   (gen-new %this ctor a0 a1 a2 a3 a4 a5 a6 a7))
+
+;*---------------------------------------------------------------------*/
+;*    jsarray ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-macro (jsarray %this . args)
+   `(let ((a (js-array-construct-alloc-small-sans-init ,%this
+		 ,(fixnum->uint32 (length args)))))
+       (with-access::JsArray a (vec ilen length)
+	  (let ((v vec))
+	     ,@(map (lambda (i o)
+		       `(vector-set! v ,i ,o))
+		  (iota (length args)) args)
+	     (set! ilen ,(fixnum->uint32 (length args)))
+	     a))))
+
+;*---------------------------------------------------------------------*/
+;*    js-call-proxyn ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-call-proxyn %this fun this args)
+   (with-access::JsProxy fun (handler)
+      (let ((target (js-proxy-target fun)))
+	 (cond
+	    ((js-procedure? target)
+	     (let ((xfun (js-get handler (& "apply") %this)))
+		(if (js-procedure? xfun)
+		    (with-access::JsProcedure xfun (procedure)
+		       (js-call3% %this xfun procedure fun target
+			  this (js-vector->jsarray (list->vector args) %this)))
+		    (with-access::JsProcedure target (procedure)
+		       (js-calln% %this target procedure this args)))))
+	    ((and (js-proxy? target) (js-proxy-function? target))
+	     (js-call-proxyn %this (js-proxy-target fun) this args))
+	    (else
+	     (js-raise-type-error %this "calln: not a function ~s" fun))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-apply-proxy ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-apply-proxy %this fun this args)
+   (with-access::JsProxy fun (handler)
+      (let ((target (js-proxy-target fun)))
+	 (cond
+	    ((js-procedure? target)
+	     (let ((xfun (js-get handler (& "apply") %this)))
+		(if (js-procedure? xfun)
+		    (with-access::JsProcedure xfun (procedure)
+		       (js-call3% %this xfun procedure fun target
+			  this (js-vector->jsarray (list->vector args) %this)))
+		    (with-access::JsProcedure target (procedure)
+		       (js-calln% %this target procedure this args)))))
+	    ((js-proxy? target)
+	     (js-apply-proxy %this (js-proxy-target fun) this args))
+	    (else
+	     (js-raise-type-error %this "apply: not a function ~s" fun))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-service/debug ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -852,95 +1479,95 @@
 ;*    js-ordinary-instanceof? ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-ordinary-instanceof? %this v f)
-   (with-access::JsFunction f (cmap elements)
-      ;; can't use %prototype here because instanceof require
-      ;; to check the user prototype value
-      (let ((o (if (eq? cmap (js-not-a-cmap))
-		   (js-get f 'prototype %this)
-		   (let ((d (vector-ref elements 0)))
+   (with-access::JsFunction f (%prototype prototype)
+      (when %prototype
+	 (let ((o prototype))
+	    (if (not (js-object? o))
+		(js-raise-type-error %this "instanceof: no prototype ~s" v)
+		(let loop ((v v))
+		   (let ((nv (js-object-proto v)))
 		      (cond
-			 ((isa? d JsValueDescriptor)
-			  (with-access::JsValueDescriptor d (value)
-			     value))
-			 ((isa? d JsWrapperDescriptor)
-			  (with-access::JsWrapperDescriptor d (value)
-			     value)))))))
-	 (if (not (isa? o JsObject))
-	     (js-raise-type-error %this "instanceof: no prototype ~s" v)
-	     (let loop ((v v))
-		(with-access::JsObject v ((v __proto__))
-		   (cond
-		      ((eq? o v) #t)
-		      ((eq? v (js-null)) #f)
-		      (else (loop v)))))))))
-
-(define (js-ordinary-instanceof/debug %this loc v f)
-   (let ((o (js-get f 'prototype %this)))
-      (if (not (isa? o JsObject))
-	  (js-raise-type-error/loc %this loc
-	     "instanceof: no prototype ~s" v)
-	  (let loop ((v v))
-	     (with-access::JsObject v ((v __proto__))
-		(cond
-		   ((eq? o v) #t)
-		   ((eq? v (js-null)) #f)
-		   (else (loop v))))))))
+			 ((eq? o nv)
+			  #t)
+			 ((eq? nv (js-null))
+			  (when (eq? (object-class v) JsProxy)
+			     (loop (js-proxy-target v))))
+			 (else
+			  (loop nv))))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-instanceof? ...                                               */
+;*    js-function-instanceof? ...                                      */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.6       */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.5.3   */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.5.3     */
 ;*---------------------------------------------------------------------*/
+(define (js-object-function-instanceof? %this v::JsObject f::JsFunction)
+   (if (js-object-mode-hasinstance? f)
+       (with-access::JsGlobalObject %this (js-symbol-hasinstance)
+	  (let ((h (js-get-jsobject f f js-symbol-hasinstance %this)))
+	     (if (js-function? h)
+		 (js-call1 %this h f v)
+		 (js-ordinary-instanceof? %this v f))))
+       (with-access::JsFunction f (prototype %prototype)
+	  (when %prototype
+	     (let ((o prototype))
+		(if (not (js-object? o))
+		    (js-raise-type-error %this "instanceof: no prototype ~s" v)
+		    (let loop ((v v))
+		       (let ((nv (js-object-proto v)))
+			  (cond
+			     ((eq? o nv)
+			      #t)
+			     ((eq? nv (js-null))
+			      (when (eq? (object-class v) JsProxy)
+				 (loop (js-proxy-target v))))
+			     (else
+			      (loop nv)))))))))))
+
+(define (js-function-instanceof? %this v f::JsFunction)
+   (when (js-object? v)
+      (if (js-object-mode-hasinstance? f)
+	  (with-access::JsGlobalObject %this (js-symbol-hasinstance)
+	     (let ((h (js-get-jsobject f f js-symbol-hasinstance %this)))
+		(if (js-function? h)
+		    (js-call1 %this h f v)
+		    (js-ordinary-instanceof? %this v f))))
+	  (js-ordinary-instanceof? %this v f))))
+
 (define (js-instanceof? %this v f)
-   (if (not (isa? f JsFunction))
+   (if (not (js-function? f))
        (with-access::JsGlobalObject %this (js-symbol-hasinstance)
 	  (let ((h (js-get f js-symbol-hasinstance %this)))
-	     (if (isa? h JsFunction)
+	     (if (js-function? h)
 		 (js-call1 %this h f v)
 		 (js-raise-type-error %this
 		    "instanceof: not a function ~s" f))))
-       (when (isa? v JsObject)
+       (when (js-object? v)
 	  (if (js-object-mode-hasinstance? f)
 	      (with-access::JsGlobalObject %this (js-symbol-hasinstance)
-		 (let ((h (js-get f js-symbol-hasinstance %this)))
-		    (if (isa? h JsFunction)
+		 (let ((h (js-get-jsobject f f js-symbol-hasinstance %this)))
+		    (if (js-function? h)
 			(js-call1 %this h f v)
 			(js-ordinary-instanceof? %this v f))))
 	      (js-ordinary-instanceof? %this v f)))))
 
 (define (js-instanceof?/debug %this loc v f)
-   (if (not (isa? f JsFunction))
+   (if (not (js-function? f))
        (with-access::JsGlobalObject %this (js-symbol-hasinstance)
 	  (let ((h (js-get f js-symbol-hasinstance %this)))
-	     (if (isa? h JsFunction)
+	     (if (js-function? h)
 		 (js-call1 %this h f v)
 		 (js-raise-type-error/loc %this loc
 		    "instanceof: not a function ~s" f))))
-       (when (isa? v JsObject)
+       (when (js-object? v)
 	  (if (js-object-mode-hasinstance? f)
 	      (with-access::JsGlobalObject %this (js-symbol-hasinstance)
 		 (let ((h (js-get f js-symbol-hasinstance %this)))
-		    (if (isa? h JsFunction)
+		    (if (js-function? h)
 			(js-call1 %this h f v)
-			(js-ordinary-instanceof/debug %this loc v f))))
-	      (js-ordinary-instanceof/debug %this loc v f)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-in? ...                                                       */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.7       */
-;*---------------------------------------------------------------------*/
-(define (js-in? %this field obj)
-   (if (not (isa? obj JsObject))
-       (js-raise-type-error %this "in: not a object ~s" obj)
-       (js-has-property obj (js-toname field %this) %this)))
-
-(define (js-in?/debug %this loc field obj)
-   (if (not (isa? obj JsObject))
-       (js-raise-type-error/loc %this loc "in: not a object ~s" obj)
-       (js-has-property obj (js-toname field %this) %this)))
+			(js-ordinary-instanceof? %this v f))))
+	      (js-ordinary-instanceof? %this v f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-let ...                                                  */
@@ -962,7 +1589,16 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.5         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-totest obj)
-   (if (boolean? obj) obj (js-toboolean obj)))
+   (if (boolean? obj) obj (js-toboolean-no-boolean obj)))
+      
+;*---------------------------------------------------------------------*/
+;*    js-totest-likely-object ...                                      */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.5         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-totest-likely-object obj)
+   (or (and (object? obj) (eq? (object-class obj) JsObject))
+       (js-toboolean obj)))
       
 ;*---------------------------------------------------------------------*/
 ;*    js-toboolean ...                                                 */
@@ -971,12 +1607,26 @@
 ;*---------------------------------------------------------------------*/
 (define (js-toboolean obj)
    (cond
-      ((eq? obj (js-null)) #f)
+      ((js-null-or-undefined? obj) #f)
+      ((boolean? obj) obj)
+      ((js-jsstring? obj) (js-jsstring-toboolean obj))
+      ((object? obj) #t)
       ((fixnum? obj) (not (=fx obj 0)))
       ((flonum? obj) (not (or (=fl obj 0.0) (nanfl? obj))))
-      ((js-jsstring? obj) (js-jsstring->bool obj))
-      ((eq? obj (js-undefined)) #f)
-      ((boolean? obj) obj)
+      (else #t)))
+
+;*---------------------------------------------------------------------*/
+;*    js-toboolean-no-boolean ...                                      */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.2          */
+;*---------------------------------------------------------------------*/
+(define (js-toboolean-no-boolean obj)
+   (cond
+      ((js-null-or-undefined? obj) #f)
+      ((js-jsstring? obj) (js-jsstring-toboolean obj))
+      ((object? obj) #t)
+      ((fixnum? obj) (not (=fx obj 0)))
+      ((flonum? obj) (not (or (=fl obj 0.0) (nanfl? obj))))
       (else #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -985,28 +1635,34 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.3          */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-tonumber obj %this::JsGlobalObject)
-   (let loop ((obj obj))
-      (cond
-	 ((number? obj)
-	  (cond
-	     ((uint32? obj) (bigloo-type-error "toNumber" "fixnum/flonum" obj))
-	     ((int32? obj) (bigloo-type-error "toNumber" "fixnum/flonum" obj))
-	     (else obj)))
-	 ((eq? obj (js-undefined))
-	  +nan.0)
-	 ((eq? obj (js-null))
-	  0)
-	 ((eq? obj #t)
-	  1)
-	 ((eq? obj #f)
-	  0)
-	 ((string? obj)
-	  (js-string->number obj %this))
-	 ((symbol? obj)
-	  (loop (symbol->string! obj)))
-	 (else
-	  (bigloo-type-error "toNumber" "JsObject" obj)))))
+   (cond
+      ((js-number? obj)
+       obj)
+      ((eq? obj (js-undefined))
+       +nan.0)
+      ((eq? obj (js-null))
+       0)
+      ((eq? obj #t)
+       1)
+      ((eq? obj #f)
+       0)
+      ((string? obj)
+       (js-string->number obj %this))
+      (else
+       (bigloo-type-error "toNumber" "JsObject" obj))))
 
+;*---------------------------------------------------------------------*/
+;*    js-tofixnum ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-macro (js-tointeger obj %this)
+   (if (symbol? obj)
+       `(if (fixnum? ,obj)
+	    ,obj
+	    ((@ js-tointeger __hopscript_public) ,obj ,%this))
+       (let ((tmp (gensym)))
+	  `(let ((,tmp ,obj))
+	      (js-tointeger ,tmp ,%this)))))
+	   
 ;*---------------------------------------------------------------------*/
 ;*    js-tointeger ::obj ...                                           */
 ;*    -------------------------------------------------------------    */
@@ -1021,12 +1677,12 @@
 	  ((nanfl? obj) 0)
 	  ((or (=fl obj +inf.0) (=fl obj -inf.0))
 	   obj)
-	  ((<fl obj 0.)
+	  ((=fx (signbitfl obj) 1)
 	   (*fl -1. (floor (abs obj))))
 	  (else
 	   (floor obj))))
       ((or (js-jsstring? obj) (symbol? obj))
-       (js-tointeger (js-tonumber obj %this) %this))
+       ((@ js-tointeger __hopscript_public) (js-tonumber obj %this) %this))
       ((eq? obj #t)
        1)
       ((int32? obj)
@@ -1075,17 +1731,9 @@
 ;*    Performance demands this function not to returned a boxed        */
 ;*    result. So, false is here denoted 1^32-1, as an uint32.          */
 ;*---------------------------------------------------------------------*/
-(define (js-toindex p)
+(define-generic (js-toindex p)
    
    (define false (-u32 #u32:0 #u32:1))
-   
-   (define (string->index p::bstring)
-      (let ((num (string->number p)))
-	 (if (bignum? num)
-	     (if (and (>=bx num #z0) (<bx num (exptbx #z2 #z32)))
-		 (llong->uint32 (bignum->llong num))
-		 false)
-	     (js-toindex num))))
 
    (cond
       ((fixnum? p)
@@ -1117,16 +1765,6 @@
        p)
       ((int32? p)
        (int32->uint32 p))
-      ((isa? p JsNumber)
-       (with-access::JsNumber p (val) (js-toindex val)))
-      ((js-jsstring? p)
-       (string->index (js-jsstring->string p)))
-      ((string? p)
-       (string->index p))
-      ((symbol? p)
-       (string->index (symbol->string! p)))
-      ((isa? p JsString)
-       (with-access::JsString p (val) (string->index (js-jsstring->string val))))
       (else
        false)))
 
@@ -1160,21 +1798,21 @@
       ((eq? obj #t) "true")
       ((eq? obj #f) "false")
       ((eq? obj (js-null)) "null")
-      ((number? obj) (js-number->string obj))
-      ((symbol? obj) (symbol->string! obj))
+      ((js-number? obj) (js-number->string obj))
       (else (typeof obj))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-tostring-safe ...                                             */
+;*    js-tojsstring-safe ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-tostring-safe::bstring obj %this::JsGlobalObject)
+(define (js-tojsstring-safe::JsStringLiteral obj %this::JsGlobalObject)
    (cond
-      ((string? obj) obj)
-      ((eq? obj #t) "true")
-      ((eq? obj #f) "false")
-      ((number? obj) (js-number->string obj))
-      ((symbol? obj) (symbol->string! obj))
-      (else (js-tostring (js-toobject %this obj) %this))))
+      ((js-jsstring? obj) obj)
+      ((eq? obj #t) (& "true"))
+      ((eq? obj #f) (& "false"))
+      ((fixnum? obj) (js-integer->jsstring obj))
+      ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
+      ((isa? obj JsSymbolLiteral) (js-string->jsstring (js-tostring obj %this)))
+      (else (js-tojsstring (js-toobject %this obj) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ::JsWrapper ...                                      */
@@ -1182,6 +1820,26 @@
 (define-method (js-tostring obj::JsWrapper %this::JsGlobalObject)
    (with-access::JsWrapper obj (obj)
       (js-tostring obj %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-toprimitive-for-string ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-toprimitive-for-string obj %this::JsGlobalObject)
+   (cond
+      ((js-jsstring? obj) obj)
+      ((fixnum? obj) (js-integer->jsstring obj))
+      ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
+      ((eq? obj #t) (& "true"))
+      ((eq? obj #f) (& "false"))
+      (else (js-tojsstring (js-toprimitive obj 'any %this) %this))))
+   
+;*---------------------------------------------------------------------*/
+;*    js-toprimitive ::obj ...                                         */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.1          */
+;*---------------------------------------------------------------------*/
+(define-generic (js-toprimitive obj preferredtype %this::JsGlobalObject)
+   obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toprimitive ::JsWrapper ...                                   */
@@ -1193,28 +1851,35 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-tojsstring ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (js-tojsstring obj %this)
+(define (js-tojsstring::JsStringLiteral obj %this)
+
+   (define (primitive->jsstring obj)
+      (let ((p (js-toprimitive obj 'string %this)))
+	 (if (eq? p obj)
+	     (js-ascii->jsstring (format "#<~a>" (typeof p)))
+	     (js-tojsstring p %this))))
+      
    (cond
       ((js-jsstring? obj) obj)
-      ((number? obj) (js-ascii->jsstring (js-number->string obj)))
-      ((eq? obj (js-undefined)) (js-ascii->jsstring "undefined"))
-      ((eq? obj #t) (js-ascii->jsstring "true"))
-      ((eq? obj #f) (js-ascii->jsstring "false"))
-      ((eq? obj (js-null)) (js-ascii->jsstring "null"))
-      (else (js-string->jsstring (js-tostring obj %this)))))
+      ((fixnum? obj) (js-integer->jsstring obj))
+      ((eq? obj (js-undefined)) (& "undefined"))
+      ((eq? obj #t) (& "true"))
+      ((eq? obj #f) (& "false"))
+      ((eq? obj (js-null)) (& "null"))
+      ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
+      ((isa? obj JsSymbolLiteral) (js-string->jsstring (js-tostring obj %this)))
+      ((string? obj) (js-string->jsstring obj))
+      (else (primitive->jsstring obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toobject-failsafe ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-toobject-failsafe %this::JsGlobalObject o)
    (cond
-      ((string? o)
-       (with-access::JsGlobalObject %this (js-string)
-	  (js-new1 %this js-string o)))
       ((js-jsstring? o)
        (with-access::JsGlobalObject %this (js-string)
 	  (js-new1 %this js-string o)))
-      ((number? o)
+      ((js-number? o)
        (with-access::JsGlobalObject %this (js-number)
 	  (js-new1 %this js-number o)))
       ((boolean? o)
@@ -1223,15 +1888,24 @@
       ((isa? o JsSymbolLiteral)
        (with-access::JsGlobalObject %this (js-symbol-ctor)
 	  (js-symbol-ctor (js-undefined) o)))
-      ((isa? o JsObject)
-       o)
-      ((pair? o)
+      ((js-object? o)
        o)
       ((isa? o object)
        o)
+      ((pair? o)
+       o)
+      ((string? o)
+       (with-access::JsGlobalObject %this (js-string)
+	  (js-new1 %this js-string o)))
       (else
        #f)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    js-toobject-fast ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-toobject-fast o %this::JsGlobalObject)
+   (if (js-object? o) o (js-toobject %this o)))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-toobject ...                                                  */
 ;*    -------------------------------------------------------------    */
@@ -1249,20 +1923,21 @@
        (js-raise-type-error/loc %this loc "toObject: cannot convert ~s" o)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-toprimitive ::obj ...                                         */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.1          */
-;*---------------------------------------------------------------------*/
-(define-generic (js-toprimitive obj preferredtype %this::JsGlobalObject)
-   obj)
-
-;*---------------------------------------------------------------------*/
 ;*    js-equal? ...                                                    */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.1       */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-equal? o1 o2 %this::JsGlobalObject)
-   (or (and (eq? o1 o2) (not (flonum? o1))) (js-equality? o1 o2 %this)))
+   (or (and (eq? o1 o2) (not (flonum? o1)))
+       (and (not (fixnums? o1 o2)) (js-equality? o1 o2 %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-equal-fixnum? ...                                             */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.1       */
+;*---------------------------------------------------------------------*/
+(define-inline (js-equal-fixnum? o1 o2 %this::JsGlobalObject)
+   (or (eq? o1 o2) (if (fixnum? o2) #f (js-equality? o1 o2 %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equal-sans-flonum? ...                                        */
@@ -1287,16 +1962,16 @@
 	  (eq? y (js-undefined)))
 	 ((eq? x (js-undefined))
 	  (eq? y (js-null)))
-	 ((number? x)
+	 ((js-number? x)
 	  (cond
-	     ((number? y)
+	     ((js-number? y)
 	      (= x y))
 	     ((js-jsstring? y)
 	      (if (= x 0)
 		  (or (js-jsstring-null? y) (equality? x (js-tonumber y %this)))
 		  (equality? x (js-tonumber y %this))))
-	     ((isa? y JsObject)
-	      (equality? x (js-toprimitive y 'any %this)))
+	     ((js-object? y)
+	      (equality? x ((@ js-toprimitive __hopscript_public) y 'any %this)))
 	     ((boolean? y)
 	      (equality? x (js-tonumber y %this)))
 	     (else #f)))
@@ -1304,12 +1979,12 @@
 	  (cond
 	     ((js-jsstring? y)
 	      (js-jsstring=? x y))
-	     ((number? y)
+	     ((js-number? y)
 	      (if (= y 0)
 		  (or (js-jsstring-null? x) (equality? (js-tonumber x %this) y))
 		  (equality? (js-tonumber x %this) y)))
-	     ((isa? y JsObject)
-	      (equality? x (js-toprimitive y 'any %this)))
+	     ((js-object? y)
+	      (equality? x ((@ js-toprimitive __hopscript_public) y 'any %this)))
 	     ((eq? y #f)
 	      (js-jsstring-null? x))
 	     ((boolean? y)
@@ -1323,21 +1998,31 @@
 	      (equality? (js-tonumber x %this) y))))
 	 ((boolean? y)
 	  (equality? x (js-tonumber y %this)))
-	 ((isa? x JsObject)
+	 ((js-object? x)
 	  (cond
 	     ((js-jsstring? y)
-	      (equality? (js-toprimitive x 'any %this) y))
-	     ((number? y)
-	      (equality? (js-toprimitive x 'any %this) y))
+	      (equality? ((@ js-toprimitive __hopscript_public) x 'any %this) y))
+	     ((js-number? y)
+	      (equality? ((@ js-toprimitive __hopscript_public) x 'any %this) y))
 	     ((isa? y JsSymbolLiteral)
-	      (equality? (js-toprimitive x 'any %this) y))
+	      (equality? ((@ js-toprimitive __hopscript_public) x 'any %this) y))
 	     (else #f)))
 	 ((isa? x JsSymbolLiteral)
-	  (if (isa? y JsObject)
-	      (equality? x (js-toprimitive y 'any %this))
+	  (if (js-object? y)
+	      (equality? x ((@ js-toprimitive __hopscript_public) y 'any %this))
 	      #f))
 	 (else
 	  #f))))
+
+;*---------------------------------------------------------------------*/
+;*    js-same-value-zero? ...                                          */
+;*    -------------------------------------------------------------    */
+;*    https://www.ecma-international.org/ecma-262/6.0/                 */
+;*       #sec-samevaluezero                                            */
+;*---------------------------------------------------------------------*/
+(define (js-same-value-zero? x y %this::JsGlobalObject)
+   (js-equality? x y %this))
+   
 
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-equal?                                                 */
@@ -1360,12 +2045,13 @@
 ;*---------------------------------------------------------------------*/
 (define (js-eq? x y)
    (cond
-      ((flonum? x)
-       (if (flonum? y) (=fl x y) (when (fixnum? y) (=fl x (fixnum->flonum y)))))
       ((js-jsstring? x)
-       (and (js-jsstring? y) (js-jsstring=? x y)))
+       (and (js-jsstring? y)
+	    (string=? (js-jsstring->string x) (js-jsstring->string y))))
       ((fixnum? x)
        (if (fixnum? y) (=fx x y) (when (flonum? y) (=fl (fixnum->flonum x) y))))
+      ((flonum? x)
+       (if (flonum? y) (=fl x y) (when (fixnum? y) (=fl x (fixnum->flonum y)))))
       (else
        #f)))
 
@@ -1385,7 +2071,9 @@
 ;*    js-eqstring? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-eqstring?::bool x y)
-   (and (js-jsstring? x) (js-jsstring? y) (js-jsstring=? x y)))
+   (or (eq? x y)
+       (and (js-jsstring? x) (js-jsstring? y)
+	    (string=? (js-jsstring->string x) (js-jsstring->string y)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-eqil? ...                                                     */
@@ -1404,22 +2092,33 @@
       ((flonum? x) (=fl x (fixnum->flonum y)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-check-class-instance ...                                      */
+;*    js-null-or-undefined? ...                                        */
+;*    -------------------------------------------------------------    */
+;*    This inline function is override by a macro that checks the      */
+;*    implementation of JS-NULL and JS-UNDEFINED in order to           */
+;*    avoid the double test when possible.                             */
 ;*---------------------------------------------------------------------*/
-(define (js-check-class-instance obj loc %this)
-   (if (and (isa? obj JsObject) (js-object-mode-instance? obj))
-       (begin
-	  (js-object-mode-instance-set! obj #f)
-	  obj)
-       (js-raise-type-error/loc %this loc "Class constructors cannot be invoked without `new'" obj)))
+(define-inline (js-null-or-undefined? obj)
+   (cond-expand
+      (bigloo4.3c
+       (or (eq? obj (js-undefined)) (eq? obj (js-null))))
+      (else
+       (null-or-unspecified? obj))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-or-null? ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-or-null? o)
+   (or (and (js-object? o) (not (js-procedure? o)))
+       (eq? o (js-null))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-super ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-super obj loc %this)
-   (if (isa? obj JsObject)
-       (with-access::JsObject obj (__proto__)
-	  (if (isa? __proto__ JsObject)
+   (if (js-object? obj)
+       (let ((__proto__ (js-object-proto obj)))
+	  (if (js-object? __proto__)
 	      __proto__
 	      (js-raise-type-error/loc %this loc
 		 "Prototype of prototype not an object" obj)))
@@ -1429,10 +2128,10 @@
 ;*    %js-hss ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (%js-eval-hss ip::input-port %this %worker scope)
-   (js-worker-exec %worker "eval-hss"
+   (js-worker-exec %worker "eval-hss" #t
       (lambda ()
-	 (let ((v (%js-eval ip 'repl %this (js-get scope 'this %this) scope)))
-	    (if (isa? v JsStringLiteral)
+	 (let ((v (%js-eval ip 'repl %this (js-get scope (& "this") %this) scope)))
+	    (if (js-jsstring? v)
 		(js-jsstring->string v)
 		v)))))
 
@@ -1566,14 +2265,16 @@
 		(raise e))))
 	 (let ((e (j2s-compile in
 		     :verbose 0
+		     :eval #t
 		     :driver (j2s-eval-driver)
 		     :driver-name "j2s-eval-driver"
 		     :es6-arrow-function #t
 		     :es6-let #t
 		     :es6-defaut-value #t
 		     :es6-rest-argument #t
+		     :commonjs-export #f
 		     :parser parser))
-	       (m (js-get scope 'module scope)))
+	       (m (js-get scope (& "module") scope)))
 	    (with-trace 'hopscript-eval "%js-eval-inner"
 	       (trace-item "e=" e)
 	       (trace-item "scope=" (typeof scope))
@@ -1590,10 +2291,10 @@
 ;*    eval-dummy-module ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (eval-dummy-module %this)
-   (with-access::JsGlobalObject %this (js-object)
-      (let ((obj (js-new %this js-object)))
-	 (js-put! obj 'filename (js-string->jsstring "") #f %this)
-	 obj)))
+   (let ((obj (instantiateJsModule
+		 (__proto__ (js-object-proto %this)))))
+      (js-put! obj (& "filename") (js-string->jsstring "") #f %this)
+      obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise ...                                                     */
@@ -1612,8 +2313,9 @@
    (when (isa? err JsError)
       (with-access::JsError err (stack fname location)
 	 (set! stack (get-trace-stack))
-	 (set! fname f)
-	 (set! location l)))
+	 (unless (js-jsstring? fname)
+	    (set! fname f)
+	    (set! location l))))
    (raise err))
 
 ;*---------------------------------------------------------------------*/
@@ -1644,12 +2346,11 @@
 ;*---------------------------------------------------------------------*/
 (define (error-obj->string::bstring %this obj)
    (cond
-      ((isa? obj JsObject)
+      ((js-object? obj)
        (with-handler
 	  (lambda (e)
-	     (js-jsstring->string (js-typeof obj)))
-	  (js-jsstring->string
-	     (js-call0 %this (js-get obj 'toString %this) obj))))
+	     (js-jsstring->string (js-typeof obj %this)))
+	  (js-jsstring->string (js-typeof obj %this))))
       ((eq? obj #unspecified)
        "undefined")
       ((eq? obj #f)
@@ -1658,12 +2359,12 @@
        "true")
       ((js-jsstring? obj)
        (js-jsstring->string obj))
-      ((symbol? obj)
-       (symbol->string! obj))
-      ((number? obj)
+      ((string? obj)
+       obj)
+      ((or (js-number? obj) (int32? obj) (uint32? obj))
        (number->string obj))
       (else
-       (js-jsstring->string (js-tostring obj %this)))))
+       (js-jsstring->string (js-typeof obj %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-type-error ...                                          */
@@ -1766,7 +2467,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-cast-object obj %this::JsGlobalObject name)
    (cond
-      ((isa? obj JsObject)
+      ((js-object? obj)
        obj)
       ((pair? obj)
        obj)
@@ -1791,6 +2492,34 @@
 		(write-circle o op)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-typeof ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.3       */
+;*---------------------------------------------------------------------*/
+(define (js-typeof obj %this)
+   (cond
+      ((or (fixnum? obj) (real? obj))
+       (& "number"))
+      ((js-jsstring? obj)
+       (& "string"))
+      ((js-procedure? obj)
+       (& "function"))
+      ((eq? obj (js-undefined))
+       (& "undefined"))
+      ((isa? obj JsSymbolLiteral)
+       (& "symbol"))
+      ((js-proxy? obj)
+       (js-proxy-typeof obj %this))
+      ((js-object? obj)
+       (& "object"))
+      ((boolean? obj)
+       (& "boolean"))
+      ((eq? obj (js-null))
+       (& "object"))
+      (else
+       (js-string->jsstring (typeof obj)))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-html-head ...                                                 */
 ;*    -------------------------------------------------------------    */
 ;*    Normally overriden by nodejs-head@__nodejs_require               */
@@ -1799,13 +2528,13 @@
 (define (js-html-head %this)
    (js-make-function %this
       (lambda (this attrs . nodes)
-	 (apply <HEAD> :idiom "javascript" :context %this
-	    (when (isa? attrs JsObject)
+	 (apply <HEAD> :idiom "javascript" :%context %this
+	    (when (js-object? attrs)
 	       (js-object->keyword-arguments* attrs %this))
 	    (filter (lambda (n)
 		       (or (isa? n xml-tilde) (isa? n xml-markup)))
 	       nodes)))
-      2 'HEAD))
+      2 (& "HEAD")))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-html-script ...                                               */
@@ -1816,11 +2545,61 @@
 (define (js-html-script %this)
    (js-make-function %this
       (lambda (this attrs . nodes)
-	 (apply <SCRIPT> :idiom "javascript" :context %this
-	    (when (isa? attrs JsObject)
+	 (apply <SCRIPT> :idiom "javascript" :%context %this
+	    (when (js-object? attrs)
 	       (js-object->keyword-arguments* attrs %this))
 	    (filter (lambda (n)
 		       (or (isa? n xml-tilde) (isa? n xml-markup)))
 	       nodes)))
-      2 'SCRIPT))
+      2 (& "SCRIPT")))
 
+;*---------------------------------------------------------------------*/
+;*    js-parseint ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
+;*---------------------------------------------------------------------*/
+(define (js-parseint string radix %this)
+   (js-string-parseint
+      (trim-whitespaces+ (js-tostring string %this) :plus #t)
+      (js-toint32 radix %this) #f))
+
+;*---------------------------------------------------------------------*/
+;*    js-parseint-string ...                                           */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
+;*---------------------------------------------------------------------*/
+(define (js-parseint-string string)
+   (js-string-parseint (trim-whitespaces+ (js-jsstring->string string) :plus #t)
+      #s32:0 #f))
+
+;*---------------------------------------------------------------------*/
+;*    js-parseint-any ...                                              */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
+;*---------------------------------------------------------------------*/
+(define (js-parseint-any string %this)
+   (js-string-parseint (trim-whitespaces+ (js-tostring string %this) :plus #t)
+      #s32:0 #f))
+
+;*---------------------------------------------------------------------*/
+;*    js-parseint-string-uint32 ...                                    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
+;*---------------------------------------------------------------------*/
+(define (js-parseint-string-uint32 string radix::uint32)
+   (js-string-parseint (trim-whitespaces+ (js-jsstring->string string) :plus #t)
+      (uint32->int32 radix) #f))
+
+;*---------------------------------------------------------------------*/
+;*    js-parsefloat ...                                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.3     */
+;*---------------------------------------------------------------------*/
+(define (js-parsefloat string %this)
+   (js-string-parsefloat (trim-whitespaces+ (js-tostring string %this) :plus #t)
+      #f))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

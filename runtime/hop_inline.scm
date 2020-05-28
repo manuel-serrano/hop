@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/hop_inline.scm            */
+;*    serrano/prgm/project/hop/hop/runtime/hop_inline.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 08:17:58 2005                          */
-;*    Last change :  Wed Aug 19 07:43:38 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Tue Oct  8 13:16:28 2019 (serrano)                */
+;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of the HOP inline markup.                     */
 ;*=====================================================================*/
@@ -67,7 +67,7 @@
 	  (url-parse src)
 	  (if early
 	      (xml-inline (or host (hostname))
-		 (or port (hop-port))
+		 (or port (hop-default-port))
 		 path userinfo authorization id)
 	      (instantiate::xml-inline-element
 		 (tag '_)

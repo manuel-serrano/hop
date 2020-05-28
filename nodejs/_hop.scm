@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/_hop.scm                   */
+;*    serrano/prgm/project/hop/hop/nodejs/_hop.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Jun  4 19:22:39 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Mon Apr 13 11:14:10 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
 ;*=====================================================================*/
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs__hop
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hopscript hop)
 
    (import  __nodejs_uv
@@ -31,6 +33,11 @@
 	   (nodejs-modules-directory-set! ::bstring)
 	   (hopjs-standalone-set! ::bool)
 	   (hopjs-process-hop ::WorkerHopThread ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    constructors                                                     */
@@ -59,26 +66,30 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (define-js name arity proc . opt)
    `(cons ',name
-       (js-make-function %this ,proc ,arity ,(symbol->string name) ,@opt)))
+       (js-make-function %this ,proc ,arity (& ,(symbol->string name))
+	  ,@opt :src "_hop.scm")))
 		 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-process-hop ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-process-hop %worker %this)
-   (with-access::JsGlobalObject %this (js-object js-function-prototype 
-					 __proto__)
+   (set! __js_strings (&init!))
       
+   (with-access::JsGlobalObject %this (js-object js-function-prototype)
+
       (define js-urlframe-prototype
 	 (instantiateJsObject
-	    (__proto__ __proto__)))
+	    (__proto__ (js-object-proto %this))
+	    (elements ($create-vector 5))))
       
       (define js-webservice
 	 (js-make-function %this
 	    (lambda (this url args)
 	       (js-new %this js-webservice url args))
-	    2 'webService
+	    2 (& "webService")
 	    :__proto__ js-function-prototype
 	    :prototype js-urlframe-prototype
+	    :alloc js-no-alloc
 	    :construct (lambda (this url args)
 			  (js-make-urlframe %this
 			     js-urlframe-prototype
@@ -86,15 +97,17 @@
 
       (define server-prototype
 	 (instantiateJsObject
-	    (__proto__ __proto__)))
+	    (__proto__ (js-object-proto %this))
+	    (elements ($create-vector 7))))
       
       (define js-server
 	 (js-make-function %this
 	    (lambda (this host port auth ssl)
 	       (js-new %this host port auth))
-	    4 'Server
+	    4 (& "Server")
 	    :__proto__ js-function-prototype
 	    :prototype server-prototype
+	    :alloc js-no-alloc
 	    :construct (lambda (this host port auth ssl)
 			  (instantiateJsServer
 			     (__proto__ server-prototype)
@@ -105,7 +118,7 @@
 					       "localhost"
 					       (js-tostring host %this)))
 				     (port (if (eq? port (js-undefined))
-					       (hop-port)
+					       (hop-default-port)
 					       (js-tointeger port %this)))
 				     (authorization (when (js-totest auth)
 						       (js-tostring auth %this)))))))))
@@ -130,70 +143,73 @@
 	 
       (define js-compiler-driver
 	 (let ((driver (instantiateJsObject
-			  (__proto__ __proto__))))
-	    (js-bind! %this driver 'pending
+			  (__proto__ (js-object-proto %this))
+			  (elements ($create-vector 4)))))
+	    (js-bind! %this driver (& "pending")
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (nodejs-compile-pending))
-		       0 'get)
+		       0 (& "get"))
 	       :writable #f
 	       :configurable #f)
-	    (js-bind! %this driver 'addEventListener
+	    (js-bind! %this driver (& "addEventListener")
 	       :value (js-make-function %this
 			 js-compiler-driver-add-event-listener
-			 3 'addEventListener)
+			 3 (& "addEventListener"))
 	       :writable #f
 	       :configurable #f)
-	    (js-bind! %this driver 'removeEventListener
+	    (js-bind! %this driver (& "removeEventListener")
 	       :value (js-make-function %this
 			 js-compiler-driver-remove-event-listener
-			 3 'removeEventListener)
+			 3 (& "removeEventListener"))
 	       :writable #f
 	       :configurable #f)
-	    (js-bind! %this driver 'policy
+	    (js-bind! %this driver (& "policy")
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (js-string->jsstring
 			     (symbol->string (hop-sofile-compile-policy))))
-		       0 'get)
+		       0 (& "get"))
 	       :set (js-make-function %this
 		       (lambda (this v)
 			  (hop-sofile-compile-policy-set!
 			     (string->symbol
 				(js-tostring v %this))))
-		       1 'set)
+		       1 (& "set"))
 	       :writable #t
 	       :configurable #f)
 	    driver))
+
       
-      (js-bind! %this js-urlframe-prototype 'post
+      
+      (js-bind! %this js-urlframe-prototype (& "post")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame success opt)
 		      (post-url this success opt %this #f))
-		   2 'post))
-      (js-bind! %this js-urlframe-prototype 'postSync
+		   2 (& "post")))
+      (js-bind! %this js-urlframe-prototype (& "postSync")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame opt)
 		      (post-url this #f opt %this #t))
-		   1 'postSync))
-      (js-bind! %this js-urlframe-prototype 'toString
+		   1 (& "postSync")))
+      (js-bind! %this js-urlframe-prototype (& "toString")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame)
 		      (js-string->jsstring (urlframe->string this %this)))
-		   0 'toString))
-      (js-bind! %this js-urlframe-prototype 'getHeader
+		   0 (& "toString")))
+      (js-bind! %this js-urlframe-prototype (& "getHeader")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame hd)
-		      (js-get this 'header %this))
-		   0 'getHeader))
-      (js-bind! %this js-urlframe-prototype 'setHeader
+		      (js-get this (& "header") %this))
+		   0 (& "getHeader")))
+      (js-bind! %this js-urlframe-prototype (& "setHeader")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame hd)
-		      (js-put! this 'header hd #f %this)
+		      (js-put! this (& "header") hd #f %this)
 		      this)
-		   1 'setHeader))
+		   1 (& "setHeader")))
 
-      (js-bind! %this server-prototype 'addEventListener
+      (js-bind! %this server-prototype (& "addEventListener")
 	 :value (js-make-function %this
 		   (lambda (this::JsServer event proc . capture)
 		      (with-access::JsServer this (obj data)
@@ -205,9 +221,9 @@
 			    (when (isa? obj server)
 			       (add-event-listener! obj
 				     (js-tostring event %this) f)))))
-		   3 'addEventListener)
+		   3 (& "addEventListener"))
 	 :enumerable #f)
-      (js-bind! %this server-prototype 'removeEventListener
+      (js-bind! %this server-prototype (& "removeEventListener")
 	 :value (js-make-function %this
 		   (lambda (this::JsServer event proc . capture)
 		      (with-access::JsServer this (obj data)
@@ -216,27 +232,27 @@
 			       (when (pair? f)
 				  (remove-event-listener! obj
 					(js-tostring event %this) (cdr f)))))))
-		   3 'removeEventListener)
+		   3 (& "removeEventListener"))
 	 :enumerable #f)
-      (js-bind! %this server-prototype 'port
+      (js-bind! %this server-prototype (& "port")
 	 :get (js-make-function %this
 		 (lambda (this::JsServer)
 		    (with-access::JsServer this (obj)
 		       (when (isa? obj server)
 			  (with-access::server obj (port)
 			     port))))
-		 0 'port)
+		 0 (& "port"))
 	 :writable #f)
-      (js-bind! %this server-prototype 'host
+      (js-bind! %this server-prototype (& "host")
 	 :get (js-make-function %this
 		 (lambda (this::JsServer)
 		    (with-access::JsServer this (obj)
 		       (when (isa? obj server)
 			  (with-access::server obj (host)
 			     (js-string->jsstring host)))))
-		 0 'host)
+		 0 (& "host"))
 	 :writable #f)
-      (js-bind! %this server-prototype 'authorization
+      (js-bind! %this server-prototype (& "authorization")
 	 :get (js-make-function %this
 		 (lambda (this::JsServer)
 		    (with-access::JsServer this (obj)
@@ -244,16 +260,16 @@
 			  (with-access::server obj (authorization)
 			     (when (string? authorization)
 				(js-string->jsstring authorization))))))
-		 0 'authorization)
+		 0 (& "authorization"))
 	 :writable #f)
-      (js-bind! %this server-prototype 'ssl
+      (js-bind! %this server-prototype (& "ssl")
 	 :get (js-make-function %this
 		 (lambda (this::JsServer)
 		    (with-access::JsServer this (obj)
 		       (when (isa? obj server)
 			  (with-access::server obj (ssl)
 			     ssl))))
-		 0 'ssl)
+		 0 (& "ssl"))
 	 :writable #f)
 
       (with-access::JsGlobalObject %this (js-object js-server-prototype)
@@ -264,25 +280,44 @@
 	       `(version . ,(hop-version))
 	       `(hostname . ,(js-string->jsstring (hostname)))
 	       `(modulesDir . ,(js-string->jsstring (nodejs-modules-directory)))
-	       `(buildid . ,(hop-build-id))
-	       `(buildtag . ,(hop-build-tag))
 	       `(standalone . ,hopjs-standalone)
+	       `(isServer . #t)
+	       `(isWorker . ,(not (js-main-worker? %worker)))
+	       `(loginCookieCryptKey . ,(hop-login-cookie-crypt-key))
+
+	       ;; server configuration
+	       (define-js httpAuthenticationMethodGet 0
+		  (lambda (this)
+		     (js-string->jsstring
+			(symbol->string (hop-http-authentication)))))
+	       (define-js httpAuthenticationMethodSet 1
+		  (lambda (this v)
+		     (hop-http-authentication-set!
+			(string->symbol (js-tostring v %this)))))
 
 	       ;; port
 	       (define-js port 0 (lambda (this) (hop-port)))
+	       
+	       (define-js ports 0
+		  (lambda (this)
+		     (js-alist->jsobject
+			(list
+			   `(http . ,(when (>=fx (hop-port) 0) (hop-port)))
+			   `(https . ,(when (>=fx (hop-ssl-port) 0) (hop-ssl-port))))
+			%this)))
 
 	       ;; services
-	       `(Service . ,(js-get %this 'Service %this))
-	       `(HopFrame . ,(js-get %this 'HopFrame %this))
+	       `(Service . ,(js-get %this (& "Service") %this))
+	       `(HopFrame . ,(js-get %this (& "HopFrame") %this))
 	       
 	       ;; webService
 	       (define-js webService 1
 		  (lambda (this base)
-		     (let ((name (string->symbol (js-tostring base %this))))
+		     (let ((name (js-tostring base %this)))
 			(js-make-function %this
 			   (lambda (this args)
 			      (js-new %this js-webservice base args))
-			   1 name))))
+			   1 (js-name->jsstring name)))))
 	       
 	       ;; charset
 	       (define-js charsetConvert 3
@@ -318,19 +353,42 @@
 	       (define-js HTTPResponseAsync 2
 		  (lambda (this proc req)
 		     (hopjs-response-async this proc req %this %worker)))
+
+	       ;; filters
+	       (define-js addRequestFilter 1
+		  (lambda (this proc)
+		     (hop-filter-add!
+			(lambda (req)
+			   (js-worker-exec (js-current-worker) "request" #t
+			      (lambda ()
+				 (js-call1 %this proc this req)))))))
+	       (define-js addRequestFilterFirst 1
+		  (lambda (this proc)
+		     (hop-filter-add-always-first!
+			(lambda (req)
+			   (js-worker-exec (js-current-worker) "request" #t
+			      (lambda ()
+				 (js-call1 %this proc this req)))))))
+	       (define-js addRequestFilterLast 1
+		  (lambda (this proc)
+		     (hop-filter-add-always-last!
+			(lambda (req)
+			   (js-worker-exec (js-current-worker) "request" #t
+			      (lambda ()
+				 (js-call1 %this proc this req)))))))
 	       
 	       ;; events
 	       (define-js signal 2
 		  (lambda (this name v)
-		     (hop-event-signal! (js-tostring name %this) v)))
+		     (hop-event-signal! (js-tostring name %this) v) %this))
 
 	       (define-js broadcast 2
 		  (lambda (this name v)
-		     (hop-event-broadcast! (js-tostring name %this) v)))
+		     (hop-event-broadcast! (js-tostring name %this) v %this)))
 
 	       (define-js addEventListener 3
 		  (lambda (this name proc capture)
-		     (add-event-listener! 'hop (js-tostring name %this)
+		     (add-event-listener! (& "hop") (js-tostring name %this)
 			(lambda (evt)
 			   (js-worker-push-thunk! (js-current-worker) "hop"
 			      (lambda ()
@@ -373,10 +431,20 @@
 		     (js-string->jsstring
 			(url-path-encode (js-tostring path %this)))))
 	       
+	       (define-js decodeURIComponent 1
+		  (lambda (this path)
+		     (js-string->jsstring
+			(uri-decode-component (js-tostring path %this)))))
+	       
 	       (define-js encodeHTML 1
 		  (lambda (this path)
 		     (js-string->jsstring
 			(html-string-encode (js-tostring path %this)))))
+
+	       (define-js decodeHTML 1
+		  (lambda (this path)
+		     (js-string->jsstring
+			(html-string-decode (js-tostring path %this)))))
 	       
 	       (define-js md5sum 1
 		  (lambda (this path)
@@ -419,7 +487,7 @@
 ;*---------------------------------------------------------------------*/
 (define (urlframe->string::bstring frame::JsUrlFrame %this)
    (with-access::JsUrlFrame frame (url args)
-      (hop-apply-nice-url (js-jsstring->string url) args)))
+      (hop-apply-nice-url (js-jsstring->string url) args %this)))
    
 ;*---------------------------------------------------------------------*/
 ;*    post-url ...                                                     */
@@ -445,20 +513,20 @@
 	 (body #f)
 	 (scheme "http"))
       (cond
-	 ((isa? opt JsFunction)
+	 ((js-procedure? opt)
 	  (set! fail (fail->handler opt)))
 	 ((not (eq? opt (js-undefined)))
-	  (let ((h (js-get opt 'hostname %this))
-		(p (js-get opt 'port %this))
-		(a (js-get opt 'authorization %this))
-		(f (js-get opt 'fail %this))
-		(y (js-get opt 'asynchronous %this))
-		(s (js-get opt 'scheme %this))
-		(c (js-get opt 'ssl %this))
-		(t (js-get opt 'timeout %this))
-		(m (js-get opt 'method %this))
-		(r (js-get opt 'header %this))
-		(b (js-get opt 'body %this)))
+	  (let ((h (js-get opt (& "hostname") %this))
+		(p (js-get opt (& "port") %this))
+		(a (js-get opt (& "authorization") %this))
+		(f (js-get opt (& "fail") %this))
+		(y (js-get opt (& "asynchronous") %this))
+		(s (js-get opt (& "scheme") %this))
+		(c (js-get opt (& "ssl") %this))
+		(t (js-get opt (& "timeout") %this))
+		(m (js-get opt (& "method") %this))
+		(r (js-get opt (& "header") %this))
+		(b (js-get opt (& "body") %this)))
 	     (unless (eq? h (js-undefined))
 		(set! host (js-tostring h %this)))
 	     (unless (eq? p (js-undefined))
@@ -466,7 +534,7 @@
 	     (unless (eq? a (js-undefined))
 		(set! authorization (js-tostring a %this)))
 	     (unless (js-totest y)
-		(when (js-in? %this 'asynchronous opt)
+		(when (js-in? %this (& "asynchronous") opt)
 		   (set! asynchronous #f)))
 	     (when (js-totest c)
 		(set! scheme "https"))
@@ -477,9 +545,9 @@
 	     (unless (eq? m (js-undefined))
 		(set! method (string->symbol
 				(string-upcase (js-tostring m %this)))))
-	     (when (isa? f JsFunction)
+	     (when (js-procedure? f)
 		(set! fail (fail->handler f)))
-	     (when (isa? r JsObject)
+	     (when (js-object? r)
 		(set! header
 		   (map! (lambda (o)
 			    (set-cdr! o (js-tostring (cdr o) %this))
@@ -507,7 +575,7 @@
       (define (post callback fail)
 	 (with-access::JsUrlFrame frame (url args)
 	    (with-url (hop-apply-nice-url
-			 (url-base (js-tostring url %this)) args)
+			 (url-base (js-tostring url %this)) args %this)
 	       callback
 	       :fail fail
 	       :method method
@@ -525,25 +593,26 @@
       (cond
 	 ((not asynchronous)
 	  (post 
-	     (if (isa? success JsFunction)
+	     (if (js-procedure? success)
 		 (lambda (x)
 		    (js-call1 %this success %this (scheme->js x)))
 		 scheme->js)
 	     fail))
-	 ((isa? success JsFunction)
+	 ((js-procedure? success)
 	  (thread-start!
 	     (instantiate::hopthread
 		(name "post-url")
 		(body (lambda ()
 			 (post
-			    (if (isa? success JsFunction)
-				(lambda (x)
-				   (js-worker-exec (js-current-worker) "post"
-				      (lambda ()
-					 (js-call1 %this success %this
-					    (scheme->js x)))))
-				scheme->js)
-			    fail)))))
+			    (lambda (x)
+			       (js-worker-exec (js-current-worker) "post" #t
+				  (lambda ()
+				     (js-call1-jsprocedure %this success %this
+					(scheme->js x)))))
+			    (lambda (x)
+			       (js-worker-exec (js-current-worker) "post" #t
+				  (lambda ()
+				     (fail x)))))))))
 	  (js-undefined))
 	 (else
 	  (with-access::JsGlobalObject %this (js-promise)
@@ -552,19 +621,23 @@
 			       (lambda (_ resolve reject)
 				  (thread-start!
 				     (instantiate::hopthread
-					(name "post-url")
+					(name "post-url-promise")
 					(body (lambda ()
 						 (post
 						    (lambda (x)
-						       (js-promise-async p
+						       (js-worker-exec (js-current-worker) "post" #t
 							  (lambda ()
-							     (js-promise-resolve p
-								(scheme->js x)))))
+							     (js-promise-async p
+								(lambda ()
+								   (js-promise-resolve p
+								      (scheme->js x)))))))
 						    (lambda (x)
-						       (js-promise-async p
+						       (js-worker-exec (js-current-worker) "post" #t
 							  (lambda ()
-							     (js-promise-reject p x))))))))))
-			       2 "executor"))))
+							     (js-promise-async p
+								(lambda ()
+								   (js-promise-reject p x))))))))))))
+			       2 (& "executor")))))
 		p))))))
 
 ;*---------------------------------------------------------------------*/
@@ -575,7 +648,7 @@
       (cond
 	 ((eq? v (js-undefined)) def)
 	 ((js-jsstring? v) (js-jsstring->string v))
-	 ((isa? v JsObject) (js-jsobject->alist v this))
+	 ((js-object? v) (js-jsobject->alist v this))
 	 (else v))))
 
 ;*---------------------------------------------------------------------*/
@@ -585,20 +658,20 @@
    (let ((v::obj (js-get obj key this)))
       (cond
 	 ((eq? v (js-undefined)) def)
-	 ((isa? v JsObject) (js-jsobject->alist v this))
+	 ((js-object? v) (js-jsobject->alist v this))
 	 (else def))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-response-hop ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-response-hop this obj req %this)
-   (if (isa? req JsObject)
+   (if (js-object? req)
        (instantiate::http-response-hop
-	  (backend (get/default req 'backend %this (hop-xml-backend)))
-	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
-	  (content-type (get/default req 'contentType %this "application/x-json-hop"))
-	  (charset (get/default req 'charset %this (hop-charset)))
-	  (header (get/list req 'header %this '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
+	  (backend (get/default req (& "backend") %this (hop-xml-backend)))
+	  (start-line (get/default req (& "startLine") %this "HTTP/1.1 200 Ok"))
+	  (content-type (get/default req (& "contentType") %this "application/x-json-hop"))
+	  (charset (get/default req (& "charset") %this (hop-charset)))
+	  (header (get/list req (& "header") %this '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
 	  (value obj))
        (instantiate::http-response-hop
 	  (backend (hop-xml-backend))
@@ -609,13 +682,13 @@
 ;*    hopjs-response-xml ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-response-xml this obj req %this)
-   (if (isa? req JsObject)
+   (if (js-object? req)
        (instantiate::http-response-xml
-	  (backend (get/default req 'backend %this (hop-xml-backend)))
-	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
-	  (content-type (get/default req 'contentType %this "application/x-javascript"))
-	  (charset (get/default req 'charset %this (hop-charset)))
-	  (header (get/list req 'header %this '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
+	  (backend (get/default req (& "backend") %this (hop-xml-backend)))
+	  (start-line (get/default req (& "startLine") %this "HTTP/1.1 200 Ok"))
+	  (content-type (get/default req (& "contentType") %this "application/x-javascript"))
+	  (charset (get/default req (& "charset") %this (hop-charset)))
+	  (header (get/list req (& "header") %this '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
 	  (xml obj))
        (instantiate::http-response-xml
 	  (backend (hop-xml-backend))
@@ -628,25 +701,29 @@
 ;*    hopjs-response-file ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-response-file this file req %this)
-   (if (isa? req JsObject)
-       (instantiate::http-response-file
-	  (charset (get/default req 'charset %this (hop-charset)))
-	  (content-type (get/default req 'contentType %this #f))
-	  (header (get/list req 'header %this '()))
-	  (file (js-tostring file %this)))
-       (instantiate::http-response-file
-	  (file (js-tostring file %this)))))
+   (let ((path (js-tostring file %this)))
+      (if (js-object? req)
+	  (instantiate::http-response-file
+	     (charset (get/default req (& "charset") %this (hop-charset)))
+	     (content-type (get/default req (& "contentType") %this
+			      (mime-type path "text/plain")))
+	     (header (get/list req (& "header") %this '()))
+	     (file path))
+	  (instantiate::http-response-file
+	     (file path)
+	     (charset (hop-locale))
+	     (content-type (mime-type path "text/plain"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-response-string ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-response-string this string req %this)
-   (if (isa? req JsObject)
+   (if (js-object? req)
        (instantiate::http-response-string
-	  (charset (get/default req 'charset %this (hop-charset)))
-	  (content-type (get/default req 'contentType %this #f))
-	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
-	  (header (get/list req 'header %this '()))
+	  (charset (get/default req (& "charset") %this (hop-charset)))
+	  (content-type (get/default req (& "contentType") %this #f))
+	  (start-line (get/default req (& "startLine") %this "HTTP/1.1 200 Ok"))
+	  (header (get/list req (& "header") %this '()))
 	  (body (js-tostring string %this)))
        (instantiate::http-response-string
 	  (body (js-tostring string %this)))))
@@ -690,16 +767,16 @@
 		      (js-call1 %this proc %this
 			 (js-make-function %this
 			    (lambda (this resp)
-			       (k (scheme->response resp req)))
-			    1 "reply" :src 'builtin))))))
+			       (k (scheme->response resp req %this)))
+			    1 (& "reply") :src 'builtin))))))
 	  (js-raise-type-error %this "not a request" req)))
    
-   (if (isa? req JsObject)
-       (let ((req (get/default req 'currentRequest %this #f)))
+   (if (js-object? req)
+       (let ((req (get/default req (& "currentRequest") %this #f)))
 	  (instantiate::http-response-async
-	     (charset (get/default req 'charset %this (hop-charset)))
-	     (content-type (get/default req 'contentType %this #f))
-	     (header (get/list req 'header %this '()))
+	     (charset (get/default req (& "charset") %this (hop-charset)))
+	     (content-type (get/default req (& "contentType") %this #f))
+	     (header (get/list req (& "header") %this '()))
 	     (async (async-proc req))))
        (instantiate::http-response-async
 	  (async (async-proc req)))))
@@ -713,3 +790,9 @@
       (charset-convert (js-tostring text %this)
 	 (if (string? from) (string->symbol from) (hop-locale))
 	 (if (string? to) (string->symbol to) (hop-charset)))))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)
+

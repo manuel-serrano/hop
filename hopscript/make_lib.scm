@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/make_lib.scm            */
+;*    serrano/prgm/project/hop/hop/hopscript/make_lib.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Tue Feb  6 17:36:22 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Sat Apr 11 13:53:49 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
 ;*=====================================================================*/
@@ -25,6 +25,7 @@
 	   __hopscript_public
 	   __hopscript_lib
 	   __hopscript_object
+	   __hopscript_builtin
 	   __hopscript_arguments
 	   __hopscript_function
 	   __hopscript_service
@@ -32,6 +33,7 @@
 	   __hopscript_arraybuffer	   
 	   __hopscript_string
 	   __hopscript_stringliteral
+	   __hopscript_names
 	   __hopscript_number 
 	   __hopscript_math
 	   __hopscript_boolean
@@ -43,12 +45,15 @@
 	   __hopscript_websocket
 	   __hopscript_promise
 	   __hopscript_generator
+	   __hopscript_proxy
 	   __hopscript_spawn
 	   __hopscript_expanders)
    
    (eval   (export-all)
 
            (class JsStringLiteral)
+           (class JsStringLiteralASCII)
+           (class JsStringLiteralUTF8)
       
            (class JsObject)
 	   (class JsGlobalObject)
@@ -63,6 +68,8 @@
 	   (class JsDate)
 	   (class JsError)
 	   
+	   (class JsModule)
+
 	   (class JsWorker)
 	   (class JsPromise)
 	   (class JsGenerator)
@@ -93,4 +100,8 @@
 
 	   (class MessageEvent)
 	   (class WorkerHopThread)
-	   (class JsWebSocketEvent)))
+	   (class JsWebSocketEvent)
+
+	   (class JsProxy)
+	   
+	   (class JsWrapper)))

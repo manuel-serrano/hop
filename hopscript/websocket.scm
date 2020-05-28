@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/websocket.scm           */
+;*    serrano/prgm/project/hop/hop/hopscript/websocket.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Wed Mar  7 13:29:39 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Fri Apr 10 08:00:04 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
 ;*=====================================================================*/
@@ -61,35 +61,38 @@
 	   (js-websocket-post ::JsObject ::JsHopFrame ::int)))
 
 ;*---------------------------------------------------------------------*/
-;*    JsStringLiteral begin                                            */
+;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsWebSocket ...                              */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsWebSocket
-   (lambda (o)
-      (js-raise-type-error (js-initial-global-object)
-	 "[[SerializeTypeError]] ~a" o))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-raise-type-error ctx "[[SerializeTypeError]] ~a" o)
+	  (error "obj->string ::JsWebWocket" "Not a JavaScript context" ctx)))
    (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsWebSocketClient ...                        */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsWebSocketClient
-   (lambda (o)
-      (js-raise-type-error (js-initial-global-object)
-	 "[[SerializeTypeError]] ~a" o))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-raise-type-error ctx "[[SerializeTypeError]] ~a" o)
+	  (error "obj->string ::JsWebWocketClient" "Not a JavaScript context" ctx)))
    (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsWebSocketServer ...                        */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsWebSocketServer
-   (lambda (o)
-      (js-raise-type-error (js-initial-global-object)
-	 "[[SerializeTypeError]] ~a" o))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-raise-type-error ctx "[[SerializeTypeError]] ~a" o)
+	  (error "obj->string ::JsWebWocketServer" "Not a JavaScript context" ctx)))
    (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/
@@ -162,284 +165,290 @@
 ;*---------------------------------------------------------------------*/
 (define (ws-json-parser ip ctx %this)
    (let ((j (json-parser ip ctx)))
-      (if (isa? j JsArray)
-	  (map! car (jsarray->list j %this))
+      (if (js-array? j)
+	  (jsarray->list j %this)
 	  j)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-websocket! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-init-websocket! %this::JsGlobalObject)
+
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
    
-   (with-access::JsGlobalObject %this (__proto__ js-object js-function)
-      (with-access::JsFunction js-function ((js-function-prototype __proto__))
-
-	 (define js-websocket-prototype
-	    (instantiateJsObject
-	       (__proto__ __proto__)))
-	 
-	 (define js-websocket-server-prototype
-	    (instantiateJsObject
-	       (__proto__ __proto__)))
-	 
-	 (define js-websocket-client-prototype
-	    (instantiateJsObject
-	       (__proto__ __proto__)))
-
-	 (define (js-websocket-construct o url options)
-	    (with-access::JsGlobalObject %this (js-object)
-	       (let* ((worker (js-current-worker))
-		      (protocol (cond
-				   ((string? options)
-				    options)
-				   ((js-jsstring? options)
-				    (js-jsstring->string options))
-				   ((isa? options JsArray)
-				    (let ((join (js-get options 'join %this)))
-				       (js-jsstring->string 
-					  (js-call1 %this join options
-					     (js-ascii->jsstring ", ")))))
-				   ((isa? options JsObject)
-				    (js-jsstring->string
-				       (js-get options 'protocol %this)))))
-		      (url (js-tostring url %this))
-		      (queue (make-cell '()))
-		      (ws (instantiate::websocket
-			     (url (cond
-				     ((string-prefix? "ws://" url)
-				      (string-append "http://"
-					 (substring url 5)))
-				     ((string-prefix? "wss://" url)
-				      (string-append "https://"
-					 (substring url 6)))
-				     (else
-				      url)))
-			     (protocol protocol)
-			     (onbinary (lambda (data)
-					  (with-handler
-					     (lambda (e)
-						(exception-notify e))
-					     (wss-onbinary data queue worker))))))
-		      (obj (instantiateJsWebSocket
-			      (__proto__ js-websocket-prototype)
-			      (worker worker)
-			      (recvqueue queue)
-			      (ws ws))))
-		  ;; listeners
-		  (for-each (lambda (act)
-			       (bind-websocket-listener! %this obj act))
-		     (list
-			(cons 'onmessage #f)
-			(cons 'onopen #f)
-			(cons 'onclose #f)
-			(cons 'onerror #f)))
-		  ;; connect the socket to the server
-		  (js-worker-push-thunk! worker "ws-listener"
-		     (lambda ()
-			(with-handler
-			   (lambda (e)
-			      (with-access::&error e (msg)
-				 (with-access::websocket ws (onerrors)
-				    (let* ((msg (js-string->jsstring msg))
-					   (evt (instantiate::JsWebSocketEvent
-						   (name "error")
-						   (target ws)
-						   (data msg)
-						   (value msg))))
-				       (js-worker-push-thunk! worker
-					  "wesbsocket-client"
-					  (lambda ()
-					     (apply-listeners onerrors evt)))))))
-			   (websocket-connect! ws))))
-		  obj)))
-
-	 (define (wss-onconnect wss)
-	    (lambda (resp)
-	       (with-access::http-response-websocket resp (request)
-		  (with-access::http-request request (socket)
-		     (let  ((ws (instantiateJsWebSocketClient
-				   (socket socket)
-				   (wss wss)
-				   (__proto__ js-websocket-client-prototype))))
-			;; listeners
-			(for-each (lambda (act)
-				     (bind-websocket-client-listener! %this
-					ws act))
-			   (list (cons 'onmessage #f)
-			      (cons 'onclose #f)
-			      (cons 'onerror #f)))
-			(let ((evt (instantiate::server-event
-				      (name "connection")
-				      (target wss)
-				      (value ws)))
-			      (id (gensym)))
-			   ;; trigger an onconnect event
-			   (with-access::JsWebSocketServer wss (conns worker)
-			      (js-worker-push-thunk! worker "wss-onconnect"
-				 (lambda ()
-				    (apply-listeners conns evt)
-				    ;; start the client-server-loop
-				    ;; on JavaScript completion
-				    (with-access::JsWebSocketServer wss (worker)
-				       (js-worker-push-thunk! worker "wss-onconnect"
-					  (lambda ()
-					     (websocket-server-read-loop
-						%this request wss ws id))))))))
-			;; returns the new client socket
-			ws)))))
-
-	 (define (wss-onbinary payload recvqueue worker)
-	    (match-case (message-split payload 5)
-	       ((?protocol ?id ?status ?content-type ?obj)
-		(let* ((pcell (assq (string->integer id) (cell-ref recvqueue)))
-		       (val (hop-http-decode-value obj
-			       (string->symbol content-type) %this
-			       :response-type 'arraybuffer
-			       :x-javascript-parser x-javascript-parser
-			       :json-parser (lambda (ip ctx)
-					       (ws-json-parser ip ctx %this))))
-		       (status (string->integer status)))
-		   (when (pair? pcell)
-		      (cell-set! recvqueue (remq! pcell (cell-ref recvqueue)))
-		      (let ((handler (cdr pcell)))
-			 ;; see hopscript/service.scm
-			 (if (and (>=fx status 100) (<=fx status 299))
-			     (cond
-				((isa? handler JsPromise)
-				 (js-worker-push-thunk! worker "ws-listener"
-				    (lambda ()
-				       (js-promise-async handler
-					  (lambda ()
-					     (js-promise-resolve handler val))))))
-				((and (pair? handler) (procedure? (car handler)))
-				 (js-worker-push-thunk! worker "ws-listener"
-				    (lambda ()
-				       ((car handler) val))))
-				((and (pair? handler) (condition-variable? (car handler)))
-				 (synchronize (cdr handler)
-				    (let ((cv (car handler)))
-				       (set-car! handler val)
-				       (set-cdr! handler #f)
-				       (condition-variable-signal! cv)))))
-			     (cond
-				((isa? handler JsPromise)
-				 (js-worker-push-thunk! worker "ws-listener"
-				    (lambda ()
-				       (js-promise-async handler
-					  (lambda ()
-					     (js-promise-reject handler val))))))
-				((and (pair? handler) (procedure? (cdr handler)))
-				 (js-worker-push-thunk! worker "ws-listener"
-				    (lambda ()
-				       ((cdr handler) val))))
-				((and (pair? handler) (condition-variable? (car handler)))
-				 (synchronize (cdr handler)
-				    (let ((cv (car handler)))
-				       (set-car! handler #f)
-				       (set-cdr! handler val)
-				       (condition-variable-signal! cv))))))))))))
-
-	 (define (js->hop x)
-	    (if (js-jsstring? x)
-		(js-jsstring->string x)
-		(js-raise-type-error %this "WebSocketServer: cannot convert ~s" x)))
-	 
-	 (define (js-websocket-server-construct this opt)
-	    (letrec* ((path (cond
-			       ((string? opt)
-				opt)
-			       ((js-jsstring? opt)
-				(js-jsstring->string opt))
-			       ((isa? opt JsObject)
-				(js->hop (js-get opt 'path %this)))
-			       (else
- 				(js->hop opt))))
-		      (proto (if (isa? opt JsObject)
-				 (let ((proto (js-get opt 'protocol %this)))
-				    (cond
-				       ((string? proto)
-					(list proto))
-				       ((js-jsstring? proto)
-					(list (js-jsstring->string proto)))
-				       ((isa? proto JsArray)
-					(map (lambda (el)
-						(js-jsstring->string (car el)))
-					   (jsarray->list proto %this)))))))
-		      (svc (service :name path ()
-			      (let ((req (current-request)))
-				 (websocket-server-response req 0
-				    (wss-onconnect wss) proto))))
-		      (wss (instantiateJsWebSocketServer
-			      (state (js-websocket-state-open))
-			      (worker (js-current-worker))
-			      (__proto__ js-websocket-server-prototype)
-			      (svc svc))))
+   (with-access::JsGlobalObject %this (js-object js-function)
+      
+      (define js-websocket-prototype
+	 (instantiateJsObject
+	    (__proto__ (js-object-proto %this))
+	    (elements ($create-vector 5))))
+      
+      (define js-websocket-server-prototype
+	 (instantiateJsObject
+	    (__proto__ (js-object-proto %this))
+	    (elements ($create-vector 2))))
+      
+      (define js-websocket-client-prototype
+	 (instantiateJsObject
+	    (__proto__ (js-object-proto %this))
+	    (elements ($create-vector 5))))
+      
+      (define (js-websocket-construct o url options)
+	 (with-access::JsGlobalObject %this (js-object)
+	    (let* ((worker (js-current-worker))
+		   (protocol (cond
+				((string? options)
+				 options)
+				((js-jsstring? options)
+				 (js-jsstring->string options))
+				((js-array? options)
+				 (let ((join (js-get options (& "join") %this)))
+				    (js-jsstring->string 
+				       (js-call1 %this join options
+					  (js-ascii->jsstring ", ")))))
+				((js-object? options)
+				 (js-jsstring->string
+				    (js-get options (& "protocol") %this)))))
+		   (url (js-tostring url %this))
+		   (queue (make-cell '()))
+		   (ws (instantiate::websocket
+			  (url (cond
+				  ((string-prefix? "ws://" url)
+				   (string-append "http://"
+				      (substring url 5)))
+				  ((string-prefix? "wss://" url)
+				   (string-append "https://"
+				      (substring url 6)))
+				  (else
+				   url)))
+			  (protocol protocol)
+			  (onbinary (lambda (data)
+				       (with-handler
+					  (lambda (e)
+					     (exception-notify e))
+					  (wss-onbinary data queue worker))))))
+		   (obj (instantiateJsWebSocket
+			   (__proto__ js-websocket-prototype)
+			   (worker worker)
+			   (recvqueue queue)
+			   (ws ws))))
 	       ;; listeners
 	       (for-each (lambda (act)
-			    (bind-websocket-server-listener! %this wss act))
-		  (list (cons 'onconnection #f)
-		     (cons 'onclose #f)))
-	       wss))
-
-	 ;; prototypes properties
-	 (init-builtin-websocket-prototype!
-	    %this js-websocket-prototype)
-	 (init-builtin-websocket-server-prototype!
-	    %this js-websocket-server-prototype)
-	 (init-builtin-websocket-client-prototype!
-	    %this js-websocket-client-prototype)
-
-	 ;; two constructors
-	 (define js-websocket
-	    (js-make-function %this
-	       (lambda (this url options)
-		  (js-new %this js-websocket url options))
-	       2 'WebSocket
-	       :__proto__ js-function-prototype
-	       :construct js-websocket-construct
-	       :shared-cmap #f))
-	 
-	 (define js-websocket-server
-	    (js-make-function %this
-	       (lambda (this path)
-		  (js-new %this js-websocket-server path))
-	       1 'WebSocketServer
-	       :__proto__ js-function-prototype
-	       :construct js-websocket-server-construct
-	       :shared-cmap #f))
-	 
-	 (js-bind! %this %this 'WebSocket
-	    :configurable #f :enumerable #f :value js-websocket
-	    :hidden-class #t)
-	 (js-bind! %this %this 'WebSocketServer
-	    :configurable #f :enumerable #f :value js-websocket-server
-	    :hidden-class #t)
-
-	 (js-bind! %this js-websocket 'CONNECTING
-	    :configurable #f :enumerable #f
-	    :value (js-websocket-state-connecting)
-	    :hidden-class #f)
-	 (js-bind! %this js-websocket 'OPEN
-	    :configurable #f :enumerable #f
-	    :value (js-websocket-state-open)
-	    :hidden-class #f)
-	 (js-bind! %this js-websocket 'CLOSING
-	    :configurable #f :enumerable #f
-	    :value (js-websocket-state-closing)
-	    :hidden-class #f)
-	 (js-bind! %this js-websocket 'CLOSED
-	    :configurable #f :enumerable #f
-	    :value (js-websocket-state-closed)
-	    :hidden-class #f)
-
-	 (js-undefined))))
+			    (bind-websocket-listener! %this obj act))
+		  (list
+		     (cons "onmessage" #f)
+		     (cons "onopen" #f)
+		     (cons "onclose" #f)
+		     (cons "onerror" #f)))
+	       ;; connect the socket to the server
+	       (js-worker-push-thunk! worker "ws-listener"
+		  (lambda ()
+		     (with-handler
+			(lambda (e)
+			   (with-access::&error e (msg)
+			      (with-access::websocket ws (onerrors)
+				 (let* ((msg (js-string->jsstring msg))
+					(evt (instantiate::JsWebSocketEvent
+						(name "error")
+						(target ws)
+						(data msg)
+						(value msg))))
+				    (js-worker-push-thunk! worker
+				       "wesbsocket-client"
+				       (lambda ()
+					  (apply-listeners onerrors evt)))))))
+			(websocket-connect! ws))))
+	       obj)))
+      
+      (define (wss-onconnect wss)
+	 (lambda (resp)
+	    (with-access::http-response-websocket resp (request)
+	       (with-access::http-request request (socket)
+		  (let  ((ws (instantiateJsWebSocketClient
+				(socket socket)
+				(wss wss)
+				(__proto__ js-websocket-client-prototype))))
+		     ;; trigger an onconnect event
+		     (with-access::JsWebSocketServer wss (conns worker)
+			(js-worker-push-thunk! worker "wss-onconnect"
+			   (lambda ()
+			      ;; listeners
+			      (for-each (lambda (act)
+					   (bind-websocket-client-listener! %this
+					      ws act))
+				 (list (cons "onmessage" #f)
+				    (cons "onclose" #f)
+				    (cons "onerror" #f)))
+			      (let ((evt (instantiate::server-event
+					    (name "connection")
+					    (target wss)
+					    (value ws)))
+				    (id (gensym)))
+				 (apply-listeners conns evt)
+				 ;; start the client-server-loop
+				 ;; on JavaScript completion
+				 (with-access::JsWebSocketServer wss (worker)
+				    (js-worker-push-thunk! worker "wss-onconnect"
+				       (lambda ()
+					  (websocket-server-read-loop
+					     %this request wss ws id))))))))
+		     ;; returns the new client socket
+		     ws)))))
+      
+      (define (wss-onbinary payload recvqueue worker)
+	 (match-case (message-split payload 5)
+	    ((?protocol ?id ?status ?content-type ?obj)
+	     (let* ((pcell (assq (string->integer id) (cell-ref recvqueue)))
+		    (val (hop-http-decode-value obj
+			    (string->symbol content-type) %this
+			    :response-type 'arraybuffer
+			    :x-javascript-parser x-javascript-parser
+			    :json-parser (lambda (ip ctx)
+					    (ws-json-parser ip ctx %this))))
+		    (status (string->integer status)))
+		(when (pair? pcell)
+		   (cell-set! recvqueue (remq! pcell (cell-ref recvqueue)))
+		   (let ((handler (cdr pcell)))
+		      ;; see hopscript/service.scm
+		      (if (and (>=fx status 100) (<=fx status 299))
+			  (cond
+			     ((isa? handler JsPromise)
+			      (js-worker-push-thunk! worker "ws-listener"
+				 (lambda ()
+				    (js-promise-async handler
+				       (lambda ()
+					  (js-promise-resolve handler val))))))
+			     ((and (pair? handler) (procedure? (car handler)))
+			      (js-worker-push-thunk! worker "ws-listener"
+				 (lambda ()
+				    ((car handler) val))))
+			     ((and (pair? handler) (condition-variable? (car handler)))
+			      (synchronize (cdr handler)
+				 (let ((cv (car handler)))
+				    (set-car! handler val)
+				    (set-cdr! handler #f)
+				    (condition-variable-signal! cv)))))
+			  (cond
+			     ((isa? handler JsPromise)
+			      (js-worker-push-thunk! worker "ws-listener"
+				 (lambda ()
+				    (js-promise-async handler
+				       (lambda ()
+					  (js-promise-reject handler val))))))
+			     ((and (pair? handler) (procedure? (cdr handler)))
+			      (js-worker-push-thunk! worker "ws-listener"
+				 (lambda ()
+				    ((cdr handler) val))))
+			     ((and (pair? handler) (condition-variable? (car handler)))
+			      (synchronize (cdr handler)
+				 (let ((cv (car handler)))
+				    (set-car! handler #f)
+				    (set-cdr! handler val)
+				    (condition-variable-signal! cv))))))))))))
+      
+      (define (js->hop x)
+	 (if (js-jsstring? x)
+	     (js-jsstring->string x)
+	     (js-raise-type-error %this "WebSocketServer: cannot convert ~s" x)))
+      
+      (define (js-websocket-server-construct this opt)
+	 (letrec* ((path (cond
+			    ((string? opt)
+			     opt)
+			    ((js-jsstring? opt)
+			     (js-jsstring->string opt))
+			    ((js-object? opt)
+			     (js->hop (js-get opt (& "path") %this)))
+			    (else
+			     (js->hop opt))))
+		   (proto (if (js-object? opt)
+			      (let ((proto (js-get opt (& "protocol") %this)))
+				 (cond
+				    ((string? proto)
+				     (list proto))
+				    ((js-jsstring? proto)
+				     (list (js-jsstring->string proto)))
+				    ((js-array? proto)
+				     (map js-jsstring->string
+					(jsarray->list proto %this)))))))
+		   (svc (service :name path ()
+			   (let ((req (current-request)))
+			      (websocket-server-response req 0
+				 (wss-onconnect wss) proto))))
+		   (wss (instantiateJsWebSocketServer
+			   (state (js-websocket-state-open))
+			   (worker (js-current-worker))
+			   (__proto__ js-websocket-server-prototype)
+			   (svc svc))))
+	    ;; listeners
+	    (for-each (lambda (act)
+			 (bind-websocket-server-listener! %this wss act))
+	       (list (cons "onconnection" #f)
+		  (cons "onclose" #f)))
+	    wss))
+      
+      ;; prototypes properties
+      (init-builtin-websocket-prototype!
+	 %this js-websocket-prototype)
+      (init-builtin-websocket-server-prototype!
+	 %this js-websocket-server-prototype)
+      (init-builtin-websocket-client-prototype!
+	 %this js-websocket-client-prototype)
+      
+      ;; two constructors
+      (define js-websocket
+	 (js-make-function %this
+	    (lambda (this url options)
+	       (js-new %this js-websocket url options))
+	    2 (& "WebSocket")
+	    :__proto__ (js-object-proto js-function)
+	    :size 4
+	    :alloc js-no-alloc
+	    :construct js-websocket-construct
+	    :shared-cmap #f))
+      
+      (define js-websocket-server
+	 (js-make-function %this
+	    (lambda (this path)
+	       (js-new %this js-websocket-server path))
+	    1 (& "WebSocketServer")
+	    :__proto__ (js-object-proto js-function)
+	    :alloc js-no-alloc
+	    :construct js-websocket-server-construct
+	    :shared-cmap #f))
+      
+      (js-bind! %this %this (& "WebSocket")
+	 :configurable #f :enumerable #f :value js-websocket
+	 :hidden-class #t)
+      (js-bind! %this %this (& "WebSocketServer")
+	 :configurable #f :enumerable #f :value js-websocket-server
+	 :hidden-class #t)
+      
+      (js-bind! %this js-websocket (& "CONNECTING")
+	 :configurable #f :enumerable #f
+	 :value (js-websocket-state-connecting)
+	 :hidden-class #t)
+      (js-bind! %this js-websocket (& "OPEN")
+	 :configurable #f :enumerable #f
+	 :value (js-websocket-state-open)
+	 :hidden-class #f)
+      (js-bind! %this js-websocket (& "CLOSING")
+	 :configurable #f :enumerable #f
+	 :value (js-websocket-state-closing)
+	 :hidden-class #f)
+      (js-bind! %this js-websocket (& "CLOSED")
+	 :configurable #f :enumerable #f
+	 :value (js-websocket-state-closed)
+	 :hidden-class #f)
+      
+      (js-undefined)))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-websocket-prototype! ...                            */
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-websocket-prototype! %this obj)
    ;; readyState
-   (js-bind! %this obj 'readyState
+   (js-bind! %this obj (& "readyState")
       :get (js-make-function %this
 	      (lambda (this)
 		 (with-access::JsWebSocket this (ws)
@@ -450,10 +459,10 @@
 			  ((closing) (js-websocket-state-closing))
 			  ((closed) (js-websocket-state-closed))
 			  (else (js-websocket-state-error))))))
-	      0 'readyState)
+	      0 (& "readyState"))
       :hidden-class #t)
    ;; url
-   (js-bind! %this obj 'url
+   (js-bind! %this obj (& "url")
       :get (js-make-function %this
 	      (lambda (this)
 		 (with-access::JsWebSocket this (ws)
@@ -467,10 +476,10 @@
 			      (list "wss://" (substring url 8))))
 			  (else
 			   (js-string->jsstring url))))))
-	      0 'url)
+	      0 (& "url"))
       :hidden-class #t)
    ;; send
-   (js-bind! %this obj 'send
+   (js-bind! %this obj (& "send")
       :value (js-make-function %this
 		(lambda (this value)
 		   (with-access::JsWebSocket this (ws)
@@ -479,23 +488,23 @@
 			    (when (socket? %socket)
 			       (websocket-send %socket
 				  (js-tostring value %this)))))))
-		1 'send)
+		1 (& "send"))
       :hidden-class #t)
    ;; close
-   (js-bind! %this obj 'close
+   (js-bind! %this obj (& "close")
       :value (js-make-function %this
 		(lambda (this)
 		   (with-access::JsWebSocket this (ws)
 		      (when (isa? ws websocket)
 			 (websocket-close ws))))
-		0 'close)
+		0 (& "close"))
       :hidden-class #t)
    ;; addEventListener
-   (js-bind! %this obj 'addEventListener
+   (js-bind! %this obj (& "addEventListener")
       :value (js-make-function %this
 		(lambda (this message proc)
 		   (add-event-listener! this (js-tostring message %this) proc))
-		2 'addEventListener)
+		2 (& "addEventListener"))
       :hidden-class #t)
    obj)
 
@@ -506,7 +515,7 @@
    (lambda (evt)
       (js-worker-push-thunk! worker "ws-listener"
 	 (lambda ()
-	    (js-call1 %this proc this evt)))))
+	    (js-call1-procedure proc this evt)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    action->listener ...                                             */
@@ -516,62 +525,62 @@
       (let ((g (gensym)))
 	 (js-worker-push-thunk! worker "ws-listener"
 	    (lambda ()
-	       (when (isa? (cdr action) JsFunction)
-		  (js-call1 %this (cdr action) this evt)))))))
+	       (when (js-procedure? (cdr action))
+		  (js-call1-jsprocedure %this (cdr action) this evt)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-websocket-listener! ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (bind-websocket-listener! %this obj action)
-   (js-bind! %this obj (car action) 
+   (js-bind! %this obj (js-ascii-name->jsstring (car action))
       :get (js-make-function %this
               (lambda (this) (cdr action))
-              0 (car action))
+              0 (js-name->jsstring (car action)))
       :set (js-make-function %this
-              (lambda (this proc)
-                 (set-cdr! action proc)
-                 (let ((name (substring (symbol->string! (car action)) 2)))
+	      (lambda (this proc)
+		 (set-cdr! action proc)
+		 (let ((name (substring (car action) 2)))
 		    (with-access::JsWebSocket this (worker)
 		       (add-event-listener! this
 			     name (action->listener worker %this action this)))))
-              1 (car action))
+	      1 (js-name->jsstring (car action)))
       :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-websocket-server-listener! ...                              */
 ;*---------------------------------------------------------------------*/
 (define (bind-websocket-server-listener! %this obj action)
-   (js-bind! %this obj (car action) 
+   (js-bind! %this obj (js-ascii-name->jsstring (car action))
       :get (js-make-function %this
               (lambda (this) (cdr action))
-              0 (car action))
+              0 (js-name->jsstring (car action)))
       :set (js-make-function %this
               (lambda (this proc)
                  (set-cdr! action proc)
-                 (let ((name (substring (symbol->string! (car action)) 2)))
+                 (let ((name (substring (car action) 2)))
 		    (with-access::JsWebSocketServer this (worker)
 		       (add-event-listener! this
 			     name (action->listener worker %this action this)))))
-              1 (car action))
+              1 (js-name->jsstring (car action)))
       :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-websocket-client-listener! ...                              */
 ;*---------------------------------------------------------------------*/
 (define (bind-websocket-client-listener! %this obj action)
-   (js-bind! %this obj (car action) 
+   (js-bind! %this obj (js-ascii-name->jsstring (car action))
       :get (js-make-function %this
               (lambda (this) (cdr action))
-              0 (car action))
+              0 (js-name->jsstring (car action)))
       :set (js-make-function %this
               (lambda (this proc)
                  (set-cdr! action proc)
-                 (let ((name (substring (symbol->string! (car action)) 2)))
+                 (let ((name (substring (car action) 2)))
 		    (with-access::JsWebSocketClient this (wss)
 		       (with-access::JsWebSocketServer wss (worker)
 			  (add-event-listener! this
 				name (action->listener worker %this action this))))))
-              1 (car action))
+              1 (js-name->jsstring (car action)))
       :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
@@ -579,7 +588,7 @@
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-websocket-server-prototype! %this obj)
    ;; close
-   (js-bind! %this obj 'close
+   (js-bind! %this obj (& "close")
       :value (js-make-function %this
 		(lambda (this)
 		   (with-access::JsWebSocketServer this (svc state closes worker downp)
@@ -596,16 +605,16 @@
 			       (js-worker-push-thunk! worker "wss-onclose"
 				  (lambda ()
 				     (apply-listeners closes evt))))))))
-		0 'close)
+		0 (& "close"))
       :hidden-class #t)
    ;; addEventListner
-   (js-bind! %this obj 'addEventListener
+   (js-bind! %this obj (& "addEventListener")
       :value (js-make-function %this
 		(lambda (this message proc)
 		   (with-access::JsWebSocketServer this (worker)
 		      (add-event-listener! this (js-tostring message %this)
 			 (proc->listener worker %this proc this))))
-		2 'addEventListener)
+		2 (& "addEventListener"))
       :hidden-class #t)
    obj)
 
@@ -682,16 +691,16 @@
 	 (cond
 	    ((isa? val JsHopFrame)
 	     val)
-	    ((isa? val JsObject)
+	    ((js-object? val)
 	     (instantiateJsHopFrame
 		(%this %this)
 		(args (map! cdr
-			 (js-jsobject->alist (js-get val 'args %this) %this)))
-		(srv (js-get val 'srv %this))
-		(options (js-get val 'options %this))
-		(header (js-get val 'header %this))
+			 (js-jsobject->alist (js-get val (& "args") %this) %this)))
+		(srv (js-get val (& "srv") %this))
+		(options (js-get val (& "options") %this))
+		(header (js-get val (& "header") %this))
 		(path (string-append
-			 (hop-service-base) "/" (js-get val 'path %this)))))
+			 (hop-service-base) "/" (js-get val (& "path") %this)))))
 	    ((pair? val)
 	     (instantiateJsHopFrame
 		(%this %this)
@@ -702,7 +711,7 @@
 	     (bigloo-type-error "websocket" "JsHopFrame or JsObject" val)))))
 
    (define (jsheader->header hd header)
-      (if (isa? hd JsObject)
+      (if (js-object? hd)
 	  (append (js-jsobject->alist hd %this) header)
 	  header))
 
@@ -720,7 +729,7 @@
 				(header (jsheader->header hd header))
 				(query path)))))
 		 (resp (invoke-websocket-service frame)))
-	     (http-ws-response resp nreq socket content-type 200 '())))
+	     (http-ws-response resp nreq socket content-type 200 '() %this)))
 	 (else
 	  (error "PoST-message" "bad message" (format "~s" msg))
 	  #f)))
@@ -778,15 +787,15 @@
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-websocket-client-prototype! %this obj)
    ;; readyState
-   (js-bind! %this obj 'readyState
+   (js-bind! %this obj (& "readyState")
       :get (js-make-function %this
 	      (lambda (this)
 		 (with-access::JsWebSocketClient this (socket state)
 		    state))
-	      0 'readyState)
+	      0 (& "readyState"))
       :hidden-class #t)
    ;; close
-   (js-bind! %this obj 'close
+   (js-bind! %this obj (& "close")
       :value (js-make-function %this
 		(lambda (this)
 		   (with-access::JsWebSocketClient this (socket oncloses wss state %mutex)
@@ -805,18 +814,18 @@
 						      (target this)
 						      (value this))))
 					   (apply-listeners oncloses evt))))))))))
-		0 'close)
+		0 (& "close"))
       :hidden-class #t)
    ;; client
-   (js-bind! %this obj 'socket
+   (js-bind! %this obj (& "socket")
       :get (js-make-function %this
 	      (lambda (this)
 		 (with-access::JsWebSocketClient this (socket)
 		    socket))
-	      0 'socket)
+	      0 (& "socket"))
       :hidden-class #t)
    ;; send
-   (js-bind! %this obj 'send
+   (js-bind! %this obj (& "send")
       :value (js-make-function %this
 		(lambda (this value)
 		   (with-access::JsWebSocketClient this (socket %mutex)
@@ -824,10 +833,10 @@
 			 (when socket
 			    (websocket-send socket
 			       (js-tostring value %this) :mask #f)))))
-		1 'send)
+		1 (& "send"))
       :hidden-class #t)
    ;; addEventListner
-   (js-bind! %this obj 'addEventListener
+   (js-bind! %this obj (& "addEventListener")
       :value (js-make-function %this
 		(lambda (this message proc)
 		   (with-access::JsWebSocketClient this (wss)
@@ -835,33 +844,25 @@
 			 (let ((action (js-tostring message %this)))
 			    (add-event-listener! this action
 			       (proc->listener worker %this proc this))))))
-		2 'addEventListener)
+		2 (& "addEventListener"))
       :hidden-class #t)
    obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    http-encode-value ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (http-encode-value obj content-type::bstring request)
-   
-   (define (request-type request)
-      (with-access::http-request request (header)
-	 (let ((c (assq 'hop-client: header)))
-	    (if (and (pair? c) (string=? (cdr c) "hop"))
-		'hop-to-hop
-		'hop-client))))
-   
+(define (http-encode-value obj content-type::bstring request %this)
    ;; see runtime/http-response.scm
    (cond
       ((or (string-prefix? "application/x-hop" content-type)
 	   (string-prefix? "application/x-frame-hop" content-type))
        ;; fast path, bigloo serialization
-       (obj->string obj (request-type request)))
+       (obj->string obj %this))
       ((or (string-prefix? "application/json" content-type)
 	   (string-prefix? "application/x-frame-json" content-type))
        ;; json encoding
        (call-with-output-string
-	  (lambda (p) (obj->json obj p))))
+	  (lambda (p) (obj->json obj p %this))))
       ((string-prefix? "text/plain" content-type)
        obj)
       (else
@@ -872,9 +873,9 @@
 ;*    ws-response-socket ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (ws-response-socket obj req::http-request socket::socket
- 	   content-type status header)
+ 	   content-type status header %this)
    (with-access::http-request req (id)
-      (let ((data (http-encode-value obj content-type req)))
+      (let ((data (http-encode-value obj content-type req %this)))
 	 (websocket-send-binary socket
 	    (string-append "PoST:"
 	       (integer->string id)
@@ -887,14 +888,14 @@
 ;*    http-ws-response ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-generic (http-ws-response resp req::http-request socket::socket
-		   content-type status header)
-   (ws-response-socket resp req socket content-type status header))
+		   content-type status header %this)
+   (ws-response-socket resp req socket content-type status header %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-ws-response ::JsPromise ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (http-ws-response resp::JsPromise req socket
-		  content-type status header)
+		  content-type status header %this)
    (with-access::JsPromise resp (worker)
       (with-access::WorkerHopThread worker (%this)
 	 (js-promise-then-catch %this resp 
@@ -903,24 +904,24 @@
 		  (js-promise-async resp
 		     (lambda ()
 			(http-ws-response result req socket
-			   content-type 200 header))))
-	       1 "reply")
+			   content-type 200 header %this))))
+	       1 (& "reply"))
 	    (js-make-function %this
 	       (lambda (this rej)
 		  (js-promise-async resp
 		     (lambda ()
 			(http-ws-response rej req socket
-			   content-type 500 header))))
-	       1 "reject")
+			   content-type 500 header %this))))
+	       1 (& "reject"))
 	    resp))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-ws-response ::%http-response ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (http-ws-response resp::%http-response req socket
-		   content-type status header)
+		   content-type status header %this)
    (ws-response-socket (format "Method not implemented ~a" (typeof resp))
-      req socket content-type 500 '()))
+      req socket content-type 500 '() %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    start-line->status ...                                           */
@@ -934,30 +935,32 @@
 ;*    http-ws-response ::http-response-string ...                      */
 ;*---------------------------------------------------------------------*/
 (define-method (http-ws-response resp::http-response-string req socket
-		   content-type status header)
+		   content-type status header %this)
    (with-access::http-response-string resp (body header content-type)
       (ws-response-socket body req socket
 	 (or content-type "text/plain")
 	 (start-line->status resp)
-	 header)))
+	 header
+	 %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-ws-response ::http-response-async ...                       */
 ;*---------------------------------------------------------------------*/
 (define-method (http-ws-response resp::http-response-async req socket
-		  content-type status header)
-   (with-access::http-response-async resp (async content-type header)
+		  content-type status header %this)
+   (with-access::http-response-async resp (async content-type header ctx)
       (async (lambda (obj)
 		(http-ws-response resp req socket
 		   (or content-type "text/plain")
 		   (start-line->status obj)
-		   header)))))
+		   header
+		   ctx)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-ws-response ::http-response-hop ...                         */
 ;*---------------------------------------------------------------------*/
 (define-method (http-ws-response obj::http-response-hop req socket
-		  content-type status header)
+		  content-type status header %this)
    (call-next-method))
 
 ;*---------------------------------------------------------------------*/
@@ -1026,6 +1029,6 @@
 		      oncloses))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    JsStringLiteral end                                              */
+;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-end!)
+(&end!)

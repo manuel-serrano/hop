@@ -1,17 +1,17 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/method.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/method.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Mon May  7 09:02:51 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Sun Apr 12 16:12:57 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
 ;*    -------------------------------------------------------------    */
 ;*    This optimization duplicates functions as methods, where THIS    */
 ;*    is statically known to be an object. This transformation applies */
 ;*    only when the occurrence number of THIS inside a function is     */
-;*    sufficient.                                                      */
+;*    above THIS-OCCURRENCE-THRESHOLD                                  */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -19,6 +19,9 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_method
 
+   (include "ast.sch"
+	    "usage.sch")
+   
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_compile
@@ -26,7 +29,8 @@
 	   __js2scheme_utils
 	   __js2scheme_alpha
 	   __js2scheme_use
-	   __js2scheme_node-size)
+	   __js2scheme_node-size
+	   __js2scheme_scheme-constant)
 
    (export j2s-method-stage))
 
@@ -38,102 +42,136 @@
       (name "method")
       (comment "Function->method transformation")
       (proc (lambda (n args) (j2s-method! n args)))
-      (optional 2)))
+      (optional :optim-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    this-occurrence-threshold ...                                    */
 ;*---------------------------------------------------------------------*/
-(define this-occurrence-threshold 1)
+(define this-occurrence-threshold 2)
 (define body-size-threshold 150)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-method! ::J2SProgram ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (j2s-method! this::J2SProgram args)
+(define (j2s-method! this::J2SProgram conf)
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes decls)
-	 (for-each method! decls)
-	 (for-each method! nodes)))
+	 (let ((log (make-cell '())))
+	    (for-each (lambda (d) (method! d this conf log)) decls)
+	    (for-each (lambda (n) (method! n this conf log)) nodes)
+	    (when (>=fx (config-get conf :verbose 0) 3)
+	       (display " " (current-error-port))
+	       (fprintf (current-error-port) "(~(, ))"
+		  (map (lambda (l)
+			  (with-access::J2SNode (cdr l) (loc)
+			     (format "~a(~a)" (car l) (caddr loc))))
+		     (cell-ref log)))))))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    method! ::J2SNode ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (method! this::J2SNode)
+(define-walk-method (method! this::J2SNode prog conf log)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    method! ::J2SAssig ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (method! this::J2SAssig)
+(define-walk-method (method! this::J2SAssig prog conf log)
    (with-access::J2SAssig this (lhs rhs)
       (when (isa? rhs J2SFun)
-	 (with-access::J2SFun rhs (thisp loc body)
-	    (when thisp
+	 (with-access::J2SFun rhs (thisp loc body generator name)
+	    (when (and thisp (not generator))
 	       (with-access::J2SDecl thisp (usecnt)
 		  (when (and (>=fx usecnt this-occurrence-threshold)
 			     (<fx (node-size body) body-size-threshold))
-		     (set! rhs
-			(instantiate::J2SMethod 
-			   (loc loc)
-			   (function rhs)
-			   (method (function->method rhs)))))))))
+		     (cell-set! log (cons (cons name this) (cell-ref log)))
+		     (let ((met (function->method rhs conf)))
+			(set! rhs
+			   (instantiate::J2SMethod 
+			      (loc loc)
+			      (function (prof-fun rhs prog conf))
+			      (method met)))))))))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    method! ::J2SDeclFun ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (method! this::J2SDeclFun)
-   (with-access::J2SDeclFun this (usage val id)
-      (set! val (method! val))
-      (with-access::J2SFun val (thisp loc body)
+(define-walk-method (method! this::J2SDeclFun prog conf log)
+   (with-access::J2SDeclFun this (val id)
+      (set! val (method! val prog conf log))
+      (with-access::J2SFun val (thisp loc body generator)
 	 (with-access::J2SDecl thisp (usecnt)
 	    (cond
-	       ((only-usage? '(new init) usage)
-		(with-access::J2SDecl thisp (itype utype vtype)
-		   (set! itype 'object)
-		   (set! utype 'object)
-		   (set! vtype 'object)))
-	       ((and (usage? '(ref get) usage)
-		     (not (usage? '(new) usage))
+	       ((and (not (decl-usage-has? this
+			     '(assig ref assig get set call delete instanceof uninit rest eval)))
+		     (not (isa? this J2SDeclSvc)))
+		(with-access::J2SDecl thisp (utype)
+		   (set! utype 'object)))
+	       ((and (decl-usage-has? this '(ref get))
+		     (not (decl-usage-has? this '(new)))
 		     (>=fx usecnt this-occurrence-threshold)
-		     (<fx (node-size body) body-size-threshold))
-		(set! val
-		   (instantiate::J2SMethod
-		      (loc loc)
-		      (function val)
-		      (method (function->method val))))))))
+		     (<fx (node-size body) body-size-threshold)
+		     (not generator))
+		(cell-set! log (cons (cons id this) (cell-ref log)))
+		(let ((met (function->method val conf)))
+		   (set! val
+		      (instantiate::J2SMethod
+			 (loc loc)
+			 (function (prof-fun val prog conf))
+			 (method met))))))))
       this))
+
+;*---------------------------------------------------------------------*/
+;*    prof-fun ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (prof-fun val::J2SFun prog conf)
+   (with-access::J2SFun val (body name)
+      (when (config-get conf :profile-method #f)
+	 (with-access::J2SBlock body (loc endloc)
+	    (set! body
+	       (J2SBlock
+		  (J2SStmtExpr
+		     (J2SPragma
+			`(js-profile-log-method-function
+			    ,(& name prog) ',loc)))
+		  body))))
+      val))
 
 ;*---------------------------------------------------------------------*/
 ;*    function->method ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (function->method this::J2SFun)
+(define (function->method this::J2SFun conf)
    
    (define (j2sdecl-duplicate p::J2SDecl)
       (duplicate::J2SDecl p
 	 (key (ast-decl-key))))
+
+   (define (prof name body::J2SBlock)
+      (if (config-get conf :profile-method #f)
+	  (with-access::J2SBlock body (loc endloc)
+	     (J2SBlock
+		(J2SStmtExpr
+		   (J2SPragma
+		      `(js-profile-log-method-method
+			  (& ,(symbol->string name)) ',loc)))
+		body))
+	  body))
    
    (with-access::J2SFun this (params thisp name body method optimize)
       (let* ((nparams (map j2sdecl-duplicate params))
 	     (nthisp (j2sdecl-duplicate thisp))
 	     (nbody (j2s-alpha body (cons thisp params) (cons nthisp nparams))))
 	 (set! optimize #f)
-	 (use-count nbody +1 #f)
-	 (with-access::J2SDecl thisp (itype vtype utype)
-	    (set! itype 'any)
-	    (set! vtype 'any)
-	    (set! utype 'any))
-	 (with-access::J2SDecl nthisp (itype vtype utype)
-	    (set! itype 'object)
-	    (set! vtype 'object)
+	 (use-count nbody +1 0)
+	 (with-access::J2SDecl nthisp (utype)
 	    (set! utype 'object)
 	    (let ((m (duplicate::J2SFun this
 			(optimize #t)
-			(name (when (symbol? name) (symbol-append name '%%%)))
+			(name (when (symbol? name) (symbol-append name '&)))
 			(params nparams)
 			(thisp nthisp)
-			(body nbody))))
+			(body (prof name nbody)))))
 	       (set! method m)
 	       m)))))
 

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/widget/slider.scm                 */
+;*    serrano/prgm/project/hop/hop/widget/slider.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Sun Apr 10 07:35:48 2016 (serrano)                */
-;*    Copyright   :  2005-16 Manuel Serrano                            */
+;*    Last change :  Sun Apr 28 10:59:26 2019 (serrano)                */
+;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of sliders.                               */
 ;*=====================================================================*/
@@ -27,6 +27,22 @@
 	       (caption read-only)))
 
    (export  (<SLIDER> . ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::html-foldlist ...                            */
+;*    -------------------------------------------------------------    */
+;*    WARNING: Module initialization prevents this declaration to be   */
+;*    moved to xml_types!                                              */
+;*---------------------------------------------------------------------*/
+(define (serialize o ctx)
+   (let ((p (open-output-string)))
+      (obj->javascript-expr o p ctx)
+      (close-output-port p)))
+
+(define (unserialize o ctx)
+   o)
+      
+(register-class-serialization! html-slider serialize unserialize)
 
 ;*---------------------------------------------------------------------*/
 ;*    <SLIDER> ...                                                     */

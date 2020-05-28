@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sat Jun  9 14:31:43 2018 (serrano)                */
-#*    Copyright   :  2006-18 Manuel Serrano                            */
+#*    Last change :  Mon Oct  7 15:39:05 2019 (serrano)                */
+#*    Copyright   :  2006-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
 #*=====================================================================*/
@@ -40,6 +40,8 @@ POPULATION = Makefile \
   hopjs/noserv/cache.js \
   hopjs/noserv/array.js \
   hopjs/noserv/ecma51.js \
+  hopjs/noserv/ecma6.js \
+  hopjs/noserv/ecma8.js \
   hopjs/noserv/number.js \
   hopjs/noserv/regexp.js \
   hopjs/noserv/unicode.js \
@@ -49,6 +51,7 @@ POPULATION = Makefile \
   hopjs/noserv/string.js \
   hopjs/noserv/date.js \
   hopjs/noserv/require.js \
+  hopjs/noserv/function.js \
   hopjs/noserv/es6-let.js \
   hopjs/noserv/es6-let-tl.js \
   hopjs/noserv/es6-sym.js \
@@ -68,6 +71,15 @@ POPULATION = Makefile \
   hopjs/noserv/es6-literal.js \
   hopjs/noserv/es6-forof.js \
   hopjs/noserv/es6-async.js \
+  hopjs/noserv/es6-proxy.js \
+  hopjs/noserv/es6-reflect.js \
+  hopjs/noserv/es6-map.js \
+  hopjs/noserv/es6-weakmap.js \
+  hopjs/noserv/es6-set.js \
+  hopjs/noserv/es6-weakset.js \
+  hopjs/noserv/es6-spread.js \
+  hopjs/noserv/es6-array-class.js \
+  hopjs/noserv/es6-misc-class.js \
   hopjs/noserv/worker1.js \
   hopjs/noserv/worker2.js \
   hopjs/noserv/parserFailure1.js \

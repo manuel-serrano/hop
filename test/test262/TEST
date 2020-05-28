@@ -6,6 +6,8 @@ verb=-v
 basedir=/usr/local/src/ecma-262-51/test262-d067d2f0ca30
 hopc=../../bin/hopc
 testjs=../../bin/testjs
+flags=-O3
+gdb=
 
 while : ; do
 
@@ -13,26 +15,34 @@ while : ; do
     "")
      break;;
 
-  -h|--help)
-    echo "usage: $0 [-v|-s] [--basedir path] [chapter0 [chapter1...]]";
-    echo "example: $0 ch07 ch10 ch15/15.9";
-    exit 0;;
+    -h|--help)
+      echo "usage: $0 [-v|-s] [--basedir path] [--flags=flags] [chapter0 [chapter1...]]";
+      echo "example: $0 ch07 ch10 ch15/15.9";
+      echo "";
+      echo "default path: $basedir";
+      exit 0;;
 
-  -v)
-    verb="$verb -v";;
+    -v)
+      verb="$verb -v";;
 
-  -s)
-    verb="";;
+    -s)
+      verb="";;
 
-  -*)
-    rest=$1;;
+    --basedir)
+      shift;
+      basedir=$1;;    
 
-  --basedir)
-    shift;
-    basedir=$1;;    
+    --flags=*)
+      flags="`echo $1 | sed 's/^[^=]*=//'`";;
+    
+    --gdb)
+      gdb="--gdb";;
+    
+    -*)
+      rest=$1;;
 
-  *)
-    chapters="$chapters $1";;
+    *)
+      chapters="$chapters $1";;
   esac
 
   shift
@@ -43,8 +53,8 @@ if [ "$chapters " = " " ]; then
 fi
 
 for c in $chapters; do
-  echo "$testjs $verb --hopc=$hopc $basedir/test/suite/$c $*"
-  $testjs $verb --hopc=$hopc --flags="-O3" $basedir/test/suite/$c $rest || exit 1
+  echo "$testjs $gdb $verb --hopc=$hopc --flags=\"$flags\" $basedir/test/suite/$c $*"
+  $testjs $gdb $verb --hopc=$hopc --flags="$flags" $basedir/test/suite/$c $rest || exit 1
   echo
   echo "all test succeeded..."
 done

@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
 /*    Last commit :  2015-12-27 [bffbda2] (Manuel Serrano)             */
-/*    Copyright   :  2015-17 Manuel Serrano                            */
+/*    Copyright   :  2015-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 let construct                             */
 /*=====================================================================*/
@@ -108,8 +108,11 @@ function arity() {
 }
 
 function forLabel() {
+   var k, l;
    label1: for( let i = 0; i <= 0; i++ ) {
+      k = i;	      
       for( let j = 0; j <= 1; j++ ) {
+	 l = j;
 	 if( j === 0 ) {
 	    continue label1;
 	 } else {
@@ -117,7 +120,7 @@ function forLabel() {
 	 }
       }  
    }
-   return true;
+   return k === 0 && l === 0;
 }
 
 function optim( x ) {

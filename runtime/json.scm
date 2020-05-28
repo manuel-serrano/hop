@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/json.scm                  */
+;*    serrano/prgm/project/hop/hop/runtime/json.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Tue Nov  3 20:41:37 2015 (serrano)                */
-;*    Copyright   :  2010-15 Manuel Serrano                            */
+;*    Last change :  Fri Mar 20 13:55:22 2020 (serrano)                */
+;*    Copyright   :  2010-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
 ;*=====================================================================*/
@@ -24,7 +24,7 @@
 	    __hop_clientc
 	    __hop_js-comp)
    
-   (export  (generic obj->json ::obj ::output-port)
+   (export  (generic obj->json ::obj ::output-port ctx)
 	    (generic json->obj ::obj ::input-port)
             (byte-array->json ::bstring ::output-port)
 	    (javascript->obj ::obj)
@@ -33,20 +33,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    obj->json ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-generic (obj->json obj op::output-port)
+(define-generic (obj->json obj op::output-port ctx)
    (cond
       ((vector? obj)
-       (vector->json obj op))
+       (vector->json obj op ctx))
       ((pair? obj)
-       (pair->json obj op))
+       (pair->json obj op ctx))
       ((procedure? obj)
        (if (service? obj)
-	   (obj->json (procedure-attr obj) op)
+	   (obj->json (procedure-attr obj) op ctx)
 	   (error "obj->json"
 	      "Illegal procedure in JSON conversion"
 	      obj)))
       (else
-       (obj->javascript-expr obj op))))
+       (obj->javascript-expr obj op ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    json->obj ::obj ...                                              */
@@ -80,34 +80,34 @@
 ;*---------------------------------------------------------------------*/
 ;*    vector->json ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (vector->json vec op::output-port)
+(define (vector->json vec op::output-port ctx)
    (let ((len (vector-length vec)))
       (case len
 	 ((0)
 	  (display "[]" op))
 	 ((1)
 	  (display "[" op)
-	  (obj->json (vector-ref vec 0) op)
+	  (obj->json (vector-ref vec 0) op ctx)
 	  (display "]" op))
 	 (else
 	  (display "[" op)
-	  (obj->json (vector-ref vec 0) op)
+	  (obj->json (vector-ref vec 0) op ctx)
 	  (let loop ((i 1))
 	     (if (=fx i len)
 		 (display "]" op)
 		 (begin
 		    (display "," op)
-		    (obj->json (vector-ref vec i) op)
+		    (obj->json (vector-ref vec i) op ctx)
 		    (loop (+fx i 1)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    pair->json ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (pair->json pair op::output-port)
+(define (pair->json pair op::output-port ctx)
    (display "{" op)
    (display "\"__uuid\":" op) (display "\"pair\"," op)
-   (display "\"car\":" op) (obj->json (car pair) op)
-   (display ",\"cdr\":" op) (obj->json (cdr pair) op)
+   (display "\"car\":" op) (obj->json (car pair) op ctx)
+   (display ",\"cdr\":" op) (obj->json (cdr pair) op ctx)
    (display "}" op))
    
 ;*---------------------------------------------------------------------*/

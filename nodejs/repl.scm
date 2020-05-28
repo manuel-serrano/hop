@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/repl.scm                   */
+;*    serrano/prgm/project/hop/hop/nodejs/repl.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct  6 08:22:43 2013                          */
-;*    Last change :  Wed Feb  7 11:26:39 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Tue Apr 21 14:17:39 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS like REPL                                                 */
 ;*=====================================================================*/
@@ -14,11 +14,18 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs_repl
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hopscript js2scheme)
 
    (import __nodejs_require)
    
    (export (repljs ::JsGlobalObject ::WorkerHopThread)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    prompt ...                                                       */
@@ -31,10 +38,11 @@
 ;*    repljs ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (repljs %this %worker)
+   (set! __js_strings (&init!))
    ;; start executing the nodejs header
    (let ((old-intrhdl (get-signal-handler sigint))
 	 (mod (eval-module))
-	 (module (nodejs-module "repl" (make-file-name (pwd) "repl.js")
+	 (module (nodejs-new-module "<repl>" (make-file-name (pwd) "repl.js")
 		    %worker %this)))
       ;; force the module initialization
       (let ((exp (call-with-input-string "false"
@@ -60,23 +68,24 @@
 		  (signal sigint intrhdl))
 	       ;; and we loop until eof
 	       (newline)
-	       (let luup ()
-		  (with-handler
-		     (lambda (e)
-			(repl-error-handler e)
-			(luup))
-		     (let liip ()
-			(prompt)
-			(let ((exp (jsread-and-compile)))
-			   (if (null? exp)
-			       (quit)
-			       (let ((v (js-worker-exec %worker "repl"
-					   (lambda ()
-					      (with-handler
-						 repl-error-handler
-						 (let ((v ((eval exp) %this %this %this module)))
-						    (jsprint v %this)))))))
-				  (liip))))))))
+	       (let ((console (nodejs-require-core "console" %worker %this)))
+		  (let luup ()
+		     (with-handler
+			(lambda (e)
+			   (repl-error-handler e)
+			   (luup))
+			(let liip ()
+			   (prompt)
+			   (let ((exp (jsread-and-compile)))
+			      (if (null? exp)
+				  (quit)
+				  (let ((v (js-worker-exec %worker "repl" #f
+					      (lambda ()
+						 (with-handler
+						    repl-error-handler
+						    (let ((v ((eval exp) %this %this %this module)))
+						       (jsprint v console %this)))))))
+				     (liip)))))))))
 	    (loop))
 	 (if (procedure? old-intrhdl)
 	     (signal sigint old-intrhdl)
@@ -99,9 +108,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    jsprint ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (jsprint exp %this)
-   (let* ((console (js-get %this 'console %this))
-	  (log (js-get console 'log %this)))
+(define (jsprint exp console %this)
+   (let ((log (js-get console (& "log") %this)))
       (js-call1 %this log console exp)))
 
 ;*---------------------------------------------------------------------*/
@@ -112,4 +120,10 @@
       :parser 'repl
       :driver (j2s-eval-driver)
       :driver-name "j2s-eval-driver"
+      :commonjs-export #f
       :filename "repl.js"))   
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

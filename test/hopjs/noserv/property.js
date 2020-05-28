@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/property.js     */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/property.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 05:40:26 2014                          */
-/*    Last change :  Wed Jun 20 16:42:10 2018 (serrano)                */
-/*    Copyright   :  2014-18 Manuel Serrano                            */
+/*    Last change :  Thu Jul 25 06:21:50 2019 (serrano)                */
+/*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Property access (get/set) tests.                                 */
 /*=====================================================================*/
@@ -274,6 +274,48 @@ Ctor.prototype = {
 
 assert( new Ctor( 1, 2, 3, 4 ).d == 444, "prototype.__proto__ constructor bis" );
 
+function Ctor2( a, b, c, d, e, f ) {
+   this.a = a;
+   this.b = b;
+   this.c = c;
+   this.d = d;
+   this.e = e;
+   this.f = f;
+}
+
+Ctor2.prototype = {
+   __proto__: {
+      set e( v ) { },
+      get e() { return 34;}
+   }
+}
+
+assert( new Ctor2( 1, 2, 3, 4, 5, 6 ).e === 34, "ctor2 with proto setter" );
+   
+function Ctor3( a, b, c, d, e, f ) {
+   this.a = a;
+   this.b = b;
+   this.c = c;
+   this.d = d;
+   this.e = e;
+   this.f = f;
+}
+
+var Ctor3__proto__ = {};
+
+Ctor3.prototype = Object.create( Ctor3__proto__ );
+
+assert( new Ctor3( 1, 2, 3, 4, 5, 6 ).e === 5, "ctor3 with proto setter" );
+assert( new Ctor3( 1, 2, 3, 4, 50, 6 ).e === 50, "ctor3 with proto setter" );
+assert( new Ctor3( 1, 2, 3, 4, 500, 6 ).e === 500, "ctor3 with proto setter" );
+
+Object.defineProperty( Ctor3__proto__, "e", {
+   set( v ) { },
+   get() { return 34;}
+} );
+
+assert( new Ctor3( 1, 2, 3, 4, 5, 6 ).e === 34, "ctor3 with proto setter" );
+
 function SETX( o, v ) {
    o.xxx = v;
    return o.xxx;
@@ -304,6 +346,13 @@ p.__proto__ = i;
 
 eq( i.xxx, 19, "p.xxx " + i.xxx + "/19" );
 eq( p.xxx, 18, "p.xxx " + p.xxx + "/18" );
+
+var i2 = { get xxx() { return 19 }, set xxx( v ) {} };
+p2 = { __proto__: i, get xxx() { return 18 }, set xxx( v ) {} };
+p2.__proto__ = i2;
+
+eq( i2.xxx, 19, "p.xxx " + i2.xxx + "/19" );
+eq( p2.xxx, 18, "p.xxx " + p2.xxx + "/18" );
 
 var pxxx = GETX( p );
 eq( pxxx, 18, "p.xxx " + pxxx + "/18" );
@@ -386,3 +435,25 @@ Object.defineProperty( Bar.prototype, "prop", {
 
 assert.strictEqual( Foo.prototype.propertyIsEnumerable( "prop" ), true );
 assert.strictEqual( Bar.prototype.propertyIsEnumerable( "prop" ), false );
+
+/*---------------------------------------------------------------------*/
+/*    Call bug                                                         */
+/*---------------------------------------------------------------------*/
+function caller( f, a, b ) {
+   return f.call( undefined, a, b );
+}
+
+function test( caller ) {
+   // log: 6283f5308940c164e74a6a70be89053826ea8bbc
+   // all the built closures share the same cmap but still 
+   // call cannot be cached
+   function mkClo( x ) {
+      return function( a, b ) { return x + a + b }
+   }
+   
+   return caller( mkClo( 1 ), 2, 3 ) === 6
+      && caller( mkClo( 2 ), 4, 5 ) === 11
+      && caller( mkClo( 3 ), 4, 5 ) === 12;
+}
+
+assert.ok( caller, "caller" );

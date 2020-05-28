@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/types.sch               */
+;*    serrano/prgm/project/hop/hop/hopscript/types.sch                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Thu Oct 26 05:32:07 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Mon Apr  6 07:44:09 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Companion macros                                                 */
 ;*=====================================================================*/
@@ -48,24 +48,42 @@
 (define-instantiate-sans JsSymbol)
 (define-instantiate-sans JsFunction)
 (define-instantiate-sans JsService)
-(define-instantiate-sans JsFunction1)
-(define-instantiate-sans JsFunction2)
-(define-instantiate-sans JsFunction3)
-(define-instantiate-sans JsFunction4)
-(define-instantiate-sans JsFunction5)
 (define-instantiate-sans JsHopFrame)
 (define-instantiate-sans JsServer)
 (define-instantiate-sans JsNumber)
 (define-instantiate-sans JsMath)
+(define-instantiate-sans JsModule)
 (define-instantiate-sans JsRegExp)
 (define-instantiate-sans JsBoolean)
 (define-instantiate-sans JsError)
 (define-instantiate-sans JsDate)
+(define-instantiate-sans JsProxy)
 (define-instantiate-sans JsJSON)
 (define-instantiate-sans JsWorker)
 (define-instantiate-sans JsPromise)
 (define-instantiate-sans JsGenerator)
+(define-instantiate-sans JsMap)
 (define-instantiate-sans JsWebSocket)
 (define-instantiate-sans JsWebSocketClient)
 (define-instantiate-sans JsWebSocketServer)
 (define-instantiate-sans JsWebSocketEvent)
+
+;*---------------------------------------------------------------------*/
+;*    isa?                                                             */
+;*---------------------------------------------------------------------*/
+(define-expander isa?
+   (lambda (x e)
+      
+      (define (epairify nx x)
+	 (if (epair? x)
+	     (econs (car nx) (cdr nx) (cer x))
+	     nx))
+
+      (match-case x
+	 ((isa? ?obj JsObject)
+	  (e (epairify `(js-object? ,obj) x) e))
+	 ((isa? ?obj JsStringLiteral)
+	  (e (epairify `(js-jsstring? ,obj) x) e))
+	 (else
+	  (set-car! x '(@ isa? __object))
+	  (e x e)))))

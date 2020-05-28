@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.1.x/test/hopjs/noserv/es6-template.js     */
+/*    .../prgm/project/hop/hop/test/hopjs/noserv/es6-template.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Aug 14 09:43:13 2015                          */
-/*    Last change :  Tue Feb  6 14:36:49 2018 (serrano)                */
-/*    Copyright   :  2015-18 Manuel Serrano                            */
+/*    Last change :  Fri Aug  9 08:27:35 2019 (serrano)                */
+/*    Copyright   :  2015-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 template strings                                     */
 /*=====================================================================*/
@@ -18,6 +18,7 @@ console.log( "basic" );
 // simple tests
 assert.strictEqual( `toto
 tutu`, "toto\ntutu" );
+assert.strictEqual( `foo${undefined || " "}bar`, "foo bar" );
 
 var res = "";
 var expect = "";

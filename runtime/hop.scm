@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/runtime/hop.scm                   */
+;*    serrano/prgm/project/hop/hop/runtime/hop.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Tue Jun  5 10:22:15 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Fri Mar 20 13:56:43 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
 ;*=====================================================================*/
@@ -57,17 +57,18 @@
 	    (with-hop-remote path success failure
 	       #!key
 	       (host "localhost")
-	       (port (hop-port))
+	       (port (hop-default-port))
+	       (scheme #f)
 	       (abspath #f)
 	       (user #f)
 	       (password #f)
 	       (authorization #f)
 	       (header '())
 	       (anim #f)
-	       (scheme 'http)
 	       (ctx #f)
 	       (json-parser (lambda (ip ctx) (javascript->obj ip)))
 	       (x-javascript-parser (lambda (ip ctx) (javascript->obj ip)))
+	       (receiver #f)
 	       (connection-timeout 0)
 	       args)
 	    (generic with-hop-local obj success fail authorization header)
@@ -212,12 +213,13 @@
 ;*---------------------------------------------------------------------*/
 (define (header-content-type header)
    (let ((cell (assq content-type: header)))
-      (when (and (pair? cell) (string? (cdr cell)))
-	 (let* ((str (cdr cell))
-		(i (string-index str #\;)))
-	    (if i
-		(string->symbol (substring str 0 i))
-		(string->symbol str))))))
+      (if (and (pair? cell) (string? (cdr cell)))
+	  (let* ((str (cdr cell))
+		 (i (string-index str #\;)))
+	     (if i
+		 (string->symbol (substring str 0 i))
+		 (string->symbol str)))
+	  'text/plain)))
 
 ;*---------------------------------------------------------------------*/
 ;*    byte-array->string ...                                           */
@@ -247,67 +249,71 @@
 	 ((>elong content-length #e0) (read-chars content-length obj))
 	 (else (read-string obj))))
 
-   (case content-type
-      ((application/x-hop)
-       (let* ((chars (get-chars))
-	      (s (if (eq? response-type 'arraybuffer)
-		     chars
-		     (string-hex-intern chars))))
-	  (string->obj s #f ctx)))
-      ((application/x-url-hop)
-       (let ((chars (get-chars)))
-	  (string->obj (url-decode chars) #f ctx)))
-      ((application/x-json-hop)
-       (let ((chars (get-chars)))
-	  (string->obj (byte-array->string (javascript->obj chars)) #f ctx)))
-      ((application/json)
-       (if (string? obj)
-	   (call-with-input-string obj
-	      (lambda (p) (json-parser p ctx)))
-	   (json-parser obj ctx)))
-      ((application/x-javascript)
-       (if (string? obj)
-	   (call-with-input-string obj
-	      (lambda (p) (x-javascript-parser p ctx)))
-	   (x-javascript-parser obj ctx)))
-      ((application/x-frame-hop)
-       (let* ((path (get-chars))
-	      (qi (string-index path #\?))
-	      (query (if qi (substring path (+fx qi 1)) path))
-	      (svc (if qi (substring path 0 qi) #f)))
-	  (let ((args (cgi-args->list query)))
-	     (match-case args
-		((("hop-encoding" . "hop") ("vals" . ?vals))
-		 (cons svc (string->obj vals #f ctx)))
-		((("hop-encoding" . "json") ("vals" . ?vals))
-		 (cons svc
-		    (call-with-input-string vals
-		       (lambda (p) (json-parser p ctx)))))
-		(else
-		 (error "hop-http-decode-value" "bad query" args))))))
-      ((application/x-frame-json)
-       (let* ((path (get-chars))
-	      (qi (string-index path #\?))
-	      (query (if qi (substring path (+fx qi 1)) path))
-	      (svc (if qi (substring path 0 qi) #f)))
-	  (let ((args (cgi-args->list query)))
-	     (match-case args
-		((("hop-encoding" . "hop") ("vals" . ?vals))
-		 (cons svc (string->obj vals #f ctx)))
-		((("hop-encoding" . "json") ("vals" . ?vals))
-		 (cons svc
-		    (call-with-input-string vals
-		       (lambda (p) (json-parser p ctx)))))
-		(else
-		 (error "hop-http-decode-value" "bad query" args))))))
-      ((text/html application/xhtml+xml)
-       (if (string? obj)
-	   (call-with-input-string obj
-	      (lambda (p)
-		 (car (last-pair (parse-html p (string-length obj))))))
-	   (car (last-pair (parse-html obj (elong->fixnum content-length))))))
-      (else
-       (get-chars))))
+   (with-trace 'with-hop "hop-http-decode-value"
+      (trace-item "content-type=" content-type)
+      (trace-item "content-length=" content-length)
+      (trace-item "obj=" (typeof obj))
+      (case content-type
+	 ((application/x-hop)
+	  (let* ((chars (get-chars))
+		 (s (if (eq? response-type 'arraybuffer)
+			chars
+			(string-hex-intern chars))))
+	     (string->obj s #f ctx)))
+	 ((application/x-url-hop)
+	  (let ((chars (get-chars)))
+	     (string->obj (url-decode chars) #f ctx)))
+	 ((application/x-json-hop)
+	  (let ((chars (get-chars)))
+	     (string->obj (byte-array->string (javascript->obj chars)) #f ctx)))
+	 ((application/json)
+	  (if (string? obj)
+	      (call-with-input-string obj
+		 (lambda (p) (json-parser p ctx)))
+	      (json-parser obj ctx)))
+	 ((application/x-javascript)
+	  (if (string? obj)
+	      (call-with-input-string obj
+		 (lambda (p) (x-javascript-parser p ctx)))
+	      (x-javascript-parser obj ctx)))
+	 ((application/x-frame-hop)
+	  (let* ((path (get-chars))
+		 (qi (string-index path #\?))
+		 (query (if qi (substring path (+fx qi 1)) path))
+		 (svc (if qi (substring path 0 qi) #f)))
+	     (let ((args (cgi-args->list query)))
+		(match-case args
+		   ((("hop-encoding" . "hop") ("vals" . ?vals))
+		    (cons svc (string->obj vals #f ctx)))
+		   ((("hop-encoding" . "json") ("vals" . ?vals))
+		    (cons svc
+		       (call-with-input-string vals
+			  (lambda (p) (json-parser p ctx)))))
+		   (else
+		    (error "hop-http-decode-value" "bad query" args))))))
+	 ((application/x-frame-json)
+	  (let* ((path (get-chars))
+		 (qi (string-index path #\?))
+		 (query (if qi (substring path (+fx qi 1)) path))
+		 (svc (if qi (substring path 0 qi) #f)))
+	     (let ((args (cgi-args->list query)))
+		(match-case args
+		   ((("hop-encoding" . "hop") ("vals" . ?vals))
+		    (cons svc (string->obj vals #f ctx)))
+		   ((("hop-encoding" . "json") ("vals" . ?vals))
+		    (cons svc
+		       (call-with-input-string vals
+			  (lambda (p) (json-parser p ctx)))))
+		   (else
+		    (error "hop-http-decode-value" "bad query" args))))))
+	 ((text/html application/xhtml+xml)
+	  (if (string? obj)
+	      (call-with-input-string obj
+		 (lambda (p)
+		    (car (last-pair (parse-html p (string-length obj))))))
+	      (car (last-pair (parse-html obj (elong->fixnum content-length))))))
+	 (else
+	  (post-multipart->obj ctx (get-chars) "string")))))
    
 ;*---------------------------------------------------------------------*/
 ;*    make-http-callback ...                                           */
@@ -329,7 +335,8 @@
 		(obj (when (input-port? p) (read-string p)))))))
    
    (lambda (p status header clength tenc)
-      (with-trace 'with-hop "make-http-callback"
+      (with-trace 'with-hop "http-callback"
+	 (trace-item "thread=" (current-thread))
 	 (trace-item "status=" status " content-length=" clength)
 	 (when (and (input-port? p) (>elong clength #e0))
 	    (input-port-fill-barrier-set! p (elong->fixnum clength)))
@@ -487,20 +494,23 @@
 (define (with-hop-remote path success fail
 	   #!key
 	   (host "localhost")
-	   (port (hop-port))
+	   (port (hop-default-port))
+	   (scheme #f)
 	   (abspath #f)
 	   (user #f)
 	   (password #f)
 	   (header '())
 	   (authorization #f)
 	   (anim #f)
-	   (scheme 'http)
 	   (json-parser (lambda (ip ctx) (javascript->obj ip)))
 	   (x-javascript-parser (lambda (ip ctx) (javascript->obj ip)))
 	   (ctx #f)
+	   (receiver #f)
 	   (connection-timeout 0)
 	   args)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
+   (unless scheme
+      (set! scheme (if (eq? port (hop-ssl-port)) 'https 'http)))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
       " " scheme "://" host ":" port
       (if (and (=fx (hop-verbose) 1) (>fx (string-length path) 80))
@@ -538,7 +548,17 @@
 			 (or user authorization) ctx 'arraybuffer
 			 json-parser x-javascript-parser)))
 	     (trace-item "remote path=" path)
-	     (http-send-request req hdl :args args))))))
+	     (http-send-request req
+		(if receiver
+		    (lambda (p status header clength tenc)
+		       (receiver ctx
+			  (lambda ()
+			     (with-handler
+				(lambda (e)
+				   (tprint "RECEIVER HANDLER TBR " (typeof e)))
+				(hdl p status header clength tenc)))))
+		    hdl)
+		:args args))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fail-or-raise ...                                                */

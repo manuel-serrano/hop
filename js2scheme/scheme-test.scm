@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-test.scm         */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-test.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:41:17 2017                          */
-;*    Last change :  Tue May  1 15:48:26 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Fri Jul 12 09:27:41 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme test code generation                                      */
 ;*=====================================================================*/
@@ -27,7 +27,8 @@
 	   __js2scheme_scheme-utils)
 
    (export (j2s-test ::J2SExpr mode return conf)
-	   (j2s-test-not ::J2SExpr mode return conf)))
+	   (j2s-test-not ::J2SExpr mode return conf)
+	   (j2s-totest ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-test ...                                                     */
@@ -47,11 +48,32 @@
 	  `(not (=fx ,(j2s-scheme test mode return conf) 0)))
 	 ((type-number? ty)
 	  `(not (= ,(j2s-scheme test mode return conf) 0)))
+	 ((eq? ty 'string)
+	  `(js-jsstring-toboolean ,(j2s-scheme test mode return conf)))
 	 ((notbool-expr? test)
 	  `(js-toboolean ,(j2s-scheme test mode return conf)))
 	 (else
-	  `(js-totest ,(j2s-scheme test mode return conf))))))
-   
+	  (with-access::J2SExpr test (hint)
+	     (if (pair? (assq 'object hint))
+		 `(js-totest-likely-object ,(j2s-scheme test mode return conf))
+		 (j2s-totest (j2s-scheme test mode return conf))))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-totest ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (j2s-totest expr)
+   (match-case expr
+      ((js-regexp-prototype-exec ?rx ?arg ?%this)
+       `(js-regexp-prototype-exec-as-bool ,rx ,arg ,%this))
+      ((js-regexp-prototype-maybe-exec ?rx ?arg ?%this ?cache)
+       `(js-regexp-prototype-maybe-exec-as-bool ,rx ,arg ,%this ,cache))
+      ((js-jsstring-match-regexp-from-string ?obj ?arg ?rx ?%this)
+       `(js-jsstring-match-regexp-from-string-as-bool ,obj ,arg ,rx ,%this))
+      ((let ((?var ?-)) ((kwote or) (js-array? ?var) (js-proxy-array? ?var)))
+       expr)
+      (else
+       `(js-totest ,expr))))
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-bool-test ::J2SNode ...                                      */
 ;*---------------------------------------------------------------------*/
@@ -68,19 +90,39 @@
 	  (j2s-test this mode return conf))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-bool-test ::J2SParen ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-bool-test this::J2SParen mode return conf)
+   (with-access::J2SParen this (expr)
+      (j2s-bool-test expr mode return conf)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-bool-test ::J2SBinary ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-bool-test this::J2SBinary mode return conf)
    (with-access::J2SBinary this (op lhs rhs loc)
       (case op
 	 ((&&)
-	  (epairify loc
-	     `(and ,(j2s-test lhs mode return conf)
-		   ,(j2s-test rhs mode return conf))))
+	  (let ((t1 (j2s-test lhs mode return conf)))
+	     (cond
+		((eq? t1 #t)
+		 (j2s-test rhs mode return conf))
+		((eq? t1 #f)
+		 #f)
+		(else
+		 (epairify loc
+		    `(and ,t1 ,(j2s-test rhs mode return conf)))))))
 	 ((OR)
-	  (epairify loc
-	     `(or ,(j2s-test lhs mode return conf)
-		  ,(j2s-test rhs mode return conf))))
+	  (let ((t1 (j2s-test lhs mode return conf)))
+	     (cond
+		((eq? t1 #t)
+		 #t)
+		((eq? t1 #f)
+		 (j2s-test rhs mode return conf))
+		(else
+		 (epairify loc
+		    `(or ,(j2s-test lhs mode return conf)
+			 ,(j2s-test rhs mode return conf)))))))
 	 (else
 	  (call-next-method)))))
 

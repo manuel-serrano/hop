@@ -1,0 +1,10 @@
+{
+   "tags": [ "evtmonitor" ],
+   "description": "Hop.js server event monitors",
+   "doc": "Example showing how to use server event monitors",
+   "files": [ "evtserver.js", "evtclient.js" ],
+   "level": 4,
+   "commands": [ "hop --no-color --no-zeroconf -p $(PORT) --rc-file $(RCFILE) evtserver.js",
+		 "hop --no-color --no-zeroconf -p $(PORT) --rc-file $(RCFILE) -- evtclient.js $(PREPORT)" ],
+   "service": false
+}

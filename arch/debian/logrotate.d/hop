@@ -1,0 +1,8 @@
+/var/log/hop/hop.log {
+	monthly
+	rotate 4
+	compress
+	delaycompress
+	missingok
+	notifempty
+}

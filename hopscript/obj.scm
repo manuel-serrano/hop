@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/obj.scm                 */
+;*    serrano/prgm/project/hop/hop/hopscript/obj.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul  9 17:41:45 2017                          */
-;*    Last change :  Mon Dec  4 08:42:42 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Tue Apr  7 05:20:59 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ScmObject binding                                                */
 ;*=====================================================================*/
@@ -43,6 +43,11 @@
 	   __hopscript_worker
 	   __hopscript_websocket
 	   __hopscript_lib))
+
+;*---------------------------------------------------------------------*/
+;*    __js_strings ...                                                 */
+;*---------------------------------------------------------------------*/
+(define __js_strings #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-obj->jsobject ::object ...                                    */
@@ -101,19 +106,37 @@
 	     (value (js-undefined))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-get-own-property-descriptor ::object ...                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-own-property-descriptor o::object p::obj %this::JsGlobalObject)
+   (let* ((n (js-toname p %this))
+	  (k (object-class o))
+	  (f (find-class-field k n)))
+      (if f
+	  (js-property-descriptor %this #t
+	     :writable (class-field-mutable? f)
+	     :enumerable #t
+	     :configurable #f
+	     :value (js-obj->jsobject ((class-field-accessor f) o) %this))
+	  (js-property-descriptor %this #t
+	     :writable #f
+	     :enumerable #f
+ 	     :configurable #f
+	     :value (js-undefined)))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-get ::object ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    Accessing Bigloo objects from hopscript                          */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::object prop %this)
-   (let* ((name (js-toname prop %this))
+   (let* ((name (string->symbol (js-tostring prop %this)))
 	  (clazz (object-class o))
 	  (field (find-class-field clazz name)))
       (if (not field)
 	  (case name
 	     ((inspect)
 	      (js-undefined))
-;* 	      (js-make-function %this js-inspect 1 'inspect))          */
 	     ((constructor)
 	      (js-undefined))
 	     ((toString)
@@ -121,11 +144,11 @@
 		 (lambda (this)
 		    (js-tostring this %this))
 		 0
-		 'toString))
+		 (& "toString")))
 	     ((isSealed)
-	      (js-make-function %this (lambda (this) #t) 1 'isSealed))
+	      (js-make-function %this (lambda (this) #t) 1 (& "isSealed")))
 	     ((isFrozen)
-	      (js-make-function %this (lambda (this) #t) 1 'isFrozen))
+	      (js-make-function %this (lambda (this) #t) 1 (& "isFrozen")))
 	     (else
 	      (js-raise-type-error %this
 		 (format "no such field \"~a\" ~~a" name) o)))

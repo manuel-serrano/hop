@@ -1,13 +1,13 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.4.x/arch/debian/makedeb.sh.in         */
+#*    serrano/prgm/project/hop/hop/arch/debian/makedeb.sh.in           */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 22 05:37:50 2007                          */
-#*    Last change :  Wed Jan  9 07:41:25 2013 (serrano)                */
-#*    Copyright   :  2007-13 Manuel Serrano                            */
+#*    Last change :  Thu Apr 23 12:11:26 2020 (serrano)                */
+#*    Copyright   :  2007-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
-#*    The Shell script to build the .deb for Hop on Maemo              */
+#*    The Shell script to build the .deb for Hop on Debian/Maemo       */
 #*    -------------------------------------------------------------    */
 #*    Debug with "sh -x makedeb.sh"                                    */
 #*=====================================================================*/
@@ -19,19 +19,25 @@ VERSION=@VERSION@    # Hop major version e.g. VERSION=2.4.0
 MINOR=@MINOR@        # Hop minor release e.g. MINOR=-pre1
 BIGLOOVERSION=@BIGLOOREQUIRED@
 
-REPOSITORY=/users/serrano/prgm/distrib
+NODEMODULESDIR=@NMODULESDIR@
+
+REPOSITORY=$HOME/prgm/distrib
 ICONS="hop-16x16.png hop-26x26.png hop-40x40.png hop-64x64.png"
 AUTHOR=Manuel.Serrano@inria.fr
 LICENSE=gpl
-TMP=`pwd`/build.hop
+BUILDDIR=`pwd`/build.hop
 BASEDIR=`dirname $0`
 MAEMODIR=$BASEDIR/maemo
-HOPPREFIX=/opt/bigloo
+HOPPREFIX=`bigloo -eval "(begin (print (dirname (bigloo-config 'ld-library-dir))) (exit 0))"`
 PREFIX=/usr
 HOPUSER=hop
 HOPCONFIGUREOPT=
 
+debformat="3.0 (quilt)"
 fakeroot=fakeroot
+sign=
+postinstall=yes
+HOP_YESORNO=ask
 
 while : ; do
   case $1 in
@@ -49,6 +55,21 @@ while : ; do
     --minor=*)
       MINOR="`echo $1 | sed 's/^[^=]*=//'`";
       shift;;
+    --repodir)
+      shift
+      REPOSITORY=$1;;
+    -O)
+      shift
+      BUILDDIR=$1;;
+    --no-postinstall)
+      shift
+      postinstall=no;;
+    --no-sign)
+      sign=--no-sign;;
+    --yes-or-no=no)
+      HOP_YESORNO=no;;
+    --yes-or-no=yes)
+      HOP_YESORNO=yes;;
     *)
       HOPCONFIGUREOPT="$1 $HOPCONFIGUREOPT";;
 
@@ -61,19 +82,24 @@ if [ "$REPODIR " != " " ]; then
 fi
 
 #*---------------------------------------------------------------------*/
-#*    Create the TMP directories                                       */
+#*    Create the BUILDDIR directories                                  */
 #*---------------------------------------------------------------------*/
-/bin/rm -rf $TMP
-mkdir -p $TMP
+/bin/rm -rf $BUILDDIR
+mkdir -p $BUILDDIR
 
 #*---------------------------------------------------------------------*/
 #*    Untar the standard Hop version                                   */
 #*---------------------------------------------------------------------*/
-tar xfz $REPOSITORY/hop-$VERSION$MINOR.tar.gz -C $TMP
+tar xfz $REPOSITORY/hop-$VERSION$MINOR.tar.gz -C $BUILDDIR
 
 if [ "$MINOR " != " " ]; then
-  mv $TMP/hop-$VERSION$MINOR $TMP/hop-$VERSION
+  mv $BUILDDIR/hop-$VERSION$MINOR $BUILDDIR/hop-$VERSION
 fi
+
+#*---------------------------------------------------------------------*/
+#*    pre-configuration needed for generating debian files             */
+#*---------------------------------------------------------------------*/
+#* (cd $BUILDDIR/hop-$VERSION; ./configure --prefix=$HOPPREFIX)        */
 
 #*---------------------------------------------------------------------*/
 #*    The maemo configuration                                          */
@@ -102,9 +128,9 @@ fi
 #*    Install the maemo specific files (including hop-launcher)        */
 #*---------------------------------------------------------------------*/
 if [ "$debian " = "maemo " ]; then
-  mkdir -p $TMP/hop-$VERSION/maemo
-  (cp -r $MAEMODIR/hop-launcher $TMP/hop-$VERSION/maemo)
-  (cd $TMP/hop-$VERSION/maemo/hop-launcher && \
+  mkdir -p $BUILDDIR/hop-$VERSION/maemo
+  (cp -r $MAEMODIR/hop-launcher $BUILDDIR/hop-$VERSION/maemo)
+  (cd $BUILDDIR/hop-$VERSION/maemo/hop-launcher && \
    branch=`echo $VERSION | sed -e "s/[0-9]*$/x/g"` && \
    cat configure.in | sed -e "s/@HOPBRANCH@/$branch/g" > configure && \
    cat hop-launcher.rc.in | \
@@ -112,16 +138,16 @@ if [ "$debian " = "maemo " ]; then
       sed -e "s|@PREFIX@|$PREFIX|g" > hop-launcher.rc && \
    ./configure)
 
-  mkdir -p $TMP/hop-$VERSION/icons
+  mkdir -p $BUILDDIR/hop-$VERSION/icons
   for p in $ICONS; do 
-    cp $MAEMODIR/$p $TMP/hop-$VERSION/icons;
+    cp $MAEMODIR/$p $BUILDDIR/hop-$VERSION/icons;
   done
 fi
 
 #*---------------------------------------------------------------------*/
 #*    Configure for small devices                                      */
 #*---------------------------------------------------------------------*/
-cat >> $TMP/hop-$VERSION/etc/hoprc.hop.in <<EOF
+cat >> $BUILDDIR/hop-$VERSION/etc/hoprc.hop.in <<EOF
 ;; small device configuration
 (hop-max-threads-set! 8)
 EOF
@@ -139,31 +165,31 @@ for p in hop; do
             -e "s|@PREFIX@|$PREFIX|g" \
             -e "s/@MAEMOHASLOCATION@/$maemohaslocation/g" \
             -e "s/@BIGLOOVERSION@/$BIGLOOVERSION/g" > \
-      $TMP/hop-$VERSION/arch/debian/init.d/$p;
+      $BUILDDIR/hop-$VERSION/arch/debian/init.d/$p;
   else
-    cp $BASEDIR/init.d/$p $TMP/hop-$VERSION/arch/debian/init.d/$p;
+    cp $BASEDIR/init.d/$p $BUILDDIR/hop-$VERSION/arch/debian/init.d/$p;
   fi
 done
 
 # copyright
-cp $TMP/hop-$VERSION/LICENSE $TMP/hop-$VERSION/copyright
+cp $BUILDDIR/hop-$VERSION/LICENSE $BUILDDIR/hop-$VERSION/arch/debian/copyright
 
 #*---------------------------------------------------------------------*/
 #*    Create the .tar.gz file used for building the package            */
 #*---------------------------------------------------------------------*/
-tar cfz $TMP/hop-$VERSION.tar.gz -C $TMP hop-$VERSION
+tar cfz $BUILDDIR/hop-$VERSION.tar.gz -C $BUILDDIR hop-$VERSION
 
 if [ "$debian " = "maemo " ]; then
   cat $MAEMODIR/Makefile.maemo | \
     sed -e "s/@HOPBRANCH@/$branch/g" | \
     sed -e "s|@HOPPREXI@|$HOPREFIX|g" | \
     sed -e "s|@PREFIX@|$PREFIX|g" >> \
-    $TMP/hop-$VERSION/Makefile
+    $BUILDDIR/hop-$VERSION/Makefile
 
   echo 'BUILDSPECIFIC=build-maemo' >> \
-    $TMP/hop-$VERSION/etc/Makefile.hopconfig.in
+    $BUILDDIR/hop-$VERSION/etc/Makefile.hopconfig.in
     echo 'INSTALLSPECIFIC=install-maemo' >> \
-    $TMP/hop-$VERSION/etc/Makefile.hopconfig.in
+    $BUILDDIR/hop-$VERSION/etc/Makefile.hopconfig.in
 fi
 
 #*---------------------------------------------------------------------*/
@@ -196,20 +222,21 @@ if [ "$debian " = "maemo " ]; then
   fi
 fi
 
-
 #*---------------------------------------------------------------------*/
 #*    Start creating the .deb                                          */
 #*---------------------------------------------------------------------*/
-(cd $TMP/hop-$VERSION &&
- dh_make -c $LICENSE -s -e $AUTHOR -f ../hop-$VERSION.tar.gz <<EOF
+(cd $BUILDDIR/hop-$VERSION &&
+ dh_make -y -c $LICENSE -s -e $AUTHOR -f ../hop-$VERSION.tar.gz) || exit $?
 
-EOF
-)
+# changelog
+cp $BUILDDIR/hop-$VERSION/ChangeLog $BUILDDIR/hop-$VERSION/debian/changelog
 
 # debian specific
-for p in control rules postinst postrm; do
-  if [ -f $BASEDIR/debian/$p.in ]; then
-    cat $BASEDIR/debian/$p.in \
+mkdir -p $BUILDDIR/hop-$VERSION/debian
+
+for p in control rules postinst postrm compat; do
+  if [ -f $BASEDIR/$p.in ]; then
+    cat $BASEDIR/$p.in \
       | sed -e "s/@HOPVERSION@/$VERSION/g" \
             -e "s/@HOPUSER@/$HOPUSER/g" \
             -e "s/@HOPCONFIGUREOPT@/$HOPCONFIGUREOPT/g" \
@@ -219,10 +246,11 @@ for p in control rules postinst postrm; do
             -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
             -e "s|@PREFIX@|$PREFIX|g" \
             -e "s/@MAEMOHASLOCATION@/$maemohaslocation/g" \
-            -e "s/@BIGLOOVERSION@/$BIGLOOVERSION/g" > \
-      $TMP/hop-$VERSION/debian/$p;
+            -e "s/@BIGLOOVERSION@/$BIGLOOVERSION/g" \
+            -e "s|@NODEMODULESDIR@|$NODEMODULESDIR|g" > \
+      $BUILDDIR/hop-$VERSION/debian/$p;
   else
-    cp $BASEDIR/debian/$p $TMP/hop-$VERSION/debian;
+    cp $BASEDIR/$p $BUILDDIR/hop-$VERSION/debian;
   fi
 done
 
@@ -233,9 +261,9 @@ if [ "$debian " = "maemo " ]; then
     | sed -e "s/@HOPVERSION@/$VERSION/g" \
           -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
           -e "s|@PREFIX@|$PREFIX|g" > \
-    $TMP/hop-$VERSION/maemo/hop.desktop && \
-    chmod a-w $TMP/hop-$VERSION/maemo/hop.desktop
-  cat > $TMP/hop-$VERSION/debian/hop.links <<EOF
+    $BUILDDIR/hop-$VERSION/maemo/hop.desktop && \
+    chmod a-w $BUILDDIR/hop-$VERSION/maemo/hop.desktop
+  cat > $BUILDDIR/hop-$VERSION/debian/hop.links <<EOF
 usr/share/applications/hildon/hop.desktop etc/others-menu/extra_applications/hop.desktop
 EOF
 
@@ -244,30 +272,32 @@ EOF
     | sed -e "s/@HOPVERSION@/$VERSION/g" \
           -e "s|@HOPPREFIX@|$HOPPREFIX|g" \
           -e "s|@PREFIX@|$PREFIX|g" > \
-    $TMP/hop-$VERSION/maemo/hop.service
+    $BUILDDIR/hop-$VERSION/maemo/hop.service
 fi
 
-# The changelog file
-/bin/rm -f $TMP/hop-$VERSION/debian/changelog
-cat $TMP/hop-$VERSION/ChangeLog | grep -v "^[ \\t]*[.]$$" > \
-   $TMP/hop-$VERSION/debian/changelog
-cat $BASEDIR/debian/changelog.in | sed "s/@HOPVERSION@/$VERSION/g" > \
-   $TMP/hop-$VERSION/debian/changelog
+mkdir -p debian/source
+echo $debformat > debian/source/format
 
-(cd $TMP/hop-$VERSION && dpkg-buildpackage -r$fakeroot)
+# build the package
+(cd $BUILDDIR/hop-$VERSION && dpkg-buildpackage -r$fakeroot $sign)
 
-# adjust the package file name
-if [ "$MINOR " != " " ]; then
-  minor=`echo $MINOR | sed -e "s/-//"`
-  for p in $TMP/hop_"$VERSION"_*.deb; do
-    np=`echo $p | sed -e "s/${VERSION}/${VERSION}${minor}/"`
-    mv $p $np
+# install the packages
+if [ "$postinstall " = "yes " ]; then
+  pkgs=`grep Package: $BUILDDIR/hop-$VERSION/debian/control | awk -F: '{print $2}' | tr -d '\n'`
+  arch=`dpkg --print-architecture`
+
+  export HOP_YESORNO
+  
+  for p in `echo $pkgs`; do
+    if [ -f $BUILDDIR/${p}_$VERSION-1_$arch.deb ]; then
+      sudo bash -c "export HOP_YESORNO=$HOP_YESORNO; dpkg -i $BUILDDIR/${p}_$VERSION-1_$arch.deb"
+    elif [ -f $BUILDDIR/${p}_$VERSION-1_all.deb ]; then
+      sudo dpkg -i $BUILDDIR/${p}_$VERSION-1_all.deb
+    else
+      echo "*** ERROR: cannot find .deb file for package $p"
+      exit 1
+    fi
   done
 fi
 
-#*---------------------------------------------------------------------*/
-#*    Copy the deb file                                                */
-#*---------------------------------------------------------------------*/
-if [ -d $REPOSITORY/$debianversion ]; then
-  cp $TMP/hop_"$VERSION"*.deb $REPOSITORY/$debianversion
-fi
+echo "Done generating .deb files in directory \"$BUILDDIR\""

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/_crypto.scm                */
+;*    serrano/prgm/project/hop/hop/nodejs/_crypto.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Thu Oct 26 05:54:58 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Mon Apr 13 11:12:48 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
 ;*=====================================================================*/
@@ -18,6 +18,7 @@
       (enable-ssl (library ssl)))
 
    (include "nodejs_debug.sch" "_crypto.sch")
+   (include "../hopscript/stringthread.sch")
    
    (library hopscript)
 
@@ -70,6 +71,11 @@
 	    (process-crypto ::WorkerHopThread ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
 ;*    constructors                                                     */
 ;*---------------------------------------------------------------------*/
 (define-instantiate JsSecureContext)
@@ -106,12 +112,8 @@
 ;*---------------------------------------------------------------------*/
 (define (process-crypto %worker %this)
    
-   (define (not-implemented name)
-      (js-make-function %this
-	 (lambda (this . l)
-	    (error "crypto" "crypto binding not implemented" name))
-	 0 name))
-
+   (define __init (set! __js_strings (&init!)))
+   
    (define (secure-context-init this . args)
       (with-access::JsSecureContext this (ctx)
 	 (let ((met (if (pair? args)
@@ -135,7 +137,7 @@
 	     (with-access::JsTypedArray cert (%data byteoffset length)
 		(secure-context-add-ca-cert! ctx %data
 		   (uint32->fixnum byteoffset)
-		   (js-get cert 'length %this))))))
+		   (js-get cert (& "length") %this))))))
 
    (define (add-crl this cert)
       (with-access::JsSecureContext this (ctx)
@@ -145,7 +147,7 @@
 	     (with-access::JsTypedArray cert (%data byteoffset length)
 		(secure-context-add-crl! ctx %data
 		   (uint32->fixnum byteoffset)
-		   (js-get cert 'length %this))))))
+		   (js-get cert (& "length") %this))))))
 
    (define (set-key this cert passphrase)
       (with-access::JsSecureContext this (ctx)
@@ -157,7 +159,7 @@
 		(with-access::JsTypedArray cert (%data byteoffset length)
 		   (secure-context-set-key! ctx %data
 		      (uint32->fixnum byteoffset)
-		      (js-get cert 'length %this)
+		      (js-get cert (& "length") %this)
 		      pass))))))
    
    (define (set-cert this cert)
@@ -229,49 +231,49 @@
    (define secure-context-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
 		      (js-new %this js-object))))
-	 (js-put! proto 'init
+	 (js-put! proto (& "init")
 	    (js-make-function %this secure-context-init
-	       1 "init")
+	       1 (& "init"))
 	    #f %this)
-	 (js-put! proto 'close
+	 (js-put! proto (& "close")
 	    (js-make-function %this secure-context-close
-	       0 "close")
+	       0 (& "close"))
 	    #f %this)
-	 (js-put! proto 'addRootCerts
+	 (js-put! proto (& "addRootCerts")
 	    (js-make-function %this add-root-certs
-	       0 "addRootCerts")
+	       0 (& "addRootCerts"))
 	    #f %this)
-	 (js-put! proto 'addCACert
+	 (js-put! proto (& "addCACert")
 	    (js-make-function %this add-ca-cert
-	       1 "addCACert")
+	       1 (& "addCACert"))
 	    #f %this)
-	 (js-put! proto 'addCRL
+	 (js-put! proto (& "addCRL")
 	    (js-make-function %this add-crl
-	       1 "addCRL")
+	       1 (& "addCRL"))
 	    #f %this)
-	 (js-put! proto 'setKey
+	 (js-put! proto (& "setKey")
 	    (js-make-function %this set-key
-	       2 "setKey")
+	       2 (& "setKey"))
 	    #f %this)
-	 (js-put! proto 'setCert
+	 (js-put! proto (& "setCert")
 	    (js-make-function %this set-cert
-	       1 "setCert")
+	       1 (& "setCert"))
 	    #f %this)
-	 (js-put! proto 'setSessionIdContext
+	 (js-put! proto (& "setSessionIdContext")
 	    (js-make-function %this set-session-id-context
-	       2 "setSessionIdContext")
+	       2 (& "setSessionIdContext"))
 	    #f %this)
-	 (js-put! proto 'loadPKCS12
+	 (js-put! proto (& "loadPKCS12")
 	    (js-make-function %this load-pkcs12
-	       2 "loadPKCS12")
+	       2 (& "loadPKCS12"))
 	    #f %this)
-	 (js-put! proto 'setCiphers
+	 (js-put! proto (& "setCiphers")
 	    (js-make-function %this set-ciphers
-	       2 "setCiphers")
+	       2 (& "setCiphers"))
 	    #f %this)
-	 (js-put! proto 'setOptions
+	 (js-put! proto (& "setOptions")
 	    (js-make-function %this set-options
-	       2 "setOptions")
+	       2 (& "setOptions"))
 	    #f %this)
 	 
 	 proto))
@@ -396,7 +398,10 @@
    
    (define (connection-get-session this)
       (with-access::JsSSLConnection this (ssl)
-	 (js-string->jsfastbuffer (ssl-connection-get-session ssl) %this)))
+	 (let ((sess (ssl-connection-get-session ssl)))
+	    (if (string? sess)
+		(js-string->jsfastbuffer sess %this)
+		(js-raise-type-error %this "Bad session" sess)))))
    
    (define (connection-get-current-cipher this)
       (with-access::JsSSLConnection this (ssl)
@@ -404,8 +409,8 @@
 	    (if (pair? c)
 		(with-access::JsGlobalObject %this (js-object)
 		   (let ((o (js-new %this js-object)))
-		      (js-put! o 'name (js-string->jsstring (car c)) #f %this)
-		      (js-put! o 'version (js-string->jsstring (cdr c)) #f %this)
+		      (js-put! o (& "name") (js-string->jsstring (car c)) #f %this)
+		      (js-put! o (& "version") (js-string->jsstring (cdr c)) #f %this)
 		      o))
 		(js-undefined)))))
    
@@ -482,89 +487,89 @@
    (define connection-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
 		      (js-new %this js-object))))
-	 (js-put! proto 'start
+	 (js-put! proto (& "start")
 	    (js-make-function %this connection-start
-	       0 "start")
+	       0 (& "start"))
 	    #f %this)
-	 (js-put! proto 'close
+	 (js-put! proto (& "close")
 	    (js-make-function %this connection-close
-	       0 "close")
+	       0 (& "close"))
 	    #f %this)
-	 (js-put! proto 'shutdown
+	 (js-put! proto (& "shutdown")
 	    (js-make-function %this connection-shutdown
-	       0 "shutdown")
+	       0 (& "shutdown"))
 	    #f %this)
-	 (js-put! proto 'encOut
+	 (js-put! proto (& "encOut")
 	    (js-make-function %this connection-encout
-	       3 "encOut")
+	       3 (& "encOut"))
 	    #f %this)
-	 (js-put! proto 'encIn
+	 (js-put! proto (& "encIn")
 	    (js-make-function %this connection-encin
-	       3 "encIn")
+	       3 (& "encIn"))
 	    #f %this)
-	 (js-put! proto 'clearIn
+	 (js-put! proto (& "clearIn")
 	    (js-make-function %this connection-clearin
-	       3 "clearIn")
+	       3 (& "clearIn"))
 	    #f %this)
-	 (js-put! proto 'clearOut
+	 (js-put! proto (& "clearOut")
 	    (js-make-function %this connection-clearout
-	       3 "clearOut")
+	       3 (& "clearOut"))
 	    #f %this)
-	 (js-put! proto 'isInitFinished
+	 (js-put! proto (& "isInitFinished")
 	    (js-make-function %this connection-is-init-finished
-	       0 "isInitFinished")
+	       0 (& "isInitFinished"))
 	    #f %this)
-	 (js-put! proto 'encPending
+	 (js-put! proto (& "encPending")
 	    (js-make-function %this connection-enc-pending
-	       0 "encPending")
+	       0 (& "encPending"))
 	    #f %this)
-	 (js-put! proto 'clearPending
+	 (js-put! proto (& "clearPending")
 	    (js-make-function %this connection-clear-pending
-	       0 "clearPending")
+	       0 (& "clearPending"))
 	    #f %this)
-	 (js-put! proto 'setSession
+	 (js-put! proto (& "setSession")
 	    (js-make-function %this connection-set-session
-	       1 "setSession")
+	       1 (& "setSession"))
 	    #f %this)
-	 (js-put! proto 'getSession
+	 (js-put! proto (& "getSession")
 	    (js-make-function %this connection-get-session
-	       0 "getSession")
+	       0 (& "getSession"))
 	    #f %this)
-	 (js-put! proto 'getCurrentCipher
+	 (js-put! proto (& "getCurrentCipher")
 	    (js-make-function %this connection-get-current-cipher
-	       0 "getCurrentCipher")
+	       0 (& "getCurrentCipher"))
 	    #f %this)
-	 (js-put! proto 'loadSession
+	 (js-put! proto (& "loadSession")
 	    (js-make-function %this connection-load-session
-	       1 "loadSession")
+	       1 (& "loadSession"))
 	    #f %this)
-	 (js-put! proto 'verifyError
+	 (js-put! proto (& "verifyError")
 	    (js-make-function %this connection-verify-error
-	       1 "verifyError")
+	       1 (& "verifyError"))
 	    #f %this)
-	 (js-put! proto 'getPeerCertificate
+	 (js-put! proto (& "getPeerCertificate")
 	    (js-make-function %this connection-get-peer-certificate
-	       1 "getPeerCertificate")
+	       1 (& "getPeerCertificate"))
 	    #f %this)
-	 (js-put! proto 'isSessionReused
+	 (js-put! proto (& "isSessionReused")
 	    (js-make-function %this connection-session-reused?
-	       1 "isSessionReused")
+	       1 (& "isSessionReused"))
 	    #f %this)
-	 (js-put! proto 'getNegotiatedProtocol
+	 (js-put! proto (& "getNegotiatedProtocol")
 	    (js-make-function %this connection-get-negotiated-protocol
-	       0 "getNegotiatedProtocol")
+	       0 (& "getNegotiatedProtocol"))
 	    #f %this)
-	 (js-put! proto 'setNPNProtocols
+	 (js-put! proto (& "setNPNProtocols")
 	    (js-make-function %this connection-set-npn-protocols
-	       1 "setNPNProtocols")
+	       1 (& "setNPNProtocols"))
 	    #f %this)
-	 (js-put! proto 'getServername
+	 (js-put! proto (& "getServername")
 	    (js-make-function %this connection-get-servername
-	       0 "getServername")
+	       0 (& "getServername"))
 	    #f %this)
-	 (js-put! proto 'setSNICallback
+	 (js-put! proto (& "setSNICallback")
 	    (js-make-function %this connection-set-sni-callback
-	       1 "setSNICallback")
+	       1 (& "setSNICallback"))
 	    #f %this)
 	 proto))
    
@@ -577,13 +582,13 @@
 	 (tprint ">>> info-callback state=" state))
       (if (=fx state 0)
 	  ;; start
-	  (let ((onhandshakestart (js-get this 'onhandshakestart %this)))
+	  (let ((onhandshakestart (js-get this (& "onhandshakestart") %this)))
 	     (when (>fx debug-crypto 0)
 		(tprint "onhandshakestart"))
 	     (!js-callback0 "onhandshakestart" %worker %this
 		onhandshakestart this))
 	  ;; done
-	  (let ((onhandshakedone (js-get this 'onhandshakedone %this)))
+	  (let ((onhandshakedone (js-get this (& "onhandshakedone") %this)))
 	     (when (>fx debug-crypto 0)
 		(tprint "onhandshakedone"))
 	     (!js-callback0 "onhandshakedone" %worker %this
@@ -592,7 +597,7 @@
 	 (tprint "<<< info-callback")))
 
    (define (newsession-callback this session-id::bstring serialized::bstring)
-      (let ((onnewsession (js-get this 'onnewsession %this)))
+      (let ((onnewsession (js-get this (& "onnewsession") %this)))
 	 (!js-callback2 "onnewsession" %worker %this
 	    onnewsession this
 	    (js-string->jsfastbuffer session-id %this)
@@ -623,21 +628,21 @@
 				    (reject-unauthorized reject))))))
 	    (with-access::HelloParser hparser ((hconn conn))
 	       (set! hconn conn))
-	    (js-bind! %this conn 'receivedShutdown
+	    (js-bind! %this conn (& "receivedShutdown")
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (with-access::JsSSLConnection this (ssl)
 			     (with-access::ssl-connection ssl (received-shutdown)
 				(or received-shutdown (js-undefined)))))
-		       0 "receivedShutdown"))
-	    (js-bind! %this conn 'sentShutdown
+		       0 (& "receivedShutdown")))
+	    (js-bind! %this conn (& "sentShutdown")
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (with-access::JsSSLConnection this (ssl)
 			     (with-access::ssl-connection ssl (sent-shutdown)
 				(or sent-shutdown (js-undefined)))))
-		       0 "sentShutdown"))
-	    (js-bind! %this conn 'error
+		       0 (& "sentShutdown")))
+	    (js-bind! %this conn (& "error")
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (with-access::JsSSLConnection this (ssl)
@@ -647,7 +652,7 @@
 				       (js-new %this js-error
 					  (js-string->jsstring err)))
 				    err))))
-		       0 "error")
+		       0 (& "error"))
 	       :set (js-make-function %this
 		       (lambda (this v)
 			  (with-access::JsSSLConnection this (ssl)
@@ -655,7 +660,7 @@
 				(if (js-jsstring? v)
 				    (set! err (js-jsstring->string v))
 				    (set! err #f)))))
-		       1 "error"))
+		       1 (& "error")))
 	    conn)))
 
    (define (check-entropy)
@@ -674,7 +679,7 @@
 	  (let ((buf (js-string->jsslowbuffer
 			(ssl-rand-bytes (js-tointeger size %this))
 			%this)))
-	     (if (isa? cb JsFunction)
+	     (if (js-procedure? cb)
 		 (!js-callback2 "randomBytes" %worker %this
 		    cb this (js-undefined) buf)
 		 buf)))))
@@ -690,7 +695,7 @@
 	  (let ((buf (js-string->jsslowbuffer
 			(ssl-rand-pseudo-bytes size)
 			%this)))
-	     (if (isa? cb JsFunction)
+	     (if (js-procedure? cb)
 		 (!js-callback2 "pseudoRandomBytes" %worker %this
 		    cb this (js-undefined) buf)
 		 buf)))))
@@ -790,37 +795,37 @@
    (define diffie-hellman-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
 		      (js-new %this js-object))))
-	 (js-put! proto 'setPrivateKey
+	 (js-put! proto (& "setPrivateKey")
 	    (js-make-function %this dh-set-private-key
-	       1 "setPrivateKey")
+	       1 (& "setPrivateKey"))
 	    #f %this)
-	 (js-put! proto 'setPublicKey
+	 (js-put! proto (& "setPublicKey")
 	    (js-make-function %this dh-set-public-key
-	       1 "setPublicKey")
+	       1 (& "setPublicKey"))
 	    #f %this)
-	 (js-put! proto 'generateKeys
+	 (js-put! proto (& "generateKeys")
 	    (js-make-function %this dh-generate-keys
-	       0 "generateKeys")
+	       0 (& "generateKeys"))
 	    #f %this)
-	 (js-put! proto 'computeSecret
+	 (js-put! proto (& "computeSecret")
 	    (js-make-function %this dh-compute-secret
-	       1 "computeSecret")
+	       1 (& "computeSecret"))
 	    #f %this)
-	 (js-put! proto 'getPrime
+	 (js-put! proto (& "getPrime")
 	    (js-make-function %this dh-get-prime
-	       0 "getPrime")
+	       0 (& "getPrime"))
 	    #f %this)
-	 (js-put! proto 'getPublicKey
+	 (js-put! proto (& "getPublicKey")
 	    (js-make-function %this dh-get-public-key
-	       0 "getPublicKey")
+	       0 (& "getPublicKey"))
 	    #f %this)
-	 (js-put! proto 'getPrivateKey
+	 (js-put! proto (& "getPrivateKey")
 	    (js-make-function %this dh-get-private-key
-	       0 "getPrivateKey")
+	       0 (& "getPrivateKey"))
 	    #f %this)
-	 (js-put! proto 'getGenerator
+	 (js-put! proto (& "getGenerator")
 	    (js-make-function %this dh-get-generator
-	       1 "getGenerator")
+	       1 (& "getGenerator"))
 	    #f %this)
 	 proto))
 
@@ -907,14 +912,14 @@
    (define hmac-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
 		      (js-new %this js-object))))
-	 (js-put! proto 'init
-	    (js-make-function %this hmac-init 1 "init")
+	 (js-put! proto (& "init")
+	    (js-make-function %this hmac-init 1 (& "init"))
 	    #f %this)
-	 (js-put! proto 'update
-	    (js-make-function %this hmac-update 1 "update")
+	 (js-put! proto (& "update")
+	    (js-make-function %this hmac-update 1 (& "update"))
 	    #f %this)
-	 (js-put! proto 'digest
-	    (js-make-function %this hmac-digest 1 "digest")
+	 (js-put! proto (& "digest")
+	    (js-make-function %this hmac-digest 1 (& "digest"))
 	    #f %this)
 	 proto))
 
@@ -941,11 +946,11 @@
    (define hash-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
 		      (js-new %this js-object))))
-	 (js-put! proto 'update
-	    (js-make-function %this hash-update 2 "update")
+	 (js-put! proto (& "update")
+	    (js-make-function %this hash-update 2 (& "update"))
 	    #f %this)
-	 (js-put! proto 'digest
-	    (js-make-function %this hash-digest 0 "digest")
+	 (js-put! proto (& "digest")
+	    (js-make-function %this hash-digest 0 (& "digest"))
 	    #f %this)
 	 proto))
 
@@ -983,14 +988,14 @@
    (define sign-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
 		      (js-new %this js-object))))
-	 (js-put! proto 'init
-	    (js-make-function %this sign-init 1 "init")
+	 (js-put! proto (& "init")
+	    (js-make-function %this sign-init 1 (& "init"))
 	    #f %this)
-	 (js-put! proto 'update
-	    (js-make-function %this sign-update 2 "update")
+	 (js-put! proto (& "update")
+	    (js-make-function %this sign-update 2 (& "update"))
 	    #f %this)
-	 (js-put! proto 'sign
-	    (js-make-function %this sign-sign 2 "sign")
+	 (js-put! proto (& "sign")
+	    (js-make-function %this sign-sign 2 (& "sign"))
 	    #f %this)
 	 proto))
 
@@ -1031,14 +1036,14 @@
    (define verify-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
 		      (js-new %this js-object))))
-	 (js-put! proto 'init
-	    (js-make-function %this verify-init 1 "init")
+	 (js-put! proto (& "init")
+	    (js-make-function %this verify-init 1 (& "init"))
 	    #f %this)
-	 (js-put! proto 'update
-	    (js-make-function %this verify-update 2 "update")
+	 (js-put! proto (& "update")
+	    (js-make-function %this verify-update 2 (& "update"))
 	    #f %this)
-	 (js-put! proto 'verify
-	    (js-make-function %this verify-final 3 "verify")
+	 (js-put! proto (& "verify")
+	    (js-make-function %this verify-final 3 (& "verify"))
 	    #f %this)
 	 proto))
 
@@ -1098,45 +1103,44 @@
    (define cipher-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
 		      (js-new %this js-object))))
-	 (js-put! proto 'init
-	    (js-make-function %this cipher-init 1 "init")
+	 (js-put! proto (& "init")
+	    (js-make-function %this cipher-init 1 (& "init"))
 	    #f %this)
-	 (js-put! proto 'initiv
-	    (js-make-function %this cipher-initiv 2 "initiv")
+	 (js-put! proto (& "initiv")
+	    (js-make-function %this cipher-initiv 2 (& "initiv"))
 	    #f %this)
-	 (js-put! proto 'update
-	    (js-make-function %this cipher-update 3 "update")
+	 (js-put! proto (& "update")
+	    (js-make-function %this cipher-update 3 (& "update"))
 	    #f %this)
-	 (js-put! proto 'final
-	    (js-make-function %this cipher-final 1 "final")
+	 (js-put! proto (& "final")
+	    (js-make-function %this cipher-final 1 (& "final"))
 	    #f %this)
-	 (js-put! proto 'setAutoPadding
-	    (js-make-function %this cipher-set-auto-padding 1 "setAutoPadding")
+	 (js-put! proto (& "setAutoPadding")
+	    (js-make-function %this cipher-set-auto-padding 1 (& "setAutoPadding"))
 	    #f %this)
 	 proto))
 
    (define decipher-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
 		      (js-new %this js-object))))
-	 (with-access::JsObject proto (__proto__)
-	    (set! __proto__ decipher-proto))
-	 (js-put! proto 'init
-	    (js-make-function %this cipher-init 1 "init")
+	 (js-object-proto-set! proto decipher-proto)
+	 (js-put! proto (& "init")
+	    (js-make-function %this cipher-init 1 (& "init"))
 	    #f %this)
-	 (js-put! proto 'initiv
-	    (js-make-function %this cipher-initiv 1 "init")
+	 (js-put! proto (& "initiv")
+	    (js-make-function %this cipher-initiv 1 (& "init"))
 	    #f %this)
-	 (js-put! proto 'update
-	    (js-make-function %this cipher-update 1 "init")
+	 (js-put! proto (& "update")
+	    (js-make-function %this cipher-update 1 (& "init"))
 	    #f %this)
-	 (js-put! proto 'final
-	    (js-make-function %this cipher-final 1 "init")
+	 (js-put! proto (& "final")
+	    (js-make-function %this cipher-final 1 (& "init"))
 	    #f %this)
-	 (js-put! proto 'finaltol
-	    (js-make-function %this cipher-final 1 "finaltol")
+	 (js-put! proto (& "finaltol")
+	    (js-make-function %this cipher-final 1 (& "finaltol"))
 	    #f %this)
-	 (js-put! proto 'setAutoPadding
-	    (js-make-function %this cipher-set-auto-padding 1 "setAutoPadding")
+	 (js-put! proto (& "setAutoPadding")
+	    (js-make-function %this cipher-set-auto-padding 1 (& "setAutoPadding"))
 	    #f %this)
 	 proto))
 	    
@@ -1155,9 +1159,9 @@
       (with-access::JsGlobalObject %this (js-object)
 	 (with-handler
 	    (lambda (err)
-	       (if (isa? callback JsFunction)
+	       (if (js-procedure? callback)
 		   (let ((obj (js-new %this js-object)))
-		      (js-put! obj 'ondone callback #f %this)
+		      (js-put! obj (& "ondone") callback #f %this)
 		      (js-call2 %this callback obj err (js-undefined)))
 		   (raise err)))
 	    (let ((r (string-encode %this
@@ -1167,40 +1171,50 @@
 			   iterations
 			   keylen)
 			(js-undefined))))
-	       (if (isa? callback JsFunction)
+	       (if (js-procedure? callback)
 		   (let ((obj (js-new %this js-object)))
-		      (js-put! obj 'ondone callback #f %this)
+		      (js-put! obj (& "ondone") callback #f %this)
 		      (js-call2 %this callback obj (js-undefined) r))
 		   r)))))
 
-   (let ((sc (js-make-function %this secure-context 1 "SecureContext"
+   (let ((sc (js-make-function %this secure-context 1 (& "SecureContext")
+		:alloc js-no-alloc
 		:construct secure-context
 		:prototype secure-context-proto))
-	 (conn (js-make-function %this connection 4 "Connection"
+	 (conn (js-make-function %this connection 4 (& "Connection")
+		  :alloc js-no-alloc
 		  :construct connection
 		  :prototype connection-proto))
-	 (dh (js-make-function %this diffie-hellman 4 "DiffieHellman"
-		  :construct diffie-hellman
-		  :prototype diffie-hellman-proto))
-	 (dhg (js-make-function %this diffie-hellman-group 1 "DiffieHellmanGroup"
-		  :construct diffie-hellman-group
-		  :prototype diffie-hellman-proto))
-	 (hm (js-make-function %this hmac 1 "Hmac"
+	 (dh (js-make-function %this diffie-hellman 4 (& "DiffieHellman")
+		:alloc js-no-alloc
+		:construct diffie-hellman
+		:prototype diffie-hellman-proto))
+	 (dhg (js-make-function %this diffie-hellman-group 1 (& "DiffieHellmanGroup")
+		 :alloc js-no-alloc
+		 :construct diffie-hellman-group
+		 :prototype diffie-hellman-proto))
+	 (hm (js-make-function %this hmac 1 (& "Hmac")
+		:alloc js-no-alloc
 		:construct hmac
 		:prototype hmac-proto))
-	 (hs (js-make-function %this hash 1 "Hash"
+	 (hs (js-make-function %this hash 1 (& "Hash")
+		:alloc js-no-alloc
 		:construct hash
 		:prototype hash-proto))
-	 (sn (js-make-function %this sign 1 "Sign"
+	 (sn (js-make-function %this sign 1 (& "Sign")
+		:alloc js-no-alloc
 		:construct sign
 		:prototype sign-proto))
-	 (vf (js-make-function %this sign 1 "Verify"
+	 (vf (js-make-function %this sign 1 (& "Verify")
+		:alloc js-no-alloc
 		:construct verify
 		:prototype verify-proto))
-	 (ci (js-make-function %this sign 1 "cipher"
+	 (ci (js-make-function %this sign 1 (& "cipher")
+		:alloc js-no-alloc
 		:construct cipher
 		:prototype cipher-proto))
-	 (dc (js-make-function %this sign 1 "decipher"
+	 (dc (js-make-function %this sign 1 (& "decipher")
+		:alloc js-no-alloc
 		:construct decipher
 		:prototype decipher-proto)))
       
@@ -1218,17 +1232,17 @@
 	      (Verify . ,vf)
 	      
 	      (PBKDF2 . ,(js-make-function %this pbkdf2
-			    5 "pbkdf2"))
+			    5 (& "pbkdf2")))
 	      (randomBytes . ,(js-make-function %this randomBytes
-				 2 "randomBytes"))
+				 2 (& "randomBytes")))
 	      (pseudoRandomBytes . ,(js-make-function %this pseudoRandomBytes
-				       2 "pseudoRandomBytes"))
+				       2 (& "pseudoRandomBytes")))
 	      (getSSLCiphers . ,(js-make-function %this get-ssl-ciphers
-				   0 "getSSLCiphers"))
+				   0 (& "getSSLCiphers")))
 	      (getCiphers . ,(js-make-function %this get-ciphers
-				0 "getCiphers"))
+				0 (& "getCiphers")))
 	      (getHashes . ,(js-make-function %this get-hashes
-			       0 "getHashes")))
+			       0 (& "getHashes"))))
 	    %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -1261,8 +1275,7 @@
 		 (blit-string-ascii-clamp! data 0 string 0 len))
 	      (js-string->jsstring string)))
 	  ((utf8 utf-8)
-	   (js-string->jsstring
-	      (string-utf8-normalize-utf16 data 0 (string-length data))))
+	   (string-utf8-normalize-utf16 data 0 (string-length data)))
 	  ((binary)
 	   (js-string->jsstring
 	      (8bits-encode-utf8 data 0 (string-length data))))
@@ -1296,7 +1309,6 @@
 	   data)
 	  ((binary)
 	   data)
-;* 	   (utf8->iso-latin data))                                     */
 	  (else
 	   (error "crypto" "bad encoding" encoding))))
       (else
@@ -1480,14 +1492,14 @@
 				  (with-access::JsGlobalObject %this (js-object)
 				     (let ((hello (js-new %this js-object))
 					   (buffer (js-string->jsfastbuffer data_ %this))
-					   (onclienthello (js-get conn 'onclienthello %this)))
+					   (onclienthello (js-get conn (& "onclienthello") %this)))
 					;; Parse frame, call javascript handler and
 					;; move parser into the paused state
 					(with-access::JsFastBuffer buffer (byteoffset length)
 					   (set! byteoffset (fixnum->uint32 session-id-offset))
 					   (set! length (fixnum->uint32 session-size))
-					   (js-put! buffer 'length session-size #f %this)
-					   (js-put! hello 'sessionId buffer #f %this)
+					   (js-put! buffer (& "length") session-size #f %this)
+					   (js-put! hello (& "sessionId") buffer #f %this)
 					   (set! state 'kPaused)
 					   (when (>fx debug-crypto 0)
 					      (tprint "HelloParser session_size=" session-size
@@ -1502,15 +1514,6 @@
 					copied)))))))
 		   (else
 		    copied)))))))
-   
-;*---------------------------------------------------------------------*/
-;*    no ssl support                                                   */
-;*---------------------------------------------------------------------*/
-)
-(else
- (define (crypto-constants) '())
- (define (process-crypto %worker %this)
-    #unspecified)))
 
 ;*---------------------------------------------------------------------*/
 ;*    data->string ...                                                 */
@@ -1531,6 +1534,20 @@
       (else
        (js-raise-type-error %this
 	  (string-append proc ": Not a string or buffer (" (typeof buf) ")") buf))))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)
+
+;*---------------------------------------------------------------------*/
+;*    no ssl support                                                   */
+;*---------------------------------------------------------------------*/
+)
+(else
+ (define (crypto-constants) '())
+ (define (process-crypto %worker %this)
+    #unspecified)))
 
 ;*---------------------------------------------------------------------*/
 ;*    buf->string ...                                                  */

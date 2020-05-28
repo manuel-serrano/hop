@@ -1,14 +1,14 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/doc/Makefile                      */
+#*    serrano/prgm/project/hop/hop/doc/Makefile                        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Apr 23 10:44:26 2018 (serrano)                */
-#*    Copyright   :  2006-18 Manuel Serrano                            */
+#*    Last change :  Wed May 27 11:50:49 2020 (serrano)                */
+#*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
-#*    ETC Makefile                                                     */
+#*    Doc Makefile                                                     */
 #*=====================================================================*/
-do: builddoc
+do: build
 
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
@@ -16,7 +16,7 @@ do: builddoc
 -include ../etc/Makefile.hopconfig
 -include ../etc/Makefile.version
 
-HOPFLAGS=-q --no-autoload --no-zeroconf --no-clear-cache --no-cache --no-server --no-sofile
+HOPFLAGS=-q --no-autoload --no-zeroconf --no-clear-cache --no-cache --no-server --no-so --so-policy none
 HOP_MODULES=$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/node_modules
 HOP_LIBS_PATH=$(HOP_MODULES)/markdown/lib/.libs/$(HOPRELEASE)/$(MACH):$(HOP_MODULES)/fontifier/lib/.libs/$(HOPRELEASE)/$(MACH)
 HOPBOOTFLAGS=--js-modules-dir $(BUILDDIR)/node_modules --icons-dir \
@@ -41,33 +41,39 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   Makefile doc.js xml.js html.js ecma-262-60.js \
   doc.json.in \
   api/api.json api/00-hop.md api/10-dom.md api/20-websocket.md api/01-html.md \
+  api/reqfilter.js \
   widget/widget.json \
   lang/lang.json _lang.md \
   lang/html.bnf lang/service.bnf lang/iservice.bnf \
   lang/tilde.bnf lang/syntax.bnf \
   lang/00-syntax.md \
   lang/01-es.md lang/01-service.md lang/02-worker.md \
-  lang/01-module.md lang/03-react.md lang/app.js lang/stateful.js lang/ui.js \
+  lang/01-module.md lang/03-react.md lang/10-xml.md \
+  lang/app.js lang/stateful.js lang/ui.js \
   dev/dev.json dev/00-command.md dev/01-rcfile.md dev/10-edit.md \
-  intf/intf.json intf/01-nodejs.md intf/10-scheme.md intf/scheme.bnf \
-  intf/20-lang.md license.md _index.md \
-  nodejs.md download.md \
+  dev/30-https.md dev/90-hopc.md dev/selfsigned.sh self/redirect.js \
+  dev/js2json.js intf/intf.json intf/01-nodejs.md intf/10-scheme.md \
+  intf/scheme.bnf \
+  intf/20-language.md license.md _index.md \
+  nodejs.md download.md bib.md \
   hss/doc.hss \
-  html-idx.json mdn-idx.json mdn.js
+  html-idx.json mdn-idx.json mdn.js node-idx.json node.js
 
 API_TARGETS=api.html 00-hop.html 10-dom.html 20-websocket.html \
-  hss.html config.html user.html 01-html.html markdown.html syslog.html
+  hss.html config.html user.html 01-html.html syslog.html \
+  systime.html hopdroid.html
 
 LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html \
-  01-es.html 03-react.html 01-module.html cpp.html
+  01-es.html 03-react.html 01-module.html 10-xml.html markdown.html cpp.html
 
 WIDGET_TARGETS=widget.html tree.html spage.html
 
-DEV_TARGETS=dev.html 00-command.html 01-rcfile.html 10-edit.html 20-cross.html
+DEV_TARGETS=dev.html 00-command.html 01-rcfile.html 10-edit.html \
+  20-cross.html 25-android.html 30-https.html 90-hopc.html
 
-INTF_TARGETS=intf.html 01-nodejs.html 10-scheme.html 20-lang.html
+INTF_TARGETS=intf.html 01-nodejs.html 10-scheme.html 20-language.html
 
-ALL_TARGETS=index.html download.html \
+ALL_TARGETS=index.html download.html bib.html \
   $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS) $(INTF_TARGETS) \
   idx.html
 
@@ -80,10 +86,13 @@ VPATH=api lang dev widget intf \
   ../node_modules/tree/doc \
   ../node_modules/spage/doc \
   ../node_modules/hss/doc \
+  ../node_modules/hopdroid/doc \
   ../node_modules/config/doc \
   ../node_modules/user/doc \
   ../node_modules/markdown/doc \
   ../node_modules/syslog/doc \
+  ../node_modules/texinfo/doc \
+  ../node_modules/systime/doc \
   ../node_modules/cpp/doc
 
 #*---------------------------------------------------------------------*/
@@ -95,8 +104,9 @@ build:
 	$(MAKE) builddoc HOPFLAGS="$(HOPFLAGS) $(HOPBOOTFLAGS)"
 
 builddoc: $(ALL_TARGETS) \
-  hss/markdown.css hss/fontifier.css hss/doc.css html-idx.json mdn-idx.json \
-  favicon.png
+  hss/markdown.css hss/fontifier.css hss/doc.css \
+  html-idx.json mdn-idx.json node-idx.json \
+  favicon.png LICENSE.academic
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
@@ -104,11 +114,12 @@ builddoc: $(ALL_TARGETS) \
 clean:
 	$(RM) $(API_TARGETS) $(LANG_TARGETS) $(WIDGET_TARGETS) $(DEV_TARGETS)
 	$(RM) $(INTF_TARGETS)
-	$(RM) license.html index.html download.html dev.html
+	$(RM) license.html index.html download.html bib.html dev.html
 	$(RM) 00-command.html 10-edit.html
 	$(RM) idx.json idx.html
 	$(RM) -f hss/markdown.hss hss/fontifier.hss
 	$(RM) -f favicon.png
+	$(RM) -f LICENSE.academic
 
 devclean: clean
 
@@ -145,6 +156,7 @@ install:
 	chmod $(MODFILE) $(DESTDIR)$(HOPDOCDIR)/lib/bootstrap/css/*
 	$(INSTALL) html-idx.json $(DESTDIR)$(HOPDOCDIR)
 	$(INSTALL) mdn-idx.json $(DESTDIR)$(HOPDOCDIR)
+	$(INSTALL) node-idx.json $(DESTDIR)$(HOPDOCDIR)
 
 uninstall:
 
@@ -211,9 +223,18 @@ mdn-idx.json:
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
+#*    node-idx.json ...                                                */
+#*---------------------------------------------------------------------*/
+node-idx.json: node.js
+	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
+          $(BUILDDIR)/doc/node.js > $@ \
+          || ($(RM) $@; exit 1)
+
+#*---------------------------------------------------------------------*/
 #*    dependencies                                                     */
 #*---------------------------------------------------------------------*/
 download.html: license.md ../INSTALL.md
+bib.html: hop.bib
 lang.html: _lang.md
 
 hss/markdown.css: ../node_modules/markdown/hss/markdown.hss
@@ -225,5 +246,10 @@ hss/fontifier.css: ../node_modules/fontifier/hss/fontifier.hss
 hss/doc.css: hss/doc.hss
 	cp $< $@
 
+25-android.html: ../arch/android/README.md
+
 favicon.png: ../share/icons/hop/favicon-16x16.png
+	cp $< $@
+
+LICENSE.academic: ../LICENSE.academic
 	cp $< $@

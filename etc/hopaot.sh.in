@@ -1,0 +1,83 @@
+#!/bin/sh
+#*=====================================================================*/
+#*    serrano/prgm/project/hop/3.2.x/etc/hopaot.sh.in                  */
+#*    -------------------------------------------------------------    */
+#*    Author      :  Manuel Serrano                                    */
+#*    Creation    :  Tue Oct 13 14:06:56 2015                          */
+#*    Last change :  Fri Feb 22 15:05:17 2019 (serrano)                */
+#*    Copyright   :  2015-19 Manuel Serrano                            */
+#*    -------------------------------------------------------------    */
+#*    Hop wrapper to precompile a whole application.                   */
+#*=====================================================================*/
+
+LD_LIBRARY_PATH=@BUILDLIBDIR@:$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=@BUILDLIBDIR@:$DYLD_LIBRARY_PATH
+
+export LD_LIBRARY_PATH
+export DYLD_LIBRARY_PATH
+
+source=
+target=a.out
+hophopcflags=
+hopcflags=
+hopflags=
+
+while : ; do
+  case $1 in
+    "")
+      break;;
+    
+    -o)
+      shift;
+      target=$1;;
+
+    *.js)
+      if [ "$source " = " " ]; then
+        source=$1
+      else
+	hophopcflags="$hophopcflags $1"
+	hopcflags="$hopcflags $1"
+      fi
+      ;;
+
+    -v*)
+      hopflags="$1 $hopflags";;
+    
+    --libs-dir)
+      shift
+      libsdir=$1
+      hophopcflags="--libs-dir $libsdir $hophopcflags"
+      hopcflags="--libs-dir $libsdir $hopcflags"
+      hopflags="--libs-dir $libsdir $hopflags";;
+
+    --rc-dir)
+      shift
+      rcdir=$1
+      hopflags="--rc-dir $rcdir $hopflags";;
+
+    --js-cspecs)
+      shift
+      jscspecs=$1
+      hophopcflags="--js-cspecs \"$jscspecs\" $hophopcflags"
+      hopcflags=--js-cspecs "$jscspecs" $hopcflags;;
+      
+    --help)
+      echo "Usage: hopaot [options] [-o TARGET] [--libs-dir DIR]" >&2;
+      exit 1;;
+
+    *)
+      hophopcflags="$hophopcflags $1"
+      hopcflags="$hopcflags $1";;
+  esac
+  shift;
+done
+
+if [ "$source " = " " ]; then
+  echo "*** hopaot error: no source file provided" >&2;
+  echo >&2;
+  exit 1;
+fi
+
+@HOP@ --no-server --sofile-policy aot $hopflags --hopc-flags "$hophopcflags" $source \
+  && @HOPC@ $hopcflags $source -o $target
+

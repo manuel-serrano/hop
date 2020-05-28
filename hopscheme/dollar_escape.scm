@@ -269,6 +269,5 @@
 (add-pre-expand! 10 ;; high priority: execute before other expansions.
 		    ;; -> $(servic...).f becomes (pragma..).f and not
 		    ;;    $ (get-field (servic...) f) 
-		 (lambda (x)
-		    (unhop x)))
+   unhop)
 

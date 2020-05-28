@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/widget/notepad.scm                */
+;*    serrano/prgm/project/hop/hop/widget/notepad.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Thu Nov 26 18:55:03 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Tue May  7 12:03:13 2019 (serrano)                */
+;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of notepads.                              */
 ;*=====================================================================*/
@@ -28,13 +28,29 @@
 	    (<NPHEAD> . ::obj)
 	    (<NPTAB> . ::obj)
 	    (<NPTABHEAD> . ::obj)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::html-foldlist ...                            */
+;*---------------------------------------------------------------------*/
+(define (serialize o ctx)
+   (let ((p (open-output-string)))
+      (obj->javascript-expr o p ctx)
+      (close-output-port p)))
+
+(define (unserialize o ctx)
+   o)
+      
+(register-class-serialization! xml-nphead-element serialize unserialize)
+(register-class-serialization! xml-nptabhead-element serialize unserialize)
+(register-class-serialization! xml-nptab-element serialize unserialize)
+
 ;*---------------------------------------------------------------------*/
 ;*    <NOTEPAD> ...                                                    */
 ;*    -------------------------------------------------------------    */
 ;*    See __hop_css for HSS types.                                     */
 ;*---------------------------------------------------------------------*/
 (define-tag <NOTEPAD> ((id #unspecified string)
+		       (%context #f)
 		       (class #unspecified string)
 		       (history #unspecified)
 		       (onchange #f)
@@ -43,7 +59,7 @@
 		       body)
    (let ((id (xml-make-id id 'NOTEPAD))
 	 (history (if (boolean? history) history (not (eq? id #unspecified))))
-	 (body (xml-body body))
+	 (body (xml-body body %context))
 	 head)
       (if (and (pair? body) (isa? (car body) xml-nphead-element))
 	  (begin
@@ -57,7 +73,8 @@
       (if (null? body)
 	  (error "<NOTEPAD>" "Missing <NPTAB> elements" id)
 	  (notepad id class history
-	     (map xml-primitive-value attrs) head body onchange))))
+	     (map (lambda (a) (xml-primitive-value a %context)) attrs)
+	     head body onchange %context))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nptab-get-body ...                                               */
@@ -80,7 +97,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    notepad ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (notepad id klass history attrs head tabs onchange)
+(define (notepad id klass history attrs head tabs onchange ctx)
    
    (define svc
       (call-with-output-string
@@ -123,7 +140,7 @@
    (let ((bodies (map (lambda (t i) (make-tab-div t i))
 		      tabs (iota (length tabs))))
 	 (attrs (append-map (lambda (a)
-			       (let ((a (xml-primitive-value a)))
+			       (let ((a (xml-primitive-value a ctx)))
 				  (list (symbol->keyword (car a)) (cdr a))))
 			    attrs)))
       (apply <DIV>
@@ -177,6 +194,7 @@
 ;*    <NPTAB> ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-tag <NPTAB> ((id #unspecified string)
+		     (%context #f)
 		     (class #unspecified string)
 		     (selected #f)
 		     (onselect #f)
@@ -197,7 +215,9 @@
 		(id (xml-make-id id 'NPTAB))
 		(idtab (xml-make-id #f 'NPTABTAG))
 		(attributes `(:data-hss-tag "hop-nptab"
-				,@(map xml-primitive-value attr)))
+				,@(map (lambda (a)
+					  (xml-primitive-value a %context))
+				     attr)))
 		(klass cla)
 		(onselect onselect)
 		(head (car head))

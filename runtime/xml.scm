@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/xml.scm                   */
+;*    serrano/prgm/project/hop/hop/runtime/xml.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Nov 27 08:43:44 2017 (serrano)                */
-;*    Copyright   :  2004-17 Manuel Serrano                            */
+;*    Last change :  Thu Mar 19 16:37:12 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -51,9 +51,9 @@
 	    (hop-xml-backend::xml-backend)
 	    (hop-xml-backend-set! ::obj)
 
-	    (xml-body ::obj)
-	    (generic xml-body-element ::obj)
-	    (generic xml-unpack ::obj)
+	    (xml-body ::obj ::obj)
+	    (generic xml-primitive-value ::obj ::obj)
+	    (generic xml-unpack ::obj ::obj)
 
  	    (generic xml-write ::obj ::output-port ::xml-backend)
 	    (generic xml-write-attribute ::obj ::keyword ::output-port ::xml-backend)
@@ -61,7 +61,6 @@
 	    (xml-write-attributes ::pair-nil ::output-port ::xml-backend)
 	    (generic xml-attribute-encode ::obj)
 
-	    (generic xml-primitive-value ::obj)
 	    (generic xml-to-errstring::bstring ::obj)
 
 	    (xml-url-for-each ::obj ::procedure)
@@ -79,8 +78,9 @@
 
 	    (xml-tilde->sexp ::xml-tilde)
 	    (sexp->xml-tilde::xml-tilde expr #!optional env menv)
+	    (xml-tilde*::xml-tilde ::xml-tilde . rest)
 
-	    (<TILDE> ::obj #!key src loc env menv)
+	    (<TILDE> ::obj #!key src loc)
 	    (<DELAY> . ::obj)
 	    (<PRAGMA> . ::obj)))
 
@@ -91,13 +91,17 @@
 ;*    moved to xml_types!                                              */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! xml-markup
-   (lambda (o mode)
-      (if (eq? mode 'hop-to-hop)
-	  o
-	  (let ((p (open-output-string)))
-	     (obj->javascript-expr o p)
-	     (close-output-port p))))
-   (lambda (o)
+   ;; use a fake ad-hoc serializer to simplify client-side
+   ;; unserializer implementation
+   (lambda (o ctx) o)
+   (lambda (o ctx) o))
+
+(register-class-serialization! xml-tilde
+   (lambda (o ctx)
+      ;; force the compilation of the attributes
+      (xml-tilde->statement o)
+      o)
+   (lambda (o ctx)
       o))
 
 ;*---------------------------------------------------------------------*/
@@ -256,7 +260,8 @@
    (let loop ((a args)
 	      (attr '())
 	      (body '())
-	      (id #unspecified))
+	      (id #unspecified)
+	      (ctx #f))
       (cond
 	 ((null? a)
 	  (instantiate::xml-element
@@ -269,25 +274,40 @@
 	     ((not (pair? (cdr a)))
 	      (error (el->string el) "Illegal attribute" (car a)))
 	     ((eq? (car a) :id)
-	      (let ((v (xml-primitive-value (cadr a))))
+	      (let ((v (xml-primitive-value (cadr a) ctx)))
 		 (if (or (string? v) (not v))
-		     (loop (cddr a) attr body v)
+		     (loop (cddr a) attr body v ctx)
 		     (bigloo-type-error el "string" (cadr a)))))
+	     ((eq? (car a) :class)
+	      (let ((v (xml-primitive-value (cadr a) ctx)))
+		 (cond
+		    ((or (string? v) (not v))
+		     (loop (cddr a) (cons* v (car a) attr) body id ctx))
+		    ((symbol? v)
+		     (loop (cddr a) (cons* (symbol->string! v) (car a) attr) body id ctx))
+		    ((eq? v #unspecified)
+		     (loop (cddr a) attr body id ctx))
+		    ((isa? v xml-tilde)
+		     (loop (cddr a) (cons* (cadr a) (car a) attr) body id ctx))
+		    (else
+		     (bigloo-type-error el "string" (cadr a))))))
+	     ((eq? (car a) :%context)
+	      (loop (cddr a) attr body id (cadr a)))
 	     (else
-	      (loop (cddr a) (cons* (cadr a) (car a) attr) body id))))
+	      (loop (cddr a) (cons* (cadr a) (car a) attr) body id ctx))))
 	 ((null? (car a))
-	  (loop (cdr a) attr body id))
-	 ((xml-unpack (car a))
+	  (loop (cdr a) attr body id ctx))
+	 ((xml-unpack (car a) ctx)
 	  =>
 	  (lambda (l)
 	     (if (not (or (null? (cdr a)) (pair? (cdr a))))
 		 (error (el->string el) "Illegal arguments"
 		    `(,(el->string el) ,@args))
 		 (if (or (pair? l) (null? l))
-		     (loop (append l (cdr a)) attr body id)
-		     (loop (cdr a) attr (cons (car a) body) id)))))
+		     (loop (append l (cdr a)) attr body id ctx)
+		     (loop (cdr a) attr (cons (car a) body) id ctx)))))
 	 (else
-	  (loop (cdr a) attr (cons (car a) body) id)))))
+	  (loop (cdr a) attr (cons (car a) body) id ctx)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-markup-is? ...                                               */
@@ -331,27 +351,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    xml-body ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (xml-body body)
+(define (xml-body body ctx)
    (if (null? body)
        body
-       (let ((el (xml-body-element (car body))))
+       (let ((el (xml-unpack (car body) ctx)))
 	  (if (pair? el)
-	      (append el (xml-body (cdr body)))
-	      (cons el (xml-body (cdr body)))))))
+	      (append el (xml-body (cdr body) ctx))
+	      (cons el (xml-body (cdr body) ctx))))))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-body ...                                                     */
+;*    xml-primitive-value ::obj ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-generic (xml-body-element obj)
-   obj)
+(define-generic (xml-primitive-value x::obj ctx)
+   x)
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-unpack ::obj ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-generic (xml-unpack obj::obj)
-   (when (pair? obj)
-      (when (list? obj)
-	 obj)))
+(define-generic (xml-unpack obj::obj ctx)
+   obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ...                                                    */
@@ -396,8 +414,7 @@
 		   'UTF-8 (hop-charset))))
 	  (xml-write s p backend)))
       (else
-       (error "xml" "bad XML object"
-	  (xml-to-errstring obj)))))
+       (error "xml" "bad XML object" (xml-to-errstring obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-verbatim ...                                     */
@@ -521,7 +538,7 @@
 	     (display "</" p)
 	     (display tag p)
 	     (display ">" p))
-	    ((or (pair? body) (eq? tag 'script))
+	    ((or (pair? body) (eq? tag 'script) (eq? tag 'title))
 	     (display ">" p)
 	     (for-each (lambda (b) (xml-write b p backend)) body)
 	     (display "</" p)
@@ -756,7 +773,7 @@
 (define-method (xml-write-attribute attr::hop-service id p backend)
    (display (keyword->string! id) p)
    (display "='" p)
-   (with-access::hop-service p (path)
+   (with-access::hop-service attr (path)
       (display path p))
    (display "'" p))
 
@@ -806,18 +823,15 @@
 	  (encode obj ol (count obj ol)))))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-primitive-value ::obj ...                                    */
-;*---------------------------------------------------------------------*/
-(define-generic (xml-primitive-value x::obj)
-   x)
-
-;*---------------------------------------------------------------------*/
 ;*    xml-to-errstring ::obj ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-generic (xml-to-errstring o::obj)
    (call-with-output-string
       (lambda (op)
-	 (write-circle o op))))
+	 (write-circle o op)
+	 (display " `" op)
+	 (display (typeof o) op)
+	 (display "'" op))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-initializations ...                                    */
@@ -995,9 +1009,13 @@
 	  ;; find the attribute (if any)
 	  (with-access::xml-element parent (tag id)
 	     (let ((attr (element-attribute parent)))
-		(if attr
-		    (format "~a#~a.~a" tag id (keyword->string attr))
-		    (format "~a#~a" tag id)))))
+		(cond
+		   ((eq? id #unspecified)
+		    (symbol->string tag))
+		   ((not attr)
+		    (format "~a#~a" tag id))
+		   (else
+		    (format "~a#~a.~a" tag id (keyword->string attr)))))))
 	 (else
 	  "")))
 
@@ -1087,18 +1105,16 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
       (let* ((env (or env (current-module-clientc-import)))
 	     (menv (or menv (macroe)))
 	     (c (sexp->precompiled obj env menv)))
-	 (<TILDE> c :src obj :env env :menv menv))))
+	 (<TILDE> c :src obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <TILDE> ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (<TILDE> body #!key src loc env menv)
+(define (<TILDE> body #!key src loc)
    (instantiate::xml-tilde
       (body body)
       (src src)
-      (loc loc)
-      (env env)
-      (menv menv)))
+      (loc loc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <DELAY> ...                                                      */
@@ -1296,3 +1312,60 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 	     (when (and (pair? h) (string? (cadr h)))
 		(cell-set! base (cadr h))))))))
 
+;*---------------------------------------------------------------------*/
+;*    xml-tilde* ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (xml-tilde* t0::xml-tilde . rest)
+   (let ((err (filter (lambda (x) (not (isa? x xml-tilde))) rest)))
+      (when (pair? err)
+	 (bigloo-type-error "xml-tilde*" "xml-tilde" (car err))))
+   (duplicate::xml-tilde t0
+      (src (map (lambda (t)
+		   (with-access::xml-tilde t (src)
+		      src))
+	      (cons t0 rest)))
+      (%js-expression (apply string-append
+			 (cons (xml-tilde->expression t0)
+			    (append-map (lambda (t)
+					   (list ","
+					      (xml-tilde->expression t)))
+			       rest))))
+      (%js-statement (apply string-append
+			(cons (xml-tilde->statement t0)
+			   (append-map (lambda (t)
+					  (list ";"
+					     (xml-tilde->statement t)))
+			      rest))))
+      (%js-return (cond
+		     ((null? rest)
+		      (xml-tilde->return t0))
+		     ((null? (cdr rest))
+		      (string-append 
+			 (xml-tilde->statement t0)
+			 ";"
+			 (xml-tilde->return (car rest))))
+		     ((null? (cddr rest))
+		      (string-append 
+			 (xml-tilde->statement t0)
+			 ";"
+			 (xml-tilde->statement (car rest))
+			 ";"
+			 (xml-tilde->return (cadr rest))))
+		     (else
+		      (string-append
+			 (apply string-append
+			    (cons (xml-tilde->statement t0)
+			       (append
+				  (append-map (lambda (t)
+						 (list ";"
+						    (xml-tilde->statement t)))
+				     (reverse (cdr (reverse rest)))))))
+			 ";"
+			 (xml-tilde->return (car (last-pair rest)))))))
+      (%js-attribute (apply string-append
+			(cons (xml-tilde->expression t0)
+			   (append-map (lambda (t)
+					  (list ";"
+					     (xml-tilde->expression t)))
+			      rest))))))
+  

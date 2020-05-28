@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/trashcan/array.js                                        */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/array.js          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Wed Jun  6 19:29:06 2018 (serrano)                */
-/*    Copyright   :  2014-18 Manuel Serrano                            */
+/*    Last change :  Thu Apr  9 10:34:38 2020 (serrano)                */
+/*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
 /*=====================================================================*/
@@ -13,11 +13,12 @@
 
 var assert = require( "assert" );
 
+console.log( "basic..." );
 var s = [ 1, 2, 3, 4, 5 ];
 var s2 = s.splice( 1, 0, 256 );
 
-assert.deepEqual( s2, [] );
-assert.deepEqual( s, [ 1, 256, 2, 3, 4, 5 ] );
+assert.deepEqual( s2, [], "splice empty" );
+assert.deepEqual( s, [ 1, 256, 2, 3, 4, 5 ], "splice" );
 
 function fun( x ) {
    return x;
@@ -33,9 +34,26 @@ var s3 = new Array( 5 );
 assert.ok( !(0 in s3), "0 should not be in s3" );
 assert.ok( !("0" in s3), "0 should not be in s3" );
 
+var pp = {
+   get x() { return -1 },
+   set x( v ) { return undefined;}
+}
+
+var oo = {__proto__: pp};
+
+oo.x = 3;
+
+assert.ok( oo.x, -1 );
+
+Object.defineProperty( oo, "x", { value: 100 } );
+
+assert.ok( oo.x, 100, "oo.x" );
+
 /*---------------------------------------------------------------------*/
 /*    preventExtensions                                                */
 /*---------------------------------------------------------------------*/
+console.log( "extensions..." );
+
 var o = [ 1, 2 ];
 Object.preventExtensions( o );
 
@@ -49,6 +67,8 @@ assert.throws( () => o2[ 2 ] = 3, undefined, "set, object not extensible" );
 /*---------------------------------------------------------------------*/
 /*    expand                                                           */
 /*---------------------------------------------------------------------*/
+console.log( "expand..." );
+
 function expander( v, nlen ) {
    for( let i = 0; i < nlen; i++ ) {
       v[ i ] = i;
@@ -62,7 +82,7 @@ function expanderLength( v, len ) {
 
    return v.length == len;
 }
-   
+
 function expanderProp( v, len ) {
    expander( v, len );
    let p = Object.getOwnPropertyDescriptor( v, "length" );
@@ -102,6 +122,8 @@ assert.ok( expanderSparse( 22 ), "expand sparse.22" );
 /*---------------------------------------------------------------------*/
 /*    properties                                                       */
 /*---------------------------------------------------------------------*/
+console.log( "properties..." );
+
 function props() {
    var arrObj = [ 0, 1 ];
    Object.defineProperty( arrObj, "1", {
@@ -117,17 +139,27 @@ assert.ok( props(), "length.configurable" );
 var a1 = [ 1, 2 ];
 
 Object.defineProperty( a1, "length", { value: 3, writable: false } );
-assert.throws( () => a1.push( "toto" ), undefined, "ronly length" );
+assert.throws( () => a1.push( "toto" ), undefined, "ronly length on push" );
 
 var a2 = [ 1, 2 ];
 
 Object.defineProperty( a2, "length", { value: 2, writable: false } );
-assert.throws( () => a2.push( "toto" ), undefined, "ronly length" );
-assert.throws( () => a2.pop(), undefined, "ronly length" );
+assert.throws( () => a2.push( "toto" ), undefined, "ronly length on push" );
+assert.throws( () => a2.pop(), undefined, "ronly length on pop" );
+
+var a3 = [ 1, 2 ];
+Object.defineProperty( a1, "length", { value: 3, writable: false } );
+a3.push = function( a ) { return true; };
+a3.pop = function( a ) { return true; };
+
+assert.ok( a3.push( "toto" ), "push overriden" );
+assert.ok( a3.pop( "toto" ), "pop overriden" );
 
 /*---------------------------------------------------------------------*/
 /*    iterations                                                       */
 /*---------------------------------------------------------------------*/
+console.log( "iterations..." );
+
 function checkA( a, len ) {
    if( a.length != len ) { return false };
    for( let i = 0; i < len; i++ ) {
@@ -251,6 +283,7 @@ function deleteLarge( a ) {
 }
 
 function run( proc, msg ) {
+   console.log( "iteration...", msg );
    let r = proc();
    assert.strictEqual( r, 0, msg + " [" + r + "]" );
 }
@@ -267,6 +300,8 @@ run( () => deleteLarge( new Array( Math.pow( 2, 32 ) -1 ) ), "deleteLarge" );
 /*---------------------------------------------------------------------*/
 /*    prototypes                                                       */
 /*---------------------------------------------------------------------*/
+console.log( "prototypes..." );
+
 function testProto( Array, msg ) {
    var a = new Array();
 
@@ -288,6 +323,8 @@ assert.throws( function() {
 /*---------------------------------------------------------------------*/
 /*    overflow                                                         */
 /*---------------------------------------------------------------------*/
+console.log( "overflow..." );
+
 var o = [ "x" ];
 
 assert.ok( o[ 4294967296 ] == undefined );
@@ -295,13 +332,26 @@ assert.ok( o[ 4294967296 ] == undefined );
 /*---------------------------------------------------------------------*/
 /*    push                                                             */
 /*---------------------------------------------------------------------*/
+console.log( "push..." );
+
 var p = [];
 
 [1,2,3,4,5,6,7,8,9,10].forEach( n => assert.ok( p.push( true ) === n ) );
 
+function testCtorPush() {
+   let a = new Array( 10 );
+   
+   let n = a.push( "foo" );
+   return !Object.getOwnPropertyDescriptor( a, "0" ) && n === 11;
+}
+
+assert.ok( testCtorPush(), "CtorPush" );
+
 /*---------------------------------------------------------------------*/
 /*    holey                                                            */
 /*---------------------------------------------------------------------*/
+console.log( "holey..." );
+
 function holey() {
    var a = [];
    var k = 0; 
@@ -320,6 +370,8 @@ assert.ok( holey() === 1, "holey" );
 /*---------------------------------------------------------------------*/
 /*    expansion                                                        */
 /*---------------------------------------------------------------------*/
+console.log( "expansion..." );
+
 function expansion() {
    var foo = [];
 
@@ -331,3 +383,147 @@ function expansion() {
 }
 
 assert.ok( expansion(), "expansion" );
+
+/*---------------------------------------------------------------------*/
+/*    optimization                                                     */
+/*---------------------------------------------------------------------*/
+console.log( "in..." );
+
+function optimInObject() {
+   const a = new Array( 10 );
+   a[ 0 ] = 10;
+   
+   a.fill = function( x ) { }
+   
+   a.fill( 20 );
+   
+   return a[ 0 ] === 10;
+}
+
+function optimInProto() {
+   const a = new Array( 10 );
+   a[ 0 ] = 10;
+   
+   Array.prototype.fill = function( x ) { }
+   
+   a.fill( 20 );
+   
+   return a[ 0 ] === 10;
+}
+
+function optimInNewProto() {
+   const a = new Array( 10 );
+   a[ 0 ] = 10;
+   const p = { fill: function() {}, __proto__: Array.prototype };
+   
+   a.__proto__ = p;
+   
+   a.fill( 20 );
+   
+   return a[ 0 ] === 10;
+}
+
+assert.ok( optimInObject(), "optimInObject" );
+assert.ok( optimInProto(), "optimInProto" );
+assert.ok( optimInProto(), "optimInNewProto" );
+
+/*---------------------------------------------------------------------*/
+/*    extensible                                                       */
+/*---------------------------------------------------------------------*/
+console.log( "extensible..." );
+
+function extensible() {
+   var a = new Array();
+   
+   Object.defineProperty( a, "length", { value: 5, writable: false } );
+   
+   a[ 3 ] = 3;
+   
+   try { 
+      a[ 6 ] = 6;
+      return false;
+   } catch( e ) {
+      return a[ 3 ] === 3;
+   }
+}
+
+assert.ok( extensible(), "extensible" );
+
+/*---------------------------------------------------------------------*/
+/*    prototype chain                                                  */
+/*---------------------------------------------------------------------*/
+console.log( "prototype chain..." );
+
+function protoChain() {
+   var a = new Array();
+   var b = new Array();
+	 
+   Object.defineProperty( Object.prototype, "0", { 
+      set: function( v ) { return; } 
+   } );
+   
+   Object.defineProperty( Object.prototype, "1", { 
+      value: 10, writable: false
+   } );
+   
+   a[ 0 ] = 3;
+   
+   try {
+      a[ 1 ] = 20;
+      return false;
+   } catch( e ) {
+      return a[ 0 ] === undefined;
+   }
+}
+
+function protoChainPush() {
+   var a = new Array( 10 );
+	 
+   Object.defineProperty( Object.prototype, "10", { 
+      set: function( v ) { return; }, get: function() { return -1 }
+   } );
+   
+   Object.defineProperty( Object.prototype, "11", { 
+      value: 10, writable: false
+   } );
+   
+   a.push( 3 );
+
+   try {
+      a.push( 4 );
+      return false;
+   } catch( e ) {
+      return a[ 10 ] === -1 && a.length === 11;
+   }
+}
+
+assert.ok( protoChain(), "protoChain" );
+assert.ok( protoChainPush(), "protoChainPush" );
+
+function testConstant() {
+   
+   function funvec( v ) {
+      v[ 2 ] = 3.6;
+   }
+   for( let i = 0; i < 10; i++ ) {
+      const o = [1, 2, 34];
+      if( i == 3 ) return o[ 2 ] === 34;
+      funvec( o );
+   }
+}
+
+assert.ok( testConstant(), "testConstant" );
+
+/*---------------------------------------------------------------------*/
+/*    splice                                                           */
+/*---------------------------------------------------------------------*/
+console.log( "splice..." );
+
+function testSplice() {
+   var o = [ 34, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 8, 7 ];
+   var o2 = o.splice( 10 );
+   
+   return o.length == 10 && o2.length == 5;
+}
+
+assert.ok( testSplice(), "testSplice" );

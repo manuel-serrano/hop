@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/module.scm                */
+;*    serrano/prgm/project/hop/hop/runtime/module.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 26 09:29:33 2009                          */
-;*    Last change :  Wed Dec  9 14:38:02 2015 (serrano)                */
-;*    Copyright   :  2009-15 Manuel Serrano                            */
+;*    Last change :  Sun Mar 29 11:55:19 2020 (serrano)                */
+;*    Copyright   :  2009-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP module resolver                                          */
 ;*=====================================================================*/
@@ -41,7 +41,7 @@
 			       (match-case c
 				  ((<TILDE> ??- :src (quote ?import) ??-) import)
 				  (else #f)))
-			    clauses)))
+		   clauses)))
 	  (if (pair? i)
 	      (with-access::clientc (hop-clientc) (modulec)
 		 (with-trace 'module "clientc-modulec"
@@ -67,18 +67,22 @@
 	 (trace-item "module=" module)
 	 (trace-item "files=" files)
 	 (trace-item "abase=" abase)
-	 (if (pair? files)
+	 (cond
+	    ((pair? files)
 	     (hop-module-afile-resolver module
 		(if (string? abase)
 		    (map (lambda (f) (make-file-name abase f)) files)
-		    files))
+		    files)))
+	    ((not abase)
+	     '())
+	    (else
 	     (let ((rfiles (resolver module files (find-afile abase))))
 		(trace-item "rfiles=" rfiles " abase=" abase)
 		(if (pair? rfiles)
 		    (hop-module-afile-resolver module rfiles)
 		    (let ((f (or (hop-module-path-resolver module ".")
 				 (hop-module-path-resolver module abase))))
-		       (if f (list f) '()))))))))
+		       (if f (list f) '())))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-afile ...                                                   */

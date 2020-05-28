@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/utils.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/utils.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Tue Jun 26 10:16:49 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Thu Apr 16 15:15:11 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
 ;*=====================================================================*/
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_utils
+
+   (include "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump)
@@ -27,8 +29,8 @@
 	   
 	   (j2s-expression-src loc ::pair-nil ::bstring)
 	   
-	   (m64? conf)
-	   (u32? conf)
+	   (m64? ::pair-nil)
+	   (u32? ::pair-nil)
 	   (conf-max-int::llong ::pair-nil)
 	   (conf-min-int::llong ::pair-nil)
 	   
@@ -51,14 +53,25 @@
 
 	   (j2s-type ::obj)
 	   (j2s-vtype ::obj)
+	   (j2s-etype ::obj ::pair-nil)
 	   
 	   (class-of ::J2SExpr)
 
-	   (usage?::bool ::pair-nil ::pair-nil)
-	   (only-usage?::bool ::pair-nil ::pair-nil)
-	   (strict-usage?::bool ::pair-nil ::pair-nil)
+	   (is-hint?::bool ::J2SExpr ::symbol)
 
-	   (is-hint?::bool ::J2SExpr ::symbol)))
+	   (string-method-type name #!optional (default '(any any)))
+	   (string-static-method-type name #!optional (default '(any any)))
+	   (math-static-method-type name #!optional (default '(any any)))
+	   (regexp-method-type name #!optional (default '(any any)))
+	   (number-method-type name #!optional (default '(any any)))
+	   (array-method-type name #!optional (default '(any any)))
+	   
+	   (find-builtin-method-type ::J2SExpr ::bstring)
+	   (guess-builtin-method-type ::J2SExpr ::bstring)
+
+	   (is-builtin-ref?::bool ::J2SExpr ::symbol)
+	   (constructor-only?::bool ::J2SDeclFun)
+	   (constructor-no-return?::bool ::J2SDeclFun)))
 
 ;*---------------------------------------------------------------------*/
 ;*    pass ...                                                         */
@@ -246,7 +259,7 @@
 ;*    type-number? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (type-number? type)
-   (or (type-integer? type) (eq? type 'number)))
+   (or (type-integer? type) (memq type '(real number))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-object? ...                                                 */
@@ -261,6 +274,9 @@
    (cond
       ((memq type '(any unknown)) #t)
       ((memq type types) #t)
+      ((eq? type 'number)
+       (any (lambda (t) (type-maybe? t types))
+	  '(real int30 int32 uint32 int53 bint fixnum ufixnum integer)))
       (else #f)))
 
 ;*---------------------------------------------------------------------*/
@@ -287,6 +303,7 @@
       ((regexp) 'JsRegExp)
       ((array) 'JsArray)
       ((function) 'JsFunction)
+      ((arrow) 'JsProcedure)
       ((date) 'JsDate)
       ((string) 'obj)
       ((null) 'nil)
@@ -303,17 +320,20 @@
 ;*    Return the smallest type that can represent both types.          */
 ;*---------------------------------------------------------------------*/
 (define (min-type t1 t2)
-   (if (eq? t1 t2)
-       t1
+   (cond
+      ((eq? t1 t2) t1)
+      ((eq? t1 'unknown) t2)
+      ((eq? t2 'unknown) t2)
+      (else
        (case t1
 	  ((index) t1)
 	  ((length) (if (eq? t2 'index) 'index t1))
-	  ((int32) t1)
 	  ((uint32) (if (memq t2 '(index length)) t2 t1))
+	  ((int32) t1)
 	  ((int53) (if (eq? t2 'int32) t2 t2))
 	  ((integer) (if (memq t2 '(int32 uint32)) t2 t1))
 	  ((number integer) t1)
-	  (else 'any))))
+	  (else 'any)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    max-type ...                                                     */
@@ -382,6 +402,12 @@
 	 ((!==) '==)
 	 ((instanceof) '!instanceof)
 	 (else (error "j2s-expr-type-test" "Unknown op" op))))
+
+   (define (string->typename val)
+      (let ((s (string->symbol val)))
+	 (if (eq? s 'boolean)
+	     'bool
+	     s)))
    
    (define (typeof op expr str)
       (when (isa? expr J2SUnary)
@@ -394,7 +420,7 @@
 		  ((and (eq? bop 'typeof) (isa? expr J2SRef))
 		   (with-access::J2SRef expr (decl)
 		      (with-access::J2SString str (val)
-			 (values op decl (string->symbol val) expr)))))))))
+			 (values op decl (string->typename val) expr)))))))))
    
    (define (binary-type-test expr)
       (with-access::J2SBinary expr (op lhs rhs)
@@ -477,6 +503,7 @@
 			((js-array?) 'array)
 			((js-object?) 'object)
 			((js-function?) 'function)
+			((js-procedure?) 'arrow)
 			((boolean?) 'bool)
 			((js-undefined?) 'undefined)
 			((js-null?) 'null)
@@ -513,8 +540,8 @@
 	  (with-access::J2SDecl decl (vtype)
 	     vtype)))
       ((isa? node J2SHopRef)
-       (with-access::J2SHopRef node (vtype)
-	  vtype))
+       (with-access::J2SHopRef node (type)
+	  type))
       ((isa? node J2SParen)
        (with-access::J2SParen node (expr)
 	  (j2s-vtype expr)))
@@ -526,6 +553,26 @@
 	  type))
       (else
        'void)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-etype ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    The type of an expression.                                       */
+;*---------------------------------------------------------------------*/
+(define (j2s-etype node conf)
+   (let ((vtype (j2s-vtype node)))
+      (if (memq vtype '(int32 uint32))
+	  vtype
+	  ;; the variable type is unboxed, check for a more specific
+	  ;; expression type
+	  (let ((etype (j2s-type node)))
+	     (cond
+		((memq etype '(int32 uint32))
+		 (if (m64? conf) 'int53 vtype))
+		((eq? etype 'integer)
+		 (if (m64? conf) 'int53 etype))
+		(else
+		 etype))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    class-of ...                                                     */
@@ -546,31 +593,6 @@
 	    (else 'unknown)))))
 
 ;*---------------------------------------------------------------------*/
-;*    usage? ...                                                       */
-;*---------------------------------------------------------------------*/
-(define (usage? keys usage)
-   (any (lambda (k)
-	   [assert (k) (memq k '(init new ref assig get set call eval))]
-	   (memq k usage))
-      keys))
-
-;*---------------------------------------------------------------------*/
-;*    only-usage? ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (only-usage? keys usage)
-   (every (lambda (u)
-	     [assert (u) (memq u '(init new ref assig get set call eval))]
-	     (memq u keys))
-      usage))
-
-;*---------------------------------------------------------------------*/
-;*    strict-usage? ...                                                */
-;*---------------------------------------------------------------------*/
-(define (strict-usage? keys usage)
-   (and (=fx (length keys) (length usage))
-	(only-usage? keys usage)))
-	
-;*---------------------------------------------------------------------*/
 ;*    is-hint? ...                                                     */
 ;*    -------------------------------------------------------------    */
 ;*    Is the most likely hint of type TYPE?                            */
@@ -583,8 +605,270 @@
 	    (cond
 	       ((null? hint)
 		(eq? (car h) type))
-	       ((>fx (cdr (car hint)) (cdr h))
-		(loop (cdr hint) (car hint)))
+	       ((>=fx (cdr (car hint)) (cdr h))
+		(if (eq? (car (car hint)) type)
+		    (loop (cdr hint) h)
+		    (loop (cdr hint) (car hint))))
 	       (else
 		(loop (cdr hint) h)))))))
 
+;*---------------------------------------------------------------------*/
+;*    assoc-method-type ...                                            */
+;*    -------------------------------------------------------------    */
+;*    A method entry is structured as follows:                         */
+;*      1- the return type                                             */
+;*      2- the type of the receiver                                    */
+;*      3- a list of argument types: type or type*                     *
+;*---------------------------------------------------------------------*/
+(define (assoc-method-type name default methods)
+   (let ((c (assoc name methods)))
+      (if (pair? c) (cdr c) default)))
+
+;*---------------------------------------------------------------------*/
+;*    string-method-type ...                                           */
+;*---------------------------------------------------------------------*/
+(define (string-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("charAt" . (string string index))
+	("charCodeAt" . (number string index))
+	("concat" . (string string string string string))
+	("indexOf" . (indexof string index))
+	("lastIndexOf" . (indexof string index))
+	("localeCompare" . (integer string (string)))
+	("naturalCompare" . (integer string (string)))
+	("replace" . (string string (string regexp) (string function)))
+	("search" . (indexof string regexp))
+	("slice" . (string string index index))
+	("split" . (array string (string regexp) index))
+	("substr" . (string string index index))
+	("substring" . (string string index index))
+	("toLowerCase" . (string string))
+	("toLocaleLowerCase" . (string string))
+	("toUpperCase" . (string string))
+	("toLocaleUpperCase" . (string string))
+	("trim" . (string string)))))
+
+;*---------------------------------------------------------------------*/
+;*    string-static-method-type ...                                    */
+;*---------------------------------------------------------------------*/
+(define (string-static-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("fromCharCode" . (string undefined integer)))))
+   
+;*---------------------------------------------------------------------*/
+;*    math-static-method-type ...                                      */
+;*---------------------------------------------------------------------*/
+(define (math-static-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("abs" . (number undefined number))
+	("acos" . (real4 undefined real))
+	("asin" . (real4 undefined real))
+	("atan" . (real undefined real))
+	("atan2" . (real undefined real))
+	("ceil" . (number undefined real))
+	("cos" . (real1 undefined real))
+	("exp" . (number undefined real))
+	("floor" . (number undefined real))
+	("log" . (real undefined real))
+	("max" . (number undefined number))
+	("min" . (number undefined number))
+	("pow" . (number undefined number))
+	("random" . (ureal1 undefined))
+	("round" . (number undefined real))
+	("sin" . (real1 undefined real))
+	("sqrt" . (real undefined real))
+	("tan" . (real undefined real)))))
+   
+;*---------------------------------------------------------------------*/
+;*    regexp-method-type ...                                           */
+;*---------------------------------------------------------------------*/
+(define (regexp-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("test" . (bool regexp string)))))
+
+;*---------------------------------------------------------------------*/
+;*    number-method-type ...                                           */
+;*---------------------------------------------------------------------*/
+(define (number-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("isInteger" . (bool number))
+	("toString" . (string number number)))))
+
+;*---------------------------------------------------------------------*/
+;*    array-method-type ...                                            */
+;*---------------------------------------------------------------------*/
+(define (array-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("concat" . (array array array array array))
+	("every" . (bool array function))
+	("filter" . (array array function))
+	("find" . (any array function))
+	("indexOf" . (indexof array index))
+	("forEach" . (any array function))
+	("join" . (string array string))
+	("lastIndexOf" . (indexof array index))
+	("map" . (array array function))
+	("reduce" . (any array function))
+	("reduceRight" . (any array function))
+	("reverse" . (array array))
+	("shift" . (array array))
+	("slice" . (array array index index))
+	("sort" . (array array function))
+	("some" . (bool array function))
+	("splice" . (array array index integer))
+	("unshift" . (array array)))))
+
+;*---------------------------------------------------------------------*/
+;*    find-builtin-method-type ...                                     */
+;*---------------------------------------------------------------------*/
+(define (find-builtin-method-type obj fn)
+
+   (define (is-global? obj ident)
+      (or (is-builtin-ref? obj ident)
+	  (when (isa? obj J2SGlobalRef)
+	     (with-access::J2SGlobalRef obj (id decl)
+		(when (eq? id ident)
+		   (not (decl-usage-has? decl '(assig))))))))
+   
+   (define (String? obj)
+      (is-global? obj 'String))
+
+   (define (Math? obj)
+      (is-global? obj 'Math))
+
+   (case (j2s-type obj)
+      ((string) (string-method-type fn))
+      ((regexp) (regexp-method-type fn))
+      ((number integer index) (number-method-type fn))
+      ((array) (array-method-type fn))
+      ((unknown) '(unknown ()))
+      (else
+       (cond
+	  ((String? obj) (string-static-method-type fn))
+	  ((Math? obj) (math-static-method-type fn))
+	  (else '(any any))))))
+
+;*---------------------------------------------------------------------*/
+;*    guess-builtin-method-type ...                                    */
+;*---------------------------------------------------------------------*/
+(define (guess-builtin-method-type obj fn)
+
+   (define (is-global? obj ident)
+      (when (isa? obj J2SGlobalRef)
+	 (with-access::J2SGlobalRef obj (id decl)
+	    (when (eq? id ident)
+	       (not (decl-usage-has? decl '(assig)))))))
+   
+   (define (String? obj)
+      (is-global? obj 'String))
+
+   (define (Math? obj)
+      (is-global? obj 'Math))
+
+   (define (map-delete-duplicates l1 l2)
+      ;; merge the two argument type lists
+      (let loop ((l1 l1)
+		 (l2 l2))
+	 (cond
+	    ((null? l1)
+	     l2)
+	    ((null? l2)
+	     l1)
+	    (else
+	     (let ((l (cond
+			 ((pair? (car l1))
+			  (cond
+			     ((pair? (car l2))
+			      (delete-duplicates (append (car l1) (car l2))))
+			     ((memq (car l2) (car l1))
+			      (car l1))
+			     (else
+			      (cons (car l2) (car l1)))))
+			 ((pair? (car l2))
+			  (cond
+			     ((memq (car l1) (car l2))
+			      (car l2))
+			     (else
+			      (cons (car l1) (car l2)))))
+			 ((eq? (car l1) (car l2))
+			  (car l1))
+			 (else
+			  (list (car l1) (car l2))))))
+		(cons l (loop (cdr l1) (cdr l2))))))))
+	     
+   (define (merge-candidate x y)
+      (if (null? y)
+	  x
+	  (let ((ret (if (eq? (car x) (car y))
+			 (car x)
+			 (list (car x) (car y))))
+		(self (if (eq? (cadr x) (cadr y))
+			  (cadr x)
+			  (list (cadr x) (cadr y))))
+		(args (map-delete-duplicates (cddr x) (cddr y))))
+	     (cons* ret self args))))
+      
+   (define (guess-method obj fn)
+      (let ((candidates (list
+			  (string-method-type fn #f)
+			  (regexp-method-type fn #f)
+			  (number-method-type fn #f)
+			  (array-method-type fn #f)
+			  (and (String? obj) (string-static-method-type fn #f))
+			  (and (Math? obj) (math-static-method-type fn #f)))))
+	 (let loop ((l candidates)
+		    (res '()))
+	    (cond
+	       ((null? l)
+		(if (pair? res) res '(any any)))
+	       ((car l)
+		(loop (cdr l) (merge-candidate (car l) res)))
+	       (else
+		(loop (cdr l) res))))))
+   
+   (let ((ty (j2s-type obj)))
+      (if (memq ty '(unknown any))
+	  (guess-method obj fn)
+	  (find-builtin-method-type obj fn))))
+   
+;*---------------------------------------------------------------------*/
+;*    is-builtin-ref? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (is-builtin-ref? expr clazz)
+   (cond
+      ((isa? expr J2SUnresolvedRef)
+       (with-access::J2SUnresolvedRef expr (id)
+	  (eq? id clazz)))
+      ((isa? expr J2SGlobalRef)
+       (with-access::J2SGlobalRef expr (decl)
+	  (with-access::J2SDecl decl (id)
+	     (and (eq? id clazz) (not (decl-usage-has? decl '(assig)))))))
+      ((isa? expr J2SRef)
+       (with-access::J2SRef expr (decl)
+	  (with-access::J2SDecl decl (id scope)
+	     (and (eq? id clazz)
+		  (eq? scope '%scope)
+		  (not (decl-usage-has? decl '(assig ref assig set delete uninit rest eval)))))))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    constructor-only? ...                                            */
+;*    -------------------------------------------------------------    */
+;*    This predicates is #t iff the function is only used as a         */
+;*    constructor.                                                     */
+;*---------------------------------------------------------------------*/
+(define (constructor-only?::bool decl::J2SDeclFun)
+   (and (decl-usage-has? decl '(new))
+	(not (decl-usage-has? decl '(ref assig call eval instanceof)))))
+
+;*---------------------------------------------------------------------*/
+;*    constructor-no-return? ...                                       */
+;*    -------------------------------------------------------------    */
+;*    Does a constructor return something else than UNDEF?             */
+;*---------------------------------------------------------------------*/
+(define (constructor-no-return? decl::J2SDeclFun)
+   (let ((fun (j2sdeclinit-val-fun decl)))
+      (when (isa? fun J2SFun)
+	 (with-access::J2SFun fun (rtype)
+	    (eq? rtype 'undefined)))))

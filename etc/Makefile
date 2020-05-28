@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/etc/Makefile                      */
+#*    serrano/prgm/project/hop/hop/etc/Makefile                        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Jan 29 10:33:11 2018 (serrano)                */
-#*    Copyright   :  2006-18 Manuel Serrano                            */
+#*    Last change :  Sun May 24 19:16:18 2020 (serrano)                */
+#*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
 #*=====================================================================*/
@@ -30,13 +30,21 @@ POPULATION	= Makefile Makefile.weblet Makefile.library \
                   js2scheme.init.in hopscript.init.in nodejs.init.in \
                   hopdroid.init.in \
                   hop.man.in hopsh.man.in hopreplay.man.in \
-                  hopc.sh.in hopwidget.init.in hglog.scm hopjs.el.in \
+                  hopc.sh.in hopwidget.init.in hglog.scm \
                   node_crypto_groups.h node_crypto_groups.c \
                   mkserializer.hop hop.sh.in hopc.sh.in \
-                  hop-autoconf.js.in hop-boot.js.in
+                  hop-autoconf.js.in hop-boot.js.in \
+                  hopjs-config.el.in hopjs.el hopjs-indent.el \
+                  hopjs-parse.el hopjs-macro.el hop_config.sch.in
 
 install:
-	cp Makefile.hopconfig $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
+	cat Makefile.hopconfig \
+          | sed -e "s|$(BUILDDIR)/bin|$(HOPBINDIR)|g" \
+                -e "s|$(BUILDDIR)/lib|$(HOPLIBDIR)|g" \
+                -e "s|$(BUILDDIR)/share|$(HOPSHAREDIR)/$(HOPRELEASE)|g" \
+                -e "s|hopc[.]sh|hopc|g" \
+                -e "s|hop[.]sh|hop|g" \
+          > $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
 	chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
 	cp hoprc.hop $(DESTDIR)$(HOPETCDIR)/hoprc.hop
 	chmod $(MODFILE) $(DESTDIR)$(HOPETCDIR)/hoprc.hop
@@ -56,8 +64,14 @@ install:
 	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPSHAREDIR)/site-lisp; \
 	  chmod $(MODDIR) $(DESTDIR)$(HOPSHAREDIR)/site-lisp; \
 	fi
-	$(INSTALL) hopjs.el $(DESTDIR)$(HOPSHAREDIR)/site-lisp
-	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/site-lisp/hopjs.el
+	for p in hopjs hopjs-config hopjs-parse hopjs-indent hopjs-macro; do \
+	  $(INSTALL) $$p.el $(DESTDIR)$(HOPSHAREDIR)/site-lisp; \
+	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/site-lisp/$$p.el; \
+        done
+	cp ../bin/hopaot.sh $(DESTDIR)$(HOPBINDIR)/hopaot
+	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/hopaot
+	cp ../bin/hopaot.sh $(DESTDIR)$(HOPBINDIR)/hopaot-$(HOPRELEASE)
+	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/hopaot-$(HOPRELEASE)
 
 uninstall:
 	$(RM) -f $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig
@@ -65,6 +79,8 @@ uninstall:
 	$(RM) -f $(DESTDIR)$(HOPMANDIR)/hop.1
 	$(RM) -f $(DESTDIR)$(HOPMANDIR)/hopsh.1
 	$(RM) -f $(DESTDIR)$(HOPMANDIR)/hopreplay.1
+	$(RM) -f $(DESTDIR)$(HOPBINDIR)/hopaot
+	$(RM) -f $(DESTDIR)$(HOPBINDIR)/hopaot-$(HOPRELEASE)
 
 clean:
 

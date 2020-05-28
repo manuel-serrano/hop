@@ -3,12 +3,11 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 22 19:47:45 2017                          */
-;*    Last change :  Mon Feb 12 20:50:39 2018 (serrano)                */
+;*    Last change :  Wed Oct 17 08:39:37 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    An optional stage used in debug mode to assign to replace        */
-;*    all UNKNOWN type occurrences with ANY.                           */
-;*    to all                                                           */
+;*    An optional stage used in debug mode to replace UNKNOWN type     */
+;*    occurrences with ANY.                                            */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -73,10 +72,11 @@
       (set! type 'bool)))
 
 ;*---------------------------------------------------------------------*/
-;*    any-types ::J2SArray ...                                          */
+;*    any-types ::J2SArray ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (any-types this::J2SArray)
-   (with-access::J2SExpr this (type)
+   (with-access::J2SArray this (type exprs)
+      (for-each any-types exprs)
       (set! type 'array)))
 
 ;*---------------------------------------------------------------------*/
@@ -91,8 +91,12 @@
 ;*    any-types ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (any-types this::J2SFun)
-   (with-access::J2SFun this (rtype thisp)
+   (with-access::J2SFun this (rtype thisp argumentsp decl)
       (when (isa? thisp J2SDecl) (any-types thisp))
+      (when (isa? argumentsp J2SDecl) (any-types argumentsp))
+      (when (isa? decl J2SDecl)
+	 (with-access::J2SDecl decl (vtype)
+	    (set! vtype (map-type vtype))))
       (set! rtype (map-type rtype)))
    (call-default-walker)
    (call-next-method))
@@ -101,26 +105,33 @@
 ;*    any-types ::J2SHopRef ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (any-types this::J2SHopRef)
-   (with-access::J2SHopRef this (itype rtype)
-      (set! itype (map-type itype))
-      (set! rtype (map-type rtype)))
+   (with-access::J2SHopRef this (type)
+      (set! type (map-type type)))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    any-types ::J2SGlobalRef ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (any-types this::J2SGlobalRef)
+   (with-access::J2SGlobalRef this (type decl)
+      (with-access::J2SDecl decl (vtype)
+	 (set! vtype (map-type vtype)))
+      (set! type (map-type type)))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    any-types ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (any-types this::J2SDecl)
-   (with-access::J2SDecl this (utype vtype itype id)
-      (set! itype (map-type itype))
-      (set! vtype (map-type vtype))
-      (set! utype (map-type utype))))
+   (with-access::J2SDecl this (vtype id)
+      (set! vtype (map-type vtype))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    any-types ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (any-types this::J2SDeclInit)
    (call-next-method)
-   (with-access::J2SDeclInit this (val)
+   (with-access::J2SDeclInit this (val id loc)
       (any-types val)))
 
 ;*---------------------------------------------------------------------*/
@@ -146,3 +157,11 @@
 	  (set! type (map-type type))))
    (call-default-walker))
 
+;*---------------------------------------------------------------------*/
+;*    any-types ::J2SCatch ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (any-types this::J2SCatch)
+   (with-access::J2SCatch this (param)
+      (any-types param)
+      (call-default-walker)))
+   

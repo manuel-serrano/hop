@@ -1,0 +1,141 @@
+;* Automatically generated file (don't edit) */
+;; -*- mode: lisp -*-
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/3.2.x/etc/hopjs-config.el               */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
+;*    Last change :  Thu Jan  3 19:47:48 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
+;*    -------------------------------------------------------------    */
+;*    Hopjs config                                                     */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The package                                                      */
+;*---------------------------------------------------------------------*/
+(provide 'hopjs-config)
+
+;*---------------------------------------------------------------------*/
+;*    configuration                                                    */
+;*---------------------------------------------------------------------*/
+(defconst hopjs-version "3.2.0")
+
+(defcustom hopjs-doc-dir "/usr/local/share/doc/hop/3.2.0"
+  "The main directory containing the documentation indexes"
+  :type 'string
+  :safe 'stringp
+  :group 'hopjs)
+
+(defcustom hopjs-official-doc-url "http://hop-dev.inria.fr/home/lang.html"
+  "The remote URL documentation"
+  :type 'string
+  :safe 'stringp
+  :group 'hopjs)
+
+(defcustom hopjs-doc-extra-dir
+  (list "~/.config/hop/weblets")
+  "Directories containing the extra documentation indexes"
+  :type '(repeat (string))
+  :group 'hopjs)
+
+(defcustom hopjs-navigator "firefox"
+  "The navigator to access the documentation"
+  :type 'string
+  :safe 'stringp
+  :group 'hopjs)
+
+(defcustom hopjs-plugins '("hiphop" "module" "in" "out" "inout")
+  "The list of plugin keywords (used for indentatation)"
+  :type '(repeat (string))
+  :group 'hopjs)
+  
+(defcustom hopjs-special-tags
+  '("link" "LINK" "input" "INPUT" "meta" "META" "img" "IMG")
+  "The special HTML tag that have no close tag"
+  :type '(repeat (string))
+  :group 'hopjs)
+
+(defcustom hopjs-html-doc-url "http://www.w3.org/TR/html4"
+  "The base URL of the HTML4.01 documentation"
+  :type 'string
+  :safe 'stringp
+  :group 'hopjs)
+
+(defcustom hopjs-mdn-doc-url "https://developer.mozilla.org"
+  "Mozilla Developper Network base URL"
+  :type 'string
+  :safe 'stringp
+  :group 'hopjs)
+
+(defcustom hopjs-node-doc-url "https://nodejs.org/api"
+  "NodeJS API base documentation URL"
+  :type 'string
+  :safe 'stringp
+  :group 'hopjs)
+
+(defcustom hopjs-external-docs
+  (list (cons "hop" (concat hopjs-doc-dir "/index.html"))
+	(cons "hop official" hopjs-official-doc-url)
+	(cons "mdn" hopjs-mdn-doc-url)
+	(cons "html4.01" hopjs-html-doc-url)
+	(cons "nodejs" "https://nodejs.org/api/"))
+  "List of available documentations"
+  :type '(repeat (cons string string))
+  :group 'hopjs)
+
+(defcustom hopjs-mode-line-doc-button-p t
+  "If true enables hop quick doc modline button"
+  :type 'boolean
+  :safe 'booleanp
+  :group 'hopjs)
+
+(defcustom hopjs-mode-line-doc-button-color "#fa9600"
+  "Background color of the mode-line doc button"
+  :type 'string
+  :safe 'stringp
+  :group 'hopjs)
+
+(defcustom hopjs-indent-custom t
+  "Enable/disable custom Hopjs indentation"
+  :type 'boolean
+  :safe 'booleanp
+  :group 'hopjs)
+
+(defcustom hopjs-indent-level 3
+  "Number of spaces for each indentation step in `js-mode'."
+  :type 'integer
+  :safe 'integerp
+  :group 'hopjs)
+
+(defcustom hopjs-indent-level-html 2
+  "Number of spaces for each indentation step in `js-mode'."
+  :type 'integer
+  :safe 'integerp
+  :group 'hopjs)
+
+(defcustom hopjs-indent-function-body-strictness-level 1
+  "If true, strictly align function body according to the function
+ opening brace"
+  :type 'integer
+  :safe 'integerp
+  :group 'hopjs)
+
+(defcustom hopjs-indent-function-body-alignment 1
+  "Multiplication indent level factor for function body
+ use a double indentation level if we want the closing
+ bracket not be shifted right at the same level as the
+ function call with the value 1 we get:
+    foo( () =>
+       return 3;
+    },
+       3 )
+ with the value 2 we get:
+    foo( () =>
+          return 3;
+       },
+       3 )"
+  :type 'integer
+  :safe 'integerp
+  :group 'hopjs)
+  

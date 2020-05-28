@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/trashcan/es6-promise.js                                  */
+/*    .../prgm/project/hop/hop/test/hopjs/noserv/es6-promise.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 19 11:16:33 2015                          */
-/*    Last change :  Tue Mar 21 13:34:46 2017 (serrano)                */
-/*    Copyright   :  2015-17 Manuel Serrano                            */
+/*    Last change :  Tue Apr 28 19:40:08 2020 (serrano)                */
+/*    Copyright   :  2015-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 promises.                                            */
 /*=====================================================================*/
@@ -75,6 +75,14 @@ p.then( function( o ) {
    assert.check( o2, 12 );
 } )
 
+var cp = new Promise( function( res, rej ) {
+   res( 1 );
+} ).then( v => { return v + 1 ; } )
+   .catch( e => { ; } )
+   .then( v => { return v + 1 ; } )
+   .then( v => { return v + 1 ; } )
+   .then( v => assert.check( v, 3 ) );
+  
 /*---------------------------------------------------------------------*/
 /*    mdn                                                              */
 /*---------------------------------------------------------------------*/
@@ -483,3 +491,25 @@ setTimeout( function() {
    process.exit( ok === expected ? 0 : 1 )
 }, 500 );
 
+/*---------------------------------------------------------------------*/
+/*    enqueue                                                          */
+/*    -------------------------------------------------------------    */
+/*    Issue 47: https://github.com/manuel-serrano/hop/issues/47        */
+/*---------------------------------------------------------------------*/
+function enqueue() {
+   var r;
+   var t = false;
+
+   var p = new Promise( function( resolve, reject ){
+      r = resolve;
+   });
+
+   p.then( function() {
+      assert.ok( t, "promise enqueue" );
+   } );
+
+   r();
+   t = true;
+}
+
+enqueue();

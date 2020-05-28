@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Sat Sep  9 12:00:48 2017 (serrano)                */
-/*    Copyright   :  2017 Manuel Serrano                               */
+/*    Last change :  Wed Feb 27 17:08:04 2019 (serrano)                */
+/*    Copyright   :  2017-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
 /*=====================================================================*/
@@ -102,7 +102,7 @@ function basicf() {
 
 function basicg() {
    var proto = {
-      gee() { console.log( "gee" ); }
+      gee() { "gee"; }
    }
 
    var p = {
@@ -121,27 +121,86 @@ function basicg() {
    }
 }
 
+function basich() {
+   class kla {
+      constructor() {
+	 return false;
+      }
+   }
+   
+   try {
+      return kla();
+   } catch( e ) {
+      return new kla() instanceof kla;
+   }
+}
+
+function basici() {
+   class kla {
+   }
+   
+   try {
+      return kla();
+   } catch( e ) {
+      return new kla() instanceof kla;
+   }
+}
+
+function basicj() {
+   class Animal {
+      constructor(name) {
+    	 this.name = name;
+      }
+
+      get() {
+    	 return this.name;
+      }
+
+      set() {
+    	 this.name = "john";
+      }
+   }
+   
+   let animal = new Animal("Jean");
+   
+   if( animal.name === "Jean" && animal.get() === "Jean" ) {
+      animal.set();
+      return animal.name === "john";
+   } else {
+      return false;
+   }
+}
+
 console.log( "basic" );
-console.log( "   basica()" );
-assert.ok( basica(), "basica" );
+console.log( "   basica()" ); assert.ok( basica(), "basica" );
+console.log( "   basicb()" ); assert.ok( basicb(), "basicb" );
+console.log( "   basicc()" ); assert.ok( basicc(), "basicc" );
+console.log( "   basicd()" ); assert.ok( basicd(), "basicd" );
+console.log( "   basice()" ); assert.ok( basice(), "basice" );
+console.log( "   basicf()" ); assert.ok( basicf(), "basicf" );
+console.log( "   basicg()" ); assert.ok( basicg(), "basicg" );
+console.log( "   basich()" ); assert.ok( basich(), "basich" );
+console.log( "   basici()" ); assert.ok( basici(), "basici" );
 
-console.log( "   basicb()" );
-assert.ok( basicb(), "basicb" );
+/*---------------------------------------------------------------------*/
+/*    misc                                                             */
+/*---------------------------------------------------------------------*/
+function misca() {
+   let passed = false;
+   
+   function FArray( a ) {
+      passed = (a === 20);
+   }
 
-console.log( "   basicc()" );
-assert.ok( basicc(), "basicc" );
+   class C extends FArray {}
+   
+   var c = new C( 20 );
+   
+   return passed;
+}
 
-console.log( "   basicd()" );
-assert.ok( basicd(), "basicd" );
-
-console.log( "   basice()" );
-assert.ok( basice(), "basice" );
-
-console.log( "   basicf()" );
-assert.ok( basicf(), "basicf" );
-
-console.log( "   basicg()" );
-assert.ok( basicg(), "basicg" );
+console.log( "misc" );
+console.log( "   misca()" ); assert.ok( misca(), "misca" );
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */
@@ -319,21 +378,21 @@ function kangaxt() {
       && Object.getPrototypeOf(C.prototype) === null;
 }
 
-/* function kangaxu() {                                                */
-/*    var passed = false;                                              */
-/*    new function f() {                                               */
-/*       passed = new.target === f;                                    */
-/*    }();                                                             */
-/*                                                                     */
-/*    class A {                                                        */
-/*       constructor() {                                               */
-/* 	 passed &= new.target === B;                                   */
-/*       }                                                             */
-/*    }                                                                */
-/*    class B extends A {}                                             */
-/*    new B();                                                         */
-/*    return passed;                                                   */
-/* }                                                                   */
+function kangaxu() {
+   var passed = false;
+   new function f() {
+      passed = new.target === f;
+   }();
+
+   class A {
+      constructor() {
+	 passed &= new.target === B;
+      }
+   }
+   class B extends A {}
+   new B();
+   return passed;
+}
 
 function kangaxv() {
    var passed = false;
@@ -390,17 +449,17 @@ function kangaxz() {
    return obj.qux("baz") === "foobarbaz";
 }
 
-/* function kangaxA() {                                                */
-/*    var passed;                                                      */
-/*    class B {                                                        */
-/*       constructor() { passed = (new.target === C); }                */
-/*    }                                                                */
-/*    class C extends B {                                              */
-/*       constructor() { super(); }                                    */
-/*    }                                                                */
-/*    new C();                                                         */
-/*    return passed;                                                   */
-/* }                                                                   */
+function kangaxA() {
+   var passed;
+   class B {
+      constructor() { passed = (new.target === C); }
+   }
+   class C extends B {
+      constructor() { super(); }
+   }
+   new C();
+   return passed;
+}
 
 function kangaxB() {
    class B {
@@ -492,8 +551,8 @@ assert.ok( kangaxs(), "kangaxs" );
 console.log( "   kangaxt()" );
 assert.ok( kangaxt(), "kangaxt" );
 
-/* console.log( "   kangaxu()" );                                      */
-/* assert.ok( kangaxu(), "kangaxu" );                                  */
+console.log( "   kangaxu()" );
+assert.ok( kangaxu(), "kangaxu" );
 
 console.log( "   kangaxv()" );
 assert.ok( kangaxv(), "kangaxv" );
@@ -510,8 +569,8 @@ assert.ok( kangaxy(), "kangaxy" );
 console.log( "   kangaxz()" );
 assert.ok( kangaxz(), "kangaxz" );
 
-/* console.log( "   kangaxA()" );                                      */
-/* assert.ok( kangaxA(), "kangaxA" );                                  */
+console.log( "   kangaxA()" );
+assert.ok( kangaxA(), "kangaxA" );
 
 console.log( "   kangaxB()" );
 assert.ok( kangaxB(), "kangaxB" );

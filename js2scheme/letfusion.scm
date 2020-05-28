@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/letfusion.scm           */
+;*    serrano/prgm/project/hop/hop/js2scheme/letfusion.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 27 13:16:54 2016                          */
-;*    Last change :  Thu Mar  9 08:57:20 2017 (serrano)                */
-;*    Copyright   :  2016-17 Manuel Serrano                            */
+;*    Last change :  Wed Apr 15 11:47:25 2020 (serrano)                */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let fusion merges J2SBlock with variable decarations and         */
 ;*    J2SLetBlock.                                                     */
@@ -32,8 +32,16 @@
    (instantiate::J2SStageProc
       (name "letfusion")
       (comment "Allocate let/const variables to registers")
-      (proc j2s-letfusion!)
+      (proc j2s-letfusion)
       (optional #f)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-letfusion ...                                                */
+;*---------------------------------------------------------------------*/
+(define (j2s-letfusion this args)
+   (when (isa? this J2SProgram)
+      (j2s-letfusion! this args))
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-letfusion! ::J2SNode ...                                     */
@@ -46,7 +54,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-letfusion! this::J2SBlock args)
    (call-default-walker)
-   (with-access::J2SBlock this (nodes)
+   (with-access::J2SBlock this (nodes loc endloc)
       ;; check the pattern (j2sblock decl decl ... decl j2sletblock)
       (let loop ((lnodes nodes)
 		 (vdecls '()))
@@ -65,8 +73,10 @@
 				   (set! scope 'letblock)))
 		      decls)))
 	     (with-access::J2SLetBlock (car lnodes) (nodes)
-		(set! nodes (append nodes (cdr lnodes))))
-	     (car lnodes))
+		(duplicate::J2SLetBlock (car lnodes)
+		   (nodes (append nodes (cdr lnodes)))
+		   (loc loc)
+		   (endloc endloc))))
 	    (else
 	     this)))))
 

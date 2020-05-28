@@ -488,7 +488,8 @@ Remove an alias URL from service. The automatic URL cannot be removed.
 Returns the vector of the current alias URL.
 
 Interoperable WebServices
------------------------
+-------------------------
+[:interop]
 
 Services may be invoked from third party clients, allowing the Hop
 server to deliver WebServices to these clients. To do so, a few
@@ -499,8 +500,8 @@ which makes the service compliant to RFC3986.  Services with unnamed
 arguments cannot be invoked from a third party client.
 
 * The service should not respond with `hop.HTTPResponseHop` that would
-not be understood by the client. Other Response constructors deliver
-contents that is generally handled by most clients. Take care to
+not be understood by the client. Others Response constructors deliver
+contents that are generally handled by most clients. Take care to
 stringify objects before sending them to the client, and note that
 string values are received on the client side as `\[text/plain\]`,
 HTML values are received as `\[text/html\]`.

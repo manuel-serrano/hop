@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/arraybuffer.scm         */
+;*    serrano/prgm/project/hop/hop/hopscript/arraybuffer.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Wed Apr  4 13:09:10 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Wed Apr  8 08:26:10 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
 ;*=====================================================================*/
@@ -26,6 +26,7 @@
 	   __hopscript_error
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_number
 	   __hopscript_worker)
 
@@ -33,13 +34,20 @@
 	   (js-u8vector->jsarraybuffer ::u8vector ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsArrayBuffer ...                            */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsArrayBuffer
-   (lambda (o)
+   (lambda (o ctx)
       (with-access::JsArrayBuffer o (data) data))
-   (lambda (o %this)
-      (js-u8vector->jsarraybuffer o (or %this (js-initial-global-object)))))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-u8vector->jsarraybuffer o ctx)
+	  (error "string->obj ::JsArrayBuffer" "Not a JavaScript context" o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsArrayBuffer ...                                    */
@@ -50,12 +58,12 @@
 	 (with-access::JsArrayBuffer obj (data frozen)
 	    (let* ((ndata data)
 		   (nobj (instantiateJsArrayBuffer
-			    (__proto__ (js-get js-arraybuffer 'prototype %this))
+			    (__proto__ (js-get js-arraybuffer (& "prototype") %this))
 			    (frozen frozen)
 			    (data ndata))))
 	       (set! data '#u8())
 	       (js-for-in obj
-		  (lambda (k)
+		  (lambda (k %this)
 		     (js-put! nobj k
 			(js-donate (js-get obj k %_this) worker %this)
 			#f %this))
@@ -68,7 +76,7 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsArrayBuffer op compile isexpr)
+(define-method (hop->javascript o::JsArrayBuffer op compile isexpr ctx)
    
    (define chars
       '#(#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9 #\a #\b #\c #\d #\e #\f))
@@ -92,10 +100,10 @@
    (with-access::JsGlobalObject %this (js-arraybuffer)
       (let* ((u8v (hexstring->u8vector (cadr args)))
 	     (buf (instantiateJsArrayBuffer
-		     (__proto__ (js-get js-arraybuffer 'prototype %this))
+		     (__proto__ (js-get js-arraybuffer (& "prototype") %this))
 		     (frozen (car args))
 		     (data u8v))))
-	 (js-put! buf 'byteLength (u8vector-length u8v) #f %this)
+	 (js-put! buf (& "byteLength") (u8vector-length u8v) #f %this)
 	 buf)))
       
 ;*---------------------------------------------------------------------*/
@@ -141,110 +149,111 @@
 ;*    js-init-arraybuffer! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-init-arraybuffer! %this)
-   (with-access::JsGlobalObject %this (__proto__ js-function js-object
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
+   (with-access::JsGlobalObject %this (js-function js-object
 					 js-arraybuffer)
-      (with-access::JsFunction js-function ((js-function-prototype __proto__))
-	 
-	 ;; builtin ArrayBuffer prototype
-	 (define js-arraybuffer-prototype
-	    (instantiateJsObject
-	       (__proto__ __proto__)))
-
-	 (define (%js-arraybuffer this . items)
-	    (apply js-arraybuffer-construct 
-	       (js-arraybuffer-alloc js-arraybuffer %this)
-	       items))
-
-	 (set! js-arraybuffer
-	    (js-make-function %this %js-arraybuffer 1 'ArrayBuffer
-	       :__proto__ js-function-prototype
-	       :prototype js-arraybuffer-prototype
-	       :alloc (lambda (ctor) (js-arraybuffer-alloc ctor %this))
-	       :construct (lambda (this . items)
-			     (apply js-arraybuffer-construct this items))))
-
-	 (define (js-arraybuffer-alloc constructor::JsFunction %this)
-	    (instantiateJsArrayBuffer
-	       (cmap (js-not-a-cmap))
-	       (__proto__ (js-get constructor 'prototype %this))))
-
-	 (define (js-arraybuffer-construct this::JsArrayBuffer . items)
-	    (with-access::JsArrayBuffer this (data)
-	       (when (pair? items)
-		  (let ((i (car items))
-			(f 0))
-
-		     ;; data
-		     (cond
-			((u8vector? i)
-			 (set! f (u8vector-length i))
-			 (set! data i))
-			((and (flonum? i) (>=fl i 1073741823.0))
-			 (js-raise-range-error %this
-			    "ArrayBufferView size is too large"
-			    i))
-			(else
-			 (let ((n (js-touint32 i %this)))
-			    (set! f (uint32->fixnum n))
-			    (set! data (make-u8vector f)))))
-			
-		     ;; byteLength
-		     (js-bind! %this this 'byteLength
-			:value f
-			:configurable #f
-			:writable #f
-			:enumerable #t
-			:hidden-class #t)
-		     
-		     ;; slice
-		     (define (arraybuffer-slice this::JsArrayBuffer beg end)
-			(with-access::JsArrayBuffer this (data)
-			   (let* ((l (u8vector-length data))
-				  (b (if (eq? beg (js-undefined))
-					 (js-raise-error %this
-					    "Wrong number of arguments."
-					    #f)
-					 (->fixnum (js-tointeger beg %this))))
-				  (e (if (eq? end (js-undefined))
-					 l
-					 (->fixnum (js-tointeger end %this)))))
-			      (when (< b 0) (set! b (+ l b)))
-			      (when (< e 0) (set! e (+ l e)))
-			      (set! b (min b l))
-			      (set! e (min e l))
-			      (let* ((l (max (min (- e b) l) 0))
-				     (new (%js-arraybuffer %this l)))
-				 (with-access::JsArrayBuffer new ((dst data))
-				    (let loop ((i 0))
-				       (when (<fx i l)
-					  (u8vector-set! dst i
-					     (u8vector-ref data (+fx i b)))
-					  (loop (+fx i 1))))
-				    new)))))
-		     
-		     (js-bind! %this this 'slice
-			:value (js-make-function %this
-				  arraybuffer-slice 2 'slice)
-			:configurable #f
-			:writable #t
-			:enumerable #t
-			:hidden-class #t)))
-	       
-	       this))
-
-	 ;; bind the ArrayBuffer in the global object
-	 (js-bind! %this %this 'ArrayBuffer
-	    :configurable #f :enumerable #f :value js-arraybuffer
-	    :hidden-class #t)
-
-	 js-arraybuffer)))
+      
+      ;; builtin ArrayBuffer prototype
+      (define js-arraybuffer-prototype
+	 (instantiateJsObject
+	    (__proto__ (js-object-proto %this))
+	    (elements ($create-vector 1))))
+      
+      (define (%js-arraybuffer this . items)
+	 (apply js-arraybuffer-construct 
+	    (js-arraybuffer-alloc %this js-arraybuffer)
+	    items))
+      
+      (set! js-arraybuffer
+	 (js-make-function %this %js-arraybuffer 1 (& "ArrayBuffer")
+	    :__proto__ (js-object-proto js-function)
+	    :prototype js-arraybuffer-prototype
+	    :alloc js-arraybuffer-alloc
+	    :construct (lambda (this . items)
+			  (apply js-arraybuffer-construct this items))))
+      
+      (define (js-arraybuffer-alloc %this constructor::JsFunction)
+	 (instantiateJsArrayBuffer
+	    (cmap (js-not-a-cmap))
+	    (__proto__ (js-get constructor (& "prototype") %this))))
+      
+      (define (js-arraybuffer-construct this::JsArrayBuffer . items)
+	 (with-access::JsArrayBuffer this (data)
+	    (when (pair? items)
+	       (let ((i (car items))
+		     (f 0))
+		  
+		  ;; data
+		  (cond
+		     ((u8vector? i)
+		      (set! f (u8vector-length i))
+		      (set! data i))
+		     ((and (flonum? i) (>=fl i 1073741823.0))
+		      (js-raise-range-error %this
+			 "ArrayBufferView size is too large"
+			 i))
+		     (else
+		      (let ((n (js-touint32 i %this)))
+			 (set! f (uint32->fixnum n))
+			 (set! data (make-u8vector f)))))
+		  
+		  ;; byteLength
+		  (js-bind! %this this (& "byteLength")
+		     :value f
+		     :configurable #f
+		     :writable #f
+		     :enumerable #t
+		     :hidden-class #t)
+		  
+		  ;; slice
+		  (define (arraybuffer-slice this::JsArrayBuffer beg end)
+		     (with-access::JsArrayBuffer this (data)
+			(let* ((l (u8vector-length data))
+			       (b (if (eq? beg (js-undefined))
+				      (js-raise-error %this
+					 "Wrong number of arguments."
+					 #f)
+				      (->fixnum (js-tointeger beg %this))))
+			       (e (if (eq? end (js-undefined))
+				      l
+				      (->fixnum (js-tointeger end %this)))))
+			   (when (< b 0) (set! b (+ l b)))
+			   (when (< e 0) (set! e (+ l e)))
+			   (set! b (min b l))
+			   (set! e (min e l))
+			   (let* ((l (max (min (- e b) l) 0))
+				  (new (%js-arraybuffer %this l)))
+			      (with-access::JsArrayBuffer new ((dst data))
+				 (let loop ((i 0))
+				    (when (<fx i l)
+				       (u8vector-set! dst i
+					  (u8vector-ref data (+fx i b)))
+				       (loop (+fx i 1))))
+				 new)))))
+		  
+		  (js-bind! %this this (& "slice")
+		     :value (js-make-function %this
+			       arraybuffer-slice 2 (& "slice"))
+		     :configurable #f
+		     :writable #t
+		     :enumerable #t
+		     :hidden-class #t)))
+	    
+	    this))
+      
+      ;; bind the ArrayBuffer in the global object
+      (js-bind! %this %this (& "ArrayBuffer")
+	 :configurable #f :enumerable #f :value js-arraybuffer
+	 :hidden-class #t)
+      
+      js-arraybuffer))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-names ::JsArray ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-names obj::JsArrayBuffer enump %this)
    (let ((len (js-arraybuffer-length obj)))
-      (append! (map js-integer->name (iota len))
+      (append! (map js-integer->jsstring (iota len))
 	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
@@ -259,6 +268,12 @@
 	  #t)
 	 (else
 	  (call-next-method)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-has-own-property ::JsArrayBuffer ...                          */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-own-property o::JsArrayBuffer p %this::JsGlobalObject)
+   (not (eq? (js-get-own-property o p %this) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ...                                          */
@@ -276,6 +291,24 @@
 		(enumerable #t)
 		(writable (not frozen))
 		(configurable (not frozen))))
+	    (else
+	     (call-next-method))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-own-property-descriptor ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-own-property-descriptor o::JsArrayBuffer p %this::JsGlobalObject)
+   (with-access::JsArrayBuffer o (frozen)
+      (let ((i::uint32 (js-toindex p)))
+	 (cond
+	    ((not (js-isindex? i))
+	     (call-next-method))
+	    ((<uint32 i (js-arraybuffer-length o))
+	     (js-property-descriptor %this #t
+		:value (js-arraybuffer-ref o (uint32->fixnum i))
+		:enumerable #t
+		:writable (not frozen)
+		:configurable (not frozen)))
 	    (else
 	     (call-next-method))))))
 
@@ -324,7 +357,7 @@
 		    (if (js-is-accessor-descriptor? desc)
 			;; 5
 			(with-access::JsAccessorDescriptor desc ((setter set))
-			   (if (isa? setter JsFunction)
+			   (if (js-procedure? setter)
 			       (js-call1 %this setter o v)
 			       (js-undefined)))
 			(let ((newdesc (instantiate::JsValueDescriptor
@@ -366,3 +399,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-u8vector->jsarraybuffer o::u8vector %this)
    #t)
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

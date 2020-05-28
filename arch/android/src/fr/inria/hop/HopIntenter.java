@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hopdac/arch/android/src/fr/inria/hop/HopIntenter.java        */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopIntenter.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jul  5 09:42:40 2016                          */
-/*    Last change :  Mon Jul 11 21:08:05 2016 (serrano)                */
-/*    Copyright   :  2016 Manuel Serrano                               */
+/*    Last change :  Fri May 15 18:06:36 2020 (serrano)                */
+/*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Spawn Hop service (not the Hop process).                         */
 /*=====================================================================*/
@@ -52,15 +52,16 @@ public class HopIntenter implements HopStage {
 	       hopservice.handler = handler;
 	       hopservice.queue = queue;
 	       hopservice.hopdroid.activity = activity;
-	       hopconnected = true;
 	       hopservice.onConnect();
-		  
-	       if( hopservice.waitHop( 4000 ) ) {
+
+	       if( hopservice.waitHop( 8000 ) ) {
 		  Log.d( "HopIntenter", "Hop ready..." );
+		  hopconnected = true;
 		  handler.sendEmptyMessage( HopLauncher.MSG_HOP_START  );
 	       } else {
-		  Log.d( "HopIntenter", "Hop fail..." );
-		  handler.sendEmptyMessage( HopLauncher.MSG_HOP_FAIL );
+		  Log.d( "HopIntenter", "Hop cannot start..." );
+		  hopconnected = false;
+		  handler.sendEmptyMessage( HopLauncher.MSG_HOP_CANNOT );
 	       }
 	    } catch( Exception e ) {
 	       Log.e( "HopIntenter", "error while connecting to service: " +
@@ -97,10 +98,9 @@ public class HopIntenter implements HopStage {
       handler.sendMessage( android.os.Message.obtain( handler, kmsg, msg ) );
    }
 
-   public void exec() {
+   public void exec( Context context ) {
       Log.d( "HopIntenter", "exec" );
-      
-      hopintent = new Intent( activity.getApplicationContext(), HopService.class );
+      hopintent = new Intent( context, HopService.class );
       if( !HopService.isBackground() ) {
 	 activity.startService( hopintent );
       }

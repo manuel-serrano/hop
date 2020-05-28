@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Wed Oct 11 19:03:16 2017 (serrano)                */
-/*    Copyright   :  2015-17 Manuel Serrano                            */
+/*    Last change :  Sun Dec 30 08:23:06 2018 (serrano)                */
+/*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 arrow functions                           */
 /*=====================================================================*/
@@ -53,3 +53,19 @@ Person.prototype.fun = function( a ) {
 var p = new Person( 20 );
 assert.strictEqual( p.fun( [ 10 ] ).age, 20 );
 
+/*---------------------------------------------------------------------*/
+/*    vararg                                                           */
+/*---------------------------------------------------------------------*/
+const vararg = (a = 0, ...b ) => a + b.reduce( (x,y) => x+y, 0 );
+
+assert.ok( vararg() === 0, "vararg()" );
+assert.ok( vararg( 1 ) === 1, "vararg( 1 )" );
+assert.ok( vararg( 1, 2 ) === 3, "vararg( 1, 2 )" );
+assert.ok( vararg( 1, 2, 3 ) === 6, "vararg( 1, 2, 3 )" );
+
+/*---------------------------------------------------------------------*/
+/*    spread                                                           */
+/*---------------------------------------------------------------------*/
+const spread = ({a,b}, [{c,d}]) => a + b + c + d;
+
+assert.ok( spread( {b: 2, a: 1}, [{a: 1, c: 6, e: 5, d: 3}] ) === 12, "spread" );

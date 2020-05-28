@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/read_js.scm               */
+;*    serrano/prgm/project/hop/hop/runtime/read_js.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:45:35 2005                          */
-;*    Last change :  Sat Oct 13 07:46:20 2012 (serrano)                */
-;*    Copyright   :  2005-12 Manuel Serrano                            */
+;*    Last change :  Fri Mar 20 07:32:33 2020 (serrano)                */
+;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP javascript parser                                        */
 ;*=====================================================================*/
@@ -85,7 +85,7 @@
 		 (set! acc (cons "$" acc))
 		 (ignore))
 		("$"
-		 (let ((exp (hop-read iport charset))
+		 (let ((exp (hop-read iport :charset charset))
 		       (pos (input-port-position iport)))
 		    (if (eof-object? exp)
 			(read-error/location "Unexpected end-of-file"

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 21 12:09:24 2013                          */
-;*    Last change :  Mon May 14 16:28:22 2018 (serrano)                */
+;*    Last change :  Sun Oct 28 10:57:55 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Debugging facilities                                             */
@@ -54,10 +54,18 @@
    ;; public/server/debug/exception
    (set! *debug-service*
       (service :name "public/server-debug/exception" :timeout 0
-	 (#!key exc url msg obj stack)
+	 (#!key exc url msg obj loc stack)
 	 (synchronize (verb-mutex)
 	    (newline port)
-	    (display-trace-stack-source stack port)
+	    (match-case loc
+	       ((:filename ?fname :pos ?point . ?-)
+		(let* ((i (string-index fname #\?))
+		       (file (if i (substring fname 0 i) fname))
+		       (path (if (file-exists? file) file fname)))
+		   (let ((frame `("client" (at ,path ,point))))
+		      (display-trace-stack-source (list frame) port))))
+	       (else
+		(display-trace-stack-source stack port)))
 	    (display "*** CLIENT ERROR: " port)
 	    (display-circle url port)
 	    (display #":\n" port)

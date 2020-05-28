@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/_timer_wrap.scm            */
+;*    /tmp/HOPNEW/hop/nodejs/_timer_wrap.scm                           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Thu Oct 26 05:56:06 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Sun Feb 23 15:13:57 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
 ;*=====================================================================*/
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs__timer-wrap
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hopscript)
 
    (import __nodejs_uv)
@@ -27,6 +29,11 @@
    (export (hopjs-process-timer ::WorkerHopThread ::JsGlobalObject ::JsObject)))
 
 ;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
 ;*    constructors                                                     */
 ;*---------------------------------------------------------------------*/
 (define-instantiate JsTimer)
@@ -35,24 +42,31 @@
 ;*    hopjs-process-timer ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-process-timer %worker %this process)
+
+   (define __js_strings_execute_first!
+      (set! __js_strings (&init!)))
    
    (define js-timer-prototype
-      (instantiateJsObject))
-   
+      (instantiateJsObject
+	 (__proto__ (js-object-proto %this))
+	 (elements ($create-vector 1))))
+
    (init-timer-prototype! %this js-timer-prototype)
    
    (define Timer
       (js-make-function %this 
 	 (lambda (this) this)
-	 0 "Timer"
+	 0 (& "Timer")
 	 :prototype js-timer-prototype
+	 :alloc js-no-alloc
+	 :src "_timer_wrap.scm"
 	 :construct (js-timer-construct! %worker %this process js-timer-prototype)))
 
-   (js-bind! %this Timer 'now
+   (js-bind! %this Timer (& "now")
       :value (js-make-function %this
 		(lambda (this)
 		   (nodejs-now %worker))
-		0 "now")
+		0 (& "now"))
       :writable #f)
    
    (with-access::JsGlobalObject %this (js-object)
@@ -81,34 +95,40 @@
       (js-make-function %this
 	 (lambda (this . l)
 	    (error "timer_wrap" "binding not implemented" name))
-	 0 (symbol->string name)))
+	 0 (js-name->jsstring name)))
    
-   (js-bind! %this obj 'start
+   (js-bind! %this obj (& "start")
       :value (js-make-function %this
 		(lambda (this start rep)
 		   (with-access::JsTimer this (timer worker)
 		      (nodejs-timer-start worker timer start rep)))
-		2 "start"))
-   (js-bind! %this obj 'close
+		2 (& "start")))
+   (js-bind! %this obj (& "close")
       :value (js-make-function %this
 		(lambda (this)
 		   (with-access::JsTimer this (timer worker)
 		      (nodejs-timer-close worker timer)))
-		0 "close"))
-   (js-bind! %this obj 'stop
+		0 (& "close")))
+   (js-bind! %this obj (& "stop")
       :value (js-make-function %this
 		(lambda (this)
 		   (with-access::JsTimer this (timer worker)
 		      (nodejs-timer-stop worker timer)))
-		0 "stop"))
-   (js-bind! %this obj 'unref
+		0 (& "stop")))
+   (js-bind! %this obj (& "unref")
       :value (js-make-function %this
 		(lambda (this)
 		   (with-access::JsTimer this (timer worker)
 		      (nodejs-timer-unref worker timer)))
-		0 "unref"))
+		0 (& "unref")))
 
    (for-each (lambda (id)
-		(js-bind! %this obj id
+		(js-bind! %this obj (js-ascii-name->jsstring id)
 		   :value (not-implemented id)))
-      '(setRepeat getRepeat again)))
+      '("setRepeat" "getRepeat" "again")))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)
+

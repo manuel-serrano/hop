@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../3.1.x/arch/android/src/fr/inria/hop/HopInstaller.java        */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopInstaller.java      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Wed Jun 22 17:16:04 2016 (serrano)                */
-/*    Copyright   :  2010-16 Marcos Dione & Manuel Serrano             */
+/*    Last change :  Fri May 15 18:07:25 2020 (serrano)                */
+/*    Copyright   :  2010-20 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
 /*=====================================================================*/
@@ -18,6 +18,7 @@ import android.app.Activity;
 import android.util.Log;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.Context;
 import android.os.*;
 
 import java.util.*;
@@ -27,39 +28,48 @@ import java.io.*;
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
-public class HopInstaller extends Thread {
+public class HopInstaller implements HopStage {
    // global constants
    final static String DOTAFILE = "dot.afile";
    final static String JSGZ = "jsgz";
    final static String ASSETS = "assets";
    final static int BUFSIZE = 10 * 1024;
-   final static String USER = "hop";
-   final static String PASSWORD = "hop";
    final static String CHMOD = "/system/bin/chmod 755";
    
    // instance variables
    Handler handler;
-   ProgressDialog progress;
    String apk;
    String root;
-   
+   ProgressDialog progress;
+
    String chmodbuf = "";
    int chmodbuflen = 0;
 
+   Boolean abort = false;
+
    // constructor
-   public HopInstaller( Handler h, ProgressDialog p, String a, String r ) {
+   public HopInstaller( Activity activity, Handler h, String hopapk, String hopdir ) {
       super();
 
-      Log.v( "HopInstaller", "creating installer root=" + r );
       handler = h;
-      progress = p;
-      apk = a;
-      root = r;
-   }
+      apk = hopapk;
+      root = hopdir;
 
+      progress = makeProgressBar( activity );
+   }
+   
+   private ProgressDialog makeProgressBar( Activity activity ) {
+      ProgressDialog p = new ProgressDialog( activity );
+      p.setTitle( "Hop Installer" );
+      p.setMessage( "Unpacking..." );
+      p.setMax( 100 );
+      p.setProgressStyle( ProgressDialog.STYLE_HORIZONTAL );
+      return p;
+   }
+   
    // static method
    public static boolean installed( String root ) {
-      return new File( root, "/bin/hop" ).exists();
+      return new File( root, "etc/androidhome.hop" ).exists();
    }
    
    // chmodflush
@@ -103,6 +113,23 @@ public class HopInstaller extends Thread {
       } while( !pdir.equals( root ) );
    }
 
+   // delete a directory recursively
+   private void rmdir( File dir ) throws IOException {
+      String[] entries = dir.list();
+
+      if( entries != null ) {
+	 for( String s: entries ) {
+	    File currentFile = new File( dir.getPath(), s );
+	    if( currentFile.isDirectory() ) {
+	       rmdir( currentFile );
+	    } else {
+	       currentFile.delete();
+	    }
+	 }
+      }
+      dir.delete();
+   }
+   
    // extract one stream from the zip archive
    public void copyStreams( InputStream is, FileOutputStream fos )
       throws IOException {
@@ -140,7 +167,7 @@ public class HopInstaller extends Thread {
    public void unpack() throws IOException {
       File zipFile = new File( apk );
 
-      Log.v( "HopInstaller", "unpack: " + apk + " root=" + root );
+      Log.d( "HopInstaller", "unpacking: apk=" + apk + " root=" + root );
       
       if( !zipFile.exists() ) {
 	 Log.e( "HopInstaller", "file not found: " + apk );
@@ -154,83 +181,135 @@ public class HopInstaller extends Thread {
       Enumeration entries = files.elements();
       int i = 0;
 
+      Log.d( "HopInstaller", "progress.setMax " + files.size() );
       progress.setMax( files.size() );
       
       while( entries.hasMoreElements() ) {
-	 ZipEntry entry = (ZipEntry) entries.nextElement();
-	 String path = entry.getName().substring( ASSETS.length() );
+	 synchronized( abort ) {
+	    if( !abort ) {
+	       ZipEntry entry = (ZipEntry) entries.nextElement();
+	       String path = entry.getName().substring( ASSETS.length() );
 
-	 progress.setProgress( i++ );
+	       progress.setProgress( i++ );
+	       if( i % 100 == 0 ) {
+		  Log.d( "HopInstaller", "unpacking " + i + "..." );
+	       }
 
-	 // restore Hop file names
-	 path = patchHopFilename( path );
+	       // restore Hop file names
+	       path = patchHopFilename( path );
 
-	 // copy the new file
-	 File outputFile = new File( root, path );
-	 File dir = outputFile.getParentFile();
+	       // copy the new file
+	       File outputFile = new File( root, path );
+	       File dir = outputFile.getParentFile();
 	    
-	 if( !dirtable.containsKey( dir ) ) {
-	    dirtable.put( dir, new Boolean( true ) );
+	       if( !dirtable.containsKey( dir ) ) {
+		  dirtable.put( dir, new Boolean( true ) );
 	    
-	    if( !dir.isDirectory() ) {
-	       mkdir( dir );
+		  if( !dir.isDirectory() ) {
+		     mkdir( dir );
+		  }
+	       }
+
+	       if( outputFile.exists()
+		   && (entry.getSize() == outputFile.length())
+		   && (zipLastModified < outputFile.lastModified()) ) {
+		  ;
+	       } else {
+		  FileOutputStream fos = new FileOutputStream( outputFile );
+
+		  copyStreams( zip.getInputStream( entry ), fos );
+		  String curPath = outputFile.getAbsolutePath();
+		  chmod( curPath );
+	       }
 	    }
-	 }
-
-	 if( outputFile.exists()
-	     && (entry.getSize() == outputFile.length())
-	     && (zipLastModified < outputFile.lastModified()) ) {
-	    ;
-	 } else {
-	    FileOutputStream fos = new FileOutputStream( outputFile );
-
-	    copyStreams( zip.getInputStream( entry ), fos );
-	    String curPath = outputFile.getAbsolutePath();
-	    chmod( curPath );
 	 }
       }
 
       // we have to execute the chmod mode now
-      chmodflush();
+      synchronized( abort ) {
+	 if( !abort ) {
+	    chmodflush();
+	 }
+      }
    }
 
    // create the androidhome.hop file which is read by Hop at start time
    // (see configure-android.sch.in). It contains the path of the
    // external storage so that hop can avoid using the explicit "/sdcard" path.
    void androidhome() throws IOException {
-      File file = new File( root, "etc/" + "androidhome.hop" );
-      OutputStream op = new FileOutputStream( file );
-      Log.i( "HopInstaller", "generating androidhome \"" + file + "\"" );
+      synchronized( abort ) {
+	 if( !abort ) {
+	    File file = new File( root, "etc/androidhome.hop" );
+	    OutputStream op = new FileOutputStream( file );
+	    Log.i( "HopInstaller", "generating androidhome \"" + file + "\"" );
       
-      op.write( ";; generated file (HopInstaller), don't edit\n".getBytes() );
-      op.write( "\"".getBytes() );
-      // MS CARE
-      op.write( Hop.HOME().getAbsolutePath().getBytes() );
-      op.write( "\"\n".getBytes() );
-      op.flush();
-      op.close();
+	    op.write( ";; generated file (HopInstaller), don't edit\n".getBytes() );
+	    op.write( "\"".getBytes() );
+	    // MS CARE
+	    op.write( Hop.HOME().getAbsolutePath().getBytes() );
+	    op.write( "\"\n".getBytes() );
+	    op.flush();
+	    op.close();
+	 }
+      }
    }
 
-   public void run() {
-      try {
-	 unpack();
-	 androidhome();
-      } catch( Exception e ) {
-	 String msg = e.getMessage();
-	 if( msg == null ) msg = e.getClass().getName();
-	 
-	 Log.e( "HopInstaller", msg );
-	 handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_INSTALL_FAILED, e ) );
+   private void raise( Exception e ) {
+      String msg = e.getMessage();
+      
+      Log.e( "HopInstaller", e.toString() );
+      e.printStackTrace();
+      
+      if( msg == null ) msg = e.getClass().getName();
+      
+      handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_INSTALL_FAIL, e ) );
+   }
+      
+   public void exec( Context context ) {
+      Log.d( "HopInstaller", "exec installed=" + installed( root ) );
+      if( !installed( root ) ) {
+	 try {
+	    Thread installer = new Thread( new Runnable () {
+		  public void run() {
+		     try {
+			unpack();
+			androidhome();
+			
+			Log.d( "HopInstaller", "setting exec mode: " + root + "/bin/hop" );
+			chmod( root + "/bin/hop" );
+			chmodflush();
+			
+			handler.sendEmptyMessage( HopLauncher.MSG_UNPACKED );
+			handler.sendEmptyMessage( HopLauncher.MSG_STATE_NEXT );
+		     } catch( Exception e ) {
+			raise( e );
+		     } finally {
+			progress.dismiss();
+		     }
+		  }
+	       } );
 
-	 // loop for ever
-	 while( true ) {
-	    try{
-	       Thread.currentThread().sleep( 10000000 );
-	    }
-	    catch( Exception _e ) {
-	       ;
-	    }
+	    progress.setMessage( "Unpacking..." );
+	    progress.show();
+	    installer.start();
+	 } catch( Exception e ) {
+	    raise( e );
 	 }
+      } else {
+	 handler.sendEmptyMessage( HopLauncher.MSG_UNPACKED );
+	 handler.sendEmptyMessage( HopLauncher.MSG_STATE_NEXT );
+      }
+   }
+
+   public void abort() {
+      Log.d( "HopInstaller", "abort" );
+      try {
+	 synchronized( abort ) {
+	    abort = false;
+	    rmdir( new File( root ) );
+	 }
+      } catch( Exception e ) {
+	 raise( e );
       }
    }
 }

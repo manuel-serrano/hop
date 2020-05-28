@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/_stream_wrap.scm           */
+;*    serrano/prgm/project/hop/hop/nodejs/_stream_wrap.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Tue Jun  5 15:53:21 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Sat Mar  7 06:28:07 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
 ;*=====================================================================*/
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs__stream-wrap
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hopscript)
 
    (include "nodejs_async.sch")
@@ -35,25 +37,32 @@
 	   (ucs2-string->buffer ::ucs2string)))
 
 ;*---------------------------------------------------------------------*/
-;*    property caches ...                                              */
+;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(%define-pcache 8)
-(define %pcache (js-make-pcache 8 "nodejs/_stream_wrap.scm"))
+(define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-stream-wrap! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-init-stream-wrap! %this)
+   (unless (vector? __js_strings)
+      (set! __js_strings (&init!))))
 
 ;*---------------------------------------------------------------------*/
 ;*    stream-shutdown ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (stream-shutdown %worker %this process this::JsHandle)
+   (js-init-stream-wrap! %this)
    (with-access::JsGlobalObject %this (js-object)
       (with-access::JsHandle this (handle reqs)
 	 (let* ((req (js-new %this js-object))
 		(res (nodejs-stream-shutdown %worker %this handle
 			(lambda (status handle)
 			   (when (<fx status 0)
-			      (js-put! process '_errno
+			      (js-put! process (& "_errno")
 				 (nodejs-err-name status) #f %this))
 			   (set! reqs (remq req reqs))
-			   (let ((oncomp (js-get req 'oncomplete %this)))
+			   (let ((oncomp (js-get req (& "oncomplete") %this)))
 			      (!js-callback3 "shutdown" %worker %this
 				 oncomp req status this req)
 			      '(js-worker-tick %worker))))))
@@ -78,32 +87,33 @@
 (define (stream-write-string %worker %this process this::JsHandle
 	   string::bstring offset::long len::long
 	   encoding callback sendhandle)
-   (with-access::JsGlobalObject %this (js-object)
+   (js-init-stream-wrap! %this)
+   (with-access::JsGlobalObject %this (js-object js-nodejs-pcache)
       (with-access::JsHandle this (handle reqs)
 	 (let ((req (js-new %this js-object)))
 	    (set! reqs (cons req reqs))
 	    (with-access::JsProcess process (using-domains)
 	       (if using-domains
-		   (let ((dom (js-object-get-name/cache process 'domain #f %this
-				 (js-pcache-ref %pcache 0))))
-		      (js-object-put-name/cache! req 'domain dom #f %this
-			 (js-pcache-ref %pcache 1)))
-		   (js-object-put-name/cache! req 'domain (js-null) #f %this
-		      (js-pcache-ref %pcache 2))))
-	    (js-object-put-name/cache! req 'bytes len #f %this
-	       (js-pcache-ref %pcache 3))
+		   (let ((dom (js-get-jsobject-name/cache process (& "domain") #f %this
+				 (js-pcache-ref js-nodejs-pcache 3))))
+		      (js-put-jsobject-name/cache! req (& "domain") dom #f %this
+			 (js-pcache-ref js-nodejs-pcache 4)))
+		   (js-put-jsobject-name/cache! req (& "domain") (js-null) #f %this
+		      (js-pcache-ref js-nodejs-pcache 5))))
+	    (js-put-jsobject-name/cache! req (& "bytes") len #f %this
+	       (js-pcache-ref js-nodejs-pcache 6))
 	    (with-access::JsHandle this (handle)
 	       (set! reqs (remq req reqs))
 	       (let ((cb (lambda (status)
-			    (js-object-put-name/cache! this 'writeQueueSize
+			    (js-put-jsobject-name/cache! this (& "writeQueueSize")
 			       (nodejs-stream-write-queue-size handle) #f %this
-			       (js-pcache-ref %pcache 4))
+			       (js-pcache-ref js-nodejs-pcache 7))
 			    (when (<fx status 0)
-			       (js-put! process '_errno
+			       (js-put! process (& "_errno")
 				  (nodejs-err-name status) #f %this))
-			    (let ((oncomp (js-object-get-name/cache req
-					     'oncomplete #f %this
-					     (js-pcache-ref %pcache 5))))
+			    (let ((oncomp (js-get-jsobject-name/cache req
+					     (& "oncomplete") #f %this
+					     (js-pcache-ref js-nodejs-pcache 8))))
 			       (js-call3 %this oncomp req status this req)
 			       '(js-worker-tick %worker)
 			       (js-undefined)))))
@@ -111,18 +121,18 @@
 		      (if (isa? sendhandle JsHandle)
 			  (with-access::JsHandle sendhandle ((shdl handle))
 			     (begin
-				(js-object-put-name/cache! req 'handle
+				(js-put-jsobject-name/cache! req (& "handle")
 				   sendhandle #f %this
-				   (js-pcache-ref %pcache 6))
+				   (js-pcache-ref js-nodejs-pcache 9))
 				(nodejs-stream-write2 %worker %this handle
 				   string offset len shdl cb)))
 			  (nodejs-stream-write2 %worker %this handle
 			     string offset len #f cb))
 		      (nodejs-stream-write %worker %this handle
 			 string offset len cb)))
-	       (js-object-put-name/cache! this 'writeQueueSize
+	       (js-put-jsobject-name/cache! this (& "writeQueueSize")
 		  (nodejs-stream-write-queue-size handle) #f %this
-		  (js-pcache-ref %pcache 7)))
+		  (js-pcache-ref js-nodejs-pcache 10)))
 	    req))))
 
 ;*---------------------------------------------------------------------*/
@@ -146,6 +156,7 @@
 ;*---------------------------------------------------------------------*/
 (define (stream-read-start %worker %this process slab this)
    (with-trace 'nodejs-buffer "read-start"
+      (js-init-stream-wrap! %this)
       (with-access::JsHandle this (handle)
 	 (nodejs-stream-read-start %worker %this process handle
 	    (lambda (obj size) (slab-allocate slab obj size))
@@ -156,16 +167,16 @@
 		  (cond
 		     ((eof-object? status)
 		      ;; eof
-		      (js-put! process '_errno (js-string->jsstring "EOF")
+		      (js-put! process (& "_errno") (js-string->jsstring "EOF")
 			 #f %this)
-		      (let ((onread (js-get this 'onread %this)))
+		      (let ((onread (js-get this (& "onread") %this)))
 			 (!js-callback3 "read-start" %worker %this onread this
 			    (js-undefined) (js-undefined) (js-undefined))))
 		     ((not status)
 		      ;; read error
 		      (slab-shrink! slab buf offset 0)
-		      (js-put! process '_errno (nodejs-err-name len) #f %this)
-		      (let ((onread (js-get this 'onread %this)))
+		      (js-put! process (& "_errno") (nodejs-err-name len) #f %this)
+		      (let ((onread (js-get this (& "onread") %this)))
 			 (!js-callback0 "read-start" %worker %this onread this)))
 		     ((=fx len 0)
 		      ;; nothing read
@@ -173,7 +184,7 @@
 		     (else
 		      ;; characters read
 		      (let* ((b (slab-shrink! slab buf offset len))
-			     (onread (js-get this 'onread %this)))
+			     (onread (js-get this (& "onread") %this)))
 			 (if (and (nodejs-pipe-ipc? handle) pending-type)
 			     (!js-callback4 "read-start" %worker %this
 				onread this b offset len
@@ -190,3 +201,8 @@
    (with-access::JsHandle this (handle)
       (nodejs-stream-read-stop %worker %this handle)))
 		
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)
+

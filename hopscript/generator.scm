@@ -1,12 +1,12 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/generator.scm           */
+;*    /tmp/HOPNEW/hop/hopscript/generator.scm                          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Thu Mar 29 08:40:00 2018 (serrano)                */
-;*    Copyright   :  2015-18 Manuel Serrano                            */
+;*    Last change :  Sun Feb 23 14:54:07 2020 (serrano)                */
+;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Native BIgloo support of JavaScript generators                   */
+;*    Native Bigloo support of JavaScript generators                   */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/6.0/#14.4             */
 ;*=====================================================================*/
@@ -20,7 +20,7 @@
    
    (library hop)
    
-   (include "types.sch" "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch" "names.sch" "property.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic
@@ -37,26 +37,23 @@
 	   __hopscript_spawn)
    
    (export (js-init-generator! ::JsGlobalObject)
-	   js-yield-cmap
 	   (js-make-generator::JsGenerator ::procedure ::JsObject ::JsGlobalObject)
-	   (js-make-iterator ::object ::JsGlobalObject)
+	   (js-make-iterator ::obj ::JsGlobalObject)
+	   (js-make-map-iterator ::object ::procedure ::JsGlobalObject)
+	   (js-make-vector-iterator ::vector ::procedure ::JsGlobalObject)
+	   (js-make-list-iterator ::pair-nil ::procedure ::JsGlobalObject)
 	   (js-generator-yield ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)
 	   (js-generator-yield* ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
-;*    Jsstringliteral begin                                            */
+;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    %spawn ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define %spawn::procedure list)
-
-;*---------------------------------------------------------------------*/
-;*    js-yield-cmap ...                                                */
-;*---------------------------------------------------------------------*/
-(define js-yield-cmap #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsGenerator ...                              */
@@ -78,29 +75,52 @@
 (define-expander current-loc
    (lambda (x e)
       (when (epair? x) `',(cer x))))
-	 
+
 ;*---------------------------------------------------------------------*/
 ;*    js-init-generator! ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    https://www.ecma-international.org/ecma-262/6.0/#sec-25.2        */
 ;*---------------------------------------------------------------------*/
 (define (js-init-generator! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (__proto__ js-function-prototype js-generator-prototype js-generatorfunction-prototype js-symbol-iterator js-symbol-tostringtag)
-
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
+   (js-init-generator-yield-cmap! %this)
+   (with-access::JsGlobalObject %this (js-function-prototype
+					 js-generator-prototype
+					 js-generatorfunction-prototype
+					 js-symbol-iterator
+					 js-symbol-tostringtag
+					 js-yield-cmap)
+      
+      (define js-gen-proto-proto
+	 (let ((proto (instantiateJsObject
+			 (cmap (instantiate::JsConstructMap (inline #t)))
+			 (__proto__ (js-object-proto %this))
+			 (elements ($create-vector 1)))))
+	    (js-bind! %this proto js-symbol-iterator
+	       :value (js-make-function %this
+			 (lambda (this)
+			    this)
+			 0 (& "@@iterator")
+			 :prototype (js-undefined))
+	       :writable #t :enumerable #f :configurable #t)
+	    proto))
+      
       (define js-gen-proto
 	 (instantiateJsObject
-	    (cmap (instantiate::JsConstructMap))
-	    (__proto__ __proto__)))
-
+	    (cmap (instantiate::JsConstructMap (inline #t)))
+	    (__proto__ js-gen-proto-proto)
+	    (elements ($create-vector 4))))
+      
       (define js-genfun-proto
 	 (instantiateJsObject
-	    (cmap (instantiate::JsConstructMap))
-	    (__proto__ js-function-prototype)))
+	    (cmap (instantiate::JsConstructMap (inline #t)))
+	    (__proto__ js-function-prototype)
+	    (elements ($create-vector 2))))
       
       (define (js-generator-done)
 	 (instantiateJsObject
 	    (cmap js-yield-cmap)
-	    (__proto__ __proto__)
+	    (__proto__ (js-object-proto %this))
 	    (elements (vector (js-undefined) #t))))
       
       (define (js-generator-next this val exn)
@@ -117,7 +137,7 @@
 	     (with-access::JsGenerator this (%next)
 		(let ((done (instantiateJsObject
 			       (cmap js-yield-cmap)
-			       (__proto__ __proto__)
+			       (__proto__ (js-object-proto %this))
 			       (elements (vector val #t)))))
 		   (set! %next #f)
 		   done))
@@ -141,48 +161,41 @@
 		   (lambda (ip)
 		      (%js-eval ip 'eval %this this %this))))))
       
-      (js-bind! %this js-gen-proto 'next
+      (js-bind! %this js-gen-proto (& "next")
 	 :configurable #f :enumerable #f
 	 :value (js-make-function %this
 		   (lambda (this val)
 		      (js-generator-next this val #f))
-		   1 'next)
+		   1 (& "next"))
 	 :hidden-class #t)
       
-      (js-bind! %this js-gen-proto 'return
+      (js-bind! %this js-gen-proto (& "return")
 	 :configurable #f :enumerable #f
 	 :value (js-make-function %this
 		   (lambda (this val)
 		      (js-generator-return this val #f))
-		   1 'return)
+		   1 (& "return"))
 	 :hidden-class #t)
       
-      (js-bind! %this js-gen-proto 'throw
+      (js-bind! %this js-gen-proto (& "throw")
 	 :configurable #f :enumerable #f
 	 :value (js-make-function %this
 		   (lambda (this val)
 		      (js-generator-next this val #t))
-		   1 'throw)
+		   1 (& "throw"))
 	 :hidden-class #t)
-
-      (js-bind! %this js-gen-proto js-symbol-iterator
-	 :configurable #t :enumerable #f :writable #t
-	 :value (js-make-function %this
-		   (lambda (this val)
-		      this)
-		   0 '@@iterator
-		   :prototype (js-undefined)))
-
+      
       (js-bind! %this js-gen-proto js-symbol-tostringtag
 	 :configurable #t :enumerable #f :writable #f
 	 :value (js-string->jsstring "Generator"))
-
       
-      (js-bind! %this js-genfun-proto 'constructor
+      
+      (js-bind! %this js-genfun-proto (& "constructor")
 	 :configurable #t :enumerable #f :writable #f
 	 :value (js-make-function %this
 		   js-generator-construct
-		   1 'constructor
+		   1 (& "constructor")
+		   :alloc js-no-alloc
 		   :construct js-generator-construct)
 	 :hidden-class #t)
       
@@ -192,10 +205,19 @@
       
       (set! js-generator-prototype js-gen-proto)
       (set! js-generatorfunction-prototype js-genfun-proto)
-      
-      (set! js-yield-cmap (js-names->cmap '#(value done)))
-      
       ))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-generator-yield-cmap! ...                                */
+;*---------------------------------------------------------------------*/
+(define (js-init-generator-yield-cmap! %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-yield-cmap)
+      (set! js-yield-cmap
+	 (let ((props `#(,(prop (& "value") (property-flags #t #t #t #f))
+			 ,(prop (& "done") (property-flags #t #t #t #f)))))
+	    (instantiate::JsConstructMap
+	       (props props)
+	       (methods (make-vector (vector-length props))))))))
 	    
 ;*---------------------------------------------------------------------*/
 ;*    js-function-construct ...                                        */
@@ -209,7 +231,7 @@
    (lambda (this . args)
       (if (null? args)
 	  (js-make-function %this (lambda (this) (js-undefined))
-	     0 "" :construct (lambda (_) (js-undefined)))
+	     0 (& "") :construct (lambda (_) (js-undefined)))
 	  (let* ((len (length args))
 		 (formals (take args (-fx len 1)))
 		 (body (car (last-pair args)))
@@ -221,9 +243,23 @@
 		   (%js-eval ip 'eval %this this %this)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-put! ::JsGenerator ...                                        */
+;*    -------------------------------------------------------------    */
+;*    The first time [[PUT]] is called on a generator it is            */
+;*    de-optimized (see JS-MAKE-CONSTRUCT).                            */
+;*---------------------------------------------------------------------*/
+(define-method (js-put! this::JsGenerator prop v throw %this)
+   (with-access::JsGenerator this (cmap elements)
+      (when (isa? cmap JsConstructMap)
+	 ;; de-optimze the generator first
+	 (js-object-unmap! this))
+      ;; regular [[PUT]] invocation
+      (call-next-method)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-make-generator ...                                            */
 ;*    -------------------------------------------------------------    */
-;*    Generator use a special encoding. They directly points to the    */
+;*    Generators use a special encoding. They directly point to the    */
 ;*    elements and cmap of their prototype. This optimizes "next"      */
 ;*    and "throw" access. To preserve the semantics, JS-PUT! is        */
 ;*    overriden for that class.                                        */
@@ -238,34 +274,19 @@
 	    (%next proc)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-put! ::JsGenerator ...                                        */
-;*    -------------------------------------------------------------    */
-;*    The first time [[PUT]] is called on a generator it is            */
-;*    de-optimized (see JS-MAKE-CONSTRUCT).                            */
+;*    js-make-map-iterator ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (js-put! this::JsGenerator prop v throw %this)
-   (with-access::JsGenerator this (cmap elements)
-      (when (and (null? (js-object-properties this)) (isa? cmap JsConstructMap))
-	 ;; de-optimze the generator first
-	 (set! cmap (js-not-a-cmap))
-	 (set! elements '#()))
-      ;; regular [[PUT]] invocation
-      (call-next-method)))
-
-;*---------------------------------------------------------------------*/
-;*    js-make-iterator ...                                             */
-;*---------------------------------------------------------------------*/
-(define (js-make-iterator obj %this)
+(define (js-make-map-iterator obj proc %this)
    (letrec ((%gen (js-make-generator
 		     (lambda (%v %e)
 			(let ((i 0))
 			   (let loop ((%v %v) (%e %e))
-			      (let ((len (js-get obj 'length %this)))
+			      (let ((len (js-get obj (& "length") %this)))
 				 (if (>=fx i len)
 				     (js-generator-yield %gen
 					(js-undefined) #t
 					loop %this)
-				     (let ((val (js-get obj i %this)))
+				     (let ((val (proc i (js-get obj i %this))))
 					(set! i (+fx i 1))
 					(js-generator-yield %gen
 					   val #f
@@ -276,15 +297,70 @@
       %gen))
 
 ;*---------------------------------------------------------------------*/
+;*    js-make-vector-iterator ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-make-vector-iterator obj::vector proc %this)
+   (letrec ((%gen (js-make-generator
+		     (lambda (%v %e)
+			(let ((l obj)
+			      (i 0))
+			   (let laap ((%v %v) (%e %e))
+			      (if (=fx i (vector-length obj))
+				  (js-generator-yield %gen
+				     (js-undefined) #t
+				     laap %this)
+				  (let ((val (vector-ref obj i)))
+				     (set! i (+fx i 1))
+				     (if (eq? val (js-absent))
+					 (laap %v %e) 
+					 (js-generator-yield %gen
+					    (proc %this val) #f
+					    laap %this)))))))
+		     (with-access::JsGlobalObject %this (js-generator-prototype)
+			js-generator-prototype)
+		     %this)))
+      %gen))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-list-iterator ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-make-list-iterator obj::pair-nil proc %this)
+   '(letrec ((%gen (js-make-generator
+		     (lambda (%v %e)
+			(let ((l obj))
+			   (let loop ((%v %v) (%e %e))
+			      (if (null? l)
+				  (js-generator-yield %gen
+				     (js-undefined) #t
+				     loop %this)
+				  (let ((val (car l)))
+				     (set! l (cdr l))
+				     (if (eq? val (js-absent))
+					 (loop %v %e)
+					 (js-generator-yield %gen
+					    (proc %this val) #f
+					    loop %this)))))))
+		     (with-access::JsGlobalObject %this (js-generator-prototype)
+			js-generator-prototype)
+		     %this)))
+      %gen))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-iterator ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-make-iterator obj %this)
+   (js-make-map-iterator obj (lambda (key val) val) %this))
+
+;*---------------------------------------------------------------------*/
 ;*    js-generator-yield ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-generator-yield gen val done kont %this)
    (with-access::JsGenerator gen (%next)
       (set! %next kont)
-      (with-access::JsGlobalObject %this (__proto__)
+      (with-access::JsGlobalObject %this (js-yield-cmap)
 	 (instantiateJsObject
 	    (cmap js-yield-cmap)
-	    (__proto__ __proto__)
+	    (__proto__ (js-object-proto %this))
 	    (elements (vector val done))))))
 
 ;*---------------------------------------------------------------------*/
@@ -293,11 +369,11 @@
 (define (js-generator-yield* gen val done kont %this)
    
    (define (yield* val)
-      (let ((next (js-get val 'next %this)))
+      (let ((next (js-get val (& "next") %this)))
 	 (let loop ((v (js-undefined)) (e #f))
 	    (let* ((n (js-call0 %this next val))
-		   (value (js-get n 'value %this))
-		   (done (js-get n 'done %this)))
+		   (value (js-get n (& "value") %this))
+		   (done (js-get n (& "done") %this)))
 	       (if done
 		   (kont value #f)
 		   (js-generator-yield gen value #f
@@ -314,8 +390,8 @@
 	 (else
 	  (yield* val)))))
 
-;*---------------------------------------------------------------------*/
-;*    Jsstringliteral end                                              */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-end!)
 
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

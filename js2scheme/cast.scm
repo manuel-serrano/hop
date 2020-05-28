@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/cast.scm                */
+;*    serrano/prgm/project/hop/hop/js2scheme/cast.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed May  9 12:47:30 2018 (serrano)                */
-;*    Copyright   :  2016-18 Manuel Serrano                            */
+;*    Last change :  Mon Apr 20 08:36:37 2020 (serrano)                */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
 ;*    -------------------------------------------------------------    */
@@ -26,7 +26,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_cast
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -74,12 +75,14 @@
 ;*    need-cast? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (need-cast? type totype)
-   (not (or (eq? type totype)
-	    (eq? totype '*)
-	    (and (eq? totype 'any) (memq type *any-types*)))))
+   (or (and (eq? totype 'any) (memq type '(int32 uint32)))
+       (not (or (and (eq? type 'function) (eq? totype 'arrow))
+		(eq? type totype)
+		(eq? totype '*)
+		(and (eq? totype 'any) (memq type *any-types*))))))
 
 (define *any-types*
-   '(undefined null bool integer number object function string real))
+   '(undefined null bool integer number object function arrow string real array regexp arguments))
 
 ;*---------------------------------------------------------------------*/
 ;*    cast-expr ...                                                    */
@@ -169,6 +172,14 @@
    (cast this totype))
 
 ;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SWithRef ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SWithRef totype)
+   (with-access::J2SWithRef this (expr)
+      (set! expr (type-cast! expr totype))
+      (cast this totype)))
+
+;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SParen ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SParen totype)
@@ -214,7 +225,9 @@
 (define-method (type-cast! this::J2SCast totype)
    
    (define (optimize-cast? totype type)
-      (or (and (eq? totype 'bool) (memq type '(int32 uint32 integer number)))))
+      (unless (eq? totype '*)
+	 (or (and (eq? totype 'bool)
+		  (memq type '(int32 uint32 integer number))))))
 
    (with-access::J2SCast this (expr type)
       (if (optimize-cast? totype type)
@@ -224,19 +237,28 @@
 	  (cast expr totype))))
 
 ;*---------------------------------------------------------------------*/
-;*    type-cast! ::J2SCall ...                                         */
+;*    type-call-cast! ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-method (type-cast! this::J2SCall totype)
+(define (type-call-cast! this::J2SExpr fun args totype)
    
    (define (known-fun this fun::J2SFun)
-      (with-access::J2SCall this (args)
+      (with-access::J2SExpr this (type)
 	 (with-access::J2SFun fun (rtype params vararg)
 	    (let loop ((params params)
 		       (vals args)
 		       (nvals '()))
 	       (cond
 		  ((null? vals)
-		   (set! args (reverse! nvals))
+		   (cond
+		      ((isa? this J2SCall)
+		       (with-access::J2SCall this (args)
+			  (set! args (reverse! nvals))))
+		      ((isa? this J2SNew)
+		       (with-access::J2SNew this (args)
+			  (set! args (reverse! nvals))))
+		      (else
+		       (error "js2scheme" "internal call error"
+			  (j2s->list this))))
 		   (cast-expr this rtype totype))
 		  ((null? params)
 		   (loop params '()
@@ -246,48 +268,54 @@
 				    vals))
 			 nvals)))
 		  (else
-		   (with-access::J2SDecl (car params) (vtype)
+		   (with-access::J2SDecl (car params) (vtype id)
 		      (let ((ptype (if (and (eq? vtype 'array)
 					    (null? (cdr params))
 					    vararg)
 				       'any
 				       vtype)))
-			 (loop (cdr params) (cdr vals)
-			    (cons (type-cast! (car vals) ptype)
-			       nvals))))))))))
+			 (let ((pt (type-cast! (car vals) ptype)))
+			    (loop (cdr params) (cdr vals)
+			       (cons pt nvals)))))))))))
    
    (define (unknown-fun this)
-      (with-access::J2SCall this (args fun)
-	 (set! fun (type-cast! fun '*))
-	 (set! args (map! (lambda (a) (type-cast! a 'any)) args))
-	 (cast-expr this 'any totype)))
-   
-   (with-access::J2SCall this (fun)
-      (cond
-	 ((isa? fun J2SFun)
-	  (set! fun (type-cast! fun '*))
-	  (known-fun this fun))
-	 ((isa? fun J2SRef)
-	  (with-access::J2SRef fun (decl)
-	     (cond
-		((isa? decl J2SDeclFun)
-		 (with-access::J2SDeclFun decl (val)
-		    (if (isa? val J2SFun)
-			(known-fun this val)
-			(with-access::J2SMethod val (function method)
-			   (known-fun this function)))))
-		(else
-		 (unknown-fun this)))))
-	 (else
-	  (unknown-fun this)))))
+      (set! fun (type-cast! fun '*))
+      (set! args (map! (lambda (a) (type-cast! a 'any)) args))
+      (cast-expr this (j2s-type this) totype))
+
+   (cond
+      ((isa? fun J2SFun)
+       (set! fun (type-cast! fun '*))
+       (known-fun this fun))
+      ((isa? fun J2SRef)
+       (with-access::J2SRef fun (decl)
+	  (cond
+	     ((isa? decl J2SDeclFun)
+	      (with-access::J2SDeclFun decl (val)
+		 (if (isa? val J2SFun)
+		     (known-fun this val)
+		     (with-access::J2SMethod val (function method)
+			(known-fun this function)))))
+	     (else
+	      (unknown-fun this)))))
+      (else
+       (unknown-fun this))))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SCall ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SCall totype)
+   (with-access::J2SCall this (fun args thisarg)
+      (when (pair? thisarg)
+	 (set-car! thisarg (type-cast! (car thisarg) 'any)))
+      (type-call-cast! this fun args totype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SNew ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SNew totype)
-   (with-access::J2SNew this (args)
-      (set! args (map! (lambda (a) (type-cast! a 'any)) args))
-      (cast this totype)))
+   (with-access::J2SNew this (clazz args)
+      (type-call-cast! this clazz args totype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SThrow ...                                        */
@@ -311,7 +339,6 @@
 	     (with-access::J2SExpr from (type)
 		(set! expr (type-cast! expr type))))
 	    (else
-	     (tprint "PAS FROM: " (j2s->list this))
 	     (set! expr (type-cast! expr '*))))
 	 this)))
 
@@ -346,6 +373,19 @@
 (define-method (type-cast! this::J2SAssig totype)
    (with-access::J2SAssig this (lhs rhs type loc)
       (cond
+	 ((and (isa? lhs J2SRef)
+	       (with-access::J2SRef lhs (decl)
+		  (with-access::J2SDecl decl (vtype utype)
+		     (and (not (memq utype '(unknown any object)))
+			  (not (eq? vtype (j2s-type rhs)))))))
+	  (error "type-cast!" "not implemented yet" (j2s->list this)))
+	 ((and (isa? lhs J2SRef)
+	       (not (isa? this J2SInit))
+	       (with-access::J2SRef lhs (decl)
+		  (with-access::J2SDecl decl (writable)
+		     (not writable))))
+	  (set! rhs (type-cast! rhs '*))
+	  (cast this totype))
 	 ((eq? (j2s-vtype lhs) type)
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs type))
@@ -396,38 +436,17 @@
 ;*    type-cast! ::J2SAssigOp ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SAssigOp totype)
-   (with-access::J2SAssigOp this (op lhs rhs)
+   (with-access::J2SAssigOp this (op lhs rhs type)
       (case op
 	 ((>> <<)
-;* 	  (if (memq (j2s-vtype rhs) '(int32 uint32))                */
-;* 	      (begin                                                   */
-;* 		 (set! lhs (type-cast! lhs 'int32))                    */
-;* 		 (set! rhs (type-cast! rhs 'uint32)))                  */
-;* 	      (begin                                                   */
-;* 		 (set! lhs (type-cast! lhs '*))                        */
-;* 		 (set! rhs (type-cast! rhs '*))))                      */
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs 'uint32))
 	  (cast this totype))
 	 ((>>>)
-;* 	  (if (memq (j2s-vtype rhs) '(int32 uint32))                */
-;* 	      (begin                                                   */
-;* 		 (set! lhs (type-cast! lhs 'uint32))                   */
-;* 		 (set! rhs (type-cast! rhs 'uint32))                   */
-;* 	      (begin                                                   */
-;* 		 (set! lhs (type-cast! lhs '*))                        */
-;* 		 (set! rhs (type-cast! rhs '*)))))                     */
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs 'uint32))
 	  (cast this totype))
 	 ((^ & BIT_OR)
-;* 	  (if (memq (j2s-vtype rhs) '(int32 uint32))                */
-;* 	      (begin                                                   */
-;* 		 (set! lhs (type-cast! lhs 'int32))                    */
-;* 		 (set! rhs (type-cast! rhs 'int32)))                   */
-;* 	      (begin                                                   */
-;* 		 (set! lhs (type-cast! lhs '*))                        */
-;* 		 (set! rhs (type-cast! rhs '*))))                      */
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs 'int32))
 	  (cast this totype))
@@ -455,6 +474,7 @@
       (if (and (eq? op '~) (eq? type 'int32))
 	  (set! expr (type-cast! expr 'int32))
 	  (set! expr (type-cast! expr '*)))
+      ;; dont cast unary - op as this is handled by the code generator
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/
@@ -491,9 +511,13 @@
 		 (set! rhs (type-cast! rhs '*))))
 	  (cast this totype))
 	 ((OR &&)
-	  (set! lhs (type-cast! lhs totype))
-	  (set! rhs (type-cast! rhs totype))
-	  this)
+	  (set! lhs (type-cast! lhs '*))
+	  (set! rhs (type-cast! rhs '*))
+	  (cast this totype))
+	 ((instanceof)
+	  (set! lhs (type-cast! lhs '*))
+	  (set! rhs (type-cast! rhs 'any))
+	  (cast this totype))
 	 (else
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs '*))
@@ -515,6 +539,15 @@
       (set! init (type-cast! init '*))
       (set! test (type-cast! test 'bool))
       (set! incr (type-cast! incr '*))
+      (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SForIn ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SForIn totype)
+   (with-access::J2SForIn this (lhs obj body)
+      (set! lhs (type-cast! lhs '*))
+      (set! obj (type-cast! obj '*))
       (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
@@ -546,6 +579,80 @@
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SSwitch ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SSwitch totype)
+   
+   (define (inrange-int30? expr)
+      (if (isa? expr J2SNumber)
+	  (with-access::J2SNumber expr (val)
+	     (cond
+		((uint32? val)
+		 (<u32 val (bit-lshu32 #u32:1 29)))
+		((int32? val)
+		 (and (>=s32 val (negs32 (bit-lshs32 #u32:1 29)))
+		      (<s32 val (bit-lshs32 #s32:1 29))))
+		((fixnum? val)
+		 (and (>=fx val (negfx (bit-lsh 1 29)))
+		      (<fx val (bit-lsh 1 29))))
+		(else #f)))
+	  (with-access::J2SExpr expr (range)
+	     (when (interval? range)
+		(and (>=llong (interval-min range) (- (bit-lshllong #l1 30)))
+		     (<llong (interval-max range) (bit-lshllong #l1 30)))))))
+   
+   (define (type-cast-switch this keytype)
+      (with-access::J2SSwitch this (key cases)
+	 (set! key (type-cast! key keytype))
+	 (for-each (lambda (c)
+		      (with-access::J2SCase c (expr body)
+			 (unless (isa? c J2SDefault)
+			    (set! expr (type-cast! expr keytype)))
+			 (set! body (type-cast! body totype))))
+	    cases)
+	 this))
+
+   (define (expr-int? expr)
+      (or (eq? (j2s-type expr) 'integer)
+	  (with-access::J2SExpr expr (range)
+	     (and (interval? range)
+		  (inrange-int30? expr)))))
+   
+   (with-access::J2SSwitch this (key cases)
+      (cond
+	 ((and (eq? (j2s-type key) 'int32)
+	       (every (lambda (c)
+			 (or (isa? c J2SDefault)
+			     (with-access::J2SCase c (expr)
+				(eq? (j2s-type expr) 'int32))))
+		  cases))
+	  (type-cast-switch this 'int32))
+	 ((and (eq? (j2s-type key) 'uint32)
+	       (every (lambda (c)
+			 (or (isa? c J2SDefault)
+			     (with-access::J2SCase c (expr)
+				(eq? (j2s-type expr) 'uint32))))
+		  cases))
+	  (type-cast-switch this 'uint32))
+	 ((and (expr-int? key)
+	       (every (lambda (c)
+			 (or (isa? c J2SDefault)
+			     (with-access::J2SCase c (expr)
+				(expr-int? expr))))
+		  cases))
+	  (type-cast-switch this 'integer))
+	 
+	 ((and (eq? (j2s-type key) 'string)
+	       (every (lambda (c)
+			 (or (isa? c J2SDefault)
+			     (with-access::J2SCase c (expr)
+				(eq? (j2s-type expr) 'string))))
+		  cases))
+	  (type-cast-switch this 'string))
+	 (else
+	  (type-cast-switch this '*)))))
+			  
+;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SDataPropertyInit ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SDataPropertyInit totype)
@@ -564,3 +671,19 @@
 	  (set! expr (type-cast! expr totype))
 	  (set! expr (type-cast! expr '*)))
       this))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2STemplate ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2STemplate totype)
+   (with-access::J2STemplate this (loc exprs)
+      (set! exprs (map! (lambda (e) (type-cast! e 'string)) exprs))
+      (cast this totype)))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SImportDynamic ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SImportDynamic totype)
+   (with-access::J2SImportDynamic this (path)
+      (set! path (type-cast! path 'string))
+      (cast this totype)))

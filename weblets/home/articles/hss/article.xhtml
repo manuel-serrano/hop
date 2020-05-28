@@ -263,7 +263,7 @@ function hop_Config() {
   var audio = document.createElement( "audio" );
   this.html5_video = "play" in document.createElement( "video" );
 
-  if( !"HTMLAudioElement" in window ) {
+  if( !("HTMLAudioElement" in window) ) {
      this.html5_audio = false;
   } else {
     this.html5_audio = 
@@ -322,7 +322,7 @@ function hop_Config() {
      this.inline_image = true;
      this.css = 3;
      this.clone_innerHTML = true;
-     if( ! "Window" in window || window.Window === undefined ) {
+     if( !("Window" in window) || window.Window === undefined ) {
        window.Window = window.constructor;
      }
   } else if( navigator.userAgent.indexOf( "Safari" ) >= 0 ) {

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/optim.js        */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/optim.js          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Mon Jun  4 18:55:56 2018 (serrano)                */
-/*    Copyright   :  2014-18 Manuel Serrano                            */
+/*    Last change :  Thu Jul 25 06:39:08 2019 (serrano)                */
+/*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optimization testing (i.e., optimizations that were wrong).      */
 /*=====================================================================*/
@@ -33,3 +33,33 @@ function bug( code ) {
 }
 
 assert.equal( bug( "f" ), "float" );
+
+/*---------------------------------------------------------------------*/
+/*    Unboxed CTOR                                                     */
+/*    -------------------------------------------------------------    */
+/*    git: 907392f7964b6985cab146f98f5e0a0ab320702f                    */
+/*    CTOR uses unboxed arguments.                                     */
+/*---------------------------------------------------------------------*/
+function unboxedCTOR() {
+   
+   function CTOR( a, b, c, d ) {
+      this.a = a;
+      this.b = b;
+      this.c = c;
+      this.d = d;
+      this.a2 = a;
+      this.b2 = b;
+      this.c2 = c;
+      this.d2 = d;
+   }
+   
+   for( let i = 0; i < 10; i++ ) {
+      let III = i;
+      o = new CTOR( III, 20, 0, 1 );
+   }
+   
+   return o.a === 9 && o.d === 1;
+}
+
+assert.ok( unboxedCTOR, "constructors with unboxed arguments" );
+   

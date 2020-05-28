@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopc/parseargs.scm                */
+;*    serrano/prgm/project/hop/hop/hopc/parseargs.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Jun 26 15:58:57 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Mon May 25 08:32:24 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -42,12 +42,14 @@
    (newline)
    (print "Shell Variables:")
    (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
-   (print "      j2s:info, j2s:type, j2s:utype, j2s:hint, j2s:range, j2s:usage, j2s:key,")
-   (print "      j2s:loc, j2s:cache, j2s:dump, j2s:size")
-   (print "      nodejs:compile,")
-   (print "      hopscript:cache[num] (*), hopscript:hint[num] (*),")
-   (print "      hopscript:alloc[num], hopscript:uncache, hopscript:call")
-   (print "      format:json, format:fprofile, srcfile=path, logfile=path")
+   (print "      j2s:stage, j2s:type, j2s:type+, j2s:hint, j2s:range, j2s:usage, j2s:key,")
+   (print "      j2s:loc, j2s:cache, j2s:dump, j2s:info, j2s:size, j2s:tail")
+   (print "      j2s:profid, nodejs:compile,")
+   (print "      hopscript:cache[num] (*), hopscript:uncache,")
+   (print "      hopscript:alloc[num], hopscript:call, hopscript:hint[num] (*)")
+   (print "      hopscript:function[num] hopscript:symtable")
+   (print "      hopscript:fprofile (alias of \"hopscript:cache hopscript:call format:fprofile\")")
+   (print "      format:json, format:fprofile, format:memviz, srcfile=path, logfile=path")
    (print "   - HOPCFLAGS: hopc compilation flags")
    (print " (*) Need both compile and runtime variable and need to be compiled")
    (print " in profile mode: --profile")
@@ -64,7 +66,10 @@
 	 (p (hop-port))
 	 (login #f)
 	 (command-string #f)
-	 (ecmascriptv 2017))
+	 (ecmascriptv 2017)
+	 (source-map #t)
+	 (lib-dir (make-file-path (hop-lib-directory) "hop" (hop-version)))
+	 (configs '()))
       (bind-exit (stop)
 	 (args-parse (cdr args)
 	    ((("-h" "--help") (help "This message"))
@@ -82,6 +87,8 @@
 	     (set! rc-file file))
 	    (("--rc-dir" ?dir (help "Set rc directory"))
 	     (hop-rc-directory-set! dir))
+	    (("--lib-dir=?dir" (help "Set hop lib-dir"))
+	     (set! lib-dir dir))
 	    (("-L" ?dir (help "Add Hop library path"))
 	     (bigloo-library-path-set! (cons dir (bigloo-library-path))))
 	    (("--share-dir" ?dir (help "Set hopc share directory"))
@@ -97,13 +104,17 @@
 		((string=? level "x")
 		 (hopc-optim-level-set! 1000)
 		 (hopc-j2s-flags-set! (cons* :optim-ccall #t (hopc-j2s-flags))))
+		((string=? level "s")
+		 (hopc-optim-level-set! 2)
+		 (hopc-j2s-flags-set! (cons* :optim-size #t (hopc-j2s-flags))))
 		(else
 		 (hopc-optim-level-set! (string->integer level))))
 	     (hopc-bigloo-options-set!
 		(cons (format "-O~a" (min (hopc-optim-level) 6))
 		   (hopc-bigloo-options))))
 	    (("-g?level" (help "Increase or set debug level"))
-	     (hopc-clientc-source-map-set! #t)
+	     (when source-map
+		(hopc-clientc-source-map-set! #t))
 	     (hopc-clientc-arity-check-set! #t)
 	     (hopc-clientc-type-check-set! #t)
 	     (bigloo-warning-set! (string->integer level))
@@ -138,6 +149,10 @@
 	     (hopc-pass-set! 'so))
 	    ((("-j" "--client-js") (help "Generate a client-side JavaScript file"))
 	     (hopc-pass-set! 'client-js))
+	    (("--ast" ?ast (help "The source is an abstract syntax tree"))
+	     (hopc-source-ast-set! ast))
+	    (("--ast-file" ?ast (help "The source is an abstract syntax tree in a file"))
+	     (hopc-source-ast-file-set! ast))
 	    (section "Configuration and devkit")
 	    (("--safe" (help "Compile and link in safe mode"))
 	     (hopc-bigloo-safe-option-set! '("-unsafe" "-safel")))
@@ -155,7 +170,8 @@
 	     (hopc-access-file-set! file))
 	    (("--mkheap" (help "Build a js heap file"))
 	     (hopc-jsheap-set! #t))
-
+	    (("--configure" ?config (help "Report hopc configuration"))
+	     (set! configs (cons config configs)))
 	    (section "Code generation")
 	    (("-m32" (help "Generate 32-bit code"))
 	     (hopc-long-size-set! 32))
@@ -164,6 +180,7 @@
 	    (("--source-map" (help "Enable source-map table generation"))
 	     (hopc-clientc-source-map-set! #t))
 	    (("--no-source-map" (help "Disable source-map table generation"))
+	     (set! source-map #f)
 	     (hopc-clientc-source-map-set! #f))
 	    (("--use-strict" (help "Enable use-strict annotation"))
 	     (hopc-clientc-use-strict-set! #t))
@@ -185,7 +202,10 @@
 	     (unless (member lang '("hop" "hopscript"))
 		(error "hopc" "Unknown language, see -help" lang))
 	     (hopc-source-language-set! (string->symbol lang)))
-	    
+	    (("--libs-dir" ?DIR (help "Generate libs-dir directive (main only)"))
+	     (hopc-libs-dir-set! DIR))
+	    (("--sobase" ?DIR (help "Set the base directory for shared libs (default (pwd))"))
+	     (hopc-sobase-set! DIR))
 	    (section "JavaScript dialect and features")
 	    (("--js-worker" (help "Enable JavaScript workers"))
 	     (hopc-js-worker-set! #t))
@@ -247,10 +267,10 @@
 	     (j2s-compile-options-set!
 		(append (call-with-input-string conf read)
 		   (j2s-compile-options))))
-	    (("--no-server" (help "Hop compatibility, ignored"))
-	     #unspecified)
-	    (("-p" ?port (help "Hop compatibility, ignored"))
-	     #unspecified)
+	    (("--js-plugins" (help "Enables JavaScript plugins"))
+	     (hopc-j2s-plugins-set! #t))
+	    
+	    (section "Optimization, profiling, and Debugging")
 	    (("-ftyflow" (help "Enable tyflow typing (-O)"))
 	     (hopc-j2s-flags-set! (cons* :optim-tyflow #t (hopc-j2s-flags))))
 	    (("-fno-tyflow" (help "Disable tyflow typing"))
@@ -267,14 +287,18 @@
 	     (hopc-j2s-flags-set! (cons* :optim-hint #t (hopc-j2s-flags))))
 	    (("-fno-hint" (help "Disable hint typing"))
 	     (hopc-j2s-flags-set! (cons* :optim-hint #f (hopc-j2s-flags))))
-	    (("-fhint-loop" (help "Enable loop hint typing"))
-	     (hopc-j2s-flags-set! (cons* :optim-hint-loop #t (hopc-j2s-flags))))
-	    (("-fno-hint-loop" (help "Disable loop hint typing"))
-	     (hopc-j2s-flags-set! (cons* :optim-hint-loop #f (hopc-j2s-flags))))
+	    (("-floop-spec" (help "Enable loop specialization (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-loopspec #t (hopc-j2s-flags))))
+	    (("-fno-loop-spec" (help "Disable loop specialization"))
+	     (hopc-j2s-flags-set! (cons* :optim-loopspec #f (hopc-j2s-flags))))
 	    (("-fhintnum" (help "Enable hintnum typing"))
 	     (hopc-j2s-flags-set! (cons* :optim-hintnum #t (hopc-j2s-flags))))
 	    (("-fno-hintnum" (help "Disable hintnum typing"))
 	     (hopc-j2s-flags-set! (cons* :optim-hintnum #f (hopc-j2s-flags))))
+	    (("-fmultivar" (help "Enable multivar split"))
+	     (hopc-j2s-flags-set! (cons* :optim-multivar #t (hopc-j2s-flags))))
+	    (("-fno-multivar" (help "Disable multivar split"))
+	     (hopc-j2s-flags-set! (cons* :optim-multivar #f (hopc-j2s-flags))))
 	    (("-frange" (help "Enable range optimization (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-range #t (hopc-j2s-flags))))
 	    (("-fno-range" (help "Disable range optimization"))
@@ -283,10 +307,14 @@
 	     (hopc-j2s-flags-set! (cons* :optim-integer #t (hopc-j2s-flags))))
 	    (("-fno-integer" (help "Disable integer optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-integer #f (hopc-j2s-flags))))
-	    (("-finlining" (help "Enable method inlining (-Ox)"))
+	    (("-finlining" (help "Enable function inlining (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-inline #t (hopc-j2s-flags))))
-	    (("-fno-inlining" (help "Disable method inlining"))
+	    (("-fno-inlining" (help "Disable function inlining"))
 	     (hopc-j2s-flags-set! (cons* :optim-inline #f (hopc-j2s-flags))))
+	    (("-finlining-method" (help "Enable method inlining (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-inline-method #t (hopc-j2s-flags))))
+	    (("-fno-inlining-method" (help "Disable method inlining"))
+	     (hopc-j2s-flags-set! (cons* :optim-inline-method #f (hopc-j2s-flags))))
 	    (("-fshared-pcache" (help "Share pcaches (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :shared-pcache #t (hopc-j2s-flags))))
 	    (("-fno-shared-pcache" (help "Disable share pcaches"))
@@ -299,6 +327,14 @@
 	     (hopc-j2s-flags-set! (cons* :optim-ctor #t (hopc-j2s-flags))))
 	    (("-fno-ctor" (help "Disable fast constructor init sequences"))
 	     (hopc-j2s-flags-set! (cons* :optim-ctor #f (hopc-j2s-flags))))
+	    (("-farguments" (help "Enable arguments optimization (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-arguments #t (hopc-j2s-flags))))
+	    (("-fno-arguments" (help "Disable arguments optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-arguments #f (hopc-j2s-flags))))
+	    (("-fprocedure" (help "Enable procedure optimization (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-procedure #t (hopc-j2s-flags))))
+	    (("-fno-procedure" (help "Disable procedure optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-procedure #f (hopc-j2s-flags))))
 	    (("-fcce" (help "Enable common inline caching (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-cce #t (hopc-j2s-flags))))
 	    (("-fno-cce" (help "Disable common inline caching"))
@@ -311,25 +347,37 @@
 	     (hopc-j2s-flags-set! (cons* :optim-unletrec #t (hopc-j2s-flags))))
 	    (("-fno-unletrec" (help "Disable unletrec optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-unletrec #f (hopc-j2s-flags))))
-	    (("-fclevel" (help "Enable property cache level optimization"))
-	     (hopc-j2s-flags-set! (cons* :optim-clevel #t (hopc-j2s-flags))))
-	    (("-fno-clevel" (help "Disable property cache level optimization"))
-	     (hopc-j2s-flags-set! (cons* :optim-clevel #f (hopc-j2s-flags))))
+	    (("-fglobprop" (help "Enable globprop optimization (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-globprop #t (hopc-j2s-flags))))
+	    (("-fno-globprop" (help "Disable globprop optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-globprop #f (hopc-j2s-flags))))
+	    (("-fcspecs" (help "Enable property cache level optimization (-O2)"))
+	     (hopc-j2s-flags-set! (cons* :optim-cspecs #t (hopc-j2s-flags))))
+	    (("-fno-cspecs" (help "Disable property cache level optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-cspecs #f (hopc-j2s-flags))))
+	    (("-fcallapply" (help "Enable CALL/APPLY optimization (-O2)"))
+	     (hopc-j2s-flags-set! (cons* :optim-callapply #t (hopc-j2s-flags))))
+	    (("-fno-callapply" (help "Disable CALL/APPLY optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-callapply #f (hopc-j2s-flags))))
 	    (("-fliterals" (help "Enable literals optimization (-O3)"))
 	     (hopc-j2s-flags-set! (cons* :optim-literals #t (hopc-j2s-flags))))
 	    (("-fno-literals" (help "Disable literals optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-literals #f (hopc-j2s-flags))))
-	    (("-fcache-instanceof" (help "Enable instanceof caching"))
+	    (("-fcache-instanceof" (help "Enable instanceof caching (-O2)"))
 	     (hopc-j2s-flags-set! (cons* :optim-cinstanceof #t (hopc-j2s-flags))))
 	    (("-fno-cache-instanceof" (help "Enable instanceof caching"))
 	     (hopc-j2s-flags-set! (cons* :optim-cinstanceof #f (hopc-j2s-flags))))
-	    (("-fvector" (help "Enable array-to-vector optimization"))
+	    (("-fvector" (help "Enable array-to-vector optimization (-O3)"))
 	     (hopc-j2s-flags-set! (cons* :optim-vector #t (hopc-j2s-flags))))
 	    (("-fno-vector" (help "Disable array-to-vector optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-vector #f (hopc-j2s-flags))))
+	    (("-fmethod" (help "Enable array-to-method optimization (-O2)"))
+	     (hopc-j2s-flags-set! (cons* :optim-method #t (hopc-j2s-flags))))
+	    (("-fno-method" (help "Disable array-to-method optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-method #f (hopc-j2s-flags))))
 	    (("-fprofile" ?log (help "Profile log file optimization"))
 	     (hopc-j2s-flags-set! (cons* :profile-log log (hopc-j2s-flags)))
-	     (hopc-j2s-flags-set! (cons* :optim-clevel #t (hopc-j2s-flags))))
+	     (hopc-j2s-flags-set! (cons* :optim-cspecs #t (hopc-j2s-flags))))
 	    (("--profile" (help "Profiling mode (see HOPTRACE)"))
 	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
 	     (hopc-j2s-flags-set! (cons* :profile #t (hopc-j2s-flags))))
@@ -340,15 +388,39 @@
 	     (hopc-j2s-flags-set! (cons* :profile-hint #t (hopc-j2s-flags))))
 	    (("--profile-call" (help "Call profiling mode (see HOPTRACE)"))
 	     (hopc-j2s-flags-set! (cons* :profile-call #t (hopc-j2s-flags))))
+	    (("--profile-method" (help "Method profiling mode (see HOPTRACE)"))
+	     (hopc-j2s-flags-set! (cons* :profile-method #t (hopc-j2s-flags))))
 	    (("--profile-alloc" (help "Alloc profiling mode (see HOPTRACE)"))
 	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
 	     (hopc-j2s-flags-set! (cons* :profile-alloc #t (hopc-j2s-flags))))
+	    (("--profile-symbols" (help "Profile with a symbol table"))
+	     (hopc-j2s-flags-set! (cons* :profile-symbols #t (hopc-j2s-flags))))
+	    (("--profile-mem?level" (help "Memory profiling mode (see bmem)"))
+	     (hopc-j2s-flags-set! (cons* :profile-mem level (hopc-j2s-flags)))
+	     (if (string=? level "")
+		 (hopc-bigloo-profile-options-set! '("-gtraceall"))
+		 (let ((gtrace (string-append "-gtrace" level)))
+		    (hopc-bigloo-profile-options-set! `(,gtrace)))))
+	    (section "Dummy option for Hop command line similarity")
+	    (("--no-server" (help "Hop compatibility, ignored"))
+	     #unspecified)
+	    (("-p" ?port (help "Hop compatibility, ignored"))
+	     #unspecified)
 	    (section "Experimental features")
 	    (("--js-cspecs" ?cspecs (help "force default cache specs"))
 	     (call-with-input-string cspecs
 		(lambda (ip)
 		   (hopc-j2s-flags-set!
 		      (cons* :cspecs (read ip) (hopc-j2s-flags))))))
+	    (("--tls" (help "Thread local storage"))
+	     (cond-expand
+		(enable-tls
+		 (hopc-j2s-flags-set!
+		    (cons* :tls #t (hopc-j2s-flags))))
+		(else
+		 (error "hopc"
+		    "thread local storage not supported by architecture"
+		    #f))))
 	    (else
 	     (if (string=? else "--")
 		 (begin
@@ -356,6 +428,9 @@
 		       (append (hopc-bigloo-options) (cdr rest)))
 		    (stop #t))
 		 (hopc-sources-set! (append (hopc-sources) (list else)))))))
+      ;; hop-lib-dir
+      (hopc-bigloo-options-set!
+	 (append `("-L" ,lib-dir) (hopc-bigloo-options)))
       ;; ecmascript version
       (j2s-compile-options-set!
 	 (append
@@ -379,6 +454,12 @@
 	 (hopc-long-size-set! (bigloo-config 'elong-size)))
       (unless (fixnum? (hopc-int-size))
 	 (hopc-int-size-set! (bigloo-config 'int-size)))
+
+      ;; config report
+      (when (pair? configs)
+	 (hopc-configure configs lib-dir)
+	 (exit 0))
+      
       exprs))
 
 ;*---------------------------------------------------------------------*/
@@ -391,3 +472,28 @@
 	  (hop-load path :menv #unspecified))))      
 
 
+;*---------------------------------------------------------------------*/
+;*    hopc-configure ...                                               */
+;*---------------------------------------------------------------------*/
+(define (hopc-configure keys lib-dir)
+   (call-with-input-file (make-file-name lib-dir "hopc_config.sch")
+      (lambda (ip)
+	 (let ((version (eval (read ip)))
+	       (configs (eval (read ip))))
+	    (for-each (lambda (s)
+			 (let* ((k (string->symbol s))
+				(c (assq k configs)))
+			    (cond
+			       ((pair? c)
+				(print (cdr c)))
+			       ((eq? k '--so-dirname)
+				(print
+				   (make-file-path
+				      (cdr (assq '--version configs))
+				      (cdr (assq '--build-id configs))
+				      (cdr (assq '--build-arch configs)))))
+			       (else
+				(error "hopc"
+				   (format "Unknown key \"~a\"" k)
+				   configs)))))
+	       keys)))))

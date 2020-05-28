@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.3.x/weblets/doc/doc.hss               */
+/*    serrano/prgm/project/hop/hop/weblets/doc/doc.hss                 */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Feb 24 13:57:44 2005                          */
-/*    Last change :  Mon May 21 16:34:30 2012 (serrano)                */
-/*    Copyright   :  2005-12 Manuel Serrano                            */
+/*    Last change :  Thu May 21 12:37:34 2020 (serrano)                */
+/*    Copyright   :  2005-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    DOC HOP CSS                                                      */
 /*=====================================================================*/
@@ -373,6 +373,10 @@ table.api-index span.href {
 
 table.api-index span.href:hover {
   text-decoration: underline;
+}
+
+div.doc div.api-proto pre {
+    width: 60%;
 }
 
 /*--- window ----------------------------------------------------------*/

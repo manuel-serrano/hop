@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Feb  6 09:07:26 2018                          */
-/*    Last change :  Wed Feb  7 17:42:40 2018 (serrano)                */
-/*    Copyright   :  2018 Manuel Serrano                               */
+/*    Last change :  Fri Jan 18 18:24:34 2019 (serrano)                */
+/*    Copyright   :  2018-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2015+ object literal syntaxes                 */
 /*=====================================================================*/
@@ -142,7 +142,6 @@ function kangaxf() {
 	  set [x] (value) { valueSet = value }
        };
    obj.y = 'foo';
-   console.log( "obj=", obj.y );
    return obj.y === 1 && valueSet == 'foo';
 }
 

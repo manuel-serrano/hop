@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/property.sch            */
+;*    serrano/prgm/project/hop/hop/hopscript/property.sch              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Apr  8 18:23:38 2018 (serrano)                */
-;*    Copyright   :  2016-18 Manuel Serrano                            */
+;*    Last change :  Thu Apr  9 07:16:09 2020 (serrano)                */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*    -------------------------------------------------------------    */
@@ -15,6 +15,12 @@
 ;*    directives                                                       */
 ;*---------------------------------------------------------------------*/
 (directives (option (loadq "property_expd.sch")))
+
+;*---------------------------------------------------------------------*/
+;*    define-jseval                                                    */
+;*---------------------------------------------------------------------*/
+(define-expander define-jseval
+   js-define-jseval-expander)
 
 ;*---------------------------------------------------------------------*/
 ;*    profiling                                                        */
@@ -29,12 +35,12 @@
 ;*---------------------------------------------------------------------*/
 (define-expander %define-pcache
    %define-pcache-expander)
-(define-expander js-make-pcache
-   js-make-pcache-expander)
+(define-expander js-make-pcache-table
+   js-make-pcache-table-expander)
 (define-expander js-pcache-ref
    js-pcache-ref-expander)
-(define-expander js-pcache-pcache
-   js-pcache-pcache-expander)
+(define-expander js-pcache-pctable
+   js-pcache-pctable-expander)
 (define-expander js-pcache-imap
    js-pcache-imap-expander)
 (define-expander js-pcache-cmap
@@ -43,6 +49,8 @@
    js-pcache-emap-expander)
 (define-expander js-pcache-pmap
    js-pcache-pmap-expander)
+(define-expander js-pcache-nmap
+   js-pcache-nmap-expander)
 (define-expander js-pcache-index
    js-pcache-index-expander)
 (define-expander js-pcache-vindex
@@ -52,15 +60,16 @@
 (define-expander js-pcache-method
    js-pcache-method-expander)
 
+(define-expander js-pcache-prefetch-index
+   js-pcache-prefetch-index-expander)
+
 ;*---------------------------------------------------------------------*/
 ;*    js-get-XXX ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-expander js-get-name/cache
    js-get-name/cache-expander)
-(define-expander js-object-get-name/cache
-   js-object-get-name/cache-expander)
-(define-expander js-global-object-get-name
-   js-global-object-get-name-expander)
+(define-expander js-get-jsobject-name/cache
+   js-get-jsobject-name/cache-expander)
 (define-expander js-global-object-get-name/cache
    js-global-object-get-name/cache-expander)
 (define-expander js-get-length
@@ -71,34 +80,41 @@
 ;*---------------------------------------------------------------------*/
 (define-expander js-put-name/cache!
    js-put-name/cache-expander)
-(define-expander js-object-put-name/cache!
-   js-object-put-name/cache-expander)
+(define-expander js-put-jsobject-name/cache!
+   js-put-jsobject-name/cache-expander)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-call-XXX ...                                                  */
 ;*---------------------------------------------------------------------*/
+;* (define-expander js-call                                            */
+;*    js-call-expander)                                                */
+;* (define-expander js-call1                                           */
+;*    js-call-expander)                                                */
+;* (define-expander js-call2                                           */
+;*    js-call-expander)                                                */
+;* (define-expander js-call3                                           */
+;*    js-call-expander)                                                */
+;* (define-expander js-call4                                           */
+;*    js-call-expander)                                                */
+;* (define-expander js-call/function                                   */
+;*    js-call/function-expander)                                       */
+;* (define-expander js-call1/function                                  */
+;*    js-call/function-expander)                                       */
+;* (define-expander js-call2/function                                  */
+;*    js-call/function-expander)                                       */
+;* (define-expander js-call3/function                                  */
+;*    js-call/function-expander)                                       */
+;* (define-expander js-call4/function                                  */
+;*    js-call/function-expander)                                       */
 (define-expander js-call/cache
    js-call/cache-expander)
 (define-expander js-method-call-name/cache
    js-method-call-name/cache-expander)
-(define-expander js-object-method-call-name/cache
-   js-object-method-call-name/cache-expander)
-(define-expander js-non-object-method-call-name
-   js-non-object-method-call-name-expander)
+(define-expander js-method-jsobject-call-name/cache
+   js-method-jsobject-call-name/cache-expander)
+(define-expander js-method-non-jsobject-call-name
+   js-method-non-jsobject-call-name-expander)
 		    
-;*---------------------------------------------------------------------*/
-;*    js-toname                                                        */
-;*---------------------------------------------------------------------*/
-(define-expander js-toname
-   (lambda (x e)
-      (match-case x
-	 ((?- (and ?n (? integer?)))
-	  (string->symbol (integer->string n)))
-	 ((?- ?n)
-	  `((@ js-toname __hopscript_property) ,(e n e)))
-	 (else
-	  (map (lambda (x) (e x e)) x)))))
-
 ;*---------------------------------------------------------------------*/
 ;*    descr ...                                                        */
 ;*---------------------------------------------------------------------*/

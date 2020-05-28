@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/_udp_wrap.scm              */
+;*    /tmp/HOPNEW/hop/nodejs/_udp_wrap.scm                             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Tue Jun 19 07:31:42 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Sun Feb 23 15:08:14 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs UDP bindings                                              */
 ;*=====================================================================*/
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs__udp-wrap
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hopscript)
 
    (include "nodejs_async.sch" "nodejs_types.sch")
@@ -27,92 +29,91 @@
 	      ::JsProcess ::obj ::JsObject)))
 
 ;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
 ;*    process-udp-wrap ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (process-udp-wrap %worker %this process::JsProcess slab slowbuffer::JsObject)
    
-   (define (not-implemented name)
-      (js-make-function %this
-	 (lambda (this . l)
-	    (error "udp_wrap" "binding not implemented" name))
-	 0 (symbol->string name)))
-
    (define (check-fail %this process r)
       (unless (=fx r 0)
-	 (js-put! process '_errno (nodejs-err-name r) #f %this))
+	 (js-put! process (& "_errno") (nodejs-err-name r) #f %this))
       r)
 
    (define (create-udp-proto)
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((obj (js-new %this js-object)))
 	    
-	    (js-put! obj 'bind
+	    (js-put! obj (& "bind")
 	       (js-make-function %this
 		  (lambda (this addr port flags)
 		     (with-access::JsHandle this (handle)
 			(let ((p (->fixnum (js-tointeger port %this))))
 			   (nodejs-udp-bind %this process handle addr p 4
 			      (if (eq? flags (js-undefined)) 0 flags)))))
-		  3 "bind")
+		  3 (& "bind"))
 	       #f %this)
 	    
-	    (js-put! obj 'send
+	    (js-put! obj (& "send")
 	       (js-make-function %this
 		  (lambda (this buffer offset length port address callback)
 		     (udp-send %worker process %this this
 			buffer offset length port address 4 callback))
-		  6 "send")
+		  6 (& "send"))
 	       #f %this)
 	    
-	    (js-put! obj 'bind6
+	    (js-put! obj (& "bind6")
 	       (js-make-function %this
 		  (lambda (this addr port flags)
 		     (with-access::JsHandle this (handle)
 			(let ((p (->fixnum (js-tointeger port %this))))
 			   (nodejs-udp-bind %this process handle addr p 6
 			      (if (eq? flags (js-undefined)) 0 flags)))))
-		  3 "bind6")
+		  3 (& "bind6"))
 	       #f %this)
 	    
-	    (js-put! obj 'send6
+	    (js-put! obj (& "send6")
 	       (js-make-function %this
 		  (lambda (this buffer offset length port address callback)
 		     (udp-send %worker process %this this 
 			buffer offset length port address 6 callback))
-		  5 "send6")
+		  5 (& "send6"))
 	       #f %this)
 	    
-	    (js-put! obj 'close
+	    (js-put! obj (& "close")
 	       (js-make-function %this
 		  (lambda (this cb)
 		     (nodejs-close %worker %this process this cb))
-		  1 "close")
+		  1 (& "close"))
 	       #f %this)
 	    
-	    (js-put! obj 'recvStart
+	    (js-put! obj (& "recvStart")
 	       (js-make-function %this
 		  (lambda (this)
 		     (udp-recv-start %worker %this process slab this))
-		  0 "recvStart")
+		  0 (& "recvStart"))
 	       #f %this)
 	    
-	    (js-put! obj 'recvStop
+	    (js-put! obj (& "recvStop")
 	       (js-make-function %this
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-udp-recv-stop handle)))
-		  1 "recvStop")
+		  1 (& "recvStop"))
 	       #f %this)
 	    
-	    (js-put! obj 'getsockname
+	    (js-put! obj (& "getsockname")
 	       (js-make-function %this
 		  (lambda (this val)
 		     (with-access::JsHandle this (handle)
 			(nodejs-udp-getsockname %this handle)))
-		  1 "getsockname")
+		  1 (& "getsockname"))
 	       #f %this)
 	    
-	    (js-put! obj 'addMembership
+	    (js-put! obj (& "addMembership")
 	       (js-make-function %this
 		  (lambda (this addr iface)
 		     (with-access::JsHandle this (handle)
@@ -122,10 +123,10 @@
 			      (unless (eq? iface (js-undefined))
 				 (js-tostring iface %this))
 			      'join-group))))
-		  3 "addMembership")
+		  3 (& "addMembership"))
 	       #f %this)
 	    
-	    (js-put! obj 'dropMembership
+	    (js-put! obj (& "dropMembership")
 	       (js-make-function %this
 		  (lambda (this addr iface)
 		     (with-access::JsHandle this (handle)
@@ -134,59 +135,59 @@
 			   (unless (eq? iface (js-undefined))
 			      (js-tostring iface %this))
 			   'leave-group)))
-		  3 "dropMembership")
+		  3 (& "dropMembership"))
 	       #f %this)
 	    
-	    (js-put! obj 'setMulticastTTL
+	    (js-put! obj (& "setMulticastTTL")
 	       (js-make-function %this
 		  (lambda (this ttl)
 		     (with-access::JsHandle this (handle)
 			(nodejs-udp-set-multicast-ttl handle
 			   (->fixnum (js-tointeger ttl %this) ))))
-		  2 "setMulticastTTL")
+		  2 (& "setMulticastTTL"))
 	       #f %this)
 	    
-	    (js-put! obj 'setMulticastLoopback
+	    (js-put! obj (& "setMulticastLoopback")
 	       (js-make-function %this
 		  (lambda (this on)
 		     (with-access::JsHandle this (handle)
 			(nodejs-udp-set-multicast-loop handle
 			   (js-toboolean on))))
-		  2 "setMulticastLoopback")
+		  2 (& "setMulticastLoopback"))
 	       #f %this)
 	    
-	    (js-put! obj 'setBroadcast
+	    (js-put! obj (& "setBroadcast")
 	       (js-make-function %this
 		  (lambda (this on)
 		     (with-access::JsHandle this (handle)
 			(nodejs-udp-set-broadcast handle
 			   (js-toboolean on))))
-		  2 "setBroadcast")
+		  2 (& "setBroadcast"))
 	       #f %this)
 	    
-	    (js-put! obj 'setTTL
+	    (js-put! obj (& "setTTL")
 	       (js-make-function %this
 		  (lambda (this ttl)
 		     (with-access::JsHandle this (handle)
 			(nodejs-udp-set-ttl handle
 			   (->fixnum (js-tointeger ttl %this) ))))
-		  2 "setTTL")
+		  2 (& "setTTL"))
 	       #f %this)
 	    
-	    (js-put! obj 'ref
+	    (js-put! obj (& "ref")
 	       (js-make-function %this
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-ref handle %worker)))
-		  0 "ref")
+		  0 (& "ref"))
 	       #f %this)
 	    
-	    (js-put! obj 'unref
+	    (js-put! obj (& "unref")
 	       (js-make-function %this
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-unref handle %worker)))
-		  0 "unref")
+		  0 (& "unref"))
 	       #f %this)
 	    
 	    obj)))
@@ -201,27 +202,31 @@
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((obj (instantiateJsHandle
 		       (handle hdl)
-		       (__proto__ (get-udp-proto)))))
-	    (js-bind! %this obj 'fd
+		       (__proto__ (get-udp-proto))
+		       (cmap (instantiate::JsConstructMap))
+		       (elements ($create-vector 1)))))
+	    (js-bind! %this obj (& "fd")
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (nodejs-stream-fd %worker hdl))
-		       0 'GetFD)
+		       0 (& "GetFD"))
 	       :writable #f :configurable #f)
 	    obj)))
    
    (define (UDP this)
       (udp-wrap (nodejs-udp-handle %worker)))
 
+   (set! __js_strings (&init!))
+   
    (with-access::JsGlobalObject %this (js-object)
       (with-access::JsProcess process (js-udp)
 	 (let ((obj (js-new %this js-object)))
 	    (set! js-udp
-	       (js-make-function %this UDP 0 "UDP"
-		  :alloc (lambda (o) #unspecified)
+	       (js-make-function %this UDP 0 (& "UDP")
+		  :alloc (lambda (%this o) #unspecified)
 		  :prototype (get-udp-proto)
 		  :construct UDP))
-	    (js-put! obj 'UDP js-udp #f %this)
+	    (js-put! obj (& "UDP") js-udp #f %this)
 	    obj))))
 
 ;*---------------------------------------------------------------------*/
@@ -245,7 +250,7 @@
 	    (len (->fixnum (js-tointeger length %this)))
 	    (port (->fixnum (js-tointeger port %this)))
 	    (req (js-new %this js-object)))
-	 (js-put! req 'buffer buffer #f %this)
+	 (js-put! req (& "buffer") buffer #f %this)
 	 (with-access::JsHandle this (handle)
 	    (with-access::JsTypedArray buffer (%data byteoffset length)
 	       (let ((r (nodejs-udp-send %worker %this handle %data
@@ -257,7 +262,7 @@
 				 (trace-item "status=" status
 				    " req=" (typeof req) " this=" (typeof this)
 				    " buffer=" (typeof buffer))
-				 (let ((oncomp (js-get req 'oncomplete %this)))
+				 (let ((oncomp (js-get req (& "oncomplete") %this)))
 				    ;; MS: nodejs set the buffer into the req
 				    ;; object using a setHiddenValue method
 				    ;; that I don't understand
@@ -269,7 +274,7 @@
 		  (if (=fx r 0)
 		      req
 		      (begin
-			 (js-put! process '_errno (nodejs-err-name r) #f %this)
+			 (js-put! process (& "_errno") (nodejs-err-name r) #f %this)
 			 (js-undefined)))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -290,14 +295,14 @@
 			   ((not status)
 			    ;; read error
 			    (slab-shrink! slab buf offset 0)
-			    (js-put! process '_errno (nodejs-err-name len) #f %this)
-			    (let ((onmsg (js-get this 'onmessage %this)))
+			    (js-put! process (& "_errno") (nodejs-err-name len) #f %this)
+			    (let ((onmsg (js-get this (& "onmessage") %this)))
 			       (!js-callback0 "recv-start" %worker %this
 				  onmsg this)))
 			   (else
 			    ;; characters read
 			    (let ((b (slab-shrink! slab buf offset len)))
-			       (let ((onmsg (js-get this 'onmessage %this)))
+			       (let ((onmsg (js-get this (& "onmessage") %this)))
 				  (!js-callback5 "recv-start" %worker %this
 				     onmsg this this b offset len
 				     (js-alist->jsobject addr %this))
@@ -305,7 +310,12 @@
 	 (if (=fx r 0)
 	     #t
 	     (begin
-		(js-put! process '_errno (nodejs-err-name r) #f %this)
+		(js-put! process (& "_errno") (nodejs-err-name r) #f %this)
 		#f)))))
 		
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)
 

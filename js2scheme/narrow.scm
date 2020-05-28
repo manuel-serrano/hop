@@ -1,14 +1,14 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/narrow.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/narrow.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Mon Jun  4 19:01:41 2018 (serrano)                */
-;*    Copyright   :  2015-18 Manuel Serrano                            */
+;*    Last change :  Tue Dec 31 14:21:02 2019 (serrano)                */
+;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
 ;*    -------------------------------------------------------------    */
-;*    This optimization consists in transforming global VAR decl into  */
+;*    This optimization transforms global VAR declarations into        */
 ;*    LET-OPT bindings.                                                */ 
 ;*=====================================================================*/
 
@@ -115,6 +115,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-blockify! ...                                                */
+;*    -------------------------------------------------------------    */
+;*    Force a block before each variable initialization.               */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-blockify! this::J2SNode)
    (call-default-walker))
@@ -157,40 +159,46 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-narrow-fun/w-init! ...                                       */
 ;*    -------------------------------------------------------------    */
-;*    For variables that are not initialized (but setted) try to       */
+;*    For variables that are not initialized (but assigned) try to     */
 ;*    find one of the assignments that could act as an initializer.    */
 ;*---------------------------------------------------------------------*/
 (define (j2s-narrow-fun/w-init! o::J2SFun)
    (with-access::J2SFun o (body)
-      (let ((uvars (j2s-find-non-init-vars* body)))
+      (let ((uvars (j2s-find-non-init-vars* body))
+	    (res #f))
 	 (when (pair? uvars)
 	    (mark-block-parent body body)
 	    (let ((assigs (collect-assig* body uvars body)))
 	       (for-each (lambda (uvar)
-			    (with-access::J2SDecl uvar (id)
+			    (with-access::J2SDecl uvar (id loc)
 			       (let ((block (find-drop-block uvar body)))
 				  (when block
 				     (let ((assig (find-drop-assig
 						     uvar assigs block)))
 					(when (always-executed? block assig)
 					   (rewrite-assig! body assig)
+					   (set! res #t)
 					   (with-access::J2SDecl uvar (%info)
 					      (with-access::J2SNarrowInfo %info
 						    (defblock narrowable ldecl)
 						 (set! defblock block)
 						 (set! ldecl uvar)
 						 (set! narrowable #t)))))))))
-		  uvars))))))
+		  uvars)))
+	 res)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-narrow-fun! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-narrow-fun! o::J2SFun)
-   (with-access::J2SFun o (body)
+   (with-access::J2SFun o (body loc)
+      ;; find the variables used but not initialized
+      (when #f 
+	 (j2s-narrow-fun/w-init! o))
+      ;; create block for all variable initialization
+      (set! body (j2s-blockify! body))
       ;; find the declaring block of all declarations
       (j2s-find-init-blocks body body o)
-      ;; find the variables used but not initialized
-      (j2s-narrow-fun/w-init! o)
       ;; get the set of narrowable declarations
       (j2s-mark-narrowable body '() #f o (make-cell #f))
       ;; narrow the function body
@@ -228,9 +236,10 @@
 	 (j2s-find-init-blocks rhs block fun)
 	 (when (isa? lhs J2SRef)
 	    (with-access::J2SRef lhs (decl)
-	       (unless (or (j2s-let? decl) (j2s-param? decl))
+	       ;;(unless (or (j2s-let? decl) (j2s-param? decl))
+	       (unless (j2s-param? decl)
 		  ;; skip let/const declarations
-		  (with-access::J2SDecl decl (%info %%dump binder)
+		  (with-access::J2SDecl decl (%info %%dump binder id)
 		     (if (isa? %info J2SNarrowInfo)
 			 (with-access::J2SNarrowInfo %info (useblocks defblock deffun)
 			    (when block
@@ -251,7 +260,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-find-init-blocks this::J2SRef block fun)
    (with-access::J2SRef this (decl)
-      (unless (or (j2s-let? decl) (j2s-param? decl))
+      ;;(unless (or (j2s-let? decl) (j2s-param? decl))
+      (unless (j2s-param? decl)
 	 ;; skip let/const declarations
 	 (with-access::J2SDecl decl (%info)
 	    (if (isa? %info J2SNarrowInfo)
@@ -274,7 +284,7 @@
 ;*      1- it is never used outside its bounding block                 */
 ;*      2- it is never captured inside a loop                          */
 ;*      3- it is never used after a yield inside a loop                */
-;*      4- it is used in two different inner functions                 */
+;*      4- it is not used in two different inner functions             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-mark-narrowable this::J2SNode blocks inloop fun yield)
    (call-default-walker))
@@ -292,7 +302,7 @@
 ;*    j2s-mark-narrowable ::J2SRef ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-mark-narrowable this::J2SRef blocks inloop fun yield)
-   (with-access::J2SRef this (decl)
+   (with-access::J2SRef this (decl loc)
       (with-access::J2SDecl decl (%info id)
 	 (when (isa? %info J2SNarrowInfo)
 	    (with-access::J2SNarrowInfo %info (deffun usefun defblock narrowable)
@@ -308,6 +318,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-mark-narrowable this::J2SFun blocks inloop fun yield)
    (with-access::J2SFun this (body)
+      ;; MS: 4sep2018, should not traverse function body
       (j2s-mark-narrowable body blocks inloop this yield)))
 
 ;*---------------------------------------------------------------------*/
@@ -350,7 +361,6 @@
 ;*    j2s-narrow-body! ::J2SFun ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-narrow-body! this::J2SFun)
-   ;;(call-default-walker)
    (j2s-narrow-fun! this)
    this)
 
@@ -359,7 +369,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-narrow-body! this::J2SDecl)
    (call-default-walker)
-   (with-access::J2SDecl this (loc %info)
+   (with-access::J2SDecl this (loc %info loc id)
       (or (when (isa? %info J2SNarrowInfo)
 	     (with-access::J2SNarrowInfo %info (defblock narrowable)
 		(when narrowable
@@ -458,7 +468,16 @@
    (with-access::J2SBlock this (nodes)
       (set! nodes (filter! (lambda (n) (not (isa? n J2SNop))) nodes))
       this))
-   
+
+;*---------------------------------------------------------------------*/
+;*    j2s-narrow-body! ::J2SLetBlock ...                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-narrow-body! this::J2SLetBlock)
+   (call-default-walker)
+   (with-access::J2SLetBlock this (decls)
+      (set! decls (filter! (lambda (n) (not (isa? n J2SNop))) decls))
+      this))
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-lift-inits! ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -471,7 +490,7 @@
 (define-walk-method (j2s-lift-inits! this::J2SLetBlock)
    
    (define (lift? node::J2SNode decls)
-      ;; lift everything that is not an initialization of one decls
+      ;; lift everything init that is not an initialization of one decls
       (or (not (isa? node J2SStmtExpr))
 	  (with-access::J2SStmtExpr node (expr)
 	     (or (not (isa? expr J2SInit))
@@ -544,16 +563,13 @@
 ;*    all its uses.                                                    */
 ;*---------------------------------------------------------------------*/
 (define (find-drop-block decl::J2SDecl parent::J2SNode)
-   ;;(tprint "j2s-assign decl=" (j2s->list decl))
    (with-access::J2SDecl decl (%info)
       (when (isa? %info J2SNarrowInfo)
 	 (with-access::J2SNarrowInfo %info (useblocks)
-	    ;;(tprint "blocks=" (block*->list useblocks))
 	    (let loop ((blocks (cdr useblocks))
 		       (block (car useblocks)))
 	       (if (null? blocks)
 		   (unless (eq? block parent)
-		      ;;(tprint "block=" (car (block*->list (list block))))
 		      block)
 		   (loop (cdr blocks)
 		      (find-common-ancestor block (car blocks) parent))))))))

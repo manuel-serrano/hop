@@ -23,24 +23,22 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /tmp
 
-RUN wget http://redrock.inria.fr:8888/home/serrano/prgm/distrib/bigloo4.3b.tar.gz \
-    && tar -xzf bigloo*.tar.gz && cd bigloo* \
+RUN wget ftp://ftp-sop.inria.fr/indes/fp/Bigloo/bigloo-latest.tar.gz \
+    && tar -xzf bigloo*.tar.gz && cd bigloo*/ \
     && ./configure && make -j$(nproc) && make install
 
-RUN wget http://redrock.inria.fr:8888/home/serrano/prgm/distrib/hop-3.2.0-pre1.tar.gz \
-    && tar -xzf hop* && cd hop* \
-    && ./configure && make -j$(nproc) && make install \
-    && cd ..; rm -rf hop-3.2.0/hopc
-
-RUN git clone https://github.com/colinvidal/hiphop.git \
-    && (cd hiphop; git checkout master) \
-    && mv hiphop /usr/local/lib/hop/3.2.0/node_modules/
+RUN wget ftp://ftp-sop.inria.fr/indes/fp/Hop/hop-3.3.0.tar.gz \
+    && tar -xzf hop* && cd hop*/ \
+    && ./configure --license=academic && make -j$(nproc) && make install
 
 RUN useradd --no-log-init -d /home/hop -s /bin/bash hop
 
-COPY hoprc.hop /home/hop/.config/hop/hoprc.hop
-
 RUN rm -rf /tmp/*
+
+RUN mkdir -p /home/hop/.config/hop && \
+    echo "(add-user! \"anonymous\" :directories '* :services '*)" \
+      > /home/hop/.config/hop/hoprc.hop && \
+    chown -R hop /home/hop
 
 USER hop
 ENV HOME /home/hop

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    /tmp/BAR/hop-3.0.0-pre14/nodejs/make_fakeuv.scm                  */
+;*    serrano/prgm/project/hop/hop/nodejs/make_fakeuv.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Mar  3 18:53:45 2015                          */
-;*    Last change :  Mon Apr 20 14:04:42 2015 (serrano)                */
-;*    Copyright   :  2015 Manuel Serrano                               */
+;*    Last change :  Thu Sep  5 13:12:30 2019 (serrano)                */
+;*    Copyright   :  2015-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Small utility to build a fake __nodejs_uv module                 */
 ;*=====================================================================*/
@@ -34,6 +34,8 @@
 (define (fake expr)
    (match-case expr
       ((module ?- . ?-) #f)
+      ((define __js_strings (&begin!)) #f)
+      ((&end!) #f)
       (((or define-inline define-method define) (?id . ?-) . ?-)
        (fake-define (find-type id) expr))
       ((cond-expand (enable-libuv . ?body))

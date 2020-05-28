@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/trashcan/es6-misc.js                                     */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/es6-misc.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Nov 25 06:02:02 2017                          */
-/*    Last change :  Sun Nov 26 10:22:18 2017 (serrano)                */
-/*    Copyright   :  2017 Manuel Serrano                               */
+/*    Last change :  Fri Jun  7 10:01:45 2019 (serrano)                */
+/*    Copyright   :  2017-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 misc features                                        */
 /*=====================================================================*/
@@ -63,6 +63,7 @@ function mdnAssign1() {
 
    var obj = Object.assign({}, o1, o2);
 
+   console.log( Object.getOwnPropertySymbols(obj)[0] );
    return obj.a === 1
       && Object.getOwnPropertySymbols(obj)[0].toString() == Symbol('foo').toString();
 }

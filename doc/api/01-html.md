@@ -8,6 +8,50 @@ the HTML syntax, identifiers are case-insensitive. For instance,
 `<DIV>`, `<div>`, and `<Div>` are equivalent.
 
 
+Local URL
+---------
+
+URL are used inside HTML documents to refer to external resources. For 
+instance, the `src` attribute of the `img` tag refers to the URL of the 
+image to be displayed or the `src` attribute of the  `audio` tag refers
+to the URL of the music to be played. These URL might be located on another
+server, in which case, the `http://` schema is used. They might also
+be located on the same server as the one delivering the page. In that
+particular case, the URL designate a file and the URL might either be
+absolute, that is the filename starts with the `/` character or relative,
+that is relative to the URL of the current document. In the following, we
+propose two ways for constructing URLS.
+
+The easiest way to build an _absolute_ URL is to rely on the
+`require.resolve` function to produce an absolute path. This function
+constructs an absolute path name of a file whose actual path is relative
+to the JavaScript source code that disignates it. Using `require.resolve`
+ensures that if the whole source code of the application is moved into
+another directory, the absolute path of the HTML resource will remains
+correct.
+
+Using an absolute URL has the drawback of exposing the directory hierarchy
+of the server disk. This is generally unaccaptable for production servers.
+Unfortunately, relative URL can generaly not be used because the URL forged
+to represent services that are prefixed with `/hop` do not correspond to
+actual disk directories. The easiest workaround consists in defining another
+service whose only purpose is to serve local file and then to create the
+URL by invoking that service.
+
+Example:
+
+```hopscript
+${ doc.include( doc.EXAMPLES_DIR + "/resource/resource.js", 14 ) }
+```
+
+In this example, the first image URL is absolute. It will refer to the actual
+path on the server disk of the image to be rendered. The second image
+URL uses the service `getResource`. The expression `getResource( "./hop.png" )`
+builds the URL corresponding to the invocation of the service with a relative
+file name. The implementation of that service merely consists in building
+the absolute path an returning that very file.
+
+
 HTML5 tags
 ----------
 

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../3.1.x/arch/android/src/fr/inria/hop/HopNsdManager.java       */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopNsdManager.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 14:10:47 2012                          */
-/*    Last change :  Tue Jul 12 08:07:32 2016 (serrano)                */
-/*    Copyright   :  2012-16 Manuel Serrano                            */
+/*    Last change :  Sun May 17 10:26:25 2020 (serrano)                */
+/*    Copyright   :  2012-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The NsdManager (zeroconf) Hop binding                            */
 /*=====================================================================*/
@@ -24,31 +24,46 @@ import android.net.nsd.*;
 import java.net.*;
 import java.util.*;
 
+import java.util.concurrent.ArrayBlockingQueue;
+
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
 public class HopNsdManager extends HopZeroconf {
    NsdManager nsd;
-   NsdManager.RegistrationListener registerer;
    NsdManager.ResolveListener resolver;
    
    Hashtable dlisteners = new Hashtable();
+   Hashtable plisteners = new Hashtable();
    Hashtable events = new Hashtable();
-
+   final ArrayBlockingQueue<NsdServiceInfo> queue =
+      new ArrayBlockingQueue<NsdServiceInfo>( 10 );
+   
    // constructor
    public HopNsdManager( HopDroid h ) {
       super( h );
-
-      registerer = new NsdManager.RegistrationListener() {
-	    public void onRegistrationFailed( NsdServiceInfo si, int err ) {
-	       Log.d( "HopNsdManager", "registration failed: " + si );
+      
+      Thread resolverthread = new Thread( new Runnable() {
+	    public void run() {
+	       boolean keep = true;
+	       while( keep ) {
+		  try {
+		     NsdServiceInfo info = queue.take();
+		     if( info == null ) {
+			keep = false;
+		     } else {
+			nsd.resolveService( info, resolver );
+			Thread.sleep( 150 );
+			keep = (queue.size() > 0);
+		     }
+		  } catch( Exception _e ) {
+		     ;
+		  }
+	       }
 	    }
-	    public void onServiceRegistered( NsdServiceInfo si ) {
-	       Log.d( "HopNsdManager", "registration succeeded: " + si );
-	    }
-	    public void onServiceUnregistered( NsdServiceInfo si ) { ; }
-	    public void onUnregistrationFailed( NsdServiceInfo si, int err ) { ; }
-	 };
+	 } );
+   
+      resolverthread.start();
    }
    
    public void start( String name ) {
@@ -61,6 +76,7 @@ public class HopNsdManager extends HopZeroconf {
    
    public void stop() {
       if( nsd != null ) {
+	 Log.d( "hopNsdManager", "stopping..." );
 	 Enumeration l = dlisteners.elements();
 
 	 while( l.hasMoreElements() ) {
@@ -68,8 +84,21 @@ public class HopNsdManager extends HopZeroconf {
 	    nsd.stopServiceDiscovery( s );
 	 }
 
-	 nsd.unregisterService( registerer );
+	 l = plisteners.elements();
+
+	 while( l.hasMoreElements() ) {
+	    NsdManager.RegistrationListener s = (NsdManager.RegistrationListener)l.nextElement();
+	    nsd.unregisterService( s );
+	 }
+	 
 	 nsd = null;
+
+	 queue.clear();
+	 try {
+	    queue.put( (NsdServiceInfo)null );
+	 } catch( Exception _e ) {
+	    ;
+	 }
       }
    }
    
@@ -84,13 +113,10 @@ public class HopNsdManager extends HopZeroconf {
 	 dlisteners.put( type, l );
 	 events.put( "." + type, event );
 
-	 Log.d( "HopNsdManager", ">>> addServiceTypeListener type=" + type
+	 Log.d( "HopNsdManager", "addServiceTypeListener type=" + type
 		+ " event=" + event );
       
 	 nsd.discoverServices( type, NsdManager.PROTOCOL_DNS_SD, l );
-	 
-	 Log.d( "HopNsdManager", "<<< addServiceTypeListener type=" + type
-		+ " event=" + event );
       }
    }
 
@@ -99,9 +125,8 @@ public class HopNsdManager extends HopZeroconf {
    }
    
    public void addTypeListener( final String type ) {
-      Log.d( "HopNsdManager", ">>> addTypeListener type=" + type );
+      Log.d( "HopNsdManager", "addTypeListener type=" + type );
       addServiceTypeListener( type, "zeroconf-add-service-" + type );
-      Log.d( "HopNsdManager", "<<< addTypeListener type=" + type );
    }
    
    public InetAddress getLocalIpAddress() throws Exception {
@@ -131,13 +156,29 @@ public class HopNsdManager extends HopZeroconf {
    public void publish( final String name, final int port, final String type, final String[] props ) {
       Log.d( "HopNsdManager", "publish name=" + name + " type=" + type + " port=" + port );
 
-      NsdServiceInfo si = new NsdServiceInfo();
+      if( plisteners.get( name ) == null ) {
+	 NsdServiceInfo si = new NsdServiceInfo();
+	 NsdManager.RegistrationListener registerer;
 
-      si.setServiceName( name );
-      si.setPort( port );
-      si.setServiceType( type );
+	 si.setServiceName( name );
+	 si.setPort( port );
+	 si.setServiceType( type );
 
-      nsd.registerService( si, NsdManager.PROTOCOL_DNS_SD, registerer );
+	 registerer = new NsdManager.RegistrationListener() {
+	       public void onRegistrationFailed( NsdServiceInfo si, int err ) {
+		  Log.d( "HopNsdManager", "registration failed: " + si );
+	       }
+	       public void onServiceRegistered( NsdServiceInfo si ) {
+		  Log.d( "HopNsdManager", "registration succeeded: " + si );
+	       }
+	       public void onServiceUnregistered( NsdServiceInfo si ) { ; }
+	       public void onUnregistrationFailed( NsdServiceInfo si, int err ) { ; }
+	    };
+
+	 plisteners.put( name, registerer );
+      
+	 nsd.registerService( si, NsdManager.PROTOCOL_DNS_SD, registerer );
+      }
    }
 }
 
@@ -160,16 +201,15 @@ class DiscoveryListener implements NsdManager.DiscoveryListener {
       Log.d( "HopNsdManager", "service found name=" + svc.getServiceName()
 	     + " type=" + svc.getServiceType()
 	     + " host=" + svc.getHost() );
-
-      // force sequencing order to prevent ALREAD_ACTIVE in the resolver
-      synchronized( hopnsd ) {
-	 hopnsd.nsd.resolveService( svc, hopnsd.resolver );
-	 hopnsd.wait();
+      try {
+	 hopnsd.queue.put( svc );
+      } catch( Exception _e ) {
+	 ;
       }
    }
 
    @Override public void onServiceLost( NsdServiceInfo service ) {
-      Log.e( "HopNsdManager", "service lost" + service );
+      Log.e( "HopNsdManager", "service lost: " + service );
    }
 
    @Override public void onDiscoveryStopped( String serviceType ) {
@@ -177,12 +217,12 @@ class DiscoveryListener implements NsdManager.DiscoveryListener {
    }
 
    @Override public void onStartDiscoveryFailed( String serviceType, int errorCode ) {
-      Log.e( "HopNsdManager", "Discovery failed: Error code:" + errorCode );
+      Log.e( "HopNsdManager", "Discovery failed: Error code: " + errorCode );
       hopnsd.nsd.stopServiceDiscovery(this);
    }
 
    @Override public void onStopDiscoveryFailed( String serviceType, int errorCode ) {
-      Log.e( "HopNsdManager", "Discovery failed: Error code:" + errorCode );
+      Log.e( "HopNsdManager", "Discovery failed: Error code: " + errorCode );
       hopnsd.nsd.stopServiceDiscovery( this );
    }
 }
@@ -209,12 +249,19 @@ class ResolveListener implements NsdManager.ResolveListener {
       
    @Override
    public void onResolveFailed( NsdServiceInfo svc, int errorCode ) {
-      Log.e( "HopNsdManager", "Resolve failed r=" + errorCode
+      Log.e( "HopNsdManager.ResolveListener", "Resolve failed r=" + errorCode
 	     + " " + NsdErrorMessage( errorCode )
 	     + " si.type=" + svc.getServiceType()
-	     + " si.event=" + svc.getServiceName() );
-      synchronized( hopnsd ) {
-	 hopnsd.notify();
+	     + " si.event=" + svc.getServiceName()
+	     + " queue.size=" + hopnsd.queue.size() );
+      if( errorCode == 3 ) {
+	 // already active error
+	 try {
+	    // random number
+	    hopnsd.queue.put( svc );
+	 } catch( Exception _e ) {
+	    ;
+	 }
       }
    }
 
@@ -225,7 +272,7 @@ class ResolveListener implements NsdManager.ResolveListener {
       String proto = (addr instanceof Inet4Address) ? "ipv4"
 	 : (addr instanceof Inet6Address) ? "ipv6" : "tcp";
 
-      Log.d( "HopNsdManager", "service resolved event=" + event
+      Log.d( "HopNsdManager.ResolveListener", "service resolved event=" + event
 	     + " name=" + svc.getServiceName()
 	     + " type=" + svc.getServiceType()
 	     + " proto=" + proto
@@ -250,9 +297,6 @@ class ResolveListener implements NsdManager.ResolveListener {
 				    + " \""
 				    + addr.getHostAddress()
 				    + "\" ())" );
-      }
-      synchronized( hopnsd ) {
-	 hopnsd.notify();
       }
    }
 

@@ -23,7 +23,7 @@ config.status
 etc/Makefile.hopconfig
 etc/hoprc.hop
 etc/hopshrc.hop
-etc/hopjs.el
+etc/hopjs-config.el
 
 share/hop-autoconf.js
 share/hop-boot.js
@@ -48,6 +48,7 @@ hopscript/bglhopscript.h
 
 node_modules/hopc/lib/ast.js
 node_modules/hopc/lib/walk.js
+node_modules/hopdroid/lib/Makefile
 
 # scheme2js tools and generated files
 scheme2js/runtime/runtime-interface.js
@@ -82,6 +83,7 @@ doc/hss/markdown.css
 doc/hss/doc.css
 doc/version.json
 doc/favicon.png
+doc/LICENSE.academic
 doc/doc.json
 
 # widget compiled files
@@ -105,7 +107,6 @@ etc/hopsh.man
 # misc
 .hoprelease
 TODO
-bench/
 devel/
 old/
 repository/
@@ -118,14 +119,19 @@ git.*.tgz
 arch/android/makeapk.sh
 arch/android/androidemo/config.hop
 arch/debian/makedeb.sh
+arch/debian/changelog
+arch/homebrew/makebrew.sh
+arch/android/splash/splash.html
+arch/android/androidemo/etc/weblet.info
+arch/android/androidemo/etc/androidemo.wiki
 
 # testing
 test/hopjs/TEST
+test/nodejs/TEST
 
 # Mercurial/GIT compatibility
 .hg
 .hgtags
 README.hg
 .git.*.tgz
-
 

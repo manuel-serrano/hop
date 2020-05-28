@@ -1,11 +1,11 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/configure                         */
+#*    serrano/prgm/project/hop/hop/configure                           */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon May  7 11:27:27 2018 (serrano)                */
-#*    Copyright   :  2004-18 Manuel Serrano                            */
+#*    Last change :  Thu May 28 08:24:03 2020 (serrano)                */
+#*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -16,6 +16,10 @@
 prefix=/usr/local
 
 bigloo=bigloo
+if [ "$HOPBIGLOO " != " " ]; then
+  bigloo=$HOPBIGLOO
+fi
+
 afile=bglafile
 jfile=bgljfile
 btags=bgltags
@@ -71,17 +75,24 @@ hostbigloo=bigloo
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="3.2.0"
-devel=pre
+version="3.3.0"
+devel=
+license=academic
+licenseforced=false
+if [ "$HOPLICENSE " != " " ]; then
+  license=$HOPLICENSE
+fi
 
 hopc=$PWD/bin/hopc
 hop=$PWD/bin/hop
 bglcpp=$PWD/scheme2js/runtime/bglcpp
 
 branch="`echo $version | sed 's/[0-9][0-9]*$/x/'`"
+branch=master
 date=`date +"%d %B %Y"`
 
 url="http://hop.inria.fr"
+docurl="http://hop-dev.inria.fr/home/lang.html"
 
 etcdir=$prefix/etc
 bindir=$prefix/bin
@@ -90,6 +101,7 @@ sharedir=$prefix/share/hop
 mansec=man1
 mandir=$prefix/man/$mansec
 webletsdir=
+nodemodulesdir=
 contribsdir=$prefix/share/hop/contribs
 docdir=$prefix/share/doc/hop/$version
 buildlibdir=$PWD/lib/hop/$version
@@ -101,7 +113,7 @@ buildbindir=$PWD/bin
 buildspecific=
 installspecific=
 
-bigloorequired=4.3b
+bigloorequired=4.3g
 bigloourl=http://www-sop.inria.fr/indes/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop
@@ -119,6 +131,7 @@ ssl=""
 locevent="true"
 threads=""
 nodoc=
+tls=
 
 zeroconf="#f"
 zeroconfbe="no"
@@ -144,14 +157,17 @@ done
 
 arch=noarch
 mach=
-felix=
+
+androidapp=hopdroid
+
+echo "configuring with [$*]..." > config.status
 
 # Argument parsing
 while : ; do
   case $1 in
     "")
       break;;
-
+      
     --prefix=*)
       prefix="`echo $1 | sed 's/^[^=]*=//'`";
       bindir=$prefix/bin;
@@ -368,6 +384,12 @@ while : ; do
     --disable-threads)
       threads=no;;
 
+    --enable-tls)
+      tls=yes;;
+
+    --disable-tls)
+      tls=no;;
+
     --disable-doc)
       nodoc=yes;;
 
@@ -389,16 +411,30 @@ while : ; do
       installspecific=install-android;
       arch=android;;
 
-    --apache-felix=*)
-      felix="`echo $1 | sed 's/^[^=]*=//'`";
-      link=felix;
-      hopsrfis="$hopsrfis boot-from-java"
+    --android-app=*)
+      androidapp="`echo $1 | sed 's/^[^=]*=//'`"
       ;;
-
+      
     --closure=*)
-      closure="`echo $1 | sed 's/^[^=]*=//'`";
+      closure="`echo $1 | sed 's/^[^=]*=//'`"
       ;;
 
+    --alloc=*)
+      alloc="`echo $1 | sed 's/^[^=]*=//'`"
+      ;;
+    
+    --license=free)
+      license=free;;
+      
+    --license=commercial)
+      license=commercial;;
+      
+    --license=academic)
+      license=academic;;
+
+    --force-license)
+      licenseforced=true;;
+      
     -*)
       if [ "$1" != "--help" ]; then
         echo "*** Configure error, unknown option $1" >&2;
@@ -430,6 +466,7 @@ while : ; do
       echo "   --[enable|disable]-avahi.... enables AVAHI support" >&2;
       echo "   --[enable|disable]-upnp..... enables UPNP support" >&2;
       echo "   --[enable|disable]-libuv.... disables LIBUV support" >&2;
+      echo "   --[enable|disable]-tls...... disables thread local storage support" >&2;
       echo "   --srfi=sym.................. activates this srfi (comptime and runtime)" >&2;
       echo "" >&2;
       echo "Cross compilation and OS dependencies:" >&2;
@@ -444,7 +481,7 @@ while : ; do
       echo "   --bigloo-prce=yes|no........ enable/disable libunistring" >&2;
       echo "   --bigloo-unistring=yes|no... enable/disable pcre" >&2;
       echo "   --backend=backend........... the execution platform [native,jvm,dotnet]" >&2;
-      echo "   --link=method............... the link method [static,dynamic,library,felix]" >&2;
+      echo "   --link=method............... the link method [static,dynamic,library]" >&2;
       echo "   --afile=afile............... the Bigloo afile tool" >&2;
       echo "   --btags=btags............... the Bigloo btags tool" >&2;
       echo "   --bdepend=bdepend........... the Bigloo dependence tool" >&2;
@@ -460,18 +497,21 @@ while : ; do
       echo "   --bhflags=args.............. the heap options" >&2;
       echo "   --hflags=args............... the hopc options" >&2;
       echo "   --ccflags=args.............. the C compilation options" >&2;
-      echo "   --macosx.................... prepares the production of a MacOSX bundle" >&2;
       echo "   --android................... prepares the production of an Android apk" >&2;
       echo "   --macosx.................... prepares the production of a MacOSX bundle" >&2;
-      echo "   --apache-felix=path......... path to felix.jar" >&2;
       echo "" >&2;
-      echo "Configuration settings:" >&2;
+      echo "Misc settings:" >&2;
       echo "   --devel..................... enables devel mode (safe but not debug)" >&2;
       echo "   --debug[2].................. enables Bigloo debug mode" >&2;
       echo "   --pmem[2]................... enables memory profiling mode" >&2;
       echo "   --profile................... enables Bigloo profiling mode" >&2;
       echo "   --optimize.................. enables Bigloo optimization mode (default)" >&2;
       echo "   --closure=comp.............. path to closure compiler" >&2;
+      echo "" >&2;
+      echo "Experimental features:" >&2;
+      echo "   --alloc=classic|worker...... allocator method [worker]" >&2
+      echo "License:" >&2;
+      echo "   --license=[license]......... select Hop license (see LICENSE)" >&2;
       exit 255;
   esac
   shift
@@ -527,6 +567,24 @@ EOF
   chmod a+rx .hoprelease
 fi
 
+if [ "$state " != " " ]; then
+  minorversion=-$state$minor
+else
+  minorversion=
+fi
+
+#*---------------------------------------------------------------------*/
+#*    license                                                          */
+#*---------------------------------------------------------------------*/
+hopsrfis="$hopsrfis license-$license"
+
+if [ "$license " = "commercial " ]; then
+  echo "*** LICENSE ERROR:configure. Aborging!" >&2
+  echo "You have choseen the commercial license." >&2
+  echo "This license requires Inria approval first." >&2
+  echo "Please contact Inria first." &2
+fi  
+  
 #*---------------------------------------------------------------------*/
 #*    First check that bigloo exists and is recent enough              */
 #*---------------------------------------------------------------------*/
@@ -571,18 +629,6 @@ fi
 case $backend in
   "native")
      break;;
-  "jvm")
-     etcdir=/resource/etc
-     libdir=/resource/lib
-     webletsdir=/resource/lib/weblets
-     contribsdir=/resource/share/contribs
-     docdir=/resource/share/doc/hop
-     sharedir=/resource/share
-     hopc="java -jar $PWD/bin/hopc.jar"
-     hop="java -jar $PWD/bin/hop.jar"
-     break;;
-  "dotnet")
-     break;;
   *)
       echo "*** Configure error, Illegal backend $backend" >&2;
       echo "see configure --help" >&2;
@@ -611,6 +657,10 @@ if [ "$ccflags " = " " ]; then
     ccflags=`echo $ccflags | sed 's/[-]O[0-9]//'`
   fi
   ccflags="$ccflags -I$bigloolibdir \$(CPICFLAGS) \$(CNANFLAGS)"
+fi
+
+if [ "$alloc " = "classic " ]; then
+  ccflags="$ccflags -DHOP_ALLOC_POLICY=1"
 fi
 
 if [ ! -f $bigloolibdir/Makefile.config ]; then
@@ -872,6 +922,16 @@ if [ "$pcre " != "pcre " -a "$bglpcre " != "no " ]; then
 fi
 
 #*---------------------------------------------------------------------*/
+#*    tls                                                              */
+#*---------------------------------------------------------------------*/
+if [ "$tls " != "no " ]; then
+  tls=`bigloo -q -eval "(exit (display (bigloo-config 'thread-local-storage))))"`
+  if [ "$tls " = "#t " ]; then
+    hopsrfis="enable-tls $hopsrfis";
+  fi
+fi
+
+#*---------------------------------------------------------------------*/
 #*    bgl test completion                                              */
 #*---------------------------------------------------------------------*/
 if [ "$bglfail " = "true " ]; then
@@ -898,10 +958,11 @@ if [ $? != "0" ]; then
 fi
 
 #*---------------------------------------------------------------------*/
-#*    Jvm zip libs                                                     */
+#*    NODEMODULES dir                                                  */
 #*---------------------------------------------------------------------*/
-jvmziplibs=
-jvminits=
+if [ "$nodemodulesdir " = " " ]; then
+  nodemodulesdir=$libdir/hop/$version/node_modules;
+fi
 
 #*---------------------------------------------------------------------*/
 #*    Weblets dir                                                      */
@@ -910,31 +971,6 @@ if [ "$webletsdir " = " " ]; then
   webletsdir=$libdir/hop/$version/weblets;
 fi
 
-# Hop librairies
-for p in scheme2js hopscheme hop hopwidget js2scheme hopscript nodejs; do
-  elib="$buildlibdir/$p"_es-$version.zip;
-  slib="$buildlibdir/$p"_s-$version.zip;
-  jvmziplibs="$elib $slib $jvmziplibs";
-done
-
-# Bigloo libraries
-for p in web multimedia sqlite ssl calendar mail text; do
-  elib="$bigloolibdir/bigloo$p"_es-$bglversion.zip;
-  slib="$bigloolibdir/bigloo$p"_s-$bglversion.zip;
-  jvmziplibs="$elib $slib $jvmziplibs";
-  jvminits="$bigloolibdir/$p"".init $jvminits";
-done
-
-#pth
-elib="$bigloolibdir/bigloopthread"_es-$bglversion.zip;
-slib="$bigloolibdir/bigloopthread"_s-$bglversion.zip;
-jvmziplibs="$elib $slib $jvmziplibs";
-jvminits="$bigloolibdir/pthread.init $jvminits";
-
-slib="$bigloolibdir/bigloo_s.zip";
-jvmziplibs="$slib $jvmziplibs";
-jvminits="$bigloolibdir/pthread.init $jvminits";
-
 #*---------------------------------------------------------------------*/
 #*    Srfis                                                            */
 #*---------------------------------------------------------------------*/
@@ -942,21 +978,6 @@ for srfi in $hopsrfis; do
     bcflags="$bcflags -srfi $srfi";
     bhflags="$bhflags -srfi $srfi";
 done
-
-#*---------------------------------------------------------------------*/
-#*    Apache Felix                                                     */
-#*---------------------------------------------------------------------*/
-if [ "$felix " != " " ]; then
-   if [ ! -f "$felix" ]; then
-      echo "*** Configure error, Apache Felix not found in $felix" >&2;
-      exit 1;
-   fi
-
-   if [ "$backend " != "jvm " ]; then
-      echo "*** Configure error, Apache Felix requires the jvm backend" >&2;
-      exit 1;
-   fi
-fi
 
 #*---------------------------------------------------------------------*/
 #*    closure (optional)                                               */
@@ -1023,6 +1044,15 @@ fi
 buildid=`$bigloo -s -eval "(begin (print (md5sum-string \"$buildid $buildtag $bigloolibdir\")) (exit 1))"`
 
 #*---------------------------------------------------------------------*/
+#*    OS specific                                                      */
+#*---------------------------------------------------------------------*/
+if [ "$arch " = "android " ]; then
+  hopsrfis="$hopsrfis enable-hopdroid"
+  bcflags="$bcflags -srfi enable-hopdroid";
+  bglcloselibs="$bglcloselibs phone";
+fi
+
+#*---------------------------------------------------------------------*/
 #*    Create directories                                               */
 #*---------------------------------------------------------------------*/
 mkdir -p bin
@@ -1054,8 +1084,8 @@ fi
 
 mkmf=etc/Makefile.hopconfig
 
-bglcloselibs_u=
-bglcloselibs_s=
+bglcloselibs_u="-lbigloo_u-$""(RELEASE) "
+bglcloselibs_s="-lbigloo_s-$""(RELEASE) "
 
 for p in $bglcloselibs; do
   bglcloselibs_u="$bglcloselibs_u -lbigloo$p""_u-$""(RELEASE)";
@@ -1073,27 +1103,27 @@ if [ "$mach " = " " ]; then
   mach="`$bigloo -lib-dir $bigloolibdir -eval \"(begin (display (bigloo-config 'os-name)) (exit 0))\"`-`$bigloo -lib-dir $bigloolibdir -eval \"(begin (display (bigloo-config 'os-arch)) (exit 0))\"`"
 fi
 
-for p in hopc.sh hop.sh; do
+for p in hopc.sh hop.sh hopaot.sh; do
   cat etc/$p.in \
-      | sed -e "s|@RELEASE@|$version|" \
-            -e "s|@BIGLOO@|$bigloo|" \
-            -e "s|@BRANCH@|$branch|" \
-            -e "s|@DATE@|$date|" \
-            -e "s|@DEVEL@|$devel|" \
-            -e "s|@DEBUG@|$debug|" \
-            -e "s|@HOP@|$hop|" \
-            -e "s|@HOPC@|$hopc|" \
-            -e "s|@HOPCFLAGS@|$hopcflags|" \
-            -e "s|@BUILDDIR@|$PWD|" \
-            -e "s|@BUILDLIBDIR@|$buildlibdir|" \
-            -e "s|@BUILDETCDIR@|$PWD/etc|" \
-            -e "s|@BUILDBINDIR@|$PWD/bin|" \
-            -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
-            -e "s|@BUILDSPECIFIC@|$buildspecific|" \
-            -e "s|@INSTALLSPECIFIC@|$installspecific|" \
-            -e "s|@BINDIR@|$bindir|" \
-            -e "s|@LIBDIR@|$libdir|" \
-            -e "s|@LIBPATH@|$libdir/hop/$version|" \
+    | sed -e "s|@RELEASE@|$version|" \
+          -e "s|@BIGLOO@|$bigloo|" \
+          -e "s|@BRANCH@|$branch|" \
+          -e "s|@DATE@|$date|" \
+          -e "s|@DEVEL@|$devel|" \
+          -e "s|@DEBUG@|$debug|" \
+          -e "s|@HOP@|$hop|" \
+          -e "s|@HOPC@|$hopc|" \
+          -e "s|@HOPCFLAGS@|$hopcflags|" \
+          -e "s|@BUILDDIR@|$PWD|" \
+          -e "s|@BUILDLIBDIR@|$buildlibdir|" \
+          -e "s|@BUILDETCDIR@|$PWD/etc|" \
+          -e "s|@BUILDBINDIR@|$PWD/bin|" \
+          -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
+          -e "s|@BUILDSPECIFIC@|$buildspecific|" \
+          -e "s|@INSTALLSPECIFIC@|$installspecific|" \
+          -e "s|@BINDIR@|$bindir|" \
+          -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@LIBPATH@|$libdir/hop/$version|" \
   > bin/$p
   chmod a+rx bin/$p
 done
@@ -1110,84 +1140,88 @@ else
   mkmfhop=$hop
 fi
 
+hsflags="`echo $hflags | sed 's/[-]O[^ ]*//g'`-Os"
+
 cat $mkmf.in \
-    | sed -e "s|@RELEASE@|$version|" \
-          -e "s|@BRANCH@|$branch|" \
-          -e "s|@DATE@|$date|" \
-          -e "s|@DEVEL@|$devel|" \
-          -e "s|@DEBUG@|$debug|" \
-          -e "s|@BIGLOO@|$bigloo|" \
-          -e "s|@HOSTBIGLOO@|$hostbigloo|" \
-          -e "s|@BIGLOOVERSION@|$bglversion|" \
-          -e "s|@HOP@|$mkmfhop|" \
-          -e "s|@HOPC@|$mkmfhopc|" \
-          -e "s|@BGLCPP@|$bglcpp|" \
-          -e "s|@BACKEND@|$backend|" \
-          -e "s|@LINK@|$link|" \
-          -e "s|@BIGLOOLIBDIR@|$bigloolibdir|" \
-          -e "s|@AFILE@|$afile|" \
-          -e "s|@JFILE@|$jfile|" \
-          -e "s|@BTAGS@|$btags|" \
-          -e "s|@BDEPEND@|$bdepend|" \
-          -e "s|@CC@|$cc|" \
-          -e "s|@HOSTCC@|$hostcc|" \
-          -e "s|@FLASHCC@|$flashcc|" \
-          -e "s|@UNZIP@|$unzip|" \
-          -e "s|@GZIP@|$gzip|" \
-          -e "s|@INSTALL@|$install|" \
-          -e "s|@JAR@|$jar|" \
-          -e "s|@JAVAC@|$javac|" \
-          -e "s|@BCFLAGS@|$bcflags $bcflagsprofile|" \
-          -e "s|@BLDFLAGS@|$bldflags|" \
-          -e "s|@BHFLAGS@|$bhflags|" \
-          -e "s|@HFLAGS@|$hflags|" \
-          -e "s|@BTFLAGS@|$btflags|" \
-          -e "s|@BCFLAGSRTS@|$bcflagsrts|" \
-          -e "s|@BSCM2JSFLAGS@|$bscm2jsflags|" \
-          -e "s|@BHOPCFLAGS@|$bhopcflags|" \
-          -e "s|@BLFLAGS@|$blflags|" \
-          -e "s|@FFLAGS@|$fflags|" \
-          -e "s|@JVMZIPLIBS@|$jvmziplibs|" \
-          -e "s|@JVMINITS@|$jvminits|" \
-          -e "s|@CCFLAGS@|$ccflags $ccflagsprofile $ccflagsdebug|" \
-          -e "s|@BCFLAGSDEV@|$bcflagsdev|" \
-          -e "s|@BUILDDIR@|$PWD|" \
-          -e "s|@BUILDLIBDIR@|$buildlibdir|" \
-          -e "s|@BUILDETCDIR@|$PWD/etc|" \
-          -e "s|@BUILDBINDIR@|$PWD/bin|" \
-          -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
-          -e "s|@BUILDSPECIFIC@|$buildspecific|" \
-          -e "s|@INSTALLSPECIFIC@|$installspecific|" \
-          -e "s|@BINDIR@|$bindir|" \
-          -e "s|@LIBDIR@|$libdir|" \
-          -e "s|@LIBPATH@|$libdir/hop/$version|" \
-          -e "s|@SHAREDIR@|$sharedir|" \
-          -e "s|@MANDIR@|$mandir|" \
-          -e "s|@PREFIX@|$prefix|" \
-          -e "s|@ETCDIR@|$etcdir|" \
-          -e "s|@WEBLETSDIR@|$webletsdir|" \
-          -e "s|@CONTRIBSDIR@|$contribsdir|" \
-          -e "s|@DOCDIR@|$docdir|" \
-          -e "s|@DISTRIBDIR@|$distribdir|" \
-          -e "s|@REPODIR@|$repodir|" \
-          -e "s|@HOPSVN@|$svn|" \
-          -e "s|@HOPDISTRIBDIR@|$distribdir|" \
-          -e "s|@BIGLOOSSLLIBS@|$bigloossllibs|" \
-          -e "s|@BIGLOOSSLLIBU@|$bigloossllibu|" \
-          -e "s|@BIGLOOPTHLIBS@|$bigloopthlibs|" \
-          -e "s|@BIGLOOPTHLIBU@|$bigloopthlibu|" \
-          -e "s|@RTSCONFIG@|$rts|" \
-          -e "s|@HOPGCCLOSELIB@|$bigloogc|" \
-          -e "s|@BGLCLOSELIBS_U@|$bglcloselibs_u $bglextracloselibs|" \
-          -e "s|@BGLCLOSELIBS_S@|$bglcloselibs_s $bglextracloselibs|" \
-	  -e "s|@BGLMACH@|$mach|" \
-	  -e "s|@BGLARCH@|$arch|" \
-          -e "s|@BUILDID@|$buildid|" \
-          -e "s|@BUILDTAG@|$buildtag|" \
-          -e "s|@CLOSURE@|$closure|" \
-	  -e "s|@THREADS@|$threads|" \
-	  -e "s|@NODOC@|$nodoc|" \
-    >> $mkmf
+  | sed -e "s|@RELEASE@|$version|" \
+        -e "s|@BRANCH@|$branch|" \
+        -e "s|@DATE@|$date|" \
+        -e "s|@DEVEL@|$devel|" \
+        -e "s|@DEBUG@|$debug|" \
+        -e "s|@BIGLOO@|$bigloo|" \
+        -e "s|@HOSTBIGLOO@|$hostbigloo|" \
+        -e "s|@BIGLOOVERSION@|$bglversion|" \
+        -e "s|@HOP@|$mkmfhop|" \
+        -e "s|@HOPC@|$mkmfhopc|" \
+        -e "s|@BGLCPP@|$bglcpp|" \
+        -e "s|@BACKEND@|$backend|" \
+        -e "s|@LINK@|$link|" \
+        -e "s|@BIGLOOLIBDIR@|$bigloolibdir|" \
+        -e "s|@AFILE@|$afile|" \
+        -e "s|@JFILE@|$jfile|" \
+        -e "s|@BTAGS@|$btags|" \
+        -e "s|@BDEPEND@|$bdepend|" \
+        -e "s|@CC@|$cc|" \
+        -e "s|@HOSTCC@|$hostcc|" \
+        -e "s|@FLASHCC@|$flashcc|" \
+        -e "s|@UNZIP@|$unzip|" \
+        -e "s|@GZIP@|$gzip|" \
+        -e "s|@INSTALL@|$install|" \
+        -e "s|@JAR@|$jar|" \
+        -e "s|@JAVAC@|$javac|" \
+        -e "s|@BCFLAGS@|$bcflags $bcflagsprofile|" \
+        -e "s|@BLDFLAGS@|$bldflags|" \
+        -e "s|@BHFLAGS@|$bhflags|" \
+        -e "s|@HFLAGS@|$hflags|" \
+        -e "s|@HSFLAGS@|$hsflags|" \
+        -e "s|@BTFLAGS@|$btflags|" \
+        -e "s|@BCFLAGSRTS@|$bcflagsrts|" \
+        -e "s|@BSCM2JSFLAGS@|$bscm2jsflags|" \
+        -e "s|@BHOPCFLAGS@|$bhopcflags|" \
+        -e "s|@BLFLAGS@|$blflags|" \
+        -e "s|@FFLAGS@|$fflags|" \
+        -e "s|@CCFLAGS@|$ccflags $ccflagsprofile $ccflagsdebug|" \
+        -e "s|@BCFLAGSDEV@|$bcflagsdev|" \
+        -e "s|@BUILDDIR@|$PWD|" \
+        -e "s|@BUILDLIBDIR@|$buildlibdir|" \
+        -e "s|@BUILDETCDIR@|$PWD/etc|" \
+        -e "s|@BUILDBINDIR@|$PWD/bin|" \
+        -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
+        -e "s|@BUILDSPECIFIC@|$buildspecific|" \
+        -e "s|@INSTALLSPECIFIC@|$installspecific|" \
+        -e "s|@BINDIR@|$bindir|" \
+        -e "s|@LIBDIR@|$libdir|" \
+        -e "s|@LIBPATH@|$libdir/hop/$version|" \
+        -e "s|@SHAREDIR@|$sharedir|" \
+        -e "s|@MANDIR@|$mandir|" \
+        -e "s|@PREFIX@|$prefix|" \
+        -e "s|@ETCDIR@|$etcdir|" \
+        -e "s|@WEBLETSDIR@|$webletsdir|" \
+        -e "s|@NMODULESDIR@|$nodemodulesdir|" \
+        -e "s|@CONTRIBSDIR@|$contribsdir|" \
+        -e "s|@DOCDIR@|$docdir|" \
+        -e "s|@DOCURL@|$docurl|" \
+        -e "s|@DISTRIBDIR@|$distribdir|" \
+        -e "s|@REPODIR@|$repodir|" \
+        -e "s|@HOPSVN@|$svn|" \
+        -e "s|@HOPDISTRIBDIR@|$distribdir|" \
+        -e "s|@BIGLOOSSLLIBS@|$bigloossllibs|" \
+        -e "s|@BIGLOOSSLLIBU@|$bigloossllibu|" \
+        -e "s|@BIGLOOPTHLIBS@|$bigloopthlibs|" \
+        -e "s|@BIGLOOPTHLIBU@|$bigloopthlibu|" \
+        -e "s|@RTSCONFIG@|$rts|" \
+        -e "s|@HOPGCCLOSELIB@|$bigloogc|" \
+        -e "s|@BGLCLOSELIBS_U@|$bglcloselibs_u $bglextracloselibs|" \
+        -e "s|@BGLCLOSELIBS_S@|$bglcloselibs_s $bglextracloselibs|" \
+        -e "s|@BGLCLOSELIBS@|$bglcloselibs_version|" \
+	-e "s|@BGLMACH@|$mach|" \
+	-e "s|@BGLARCH@|$arch|" \
+        -e "s|@BUILDID@|$buildid|" \
+        -e "s|@BUILDTAG@|$buildtag|" \
+        -e "s|@CLOSURE@|$closure|" \
+	-e "s|@THREADS@|$threads|" \
+	-e "s|@NODOC@|$nodoc|" \
+	>> $mkmf
 
 # runtime/configure.scm
 for p in configure.scm configure_noarch.sch configure_macosx.sch configure_android.sch; do
@@ -1195,35 +1229,39 @@ for p in configure.scm configure_noarch.sch configure_macosx.sch configure_andro
   rm -f $configure 2> /dev/null
   echo ";* Automatically generated file (don't edit) */" > $configure
   cat etc/$p.in \
-      | sed -e "s|@VERSION@|$version|" \
-            -e "s|@BIGLOOVERSION@|$bglversion|" \
-            -e "s|@BRANCH@|$branch|" \
-            -e "s|@BACKEND@|$backend|" \
-            -e "s|@LINK@|$link|" \
-            -e "s|@URL@|$url|" \
-            -e "s|@BINDIR@|$bindir|" \
-            -e "s|@LIBDIR@|$libdir|" \
-            -e "s|@LIBPATH@|$libdir/hop/$version|" \
-            -e "s|@SHAREDIR@|$sharedir/$version|" \
-            -e "s|@ETCDIR@|$etcdir|" \
-            -e "s|@WEBLETSDIR@|$webletsdir|" \
-            -e "s|@CONTRIBSDIR@|$contribsdir|" \
-            -e "s|@DOCDIR@|$docdir|" \
-            -e "s|@MIMETYPES@|$mimetypes|" \
-            -e "s|@JSMIMETYPE@|$jsmimetype|" \
-            -e "s|@CSSMIMETYPE@|$cssmimetype|" \
-            -e "s|@HOPJSSANSSUFFIX@|$hopjssanssuffix|" \
-            -e "s|@HOPJSFILES@|$hopjsfiles|" \
-            -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
-            -e "s|@HOPZEROCONF@|$zeroconf|" \
-            -e "s|@HOPSRFIS@|$hopsrfis|" \
-            -e "s|@HOPMACH@|$mach|" \
-            -e "s|@HOPARCH@|$arch|" \
-            -e "s|@BUILDID@|$buildid|" \
-            -e "s|@BUILDTAG@|$buildtag|" \
-            -e "s|@BIGLOO@|$bigloo|" \
-            -e "s|@HOSTBIGLOO@|$hostbigloo|" \
-      >> $configure
+    | sed -e "s|@VERSION@|$version|" \
+	  -e "s|@MINORVERSION@|$minorversion|" \
+          -e "s|@BIGLOOVERSION@|$bglversion|" \
+          -e "s|@BRANCH@|$branch|" \
+          -e "s|@BACKEND@|$backend|" \
+          -e "s|@LINK@|$link|" \
+          -e "s|@URL@|$url|" \
+          -e "s|@BINDIR@|$bindir|" \
+          -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@LIBPATH@|$libdir/hop/$version|" \
+          -e "s|@SHAREDIR@|$sharedir/$version|" \
+          -e "s|@ETCDIR@|$etcdir|" \
+          -e "s|@WEBLETSDIR@|$webletsdir|" \
+          -e "s|@NMODULESDIR@|$nodemodulesdir|" \
+          -e "s|@CONTRIBSDIR@|$contribsdir|" \
+          -e "s|@DOCDIR@|$docdir|" \
+          -e "s|@DOCURL@|$docurl|" \
+          -e "s|@MIMETYPES@|$mimetypes|" \
+          -e "s|@JSMIMETYPE@|$jsmimetype|" \
+          -e "s|@CSSMIMETYPE@|$cssmimetype|" \
+          -e "s|@HOPJSSANSSUFFIX@|$hopjssanssuffix|" \
+          -e "s|@HOPJSFILES@|$hopjsfiles|" \
+          -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
+          -e "s|@HOPZEROCONF@|$zeroconf|" \
+          -e "s|@HOPSRFIS@|$hopsrfis|" \
+          -e "s|@HOPMACH@|$mach|" \
+          -e "s|@HOPARCH@|$arch|" \
+          -e "s|@BUILDID@|$buildid|" \
+          -e "s|@BUILDTAG@|$buildtag|" \
+          -e "s|@BUILDARCH@|$mach|" \
+          -e "s|@BIGLOO@|$bigloo|" \
+          -e "s|@HOSTBIGLOO@|$hostbigloo|" \
+	  >> $configure
 done
 
 # nodejs/configure.scm
@@ -1232,94 +1270,99 @@ for p in nodejs.sch; do
   rm -f $configure 2> /dev/null
   echo ";* Automatically generated file (don't edit) */" > $configure
   cat etc/$p.in \
-      | sed -e "s|@VERSION@|$version|" \
-            -e "s|@BIGLOOVERSION@|$bglversion|" \
-            -e "s|@BRANCH@|$branch|" \
-            -e "s|@BACKEND@|$backend|" \
-            -e "s|@LINK@|$link|" \
-            -e "s|@URL@|$url|" \
-            -e "s|@BINDIR@|$bindir|" \
-            -e "s|@LIBDIR@|$libdir|" \
-            -e "s|@LIBPATH@|$libdir/hop/$version|" \
-            -e "s|@SHAREDIR@|$sharedir/$version|" \
-            -e "s|@ETCDIR@|$etcdir|" \
-            -e "s|@WEBLETSDIR@|$webletsdir|" \
-            -e "s|@CONTRIBSDIR@|$contribsdir|" \
-            -e "s|@DOCDIR@|$docdir|" \
-            -e "s|@MIMETYPES@|$mimetypes|" \
-            -e "s|@JSMIMETYPE@|$jsmimetype|" \
-            -e "s|@CSSMIMETYPE@|$cssmimetype|" \
-            -e "s|@HOPJSSANSSUFFIX@|$hopjssanssuffix|" \
-            -e "s|@HOPJSFILES@|$hopjsfiles|" \
-            -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
-            -e "s|@HOPZEROCONF@|$zeroconf|" \
-            -e "s|@HOPSRFIS@|$hopsrfis|" \
-            -e "s|@HOPMACH@|$mach|" \
-            -e "s|@HOPARCH@|$arch|" \
-      >> $configure
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BIGLOOVERSION@|$bglversion|" \
+          -e "s|@BRANCH@|$branch|" \
+          -e "s|@BACKEND@|$backend|" \
+          -e "s|@LINK@|$link|" \
+          -e "s|@URL@|$url|" \
+          -e "s|@BINDIR@|$bindir|" \
+          -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@LIBPATH@|$libdir/hop/$version|" \
+          -e "s|@SHAREDIR@|$sharedir/$version|" \
+          -e "s|@ETCDIR@|$etcdir|" \
+          -e "s|@WEBLETSDIR@|$webletsdir|" \
+          -e "s|@NMODULESDIR@|$nodemodulesdir|" \
+          -e "s|@CONTRIBSDIR@|$contribsdir|" \
+          -e "s|@DOCDIR@|$docdir|" \
+          -e "s|@DOCURL@|$docurl|" \
+          -e "s|@MIMETYPES@|$mimetypes|" \
+          -e "s|@JSMIMETYPE@|$jsmimetype|" \
+          -e "s|@CSSMIMETYPE@|$cssmimetype|" \
+          -e "s|@HOPJSSANSSUFFIX@|$hopjssanssuffix|" \
+          -e "s|@HOPJSFILES@|$hopjsfiles|" \
+          -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
+          -e "s|@HOPZEROCONF@|$zeroconf|" \
+          -e "s|@HOPSRFIS@|$hopsrfis|" \
+          -e "s|@HOPMACH@|$mach|" \
+          -e "s|@HOPARCH@|$arch|" \
+	  >> $configure
 done
 
 # script
 for script in test/nodejs/TEST test/nodejs/HOP.exe test/hopjs/TEST; do
   rm -f $script 2> /dev/null
   cat $script.in \
-      | sed -e "s|@VERSION@|$version|" \
-            -e "s|@BIGLOOVERSION@|$bglversion|" \
-            -e "s|@BRANCH@|$branch|" \
-            -e "s|@BACKEND@|$backend|" \
-            -e "s|@LINK@|$link|" \
-            -e "s|@URL@|$url|" \
-            -e "s|@BINDIR@|$bindir|" \
-            -e "s|@LIBDIR@|$libdir|" \
-            -e "s|@LIBPATH@|$libdir/hop/$version|" \
-            -e "s|@SHAREDIR@|$sharedir/$version|" \
-            -e "s|@ETCDIR@|$etcdir|" \
-            -e "s|@WEBLETSDIR@|$webletsdir|" \
-            -e "s|@CONTRIBSDIR@|$contribsdir|" \
-            -e "s|@BUILDDIR@|$PWD|" \
-            -e "s|@BUILDLIBDIR@|$buildlibdir|" \
-            -e "s|@BUILDETCDIR@|$PWD/etc|" \
-            -e "s|@BUILDBINDIR@|$PWD/bin|" \
-            -e "s|@DOCDIR@|$docdir|" \
-            -e "s|@MIMETYPES@|$mimetypes|" \
-            -e "s|@JSMIMETYPE@|$jsmimetype|" \
-            -e "s|@CSSMIMETYPE@|$cssmimetype|" \
-            -e "s|@HOPJSSANSSUFFIX@|$hopjssanssuffix|" \
-            -e "s|@HOPJSFILES@|$hopjsfiles|" \
-            -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
-            -e "s|@HOPZEROCONF@|$zeroconf|" \
-            -e "s|@HOPSRFIS@|$hopsrfis|" \
-            -e "s|@HOPMACH@|$mach|" \
-            -e "s|@HOPARCH@|$arch|" \
-      >> $script
+    | sed -e "s|@VERSION@|$version|g" \
+          -e "s|@BIGLOOVERSION@|$bglversion|g" \
+          -e "s|@BRANCH@|$branch|g" \
+          -e "s|@BACKEND@|$backend|g" \
+          -e "s|@LINK@|$link|g" \
+          -e "s|@URL@|$url|g" \
+          -e "s|@BINDIR@|$bindir|g" \
+          -e "s|@LIBDIR@|$libdir|g" \
+          -e "s|@LIBPATH@|$libdir/hop/$version|g" \
+          -e "s|@SHAREDIR@|$sharedir/$version|g" \
+          -e "s|@ETCDIR@|$etcdir|g" \
+          -e "s|@WEBLETSDIR@|$webletsdir|g" \
+          -e "s|@NMODULESDIR@|$nodemodulesdir|g" \
+          -e "s|@CONTRIBSDIR@|$contribsdir|g" \
+          -e "s|@BUILDDIR@|$PWD|g" \
+          -e "s|@BUILDLIBDIR@|$buildlibdir|g" \
+          -e "s|@BUILDETCDIR@|$PWD/etc|g" \
+          -e "s|@BUILDBINDIR@|$PWD/bin|g" \
+          -e "s|@DOCDIR@|$docdir|g" \
+          -e "s|@DOCURL@|$docurl|g" \
+          -e "s|@MIMETYPES@|$mimetypes|g" \
+          -e "s|@JSMIMETYPE@|$jsmimetype|g" \
+          -e "s|@CSSMIMETYPE@|$cssmimetype|g" \
+          -e "s|@HOPJSSANSSUFFIX@|$hopjssanssuffix|g" \
+          -e "s|@HOPJSFILES@|$hopjsfiles|g" \
+          -e "s|@HOPSERVICEBASE@|$hopservicebase|g" \
+          -e "s|@HOPZEROCONF@|$zeroconf|g" \
+          -e "s|@HOPSRFIS@|$hopsrfis|g" \
+          -e "s|@HOPMACH@|$mach|g" \
+          -e "s|@HOPARCH@|$arch|g" \
+	  >> $script
   chmod a+x $script
 done
 
-# hopjs
-for file in etc/hopjs.el; do
+# misc files
+for file in etc/hopjs-config.el; do
   rm -f $file 2> /dev/null
   echo ";* Automatically generated file (don't edit) */" > $file
   cat $file.in \
-      | sed -e "s|@VERSION@|$version|" \
-            -e "s|@BIGLOOVERSION@|$bglversion|" \
-            -e "s|@BRANCH@|$branch|" \
-            -e "s|@BACKEND@|$backend|" \
-            -e "s|@LINK@|$link|" \
-            -e "s|@URL@|$url|" \
-            -e "s|@BINDIR@|$bindir|" \
-            -e "s|@LIBDIR@|$libdir|" \
-            -e "s|@LIBPATH@|$libdir/hop/$version|" \
-            -e "s|@SHAREDIR@|$sharedir/$version|" \
-            -e "s|@ETCDIR@|$etcdir|" \
-            -e "s|@WEBLETSDIR@|$webletsdir|" \
-            -e "s|@CONTRIBSDIR@|$contribsdir|" \
-            -e "s|@BUILDDIR@|$PWD|" \
-            -e "s|@BUILDLIBDIR@|$buildlibdir|" \
-            -e "s|@BUILDETCDIR@|$PWD/etc|" \
-            -e "s|@BUILDBINDIR@|$PWD/bin|" \
-            -e "s|@DOCDIR@|$docdir|" \
-            -e "s|@DOCDIR@|$docdir|" \
-      >> $file
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BIGLOOVERSION@|$bglversion|" \
+          -e "s|@BRANCH@|$branch|" \
+          -e "s|@BACKEND@|$backend|" \
+          -e "s|@LINK@|$link|" \
+          -e "s|@URL@|$url|" \
+          -e "s|@BINDIR@|$bindir|" \
+          -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@LIBPATH@|$libdir/hop/$version|" \
+          -e "s|@SHAREDIR@|$sharedir/$version|" \
+          -e "s|@ETCDIR@|$etcdir|" \
+          -e "s|@WEBLETSDIR@|$webletsdir|" \
+          -e "s|@NMODULESDIR@|$nodemodulesdir|" \
+          -e "s|@CONTRIBSDIR@|$contribsdir|" \
+          -e "s|@BUILDDIR@|$PWD|" \
+          -e "s|@BUILDLIBDIR@|$buildlibdir|" \
+          -e "s|@BUILDETCDIR@|$PWD/etc|" \
+          -e "s|@BUILDBINDIR@|$PWD/bin|" \
+          -e "s|@DOCDIR@|$docdir|" \
+          -e "s|@DOCURL@|$docurl|" \
+	  >> $file
   chmod a+r $file
 done
 
@@ -1328,49 +1371,112 @@ hoprc=etc/hoprc.hop
 rm -f $hoprc 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $hoprc
 cat etc/hoprc.hop.in \
-    | sed -e "s|@VERSION@|$version|" \
-          -e "s|@BRANCH@|$branch|" \
-          -e "s|@BINDIR@|$bindir|" \
-          -e "s|@LIBDIR@|$libdir|" \
-          -e "s|@LIBPATH@|$libdir/hop/$version|" \
-          -e "s|@SHAREDIR@|$sharedir/$version|" \
-          -e "s|@ETCDIR@|$etcdir|" \
-          -e "s|@WEBLETSDIR@|$webletsdir|" \
-          -e "s|@CONTRIBSDIR@|$contribsdir|" \
-          -e "s|@DOCDIR@|$docdir|" \
-          -e "s|@MIMETYPES@|$mimetypes|" \
-    >> $hoprc
+  | sed -e "s|@VERSION@|$version|" \
+        -e "s|@BRANCH@|$branch|" \
+        -e "s|@BINDIR@|$bindir|" \
+        -e "s|@LIBDIR@|$libdir|" \
+        -e "s|@LIBPATH@|$libdir/hop/$version|" \
+        -e "s|@SHAREDIR@|$sharedir/$version|" \
+        -e "s|@ETCDIR@|$etcdir|" \
+        -e "s|@WEBLETSDIR@|$webletsdir|" \
+        -e "s|@NMODULESDIR@|$nodemodulesdir|" \
+        -e "s|@CONTRIBSDIR@|$contribsdir|" \
+        -e "s|@DOCDIR@|$docdir|" \
+        -e "s|@DOCURL@|$docurl|" \
+        -e "s|@MIMETYPES@|$mimetypes|" \
+	>> $hoprc
 
 # etc/hopshrc.hop
 hopshrc=etc/hopshrc.hop
 rm -f $hopshrc 2> /dev/null
 cat etc/hopshrc.hop.in \
-    | sed -e "s|@VERSION@|$version|" \
-          -e "s|@BRANCH@|$branch|" \
-          -e "s|@BINDIR@|$bindir|" \
-          -e "s|@LIBDIR@|$libdir|" \
-          -e "s|@LIBPATH@|$libdir/hop/$version|" \
-          -e "s|@SHAREDIR@|$sharedir/$version|" \
-          -e "s|@ETCDIR@|$etcdir|" \
-          -e "s|@WEBLETSDIR@|$webletsdir|" \
-          -e "s|@CONTRIBSDIR@|$contribsdir|" \
-          -e "s|@DOCDIR@|$docdir|" \
-          -e "s|@MIMETYPES@|$mimetypes|" \
-    >> $hopshrc
+  | sed -e "s|@VERSION@|$version|" \
+        -e "s|@BRANCH@|$branch|" \
+        -e "s|@BINDIR@|$bindir|" \
+        -e "s|@LIBDIR@|$libdir|" \
+        -e "s|@LIBPATH@|$libdir/hop/$version|" \
+        -e "s|@SHAREDIR@|$sharedir/$version|" \
+        -e "s|@ETCDIR@|$etcdir|" \
+        -e "s|@WEBLETSDIR@|$webletsdir|" \
+        -e "s|@NMODULESDIR@|$nodemodulesdir|" \
+        -e "s|@CONTRIBSDIR@|$contribsdir|" \
+        -e "s|@DOCDIR@|$docdir|" \
+        -e "s|@DOCURL@|$docurl|" \
+        -e "s|@MIMETYPES@|$mimetypes|" \
+	>> $hopshrc
 
 # doc/doc.json
 docjson=doc/doc.json
 rm -f $docjson 2> /dev/null
 cat $docjson.in \
-  | sed -e "s|@VERSION@|$version $state$minor|" \
+  | sed -e "s|@VERSION@|$version$minorversion|" \
+	-e "s|@BRANCH@|$version|" \
+	-e "s|@DATE@|$date|" \
+	-e "s|@HOMEPAGE@|$url|" \
 	-e "s|@BIGLOOVERSION@|$bglversion|" \
-    >> $docjson
+	>> $docjson
+
+# docker/Dockerfile.in
+docker=docker/Dockerfile
+rm -f $docker 2> /dev/null
+cat $docker.in \
+  | sed -e "s|@HOPVERSION@|$version|" \
+	-e "s|@HOPMINORVERSION@|$minorversion|" \
+	-e "s|@BIGLOOVERSION@|$bglversion|" \
+    >> $docker
+
+# travis.yml.in
+travis=.travis.yml
+rm -f $travis 2> /dev/null
+cat $travis.in \
+  | sed -e "s|@HOPVERSION@|$version|" \
+	-e "s|@HOPMINORVERSION@|$minorversion|" \
+	-e "s|@BIGLOOVERSION@|$bglversion|" \
+    >> $travis
 
 # lib/hop.init
 init=lib/hop/$version/hop.init
 
 rm -f $init 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $init
+
+cat etc/hop.init.in \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
+          -e "s|@BIGLOOCLOSELIBS@|$bglcloselibs|" \
+    >> $init
+echo "" >> $init
+
+# lib/hopc_config.sch
+config=lib/hop/$version/hopc_config.sch
+
+rm -f $config 2> /dev/null
+echo ";* Automatically generated file (don't edit) */" > $config
+echo ";; Hop release number" >> $config
+echo "\"$version\"" >> $config
+echo "" >> $config
+cat etc/hopc_config.sch.in \
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
+          -e "s|@BIGLOO@|$bigloo|" \
+          -e "s|@URL@|$url|" \
+          -e "s|@BINDIR@|$bindir|" \
+          -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@LIBRARY-PATH@|$libdir/hop/$version|" \
+          -e "s|@SHAREDIR@|$sharedir/$version|" \
+          -e "s|@ETCDIR@|$etcdir|" \
+          -e "s|@CONTRIBSDIR@|$contribsdir|" \
+          -e "s|@DOCDIR@|$docdir|" \
+          -e "s|@WEBLETSDIR@|$webletsdir|" \
+          -e "s|@NODE_MODULES@|$nodemodulesdir|" \
+          -e "s|@BUILD-ID@|$buildid|" \
+          -e "s|@BUILD-TAG@|$buildtag|" \
+          -e "s|@BUILD-ARCH@|$mach|" \
+          -e "s|@MIMETYPES@|$mimetypes|" \
+          -e "s|@JAVASCRIPT-MIME-TYPE@|$jsmimetype|" \
+          -e "s|@CSS-MIME-TYPE@|$cssmimetype|" \
+    >> $config
+echo "" >> $config
 
 cat etc/hop.init.in \
     | sed -e "s|@VERSION@|$version|" \
@@ -1457,6 +1563,22 @@ if [ "$arch " = "android " ]; then
       >> $init
   echo "" >> $init
   chmod a-w $init
+  
+  cat node_modules/hopdroid/lib/Makefile.in \
+      | sed -e "s|@HOPDROIDCLOSELIBS_S@|-lhopdroid_s-$version|" \
+            -e "s|@HOPDROIDCLOSELIBS_U@|-lhopdroid_u-$version|" \
+      > node_modules/hopdroid/lib/Makefile
+  chmod a-w $init
+  cat arch/android/hopdroid/phone.scm.in \
+      | sed -e "s|@HOPAPP@|$androidapp|" \
+      > arch/android/hopdroid/phone.scm
+  chmod a-w $init
+else
+  cat node_modules/hopdroid/lib/Makefile.in \
+      | sed -e "s|@HOPDROIDCLOSELIBS_S@||" \
+            -e "s|@HOPDROIDCLOSELIBS_U@||" \
+      > node_modules/hopdroid/lib/Makefile
+  chmod a-w $init
 fi
   
 # lib/js2scheme.init
@@ -1499,15 +1621,23 @@ cat hopscript/arithmetic.sch >> $init
 echo "" >> $init
 cat hopscript/array.sch >> $init
 echo "" >> $init
+cat hopscript/function.sch >> $init
+echo "" >> $init
+cat hopscript/arguments.sch >> $init
+echo "" >> $init
 cat hopscript/number.sch >> $init
 echo "" >> $init
 cat hopscript/call.sch >> $init
 echo "" >> $init
 cat hopscript/public_expd.sch >> $init
 echo "" >> $init
-cat hopscript/expanders.sch >> $init
-echo "" >> $init
 cat hopscript/stringliteral_expd.sch >> $init
+echo "" >> $init
+cat hopscript/constants_expd.sch >> $init
+echo "" >> $init
+cat hopscript/names_expd.sch >> $init
+echo "" >> $init
+cat hopscript/expanders.sch >> $init
 echo "" >> $init
 echo "(hopscript-install-expanders!)" >> $init
 echo "   ))" >> $init
@@ -1528,31 +1658,33 @@ cat etc/nodejs.init.in \
 echo "" >> $init
 chmod a-w $init
 
-# share/hop-autoconf.js
+# share/hop-autoconf.js, share/hop-boot.js
 for init in hop-autoconf.js hop-boot.js; do
   rm -f share/$init 2> /dev/null
   echo "/* Automatically generated file (don't edit) */" > share/$init
 
   cat etc/$init.in \
-      | sed -e "s|@VERSION@|$version|" \
-            -e "s|@BRANCH@|$branch|" \
-            -e "s|@BACKEND@|$backend|" \
-            -e "s|@LINK@|$link|" \
-            -e "s|@URL@|$url|" \
-            -e "s|@BINDIR@|$bindir|" \
-            -e "s|@LIBDIR@|$libdir|" \
-            -e "s|@LIBPATH@|$libdir/hop/$version|" \
-            -e "s|@SHAREDIR@|$sharedir/$version|" \
-            -e "s|@ETCDIR@|$etcdir|" \
-            -e "s|@CONTRIBSDIR@|$contribsdir|" \
-            -e "s|@DOCDIR@|$docdir|" \
-            -e "s|@WEBLETSDIR@|$webletsdir|" \
-            -e "s|@LOCEVENT@|$locevent|" \
-            -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
-            -e "s|@BUILDID@|$buildid|" \
-            -e "s|@BUILDTAG@|$buildtag|" \
-            -e 's|//[^\"]*$||g' \
-      >> share/$init
+    | sed -e "s|@VERSION@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
+          -e "s|@BACKEND@|$backend|" \
+          -e "s|@LINK@|$link|" \
+          -e "s|@URL@|$url|" \
+          -e "s|@BINDIR@|$bindir|" \
+          -e "s|@LIBDIR@|$libdir|" \
+          -e "s|@LIBPATH@|$libdir/hop/$version|" \
+          -e "s|@SHAREDIR@|$sharedir/$version|" \
+          -e "s|@ETCDIR@|$etcdir|" \
+          -e "s|@CONTRIBSDIR@|$contribsdir|" \
+          -e "s|@DOCDIR@|$docdir|" \
+          -e "s|@DOCURL@|$docurl|" \
+          -e "s|@WEBLETSDIR@|$webletsdir|" \
+          -e "s|@NMODULESDIR@|$nodemodulesdir|" \
+          -e "s|@LOCEVENT@|$locevent|" \
+          -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
+          -e "s|@BUILDID@|$buildid|" \
+          -e "s|@BUILDTAG@|$buildtag|" \
+          -e 's|//[^\"]*$||g' \
+	  >> share/$init
   echo "" >> share/$init
   chmod a-w share/$init
 done
@@ -1563,82 +1695,80 @@ rm -f $lib 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $lib
 
 cat etc/libraries.sch.in \
-    | sed -e "s|@VERSION@|$version|" \
-          -e "s|@LIBRARIES@|$libraries|" \
-    >> $lib
+  | sed -e "s|@VERSION@|$version|" \
+        -e "s|@LIBRARIES@|$libraries|" \
+	>> $lib
 echo "" >> $lib
 chmod a-w $lib
 
 # man pages
 for p in etc/hop.man etc/hopsh.man etc/hopreplay.man; do
   cat $p.in \
-      | sed -e "s|@RELEASE@|$version|" \
-            -e "s|@BRANCH@|$branch|" \
-            -e "s|@DATE@|$date|" \
-            -e "s|@DEVEL@|$devel|" \
-            -e "s|@DEBUG@|$debug|" \
-            -e "s|@BIGLOO@|$bigloo|" \
-            -e "s|@HOSTBIGLOO@|$hostbigloo|" \
-            -e "s|@BACKEND@|$backend|" \
-            -e "s|@LINK@|$link|" \
-      > $p
+    | sed -e "s|@RELEASE@|$version|" \
+          -e "s|@BRANCH@|$branch|" \
+          -e "s|@DATE@|$date|" \
+          -e "s|@DEVEL@|$devel|" \
+          -e "s|@DEBUG@|$debug|" \
+          -e "s|@BIGLOO@|$bigloo|" \
+          -e "s|@HOSTBIGLOO@|$hostbigloo|" \
+          -e "s|@BACKEND@|$backend|" \
+          -e "s|@LINK@|$link|" \
+	  > $p
 done
 
 #*---------------------------------------------------------------------*/
 #*    Debian script                                                    */
 #*---------------------------------------------------------------------*/
-if [ "$state " != " " ]; then
-  minorversion=-$state$minor
-else
-  minorversion=
-fi
-
 # debian
 deb=arch/debian/makedeb.sh
 rm -f $deb 2> /dev/null
 echo "#!/bin/sh" > $deb
 echo "#* Automatically generated file (don't edit) */" >> $deb
 
-
 cat $deb.in \
-   | sed -e "s|#!/bin/sh||" \
-         -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
-         -e "s|@VERSION@|$version|" \
-         -e "s|@MINOR@|$minorversion|" \
-   > $deb  
+  | sed -e "s|#!/bin/sh||" \
+        -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
+        -e "s|@VERSION@|$version|" \
+        -e "s|@WEBLETSDIR@|$webletsdir|" \
+        -e "s|@NMODULESDIR@|$nodemodulesdir|" \
+        -e "s|@MINOR@|$minorversion|" \
+	>> $deb  
 chmod a+rx $deb
  
-# android
-and=arch/android/makeapk.sh
-rm -f $and 2> /dev/null
-echo "#!/bin/sh" > $and
-echo "#* Automatically generated file (don't edit) */" >> $and
+# homebrew
+deb=arch/homebrew/makebrew.sh
+rm -f $deb 2> /dev/null
+echo "#!/bin/sh" > $deb
+echo "#* Automatically generated file (don't edit) */" >> $deb
 
-cat $and.in \
-   | sed -e "s|#!/bin/sh||" \
-         -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
-         -e "s|@VERSION@|$hopversion|" \
-         -e "s|@MINOR@|$minorversion|" \
-   >> $and  
-chmod a+rx $and
+cat $deb.in \
+  | sed -e "s|#!/bin/sh||" \
+        -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
+        -e "s|@VERSION@|$version|" \
+        -e "s|@WEBLETSDIR@|$webletsdir|" \
+        -e "s|@NMODULESDIR@|$nodemodulesdir|" \
+        -e "s|@MINOR@|$minorversion|" \
+	>> $deb  
+chmod a+rx $deb
  
 #*---------------------------------------------------------------------*/
 #*    Summary                                                          */
 #*---------------------------------------------------------------------*/
 
 # Generate the config.status file to please debian packages
-echo "configuration completed" > config.status
+echo "configuration completed" >> config.status
 
 echo "** Configuration summary **"
 echo 
 echo "Release:"
-echo "  hop release number.................... $version $state$minor"
+echo "  hop release number.................... $version$minorversion ($license)"
 echo "  hop build id.......................... $buildid"
 echo "  hop build tag......................... $buildtag"
 echo "  bigloo................................ $bigloo ($bglversion)"
 echo "  backend............................... $backend"
 echo "  link.................................. $link"
 echo "  devel mode............................ $devmode"
+echo "  arch.................................. $arch"
 echo 
 echo "Optional features:"
 echo "  multi-threading....................... $threads"
@@ -1658,8 +1788,10 @@ echo "  lib directory......................... $libdir"
 echo "  share directory....................... $sharedir"
 echo "  man directory......................... $mandir"
 echo "  weblets directory..................... $webletsdir"
+echo "  node_modules directory................ $nodemodulesdir"
 echo "  contribs directory.................... $contribsdir"
 echo "  doc directory......................... $docdir"
+echo "  doc official url...................... $docurl"
 echo 
 echo "Internals:"
 echo "  bigloo compilation flags.............. $bcflags"

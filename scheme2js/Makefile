@@ -1,14 +1,15 @@
 #*=====================================================================*/
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Sat May 24 06:48:48 2014 (serrano)                */
+#*    Last change :  Mon May 27 08:43:46 2019 (serrano)                */
 #*    Copyright   :  2006-08 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
 #*=====================================================================*/
-.PHONY: do
+.PHONY: do install
 
 do: exec runtime-build
+install: install-library
 
 #*---------------------------------------------------------------------*/
 #*    Standard Bigloo configuration                                    */
@@ -82,8 +83,10 @@ POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile \
 #*---------------------------------------------------------------------*/
 .PHONY: build native jvm 
 
-build: $(BACKEND) runtime-build
+build: runtime-build
+	$(MAKE) $(BACKEND)
 
+#* native: o heap-c lib-c                                              */
 native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
 

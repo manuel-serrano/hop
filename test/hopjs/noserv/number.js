@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/number.js       */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/number.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:25 2014                          */
-/*    Last change :  Fri Feb 23 17:07:21 2018 (serrano)                */
-/*    Copyright   :  2014-18 Manuel Serrano                            */
+/*    Last change :  Mon Dec  2 10:52:26 2019 (serrano)                */
+/*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JS numbers                                               */
 /*=====================================================================*/
@@ -71,6 +71,8 @@ assert.ok( p.toFixed( 2 ), "0.51" );
 var q = 0.49;
 assert.ok( q.toFixed( 2 ), "0.49" );
 
+assert.ok( Math.abs( null ) === 0, "Math.abs( null )" );
+
 /*---------------------------------------------------------------------*/
 /*    integer limits                                                   */
 /*---------------------------------------------------------------------*/
@@ -83,11 +85,11 @@ assert.ok( Math.floor( 2147483647.0 ) > 0, "floor" );
 
 var b = [ 0xff, 0xff, 0xff, 0xff ];
 
-function foo( b ) {
+function fooMaxint( b ) {
   return ((b[0]) | (b[1] << 8) | (b[2] << 16)) + (b[3] * 0x1000000);
 }
 
-assert.ok( foo( b ) === 0xFFFFFFFF, "maxint" );
+assert.ok( fooMaxint( b ) === 0xFFFFFFFF, "maxint" );
 
 /*---------------------------------------------------------------------*/
 /*    parsing                                                          */
@@ -109,6 +111,7 @@ assert.equal( Math.pow(2, 32), 4294967296, "Math.pow(2" );
 assert.equal( Math.pow(2, 32) + 123, 4294967419, "Math.pow(2" );
 assert.equal( Math.pow(2, 33), 8589934592, "Math.pow(2" );
 assert.equal( ((1<<29) + 123) << 2, -2147483156, "((1<<29) + 123) << 2" );
+assert.ok( Math.pow(10, 2.5) > 316, "Math.pow" );
 
 /*---------------------------------------------------------------------*/
 /*    maxint parsing                                                   */
@@ -144,3 +147,13 @@ assert.equal( testS( 2 ), false );
 assert.equal( testS( 3 ), true );
 assert.equal( testS( 4 ), true );
 
+/*---------------------------------------------------------------------*/
+/*    casts                                                            */
+/*---------------------------------------------------------------------*/
+function fooCast() {
+   var a = [1,2,3];
+   
+   return( a.length/2 >> 0 );
+}
+
+assert.equal( fooCast(), 1, "integer cast" );

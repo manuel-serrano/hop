@@ -1,0 +1,43 @@
+class Hop < Formula
+  desc "Multitier Web Programming Environment"
+  homepage "http://hop.inria.fr/"
+  url "ftp://ftp-sop.inria.fr/indes/fp/Hop/hop-@RELEASE@.tar.gz"
+  version "@RELEASE@"
+  sha256 "@SHA256@"
+  revision 1
+
+  depends_on "autoconf" => :build
+  depends_on "automake" => :build
+  depends_on "libtool" => :build
+  depends_on "bigloo-unstable" => :build
+
+  depends_on "bigloo-unstable"
+  depends_on "gmp"
+  depends_on "pcre"
+  depends_on "libunistring"
+  depends_on "openssl@1.1"
+
+  def install
+    args = %W[
+      --prefix=#{prefix}
+    ]
+
+    ENV['PKG_CONFIG_PATH'] = "/usr/local/opt/openssl@1.1/lib/pkgconfig"
+    system "./configure", *args
+
+    system "make"
+    system "make", "install"
+
+    # Install the other manpages too
+    manpages = %w[hop]
+    manpages.each { |m| man1.install "etc/#{m}.man" => "#{m}.1" }
+  end
+
+  test do
+    program = <<~EOS
+      console.log( "Hello World!" );
+      process.exit( 0 );
+    EOS
+    assert_match "Hello World!\n", pipe_output("#{bin}/hop -j <", program)
+  end
+end

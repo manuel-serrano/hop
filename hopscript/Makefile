@@ -1,15 +1,16 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/hopscript/Makefile                */
+#*    serrano/prgm/project/hop/hop/hopscript/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon May  7 10:48:16 2018 (serrano)                */
+#*    Last change :  Fri Apr 17 08:00:05 2020 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
-.PHONY: do 
+.PHONY: do install
 
 do: build
+install: install-library
 
 #*---------------------------------------------------------------------*/
 #*    Standard Hop configuration                                       */
@@ -39,11 +40,11 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_OBJECTS = types rts object function string number regexp boolean \
+_OBJECTS = types object function string number regexp boolean \
   error array arguments date json math worker private public lib service \
   property websocket pair obj arraybuffer arraybufferview stringliteral dom \
-  symbol promise generator spawn expanders profile \
-  arithmetic arithmetic32 arithmetic64 
+  symbol promise generator proxy reflect map set spawn expanders profile \
+  arithmetic arithmetic32 arithmetic64 builtin names
 
 _C_OBJECTS = _bglhopscript
 
@@ -55,9 +56,11 @@ BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
 SOURCES = $(_OBJECTS:%=%.scm) $(_C_OBJECTS:%=%.c)
 
-INCLUDES = stringliteral.sch property_expd.sch property.sch expanders.sch \
-  arithmetic.sch call.sch array.sch number.sch public.sch public_expd.sch \
-  stringliteral_expd.sch types.sch types_expd.sch
+INCLUDES = stringliteral.sch names.sch property_expd.sch property.sch \
+  expanders.sch arithmetic.sch call.sch array.sch number.sch public_expd.sch \
+  stringliteral_expd.sch types.sch types_expd.sch arity.sch \
+  constants_expd.sch constants.sch stringthread.sch function.sch arguments.sch
+
 C_INCLUDES = bglhopscript.h bglhopscript_malloc.h
 
 #*---------------------------------------------------------------------*/

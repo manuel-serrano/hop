@@ -43,7 +43,6 @@
 	   (inline hop-runtime-system-files::pair)
 	   (inline hop-service-base::bstring)
 	   (hop-configure-rc-directory)
-	   (hop-configure-var-directory)
 	   (hop-configure-cache-directory)
 	   (hop-srfis::pair-nil))
 
@@ -66,7 +65,6 @@
            (export hop-runtime-system-files)
 	   (export hop-service-base)
 	   (export hop-configure-rc-directory)
-	   (export hop-configure-var-directory)
 	   (export hop-configure-cache-directory)
 	   (export hop-srfis)))
 
@@ -210,11 +208,6 @@
 ;*    hop-configure-rc-directory ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (hop-configure-rc-directory) "Library/Preferences/hop")
-
-;*---------------------------------------------------------------------*/
-;*    hop-configure-var-directory ...                                  */
-;*---------------------------------------------------------------------*/
-(define (hop-configure-var-directory) "Library/Application Support/hop")
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure-cache-directory ...                                */

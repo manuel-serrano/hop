@@ -14,10 +14,30 @@
  "S12.2_A9.js"
  "S12.2_A11.js"
  "S12.10_A[13].[0-9]+_T[1-5].js"
+ ;; black listed to support catch without exception declaration
+ "S12.14_A16_T4.js" 
  "S13.2.2_A1[78]_T[0-9]+.js"
  "S13.2.2_A19_T7.js"
  "S15.2.2.1_A2_T4.js"
+ ;; hop incompatibility with the new (2019-01-05) hop builtin object
+ "15.2.3.2-1-4.js"
+ "15.2.3.2-2-31.js" 
  "15.2.3.6-4-625gs.js"
+ "15.2.3.9-1-1.js"
+ "15.2.3.9-1-2.js"
+ "15.2.3.9-1-3.js"
+ "15.2.3.9-1-4.js"
+ "15.2.3.9-1.js"
+ "15.2.3.10-1-4.js"
+ "15.2.3.12-1-4.js"
+ "15.2.3.13-1-4.js"
+ "15.2.3.14-1-3.js"
+ ;; Incompabible with ES6 RegExp properties
+ "15.2.3.3-4-212.js" 
+ "15.2.3.3-4-213.js"
+ "15.2.3.3-4-214.js"
+ "15.2.3.3-4-215.js"
+ ;; 
  "S15.2_A1.js"
  "S15.3.2.1_A3_T8.js"
  "S15.3.4.3_A7_T8.js"
@@ -29,7 +49,7 @@
  ;; incompatible with ES6 destructuring args
  "S12.1_A4_T2.js"
  "S12.6.4_A15.js"
- ;; Hop binds a global variable called OBJECT (for HTML)
+ ;; hop binds a global variable called OBJECT (for HTML)
  "S11.8.6_A2.1_T3.js"
  "S11.8.6_A2.4_T3.js"
  ;; on purpose failures
@@ -86,6 +106,8 @@
  "S13_A15_T4.js"
  ;; this test is suspicious (node also refuses it)
  "15.2.3.7-6-a-86-1.js"
+ ;; ecma6 incompatibility
+ "15.2.3.4-1-5.js"
  ;;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.3, NOTE
  "S15.3.4.3_A3_T1.js" 
  "S15.3.4.3_A3_T2.js"
@@ -205,10 +227,34 @@
  "S15.10.3.1_A3_T1.js"
  "S15.10.3.1_A3_T2.js"
  "S15.10.6.2_A1_T6.js"
+ ;; es6 incompatible regexp property 
+ "15.10.7.1-2.js"
+ "S15.10.7.1_A8.js"
+ "S15.10.7.1_A9.js"
+ "S15.10.7.1_A10.js"
+ "15.10.7.2-2.js"
+ "15.10.7.2-2.js"
+ "S15.10.7.2_A8.js"
+ "S15.10.7.2_A9.js"
+ "S15.10.7.2_A10.js"
+ "15.10.7.3-2.js"
+ "S15.10.7.3_A8.js"
+ "S15.10.7.3_A9.js"
+ "S15.10.7.3_A10.js"
+ "15.10.7.4-2.js"
+ "S15.10.7.4_A8.js"
+ "S15.10.7.4_A9.js"
+ "S15.10.7.4_A10.js"
  ;; incompatible function representation
  "S15.10.6.2_A1_T9.js" 
  ;; __proto__ Chrome compatibility design
  "S15.12.2_A1.js" 
  ;; Bigloo forbids setting library functions
  "12.2.1-9-s.js"
+ ;; ES6 incompatibilities
+ "15.2.3.8-1.js"
+ "15.2.3.8-1-1.js"
+ "15.2.3.8-1-2.js"
+ "15.2.3.8-1-3.js"
+ "15.2.3.8-1-4.js"
 )

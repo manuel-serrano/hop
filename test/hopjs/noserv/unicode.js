@@ -1,10 +1,10 @@
-﻿/*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/unicode.js             */
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/unicode.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:20:00 2014                          */
-/*    Last change :  Tue Dec 23 17:06:54 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Sat Apr 13 09:39:22 2019 (serrano)                */
+/*    Copyright   :  2014-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Unicode testing                                                  */
 /*=====================================================================*/

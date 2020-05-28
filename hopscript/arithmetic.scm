@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/arithmetic.scm          */
+;*    serrano/prgm/project/hop/hop/hopscript/arithmetic.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Sun Jun  3 06:33:59 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Sat Feb  8 07:14:09 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
 ;*=====================================================================*/
@@ -16,7 +16,7 @@
 
    (library hop)
 
-   (include "types.sch" "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch" "names.sch")
 
    (import __hopscript_types
 	   __hopscript_object
@@ -26,24 +26,43 @@
 	   __hopscript_property
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_arithmetic32
 	   __hopscript_arithmetic64)
 
    (from   __hopscript_arithmetic32 __hopscript_arithmetic64)
 
+   (extern (macro $real-set!::real (::real ::double) "BGL_REAL_SET"))
+   
    (export (inline js-toflonum::double ::obj)
 	   (+js::obj ::obj ::obj ::JsGlobalObject)
 	   (-js::obj ::obj ::obj ::JsGlobalObject)
 	   (*js::obj ::obj ::obj ::JsGlobalObject)
+	   (**js::obj ::obj ::obj ::JsGlobalObject)
 	   (/js::obj ::obj ::obj ::JsGlobalObject)
 	   (negjs ::obj ::JsGlobalObject)
+
+	   (inline +l!fl::real ::real ::double)
+	   (inline +r!fl::real ::double ::real)
+	   (inline -l!fl::real ::real ::double)
+	   (inline -r!fl::real ::double ::real)
+	   (inline *l!fl::real ::real ::double)
+	   (inline *r!fl::real ::double ::real)
+	   (inline /l!fl::real ::real ::double)
+	   (inline /r!fl::real ::double ::real)
 	   
 	   (inline /pow2s32::int32 x::int32 y::long)
 	   (inline /pow2u32::uint32 x::uint32 y::long)
 	   (inline /pow2fx::long n::long k::long)
+	   (inline /integer::obj ::double ::double)
+	   (inline jsintegerfl?::bool ::double)
 	   
+	   (inline %$$II ::long ::long)
 	   (%$$NN ::obj ::obj)
 	   (%$$NZ ::obj ::obj)
+	   (%$$FF::double ::double ::double)
+	   (%$$NF::double ::obj ::double)
+	   (%$$FN::double ::double ::obj)
 	   
 	   (bit-lshjs::obj ::obj ::obj ::JsGlobalObject)
 	   (bit-rshjs::obj ::obj ::obj ::JsGlobalObject)
@@ -68,19 +87,18 @@
 	   (>>=fl::bool ::double ::double)
 	   (<<=fl::bool ::double ::double)
 	   
-	   (inline fixnums?::bool ::obj ::obj)))
+	   ))
+
+;*---------------------------------------------------------------------*/
+;*    __js_strings ...                                                 */
+;*---------------------------------------------------------------------*/
+(define __js_strings #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toflonum ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-toflonum r)
    (if (flonum? r) r (fixnum->flonum r)))
-;*    (cond                                                            */
-;*       ((flonum? r) r)                                               */
-;*       ((fixnum? r) (fixnum->flonum r))                              */
-;*       ((uint32? r) (uint32->flonum r))                              */
-;*       ((int32? r) (int32->flonum r))                                */
-;*       (else (error "js-toflonum" (format "Illegal number (~a)" (typeof r)) r)))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    +js ...                                                          */
@@ -88,8 +106,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
 ;*---------------------------------------------------------------------*/
 (define (+js x::obj y::obj %this)
-   (let* ((nx (if (number? x) x (js-tonumber x %this)))
-	  (ny (if (number? y) y (js-tonumber y %this))))
+   (let* ((nx (if (js-number? x) x (js-tonumber x %this)))
+	  (ny (if (js-number? y) y (js-tonumber y %this))))
       (+/overflow nx ny)))
    
 ;*---------------------------------------------------------------------*/
@@ -98,8 +116,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.2       */
 ;*---------------------------------------------------------------------*/
 (define (-js x::obj y::obj %this)
-   (let* ((nx (if (number? x) x (js-tonumber x %this)))
-	  (ny (if (number? y) y (js-tonumber y %this))))
+   (let* ((nx (if (js-number? x) x (js-tonumber x %this)))
+	  (ny (if (js-number? y) y (js-tonumber y %this))))
       (-/overflow nx ny)))
    
 ;*---------------------------------------------------------------------*/
@@ -108,9 +126,20 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.1       */
 ;*---------------------------------------------------------------------*/
 (define (*js x::obj y::obj %this)
-   (let* ((nx (if (number? x) x (js-tonumber x %this)))
-	  (ny (if (number? y) y (js-tonumber y %this))))
+   (let* ((nx (if (js-number? x) x (js-tonumber x %this)))
+	  (ny (if (js-number? y) y (js-tonumber y %this))))
       (*/overflow nx ny)))
+
+;*---------------------------------------------------------------------*/
+;*    **js ...                                                         */
+;*    -------------------------------------------------------------    */
+;*    https://www.ecma-international.org/ecma-262/8.0/                 */
+;*       #sec-applying-the-exp-operator                                */
+;*---------------------------------------------------------------------*/
+(define (**js x::obj y::obj %this)
+   (let* ((nx (if (js-number? x) x (js-tonumber x %this)))
+	  (ny (if (js-number? y) y (js-tonumber y %this))))
+      (exptfl (js-toflonum nx) (js-toflonum ny))))
 
 ;*---------------------------------------------------------------------*/
 ;*    /js ...                                                          */
@@ -148,7 +177,29 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (/pow2fx::long n::long k::long)
    (/fx n (bit-lsh 1 k)))
- 
+
+;*---------------------------------------------------------------------*/
+;*    jsintegerfl? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (jsintegerfl? n::double)
+   (and (cond-expand
+	   (bigloo-c
+	    (let ((intpart::double 0.0))
+	       (=fl ($modf n (pragma::void* "&($1)" (pragma intpart))) 0.0)))
+	   (else
+	    (integerfl? n)))
+	(<=fl n 9007199254740992.0)
+	(>=fl n -9007199254740992.0)))
+   
+;*---------------------------------------------------------------------*/
+;*    /integer ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (/integer x::double y::double)
+   (let ((v (/fl x y)))
+      (if (jsintegerfl? v)
+	  (flonum->fixnum v)
+	  v)))
+
 ;*---------------------------------------------------------------------*/
 ;*    negjs ...                                                        */
 ;*    -------------------------------------------------------------    */
@@ -157,29 +208,63 @@
 (define (negjs expr %this)
    (let loop ((expr expr))
       (cond
-	 ((and (number? expr) (= expr 0))
-	  (if (flonum? expr)
+	 ((fixnum? expr)
+	  (if (=fx expr 0)
+	      -0.0
+	      (negfx expr)))
+	 ((flonum? expr)
+	  (if (=fl expr 0.0)
 	      (if (=fx (signbitfl expr) 0) -0.0 +0.0)
-	      -0.0))
-	 ((number? expr)
+	      (negfl expr)))
+	 ((js-number? expr)
 	  (- expr))
 	 (else
 	  (loop (js-tonumber expr %this))))))
 
+;*---------------------------------------------------------------------*/
+;*    oplr!fl ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (+l!fl::real x::real y::double) ($real-set! x (+fl x y)))
+(define-inline (+r!fl::real x::double y::real) ($real-set! y (+fl x y)))
+
+(define-inline (-l!fl::real x::real y::double) ($real-set! x (-fl x y)))
+(define-inline (-r!fl::real x::double y::real) ($real-set! y (-fl x y)))
+
+(define-inline (*l!fl::real x::real y::double) ($real-set! x (*fl x y)))
+(define-inline (*r!fl::real x::double y::real) ($real-set! y (*fl x y)))
+
+(define-inline (/l!fl::real x::real y::double) ($real-set! x (/fl x y)))
+(define-inline (/r!fl::real x::double y::real) ($real-set! y (/fl x y)))
+
+;*---------------------------------------------------------------------*/
+;*    %$$II ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (%$$II lnum rnum)
+   (if (=fx rnum 0)
+       +nan.0
+       (if (>=fx lnum 0)
+	   (remainderfx lnum rnum)
+	   (%$$NZ lnum rnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %$$NN ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define (%$$NN lnum rnum)
-   (if (= rnum 0)
-       +nan.0
-       (%$$NZ lnum rnum)))
+   (cond
+      ((and (fixnums? lnum rnum) (>=fx lnum 0) (not (=fx rnum 0)))
+       (remainderfx lnum rnum))
+      ((= rnum 0)
+       +nan.0)
+      (else
+       (%$$NZ lnum rnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %$$NZ ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define (%$$NZ lnum rnum)
    (cond
+      ((and (fixnums? lnum rnum) (>=fx lnum 0) (not (=fx rnum 0)))
+       (remainderfx lnum rnum))
       ((and (flonum? lnum) (or (=fl lnum +inf.0) (=fl lnum -inf.0)))
        +nan.0)
       ((and (flonum? rnum) (or (=fl rnum +inf.0) (=fl rnum -inf.0)))
@@ -208,6 +293,37 @@
 		     ;; MS: CARE 21 dec 2016, why returning a flonum?
                      ;; (if (= m 0) 0.0 m)
 		     m)))))))
+
+;*---------------------------------------------------------------------*/
+;*    %$$FF ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (%$$FF lnum rnum)
+   (if (or (=fl rnum 0.0) (nanfl? rnum))
+       +nan.0
+       (let* ((alnum (absfl lnum))
+	      (arnum (absfl rnum))
+	      (m (remainderfl alnum arnum)))
+	  (if (or (<fl lnum 0.0)
+		  (and (=fl lnum 0.0)
+		       (not (=fx (signbitfl lnum) 0))))
+	      (if (=fl m 0.0) -0.0 (negfl m))
+	      (if (=fl m 0.0) +0.0 m)))))
+
+;*---------------------------------------------------------------------*/
+;*    %$$FN ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (%$$FN lnum rnum)
+   (if (flonum? rnum)
+       (%$$FF lnum rnum)
+       (%$$FF lnum (fixnum->flonum rnum))))
+
+;*---------------------------------------------------------------------*/
+;*    %$$NF ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (%$$NF lnum rnum)
+   (if (flonum? lnum)
+       (%$$FF lnum rnum)
+       (%$$FF (fixnum->flonum lnum) rnum)))
 
 ;*---------------------------------------------------------------------*/
 ;*    bit-lshjs ...                                                    */
@@ -324,7 +440,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.2       */
 ;*---------------------------------------------------------------------*/
 (define (>js left right %this::JsGlobalObject)
-   (if (and (number? left) (number? right))
+   (if (and (js-number? left) (js-number? right))
        (> left right)
        (let* ((px (js-toprimitive left 'number %this))
 	      (py (js-toprimitive right 'number %this)))
@@ -340,7 +456,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.3       */
 ;*---------------------------------------------------------------------*/
 (define (<=js left right %this::JsGlobalObject)
-   (if (and (number? left) (number? right))
+   (if (and (js-number? left) (js-number? right))
        (<= left right)
        (let* ((px (js-toprimitive left 'number %this))
 	      (py (js-toprimitive right 'number %this)))
@@ -356,7 +472,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.4       */
 ;*---------------------------------------------------------------------*/
 (define (>=js left right %this::JsGlobalObject)
-   (if (and (number? left) (number? right))
+   (if (and (js-number? left) (js-number? right))
        (>= left right)
        (let* ((px (js-toprimitive left 'number %this))
 	      (py (js-toprimitive right 'number %this)))
@@ -414,12 +530,3 @@
       ((not (=fl right right)) #f)
       (else (<=fl left right))))
 
-;*---------------------------------------------------------------------*/
-;*    fixnums? ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-inline (fixnums? a b)
-   (cond-expand
-      ((and bigloo-c (config nan-tagging #f))
-       (pragma::bool "INTEGERP( TAG_INT == 0 ? ((long)$1 | (long)$2) : ((long)$1 & (long)$2) )" a b))
-      (else
-       (and (fixnum? a) (fixnum? b)))))

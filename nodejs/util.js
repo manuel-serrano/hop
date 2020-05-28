@@ -349,7 +349,8 @@ function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
     }
   }
   keys.forEach(function(key) {
-    if (!key.match(/^\d+$/)) {
+     // MS: 2018-04-06, symbols support
+    if (typeof key === "symbol" || !key.match(/^\d+$/)) {
       output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
           key, true));
     }
@@ -400,11 +401,16 @@ function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
     }
   }
   if (typeof name === 'undefined') {
-    if (array && key.match(/^\d+$/)) {
+     // MS: 2018-04-06, symbols support
+     if (array && (typeof key === "symbol" || key.match(/^\d+$/))) {
+      return str;
+    }
+    if (typeof(key) === 'symbol') {
       return str;
     }
      name = JSON.stringify('' + key);
-     if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
+     // MS: 2018-04-06, symbols support
+     if (typeof key === "symbol" || name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
       name = name.substr(1, name.length - 2);
       name = ctx.stylize(name, 'name');
     } else {

@@ -1,0 +1,585 @@
+@string{lncs	= "Lecture Notes on Computer Science"}
+@string{sas	= "Static Analysis Symposium ({SAS})"}
+@string{jfp	= "Journal of Functional Programming"}
+@string{icfp	= "{\sc ACM Sigplan} Int'l Conference on Functional Programming ({ICFP})"}
+@string{dls	= "Dynamic Language Symposium (DLS)"}
+@string{ppdp	= "{\sc ACM Sigplan} Int'l Conference on Principles and Practice of Declarative Programming ({PPDP})"}
+@string{plilp	= "{I}nt'l {S}ymposium on {P}rogramming {L}anguage
+                   {I}mplementation and {L}ogic {P}rogramming ({PLILP})"}
+@string{hosc    = "Higher Order and Symbolic Computation (HOSC)"}
+@string{toplas  = "ACM Transactions on Programming Languages and Systems (TOPLAS)"}
+@string{urlbase	= "http://www-sop.inria.fr/members/Manuel.Serrano/publi/"}
+
+@InProceedings{ sf:cc20,
+  author = {Serrano, M. and Findler, R.},
+  title = {{D}ynamic {P}roperty {C}aches, a {S}tep towards
+           {F}aster {J}ava{S}cripts {P}roxy {O}bjects},
+  booktitle = "Proceedings of the 29th Compiler Construction Conference (CC'20)",
+  address = "San Dieo, USA",
+  download = urlbase # "sf-cc20.pdf",
+  category = "compilation",
+  doi = "10.1145/3377555.3377888",
+  month = "feb",
+  year = 2020,
+  abstract = "Inline caches and hidden classes are two essential components for
+closing the performance gap between static languages such as Java,
+Scheme, or ML and dynamic languages such as JavaScript or Python.
+They rely on the observation that for a particular object access
+located at a particular point of the program, the shapes, usually
+referred to as the hidden classes, of accessed objects are
+likely to be the same. Taking benefit of that invariant, they replace
+the expensive lookup the semantics of these languages normally demand
+with one test, the inline cache, and a memory read indexed by
+an offset computed during the last cache miss.  These optimizations
+are essential but they are not general enough to cope with
+JavaScript's proxies. In particular, when the property name is itself
+unknown statically, inline cache-based optimizations always take a
+slow path.
+
+In this paper, we show how to generalize inline caches to cope with an
+unknown property name. The paper first discusses the general principle
+of the extension and then presents the experimental results we
+collected using a modified version of the Hop JavaScript compiler,
+demonstrating how the optimization is crucial for improving the
+performance of proxy objects (as they naturally use dynamic property
+names extensively). The evaluation report shows that the modified Hop
+outperforms all other implementations of the language, including the
+most efficient commercial ones, by a factor ranging from 2 times to
+100 times. Even better, our optimizations are applicable to
+existing compilers as they require only straightforward changes to
+runtime data structures; no complex analyses are required. "
+}
+	   
+@InProceedings{ sf:cc19,
+  author = {Serrano, M. and Feeley, M.},
+  title = {{P}roperty {C}aches {R}evisited},
+  booktitle = "Proceedings of the 28th Compiler Construction Conference (CC'19)",
+  address = "Washington, USA",
+  category = "compilation",
+  doi = "10.1145/3302516.3307344",
+  download = urlbase # "sf-cc19.pdf",
+  month = "feb",
+  year = 2019,
+  abstract = "Property caches are a well-known technique invented over 30 
+years ago to improve dynamic object accesses. They have been adapted to
+JavaScript, which they have greatly contributed to accelerate. However,
+this technique is applicable only when some constraints are satisfied
+by the objects, the properties, and the property access sites. In this
+work, we propose enhancements to improve two common usage patterns:
+prototype accesses, object extensions, and
+megamorphic accesses. We have implemented these in the Hopc
+AOT JavaScript compiler and we have measured their impact. We observe that
+they effectively complement traditional caches. They reduce cache
+misses and consequently accelerate execution. Moreover, they do not
+cause a slowdown in the handling of the other usage patterns."
+}
+
+@InProceedings{ ps:nime19,
+  author = {Petit, B. and Serrano, M.},
+  title = {{C}omposing and {E}xecuting {I}nteractive {M}usic {U}sing
+   the {H}ip{H}op.JS {L}anguage},
+  year = 2019,
+  month = jun,
+  address = {Porto Alegre, Brazil},
+  download = urlbase # "ps-nime19.pdf"
+}
+  
+@InProceedings{ serrano:dls18,
+  author = {Serrano, M.},
+  title = {JavaScript AOT Compilation},
+  booktitle = "14th " # dls,
+  download = urlbase # "serrano-dls18.pdf",
+  address = "Boston, USA",
+  category = "compilation",
+  year = 2018,
+  doi = "10.1145/3276945.3276950",
+  month = nov,
+  abstract = "Static compilation, a.k.a., ahead-of-time (AOT) compilation, is
+an alternative approach to JIT compilation that can combine good speed
+and lightweight memory footprint, and that can accommodate read-only
+memory constraints that are imposed by some devices and some operating
+systems. Unfortunately the highly dynamic nature of JavaScript makes
+it hard to compile statically and all existing AOT compilers have
+either gave up on good performance or full language support. We have
+designed and implemented an AOT compiler that aims at satisfying
+both. It supports full unrestricted ECMAScript 5.1 plus many
+ECMAScript 2017 features and the majority of benchmarks are within
+50% of the performance of one of the fastest JIT compilers."
+}
+
+@InProceedings{ sp:icfp16,
+  author = {Serrano, M. and Prunet, V.},
+  title = {A {G}limpse of {H}opjs},
+  booktitle = "21th " #icfp,
+  address = {Nara, Japan},
+  category = {web programming},
+  download = urlbase # "sp-icfp16.pdf",
+  year = 2016,
+  month = sep,
+  doi = {10.1145/2951913.2951916},
+  pages = {188--200},
+  abstract = {,(list
+[Hop.js is a multitier programming environment for JavaScript. It
+allows a single JavaScript program to describe the client-side and the
+server-side components of a web application. Its runtime environment
+ensures consistent executions of the application on the server and on
+the client.,(linebreak 2)
+
+~~ This paper overviews the Hop.js design. It shows the JavaScript
+extensions that makes it possible to conceive web applications
+globally. It presents how Hop.js interacts with the outside world. It
+also briefly presents the Hop.js implementation. It presents the
+Hop.js web server implementation, the handling of server-side
+parallelism, and the JavaScript and HTML compilers.])},
+  x-proceedings = {yes},
+  x-editorial-board = {no},
+  x-international-audience = {yes},
+  x-scientific-popularization = {no}
+}
+
+@InProceedings{ serrano:webist14,
+  author = {Serrano, M.},
+  title = {{A} {M}ultitier {D}ebugger for {W}eb {A}pplications},
+  booktitle = {Proceedings of the 10th WEBIST conference (WEBIST'14)},
+  year = 2014,
+  month = apr,
+  address = {Barcelona, Spain},
+  category = {web programming},
+  download = urlbase # "serrano-webist14.pdf",
+  download2 = urlbase # "serrano-webist14.html",
+  abstract = {,(list 
+[Debugging Web applications is difficult because of their
+distributed nature but also because of the programming languages and
+tools commonly used to develop them. Taking benefit of the multitier
+aspect of the Hop programming language, we have built a new debugger
+for Web applications that copes with the server-side and the
+client-side of the executions. Its advantage over most debuggers for
+the Web is that it reports the full stack trace containing all the
+server-side and client-side frames that have conducted to an
+error. An error is reported on its actual position on the source
+code, wherever it occurs on the server or on the client.
+
+To help detecting errors as early as possible, the Hop debugger is
+accompanied with a debugging execution mode where types are
+checked before data structures are accessed, argument numbers are
+verified before functions are called, and array bounds are checked
+before vectors are accessed. Combining the debugger and the debugging
+mode makes errors of Web applications easier to understand and easier
+to localize. Hopefully they also become easier to fix.])},
+  x-editorial-board = {no},
+  x-international-audience = {yes},
+  x-scientific-popularization = {no},
+}
+
+@Article {sb:cacm12,
+  author = {Serrano, M. and Berry, G.},
+  title = {{M}ultitier {P}rogramming in {H}op - A first step toward programming
+21st-century applications},
+  journal = {Communications of the ACM},
+  year = {2012},
+  month = aug,
+  volume = 55,
+  number = 8,
+  pages = {53--59},
+  doi = {10.1145/2240236.2240253},
+  url = {http://cacm.acm.org/magazines/2012/8/153796-multitier-programming-in-hop/abstract},
+  category = {web programming},
+}
+
+@Article{ blrs:toplas12,
+  author = {Boudol, G. and Luo, Z. and Rezk, T. and Serrano, M.},
+  title = {{R}easoning about {W}eb {A}pplications: {A}n {O}perational {S}emantics for {HOP}},
+  journal = toplas,
+  year = {2012},
+  issn = {0164-0925},
+  volume = {34},
+  number = {2},
+  doi = {10.1145/2220365.2220369},
+  publisher = {ACM},
+  address = {New York, NY, USA},
+  category = {web programming},
+  download = urlbase # "blrs-toplas12.pdf"
+} 
+@Article{ sq:hosc12,
+  author = {Serrano, M. and Queinnec, C.},
+  title = {{A} multi-tier semantics for {H}op},
+  year = 2012,
+  journal = hosc,
+  category = {web programming},
+  doi = {10.1007/s10990-010-9061-9},
+  volume = 23,
+  number = 4,
+  pages = {409-431},
+  download = urlbase # "sq-hosc12.pdf",
+  abstract = {,(list 
+[Hop is a multi-tier programming language where a single program
+specifies servers and clients behaviors altogether. Hop adheres to the
+standard web programming style where servers elaborate HTML pages
+containing JavaScript code. This JavaScript code responds locally to
+user's interactions but also (following the so-called Ajax style)
+requests services from remote servers. These services bring back new
+HTML fragments containing additional JavaScript code replacing or
+modifying the state of the client.]
+
+[This paper presents a continuation-based denotational semantics for a
+sequential subset of Hop. Though restricted to a single server and a
+single client, this semantics takes into account the nature of the web
+where the server elaborates some JavaScript code to be run in the
+client's browser. This new client-code dynamically requests services
+from the server which, again, elaborate new JavaScript code to be run
+in the client's browser.]
+
+[This semantics details the programming model advocated by Hop and
+provides a sound basis for future studies such as web continuations
+and concurrency.]
+)},
+  x-editorial-board = {no},
+  x-international-audience = {yes},
+  x-scientific-popularization = {no},
+}
+
+@InProceedings{ ss:dls11,
+  author = {Serpette, B. and Serrano, M.},
+  title = {{A}n {I}nterpreter for {S}erver-{S}ide {H}op},
+  booktitle = {Proceedings of the Dynamic Language symposium (DLS)},
+  address = {Portland, USA},
+  year = 2011,
+  month = oct,
+  category = {compilation},
+  download = urlbase # "ss-dls11.pdf",
+  download2 = urlbase # "ss-dls11.html",
+  abstract = {,(list 
+[HOP is a Scheme-based multi-tier programming language for the
+Web. The client-side of a program is compiled to JavaScript, while the
+server-side is executed by a mix of natively compiled code and
+interpreted code. At the time where HOP programs were basic
+scripts, the performance of the server-side interpreter was not a
+concern; an inefficient interpreter was acceptable. As HOP
+expanded, HOP programs got larger and more complex. A more
+efficient interpreter was necessary. This new interpreter is described
+in this paper. It is compact, its whole implementation counting no
+more than 2.5 KLOC. It is more than twice faster than the old
+interpreter and consumes less than a third of its memory. Although it
+cannot compete with static or JIT native compilers, our experimental
+results show that it is amongst the fastest interpreters for dynamic
+languages.])},
+  x-editorial-board = {yes},
+  x-international-audience = {yes},
+  x-scientific-popularization = {no},
+  x-proceedings = {yes},
+}
+
+@InProceedings{ lrs:tosca11,
+  author = {Luo, Z. and Rezk, T. and Serrano, M.},
+  title = {{A}utomated {C}ode {I}njection {P}revention for {W}eb 
+    {A}pplications},
+  booktitle = {Proceedings of the first Conference on Theory of Security 
+    and Applications (TOSCA'11)},
+  address = {Saarbr{\"u}cken, Germany},
+  year = 2011,
+  month = apr,
+  series = lncs,
+  volume = 6993,
+  pages = {186--204},
+  category = {web programming},
+  download = urlbase # "lrs-tosca11.pdf",
+  x-editorial-board = {no},
+  x-international-audience = {yes},
+  x-scientific-popularization = {no},
+  x-proceedings = {yes},
+}
+
+@NatArticle{ sq:glmf10,
+  author = {Serrano, M. and Queinnec, C.},
+  title = {{HTML5} {V}ideo portable avec {H}op},
+  year = 2010,
+  month = jan,
+  journal = {Gnu Linux Magazine France},
+  category = {web programming},
+  number = "129",
+  url = {https://www.gnulinuxmag.com/},
+  x-editorial-board = {yes},
+  x-international-audience = {no},
+  x-scientific-popularization = {yes},
+}
+
+@InProceedings{ serrano:ppdp10,
+  author = {Serrano, M.},
+  title = {{HSS}: a {C}ompiler for {C}ascading {S}tyle {S}heets},
+  year = 2010,
+  month = jul,
+  category = {web programming},
+  booktitle = "12th " # ppdp,
+  download = urlbase # "serrano-ppdp10.pdf",
+  address = {Hagenberg, Austria},
+  abstract = {,(list 
+[This article presents HSS, 
+a compiler for CSS. It is first argued that generating CSS improves 
+portability and maintainability of CSS files. This claim is supported 
+by realistic examples. Then, the HSS compilation algorithm is presented. 
+It is simple enough to be easily adapted to most web development kits.
+
+~~ HSS can be used as a stand-alone HSS-to-CSS compiler in the goal of
+enriching CSS with user defined variables, functions, and element
+types. It can also be used with the Hop web development kit in which
+case, working hand in hand with the Hop programming language, it can
+be used to implement skinning or theming of web
+applications.])},
+  x-editorial-board = {no},
+  x-international-audience = {yes},
+  x-scientific-popularization = {no},
+}
+
+@InProceedings{ blts:aplwaca10,
+  author = {Boudol, G. and Luo, Z. and Rezk, T. and Serrano, M.},
+  title = {{T}owards {R}easoning for {W}eb {A}pplications: an {O}perational 
+{S}emantics for {H}op},
+  year = 2010,
+  month = jun,
+  category = {web programming},
+  download = urlbase # "blrs-aplwaca10.pdf",
+  booktitle = {Proceedings of the first Workshop on Analysis and Programming 
+Languages for Web Applications and Cloud Applications (APLWACA'10)},
+  address = {Toronto, Canada},
+  abstract = {,(list
+[We propose a small-step operational semantics to support reasoning
+about web applications written in the multi-tier language
+Hop. The semantics covers
+both server side and client side computations, as well as their
+interactions, and includes creation of web services, distributed
+client-server communications, concurrent evaluation of service
+requests at server side, elaboration of HTML documents, DOM
+operations, evaluation of script nodes in HTML documents and actions
+from HTML pages at client side.])},
+  x-editorial-board = {no},
+  x-international-audience = {yes},
+  x-scientific-popularization = {no},
+}
+
+@InProceedings{ serrano:coordination09,
+  author = {Serrano, M.},
+  title = {{HOP}, a {F}ast {S}erver for the {D}iffuse {W}eb},
+  year = 2009,
+  month = jun,
+  category = {web programming},
+  booktitle = {proceedings of the 11th international conference on 
+               Coordination Models and Languages (COORDINATION'09) {\em (invited paper)}},
+  address = {Lisbon, Portugal},
+  download = urlbase # "serrano-coordination09.pdf",
+  abstract = {,(list
+[The diffuse Web is an alternative way of using the Web
+2.0 infrastructure for building personal diffuse applications.
+Systems that let users tune the temperature of their house with a
+cell-phone, check that the shutters are closed with a PDA, or select
+the music to be played on a Hi-Fi system with a PC are
+examples of the targeted applications.]
+
+[Diffuse Web applications have similarities with Web 2.0
+applications: they rely on fast bi-directional
+interactions between servers and clients, and they make
+extensive use of non-cachable dynamic contents. On the other hand,
+diffuse applications have also an important difference with respect to
+traditional Web applications: they generally do not need to deal with
+a huge number of simultaneous users. That is, diffuse Web applications
+are built on top of standard technologies but they use it
+differently. Therefore they demand different optimizations and
+tunings.]
+
+[HOP (http://hop.inria.fr) is a platform designed for
+building and running diffuse Web applications. Its software
+development kit contains two compilers, one interpreter, and a 
+bootstrapped Web server. That is, the HOP Web server is
+implemented in HOP. This paper shows that this implementation
+strategy allows HOP to dramatically outperform the popular
+mainstream Web servers for delivering dynamic contents. Contrary to
+most servers, HOP delivers static and dynamic contents at a
+comparable pace. The paper details the implementation of the HOP
+Web server.])},
+  x-editorial-board = {yes},
+  x-proceedings = {yes},
+  x-international-audience = {yes},
+  x-invited-conference = {yes},
+}
+  @InProceedings{ serrano:mmcn09,
+  author = {Serrano, M.},
+  title = {{A}natomy of a {U}biquitous {M}edia {C}enter},
+  year = 2009,
+  month = jan,
+  booktitle = {Proceedings of the Sixteenth Annual {M}ultimedia {C}omputing 
+and {N}etworking (MMCN'09)},
+  address = {San Jose, CA, USA},
+  category = {web programming},
+  organization = {(taux d'acceptation\,: 12/34)},
+  download = urlbase # "serrano-mmcn09.pdf",
+  abstract = {,(list 
+[The Web is such a rich architecture that it is giving birth to new
+applications that were unconceivable only few years ago in the past.
+Developing these applications being different from developing
+traditional applications, generalist programming languages are not
+well suited. To help face this problem, we have conceived the HOP
+programming language whose syntax and semantics are specially crafted
+for programming Web applications. In order to demonstrate that HOP,
+and its SDK, can be used for implementing realistic applications, we
+have started to develop new innovative applications that extensively
+rely on the infrastructure offered by the Web and that use features
+unique to HOP. We have initiated this effort with a focus on
+multimedia applications.,(linebreak 2)
+
+Using HOP we have implemented a distributed audio system. It
+supports a flexible architecture that allows new devices to catch up
+with the application any time: a cell phone can be used to pump up the
+volume, a PDA can be used to browse over the available musical
+resources, a laptop can be used to select the output speakers, etc.
+This application is intrinsically complex to program because, 
+i- it is distributed (several different devices access and control
+shared resources such a music repositories and sound card
+controllers), ii- it is dynamic (new devices may join or
+quit the application at any time), and iii- it involves
+different heterogeneous devices with different hardware architectures
+and different capabilities.])},
+  x-editorial-board = {yes},
+  x-proceedings = {yes},
+  x-international-audience = {yes},
+  x-invited-conference = {no},
+}
+
+@NatArticle{ sq:programmez104,
+  author = {Serrano, M. and Queinnec, C.},
+  title = {{H}op, un langage de programmation pour le {W}eb},
+  year = 2008,
+  month = jan,
+  journal = {Programmez!},
+  category = {web programming},
+  number = "104",
+  url = {http://www.programmez.com},
+  x-editorial-board = {yes},
+  x-international-audience = {no},
+  x-scientific-popularization = {yes},
+}
+@NatArticle{ sq:programmez105,
+  author = {Serrano, M. and Queinnec, C.},
+  title = {{U}ne galerie de photos sur le {W}eb avec {HOP}},
+  year = 2008,
+  month = feb,
+  journal = {Programmez!},
+  category = {web programming},
+  number = "105",
+  url = {http://www.programmez.com},
+  x-editorial-board = {yes},
+  x-international-audience = {no},
+  x-scientific-popularization = {yes},
+}
+
+@InProceedings{ ls:tfp07,
+  author = {Loitsch, F. and Serrano, M.},
+  title = {{H}op {C}lient-{S}ide {C}ompilation},
+  year = 2007,
+  month = apr,
+  booktitle = {Proceedings of the 8th Symposium on Trends on Functional Languages},
+  address = {New York, USA},
+  download = urlbase # "ls-tfp07.pdf",
+  url = {http://cs.shu.edu/tfp2007/draftProcDocument.pdf},
+  category = {web programming},
+  abstract = {,(list [
+HOP is a new language for programming interactive Web applications.
+It aims to replace HTML, JavaScript, and server-side scripting
+languages (such as PHP, JSP, ...) with a unique language that unites
+client-side interactions and server-side computations. A HOP execution
+platform is made of two compilers. One that compiles the code executed
+by the server, and one that compiles the code executed by the
+client. T his paper presents the latter.
+
+In order to ensure compatibility of HOP graphical user interfaces with
+popular plain Web browsers, the client-side HOP compiler has to
+generate regular HTML and JavaScript code. Since the HOP language is
+built on top of the Scheme programming language, compiling HOP to
+JavaScript is nearly equivalent to compiling Scheme to JavaScript. The
+compiler we have designed supports the whole Scheme core language. In
+particular it optimizes tail-recursive calls. We show in this paper
+that this compiler is efficient because with optimizations for obvious
+tail recursive calls the generated code runs roughly at the same speed
+as equivalent hand-written JavaScript code. With support for all tail
+calls the generated code typically runs at most 2.1 times slower than
+without.
+
+The techniques presented in this paper can be applied to most strict
+functional languages such as ML and Lisp.
+])}
+}
+
+@InProceedings{ serrano:mm07,
+  author = {Serrano, M.},
+  title = {{P}rogramming {W}eb {M}ultimedia {A}pplications with {H}op},
+  year = 2007,
+  month = sep,
+  booktitle = {Proceedings of the {\sc ACM} Sigmm and {\sc ACM} Siggraph
+                   conference on Multimedia, {\em Best Open Source Software}},
+  address = {{A}ugsburg, {G}ermany},
+  download = urlbase # "serrano-acmmm07.pdf",
+  category = {web programming},
+  abstract = {,(list
+[Hop is a new execution platform for running interactive and
+multimedia applications on the Web. It is aimed at executing
+applications such as Web agendas, Web galleries, Web music players,
+etc. Hop consists of: ,(emph "i)") a new programming language
+specially designed for addressing the distributed aspects of Web
+programming, ,(emph "ii)") a rich set of libraries for dealing with
+music files, sounds, pictures, photographs, etc., ,(emph "iii)") a
+full-fledged Web server for executing the ,(emph "server-side")
+components of the applications.]
+ (p [In this paper we illustrate Hop's skills for programming
+multimedia applications in two examples. We show that, with 50 lines
+of code, an operational photograph gallery can be implemented and we
+show that with approximatively 30 lines of code an operational ,(emph
+"podcast") receiver can be built.]))}
+}
+
+@InProceedings{ sgl:dls06,
+  author = {Serrano, M. and Gallesio, E. and Loitsch, F.},
+  title = {{HOP}, a language for programming the {W}eb 2.0},
+  year = 2006,
+  month = oct,
+  booktitle = {Proceedings of the First Dynamic Languages Symposium (DLS)},
+  address = {Portland, Oregon, USA},
+  download = urlbase # "sgl-dls06.pdf",
+  download2 = urlbase # "dls06/article.html",
+  category = {web programming},
+  abstract = {,(list
+[Hop is a new higher-order language designed for programming
+interactive web applications such as web agendas, web galleries, music
+players, etc. It exposes a programming model based on two computation
+levels. The first one is in charge of executing the logic of an
+application while the second one is in charge of executing the
+graphical user interface. Hop separates the logic and the graphical
+user interface but it packages them together and it supports strong
+collaboration between the two engines. The two execution flows
+communicate through function calls and event loops. Both ends can
+initiate communications.
+
+The paper presents the main constructions of Hop. It sketches its
+implementation and it presents an example of a simple web application
+written in Hop.])}  
+}
+
+@InProceedings{ serrano:sfp06,
+  author = {Serrano, M.},
+  title = {The {HOP} {D}evelopment {K}it},
+  year = 2006,
+  month = sep,
+  category = {web programming},
+  booktitle = {proceedings of the Seventh {\sc ACM sigplan}
+                   Workshop on Scheme and Functional Programming {\em (invited paper)}},
+  address = {Portland, Oregon, USA},
+  download = urlbase # "serrano-sfp06.pdf",
+  download2 = urlbase # "sfp06/article.html",
+  abstract = {,(list 
+[Hop, is a language dedicated to programming
+reactive and dynamic applications on the web. It is meant for
+programming applications such as web agendas, web galleries, web mail
+clients, etc. While a previous paper (Hop, a Language for Programming
+the Web 2.0, available at http://hop.inria.fr) focused on the
+linguistic novelties brought by Hop, the present one focuses on its
+execution environment. That is, it presents Hop's user libraries, its
+extensions to the HTML-based standards, and its execution platform,
+the Hop web broker.])}
+}

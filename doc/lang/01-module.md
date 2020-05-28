@@ -87,6 +87,40 @@ language is specified on the `require` calls.
 This can be changed by modified the value of the `require.lang`
 attribute.
 
+### DSL ###
+
+Modules implemented in Hop DSL (Domain Specific Languages) that
+extend the Hop syntax by implementing their parser with the builtin
+machinery of the Hop parser can auto-declare their implementation
+language. In that case, the `require` calls that load them do not need
+to specify any implementation language. The declaration is an extra
+_use string_ to be included in the head of the program. For instance:
+
+```hopscript
+"use hiphop"
+"use strict"
+
+exports.prg = hiphop module( in A, in B, in R, out O ) {
+   do {
+      fork {
+	 await now( A );
+      } par {
+	 await now( B );
+      }
+      emit O();
+   } every( now( R ) )
+}
+```
+
+The syntax of the _use string_ declaration is:
+
+```ebnf
+<UseDeclaration> --> use <Identifier>
+```
+
+The `Identifier` should be a module name resolvable using 
+`require.resolve( Identifier )`.
+
 
 ### Client Side modules ###
 

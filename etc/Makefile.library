@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/etc/Makefile.library              */
+#*    serrano/prgm/project/hop/hop/etc/Makefile.library                */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Wed Mar 21 10:26:33 2018 (serrano)                */
-#*    Copyright   :  2006-18 Manuel Serrano                            */
+#*    Last change :  Tue Mar 24 16:24:20 2020 (serrano)                */
+#*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
 #*=====================================================================*/
@@ -266,11 +266,11 @@ distclean: cleanall
 #*---------------------------------------------------------------------*/
 #*    Installation                                                     */
 #*---------------------------------------------------------------------*/
-.PHONY: install install-c install-native install-jvm uninstall
+.PHONY: install-library install-c install-native install-jvm uninstall
 
 -include $(BIGLOOLIBDIR)/Makefile.misc
 
-install: install-$(BACKEND)
+install-library: install-$(BACKEND)
 
 install-native: install-native-heap install-native-libs
 
@@ -283,25 +283,25 @@ install-native-libs:
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR)\
-                LIBDIR=$(DESTDIR)$(HOPLIBDIR)\
+                LIBDIR=$(HOPLIBDIR)\
                 LIB=lib$(TARGETNAME)_s-$(LIBVERSION) && \
         $(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
-                LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
+                LIBDIR=$(HOPLIBDIR) \
                 LIB=lib$(TARGETNAME)_es-$(LIBVERSION) && \
         $(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
-                LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
+                LIBDIR=$(HOPLIBDIR) \
                 LIB=lib$(TARGETNAME)_u-$(LIBVERSION) && \
         $(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
-                LIBDIR=$(DESTDIR)$(HOPLIBDIR) \
+                LIBDIR=$(HOPLIBDIR) \
                 LIB=lib$(TARGETNAME)_eu-$(LIBVERSION)
 
 install-jvm:

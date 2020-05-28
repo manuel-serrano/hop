@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/src/init.scm                      */
+;*    serrano/prgm/project/hop/hop/src/init.scm                        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Fri Mar  9 10:44:46 2018 (serrano)                */
-;*    Copyright   :  2005-18 Manuel Serrano                            */
+;*    Last change :  Thu Mar 26 14:44:41 2020 (serrano)                */
+;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
 ;*=====================================================================*/
@@ -20,7 +20,7 @@
 
    (import  hop_param)
    
-   (export  (init-server-socket!)
+   (export  (init-server-socket! ::int ::bool)
 	    (init-http!)
 	    (init-webdav!)
 	    (init-flash!)
@@ -31,30 +31,27 @@
 ;*    -------------------------------------------------------------    */
 ;*    Create the Hop server socket according to user options.          */
 ;*---------------------------------------------------------------------*/
-(define (init-server-socket!)
-   (when (socket-server? (hop-server-socket))
-      (socket-close (hop-server-socket)))
+(define (init-server-socket! port ssl)
    (with-handler
       (lambda (e)
 	 (exception-notify e)
-	 (fprint (current-error-port) "Cannot start Hop server, exiting...")
+	 (fprintf (current-error-port)
+	    "Cannot start Hop (~a) server, exiting..." port)
 	 (exit 2))
-      (if (hop-enable-https)
+      (if ssl
 	  (cond-expand
 	     (enable-ssl
 	      (let ((cert (read-certificate (hop-https-cert)))
 		    (pkey (read-private-key (hop-https-pkey))))
-		 (hop-server-socket-set!
-		    (make-ssl-server-socket (hop-port)
-		       :name (hop-server-listen-addr)
-		       :protocol (hop-https-protocol)
-		       :cert cert :pkey pkey))))
+		 (make-ssl-server-socket port
+		    :name (hop-server-listen-addr)
+		    :protocol (hop-https-protocol)
+		    :cert cert :pkey pkey)))
 	     (else
 	      (error "hop" "SSL not supported by this version of Hop" #f)))
-	  (hop-server-socket-set!
-	     (make-server-socket (hop-port)
-		:name (hop-server-listen-addr)
-		:backlog (hop-somaxconn))))))
+	  (make-server-socket port
+	     :name (hop-server-listen-addr)
+	     :backlog (hop-somaxconn)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *http-method-handlers* ...                                       */
@@ -148,7 +145,7 @@
 	 (else
 	  ;; a regular file
 	  (let ((lm (date->rfc2822-date
-		       (seconds->date (file-modification-time abspath)))))
+		       (seconds->gmtdate (file-modification-time abspath)))))
 	     (http-get-file req lm #f))))))
 
 ;*---------------------------------------------------------------------*/
@@ -180,7 +177,7 @@
 <!DOCTYPE cross-domain-policy SYSTEM \"http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd\">
 <cross-domain-policy>
  <allow-access-from domain=\"*\" />
-</cross-domain-policy>" (hop-port))))
+</cross-domain-policy>" (hop-default-port))))
 	     (instantiate::http-response-string
 		(timeout timeout)
 		(content-type "application/xml")
@@ -203,6 +200,8 @@
 	 ((string=? query (hop-scm-compile-suffix))
 	  (clientc-response req abspath abspath (hop-scm-compile-suffix)))
 	 ((string-prefix? "js=" query)
+	  (clientc-response req abspath (query-name query) query))
+	 ((string-prefix? "mjs=" query)
 	  (clientc-response req abspath (query-name query) query))
 	 ((string-prefix? "es=" query)
 	  (let ((resp (clientc-response req abspath (query-name query) query)))
@@ -273,7 +272,7 @@
 	     (with-access::cache-entry ce (value)
 		value)
 	     (let ((lm (date->rfc2822-date
-			  (seconds->date (file-modification-time abspath)))))
+			  (seconds->gmtdate (file-modification-time abspath)))))
 		(cond
 		   ((and im (string<=? lm im))
 		    ;; not modified
@@ -607,7 +606,7 @@
 	    ;; publish main Hop service
 	    (zeroconf-publish! :name name
 	       :type "_http._tcp"
-	       :port (hop-port)
+	       :port (hop-default-port)
 	       session
 	       (format "version=~a" (hop-version))
 	       (format "path=~a" (hop-service-base)))
@@ -615,7 +614,7 @@
 	    (when (hop-enable-webdav)
 	       (zeroconf-publish! :name name
 		  :type "_webdav._tcp"
-		  :port (hop-port)
+		  :port (hop-default-port)
 		  session))
 	    ;; publish hop available services
 	    (for-each (lambda (wi)

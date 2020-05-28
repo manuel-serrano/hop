@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/lexer.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/lexer.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Tue May 15 11:31:40 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Tue Apr 21 10:58:20 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
 ;*=====================================================================*/
@@ -43,6 +43,7 @@
        
 (define *JS-care-future-reserved* #t)
 
+;; https://www.ecma-international.org/ecma-262/10.0/index.html#sec-keywords
 (define *keyword-list*
    '("await"
      "break"
@@ -80,8 +81,7 @@
      ;; es2015 classes
      "class"
      "extends"
-     "super"
-     "static"))
+     "super"))
 
 (define *future-reserved-list*
    '("enum"
@@ -232,12 +232,10 @@
        ;; integer constant
        (let* ((len (the-length))
 	      (val (cond
-		      ((>=fx len 21)
-		       (string->real (the-string)))
-		      ((>=fx len 18)
-		       (string->real (the-string)))
-		      (else
-		       (js-string->number (the-string))))))
+		      ((<=fx len 8) (the-fixnum))
+		      ((>=fx len 21) (the-flonum))
+		      ((>=fx len 18) (the-flonum))
+		      (else (js-string->number (the-string))))))
 	  (token 'NUMBER val len)))
       ((: (+ #\0) (in ("17")) (* (in ("07"))))
        ;; integer constant
@@ -292,12 +290,12 @@
       (#\| (token 'BIT_OR #\| 1))
       ("||" (token 'OR "||" 2))
       ("|=" (token 'BIT_OR= "|=" 2))
-      ((or #\< #\> "<=" ">=" "==" "!=" "===" "!==" #\+ #\- #\* #\% "++" "--"
+      ((or #\< #\> "<=" ">=" "==" "!=" "===" "!==" #\+ #\- #\* #\% "**" "++" "--"
 	   "<<" ">>" ">>>" #\& #\^ #\! #\~ "&&" #\: #\= "+=" "-="  
-	   "*=" "%=" "<<=" ">>=" ">>>=" "&=" "^=" "/=" #\/ #\?)
+	   "*=" "%=" "<<=" ">>=" ">>>=" "&=" "^=" "/=" "**=" #\/ #\?)
        (token (the-symbol) (the-string) (the-length)))
       ("=>" (token '=> "=>" 2))
-      ("..." (token 'DOTS "..." 3))
+      ("..." (token 'DOTS '|...| 3))
 
       ;; strings
       ((: #\" (* string_char_quote) #\")
@@ -314,7 +312,7 @@
        (read/rp j2s-template-grammar (the-port)))
       
       ;; hopscript pragma
-      ((: #\# #\:
+      ((: "#:"
 	  (: (* digit)
 	     (or letter special)
 	     (* (or letter special digit (in "'`")))))
@@ -336,8 +334,6 @@
       ((: id_start (* id_part))
        (let ((symbol (the-symbol)))
 	  (cond
-	     ((and (eq? symbol 'service) (not (eq? lang 'javascript)))
-	      (token symbol symbol (the-length)))
 	     ((getprop symbol 'reserved)
 	      (token symbol symbol (the-length)))
 	     ((and *JS-care-future-reserved* (getprop symbol 'future-reserved))
@@ -348,6 +344,8 @@
       ((: id_start_u (* id_part_u))
        (let ((str (the-string)))
 	  (cond
+	     ((unicode-whitespace? str)
+	      (token 'BADTOKEN str (string-length str)))
 	     ((no-line-terminator "continue\\u" str)
 	      (unread-string! (substring str 0 8) (the-port))
 	      (token 'continue 'continue 9))
@@ -366,9 +364,6 @@
 		     (let ((symbol (string->symbol (cdr estr))))
 			(cond
 			   ((getprop symbol 'reserved)
-			    (token symbol symbol (the-length)))
-			   ((and (eq? symbol 'service)
-				 (not (eq? lang 'javascript)))
 			    (token symbol symbol (the-length)))
 			   ((and *JS-care-future-reserved*
 				 (getprop symbol 'future-reserved))
@@ -522,6 +517,28 @@
 	       (substring-at? str "000d" offset)
 	       (substring-at? str "2028" offset)
 	       (substring-at? str "2029" offset)))))
+
+;*---------------------------------------------------------------------*/
+;*    unicode-whitespace? ...                                          */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-7.2          */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-7.6          */
+;*---------------------------------------------------------------------*/
+(define (unicode-whitespace? str)
+   (let ((len2 (-fx (string-length str) 2)))
+      (let loop ((r 0))
+	 (let ((i (string-index str "\\u00" r)))
+	    (when (and i (<fx i len2))
+	       (if (or (substring-at? str "\\u0009" i)
+		       (substring-at? str "\\u000b" i)
+		       (substring-at? str "\\u000B" i)
+		       (substring-at? str "\\u000c" i)
+		       (substring-at? str "\\u000C" i)
+		       (substring-at? str "\\u0020" i)
+		       (substring-at? str "\\u00a0" i)
+		       (substring-at? str "\\u00A0" i))
+		   #t
+		   (loop (+fx i 6))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-escape-js-string ...                                         */
@@ -682,7 +699,7 @@
 			   (loop (+fx j 1) w octal)))
 		      ((#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7)
 		       (multiple-value-bind (n lo)
-			  (octal-val str (+fx j 1) len)
+			  (octal-val str (+fx j 1) (minfx len (+fx j 4)))
 			  (let* ((s (integer->utf8 n))
 				 (l (string-length s)))
 			     (blit-string! s 0 res w l)

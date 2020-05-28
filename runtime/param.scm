@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/runtime/param.scm                 */
+;*    serrano/prgm/project/hop/hop/runtime/param.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Feb  6 18:25:50 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Mon May 25 08:15:39 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -28,9 +28,6 @@
 	    (hop-rc-file::bstring)
 	    (hop-rc-file-set! ::bstring)
 
-	    (hop-var-directory::bstring)
-	    (hop-var-directory-set! ::bstring)
-
 	    (hop-cache-directory::bstring)
 	    (hop-cache-directory-set! ::bstring)
 
@@ -51,6 +48,9 @@
 
 	    (hop-sofile-compile-policy::symbol)
 	    (hop-sofile-compile-policy-set! ::symbol)
+
+	    (hop-sofile-compile-target::symbol)
+	    (hop-sofile-compile-target-set! ::symbol)
 
 	    (hop-sofile-max-workers::int)
 	    (hop-sofile-max-workers-set! ::int)
@@ -88,9 +88,15 @@
 	    (hop-login-cookie-id::bstring)
 	    (hop-login-cookie-time::int)
 	    (hop-login-cookie-crypt-key::int)
+
+	    (inline hop-default-port::int)
+	    (inline hop-default-scheme::symbol)
 	    
 	    (hop-port::int)
 	    (hop-port-set! ::int)
+
+	    (hop-ssl-port::int)
+	    (hop-ssl-port-set! ::int)
 
 	    (hop-use-proxy::obj)
 	    (hop-use-proxy-set! ::obj)
@@ -363,8 +369,20 @@
 	    (hop-user-agent::bstring)
 	    (hop-user-agent-set! ::bstring)
 
+	    (hop-access-denied-format::bstring)
+	    (hop-access-denied-format-set! ::bstring)
+
+	    (hop-user-service-denied-format::bstring)
+	    (hop-user-service-denied-format-set! ::bstring)
+
+	    (hop-proxy-denied-format::bstring)
+	    (hop-proxy-denied-format-set! ::bstring)
+	    
 	    (hop-preferred-language::bstring)
 	    (hop-preferred-language-set! ::bstring)
+
+	    (hop-enable-zeroconf::bool)
+	    (hop-enable-zeroconf-set! ::bool)
 
 	    (hop-rc-loaded)
 	    (hop-rc-loaded?)
@@ -393,20 +411,14 @@
       (hop-contribs-directory)))
 
 ;*---------------------------------------------------------------------*/
-;*    hop-var-directory ...                                            */
-;*---------------------------------------------------------------------*/
-(define-parameter hop-var-directory
-   (or (hop-configure-var-directory) (hop-rc-directory)))
-
-;*---------------------------------------------------------------------*/
 ;*    hop-cache-directory ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-cache-directory
    (or (hop-configure-cache-directory)
        (let ((h (getenv "XDG_CACHE_HOME")))
 	  (when (string? h)
-	     (make-file-name h "hop")))
-       (make-file-name (hop-rc-directory) "cache"))
+	     (make-file-path h "hop" (hop-build-tag))))
+       (make-file-path (hop-rc-directory) "cache" (hop-build-tag)))
    (lambda (v)
       (hop-path-set! (cons v (hop-path)))
       v))
@@ -445,7 +457,13 @@
 ;*    hop-sofile-compile-policy ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-sofile-compile-policy
-   'nte)
+   (hop-sofile-compile-default-policy))
+
+;*---------------------------------------------------------------------*/
+;*    hop-sofile-compile-target ...                                    */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-sofile-compile-target
+   'sodir)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-sofile-max-workers ...                                       */
@@ -457,7 +475,7 @@
 ;*    hop-sofile-directory ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-sofile-directory
-   (make-file-path (hop-rc-directory) "libs"))
+   (make-file-path (hop-rc-directory) "so"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-rc-file ...                                                  */
@@ -481,7 +499,10 @@
 ;*    For that reason it is implemented as an inline function and      */
 ;*    the global register *HOP-VERBOSE* is exported.                   */
 ;*---------------------------------------------------------------------*/
-(define %%*hop-verbose* 0)
+(define %%*hop-verbose*
+   (if (string? (getenv "HOPVERBOSE"))
+       (string->integer (getenv "HOPVERBOSE"))
+       0))
 (define-inline (hop-verbose) %%*hop-verbose*)
 (define (hop-verbose-set! v) (set! %%*hop-verbose* v))
 
@@ -1496,6 +1517,18 @@
    (* 60 60 24))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-default-port ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (hop-default-port)
+   (if (<fx (hop-port) 0) (hop-ssl-port) (hop-port)))
+
+;*---------------------------------------------------------------------*/
+;*    hop-default-scheme ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (hop-default-scheme)
+   (if (<fx (hop-port) 0) 'https 'http))
+
+;*---------------------------------------------------------------------*/
 ;*    hop-port ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-port
@@ -1507,6 +1540,19 @@
 		(format "hop@~a:~a" (hop-server-hostname) v))
 	     v)
 	  (error "hop-port" "Illegal hop port" v))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-ssl-port ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-ssl-port
+   -1
+   (lambda (v)
+      (if (integer? v)
+	  (begin
+	     (hop-login-cookie-id-set!
+		(format "hop@~a:~a" (hop-server-hostname) v))
+	     v)
+	  (error "hop-ssl-port" "Illegal hop ssl-port" v))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-exepath ...                                                  */
@@ -1523,7 +1569,35 @@
    "Mozilla/5.0 (X11; Linux i686; rv:31.0) Gecko/20100101 Firefox/31.0 Iceweasel/31.5.3")
 
 ;*---------------------------------------------------------------------*/
+;*    hop-access-denied-format ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-access-denied-format
+   ;; arguments are: host, port, path
+   "Protected Area! Authentication required: ~a:~a:~a")
+
+;*---------------------------------------------------------------------*/
+;*    hop-user-service-denied-format ...                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-user-service-denied-format
+   ;; arguments are: user name and service name
+   "User \"~a\" is not allowed to execute service \"~a\".")
+
+;*---------------------------------------------------------------------*/
+;*    hop-proxy-denied-format ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-proxy-denied-format
+   ;; argument is user name
+   "Protected Area! Authentication required for user \"~a\".")
+
+;*---------------------------------------------------------------------*/
 ;*    hop-preferred-language ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-preferred-language
    "hop")
+
+;*---------------------------------------------------------------------*/
+;*    hop-enable-zeroconf ...                                          */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-enable-zeroconf
+   (hop-zeroconf-default))
+

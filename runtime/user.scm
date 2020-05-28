@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/user.scm                  */
+;*    serrano/prgm/project/hop/hop/runtime/user.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Fri Jul 28 15:25:03 2017 (serrano)                */
-;*    Copyright   :  2005-17 Manuel Serrano                            */
+;*    Last change :  Tue Oct  8 13:18:29 2019 (serrano)                */
+;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -26,6 +26,7 @@
 	    __hop_password)
    
    (export  (users-close!)
+	    (users-closed?)
 	    (add-user! ::bstring . opt)
 	    (user-exists? ::bstring)
 	    (user-authentication-encrypt::bstring ::symbol ::bstring ::bstring)
@@ -83,6 +84,12 @@
    (set! *basic-realm* (format "Basic realm=\"Basic ~a authentication\"" (hop-realm)))
 
 ;*---------------------------------------------------------------------*/
+;*    users-closed? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (users-closed?)
+   (not *users-open*))
+
+;*---------------------------------------------------------------------*/
 ;*    add-user! ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (add-user! name . args)
@@ -101,7 +108,7 @@
 		 (hop-rc-directory) "users" (string-append name ".prefs")))
 	 (c '())
 	 (u #f)
-	 (d (list (hop-share-directory) (hop-var-directory))))
+	 (d (list (hop-share-directory))))
       (let loop ((a args))
 	 (cond
 	    ((null? a)
@@ -593,7 +600,8 @@
 ;*    digest-opaque ...                                                */
 ;*---------------------------------------------------------------------*/
 (define digest-opaque
-   (base64-encode (format "~a:~a:~a" (hostname) (hop-port) (hop-session))))
+   (base64-encode
+      (format "~a:~a:~a" (hostname) (hop-default-port) (hop-session))))
 
 ;*---------------------------------------------------------------------*/
 ;*    digest-authenticate ...                                          */
@@ -644,8 +652,7 @@
 		      (display message (current-output-port)))))
 	       ((isa? req http-request)
 		(with-access::http-request req (host port path)
-		   (format "Protected Area! Authentication required: ~a:~a:~a"
-		      host port path)))
+		   (format (hop-access-denied-format) host port path)))
 	       (else
 		"Protected Area! Authentication required.")))))
 
@@ -656,7 +663,7 @@
    (instantiate::http-response-authentication
       (header (authenticate-header req))
       (start-line "HTTP/1.0 401 Unauthorized")
-      (body (format "User \"~a\" is not allowed to execute service \"~a\"."
+      (body (format (hop-user-service-denied-format)
 	       (with-access::user user (name) name) svc))))
 
 ;*---------------------------------------------------------------------*/
@@ -672,11 +679,11 @@
    (instantiate::http-response-authentication
       (start-line "HTTP/1.0 407 Proxy Authentication Required")
       (header `((Proxy-Authenticate:
-		 .
-		 ,(format "Basic realm=\"Hop proxy (~a) authentication\""
-			  host))))
-      (body (format "Protected Area! Authentication required for user \"~a\"."
-		    (with-access::user user (name) name)))))
+		   .
+		   ,(format "Basic realm=\"Hop proxy (~a) authentication\""
+		       host))))
+      (body (format (hop-proxy-denied-format)
+	       (with-access::user user (name) name)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-add-authorized-files! ...                                   */

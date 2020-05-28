@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-16 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-20 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -68,6 +68,8 @@ function sc_alert() {
 function sc_typeof( x ) {
    if( sc_isSymbol( x ) ) {
       return "symbol";
+   } else if( sc_isPair( x ) ) {
+      return "pair";
    } else if( sc_isVector( x ) ) {
       return "vector";
    } else {

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hop/2.4.x/arch/android/src/fr/inria/hop/HopService.java      */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopService.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Fri Apr 19 08:48:44 2013 (serrano)                */
-/*    Copyright   :  2012-13 Manuel Serrano                            */
+/*    Last change :  Fri May 15 10:27:21 2020 (serrano)                */
+/*    Copyright   :  2012-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
 /*=====================================================================*/
@@ -18,7 +18,6 @@ import android.os.*;
 import android.util.Log;
 import android.app.*;
 import android.content.Intent;
-
 import java.util.concurrent.ArrayBlockingQueue;
 
 /*---------------------------------------------------------------------*/
@@ -30,16 +29,16 @@ public class HopService extends Service {
    private final int HOP_ID = 17051966;
 
    // class variables
-   static String hopargs = "";
-
+   static Hop lasthop = null;
+   static HopDroid lasthopdroid;
+   
    // instance variables
    protected Hop hop = null;
    protected HopDroid hopdroid = null;
    protected Boolean inrestart = false;
-   protected Boolean inkill = false;
+   Handler handler;
    
    // communication with the launcher
-   Handler handler;
    ArrayBlockingQueue<String> queue;
    
    public class HopBinder extends Binder {
@@ -50,27 +49,20 @@ public class HopService extends Service {
    
    private final IBinder hopbinder = new HopBinder();
    
-   private void startThreadLog( Thread th ) {
-      String name = th.getClass().getName();
-      th.start();
-   }
-   
    @Override
    public void onCreate() {
-      Log.i( "HopService", "onCreate..." );
-      
       // status bar notification
       mNM = (NotificationManager)getSystemService( NOTIFICATION_SERVICE );
 
       Notification notification = statusNotification( false );
-      
+
       startForeground( HOP_ID, notification );
    }
 
    @Override
    public void onDestroy() {
-      Log.i( "HopService", "onDestroy... inrestart=" + inrestart
-	     + " inkill=" + inkill );
+      Log.i( "HopService", "onDestroy..." );
+
       kill();
       
       // status bar update
@@ -108,6 +100,7 @@ public class HopService extends Service {
    public boolean onUnbind( Intent intent ) {
       Log.i( "HopService", "onUnbind: " + this );
 
+      kill();
       // true is returned to get onRebind invoked
       return true;
    }
@@ -128,83 +121,130 @@ public class HopService extends Service {
    }
    
    public synchronized void kill() {
-      Log.i( "HopService", ">>> kill... inkill=" + inkill );
+      Log.i( "HopService", ">>> kill..." );
 
-      if( !inkill ) {
-	 inkill = true;
-      
-	 if( hop != null ) {
-	    hop.kill();
-	    hop = null;
-	 }
-      
-	 if( hopdroid != null ) {
-	    hopdroid.kill();
-	    hopdroid = null;
-	 } else {
-	    if( HopDroid.isBackground() ) {
-	       HopDroid.killBackground();
-	    }
-	 }
+      if( hop != null ) {
+	 hop.kill();
+	 lasthop = hop = null;
       }
+      
+      if( hopdroid != null ) {
+	 hopdroid.kill();
+	 lasthopdroid = hopdroid = null;
+      }
+      
       Log.i( "HopService", "<<< kill" );
    }
 
    @Override
     public int onStartCommand( Intent intent, int flags, int startid ) {
-      Log.d( "HopService", ">>> onStartCommand " + this + "..." );
+      Log.d( "HopService", "onStartCommand " + this + "..." + " flags=" + flags + " startid=" + startid );
       
       // create hopdroid
-      hopdroid = new HopDroid( HopService.this );
+      lasthopdroid = hopdroid = new HopDroid( HopService.this );
 
       if( hopdroid.state == HopDroid.HOPDROID_STATE_INIT ) {
 	 // create hop 
-	 hop = new Hop( HopService.this, hopargs );
+	 lasthop = hop = new Hop( HopService.this );
       
 	 // starting hopdroid
-	 startThreadLog( hopdroid );
+	 hopdroid.start();
 
 	 // starting hop
-	 startThreadLog( hop );
+	 hop.start();
 
-	 Log.d( "HopService", "<<< onStartCommandinitialized" );
 	 // sticky service
-	 return START_STICKY;
+	 return START_NOT_STICKY;
       } else {
-	 handler.sendMessage(
-	    android.os.Message.obtain(
-	       handler, HopLauncher.MSG_HOP_FAILED, -1 ) );
 	 stopSelf();
-	 
+
 	 return 0;
       }
    }
 
    public static boolean isBackground() {
-      return HopDroid.isBackground();
+      return lasthop != null && lasthop.isRunning( 0 );
+      //return HopDroid.isBackground();
+   }
+
+   public boolean waitHop( final int timeout ) {
+      // wait (timeout ms) for the Hop server to be up and running
+      final boolean[] res = new boolean[ 1 ];
+
+      Thread th = new Thread( new Runnable() {
+	    public void run() {
+	       int tmt = timeout;
+	       synchronized( res ) {
+		  while( tmt >= 1000 ) {
+		     if( hop.isRunning( 1000 ) ) {
+
+			res[ 0 ] = true;
+			res.notify();
+			return;
+		     } else {
+			try {
+			   Thread.sleep( 1000 );
+			} catch( Exception e ) {
+			   ;
+			}
+			tmt -= 1000;
+		     }
+		  }
+	       
+		  res[ 0 ] = false;
+		  res.notify();
+		  return;
+	       }
+	    }
+	 } );
+	 
+      synchronized( res ) {
+	 th.start();
+
+	 try {
+	    res.wait();
+	    return res[ 0 ];
+	 } catch( Exception e ) {
+	    return false;
+	 }
+      }
    }
 
    private Notification statusNotification( boolean notify ) {
       // Set the icon, scrolling text and timestamp
       CharSequence text = getText( R.string.hopservicestarted );
-      Notification notification =
-	 new Notification( R.drawable.hopicon, text, System.currentTimeMillis());
-      notification.flags = Notification.FLAG_NO_CLEAR;
-      
       PendingIntent contentIntent =
 	 PendingIntent.getActivity(
 	    this, 0, new Intent( this, HopService.class ), 0 );
+/*       Notification notification =                                   */
+/* 	 new Notification( R.drawable.hopicon, text, System.currentTimeMillis()); */
+/* {*       NotificationCompat.Builder builder =                          *} */
+/* {* 	 new NotificationCompat.Builder( this ) ;                      *} */
+/* {*       Notification notification = builder.setContentIntent( contentIntent ) *} */
+/* {* 	 .setSmallIcon( R.drawable.hopicon )                           *} */
+/* {* 	 .setTicker( text )                                            *} */
+/* {* 	 .setWhen( System.currentTimeMillis() )                        *} */
+/* {* 	 .setAutoCancel( true ).setContentTitle( HopConfig.HOPRELEASE ) *} */
+/* {* 	 .setContentText( text ).build();                              *} */
+/*       notification.flags = Notification.FLAG_NO_CLEAR;              */
+/*                                                                     */
+/*       Log.d( "HopService", "statusNotification" );                  */
+/*       notification.setLatestEventInfo(                              */
+/* 	 this, HopConfig.HOPRELEASE, text, contentIntent );            */
 
-      notification.setLatestEventInfo(
-	 this, getText( R.string.hopversion ), text, contentIntent );
-
+      Notification.Builder builder =
+	 new Notification.Builder( getApplicationContext() )
+	 .setContentIntent( contentIntent )
+	 .setSmallIcon( R.drawable.hopicon )
+	 .setContentTitle( HopConfig.HOPRELEASE );
+      Notification notification = builder.build();
       // Send the notification.
       if( notify ) {
 	 mNM.notify( NOTIFICATION, notification );
       }
 
       return notification;
-   }   
+   }
 }
 
    

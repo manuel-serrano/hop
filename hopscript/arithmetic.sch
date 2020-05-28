@@ -1,78 +1,106 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/arithmetic.sch          */
+;*    serrano/prgm/project/hop/hop/hopscript/arithmetic.sch            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 13 08:20:08 2016                          */
-;*    Last change :  Sun Nov 26 06:35:21 2017 (serrano)                */
-;*    Copyright   :  2016-17 Manuel Serrano                            */
+;*    Last change :  Sat Jan 18 07:28:56 2020 (serrano)                */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic (overflow) expansion.                                 */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
-;*    js-fx32-init! ...                                                */
+;*    +fx/overflow                                                     */
 ;*---------------------------------------------------------------------*/
-(define-expander js-fx-init!
-   (lambda (x e)
-      (eval '(define fx-count 0))
-      #unspecified))
-
-(js-fx-init!)
-
-;*---------------------------------------------------------------------*/
-;*    js+fx32 ...                                                      */
-;*    -------------------------------------------------------------    */
-;*    Overrides the portable definition of __hopscript_number          */
-;*---------------------------------------------------------------------*/
-(define-macro (js+fx32 x y)
+(define-macro (+fx/overflow x y)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t))
-       `(let ((x::obj ,x)
-	      (y::obj ,y)
-	      (res::long 0))
-	   (if (pragma::bool "__builtin_saddl_overflow( (long)$1, (long)$2, &$3 )"
-		  x y (pragma res))
-	       (pragma::real "DOUBLE_TO_REAL( ((double)(CINT( $1 )) + CINT( $2) ))"
-		  x y)
-	       (pragma::bint "(obj_t)($1 - TAG_INT)" res))))
+      ((or bint61 bint64)
+       (cond
+	  ((eqv? y 1)
+	   `(if (=fx ,x 9007199254740992)
+		9007199254740992
+		(+fx ,x 1)))
+	  ((eqv? x 1)
+	   `(if (=fx ,y 9007199254740992)
+		9007199254740992
+		(+fx 1 ,y)))
+	  ((eqv? y 2)
+	   `(if (>=fx ,x 9007199254740991)
+		(fixnum->flonum (+fx ,x 2))
+		(+fx ,x 2)))
+	  ((eqv? y 3)
+	   `(if (>=fx ,x 9007199254740990)
+		(fixnum->flonum (+fx ,x 3))
+		(+fx ,x 3)))
+	  ((eqv? y 4)
+	   `(if (>=fx ,x 9007199254740989)
+		(fixnum->flonum (+fx ,x 4))
+		(+fx ,x 4)))
+	  ((eqv? y -1)
+	   `(-fx/overflow ,x 1))
+	  ((eqv? y -2)
+	   `(-fx/overflow ,x 2))
+	  ((eqv? y -3)
+	   `(-fx/overflow ,x 3))
+	  ((eqv? y -4)
+	   `(-fx/overflow ,x 4))
+	  (else
+	   `((@ +fx/overflow __hopscript_arithmetic64) ,x ,y))))
       (else
-       `((@ js+fx32 __hopscript_number) ,x ,y))))
+       `((@ +fx/overflow __hopscript_arithmetic32) ,x ,y))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-fx32 ...                                                      */
-;*    -------------------------------------------------------------    */
-;*    Overrides the portable definition of __hopscript_number          */
+;*    -fx/overflow                                                     */
 ;*---------------------------------------------------------------------*/
-(define-macro (js-fx32 x y)
+(define-macro (-fx/overflow x y)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t))
-       `(let ((x::obj ,x)
-	      (y::obj ,y)
-	      (res::long 0))
-	   (if (pragma::bool "__builtin_ssubl_overflow( (long)$1, (long)$2, &$3 )"
-		  x y (pragma res))
-	       (pragma::real "DOUBLE_TO_REAL( ((double)(CINT( $1 )) - CINT( $2) ))"
-		  x y)
-	       (pragma::bint "(obj_t)($1 + TAG_INT)" res))))
+      ((or bint61 bint64)
+       (cond
+	  ((eqv? y 1)
+	   `(if (>fx ,x -9007199254740994)
+		(-fx ,x 1)
+		(fixnum->flonum (-fx ,x 1))))
+	  ((eqv? y 2)
+	   `(if (>fx ,x -9007199254740993)
+		(-fx ,x 2)
+		(fixnum->flonum (-fx ,x 2))))
+	  ((eqv? y 3)
+	   `(if (>=fx ,x -9007199254740992)
+		(-fx ,x 3)
+		(fixnum->flonum (-fx ,x 3))))
+	  ((eqv? y 4)
+	   `(if (>=fx ,x -9007199254740991)
+		(-fx ,x 4)
+		(fixnum->flonum (-fx ,x 4))))
+	  (else
+	   `((@ -fx/overflow __hopscript_arithmetic64) ,x ,y))))
       (else
-       `((@ js-fx32 __hopscript_number) ,x ,y))))
+       `((@ -fx/overflow __hopscript_arithmetic32) ,x ,y))))
 
 ;*---------------------------------------------------------------------*/
-;*    js*fx32 ...                                                      */
-;*    -------------------------------------------------------------    */
-;*    Overrides the portable definition of __hopscript_number          */
+;*    js-int53-inc ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-macro (js*fx32 x y)
+(define-macro (js-int53-inc x)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t))
-       `(let ((x::obj ,x)
-	      (y::obj ,y)
-	      (res::long 0))
-	   (if (pragma::bool "__builtin_smull_overflow( (long)$1 - TAG_INT, CINT( $2 ), &$3 )"
-		  x y (pragma res))
-	       (pragma::real "DOUBLE_TO_REAL( ((double)(CINT( $1 )) * CINT( $2 ) ))"
-		  x y)
-	       (pragma::bint "(obj_t)($1 + TAG_INT)" res))))
+      ((or bint61 bint64)
+       (if (symbol? x)
+	   `(if (>fx (bit-rsh ,x 53) 0) ,x (+fx ,x 1))
+	   (let ((tmp (gensym)))
+	      `(let ((,tmp ,x))
+		  (js-int53-inc ,tmp)))))
       (else
-       `((@ js*fx32 __hopscript_number) ,x ,y))))
+       `((@ js-int53-inc __hopscript_arithmetic32) ,x))))
 
+;*---------------------------------------------------------------------*/
+;*    js-int53-dec ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-macro (js-int53-dec x)
+   (cond-expand
+      ((or bint61 bint64)
+       (if (symbol? x)
+	   `(if (<fx (bit-rsh ,x 53) -1) ,x (-fx ,x 1))
+	   (let ((tmp (gensym)))
+	      `(let ((,tmp ,x))
+		  (js-int53-dec ,tmp)))))
+      (else
+       `((@ js-int53-dec __hopscript_arithmetic32) ,x))))

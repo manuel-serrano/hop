@@ -1,12 +1,12 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/this.scm                */
+;*    serrano/prgm/project/hop/hop/js2scheme/this.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Jan 24 15:58:03 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Wed Oct 23 09:41:35 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Init the this variable of all function in non-strict mode        */
+;*    Init the this variable of all non-strict mode functions.         */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -14,14 +14,15 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_this
 
+   (include "ast.sch")
+   
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_utils)
 
-   (export j2s-this-stage
-	   (generic j2s-this ::obj ::obj)))
+   (export j2s-this-stage))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-this-stage ...                                               */
@@ -36,17 +37,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-this ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-this this args)
-   this)
-
-;*---------------------------------------------------------------------*/
-;*    j2s-this ::J2SProgram ...                                        */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-this this::J2SProgram args)
-   (with-access::J2SProgram this (nodes headers decls)
-      (for-each (lambda (o) (this! o)) headers)
-      (for-each (lambda (o) (this! o)) decls)
-      (for-each (lambda (o) (this! o)) nodes))
+(define (j2s-this this args)
+   (when (isa? this J2SProgram)
+      (with-access::J2SProgram this (nodes headers decls)
+	 (for-each (lambda (o) (this! o)) headers)
+	 (for-each (lambda (o) (this! o)) decls)
+	 (for-each (lambda (o) (this! o)) nodes)))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -60,33 +56,33 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (this! this::J2SFun)
 
-   (define (init-this loc)
-      (let ((prag (instantiate::J2SPragma
-		     (loc loc)
-		     (type 'any)
-		     (expr `(cond
-			       ((or (eq? this (js-undefined))
-				    (eq? this (js-null)))
-				;; use to be
-				;; (set! this %scope)
-				;; but it breaks nodejs/test/simple/test-fs-fstat.js
-				(set! this %this))
-			       ((not (js-object? this))
-				(set! this (js-toobject %this this))))))))
-      (instantiate::J2SStmtExpr
-	 (loc loc)
-	 (expr prag))))
+   (define (init-this thisp loc)
+      (with-access::J2SDecl thisp (id)
+	 (J2SIf (J2SPragma/bindings 'bool
+		   '(^this) (list (J2SThis thisp))
+		   '(or (eq? ^this (js-undefined)) (eq? ^this (js-null))))
+	    (J2SStmtExpr
+	       (J2SAssig (J2SThis thisp) (J2SPragma/type 'object '%this)))
+	    (J2SIf (J2SPragma/bindings 'bool
+		      '(^this) (list (J2SThis thisp))
+		      '(not (js-object? ^this)))
+	       (J2SStmtExpr
+		  (J2SAssig (J2SThis thisp)
+		     (J2SPragma/bindings 'object
+			'(^this) (list (J2SThis thisp))
+			'(js-toobject %this ^this))))
+	       (J2SNop)))))
    
    (with-access::J2SFun this (mode body params id loc thisp)
       (when (eq? mode 'normal)
 	 (let ((nbody (this! body)))
 	    (when (this? nbody)
-	       (with-access::J2SDecl thisp (vtype)
-		  (set! vtype 'any))
+	       (with-access::J2SDecl thisp (utype)
+		  (set! utype 'any))
 	       (set! body
 		  (with-access::J2SBlock body (endloc)
 		     (instantiate::J2SBlock
 			(loc loc)
 			(endloc endloc)
-			(nodes (list (init-this loc) nbody)))))))))
+			(nodes (list (init-this thisp loc) nbody)))))))))
    this)

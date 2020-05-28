@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/http_error.scm            */
+;*    serrano/prgm/project/hop/hop/runtime/http_error.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Dec 17 05:38:32 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Tue Oct  8 13:17:09 2019 (serrano)                */
+;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
 ;*=====================================================================*/
@@ -254,7 +254,7 @@
 	  (with-access::http-request request (socket)
 	     (<HEAD> :base (format "http://~a:~a"
 			      (socket-hostname socket)
-			      (hop-port))))
+			      (hop-default-port))))
 	  ;; this is a local request
 	  (<HEAD>))
       (<BODY> :data-hss-class "hop-exception"

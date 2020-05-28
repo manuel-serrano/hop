@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/private.scm             */
+;*    serrano/prgm/project/hop/hop/hopscript/private.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue May  1 18:26:26 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Wed Feb 12 07:44:21 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
 ;*=====================================================================*/
@@ -22,6 +22,7 @@
 	   __hopscript_function
 	   __hopscript_error
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_property
 	   __hopscript_worker
 	   __hopscript_json
@@ -49,19 +50,16 @@
 	   (inline u32vset! ::vector ::uint32 ::obj)
 	   (inline u32vlen::uint32 ::vector)
 	   
-	   (js-freeze-property! desc::JsPropertyDescriptor)
+	   (js-seal-property! ::JsPropertyDescriptor)
+	   (js-freeze-property! ::JsPropertyDescriptor)
 
-	   (js-properties-clone ::pair-nil)
-	   
 	   (generic js-valueof ::obj ::JsGlobalObject)
 	   
-	   (js-number->string obj)
-	   (js-parseint ::bstring ::obj ::bool ::JsGlobalObject)
-	   (js-parsefloat ::bstring ::bool ::JsGlobalObject)
-
+	   (js-number->string ::obj)
 	   (js-serializer ::JsObject)
 	   (js-unserializer ::obj)
-	   
+
+	   (js-get-hashnumber ::obj)
 	   ))
 
 ;*---------------------------------------------------------------------*/
@@ -133,23 +131,30 @@
 	 (match-case x
 	    ((?- ?val 'number ?this)
 	     `(let ((,tmp ,(e val e)))
-		 (if ,(e `(number? ,tmp) e)
+		 (if ,(e `(js-number? ,tmp) e)
 		     ,tmp
 		     (js-toprimitive ,tmp 'number ,this))))
 	    ((?- ?val 'string ?this)
 	     `(let ((,tmp ,(e val e)))
-		 (if ,(e `(string? ,tmp) e)
+		 (if ,(e `(js-jsstring? ,tmp) e)
 		     ,tmp
 		     (js-toprimitive ,tmp 'string ,this))))
 	    ((?- ?val 'any ?this)
 	     `(let ((,tmp ,(e val e)))
-		 (if ,(e `(number? ,tmp) e)
+		 (if ,(e `(js-number? ,tmp) e)
 		     ,tmp
 		     (if ,(e `(js-jsstring? ,tmp) e)
 			 ,tmp
 			 (js-toprimitive ,tmp 'any ,this)))))
 	    (else
 	     (error "js-toprimitive" "illegal call" x))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-seal-property! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-seal-property! desc::JsPropertyDescriptor)
+   (with-access::JsPropertyDescriptor desc (name configurable)
+      (when (eq? configurable #t) (set! configurable #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-freeze-property! ...                                          */
@@ -160,19 +165,6 @@
 	 (with-access::JsValueDescriptor desc (writable)
 	    (when (eq? writable #t) (set! writable #f))))
       (when (eq? configurable #t) (set! configurable #f))))
-
-;*---------------------------------------------------------------------*/
-;*    js-properties-clone ...                                          */
-;*---------------------------------------------------------------------*/
-(define (js-properties-clone properties)
-   (map (lambda (p)
-	   (if (isa? p JsValueDescriptor)
-	       (with-access::JsValueDescriptor p (writable)
-		  (if writable
-		      (duplicate::JsValueDescriptor p)
-		      p))
-	       p))
-      properties))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-valueof ::obj ...                                             */
@@ -264,152 +256,13 @@
 		 s)))))
 
    (cond
+      ((fixnum? obj) (integer->string obj))
       ((not (= obj obj)) "NaN")
       ((= obj +inf.0) "Infinity")
       ((= obj -inf.0) "-Infinity")
-      ((fixnum? obj) (integer->string obj))
       ((real? obj) (js-real->string obj))
       ((bignum? obj) (js-bignum->string obj))
       (else (number->string obj))))
-
-;*---------------------------------------------------------------------*/
-;*    js-parseint ...                                                  */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
-;*---------------------------------------------------------------------*/
-(define (js-parseint s::bstring radix strict-syntax::bool %this)
-   
-   (define (integer v s r)
-      (if (and (fixnum? v) (=fx v 0))
-	  (cond
-	     ((string-prefix? "0" s) v)
-	     ((string-prefix? "+0" s) v)
-	     ((string-prefix? "-0" s) -0.0)
-	     ((string=? s "+inf.0") +nan.0)
-	     ((string=? s "-inf.0") +nan.0)
-	     ((string=? s "+nan.0") +nan.0)
-	     (else +nan.0))
-	  v))
-   
-   (define (shrink n)
-      (let ((r (+ n 0)))
-	 (if (fixnum? r)
-	     r
-	     (bignum->flonum r))))
-
-   (define radix-charset
-      '#(unspecified
-	 #unspecified
-	 "01"
-	 "012"
-	 "0123"
-	 "01234"
-	 "012345"
-	 "0123456"
-	 "01234567"
-	 "012345678"
-	 "0123456789"
-	 "0123456789aA"
-	 "0123456789aAbB"
-	 "0123456789aAbBcC"
-	 "0123456789aAbBcCdD"
-	 "0123456789aAbBcCdDeE"
-	 "0123456789aAbBcCdDeEfF"
-	 "0123456789aAbBcCdDeEfFgG"
-	 "0123456789aAbBcCdDeEfFgGhH"
-	 "0123456789aAbBcCdDeEfFgGhHiI"
-	 "0123456789aAbBcCdDeEfFgGhHiIjJ"
-	 "0123456789aAbBcCdDeEfFgGhHiIjJkK"
-	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlL"
-	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmM"
-	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnN"
-	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoO"
-	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpP"
-	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQ"
-	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrR"
-	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsS"
-	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStT"
-	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuU"
-	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvV"
-	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwW"
-	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxX"
-	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyY"
-	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ"))
-	 
-   (define (string->bignum-safe s r)
-      (let ((v (string->bignum s r)))
-	 (if (=bx v #z0)
-	     (if strict-syntax
-		 (let ((i (string-skip s (vector-ref radix-charset r))))
-		    (if i
-			+nan.0
-			0))
-		 (let ((i (string-skip s (vector-ref radix-charset r))))
-		    (if i
-			(shrink (string->bignum (substring s 0 i) r))
-			0)))
-	     (shrink v))))
-   
-   (define (str->integer s r)
-      (if strict-syntax
-	  (or (string->number s r) +nan.0)
-	  (string->integer s r)))
-
-   (let ((r::int32 (js-toint32 radix %this))
-	 (l (string-length s)))
-      (cond
-	 ((and (not (zeros32? r))
-	       (or (<s32 r (fixnum->int32 2))
-		   (>s32 r (fixnum->int32 36))))
-	  +nan.0)
-	 ((and (or (zeros32? r) (=s32 r (fixnum->int32 16)))
-	       (>=fx (string-length s) 2)
-	       (char=? (string-ref s 0) #\0)
-	       (or (char=? (string-ref s 1) #\x)
-		   (char=? (string-ref s 1) #\X)))
-	  (let ((s (substring s 2)))
-	     (if (<=fx l 9)
-		 (integer (str->integer s 16) s 16)
-		 (integer (string->bignum-safe s 16) s 16))))
-	 ((zeros32? r)
-	  (if (<=fx l 8)
-	      (integer (str->integer s 10) s 10)
-	      (integer (string->bignum-safe s 10) s 10)))
-	 (else
-	  (let ((r (int32->fixnum r)))
-	     (if (<=fx l (if (<=fx r 10) 8 (if (<=fx r 16) 7 5)))
-		 (integer (str->integer s r) s 10)
-		 (integer (string->bignum-safe s r) s r)))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-parsefloat ...                                                */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.3     */
-;*---------------------------------------------------------------------*/
-(define (js-parsefloat s::bstring strict::bool %this)
-   (let ((l (string-length s)))
-      (cond
-	 ((=fx l 0)
-	  +nan.0)
-	 ((char=? (string-ref s 0) #\E)
-	  +nan.0)
-	 ((and (>=fx l 2)
-	       (char=? (string-ref s 0) #\0)
-	       (or (char=? (string-ref s 1) #\x) (char=? (string-ref s 1) #\X)))
-	  0.)
-	 (else
-	  (let ((n (string->real s)))
-	     (cond
-		((=fl n 0.)
-		 (cond
-		    ((pregexp-match "^(?:[-+]?)(?:0+.?0*|.?0+)$" s) 0.)
-		    (strict +nan.0)
-		    ((pregexp-match "(?:[-+]?)(?:0+.?0*|.?0+)" s) 0.)
-		    (else +nan.0)))
-		((= n +inf.0)
-		 (if (string=? s "infinity") +nan.0 n))
-		(else
-		 n)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    trim-whitespaces+ ...                                            */
@@ -569,7 +422,9 @@
    
    (let* ((i (if left (trim-left s) 0))
 	  (j (if right (trim-right s i) (-fx (string-length s) 1))))
-      (substring s i (+fx j 1))))
+      (if (and (=fx i 0) (=fx j (-fx (string-length s) 1)))
+	  s
+	  (substring s i (+fx j 1)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    =uint32 ...                                                      */
@@ -698,3 +553,12 @@
 ;*---------------------------------------------------------------------*/
 (define (js-unserializer s)
    s)
+
+;*---------------------------------------------------------------------*/
+;*    js-get-hashnumber ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-get-hashnumber key)
+   (if (js-jsstring? key)
+       (get-hashnumber (js-jsstring->string key))
+       (get-hashnumber key)))
+

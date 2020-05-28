@@ -1,13 +1,13 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/constant.scm            */
+;*    serrano/prgm/project/hop/hop/js2scheme/constant.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Jun 20 17:49:49 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Thu May 28 09:00:43 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
-;*    closed functions, ...)                                           */
+;*    closed functions, ronly literal objects, ...)                    */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -15,7 +15,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_constant
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import  __js2scheme_ast
 	    __js2scheme_dump
@@ -32,13 +33,12 @@
    (instantiate::J2SStageProc
       (name "constant")
       (comment "Pre-allocated constants")
-      (proc j2s-constant)
-      (optional 2)))
+      (proc j2s-constant)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-constant ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (j2s-constant this args)
+(define (j2s-constant this conf)
    
    (define (keys-hashnumber v)
       (cond
@@ -62,9 +62,9 @@
 		       (create-hashtable :eqtest equal?
 			  :hash keys-hashnumber)
 		       '())))
-	    (for-each (lambda (n) (constant! n env 0)) headers)
-	    (for-each (lambda (n) (constant! n env 0)) decls)
-	    (for-each (lambda (n) (constant! n env 0)) nodes)
+	    (for-each (lambda (n) (constant! n env 0 conf)) headers)
+	    (for-each (lambda (n) (constant! n env 0 conf)) decls)
+	    (for-each (lambda (n) (constant! n env 0 conf)) nodes)
 	    (set! cnsts (reverse! (env-list env)))
 	    (set! decls (append decls (env-vars env))))))
    this)
@@ -102,12 +102,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    add-literal! ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (add-literal! this env::struct sharep)
+(define (add-literal! this env::struct type sharep)
    (with-access::J2SLiteralValue this (val)
       (let ((index (add-env! this val env sharep)))
 	 (with-access::J2SExpr this (loc)
 	    (instantiate::J2SLiteralCnst
 	       (loc loc)
+	       (type type)
 	       (index index)
 	       (val this))))))
 
@@ -143,39 +144,39 @@
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SNode ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SNode env::struct nesting)
+(define-walk-method (constant! this::J2SNode env::struct nesting conf)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SRegExp ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SRegExp env nesting)
+(define-walk-method (constant! this::J2SRegExp env nesting conf)
    (with-access::J2SRegExp this (val flags)
       (if (=fx nesting 0)
-	  (add-literal! this env #f)
+	  (add-literal! this env 'regexp #f)
 	  this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2STilde ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2STilde env nesting)
+(define-walk-method (constant! this::J2STilde env nesting conf)
    (with-access::J2STilde this (stmt)
-      (set! stmt (constant! stmt env (+fx nesting 1)))
+      (set! stmt (constant! stmt env (+fx nesting 1) conf))
       this))
    
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SDollar ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SDollar env nesting)
+(define-walk-method (constant! this::J2SDollar env nesting conf)
    (with-access::J2SDollar this (node)
-      (set! node (constant! node env (-fx nesting 1)))
+      (set! node (constant! node env (-fx nesting 1) conf))
       this))
    
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SObjInit ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SObjInit env nesting)
-   (with-access::J2SObjInit this (inits cmap loc)
+(define-walk-method (constant! this::J2SObjInit env nesting conf)
+   (with-access::J2SObjInit this (inits cmap loc ronly)
       (let ((keys (map (lambda (i)
 			  (when (isa? i J2SDataPropertyInit)
 			     (with-access::J2SDataPropertyInit i (name)
@@ -191,21 +192,58 @@
 				   (else
 				    #f)))))
 		     inits)))
-	 (if (and (pair? keys) (every (lambda (x) x) keys))
-	     ;; constant cmap
-	     (let ((n (add-cmap! loc (list->vector keys) env)))
-		(set! cmap
-		   (instantiate::J2SLiteralCnst
-		      (loc loc)
-		      (index n)
-		      (val (env-list-ref env n))))
-		this)
-	     (call-next-method)))))
+	 (call-default-walker)
+	 (if (and (pair? keys)
+		  (every (lambda (x) x) keys)
+		  (=fx (config-get conf :debug 0) 0))
+	     (begin
+		;; WARNING: Constant cmap are only computed in non-debug mode
+		;; because the debug initialization does not support
+		;; recursivity between the objects that use cmaps and
+		;; cmaps themselves (see js-constant-init@hopscript/lib.scm
+		;; and j2sscheme/scheme-program.scm)
+		(let ((n (add-cmap! loc (list->vector keys) env)))
+		   (set! cmap
+		      (instantiate::J2SLiteralCnst
+			 (loc loc)
+			 (index n)
+			 (val (env-list-ref env n)))))
+		(if (and ronly
+			 (every (lambda (init)
+				   (with-access::J2SDataPropertyInit init (val)
+				      (or (isa? val J2SLiteralCnst)
+					  (isa? val J2SString)
+					  (isa? val J2SNumber)
+					  (isa? val J2SBool)
+					  (isa? val J2SUndefined))))
+			    inits))
+		    (let ((index (add-env! this this env #t)))
+		       (with-access::J2SExpr this (loc)
+			  (instantiate::J2SLiteralCnst
+			     (loc loc)
+			     (type 'object)
+			     (index index)
+			     (val this))))
+		    this))
+	     this))))
+
+;*---------------------------------------------------------------------*/
+;*    constant! ::J2SAccess ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (constant! this::J2SAccess env nesting conf)
+   (with-access::J2SAccess this (obj field)
+      (set! obj (constant! obj env nesting conf))
+      (unless (isa? field J2SString)
+	 ;; MS 15mar19: otherwise, no hidden class test would ever be emitted
+	 ;; (see "constant! ::J2SString" and Scheme code generation
+	 ;; (put and get)
+	 (set! field (constant! field env nesting conf)))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SUnary ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SUnary env nesting)
+(define-walk-method (constant! this::J2SUnary env nesting conf)
    (call-default-walker)
    (with-access::J2SUnary this (op expr expr loc type)
       (if (isa? expr J2SNumber)
@@ -235,7 +273,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SBinary ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SBinary env nesting)
+(define-walk-method (constant! this::J2SBinary env nesting conf)
    
    (define (evaluate this op l r)
       (with-access::J2SBinary this (loc)
@@ -245,16 +283,30 @@
 	    ((flonum? r) (J2SNumber/type 'real (op (fixnum->flonum l) r)))
 	    (else this))))
    
+   (define (unparen expr)
+      (if (isa? expr J2SParen)
+	  (with-access::J2SParen expr (expr) (unparen expr))
+	  expr))
+   
    (call-default-walker)
    (with-access::J2SBinary this (op expr lhs rhs loc type)
-      (if (and (isa? lhs J2SNumber) (isa? rhs J2SNumber))
-	  (with-access::J2SNumber lhs ((lval val))
-	     (with-access::J2SNumber rhs ((rval val))
+      (cond
+	 ((and (isa? (unparen lhs) J2SNumber) (isa? (unparen rhs) J2SNumber))
+	  (with-access::J2SNumber (unparen lhs) ((lval val))
+	     (with-access::J2SNumber (unparen rhs) ((rval val))
 		(case op
 		   ((+) (evaluate this + lval rval))
 		   ((-) (evaluate this - lval rval))
 		   ((*) (evaluate this * lval rval))
-		   ((/) (evaluate this / lval rval))
+		   ((/)
+		    (if (= rval 0)
+			(cond
+			   ((flonum? rval)
+			    ;; get the correct infinity sign
+			    (J2SNumber (/ lval rval)))
+			   (else
+			    (J2SNumber (/ lval 0.0))))
+			(evaluate this / lval rval)))
 		   ((BIT_OR & ^)
 		    (if (and (fixnum? lval) (fixnum? rval))
 			(let* ((x (fixnum->int32 lval))
@@ -263,9 +315,9 @@
 				     ((BIT_OR) (bit-ors32 x y))
 				     ((&) (bit-ands32 x y))
 				     (else (bit-xors32 x y)))))
-			   (if (and (>=s32 (fixnum->int32 (minvalfx)) r)
-				    (<=s32 (fixnum->int32 (maxvalfx)) r))
-			       (J2SNumber (int32->fixnum r))
+			   (if (and (>=s32 r (fixnum->int32 (minvalfx)))
+				    (<=s32 r (fixnum->int32 (maxvalfx))))
+			       (J2SNumber/type 'integer (int32->fixnum r))
 			       this))
 			this))
 		   ((<<)
@@ -273,9 +325,9 @@
 			(let* ((x (fixnum->int32 lval))
 			       (y (bit-andu32 (fixnum->uint32 rval) #u32:31))
 			       (r (bit-lshu32 x (uint32->fixnum y))))
-			   (if (and (>=s32 (fixnum->int32 (minvalfx)) r)
-				    (<=s32 (fixnum->int32 (maxvalfx)) r))
-			       (J2SNumber (int32->fixnum r))
+			   (if (and (>=s32 r (fixnum->int32 (minvalfx)))
+				    (<=s32 r (fixnum->int32 (maxvalfx))))
+			       (J2SNumber/type 'integer (int32->fixnum r))
 			       this))
 			this))
 		   ((>>)
@@ -283,9 +335,9 @@
 			(let* ((x (fixnum->int32 lval))
 			       (y (bit-andu32 (fixnum->uint32 rval) #u32:31))
 			       (r (bit-rshs32 x (uint32->fixnum y))))
-			   (if (and (>=s32 (fixnum->int32 (minvalfx)) r)
-				    (<=s32 (fixnum->int32 (maxvalfx)) r))
-			       (J2SNumber (int32->fixnum r))
+			   (if (and (>=s32 r (fixnum->int32 (minvalfx)))
+				    (<=s32 r (fixnum->int32 (maxvalfx))))
+			       (J2SNumber/type 'integer (int32->fixnum r))
 			       this))
 			this))
 		   ((>>>)
@@ -294,27 +346,55 @@
 			       (y (bit-andu32 (fixnum->uint32 rval) #u32:31))
 			       (r (bit-rshu32 x (uint32->fixnum y))))
 			   (if (<=u32 r (fixnum->uint32 (maxvalfx)))
-			       (J2SNumber (uint32->fixnum r))
+			       (J2SNumber/type 'integer (uint32->fixnum r))
 			       this))
 			this))
 		   ((%)
-		    (tprint "TODO.constant! " (j2s->list this))
-		    this)
-		   (else this))))
-	  this)))
+		    (if (and (fixnum? lval) (fixnum? rval)
+			     (>=fx lval 0) (>fx rval 0))
+			(J2SNumber/type 'integer (remainder lval rval))
+			this))
+		   (else this)))))
+	 ((and (isa? (unparen lhs) J2SBool) (isa? (unparen rhs) J2SBool))
+	  (with-access::J2SBool (unparen lhs) ((lval val))
+	     (with-access::J2SBool (unparen rhs) ((rval val))
+		(case op
+		   ((&&) (J2SBool (and lval rval)))
+		   ((OR) (J2SBool (or lval rval)))
+		   (else this)))))
+	 ((and (isa? (unparen lhs) J2SString) (isa? (unparen rhs) J2SString))
+	  (with-access::J2SString (unparen lhs) ((lval val))
+	     (with-access::J2SString (unparen rhs) ((rval val))
+		(case op
+		   ((== ===)
+		    (instantiate::J2SBool
+		       (loc loc)
+		       (val (string=? lval rval))))
+		   ((!= !==)
+		    (instantiate::J2SBool
+		       (loc loc)
+		       (val (not (string=? lval rval)))))
+		   ((+)
+		    (let ((ns (duplicate::J2SString (unparen lhs)
+				 (val (string-append lval rval)))))
+		       (constant! ns env nesting conf)))
+		   (else
+		    this)))))
+	 (else
+	  this))))
        
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SDeclFun ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SDeclFun env nesting)
+(define-walk-method (constant! this::J2SDeclFun env nesting conf)
    (with-access::J2SDeclFun this (val)
-      (constant! val env nesting))
+      (constant! val env nesting conf))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SFun env nesting)
+(define-walk-method (constant! this::J2SFun env nesting conf)
    (call-default-walker)
    (with-access::J2SFun this (body params)
       ;; in order to activate this optimization, it must be proved

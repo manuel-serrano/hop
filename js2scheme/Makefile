@@ -1,15 +1,16 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/js2scheme/Makefile                */
+#*    serrano/prgm/project/hop/hop/js2scheme/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon May 28 08:37:13 2018 (serrano)                */
+#*    Last change :  Sun Apr 12 08:03:17 2020 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
-.PHONY: do 
+.PHONY: do install
 
 do: build
+install: install-library
 
 #*---------------------------------------------------------------------*/
 #*    Standard Hop configuration                                       */
@@ -35,16 +36,19 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_OBJECTS = lexer header parser html ast dump utils \
-  stage compile js globvar varpreinit method nodesize \
-  syntax return loopexit symbol ronly resolve this any \
-  use property bestpractice sourcemap debug stmtassign letopt unletrec \
-  cps ecmascript5 narrow constant tyflow hint range cast vector \
-  array alpha letfusion constrsize ctor propcce clevel sweep inline unthis \
-  instanceof hintnum pce scheme scheme-utils scheme-program scheme-fun \
-  scheme-ops scheme-test scheme-class scheme-string scheme-math \
+_OBJECTS = lexer header parser html ast usage dump utils \
+  stage compile js uninit globprop globvar varpreinit method nodesize \
+  syntax return loopexit symbol ronly resolve this any letfun \
+  use propcache bestpractice sourcemap debug stmtassign letopt unletrec \
+  cps ecmascript5 narrow constant tyflow hint range loopspec cast vector \
+  array alpha letfusion constrsize ctor propcce cspecs sweep inline unthis \
+  instanceof hintnum pce callapply multivar module checksum newtarget \
+  objinit arguments procedure hop-module \
+  scheme scheme-utils scheme-program \
+  scheme-fun scheme-ops scheme-test scheme-class scheme-string scheme-math \
   scheme-date scheme-array scheme-regexp scheme-cast scheme-arguments \
-  scheme-call
+  scheme-call scheme-spread scheme-json scheme-bexit scheme-object \
+  scheme-constant
 
 OBJECTS = $(_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o
@@ -54,7 +58,7 @@ BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
 SOURCES = $(_OBJECTS:%=%.scm) ecmascript5.js
 
-INCLUDES = ast.sch
+INCLUDES = ast.sch usage.sch usage-bit.sch scheme.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */

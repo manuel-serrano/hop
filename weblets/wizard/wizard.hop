@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/weblets/wizard/wizard.hop         */
+;*    serrano/prgm/project/hop/hop/weblets/wizard/wizard.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Thu Oct  5 18:26:46 2017 (serrano)                */
-;*    Copyright   :  2005-17 Manuel Serrano                            */
+;*    Last change :  Thu May 28 08:06:33 2020 (serrano)                */
+;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
 ;*=====================================================================*/
@@ -487,11 +487,13 @@ setting can be overriden when starting Hop.]))))))
 	    (print ";; wizard file")
 	    (write `(hop-load-rc ,(basename passwdfile)))
 	    (nl)
+	    (print ";; http authentication method")
+	    (write '(hop-http-authentication-set! 'basic))
+	    (nl)
 	    (unless (string=? proxy "")
 	       (print ";; hop proxy")
 	       (write `(hop-use-proxy-set! ,proxy))
 	       (nl))
-	    (print ";; proxying")
 	    (write `(hop-enable-proxying-set! ,uproxy))
 	    (nl)
 	    (when proxy
@@ -583,11 +585,13 @@ setting can be overriden when starting Hop.]))))))
 	    (print "// wizard file")
 	    (print "require( './" (basename passwdfile) "' );")
 	    (newline)
+	    (print "// http authentication method")
+	    (print "cfg.httpAuthenticationMethod = 'basic';")
+	    (newline)
 	    (when (and (string? proxy) (not (string=? proxy "")))
-	       (print "// hop proxy")
 	       (print "cfg.useProxy = '" proxy "';")
 	       (newline))
-	    (print "// proxying")
+	    (print "// enable/disable proxy services")
 	    (print "cfg.enableProxying = " (jsbool uproxy) ";")
 	    (newline)
 	    (when proxy

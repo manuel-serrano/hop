@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/arithmetic32.scm        */
+;*    serrano/prgm/project/hop/hop/hopscript/arithmetic32.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Jul  8 09:30:32 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Fri Jan 17 13:22:55 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
 ;*=====================================================================*/
@@ -16,7 +16,7 @@
 
    (library hop)
 
-   (include "types.sch" "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch" "names.sch")
 
    (import __hopscript_types
 	   __hopscript_object
@@ -25,12 +25,16 @@
 	   __hopscript_error
 	   __hopscript_property
 	   __hopscript_private
+	   __hopscript_lib
 	   __hopscript_public)
 
    (cond-expand
       ((or bint30 bint32)
        (export
 	  (js-number->jsnumber ::obj)
+	  
+	  (inline js-flonum->integer::obj ::double)
+	  (inline negjs-int::obj ::obj)
 	  
 	  (inline overflowfx ::long)
 	  (macro overflowu32?)
@@ -56,16 +60,21 @@
 	  (inline +u32/overflow::obj ::uint32 ::uint32)
 	  (+/overflow::obj ::obj ::obj)
 	  
-	  (inline -fx/overflow::obj ::long ::long)
+	  (inline -fx/overflow::obj ::obj ::obj)
 	  (inline -fx32/overflow::obj ::long ::long)
 	  (inline -s32/overflow::obj ::int32 ::int32)
 	  (inline -u32/overflow::obj ::uint32 ::uint32)
 	  (-/overflow::obj ::obj ::obj)
 	  
-	  (inline *fx/overflow::obj ::long ::long)
+	  (inline *fx/overflow::obj ::obj ::obj)
 	  (inline *s32/overflow::obj ::int32 ::int32)
 	  (inline *u32/overflow::obj ::uint32 ::uint32)
 	  (*/overflow::obj ::obj ::obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    __js_strings ...                                                 */
+;*---------------------------------------------------------------------*/
+(define __js_strings #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    oveflow? ...                                                     */
@@ -138,6 +147,21 @@
        (bignum->flonum val))
       (else
        (bigloo-type-error "js-number->jsnumber" "number" val))))
+
+;*---------------------------------------------------------------------*/
+;*    js-flonum->integer ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-flonum->integer num)
+   (if (and (<fl num (-fl (exptfl 2. 30.) 1.))
+	    (>=fl num (negfl (exptfl 2. 30.))))
+       (flonum->fixnum num)
+       num))
+
+;*---------------------------------------------------------------------*/
+;*    negjs-int ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (negjs-int num)
+   (if (fixnum? num) (if (=fx num 0) -0.0 (negfx num)) (negfl num)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toint32 ::obj ...                                             */
@@ -222,21 +246,18 @@
 ;*---------------------------------------------------------------------*/
 (define (js-number-touint32::uint32 obj)
    
-   (define 2^32 (exptfl 2. 32.))
-   
-   (define (positive-double->uint32::uint32 obj::double)
-      (if (<fl obj 2^32)
-	  (flonum->uint32 obj)
-	  (flonum->uint32 (remainderfl obj 2^32))))
-   
    (define (double->uint32::uint32 obj::double)
       (cond
 	 ((or (= obj +inf.0) (= obj -inf.0) (not (= obj obj)))
 	  #u32:0)
 	 ((<fl obj 0.)
-	  (positive-double->uint32 (+fl 2^32 (*fl -1. (floorfl (absfl obj))))))
+	  (llong->uint32
+	     (+llong (bit-lshllong #l1 32)
+		(flonum->llong (*fl -1. (floorfl (absfl obj)))))))
 	 (else
-	  (positive-double->uint32 obj))))
+	  (llong->uint32
+	     (+llong (bit-lshllong #l1 32)
+		(flonum->llong (floorfl (absfl obj))))))))
    
    (cond
       ((flonum? obj) (double->uint32 obj))
@@ -346,7 +367,9 @@
 (define (tolong x)
    (cond
       ((fixnum? x) x)
+      ((=fl x 0.0) 0)
       ((int32? x) (int32->fixnum x))
+      ((uint32? x) (uint32->fixnum x))
       (else #f)))
 
 ;*---------------------------------------------------------------------*/
@@ -361,8 +384,6 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    +fx/overflow ...                                                 */
-;*    -------------------------------------------------------------    */
-;*    The argument are 30bit integers encoded into long values.        */
 ;*---------------------------------------------------------------------*/
 (define-inline (+fx/overflow x::obj y::obj)
    (cond-expand
@@ -459,11 +480,25 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    -fx/overflow ...                                                 */
-;*    -------------------------------------------------------------    */
-;*    The argument are 30bit integers encoded into long values.        */
 ;*---------------------------------------------------------------------*/
-(define-inline (-fx/overflow x::long y::long)
-   (overflowfx (-fx x y)))
+(define-inline (-fx/overflow x::obj y::obj)
+   (cond-expand
+      ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
+       (let ((res::int 0))
+	  (if (pragma::bool "__builtin_ssub_overflow((int)((long)$1), (int)((long)$2), &$3)"
+		 x y (pragma res))
+	      (pragma::real "DOUBLE_TO_REAL(((double)(CINT($1)))+((double)(CINT($2))))"
+		 x y)
+	      (pragma::bint "BINT($1)" res))))
+      ((and bigloo-c (config have-overflow #t))
+       (let ((res::long 0))
+	  (if (pragma::bool "__builtin_ssubl_overflow((long)$1, (long)$2-TAG_INT, &$3)"
+		 x y (pragma res))
+	      (pragma::real "DOUBLE_TO_REAL(((double)(CINT($1)))+((double)(CINT($2))))"
+		 x y)
+	      (pragma::bint "(obj_t)($1)" res))))
+      (else
+       (overflowfx (-fx x y)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    -fx32/overflow ...                                               */
@@ -540,17 +575,15 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    *fx/overflow ...                                                 */
-;*    -------------------------------------------------------------    */
-;*    The argument are 30bit integers encoded into long values.        */
 ;*---------------------------------------------------------------------*/
-(define-inline (*fx/overflow x::long y::long)
+(define-inline (*fx/overflow x::obj y::obj)
    (cond-expand
       ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
        (let ((res::int32 #s32:0))
 	  (cond
-	     ((pragma::bool "__builtin_smul_overflow($1, $2, &$3)"
+	     ((pragma::bool "__builtin_smul_overflow((int)((long)$1), (int)((long)$2), &$3)"
 		 x y (pragma res))
-	      (pragma::real "DOUBLE_TO_REAL(((double)($1))*((double)($2)))"
+	      (pragma::real "DOUBLE_TO_REAL(((double)CINT($1))*((double)CINT($2)))"
 		 x y))
 	     ((=s32 res #s32:0)
 	      (if (or (and (<fx x 0) (>=fx y 0))
@@ -560,11 +593,11 @@
 	     (else
 	      (pragma::bint "BINT($1)" res)))))
       ((and bigloo-c (config have-overflow #t))
-       (let ((res::long 0))
+       (let ((res::int 0))
 	  (cond
-	     ((pragma::bool "__builtin_smull_overflow($1, $2, &$3)"
+	     ((pragma::bool "__builtin_smul_overflow((int)(CINT($1)), (int)(CINT($2)), &$3)"
 		 x y (pragma res))
-	      (pragma::real "DOUBLE_TO_REAL(((double)($1))*((double)($2)))"
+	      (pragma::real "DOUBLE_TO_REAL(((double)(CINT(($1))))*((double)(CINT($2))))"
 		 x y))
 	     ((=fx res 0)
 	      (if (or (and (<fx x 0) (>=fx y 0))
@@ -572,7 +605,7 @@
 		  -0.0
 		  (overflowfx res)))
 	     (else
-	      (overflowfx res)))))
+	      (pragma::bint "BINT($1)" res)))))
       (else
        (define (neg? o)
 	  (if (flonum? o)

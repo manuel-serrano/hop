@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/cssmatch.scm              */
+;*    serrano/prgm/project/hop/hop/runtime/cssmatch.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 19 14:53:16 2010                          */
-;*    Last change :  Fri Apr 22 14:44:22 2016 (serrano)                */
-;*    Copyright   :  2010-16 Manuel Serrano                            */
+;*    Last change :  Thu Apr 18 07:51:22 2019 (serrano)                */
+;*    Copyright   :  2010-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Parsing and dealing with CSS.                                    */
 ;*=====================================================================*/
@@ -473,7 +473,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (css-selector-match? selector::css-selector-class el)
    (when (isa? el xml-element)
-      (let ((c (xml-primitive-value (dom-get-attribute el "class"))))
+      (let ((c (dom-get-attribute el "class")))
 	 (when (string? c)
 	    (with-access::css-selector-class selector (name)
 	       (or (string=? name c)

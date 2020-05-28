@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/runtime/watch.scm                 */
+;*    serrano/prgm/project/hop/hop/runtime/watch.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 21 18:31:30 2017                          */
-;*    Last change :  Tue Jul  3 04:59:12 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Thu Oct 24 12:03:22 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Watch for socket close                                           */
 ;*    -------------------------------------------------------------    */
@@ -46,7 +46,7 @@
 ;*---------------------------------------------------------------------*/
 (define (watch-socket! socket onclose)
    (cond-expand
-      (bigloo4.3a
+      (|bigloo4.3a|
        ;; alternative without select
        (thread-start!
 	  (instantiate::hopthread
@@ -71,7 +71,7 @@
 ;*---------------------------------------------------------------------*/
 (define (watch-thread onclose)
    (cond-expand
-      (bigloo4.3a
+      (|bigloo4.3a|
        (lambda () #f))
       (else
        (lambda ()

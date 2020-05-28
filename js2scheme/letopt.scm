@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/letopt.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/letopt.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sat Jun  9 16:03:03 2018 (serrano)                */
-;*    Copyright   :  2015-18 Manuel Serrano                            */
+;*    Last change :  Wed Feb 26 10:29:44 2020 (serrano)                */
+;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
 ;*    -------------------------------------------------------------    */
@@ -19,7 +19,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_letopt
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -231,8 +232,18 @@
       ;; the first decl
       (with-trace 'j2s-letopt "j2s-letopt!"
 	 (trace-item "" (j2s->list this))
+	 ;; optimize recursively
+	 ;;(for-each j2s-letopt! nodes)
+	 (for-each (lambda (d)
+		      (when (isa? d J2SDeclInit)
+			 (with-access::J2SDeclInit d (val)
+			    (j2s-letopt! val))))
+	    decls)
 	 ;; mark all declarations
-	 (for-each init-decl! decls)
+	 (for-each (lambda (d)
+		      (trace-item "d=" (j2s->list d))
+		      (init-decl! d))
+	    decls)
 	 (if (every (lambda (d)
 		       (with-access::J2SDecl d (binder)
 			  (not (eq? binder 'let-opt))) )
@@ -370,8 +381,8 @@
 	    (trace-item "unprocs=" (j2s-dump-decls unprocs))
 	    (values noopts opts unprocs))))
    
-   (define (optimize-letblock! this::J2SLetBlock resnode inodes rests)
-      (with-trace 'j2s-letopt "optimize-letblock"
+   (define (optimize-tail-letblock! this::J2SLetBlock resnode inodes rests)
+      (with-trace 'j2s-letopt "optimize-tail-letblock!"
 	 (with-access::J2SLetBlock this (nodes decls loc)
 	    (multiple-value-bind (noopts opts unprocs)
 	       (split-decls decls)
@@ -420,6 +431,19 @@
 
       (or (used-in-inits? decl inits)
 	  (used-in-rests? decl rests)))
+
+   (define (init-unopt? init decls)
+      (with-trace 'j2s-letopt "init-unopt?"
+	 (trace-item "init=" (j2s->list init))
+	 (let* ((used (get-used-decls init decls))
+		(unopt (filter (lambda (d)
+				  (with-access::J2SDecl d (%info)
+				     (with-access::DeclInfo %info (optdecl)
+					(not optdecl))))
+			  used)))
+	    (trace-item "used=" (j2s-dump-decls used))
+	    (trace-item "unopt=" (j2s-dump-decls unopt))
+	    (pair? unopt))))
    
    ;; the main optimization loop
    (with-trace 'j2s-letopt "tail-let!"
@@ -431,7 +455,7 @@
 	    (let loop ((inodes inits))
 	       (cond
 		  ((null? inodes)
-		   (optimize-letblock! this resnode inits rests))
+		   (optimize-tail-letblock! this resnode inits rests))
 		  ((isa? (car inodes) J2SDeclFun)
 		   (trace-item "decl-fun=" (j2s-dump-decls (car inodes)))
 		   ;; a function
@@ -472,6 +496,11 @@
 		   (trace-item "dup=" (j2s-dump-decls (init-decl (car inodes))))
 		   (mark-decl-noopt! (init-decl (car inodes)))
 		   (loop (cdr inodes)))
+		  ((init-unopt? (car inodes) decls)
+		   ;; the init expression cannot be optimized
+		   (let ((decl (init-decl (car inodes))))
+		      (mark-decl-noopt! decl)
+		      (loop (cdr inodes))))
 		  (else
 		   (let ((decl (init-decl (car inodes))))
 		      (trace-item "regular=" (j2s-dump-decls decl))
@@ -622,13 +651,13 @@
 	     (and (liftable? test) (liftable? then) (liftable? else))))
 	 ((isa? expr J2SRef)
 	  (with-access::J2SRef expr (decl)
-	     (with-access::J2SDecl decl (binder writable usage)
+	     (with-access::J2SDecl decl (binder writable)
 		(when (eq? binder 'let-opt)
-		   (or (not writable) (not (usage? '(assig) usage)))))))
+		   (or (not writable) (not (decl-usage-has? decl '(assig))))))))
 	 ((isa? expr J2SGlobalRef)
 	  (with-access::J2SGlobalRef expr (decl)
-	     (with-access::J2SDecl decl (writable usage id)
-		(when (or (not writable) (not (usage? '(assig) usage)))
+	     (with-access::J2SDecl decl (writable id)
+		(when (or (not writable) (not (decl-usage-has? decl '(assig))))
 		   (memq id '(Array Function Number Boolean Promise))))))
 	 ((isa? expr J2SNew)
 	  (with-access::J2SNew expr (clazz args)
@@ -750,14 +779,14 @@
 ;*    node-used* ::J2SDecl ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-used* node::J2SDecl decls store)
-   (if (member node decls) (list node) '()))
+   (if (memq node decls) (list node) '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-used* ::J2Ref ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-used* node::J2SRef decls store)
    (with-access::J2SRef node (decl)
-      (if (member decl decls) (list decl) '())))
+      (if (memq decl decls) (list decl) '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-used* ::J2SDeclInit ...                                     */
@@ -854,6 +883,7 @@
 	 (when optdecl
 	    (with-trace 'j2s-letopt "mark-decl-noopt!"
 	       (trace-item "decl=" (j2s-dump-decls decl))))
+	 (decl-usage-add! decl 'uninit)
 	 (set! optdecl #f)))
    decl)
 
@@ -865,11 +895,15 @@
       (trace-item "node=" (j2s->list node))
       (trace-item "no-used*=" (map j2s->list (node-used* node decls #t)))
       (for-each (lambda (d)
-		   (when (eq? (decl-maybe-opt? d) #unspecified)
-		      (mark-decl-noopt! d)
-		      (when (isa? d J2SDeclInit)
-			 (with-access::J2SDeclInit d (val)
-			    (mark-used-noopt*! val decls)))))
+		   (with-trace 'j2s-letopt "mark-used-noopt"
+		      (with-access::J2SDecl d (id)
+			 (trace-item "d=" id " maybe-opt="
+			    (typeof (decl-maybe-opt? d)))
+			 (when (eq? (decl-maybe-opt? d) #unspecified)
+			    (mark-decl-noopt! d)
+			    (when (isa? d J2SDeclInit)
+			       (with-access::J2SDeclInit d (val)
+				  (mark-used-noopt*! val decls)))))))
 	 (node-used* node decls #t))))
    
 ;*---------------------------------------------------------------------*/

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/widget/paned.scm                  */
+;*    serrano/prgm/project/hop/hop/widget/paned.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Jul 19 16:03:23 2013 (serrano)                */
-;*    Copyright   :  2005-13 Manuel Serrano                            */
+;*    Last change :  Sun Apr 28 10:59:05 2019 (serrano)                */
+;*    Copyright   :  2005-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of paned.                                 */
 ;*=====================================================================*/
@@ -29,6 +29,20 @@
    (export  (<PANED> . ::obj)
 	    (<PAN> . ::obj)))
    
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::html-foldlist ...                            */
+;*---------------------------------------------------------------------*/
+(define (serialize o ctx)
+   (let ((p (open-output-string)))
+      (obj->javascript-expr o p ctx)
+      (close-output-port p)))
+
+(define (unserialize o ctx)
+   o)
+      
+(register-class-serialization! html-paned serialize unserialize)
+(register-class-serialization! html-pan serialize unserialize)
+
 ;*---------------------------------------------------------------------*/
 ;*    <PANED> ...                                                      */
 ;*    -------------------------------------------------------------    */

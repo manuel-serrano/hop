@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/xml_expd.sch              */
+;*    serrano/prgm/project/hop/hop/runtime/xml_expd.sch                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:27:30 2006                          */
-;*    Last change :  Fri May 29 09:59:22 2015 (serrano)                */
-;*    Copyright   :  2006-15 Manuel Serrano                            */
+;*    Last change :  Tue May  7 10:00:46 2019 (serrano)                */
+;*    Copyright   :  2006-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    XML expanders                                                    */
 ;*=====================================================================*/
@@ -254,6 +254,8 @@
    
    (let ((args (gensym 'args))
 	 (loop (gensym 'loop))
+	 (ctx (gensym 'ctx))
+	 (l (gensym 'l))
 	 (name (symbol->string m)))
       `(define (,m . ,args)
 	  (let ,(map (lambda (b)
@@ -267,75 +269,78 @@
 				(attach-loc `(,b '()) b loc)
 				(error name "Illegal binding" b)))))
 		   bindings)
-	     (let ,loop ((,args ,args))
-		  (cond
-		     ((null? ,args)
-		      ,@(map (lambda (b)
-				(match-case b
-				   ((?id ?init (and (? symbol?) ?type))
-				    (let ((id (untyped-ident id)))
-				       `(unless (or ,(if (eq? init #f)
-							 `(not ,id)
-							 `(eq? ,id #unspecified))
-						    ,(predicate type id))
-					   ,(match-case (get-source-location b)
-					       ((at ?fname ?pos)
-						`(bigloo-type-error/location ,(symbol->string m)
-						    (symbol->string ',type)
-						    ,id ,fname ,pos))
-					       (else
-						`(bigloo-type-error ,(symbol->string m)
-						    (symbol->string ',type)
-						    ,id))))))
-				   (((and ?id (? symbol?)))
-				    (let ((id (untyped-ident id)))
-				       `(set! ,id (reverse! ,id))))
-				   ((and ?id (? symbol?))
-				    (let ((id (untyped-ident id)))
-				       `(set! ,id (reverse! ,id))))
-				   (else
-				    #unspecified)))
+	     (let ((,ctx #f))
+		(let ,loop ((,args ,args))
+		     (cond
+			((null? ,args)
+			 ,@(map (lambda (b)
+				   (match-case b
+				      ((?id ?init (and (? symbol?) ?type))
+				       (let ((id (untyped-ident id)))
+					  `(unless (or ,(if (eq? init #f)
+							    `(not ,id)
+							    `(eq? ,id #unspecified))
+						       ,(predicate type id))
+					      ,(match-case (get-source-location b)
+						  ((at ?fname ?pos)
+						   `(bigloo-type-error/location ,(symbol->string m)
+						       (symbol->string ',type)
+						       ,id ,fname ,pos))
+						  (else
+						   `(bigloo-type-error ,(symbol->string m)
+						       (symbol->string ',type)
+						       ,id))))))
+				      (((and ?id (? symbol?)))
+				       (let ((id (untyped-ident id)))
+					  `(set! ,id (reverse! ,id))))
+				      ((and ?id (? symbol?))
+				       (let ((id (untyped-ident id)))
+					  `(set! ,id (reverse! ,id))))
+				      (else
+				       #unspecified)))
+			      bindings)
+			 (let () ,@body))
+			,@(map (lambda (b)
+				  (match-case b
+				     (((and (? symbol?) ?id) ?- . ?-)
+				      (let ((id (untyped-ident id)))
+					 `((eq? (car ,args) ,(symbol->keyword id))
+					   (if (null? (cdr ,args))
+					       (begin
+						  (set! ,id #t)
+						  (,loop '()))
+					       (begin
+						  (set! ,id (cadr ,args))
+						  ,@(if (eq? id '%context) `((set! ,ctx ,id)) '())
+						  (,loop (cddr ,args)))))))
+				     (((and (? symbol?) ?id))
+				      (let ((id (untyped-ident id)))
+					 `((keyword? (car ,args))
+					   (if (null? (cdr ,args))
+					       (begin
+						  (set! ,id #t)
+						  (,loop '()))
+					       (begin
+						  (set! ,id (cons* (cadr ,args) (car ,args) ,id))
+						  ,@(if (eq? id '%context) `((set! ,ctx ,id)) '())
+						  (,loop (cddr ,args)))))))
+				     ((and ?id (? symbol?))
+				      (let ((id (untyped-ident id)))
+					 `((not (keyword? (car ,args)))
+					   (let ((,l (xml-unpack (car ,args) ,ctx)))
+					      (if (pair? ,l)
+						  (,loop (append ,l (cdr ,args)))
+						  (begin
+						     (set! ,id (cons ,l ,id))
+						     (,loop (cdr ,args))))))))
+				     (else
+				      `(let ((,l (xml-unpack (car ,args) ,ctx)))
+					  (if (pair? ,l)
+					      (,loop (append ,l (cdr ,args)))
+					      (,loop (cons ,l (cdr ,args))))))))
 			   bindings)
-		      (let () ,@body))
-		     ,@(map (lambda (b)
-			       (match-case b
-				  (((and (? symbol?) ?id) ?- . ?-)
-				   (let ((id (untyped-ident id)))
-				      `((eq? (car ,args) ,(symbol->keyword id))
-					(if (null? (cdr ,args))
-					    (begin
-					       (set! ,id #t)
-					       (,loop '()))
-					    (begin
-					       (set! ,id (cadr ,args))
-					       (,loop (cddr ,args)))))))
-				  (((and (? symbol?) ?id))
-				   (let ((id (untyped-ident id)))
-				      `((keyword? (car ,args))
-					(if (null? (cdr ,args))
-					    (begin
-					       (set! ,id #t)
-					       (,loop '()))
-					    (begin
-					       (set! ,id (cons* (cadr ,args) (car ,args) ,id))
-					       (,loop (cddr ,args)))))))
-				  ((and ?id (? symbol?))
-				   (let ((id (untyped-ident id)))
-				      `((not (keyword? (car ,args)))
-					(cond
-					   ((xml-unpack (car ,args))
-					    =>
-					    (lambda (l) (,loop (append l (cdr ,args)))))
-					   (else
-					    (set! ,id (cons (car ,args) ,id))
-					    (,loop (cdr ,args)))))))
-				  (else
-				   `((xml-unpack (car ,args))
-				     =>
-				     (lambda (l) (,loop (append l (cdr ,args))))))))
-			bindings)
-		     (else
-		      (error ,name "Illegal argument" (car ,args)))))))))
+			(else
+			 (error ,name "Illegal argument" (car ,args))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expand-define-xml-compound ...                                   */

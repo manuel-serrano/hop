@@ -1745,10 +1745,12 @@ SyncWriteStream.prototype.write = function(data, arg1, arg2) {
 
   // Change strings to buffers. SLOW
   if (typeof data == 'string') {
-    data = new Buffer(data, encoding);
+     // MS: 30apr2019, modification to save buffer allocations
+    // data = new Buffer(data, encoding);
+    binding.writeString(this.fd, data, 0, data.length);
+  } else {
+     fs.writeSync(this.fd, data, 0, data.length);
   }
-
-  fs.writeSync(this.fd, data, 0, data.length);
 
   if (cb) {
     process.nextTick(cb);

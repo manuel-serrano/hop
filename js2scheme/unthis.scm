@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/unthis.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/unthis.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 21 09:27:29 2017                          */
-;*    Last change :  Fri Dec 22 17:07:12 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Mon Dec 30 09:56:14 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This optimization removes the THIS argument of functions that    */
 ;*    don't need it, i.e., that do not escape and that do not use it.  */
@@ -15,7 +15,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_unthis
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -56,10 +57,11 @@
 ;*    unthis ::J2SDeclInit ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unthis this::J2SDeclInit)
-   (with-access::J2SDeclInit this (usage ronly val)
-      (when (and ronly (isa? val J2SFun) (not (isa? val J2SSvc)))
+   (call-default-walker)
+   (with-access::J2SDeclInit this (val)
+      (when (and (decl-ronly? this) (isa? val J2SFun) (not (isa? val J2SSvc)))
 	 (with-access::J2SFun val (generator idthis thisp)
-	    (when (and (not generator) (strict-usage? '(init call) usage))
+	    (when (and (not generator) (decl-usage-strict? this '(init call)))
 	       (when (isa? thisp J2SDecl)
 		  (with-access::J2SDecl thisp (usecnt)
 		     (when (=fx usecnt 0)

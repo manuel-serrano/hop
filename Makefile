@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/Makefile                          */
+#*    serrano/prgm/project/hop/hop/Makefile                            */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri May  4 10:27:35 2018 (serrano)                */
+#*    Last change :  Mon May 25 07:29:17 2020 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -150,7 +150,7 @@ install-share: hop-dirs
 install-weblets: hop-dirs
 	$(MAKE) -C weblets install
 
-install-quick: hop-dirs install-init
+install-quick: hop-dirs install-init install-config
 	$(MAKE) -C runtime install && \
 	$(MAKE) -C widget install && \
 	$(MAKE) -C scheme2js install && \
@@ -182,7 +182,11 @@ install-init: hop-dirs
 	$(INSTALL) $(BUILDLIBDIR)/hopscript.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscript.init && \
         chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopscript.init;
 	$(INSTALL) $(BUILDLIBDIR)/nodejs.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/nodejs.init && \
-        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/nodejs.init;
+        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/nodejs.init
+
+install-config: hop-dirs
+	$(INSTALL) $(BUILDLIBDIR)/hopc_config.sch $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopc_config.sch && \
+        chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopc_config.sch
 
 hop-dirs:
 	if [ ! -d $(DESTDIR)$(HOPBINDIR) ]; then \
@@ -226,6 +230,9 @@ install-debian: hop-dirs
 	mkdir -p $(DESTDIR)/etc/init.d
 	$(INSTALL) $(BUILDDIR)/arch/debian/init.d/hop $(DESTDIR)/etc/init.d \
 	  && chmod u+rx $(DESTDIR)/etc/init.d/hop
+	mkdir -p $(DESTDIR)/etc/logrotate.d
+	$(INSTALL) $(BUILDDIR)/arch/debian/logrotate.d/hop $(DESTDIR)/etc/logrotate.d \
+	  && chmod u+rx $(DESTDIR)/etc/logrotate.d/hop
 
 install-doc:
 	$(MAKE) -C doc install
@@ -374,7 +381,7 @@ distrib-inc-version:
 	  $(MAKE) revision LOGMSG="New distrib $$version-$$devel$$min"; \
         fi
 
-distrib-sans-version: distrib-native # distrib-jvm
+distrib-sans-version: distrib-native
 
 distrib-pre:
 	(version=$(HOPRELEASE); \
@@ -412,12 +419,16 @@ distrib-native: distrib-tmp
            ./configure && \
            $(MAKE) predistrib && \
            $(MAKE) distclean) && \
-          tar cvfz hop-$$distrib.tar.gz --exclude .hg --exclude .git -C $(HOPTMPDIR) hop-$$distrib && \
-          $(RM) -rf $(HOPTMPDIR)/hop-$$distrib && \
+          tar cvfz hop-$$distrib.tar.gz --exclude .hg --exclude .git --exclude arch/debian/makedeb.sh --exclude arch/homebrew/makebrew.sh -C $(HOPTMPDIR) hop-$$distrib; \
           if [ $(HOPDISTRIBDIR) != "." ]; then \
             if [ $(HOPDISTRIBDIR) != "" ]; then \
               $(RM) -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.tar.gz && \
-              mv hop-$$distrib.tar.gz $(HOPDISTRIBDIR); \
+              mv hop-$$distrib.tar.gz $(HOPDISTRIBDIR) && \
+              cp $(HOPTMPDIR)/hop-$$distrib/docker/Dockerfile \
+                $(HOPDISTRIBDIR)/hop-$$distrib.dockerfile && \
+              cp $(HOPTMPDIR)/hop-$$distrib/docker/hop.docker \
+                $(HOPDISTRIBDIR)/hop-$$distrib.docker && \
+              $(RM) -rf $(HOPTMPDIR)/hop-$$distrib; \
             fi \
           fi) || exit 1
 

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/src/parseargs.scm                 */
+;*    serrano/prgm/project/hop/hop/src/parseargs.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Feb 21 16:32:08 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Tue Apr 14 09:56:21 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -19,10 +19,7 @@
    (import  hop_param
 	    hop_init)
 
-   (eval    (export hop-load-rc))
-
    (export  (parse-args::pair-nil ::pair)
-	    (hop-load-rc ::bstring)
 	    (hello-world)))
 
 ;*---------------------------------------------------------------------*/
@@ -45,6 +42,7 @@
 	 (mimep #t)
 	 (autoloadp #t)
 	 (p #f)
+	 (ps #f)
 	 (ep #unspecified)
 	 (dp #unspecified)
 	 (rc-file #f)
@@ -59,7 +57,7 @@
 	 (webdav #unspecified)
 	 (zeroconf #unspecified)
 	 (clear-cache #f)
-	 (clear-libs #f)
+	 (clear-so #f)
 	 (setuser #f)
 	 (clientc-source-map #f)
 	 (clientc-arity-check #f)
@@ -67,7 +65,9 @@
 	 (clientc-debug #f)
 	 (clientc-compress #f)
 	 (clientc-inlining #t)
-	 (clientc-use-strict #t))
+	 (clientc-use-strict #t)
+	 (sofile-dir #f)
+	 (cache-dir #f))
       
       (bigloo-debug-set! 0)
 
@@ -100,16 +100,13 @@
 	     (set! rc-file file))
 	    (("--rc-dir" ?dir (help "Set rc directory"))
 	     (hop-rc-directory-set! dir)
-	     (hop-cache-directory-set! (make-file-name dir "cache"))
-	     (hop-sofile-directory-set! (make-file-path dir "libs")))
-	    (("--var-dir" ?dir (help "Set var directory"))
-	     (hop-var-directory-set! dir)
-	     (hop-upload-directory-set! (make-file-name dir "upload")))
+	     (unless cache-dir
+		(hop-cache-directory-set! (make-file-name dir "cache")))
+	     (unless sofile-dir
+		(hop-sofile-directory-set! (make-file-path dir "so"))))
 	    (("--cache-dir" ?dir (help "Set cache directory"))
+	     (set! cache-dir #t)
 	     (hop-cache-directory-set! dir))
-	    (("--libs-dir" ?dir
-		(help (format "Set libs directory (~a)" (hop-sofile-directory))))
-	     (hop-sofile-directory-set! dir))
 	    (("--icons-dir" ?dir (help "Set Hop icons directory"))
 	     (hop-icons-directory-set! dir))
 	    (("--no-cache" (help "Disable server caching"))
@@ -119,14 +116,27 @@
 	    (("--no-clear-cache" (help "Don't clear any cache"))
 	     (hop-hss-clear-cache-set! #f)
 	     (hop-clientc-clear-cache-set! #f))
-	    (("--clear-libs" (help "Clear libs (sofiles) directory"))
-	     (set! clear-libs #t))
-	    (("--no-clear-libs" (help "Don't clear libs"))
-	     (set! clear-libs #f))
-	    (("--no-sofile" (help "Disable loading pre-compiled file"))
+	    (("--so-dir" ?dir (help (format "Set libs directory (~a)" (hop-sofile-directory))))
+	     (set! sofile-dir #t)
+	     (hop-sofile-directory-set! dir))
+	    (("--display-so-dir"  (help "Display default so dir"))
+	     (print (dirname (hop-sofile-path "dummy.hop"))))
+	    (("--clear-so" (help "Clear sofiles directory"))
+	     (set! clear-so #t))
+	    (("--no-clear-so" (help "Don't clear libs"))
+	     (set! clear-so #f))
+	    (("--no-so" (help "Disable loading pre-compiled file"))
 	     (hop-sofile-enable-set! #f))
-	    (("--sofile-policy" ?policy (help "Sofile compile policy [none, aot, nte, nte1, nte+]"))
+	    (("--so-policy" ?policy (help "Sofile compile policy [none, aot, nte, nte1, nte+]"))
 	     (hop-sofile-compile-policy-set! (string->symbol policy)))
+	    (("--sofile-policy" ?policy (help "Deprecated, use \"--so-policy\" instead"))
+	     (hop-sofile-compile-policy-set! (string->symbol policy)))
+	    (("--so-target" ?loc
+		(help
+		   (format "Location for generated so file [sodir, src] [~s]"
+		      (hop-sofile-compile-target))))
+	     (hop-sofile-compile-target-set! (string->symbol loc)))
+	    
 	    (("--autoload" (help "Enable autoload (default)"))
 	     (set! autoloadp #t))
 	    (("--no-autoload" (help "Disable autoload"))
@@ -146,7 +156,7 @@
 	     (if (string=? level "")
 		 (hop-verbose-set! (+fx 1 (hop-verbose)))
 		 (hop-verbose-set! (string->integer level))))
-	    (("-g?level" (help "Increase/set debug level"))
+	    (("-g?level" (help "Set debug level (do not use in production)"))
 	     (cond
 		((string=? level "")
 		 (hop-sofile-enable-set! #f)
@@ -241,10 +251,10 @@
 	    (section "Run")
 	    ((("-p" "--http-port") ?port (help (format "Port number [~s]" p)))
 	     (set! p (string->integer port)))
+	    (("--https-port" ?port (help (format "Port number [~s]" ps)))
+	     (set! ps (string->integer port)))
 	    (("--listen-addr" ?addr (help "Server listen hostname or IP"))
 	     (hop-server-listen-addr-set! addr))
-	    (("--fast-server-event-port" ?port (help (format "Fast Server event port number [~s]" ep)))
-	     (set! ep (string->integer port)))
 	    (("--https" (help (format "Enable HTTPS")))
 	     (hop-enable-https-set! #t))
 	    (("--no-https" (help (format "Disable HTTPS")))
@@ -253,10 +263,6 @@
 	     (hop-https-pkey-set! pem))
 	    (("--https-cert" ?pem (help "HTTPS certificate file"))
 	     (hop-https-cert-set! pem))
-	    (("--fast-server-event" (help "Enable fast Server events"))
-	     (hop-enable-fast-server-event-set! #t))
-	    (("--no-fast-server-event" (help "Disable fast server events"))
-	     (hop-enable-fast-server-event-set! #f))
 	    ((("-i" "--session-id") ?session (help "Set session identifier"))
 	     (hop-session-set! (string->integer session)))
 	    (("--no-job-restore" (help "Don't restore jobs"))
@@ -301,8 +307,9 @@
 	     (hop-run-server-set! #t))
 	    (("--no-server" (help "Exit after loading command line files"))
 	     (hop-port-set! -1)
+	     (hop-ssl-port-set! -1)
 	     (hop-run-server-set! #f)
-	     (unless p (set! p 0)))
+	     (set! p #f))
 	    (("--exepath" ?name (help "Set JavaScript executable path"))
 	     (if (string=? name "*")
 		 (hop-exepath-set! (executable-name))
@@ -348,8 +355,14 @@
 		   ((or (string=? val "false") (string=? val "#f")) #f)
 		   ((string->number val) => (lambda (val) val))
 		   (else val))))
-	    (("--js-modules-dir" ?dir (help "Set default node_modules dir"))
+	    (("--js-modules-dir" ?dir
+		(help (format "Set default node_modules dir [~a]"
+			 (nodejs-modules-directory))))
 	     (nodejs-modules-directory-set! dir))
+	    (("--js-commonjs-export" (help "Automatic commonjs modules export"))
+	     (nodejs-compiler-options-add! :commonjs-export #t))
+	    (("--no-js-commonjs-export" (help "Automatic commonjs modules export"))
+	     (nodejs-compiler-options-add! :commonjs-export #f))
 	    (("--profile" (help "Profiling mode (see HOPTRACE)"))
 	     (hop-profile-set! #t))
 	    ;; Internals
@@ -398,8 +411,20 @@
 	    (else
 	     (set! files (cons else files)))))
 
-      ;; http port
-      (when p (hop-port-set! p))
+      ;; http and https port
+      (cond
+	 ((and p ps)
+	  (hop-port-set! p)
+	  (hop-ssl-port-set! ps))
+	 (p
+	  (if (hop-enable-https)
+	      (begin
+		 (hop-port-set! -1)
+		 (hop-ssl-port-set! p))
+	      (hop-port-set! p)))
+	 (ps
+	  (hop-port-set! -1)
+	  (hop-ssl-port-set! ps)))
       
       ;; Hop version
       (hop-verb 1 "Hop " (hop-color 1 "v" (hop-version)) "\n")
@@ -414,7 +439,13 @@
 	    (exit 0)))
 
       ;; open the server socket before switching to a different process owner
-      (init-server-socket!)
+      (when (>=fx (hop-port) 0)
+	 (hop-server-socket-set! (init-server-socket! (hop-port) #f))
+	 (hop-port-set! (socket-port-number (hop-server-socket))))
+      
+      (when (>=fx (hop-ssl-port) 0)
+	 (hop-server-ssl-socket-set! (init-server-socket! (hop-ssl-port) #t))
+	 (hop-ssl-port-set! (socket-port-number (hop-server-ssl-socket))))
       
       ;; set the hop process owner
       (when setuser
@@ -439,23 +470,29 @@
 	     (lambda (p)
 		(load-mime-types (make-file-name p ".mime.types"))))))
       
+      ;; clear sofiles
+      (when clear-so
+	 (let ((dir (dirname (hop-sofile-path "dummy.so"))))
+	    (delete-path dir)))
+      
       ;; clear all caches
       (when clear-cache
 	 (let ((cache (make-cache-name)))
 	    (when (directory? cache)
 	       (delete-path cache))))
-      
-      ;; clear sofiles
-      (when clear-libs
-	 (let ((dir (dirname (hop-sofile-path "dummy.so"))))
-	    (delete-path dir)))
+
+      ;; create cache directory
+      (when (hop-cache-enable)
+	 (let ((cache (make-cache-name)))
+	    (unless (directory? cache)
+	       (make-directories cache))))
       
       ;; weblets path
       (hop-autoload-directory-add!
 	 (make-file-name (hop-rc-directory) "weblets"))
       
       ;; init hss, scm compilers, and services
-      (init-hss-compiler! (hop-port))
+      (init-hss-compiler! (hop-default-port))
       
       (init-hopscheme! :reader (lambda (p v) (hop-read p))
 	 :tmp-dir (os-tmp)
@@ -467,7 +504,7 @@
 		     (obj->javascript-attr ev op)
 		     (close-output-port op)))
 	 :hop-compile (lambda (obj op compile)
-			 (hop->javascript obj op compile #f))
+			 (hop->javascript obj op compile #f #f))
 	 :hop-register hop-register-value
 	 :hop-library-path (hop-library-path)
 	 :features `(hop
@@ -500,7 +537,7 @@
 	 :precompiled-declared-variables hopscheme-declared
 	 :precompiled-free-variables hopscheme-free
 	 :filename-resolver hop-clientc-filename-resolver
-	 :jsc nodejs-compile-file
+	 :jsc nodejs-compile-client-file
 	 :jsonc nodejs-compile-json
 	 :htmlc nodejs-compile-html)
 
@@ -527,32 +564,16 @@
       ;; default backend
       (when (string? be) (hop-xml-backend-set! (string->symbol be)))
       
-      ;; server event port
-      (when (hop-enable-fast-server-event)
-	 (cond
-	    ((eq? ep #unspecified)
-	     (set! ep p))
-	    ((and (>fx ep 0) (<fx ep 1024))
-	     (error "fast-server-event-port"
-		"Server event port must be greater than 1023. (See `--fast-server-event-port' or `--no-fast-server-event' options.)"
-		ep))
-	    (else
-	     (hop-fast-server-event-port-set! ep))))
-      
       (when autoloadp (install-autoload-weblets! (hop-autoload-directories)))
       
       (for-each (lambda (l) (eval `(library-load ',l))) libraries)
       
       ;; write the process key
-      (hop-process-key-write (hop-process-key) (hop-port))
+      (hop-process-key-write (hop-process-key) (hop-default-port))
       (register-exit-function! (lambda (ret)
-				  (hop-process-key-delete (hop-port))
+				  (hop-process-key-delete (hop-default-port))
 				  ret))
 
-      ;; check if a new server socket must be opened
-      (when (and (integer? p) (not (=fx p (hop-port))))
-	 (init-server-socket!))
-      
       (values (reverse files) (reverse! exprs) (reverse! exprsjs))))
 
 ;*---------------------------------------------------------------------*/
@@ -596,20 +617,21 @@
 ;*---------------------------------------------------------------------*/
 (define (hello-world)
    ;; ports and various configuration
-   (hop-verb 1
-      (if (hop-enable-https)
-	  (format "  https (~a): " (hop-https-protocol)) "  http: ")
-      (hop-color 2 "" (hop-port)) "\n")
+   (when (>=fx (hop-port) 0)
+      (hop-verb 1
+	 "  http: "
+	 (hop-color 2 "" (hop-port)) "\n"))
+   (when (>=fx (hop-ssl-port) 0)
+      (hop-verb 1
+	 (format "  https (~a): " (hop-https-protocol))
+	 (hop-color 2 "" (hop-ssl-port)) "\n"))
+   ;; host
    (hop-verb 1
       "  hostname: " (hop-color 2 "" (hop-server-hostname)) "\n")
    (hop-verb 1
       "  hostip: " (hop-color 2 "" (hop-server-hostip)) "\n")
+   ;; security
    (hop-verb 2
-      (if (and (hop-enable-fast-server-event)
-	       (not (=fx (hop-port) (hop-fast-server-event-port))))
-	  (format "  comet-port: ~a\n"
-	     (hop-color 2 "" (hop-fast-server-event-port)))
-	  "")
       "  security: "
       (with-access::security-manager (hop-security-manager) (name)
 	 (hop-color 2 "" name))
@@ -635,7 +657,8 @@
    (print "Shell Variables:")
    (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
    (print "      j2s:info, j2s:type, j2s:utype, j2s:hint, j2s:usage, j2s:key")
-   (print "      nodejs:compile, hopscript:cache, hopscript:hint")
+   (print "      j2s:dump, nodejs:compile, hopscript:cache, hopscript:hint")
+   (print "   - HOPVEROSE: an integer")
    (print "   - HOPCFLAGS: hopc compilation flags")
    (print "   - NODE_DEBUG: nodejs internal debugging [NODE_DEBUG=key]")
    (print "   - NODE_PATH: nodejs require path")
@@ -645,15 +668,6 @@
    (print "   - rc-file: " (hop-rc-file)))
 
 ;*---------------------------------------------------------------------*/
-;*    %hop-load-rc ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (%hop-load-rc path)
-   (when (and (string? path) (file-exists? path))
-      (hop-verb 3 "loading \"" (hop-color 3 "" path) "\"...\n")
-      (hop-load path)
-      path))
-
-;*---------------------------------------------------------------------*/
 ;*    parseargs-loadrc ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (parseargs-loadrc rc-file default)
@@ -661,26 +675,18 @@
        (let ((suf (suffix rc-file)))
 	  (cond
 	     ((member suf '("hop" "scm"))
-	      (%hop-load-rc rc-file)
+	      (hop-load-rc rc-file)
 	      rc-file)
 	     ((member suf '("js"))
 	      rc-file)))
        (let ((path (make-file-name (hop-rc-directory) default)))
 	  (if (file-exists? path)
-	      (%hop-load-rc path)
+	      (hop-load-rc path)
 	      (let ((jspath (string-append (prefix path) ".js")))
 		 (if (file-exists? jspath)
 		     jspath
 		     (let ((def (make-file-name (hop-etc-directory) default)))
-			(%hop-load-rc def))))))))
-
-;*---------------------------------------------------------------------*/
-;*    hop-load-rc ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (hop-load-rc file)
-   (let ((path (make-file-name (hop-rc-directory) file)))
-      (when (file-exists? path)
-	 (%hop-load-rc path))))
+			(hop-load-rc def))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    key-filename ...                                                 */
@@ -729,11 +735,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-clientc-filename-resolver ...                                */
 ;*---------------------------------------------------------------------*/
-(define (hop-clientc-filename-resolver name context-or-path)
+(define (hop-clientc-filename-resolver name ctx module)
    (cond
-      ((or (string-suffix? ".js" name) (not (string? context-or-path)))
-       (let ((scope context-or-path))
-	  (nodejs-resolve name scope (js-get scope 'module scope) 'head)))
+      ((or (string-suffix? ".js" name) (not (string? ctx)))
+       (when module
+	  (nodejs-resolve name ctx module 'head)))
       (else
-       (let ((path context-or-path))
-	  (find-file/path name path)))))
+       (find-file/path name ctx))))

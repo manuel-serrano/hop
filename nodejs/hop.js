@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/nodejs/hop.js                     */
+/*    serrano/prgm/project/hop/hop/nodejs/hop.js                       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Fri Oct 20 08:16:15 2017 (serrano)                */
-/*    Copyright   :  2014-17 Manuel Serrano                            */
+/*    Last change :  Sun May 17 13:49:02 2020 (serrano)                */
+/*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
 /*=====================================================================*/
@@ -15,10 +15,21 @@ var hop = process.binding( "hop" );
 /*---------------------------------------------------------------------*/
 /*    info                                                             */
 /*---------------------------------------------------------------------*/
+exports.isServer = hop.isServer;
+exports.isWorker = hop.isWorker;
 exports.hostname = hop.hostname;
 exports.version = hop.version;
-exports.__defineGetter__( 'port', function() { return hop.port(); } );
+exports.__defineGetter__( 'port', hop.port );
+exports.__defineGetter__( 'ports', hop.ports );
 exports.standalone = hop.standalone;
+exports.loginCookieCryptKey = hop.loginCookieCryptKey;
+
+/*---------------------------------------------------------------------*/
+/*    Server configuration                                             */
+/*---------------------------------------------------------------------*/
+exports.__defineGetter__( 'httpAuthenticationMethod',
+			  hop.httpAuthenticationMethodGet,
+			  hop.httpAuthenticationMethodSet );
 
 /*---------------------------------------------------------------------*/
 /*    Services                                                         */
@@ -52,6 +63,13 @@ exports.HTTPResponseError = function( obj ) {
 };
 
 /*---------------------------------------------------------------------*/
+/*    Request Filters                                                  */
+/*---------------------------------------------------------------------*/
+exports.addRequestFilter = hop.addRequestFilter;
+exports.addRequestFilterFirst = hop.addRequestFilterFirst;
+exports.addRequestFilterLast = hop.addRequestFilterLast;
+
+/*---------------------------------------------------------------------*/
 /*    Charset                                                          */
 /*---------------------------------------------------------------------*/
 exports.charsetConvert = hop.charsetConvert;
@@ -75,6 +93,8 @@ exports.createElement = hop.createElement;
 /*---------------------------------------------------------------------*/
 exports.encodeURIComponent = hop.encodeURIComponent;
 exports.encodeHTML = hop.encodeHTML;
+exports.decodeURIComponent = hop.decodeURIComponent;
+exports.decodeHTML = hop.decodeHTML;
 exports.md5sum = hop.md5sum;
 exports.sha1sum = hop.sha1sum;
 
@@ -120,7 +140,7 @@ function eventListenerMonitor( ... events ) {
    // Although the two following methods have no free variables, they
    // must be created for each monitor. If they would be shared by
    // all monitors the removeEventListener would not work properly.
-   Object.defineProperty( eventListenerMonitor.prototype, "connectListener", {
+   Object.defineProperty( this, "connectListener", {
       configurable: false, enumerable: false, writable: false,
       value: e => {
 	 if( this.events.indexOf( e.data ) >= 0 ) {
@@ -128,7 +148,7 @@ function eventListenerMonitor( ... events ) {
 	 }
       }
    } );
-   Object.defineProperty( eventListenerMonitor.prototype, "disconnectListener", {
+   Object.defineProperty( this, "disconnectListener", {
       configurable: false, enumerable: false, writable: false,
       value: e => {
 	 if( this.events.indexOf( e.data ) >= 0 ) {
@@ -138,14 +158,14 @@ function eventListenerMonitor( ... events ) {
    } );
 
    events.forEach( this.monitor, this );
-   
+
    return this;
 }
 
 eventListenerMonitor.prototype.monitor = function( evname ) {
    if( this.events.indexOf( evname ) < 0 ) {
       this.events.push( evname );
-      if( this.events.length == 1 ) {
+      if( this.events.length === 1 ) {
 	 hop.addEventListener( "connect", this.connectListener );
 	 hop.addEventListener( "disconnect", this.disconnectListener );
       }
@@ -157,7 +177,7 @@ eventListenerMonitor.prototype.ignore = function( evname ) {
    if( i >= 0 ) {
       this.events.splice( i, 1 );
    }
-   if( this.events.length == 0 ) {
+   if( this.events.length === 0 ) {
       hop.removeEventListener( "connect", this.connectListener );
       hop.removeEventListener( "disconnect", this.disconnectListener );
    }
@@ -168,7 +188,7 @@ eventListenerMonitor.prototype.addEventListener = function( evname, ltn ) {
       case "newListener":
 	 this.conlisteners.push( ltn );
 	 break;
-	 
+
       case "removeListener":
 	 this.dislisteners.push( ltn );
 	 break;
@@ -180,7 +200,7 @@ eventListenerMonitor.prototype.removeEventListener = function( evname, ltn ) {
       case "newListener":
 	 this.conlisteners.filter( l => l != ltn );
 	 break;
-	 
+
       case "removeListener":
 	 this.dislisteners.filter( l => l != ltn );
 	 break;
@@ -207,9 +227,12 @@ exports.config = hop.modulesDir + "/config";
 exports.user = hop.modulesDir + "/user";
 exports.hss = hop.modulesDir + "/hss";
 exports.markdown = hop.modulesDir + "/markdown";
+exports.texinfo = hop.modulesDir + "/texinfo";
 exports.syslog = hop.modulesDir + "/syslog";
 exports.systime = hop.modulesDir + "/systime";
+exports.hopc = hop.modulesDir + "/hopc";
+exports.feed = hop.modulesDir + "/feed";
+exports.hopdroid = hop.modulesDir + "/hopdroid";
 
 Object.seal( exports );
 Object.freeze( exports );
-

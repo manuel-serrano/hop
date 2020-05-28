@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/etc/hop-autoconf.js.in            */
+/*    serrano/prgm/project/hop/hop/etc/hop-autoconf.js.in              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Apr 29 11:00:56 2016 (serrano)                */
-/*    Copyright   :  2006-16 Manuel Serrano                            */
+/*    Last change :  Tue Sep  3 08:06:22 2019 (serrano)                */
+/*    Copyright   :  2006-19 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
@@ -153,34 +153,6 @@ var hop_enable_location_event = @LOCEVENT@;
 /*    deduced by introspection.                                        */
 /*---------------------------------------------------------------------*/
 function hop_Config() {
-   function hop_get_flash_version() {
-      if( navigator.mimeTypes
-	  && navigator.mimeTypes[ "application/x-shockwave-flash" ] ) {
-	 var p = navigator.mimeTypes[ "application/x-shockwave-flash" ].enabledPlugin;
-	 
-	 if( p && p.description ) {
-	    var d = p.description;
-
-	    if( (typeof d == "string") && (d.indexOf( "Shockwave Flash " ) == 0) ) {
-	       return parseFloat( d.substring( 16, d.indexOf( " ", 16 ) ) );
-	    }
-	 }
-      } else {
-	 try {
-	    if( "ActiveXObject" in window ) {
-	       axo = new ActiveXObject( "ShockwaveFlash.ShockwaveFlash.7" );
-	       var m = axo.GetVariable( "$version" ).match( /.+ ([0-9]+),/ );
-	       if( m != null ) {
-		  return m[ 1 ];
-	       }
-	    }
-	 } catch (e) {
-	 }
-      }
-
-      return 0;
-   }
-   
    /* body */
    if( ("body" in document) && (document.body != null) ) {
       this.body = document.body;
@@ -212,7 +184,7 @@ function hop_Config() {
    this.html5_video = "play" in document.createElement( "video" );
    var audio = document.createElement( "audio" );
 
-   if( !"HTMLAudioElement" in window ) {
+   if( !("HTMLAudioElement" in window) ) {
       this.html5_audio = false;
    } else {
       this.html5_audio = 
@@ -221,13 +193,6 @@ function hop_Config() {
 	 && ((audio.canPlayType( "audio/ogg" ) != "")
              || (audio.canPlayType( "audio/mpeg" ) != ""));
    }
-
-   /* flash version */
-   this.flash_version = hop_get_flash_version();
-   this.flash_external_interface = false;
-   this.flash_audio = false;
-   this.flash_serverevent = false;
-   this.flash_markup = "embed";
 
    /* Geolocation */
    this.geolocation = (navigator.geolocation ? true : false);
@@ -257,10 +222,6 @@ function hop_Config() {
       this.js_speed = 20;
       this.navigator_family = "msie";
       this.mouse_left_button = 1;
-      this.flash_external_interface = true;
-      this.flash_audio = true;
-      this.flash_serverevent = true;
-      this.flash_markup = "object";
       this.inline_image = false;
       if( navigator.userAgent.indexOf( "MSIE 6.0" ) >= 0 ) {
 	 hop_enable_location_event = false;
@@ -269,52 +230,32 @@ function hop_Config() {
       this.js_speed = 70;
       this.navigator_family = "opera";
       this.mouse_left_button = 0;
-      this.flash_external_interface = false;
-      this.flash_audio = false;
-      this.flash_serverevent = false;
-      this.flash_markup = "embed";
       this.inline_image = true;
    } else if( navigator.userAgent.indexOf( "Chrome" ) >= 0 ) {
       this.js_speed = 100;
       this.navigator_family = "chrome";
       this.mouse_left_button = 0;
-      this.flash_external_interface = true;
-      this.flash_audio = true;
-      this.flash_serverevent = true;
-      this.flash_markup = "embed";
       this.inline_image = true;
       this.css = 3;
       this.css_transition = true;
-      if( ! "Window" in window || window.Window === undefined ) {
+      if( !("Window" in window) || window.Window === undefined ) {
 	 window.Window = window.constructor;
       }
    } else if( navigator.userAgent.indexOf( "Safari" ) >= 0 ) {
       this.js_speed = 80;
       this.navigator_family = "safari";
       this.mouse_left_button = 0;
-      this.flash_external_interface = true;
-      this.flash_audio = true;
-      this.flash_serverevent = true;
-      this.flash_markup = "embed";
       this.inline_image = true;
       this.css_transition = true;
    } else if( navigator.userAgent.indexOf( "WebKit" ) >= 0 ) {
       this.navigator_family = "webkit";
       this.js_speed = 80;
       this.mouse_left_button = 0;
-      this.flash_external_interface = true;
-      this.flash_audio = true;
-      this.flash_serverevent = true;
-      this.flash_markup = "embed";
       this.inline_image = true;
       this.css_transition = true;
    } else if( navigator.userAgent.indexOf( "KHTML" ) >= 0 ) {
       this.navigator_family = "khtml";
       this.mouse_left_button = 1;
-      this.flash_external_interface = true;
-      this.flash_audio = true;
-      this.flash_serverevent = true;
-      this.flash_markup = "embed";
       this.inline_image = true;
    } else if( navigator.userAgent.indexOf( "Mozilla" ) >= 0 ) {
       if( navigator.userAgent.match( /(?:[4-9]|[1-9][0-9]+).[0-9][^ ]*$/ ) ) {
@@ -335,12 +276,8 @@ function hop_Config() {
       
       this.navigator_family = "mozilla";
       this.mouse_left_button = 0;
-      this.flash_external_interface = true;
-      this.flash_audio = true;
-      this.flash_serverevent = true;
-      this.flash_markup = "embed";
       this.inline_image = true;
-      this.filtered_errors = ["javascript:top.location+\"__flashplugin_unique__\"", "tipElement.ownerDocument is null"];
+      this.filtered_errors = ["tipElement.ownerDocument is null"];
    } else {
       alert( "Unknown navigator (" + navigator.userAgent +
 	     "), using default settings..." );
@@ -353,20 +290,6 @@ function hop_Config() {
    this.screen_available_height = screen.availHeight;
    this.screen_color_depth = screen.colorDepth;
    
-   /* Android webkit adjustments */
-   if( this.flash_audio ) {
-      if( navigator.userAgent.indexOf( "Android 2.1" ) ||
-          navigator.userAgent.indexOf( "Android 2.0" ) ) {
-	 this.flash_audio = false;
-      }
-   }
-
-   if( this.flash_serverevent ) {
-      if( navigator.userAgent.indexOf( "Android 2.3" ) ) {
-	 this.flash_serverevent = false;
-      }
-   }
-
 #if HOP_SCHEME   
    this.version = hop_version();
    this.backend = hop_backend();
@@ -404,20 +327,6 @@ function hop_config_get( key ) {
    } else {
       return hop_config[ sc_keyword2jsstring( key ) ];
    }
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_flash_minversion_set ...                                     */
-/*---------------------------------------------------------------------*/
-function hop_flash_minversion_set( v ) {
-   if( v > hop_config.flash_version ) hop_config.flash_version = v;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_flash_audio_set ...                                          */
-/*---------------------------------------------------------------------*/
-function hop_flash_audio_set( v ) {
-   hop_config.flash_audio = v;
 }
 
 /*---------------------------------------------------------------------*/
@@ -756,13 +665,7 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
       var h = http.getResponseHeader( "Content-Type" );
 
       if( h ) {
-	 var i = h.indexOf( ";" );
-
-	 if( i >= 0 ) {
-	    return h.substring( 0, i );
-	 } else {
-	    return h;
-	 }
+	 return h;
       } else {
 	 return "application/text";
       }
@@ -787,7 +690,7 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
 
       var j = hds.indexOf( "\n", i + 1 );
       var s = (j >= 0) ? hds.substring( i, j ) : hds.substring( i, s.length );
-      var m = s.match( "[ \t:]+([^ \n;]*)" );
+      var m = s.match( "[ \t:]+([^\n]*)" );
 
       if( m )
 	 return m[ 1 ];
@@ -1267,7 +1170,25 @@ if( hop_config.uint8array ) {
 
    if( typeof s === "string" && s.charCodeAt( 0 ) === 111 ) {
       hop_uint8array_to_string = function hop_uint8array_to_string( o ) {
-	 return String.fromCharCode.apply( null, o );
+      	 if( o.length > 10000 ) {
+	    var res = String.fromCharCode.apply( null, o.subarray( o, 10000 ) );
+	    var i = 10000;
+	    
+	    // split the string creation as chromium suffer a stack overflow
+	    // on large strings
+	    while( true ) {
+	       var j = i + 10000;
+	       
+	       if( j < o.length ) {
+		  res += String.fromCharCode.apply( null, o.subarray( i, j ) );
+		  i = j;
+	       } else {
+		  return res + String.fromCharCode.apply( null, o.subarray( i, o.length ) );
+	       }
+	    }
+	 } else {
+	    return String.fromCharCode.apply( null, o );
+	 }
       }
    } else {
       hop_uint8array_to_string = function hop_uint8array_to_string( o ) {

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/html_react.scm            */
+;*    serrano/prgm/project/hop/3.2.x/runtime/html_react.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr 28 18:01:20 2016                          */
-;*    Last change :  Sat Jun 25 08:26:52 2016 (serrano)                */
-;*    Copyright   :  2016 Manuel Serrano                               */
+;*    Last change :  Tue Nov 13 20:50:36 2018 (serrano)                */
+;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dynamic nodes                                                    */
 ;*=====================================================================*/
@@ -45,15 +45,17 @@
 		     (src #unspecified)
 		     (attributes)
 		     body)
-   (let ((id (xml-make-id)))
-      (instantiate::xml-react
-	 (tag 'react)
-	 (id id)
-	 (body `(lambda ()
-		   ,@(filter-map (lambda (node)
-				    (when (isa? node xml-tilde)
-				       (xml-tilde->sexp node)))
-			body))))))
+   (let ((nodes (filter-map (lambda (node)
+			       (when (isa? node xml-tilde)
+				  (xml-tilde->sexp node)))
+		   body)))
+      (if (null? nodes)
+	  (error "<REACT>" "Illegal empty react node" body)
+	  (let ((id (xml-make-id)))
+	     (instantiate::xml-react
+		(tag 'react)
+		(id id)
+		(body `(lambda () ,@nodes)))))))
 	       
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-react ...                                        */

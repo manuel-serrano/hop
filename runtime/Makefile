@@ -1,15 +1,16 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/runtime/Makefile                  */
+#*    serrano/prgm/project/hop/hop/runtime/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Mar 14 07:21:11 2018 (serrano)                */
+#*    Last change :  Mon May 27 08:43:03 2019 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
-.PHONY: do 
+.PHONY: do install
 
 do: build
+install: install-library
 
 #*---------------------------------------------------------------------*/
 #*    Standard Hop configuration                                       */
@@ -40,7 +41,7 @@ _OBJECTS = param thread misc priv types read module \
            read_js clientc js_comp json \
            css cssmatch hop_rss \
            hop service \
-           job mime user password cache \
+           mime user password cache \
            hop_wiki wiki_syntax wiki_parser wiki_toc hz \
            http_lib http_request \
            http_response http_shoutcast http_proxy http_webdav \

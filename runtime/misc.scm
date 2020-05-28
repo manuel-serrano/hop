@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/runtime/misc.scm                  */
+;*    serrano/prgm/project/hop/hop/runtime/misc.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Sat Jun 23 06:52:37 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Thu Oct 31 22:18:35 2019 (serrano)                */
+;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
 ;*=====================================================================*/
@@ -289,7 +289,9 @@
 ;*---------------------------------------------------------------------*/
 (define (make-cache-name #!optional name)
    (let ((base (make-file-name (hop-cache-directory)
-		  (integer->string (hop-port)))))
+		  (integer->string (hop-default-port)))))
+      (unless (directory? base)
+	 (make-directories base))
       (if name
 	  (make-file-name base name)
 	  base)))
@@ -324,6 +326,7 @@
       (let loop ((ttl (hop-connection-ttl)))
 	 (let ((res (with-handler
 		       (lambda (e)
+			  (exception-notify e)
 			  (if (and (>fx ttl 0) (isa? e &io-timeout-error))
 			      (begin
 				 (hop-verb 1
@@ -340,9 +343,9 @@
 		       (if ssl
 			   (cond-expand
 			      (enable-ssl
-				 (make-ssl-client-socket host port
-				    :protocol (hop-https-protocol)
-				    :timeout tmt))
+			       (make-ssl-client-socket host port
+				  :protocol (hop-https-protocol)
+				  :timeout tmt))
 			      (else
 			       (error "make-client-socket/timeout"
 				  "SSL not supported"

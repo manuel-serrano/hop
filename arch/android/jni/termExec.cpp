@@ -67,7 +67,7 @@ static jclass class_fileDescriptor;
 static jfieldID field_fileDescriptor_descriptor;
 static jmethodID method_fileDescriptor_init;
 
-typedef uint16_t char16_t;
+//typedef uint16_t char16_t;
 
 
 class String8 {
@@ -82,7 +82,7 @@ public:
         }
     }
 
-    void set(const char16_t* o, size_t numChars) {
+    void set(const uint16_t* o, size_t numChars) {
         mString = (char*) malloc(numChars + 1);
         for (size_t i = 0; i < numChars; i++) {
             mString[i] = (char) o[i];

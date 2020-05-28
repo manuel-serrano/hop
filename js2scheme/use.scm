@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/use.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/use.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun Jun 17 12:21:08 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Thu Jan 16 08:31:50 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
 ;*=====================================================================*/
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_use
 
+   (include "usage.sch")
+   
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_compile
@@ -22,8 +24,9 @@
 
    (export j2s-use-stage
 	   j2s-dead-stage
+	   (generic reinit-use-count! ::J2SNode)
 	   (generic reset-use-count ::J2SNode)
-	   (generic use-count ::J2SNode inc::int inloop::bool)
+	   (generic use-count ::J2SNode inc::int looplevel::int)
 	   (filter-dead-declarations::pair-nil ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
@@ -55,8 +58,8 @@
    
    (define (use-nodes nodes)
       (for-each (lambda (o)
-		   (use-count o +1 #f)
-		   (usage o 'ref deval #f))
+		   (use-count o +1 0)
+		   (j2s-use o 'ref deval #f))
 	 nodes))
    
    (when (isa? this J2SProgram)
@@ -66,8 +69,7 @@
 	 (use-nodes nodes)
 	 (if (cell-ref deval)
 	     (for-each (lambda (d::J2SDecl)
-			  (with-access::J2SDecl d (usage)
-			     (set! usage (cons 'eval usage))))
+ 			  (decl-usage-add! d 'eval))
 		decls)
 	     (begin
 		;; it might be valuable to count the number of direct
@@ -101,8 +103,9 @@
 	    (set! keep #f)
 	    (set! decls
 	       (filter (lambda (d::J2SDecl)
-			  (with-access::J2SDecl d (usecnt id)
+			  (with-access::J2SDecl d (usecnt id scope)
 			     (or (>fx usecnt 0)
+				 (eq? scope 'export)
 				 (and (isa? d J2SDeclInit)
 				      (with-access::J2SDeclInit d (val)
 					 (or (isa? val J2SSvc)
@@ -113,7 +116,7 @@
 				    (set! keep #t)
 				    (when (isa? d J2SDeclInit)
 				       (with-access::J2SDeclInit d (val)
-					  (use-count val -1 #f)))
+					  (use-count val -1 0)))
 				    #f))))
 		  decls))
 	    (loop)))
@@ -122,63 +125,94 @@
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SNode ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SNode inc inloop)
+(define-walk-method (use-count this::J2SNode inc looplevel)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SFun inc inloop)
+(define-walk-method (use-count this::J2SFun inc looplevel)
    (with-access::J2SFun this (params body decl)
-      (use-count body inc #f))
+      (use-count body inc looplevel))
    this)
    
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SSvc ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SSvc inc inloop)
+(define-walk-method (use-count this::J2SSvc inc looplevel)
    (with-access::J2SSvc this (params body decl)
-      (use-count body inc #f))
+      (use-count body inc looplevel))
    this)
-   
+
+;*---------------------------------------------------------------------*/
+;*    use-count ::J2SDecl ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (use-count this::J2SDecl inc looplevel)
+   (with-access::J2SDecl this (%info)
+      (set! %info looplevel)
+      (call-default-walker)))
+
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SRef ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SRef inc inloop)
+(define-walk-method (use-count this::J2SRef inc looplevel)
    (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (usecnt useinloop)
-	 (when inloop (set! useinloop #t))
+      (with-access::J2SDecl decl (usecnt useinloop %info)
+	 (when (and (integer? %info) (<fx %info looplevel))
+	    (set! useinloop #t))
 	 (set! usecnt (+fx inc usecnt))))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SGlobalRef ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SGlobalRef inc inloop)
+(define-walk-method (use-count this::J2SGlobalRef inc looplevel)
    (with-access::J2SGlobalRef this (decl)
-      (with-access::J2SDecl decl (usecnt useinloop)
-	 (when inloop (set! useinloop #t))
+      (with-access::J2SDecl decl (usecnt useinloop %info)
+	 (when (and (integer? %info) (<fx %info looplevel))
+	    (set! useinloop #t))
 	 (set! usecnt (+fx inc usecnt))))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SFor ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SFor inc inloop)
+(define-walk-method (use-count this::J2SFor inc looplevel)
    (with-access::J2SFor this (init test incr body)
-      (use-count init inc #f)
-      (use-count test inc #t)
-      (use-count incr inc #t)
-      (use-count body inc #t)))
+      (use-count init inc looplevel)
+      (use-count test inc (+fx 1 looplevel))
+      (use-count incr inc (+fx 1 looplevel))
+      (use-count body inc (+fx 1 looplevel))))
 
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SWhile ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SWhile inc inloop)
+(define-walk-method (use-count this::J2SWhile inc looplevel)
    (with-access::J2SWhile this (test body)
-      (use-count test inc #t)
-      (use-count body inc #t)))
-      
+      (use-count test inc (+fx looplevel 1))
+      (use-count body inc (+fx looplevel 1))))
+
+;*---------------------------------------------------------------------*/
+;*    reinit-use-count! ::J2SNode ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reinit-use-count! this::J2SNode)
+   (reset-use-count this)
+   (use-count this +1 0)
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    reinit-use-count! ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reinit-use-count! this::J2SProgram)
+   (with-access::J2SProgram this (headers decls nodes)
+      (for-each reset-use-count headers)
+      (for-each reset-use-count decls)
+      (for-each reset-use-count nodes)
+      (for-each (lambda (n) (use-count n +1 0)) headers)
+      (for-each (lambda (n) (use-count n +1 0)) decls)
+      (for-each (lambda (n) (use-count n +1 0)) nodes)
+      this))
+
 ;*---------------------------------------------------------------------*/
 ;*    reset-use-count ::J2SNode ...                                    */
 ;*---------------------------------------------------------------------*/
@@ -213,49 +247,60 @@
 ;*    reset-use-count ::J2SDecl ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (reset-use-count this::J2SDecl)
-   (with-access::J2SDecl this (usecnt)
-      (set! usecnt 0))
+   (with-access::J2SDecl this (usecnt scope id)
+      (set! usecnt (if (eq? scope 'export) 1000 0)))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    reset-use-count ::J2SDeclInit ...                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (reset-use-count this::J2SDeclInit)
-   (with-access::J2SDeclInit this (usecnt val)
-      (when (>fx usecnt 0)
-	 (set! usecnt 0)
+   (with-access::J2SDeclInit this (usecnt val scope %info id)
+      (unless (eq? %info this)
+	 (set! %info this)
+	 (when (or (>fx usecnt 0) (eq? scope 'export))
+	    (set! usecnt (if (eq? scope 'export) 1000 0))
+	    (reset-use-count val))))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    reset-use-count ::J2SDeclSvc ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reset-use-count this::J2SDeclSvc)
+   (with-access::J2SDeclSvc this (val id %info)
+      (unless (eq? %info this)
+	 (set! %info this)
 	 (reset-use-count val)))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    usage ::J2SNode ...                                              */
+;*    j2s-use ::J2SNode ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SNode ctx deval infun)
+(define-walk-method (j2s-use this::J2SNode ctx deval infun)
    (default-walk this ctx deval infun))
 
 ;*---------------------------------------------------------------------*/
-;*    usage ::J2SExpr ...                                              */
+;*    j2s-use ::J2SExpr ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SExpr ctx deval infun)
+(define-walk-method (j2s-use this::J2SExpr ctx deval infun)
    (default-walk this 'ref deval infun))
       
 ;*---------------------------------------------------------------------*/
-;*    usage ::J2SRef ...                                               */
+;*    j2s-use ::J2SRef ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SRef ctx deval infun)
+(define-walk-method (j2s-use this::J2SRef ctx deval infun)
    (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (usage %info useinfun id)
+      (with-access::J2SDecl decl (%info escape id)
 	 (unless (eq? infun %info)
-	    (set! useinfun #t))
+	    (set! escape #t))
 	 (when ctx
-	    (unless (memq ctx usage)
-	       (set! usage (cons ctx usage))))))
+	    (decl-usage-add! decl ctx))))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    usage ::J2SUnresolvedRef ...                                     */
+;*    j2s-use ::J2SUnresolvedRef ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SUnresolvedRef ctx deval infun)
+(define-walk-method (j2s-use this::J2SUnresolvedRef ctx deval infun)
    (call-default-walker)
    (with-access::J2SUnresolvedRef this (id)
       (when (and (eq? id 'eval) (eq? ctx 'call))
@@ -263,140 +308,164 @@
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    usage ::J2SGlobalRef ...                                         */
+;*    j2s-use ::J2SGlobalRef ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SGlobalRef ctx deval infun)
+(define-walk-method (j2s-use this::J2SGlobalRef ctx deval infun)
    (call-next-method)
    (with-access::J2SGlobalRef this (decl)
-      (with-access::J2SDecl decl (usage)
-	 (when ctx
-	    (unless (memq ctx usage)
-	       (set! usage (cons ctx usage))))))
+      (when ctx
+	 (decl-usage-add! decl ctx)))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    ronly! ::J2SUnary ...                                            */
+;*    j2s-use ::J2SUnary ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SUnary ctx deval infun)
+(define-walk-method (j2s-use this::J2SUnary ctx deval infun)
    (with-access::J2SUnary this (op expr)
       (cond
 	 ((and (eq? op 'delete) (isa? expr J2SRef))
 	  (with-access::J2SRef expr (decl)
-	     (with-access::J2SDecl decl (usage)
-		(unless (memq 'delete usage)
-		   (set! usage (cons 'delete usage))))
+	     (decl-usage-add! decl 'delete)
 	     this))
 	 ((and (eq? op 'delete) (isa? expr J2SAccess))
 	  (with-access::J2SAccess expr (obj field)
 	     (if (isa? obj J2SRef)
 		 (with-access::J2SRef obj (decl)
-		    (with-access::J2SDecl decl (usage)
-		       (unless (memq 'delete usage)
-			  (set! usage (cons 'delete usage)))))
-		 (usage obj 'ref deval infun))
-	     (usage field 'ctx deval infun)
+		    (decl-usage-add! decl 'delete))
+		 (j2s-use obj 'ref deval infun))
+	     (j2s-use field ctx deval infun)
 	     this))
 	 ((and (eq? op 'delete) (isa? expr J2SGlobalRef))
 	  (with-access::J2SGlobalRef expr (decl)
-	     (with-access::J2SDecl decl (usage)
-		(unless (memq 'delete usage)
-		   (set! usage (cons 'delete usage))))
+	     (decl-usage-add! decl 'delete)
 	     this))
 	 (else
 	  (call-default-walker)))))
 
 ;*---------------------------------------------------------------------*/
-;*    usage ::J2SCall ...                                              */
+;*    j2s-use ::J2SBinary ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SCall ctx deval infun)
-   (with-access::J2SCall this (fun args)
-      (usage fun 'call deval infun)
-      (for-each (lambda (a) (usage a 'ref deval infun)) args))
+(define-walk-method (j2s-use this::J2SBinary ctx deval infun)
+   (with-access::J2SBinary this (op lhs rhs)
+      (if (and (eq? op 'instanceof) (isa? rhs J2SRef))
+	  (with-access::J2SRef rhs (decl)
+	     (decl-usage-add! decl 'instanceof)
+	     (j2s-use lhs 'ref deval infun)
+	     this)
+	  (call-default-walker))))
+      
+;*---------------------------------------------------------------------*/
+;*    j2s-use ::J2SCall ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-use this::J2SCall ctx deval infun)
+   (with-access::J2SCall this (fun args protocol)
+      (j2s-use fun 'call deval infun)
+      (when (eq? protocol 'spread)
+	 (j2s-use fun 'get deval infun))
+      (for-each (lambda (a) (j2s-use a 'ref deval infun)) args))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    usage ::J2SParen ...                                             */
+;*    j2s-use ::J2SParen ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SParen ctx deval infun)
+(define-walk-method (j2s-use this::J2SParen ctx deval infun)
    (with-access::J2SParen this (expr)
-      (usage expr ctx deval infun))
+      (j2s-use expr ctx deval infun))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    usage ::J2SAssig ...                                             */
+;*    j2s-use ::J2SAssig ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SAssig ctx deval infun)
-   (with-access::J2SAssig this (lhs rhs)
-      (usage lhs 'assig deval infun)
-      (usage rhs 'ref deval infun))
+(define-walk-method (j2s-use this::J2SAssig ctx deval infun)
+   (with-access::J2SAssig this (lhs rhs loc)
+      (j2s-use lhs 'assig deval infun)
+      (j2s-use rhs 'ref deval infun))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    usage ::J2SInit ...                                              */
+;*    j2s-use ::J2SInit ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SInit ctx deval infun)
+(define-walk-method (j2s-use this::J2SInit ctx deval infun)
    (with-access::J2SInit this (lhs rhs)
-      (usage lhs 'init deval infun)
-      (usage rhs 'ref deval infun))
+      (j2s-use lhs 'init deval infun)
+      (j2s-use rhs 'ref deval infun))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    usage ::J2SAccess ...                                            */
+;*    j2s-use ::J2SAccess ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SAccess ctx deval infun)
+(define-walk-method (j2s-use this::J2SAccess ctx deval infun)
    (with-access::J2SAccess this (obj field)
-      (usage obj (if (eq? ctx 'assig) 'set 'get) deval infun)
-      (usage field 'ref deval infun))
+      (j2s-use obj (if (eq? ctx 'assig) 'set 'get) deval infun)
+      (j2s-use field 'ref deval infun))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    usage ::J2SNew ...                                               */
+;*    j2s-use ::J2SNew ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SNew ctx deval infun)
+(define-walk-method (j2s-use this::J2SNew ctx deval infun)
    (with-access::J2SNew this (clazz args)
-      (usage clazz 'new deval infun)
-      (for-each (lambda (a) (usage a 'ref deval infun)) args))
+      (j2s-use clazz 'new deval infun)
+      (for-each (lambda (a) (j2s-use a 'ref deval infun)) args))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    usage ::J2SLetBlock ...                                          */
+;*    j2s-use ::J2SLetBlock ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SLetBlock ctx deval infun)
+(define-walk-method (j2s-use this::J2SLetBlock ctx deval infun)
    (with-access::J2SLetBlock this (decls nodes)
       (for-each (lambda (d)
 		   (with-access::J2SDecl d (%info) (set! %info infun)))
 	 decls)
-      (for-each (lambda (d) (usage d 'init deval infun)) decls)
-      (for-each (lambda (n) (usage n 'ref deval infun)) nodes))
+      (for-each (lambda (d) (j2s-use d 'init deval infun)) decls)
+      (for-each (lambda (n) (j2s-use n 'ref deval infun)) nodes))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    usage ::J2SDeclInit ...                                          */
+;*    j2s-use ::J2SDecl ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SDeclInit ctx deval infun)
-   (with-access::J2SDeclInit this ((u usage) val)
-      (usage val 'ref deval infun)
-      (set! u (cons 'init u)))
+(define-walk-method (j2s-use this::J2SDecl ctx deval infun)
+   (with-access::J2SDecl this (exports)
+      (when (and (pair? exports) (not (decl-usage-has? this '(ref))))
+	 (decl-usage-add! this 'ref)))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    usage ::J2SReturn ...                                            */
+;*    j2s-use ::J2SDeclInit ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SReturn ctx deval infun)
+(define-walk-method (j2s-use this::J2SDeclInit ctx deval infun)
+   (with-access::J2SDeclInit this (val)
+      (j2s-use val 'ref deval infun)
+      (decl-usage-add! this 'init))
+   (call-next-method))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-use ::J2SReturn ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-use this::J2SReturn ctx deval infun)
    (with-access::J2SReturn this (expr)
-      (usage expr 'ref deval infun)
+      (j2s-use expr 'ref deval infun)
       this))
 
 ;*---------------------------------------------------------------------*/
-;*    usage ::J2SFun ...                                               */
+;*    j2s-use ::J2SFun ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SFun ctx deval infun)
+(define-walk-method (j2s-use this::J2SFun ctx deval infun)
    (with-access::J2SFun this (params body)
       (for-each (lambda (p)
 		   (with-access::J2SDecl p (%info)
 		      (set! %info this)))
 	 params)
-      (usage body 'ref deval this)))
+      (j2s-use body 'ref deval this)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-use ::J2SForIn ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-use this::J2SForIn ctx deval infun)
+   (with-access::J2SForIn this (lhs obj body)
+      (j2s-use obj ctx deval infun)
+      (j2s-use body 'ref deval infun)
+      (j2s-use lhs 'assig deval infun)))
 
 ;*---------------------------------------------------------------------*/
 ;*    dead-code! ::J2SNode ...                                         */

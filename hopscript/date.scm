@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/date.scm                */
+;*    serrano/prgm/project/hop/hop/hopscript/date.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Nov  3 07:49:46 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Wed Apr  8 08:27:30 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
 ;*    -------------------------------------------------------------    */
@@ -27,24 +27,35 @@
 	   __hopscript_regexp
 	   __hopscript_private
 	   __hopscript_public
-	   __hopscript_error)
+	   __hopscript_lib
+	   __hopscript_error
+	   __hopscript_names)
+
+   (cond-expand
+      ((or bint30 bint32)
+       (import __hopscript_arithmetic32))
+      (else
+       (import __hopscript_arithmetic64)))
    
    (export (js-init-date! ::JsObject)
-	   (js-date->jsdate::JsDate ::date ::JsGlobalObject)))
+	   (js-date->jsdate::JsDate ::date ::JsGlobalObject)
+	   (js-date-now)))
 
 ;*---------------------------------------------------------------------*/
-;*    JsStringLiteral begin                                            */
+;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsDate ...                                   */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsDate
-   (lambda (o)
+   (lambda (o ctx)
       (with-access::JsDate o (val) val))
-   (lambda (o %this)
-      (js-date->jsdate o (or %this (js-initial-global-object)))))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-date->jsdate o ctx)
+	  (error "string-obj ::JsData" "Not a JavaScript context" ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsDate ...                                           */
@@ -53,9 +64,9 @@
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-date)
 	 (let ((nobj (call-next-method)))
-	    (with-access::JsDate nobj (__proto__ val)
+	    (with-access::JsDate nobj (val)
 	       (with-access::JsDate obj ((_val val))
-		  (set! __proto__ (js-get js-date 'prototype %this))
+		  (js-object-proto-set! nobj (js-get js-date (& "prototype") %this))
 		  (set! val (js-donate _val worker %_this))))
 	    nobj))))
 
@@ -72,7 +83,7 @@
 ;*    Used when an JS object is to pack the arguments sent to          */
 ;*    an XML constructor.                                              */
 ;*---------------------------------------------------------------------*/
-(define-method (xml-unpack o::JsDate)
+(define-method (xml-unpack o::JsDate ctx)
    (with-access::JsDate o (val)
       (list val)))
 
@@ -82,7 +93,7 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsDate op compile isexpr)
+(define-method (hop->javascript o::JsDate op compile isexpr ctx)
    (display "new Date(" op)
    (with-access::JsDate o (val)
       (if (date? val)
@@ -107,206 +118,205 @@
 ;*    js-init-date! ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-init-date! %this)
+   ;; local constant strings
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
+   
    ;; first, bind the builtin date prototype
-   (with-access::JsGlobalObject %this (__proto__ js-date js-function)
-      (with-access::JsFunction js-function ((js-function-prototype __proto__))
-
-	 (define js-date-prototype
-	    (instantiateJsDate
-	       (val (current-date))
-	       (cmap (instantiate::JsConstructMap))
-	       (__proto__ __proto__)))
+   (with-access::JsGlobalObject %this (js-date js-function)
+      
+      (define js-date-prototype
+	 (instantiateJsDate
+	    (val (current-date))
+	    (cmap (instantiate::JsConstructMap))
+	    (elements ($create-vector 47))
+	    (__proto__ (js-object-proto %this))))
+      
+      (define (js-date-alloc %this constructor::JsFunction)
+	 (instantiateJsDate
+	    (__proto__ (js-get constructor (& "prototype") %this))))
+      
+      (define (parse-date-arguments args)
+	 (match-case args
+	    ((?year ?month ?date ?hours ?minutes ?seconds ?ms)
+	     (let* ((y (js-tonumber year %this))
+		    (m (js-tonumber month %this))
+		    (d (js-tonumber date %this))
+		    (h (js-tonumber hours %this))
+		    (mi (js-tonumber minutes %this))
+		    (se (js-tonumber seconds %this))
+		    (us (js-tonumber ms %this))
+		    (ns (cond
+			   ((fixnum? us)
+			    (*llong #l1000000 (fixnum->llong us)))
+			   ((flonum? us)
+			    (*llong #l1000000
+			       (fixnum->llong (flonum->fixnum us))))
+			   (else
+			    #l0))))
+		(when (and (fixnum? y) (>fx y 0)
+			   (fixnum? m) (fixnum? d) (fixnum? h)
+			   (fixnum? mi) (fixnum? se) (llong? ns))
+		   (make-date
+		      :year y :month (+ m 1) :day d
+		      :hour h :min mi :sec se :nsec ns))))
+	    ((?year ?month ?date ?hours ?minutes ?seconds)
+	     (let* ((y (js-tonumber year %this))
+		    (m (js-tonumber month %this))
+		    (d (js-tonumber date %this))
+		    (h (js-tonumber hours %this))
+		    (mi (js-tonumber minutes %this))
+		    (se (js-tonumber seconds %this)))
+		(when (and (fixnum? y) (>fx y 0)
+			   (fixnum? m) (fixnum? d) (fixnum? h)
+			   (fixnum? mi) (fixnum? se))
+		   (make-date
+		      :year y :month (+ m 1) :day d
+		      :hour h :min mi :sec se))))
+	    ((?year ?month ?date ?hours ?minutes)
+	     (let* ((y (js-tonumber year %this))
+		    (m (js-tonumber month %this))
+		    (d (js-tonumber date %this))
+		    (h (js-tonumber hours %this))
+		    (mi (js-tonumber minutes %this)))
+		(when (and (fixnum? y) (>fx y 0)
+			   (fixnum? m) (fixnum? d) (fixnum? h)
+			   (fixnum? mi))
+		   (make-date
+		      :year y :month (+ m 1) :day d
+		      :hour h :min mi :sec 0))))
+	    ((?year ?month ?date ?hours)
+	     (let* ((y (js-tonumber year %this))
+		    (m (js-tonumber month %this))
+		    (d (js-tonumber date %this))
+		    (h (js-tonumber hours %this)))
+		(when (and (fixnum? y) (>fx y 0)
+			   (fixnum? m) (fixnum? d) (fixnum? h))
+		   (make-date
+		      :year y :month (+ m 1) :day d
+		      :hour h :min 0 :sec 0))))
+	    ((?year ?month ?date)
+	     (let* ((y (js-tonumber year %this))
+		    (m (js-tonumber month %this))
+		    (d (js-tonumber date %this)))
+		(when (and (fixnum? y) (>fx y 0)
+			   (fixnum? m) (fixnum? d))
+		   (make-date
+		      :year y :month (+ m 1) :day d
+		      :hour 0 :min 0 :sec 0))))
+	    ((?year ?month)
+	     (let* ((y (js-tonumber year %this))
+		    (m (js-tonumber month %this)))
+		(when (and (fixnum? y) (>fx y 0)
+			   (fixnum? m))
+		   (make-date
+		      :year y :month (+ m 1)
+		      :day 1 :hour 0 :min 0 :sec 0))))
+	    ((?value)
+	     (if (isa? value JsDate)
+		 (with-access::JsDate value (val)
+		    val)
+		 (let ((v (js-toprimitive value 'any %this)))
+		    (cond
+		       ((js-jsstring? v)
+			(parse-date (js-jsstring->string v)))
+		       ((js-number? v)
+			(if (flonum? v)
+			    (if (or (nanfl? v) (=fl v +inf.0) (=fl v -inf.0))
+				+nan.0
+				(nanoseconds->date
+				   (flonum->llong
+				      (*fl 1000000. (floorfl v)))))
+			    (let ((n (cond
+					((fixnum? v) (fixnum->llong v))
+					((llong? v) v)
+					((elong? v) (elong->llong v))
+					(else #l0))))
+			       (nanoseconds->date
+				  (*llong #l1000000 n)))))
+		       (else
+			v)))))
+	    (else
+	     (current-date))))
+      
+      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9
+      (define (js-date-construct this::JsDate . args)
 	 
-	 (define (js-date-alloc constructor::JsFunction)
-	    (instantiateJsDate
-	       (__proto__ (js-get constructor 'prototype %this))))
-
-	 (define (parse-date-arguments args)
-	    (match-case args
-	       ((?year ?month ?date ?hours ?minutes ?seconds ?ms)
-		(let* ((y (js-tonumber year %this))
-		       (m (js-tonumber month %this))
-		       (d (js-tonumber date %this))
-		       (h (js-tonumber hours %this))
-		       (mi (js-tonumber minutes %this))
-		       (se (js-tonumber seconds %this))
-		       (us (js-tonumber ms %this))
-		       (ns (cond
-			      ((fixnum? us)
-			       (*llong #l1000000 (fixnum->llong us)))
-			      ((flonum? us)
-			       (*llong #l1000000
-				  (fixnum->llong (flonum->fixnum us))))
-			      (else
-			       #l0))))
-		   (when (and (fixnum? y) (>fx y 0)
-			      (fixnum? m) (fixnum? d) (fixnum? h)
-			      (fixnum? mi) (fixnum? se) (llong? ns))
-		      (make-date
-			 :year y :month (+ m 1) :day d
-			 :hour h :min mi :sec se :nsec ns))))
-	       ((?year ?month ?date ?hours ?minutes ?seconds)
-		(let* ((y (js-tonumber year %this))
-		       (m (js-tonumber month %this))
-		       (d (js-tonumber date %this))
-		       (h (js-tonumber hours %this))
-		       (mi (js-tonumber minutes %this))
-		       (se (js-tonumber seconds %this)))
-		   (when (and (fixnum? y) (>fx y 0)
-			      (fixnum? m) (fixnum? d) (fixnum? h)
-			      (fixnum? mi) (fixnum? se))
-		      (make-date
-			 :year y :month (+ m 1) :day d
-			 :hour h :min mi :sec se))))
-	       ((?year ?month ?date ?hours ?minutes)
-		(let* ((y (js-tonumber year %this))
-		       (m (js-tonumber month %this))
-		       (d (js-tonumber date %this))
-		       (h (js-tonumber hours %this))
-		       (mi (js-tonumber minutes %this)))
-		   (when (and (fixnum? y) (>fx y 0)
-			      (fixnum? m) (fixnum? d) (fixnum? h)
-			      (fixnum? mi))
-		      (make-date
-			 :year y :month (+ m 1) :day d
-			 :hour h :min mi :sec 0))))
-	       ((?year ?month ?date ?hours)
-		(let* ((y (js-tonumber year %this))
-		       (m (js-tonumber month %this))
-		       (d (js-tonumber date %this))
-		       (h (js-tonumber hours %this)))
-		   (when (and (fixnum? y) (>fx y 0)
-			      (fixnum? m) (fixnum? d) (fixnum? h))
-		      (make-date
-			 :year y :month (+ m 1) :day d
-			 :hour h :min 0 :sec 0))))
-	       ((?year ?month ?date)
-		(let* ((y (js-tonumber year %this))
-		       (m (js-tonumber month %this))
-		       (d (js-tonumber date %this)))
-		   (when (and (fixnum? y) (>fx y 0)
-			      (fixnum? m) (fixnum? d))
-		      (make-date
-			 :year y :month (+ m 1) :day d
-			 :hour 0 :min 0 :sec 0))))
-	       ((?year ?month)
-		(let* ((y (js-tonumber year %this))
-		       (m (js-tonumber month %this)))
-		   (when (and (fixnum? y) (>fx y 0)
-			      (fixnum? m))
-		      (make-date
-			 :year y :month (+ m 1)
-			 :day 1 :hour 0 :min 0 :sec 0))))
-	       ((?value)
-		(if (isa? value JsDate)
-		    (with-access::JsDate value (val)
-		       val)
-		    (let ((v (js-toprimitive value 'any %this)))
-		       (cond
-			  ((js-jsstring? v)
-			   (parse-date (js-jsstring->string v)))
-			  ((number? v)
-			   (if (flonum? v)
-			       (if (or (nanfl? v) (=fl v +inf.0) (=fl v -inf.0))
-				   +nan.0
-				   (nanoseconds->date
-				      (*llong
-					 #l1000000
-					 (flonum->llong (round v)))))
-			       (let ((n (cond
-					   ((fixnum? v) (fixnum->llong v))
-					   ((llong? v) v)
-					   ((elong? v) (elong->llong v))
-					   (else #l0))))
-				  (nanoseconds->date
-				     (*llong #l1000000 n)))))
-			  (else
-			   v)))))
-	       (else
-		(current-date))))
+	 (define (js-date->jsdate v)
+	    (with-access::JsDate this (val)
+	       (set! val v)
+	       this))
 	 
-	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9
-	 (define (js-date-construct this::JsDate . args)
-	    
-	    (define (js-date->jsdate v)
-	       (with-access::JsDate this (val)
-		  (set! val v)
-		  this))
-	    
-	    (if (any (lambda (a) (eq? a (js-undefined))) args)
-		(instantiateJsDate
-		   (__proto__ js-date-prototype))
-		(let ((d (parse-date-arguments args)))
-		   (cond
-		      ((date? d) (js-date->jsdate d))
-		      ((string? d) (js-string->jsstring d))
-		      (else d)))))
-
-	 ;; create a HopScript object
-	 (define (%js-date this . args)
-	    (let ((dt (js-date-construct (js-date-alloc js-date))))
-	       (js-call0 %this (js-get dt 'toString %this) dt)))
-	 
-	 (set! js-date
-	    (js-make-function %this %js-date 7 'Date
-	       :__proto__ js-function-prototype
-	       :prototype js-date-prototype
-	       :alloc js-date-alloc
-	       :construct js-date-construct
-	       :shared-cmap #f))
-
-	 ;; parse
-	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.2
-	 (define (js-date-parse this str)
-	    (let ((d (parse-date (js-tostring str %this))))
-	       (if (date? d)
-		   (*fl 1000. (elong->flonum (date->seconds d)))
-		   +nan.0)))
-	 
-	 (js-bind! %this js-date 'parse
-	    :value (js-make-function %this js-date-parse 1 'parse)
-	    :writable #t :configurable #t :enumerable #f :hidden-class #f)
-
-	 ;; UTC
-	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.3
-	 (define (js-date-utc this . args)
-	    (match-case args
-	       (()
-		0)
-	       ((?year)
-		(let ((d (parse-date-arguments (list (js-tonumber year %this)))))
+	 (if (any (lambda (a) (eq? a (js-undefined))) args)
+	     (instantiateJsDate
+		(__proto__ js-date-prototype))
+	     (let ((d (parse-date-arguments args)))
+		(cond
+		   ((date? d) (js-date->jsdate d))
+		   ((string? d) (js-string->jsstring d))
+		   (else d)))))
+      
+      ;; create a HopScript object
+      (define (%js-date this . args)
+	 (let ((dt (js-date-construct (js-date-alloc %this js-date))))
+	    (date-prototype-tostring dt)))
+      
+      (set! js-date
+	 (js-make-function %this %js-date 7 (& "Date")
+	    :__proto__ (js-object-proto js-function)
+	    :prototype js-date-prototype
+	    :alloc js-date-alloc
+	    :construct js-date-construct
+	    :size 3
+	    :shared-cmap #f))
+      
+      ;; parse
+      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.2
+      (define (js-date-parse this str)
+	 (let ((d (parse-date (js-tostring str %this))))
+	    (if (date? d)
+		(*fl 1000. (elong->flonum (date->seconds d)))
+		+nan.0)))
+      
+      (js-bind! %this js-date (& "parse")
+	 :value (js-make-function %this js-date-parse 1 (& "parse"))
+	 :writable #t :configurable #t :enumerable #f :hidden-class #t)
+      
+      ;; UTC
+      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.3
+      (define (js-date-utc this . args)
+	 (match-case args
+	    (()
+	     0)
+	    ((?year)
+	     (let ((d (parse-date-arguments (list (js-tonumber year %this)))))
+		(js-flonum->integer
 		   (*fl 1000.
 		      (elong->flonum
-			 (- (date->seconds d) (date-timezone d))))))
-	       (else
-		(let* ((dt (parse-date-arguments args))
-		       (ctz (date-timezone dt)))
+			 (- (date->seconds d) (date-timezone d)))))))
+	    (else
+	     (let* ((dt (parse-date-arguments args))
+		    (ctz (date-timezone dt)))
+		(js-flonum->integer
 		   (llong->flonum 
 		      (/llong (+ (date->nanoseconds dt)
 				 (*llong (fixnum->llong ctz)
 				    #l1000000000))
-			 #l1000000))))))
-	 
-	 (js-bind! %this js-date 'UTC
-	    :value (js-make-function %this js-date-utc 7 'UTC)
-	    :writable #t :configurable #t :enumerable #f :hidden-class #f)
-
-	 ;; now
-	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.4
-	 (define (js-date-now this)
-	    (let ((ns (llong->flonum (current-nanoseconds))))
-	       (roundfl (/fl ns 1000000.))))
-	 
-	 (js-bind! %this js-date 'now
-	    :value (js-make-function %this js-date-now 0 'now)
-	    :writable #t :configurable #t :enumerable #f :hidden-class #f)
-	 
-	 ;; prototype properties
-	 (init-builtin-date-prototype! %this js-date js-date-prototype)
-	 ;; bind Date in the global object
-	 (js-bind! %this %this 'Date
-	    :configurable #f :enumerable #f :value js-date :hidden-class #t)
-	 js-date)))
+			 #l1000000)))))))
+      
+      (js-bind! %this js-date (& "UTC")
+	 :value (js-make-function %this js-date-utc 7 (& "UTC"))
+	 :writable #t :configurable #t :enumerable #f :hidden-class #f)
+      
+      (js-bind! %this js-date (& "now")
+	 :value (js-make-function %this (lambda (this) (js-date-now)) 0 (& "now"))
+	 :writable #t :configurable #t :enumerable #f :hidden-class #f)
+      
+      ;; prototype properties
+      (init-builtin-date-prototype! %this js-date js-date-prototype)
+      ;; bind Date in the global object
+      (js-bind! %this %this (& "Date")
+	 :configurable #f :enumerable #f :value js-date :hidden-class #t)
+      js-date))
 
 ;*---------------------------------------------------------------------*/
 ;*    parse-date ...                                                   */
@@ -334,21 +344,14 @@
 (define (init-builtin-date-prototype! %this js-date obj)
    
    ;; constructor
-   (js-bind! %this obj 'constructor
+   (js-bind! %this obj (& "constructor")
       :value js-date
-      :writable #t :configurable #t :enumerable #f :hidden-class #f)
+      :writable #t :configurable #t :enumerable #f :hidden-class #t)
    
    ;; toString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.2
-   (define (date-prototype-tostring this::JsDate)
-      (with-access::JsDate this (val)
-	 (if (date? val)
-	     (js-string->jsstring
-		(date->rfc2822-date (seconds->date (date->seconds val))))
-	     (js-string->jsstring "Invalid Date"))))
-   
-   (js-bind! %this obj 'toString
-      :value (js-make-function %this date-prototype-tostring 0 'toString)
+   (js-bind! %this obj (& "toString")
+      :value (js-make-function %this date-prototype-tostring 0 (& "toString"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toDateString
@@ -364,9 +367,9 @@
 		   (date-year val)))
 	     (js-string->jsstring "Invalid date"))))
 
-   (js-bind! %this obj 'toDateString
+   (js-bind! %this obj (& "toDateString")
       :value (js-make-function %this date-prototype-todatestring
-		0 'toDateString)
+		0 (& "toDateString"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toTimeString
@@ -382,9 +385,9 @@
 		   (date-timezone val)))
 	     (js-string->jsstring "Invalid date"))))
 
-   (js-bind! %this obj 'toTimeString
+   (js-bind! %this obj (& "toTimeString")
       :value (js-make-function %this date-prototype-totimestring
-		0 'toTimeString)
+		0 (& "toTimeString"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toLocaleString
@@ -392,9 +395,9 @@
    (define (date-prototype-tolocalestring this::JsDate)
       (date-prototype-tostring this))
 
-   (js-bind! %this obj 'toLocaleString
+   (js-bind! %this obj (& "toLocaleString")
       :value (js-make-function %this date-prototype-tolocalestring
-		0 'toLocaleString)
+		0 (& "toLocaleString"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toLocaleDateString
@@ -402,9 +405,9 @@
    (define (date-prototype-tolocaledatestring this::JsDate)
       date-prototype-todatestring this)
 
-   (js-bind! %this obj 'toLocaleDateString
+   (js-bind! %this obj (& "toLocaleDateString")
       :value (js-make-function %this date-prototype-tolocaledatestring
-		0 'toLocaleDateString)
+		0 (& "toLocaleDateString"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toLocaleTimeString
@@ -412,9 +415,9 @@
    (define (date-prototype-tolocaletimestring this::JsDate)
       (date-prototype-totimestring this))
 
-   (js-bind! %this obj 'toLocaleTimeString
+   (js-bind! %this obj (& "toLocaleTimeString")
       :value (js-make-function %this date-prototype-tolocaletimestring
-		0 'toLocaleTimeString)
+		0 (& "toLocaleTimeString"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toUTCString
@@ -425,8 +428,8 @@
 	     (js-string->jsstring (date->utc-string val))
 	     "Invalid date")))
 
-   (js-bind! %this obj 'toUTCString
-      :value (js-make-function %this date-prototype-toutcstring 0 'toUTCString)
+   (js-bind! %this obj (& "toUTCString")
+      :value (js-make-function %this date-prototype-toutcstring 0 (& "toUTCString"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toISOString
@@ -439,38 +442,55 @@
 	     (if (date? val)
 		 (let loop ((val val))
 		    (if (=fx (date-timezone val) 0)
-			(js-string->jsstring
-			   (format "~4,0d-~2,0d-~2,0dT~2,0d:~2,0d:~2,0d.~3,0dZ"
-			      (date-year val)
-			      (date-month val)
-			      (date-day val)
-			      (date-hour val)
-			      (date-minute val)
-			      (date-second val)
-			      (llong->fixnum
-				 (/llong (date-nanosecond val) #l1000000))))
+			(let ((buf (make-string 24 #\0)))
+			   ;; equivalent to
+			   ;; (format "~4,0d-~2,0d-~2,0dT~2,0d:~2,0d:~2,0d.~3,0dZ"
+                           ;;    (date-year val)
+                           ;;    (date-month val)
+                           ;;    (date-day val)
+                           ;;    (date-hour val)
+                           ;;    (date-minute val)
+                           ;;    (date-second val)
+                           ;;    (llong->fixnum
+                           ;;       (/llong (date-nanosecond val) #l1000000)))
+			   (string-set! buf 4 #\-)
+			   (string-set! buf 7 #\-)
+			   (string-set! buf 10 #\T)
+			   (string-set! buf 13 #\:)
+			   (string-set! buf 16 #\:)
+			   (string-set! buf 19 #\.)
+			   (string-set! buf 23 #\Z)
+			   (blit-fixnum! buf (date-year val) 0 4)
+			   (blit-fixnum! buf (date-month val) 5 2)
+			   (blit-fixnum! buf (date-day val) 8 2)
+			   (blit-fixnum! buf (date-hour val) 11 2)
+			   (blit-fixnum! buf (date-minute val) 14 2)
+			   (blit-fixnum! buf (date-second val) 17 2)
+			   (let ((ms (llong->fixnum (/llong (date-nanosecond val) #l1000000))))
+			      (blit-fixnum! buf ms 20 3))
+			   (js-ascii->jsstring buf))
 			(loop (date->utc-date val))))
 		 (js-raise-range-error %this "Invalid date ~s" val)))))
    
-   (js-bind! %this obj 'toISOString
-      :value (js-make-function %this date-prototype-toisostring 0 'toISOString)
+   (js-bind! %this obj (& "toISOString")
+      :value (js-make-function %this date-prototype-toisostring 0 (& "toISOString"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toJSON
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.44
-   (define (date-prototype-toJSON this::JsDate)
+   (define (date-prototype-toJSON this)
       (let* ((o (js-toobject %this this))
 	     (tv (js-toprimitive o 'number %this)))
-	 (if (and (number? tv) (not (integer? tv)))
+	 (if (and (js-number? tv) (not (integer? tv)))
 	     (js-null)
-	     (let ((p (js-get o 'toISOString %this)))
-		(if (isa? p JsFunction)
+	     (let ((p (js-get o (& "toISOString") %this)))
+		(if (js-procedure? p)
 		    (js-call0 %this p o)
 		    (js-raise-type-error %this
 		       "toJSON: argument not a function ~s" p))))))
 
-   (js-bind! %this obj 'toJSON
-      :value (js-make-function %this date-prototype-toJSON 1 'toJSON)
+   (js-bind! %this obj (& "toJSON")
+      :value (js-make-function %this date-prototype-toJSON 1 (& "toJSON"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
 
    ;; valueOf
@@ -481,8 +501,8 @@
 	     (llong->flonum (/llong (date->nanoseconds val) #l1000000))
 	     +nan.0)))
 	 
-   (js-bind! %this obj 'valueOf
-      :value (js-make-function %this date-prototype-valueof 0 'valueOf)
+   (js-bind! %this obj (& "valueOf")
+      :value (js-make-function %this date-prototype-valueof 0 (& "valueOf"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getTime
@@ -493,8 +513,8 @@
 	     (date->milliseconds val)
 	     +nan.0)))
  	 
-   (js-bind! %this obj 'getTime
-      :value (js-make-function %this date-prototype-gettime 0 'getTime)
+   (js-bind! %this obj (& "getTime")
+      :value (js-make-function %this date-prototype-gettime 0 (& "getTime"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getFullYear
@@ -505,8 +525,8 @@
 	     (date-year val)
 	     +nan.0)))
 	 
-   (js-bind! %this obj 'getFullYear
-      :value (js-make-function %this date-prototype-getfullyear 0 'getFullYear)
+   (js-bind! %this obj (& "getFullYear")
+      :value (js-make-function %this date-prototype-getfullyear 0 (& "getFullYear"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getUTCFullYear
@@ -519,8 +539,8 @@
 		(date-year d))
 	     +nan.0)))
 	 
-   (js-bind! %this obj 'getUTCFullYear
-      :value (js-make-function %this date-prototype-getutcfullyear 0 'getUTCFullYear)
+   (js-bind! %this obj (& "getUTCFullYear")
+      :value (js-make-function %this date-prototype-getutcfullyear 0 (& "getUTCFullYear"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getMonth
@@ -531,8 +551,8 @@
 	     (-fx (date-month val) 1)
 	     +nan.0)))
 	 
-   (js-bind! %this obj 'getMonth
-      :value (js-make-function %this date-prototype-getmonth 0 'getMonth)
+   (js-bind! %this obj (& "getMonth")
+      :value (js-make-function %this date-prototype-getmonth 0 (& "getMonth"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getUTCMonth
@@ -545,8 +565,8 @@
 		(-fx (date-month d) 1))
 	     +nan.0)))
 	 
-   (js-bind! %this obj 'getUTCMonth
-      :value (js-make-function %this date-prototype-getutcmonth 0 'getUTCMonth)
+   (js-bind! %this obj (& "getUTCMonth")
+      :value (js-make-function %this date-prototype-getutcmonth 0 (& "getUTCMonth"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getDate
@@ -557,8 +577,8 @@
 	     (date-day val)
 	     +nan.0)))
 	 
-   (js-bind! %this obj 'getDate
-      :value (js-make-function %this date-prototype-getdate 0 'getDate)
+   (js-bind! %this obj (& "getDate")
+      :value (js-make-function %this date-prototype-getdate 0 (& "getDate"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getUTCDate
@@ -571,8 +591,8 @@
 		(date-day d))
 	     +nan.0)))
 	 
-   (js-bind! %this obj 'getUTCDate
-      :value (js-make-function %this date-prototype-getutcdate 0 'getUTCDate)
+   (js-bind! %this obj (& "getUTCDate")
+      :value (js-make-function %this date-prototype-getutcdate 0 (& "getUTCDate"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getDay
@@ -583,8 +603,8 @@
 	     (-fx (date-wday val) 1)
 	     +nan.0)))
 	 
-   (js-bind! %this obj 'getDay
-      :value (js-make-function %this date-prototype-getday 0 'getDay)
+   (js-bind! %this obj (& "getDay")
+      :value (js-make-function %this date-prototype-getday 0 (& "getDay"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getUTCDay
@@ -595,8 +615,8 @@
 	     (-fx (date-wday val) 1)
 	     +nan.0)))
 	 
-   (js-bind! %this obj 'getUTCDay
-      :value (js-make-function %this date-prototype-getutcday 0 'getUTCDay)
+   (js-bind! %this obj (& "getUTCDay")
+      :value (js-make-function %this date-prototype-getutcday 0 (& "getUTCDay"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getHours
@@ -607,8 +627,8 @@
 	     (date-hour val)
 	     +nan.0)))
 	 
-   (js-bind! %this obj 'getHours
-      :value (js-make-function %this date-prototype-gethours 0 'getHours)
+   (js-bind! %this obj (& "getHours")
+      :value (js-make-function %this date-prototype-gethours 0 (& "getHours"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getUTCHours
@@ -625,8 +645,8 @@
 		   (else n)))
 	     +nan.0)))
 	 
-   (js-bind! %this obj 'getUTCHours
-      :value (js-make-function %this date-prototype-getutchours 0 'getUTCHours)
+   (js-bind! %this obj (& "getUTCHours")
+      :value (js-make-function %this date-prototype-getutchours 0 (& "getUTCHours"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getMinutes
@@ -637,8 +657,8 @@
 	     (date-minute val)
 	     +nan.0)))
 	 
-   (js-bind! %this obj 'getMinutes
-      :value (js-make-function %this date-prototype-getminutes 0 'getMinutes)
+   (js-bind! %this obj (& "getMinutes")
+      :value (js-make-function %this date-prototype-getminutes 0 (& "getMinutes"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getUTCMinutes
@@ -649,8 +669,8 @@
 	     (date-minute val)
 	     +nan.0)))
 	 
-   (js-bind! %this obj 'getUTCMinutes
-      :value (js-make-function %this date-prototype-getutcminutes 0 'getUTCMinutes)
+   (js-bind! %this obj (& "getUTCMinutes")
+      :value (js-make-function %this date-prototype-getutcminutes 0 (& "getUTCMinutes"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getSeconds
@@ -661,8 +681,8 @@
 	     (date-second val)
 	     +nan.0)))
 	 
-   (js-bind! %this obj 'getSeconds
-      :value (js-make-function %this date-prototype-getseconds 0 'getSeconds)
+   (js-bind! %this obj (& "getSeconds")
+      :value (js-make-function %this date-prototype-getseconds 0 (& "getSeconds"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getUTCSeconds
@@ -673,8 +693,8 @@
 	     (date-second val)
 	     +nan.0)))
 	 
-   (js-bind! %this obj 'getUTCSeconds
-      :value (js-make-function %this date-prototype-getutcseconds 0 'getUTCSeconds)
+   (js-bind! %this obj (& "getUTCSeconds")
+      :value (js-make-function %this date-prototype-getutcseconds 0 (& "getUTCSeconds"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getMilliseconds
@@ -685,8 +705,8 @@
 	     (llong->fixnum (/llong (date-nanosecond val) #l1000000))
 	     +nan.0)))
 	 
-   (js-bind! %this obj 'getMilliseconds
-      :value (js-make-function %this date-prototype-getmilliseconds 0 'getMilliseconds)
+   (js-bind! %this obj (& "getMilliseconds")
+      :value (js-make-function %this date-prototype-getmilliseconds 0 (& "getMilliseconds"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getUTCMilliseconds
@@ -697,8 +717,8 @@
 	     (llong->fixnum (/llong (date-nanosecond val) #l1000000))
 	     +nan.0)))
 	 
-   (js-bind! %this obj 'getUTCMilliseconds
-      :value (js-make-function %this date-prototype-getutcmilliseconds 0 'getUTCMilliseconds)
+   (js-bind! %this obj (& "getUTCMilliseconds")
+      :value (js-make-function %this date-prototype-getutcmilliseconds 0 (& "getUTCMilliseconds"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getTimezoneOffset
@@ -709,8 +729,8 @@
 	     (negfx (/fx (date-timezone (seconds->date (date->seconds val))) 60))
 	     +nan.0)))
 
-   (js-bind! %this obj 'getTimezoneOffset
-      :value (js-make-function %this date-prototype-gettimezoneoffset 0 'getTimezoneOffset)
+   (js-bind! %this obj (& "getTimezoneOffset")
+      :value (js-make-function %this date-prototype-gettimezoneoffset 0 (& "getTimezoneOffset"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setTime
@@ -729,13 +749,13 @@
 		(if (nanfl? s)
 		    (begin
 		       (set! val s)
-		       time)
+		       s)
 		    (begin
 		       (set! val (seconds->date (flonum->fixnum s)))
 		       (date->milliseconds val))))))))
 
-   (js-bind! %this obj 'setTime
-      :value (js-make-function %this date-prototype-settime 1 'setTime)
+   (js-bind! %this obj (& "setTime")
+      :value (js-make-function %this date-prototype-settime 1 (& "setTime"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getYear
@@ -746,8 +766,8 @@
 	     (-fx (date-year val) 1900)
 	     +nan.0)))
    
-   (js-bind! %this obj 'getYear
-      :value (js-make-function %this date-prototype-getyear 0 'getYear)
+   (js-bind! %this obj (& "getYear")
+      :value (js-make-function %this date-prototype-getyear 0 (& "getYear"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setYear
@@ -769,8 +789,8 @@
 		   (set! val r)
 		   r)))))
 
-   (js-bind! %this obj 'setYear
-      :value (js-make-function %this date-prototype-setyear 1 'setYear)
+   (js-bind! %this obj (& "setYear")
+      :value (js-make-function %this date-prototype-setyear 1 (& "setYear"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setMilliseconds
@@ -795,8 +815,8 @@
 		    (date->milliseconds val))))
 	     val)))
 
-   (js-bind! %this obj 'setMilliseconds
-      :value (js-make-function %this date-prototype-setmilliseconds 1 'setMilliseconds)
+   (js-bind! %this obj (& "setMilliseconds")
+      :value (js-make-function %this date-prototype-setmilliseconds 1 (& "setMilliseconds"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setUTCMilliseconds
@@ -821,8 +841,8 @@
 		    (date->milliseconds val))))
 	     val)))
 
-   (js-bind! %this obj 'setUTCMilliseconds
-      :value (js-make-function %this date-prototype-setutcmilliseconds 1 'setUTCMilliseconds)
+   (js-bind! %this obj (& "setUTCMilliseconds")
+      :value (js-make-function %this date-prototype-setutcmilliseconds 1 (& "setUTCMilliseconds"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
 
    ;; setSeconds
@@ -840,8 +860,8 @@
 		       (date->milliseconds val))))
 	     val)))
 
-   (js-bind! %this obj 'setSeconds
-      :value (js-make-function %this date-prototype-setseconds 2 'setSeconds)
+   (js-bind! %this obj (& "setSeconds")
+      :value (js-make-function %this date-prototype-setseconds 2 (& "setSeconds"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setUTCSeconds
@@ -859,8 +879,8 @@
 		       (date->milliseconds val))))
 	     val)))
 
-   (js-bind! %this obj 'setUTCSeconds
-      :value (js-make-function %this date-prototype-setutcseconds 2 'setUTCSeconds)
+   (js-bind! %this obj (& "setUTCSeconds")
+      :value (js-make-function %this date-prototype-setutcseconds 2 (& "setUTCSeconds"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setMinutes
@@ -880,8 +900,8 @@
 		       (date->milliseconds val))))
 	     val)))
 
-   (js-bind! %this obj 'setMinutes
-      :value (js-make-function %this date-prototype-setminutes 3 'setMinutes)
+   (js-bind! %this obj (& "setMinutes")
+      :value (js-make-function %this date-prototype-setminutes 3 (& "setMinutes"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setUTCMinutes
@@ -901,8 +921,8 @@
 		       (date->milliseconds val))))
 	     val)))
 
-   (js-bind! %this obj 'setUTCMinutes
-      :value (js-make-function %this date-prototype-setutcminutes 3 'setUTCMinutes)
+   (js-bind! %this obj (& "setUTCMinutes")
+      :value (js-make-function %this date-prototype-setutcminutes 3 (& "setUTCMinutes"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setHours
@@ -925,8 +945,8 @@
 		       (date->milliseconds val))))
 	     val)))
 
-   (js-bind! %this obj 'setHours
-      :value (js-make-function %this date-prototype-sethours 4 'setHours)
+   (js-bind! %this obj (& "setHours")
+      :value (js-make-function %this date-prototype-sethours 4 (& "setHours"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setUTCHours
@@ -954,8 +974,8 @@
 		       (date->milliseconds val))))
 	     val)))
 
-   (js-bind! %this obj 'setUTCHours
-      :value (js-make-function %this date-prototype-setutchours 4 'setUTCHours)
+   (js-bind! %this obj (& "setUTCHours")
+      :value (js-make-function %this date-prototype-setutchours 4 (& "setUTCHours"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setDate
@@ -977,8 +997,8 @@
 		       (date->milliseconds val))))
 	     val)))
 
-   (js-bind! %this obj 'setDate
-      :value (js-make-function %this date-prototype-setdate 1 'setDate)
+   (js-bind! %this obj (& "setDate")
+      :value (js-make-function %this date-prototype-setdate 1 (& "setDate"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setUTCDate
@@ -996,8 +1016,8 @@
 		       (date->milliseconds val))))
 	     val)))
 
-   (js-bind! %this obj 'setUTCDate
-      :value (js-make-function %this date-prototype-setutcdate 1 'setUTCDate)
+   (js-bind! %this obj (& "setUTCDate")
+      :value (js-make-function %this date-prototype-setutcdate 1 (& "setUTCDate"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setMonth
@@ -1019,8 +1039,8 @@
 		       (date->milliseconds val))))
 	     val)))
 
-   (js-bind! %this obj 'setMonth
-      :value (js-make-function %this date-prototype-setmonth 2 'setMonth)
+   (js-bind! %this obj (& "setMonth")
+      :value (js-make-function %this date-prototype-setmonth 2 (& "setMonth"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setUTCMonth
@@ -1041,8 +1061,8 @@
 		       (date->milliseconds val))))
 	     val)))
 
-   (js-bind! %this obj 'setUTCMonth
-      :value (js-make-function %this date-prototype-setutcmonth 2 'setUTCMonth)
+   (js-bind! %this obj (& "setUTCMonth")
+      :value (js-make-function %this date-prototype-setutcmonth 2 (& "setUTCMonth"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setFullYear
@@ -1051,8 +1071,10 @@
       (with-access::JsDate this (val)
 	 (if (date? val)
 	     (let ((year (js-tonumber year %this))
-		   (month (unless (eq? month (js-undefined)) (js-tonumber month %this)))
-		   (date (unless (eq? date (js-undefined)) (js-tonumber date %this))))
+		   (month (unless (eq? month (js-undefined))
+			     (js-tonumber month %this)))
+		   (date (unless (eq? date (js-undefined))
+			    (js-tonumber date %this))))
 		(if (and (flonum? year) (nanfl? year))
 		    (begin
 		       (set! val year)
@@ -1063,10 +1085,29 @@
 				    :month (->fixnum-safe month)
 				    :day (->fixnum-safe date)))
 		       (date->milliseconds val))))
-	     val)))
+	     ;; 1. Let t be the result of LocalTime(this time value)
+	     ;; but if this time value is NaN, let t be +0.
+	     (let ((year (js-tonumber year %this))
+		   (month (if (eq? month (js-undefined))
+			      1
+			      (js-tonumber month %this)))
+		   (date (if (eq? date (js-undefined))
+			     1
+			     (js-tonumber date %this))))
+		(if (and (flonum? year) (nanfl? year))
+		    (begin
+		       (set! val year)
+		       year)
+		    (begin
+		       (set! val (make-date
+				    :year (->fixnum-safe year)
+				    :month (->fixnum-safe month)
+				    :day (->fixnum-safe date)
+				    :hour 0 :min 0 :sec 0))
+		       (date->milliseconds val)))))))
 
-   (js-bind! %this obj 'setFullYear
-      :value (js-make-function %this date-prototype-setfullyear 3 'setFullYear)
+   (js-bind! %this obj (& "setFullYear")
+      :value (js-make-function %this date-prototype-setfullyear 3 (& "setFullYear"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setUTCFullYear
@@ -1089,8 +1130,8 @@
 		       (date->milliseconds val))))
 	     val)))
 
-   (js-bind! %this obj 'setUTCFullYear
-      :value (js-make-function %this date-prototype-setutcfullyear 3 'setUTCFullYear)
+   (js-bind! %this obj (& "setUTCFullYear")
+      :value (js-make-function %this date-prototype-setutcfullyear 3 (& "setUTCFullYear"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toGMTString
@@ -1098,17 +1139,30 @@
    (define (date-prototype-togmtstring this::JsDate)
       (date-prototype-toutcstring this))
 
-   (js-bind! %this obj 'toGMTString
-      :value (js-make-function %this date-prototype-togmtstring 0 'toGMTString)
+   (js-bind! %this obj (& "toGMTString")
+      :value (js-make-function %this date-prototype-togmtstring 0 (& "toGMTString"))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    obj)
 
 ;*---------------------------------------------------------------------*/
+;*    date-prototype-tostring ...                                      */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.2     */
+;*---------------------------------------------------------------------*/
+(define (date-prototype-tostring this::JsDate)
+   (with-access::JsDate this (val)
+      (if (date? val)
+	  (js-string->jsstring
+	     (date->rfc2822-date (seconds->date (date->seconds val))))
+	  (js-string->jsstring "Invalid Date"))))
+
+;*---------------------------------------------------------------------*/
 ;*    date->milliseconds ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (date->milliseconds dt::date)
-   (llong->flonum (/llong (date->nanoseconds dt) #l1000000)))
+   (js-flonum->integer
+      (roundfl (/fl (llong->flonum (date->nanoseconds dt)) 1000000.0))))
 
 ;*---------------------------------------------------------------------*/
 ;*    date->utc-date ...                                               */
@@ -1140,6 +1194,32 @@
    (when num (->fixnum num)))
 
 ;*---------------------------------------------------------------------*/
-;*    JsStringLiteral end                                              */
+;*    blit-fixnum! ...                                                 */
 ;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-end!)
+(define (blit-fixnum! buffer::bstring n idx padding::long)
+   
+   (define (digit->char n) (integer->char (+fx n (char->integer #\0))))
+   
+   (let loop ((n n)
+	      (p (-fx padding 1)))
+      (string-set! buffer (+fx idx p) (digit->char (remainderfx n 10)))
+      (when (>fx p 0) (loop (/fx n 10) (-fx p 1)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-now ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.4     */
+;*---------------------------------------------------------------------*/
+(define (js-date-now)
+   (cond-expand
+      ((or bint61 bint64)
+       (let ((ns (llong->fixnum (current-nanoseconds))))
+	  (/fx ns 1000000)))
+      (else
+       (let ((ns (llong->flonum (current-nanoseconds))))
+	  (roundfl (/fl ns 1000000.))))))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

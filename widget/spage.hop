@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/widget/spage.hop                  */
+;*    serrano/prgm/project/hop/hop/widget/spage.hop                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Sun Aug  7 08:23:19 2016 (serrano)                */
-;*    Copyright   :  2009-16 Manuel Serrano                            */
+;*    Last change :  Mon Mar 23 14:19:21 2020 (serrano)                */
+;*    Copyright   :  2009-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
 ;*=====================================================================*/
@@ -22,6 +22,19 @@
 	   (<SPHEAD> . obj)
 	   (<SPTAB> . obj)
 	   (<SPTABHEAD> . obj)))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::html-foldlist ...                            */
+;*---------------------------------------------------------------------*/
+(define (serialize o ctx)
+   (let ((p (open-output-string)))
+      (obj->javascript-expr o p ctx)
+      (close-output-port p)))
+
+(define (unserialize o ctx)
+   o)
+      
+(register-class-serialization! xml-sphead-element serialize unserialize)
 
 ;*---------------------------------------------------------------------*/
 ;*    SPAGE ...                                                        */
@@ -50,11 +63,8 @@
 		      (lambda (e)
 			 (spage-init $id
 			    $(when (isa? onchange xml-tilde)
-				(with-access::xml-tilde onchange (env menv)
-				   (sexp->xml-tilde
-				      `(lambda (event)
-					  ,(xml-tilde->sexp onchange))
-				      env menv))))))
+				(sexp->xml-tilde
+				   `(lambda (event) ,onchange))))))
 		  ;; firefox workaround
 		  ~(if #f 1 2))))))
 
@@ -91,6 +101,7 @@
 ;*    SPTAB ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define-tag <SPTAB> ((id (xml-make-id 'SPTAB) string)
+		     (%context #f)
 		     (onselect #f)
 		     (direction "push")
 		     (class #f)
@@ -99,17 +110,13 @@
    
    (define (init-sptab id onselect)
       (if (isa? onselect xml-tilde)
-	  (with-access::xml-tilde onselect (env menv)
-	     (sexp->xml-tilde
-		`(add-event-listener! ,id "ready"
-		    (lambda (event)
-		       (let ((el this))
-			  (set! el.hop_add_event_listener sptab-add-event-listener!)
-			  (set! el.onselect
-			     (lambda (event)
-				,(xml-tilde->sexp onselect)))
-			  #unspecified)))
-		env menv))
+	  (sexp->xml-tilde
+	     `(add-event-listener! ,id "ready"
+		 (lambda (event)
+		    (let ((el this))
+		       (set! el.hop_add_event_listener sptab-add-event-listener!)
+		       (set! el.onselect (lambda (event) ,onselect))
+		       #unspecified))))
 	  (sexp->xml-tilde
 	     `(add-event-listener! ,id "ready"
 		 (lambda (event)
@@ -137,7 +144,7 @@
 					   (let ((obj (proc (current-request))))
 					      (if (isa? obj xml-element)
 						  obj
-						  (xml-unpack obj)))))))))
+						  (xml-body obj %context)))))))))
 		   (when (=fx ttl 0) (unregister-service! svc))
 		   (<DIV> :data-hss-tag "hop-sptab" :class class  :id id
 		      :onclick ~(begin
@@ -149,8 +156,9 @@
 		      (init-sptab id onselect))))))
 	 ((and (pair? body) (service? (car body)))
 	  ;; a dynamic tab (new service syntax with arguments)
-	  (<DIV> :data-hss-tag "hop-sptab" :class class  :id id
-	     
+	  (<DIV> :data-hss-tag "hop-sptab" :class class :id id
+	     :data-hop-svc (service-path (car body))
+	     :data-hop-svc-direction direction
 	     :onclick (if (pair? attr)
 			  (sexp->xml-tilde
 			     `(begin
@@ -159,7 +167,7 @@
 				    ,(apply (car body) (cdr body))
 				    (lambda (body)
 				       (<DIV> :data-hss-tag "hop-spbody"
-					  :class ,class
+					  :class ,(or class "hop-spbody")
 					  ,@attr
 					  body)))))
 			  ~(begin
@@ -168,10 +176,8 @@
 				 $(apply (car body) (cdr body))
 				 (lambda (body)
 				    (<DIV> :data-hss-tag "hop-spbody"
-				       :class $class
+				       :class $(or class "hop-spbody")
 				       body)))))
-	     :data-hop-svc (car body)
-	     :data-hop-svc-direction direction
 	     (if (null? head) "?" (car head))
 	     (init-sptab id onselect)))
 	 ((and (pair? body) (null? (cdr body)) (isa? (car body) xml-delay))
@@ -185,7 +191,7 @@
 		:onclick ~(begin
 			     (stop-event-propagation event #f)
 			     (spage-push-service this $svc))
-		:data-hop-svc svc
+		:data-hop-svc (service-path (car body))
 		(if (null? head) "?" (car head))
 		(init-sptab id onselect))))
 	 (else

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/share/hop-request.js              */
+/*    serrano/prgm/project/hop/hop/share/hop-request.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue May 15 06:30:12 2018 (serrano)                */
-/*    Copyright   :  2004-18 Manuel Serrano                            */
+/*    Last change :  Sat Mar 21 11:38:17 2020 (serrano)                */
+/*    Copyright   :  2004-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
 /*=====================================================================*/
@@ -60,11 +60,11 @@ function hop_apply_form_url( service, args ) {
    var els = args[ 0 ].elements;
 
    for( i = els.length - 1 ; i >=0 ; i-- ) {
-      if( els[ i ].type == "checkbox" ) {
+      if( els[ i ].type === "checkbox" ) {
 	 nargs = sc_cons( els[ i ].checked ? els[ i ].value : false, nargs );
 	 nargs = sc_cons( sc_jsstring2keyword( els[ i ].name ), nargs );
       } else {
-	 if( els[ i ].type == "radio" ) {
+	 if( els[ i ].type === "radio" ) {
 	    if( els[ i ].checked ) {
 	       nargs = sc_cons( els[ i ].value, nargs );
 	       nargs = sc_cons( sc_jsstring2keyword( els[ i ].name ), nargs );
@@ -94,10 +94,10 @@ function hop_apply_url( service, args ) {
       if( !args ) {
 	 return service;
       } else {
-         if( (args.length == 1) && hop_is_dom_form_element( args[ 0 ] ) ) {
+         if( (args.length === 1) && hop_is_dom_form_element( args[ 0 ] ) ) {
 	    return hop_apply_form_url( service, args );
          } else {
-            if( (args.length == 1) && hop_is_dom_formdata_element( args[ 0 ] ) ) {
+            if( (args.length === 1) && hop_is_dom_formdata_element( args[ 0 ] ) ) {
 	       return service;
             } else {
 	       return service
@@ -224,7 +224,7 @@ var hop_anim_container = false;
 /*** META ((export with-hop-default-anim-set!) (arity -2)) */
 function hop_default_anim_set( anim, container ) {
    var old = hop_default_anim;
-   if( typeof( anim ) == "string" ) {
+   if( typeof( anim ) === "string" ) {
       var img = hop_anim_32_32( "custom" ).firstChild;
 
       img.src = anim;
@@ -263,7 +263,7 @@ function hop_stop_anim( xhr ) {
 
       if( xhr.hop_anim != true ) {
 	 xhr.hop_anim.count--;
-	 if( xhr.hop_anim.count == 1 )
+	 if( xhr.hop_anim.count === 1 )
 	    node_style_set( xhr.hop_anim, "display", "none" );
       }
    }
@@ -327,7 +327,7 @@ function hexStringToUint8( str ) {
    }
 
    for( var r = 0, w = 0; r < l; w++ ) {
-      if( str.charAt( r ) == '%' ) {
+      if( str.charAt( r ) === '%' ) {
 	 var d1 = hex_to_num( str.charCodeAt( r + 1 ) );
 	 var d2 = hex_to_num( str.charCodeAt( r + 2 ) );
 	 r += 3;
@@ -419,14 +419,27 @@ function ab2string( abuf ) {
 /*    unserialization method depends on the mime type of the response. */
 /*---------------------------------------------------------------------*/
 function hop_request_unserialize( xhr, svc ) {
-   var ctype = ("content_type" in xhr) ?
+   var content_type = ("content_type" in xhr) ?
        xhr[ "content_type" ] : hop_header_content_type( xhr );
+   var m = content_type.match( "([a-zA-Z/-]+)(?:;[ ]*charset=([a-zA-Z[0-9]-]+))?" );
+
+   var ctype = content_type;
+   var cset = "utf8";
+   
+   if( m ) {
+      ctype = m[ 1 ];
+      if( m[ 2 ] && m[ 2 ] !== "UTF-8" ) {
+	 cset = m[ 2 ];
+      } else {
+	 cset = "utf8";
+      }
+   }      
    
    if( ctype === "application/x-hop" ) {
       if( xhr.responseType === "arraybuffer" ) {
-	 return hop_bytearray_to_obj( new Uint8Array( xhr.response ) );
+	 return hop_bytearray_to_obj( new Uint8Array( xhr.response ), undefined, cset );
       } else {
-	 return hop_bytearray_to_obj( hexToUint8( xhr.responseText ) );
+	 return hop_bytearray_to_obj( hexToUint8( xhr.responseText ), undefined, cset );
       }
    } else {
       var rep = (xhr.responseType === "arraybuffer") ?
@@ -436,7 +449,7 @@ function hop_request_unserialize( xhr, svc ) {
       } else if( ctype === "application/x-url-hop" ) {
 	 return hop_url_encoded_to_obj( rep );
       } else if( ctype === "application/x-json-hop" ) {
-	 return hop_bytearray_to_obj( hop_json_parse( rep ) );
+	 return hop_bytearray_to_obj( hop_json_parse( rep ), undefined, cset );
       } else if( (ctype === "text/html") || (ctype === "application/xhtml+xml") ) {
 	 return hop_create_element( rep );
       } else if( ctype === "application/json" ) {
@@ -453,7 +466,7 @@ function hop_request_unserialize( xhr, svc ) {
 function hop_request_onready( xhr, svc, succ, fail ) {
 
    function xhr_hop_success_callback( succ ) {
-      if( svc.indexOf( "/hop/public/server-debug" ) == 0 ) {
+      if( svc.indexOf( "/hop/public/server-debug" ) === 0 ) {
 	 return succ;
       } else {
 	 return hop_callback( succ, xhr.precontext, "with-hop" );
@@ -461,7 +474,7 @@ function hop_request_onready( xhr, svc, succ, fail ) {
    }
       
    function xhr_hop_failure_callback( fail ) {
-      if( svc.indexOf( "/hop/public/server-debug" ) == 0 ) {
+      if( svc.indexOf( "/hop/public/server-debug" ) === 0 ) {
 	 return fail;
       } else {
 	 /* restore the context at the moment of the xhr */
@@ -658,18 +671,18 @@ function onPostMessage( e ) {
       var i2 = buf.indexOf( 58, i1 + 1 );
       var i3 = buf.indexOf( 58, i2 + 1 );
 
-      if( String.fromCharCode.apply( null, buf.slice( 0, i0 ) ) == "PoST" ) {
+      if( String.fromCharCode.apply( null, buf.slice( 0, i0 ) ) === "PoST" ) {
 	 e.stopPropagation = true;
 	 e.preventDefault = true;
 	 var id = parseInt( String.fromCharCode.apply( null, buf.slice( i0 + 1, i1 ) ) );
 	 var status = parseInt( String.fromCharCode.apply( null, buf.slice( i1 + 1, i2 ) ) );
 	 var ctype = String.fromCharCode.apply( null, buf.slice( i2 + 1, i3 ) ) 
 	 var msg = buf.slice( i3 + 1 );
-	 var val = (ctype == "application/x-frame-hop")
-	     ? hop_bytearray_to_obj( msg )
-	     : (ctype == "application/x-frame-json")
-	     ? hop_json_parse( String.fromCharCode.apply( null, msg ) )
-	     : String.fromCharCode.apply( null, msg );
+	 var val = (ctype === "application/x-frame-hop")
+	    ? hop_bytearray_to_obj( msg, undefined, cset )
+	    : (ctype === "application/x-frame-json")
+	    ? hop_json_parse( String.fromCharCode.apply( null, msg ) )
+	    : String.fromCharCode.apply( null, msg );
 
 	 if( this.postHandlers[ id ] ) {
 	    if( status >= 100 && status <= 299 ) {
@@ -792,7 +805,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
    var fail = (typeof failure === "function") ? failure : hop_default_failure;
 
    function onreadystatechange() {
-      if( this.readyState == 4 ) {
+      if( this.readyState === 4 ) {
 	 return hop_request_onready( this, svc, succ, fail );
       } else {
 	 return false;
@@ -840,7 +853,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
 	 var i = svc.indexOf( "?" );
 	 var svcname = i ? svc.substring( 0, i ) : svc;
 
-	 if( svcname.indexOf( "/hop/" ) == 0 ) {
+	 if( svcname.indexOf( "/hop/" ) === 0 ) {
 	    svcname = svcname.substring( 5 );
 	 }
 
@@ -906,7 +919,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
 	    xhr.hop_anim_interval =
 	       setInterval( function() {
 		     clearInterval( xhr.hop_anim_interval );
-		     if( xhr.hop_anim == true )
+		     if( xhr.hop_anim === true )
 			xhr.hop_anim = hop_start_anim( svc, a );
 		  }, hop_anim_latency );
 	 } else {
@@ -918,7 +931,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
       }
 
       if( sync ) {
-	 if( xhr.readyState == 4 ) {
+	 if( xhr.readyState === 4 ) {
 	    return xhr.onreadystatechange();
 	 } else {
 	    var exc = new Error( "\"" + svc

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/share/hop-dom.js                  */
+/*    serrano/prgm/project/hop/hop/share/hop-dom.js                    */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Jan 26 07:48:15 2018 (serrano)                */
-/*    Copyright   :  2006-18 Manuel Serrano                            */
+/*    Last change :  Thu May 21 08:50:57 2020 (serrano)                */
+/*    Copyright   :  2006-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
 /*    -------------------------------------------------------------    */
@@ -38,7 +38,7 @@ function hop_xml_tilde( proc, args ) {
 /*---------------------------------------------------------------------*/
 function hop_add( id, e, insert ) {
    var node;
-   
+
    if( (id instanceof String) || (typeof id == "string") ) {
       node = document.getElementById( id );
    } else {
@@ -46,7 +46,7 @@ function hop_add( id, e, insert ) {
    }
 
    if( node == null || node == undefined ) {
-      sc_error( "dom-append-child!", "illegal node", id );
+      sc_error( "dom-append-child!", "illegal node (" + node + ")", id );
    }
 
    function add( e ) {
@@ -60,10 +60,29 @@ function hop_add( id, e, insert ) {
 	 if( (e instanceof String) ||
 	     (typeof e === "string") ||
 	     (typeof e === "number") ) {
-	    insert( node, document.createTextNode( e ) );
+
+	    if( typeof e === "string" && e.indexOf( "&" ) >= 0 ) {
+	       /* use an dummy HTML element to force decoding the HTML entity */
+	       var sp = document.createElement( "span" );
+	       sp.innerHTML = e;
+	    
+	       insert( node, document.createTextNode( sp.textContent ) );
+	    } else {
+	       insert( node, document.createTextNode( e ) );
+	    }
 	 } else if( e instanceof hop_tilde ) {
 	    var sc = document.createElement( "script" );
 	    var src = "(" + e.fun + ")()";
+	    sc.type = "text/javascript";
+	    if( "text" in sc ) {
+	       sc.text = src;
+	    } else {
+	       sc.appendChild( src );
+	    }
+	    insert( node, sc );
+	 } else if( e instanceof Function ) {
+	    var sc = document.createElement( "script" );
+	    var src = "(" + e + ")()";
 	    sc.type = "text/javascript";
 	    if( "text" in sc ) {
 	       sc.text = src;
@@ -79,9 +98,9 @@ function hop_add( id, e, insert ) {
 	    } else if( typeof e === "boolean" || e == null || e == undefined ) {
 	       return;
 	    } else {
-	       sc_error( "dom-append-child!",
-			 "illegal child node (" + (typeof e) + ")",
-			 e );
+	       console.log( "*** WARNING: hop_add -- illegal child node (" 
+			    + sc_typeof( e ) + ") e=", e );
+	       return hop_add( id, e.toString(), insert );
 	    }
 	 }
       }

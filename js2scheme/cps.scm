@@ -1,17 +1,17 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/cps.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/cps.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Mar 23 17:19:12 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Mon Jan 20 09:45:02 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/6.0/#sec-14.4         */
 ;*    -------------------------------------------------------------    */
 ;*    This module implements the JavaScript CPS transformation needed  */
-;*    to implement generators. Only generator function are modified.   */
+;*    for generators. Only generator function are modified.            */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -26,7 +26,7 @@
 	   __js2scheme_syntax
 	   __js2scheme_utils)
 
-   (include "ast.sch")
+   (include "ast.sch" "usage.sch")
 
    (static (final-class %J2STail::J2SReturn))
 
@@ -243,7 +243,7 @@
 (define (make-stmt-kont loc stmt::J2SStmt)
    (let* ((name (gensym '%kstmt))
 	  (arg (J2SParam '(ref) (gensym '%karg) :vtype 'any))
-	  (kfun (J2SFun #f (list arg) (J2SBlock/w-endloc stmt))))
+	  (kfun (J2SArrow #f (list arg) (J2SBlock/w-endloc stmt))))
       (J2SLetOpt '(call) name kfun)))
    
 ;*---------------------------------------------------------------------*/
@@ -281,7 +281,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SNode ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-generic (cps::J2SNode this::J2SNode k pack::procedure kbreaks kcontinues kbry fun::J2SFun)
+(define-generic (cps::J2SNode this::J2SNode k pack::procedure kbreaks kcontinues ktry fun::J2SFun)
    (warning "cps: should not be here " (typeof this))
    (kcall k this))
 
@@ -403,7 +403,7 @@
 	     pack kbreaks kcontinues ktry fun)
 	  (if ktry
 	      (%J2STail
-		 (J2SCall (J2SRef ktry fun) (J2SBool #t) (cps-fun! expr))
+		 (J2SCall (J2SRef ktry) (J2SBool #t) (cps-fun! expr))
 		 fun)
 	      (J2SReturnYield (cps-fun! expr) (J2SUndefined) #f)))))
 
@@ -419,7 +419,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SStmtExpr ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-method (cps this::J2SStmt k pack kbreaks kcontinues ktry fun)
+(define-method (cps this::J2SStmtExpr k pack kbreaks kcontinues ktry fun)
    (assert-kont k KontStmt this)
    (with-access::J2SStmtExpr this (loc expr)
       (if (yield-expr? expr kbreaks kcontinues)
@@ -585,9 +585,6 @@
 	     (let* ((y (cps (car wdecls)
 			  (KontStmt (lambda (ndecl::J2SStmt)
 				       (cond
-					  ((null? (cdr decls))
-					   (set-car! decls ndecl)
-					   (call-next-method))
 					  ((null? (cdr wdecls))
 					   (let ((block (instantiate::J2SBlock
 							   (loc loc)
@@ -622,7 +619,7 @@
    (define (make-kont-decl loc k)
       (assert-kont k KontStmt this)
       (let* ((name (gensym '%kif))
-	     (kfun (J2SFun name '()
+	     (kfun (J2SArrow name '()
 		      (J2SBlock/w-endloc (kcall k (J2SNop))))))
 	 (J2SLetOpt '(call) name kfun)))
    
@@ -675,23 +672,33 @@
 ;*    cps ::J2SBindExit ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SBindExit k pack kbreaks kcontinues ktry fun)
-   (assert-kont k KontExpr this)
-   (with-access::J2SBindExit this (stmt lbl)
-      (if lbl
-	  (begin
-	     ;; an inlined function
-	     (set! stmt (cps-fun! stmt))
-	     (kcall k this))
-	  (if (yield-expr? stmt kbreaks kcontinues)
-	      (cps stmt
-		 (KontStmt (lambda (kstmt::J2SStmt)
-			      (set! stmt kstmt)
-			      (kcall k this))
-		    this k)
-		 pack kbreaks kcontinues ktry fun)
-	      (begin
-		 (set! stmt (cps-fun! stmt))
-		 (kcall k this))))))
+   
+   (define (make-kont-decl loc k)
+      (let* ((name (gensym '%kbind-exit))
+	     (kfun (J2SArrow name '()
+		      (J2SBlock/w-endloc (kcall k (J2SUndefined))))))
+	 (J2SLetOpt '(call) name kfun)))
+   
+   (define (make-kont-fun-call loc decl)
+      (J2SCall (J2SRef decl)))   (assert-kont k KontExpr this)
+      
+   (with-access::J2SBindExit this (stmt lbl loc)
+      (cond
+	 ((not (yield-expr? stmt kbreaks kcontinues))
+	  (set! stmt (cps-fun! stmt))
+	  (kcall k this))
+	 (lbl
+	  ;; in order to inline code generator, the j2sreturn CPS
+	  ;; transformation must know how to map its lbl to a contination
+	  (tprint "THIS=" (j2s->list this))
+	  (error "cps" "generator cannot use inline expression" loc))
+	 (else
+	  (cps stmt
+	     (KontStmt (lambda (kstmt::J2SStmt)
+			  (set! stmt kstmt)
+			  (kcall k this))
+		this k)
+	     pack kbreaks kcontinues ktry fun)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SFor ...                                                 */
@@ -729,16 +736,16 @@
 		 (bname (gensym '%kbreak))
 		 (cname (gensym '%kcontinue))
 		 (block (J2SBlock/w-endloc))
-		 (for (J2SFun name '() block))
+		 (for (J2SArrow name '() block))
 		 (decl (J2SLetOpt '(call) name for))
-		 (break (J2SFun name '()
+		 (break (J2SArrow name '()
 			   (J2SBlock/w-endloc
 			      (kcall k (J2SStmtExpr (J2SUndefined))))))
 		 (fbody (J2SBlock/w-endloc
 			   (J2SSeq
 			      (J2SStmtExpr incr)
 			      (%J2STail (J2SCall (J2SRef decl)) fun))))
-		 (conti (J2SFun name '()
+		 (conti (J2SArrow name '()
 			   (cps fbody
 			      (KontStmt kid this k)
 			      pack kbreaks
@@ -794,7 +801,7 @@
 			     obj)))
 		 (len (J2SLetOpt '(ref) l
 			 (J2SAccess (J2SRef keys) (J2SString "length"))))
-		 (idx (J2SLetOpt '(ref write) i (J2SNumber 0)))
+		 (idx (J2SLetOpt '(assig ref) i (J2SNumber 0)))
 		 (for (J2SFor (J2SUndefined)
 			 (J2SBinary '< (J2SRef idx) (J2SRef len))
 			 (J2SPostfix '++ (J2SRef idx) (J2SUndefined))
@@ -825,14 +832,14 @@
 		    (bname (gensym '%kbreak))
 		    (cname (gensym '%kcontinue))
 		    (block (J2SBlock/w-endloc))
-		    (while (J2SFun name '() block))
+		    (while (J2SArrow name '() block))
 		    (decl (J2SLetOpt '(call) name while))
-		    (break (J2SFun bname '()
+		    (break (J2SArrow bname '()
 			      (J2SBlock/w-endloc
 				 (kcall k (J2SStmtExpr (J2SUndefined))))))
 		    (fbody (J2SBlock/w-endloc
 			      (J2SReturn #t (J2SCall (J2SRef decl)) fun)))
-		    (conti (J2SFun cname '() fbody))
+		    (conti (J2SArrow cname '() fbody))
 		    (bdecl (J2SLetOpt '(call) bname break))
 		    (cdecl (J2SLetOpt '(call) cname conti))
 		    (then (J2SBlock/w-endloc body
@@ -869,10 +876,10 @@
 		    (cname (gensym '%kcontinue))
 		    (tname (gensym '%ktmp))
 		    (block (J2SBlock/w-endloc))
-		    (while (J2SFun name '() block))
+		    (while (J2SArrow name '() block))
 		    (decl (J2SLetOpt '(call) name while))
-		    (declv (J2SLetOpt '(ref) tname (J2SBool #t)))
-		    (conti (J2SFun name '()
+		    (declv (J2SLetOpt '(assig ref) tname (J2SBool #t)))
+		    (conti (J2SArrow name '()
 			      (cps (J2SBlock/w-endloc
 				      (J2SIf (J2SCond test
 						(J2SRef declv)
@@ -882,7 +889,7 @@
 				 k
 				 pack kbreaks kcontinues ktry fun)))
 		    (cdecl (J2SLetOpt '(call) cname conti))
-		    (break (J2SFun name '()
+		    (break (J2SArrow name '()
 			      (J2SBlock/w-endloc
 				 (J2SStmtExpr
 				    (J2SAssig (J2SRef declv) (J2SBool #f)))
@@ -1015,7 +1022,7 @@
       (assert-kont k KontExpr this)
       (let* ((name (gensym '%kcond))
 	     (arg (J2SParam '(call ref) (gensym '%arg) :vtype 'any))
-	     (kfun (J2SFun name (list arg)
+	     (kfun (J2SArrow name (list arg)
 		      (J2SBlock/w-endloc (kcall k (J2SRef arg))))))
 	 (J2SLetOpt '(call) name kfun)))
    
@@ -1111,7 +1118,7 @@
 	      (cps body k pack kbreaks kcontinues ktry fun)
 	      (let* ((cname (gensym '%kcatch))
 		     (catch (with-access::J2SCatch catch (param body)
-			       (J2SFun cname (list param)
+			       (J2SArrow cname (list param)
 				  (J2SBlock/w-endloc
 				     (cps body
 					k pack kbreaks kcontinues ktry fun)))))
@@ -1126,7 +1133,7 @@
 	  (let* ((fname (gensym '%kfinally))
 		 (paramf (J2SParam '(ref) (gensym '%excf) :vtype 'any))
 		 (paramt (J2SParam '(ref) (gensym '%exct) :vtype 'bool))
-		 (final (J2SFun fname (list paramt paramf)
+		 (final (J2SArrow fname (list paramt paramf)
 			   (J2SBlock/w-endloc
 			      (cps (SeqFinally loc finally paramt paramf)
 				 k pack kbreaks kcontinues ktry fun))))
@@ -1142,14 +1149,14 @@
 	     (let* ((fname (gensym '%kfinally))
 		    (paramf (J2SParam '(ref)  (gensym '%excf) :vtype 'any))
 		    (paramt (J2SParam '(ref) (gensym '%exct) :vtype 'bool))
-		    (final (J2SFun fname (list paramt paramf)
+		    (final (J2SArrow fname (list paramt paramf)
 			      (J2SBlock/w-endloc
 				 (cps (SeqFinally loc finally paramt paramf)
 				    k pack kbreaks kcontinues ktry fun))))
 		    (declf (J2SLetOpt '(call ref) fname final))
 		    (cname (gensym '%kcatch))
 		    (eparam (J2SParam '(ref)  (gensym '%exc) :vtype 'any))
-		    (catch (J2SFun cname (list param)
+		    (catch (J2SArrow cname (list param)
 			      (cps (J2SBlock/w-endloc
 				      (J2STry cbody (J2SNop)
 					 (%J2STail
@@ -1158,8 +1165,7 @@
 					    fun)))
 				 k pack kbreaks kcontinues ktry fun)))
 		    (declc (J2SLetOpt '(call) cname catch)))
-		(with-access::J2SDecl param (usage)
-		   (set! usage (cons 'ref usage)))
+		(decl-usage-add! param 'ref)
 		(J2SLetBlock (list declf declc)
 		   (J2STry
 		      (cps-try-body (SeqTry loc body declf)
@@ -1226,14 +1232,14 @@
 	  (let* ((v (gensym '%kkey))
 		 (t (gensym '%ktmp))
 		 (key (J2SLetOpt '(ref) v key))
-		 (tmp (J2SLetOpt '(write ref) t (J2SBool #f)))
+		 (tmp (J2SLetOpt '(assig ref) t (J2SBool #f)))
 		 (seq (J2SSeq*
 			 (map (lambda (clause)
 				 (switch->if key tmp clause))
 			    cases))))
 	     (if need-bind-exit-break
 		 (let* ((bname (gensym '%kbreak))
-			(break (J2SFun bname '()
+			(break (J2SArrow bname '()
 				  (J2SBlock/w-endloc
 				     (J2SBlock/w-endloc
 					(kcall k
@@ -1250,8 +1256,7 @@
 ;*    yield-expr? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (yield-expr? this kbreaks kcontinues)
-   (let ((v (yield-expr* this kbreaks kcontinues)))
-      (find (lambda (v) v) v)))
+   (pair? (yield-expr* this kbreaks kcontinues '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    yield-expr* ::J2SNode ...                                        */
@@ -1259,25 +1264,35 @@
 ;*    Returns #t iff a statement contains a YIELD. Otherwise           */
 ;*    returns #f.                                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (yield-expr* this::J2SNode kbreaks kcontinues)
+(define-walk-method (yield-expr* this::J2SNode kbreaks kcontinues localrets)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    yield-expr* ::J2SYield ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (yield-expr* this::J2SYield kbreaks kcontinues)
+(define-walk-method (yield-expr* this::J2SYield kbreaks kcontinues localrets)
    (list this))
 
 ;*---------------------------------------------------------------------*/
 ;*    yield-expr* ::J2SReturn ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (yield-expr* this::J2SReturn kbreaks kcontinues)
-   (list this))
+(define-walk-method (yield-expr* this::J2SReturn kbreaks kcontinues localrets)
+   (with-access::J2SReturn this (from)
+      (if (memq from localrets)
+	  '()
+	  (list this))))
+
+;*---------------------------------------------------------------------*/
+;*    yield-expr* ::J2SBindExit ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (yield-expr* this::J2SBindExit kbreaks kcontinues localrets)
+   (with-access::J2SBindExit this (stmt)
+      (yield-expr* stmt kbreaks kcontinues (cons this localrets))))
 
 ;*---------------------------------------------------------------------*/
 ;*    yield-expr* ::J2SBreak ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (yield-expr* this::J2SBreak kbreaks kcontinues)
+(define-walk-method (yield-expr* this::J2SBreak kbreaks kcontinues localrets)
    (with-access::J2SBreak this (target)
       (if (assq target kbreaks)
 	  (list this)
@@ -1286,7 +1301,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    yield-expr* ::J2SContinue ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (yield-expr* this::J2SContinue kbreaks kcontinues)
+(define-walk-method (yield-expr* this::J2SContinue kbreaks kcontinues localrets)
    (with-access::J2SContinue this (target)
       (if (assq target kcontinues)
 	  (list this)
@@ -1295,13 +1310,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    yield-expr* ::J2SFun ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (yield-expr* this::J2SFun kbreaks kcontinues)
+(define-walk-method (yield-expr* this::J2SFun kbreaks kcontinues localrets)
    '())
 
 ;*---------------------------------------------------------------------*/
 ;*    yield-expr* ::J2SCase ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (yield-expr* this::J2SCase kbreaks kcontinues)
+(define-walk-method (yield-expr* this::J2SCase kbreaks kcontinues localrets)
    (with-access::J2SCase this (expr body)
-      (append (yield-expr* expr kbreaks kcontinues)
-	 (yield-expr* body kbreaks kcontinues))))
+      (append (yield-expr* expr kbreaks kcontinues localrets)
+	 (yield-expr* body kbreaks kcontinues localrets))))

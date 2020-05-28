@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/_pipe_wrap.scm             */
+;*    /tmp/HOPNEW/hop/nodejs/_pipe_wrap.scm                            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Thu Oct 26 05:55:32 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Sun Feb 23 15:07:58 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
 ;*=====================================================================*/
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs__pipe-wrap
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hopscript)
 
    (import  __nodejs_uv
@@ -24,6 +26,11 @@
    (include "nodejs_types.sch" "nodejs_async.sch")
    
    (export (process-pipe-wrap ::WorkerHopThread ::JsGlobalObject ::JsProcess ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-pipe-wrap ...                                            */
@@ -39,87 +46,89 @@
    (define pipe-prototype
       (with-access::JsGlobalObject %this (js-object)
 	 (js-new %this js-object)))
+
+   (set! __js_strings (&init!))
    
    ;; close
-   (js-put! pipe-prototype 'close
+   (js-put! pipe-prototype (& "close")
       (js-make-function %this
 		  (lambda (this cb)
 		     (nodejs-close %worker %this process this cb))
-		  1 "close")
+		  1 (& "close"))
       #f %this)
 
    ;; unref
-   (js-put! pipe-prototype 'unref
+   (js-put! pipe-prototype (& "unref")
       (js-make-function %this
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-unref handle %worker)))
-		  0 "unref")
+		  0 (& "unref"))
       #f %this)
 
    ;; ref
-   (js-put! pipe-prototype 'ref
+   (js-put! pipe-prototype (& "ref")
       (js-make-function %this
 	 (lambda (this)
 	    (with-access::JsHandle this (handle)
 	       (nodejs-ref handle %worker)))
-	 0 "ref")
+	 0 (& "ref"))
       #f %this)
 
    ;; readStart
-   (js-put! pipe-prototype 'readStart
+   (js-put! pipe-prototype (& "readStart")
       (js-make-function %this
 	 (lambda (this)
 	    (stream-read-start %worker %this process slab this))
-	 0 "readStart")
+	 0 (& "readStart"))
       #f %this)
    
    ;; readStop
-   (js-put! pipe-prototype 'readStop
+   (js-put! pipe-prototype (& "readStop")
       (js-make-function %this
 	 (lambda (this)
 	    (stream-read-stop %worker %this this))
-	 0 "readStop")
+	 0 (& "readStop"))
       #f %this)
    
    ;; shutdown
-   (js-put! pipe-prototype 'shutdown
+   (js-put! pipe-prototype (& "shutdown")
       (js-make-function %this 
 	 (lambda (this)
 	    (stream-shutdown %worker %this process this))
-	 0 'shutdown)
+	 0 (& "shutdown"))
       #f %this)
    
    ;; writeBuffer
-   (js-put! pipe-prototype 'writeBuffer
+   (js-put! pipe-prototype (& "writeBuffer")
       (js-make-function %this
 	 (lambda (this buffer)
 	    (stream-write-buffer %worker %this process this buffer))
-	 1 "writeBuffer")
+	 1 (& "writeBuffer"))
       #f %this)
    
    ;; writeAsciiString
-   (js-put! pipe-prototype 'writeAsciiString
+   (js-put! pipe-prototype (& "writeAsciiString")
       (js-make-function %this 
 	 (lambda (this string handle)
 	    (stream-write-string %worker %this process this
 	       (js-jsstring->string string) 0 (js-jsstring-lengthfx string)
 	       "ascii" #f handle))
-	 2 'writeAsciiString)
+	 2 (& "writeAsciiString"))
       #f %this)
    
    ;; writeUtf8String
-   (js-put! pipe-prototype 'writeUtf8String
+   (js-put! pipe-prototype (& "writeUtf8String")
       (js-make-function %this
 	 (lambda (this string handle)
 	    (stream-write-string %worker %this process this
 	       (js-jsstring->string string) 0 (js-jsstring-lengthfx string)
 	       "utf8" #f handle))
-	 2 "writeUtf8String")
+	 2 (& "writeUtf8String"))
       #f %this)
    
    ;; writeUcs2String
-   (js-put! pipe-prototype 'writeUcs2String
+   (js-put! pipe-prototype (& "writeUcs2String")
       (js-make-function %this
 	 (lambda (this string handle)
 	    (let* ((ucs2string (utf8-string->ucs2-string string))
@@ -127,30 +136,30 @@
 	       (stream-write-string %worker %this process this
 		  (js-jsstring->string string) 0 (js-jsstring-lengthfx string)
 		  "ascii" #f handle)))
-	 2 "writeUcs2String")
+	 2 (& "writeUcs2String"))
       #f %this)
    
    ;; bind
-   (js-put! pipe-prototype 'bind
+   (js-put! pipe-prototype (& "bind")
       (js-make-function %this 
 	 (lambda (this name)
 	    (with-access::JsHandle this (handle)
 	       (nodejs-pipe-bind %this process handle name)))
-	 0 'bind)
+	 0 (& "bind"))
       #f %this)
    
    ;; listen
-   (js-put! pipe-prototype 'listen
+   (js-put! pipe-prototype (& "listen")
       (js-make-function %this
 		  (lambda (this backlog)
 		     (with-access::JsHandle this (handle)
 			(nodejs-pipe-listen %worker %this process this handle
 			   (->fixnum (js-tointeger backlog %this)))))
-		  1 "listen")
+		  1 (& "listen"))
       #f %this)
    
    ;; connect
-   (js-put! pipe-prototype 'connect
+   (js-put! pipe-prototype (& "connect")
       (js-make-function %this 
 	 (lambda (this name callback)
 	    (with-access::JsGlobalObject %this (js-object)
@@ -159,23 +168,23 @@
 		     (nodejs-pipe-connect %worker %this handle name
 			(lambda (status handle)
 			   (when (<fx status 0)
-			      (js-put! process '_errno
+			      (js-put! process (& "_errno")
 				 (nodejs-err-name status) #f %this))
-			   (let ((oncomp (js-get req 'oncomplete %this)))
+			   (let ((oncomp (js-get req (& "oncomplete") %this)))
 			      (!js-callback5 'connect %worker %this
 				 oncomp req status this req #t #t)
 			      (js-undefined))))
 		     req))))
-	 2 'connect)
+	 2 (& "connect"))
       #f %this)
    
    ;; open
-   (js-put! pipe-prototype 'open
+   (js-put! pipe-prototype (& "open")
       (js-make-function %this 
 	 (lambda (this fd)
 	    (with-access::JsHandle this (handle)
 	       (nodejs-pipe-open %worker %this handle fd)))
-	 1 'open)
+	 1 (& "open"))
       #f %this)
 
    ;; pipe
@@ -184,17 +193,19 @@
 	 (let* ((hdl (nodejs-new-pipe %worker (and (pair? val) (car val))))
 		(obj (instantiateJsHandle
 			(handle hdl)
-			(__proto__ pipe-prototype))))
+			(__proto__ pipe-prototype)
+			(cmap (instantiate::JsConstructMap))
+			(elements ($create-vector 1)))))
 	    ;; fd
-	    (js-bind! %this obj 'fd
+	    (js-bind! %this obj (& "fd")
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (with-access::JsHandle this (handle)
 			     (nodejs-stream-fd %worker handle)))
-		       0 'getGD)
+		       0 (& "getGD"))
 	       :writable #f :configurable #f)
 	    ;; writeQueueSize
-	    (js-put! obj 'writeQueueSize
+	    (js-put! obj (& "writeQueueSize")
 	       (nodejs-stream-write-queue-size hdl) #f %this)
 	    obj)))
    
@@ -203,9 +214,14 @@
 	 (let ((obj (js-new %this js-object)))
 	    (set! js-pipe
 	       (js-make-function %this
-		  (lambda (this . args) #unspecified) 1 'Pipe
+		  (lambda (this . args) #unspecified) 1 (& "Pipe")
 		  :construct pipe
 		  :prototype pipe-prototype
-		  :alloc (lambda (o) #unspecified)))
-	    (js-put! obj 'Pipe js-pipe #t %this)
+		  :alloc (lambda (%this o) #unspecified)))
+	    (js-put! obj (& "Pipe") js-pipe #t %this)
 	    obj))))
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)
+

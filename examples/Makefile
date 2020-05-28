@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Mar  9 09:52:56 2018 (serrano)                */
-#*    Copyright   :  2006-18 Manuel Serrano                            */
+#*    Last change :  Mon Jan 28 16:46:24 2019 (serrano)                */
+#*    Copyright   :  2006-19 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
 #*=====================================================================*/
@@ -56,6 +56,7 @@ POPULATION = Makefile \
   dom/dom.js dom/example.json dom/README.md \
   jquery/jquery.js jquery/example.json \
   hello/hello.js hello/example.json hello/README.md \
+  resource/resource.js resource/example.json resource/README.md resource/hop.png \
   svg/svg.js svg/example.json svg/README.md \
   pdfviewer/pdfviewer.js pdfviewer/example.json pdfviewer/README.md \
   pdfviewer/pdfwrap.js pdfviewer/pdf.js pdfviewer/example.pdf \

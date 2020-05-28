@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/html_base.scm             */
+;*    serrano/prgm/project/hop/hop/runtime/html_base.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Wed Oct  5 06:18:50 2016 (serrano)                */
-;*    Copyright   :  2010-16 Manuel Serrano                            */
+;*    Last change :  Thu Apr 18 05:49:25 2019 (serrano)                */
+;*    Copyright   :  2010-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
 ;*=====================================================================*/
@@ -49,6 +49,7 @@
 	    (<DATALIST> . ::obj)
 	    (<DD> . ::obj)
 	    (<DEL> . ::obj)
+	    (<DETAILS> . ::obj)
 	    (<DFN> . ::obj)
 	    (<DIR> . ::obj)
  	    (<DIV> . ::obj)
@@ -111,6 +112,7 @@
 	    (<STRIKE> . ::obj)
 	    (<STRONG> . ::obj)
 	    (<SUB> . ::obj)
+	    (<SUMMARY> . ::obj)
 	    (<SUP> . ::obj)
 	    (<TABLE> . ::obj)
 	    (<TBODY> . ::obj)
@@ -158,6 +160,7 @@
 (define-xml-element <DATALIST>)
 (define-xml-element <DD>)
 (define-xml-element <DEL>)
+(define-xml-element <DETAILS>)
 (define-xml-element <DFN>)
 (define-xml-element <DIR>)
 (define-xml-element <DIV>)
@@ -217,6 +220,7 @@
 (define-xml-element <STRIKE>)
 (define-xml-element <STRONG>)
 (define-xml-element <SUB>)
+(define-xml-element <SUMMARY>)
 (define-xml-element <SUP>)
 (define-xml-element <TABLE>)
 (define-xml-element <TBODY>)
@@ -238,18 +242,20 @@
 ;*    <META> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define-tag <META> ((content #f)
+		    (%context #f)
 		    (attrs)
 		    body)
    (instantiate::xml-meta
       (tag 'meta)
       (attributes attrs)
-      (content (xml-primitive-value content))
+      (content (xml-primitive-value content %context))
       (body body)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <FORM> ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define-tag <FORM> ((id #unspecified)
+		    (%context #f)
 		    (onsubmit #f)
 		    (onreset #f)
 		    (action #f)
@@ -261,26 +267,26 @@
 		    (onsubmit
 		     `(:onsubmit ,onsubmit ,@attrs))
 		    (else
-		     (map xml-primitive-value attrs))))
+		     (map (lambda (a) (xml-primitive-value a %context)) attrs))))
 	  (attrs (cond
 		    ((isa? onreset xml-tilde)
 		     `(:onreset ,(xml-tilde->return onreset) ,@attrs))
 		    (onreset
 		     `(:onreset ,onreset ,@attrs))
 		    (else
-		     (map xml-primitive-value attrs))))
+		     (map (lambda (a) (xml-primitive-value a %context)) attrs))))
 	  (attrs (cond
 		    ((isa? action xml-tilde)
 		     `(:action ,(format "javascript: ~a"
 				   (xml-tilde->statement action))
-			 ,@(map xml-primitive-value attrs)))
+			 ,@(map (lambda (a) (xml-primitive-value a %context)) attrs)))
 		    (action
 		     `(:action ,action ,@attrs))
 		    (else
-		     (map xml-primitive-value attrs)))))
+		     (map (lambda (a) (xml-primitive-value a %context)) attrs)))))
       (instantiate::xml-element
 	 (tag 'form)
-	 (id (xml-make-id (xml-primitive-value id) 'FORM))
+	 (id (xml-make-id (xml-primitive-value id %context) 'FORM))
 	 (attributes attrs)
 	 (body body))))
 
@@ -288,11 +294,12 @@
 ;*    <INPUT> ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-tag <INPUT> ((id #unspecified)
+		     (%context #f)
 		     (type 'text)
 		     (onkeydown #f)
 		     (attributes))
    (if (or (eq? type 'url) (equal? type "url"))
-       (let* ((id (xml-make-id (xml-primitive-value id) 'input))
+       (let* ((id (xml-make-id (xml-primitive-value id %context) 'input))
 	      (comp "hop_inputurl_keydown( this, event )")
 	      (onkeydown (if onkeydown
 			     (format "~a; ~a" comp
@@ -305,14 +312,14 @@
 	     (id id)
 	     (attributes `(:type ,type
 			     :onkeydown ,(secure-javascript-attr onkeydown)
-			     ,@(map xml-primitive-value attributes)))
+			     ,@(map (lambda (a) (xml-primitive-value a %context)) attributes)))
 	     (body '())))
        (instantiate::xml-empty-element
 	  (tag 'input)
-	  (id (xml-make-id (xml-primitive-value id) 'input))
+	  (id (xml-make-id (xml-primitive-value id %context) 'input))
 	  (attributes `(type: ,type
 			  ,@(if onkeydown
 				`(onkeydown: ,(secure-javascript-attr onkeydown))
 				'())
-			  ,@(map xml-primitive-value attributes)))
+			  ,@(map (lambda (a) (xml-primitive-value a %context)) attributes)))
 	  (body '()))))

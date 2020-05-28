@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/_zlib.scm                  */
+;*    /tmp/HOPNEW/hop/nodejs/_zlib.scm                                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 27 19:12:38 2015                          */
-;*    Last change :  Thu Oct 26 05:56:27 2017 (serrano)                */
-;*    Copyright   :  2015-17 Manuel Serrano                            */
+;*    Last change :  Sun Feb 23 15:12:28 2020 (serrano)                */
+;*    Copyright   :  2015-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Zlib bindings                                                    */
 ;*=====================================================================*/
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs__zlib
 
+   (include "../hopscript/stringthread.sch")
+   
    (library hopscript)
 
    (include "nodejs_async.sch")
@@ -24,6 +26,11 @@
 	    __nodejs_process)
 
    (export  (process-zlib ::WorkerHopThread ::JsGlobalObject ::JsObject)))
+
+;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    constructors                                                     */
@@ -37,6 +44,8 @@
 ;*---------------------------------------------------------------------*/
 (define (process-zlib %worker %this process)
 
+   (define __init (set! __js_strings (&init!)))
+   
    (define (zlib-write this . l)
       (tprint "zlib-write l=" l)
       (error "zlib" "binding not implemented" "write"))
@@ -53,32 +62,37 @@
    (define zlib-proto
       (let ((proto (with-access::JsGlobalObject %this (js-object)
 		      (js-new %this js-object))))
-	 (js-put! proto 'write
+	 (js-put! proto (& "write")
 	    (js-make-function %this zlib-write
-	       7 "write")
+	       7 (& "write"))
 	    #f %this)
-	 (js-put! proto 'init
+	 (js-put! proto (& "init")
 	    (js-make-function %this zlib-init
-	       5 "init")
+	       5 (& "init"))
 	    #f %this)
-	 (js-put! proto 'close
+	 (js-put! proto (& "close")
 	    (js-make-function %this zlib-close
-	       0 "close")
+	       0 (& "close"))
 	    #f %this)
-	 (js-put! proto 'reset
+	 (js-put! proto (& "reset")
 	    (js-make-function %this zlib-reset
-	       0 "reset")
+	       0 (& "reset"))
 	    #f %this)
 	 proto))
    
    (define (zlib this)
       (instantiateJsZlib
 	 (__proto__ zlib-proto)))
-   
-   (let* ((zlib (js-make-function %this zlib 0 "Zlib"
+
+   (let* ((zlib (js-make-function %this zlib 0 (& "Zlib")
 		   :construct zlib
 		   :prototype zlib-proto)))
       (js-alist->jsobject
 	 `((Zlib . ,zlib))
 	 %this) ))
+
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)
 

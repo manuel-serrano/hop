@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/doc/doc.js                        */
+/*    serrano/prgm/project/hop/hop/doc/doc.js                          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Tue Mar 13 15:44:25 2018 (serrano)                */
-/*    Copyright   :  2015-18 Manuel Serrano                            */
+/*    Last change :  Wed May 27 11:49:39 2020 (serrano)                */
+/*    Copyright   :  2015-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
 /*=====================================================================*/
@@ -54,6 +54,14 @@ const alias = {
    "markdown.md": "api",
    "tree.md": "widget",
    "spage.md": "widget"
+}
+
+/*---------------------------------------------------------------------*/
+/*    findChapter ...                                                  */
+/*---------------------------------------------------------------------*/
+function findChapter( key ) {
+   const keyhtml = key + ".html";
+   return chapters.find( e => e.href === keyhtml );
 }
 
 /*---------------------------------------------------------------------*/
@@ -157,11 +165,12 @@ function makeToc( els, k, proc = false ) {
 function compileSection( page ) {
    var footer = path.join( PWD, "footer.md" );
    var ast = hopdoc.load( path.join( PWD, page ) )
-   var toc = hopdoc.toc( ast );
    var title = path.basename( page ).replace( /[0-9]+[-]|[.][^.]*$/g, "" );
    var key = path.basename( path.dirname( page ) ).toLowerCase();
    var affix = "normal";
-   
+   var chap = findChapter( title );
+   var toc = (!chap || !("toc" in chap) || chap.toc) ? hopdoc.toc( ast ) : [];
+
    if( key == "doc" ) {
       key = alias[ path.basename( page ) ];
    } else if( key == "." ) {
@@ -175,7 +184,10 @@ function compileSection( page ) {
 	   favicon=${favicon}
            rts=${false}/>
 
-     <body data-spy="scroll" data-target="#navbar" class=${title}
+     <body data-spy="scroll" 
+	   data-target="#navbar" 
+	   class=${"hop" + " " + title}
+	   data-toc=${toc.length > 0 ? "yes" : "no"}
            onscroll=~{
 	      var top = (window.pageYOffset || document.scrollTop)-(document.clientTop||0);
 	      if( top > 180 ) {
@@ -191,6 +203,7 @@ function compileSection( page ) {
        
        <docxml.title title=${doc.title}
 		     version=${doc.version}
+		     date=${doc.date}
 		     logo=${doc.logo}
 		     root=${ROOT}>
           ${title}
@@ -198,14 +211,16 @@ function compileSection( page ) {
        <div class="container">
 	 <div class="filler">.keep</div>
          <div class=${toc == [] ? "col-md-12" : "col-md-9"} role="main">
-           <h1 class="toc" id="toc">Table of Contents</h1>
-           <ul class="toc">
-             ${makeToc( toc, 0 )}
-           </ul>
+	   ${ toc.length != 0 ?
+              <h1 class="toc" id="toc">Table of Contents</h1> : "" }
+	   ${ toc.length != 0 ?
+              <ul class="toc">
+             	${makeToc( toc, 0 )}
+              </ul> : "" }
            ${ast.XML}
          </div>
          <div class="row">
-           ${(toc.length > 0) ?
+	   ${(toc.length > 0) ?
            <div id="navbar" class="col-md-3" role="complementary">
              <nav class="sidebar noaffix"
 		  data-spy=${affix}
@@ -240,7 +255,8 @@ function compileSection( page ) {
 function compileChapter( json ) {
    var footer = path.join( PWD, "footer.md" );
    var chapter = require( path.join( PWD, json ) );
-   var toc = chapterEntries( chapter ).filter( x => x );
+   var toc = (typeof json !== "Object" || !("toc" in json) || json.toc) ? 
+      chapterEntries( chapter ).filter( x => x ) : false;
 
    var document = <html>
      <head css=${css}
@@ -249,12 +265,13 @@ function compileChapter( json ) {
 	   favicon=${favicon}
            rts=${false}/>
 
-     <body data-spy="scroll" data-target="#navbar">
+     <body data-spy="scroll" data-target="#navbar" class="hop" data-toc=${toc ? "yes" : "no"}>
        <docxml.navbar title=${chapter.title} key=${chapter.key}>
          ${chapters}
        </docxml.navbar>
        <docxml.title title=${doc.title}
 		     version=${doc.version}
+		     date=${doc.date}
 		     logo=${doc.logo}
 		     root=${ROOT}>
           ${chapter.title}
@@ -268,7 +285,7 @@ function compileChapter( json ) {
 	      : hopdoc.eval( chapter.description ).XML }
 	   </div> : ""}
 	 
-         <h1 class="toc" id="toc">Table of Contents</h1>
+	 ${ toc ? <h1 class="toc" id="toc">Table of Contents</h1> : "" }
          <ul class="toc">
            ${toc.map( function( el, idx = undefined, arr = undefined ) {
               return <li>
@@ -301,12 +318,22 @@ function compileMain( content ) {
 	   favicon=${favicon}
            rts=${false}/>
 
-     <body class="home" data-spy="scroll" data-target="#navbar">
+     <body class="hop home" data-spy="scroll" data-target="#navbar"
+           onscroll=~{
+	      var top = (window.pageYOffset || document.scrollTop)-(document.clientTop||0);
+	      if( top > 180 ) {
+		 document.body.setAttribute( "scrolled", "yes" );
+	      } else {
+		 document.body.setAttribute( "scrolled", "no" );
+	      }
+	   } >
+       ~{ $('body').scrollspy( { target: '#navbar' }) }
        <docxml.navbar title=${doc.title} key="home">
          ${chapters}
        </docxml.navbar>
        <docxml.title title=${doc.title}
 		     version=${doc.version}
+		     date=${doc.date}
 		     logo=${doc.logo}
 		     root=${ROOT}/>
 
@@ -334,12 +361,13 @@ function compileLibrary( content ) {
 	   favicon=${favicon}
            rts=${false}/>
 
-     <body class="library" data-spy="scroll" data-target="#navbar">
+     <body class="hop library" data-spy="scroll" data-target="#navbar">
        <docxml.navbar title=${doc.title} key="home">
          ${chapters}
        </docxml.navbar>
        <docxml.title title=${doc.title}
 		     version=${doc.version}
+		     date=${doc.date}
 		     logo=${doc.logo}
 		     root=${ROOT}/>
 
@@ -364,6 +392,7 @@ function compileLibrary( content ) {
 function compileIdx( json ) {
    var idx = require( path.join( PWD, json ) );
    var chapter = { title: "Index", key: "index" };
+   var footer = path.join( PWD, "footer.md" );
 
    var document = <html>
      <head css=${css}
@@ -372,13 +401,23 @@ function compileIdx( json ) {
 	   favicon=${favicon}
            rts=${false}/>
 
-     <body data-spy="scroll" data-target="#navbar">
+     <body class="hop" data-spy="scroll" data-target="#navbar"
+           onscroll=~{
+	      var top = (window.pageYOffset || document.scrollTop)-(document.clientTop||0);
+	      if( top > 180 ) {
+		 document.body.setAttribute( "scrolled", "yes" );
+	      } else {
+		 document.body.setAttribute( "scrolled", "no" );
+	      }
+	   } >
+       ~{ $('body').scrollspy( { target: '#navbar' }) }
        <docxml.navbar title=${chapter.title}
                       key=${chapter.key}>
          ${chapters}
        </docxml.navbar>
        <docxml.title title=${doc.title}
 		     version=${doc.version}
+		     date=${doc.date}
 		     logo=${doc.logo}
 		     root=${ROOT}>
           ${chapter.title}
@@ -387,7 +426,9 @@ function compileIdx( json ) {
        <div class="container">
 	 <div class="filler">.keep</div>
 	 <docxml.idx>${idx}</docxml.idx>
-	 <docxml.footer root=${ROOT}/>
+	 ${fs.existsSync( footer )
+	   ? hopdoc.load( footer ).XML
+	   : ""}
        </div>
      </body>
    </html>;

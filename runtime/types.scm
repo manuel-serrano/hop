@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/types.scm                 */
+;*    serrano/prgm/project/hop/hop/runtime/types.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Jul 12 07:03:54 2017 (serrano)                */
-;*    Copyright   :  2004-17 Manuel Serrano                            */
+;*    Last change :  Sun Jul 14 11:14:14 2019 (serrano)                */
+;*    Copyright   :  2004-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
 ;*=====================================================================*/
@@ -119,7 +119,13 @@
 	   (class http-response-hop::%http-response-server
 	      (backend read-only)
 	      (padding::obj (default #f))
-	      (value::obj read-only))
+	      (value::obj read-only)
+	      (ctx::obj (default 'hop)))
+
+	   (class http-response-responder::%http-response-server
+	      (ctx read-only)
+	      (responder::procedure read-only)
+	      (response::%http-response-server read-only))
 	   
 	   (class http-response-procedure::%http-response-server
 	      (proc::procedure read-only))
@@ -158,7 +164,8 @@
 	      (body (default #f)))
 	   
 	   (class http-response-async::%http-response
-	      (async::procedure read-only))
+	      (async::procedure read-only)
+	      (ctx::obj (default 'hop)))
 	   
 	   (class http-response-chunked::%http-response
 	      (body (default #f)))
@@ -173,8 +180,10 @@
 	      wid::symbol
 	      ;; the path associated with the service
 	      path::bstring
+	      ;; an optional service handler that is in charge of invoking proc
+	      (handler read-only (default #f))
 	      ;; the service formals
-	      (args::obj read-only)
+	      (args::obj read-only (info '(serialize: #f)))
 	      ;; the user procedure associated
 	      (proc::procedure read-only (info '(serialize: #f)))
 	      ;; the JS code calling that service

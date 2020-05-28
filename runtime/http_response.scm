@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/runtime/http_response.scm         */
+;*    serrano/prgm/project/hop/hop/runtime/http_response.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Mon Jul  2 18:02:44 2018 (serrano)                */
-;*    Copyright   :  2004-18 Manuel Serrano                            */
+;*    Last change :  Tue Mar 31 05:46:42 2020 (serrano)                */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -37,7 +37,7 @@
 	    __hop_security)
 
    (export  (generic http-response::symbol ::%http-response ::obj ::socket)
-	    (generic scheme->response ::obj ::http-request)
+	    (generic scheme->response ::obj ::http-request ctx)
 	    (http-send-request ::http-request ::procedure #!key body args)
 	    (chunked-flush-hook port size)))
 
@@ -88,12 +88,21 @@
 	    connection))))
 
 ;*---------------------------------------------------------------------*/
+;*    http-response ::http-response-responder ...                      */
+;*---------------------------------------------------------------------*/
+(define-method (http-response r::http-response-responder request socket)
+   (with-access::http-response-responder r (ctx responder response)
+      (responder ctx
+	 (lambda ()
+	    (http-response response request socket)))))
+	 
+;*---------------------------------------------------------------------*/
 ;*    http-response ::http-response-hop ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (http-response r::http-response-hop request socket)
 
-   (define (serialize val)
-      (obj->string val (request-type request)))
+   (define (serialize val ctx)
+      (obj->string val ctx))
    
    (define (arraybuffer-request? request)
       (with-access::http-request request (header)
@@ -107,47 +116,46 @@
 		'hop-to-hop
 		'hop-client))))
    
-   (define (response-x-hop value conn p)
-      (with-access::http-request request (connection)
-	 (let* ((str (serialize value))
-		(rep (if (arraybuffer-request? request)
-			 str
-			 (string-hex-extern str))))
-	    (http-write-line p "Content-Length: " (string-length rep))
-	    (http-write-line p "Connection: " conn)
-	    (http-write-line p)
-	    (display-string rep p))))
+   (define (response-x-hop value conn p ctx)
+      (let* ((str (serialize value ctx))
+	     (rep (if (arraybuffer-request? request)
+		      str
+		      (string-hex-extern str))))
+	 (http-write-line p "Content-Length: " (string-length rep))
+	 (http-write-line p "Connection: " conn)
+	 (http-write-line p)
+	 (display-string rep p)))
 
-   (define (response-x-javascript value p padding)
+   (define (response-x-javascript value p padding ctx)
       (http-write-line p "Connection: close")
       (http-write-line p)
       (when padding (display padding p))
       (display "(" p)
-      (obj->javascript-expr value p)
+      (obj->javascript-expr value p ctx)
       (display ")" p))
 
-   (define (response-x-url-hop value conn p)
-      (let ((s (url-path-encode (serialize value))))
+   (define (response-x-url-hop value conn p ctx)
+      (let ((s (url-path-encode (serialize value ctx))))
 	 (http-write-line p "Content-Length: " (string-length s))
 	 (http-write-line p "Connection: " conn)
 	 (http-write-line p)
 	 (display s p)))
 
-   (define (response-x-json-hop value p)
+   (define (response-x-json-hop value p ctx)
       (http-write-line p "Connection: close")
       (http-write-line p)
-      (byte-array->json (serialize value) p))
+      (byte-array->json (serialize value ctx) p))
    
-   (define (response-json value p padding)
+   (define (response-json value p padding ctx)
       (http-write-line p "Connection: close")
       (http-write-line p)
       (if padding
 	  (begin
 	     (display padding p)
 	     (display "(" p)
-	     (obj->json value p)
+	     (obj->json value p ctx)
 	     (display ")" p))
-	  (obj->json value p)))
+	  (obj->json value p ctx)))
 
    (with-trace 'hop-response "http-response::http-response-hop"
       (with-access::http-response-hop r (start-line
@@ -157,7 +165,7 @@
 					   server content-length
 					   value padding
 					   bodyp 
-					   timeout)
+					   timeout ctx)
 	 (with-access::http-request request (connection (headerreq header))
 	    (let ((p (socket-output socket))
 		  (conn connection))
@@ -176,21 +184,21 @@
 			 ctype))
 		     ((string-prefix? "application/x-hop" ctype)
 		      ;; fast path, bigloo serialization
-		      (response-x-hop value conn p))
+		      (response-x-hop value conn p ctx))
 		     ((string-prefix? "application/x-javascript" ctype)
 		      ;; standard javascript serialization
 		      (set! conn 'close)
-		      (response-x-javascript value p padding))
+		      (response-x-javascript value p padding ctx))
 		     ((string-prefix? "application/x-url-hop" ctype)
 		      ;; fast path, bigloo serialization
-		      (response-x-url-hop value conn p))
+		      (response-x-url-hop value conn p ctx))
 		     ((string-prefix? "application/x-json-hop" ctype)
 		      (set! conn 'close)
-		      (response-x-json-hop value p))
+		      (response-x-json-hop value p ctx))
 		     ((string-prefix? "application/json" ctype)
 		      ;; json encoding
 		      (set! conn 'close)
-		      (response-json value p padding))
+		      (response-json value p padding ctx))
 		     (else
 		      (error "http-response"
 			 (format "Unsupported serialization method \"~a\""
@@ -542,7 +550,7 @@
 		env: (format "REQUEST_METHOD=~a" method)
 		env: (format "SCRIPT_NAME=~a" path)
 		env: (format "SERVER_NAME=~a" (with-access::http-request request (host) host))
-		env: (format "SERVER_PORT=~a" (hop-port))
+		env: (format "SERVER_PORT=~a" (hop-default-port))
 		env: (format "SERVER_PROTOCOL=HTTP/1.1")
 		env: (format "SERVER_SOFTWARE=~a~a" (hop-name) (hop-version))
 		(apply append
@@ -692,7 +700,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::obj ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-generic (scheme->response obj::obj req)
+(define-generic (scheme->response obj::obj req ctx)
    (with-access::http-request req (method header)
       (cond
 	 ((string? obj)
@@ -729,13 +737,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::%http-response ...                            */
 ;*---------------------------------------------------------------------*/
-(define-method (scheme->response obj::%http-response req)
+(define-method (scheme->response obj::%http-response req ctx)
    obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::xml ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (scheme->response obj::xml req)
+(define-method (scheme->response obj::xml req ctx)
    (with-access::http-request req (method)
       (let ((be (hop-xml-backend-secure)))
 	 (with-access::xml-backend be (mime-type)
@@ -750,7 +758,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::xml-tilde ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (scheme->response obj::xml-tilde req)
+(define-method (scheme->response obj::xml-tilde req ctx)
    (with-access::http-request req (method)
       (instantiate::http-response-string
 	 (content-type (hop-mime-type))
@@ -765,7 +773,7 @@
 ;*    This is used to forward the response of a remote WITH-HOP        */
 ;*    to clients.                                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (scheme->response obj::xml-http-request req)
+(define-method (scheme->response obj::xml-http-request req ctx)
    (with-access::xml-http-request obj (status input-port header)
       (instantiate::http-response-procedure
 	 (start-line (format "HTTP/1.1 ~a" status))
@@ -810,7 +818,9 @@
 				      rpath)
 				     (else
 				      (make-file-name (dirname path) rpath)))))
-			    (raise e)))
+			    (begin
+			       (exception-notify e)
+			       (raise e))))
 		     (set! header (cons (cons connection: connection) header))
 		     (let ((auth (if (and (isa? req http-server-request)
 					  (with-access::http-server-request req (authorization)

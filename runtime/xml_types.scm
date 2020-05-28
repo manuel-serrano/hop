@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/xml_types.scm             */
+;*    serrano/prgm/project/hop/hop/runtime/xml_types.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Mon May 30 14:26:15 2016 (serrano)                */
-;*    Copyright   :  2010-16 Manuel Serrano                            */
+;*    Last change :  Thu May 21 09:59:24 2020 (serrano)                */
+;*    Copyright   :  2010-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
 ;*=====================================================================*/
@@ -87,16 +87,17 @@
 	    
 	    (class xml-tilde::xml
 	       (lang read-only (default 'hop))
-	       (body read-only)
-	       (parent (default #f))
+	       (body read-only (info '(serialize: #f)))
+	       (parent (default #f) (info '(serialize: #f)))
 	       (src read-only (default #f))
 	       (loc::obj read-only (default #f))
 	       (%js-expression (default #f))
 	       (%js-statement (default #f))
 	       (%js-return (default #f))
 	       (%js-attribute (default #f))
-	       (env (default #f))
-	       (menv (default #f)))
+	       )
+;* 	       (env (default #f))                                      */
+;* 	       (menv (default #f)))                                    */
 
 	    (class xml-meta::xml-markup
 	       (content::obj (default #f)))

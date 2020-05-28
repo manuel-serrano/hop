@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/instanceof.scm          */
+;*    serrano/prgm/project/hop/hop/js2scheme/instanceof.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 24 16:22:25 2018                          */
-;*    Last change :  Sun Feb  4 06:43:08 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Last change :  Mon Dec 16 19:22:41 2019 (serrano)                */
+;*    Copyright   :  2018-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Cache instanceof tests.                                          */
 ;*=====================================================================*/
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_instanceof
    
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -62,11 +63,10 @@
    (define (immutable? expr)
       (when (isa? expr J2SRef)
 	 (with-access::J2SRef expr (decl)
-	    (with-access::J2SDecl decl (usage ronly)
-	       (or ronly
-		   (with-access::J2SProgram prgm (mode)
-		      (and (not (usage? '(assig) usage))
-			   (memq mode '(strict hopscript)))))))))
+	    (or (decl-ronly? decl)
+		(with-access::J2SProgram prgm (mode)
+		   (and (not (decl-usage-has? decl '(assig)))
+			(memq mode '(strict hopscript))))))))
    
    (define (object-instanceof/cache obj rhs be loc)
       (let ((cache (get-cache prgm)))
@@ -95,12 +95,17 @@
 	  (instanceof/cache lhs lhs rhs be loc)))
    
    (with-access::J2SBinary this (op lhs rhs loc)
-      (if (or (not (eq? op 'instanceof)) (not (immutable? rhs)))
-	  (call-default-walker)
-	  (let* ((lbl '%instanceof)
-		 (be (J2SBindExit/type 'bool (gensym '%instanceof)
-			(J2SBlock/w-endloc))))
-	     (with-access::J2SBindExit be (stmt)
-		(set! stmt (instanceof-stmt lhs rhs be loc))
-		be)))))
+      (let ((ty (j2s-type lhs)))
+	 (cond
+	    ((and (not (type-object? ty)) (not (memq ty '(any unknown obj))))
+	     (call-default-walker))
+	    ((or (not (eq? op 'instanceof)) (not (immutable? rhs)))
+	     (call-default-walker))
+	    (else
+	     (let* ((lbl '%instanceof)
+		    (be (J2SBindExit/type 'bool (gensym '%instanceof)
+			   (J2SBlock/w-endloc))))
+		(with-access::J2SBindExit be (stmt)
+		   (set! stmt (instanceof-stmt lhs rhs be loc))
+		   be)))))))
 	  

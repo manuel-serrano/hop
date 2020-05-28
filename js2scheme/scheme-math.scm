@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-math.scm         */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-math.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Wed May  2 07:34:10 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Wed Dec  4 18:10:27 2019 (serrano)                */
+;*    Copyright   :  2017-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
 ;*=====================================================================*/
@@ -26,27 +26,50 @@
 	   __js2scheme_scheme
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-fun
+	   __js2scheme_scheme-cast
 	   __js2scheme_scheme-ops)
 
    (export (j2s-math-builtin-method fun::J2SAccess args
-	      mode return::procedure conf)))
+	      expr mode return::procedure conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-math-builtin-method ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (j2s-math-builtin-method fun::J2SAccess args mode return conf)
+(define (j2s-math-builtin-method fun::J2SAccess args expr mode return conf)
+
+   (define (cast-math sexp)
+      (with-access::J2SCall expr (args)
+	 (j2s-cast sexp expr (j2s-type (car args)) (j2s-type expr) conf)))
+
+   (define (integer-division? exp)
+      (when (isa? exp J2SBinary)
+	 (with-access::J2SBinary exp (op lhs rhs)
+	    (when (eq? op '/)
+	       (and (type-integer? (j2s-type lhs))
+		    (type-integer? (j2s-type rhs)))))))
+   
    (with-access::J2SAccess fun (loc obj field)
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)
 	    (cond
+	       ((string=? val "abs")
+		(when (=fx (length args) 1)
+		   (cast-math
+		      `(js-math-abs
+			  ,(j2s-scheme (car args) mode return conf)
+			  %this))))
 	       ((string=? val "floor")
 		(when (=fx (length args) 1)
-		   (j2s-math-inline-floor
-		      (car args) mode return conf)))
+		   (cast-math
+		      (j2s-math-inline-floor
+			 (car args) mode return conf))))
 	       ((string=? val "ceil")
 		(when (=fx (length args) 1)
-		   `(js-math-ceil
-		       ,(j2s-scheme (car args) mode return conf))))
+		   (cast-math
+		      `(,(if (integer-division? (car args))
+			     'js-math-ceil-as-integer
+			     'js-math-ceil)
+			  ,(j2s-scheme (car args) mode return conf)))))
 	       ((string=? val "round")
 		(when (=fx (length args) 1)
 		   `(js-math-round
@@ -90,8 +113,6 @@
       (when (isa? arg J2SBinary)
 	 (with-access::J2SBinary arg (op lhs rhs)
 	    (when (and (eq? op '/)
-;* 		       (type-fixnum? (j2s-vtype lhs))                  */
-;* 		       (type-fixnum? (j2s-vtype rhs))                  */
 		       (isa? rhs J2SNumber))
 	       (with-access::J2SNumber rhs (val)
 		  (when (and (integer? val) (> val 0))

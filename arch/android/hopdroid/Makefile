@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    .../prgm/project/hop/3.1.x/arch/android/hopdroid/Makefile        */
+#*    serrano/prgm/project/hop/hop/arch/android/hopdroid/Makefile      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Sun Jul 17 14:24:38 2016 (serrano)                */
-#*    Copyright   :  2006-16 Manuel Serrano                            */
+#*    Last change :  Tue May 19 14:50:23 2020 (serrano)                */
+#*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopdroid library.                      */
 #*=====================================================================*/
@@ -36,40 +36,35 @@ HOPCLOSELIBS_EU = -lhopdroid_u-$(HOPRELEASE)
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
-_BGL_OBJECTS = phone music mpd multimedia tts wifi zeroconf system prefs
+_BGL_OBJECTS = music mpd multimedia tts wifi zeroconf system prefs
 
 _OBJECTS = $(_BGL_OBJECTS)
 
-OBJECTS = $(_OBJECTS:%=o/%.o)
+OBJECTS = $(_OBJECTS:%=o/%.o) o/phone.o
 EOBJECTS = o/make_lib.o
 
-BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class)
-BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
-
-BGL_DOTNET_OBJ = $(_OBJECTS:%=$(DOTNET_OBJ_DIR)/%.obj)
-BGL_DOTNET_EOBJ	= $(DOTNET_OBJ_EDIR)/make_lib.obj
-
-SOURCES = $(_OBJECTS:%=%.scm)
+SOURCES_IN = $(_BGL_OBJECTS:%=%.scm)
+SOURCES = $(SOURCES_IN) phone.scm
 
 INCLUDES =
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
-POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile
+POPULATION = phone.scm.in $(SOURCES_IN) $(INCLUDES) make_lib.scm Makefile
 
 include ../../../etc/Makefile.library
 
 #*---------------------------------------------------------------------*/
 #*    all                                                              */
 #*---------------------------------------------------------------------*/
-.PHONY: build native jvm dotnet
+.PHONY: build native
 
 build: $(BACKEND)
 
 native: heap-c lib-c
-jvm: heap-jvm lib-jvm
-dotnet: heap-jvm lib-dotnet
+
+install: install-native
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */
@@ -81,10 +76,6 @@ ude:
 
 .afile: $(SOURCES)
 	@ $(AFILE) -o .afile $(SOURCES)
-
-.jfile: $(SOURCES)
-	@ $(JFILE) -o .jfile \
-                   -pbase $(PBASE) $(SOURCES) make_lib.scm
 
 .etags: $(SOURCES)
 	@ $(BTAGS) -o .etags $(SOURCES)

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/boolean.scm             */
+;*    /tmp/HOPNEW/hop/hopscript/boolean.scm                            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Jan 29 13:05:50 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Sun Feb 23 14:57:52 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
 ;*    -------------------------------------------------------------    */
@@ -23,6 +23,7 @@
    (import __hopscript_types
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_object
 	   __hopscript_function
 	   __hopscript_property
@@ -33,18 +34,20 @@
 	   (js-bool->jsBoolean::JsBoolean ::bool ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
-;*    JsStringLiteral begin                                            */
+;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsBoolean ...                                */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsBoolean
-   (lambda (o)
+   (lambda (o ctx)
       (with-access::JsBoolean o (val) val))
-   (lambda (o %this)
-      (js-bool->jsBoolean o (or %this (js-initial-global-object)))))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-bool->jsBoolean o ctx)
+	  (error "string->obvj ::JsBoolean" "Not a JavaScript context" ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsBoolean ...                                        */
@@ -53,9 +56,9 @@
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-boolean)
 	 (let ((nobj (call-next-method)))
-	    (with-access::JsBoolean nobj (__proto__ val)
+	    (with-access::JsBoolean nobj (val)
 	       (with-access::JsBoolean obj ((_val val))
-		  (set! __proto__ (js-get js-boolean 'prototype %this))
+		  (js-object-proto-set! nobj (js-get js-boolean (& "prototype") %this))
 		  (set! val (js-donate _val worker %_this))))
 	    nobj))))
 
@@ -65,7 +68,7 @@
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (hop->javascript o::JsBoolean op compile isexpr)
+(define-method (hop->javascript o::JsBoolean op compile isexpr ctx)
    (with-access::JsBoolean o (val)
       (display (if val "new Boolean(true)" "new Boolean(false)") op)))
 
@@ -73,33 +76,34 @@
 ;*    js-init-boolean! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-init-boolean! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (__proto__ js-boolean js-function)
-      (with-access::JsFunction js-function ((js-function-prototype __proto__))
-	 
-	 (define js-boolean-prototype
-	    (instantiateJsBoolean
-	       (val #f)
-	       (__proto__ __proto__)))
-	 
-	 (define (js-boolean-alloc constructor::JsFunction)
-	    (instantiateJsBoolean
-	       (__proto__ (js-get constructor 'prototype %this))))
-
-	 ;; then, Create a HopScript string object
-	 (set! js-boolean
-	    (js-make-function %this %js-boolean 1 'Boolean
-	       :__proto__ js-function-prototype
-	       :prototype js-boolean-prototype
-	       :alloc js-boolean-alloc
-	       :construct js-boolean-construct))
-	 ;; now the boolean constructor is fully built,
-	 ;; initialize the prototype properties
-	 (init-builtin-boolean-prototype! %this js-boolean js-boolean-prototype)
-	 ;; bind Boolean in the global object
-	 (js-bind! %this %this 'Boolean
-	    :configurable #f :enumerable #f :value js-boolean
-	    :hidden-class #t)
-	 js-boolean)))
+   (with-access::JsGlobalObject %this (js-boolean js-function)
+      ;; local constant strings
+      (unless (vector? __js_strings) (set! __js_strings (&init!)))
+      
+      (define js-boolean-prototype
+	 (instantiateJsBoolean
+	    (val #f)
+	    (__proto__ (js-object-proto %this))))
+      
+      (define (js-boolean-alloc %this constructor::JsFunction)
+	 (instantiateJsBoolean
+	    (__proto__ (js-get constructor (& "prototype") %this))))
+      
+      ;; then, Create a HopScript string object
+      (set! js-boolean
+	 (js-make-function %this %js-boolean 1 (& "Boolean")
+	    :__proto__ (js-object-proto js-function)
+	    :prototype js-boolean-prototype
+	    :alloc js-boolean-alloc
+	    :construct js-boolean-construct))
+      ;; now the boolean constructor is fully built,
+      ;; initialize the prototype properties
+      (init-builtin-boolean-prototype! %this js-boolean js-boolean-prototype)
+      ;; bind Boolean in the global object
+      (js-bind! %this %this (& "Boolean")
+	 :configurable #f :enumerable #f :value js-boolean
+	 :hidden-class #t)
+      js-boolean))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-boolean ...                                                  */
@@ -123,8 +127,7 @@
 ;*    js-valueof ::JsBoolean ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (js-valueof this::JsBoolean %this)
-   (with-access::JsBoolean this (val)
-      val))
+   this)
    
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-boolean-prototype! ...                              */
@@ -141,12 +144,12 @@
 		  (if shape (shape this) this)))))
    
    ;; prototype fields
-   (js-bind! %this obj 'constructor
+   (js-bind! %this obj (& "constructor")
       :value js-boolean
       :enumerable #f
       :hidden-class #t)
    ;; toString
-   (js-bind! %this obj 'toString
+   (js-bind! %this obj (& "toString")
       :value (js-make-function %this
 		(lambda (this)
 		   (let ((val (js-cast-boolean this typeof)))
@@ -154,15 +157,15 @@
 			  (js-string->jsstring "true")
 			  (js-string->jsstring "false"))))
 		0
-		'toString)
+		(& "toString"))
       :enumerable #f
       :hidden-class #t)
    ;; valueOf
-   (js-bind! %this obj 'valueOf
+   (js-bind! %this obj (& "valueOf")
       :value (js-make-function %this
 		(lambda (this)
 		   (js-cast-boolean this #f))
-		0 'valueOf)
+		0 (& "valueOf"))
       :enumerable #f
       :hidden-class #t))
       
@@ -174,7 +177,7 @@
       (js-new1 %this js-boolean val)))
 
 ;*---------------------------------------------------------------------*/
-;*    JsStringLiteral end                                              */
+;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-end!)
+(&end!)
 

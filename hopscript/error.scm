@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/error.scm               */
+;*    serrano/prgm/project/hop/hop/hopscript/error.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed May  2 16:26:17 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Wed Apr  8 08:27:37 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
 ;*    -------------------------------------------------------------    */
@@ -27,7 +27,9 @@
 	   __hopscript_array
 	   __hopscript_function
 	   __hopscript_private
-	   __hopscript_public)
+	   __hopscript_lib
+	   __hopscript_public
+	   __hopscript_worker)
 
    (static (class JsFrame::JsObject
 	      (file::bstring read-only)
@@ -39,45 +41,47 @@
    (export (js-init-error! ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
 ;*    constructor                                                      */
 ;*---------------------------------------------------------------------*/
 (define-instantiate JsFrame)
-
-;*---------------------------------------------------------------------*/
-;*    JsStringLiteral begin                                            */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsError ...                                  */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsError
    (lambda (o ctx)
-      (let ((%this (js-initial-global-object)))
-	 (with-access::JsError o (name msg stack fname location)
-	    (vector (string-append "Server" (js-tostring name %this))
-	       (js-tostring msg %this)
-	       (obj->string stack %this)
-	       (js-tostring fname %this)
-	       (js-tonumber location %this)))))
+      (with-access::JsError o (name msg stack fname location %this)
+	 (let ((%this (if (isa? ctx JsGlobalObject) ctx %this)))
+	    (if (isa? %this JsGlobalObject)
+		(vector (string-append "Server" (js-tostring name %this))
+		   (js-tostring msg %this)
+		   (obj->string stack %this)
+		   (js-tostring fname %this)
+		   (js-tonumber location %this))
+		(error "obj->string ::JsError" "Not a JavaScript context" ctx)))))
    (lambda (o ctx)
       (if (and (vector? o) (=fx (vector-length o) 5))
-	  (if (eq? ctx 'hop)
+	  (if (isa? ctx JsGlobalObject)
+	      (with-access::JsGlobalObject ctx (js-error)
+		 (instantiateJsError
+		    (%this ctx)
+		    (__proto__ (js-get js-error (& "prototype") ctx))
+		    (name (js-string->jsstring (vector-ref o 0)))
+		    (msg (js-string->jsstring (vector-ref o 1)))
+		    (stack (string->obj (url-decode (vector-ref o 2)) ctx))
+		    (fname (js-string->jsstring (vector-ref o 3)))
+		    (location (vector-ref o 4))))
 	      (instantiate::&error
 		 (obj (js-string->jsstring (vector-ref o 0)))
 		 (msg (js-string->jsstring (vector-ref o 1)))
 		 (stack (string->obj (url-decode (vector-ref o 2)) ctx))
 		 (proc (js-string->jsstring (vector-ref o 3)))
-		 (location (vector-ref o 4)))
-	      (with-access::JsGlobalObject ctx (js-error)
-		 (instantiateJsError
-		    (__proto__ (js-get js-error 'prototype ctx))
-		    (name (js-string->jsstring (vector-ref o 0)))
-		    (msg (js-string->jsstring (vector-ref o 1)))
-		    (stack (string->obj (url-decode (vector-ref o 2)) ctx))
-		    (fname (js-string->jsstring (vector-ref o 3)))
-		    (location (vector-ref o 4)))))
-	  (error "Error" "wrong error" o))))
+		 (location (vector-ref o 4)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsError ...                                          */
@@ -101,370 +105,449 @@
    (object-display o port))
    
 ;*---------------------------------------------------------------------*/
-;*    exception-notify ::obj ...                                       */
+;*    exception-notify ::JsError ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (exception-notify exc::JsError)
-   (with-access::JsError exc (name msg stack fname location)
+   (with-access::JsError exc (name msg stack fname location %this)
       (if (isa? msg &exception)
 	  (exception-notify msg)
-	  (let* ((name (js-jsstring->string name))
-		 (%this (js-new-global-object))
-		 (stk (js-get exc 'stack %this))
-		 (port (current-error-port)))
-	     (cond
-		((js-jsstring? fname)
-		 (display-trace-stack-source
-		    (list `(,name (at ,(js-jsstring->string fname) ,location)))
-		    port))
-		((string? fname)
-		 (display-trace-stack-source
-		    (list `(,name (at ,fname ,location)))
-		    port)))
-	     (if (js-jsstring? stk)
-		 (display (js-jsstring->string stk) port)
-		 (let ((stack (cond
-				 ((string=? name "ReferenceError")
-				  stack)
-				 ((string=? name "TypeError")
-				  stack)
-				 (else
-				  stack))))
-		    (fprint port name ": " msg "\n")
-		    (display-trace-stack stack port)))))))
+	  (with-handler
+	     (lambda (e)
+		(let ((port (current-error-port)))
+		   (
+		    (display "*** INTERNAL-ERROR: " port)
+		    (display "an error occurred while signaling an error!" port)
+		    (newline port)
+		    (display "The initial error was:" port)
+		    (newline port)
+		    (display "  " port)
+		    (display (js-jsstring->string name) port)
+		    (display " -- " port)
+		    (display (js-tostring msg %this) port)
+		    (newline port)
+		    (display "  " port)
+		    (display (js-tostring fname %this) port)
+		    (display ":" port)
+		    (display location port)
+		    (newline port)
+		    (display "The reraise error is:" port)
+		    (newline port)
+		    (exception-notify e))))
+	     (with-access::JsGlobalObject %this (worker)
+		(js-worker-exec worker "error" #t
+		   (lambda ()
+		      (let* ((name (js-jsstring->string name))
+			     (stk (js-get exc (& "stack") %this))
+			     (port (current-error-port)))
+			 (cond
+			    ((js-jsstring? fname)
+			     (display-trace-stack-source
+				(list `(,name (at ,(js-jsstring->string fname) ,location)))
+				port))
+			    ((string? fname)
+			     (display-trace-stack-source
+				(list `(,name (at ,fname ,location)))
+				port)))
+			 (if (js-jsstring? stk)
+			     (display (js-jsstring->string stk) port)
+			     (let ((stack (cond
+					     ((string=? name "ReferenceError")
+					      stack)
+					     ((string=? name "TypeError")
+					      stack)
+					     (else
+					      stack))))
+				(fprint port name ": " msg "\n")
+				(display-trace-stack stack port)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    exception-notify ::obj ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (exception-notify exc::JsObject)
-   (let* ((%this (js-new-global-object))
-	  (msg (js-get exc 'message %this))
-	  (stack (js-get exc 'stack %this))
-	  (name (js-get exc 'name %this))
-	  (port (current-error-port)))
-      (unless (or (eq? name (js-undefined)) (eq? msg (js-undefined)))
-	  (fprint port name ": " msg "\n"))
-      (display stack port)))
+   (with-access::JsObject exc (%this)
+      (let* ((%this (js-new-global-object))
+	     (msg (js-get exc (& "message") %this))
+	     (stack (js-get exc (& "stack") %this))
+	     (name (js-get exc (& "name") %this))
+	     (port (current-error-port)))
+	 (unless (or (eq? name (js-undefined)) (eq? msg (js-undefined)))
+	    (fprint port name ": " msg "\n"))
+	 (display stack port))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-error! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-init-error! %this::JsGlobalObject)
+   ;; local constant strings
+   (unless (vector? __js_strings) (set! __js_strings (&init!)))
+   
    ;; bind the errors into the global object
-   (with-access::JsGlobalObject %this (__proto__ js-error js-function
+   (with-access::JsGlobalObject %this (js-error js-function
 					 js-syntax-error js-type-error
 					 js-uri-error js-eval-error
-					 js-range-error js-reference-error)
-      (with-access::JsFunction js-function ((js-function-prototype __proto__))
+					 js-range-error js-reference-error
+					 name)
+      
+      (define js-function-prototype
+	 (js-object-proto js-function))
+      
+      (define js-error-prototype
+	 (instantiateJsError
+	    (%this %this)
+	    (__proto__ (js-object-proto %this))
+	    (name (& "Error"))
+	    (msg (& ""))))
+      
+      (define (js-error-alloc %this constructor::JsFunction)
+	 (instantiateJsError
+	    (%this %this)
+	    (name (js-get constructor (& "name") %this))
+	    (msg (& ""))
+	    (__proto__ (js-get constructor (& "prototype") %this))
+	    (stack '())))
+      
+      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.11
+      (define (js-error-construct this::JsError . args)
+	 (with-access::JsError this (msg fname location name)
+	    (match-case args
+	       ((?m)
+		(unless (eq? m (js-undefined))
+		   (js-bind! %this this (& "message") :value m :enumerable #f
+		      :hidden-class #t)
+		   (set! msg m)))
+	       ((?m (and (? js-jsstring?) ?f) ?l)
+		(unless (eq? m (js-undefined))
+		   (js-bind! %this this (& "message") :value m :enumerable #f
+		      :hidden-class #t)
+		   (set! msg m))
+		(set! fname f)
+		(set! location l))
+	       ((?m (and (? string?) ?f) ?l)
+		(unless (eq? m (js-undefined))
+		   (js-bind! %this this (& "message") :value m :enumerable #f
+		      :hidden-class #t)
+		   (set! msg m))
+		(set! fname (js-string->jsstring f))
+		(set! location l))
+	       ((?m (and ?loc (? js-object?)) #unspecified)
+		(unless (eq? m (js-undefined))
+		   (js-bind! %this this (& "message") :value m :enumerable #f
+		      :hidden-class #t)
+		   (set! msg m))
+		(set! fname (js-get loc (& "filename") %this))
+		(set! location (js-get loc (& "pos") %this)))
+	       ((?m . ?-)
+		(unless (eq? m (js-undefined))
+		   (js-bind! %this this (& "message") :value m :enumerable #f
+		      :hidden-class #t)
+		   (set! msg m))))
+	    
+	    (js-bind! %this this (& "name")
+	       :value name
+	       :enumerable #f
+	       :hidden-class #t))
+	 this)
+      
+      (define (js-error-construct/stack this::JsError . args)
+	 (let ((err (apply js-error-construct this args)))
+	    (capture-stack-trace err (js-undefined))
+	    err))
+      
+      (define (capture-stack-trace err start-fun)
 	 
-	 (define js-error-prototype
-	    (instantiateJsError
-	       (__proto__ __proto__)
-	       (msg (js-ascii->jsstring ""))))
+	 (define frame-proto
+	    (with-access::JsGlobalObject %this (js-object)
+	       (js-new0 %this js-object)))
 	 
-	 (define (js-error-alloc constructor::JsFunction)
-	    (with-access::JsFunction constructor (name)
-	       (instantiateJsError
-		  (name (js-string->jsstring name))
-		  (msg (js-ascii->jsstring ""))
-		  (__proto__ (js-get constructor 'prototype %this))
-		  (stack '()))))
+	 (define (make-frame fun loc file line column)
+	    (with-access::JsGlobalObject %this (js-object)
+	       (let ((obj (instantiateJsFrame
+			     (__proto__ frame-proto)
+			     (file file)
+			     (line line)
+			     (column column)
+			     (fun fun))))
+		  (js-put! obj (& "receiver") (js-undefined) #f %this)
+		  (js-put! obj (& "fun") (js-string->jsstring fun) #f %this)
+		  (js-put! obj (& "pos") (js-string->jsstring loc) #f %this)
+		  obj)))
 	 
-	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.11
-	 (define (js-error-construct this::JsError . args)
-	    (with-access::JsError this (msg fname location name)
-	       (match-case args
-		  ((?m)
-		   (unless (eq? m (js-undefined))
-		      (js-bind! %this this 'message :value m :enumerable #f
-			 :hidden-class #t)
-		      (set! msg m)))
-		  ((?m (and (? js-jsstring?) ?f) ?l)
-		   (unless (eq? m (js-undefined))
-		      (js-bind! %this this 'message :value m :enumerable #f
-			 :hidden-class #t)
-		      (set! msg m))
-		   (set! fname f)
-		   (set! location l))
-		  ((?m (and (? string?) ?f) ?l)
-		   (unless (eq? m (js-undefined))
-		      (js-bind! %this this 'message :value m :enumerable #f
-			 :hidden-class #t)
-		      (set! msg m))
-		   (set! fname (js-string->jsstring f))
-		   (set! location l))
-		  ((?m . ?-)
-		   (unless (eq? m (js-undefined))
-		      (js-bind! %this this 'message :value m :enumerable #f
-			 :hidden-class #t)
-		      (set! msg m))))
-
-	       (js-bind! %this this 'name
-		  :value name
-		  :enumerable #f
-		  :hidden-class #t))
-	    this)
-
-	 (define (js-error-construct/stack this::JsError . args)
-	    (let ((err (apply js-error-construct this args)))
-	       (capture-stack-trace err (js-undefined))
-	       err))
-
-	 (define (capture-stack-trace err start-fun)
-	    
-	    (define frame-proto
-	       (with-access::JsGlobalObject %this (js-object)
-		  (js-new0 %this js-object)))
-	    
-	    (define (make-frame fun loc file line column)
-	       (with-access::JsGlobalObject %this (js-object)
-		  (let ((obj (instantiateJsFrame
-				(__proto__ frame-proto)
-				(file file)
-				(line line)
-				(column column)
-				(fun fun))))
-		     (js-put! obj 'receiver (js-undefined) #f %this)
-		     (js-put! obj 'fun (js-string->jsstring fun) #f %this)
-		     (js-put! obj 'pos (js-string->jsstring loc) #f %this)
-		     obj)))
-	    
-	    (define (hop-frame->js-frame frame)
-	       (let ((name (pregexp-match "\\@@([^ ]*) hopscript"
-			      (symbol->string! (car frame)))))
-		  (cond
-		     ((pair? name)
-		      (let ((fun (cadr name))
-			    (loc (cadr frame)))
-			 (make-frame fun (apply format "~a:~a" (cdr loc))
-			    (cadr loc) (caddr loc) 0)))
-		     ((eq? (car frame) 'hopscript)
-		      (make-frame "hopscript" "" "" 0 0))
-		     (else
-		      (js-undefined)))))
-	    
-	    (define (hop-stack->jsstring err stack)
-	       (js-string->jsstring
-		  (call-with-output-string
-		     (lambda (op)
-			(when (isa? err JsObject)
-			   ;; needed for nodejs compatibility
-			   (let ((head (js-get err 'name %this)))
-			      (unless (eq? head (js-undefined))
-				 (display (js-tostring head %this) op)
-				 (display ": " op)))
-			   (display (js-get err 'message %this) op)
-			   (newline op))
-			(display-trace-stack stack op 1)))))
-	    
-	    ;; initialize the frame proto object
-	    (js-bind! %this frame-proto 'getFileName
-	       :value (js-make-function %this
-			 (lambda (o)
-			    (with-access::JsFrame o (file)
-			       (js-string->jsstring file)))
-			 0 'getFileName)
-	       :enumerable #t
-	       :hidden-class #t)
-	    (js-bind! %this frame-proto 'getLineNumber
-	       :value (js-make-function %this
-			 (lambda (o)
-			    (with-access::JsFrame o (line)
-			       line))
-			 0 'getLineNumber)
-	       :enumerable #t
-	       :hidden-class #t)
-	    (js-bind! %this frame-proto 'getColumnNumber
-	       :value (js-make-function %this
-			 (lambda (o)
-			    (with-access::JsFrame o (column)
-			       column))
-			 0 'getColumnNumber)
-	       :enumerable #t
-	       :hidden-class #t)
-	    (js-bind! %this frame-proto 'getFunctionName
-	       :value (js-make-function %this
-			 (lambda (o)
-			    (with-access::JsFrame o (fun)
-			       (js-string->jsstring fun)))
-			 0 'getFunctionName)
-	       :enumerable #t
-	       :hidden-class #t)
-	    (js-bind! %this frame-proto 'isEval
-	       :value (js-make-function %this
-			 (lambda (o)
-			    (with-access::JsFrame o (iseval)
-			       iseval))
-			 0 'isEval)
-	       :enumerable #t
-	       :hidden-class #t)
-	    
-	    
-	    (let ((limit (js-get js-error 'stackTraceLimit %this)))
+	 (define (hop-frame->js-frame frame)
+	    (let ((name (pregexp-match "\\@@([^ ]*) hopscript"
+			   (symbol->string! (car frame)))))
 	       (cond
-		  ((eq? limit (js-undefined))
-		   (set! limit 10))
-		  ((not (integer? limit))
-		   (set! limit 10))
-		  ((or (< limit 0) (> limit 10000))
-		   (set! limit 10)))
-	       (let ((stack (get-trace-stack limit)))
-		  (js-bind! %this err 'stack
-		     :get (js-make-function %this
-			     (lambda (o)
-				(let ((prepare (js-get js-error
-						  'prepareStackTrace %this)))
-				   (if (isa? prepare JsFunction)
-				       (let ((frames (js-vector->jsarray
-							(list->vector
-							   (filter-map hop-frame->js-frame
-							      stack))
-							%this)))
-					  (js-call2 %this prepare js-error
-					     err frames))
-				       (hop-stack->jsstring err stack))))
-			     0 'get)
-		     :set (js-make-function %this
-			     (lambda (o v)
-				(js-undefined))
-			     2 'set)
-		     :enumerable #f
-		     :configurable #f
-		     :hidden-class #t))))
+		  ((pair? name)
+		   (let ((fun (cadr name))
+			 (loc (cadr frame)))
+		      (make-frame fun (apply format "~a:~a" (cdr loc))
+			 (cadr loc) (caddr loc) 0)))
+		  ((eq? (car frame) 'hopscript)
+		   (make-frame "hopscript" "" "" 0 0))
+		  (else
+		   #f))))
 	 
-	 ;; bind the properties of the prototype
-	 (js-bind! %this js-error-prototype 'message
-	    :set (js-make-function %this
-		    (lambda (o v)
-		       (js-bind! %this o 'message :value v :enumerable #f))
-		    1 'message)
-	    :get (js-make-function %this
-		    (lambda (o)
-		       (if (isa? o JsError)
-			   (with-access::JsError o (msg) msg)
-			   (js-undefined)))
-		    0 'message)
-	    :enumerable #f
-	    :configurable #t
-	    :hidden-class #t)
-	 (js-bind! %this js-error-prototype 'name
-	    :set (js-make-function %this
-		    (lambda (o v)
-		       (js-bind! %this o 'name :value v))
-		    1 'name)
-	    :get (js-make-function %this
-		    (lambda (o)
-		       (if (isa? o JsError)
-			   (with-access::JsError o (name) name)
-			   (js-undefined)))
-		    0 'name)
-	    :enumerable #f
-	    :hidden-class #t)
+	 (define (hop-stack->jsstring err stack)
+	    (js-string->jsstring
+	       (call-with-output-string
+		  (lambda (op)
+		     (when (js-object? err)
+			;; needed for nodejs compatibility
+			(let ((head (js-get err (& "name") %this)))
+			   (unless (eq? head (js-undefined))
+			      (display (js-tostring head %this) op)
+			      (display ": " op)))
+			(display (js-get err (& "message") %this) op)
+			(newline op))
+		     (display-trace-stack stack op 1)))))
 	 
-	 ;; then, create a HopScript object
-	 (set! js-error
-	    (js-make-function %this (%js-error %this) 1
-	       'Error
-	       :__proto__ js-function-prototype
-	       :prototype js-error-prototype
-	       :alloc js-error-alloc
-	       :construct js-error-construct/stack))
-	 (init-builtin-error-prototype! %this js-error js-error-prototype)
-	 (set! js-syntax-error
-	    (js-make-function %this (%js-syntax-error %this) 1
-	       'SyntaxError
-	       :__proto__ js-function-prototype
-	       :prototype (instantiateJsError 
-			     (__proto__ js-error-prototype)
-			     (msg (js-ascii->jsstring "")))
-	       :alloc js-error-alloc
-	       :construct js-error-construct/stack))
-	 (set! js-type-error
-	    (js-make-function %this (%js-type-error %this) 1
-	       'TypeError
-	       :__proto__ js-function-prototype
-	       :prototype (instantiateJsError 
-			     (__proto__ js-error-prototype)
-			     (msg (js-ascii->jsstring "")))
-	       :alloc js-error-alloc
-	       :construct js-error-construct/stack))
-	 (set! js-uri-error
-	    (js-make-function %this (%js-uri-error %this) 1
-	       'URIError
-	       :__proto__ js-function-prototype
-	       :prototype (instantiateJsError 
-			     (__proto__ js-error-prototype)
-			     (msg (js-ascii->jsstring "")))
-	       :alloc js-error-alloc
-	       :construct js-error-construct/stack))
-	 (set! js-eval-error
-	    (js-make-function %this (%js-eval-error %this) 1
-	       'EvalError
-	       :__proto__ js-function-prototype
-	       :prototype (instantiateJsError 
-			     (__proto__ js-error-prototype)
-			     (msg (js-ascii->jsstring "")))
-	       :alloc js-error-alloc
-	       :construct js-error-construct/stack))
-	 (set! js-range-error
-	    (js-make-function %this (%js-range-error %this) 1
-	       'RangeError
-	       :__proto__ js-function-prototype
-	       :prototype (instantiateJsError 
-			     (__proto__ js-error-prototype)
-			     (msg (js-ascii->jsstring "")))
-	       :alloc js-error-alloc
-	       :construct js-error-construct))
-	 (set! js-reference-error
-	    (js-make-function %this (%js-reference-error %this) 1
-	       'ReferenceError
-	       :__proto__ js-function-prototype
-	       :prototype (instantiateJsError 
-			     (__proto__ js-error-prototype)
-			     (msg (js-ascii->jsstring "")))
-	       :alloc js-error-alloc
-	       :construct js-error-construct/stack))
-	 ;; bind Error in the global object
-	 (js-bind! %this %this 'Error :configurable #f :enumerable #f
-	    :value js-error
-	    :hidden-class #t)
-	 (js-bind! %this %this 'SyntaxError :configurable #f :enumerable #f
-	    :value js-syntax-error
-	    :hidden-class #t)
-	 (js-bind! %this %this 'TypeError :configurable #f :enumerable #f
-	    :value js-type-error
-	    :hidden-class #t)
-	 (js-bind! %this %this 'URIError :configurable #f :enumerable #f
-	    :value js-uri-error
-	    :hidden-class #t)
-	 (js-bind! %this %this 'EvalError :configurable #f :enumerable #f
-	    :value js-eval-error
-	    :hidden-class #t)
-	 (js-bind! %this %this 'RangeError :configurable #f :enumerable #f
-	    :value js-range-error
-	    :hidden-class #t)
-	 (js-bind! %this %this 'ReferenceError :configurable #f :enumerable #f
-	    :value js-reference-error
-	    :hidden-class #t)
-	 ;; nodejs addon
-	 (js-bind! %this js-error 'stackTraceLimit
-	    :value 10
-	    :enumerable #f
-	    :hidden-class #t)
-	 (js-bind! %this js-error 'captureStackTrace
+	 ;; initialize the frame proto object
+	 (js-bind! %this frame-proto (& "getFileName")
 	    :value (js-make-function %this
-		      (lambda (o this start-func)
-			 (capture-stack-trace this start-func))
-		      2 'captureStackTrace)
-	    :enumerable #f
+		      (lambda (o)
+			 (with-access::JsFrame o (file)
+			    (js-string->jsstring file)))
+		      0 (& "getFileName")
+		      :src "error.scm")
+	    :enumerable #t
 	    :hidden-class #t)
-	 js-error)))
+	 (js-bind! %this frame-proto (& "getLineNumber")
+	    :value (js-make-function %this
+		      (lambda (o)
+			 (with-access::JsFrame o (line)
+			    line))
+		      0 (& "getLineNumber")
+		      :src "error.scm")
+	    :enumerable #t
+	    :hidden-class #t)
+	 (js-bind! %this frame-proto (& "getColumnNumber")
+	    :value (js-make-function %this
+		      (lambda (o)
+			 (with-access::JsFrame o (column)
+			    column))
+		      0 (& "getColumnNumber")
+		      :src "error.scm")
+	    :enumerable #t
+	    :hidden-class #t)
+	 (js-bind! %this frame-proto (& "getFunctionName")
+	    :value (js-make-function %this
+		      (lambda (o)
+			 (with-access::JsFrame o (fun)
+			    (js-string->jsstring fun)))
+		      0 (& "getFunctionName")
+		      :src "error.scm")
+	    :enumerable #t
+	    :hidden-class #t)
+	 (js-bind! %this frame-proto (& "isEval")
+	    :value (js-make-function %this
+		      (lambda (o)
+			 (with-access::JsFrame o (iseval)
+			    iseval))
+		      0 (& "isEval")
+		      :src "error.scm")
+	    :enumerable #t
+	    :hidden-class #t)
+	 
+	 
+	 (let ((limit (js-get js-error (& "stackTraceLimit") %this)))
+	    (cond
+	       ((eq? limit (js-undefined))
+		(set! limit 10))
+	       ((not (integer? limit))
+		(set! limit 10))
+	       ((or (< limit 0) (> limit 10000))
+		(set! limit 10)))
+	    (let ((stack (get-trace-stack limit)))
+	       (js-bind! %this err (& "stack")
+		  :get (js-make-function %this
+			  (lambda (o)
+			     (let ((prepare (js-get js-error
+					       (& "prepareStackTrace") %this)))
+				(if (js-procedure? prepare)
+				    (let ((frames (js-vector->jsarray
+						     (list->vector
+							(filter-map hop-frame->js-frame
+							   stack))
+						     %this)))
+				       (js-call2 %this prepare js-error
+					  err frames))
+				    (hop-stack->jsstring err stack))))
+			  0 (& "get")
+			  :src "error.scm")
+		  :set (js-make-function %this
+			  (lambda (o v)
+			     (js-undefined))
+			  2 (& "set")
+			  :src "error.scm")
+		  :enumerable #f
+		  :configurable #t
+		  :hidden-class #t))))
+      
+      ;; bind the properties of the prototype
+      (js-bind! %this js-error-prototype (& "notify")
+	 :value (js-make-function %this
+		   (lambda (exn)
+		      (exception-notify exn))
+		   1 (& "notify")
+		   :src "error.scm")
+	 :enumerable #f)
+      (js-bind! %this js-error-prototype (& "message")
+	 :set (js-make-function %this
+		 (lambda (o v)
+		    (js-bind! %this o (& "message") :value v :enumerable #f))
+		 1 (& "message")
+		 :src "error.scm")
+	 :get (js-make-function %this
+		 (lambda (o)
+		    (if (isa? o JsError)
+			(with-access::JsError o (msg) msg)
+			(js-undefined)))
+		 0 (& "message")
+		 :src "error.scm")
+	 :enumerable #f
+	 :configurable #t
+	 :hidden-class #t)
+      (js-bind! %this js-error-prototype (& "name")
+	 :set (js-make-function %this
+		 (lambda (o v)
+		    (js-bind! %this o (& "name") :value v))
+		 1 (& "name")
+		 :src "error.scm")
+	 :get (js-make-function %this
+		 (lambda (o)
+		    (if (isa? o JsError)
+			(with-access::JsError o (name) name)
+			(js-undefined)))
+		 0 (& "name")
+		 :src "error.scm")
+	 :enumerable #f
+	 :hidden-class #t)
+      
+      ;; then, create a HopScript object
+      (set! js-error
+	 (js-make-function %this (%js-error %this) 1
+(& 	    "Error")
+	    :__proto__ js-function-prototype
+	    :prototype js-error-prototype
+	    :size 5
+	    :alloc js-error-alloc
+	    :construct js-error-construct/stack
+	    :src "error.scm"))
+      (init-builtin-error-prototype! %this js-error js-error-prototype)
+      (set! js-syntax-error
+	 (js-make-function %this (%js-syntax-error %this) 1
+(& 	    "SyntaxError")
+	    :__proto__ js-function-prototype
+	    :prototype (instantiateJsError
+			  (%this %this)
+			  (__proto__ js-error-prototype)
+			  (name (& "error"))
+			  (msg (& "")))
+	    :alloc js-error-alloc
+	    :construct js-error-construct/stack
+	    :src "error.scm"))
+      (set! js-type-error
+	 (js-make-function %this (%js-type-error %this) 1
+(& 	    "TypeError")
+	    :__proto__ js-function-prototype
+	    :prototype (instantiateJsError
+			  (%this %this)
+			  (__proto__ js-error-prototype)
+			  (name (& "error"))
+			  (msg (& "")))
+	    :alloc js-error-alloc
+	    :construct js-error-construct/stack
+	    :src "error.scm"))
+      (set! js-uri-error
+	 (js-make-function %this (%js-uri-error %this) 1
+(& 	    "URIError")
+	    :__proto__ js-function-prototype
+	    :prototype (instantiateJsError
+			  (%this %this)
+			  (__proto__ js-error-prototype)
+			  (name (& "error"))
+			  (msg (& "")))
+	    :alloc js-error-alloc
+	    :construct js-error-construct/stack
+	    :src "error.scm"))
+      (set! js-eval-error
+	 (js-make-function %this (%js-eval-error %this) 1
+(& 	    "EvalError")
+	    :__proto__ js-function-prototype
+	    :prototype (instantiateJsError 
+			  (%this %this)
+			  (__proto__ js-error-prototype)
+			  (name (& "error"))
+			  (msg (& "")))
+	    :alloc js-error-alloc
+	    :construct js-error-construct/stack
+	    :src "error.scm"))
+      (set! js-range-error
+	 (js-make-function %this (%js-range-error %this) 1
+(& 	    "RangeError")
+	    :__proto__ js-function-prototype
+	    :prototype (instantiateJsError 
+			  (%this %this)
+			  (__proto__ js-error-prototype)
+			  (name (& "error"))
+			  (msg (& "")))
+	    :alloc js-error-alloc
+	    :construct js-error-construct
+	    :src "error.scm"))
+      (set! js-reference-error
+	 (js-make-function %this (%js-reference-error %this) 1
+(& 	    "ReferenceError")
+	    :__proto__ js-function-prototype
+	    :prototype (instantiateJsError 
+			  (%this %this)
+			  (__proto__ js-error-prototype)
+			  (name (& "error"))
+			  (msg (& "")))
+	    :alloc js-error-alloc
+	    :construct js-error-construct/stack
+	    :src "error.scm"))
+      ;; bind Error in the global object
+      (js-bind! %this %this (& "Error") :configurable #f :enumerable #f
+	 :value js-error
+	 :hidden-class #t)
+      (js-bind! %this %this (& "SyntaxError") :configurable #f :enumerable #f
+	 :value js-syntax-error
+	 :hidden-class #t)
+      (js-bind! %this %this (& "TypeError") :configurable #f :enumerable #f
+	 :value js-type-error
+	 :hidden-class #t)
+      (js-bind! %this %this (& "URIError") :configurable #f :enumerable #f
+	 :value js-uri-error
+	 :hidden-class #t)
+      (js-bind! %this %this (& "EvalError") :configurable #f :enumerable #f
+	 :value js-eval-error
+	 :hidden-class #t)
+      (js-bind! %this %this (& "RangeError") :configurable #f :enumerable #f
+	 :value js-range-error
+	 :hidden-class #t)
+      (js-bind! %this %this (& "ReferenceError") :configurable #f :enumerable #f
+	 :value js-reference-error
+	 :hidden-class #t)
+      ;; nodejs addon
+      (js-bind! %this js-error (& "stackTraceLimit")
+	 :value 10
+	 :enumerable #f
+	 :hidden-class #t)
+      (js-bind! %this js-error (& "captureStackTrace")
+	 :value (js-make-function %this
+		   (lambda (o this start-func)
+		      (capture-stack-trace this start-func))
+		   2 (& "captureStackTrace")
+		   :src "error.scm")
+	 :enumerable #f
+	 :hidden-class #t)
+      js-error))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-error ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (%js-error %this)
    (lambda (this message fname loc)
-      (with-access::JsGlobalObject %this (js-error)
+      (with-access::JsGlobalObject %this (js-error name)
 	 (js-new %this js-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
@@ -472,7 +555,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-syntax-error %this)
    (lambda (this message fname loc)
-      (with-access::JsGlobalObject %this (js-syntax-error)
+      (with-access::JsGlobalObject %this (js-syntax-error name)
 	 (js-new %this js-syntax-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
@@ -480,7 +563,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-type-error %this)
    (lambda (this message fname loc)
-      (with-access::JsGlobalObject %this (js-type-error)
+      (with-access::JsGlobalObject %this (js-type-error name)
 	 (js-new %this js-type-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
@@ -488,7 +571,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-uri-error %this)
    (lambda (this message fname loc)
-      (with-access::JsGlobalObject %this (js-uri-error)
+      (with-access::JsGlobalObject %this (js-uri-error name)
 	 (js-new %this js-uri-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
@@ -496,7 +579,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-eval-error %this)
    (lambda (this message fname loc)
-      (with-access::JsGlobalObject %this (js-eval-error)
+      (with-access::JsGlobalObject %this (js-eval-error name)
 	 (js-new %this js-eval-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
@@ -504,7 +587,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-range-error %this)
    (lambda (this message fname loc)
-      (with-access::JsGlobalObject %this (js-range-error)
+      (with-access::JsGlobalObject %this (js-range-error name)
 	 (js-new %this js-range-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
@@ -512,7 +595,7 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-reference-error %this)
    (lambda (this message fname loc)
-      (with-access::JsGlobalObject %this (js-reference-error)
+      (with-access::JsGlobalObject %this (js-reference-error name)
 	 (js-new %this js-reference-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/
@@ -533,7 +616,7 @@
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-error-prototype! %this js-error obj)
    ;; prototype fields
-   (js-bind! %this obj 'constructor
+   (js-bind! %this obj (& "constructor")
       :value js-error
       :enumerable #f
       :hidden-class #t)
@@ -541,27 +624,28 @@
    ;; toString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.11.4.4
    (define (error-prototype-tostring this)
-      (if (not (isa? this JsObject))
-	  (bigloo-type-error "toString" "JsObject" this)
-	  (let* ((name3 (js-get this 'name %this))
-		 (name4 (if (eq? name3 (js-undefined))
-			    (js-ascii->jsstring "Error")
-			    (js-tojsstring name3 %this)))
-		 (msg5 (if (isa? this JsObject)
-			   (js-get this 'message %this)
-			   (js-undefined)))
-		 (msg6 (if (eq? msg5 (js-undefined))
-			   ""
-			   (js-tostring msg5 %this))))
-	     (cond
-		((js-jsstring-null? name4) (js-string->jsstring msg6))
-		((string=? msg6 "") name4)
-		(else
-		 (js-stringlist->jsstring
-		    (list (js-jsstring->string name4) ": " msg6)))))))
+      (if (not (js-object? this))
+          (bigloo-type-error "toString" "JsObject" this)
+          (let* ((name3 (js-get this (& "name") %this))
+                 (name4 (if (eq? name3 (js-undefined))
+                            (js-ascii->jsstring "Error")
+                            (js-tojsstring name3 %this)))
+                 (msg5 (if (js-object? this)
+                           (js-get this (& "message") %this)
+                           (js-undefined)))
+                 (msg6 (if (eq? msg5 (js-undefined))
+                           ""
+                           (js-tostring msg5 %this))))
+             (cond
+                ((js-jsstring-null? name4) (js-string->jsstring msg6))
+                ((string=? msg6 "") name4)
+                (else
+                 (js-stringlist->jsstring
+                    (list (js-jsstring->string name4) ": " msg6)))))))
       
-   (js-bind! %this obj 'toString
-      :value (js-make-function %this error-prototype-tostring 1 'toString)
+   (js-bind! %this obj (& "toString")
+      :value (js-make-function %this error-prototype-tostring 1 (& "toString")
+		:src "error.scm")
       :enumerable #f
       :hidden-class #t)
    
@@ -586,6 +670,6 @@
        (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
-;*    JsStringLiteral end                                              */
+;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-end!)
+(&end!)

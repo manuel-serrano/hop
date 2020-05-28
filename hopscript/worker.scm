@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/worker.scm              */
+;*    serrano/prgm/project/hop/hop/hopscript/worker.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Tue Jun  5 13:30:52 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Last change :  Sat Apr 11 14:04:30 2020 (serrano)                */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
 ;*    -------------------------------------------------------------    */
@@ -26,6 +26,7 @@
 	   __hopscript_property
 	   __hopscript_private
 	   __hopscript_public
+	   __hopscript_lib
 	   __hopscript_function
 	   __hopscript_error
 	   __hopscript_array)
@@ -36,8 +37,10 @@
    (export (js-init-worker! ::JsGlobalObject)
 	   (js-worker-construct ::JsGlobalObject ::procedure)
 	   
-	   (js-init-main-worker!::WorkerHopThread ::JsGlobalObject ::bool ::procedure)
+ 	   (js-main-worker!::WorkerHopThread ::bstring ::bstring ::bool ::procedure ::procedure)
+ 	   (js-main-no-worker!::WorkerHopThread ::bstring ::bstring ::bool ::procedure ::procedure)
 	   (js-current-worker::WorkerHopThread)
+	   (js-main-worker?::bool ::WorkerHopThread)
 
 	   (js-worker-load::procedure)
 	   (js-worker-load-set! ::procedure)
@@ -46,7 +49,7 @@
 	   (generic js-worker-loop ::object)
 	   (generic js-worker-tick ::object)
 	   (generic js-worker-exception-handler ::object ::obj ::int)
-	   (generic js-worker-exec ::object ::bstring ::procedure)
+	   (generic js-worker-exec ::object ::bstring ::bool ::procedure)
 	   (generic js-worker-push-thunk! ::object ::bstring ::procedure)
 	   (generic js-worker-alive? ::object)
 	   
@@ -58,17 +61,18 @@
 	   (generic js-worker-remove-handler! ::object ::JsFunction)))
 
 ;*---------------------------------------------------------------------*/
-;*    JsStringLiteral begin                                            */
+;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-begin!)
+(define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsWorker ...                                 */
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsWorker
-   (lambda (o)
-      (js-raise-type-error (js-initial-global-object)
-	 "[[SerializeTypeError]] ~a" o))
+   (lambda (o ctx)
+      (if (isa? ctx JsGlobalObject)
+	  (js-raise-type-error ctx "[[SerializeTypeError]] ~a" o)
+	  (error "obj->string" "Not a JavaScript context" ctx)))
    (lambda (o) o))
 
 ;*---------------------------------------------------------------------*/
@@ -88,35 +92,38 @@
 ;*    js-init-worker! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-init-worker! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (__proto__ js-worker js-worker-prototype
+   (with-access::JsGlobalObject %this (js-worker js-worker-prototype
 					 js-function)
-      (with-access::JsFunction js-function ((js-function-prototype __proto__))
-	 
-	 (define (%js-worker %this)
-	    (with-access::JsGlobalObject %this (js-worker)
-	       (lambda (this proc)
-		  (js-new %this js-worker proc))))
-
-	 ;; first, create the builtin prototype
-	 (set! js-worker-prototype
-	    (instantiateJsWorker
-	       (__proto__ __proto__)))
-	 
-	 ;; then, Create a HopScript worker object constructor
-	 (set! js-worker
-	    (js-make-function %this (%js-worker %this) 2 'Worker
-	       :__proto__ js-function-prototype
-	       :prototype js-worker-prototype
-	       :construct (js-worker-construct %this (js-worker-load))))
-
-	 ;; prototype properties
-	 (init-builtin-worker-prototype! %this js-worker js-worker-prototype)
-	 
-	 ;; bind Worker in the global object
-	 (js-bind! %this %this 'Worker
-	    :configurable #f :enumerable #f :value js-worker
-	    :hidden-class #t)
-	 js-worker)))
+      
+      (define (%js-worker %this)
+	 (with-access::JsGlobalObject %this (js-worker)
+	    (lambda (this proc)
+	       (js-new %this js-worker proc))))
+      
+      ;; local constant strings
+      (unless (vector? __js_strings) (set! __js_strings (&init!)))
+      
+      ;; create the builtin prototype
+      (set! js-worker-prototype
+	 (instantiateJsWorker
+	    (__proto__ (js-object-proto %this))))
+      
+      ;; then, Create a HopScript worker object constructor
+      (set! js-worker
+	 (js-make-function %this (%js-worker %this) 2 (& "Worker")
+	    :__proto__ (js-object-proto js-function)
+	    :prototype js-worker-prototype
+	    :alloc js-no-alloc
+	    :construct (js-worker-construct %this (js-worker-load))))
+      
+      ;; prototype properties
+      (init-builtin-worker-prototype! %this js-worker js-worker-prototype)
+      
+      ;; bind Worker in the global object
+      (js-bind! %this %this (& "Worker")
+	 :configurable #f :enumerable #f :value js-worker
+	 :hidden-class #t)
+      js-worker))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-construct ...                                          */
@@ -136,22 +143,22 @@
    
    (define (bind-worker-methods! %this scope worker)
       ;; postMessage
-      (js-bind! %this scope 'postMessage
+      (js-bind! %this scope (& "postMessage")
 	 :value (js-make-function %this
 		   (lambda (this data)
 		      (js-worker-post-slave-message worker data))
-		   1 'postMessage)
+		   1 (& "postMessage"))
 	 :writable #f
 	 :configurable #f
 	 :enumerable #f
 	 :hidden-class #t)
       
       ;; close
-      (js-bind! %this scope 'close
+      (js-bind! %this scope (& "close")
 	 :value (js-make-function %this
 		   (lambda (this)
 		      (js-worker-self-terminate! worker #f))
-		   0 'close)
+		   0 (& "close"))
 	 :writable #f
 	 :configurable #f
 	 :enumerable #f
@@ -159,47 +166,78 @@
       
       (with-access::JsWorker worker (thread)
 	 ;; onmessage
-	 (js-bind! %this %this 'onmessage
+	 (js-bind! %this %this (& "onmessage")
 	    :get (js-make-function %this
 		    (lambda (this)
 		       (with-access::WorkerHopThread thread (onmessage)
 			  onmessage))
-		    0 'onmessage)
+		    0 (& "onmessage"))
 	    :set (js-make-function %this
 		    (lambda (this v)
 		       (with-access::WorkerHopThread thread (onmessage keep-alive)
 			  (set! keep-alive #t)
 			  (set! onmessage v)))
-		    1 'onmessage)
+		    1 (& "onmessage"))
 	    :configurable #f
 	    :writable #t
 	    :enumerable #t
 	    :hidden-class #t)))
-   
+
+   (define (onexit th)
+      (with-access::WorkerHopThread th (keep-alive parent exitlisteners)
+	 (when (pair? exitlisteners)
+	    (js-worker-push-thunk! parent "slave-terminate"
+	       (lambda ()
+		  (let ((e (instantiate::MessageEvent
+			      (name "exit")
+			      (target (js-undefined))
+			      (data (js-undefined)))))
+		     (apply-listeners exitlisteners e)))))))
+
    (lambda (_ src)
-      (with-access::JsGlobalObject %this (js-worker js-worker-prototype js-object)
+      (with-access::JsGlobalObject %this (js-worker-prototype js-object)
 	 (letrec* ((parent (js-current-worker))
-		   (this (%global-constructor))
 		   (source (js-tostring src %this))
+		   (setup (lambda ()
+			     (let ((this (%global-constructor
+					    :name (string-append source "_w"))))
+				;; store the worker in global object
+				(with-access::JsGlobalObject this (worker js-object)
+				   (set! worker thread)
+				   (with-access::WorkerHopThread thread (%this module-cache)
+				      (set! %this this)
+				      (set! module-cache (js-new0 this js-object)))))))
 		   (thunk (lambda ()
-			     (js-put! this 'module
-				(js-get %this 'module %this) #f this)
-			     (loader source thread this)))
+			     (with-access::WorkerHopThread thread (%this)
+				(with-handler
+				   (lambda (e)
+				      (exception-notify e))
+				   (loader source thread %this)))))
+		   (mutex (make-mutex))
+		   (condv (make-condition-variable))
 		   (thread (instantiate::WorkerHopThread
-			      (name (gensym (string-append "WebWorker@" src)))
+			      (name (gensym (string-append "WebWorker@"
+					       (js-jsstring->string src))))
 			      (parent parent)
+			      (mutex (if (isa? parent WorkerHopThread)
+					 (with-access::WorkerHopThread parent (mutex)
+					    mutex)
+					 (make-mutex)))
 			      (tqueue (list (cons "init" thunk)))
-			      (%this this)
+			      (onexit (js-make-function %this
+					 (lambda (this process retval)
+					    (onexit thread))
+					 2 (& "onexit")))
 			      (keep-alive #f)
-			      (module-cache (js-new0 %this js-object))
 			      (body (lambda ()
+				       (setup)
+				       (synchronize mutex
+					  (condition-variable-broadcast! condv))
+				       (js-worker-init! thread)
 				       (js-worker-loop thread)))
 			      (cleanup (lambda (thread)
 					  (when (isa? parent WorkerHopThread)
 					     (remove-subworker! parent thread)))))))
-
-	    ;; prepare the worker loop
-	    (js-worker-init! thread)
 
 	    ;; add the worker to the parent list
 	    (when (isa? parent WorkerHopThread)
@@ -207,6 +245,7 @@
 	    
 	    ;; start the worker thread
 	    (thread-start! thread)
+	    (condition-variable-wait! condv mutex)
 	       
 	    ;; create the worker object
 	    (let ((worker (instantiateJsWorker
@@ -216,50 +255,50 @@
 		  (set! prehook
 		     (lambda (%this this scope mod)
 			(bind-worker-methods! %this scope worker))))
-	       
+
 	       ;; master onmessage and onexit
 	       (let ((onmessage (js-undefined))
 		     (onerror (js-undefined))
 		     (onexit (js-undefined)))
-		  (js-bind! %this worker 'onmessage
+		  (js-bind! %this worker (& "onmessage")
 		     :get (js-make-function %this
 			     (lambda (this) onmessage)
-			     0 'onmessage)
+			     0 (& "onmessage"))
 		     :set (js-make-function %this
 			     (lambda (this v)
 				(set! onmessage v)
 				(add-event-listener! this "message"
 				   (lambda (this e)
 				      (js-call1 %this v this e))))
-			     2 'onmessage)
+			     2 (& "onmessage"))
 		     :configurable #t
 		     :enumerable #t
 		     :hidden-class #t)
-		  (js-bind! %this worker 'onerror
+		  (js-bind! %this worker (& "onerror")
 		     :get (js-make-function %this
 			     (lambda (this) onerror)
-			     0 'onerror)
+			     0 (& "onerror"))
 		     :set (js-make-function %this
 			     (lambda (this v)
 				(set! onerror v)
 				(add-event-listener! this "error"
 				   (lambda (this e)
 				      (js-call0 %this v this))))
-			     1 'onerror)
+			     1 (& "onerror"))
 		     :configurable #t
 		     :enumerable #t
 		     :hidden-class #t)
-		  (js-bind! %this worker 'onexit
+		  (js-bind! %this worker (& "onexit")
 		     :get (js-make-function %this
 			     (lambda (this) onexit)
-			     0 'onexit)
+			     0 (& "onexit"))
 		     :set (js-make-function %this
 			     (lambda (this v)
 				(set! onexit v)
 				(add-event-listener! this "exit"
 				   (lambda (this e)
 				      (js-call1 %this v this e))))
-			     2 'onexit)
+			     2 (& "onexit"))
 		     :configurable #t
 		     :enumerable #t
 		     :hidden-class #t))
@@ -272,37 +311,37 @@
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-worker-prototype! %this js-worker obj)
    ;; prototype fields
-   (js-bind! %this obj 'constructor
+   (js-bind! %this obj (& "constructor")
       :value js-worker
       :enumerable #f
       :hidden-class #t)
    ;; toString
-   (js-bind! %this obj 'toString
+   (js-bind! %this obj (& "toString")
       :value (js-make-function %this
 		(lambda (this) (js-string->jsstring "[object Worker]"))
-		0 'toString)
+		0 (& "toString"))
       :writable #t
       :configurable #t
       :enumerable #f
       :hidden-class #t)
    ;; postMessage
-   (js-bind! %this obj 'postMessage
+   (js-bind! %this obj (& "postMessage")
       :value (js-make-function %this
 		(lambda (this::JsWorker data)
 		   (with-access::JsWorker this (thread)
 		      (js-worker-post-master-message this data)))
-		1 'postMessage)
+		1 (& "postMessage"))
       :writable #f
       :configurable #t
       :enumerable #f
       :hidden-class #t)
    ;; terminate
-   (js-bind! %this obj 'terminate
+   (js-bind! %this obj (& "terminate")
       :value (js-make-function %this
 		(lambda (this::JsWorker)
 		   (with-access::JsWorker this (thread)
 		      (js-worker-terminate! thread #f)))
-		1 'terminate)
+		1 (& "terminate"))
       :writable #f
       :enumerable #t
       :configurable #f
@@ -326,12 +365,12 @@
    (with-access::JsWorker worker (thread)
       (with-access::WorkerHopThread thread (parent listeners %this)
 	 (when (isa? parent WorkerHopThread)
-	    (let ((e (instantiate::MessageEvent
-			(name "message")
-			(target worker)
-			(data (js-donate data parent %this)))))
-	       (js-worker-push-thunk! parent "post-slave-message"
-		  (lambda ()
+	    (js-worker-push-thunk! parent "post-slave-message"
+	       (lambda ()
+		  (let ((e (instantiate::MessageEvent
+			      (name "message")
+			      (target worker)
+			      (data (js-donate data parent %this)))))
 		     (apply-listeners listeners e))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -341,12 +380,12 @@
    (with-handler
       exception-notify 
       (with-access::WorkerHopThread thread (parent errorlisteners %this mutex)
-	 (let ((e (instantiate::MessageEvent
-		     (name "error")
-		     (target parent)
-		     (data (js-donate data parent %this)))))
-	    (js-worker-push-thunk! parent "post-slave-message"
-	       (lambda ()
+	 (js-worker-push-thunk! parent "post-slave-message"
+	    (lambda ()
+	       (let ((e (instantiate::MessageEvent
+			   (name "error")
+			   (target parent)
+			   (data (js-donate data parent %this)))))
 		  (synchronize mutex
 		     (if (pair? errorlisteners)
 			 (apply-listeners errorlisteners e)
@@ -358,13 +397,13 @@
 (define-generic (js-worker-post-master-message this::JsWorker data)
    (with-access::JsWorker this (thread)
       (with-access::WorkerHopThread thread (onmessage %this)
-	 (let ((e (instantiate::MessageEvent
-		     (name "message")
-		     (target this)
-		     (data (js-donate data thread %this)))))
-	    (js-worker-push-thunk! thread "post-master-message"
-	       (lambda ()
-		  (when (isa? onmessage JsFunction)
+	 (js-worker-push-thunk! thread "post-master-message"
+	    (lambda ()
+	       (when (js-procedure? onmessage)
+		  (let ((e (instantiate::MessageEvent
+			      (name "message")
+			      (target this)
+			      (data (js-donate data thread %this)))))
 		     (js-call1 %this onmessage this e))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -452,7 +491,17 @@
 ;*    %worker ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define %worker #f)
+(define %global #f)
+(define %module #f)
 (define %global-constructor js-new-global-object)
+
+;*---------------------------------------------------------------------*/
+;*    js-main-worker? ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Returns #t iff worker is the main worker.                        */
+;*---------------------------------------------------------------------*/
+(define (js-main-worker? w)
+   (eq? w %worker))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-current-worker ...                                            */
@@ -464,24 +513,81 @@
 	  %worker)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-init-main-worker! ...                                         */
+;*    js-main-worker! ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    Start the initial WorkerHopThread                                */
 ;*---------------------------------------------------------------------*/
-(define (js-init-main-worker! %this::JsGlobalObject keep-alive ctor)
+(define (js-main-worker! name path keep-alive ctor ctormod)
+
+   (define (setup-worker! %worker)
+      (set! %global (ctor :name name))
+      (with-access::JsGlobalObject %global (js-object worker)
+	 (set! worker %worker)
+	 (set! %module (ctormod (basename path) path %worker %global))
+	 (with-access::WorkerHopThread %worker (%this module-cache)
+	    ;; module-cache is used in src/main to check
+	    ;; where the worker is running or not
+	    (set! module-cache (js-new0 %this js-object))
+	    (set! %this %global)
+	    (js-put! module-cache (js-string->jsstring path) %module #f %this))))
+      
    (unless %worker
+      ($js-init-jsalloc (js-object-default-mode))
       (set! %global-constructor ctor)
-      (with-access::JsGlobalObject %this (js-object)
-	 (set! %worker
-	    (instantiate::WorkerHopThread
-	       (name "%worker")
-	       (%this %this)
-	       (onexit #f)
-	       (keep-alive keep-alive)
-	       (module-cache (js-new0 %this js-object))
-	       (body (lambda () (js-worker-loop %worker))))))
+      (let ((mutex (make-mutex))
+	    (condv (make-condition-variable)))
+	 (synchronize mutex
+	    (set! %worker
+	       (instantiate::WorkerHopThread
+		  (name (string-append "%worker@" name))
+		  (onexit #f)
+		  (keep-alive keep-alive)
+		  (body (lambda ()
+			   (setup-worker! %worker)
+			   (synchronize mutex
+			      (condition-variable-broadcast! condv))
+			   (js-worker-init! %worker)
+			   (js-worker-loop %worker)))))
+	    (thread-start-joinable! %worker)
+	    (condition-variable-wait! condv mutex))))
+   
+   (values %worker %global %module))
+
+;*---------------------------------------------------------------------*/
+;*    js-main-no-worker! ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Initialize the main worker in js-no-worker mode                  */
+;*---------------------------------------------------------------------*/
+(define (js-main-no-worker! name path keep-alive ctor ctormod)
+   
+   (define (setup-worker! %worker)
+      (set! %global (ctor :name name))
+      (with-access::JsGlobalObject %global (js-object worker)
+	 (set! worker %worker)
+	 (set! %module (ctormod (basename path) path %worker %global))
+	 (with-access::WorkerHopThread %worker (%this module-cache)
+	    ;; module-cache is used in src/main to check
+	    ;; where the worker is running or not
+	    (set! module-cache (js-new0 %this js-object))
+	    (set! %this %global)
+	    (js-put! module-cache (js-string->jsstring path) %module #f %this))))
+   
+   (unless %worker
+      ($js-init-jsalloc (js-object-default-mode))
+      (set! %global-constructor ctor)
+      (set! %worker
+	 (instantiate::WorkerHopThread
+	    (name (string-append "%worker@" name))
+	    (onexit #f)
+	    (keep-alive keep-alive)
+	    (body (lambda ()
+		     (error "js-main-no-worker"
+			"Cannot execute main worker in --js-no-worker mode"
+			#f)))))
+      (setup-worker! %worker)
       (js-worker-init! %worker))
-   %worker)
+   
+   (values %worker %global %module))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exception-handler ...                                  */
@@ -558,12 +664,6 @@
       (synchronize mutex
 	 (condition-variable-broadcast! condv)
 	 (tprint "THIS CODE SHOULD NOT BE EXECUTED")
-	 ;; install the signal handler for that thread
-	 (signal sigsegv
-	    (lambda (x)
-	       (js-raise-range-error %this
-		  "Maximum call stack size exceeded"
-		  #f)))
 	 ;; loop unless terminated
 	 (with-handler
 	    (lambda (exn)
@@ -576,11 +676,26 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-worker-exec th::object name::bstring thunk::procedure)
-   (if (and (eq? (current-thread) th)
+(define-generic (js-worker-exec th::object name::bstring
+		   handleerror::bool thunk::procedure)
+   (cond
+      ((and (eq? (current-thread) th)
 	    (with-access::WorkerHopThread th (tqueue)
 	       (null? tqueue)))
-       (thunk)
+       (thunk))
+      (handleerror
+       (let ((response #f)
+	     (mutex (make-mutex))
+	     (condv (make-condition-variable)))
+	  (synchronize mutex
+	     (js-worker-push-thunk! th name
+		(lambda ()
+		   (set! response (thunk))
+		   (synchronize mutex
+		      (condition-variable-signal! condv))))
+	     (condition-variable-wait! condv mutex)
+	     response)))
+      (else
        (let ((response #f)
 	     (mutex (make-mutex))
 	     (condv (make-condition-variable)))
@@ -599,7 +714,7 @@
 	     (if (isa? response WorkerException)
 		 (with-access::WorkerException response (exn)
 		    (raise exn))
-		 response)))))
+		 response))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-push-thunk! ::object ...                               */
@@ -633,8 +748,8 @@
 	 (set! state 'terminated)
 	 (condition-variable-signal! condv))))
 
-;*---------------------------------------------------------------------*/
-;*    JsStringLiteral end                                              */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-end!)
 
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)

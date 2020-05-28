@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/array.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/array.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed May  9 15:52:44 2018 (serrano)                */
-;*    Copyright   :  2016-18 Manuel Serrano                            */
+;*    Last change :  Sun Feb  9 11:33:47 2020 (serrano)                */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array loop optimization                                          */
 ;*=====================================================================*/
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_array
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "usage.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -86,7 +87,7 @@
 ;*---------------------------------------------------------------------*/
 (define (decl->adecl::J2SDeclInit decl::J2SDecl)
    (with-access::J2SDecl decl (id loc)
-      (J2SLetOptVtype 'vector '(read write)
+      (J2SLetOptVtype 'vector '(ref get assig)
 	 (symbol-append '%A id)
 	 (J2SCall (J2SHopRef 'js-array-vec) (J2SRef decl)))))
 
@@ -95,7 +96,7 @@
 ;*---------------------------------------------------------------------*/
 (define (decl->ldecl::J2SDeclInit adecl::J2SDecl decl::J2SDecl)
    (with-access::J2SDecl decl (id loc)
-      (J2SLetOptVtype 'uint32 '(read write)
+      (J2SLetOptVtype 'uint32 '(ref get assig)
 	 (symbol-append '%L id)
 	 (J2SCall (J2SHopRef 'js-array-ilen) (J2SRef decl)))))
 
@@ -103,7 +104,7 @@
 ;*    mark-decl ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (mark-decl::J2SDeclInit loc)
-   (J2SLetOptVtype 'integer '(read write)
+   (J2SLetOptVtype 'integer '(ref get assig)
       (gensym '%Marray-mark)
       (J2SCall (J2SHopRef 'js-array-mark))))
 
@@ -222,10 +223,19 @@
 	     (with-access::J2SRef obj (type decl)
 		(if (and (eq? type 'array)
 			 (memq decl env)
-			 (type-number? (j2s-type field)))
+			 (type-number? (j2s-type field))
+			 (not (rest-lazy-argument? decl)))
 		    (cons decl fdaref)
 		    fdaref))))))
-      
+
+;*---------------------------------------------------------------------*/
+;*    rest-lazy-argument? ...                                          */
+;*---------------------------------------------------------------------*/
+(define (rest-lazy-argument? decl)
+   (when (eq? (object-class decl) J2SDeclRest)
+      (with-access::J2SDeclRest decl (alloc-policy)
+	 (eq? alloc-policy 'lazy))))
+	  
 ;*---------------------------------------------------------------------*/
 ;*    array-ref! ::J2SNode ...                                         */
 ;*    -------------------------------------------------------------    */

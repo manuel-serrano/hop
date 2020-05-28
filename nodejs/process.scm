@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/nodejs/process.scm                */
+;*    serrano/prgm/project/hop/hop/nodejs/process.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sun Jun 10 13:30:49 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Mon Apr 13 11:16:49 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
 ;*=====================================================================*/
@@ -15,6 +15,8 @@
 (module __nodejs_process
    
    (option (set! *warning-overriden-variables* #f))
+   
+   (include "../hopscript/stringthread.sch")
    
    (library hopscript hop js2scheme)
 
@@ -67,6 +69,11 @@
 	   (process-ares-fail ::JsGlobalObject ::JsProcess ::int)))
 
 ;*---------------------------------------------------------------------*/
+;*    &begin!                                                          */
+;*---------------------------------------------------------------------*/
+(define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-version ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-version) "0.10.32")
@@ -89,143 +96,140 @@
 (define (nodejs-process %worker::WorkerHopThread %this::JsGlobalObject)
    (with-access::WorkerHopThread %worker (%process)
       (unless %process
+	 ;; local constant strings
+	 (set! __js_strings (&init!))
 	 ;; create the process object
 	 (set! %process (new-process-object %worker %this))
 	 ;; bind process into %this
-	 (js-put! %this 'process %process #t %this)
+	 (js-put! %this (& "process") %process #t %this)
 	 ;; bind the process fatal error handler
 	 (js-worker-add-handler! %worker
 	    (js-make-function %this
 	       (lambda (this exn)
-		  (let ((fatal (js-get %process '_fatalException %this)))
-		     (if (isa? fatal JsFunction)
-			 (js-call1 %this fatal %process exn)
+		  (let ((fatal (js-get %process (& "_fatalException") %this)))
+		     (if (js-procedure? fatal)
+			 (js-call1-jsprocedure %this fatal %process exn)
 			 (raise exn))))
-	       1 "fatalException"))
+	       1 (& "fatalException") :src "process.scm"))
 	 ;; init tick machinery
 	 (let* ((m (nodejs-require-core "node_tick" %worker %this))
-                (tick (js-get m 'initNodeTick %this)))
+                (tick (js-get m (& "initNodeTick") %this)))
             (js-call1 %this tick (js-undefined) %process))
 	 ;; events
-	 (with-access::JsObject %process (__proto__)
-	    (let* ((e (nodejs-require-core "events" %worker %this))
-		   (em (js-get e 'EventEmitter %this))
-		   (proto (js-get em 'prototype %this))
-		   (add (js-get proto 'addListener %this))
-		   (rem (js-get proto 'removeListener %this))
-		   (remall (js-get proto 'removeAllListeners %this))
-		   (exitarmed #f)
-		   (sighdls '()))
-	       
-	       (set! __proto__ proto)
-	       
-	       (define (on this signame proc)
-		  (let ((sig (js-tostring signame %this)))
-		     (cond
-			((and (string=? sig "exit") (not exitarmed))
-			 (with-access::WorkerHopThread %worker (onexit)
-			    (set! onexit proc))
-			 (js-call2 %this add this signame proc))
-			((assq (string->symbol sig) signals)
-			 =>
-			 (lambda (c)
-			    (set! sighdls (cons c sighdls))
-			    (if (eq? (car c) 'SIGTERM)
-				(hop-sigterm-handler-set!
-				   (lambda (n)
-				      (js-call0 %this proc this)
-				      '(js-worker-tick %worker)))
-				(signal (cdr c)
-				   (lambda (s)
-				      (!js-callback0 "signal" %worker %this
-					 proc this))))))
-;* 				   (lambda (s)                         */
-;* 				      (js-worker-push-thunk! %worker sig */
-;* 					 (lambda ()                    */
-;* 					    (js-call0 %this proc this)))))))) */
-			(else
-			 (js-call2 %this add this signame proc)))))
-	       
-	       (define (remove this signame proc)
-		  (let ((sig (js-tostring signame %this)))
-		     (cond
-			((string=? sig "exit")
-			 (with-access::WorkerHopThread %worker (onexit)
-			  (set! onexit #f))
-			 (js-call2 %this rem this signame proc))
-			((assq (string->symbol sig) signals)
-			 =>
-			 (lambda (c)
-			    (set! sighdls (remq! c sighdls))
-			    (if (eq? (car c) 'SIGTERM)
-				(hop-sigterm-handler-set!
-				   hop-sigterm-default-handler)
-				(signal (cdr c) 'default))))
-			(else
-			 (js-call2 %this rem this signame proc)))))
-	       
-	       (define (removeall this signame)
-		  (let ((sig (js-tostring signame %this)))
-		     (cond
-			((string=? sig "exit")
-			 (with-access::WorkerHopThread %worker (onexit)
-			    (set! onexit #f)))
-			((assq (string->symbol sig) signals)
-			 =>
-			 (lambda (c)
-			    (set! sighdls (remq! c sighdls))
-			    (if (eq? (car c) 'SIGTERM)
-				(hop-sigterm-handler-set!
-				   hop-sigterm-default-handler)
-				(signal (cdr c) 'default))))
-			(else
-			 (js-call1 %this remall this signame)))))
-
-	       ;; on
-	       (let ((add (js-make-function %this on 2 "addListener")))
-		  (js-put! %process 'on add #f %this)
-		  (js-put! %process 'addListener add #f %this))
-	       ;; remove
-	       (let ((rem (js-make-function %this remove 2 "removeListener")))
-		  (js-put! %process 'removeListener rem #f %this))
-	       ;; removeALl
-	       (let ((remall (js-make-function %this removeall 1 "removeAllListeners")))
-		  (js-put! %process 'removeAllListeners remall #f %this))))
+	 (let* ((e (nodejs-require-core "events" %worker %this))
+		(em (js-get e (& "EventEmitter") %this))
+		(proto (js-get em (& "prototype") %this))
+		(add (js-get proto (& "addListener") %this))
+		(rem (js-get proto (& "removeListener") %this))
+		(remall (js-get proto (& "removeAllListeners") %this))
+		(exitarmed #f)
+		(sighdls '()))
+	    
+	    (js-object-proto-set! %process proto)
+	    
+	    (define (on this signame proc)
+	       (let ((sig (js-tostring signame %this)))
+		  (cond
+		     ((and (string=? sig "exit") (not exitarmed))
+		      (with-access::WorkerHopThread %worker (onexit)
+			 (set! onexit proc))
+		      (js-call2 %this add this signame proc))
+		     ((assq (string->symbol sig) signals)
+		      =>
+		      (lambda (c)
+			 (set! sighdls (cons c sighdls))
+			 (if (eq? (car c) 'SIGTERM)
+			     (hop-sigterm-handler-set!
+				(lambda (n)
+				   (js-call0 %this proc this)
+				   '(js-worker-tick %worker)))
+			     (signal (cdr c)
+				(lambda (s)
+				   (!js-callback0 "signal" %worker %this
+				      proc this))))))
+		     (else
+		      (js-call2 %this add this signame proc)))))
+	    
+	    (define (remove this signame proc)
+	       (let ((sig (js-tostring signame %this)))
+		  (cond
+		     ((string=? sig "exit")
+		      (with-access::WorkerHopThread %worker (onexit)
+			 (set! onexit #f))
+		      (js-call2 %this rem this signame proc))
+		     ((assq (string->symbol sig) signals)
+		      =>
+		      (lambda (c)
+			 (set! sighdls (remq! c sighdls))
+			 (if (eq? (car c) 'SIGTERM)
+			     (hop-sigterm-handler-set!
+				hop-sigterm-default-handler)
+			     (signal (cdr c) 'default))))
+		     (else
+		      (js-call2 %this rem this signame proc)))))
+	    
+	    (define (removeall this signame)
+	       (let ((sig (js-tostring signame %this)))
+		  (cond
+		     ((string=? sig "exit")
+		      (with-access::WorkerHopThread %worker (onexit)
+			 (set! onexit #f)))
+		     ((assq (string->symbol sig) signals)
+		      =>
+		      (lambda (c)
+			 (set! sighdls (remq! c sighdls))
+			 (if (eq? (car c) 'SIGTERM)
+			     (hop-sigterm-handler-set!
+				hop-sigterm-default-handler)
+			     (signal (cdr c) 'default))))
+		     (else
+		      (js-call1 %this remall this signame)))))
+	    
+	    ;; on
+	    (let ((add (js-make-function %this on 2 (& "addListener"))))
+	       (js-put! %process (& "on") add #f %this)
+	       (js-put! %process (& "addListener") add #f %this))
+	    ;; remove
+	    (let ((rem (js-make-function %this remove 2 (& "removeListener"))))
+	       (js-put! %process (& "removeListener") rem #f %this))
+	    ;; removeALl
+	    (let ((remall (js-make-function %this removeall 1 (& "removeAllListeners"))))
+	       (js-put! %process (& "removeAllListeners") remall #f %this)))
 	 ;; stdios
 	 (let* (;; (oldstdout (js-get %process 'stdout %this))
 		;; (oldstderr (js-get %process 'stderr %this))
 		(m (nodejs-require-core "node_stdio" %worker %this))
-		(stdio (js-get m 'initNodeStdio %this)))
+		(stdio (js-get m (& "initNodeStdio") %this)))
 	    (js-call1 %this stdio (js-undefined) %process))
 	 ;; console finalization
 	 ;; for this a new console object is created and the core module
 	 ;; console.exports value is updated
-	 (let* ((stdout (js-get %process 'stdout %this))
-		(stderr (js-get %process 'stderr %this))
+	 (let* ((stdout (js-get %process (& "stdout") %this))
+		(stderr (js-get %process (& "stderr") %this))
 		(mcon (nodejs-core-module "console" %worker %this))
-		(exports (js-get mcon 'exports %this))
-		(ctor (js-get exports 'Console %this))
+		(exports (js-get mcon (& "exports") %this))
+		(ctor (js-get exports (& "Console") %this))
 		(con (js-new2 %this ctor stdout stderr)))
 	    ;; update console.exports
-	    (js-put! con 'Console ctor #f %this)
-	    (js-put! mcon 'exports con #f %this))
+	    (js-put! con (& "Console") ctor #f %this)
+	    (js-put! mcon (& "exports") con #f %this))
 	 ;; timers
 	 (let* ((m (nodejs-require-core "node_timers" %worker %this))
-		(timers (js-get m 'initNodeTimers %this)))
+		(timers (js-get m (& "initNodeTimers") %this)))
 	    (js-call0 %this timers (js-undefined)))
 	 ;; process and exit
 	 (let* ((m (nodejs-require-core "node_proc" %worker %this))
-		(fatal (js-get m 'initFatal %this))
-		(assert (js-get m 'initAssert %this))
-		(prockillexit (js-get m 'initProcessKillAndExit %this))
-		(procchannel (js-get m 'initProcessChannel %this)))
+		(fatal (js-get m (& "initFatal") %this))
+		(assert (js-get m (& "initAssert") %this))
+		(prockillexit (js-get m (& "initProcessKillAndExit") %this))
+		(procchannel (js-get m (& "initProcessChannel") %this)))
 	    (js-call1 %this fatal (js-undefined) %process)
 	    (js-call1 %this assert (js-undefined) %process)
 	    (js-call1 %this prockillexit (js-undefined) %process)
 	    (js-call1 %this procchannel (js-undefined) %process))
 	 ;; cluster
 	 (let* ((m (nodejs-require-core "node_cluster" %worker %this))
-		(cluster (js-get m 'initNodeCluster %this)))
+		(cluster (js-get m (& "initNodeCluster") %this)))
 	    (js-call0 %this cluster (js-undefined))))
 
       ;; return the process object
@@ -238,14 +242,15 @@
    (with-access::JsGlobalObject %this (js-object)
       (let ((proc (instantiateJsProcess
 		     (cmap (instantiate::JsConstructMap))
-		     (__proto__ (js-new %this js-object)))))
+		     (__proto__ (js-new %this js-object))
+		     (elements ($create-vector 46)))))
 
 	 (define (not-implemented name)
-	    (js-put! proc name
+	    (js-put! proc (js-ascii-name->jsstring name)
 	       (js-make-function %this
 		  (lambda (this . l)
 		     (error "process" "binding not implemented" name))
-		  0 (symbol->string name))
+		  0 (js-name->jsstring name))
 	       #f %this))
 
 	 (define prog-start-time::uint64 (nodejs-uptime %worker))
@@ -270,14 +275,14 @@
 	    (lambda (callback)
 	       ;; this is a transcription of the C++ nodejs MakeDomainCall
 	       ;; function (see node.cc)
-	       (let ((domainv (js-get this 'domain %this)))
+	       (let ((domainv (js-get this (& "domain") %this)))
 		  (if (isa? domainv JsObject)
 		      (begin
-			 (unless (js-get domainv '_disposed %this)
-			    (let ((enter (js-get domainv 'enter %this)))
+			 (unless (js-get domainv (& "_disposed") %this)
+			    (let ((enter (js-get domainv (& "enter") %this)))
 			       (js-call0 %this enter domainv)))
 			 (let ((ret (callback)))
-			    (let ((exit (js-get domainv 'exit %this)))
+			    (let ((exit (js-get domainv (& "exit") %this)))
 			       (js-call0 %this exit domainv)
 			       ret)))
 		      (callback)))))
@@ -293,7 +298,7 @@
 	       (nodejs-idle-stop %worker %this tick-spinner)
 	       (unless tick-from-spinner
 		  (set! tick-from-spinner
-		     (js-get proc '_tickFromSpinner %this)))
+		     (js-get proc (& "_tickFromSpinner") %this)))
 	       (with-access::WorkerHopThread %worker (call state)
 		  (if (eq? state 'error)
 		      (js-worker-push-thunk! %worker "spin"
@@ -329,41 +334,41 @@
 	 
 	 ;; these stdio definitions are used during the bootstrap only
 	 ;; they will be overriden by node_stdio.js
-	 (js-put! proc 'stdout
+	 (js-put! proc (& "stdout")
 	    (js-alist->jsobject
 	       `((write . ,(js-make-function %this
 			      (lambda (this o)
 				 (display-value o (current-output-port)))
-			      1 "write"))
+			      1 (& "write")))
 		 (writable . #t)
 		 (_isStdio . #t)
 		 (fd . 1))
 	       %this)
 	    #f %this)
-	 (js-put! proc 'stderr
+	 (js-put! proc (& "stderr")
 	    (js-alist->jsobject
 	       `((write . ,(js-make-function %this
 			      (lambda (this o)
 				 (display-value o (current-error-port)))
-			      1 "write"))
+			      1 (& "write")))
 		 (writable . #t)
 		 (_isStdio . #t)
 		 (fd . 2))
 	       %this)
 	    #f %this)
-	 (js-put! proc 'stdin
+	 (js-put! proc (& "stdin")
 	    (js-alist->jsobject
 	       `((read . ,(js-make-function %this
 			     (lambda (this o)
 				(tprint "stdin read not implemented"))
-			     1 "read"))
+			     1 (& "read")))
 		 (writable . #f)
 		 (_isStdio . #t)
 		 (fd . 0))
 	       %this)
 	    #f %this)
 
-	 (js-put! proc 'argv
+	 (js-put! proc (& "argv")
 	    (let ((jsargs (member "--" (command-line))))
 	       (if jsargs
 		   (let ((cmdline (cons (js-string->jsstring (car (command-line)))
@@ -373,48 +378,48 @@
 		      (list->vector (map js-string->jsstring (command-line)))
 		      %this)))
 	    #f %this)
-	 (js-put! proc 'execPath
+	 (js-put! proc (& "execPath")
 	    (js-string->jsstring (nodejs-exepath)) #f %this)
-	 (js-put! proc 'execArgv
+	 (js-put! proc (& "execArgv")
 	    (js-vector->jsarray '#() %this)
 	    #f %this)
-	 (js-put! proc 'abort
+	 (js-put! proc (& "abort")
 	    (js-make-function %this
 	       (lambda (this)
 		  (exit 134))
-	       0 "abort")
+	       0 (& "abort"))
 	    #f %this)
 
-	 (js-bind! %this proc 'compilerOptions
+	 (js-bind! %this proc (& "compilerOptions")
 	    :get (js-make-function %this
 		    (lambda (this)
 		       (js-plist->jsobject (j2s-compile-options) %this))
-		    0 'compilerOptions)
+		    0 (& "compilerOptions"))
 	    :set (js-make-function %this
 		    (lambda (this o)
 		       (j2s-compile-options-set!
 			  (js-jsobject->plist o %this)))
-		    1 'compilerOptions)
+		    1 (& "compilerOptions"))
 	    :configurable #f)
 	 
 	 ;; first process name
 	 (nodejs-process-title-init!)
 	 
-	 (js-bind! %this proc 'title
+	 (js-bind! %this proc (& "title")
 	    :get (js-make-function %this
 		    (lambda (this)
 		       (js-string->jsstring (nodejs-get-process-title)))
-		    0 'title)
+		    0 (& "title"))
 	    :set (js-make-function %this
 		    (lambda (this str)
 		       (nodejs-set-process-title! (js-tostring str %this)))
-		    1 'title)
+		    1 (& "title"))
 	    :configurable #f)
 	 
-	 (js-put! proc 'version
+	 (js-put! proc (& "version")
 	    (js-stringlist->jsstring `("v" ,(nodejs-version))) #f %this)
 	 
-	 (js-put! proc 'versions
+	 (js-put! proc (& "versions")
 	    (js-alist->jsobject
 	       `((http_parser: . "1.0")
 		 (hop: . ,(hop-version))
@@ -431,30 +436,30 @@
 	       %this)
 	    #f %this)
 	 
-	 (js-put! proc 'exit
+	 (js-put! proc (& "exit")
 	    (js-make-function %this
 	       (lambda (this status)
 		  (let ((r (if (eq? status (js-undefined))
 			       0
 			       (js-tointeger status %this))))
-		     (unless (js-totest (js-get proc '_exiting %this))
-			(js-put! proc '_exiting #t #f %this)
-			(let ((emit (js-get proc 'emit %this)))
+		     (unless (js-totest (js-get proc (& "_exiting") %this))
+			(js-put! proc (& "_exiting") #t #f %this)
+			(let ((emit (js-get proc (& "emit") %this)))
 			   (js-call2 %this emit proc "exit" r))
 			(nodejs-compile-abort-all!)
 			(exit r))))
-	       1 "exit")
+	       1 (& "exit"))
 	    #f %this)
-	 (js-put! proc 'reallyExit
+	 (js-put! proc (& "reallyExit")
 	    (js-make-function %this
 	       (lambda (this status)
-		  (nodejs-compile-abort-all!)
+		  ;;(nodejs-compile-abort-all!)
 		  (exit (js-tointeger status %this)))
-	       1 "exit")
+	       1 (& "exit"))
 	    #f %this)
-	 (js-put! proc 'arch (js-string->jsstring (os-arch)) #f %this)
-	 (js-put! proc 'platform (js-string->jsstring (os-name)) #f %this)
-	 (js-put! proc 'binding
+	 (js-put! proc (& "arch") (js-string->jsstring (os-arch)) #f %this)
+	 (js-put! proc (& "platform") (js-string->jsstring (os-name)) #f %this)
+	 (js-put! proc (& "binding")
 	    (js-make-function %this
 	       (lambda (this module)
 		  (let ((mod (js-jsstring->string module)))
@@ -514,14 +519,14 @@
 			 (warning "%nodejs-process"
 			    "binding not implemented: " mod)
 			 (js-new %this js-object)))))
-	       2 "binding")
+	       2 (& "binding"))
 	    #f %this)
-	 (js-put! proc 'env
+	 (js-put! proc (& "env")
 	    (js-alist->jsobject (getenv) %this)
 	    #f %this)
-	 (js-put! proc 'pid (getpid)
+	 (js-put! proc (& "pid") (getpid)
 	    #f %this)
-	 (js-put! proc 'features
+	 (js-put! proc (& "features")
 	    (js-alist->jsobject
 	       `((debug . ,(>fx (bigloo-debug) 0))
 		 (uv . #t)
@@ -533,11 +538,11 @@
 	    #f %this)
 	 (let ((check #f)
 	       (idle #f))
-	    (js-bind! %this proc '_needImmediateCallback
+	    (js-bind! %this proc (& "_needImmediateCallback")
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (nodejs-check? check))
-		       0 '_needImmediateCallback)
+		       0 (& "_needImmediateCallback"))
 	       :set (js-make-function %this
 		       (lambda (this val)
 			  (let ((v (js-totest val)))
@@ -556,42 +561,42 @@
 				 (set! idle #f)
 				 (nodejs-check-stop %worker %this check)
 				 (set! check #f)))))
-		       1 '_needImmediateCallback)
+		       1 (& "_needImmediateCallback"))
 	       :configurable #f))
 	    
-	 (js-put! proc 'cwd
+	 (js-put! proc (& "cwd")
 	    (js-make-function %this
 	       (lambda (this)
 		  (js-string->jsstring (pwd)))
-	       0 "cwd")
+	       0 (& "cwd"))
 	    #f %this)
-	 (js-put! proc 'chdir
+	 (js-put! proc (& "chdir")
 	    (js-make-function %this
 	       (lambda (this path)
 		  (chdir (js-jsstring->string path)))
-	       1 "chdir")
+	       1 (& "chdir"))
 	    #f %this)
-	 (js-put! proc 'getuid
+	 (js-put! proc (& "getuid")
 	    (js-make-function %this
 	       (lambda (this) (getuid))
-	       0 "getuid")
+	       0 (& "getuid"))
 	    #f %this)
-	 (js-put! proc 'setuid
+	 (js-put! proc (& "setuid")
 	    (js-make-function %this
 	       (lambda (this val) (setuid (js-tointeger val %this)))
-	       1 "setuid")
+	       1 (& "setuid"))
 	    #f %this)
-	 (js-put! proc 'getgid
+	 (js-put! proc (& "getgid")
 	    (js-make-function %this
 	       (lambda (this) (getgid))
-	       0 "getgid")
+	       0 (& "getgid"))
 	    #f %this)
-	 (js-put! proc 'setgid
+	 (js-put! proc (& "setgid")
 	    (js-make-function %this
 	       (lambda (this val) (setgid (js-tointeger val %this)))
-	       1 "setgid")
+	       1 (& "setgid"))
 	    #f %this)
-	 (js-put! proc 'umask
+	 (js-put! proc (& "umask")
 	    (js-make-function %this
 	       (lambda (this val)
 		  (cond
@@ -601,10 +606,10 @@
 		      (umask (string->integer (js-jsstring->string val) 8)))
 		     (else
 		      (umask (js-tointeger val %this)))))
-	       1 "umask")
+	       1 (& "umask"))
 	    #f %this)
 	 
-	 (js-put! proc '_usingDomains
+	 (js-put! proc (& "_usingDomains")
 	    (js-make-function %this
 	       (lambda (this)
 		  (with-access::JsProcess proc (using-domains tick-callback)
@@ -613,33 +618,33 @@
 			(with-access::WorkerHopThread %worker (call async)
 			   (set! async #t)
 			   (set! call (domain-call this)))
-			(let ((tdc (js-get this '_tickDomainCallback %this))
-			      (ndt (js-get this '_nextDomainTick %this)))
-			   (unless (isa? tdc JsFunction)
+			(let ((tdc (js-get this (& "_tickDomainCallback") %this))
+			      (ndt (js-get this (& "_nextDomainTick") %this)))
+			   (unless (js-procedure? tdc)
 			      (error "_usingDomains"
 				 "process._tickDomainCallback assigned to non-function"
 				 tdc))
-			   (unless (isa? ndt JsFunction)
+			   (unless (js-procedure? ndt)
 			      (error "_usingDomains"
 				 "process._nextDomainTick assigned to non-function"
 				 ndt))
 			   (set! tick-callback #f)
-			   (js-put! this '_tickCallback tdc #f %this)
-			   (js-put! this '_currentTickHandler ndt #f %this)))))
-	       0 "_usingDomains")
+			   (js-put! this (& "_tickCallback") tdc #f %this)
+			   (js-put! this (& "_currentTickHandler") ndt #f %this)))))
+	       0 (& "_usingDomains"))
 	    #f %this)
 
 	 ;; tick
-	 (js-put! proc '_tickInfoBox
+	 (js-put! proc (& "_tickInfoBox")
 	    (js-vector->jsarray (make-vector 3 0) %this)
 	    #f %this)
-	 (js-put! proc '_needTickCallback
+	 (js-put! proc (& "_needTickCallback")
 	    (js-make-function %this need-tick-callback
-	       0 "needTickCallback")
+	       0 (& "needTickCallback"))
 	    #f %this)
 
 	 ;; hrtime
-	 (js-put! proc 'hrtime
+	 (js-put! proc (& "hrtime")
 	    (js-make-function %this
 	       (lambda (this diff)
 		  (let* ((t (nodejs-hrtime))
@@ -655,45 +660,29 @@
 		     (let ((t0 (uint64->flonum (/u64 t d)))
 			   (t1 (uint64->flonum (remainderu64 t d))))
 			(js-vector->jsarray (vector t0 t1) %this))))
-	       1 "hrtime")
+	       1 (& "hrtime"))
 	    #t %this)
 
 	 ;; uptime
-	 (js-put! proc 'uptime
+	 (js-put! proc (& "uptime")
 	    (js-make-function %this
 	       (lambda (this)
 		  (let* ((uptime (-u64 (nodejs-uptime %worker) prog-start-time))
 			 (t (uint64->flonum uptime)))
 		     (/fl t 1000.)))
-	       0 "uptime")
+	       0 (& "uptime"))
 	    #t %this)
 
 	 ;; kill
-	 (js-put! proc '_kill
+	 (js-put! proc (& "_kill")
 	    (js-make-function %this
 	       (lambda (this pid sig)
 		  (nodejs-kill %worker %this proc pid sig))
-	       2 "_kill")
+	       2 (& "_kill"))
 	    #t %this)
 
-;* 	 ;; _getActiveRequests                                         */
-;* 	 (js-put! proc '_getActiveRequests                             */
-;* 	    (js-make-function %this                                    */
-;* 	       (lambda (this)                                          */
-;* 		  (js-vector->jsarray (make-vector 0) %this))          */
-;* 	       0 "_getActiveRequests")                                 */
-;* 	    #t %this)                                                  */
-;*                                                                     */
-;* 	 ;; _getActiveHandles                                          */
-;* 	 (js-put! proc '_getActiveHandles                              */
-;* 	    (js-make-function %this                                    */
-;* 	       (lambda (this)                                          */
-;* 		  (js-vector->jsarray (make-vector 0) %this))          */
-;* 	       0 "_getActiveHandles")                                  */
-;* 	    #t %this)                                                  */
-
 	 ;; memoryUsage
-	 (js-put! proc 'memoryUsage
+	 (js-put! proc (& "memoryUsage")
 	    (js-make-function %this
 	       (lambda (this)
 		  (js-alist->jsobject
@@ -701,44 +690,48 @@
 		       (heapTotal . 0)
 		       (heapUsed . 0))
 		     %this))
-	       0 "memoryUsage")
+	       0 (& "memoryUsage"))
 	    #t %this)
 
 	 ;; getgroups
-	 (js-put! proc 'getgroups
+	 (js-put! proc (& "getgroups")
 	    (js-make-function %this
 	       (lambda (this)
 		  (js-vector->jsarray (getgroups) %this))
-	       0 "getgroups")
+	       0 (& "getgroups"))
 	    #t %this)
 
 	 ;; ioctl (hop extension)
-	 (js-put! proc 'ioctl
+	 (js-put! proc (& "ioctl")
 	    (js-make-function %this
 	       (lambda (this fd request val)
 		  (apply ioctl (inexact->exact (js-tointeger fd %this))
 		     (if (number? request) request (js-tostring request %this))
 		     (js-tonumber val %this)))
-	       3 "ioctl")
+	       3 (& "ioctl"))
 	    #t %this)
 
+	 ;; noDeprecation (bound to avoid cache misses)
+	 (js-put! proc (& "noDeprecation")
+	    #f #t %this)
+	 
 	 ;; mainModule
 	 (with-access::JsGlobalObject %this (js-main) 
-	    (js-bind! %this proc 'mainModule
-	       :get (js-make-function %this (lambda (this) js-main) 0 'main)
+	    (js-bind! %this proc (& "mainModule")
+	       :get (js-make-function %this (lambda (this) js-main) 0 (& "main"))
 	       :configurable #f
 	       :writable #f))
-	 
+
 	 (for-each not-implemented
-	    '(_getActiveRequests
-	      _getActiveHandles
-	      setgroups
-	      initgroups
-	      _debugProcess
-	      _debugPause
-	      _debugEnd
-	      dlopen))
-	 
+	    '("_getActiveRequests"
+	      "_getActiveHandles"
+	      "setgroups"
+	      "initgroups"
+	      "_debugProcess"
+	      "_debugPause"
+	      "_debugEnd"
+	      "dlopen"))
+
 	 proc)))
 
 ;*---------------------------------------------------------------------*/
@@ -802,19 +795,19 @@
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((obj (js-new %this js-object)))
 	    
-	    (js-put! obj 'start
+	    (js-put! obj (& "start")
 	       (js-make-function %this
 		  (lambda (this::JsHandle path options listener)
 		     (with-access::JsHandle this (handle)
-			(js-put! this 'initialized_ #t #f %this)
+			(js-put! this (& "initialized_") #t #f %this)
 			(nodejs-fs-event-start handle
 			   (lambda (_ path events status)
 			      ;; see fs_event_wrap.cc
 			      (let ((eventstr "")
-				    (onchange (js-get this 'onchange %this)))
+				    (onchange (js-get this (& "onchange") %this)))
 				 (cond
 				    ((not (=fx status 0))
-				     (js-put! process '_errno
+				     (js-put! process (& "_errno")
 					(nodejs-err-name status)
 					#f %this))
 				    ((=fx (nodejs-fs-event-change)
@@ -835,16 +828,16 @@
 		     (unless (js-totest options)
 			(with-access::JsHandle this (handle)
 			   (nodejs-unref handle %worker))))
-		  3 "start")
+		  3 (& "start"))
 	       #f %this)
 	    
-	    (js-put! obj 'close
+	    (js-put! obj (& "close")
 	       (js-make-function %this
 		  (lambda (this)
-		     (js-put! this 'initialized_ #f #f %this)
+		     (js-put! this (& "initialized_") #f #f %this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-fs-event-stop handle)))
-		  1 "close")
+		  1 (& "close"))
 	       #f %this)
 	    
 	    obj)))
@@ -858,12 +851,13 @@
    (define (fs-event this)
       (instantiateJsHandle
 	 (handle (nodejs-make-fs-event %worker))
-	 (__proto__ (get-fs-event-proto process))))
+	 (__proto__ (get-fs-event-proto process))
+	 (cmap (instantiate::JsConstructMap))))
    
    (with-access::JsGlobalObject %this (js-object)
       (js-alist->jsobject
-	 `((FSEvent . ,(js-make-function %this fs-event 0 "FSEvent"
-			  :alloc (lambda (o) #unspecified)
+	 `((FSEvent . ,(js-make-function %this fs-event 0 (& "FSEvent")
+			  :alloc (lambda (%this o) #unspecified)
 			  :construct fs-event)))
 	 %this)))
 
@@ -884,8 +878,8 @@
 	     "ENOTFOUND"
 	     (vector-ref errnames n))))
 
-   (js-put! process 'errno errno #f %this)
-   (js-put! process '_errno (js-string->jsstring (ares-err-name errno)) #f %this)
+   (js-put! process (& "errno") errno #f %this)
+   (js-put! process (& "_errno") (js-string->jsstring (ares-err-name errno)) #f %this)
    #f)
 
 ;*---------------------------------------------------------------------*/
@@ -907,39 +901,39 @@
       (define (fmt-mx e)
 	 (with-access::JsGlobalObject %this (js-object)
 	    (let ((obj (js-new %this js-object)))
-	       (js-put! obj 'exchange
+	       (js-put! obj (& "exchange")
 		  (js-string->jsstring (car e)) #f %this)
-	       (js-put! obj 'priority
+	       (js-put! obj (& "priority")
 		  (cdr e) #f %this)
 	       obj)))
 
       (define (fmt-srv e)
 	 (with-access::JsGlobalObject %this (js-object)
 	    (let ((obj (js-new %this js-object)))
-	       (js-put! obj 'name
+	       (js-put! obj (& "name")
 		  (js-string->jsstring (car e)) #f %this)
-	       (js-put! obj 'priority
+	       (js-put! obj (& "priority")
 		  (cadr e) #f %this)
-	       (js-put! obj 'weight
+	       (js-put! obj (& "weight")
 		  (caddr e) #f %this)
-	       (js-put! obj 'port
+	       (js-put! obj (& "port")
 		  (cadddr e) #f %this)
 	       obj)))
       
       (define (fmt-naptr e)
 	 (with-access::JsGlobalObject %this (js-object)
 	    (let ((obj (js-new %this js-object)))
-	       (js-put! obj 'replacement
+	       (js-put! obj (& "replacement")
 		  (js-string->jsstring (car e)) #f %this)
-	       (js-put! obj 'regexp
+	       (js-put! obj '(& "egexp")
 		  (js-string->jsstring (cadr e)) #f %this)
-	       (js-put! obj 'service
+	       (js-put! obj (& "service")
 		  (js-string->jsstring (caddr e)) #f %this)
-	       (js-put! obj 'flags
+	       (js-put! obj (& "flags")
 		  (js-string->jsstring (cadddr e)) #f %this)
-	       (js-put! obj 'order
+	       (js-put! obj (& "order")
 		  (cadddr (cdr e)) #f %this)
-	       (js-put! obj 'preference
+	       (js-put! obj (& "preference")
 		  (cadddr (cddr e)) #f %this)
 	       obj)))
       
@@ -1007,7 +1001,7 @@
 		   (js-string->jsstring (car (cdr addr))))
 		#t)
 	     (begin
-		(js-put! process '_errno -1 #f %this)
+		(js-put! process (& "_errno") -1 #f %this)
 		(js-call2 %this callback (js-undefined) -1 #f)
 		#f))))
 
@@ -1016,18 +1010,18 @@
 	 `((isIP . ,(js-make-function %this
 		       (lambda (this domain)
 			  (nodejs-isip (js-tojsstring domain %this)))
-		       1 'isIP))
-	   (getaddrinfo . ,(js-make-function %this getaddrinfo 2 "getaddrinfo"))
-	   (queryA . ,(js-make-function %this query4 2 "queryA"))
-	   (queryAaaa . ,(js-make-function %this query6 2 "queryAaaa"))
-	   (queryCname . ,(js-make-function %this query-cname 2 "queryCname"))
-	   (queryMx . ,(js-make-function %this query-mx 2 "queryMx"))
-	   (queryNs . ,(js-make-function %this query-ns 2 "queryNs"))
-	   (queryTxt . ,(js-make-function %this query-txt 2 "queryTxt"))
-	   (querySrv . ,(js-make-function %this query-srv 2 "querySrv"))
-	   (queryNaptr . ,(js-make-function %this query-naptr 2 "querySrv"))
-	   (getHostByAddr . ,(js-make-function %this gethostbyaddr 2 "gethostbyaddr"))
-	   (getHostByName . ,(js-make-function %this gethostbyname 2 "gethostbyname")))
+		       1 (& "isIP")))
+	   (getaddrinfo . ,(js-make-function %this getaddrinfo 2 (& "getaddrinfo")))
+	   (queryA . ,(js-make-function %this query4 2 (& "queryA")))
+	   (queryAaaa . ,(js-make-function %this query6 2 (& "queryAaaa")))
+	   (queryCname . ,(js-make-function %this query-cname 2 (& "queryCname")))
+	   (queryMx . ,(js-make-function %this query-mx 2 (& "queryMx")))
+	   (queryNs . ,(js-make-function %this query-ns 2 (& "queryNs")))
+	   (queryTxt . ,(js-make-function %this query-txt 2 (& "queryTxt")))
+	   (querySrv . ,(js-make-function %this query-srv 2 (& "querySrv")))
+	   (queryNaptr . ,(js-make-function %this query-naptr 2 (& "querySrv")))
+	   (getHostByAddr . ,(js-make-function %this gethostbyaddr 2 (& "gethostbyaddr")))
+	   (getHostByName . ,(js-make-function %this gethostbyname 2 (& "gethostbyname"))))
 	 %this)))
 
 ;*---------------------------------------------------------------------*/
@@ -1064,43 +1058,43 @@
 				(if (eq? (bigloo-config 'endianess) 'little-endian)
 				    (js-ascii->jsstring "LE")
 				    (js-ascii->jsstring "BE")))
-			     0 "endianness"))
+			     0 (& "endianness")))
 	(getHostname . ,(js-make-function %this
 			   (lambda (this)
 			      (js-string->jsstring (hostname)))
-			   0 "getHostname"))
+			   0 (& "getHostname")))
 	(getOSType . ,(js-make-function %this
 			 (lambda (this)
 			    (js-string->jsstring (os-name)))
-			 0 "getOSType"))
+			 0 (& "getOSType")))
 	(getOSRelease . ,(js-make-function %this
 			    (lambda (this)
 			       (js-string->jsstring (os-version)))
-			    0 "getOSRelease"))
+			    0 (& "getOSRelease")))
 	(getInterfaceAddresses . ,(js-make-function %this
 				     (lambda (this)
 					(interfaces->js))
-				     0 "getInterfaceAddresses"))
+				     0 (& "getInterfaceAddresses")))
 	(getUptime . ,(js-make-function %this
 			 (lambda (this)
 			    (nodejs-getuptime))
-			 0 "getUptime"))
+			 0 (& "getUptime")))
 	(getLoadAvg . ,(js-make-function %this
 			  (lambda (this)
-			     (let* ((f64 (js-get %this 'Float64Array %this))
+			     (let* ((f64 (js-get %this (& "Float64Array") %this))
 				    (obj (js-new %this f64 3)))
 				(with-access::JsTypedArray obj (buffer)
 				   (with-access::JsArrayBuffer buffer (data)
 				      (nodejs-loadavg data))) obj))
-			  0 "getLoadAvg"))
+			  0 (& "getLoadAvg")))
 	(getFreeMem . ,(js-make-function %this
 			  (lambda (this)
 			     (nodejs-getfreemem))
-			  0 "getFreeMem"))
+			  0 (& "getFreeMem")))
 	(getTotalMem . ,(js-make-function %this
 			   (lambda (this)
 			      (nodejs-gettotalmem))
-			   0 "getTotalMem"))
+			   0 (& "getTotalMem")))
 	(getCPUs . ,(js-make-function %this
 		       (lambda (this)
 			  (js-vector->jsarray
@@ -1108,5 +1102,10 @@
 					     (js-alist->jsobject cpu %this))
 				(nodejs-getcpus))
 			     %this))
-		       0 "getCPUs")))
+		       0 (& "getCPUs"))))
       %this))
+;*---------------------------------------------------------------------*/
+;*    &end!                                                            */
+;*---------------------------------------------------------------------*/
+(&end!)
+

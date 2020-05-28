@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/widget/tabslider.scm              */
+;*    serrano/prgm/project/hop/hop/widget/tabslider.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Fri Jul 19 16:03:41 2013 (serrano)                */
+;*    Last change :  Sun Apr 28 11:01:01 2019 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of TABSLIDER.                             */
 ;*=====================================================================*/
@@ -29,6 +29,21 @@
 	    (<TSPAN> . ::obj)
 	    (<TSHEAD> . ::obj)))
    
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::html-foldlist ...                            */
+;*---------------------------------------------------------------------*/
+(define (serialize o ctx)
+   (let ((p (open-output-string)))
+      (obj->javascript-expr o p ctx)
+      (close-output-port p)))
+
+(define (unserialize o ctx)
+   o)
+      
+(register-class-serialization! html-tabslider serialize unserialize)
+(register-class-serialization! html-tspan serialize unserialize)
+(register-class-serialization! html-tshead serialize unserialize)
+
 ;*---------------------------------------------------------------------*/
 ;*    <TABSLIDER> ...                                                  */
 ;*---------------------------------------------------------------------*/

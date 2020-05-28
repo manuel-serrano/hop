@@ -1,12 +1,12 @@
 /*=====================================================================*/
-/*    .../hop/3.1.x/arch/android/src/fr/inria/hop/HopLauncher.java     */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopLauncher.java       */
 /*    -------------------------------------------------------------    */
-/*    Author      :  Marcos Dione & Manuel Serrano                     */
+/*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Jul  1 14:01:29 2016 (serrano)                */
-/*    Copyright   :  2010-16 Marcos Dione & Manuel Serrano             */
+/*    Last change :  Sun May 17 12:26:05 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
-/*    Hop Launcher (and installer)                                     */
+/*    Hop Launcher                                                     */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
@@ -23,10 +23,13 @@ import android.content.res.*;
 import android.widget.*;
 import android.view.*;
 import android.view.View.*;
+import android.webkit.*;
 import android.net.*;
 import android.text.*;
 import android.provider.*;
 import android.media.AudioManager;
+import android.graphics.drawable.*; 
+import android.graphics.*; 
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.net.*;
@@ -37,12 +40,13 @@ import java.lang.reflect.*;
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
 public class HopLauncher extends Activity {
+   
    // Global constants
    public static final int MSG_HOP_OUTPUT_AVAILABLE = 1;
    public static final int MSG_HOPDROID_ENDED = 2;
-   public static final int MSG_RUN_WIZARD = 3;
-   public static final int MSG_INSTALL_FAILED = 4;
+   public static final int MSG_INSTALL_FAIL = 4;
    public static final int MSG_CONFIGURE_FAIL = 5;
+   public static final int MSG_HOP_FAIL = 6;
    public static final int MSG_HOP_FAILED = 6;
    public static final int MSG_CONFIGURE = 7;
    public static final int MSG_HOPDROID_FAILED = 8;
@@ -50,10 +54,27 @@ public class HopLauncher extends Activity {
    public static final int MSG_RESTART_HOP_SERVICE = 10;
    public static final int MSG_KILL_HOP_SERVICE = 11;
    public static final int MSG_REBIND_HOP_SERVICE = 12;
+   public static final int MSG_STATE_INSTALL = 13;
+   public static final int MSG_STATE_CONFIGURE = 14;
+   public static final int MSG_STATE_NEXT = 15;
+   public static final int MSG_PING = 16;
+   public static final int MSG_HOP_START = 17;
+   public static final int MSG_HOPDROID_FAIL = 18;
+   public static final int MSG_HOP_CANNOT = 19;
+   public static final int MSG_UNPACKED = 20;
 
    private static String WIFI_SLEEP_POLICY = null;
    private static int WIFI_SLEEP_POLICY_NEVER = -1;
 
+   // ui elements
+   WebView webview;
+   
+   // staging
+   private HopStage currentStage;
+   private HopInstaller installer;
+   private HopConfigurer configurer;
+   private HopIntenter intenter;
+   
    static {
       // bind the WIFI_SLEEP constants
       Class clazz = findSystemClass( "android.provider.Settings.Global" );
@@ -116,8 +137,6 @@ public class HopLauncher extends Activity {
    boolean hopconnected = false;
    int onresume_wifi_policy;
 
-   ProgressDialog progress = null;
-
    // Preferences listeners are stored in a weakhash tables! To prevent
    // the Hop preference listener to be collected we store it into an
    // instance variable (thank you Android)
@@ -126,283 +145,245 @@ public class HopLauncher extends Activity {
    int maxlines = 0;
    StringBuffer textbuffer = new StringBuffer( 2048 );
    CheckBox checkbox, checkbox2, checkbox3, checkbox4;
-   TextView textview;
-   ScrollView scrollview;
    final ArrayBlockingQueue<String> queue =
-      new ArrayBlockingQueue<String>( 10 );
+      new ArrayBlockingQueue<String>( 1024 );
+   // MS WARNING, there is a potential deadlock when
+   // starting the application. If the queue is too
+   // small the logger thread (see Hop.java) might be
+   // blocked while the main thread is waiting for
+   // Hop to start...
    
-   private void startProgressBar() {
-      progress = new ProgressDialog( this );
-      progress.setTitle( "Hop Installer" );
-      progress.setMessage( "Unpacking..." );
-      progress.setMax( 100 );
-      progress.setProgressStyle( ProgressDialog.STYLE_HORIZONTAL );
-      progress.show();
-   }
-   
-   private void cleanupProgressBar() {
-      if( progress != null ) {
-	 progress.dismiss();
-	 progress = null;
-      }
-   }
-
    // write a line on Hop console
    private void write_console( String line ) {
-      int lineh = textview.getLineHeight();
-
-      try {
-	 textbuffer.append( line );
-	 textview.setText( textbuffer );
-      } catch( Throwable e ) {
-	 Log.e( "HopLauncher", "e=" + e );
-      }
-			   
-      int lc = textview.getLineCount();
-	 
-      if( lc > maxlines - 20 ) {
-	 int index = 0;
-
-	 for( int counter = 0; counter < 20; counter++ ) {
-	    int i = textbuffer.indexOf( "\n", index );
-
-	    if( i > 0 ) {
-	       index = i;
-	    } else {
-	       break;
-	    }
-	 }
-
-	 // if no lines found remove a bunch of chars
-	 if( index == 0 ) index = 1024;
-
-	 textbuffer.delete( 0, index );
-	 textview.setText( textbuffer );
-	 lc = textview.getLineCount();
-      }
-
-      if( checkbox.isChecked() ) {
-	 textview.setTextColor( getResources().getColor( R.color.scrollColor ) );
-	 scrollview.fullScroll( View.FOCUS_DOWN );
-      } else {
-	 textview.setTextColor( getResources().getColor( R.color.noScrollColor ) );
-      }
+      Log.v( "HopLauncher", line );
    }
-   
-   final ServiceConnection hopconnection = new ServiceConnection() {
-	 public void onServiceConnected( ComponentName className, IBinder service ) {
-	    hopservice = ((HopService.HopBinder)service).getService();
-
-	    try {
-	       hopservice.handler = handler;
-	       hopservice.queue = queue;
-	       hopservice.hopdroid.activity = activity;
-	       hopconnected = true;
-	       hopservice.onConnect();
-	    } catch( Exception e ) {
-	       Log.e( "HopLauncher", "error while connecting to service: " +
-		      e.toString() );
-	       e.printStackTrace();
-	       Log.e( "HopLauncher", "killing background hop because of error..." );
-	       hopconnected = false;
-	       unbindService( hopconnection );
-	       HopService.emergencyExit();
-	       kill( 4000 );
-	    }
-	 }
-
-	 public void onServiceDisconnected( ComponentName className ) {
-	    hopconnected = false;
-	    hopservice = null;
-	 }
-      };
 
    final Handler handler = new Handler() {
 	 @Override public void handleMessage( Message msg ) {
 
-	    synchronized( activity ) {
-	       if( !killed ) {
-		  switch( msg.what ) {
-		     case MSG_HOP_OUTPUT_AVAILABLE:
-			try {
-			   write_console( queue.take() );
-			} catch( InterruptedException i ) {
-			   ;
-			}
-			break;
-
-		     case MSG_REBIND_HOP_SERVICE:
-			write_console( "Hop reconnected...\n" );
-			break;
-
-		     case MSG_HOPDROID_ENDED:
-			Log.i( "HopLauncher", "===== MSG_HOPDROID_ENDED" );
-			write_console( "Hop ended...\n" );
-			if( hop_resuscitate ) {
-			   hop_resuscitate = false;
-			   start( "" );
-			}
-			break;
-
-		     case MSG_HOP_FAILED:
-   		        Log.i( "HopLauncher", "===== MSG_HOP_FAILED: " + msg.obj );
-			HopUiUtils.failExit( activity, "Hop", "failed", msg.obj );
-			break;
-
-		     case MSG_HOPDROID_FAILED:
-			Log.i( "HopLauncher", "===== MSG_HOPDROID_FAILED: " + msg.obj );
-			HopUiUtils.failExit( activity, "HopDroid", "failed", msg.obj );
-			break;
-
-		     case MSG_RUN_WIZARD:
-			Log.i( "HopLauncher", "===== MSG_RUN_WIZARD" );
-			cleanupProgressBar();
-
-			Uri uri = Uri.parse( hop_wizard_url );
-			Intent intent = new Intent( Intent.ACTION_VIEW, uri );
-			// give time to Hop to be ready
-			try {
-			   Thread.sleep( 2000 );
-			} catch( Exception e ) {
-			   ;
-			}
-			startActivity( intent );
-			break;
-
-		     case MSG_INSTALL_FAILED:
-			Log.e( "HopLauncher", "installation failed..." );
-			HopUiUtils.failExit( activity, "HopInstaller", "failed", msg.obj );
-			break;
-
-		     case MSG_CONFIGURE_FAIL:
-			Log.e( "HopLauncher", "configuration failed..." );
-			HopUiUtils.failExit( activity, "HopConfigurer", "failed", msg.obj );
-			break;
-
-		     case MSG_CONFIGURE:
-			progress.setMessage( "Configuring..." );
-			break;
-
-		     case MSG_START_HOP_SERVICE:
-			Log.i( "HopLauncher", "===== MSG_START_HOP_SERVICE" );
-			start( "" );
-			break;
-
-		     case MSG_RESTART_HOP_SERVICE:
-			Log.i( "HopLauncher", "===== MSG_RESTART_HOP_SERVICE" );
-			
-			if( hopservice != null ) hopservice.inrestart = true;
-			stop();
-
-			break;
-
-		     case MSG_KILL_HOP_SERVICE:
-			Log.i( "HopLauncher", "===== MSG_KILL_HOP_SERVICE" );
-			kill( 0 );
-			break;
-
-		     default:
+	    switch( msg.what ) {
+	       case MSG_UNPACKED:
+		  splashScreen();
+		  break;
+		  
+	       case MSG_STATE_NEXT:
+		  Log.i( "HopLauncher", "===== MSG_STATE_NEXT" );
+		  execStage();
+		  break;
+			   
+	       case MSG_HOP_OUTPUT_AVAILABLE:
+		  // Log.i( "HopLauncher", "===== MSG_HOP_OUTOUT_AVAILABLE" );
+		  try {
+		     Log.v( "HopConsole", queue.take() );
+		  } catch( InterruptedException i ) {
+		     ;
 		  }
-	       }
+		  break;
+
+	       case MSG_REBIND_HOP_SERVICE:
+		  write_console( "Hop reconnected...\n" );
+		  break;
+
+	       case MSG_HOPDROID_ENDED:
+		  Log.i( "HopLauncher", "===== MSG_HOPDROID_ENDED" );
+		  write_console( "Hop ended...\n" );
+		  if( hop_resuscitate ) {
+		     hop_resuscitate = false;
+		     start( "" );
+		  } else {
+		     kill( 0 );
+		  }
+		  break;
+
+	       case MSG_HOP_FAIL:
+		  Log.i( "HopLauncher", "===== MSG_HOP_FAIL: " + msg.obj );
+		  HopUiUtils.failExit( activity, "Hop", "failed", msg.obj );
+		  break;
+
+	       case MSG_HOP_CANNOT:
+		  Log.i( "HopLauncher", "===== MSG_HOP_CANNOT: " + msg.obj );
+		  HopUiUtils.failExit( activity, "Hop", "cannot start", msg.obj );
+		  break;
+
+	       case MSG_HOP_START:
+		  Log.i( "HopLauncher", "===== MSG_HOP_START" );
+		  webview.loadUrl( "http://localhost:" + Hop.port + "/hop/" + HopConfig.APP );
+		  break;
+
+	       case MSG_HOPDROID_FAIL:
+	       case MSG_HOPDROID_FAILED:
+		  Log.i( "HopLauncher", "===== MSG_HOPDROID_FAIL: " + msg.obj );
+		  HopUiUtils.failExit( activity, "HopDroid", "failed", msg.obj );
+		  break;
+
+	       case MSG_INSTALL_FAIL:
+		  Log.e( "HopLauncher", "installation failed..." );
+		  HopUiUtils.failExit( activity, "HopInstaller", "failed", msg.obj );
+		  break;
+
+	       case MSG_CONFIGURE_FAIL:
+		  Log.e( "HopLauncher", "configuration failed..." );
+		  HopUiUtils.failExit( activity, "HopConfigurer", "failed", msg.obj );
+		  break;
+
+	       case MSG_CONFIGURE:
+		  break;
+
+	       case MSG_START_HOP_SERVICE:
+		  Log.i( "HopLauncher", "===== MSG_START_HOP_SERVICE" );
+		  webview.loadUrl( "http://localhost:" + Hop.port + "/hop" );
+		  break;
+
+	       case MSG_RESTART_HOP_SERVICE:
+		  Log.i( "HopLauncher", "===== MSG_RESTART_HOP_SERVICE" );
+			
+		  if( hopservice != null ) hopservice.inrestart = true;
+		  stop();
+
+		  break;
+
+	       case MSG_KILL_HOP_SERVICE:
+		  Log.i( "HopLauncher", "===== MSG_KILL_HOP_SERVICE" );
+		  hop_resuscitate = false;
+		  hopservice.hopdroid.kill();
+		  break;
+
+	       case MSG_PING:
+		  Log.i( "HopLauncher", "===== MSG_PING" );
+		  break;
+
+	       default:
+		  Log.i( "HopLauncher", "===== MSG_UNKNOWN: " + msg.what );
 	    }
 	 }
       };
-   
-   @Override public void onCreate( Bundle bundle ) {
-      super.onCreate( bundle );
 
-      // install our view
-      if( android.os.Build.VERSION.SDK_INT < 11 ) {
-	 // adding an inco to SDK >= 11 prevent the action bar to
-	 // be displayed
-	 requestWindowFeature( Window.FEATURE_LEFT_ICON );
-      }
+   private void initUI() {
+      Log.d( "HopLauncher", "initUI" );
+
+      final String BOOT_PAGE = "<!DOCTYPE html><html><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8'><meta name='viewport' content='width=device-width, height=device-height, initial-scale=1, maximum-scale=1, user-scalable=no'></head><body style='background-color: #222; color: #eee'>" + getApplicationContext().getString( R.string.hopapp ) + " booting...</body></html>";
       
+      // remove title bar
+      this.requestWindowFeature( Window.FEATURE_NO_TITLE );
+
+      // action bar color
+      //this.requestWindowFeature( Window.FEATURE_ACTION_BAR );
+      //ActionBar bar = getActionBar();
+      //bar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#3e3e3e")));
+      
+
       setContentView( R.layout.main );
 
-      if( android.os.Build.VERSION.SDK_INT < 11 ) {
-	 getWindow().setFeatureDrawableResource(
-	    Window.FEATURE_LEFT_ICON,
-	    R.drawable.logo );
-      }
+      // grab the view
+      webview = (WebView)findViewById( R.id.webview );
+      WebSettings webSettings = webview.getSettings();
+      webSettings.setJavaScriptEnabled( true );
+      webSettings.setBuiltInZoomControls( true );
+      webSettings.setAppCacheEnabled( false );
+
+      webview.requestFocusFromTouch();
+
+      webview.setWebViewClient( new WebViewClient() );
+      webview.setWebChromeClient( new WebChromeClient() );
+
+      // start with the splash message
+      Log.d( "HopLauncher", "loading boot page" );
+      webview.loadData( BOOT_PAGE, "text/html; charset=UTF-8", null );
 
       // control the volume key when the console has the focus
       setVolumeControlStream( AudioManager.STREAM_MUSIC );
+   }
+
+   private void splashScreen() {
+      String hopdir = activity.getApplicationInfo().dataDir + "/assets";
+      String url = "file://" + hopdir + "/etc/hop/" + HopConfig.HOPRELEASE + "/splash/splash.html";
+      File f = new File( hopdir + "/etc/hop/" + HopConfig.HOPRELEASE + "/splash/splash.html" );
+      Log.d( "HopLauncher", "splash url=" + url );
+
+      if( f.exists() ) {
+	 webview.loadUrl( url );
+      } else {
+	 Log.e( "HopLauncher", "splash does not exist: " + f.toString() );
+      }
+   }
       
-      // setup the scroll button
-      checkbox = (CheckBox)findViewById( R.id.scrollconsole );
-      checkbox.setChecked( true );
+   @Override public void onCreate( Bundle bundle ) {
+      super.onCreate( bundle );
+
+      Log.d( "HopLauncher", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
+      Log.d( "HopLauncher", "Hopdac (" + System.currentTimeMillis()/1000 + ")" );
+      Log.d( "HopLauncher", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
+      Log.d( "HopLauncher", "" );
+      Log.d( "HopLauncher", "onCreate" );
+      String hopapk = activity.getApplicationInfo().sourceDir;
+      String hopdir = activity.getApplicationInfo().dataDir + "/assets";
+
+      HopConfig.init( getApplicationContext() );
+
+      Log.d( "HopLauncher", "onCreate apk=" + hopapk + " dir=" + hopdir );
+
+      initUI();
+      installer = new HopInstaller( activity, handler, hopapk, hopdir );
+      configurer = new HopConfigurer( handler, Hop.HOME() );
+      intenter = new HopIntenter( activity, handler, queue );
+
+      Hop.setHopActivityParams( activity );
+
+      currentStage = null;
+      execStage();
+   }
+
+   @Override public void onStart() {
+      super.onStart();
+
+      Log.d( "HopLauncher", "onStart" );
+   }
+
+   @Override public void onStop() {
+      super.onStop();
       
-      // grab the text for the output log
-      textview = (TextView)activity.findViewById( R.id.textview );
-      scrollview = (ScrollView)activity.findViewById( R.id.scrollview );
+      Log.d( "HopLauncher", "onStop" );
+   }
 
-      //maxlines = textview.getResources().getInteger( R.styleable.TextView_maxLines );
-      maxlines = 500;
-
-      // loadPreferences
-      loadPreferences();
+   
+   @Override public void onDestroy() {
+      super.onDestroy();
       
-      try {
-	 // now that the activity is fully initialized, it's possible
-	 // to get the disk location of the package
-	 String apk = activity.getApplicationInfo().sourceDir;
-	 Hop.root = activity.getApplicationInfo().dataDir + "/assets";
-
-	 if( !HopInstaller.installed( Hop.root ) ) {
-
-	    // The install scheduler is a mere thread that waits for
-	    // the  installer to complete. It then notifies the application.
-	    Thread installscheduler = new Thread( new Runnable () {
-		  public void run() {
-		     Log.v( "HopLauncher", "waiting installer" );
-		     // wait for the installer to complete the installation
-		     try {
-			hopinstaller.join();
-		     } catch( Exception e ) {
-			HopUiUtils.failExit( activity, "HopLauncher", " failed:", e );
-		     }
-
-		     Log.v( "HopLauncher", "installation complete" );
-
-		     if( !HopConfigurer.configured( Hop.HOME() ) ) {
-			Log.v( "HopLauncher", "progress=" + progress );
-			handler.sendEmptyMessage( MSG_CONFIGURE );
-			configure();
-		     } else {
-			cleanupProgressBar();
-			handler.sendEmptyMessage( MSG_START_HOP_SERVICE );
-		     }
-		  }
-	       } );
+      Log.d( "HopLauncher", "onDestroy currentState=" + currentStage );
+      if( currentStage != null ) {
+	 currentStage.abort();
+      }
       
-	    // the installation progress bar
-	    startProgressBar();
-
-	    // start the installed and the installscheduler
-	    hopinstaller = new HopInstaller( handler, progress, apk, Hop.root );
-	    hopinstaller.start();
-	    installscheduler.start();
-	 } else {
-	    if( !HopConfigurer.configured( Hop.HOME() ) ) {
-	       configure();
-	    } else {
-	       handler.sendEmptyMessage( MSG_START_HOP_SERVICE );
-	    }
-	 }
-      } catch( Exception e ) {
-	 HopUiUtils.failExit( activity, "HopLauncher", " failed", e );
+      if( hopconnected ) {
+	 hopconnected = false;
+	 //unbindService( hopconnection );
       }
    }
 
+   void execStage() {
+      boolean exec = true;
+      if( currentStage == null ) {
+	 currentStage = installer;
+      } else if( currentStage == installer ) {
+	 currentStage = configurer;
+      } else if( currentStage == configurer ) {
+	 currentStage = intenter;
+      } else if( currentStage == intenter ) {
+	 exec = false;
+      }
+      if( exec ) {
+	 currentStage.exec( getApplicationContext() );
+      }
+   }
+   
    @Override public boolean onCreateOptionsMenu( Menu menu ) {
+      Log.d( "HopLauncher", "onCreateOptionsMenu" );
       MenuInflater inflater = getMenuInflater();
       inflater.inflate( R.menu.hop_menu, menu );
       return true;
    }
 
-   @Override
-   public boolean onOptionsItemSelected( MenuItem item ) {
+   @Override public boolean onOptionsItemSelected( MenuItem item ) {
       // Handle item selection
       switch( item.getItemId() ) {
 	 case R.id.menu_settings:
@@ -415,9 +396,8 @@ public class HopLauncher extends Activity {
 	    handler.sendEmptyMessage( MSG_KILL_HOP_SERVICE );
             return true;
 
-	 case R.id.menu_clear:
-            textbuffer.delete( 0, textbuffer.length() - 1 );
-	    write_console( "" );
+	 case R.id.menu_reload:
+	    webview.loadUrl( "http://localhost:" + Hop.port + "/hop/" + HopConfig.APP );
             return true;
 
 	 case R.id.menu_detach:
@@ -462,24 +442,7 @@ public class HopLauncher extends Activity {
       dialog.show();
    }
    
-   private void configure() {
-      Log.v( "HopLauncher", "configure..." );
-
-      // configure an installed Hop
-      HopConfigurer hopconfigurer = new HopConfigurer( handler, hop_wizard_url );
-      hopconfigurer.start();
-   }
-
-
-   @Override
-   public void onStart() {
-      super.onStart();
-
-      if( progress != null ) progress.show();
-   }
-
-   @Override
-   public void onResume() {
+   @Override public void onResume() {
       Log.d( "HopLauncher", "onResume" );
       super.onResume();
 
@@ -500,8 +463,7 @@ public class HopLauncher extends Activity {
       }
    }
 
-   @Override
-   public void onPause() {
+   @Override public void onPause() {
       Log.d( "HopLauncher", "onPause isFinishing=" + isFinishing() );
       
       // restore the wifi policy
@@ -517,114 +479,97 @@ public class HopLauncher extends Activity {
       super.onPause();
    }
 
-   @Override
-   public void onDestroy() {
-      Log.d( "HopLauncher", "onDestroy" );
-      
-      super.onDestroy();
-   }
-
-   @Override
-   public void onStop() {
-      if( hopconnected ) {
-	 hopconnected = false;
-	 unbindService( hopconnection );
-      }
-      super.onStop();
-   }
-
-
    private void setWifiPolicy( int policy ) {
       Settings.System.putInt( getContentResolver(), WIFI_SLEEP_POLICY, policy );
    }
       
-   private void loadPreferences() {
-      Log.d( "HopLauncher", "loadPreferences" );
-      try {
-	 final Resources res = getResources();
-	 final SharedPreferences sp =
-	    PreferenceManager.getDefaultSharedPreferences( this );
-
-	 final int initial_wifi_policy =
-	    Settings.System.getInt( getContentResolver(), WIFI_SLEEP_POLICY );
-
-	 final String defaultverbose = res.getString( R.string.hopverbose );
-	 final String defaultport = res.getString( R.string.hopport );
-	 final String defaultthreads = res.getString( R.string.hopthreads );
-	 final String defaultdebug = res.getString( R.string.hopdebug );
-	 final String defaultroot = res.getString( R.string.hoproot );
-	 final boolean defaultlog = res.getString( R.string.hoplog ).equals( "true" );
-	 final boolean defaultzeroconf = res.getString( R.string.hopzeroconf ).equals( "true" );
-      
-	 setHopPort( sp.getString( "hop_port", defaultport ) );
-	 Hop.maxthreads = sp.getString( "hop_threads", defaultthreads );
-	 Hop.zeroconf = sp.getBoolean( "hop_zeroconf", defaultzeroconf );
-	 Hop.webdav = sp.getBoolean( "hop_webdav", false );
-	 Hop.jobs = sp.getBoolean( "hop_jobs", false );
-	 Hop.debug = sp.getString( "hop_debug", defaultdebug );
-	 Hop.verbose = sp.getString( "hop_verbose", defaultverbose );
-	 Hop.root = sp.getString( "hop_root", defaultroot );
-	 hop_log = sp.getBoolean( "hop_log", defaultlog );
-
-	 // keep wifi alive
-	 if( sp.getBoolean( "hop_wifi", false ) ) {
-	    setWifiPolicy( WIFI_SLEEP_POLICY_NEVER );
-	 }
-      
-	 if( prefslistener == null ) {
-	    prefslistener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-		  public void onSharedPreferenceChanged( SharedPreferences sp, String key ) {
-		     if( key.equals( "hop_port" ) ) {
-			setHopPort( sp.getString( "hop_port", defaultport ) );
-			return;
-		     } 
-		     if( key.equals( "hop_threads" ) ) {
-			Hop.maxthreads = sp.getString( "hop_threads", defaultthreads );
-			return;
-		     } 
-		     if( key.equals( "hop_zeroconf" ) ) {
-			Hop.zeroconf = sp.getBoolean( "hop_zeroconf", true );
-			return;
-		     }
-		     if( key.equals( "hop_wifi" ) ) {
-			if( sp.getBoolean( "hop_wifi", false ) ) {
-			   setWifiPolicy( WIFI_SLEEP_POLICY_NEVER );
-			} else {
-			   setWifiPolicy( initial_wifi_policy );
-			}
-			return;
-		     }
-		     if( key.equals( "hop_webdav" ) ) {
-			Hop.webdav = sp.getBoolean( "hop_webdav", false );
-			return;
-		     }
-		     if( key.equals( "hop_jobs" ) ) {
-			Hop.jobs = sp.getBoolean( "hop_jobs", false );
-			return;
-		     }
-		     if( key.equals( "hop_log" ) ) {
-			hop_log = sp.getBoolean( "hop_log", false );
-			return;
-		     }
-		     if( key.equals( "hop_debug" ) ) {
-			Hop.debug = sp.getString( "hop_debug", defaultdebug );
-			return;
-		     }
-		     if( key.equals( "hop_verbose" ) ) {
-			Hop.verbose = sp.getString( "hop_verbose", defaultverbose );
-			return;
-		     }
-		  }
-	       };
-	 
-	    sp.registerOnSharedPreferenceChangeListener( prefslistener );
-	 }
-      }
-      catch( Throwable e ) {
-	 Log.d( "HopLauncher", "loadPreferences exception: " + e );
-	 e.printStackTrace();
-      }
-   }
+/*    private void loadPreferences() {                                 */
+/*       Log.d( "HopLauncher", "loadPreferences" );                    */
+/*       try {                                                         */
+/* 	 final Resources res = getResources();                         */
+/* 	 final SharedPreferences sp =                                  */
+/* 	    PreferenceManager.getDefaultSharedPreferences( this );     */
+/*                                                                     */
+/* 	 final int initial_wifi_policy =                               */
+/* 	    Settings.System.getInt( getContentResolver(), WIFI_SLEEP_POLICY ); */
+/*                                                                     */
+/* 	 final String defaultverbose = res.getString( R.string.hopverbose ); */
+/* 	 final String defaultport = res.getString( R.string.hopport ); */
+/* 	 final String defaultthreads = res.getString( R.string.hopthreads ); */
+/* 	 final String defaultdebug = res.getString( R.string.hopdebug ); */
+/* 	 final String defaultroot = res.getString( R.string.hoproot ); */
+/* 	 final boolean defaultlog = res.getString( R.string.hoplog ).equals( "true" ); */
+/* 	 final boolean defaultzeroconf = res.getString( R.string.hopzeroconf ).equals( "true" ); */
+/*                                                                     */
+/* 	 setHopPort( sp.getString( "hop_port", defaultport ) );        */
+/* 	 Hop.maxthreads = sp.getString( "hop_threads", defaultthreads ); */
+/* 	 Hop.zeroconf = sp.getBoolean( "hop_zeroconf", defaultzeroconf ); */
+/* 	 Hop.webdav = sp.getBoolean( "hop_webdav", false );            */
+/* 	 Hop.jobs = sp.getBoolean( "hop_jobs", false );                */
+/* 	 Hop.debug = sp.getString( "hop_debug", defaultdebug );        */
+/* 	 Hop.verbose = sp.getString( "hop_verbose", defaultverbose );  */
+/* 	 Hop.root = sp.getString( "hop_root", defaultroot );           */
+/* 	 hop_log = sp.getBoolean( "hop_log", defaultlog );             */
+/*                                                                     */
+/* 	 // keep wifi alive                                            */
+/* 	 if( sp.getBoolean( "hop_wifi", false ) ) {                    */
+/* 	    setWifiPolicy( WIFI_SLEEP_POLICY_NEVER );                  */
+/* 	 }                                                             */
+/*                                                                     */
+/* 	 if( prefslistener == null ) {                                 */
+/* 	    prefslistener = new SharedPreferences.OnSharedPreferenceChangeListener() { */
+/* 		  public void onSharedPreferenceChanged( SharedPreferences sp, String key ) { */
+/* 		     if( key.equals( "hop_port" ) ) {                  */
+/* 			setHopPort( sp.getString( "hop_port", defaultport ) ); */
+/* 			return;                                        */
+/* 		     }                                                 */
+/* 		     if( key.equals( "hop_threads" ) ) {               */
+/* 			Hop.maxthreads = sp.getString( "hop_threads", defaultthreads ); */
+/* 			return;                                        */
+/* 		     }                                                 */
+/* 		     if( key.equals( "hop_zeroconf" ) ) {              */
+/* 			Hop.zeroconf = sp.getBoolean( "hop_zeroconf", true ); */
+/* 			return;                                        */
+/* 		     }                                                 */
+/* 		     if( key.equals( "hop_wifi" ) ) {                  */
+/* 			if( sp.getBoolean( "hop_wifi", false ) ) {     */
+/* 			   setWifiPolicy( WIFI_SLEEP_POLICY_NEVER );   */
+/* 			} else {                                       */
+/* 			   setWifiPolicy( initial_wifi_policy );       */
+/* 			}                                              */
+/* 			return;                                        */
+/* 		     }                                                 */
+/* 		     if( key.equals( "hop_webdav" ) ) {                */
+/* 			Hop.webdav = sp.getBoolean( "hop_webdav", false ); */
+/* 			return;                                        */
+/* 		     }                                                 */
+/* 		     if( key.equals( "hop_jobs" ) ) {                  */
+/* 			Hop.jobs = sp.getBoolean( "hop_jobs", false ); */
+/* 			return;                                        */
+/* 		     }                                                 */
+/* 		     if( key.equals( "hop_log" ) ) {                   */
+/* 			hop_log = sp.getBoolean( "hop_log", false );   */
+/* 			return;                                        */
+/* 		     }                                                 */
+/* 		     if( key.equals( "hop_debug" ) ) {                 */
+/* 			Hop.debug = sp.getString( "hop_debug", defaultdebug ); */
+/* 			return;                                        */
+/* 		     }                                                 */
+/* 		     if( key.equals( "hop_verbose" ) ) {               */
+/* 			Hop.verbose = sp.getString( "hop_verbose", defaultverbose ); */
+/* 			return;                                        */
+/* 		     }                                                 */
+/* 		  }                                                    */
+/* 	       };                                                      */
+/* 	                                                               */
+/* 	    sp.registerOnSharedPreferenceChangeListener( prefslistener ); */
+/* 	 }                                                             */
+/*       }                                                             */
+/*       catch( Throwable e ) {                                        */
+/* 	 Log.d( "HopLauncher", "loadPreferences exception: " + e );    */
+/* 	 e.printStackTrace();                                          */
+/*       }                                                             */
+/*    }                                                                */
    
    @Override
    public void startActivityForResult( Intent intent, int requestCode ) {
@@ -651,14 +596,10 @@ public class HopLauncher extends Activity {
 	    }
 	 }
 
-	 if( hopconf != null && hopconf.isRunning() ) {
-	    hopconf.kill();
-	 }
-	 
 	 if( hopconnected ) {
 	    Log.d( "HopLauncher", "unbinding service..." );
 	    hopconnected = false;
-	    unbindService( hopconnection );
+	    // unbindService( hopconnection );
 	 }
       
 	 if( hopintent != null ) {
@@ -666,53 +607,55 @@ public class HopLauncher extends Activity {
 	 }
 	 
 	 Log.d( "HopLauncher", "finishing activity..." );
-	 finish();
-      
+	 //finish();
+	 this.finishAffinity();
 	 Log.i( "HopLauncher", "<<< kill launcher" );
+
+	 System.exit( 0 );
       }
    }
 
    private void start( String hopargs ) {
-      Log.i( "HopLauncher", "starting Hop Service" );
-      
-      if( hopintent == null ) {
-	 HopService.hopargs = hopargs;
-	 hopintent = new Intent( getApplicationContext(), HopService.class );
-      }
-
-      if( !HopService.isBackground() ) {
-	 Log.d( "HopLauncher", "starting new service..." );
-	 startService( hopintent );
-	 
-	 write_console( "Starting Hop...\n" );
-      } else {
-	 Log.d( "HopLauncher", "background service already running..." );
-      }
-			
-      Log.d( "HopLauncher", "binding the service..." );
-      bindService( hopintent, hopconnection, Context.BIND_AUTO_CREATE );
+/*       Log.i( "HopLauncher", "starting Hop Service" );               */
+/*                                                                     */
+/*       if( hopintent == null ) {                                     */
+/* 	 HopService.hopargs = hopargs;                                 */
+/* 	 hopintent = new Intent( getApplicationContext(), HopService.class ); */
+/*       }                                                             */
+/*                                                                     */
+/*       if( !HopService.isBackground() ) {                            */
+/* 	 Log.d( "HopLauncher", "starting new service..." );            */
+/* 	 startService( hopintent );                                    */
+/* 	                                                               */
+/* 	 write_console( "Starting Hop...\n" );                         */
+/*       } else {                                                      */
+/* 	 Log.d( "HopLauncher", "background service already running..." ); */
+/*       }                                                             */
+/* 			                                               */
+/*       Log.d( "HopLauncher", "binding the service..." );             */
+/*       bindService( hopintent, hopconnection, Context.BIND_AUTO_CREATE ); */
    }
 
 
    private void stop() {
-      Log.i( "HopLauncher", ">>> stop..." );
-      
-      textbuffer.delete( 0, textbuffer.length() );
-      write_console( "Stopping Hop...\n" );
-      
-      if( hopconnected ) {
-	 Log.i( "HopLauncher", ">>> stop, unbindService..." );
-	 hopconnected = false;
-	 unbindService( hopconnection );
-	 Log.i( "HopLauncher", "<<< stop, unbindService..." );
-      }
-
-      if( hopintent != null ) {
-	 Log.i( "HopLauncher", ">>> stop, stopService..." );
-	 stopService( hopintent );
-	 hopintent = null;
-	 Log.i( "HopLauncher", "<<< stop, stopService..." );
-      }
-      Log.i( "HopLauncher", "<<< stop" );
+/*       Log.i( "HopLauncher", ">>> stop..." );                        */
+/*                                                                     */
+/*       textbuffer.delete( 0, textbuffer.length() );                  */
+/*       write_console( "Stopping Hop...\n" );                         */
+/*                                                                     */
+/*       if( hopconnected ) {                                          */
+/* 	 Log.i( "HopLauncher", ">>> stop, unbindService..." );         */
+/* 	 hopconnected = false;                                         */
+/* 	 unbindService( hopconnection );                               */
+/* 	 Log.i( "HopLauncher", "<<< stop, unbindService..." );         */
+/*       }                                                             */
+/*                                                                     */
+/*       if( hopintent != null ) {                                     */
+/* 	 Log.i( "HopLauncher", ">>> stop, stopService..." );           */
+/* 	 stopService( hopintent );                                     */
+/* 	 hopintent = null;                                             */
+/* 	 Log.i( "HopLauncher", "<<< stop, stopService..." );           */
+/*       }                                                             */
+/*       Log.i( "HopLauncher", "<<< stop" );                           */
    }
 }

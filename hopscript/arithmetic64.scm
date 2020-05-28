@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/arithmetic64.scm        */
+;*    serrano/prgm/project/hop/hop/hopscript/arithmetic64.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Apr 22 14:46:10 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Sat Jan 18 07:21:43 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
 ;*=====================================================================*/
@@ -16,7 +16,7 @@
    
    (library hop)
    
-   (include "types.sch" "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch" "names.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -25,18 +25,24 @@
 	   __hopscript_error
 	   __hopscript_property
 	   __hopscript_private
+	   __hopscript_lib
 	   __hopscript_public)
    
    (cond-expand
       ((or bint61 bint64)
        (export
 	  (js-number->jsnumber ::obj)
+
+	  (inline js-flonum->integer::long ::double)
+	  (inline negjs-int::obj ::long)
 	  
 	  (inline overflowfx ::long)
 	  (inline overflow53::obj ::long)
 	  
-	  (js-toint32::int32 ::obj ::JsGlobalObject)
-	  (js-touint32::uint32 ::obj ::JsGlobalObject)
+	  (inline js-toint32::int32 ::obj ::JsGlobalObject)
+	  (js-toint32-slow::int32 ::obj ::JsGlobalObject)
+	  (inline js-touint32::uint32 ::obj ::JsGlobalObject)
+	  (js-touint32-slow::uint32 obj %this)
 	  
 	  (js-number-toint32::int32 ::obj)
 	  (js-number-touint32::uint32 ::obj)
@@ -45,8 +51,11 @@
 	  (inline js-uint32-tointeger::obj ::uint32)
 	  
 	  (inline js-int53-tointeger::bint ::obj)
-	  (js-int53-toint32::int32 ::obj)
-	  (js-int53-touint32::uint32 ::obj)
+	  (inline js-int53-toint32::int32 ::obj)
+	  (inline js-int53-touint32::uint32 ::obj)
+
+	  (inline js-int53-inc::long ::long)
+	  (inline js-int53-dec::long ::long)
 	  
 	  (inline +fx/overflow::obj ::long ::long)
 	  (inline +s32/overflow::obj ::int32 ::int32)
@@ -54,14 +63,19 @@
 	  (+/overflow::obj ::obj ::obj)
 	  
 	  (inline -fx/overflow::obj ::long ::long)
-	  (inline -s32/overflow::obj ::int32 ::int32)
-	  (inline -u32/overflow::obj ::uint32 ::uint32)
+	  (inline -s32/overflow::long ::int32 ::int32)
+	  (inline -u32/overflow::long ::uint32 ::uint32)
 	  (-/overflow::obj ::obj ::obj)
 	  
 	  (inline *fx/overflow::obj ::long ::long)
 	  (inline *s32/overflow::obj ::int32 ::int32)
 	  (inline *u32/overflow::obj ::uint32 ::uint32)
 	  (*/overflow ::obj ::obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    __js_strings ...                                                 */
+;*---------------------------------------------------------------------*/
+(define __js_strings #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    oveflow? ...                                                     */
@@ -116,6 +130,18 @@
        (bigloo-type-error "js-number->jsnumber" "number" val))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-flonum->integer ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-flonum->integer num)
+   (flonum->fixnum num))
+
+;*---------------------------------------------------------------------*/
+;*    negjs-int ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (negjs-int num)
+   (if (=fx num 0) -0.0 (negfx num)))
+
+;*---------------------------------------------------------------------*/
 ;*    overflowfx ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (overflowfx v::long)
@@ -130,21 +156,36 @@
 ;*    Chapter 4, section 4.1, page 68                                  */
 ;*---------------------------------------------------------------------*/
 (define-inline (overflow53 v::long)
-   (let* ((a (-fx 0 (bit-lsh 1 53)))
-	  (b (-fx (bit-lsh 1 53) 1))
-	  (b-a (-fx b a)))
-      (if (<=u64 (fixnum->uint64 (-fx v a)) (fixnum->uint64 b-a))
-	  v
-	  (fixnum->flonum v))))
+   ;; (let* ((a (-fx 0 (bit-lsh 1 53)))
+   ;; 	  (b (-fx (bit-lsh 1 53) 1))
+   ;;	  (b-a (-fx b a)))
+   ;;  (if (<=u64 (fixnum->uint64 (-fx v a)) (fixnum->uint64 b-a))
+   ;;	  v
+   ;;	  (fixnum->flonum v)))
+   ;;
+   ;; use expanded constant and test to minimize code size generation
+   (if (pragma::bool "(uint64_t)($1 - -9007199254740992) <= (uint64_t)18014398509481983" v)
+       v
+       (fixnum->flonum v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toint32 ::obj ...                                             */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.5          */
 ;*---------------------------------------------------------------------*/
-(define (js-toint32::int32 obj %this)
+(define-inline (js-toint32::int32 obj %this)
+   (if (fixnum? obj)
+       (fixnum->int32 obj)
+       (js-toint32-slow obj %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-toint32-slow ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-toint32-slow::int32 obj %this)
    (cond
-      ((or (fixnum? obj) (flonum? obj)) (js-number-toint32 obj))
+      ((flonum? obj) (js-number-toint32 obj))
+      ((fixnum? obj) (fixnum->int32 obj))
+      ((eq? obj (js-undefined)) 0)
       (else (js-number-toint32 (js-tonumber obj %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -152,9 +193,19 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.6          */
 ;*---------------------------------------------------------------------*/
-(define (js-touint32::uint32 obj %this)
+(define-inline (js-touint32::uint32 obj %this)
+   (if (fixnum? obj)
+       (fixnum->uint32 obj)
+       (js-touint32-slow obj %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-touint32-slow ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-touint32-slow::uint32 obj %this)
    (cond
-      ((or (fixnum? obj) (flonum? obj)) (js-number-touint32 obj))
+      ((flonum? obj) (js-number-touint32 obj))
+      ((fixnum? obj) (fixnum->uint32 obj))
+      ((eq? obj (js-undefined)) 0)
       (else (js-number-touint32 (js-tointeger obj %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -275,8 +326,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.6          */
 ;*---------------------------------------------------------------------*/
-(define (js-int53-touint32 i)
+(define-inline (js-int53-touint32 i)
+   (fixnum->uint32 i))
    
+(define (js-int53-touint32-TOBEREMOVED-4sep2018 i)
    (define 2^32 (exptfl 2. 32.))
    
    (define (positive-double->uint32::uint32 i::double)
@@ -316,7 +369,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.5          */
 ;*---------------------------------------------------------------------*/
-(define (js-int53-toint32 i)
+(define-inline (js-int53-toint32 i)
+   (fixnum->int32 i))
+
+(define (js-int53-toint32-TOBEREMOVED-4sep2018 i)
    
    (define (int64->int32::int32 i::int64)
       (let* ((i::elong (int64->elong i))
@@ -375,6 +431,7 @@
       ((fixnum? x) x)
       ((int32? x) (int32->fixnum x))
       ((uint32? x) (uint32->fixnum x))
+      ((=fl x 0.0) 0)
       (else #f)))
 
 ;*---------------------------------------------------------------------*/
@@ -388,6 +445,18 @@
       (else x)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-int53-inc ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (js-int53-inc x::long)
+   (if (>fx (bit-rsh x 53) 0) x (+fx x 1)))
+
+;*---------------------------------------------------------------------*/
+;*    js-int53-dec ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (js-int53-dec x::long)
+   (if (<fx (bit-rsh x 53) -1) x (-fx x 1)))
+
+;*---------------------------------------------------------------------*/
 ;*    +fx/overflow ...                                                 */
 ;*    -------------------------------------------------------------    */
 ;*    Fixnum addition on 64 bits machines (three tagging bits).        */
@@ -399,13 +468,13 @@
 ;*    +s32/overflow ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (+s32/overflow x::int32 y::int32)
-   (+fx/overflow (int32->fixnum x) (int32->fixnum y)))
+   (+fx (int32->fixnum x) (int32->fixnum y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    +u32/overflow ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (+u32/overflow x::uint32 y::uint32)
-   (+fx/overflow (uint32->fixnum x) (uint32->fixnum y)))
+   (+fx (uint32->fixnum x) (uint32->fixnum y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    +/overflow ...                                                   */
@@ -435,13 +504,13 @@
 ;*    -s32/overflow ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (-s32/overflow x::int32 y::int32)
-   (-fx/overflow (int32->fixnum x) (int32->fixnum y)))
+   (-fx (int32->fixnum x) (int32->fixnum y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    -u32/overflow ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (-u32/overflow x::uint32 y::uint32)
-   (-fx/overflow (int32->fixnum x) (int32->fixnum y)))
+   (-fx (int32->fixnum x) (int32->fixnum y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    -/overflow ...                                                   */

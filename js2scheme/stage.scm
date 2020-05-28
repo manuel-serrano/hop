@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/stage.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/stage.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Fri May 18 16:02:39 2018 (serrano)                */
-;*    Copyright   :  2013-18 Manuel Serrano                            */
+;*    Last change :  Wed Sep 11 11:23:29 2019 (serrano)                */
+;*    Copyright   :  2013-19 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
 ;*=====================================================================*/
@@ -23,6 +23,7 @@
    
    (export (abstract-class J2SStage
 	      (name::bstring read-only)
+	      (footer::bstring read-only (default "\n"))
 	      (comment::bstring read-only)
 	      (optional read-only (default #f))
 	      (before read-only (default #f))
@@ -64,28 +65,34 @@
 		(and (procedure? opt) (opt args))
 		(and (eq? opt #t) (error "stage" "bad opt" stage))
 		(and (pair? opt) (any loop opt))))))
-   
-   (with-access::J2SStage stage (name comment before after)
+
+   (with-access::J2SStage stage (name footer comment before after)
       (if (active? stage)
 	  (begin
 	     (when (>=fx (j2s-verbose) 2)
-		(fprintf (current-error-port) "~3d. ~a" count name))
+		(fprintf (current-error-port) "~a~3d. ~a"
+		   (config-get args :verbmargin "") count name))
 	     (when (procedure? before) (before ast))
 	     (let ((nast (proc ast args)))
 		(when (directory? tmp)
 		   (let ((file (make-file-path tmp
 				  (string-replace name (file-separator) #\_))))
 		      (cond
-			 ((>=fx (bigloo-debug) 1)
-			  (call-with-output-file file
-			     (lambda (p)
-				(fprint p ";; -*-bee-*-")
-				(fprint p ";; " comment)
-				(pp (j2s->list nast) p))))
+			 ((config-get args :debug-stage)
+			  (if (eq? (config-get args :debug-stage-format) 'json)
+			      (call-with-output-file (string-append file ".json")
+				 (lambda (op)
+				    (ast->json ast op)))
+			      (call-with-output-file file
+				 (lambda (p)
+				    (fprint p ";; -*-bee-*-")
+				    (fprint p ";; " comment)
+				    (pp (j2s->list nast) p)))))
 			 ((file-exists? file)
 			  (delete-file file)))))
 		(when (procedure? after) (after nast))
-		(when (>=fx (j2s-verbose) 2) (newline (current-error-port)))
+		(when (>=fx (j2s-verbose) 2)
+		   (display footer (current-error-port)))
 		(values nast #t)))
 	  (values ast #f))))
 
@@ -100,34 +107,55 @@
 ;*    stage-exec ::J2SStageUrl ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (stage-exec stage::J2SStageUrl ast::J2SProgram tmp::bstring count::int args::obj)
+   
+   (define (value->json-value v)
+      (cond
+	 ((eq? v #t) "true")
+	 ((eq? v #f) "false")
+	 ((number? v) v)
+	 ((string? v) (format "~s" v))
+	 ((symbol? v) (format "~s" (symbol->string v)))))
+	 
    (with-access::J2SStageUrl stage (url)
       (driver-debug-post stage tmp count ast args
 	 (lambda (ast args)
-	    (call-with-output-file "/tmp/AST" 
-	       (lambda (op)
-		  (ast->json ast op)))
 	    (with-url (string-append url "?hop-encoding=json")
 	       (lambda (ast) ast)
 	       :method 'POST
-	       :header '((content-type: . "application/json"))
+	       :header '((content-type: . "application/json")
+			 (hop-serialize: . "json"))
 	       :connection 'close
-	       :json-parser (lambda (ip ctx) (json->ast ip))
+	       :json-parser (lambda (ip ctx)
+			       (json->ast ip))
+	       :x-javascript-parser (lambda (ip ctx)
+				       (error "url-stage"
+					  "Bad response mime-type (should be application/json)"
+					  #f))
 	       :body (call-with-output-string
 			(lambda (op)
-			   (ast->json ast op))))))))
+			   (display "{ \"ast\": " op)
+			   (ast->json ast op)
+			   (display ", \"config\": {" op)
+			   (let loop ((args args))
+			      (when (pair? args)
+				 (let ((v (value->json-value (cadr args))))
+				    (when v
+				       (fprintf op "\"~a\": ~a" (car args) v))
+				    (when (pair? (cddr args))
+				       (display ", " op)
+				       (loop (cddr args))))))
+			   (display "}}" op))))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    stage-exec ::J2SStageFile ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (stage-exec stage::J2SStageFile ast::J2SProgram tmp::bstring count args::obj)
    (with-access::J2SStageFile stage (path)
-      (driver-debug-post stage tmp count ast args
-	 (lambda (ast args)
-	    (cond
-	       ((string-suffix? ".hop" path)
-		(let ((stage (hop-load path)))
-		   (if (isa? stage J2SStage)
-		       (stage-exec stage ast tmp count args)
-		       (error "j2scheme" "Illegal plugin file" path))))
-	       (else
-		(error "j2sscheme" "Illegal plugin file" path)))))))
+      (cond
+	 ((string-suffix? ".hop" path)
+	  (let ((stage (hop-load path)))
+	     (if (isa? stage J2SStage)
+		 (stage-exec stage ast tmp count args)
+		 (error "j2scheme" "Illegal plugin file" path))))
+	 (else
+	  (error "j2sscheme" "Illegal plugin file" path)))))

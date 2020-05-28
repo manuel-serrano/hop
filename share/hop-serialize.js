@@ -1,13 +1,18 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/share/hop-serialize.js            */
+/*    serrano/prgm/project/hop/hop/share/hop-serialize.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Sat Jan 21 08:18:52 2017 (serrano)                */
-/*    Copyright   :  2007-17 Manuel Serrano                            */
+/*    Last change :  Thu May 21 07:12:41 2020 (serrano)                */
+/*    Copyright   :  2007-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    defining                                                         */
+/*---------------------------------------------------------------------*/
+var defining = -1;
 
 /*---------------------------------------------------------------------*/
 /*    hop_serialize_context ...                                        */
@@ -843,7 +848,7 @@ function hop_string_to_obj( s, extension ) {
       a[ i ] = (s.charCodeAt( i )) & 0xff;
    }
 
-   return hop_bytearray_to_obj( a, extension );
+   return hop_bytearray_to_obj( a, extension, "utf8" );
 }
 
 /*---------------------------------------------------------------------*/
@@ -888,16 +893,15 @@ function hop_url_encoded_to_obj( s ) {
    }
 
    /* decode the object */
-   return hop_bytearray_to_obj( a );
+   return hop_bytearray_to_obj( a, undefined, "utf8" );
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_bytearray_to_obj ...                                         */
 /*---------------------------------------------------------------------*/
-function hop_bytearray_to_obj( s, extension ) {
+function hop_bytearray_to_obj( s, extension, cset ) {
    var pointer = 0;
    var definitions = [];
-   var defining = -1;
 
    function substring( s, beg, end ) {
       if( s instanceof Array ) {
@@ -909,6 +913,7 @@ function hop_bytearray_to_obj( s, extension ) {
 
    function utf8substring( s, end ) {
       var res = "";
+      let start = pointer;
 
       while( pointer < end ) {
 	 var code = s[ pointer++ ];
@@ -937,9 +942,31 @@ function hop_bytearray_to_obj( s, extension ) {
 	 }
       }
       
+      // repair illegal utf8 strings by ignoring non ascii chars
+      if( pointer > end ) {
+	 pointer = start;
+	 res = "";
+	 
+	 while( pointer < end ) {
+	    var code = s[ pointer++ ];
+	    if( code < 128 ) {
+	       res += String.fromCharCode( code );
+	    } else {
+	       res += ".";
+	    }
+	 }
+      }
+      
       return res;
    }
 
+   function asciisubstring( s, end ) {
+      var res = substring( s, pointer, end );
+      pointer = end;
+      
+      return res;
+   }
+   
    function read_integer( s ) {
       return read_size( s );
    }
@@ -979,7 +1006,9 @@ function hop_bytearray_to_obj( s, extension ) {
    function read_string( s ) {
       var ulen = read_size( s );
       var sz = ((ulen + pointer) > s.length) ? s.length - pointer : ulen;
-      var res = utf8substring( s, pointer + sz );
+      var res = (cset === "utf8")
+	 ? utf8substring( s, pointer + sz )
+	 : asciisubstring( s, pointer + sz );
 
       if( defining >= 0 ) {
 	 definitions[ defining ] = res;
@@ -1007,8 +1036,11 @@ function hop_bytearray_to_obj( s, extension ) {
    }
 
    function read_cnst() {
-      switch( read_integer( s ) ) {
-	 default: alert( "read_cnst: not implemented: " + s );
+      var i = read_integer( s );
+
+      switch( i ) {
+	 case 30: return "#!key";
+	 default: alert( "read_cnst[" + i + "]: not implemented: " + s );
       }
    }
 
@@ -1031,7 +1063,7 @@ function hop_bytearray_to_obj( s, extension ) {
       var res = sc_cons( null, null );
       var hd = res;
 
-      if( defining >=0 ) {
+      if( defining >= 0 ) {
 	 definitions[ defining ] = res;
 	 defining = -1;
       }
@@ -1103,7 +1135,7 @@ function hop_bytearray_to_obj( s, extension ) {
       clazz = sc_class_exists( key );
       cinfo = read_item();
       sz--;
-
+      
       if( clazz ) {
 	 res = sc_class_allocator( clazz )();
 	 fields = sc_class_all_fields( clazz );
@@ -1123,13 +1155,24 @@ function hop_bytearray_to_obj( s, extension ) {
       } else {
 	 res = new Object();
 
+	 res.__class__ = key;
+	 
+	 if( old_defining >= 0 )
+	    definitions[ old_defining ] = res;
+
 	 for( var i = 0; i < sz; i++ ) {
-	    res[ sc_keyword2jsstring( cinfo[ i ] ) ] = read_item();
+	    var k = sc_keyword2jsstring( cinfo[ i ] );
+	    
+	    res[ k ] = read_item();
 	 }
 
 	 // consume the hash number
 	 read_item();
-
+	 
+	 if( key in hop_builtin_class_unserializer ) {
+	    res = hop_builtin_class_unserializer[ key ]( res );
+	 }
+	 
 	 return res;
       }
    }
@@ -1178,8 +1221,8 @@ function hop_bytearray_to_obj( s, extension ) {
       return read_word( s, sz );
    }
       
-   function read_llong( sz ) {
-      return read_word( s, sz );
+   function read_llong( s ) {
+      return read_float( s );
    }
 
    function read_unsupported( type ) {
@@ -1232,14 +1275,14 @@ function hop_bytearray_to_obj( s, extension ) {
    function read_procedure() {
       var svc = read_item();
 
-      if( svc == undefined ) {
+      if( svc === undefined ) {
 	 return undefined;
       } else {
 	 var rsc = svc.resource ? svc.resource : "/hop";
 	 if( svc.javascript) {
 	    return eval( sc_format( svc.javascript, svc.path, rsc ) );
 	 } else {
-	    return undefined;
+	    return svc;
 	 }
       }
    }
@@ -1269,7 +1312,7 @@ function hop_bytearray_to_obj( s, extension ) {
 	 case 0x66 /* f */: return read_float( s );
 	 case 0x2d /* - */: return -read_integer( s );
          case 0x45 /* E */: return read_elong( read_size( s ) );
-         case 0x4c /* L */: return read_llong( read_size( s ) );
+         case 0x4c /* L */: return read_llong( s );
          case 0x64 /* d */: return read_date();
          case 0x44 /* D */: return read_nanoseconds();
          case 0x6b /* k */: return read_class();
@@ -1297,6 +1340,105 @@ function hop_bytearray_to_obj( s, extension ) {
 
    return read_item();
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_dom_unserialize ...                                          */
+/*---------------------------------------------------------------------*/
+function hop_dom_unserialize( obj ) {
+   var el = document.createElement( sc_symbol2jsstring( obj.tag ) );
+   var attrs = obj.attributes;
+   
+   if( defining >= 0 ) {
+      definitions[ defining ] = el;
+      defining = -1;
+   }
+
+   while( sc_isPair( attrs ) ) {
+      var k = sc_symbol2jsstring( sc_car( attrs ) );
+      var v = sc_cadr( attrs );
+      attrs = sc_cddr( attrs );
+      
+      switch( k ) {
+	 case "class": 
+	    el.className = v;
+	    break;
+	 case "style": 
+	    hop_style_attribute_set( el, v );
+	    break;
+	    
+	 default:
+	    if( k[ 0 ] !== "%" ) {
+	       var m = k.match( "^on(.*)" );
+	       if( m ) {
+		  if( v !== false && v !== undefined ) {
+		     try {
+		     	var fun = (typeof v === "string") 
+			   ? new Function( "event", v ) 
+			   : v;
+		     	hop_add_event_listener( el, m[ 1 ], fun, true );
+		     } catch( e ) {
+			throw( e );
+		     }
+		  }
+	       } else {
+		  el.setAttribute( k, v );
+	       }
+	    }
+      };
+   }
+   
+   if( "id" in obj ) el.id = obj.id;
+   if( obj.body ) {
+      obj.body.forEach( n => { 
+	    if( n ) {
+	       if( n instanceof Object && "__class__" in n ) {
+		  if( n.__class__ in hop_builtin_class_unserializer ) {
+		     var c = hop_builtin_class_unserializer[ n.__class__ ]( n );
+		     dom_add_child( el, c );
+		  } else {
+		     dom_add_child( el, n );
+		  }
+	       } else {
+		  dom_add_child( el, n );
+	       }
+	    }
+	 } );
+   }
+   
+   return el;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_tilde_unserialize ...                                        */
+/*---------------------------------------------------------------------*/
+function hop_tilde_unserialize( obj ) {
+   return new Function( 'event', obj[ "%js-statement" ] );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_service_unserialize ...                                      */
+/*---------------------------------------------------------------------*/
+/* function hop_service_unserialize( obj ) {                           */
+/*    return obj.path;                                                 */
+/* }                                                                   */
+
+/*---------------------------------------------------------------------*/
+/*    hop_builtin_class_unserializer ...                               */
+/*---------------------------------------------------------------------*/
+var hop_builtin_class_unserializer = {};
+
+function hop_builtin_class_register_unserializer( key, unserializer ) {
+   hop_builtin_class_unserializer[ key ] = unserializer;
+}
+
+hop_builtin_class_register_unserializer( 
+   sc_jsstring2symbol( "xml-element" ), hop_dom_unserialize );
+hop_builtin_class_register_unserializer( 
+   sc_jsstring2symbol( "xml-empty-element" ), hop_dom_unserialize );
+hop_builtin_class_register_unserializer( 
+   sc_jsstring2symbol( "xml-tilde" ), hop_tilde_unserialize );
+/* hop_builtin_class_register_unserializer(                            */
+/*    sc_jsstring2symbol( "hop-service" ), hop_service_unserialize );  */
 
 /*---------------------------------------------------------------------*/
 /*    hop_custom_object_regexp ...                                     */
