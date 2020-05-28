@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu May 28 07:54:56 2020 (serrano)                */
+#*    Last change :  Thu May 28 08:24:03 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -76,7 +76,7 @@ hostbigloo=bigloo
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
 version="3.3.0"
-devel=pre
+devel=
 license=academic
 licenseforced=false
 if [ "$HOPLICENSE " != " " ]; then
