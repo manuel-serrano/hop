@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Wed May 27 11:49:39 2020 (serrano)                */
+/*    Last change :  Thu May 28 13:52:21 2020 (serrano)                */
 /*    Copyright   :  2015-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -361,7 +361,7 @@ function compileLibrary( content ) {
 	   favicon=${favicon}
            rts=${false}/>
 
-     <body classf="hop library" data-spy="scroll" data-target="#navbar">
+     <body class="hop library" data-spy="scroll" data-target="#navbar">
        <docxml.navbar title=${doc.title} key="home">
          ${chapters}
        </docxml.navbar>
