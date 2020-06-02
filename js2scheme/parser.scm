@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat May  2 08:30:08 2020 (serrano)                */
+;*    Last change :  Tue Jun  2 07:55:01 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -39,6 +39,7 @@
    (define debug-function (>= (config-get conf :debug 0) 2))
    (define current-mode 'normal)
    (define source-map (config-get conf :source-map #f))
+   (define optim-size (config-get conf :optim-size #f))
 
    (define es-module #f)
    
@@ -979,6 +980,7 @@
 		(let ((gen (instantiate::J2SFun
 			      (thisp thisp)
 			      (loc loc)
+			      (src (not optim-size))
 			      (generator #t)
 			      (name (symbol-append name '*))
 			      (mode 'strict)
@@ -1089,6 +1091,7 @@
 		     (declaration?
 		      (co-instantiate ((val (instantiate::J2SFun
 					       (loc loc)
+					       (src (not optim-size))
 					       (thisp (new-decl-this loc))
 					       (params params)
 					       (name (cdr id))
@@ -1109,6 +1112,7 @@
 		     (id
 		      (co-instantiate ((fun (instantiate::J2SFun
 					       (loc loc)
+					       (src (not optim-size))
 					       (decl decl)
 					       (mode mode)
 					       (generator gen)
@@ -1124,12 +1128,12 @@
 						(writable #f)
 						(_usage (usage '()))
 						(expression #t)
-;* 						(scope 'global)        */
 						(val fun))))
 			 fun))
 		     (else
 		      (instantiate::J2SFun
 			 (loc loc)
+			 (src (not optim-size))
 			 (name (loc->funname "fun" loc))
 			 (mode mode)
 			 (generator gen)
@@ -1732,6 +1736,7 @@
 		(let* ((body (fun-body params args 'strict))
 		       (fun (instantiate::J2SFun
 			       (loc loc)
+			       (src (not optim-size))
 			       (thisp (new-decl-this loc))
 			       (params params)
 			       (mode 'strict)
@@ -1754,6 +1759,7 @@
 		(let* ((body (fun-body params args 'strict))
 		       (fun (instantiate::J2SFun
 			       (loc loc)
+			       (src (not optim-size))
 			       (thisp (new-decl-this loc))
 			       (params params)
 			       (mode 'strict)
@@ -1780,6 +1786,7 @@
 		   (let* ((body (fun-body params args 'strict))
 			  (fun (instantiate::J2SFun
 				  (loc loc)
+				  (src (not optim-size))
 				  (thisp (new-decl-this loc))
 				  (params params)
 				  (mode 'strict)
@@ -2728,6 +2735,7 @@
 		   (fun (instantiate::J2SFun
 			   (mode mode)
 			   (loc loc)
+			   (src (not optim-size))
 			   (thisp (new-decl-this loc))
 			   (params params)
 			   (name (loc->funname "get" loc))
@@ -2764,6 +2772,7 @@
 		   (mode (or (javascript-mode body) current-mode))
 		   (fun (instantiate::J2SFun
 			   (name (loc->funname "dyn" loc))
+			   (src (not optim-size))
 			   (mode mode)
 			   (loc loc)
 			   (thisp (new-decl-this loc))

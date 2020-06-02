@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sun Apr 19 08:10:27 2020 (serrano)                */
+;*    Last change :  Tue Jun  2 07:58:06 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -495,6 +495,8 @@
 	    (set! o (cons* :optim-procedure #t o)))
 	 )
       (when (>=fx l 3)
+	 (unless (memq :optim-method o)
+	    (set! o (cons* :optim-method #t o)))
 	 (unless (memq :optim-literals o)
 	    (set! o (cons* :optim-literals #t o)))
 	 (unless (memq :optim-array o)
@@ -515,8 +517,6 @@
 ;* 	    (set! o (cons* :optim-pce #t o)))                          */
 	 )
       (when (>=fx l 2)
-	 (unless (memq :optim-method o)
-	    (set! o (cons* :optim-method #t o)))
 	 (unless (memq :optim-letopt o)
 	    (set! o (cons* :optim-letopt #t o)))
 	 (unless (memq :optim-unletrec o)
@@ -540,8 +540,6 @@
       (when (>=fx l 1)
 	 (unless (memq :optim-tyflow o)
 	    (set! o (cons* :optim-tyflow #t o))))
-;* 		     (unless (memq :optim-cce o)                       */
-;* 			(set! o (cons* :optim-cce #t o)))              */
 
       (when (memq :optim-size o)
 	 (set! o
