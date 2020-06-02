@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Jun  2 09:03:52 2020 (serrano)                */
+#*    Last change :  Tue Jun  2 12:14:16 2020 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -410,7 +410,7 @@ distrib-native: distrib-tmp
             distrib=$$version-$$devel$$minor; \
           fi; \
 	  echo "Building hop-$(HOPRELEASE).tar.gz..." && \
-          $(MAKE) clone -b $(HOPBRANCH) CLONEDIR=$(HOPTMPDIR)/hop-tmp && \
+          $(MAKE) clone CLONEDIR=$(HOPTMPDIR)/hop-tmp && \
 	  $(MAKE) changelog > $(HOPTMPDIR)/hop-tmp/ChangeLog && \
 	  $(RM) -rf $(HOPTMPDIR)/hop-tmp/weblets/home/talks && \
 	  $(RM) -rf $(HOPTMPDIR)/hop-tmp/weblets/home/videos && \
