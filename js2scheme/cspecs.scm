@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/cspecs.scm                */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/cspecs.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Sun Apr 19 08:23:15 2020 (serrano)                */
+;*    Last change :  Tue Jun  2 07:49:36 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -645,7 +645,7 @@
 (define-walk-method (cspecs-default! this::J2SDeclFun csdef)
    (if (decl-usage-has? this '(new))
        (with-access::J2SDeclFun this (val c)
-	  (cspecs-update! val '(emap amap))
+	  (cspecs-update! val '(emap))
 	  this)
        (call-default-walker)))
 

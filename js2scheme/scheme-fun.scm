@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-fun.scm            */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/scheme-fun.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Mon May 11 16:32:55 2020 (serrano)                */
+;*    Last change :  Tue Jun  2 07:30:39 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -78,7 +78,7 @@
 		     ,(jsfun->lambda val mode return ctx
 			 (j2s-declfun-prototype this ctx)
 			 (decl-usage-has? this '(new)))))
-	     ,@(if (optimized-ctor this)
+	     ,@(if (optimized-ctor this ctx)
 		   `(,(beautiful-define
 			 `(define ,(j2s-fast-constructor-id id)
 			     ,(j2sfun->ctor val mode return ctx this))))
@@ -99,7 +99,7 @@
 		     ,(jsfun->lambda val mode return ctx
 			 (j2s-declfun-prototype this ctx)
 			 (decl-usage-has? this '(new)))))
-	     ,@(if (optimized-ctor this)
+	     ,@(if (optimized-ctor this ctx)
 		   `(,(beautiful-define
 			 `(define ,(j2s-fast-constructor-id id)
 			     ,(j2sfun->ctor val mode return ctx this))))
@@ -1161,3 +1161,17 @@
 (define-walk-method (ctor-body! this::J2SFun)
    this)
 
+;*---------------------------------------------------------------------*/
+;*    ctor-body! ::J2SMeta ...                                         */
+;*    -------------------------------------------------------------    */
+;*    Normal methods start testing THIS type (unless in strict         */
+;*    mode). This test is useless for constructor. The                 */
+;*    CTOR-BODY! ::J2SIF method removes it.                            */
+;*    -------------------------------------------------------------    */
+;*    See this.scm for the form of the META statement.                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ctor-body! this::J2SMeta)
+   (with-access::J2SMeta this (meta stmt loc)
+      (if (eq? meta 'unstrict-this)
+	  (ctor-body! (J2SStmtExpr (J2SUndefined)))
+	  (call-next-method))))

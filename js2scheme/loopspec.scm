@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/loopspec.scm              */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/loopspec.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Nov  3 07:00:40 2019                          */
-;*    Last change :  Sat Dec 14 18:42:18 2019 (serrano)                */
-;*    Copyright   :  2019 Manuel Serrano                               */
+;*    Last change :  Tue Jun  2 07:37:58 2020 (serrano)                */
+;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Loop specialization                                              */
 ;*    -------------------------------------------------------------    */
@@ -306,7 +306,7 @@
 					  (j2s-alpha this
 					     (list decl) (list fordecl))
 					  (list (test-rhs-decl test ref) fordecl)))
-				    (J2SMeta 0 0
+				    (J2SMeta 'loopspec 0 0
 				       (uncache! this))))))))))))))
 
 ;*---------------------------------------------------------------------*/

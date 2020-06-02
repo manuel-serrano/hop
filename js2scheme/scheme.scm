@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme.scm                */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/scheme.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue May 26 12:23:53 2020 (serrano)                */
+;*    Last change :  Tue Jun  2 07:44:27 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2677,7 +2677,7 @@
 	 ((and (new-proxy? clazz) (=fx (length args) 2))
 	  (epairify loc
 	     (j2s-new-proxy this mode return ctx)))
-	 ((optimized-ctor clazz)
+	 ((optimized-ctor clazz ctx)
 	  =>
 	  (lambda (decl)
 	     (epairify loc

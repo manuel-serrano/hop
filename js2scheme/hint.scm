@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/hint.scm                  */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/hint.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Apr 13 12:38:50 2020 (serrano)                */
+;*    Last change :  Tue Jun  2 07:37:41 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -926,8 +926,7 @@
       (let ((val (j2sdeclinit-val-fun fun)))
 	 (with-access::J2SFun val (params body name generator idthis loc)
 	    (let* ((nbody (duplicate::J2SBlock body
-			     (nodes (list (J2SMeta
-					     0 1
+			     (nodes (list (J2SMeta 'hint 0 1
 					     (J2SSeq body))))))
 		   (nfun (duplicate::J2SDeclFun fun
 			    (parent fun)
@@ -1204,7 +1203,7 @@
 					(let ((an (j2s-alpha n '() '())))
 					   (reset-type! an decls)))
 				   nodes))))
-		(otherwise (J2SMeta 0 0
+		(otherwise (J2SMeta 'hint 0 0
 			      (duplicate::J2SBlock this))))
 	    (dispatch-body this pred then otherwise))))
    

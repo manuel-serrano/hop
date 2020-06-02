@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/ast.scm                   */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/ast.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Apr 12 16:06:26 2020 (serrano)                */
+;*    Last change :  Tue Jun  2 07:33:35 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -30,6 +30,7 @@
 	   (abstract-class J2SStmt::J2SNode)
 
 	   (class J2SMeta::J2SStmt
+	      (meta::obj (default #unspecified))
 	      (debug::long (default 0))
 	      (optim::long (default 0))
 	      (stmt::J2SStmt (info '("ast"))))

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/inline.scm                */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/inline.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sun Jan 26 09:44:16 2020 (serrano)                */
+;*    Last change :  Tue Jun  2 07:39:28 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -1206,7 +1206,7 @@
 					(J2SHopRef/rtype 'js-object? 'bool))
 				    (J2SRef decl))
 			     (inline-object-method-call fun decl args loc guard)
-			     (J2SMeta 0 0
+			     (J2SMeta 'inline 0 0
 				(J2SStmtExpr
 				   (J2SCall* (J2SAccess (J2SRef decl) field)
 				      args))))))
@@ -1219,7 +1219,7 @@
 					(J2SHopRef/rtype 'js-object? 'bool))
 				    (J2SRef decl))
 			     (inline-object-method-call fun decl args loc guard)
-			     (J2SMeta 0 0
+			     (J2SMeta 'inline 0 0
 				(J2SStmtExpr
 				   (J2SCall* (J2SAccess (J2SRef decl) field)
 				      args))))))))
@@ -1350,7 +1350,7 @@
 		   (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
 			     (J2SRef d))
 		      (inline-object-method-call fun (J2SRef d) args)
-		      (J2SMeta 0 0
+		      (J2SMeta 'inline 0 0
 			 (J2SStmtExpr
 			    (J2SCall* (J2SAccess (J2SRef d) field)
 			       args)))))))
