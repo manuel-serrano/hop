@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Jun  2 12:29:20 2020 (serrano)                */
+#*    Last change :  Tue Jun  2 16:29:56 2020 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -137,6 +137,9 @@ o/require.o: ../share/hop-boot.js
 
 o/http.o: http.js
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_http --js-module-path http -Os,$< -o $@)
+
+o/tls.o: tls.js
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_tls --js-module-path tls -Os,$< -o $@)
 
 
 #bdepend start (don't edit)
