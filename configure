@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu May 28 08:24:03 2020 (serrano)                */
+#*    Last change :  Tue Jun  2 08:20:21 2020 (serrano)                */
 #*    Copyright   :  2004-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -42,7 +42,7 @@ debug=no
 bcflags="-O2 -fsharing -L \$(BUILDLIBDIR) -srfi bigloo-compile"
 bhflags=
 btflags="-gtrace"
-hflags="-O2"
+hflags="-Os"
 
 bglpcre=required
 bglunistring=required

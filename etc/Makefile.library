@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Tue Mar 24 16:24:20 2020 (serrano)                */
+#*    Last change :  Tue Jun  2 08:15:44 2020 (serrano)                */
 #*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
@@ -12,14 +12,7 @@
 #*---------------------------------------------------------------------*/
 #*    Compilers, Tools and Destinations                                */
 #*---------------------------------------------------------------------*/
-# The heap file
 HEAP_FILE	= $(BUILDLIBDIR)/$(TARGETNAME).heap
-HEAPJVM_FILE	= $(BUILDLIBDIR)/$(TARGETNAME).jheap
-# Where to store the library class files
-PBASE		= bigloo.$(TARGETNAME)
-CLASS_DIR	= o/class_s/bigloo/$(TARGETNAME)
-CLASS_EDIR	= o/class_es/bigloo/$(TARGETNAME)
-# the library version
 LIBVERSION	= $(HOPRELEASE)
 
 RPATH		+= $(HOPLIBDIR)/$(HOPFILDIR)
@@ -28,7 +21,7 @@ RPATH		+= $(HOPLIBDIR)/$(HOPFILDIR)
 #*    Suffixes                                                         */
 #*---------------------------------------------------------------------*/
 .SUFFIXES:
-.SUFFIXES: .scm .class .java .o .hop .js
+.SUFFIXES: .scm .o .hop .js
 
 #*---------------------------------------------------------------------*/
 #*    The implicit rules                                               */
@@ -42,46 +35,23 @@ o/%.o: %.scm
 o/%.o: %.js
 	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_$* --js-module-path $*,$< -o $@)
 
-$(CLASS_DIR)/%.class: %.scm
-	@ $(call compile2,$(BIGLOO),$(BJVMFLAGS),$(BLFLAGS),-c,$< -o $@)
-
-$(CLASS_EDIR)/%.class: %.scm
-	@ $(call compile2,$(BIGLOO),$(BJVMFLAGS),$(BLJVMFLAGS),-c,$< -o $@)
-
-$(CLASS_DIR)/%.class: %.hop
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLFLAGS),-c,$< -o $@)
-
-$(CLASS_EDIR)/%.class: %.hop
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLJVMFLAGS),$(BHOPCFLAGS) -c,$< -o $@)
-
-$(CLASS_DIR)/%.class: %.js
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLFLAGS),-c,$< -o $@)
-
-$(CLASS_EDIR)/%.class: %.js
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BJVMFLAGS),$(BLJVMFLAGS),$(BHOPCFLAGS) -c,$< -o $@)
-
 #*---------------------------------------------------------------------*/
 #*    The heap construction                                            */
 #*---------------------------------------------------------------------*/
-.PHONY: heap-c heap-jvm
+.PHONY: heap-c
 
 heap-c: .afile $(HEAP_FILE)
-heap-jvm: .afile .jfile $(HEAPJVM_FILE)
 
 $(HEAP_FILE): make_lib.scm .afile
 	@ $(RM) -f $(HEAP_FILE)
 	@ $(call heap,$(BIGLOO),$(BCFLAGS),$(BHFLAGS),$<,-heap-library $(TARGETNAME),-addheap, $@)
 
-$(HEAPJVM_FILE): .jfile .afile make_lib.scm
-	@ $(RM) -f $(HEAPJVM_FILE)
-	@ $(BIGLOO) -jvm $(EFLAGS) $(BJVMFLAGS) $(BHFLAGS) make_lib.scm -addheap $(HEAPJVM_FILE) -heap-library $(TARGETNAME)
-
 #*---------------------------------------------------------------------*/
 #*    lib                                                              */
 #*---------------------------------------------------------------------*/
-.PHONY: lib-c lib-jvm
+.PHONY: lib-c
 
-lib: lib-jvm
+lib:
 
 #*--- lib-c -----------------------------------------------------------*/
 lib-c: $(TAGS) o lib-c-static lib-c-shared
@@ -197,32 +167,6 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).a: \
         $(LN_S) lib$(TARGETNAME)_es-$(LIBVERSION).a lib$(TARGETNAME)_eu-$(LIBVERSION).a
 	@ $(call done,$@)
 
-#*--- lib-jvm ---------------------------------------------------------*/
-lib-jvm: $(TAGS) $(CLASS_DIR) $(CLASS_EDIR) lib.zip
-
-$(CLASS_DIR):
-	mkdir -p $(CLASS_DIR)
-
-$(CLASS_EDIR):
-	mkdir -p $(CLASS_EDIR)
-
-lib.zip: $(BUILDLIBDIR)/$(TARGETNAME)_s-$(LIBVERSION).zip \
-         $(BUILDLIBDIR)/$(TARGETNAME)_es-$(LIBVERSION).zip
-
-$(BUILDLIBDIR)/$(TARGETNAME)_s-$(LIBVERSION).zip: .afile .jfile $(BGL_CLASSES)
-	@ $(RM) -f $@
-	@ (cd o/class_s && \
-	  $(ZIP) -q $(ZFLAGS) $@ $(CLASS_DIR:o/class_s/%=%)/*.class)
-	@ $(call done,$@)
-	@ echo "-------------------------------"
-
-$(BUILDLIBDIR)/$(TARGETNAME)_es-$(LIBVERSION).zip: .afile .jfile $(BGL_ECLASSES)
-	@ $(RM) -f $@
-	@ (cd o/class_es && \
-	  $(ZIP) -q $(ZFLAGS) $@ $(CLASS_EDIR:o/class_es/%=%)/*.class)
-	@ $(call done,$@)
-	@ echo "-------------------------------"
-
 #*---------------------------------------------------------------------*/
 #*    stdclean                                                         */
 #*---------------------------------------------------------------------*/
@@ -237,19 +181,13 @@ stdclean:
 	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX)
 	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX)
 	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).$(SHAREDSUFFIX)
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_s-$(LIBVERSION).zip
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_u-$(LIBVERSION).zip
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_es-$(LIBVERSION).zip
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME)_eu-$(LIBVERSION).zip
-	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).jheap
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).heap
-	$(RM) -rf $(CLASS_DIR)
 	$(RM) -f *~
 	$(RM) -f *.mco
 	$(RM) -f *.ast
 
 udeclean:
-	$(RM) -f .afile .etags .jfile
+	$(RM) -f .afile .etags
 
 devclean: cleanall
 
@@ -266,7 +204,7 @@ distclean: cleanall
 #*---------------------------------------------------------------------*/
 #*    Installation                                                     */
 #*---------------------------------------------------------------------*/
-.PHONY: install-library install-c install-native install-jvm uninstall
+.PHONY: install-library install-c install-native uninstall
 
 -include $(BIGLOOLIBDIR)/Makefile.misc
 
@@ -304,13 +242,7 @@ install-native-libs:
                 LIBDIR=$(HOPLIBDIR) \
                 LIB=lib$(TARGETNAME)_eu-$(LIBVERSION)
 
-install-jvm:
-
 uninstall: uninstall-native-heap uninstall-native-libs
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).jheap
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_s-$(LIBVERSION).zip
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_u-$(LIBVERSION).zip
-	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME)_es-$(LIBVERSION).zip
 
 uninstall-native-heap:
 	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap

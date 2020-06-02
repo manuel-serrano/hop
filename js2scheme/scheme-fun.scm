@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Tue Jun  2 07:51:32 2020 (serrano)                */
+;*    Last change :  Mon May 11 16:32:55 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -1075,7 +1075,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-function-src loc val::J2SFun ctx)
    (with-access::J2SFun val (src body)
-      (when (and #f src)
+      (when src
 	 (match-case loc
 	    ((at ?path ?start)
 	     (let ((m (config-get-mmap (context-conf ctx) path)))
