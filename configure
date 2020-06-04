@@ -1,6 +1,6 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/hop/configure                           */
+#*    serrano/prgm/project/hop/3.3.x/configure                         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
@@ -88,7 +88,6 @@ hop=$PWD/bin/hop
 bglcpp=$PWD/scheme2js/runtime/bglcpp
 
 branch="`echo $version | sed 's/[0-9][0-9]*$/x/'`"
-branch=master
 date=`date +"%d %B %Y"`
 
 url="http://hop.inria.fr"

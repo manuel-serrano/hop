@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Tue Jun  2 08:22:10 2020 (serrano)                */
+;*    Last change :  Thu Jun  4 10:41:41 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -542,9 +542,9 @@
 	    (set! o (cons* :optim-tyflow #t o))))
 
       (let ((s (config-get args :optim-size 0)))
-	 (when (>=fx l 1)
+	 (when (>=fx s 1)
 	    (set! o (cons* :fun-src #f o)))
-	 (when (>=fx l 2)
+	 (when (>=fx s 2)
 	    (set! o (cons* :optim-hint #f
 		       :optim-inline #f
 		       :optim-method #f

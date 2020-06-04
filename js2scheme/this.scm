@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/this.scm                  */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/this.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Oct 23 09:41:35 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Tue Jun  2 07:34:39 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all non-strict mode functions.         */
 ;*=====================================================================*/
@@ -58,20 +58,21 @@
 
    (define (init-this thisp loc)
       (with-access::J2SDecl thisp (id)
-	 (J2SIf (J2SPragma/bindings 'bool
-		   '(^this) (list (J2SThis thisp))
-		   '(or (eq? ^this (js-undefined)) (eq? ^this (js-null))))
-	    (J2SStmtExpr
-	       (J2SAssig (J2SThis thisp) (J2SPragma/type 'object '%this)))
+	 (J2SMeta 'unstrict-this 0 2
 	    (J2SIf (J2SPragma/bindings 'bool
 		      '(^this) (list (J2SThis thisp))
-		      '(not (js-object? ^this)))
+		      '(or (eq? ^this (js-undefined)) (eq? ^this (js-null))))
 	       (J2SStmtExpr
-		  (J2SAssig (J2SThis thisp)
-		     (J2SPragma/bindings 'object
-			'(^this) (list (J2SThis thisp))
-			'(js-toobject %this ^this))))
-	       (J2SNop)))))
+		  (J2SAssig (J2SThis thisp) (J2SPragma/type 'object '%this)))
+	       (J2SIf (J2SPragma/bindings 'bool
+			 '(^this) (list (J2SThis thisp))
+			 '(not (js-object? ^this)))
+		  (J2SStmtExpr
+		     (J2SAssig (J2SThis thisp)
+			(J2SPragma/bindings 'object
+			   '(^this) (list (J2SThis thisp))
+			   '(js-toobject %this ^this))))
+		  (J2SNop))))))
    
    (with-access::J2SFun this (mode body params id loc thisp)
       (when (eq? mode 'normal)

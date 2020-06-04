@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/math.scm                               */
+;*    serrano/prgm/project/hop/hop/hopscript/math.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Feb 23 14:47:01 2020 (serrano)                */
+;*    Last change :  Thu Jun  4 09:22:28 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -33,8 +33,8 @@
    (export (js-init-math! ::JsObject)
 	   (js-math-ceil ::obj)
 	   (js-math-ceil-as-integer ::obj)
-	   (js-math-sqrt ::obj ::JsGlobalObject)
-	   (inline js-math-sqrtfl ::double)
+	   (js-math-sqrt::double ::obj ::JsGlobalObject)
+	   (inline js-math-sqrtfl::double ::double)
 	   (js-math-floor ::obj ::JsGlobalObject)
 	   (js-math-floorfl ::double)
 	   (js-math-abs ::obj ::JsGlobalObject)

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/OFAOT/smi/hop/js2scheme/scheme-utils.scm                    */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/scheme-utils.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Apr 27 10:54:07 2020 (serrano)                */
+;*    Last change :  Tue Jun  2 07:44:16 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -107,7 +107,7 @@
 	   (uncast::J2SExpr ::J2SExpr)
 
 	   (cancall?::bool ::J2SNode)
-	   (optimized-ctor ::J2SNode)
+	   (optimized-ctor ::J2SNode ctx)
 
 	   (with-tmp-flip flip lhs rhs mode return ::struct gen::procedure)
 	   (with-tmp lhs rhs mode return ::struct gen::procedure)))
@@ -1087,25 +1087,26 @@
 ;*---------------------------------------------------------------------*/
 ;*    optimized-ctor ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (optimized-ctor this::J2SNode)
-   (let loop ((this this))
-      (cond
-	 ((isa? this J2SRef)
-	  (with-access::J2SRef this (decl)
-	     (loop decl)))
-	 ((isa? this J2SParen)
-	  (with-access::J2SParen this (expr)
-	     (loop expr)))
-	 ((isa? this J2SDeclFun)
-	  (with-access::J2SDeclFun this (scope val)
-	     (unless (memq scope '(none letblock))
-		(when (and (decl-usage-has? this '(new))
-			   (not (decl-usage-has? this '(call assig))))
-		   (with-access::J2SFun val (rtype vararg)
-		      (when (and (eq? rtype 'undefined) (not vararg))
-			 this))))))
-	 (else
-	  #f))))
+(define (optimized-ctor this::J2SNode ctx)
+   (when (context-get ctx :optim-ctor #f)
+      (let loop ((this this))
+	 (cond
+	    ((isa? this J2SRef)
+	     (with-access::J2SRef this (decl)
+		(loop decl)))
+	    ((isa? this J2SParen)
+	     (with-access::J2SParen this (expr)
+		(loop expr)))
+	    ((isa? this J2SDeclFun)
+	     (with-access::J2SDeclFun this (scope val)
+		(unless (memq scope '(none letblock))
+		   (when (and (decl-usage-has? this '(new))
+			      (not (decl-usage-has? this '(call assig))))
+		      (with-access::J2SFun val (rtype vararg)
+			 (when (and (eq? rtype 'undefined) (not vararg))
+			    this))))))
+	    (else
+	     #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-tmp-flip ...                                                */

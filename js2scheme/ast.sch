@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/ast.sch                   */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/ast.sch                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Sat Dec 14 07:42:09 2019 (serrano)                */
-;*    Copyright   :  2016-19 Manuel Serrano                            */
+;*    Last change :  Tue Jun  2 07:33:59 2020 (serrano)                */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
 ;*=====================================================================*/
@@ -611,9 +611,10 @@
        (expr ,expr)
        (type ,totype)))
 
-(define-macro (J2SMeta debug optim stmt)
+(define-macro (J2SMeta meta debug optim stmt)
    `(instantiate::J2SMeta
        (loc loc)
+       (meta ,meta)
        (optim ,optim)
        (debug ,debug)
        (stmt ,stmt)))

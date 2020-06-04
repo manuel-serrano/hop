@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme.scm                */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/scheme.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue May 26 12:23:53 2020 (serrano)                */
+;*    Last change :  Tue Jun  2 07:44:27 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1579,8 +1579,6 @@
 			  ,@(mapc (lambda (c body)
 				     (comp-switch-cond-string-clause c tmp body tleft))
 			     cases bodies)))))))
-	     
-	     
       
       (define (scheme-case? key cases)
 	 (let ((t (j2s-vtype key)))
@@ -2200,25 +2198,23 @@
 		(not (pair? (assq 'no-string hint))))
 	     #t)))
 
-   (define (maybe-string? obj)
+   (define (hint-string? obj)
       (when (memq (j2s-type obj) '(any unknown string))
-	 (if (isa? obj J2SRef)
-	     (with-access::J2SRef obj (hint)
-		(let ((cs (assq 'string hint))
-		      (ca (assq 'array hint))
-		      (ns (assq 'no-string hint)))
-		   (cond
-		      ((pair? ns)
-		       #f)
-		      ((pair? cs)
-		       (if (pair? ca)
-			   (=fx (cdr cs) (cdr ca))
-			   #t))
-		      ((pair? ca)
-		       #f)
-		      (else
-		       #t))))
-	     #t)))
+	 (with-access::J2SExpr obj (hint)
+	    (let ((cs (assq 'string hint))
+		  (ca (assq 'array hint))
+		  (ns (assq 'no-string hint)))
+	       (cond
+		  ((pair? ns)
+		   #f)
+		  ((pair? cs)
+		   (if (pair? ca)
+		       (=fx (cdr cs) (cdr ca))
+		       #t))
+		  ((pair? ca)
+		   #f)
+		  (else
+		   #t))))))
 
    (define (canbe-arguments? obj)
       (memq (j2s-type obj) '(any undefined unknown object)))
@@ -2231,7 +2227,8 @@
 		   ,(or (j2s-array-ref this mode return ctx)
 			(get obj tmp field cache cspecs #f loc))))
 		'())
-	     ,@(if (and (canbe-string? obj) (maybe-string? obj))
+	     ,@(if (and (canbe-string? obj) (hint-string? obj)
+			(hint-string? this))
 		`(((js-jsstring? ,tmp)
 		   ,(or (j2s-string-ref this mode return ctx)
 			(get obj tmp field cache cspecs #f loc))))
@@ -2245,6 +2242,9 @@
 	  (let* ((tmp (gensym 'tmpf))
 		 (lit (J2SHopRef/type tmp (j2s-type field)))
 		 (access (J2SAccess obj lit)))
+	     (with-access::J2SAccess access ((ahint hint))
+		(with-access::J2SAccess this (hint)
+		   (set! ahint hint)))
 	     `(let ((,tmp ,(j2s-scheme field mode return ctx)))
 		 ,(index-obj-literal-ref access obj lit cache cspecs loc)))))
    
@@ -2254,6 +2254,9 @@
 	  (let* ((tmp (gensym 'tmpo))
 		 (ref (J2SHopRef/type tmp (j2s-type obj)))
 		 (access (J2SAccess (J2SHopRef tmp) field)))
+	     (with-access::J2SAccess access ((ahint hint))
+		(with-access::J2SAccess this (hint)
+		   (set! ahint hint)))
 	     `(let ((,tmp ,(j2s-scheme obj mode return ctx)))
 		 ,(index-obj-ref access ref field cache cspecs loc)))))
 
@@ -2677,7 +2680,7 @@
 	 ((and (new-proxy? clazz) (=fx (length args) 2))
 	  (epairify loc
 	     (j2s-new-proxy this mode return ctx)))
-	 ((optimized-ctor clazz)
+	 ((optimized-ctor clazz ctx)
 	  =>
 	  (lambda (decl)
 	     (epairify loc

@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/hop/nodejs/Makefile                     */
+#*    serrano/prgm/project/hop/3.3.x/nodejs/Makefile                   */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Aug 14 09:48:16 2019 (serrano)                */
+#*    Last change :  Tue Jun  2 16:29:56 2020 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -134,6 +134,13 @@ _crypto.sch: $(BUILDETCDIR)/node_crypto_groups.h \
 	$(RM) a.out
 
 o/require.o: ../share/hop-boot.js
+
+o/http.o: http.js
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_http --js-module-path http -Os,$< -o $@)
+
+o/tls.o: tls.js
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS),$(BHOPCFLAGS) -c --js-module-name __nodejs_tls --js-module-path tls -Os,$< -o $@)
+
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/
