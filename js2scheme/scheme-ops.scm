@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-ops.scm            */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/scheme-ops.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Apr 19 08:12:01 2020 (serrano)                */
+;*    Last change :  Thu Jun  4 11:13:03 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1472,7 +1472,7 @@
 			     (set-cdr! target
 				(list (j2s-scheme-as-string expr mode return ctx)))
 			     '())))
-		 ,(fast-add 'string 'string loc 'string
+		 ,(fast-add tl tr loc 'string
 		     (instantiate::J2SHopRef
 			(loc loc)
 			(id %str)

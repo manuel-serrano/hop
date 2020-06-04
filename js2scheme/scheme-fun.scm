@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Tue Jun  2 07:30:39 2020 (serrano)                */
+;*    Last change :  Thu Jun  4 10:35:53 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -712,7 +712,6 @@
 		       'js-make-function-strict)
 		  %this ,tmp ,len
 		  ,(& name (context-program ctx))
-		  :strict ',mode
 		  :constrsize ,constrsize
 		  :method ,tmp
 		  :arity ,arity
