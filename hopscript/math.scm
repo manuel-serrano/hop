@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Jun  4 09:22:28 2020 (serrano)                */
+;*    Last change :  Fri Jun  5 05:52:17 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -437,7 +437,7 @@
 ;*    js-math-sqrtfl ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-math-sqrtfl x)
-   (if (<fl x 0.0) +nan.0 (sqrtfl x)))
+   (sqrtfl-ur x))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-math-floor ...                                                */
