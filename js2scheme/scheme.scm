@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/js2scheme/scheme.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Jun  2 07:44:27 2020 (serrano)                */
+;*    Last change :  Fri Jun  5 07:29:56 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -21,6 +21,7 @@
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_utils
+	   __js2scheme_alpha
 	   __js2scheme_js
 	   __js2scheme_stmtassign
 	   __js2scheme_compile
@@ -2083,7 +2084,7 @@
 	  #f)))
    
    (define (aput-assigop otmp::symbol pro prov op
-	      tl::symbol lhs::J2SAccess rhs::J2SExpr field cachep)
+	      tl::symbol lhs::J2SAccess rhs::J2SExpr field cachep ctx)
       (with-access::J2SAssigOp this ((typea type) cache cspecs)
 	 (with-access::J2SAccess lhs (obj field loc (typel type))
 	    (with-access::J2SExpr obj ((typeo type) loc)
@@ -2114,7 +2115,7 @@
    (define (access-assigop/otmp obj otmp::symbol op tl::symbol lhs::J2SAccess rhs::J2SExpr)
       ;; WARNING: because of the caching of cache misses that uses the
       ;; pmap test to cache misses, pmap cannot be used in assigop.
-      (with-access::J2SAccess lhs (obj field cache cspecs)
+      (with-access::J2SAccess lhs (obj field cache cspecs loc)
 	 (let* ((prov (j2s-property-scheme field mode return ctx))
 		(pro (match-case prov
 			((& . ?-) #f)
@@ -2124,19 +2125,21 @@
 		,(cond
 		    ((or (not cache) (is-integer? field))
 		     (aput-assigop otmp pro prov op
-			tl lhs rhs field #f))
+			tl lhs rhs field #f ctx))
 		    ((memq (typeof-this obj ctx) '(object this global))
 		     (aput-assigop otmp pro prov op
-			tl lhs rhs field #t))
+			tl lhs rhs field #t ctx))
 		    (else
 		      `(if (js-object? ,otmp)
 			   ,(with-object obj
 			      (lambda ()
 				 `(with-access::JsObject ,otmp (cmap)
 				     ,(aput-assigop otmp pro prov op
-					 tl lhs rhs field #t))))
+					 tl lhs rhs field #t ctx))))
 			   ,(aput-assigop otmp pro prov op
-			       tl lhs rhs field #f))))))))
+			       tl (unoptimize lhs) (unoptimize rhs)
+			       field #f
+			       (new-compiler-context ctx :optim 0)))))))))
 
    (define (access-assigop op tl::symbol lhs::J2SAccess rhs::J2SExpr)
       (with-access::J2SAccess lhs (obj field cache)
@@ -3082,3 +3085,48 @@
        (and (isa? val J2SRef)
 	    (with-access::J2SRef val (decl)
 	       (isa? decl J2SDeclFun)))))
+
+;*---------------------------------------------------------------------*/
+;*    unoptimize ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (unoptimize expr)
+   (let ((nexpr (j2s-alpha expr '() '())))
+      (uncache! nexpr)))
+
+;*---------------------------------------------------------------------*/
+;*    uncache! ::J2SNode ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uncache! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    uncache! ::J2SAccess ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uncache! this::J2SAccess)
+   (with-access::J2SAccess this (cache)
+      (set! cache #f)
+      (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    uncache! ::J2SPrefix ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uncache! this::J2SPrefix)
+   (with-access::J2SPrefix this (cache)
+      (set! cache #f)
+      (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    uncache! ::J2SPostfix ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uncache! this::J2SPostfix)
+   (with-access::J2SPostfix this (cache)
+      (set! cache #f)
+      (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    uncache! ::J2SAssigOp ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uncache! this::J2SAssigOp)
+   (with-access::J2SAssigOp this (cache)
+      (set! cache #f)
+      (call-default-walker)))
