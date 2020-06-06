@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue May 19 09:31:11 2020 (serrano)                */
+;*    Last change :  Sat Jun  6 06:54:46 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -437,8 +437,9 @@
 		    (fprint (current-error-port) "  imap.%id=" %iid
 		       " imap.props=" iprops)))
 	      (when (isa? cmap JsConstructMap)
-		 (with-access::JsConstructMap cmap ((%cid %id) (cprops props))
+		 (with-access::JsConstructMap cmap ((%cid %id) (cprops props) (csize size))
 		    (fprint (current-error-port) "  cmap.%id=" %cid
+		       " cmap.size=" csize
 		       " cmap.props=" cprops)))
 	      (when (not (eq? pmap (js-not-a-pmap)))
 		 (with-access::JsConstructMap pmap ((%pid %id) (pprops props) (psize size))
