@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Apr 17 14:58:24 2020 (serrano)                */
+;*    Last change :  Mon Jun  8 07:15:36 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -200,7 +200,8 @@
 	    (set! constrmap
 	       (instantiate::JsConstructMap
 		  (ctor constructor)
-		  (size 1))))
+;* 		  (size 1)                                             */
+		  )))
 	 (instantiateJsNumber
 	    (cmap constrmap)
 	    (__proto__ (js-get-jsobject-name/cache constructor

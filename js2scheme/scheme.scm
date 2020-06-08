@@ -2881,34 +2881,33 @@
    
    (define (elements-init n offset nodes %cmap cnt pcache)
       `(with-access::JsConstructMap cmap (props)
-	  (let ((%len0 -1)
-		(%cmap0 cmap))
+	  (let ((%cmap0 cmap))
 	     ,(elements-init-sans-cmap nodes)
 	     (when (<fx ,cnt 1000)
 		(set! ,cnt (+fx ,cnt 1))
 		(with-access::JsConstructMap cmap (props)
 		   (when (and (js-object-no-setter? ,n)
-			      (=fx ,(length nodes)
+			      (=fx ,(-fx (length nodes) 1)
 				 (-fx (with-access::JsConstructMap
-					    (js-pcache-pmap
+					    (js-pcache-nmap
 					       (js-pcache-ref %pcache
 						  ,(node-cache
 						      (car (last-pair nodes)))))
-					    (size)
-					 size)
+					    (props)
+					 (vector-length props))
 				    (with-access::JsConstructMap
-					  (js-pcache-pmap
+					  (js-pcache-nmap
 					     (js-pcache-ref %pcache
 						,(node-cache (car nodes))))
-					    (size)
-					 size))))
+					    (props)
+					 (vector-length props)))))
 		      (set! ,offset
 			 (js-pcache-index
 			    (js-pcache-ref %pcache ,(node-cache (car nodes)))))
 		      (set! ,%cmap cmap)
 		      (js-validate-pmap-pcache! (js-pcache-ref %pcache ,pcache))
-		      (with-access::JsPropertyCache (js-pcache-ref %pcache ,pcache) (pmap)
-			 (set! pmap %cmap0))))))))
+		      (with-access::JsPropertyCache (js-pcache-ref %pcache ,pcache) (nmap)
+			 (set! nmap %cmap0))))))))
    
    (define (init-ref this n)
       (with-access::J2SOPTInitSeq this (loc ref nodes cmap offset cnt cache)
@@ -2916,7 +2915,7 @@
 	       (elements (gensym '%elements)))
 	    (if cmap
 		`(with-access::JsObject ,n (cmap elements)
-		    (if (eq? cmap (js-pcache-pmap (js-pcache-ref %pcache ,cache)))
+		    (if (eq? cmap (js-pcache-nmap (js-pcache-ref %pcache ,cache)))
 			,(vector-inits n elements i offset nodes cmap)
 			,(elements-init n offset nodes cmap cnt cache)))
 		(elements-init-sans-cmap nodes)))))

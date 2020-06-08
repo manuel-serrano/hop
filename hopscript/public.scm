@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Apr 17 10:30:31 2020 (serrano)                */
+;*    Last change :  Mon Jun  8 07:07:29 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1275,9 +1275,10 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-alloc %this ctor::JsFunction)
    (with-access::JsFunction ctor (constrsize constrmap %prototype)
-      (with-access::JsConstructMap constrmap (size)
-	 (unless (=fx size constrsize)
-	    (js-function-set-constrmap! ctor)))
+      (when (eq? constrmap (js-not-a-cmap))
+;*       (with-access::JsConstructMap constrmap (size)                 */
+;* 	 (unless (=fx size constrsize)                                 */
+	    (js-function-set-constrmap! ctor))
       (js-make-jsobject constrsize constrmap %prototype)))
 
 ;*---------------------------------------------------------------------*/
@@ -1330,7 +1331,7 @@
       (set! constrmap
 	 (instantiate::JsConstructMap
 	    (ctor ctor)
-	    (size constrsize)
+;* 	    (size constrsize)                                          */
 	    (inline #t)))
       ctor))
    
