@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/tyflow.scm                */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/tyflow.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Apr 10 18:06:47 2020 (serrano)                */
+;*    Last change :  Fri Jun  5 05:15:02 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -446,6 +446,14 @@
       (return 'any '() '())))
 
 ;*---------------------------------------------------------------------*/
+;*    node-type ::J2SMeta ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-type this::J2SMeta env::pair-nil fix::cell)
+   (with-trace 'j2s-tyflow "node-type ::J2SMeta"
+      (with-access::J2SMeta this (stmt)
+	 (node-type stmt env fix))))
+
+;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SExpr ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SExpr env::pair-nil fix::cell)
@@ -811,6 +819,10 @@
 	 (node-type val env fix)
 	 (return 'class env bk))))
 
+;* (define-walk-method (node-type this::J2SMeta env::pair-nil fix::cell) */
+;*    (tprint "META " (j2s->list this))                                */
+;*    (call-default-walker))                                           */
+      
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SAssig ...                                         */
 ;*---------------------------------------------------------------------*/

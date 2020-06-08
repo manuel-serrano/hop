@@ -20,6 +20,8 @@ to your `apt` path:
 deb [trusted=yes] http://hop.inria.fr/linux/Debian buster hop
 ```
 
+The Debian packages are all installed in the `/opt/hop` directory.
+
 ### Ubuntu ###
 
 An Ubuntu repository is available. To use it, add the following
@@ -28,6 +30,8 @@ to your `apt` path:
 ```shell[:@config]
 deb [trusted=yes] http://hop.inria.fr/linux/Ubuntu focal hop
 ```
+
+The Ubuntu packages are all installed in the `/opt/hop` directory.
 
 ### Homebrew ###
 

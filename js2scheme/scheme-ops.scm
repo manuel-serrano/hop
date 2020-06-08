@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-ops.scm            */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/scheme-ops.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Apr 19 08:12:01 2020 (serrano)                */
+;*    Last change :  Thu Jun  4 11:13:03 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1431,7 +1431,7 @@
 		      (asfixnum right tr)
 		      #f)
 		   (if-flonums? left tl right tr
-		      (binop-flonum-flonum (real-op '+ lhs rhs #f) type
+		      (binop-flonum-flonum (real-op '+ type lhs rhs #f) type
 			 (asreal left tl)
 			 (asreal right tr)
 			 #f)
@@ -1472,7 +1472,7 @@
 			     (set-cdr! target
 				(list (j2s-scheme-as-string expr mode return ctx)))
 			     '())))
-		 ,(fast-add 'string 'string loc 'string
+		 ,(fast-add tl tr loc 'string
 		     (instantiate::J2SHopRef
 			(loc loc)
 			(id %str)
@@ -1538,7 +1538,7 @@
 		   (binop-real-xxx op type rhs tr right lhs tl left ctx #t))
 		  ((and (is-hint? lhs 'real) (is-hint? rhs 'real))
 		   (if-flonums? left tl right tr
-		      (binop-flonum-flonum (real-op op lhs rhs #f) type
+		      (binop-flonum-flonum (real-op op type lhs rhs #f) type
 			 (asreal left tl)
 			 (asreal right tr)
 			 #f)
@@ -1548,7 +1548,7 @@
 			 #f)))
 		  ((and (eq? op '-) (or (is-hint? lhs 'real) (is-hint? rhs 'real)))
 		   (if-flonums? left tl right tr
-		      (binop-flonum-flonum (real-op op lhs rhs #f) type
+		      (binop-flonum-flonum (real-op op type lhs rhs #f) type
 			 (asreal left tl)
 			 (asreal right tr)
 			 #f)
@@ -1563,7 +1563,7 @@
 			 (asfixnum right tr)
 			 #f)
 		      (if-flonums? left tl right tr
-			 (binop-flonum-flonum (real-op op lhs rhs #f) type
+			 (binop-flonum-flonum (real-op op type lhs rhs #f) type
 			    (asreal left tl)
 			    (asreal right tr)
 			    #f)
@@ -1578,7 +1578,7 @@
 			 (asfixnum right tr)
 			 #f)
 		      (if-flonums? left tl right tr
-			 (binop-flonum-flonum (real-op op lhs rhs #f) type
+			 (binop-flonum-flonum (real-op op type lhs rhs #f) type
 			    (asreal left tl)
 			    (asreal right tr)
 			    #f)
@@ -1597,6 +1597,9 @@
 	 (let ((tl (j2s-vtype lhs))
 	       (tr (j2s-vtype rhs)))
 	    (cond
+	       ((and (eq? (j2s-type lhs) 'real) (eq? (j2s-type rhs) 'real))
+		(binop-flonum-flonum (real-op '* type lhs rhs #f)
+		   type left right #f))
 	       ((eq? tl 'int32)
 		(binop-int32-xxx '* type lhs tl left rhs tr right ctx #f))
 	       ((eq? tr 'int32)
@@ -1623,7 +1626,7 @@
 		(binop-real-xxx '* type rhs tr right lhs tl left ctx #t))
 	       ((eq? type 'real)
 		(if-flonums? left tl right tr
-		   (binop-flonum-flonum (real-op '* lhs rhs #f) type
+		   (binop-flonum-flonum (real-op '* type lhs rhs #f) type
 		      (asreal left tl)
 		      (asreal right tr)
 		      #f)
@@ -1633,7 +1636,7 @@
 		      #f)))
 	       ((or (is-hint? lhs 'real) (is-hint? rhs 'real))
 		(if-flonums? left tl right tr
-		   (binop-flonum-flonum (real-op '* lhs rhs #f) type
+		   (binop-flonum-flonum (real-op '* type lhs rhs #f) type
 		      (asreal left tl)
 		      (asreal right tr)
 		      #f)
@@ -1648,7 +1651,7 @@
 		      (asfixnum right tr)
 		      #f)
 		   (if-flonums? left tl right tr
-		      (binop-flonum-flonum (real-op '* lhs rhs #f) type
+		      (binop-flonum-flonum (real-op '* type lhs rhs #f) type
 			 (asreal left tl)
 			 (asreal right tr)
 			 #f)
@@ -2356,6 +2359,7 @@
 ;*    fixnums? ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (fixnums? left tl right tr)
+   
    (define (type-fixnum? type)
       (memq type '(int30 int53 bint)))
    
@@ -2372,6 +2376,8 @@
 	  ((fixnum? right)
 	   `(fixnum? ,left))
 	  ((and (eq? left right) (symbol? left))
+	   `(fixnum? ,left))
+	  ((eq? left right)
 	   `(fixnum? ,left))
 	  (else
 	   `(fixnums? ,left ,right))))
@@ -2415,7 +2421,9 @@
       ((eq? tr 'real) `(flonum? ,left))
       ((and (memq tl '(number any unknown))
 	    (memq tr '(number any unknown)))
-       `(and (flonum? ,left) (flonum? ,right)))
+       (if (eq? left right)
+	   `(flonum? ,left)
+	   `(and (flonum? ,left) (flonum? ,right))))
       (else #f)))
 
 ;*---------------------------------------------------------------------*/
@@ -2748,9 +2756,9 @@
 		  left (box right tr ctx) flip))))
 	  ((bint)
 	   `(if (fixnum? ,left)
-		(binop-fixnum-fixnum op type
+		,(binop-fixnum-fixnum op type
 		   left right flip)
-		(binop-number-number op type
+		,(binop-number-number op type
 		   left right flip)))
 	  ((integer)
 	   (if-fixnums? left tl right tr
@@ -2803,8 +2811,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    real-op ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (real-op op lhs rhs flip)
+(define (real-op op type lhs rhs flip)
    (cond
+      ((eq? type 'real) op)
       ((not (memq op '(+ * - /))) op)
       ((fresh-real? lhs) (symbol-append op (if flip 'r! 'l!)))
       ((fresh-real? rhs) (symbol-append op (if flip 'l! 'r!)))
@@ -2826,7 +2835,7 @@
 	  left (asreal right tr) flip))
       (else
        (if-flonum? right tr 
-	  (binop-flonum-flonum (real-op op lhs rhs flip) type
+	  (binop-flonum-flonum (real-op op type lhs rhs flip) type
 	     left right flip)
 	  (if (memq type '(int32 uint32 integer bint real number))
 	      (binop-number-number op type

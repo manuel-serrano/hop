@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Thu Feb 13 08:31:04 2020 (serrano)                */
+;*    Last change :  Thu Jun  4 12:35:39 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
@@ -260,13 +260,12 @@
 (define-walk-method (hintnum this::J2SAssig fix::cell)
    (call-default-walker)
    (with-access::J2SAssig this (lhs rhs)
-      (when (and (isa? lhs J2SRef) (isa? rhs J2SRef))
-	 (cond
-	    ((is-hint? lhs 'real)
-	     (add-expr-hint! rhs (expr-hint lhs) #f fix))
-	    ((is-hint? rhs 'real)
-	     (add-expr-hint! lhs (expr-hint rhs) #f fix)
-	     (add-expr-hint! this (expr-hint rhs) #f fix))))))
+      (cond
+	 ((is-hint? lhs 'real)
+	  (add-expr-hint! rhs (expr-hint lhs) #f fix))
+	 ((is-hint? rhs 'real)
+	  (add-expr-hint! lhs (expr-hint rhs) #f fix)
+	  (add-expr-hint! this (expr-hint rhs) #f fix)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type<? ...                                                       */

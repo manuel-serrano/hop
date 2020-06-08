@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/hint.scm                  */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/hint.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Apr 13 12:38:50 2020 (serrano)                */
+;*    Last change :  Tue Jun  2 07:37:41 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -325,10 +325,20 @@
 ;*    j2s-hint ::J2SDeclInit ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SDeclInit hints)
-   (with-access::J2SDeclInit this (val vtype hint loc)
+   (with-access::J2SDeclInit this (val vtype hint loc id)
       (let ((ty (j2s-type val)))
 	 (when (symbol? ty)
 	    (add-hints! this `((,ty . 3)) this)))
+      (let ((bc (if (decl-usage-has? this '(get))
+		    100
+		    (multiple-value-bind (bt bc)
+		       (best-hint-type this #t)
+		       (if (eq? bt 'string) 0 bc)))))
+	 (when (> bc 0)
+	    ;; if the variable is not a string, neither is the rhs
+	    (with-access::J2SExpr val (hint)
+	       (unless (pair? (assq 'no-string hint))
+		  (set! hint (cons `(no-string . ,bc) hint))))))
       (set! hints hint)
       (call-default-walker)))
 
@@ -926,8 +936,7 @@
       (let ((val (j2sdeclinit-val-fun fun)))
 	 (with-access::J2SFun val (params body name generator idthis loc)
 	    (let* ((nbody (duplicate::J2SBlock body
-			     (nodes (list (J2SMeta
-					     0 1
+			     (nodes (list (J2SMeta 'hint 0 1
 					     (J2SSeq body))))))
 		   (nfun (duplicate::J2SDeclFun fun
 			    (parent fun)
@@ -1204,7 +1213,7 @@
 					(let ((an (j2s-alpha n '() '())))
 					   (reset-type! an decls)))
 				   nodes))))
-		(otherwise (J2SMeta 0 0
+		(otherwise (J2SMeta 'hint 0 0
 			      (duplicate::J2SBlock this))))
 	    (dispatch-body this pred then otherwise))))
    

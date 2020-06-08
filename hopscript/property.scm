@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue May 19 09:31:11 2020 (serrano)                */
+;*    Last change :  Sun Jun  7 09:06:27 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -403,12 +403,12 @@
 		"\n   props="
 		(map (lambda (p) (format "~s" p))
 		   (vector->list elements))))
-	  (with-access::JsConstructMap cmap (%id props methods size)
+	  (with-access::JsConstructMap cmap (%id props methods)
 	     (fprint (current-error-port) "===" msg (typeof obj) " MAPPED"
 		" length=" (vector-length elements)
 		" plain=" (js-object-mode-plain? obj)
 		" inline=" (js-object-inline-elements? obj)
-		" size=" size
+;* 		" size=" size                                          */
 		" extensible=" (js-object-mode-extensible? obj)
 		" mlengths=" (vector-length methods)
 		"\n   cmap.%id=" %id
@@ -441,11 +441,10 @@
 		    (fprint (current-error-port) "  cmap.%id=" %cid
 		       " cmap.props=" cprops)))
 	      (when (not (eq? pmap (js-not-a-pmap)))
-		 (with-access::JsConstructMap pmap ((%pid %id) (pprops props) (psize size))
+		 (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
 		    (fprint (current-error-port) "  pmap.%id=" %pid
-		       " pmap.size=" psize
 		       " pmap.props=" pprops)))
-	      (when (not (eq? nmap (js-not-a-pmap)))
+	      (when (and (isa? nmap JsConstructMap) (not (eq? nmap (js-not-a-pmap))))
 		 (with-access::JsConstructMap nmap ((%pid %id) (pprops props))
 		    (fprint (current-error-port) "  nmap.%id=" %pid
 		       " nmap.props=" pprops)))
@@ -459,15 +458,13 @@
 		 (fprint (current-error-port) "  imap.%id=" %iid
 		    " imap.props=" iprops)))
 	     ((isa? nmap JsConstructMap)
-	      (with-access::JsConstructMap nmap ((%pid %id) (pprops props) (psize size))
+	      (with-access::JsConstructMap nmap ((%pid %id) (pprops props))
 		 (fprint (current-error-port) "  nmap.%id=" %pid
-		    " nmap.props=" pprops
-		    " nmap.size=" psize)))
+		    " nmap.props=" pprops)))
 	     ((isa? pmap JsConstructMap)
-	      (with-access::JsConstructMap pmap ((%pid %id) (pprops props) (psize size))
+	      (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
 		 (fprint (current-error-port) "  pmap.%id=" %pid
-		    " pmap.props=" pprops
-		    " pmap.size=" psize)))
+		    " pmap.props=" pprops)))
 	     ((isa? amap JsConstructMap)
 	      (with-access::JsConstructMap amap ((%aid %id) (aprops props))
 		 (fprint (current-error-port) "  amap.%id=" %aid
@@ -481,10 +478,9 @@
 ;*    js-debug-cmap ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-debug-cmap cmap #!optional (msg ""))
-   (with-access::JsConstructMap cmap (%id props methods size transitions inline sibling vlen)
+   (with-access::JsConstructMap cmap (%id props methods transitions inline sibling vlen)
       (fprint (current-error-port) "~~~~ " msg (typeof cmap)
 	 " cmap.%id=" %id
-	 " size=" size
 	 " inline=" inline
 	 " sibling=" (typeof sibling)
 	 " plength=" (vector-length props)
@@ -508,9 +504,14 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-add! obj::JsObject idx::long value)
    (with-access::JsObject obj (elements cmap)
-      (let ((nlen (if (>fx (vector-length elements) 16)
-		      (+fx 2 (vector-length elements))
-		      (+fx 2 (*fx 2 (vector-length elements))))))
+      (let ((nlen (+fx 1 (vector-length elements))))
+;* 	    (cond                                                      */
+;* 		     ((>fx (vector-length elements) 16)                */
+;* 		      (+fx 2 (vector-length elements)))                */
+;* 		     ((<fx (vector-length elements) 2)                 */
+;* 		      2)                                               */
+;* 		     (else                                             */
+;* 		      (*fx 2 (vector-length elements))))))             */
 	 (let ((nels (copy-vector elements nlen)))
 	    (cond-expand (profile (profile-cache-extension nlen)))
 	    (vector-set! nels idx value)
@@ -558,18 +559,20 @@
 ;*    js-object-push/ctor! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-object-push/ctor! obj::JsObject idx::long value ctor)
-   (with-access::JsObject obj (elements)
+   (with-access::JsObject obj (elements cmap)
       (if (>=fx idx (vector-length elements))
 	  (begin
 	     (js-object-add! obj idx value)
 	     (when (js-function? ctor)
 		(with-access::JsFunction ctor (constrmap constrsize maxconstrsize)
 		   (when (<fx constrsize maxconstrsize)
-		      (set! constrsize (+fx 1 constrsize))
+		      (with-access::JsConstructMap cmap (props)
+			 (set! constrsize (+fx 1 (vector-length props))))
 		      (set! constrmap
 			 (instantiate::JsConstructMap
 			    (ctor ctor)
-			    (size constrsize)))))))
+;* 			    (size constrsize)                          */
+			    ))))))
 	  (vector-set! elements idx value))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Apr 13 11:29:56 2020 (serrano)                */
+;*    Last change :  Mon Jun  8 07:05:42 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -137,7 +137,7 @@
 	   (final-class JsConstructMap
 	      (%id::uint32 read-only (default (gencmapid)))
 	      (lock read-only (default (make-spinlock "JsConstructMap")))
-	      (size::long (default 0))
+;* 	      (ctorsize::long (default 0))                             */
 	      (props::vector (default '#()))
 	      (methods::vector (default '#()))
 	      (transitions::pair-nil (default '()))
@@ -1253,7 +1253,7 @@
 (define *js-not-a-cmap*
    (instantiate::JsConstructMap
       (inline #f)
-      (size -100)
+;*       (size -100)                                                   */
       (%id 0)))
 
 ;*---------------------------------------------------------------------*/
@@ -1262,7 +1262,7 @@
 (define *js-not-a-pmap*
    (instantiate::JsConstructMap
       (inline #f)
-      (size -200)
+;*       (size -200)                                                   */
       (%id -1)))
 
 ;*---------------------------------------------------------------------*/

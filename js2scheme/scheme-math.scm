@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Wed Dec  4 18:10:27 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Last change :  Fri Jun  5 06:58:36 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
 ;*=====================================================================*/
@@ -210,17 +210,23 @@
 (define (j2s-math-inline-sqrt arg mode return conf)
    (case (j2s-vtype arg)
       ((int32)
-       (let ((tmp (gensym 'tmp)))
+       (let ((tmp (gensym 'int)))
 	  `(let ((,tmp ,(j2s-scheme arg mode return conf)))
 	      (if (<s32 ,tmp 0) +nan.0 (sqrtfl (int32->flonum ,tmp))))))
       ((uint32)
        `(sqrtfl (uint32->flonum ,(j2s-scheme arg mode return conf))))
       ((int53 bint)
-       (let ((tmp (gensym 'tmp)))
+       (let ((tmp (gensym 'int)))
 	  `(let ((,tmp ,(j2s-scheme arg mode return conf)))
-	      (if (<fx ,tmp 0) +nan.0 (sqrtfl (fixnum->flonum ,tmp))))))
+	      (js-math-sqrtfl (fixnum->flonum ,tmp)))))
       ((real)
        `(js-math-sqrtfl ,(j2s-scheme arg mode return conf)))
+      ((number)
+       (let ((tmp (gensym 'num)))
+	  `(let ((,tmp ,(j2s-scheme arg mode return conf)))
+	      (if (flonum? ,tmp)
+		  (js-math-sqrtfl ,tmp)
+		  (js-math-sqrtfl (fixnum->flonum ,tmp))))))
       (else
        `(js-math-sqrt ,(j2s-scheme arg mode return conf) %this))))
 

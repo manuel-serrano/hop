@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon May 25 08:32:24 2020 (serrano)                */
+;*    Last change :  Tue Jun  2 08:19:42 2020 (serrano)                */
 ;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -106,7 +106,10 @@
 		 (hopc-j2s-flags-set! (cons* :optim-ccall #t (hopc-j2s-flags))))
 		((string=? level "s")
 		 (hopc-optim-level-set! 2)
-		 (hopc-j2s-flags-set! (cons* :optim-size #t (hopc-j2s-flags))))
+		 (hopc-j2s-flags-set! (cons* :optim-size 1 (hopc-j2s-flags))))
+		((string=? level "2s")
+		 (hopc-optim-level-set! 2)
+		 (hopc-j2s-flags-set! (cons* :optim-size 2 (hopc-j2s-flags))))
 		(else
 		 (hopc-optim-level-set! (string->integer level))))
 	     (hopc-bigloo-options-set!

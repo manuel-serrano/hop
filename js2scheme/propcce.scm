@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/propcce.scm             */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/propcce.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Sat Feb 10 10:55:06 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Tue Jun  2 07:39:18 2020 (serrano)                */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property common caching elimination optimization                 */
 ;*=====================================================================*/
@@ -360,7 +360,7 @@
 	     (tprint "precaching..." (length accesses))
 	     (let ((pc (J2SPrecache accesses
 			  (j2s-cachelevel1! (j2s-alpha this '() '()))
-			  (J2SMeta 0 0 (j2s-uncache! this)))))
+			  (J2SMeta 'propcce 0 0 (j2s-uncache! this)))))
 		(if (isa? this J2SBlock)
 		    (J2SBlock/w-endloc pc)
 		    pc)))

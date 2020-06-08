@@ -31,36 +31,36 @@ while : ; do
     "")
      break;;
 
-  -h|--help)
-    echo "usage: $0 [-v|-s] [--basedir dir] [--hop hop]";
-    echo "example: $0";
-    exit 0;;
+    -h|--help)
+      echo "usage: $0 [-v|-s] [--basedir dir] [--hop hop]";
+      echo "example: $0";
+      exit 0;;
 
-  -v)
-    verb="$verb -v";;
+    -v)
+      verb="$verb -v";;
 
-  -v2)
-    verb="$verb -v -v";;
+    -v2)
+      verb="$verb -v -v";;
 
-  -s)
-    verb="";;
+    -s)
+      verb="";;
+    
+    -*)
+      rest=$1;;
 
-  -*)
-    rest=$1;;
+    --basedir)
+      shift;
+      basedir=$1;;    
 
-  --basedir)
-    shift;
-    basedir=$1;;    
+    --hop)
+      shift;
+      hop=$1;;    
 
-  --hop)
-    shift;
-    hop=$1;;    
-
-  --stop-on-failure)
-    stoponfailure="yes";;
-
-  *)
-    test=$1;;
+    --stop-on-failure)
+      stoponfailure="yes";;
+    
+    *)
+      test=$1;;
   esac
 
   shift

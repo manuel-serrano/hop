@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue May 26 12:23:53 2020 (serrano)                */
+;*    Last change :  Fri Jun  5 07:29:56 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -21,6 +21,7 @@
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_utils
+	   __js2scheme_alpha
 	   __js2scheme_js
 	   __js2scheme_stmtassign
 	   __js2scheme_compile
@@ -1579,8 +1580,6 @@
 			  ,@(mapc (lambda (c body)
 				     (comp-switch-cond-string-clause c tmp body tleft))
 			     cases bodies)))))))
-	     
-	     
       
       (define (scheme-case? key cases)
 	 (let ((t (j2s-vtype key)))
@@ -2085,7 +2084,7 @@
 	  #f)))
    
    (define (aput-assigop otmp::symbol pro prov op
-	      tl::symbol lhs::J2SAccess rhs::J2SExpr field cachep)
+	      tl::symbol lhs::J2SAccess rhs::J2SExpr field cachep ctx)
       (with-access::J2SAssigOp this ((typea type) cache cspecs)
 	 (with-access::J2SAccess lhs (obj field loc (typel type))
 	    (with-access::J2SExpr obj ((typeo type) loc)
@@ -2116,7 +2115,7 @@
    (define (access-assigop/otmp obj otmp::symbol op tl::symbol lhs::J2SAccess rhs::J2SExpr)
       ;; WARNING: because of the caching of cache misses that uses the
       ;; pmap test to cache misses, pmap cannot be used in assigop.
-      (with-access::J2SAccess lhs (obj field cache cspecs)
+      (with-access::J2SAccess lhs (obj field cache cspecs loc)
 	 (let* ((prov (j2s-property-scheme field mode return ctx))
 		(pro (match-case prov
 			((& . ?-) #f)
@@ -2126,19 +2125,21 @@
 		,(cond
 		    ((or (not cache) (is-integer? field))
 		     (aput-assigop otmp pro prov op
-			tl lhs rhs field #f))
+			tl lhs rhs field #f ctx))
 		    ((memq (typeof-this obj ctx) '(object this global))
 		     (aput-assigop otmp pro prov op
-			tl lhs rhs field #t))
+			tl lhs rhs field #t ctx))
 		    (else
 		      `(if (js-object? ,otmp)
 			   ,(with-object obj
 			      (lambda ()
 				 `(with-access::JsObject ,otmp (cmap)
 				     ,(aput-assigop otmp pro prov op
-					 tl lhs rhs field #t))))
+					 tl lhs rhs field #t ctx))))
 			   ,(aput-assigop otmp pro prov op
-			       tl lhs rhs field #f))))))))
+			       tl (unoptimize lhs) (unoptimize rhs)
+			       field #f
+			       (new-compiler-context ctx :optim 0)))))))))
 
    (define (access-assigop op tl::symbol lhs::J2SAccess rhs::J2SExpr)
       (with-access::J2SAccess lhs (obj field cache)
@@ -2200,25 +2201,23 @@
 		(not (pair? (assq 'no-string hint))))
 	     #t)))
 
-   (define (maybe-string? obj)
+   (define (hint-string? obj)
       (when (memq (j2s-type obj) '(any unknown string))
-	 (if (isa? obj J2SRef)
-	     (with-access::J2SRef obj (hint)
-		(let ((cs (assq 'string hint))
-		      (ca (assq 'array hint))
-		      (ns (assq 'no-string hint)))
-		   (cond
-		      ((pair? ns)
-		       #f)
-		      ((pair? cs)
-		       (if (pair? ca)
-			   (=fx (cdr cs) (cdr ca))
-			   #t))
-		      ((pair? ca)
-		       #f)
-		      (else
-		       #t))))
-	     #t)))
+	 (with-access::J2SExpr obj (hint)
+	    (let ((cs (assq 'string hint))
+		  (ca (assq 'array hint))
+		  (ns (assq 'no-string hint)))
+	       (cond
+		  ((pair? ns)
+		   #f)
+		  ((pair? cs)
+		   (if (pair? ca)
+		       (=fx (cdr cs) (cdr ca))
+		       #t))
+		  ((pair? ca)
+		   #f)
+		  (else
+		   #t))))))
 
    (define (canbe-arguments? obj)
       (memq (j2s-type obj) '(any undefined unknown object)))
@@ -2231,7 +2230,8 @@
 		   ,(or (j2s-array-ref this mode return ctx)
 			(get obj tmp field cache cspecs #f loc))))
 		'())
-	     ,@(if (and (canbe-string? obj) (maybe-string? obj))
+	     ,@(if (and (canbe-string? obj) (hint-string? obj)
+			(hint-string? this))
 		`(((js-jsstring? ,tmp)
 		   ,(or (j2s-string-ref this mode return ctx)
 			(get obj tmp field cache cspecs #f loc))))
@@ -2245,6 +2245,9 @@
 	  (let* ((tmp (gensym 'tmpf))
 		 (lit (J2SHopRef/type tmp (j2s-type field)))
 		 (access (J2SAccess obj lit)))
+	     (with-access::J2SAccess access ((ahint hint))
+		(with-access::J2SAccess this (hint)
+		   (set! ahint hint)))
 	     `(let ((,tmp ,(j2s-scheme field mode return ctx)))
 		 ,(index-obj-literal-ref access obj lit cache cspecs loc)))))
    
@@ -2254,6 +2257,9 @@
 	  (let* ((tmp (gensym 'tmpo))
 		 (ref (J2SHopRef/type tmp (j2s-type obj)))
 		 (access (J2SAccess (J2SHopRef tmp) field)))
+	     (with-access::J2SAccess access ((ahint hint))
+		(with-access::J2SAccess this (hint)
+		   (set! ahint hint)))
 	     `(let ((,tmp ,(j2s-scheme obj mode return ctx)))
 		 ,(index-obj-ref access ref field cache cspecs loc)))))
 
@@ -2677,7 +2683,7 @@
 	 ((and (new-proxy? clazz) (=fx (length args) 2))
 	  (epairify loc
 	     (j2s-new-proxy this mode return ctx)))
-	 ((optimized-ctor clazz)
+	 ((optimized-ctor clazz ctx)
 	  =>
 	  (lambda (decl)
 	     (epairify loc
@@ -2875,34 +2881,33 @@
    
    (define (elements-init n offset nodes %cmap cnt pcache)
       `(with-access::JsConstructMap cmap (props)
-	  (let ((%len0 -1)
-		(%cmap0 cmap))
+	  (let ((%cmap0 cmap))
 	     ,(elements-init-sans-cmap nodes)
 	     (when (<fx ,cnt 1000)
 		(set! ,cnt (+fx ,cnt 1))
 		(with-access::JsConstructMap cmap (props)
 		   (when (and (js-object-no-setter? ,n)
-			      (=fx ,(length nodes)
+			      (=fx ,(-fx (length nodes) 1)
 				 (-fx (with-access::JsConstructMap
-					    (js-pcache-pmap
+					    (js-pcache-nmap
 					       (js-pcache-ref %pcache
 						  ,(node-cache
 						      (car (last-pair nodes)))))
-					    (size)
-					 size)
+					    (props)
+					 (vector-length props))
 				    (with-access::JsConstructMap
-					  (js-pcache-pmap
+					  (js-pcache-nmap
 					     (js-pcache-ref %pcache
 						,(node-cache (car nodes))))
-					    (size)
-					 size))))
+					    (props)
+					 (vector-length props)))))
 		      (set! ,offset
 			 (js-pcache-index
 			    (js-pcache-ref %pcache ,(node-cache (car nodes)))))
 		      (set! ,%cmap cmap)
 		      (js-validate-pmap-pcache! (js-pcache-ref %pcache ,pcache))
-		      (with-access::JsPropertyCache (js-pcache-ref %pcache ,pcache) (pmap)
-			 (set! pmap %cmap0))))))))
+		      (with-access::JsPropertyCache (js-pcache-ref %pcache ,pcache) (nmap)
+			 (set! nmap %cmap0))))))))
    
    (define (init-ref this n)
       (with-access::J2SOPTInitSeq this (loc ref nodes cmap offset cnt cache)
@@ -2910,7 +2915,7 @@
 	       (elements (gensym '%elements)))
 	    (if cmap
 		`(with-access::JsObject ,n (cmap elements)
-		    (if (eq? cmap (js-pcache-pmap (js-pcache-ref %pcache ,cache)))
+		    (if (eq? cmap (js-pcache-nmap (js-pcache-ref %pcache ,cache)))
 			,(vector-inits n elements i offset nodes cmap)
 			,(elements-init n offset nodes cmap cnt cache)))
 		(elements-init-sans-cmap nodes)))))
@@ -3079,3 +3084,48 @@
        (and (isa? val J2SRef)
 	    (with-access::J2SRef val (decl)
 	       (isa? decl J2SDeclFun)))))
+
+;*---------------------------------------------------------------------*/
+;*    unoptimize ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (unoptimize expr)
+   (let ((nexpr (j2s-alpha expr '() '())))
+      (uncache! nexpr)))
+
+;*---------------------------------------------------------------------*/
+;*    uncache! ::J2SNode ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uncache! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    uncache! ::J2SAccess ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uncache! this::J2SAccess)
+   (with-access::J2SAccess this (cache)
+      (set! cache #f)
+      (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    uncache! ::J2SPrefix ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uncache! this::J2SPrefix)
+   (with-access::J2SPrefix this (cache)
+      (set! cache #f)
+      (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    uncache! ::J2SPostfix ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uncache! this::J2SPostfix)
+   (with-access::J2SPostfix this (cache)
+      (set! cache #f)
+      (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    uncache! ::J2SAssigOp ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uncache! this::J2SAssigOp)
+   (with-access::J2SAssigOp this (cache)
+      (set! cache #f)
+      (call-default-walker)))
