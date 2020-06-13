@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Jun  9 15:47:15 2020 (serrano)                */
+;*    Last change :  Sat Jun 13 12:49:47 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -945,7 +945,8 @@
 		(call (cond
 			 ((>=fx len 11)
 			  'js-calln)
-			 ((context-get ctx :optim-size)
+			 ((and (context-get ctx :optim-size)
+			       (= (context-get ctx :debug 0) 0))
 			  (string->symbol (format "js-call~a-obj" len)))
 			 (else
 			  (string->symbol (format "js-call~a" len)))))
