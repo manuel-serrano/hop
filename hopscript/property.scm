@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/property.scm              */
+;*    serrano/prgm/project/hop/3.3.x/hopscript/property.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue May 19 09:31:11 2020 (serrano)                */
+;*    Last change :  Fri Jun 12 12:20:52 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1804,11 +1804,6 @@
 ;*    js-get-jsobject-property-value ...                               */
 ;*---------------------------------------------------------------------*/
 (define (js-get-jsobject-property-value o::JsObject base p::obj %this::JsGlobalObject)
-   (when (eq? p (& "__proto__"))
-      (tprint "ICI: " (typeof o) " " p)
-      (when (isa? o JsWrapper)
-	 (tprint "ptoto=" (js-getprototypeof o %this "__proto__")
-	    " " (js-object-proto o))))
    ;; JsObject x obj x JsGlobalObject -> value | Absent
    (jsobject-find o o (js-toname p %this)
       ;; cmap search
@@ -3766,7 +3761,7 @@
 	       (proc (js-get n (& "value") %this) %this)
 	       (loop))))
       #t)
-   
+
    (let ((next (js-get iterator (& "next") %this))
 	 (exn #t))
       (if (js-function? next)

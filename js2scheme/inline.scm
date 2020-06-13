@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Jun  2 07:39:28 2020 (serrano)                */
+;*    Last change :  Wed Jun 10 13:00:01 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -892,6 +892,8 @@
       (cond
 	 ((null? stack)
 	  ;; don't inline at toplevel
+	  (call-default-walker))
+	 ((or (any yield-expr? args) (any yield-expr? thisarg))
 	  (call-default-walker))
 	 (cache
 	  (call-default-walker))
@@ -2185,3 +2187,27 @@
 	       :parse-error (lambda (msg fname loc)
 			       (error/location "fprofile" "Wrong JSON file" msg
 				  fname loc)))))))
+
+;*---------------------------------------------------------------------*/
+;*    yield-expr? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (yield-expr? this::J2SExpr)
+   (let ((cell (make-cell #f)))
+      (yield-expr this cell)
+      (cell-ref cell)))
+
+;*---------------------------------------------------------------------*/
+;*    yield-expr ::J2SNode ...                                         */
+;*    -------------------------------------------------------------    */
+;*    Returns #t iff a statement contains a YIELD. Otherwise           */
+;*    returns #f.                                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (yield-expr this::J2SNode cell)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    yield-expr ::J2SYield ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (yield-expr this::J2SYield cell)
+   (cell-set! cell #t))
+
