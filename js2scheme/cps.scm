@@ -281,7 +281,7 @@
 ;*    cps-fun! ::J2SFun ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cps-fun! this::J2SFun r::procedure)
-   (with-access::J2SFun this (generator body name)
+   (with-access::J2SFun this (generator body name loc)
       (if generator
 	  (let* ((k (KontStmt kid this #f "J2SFun")))
 	     (set! body (blockify body (cps body k r '() '() this))))
@@ -656,10 +656,11 @@
    (assert-kont k KontExpr this)
    (with-access::J2SBindExit this (stmt lbl loc)
       (cond
-	 ((not (yield-expr? stmt kbreaks kcontinues))
+	 ((not (yield-expr? this kbreaks kcontinues))
 	  (set! stmt (cps-fun! stmt r))
 	  (kcall k this))
 	 (lbl
+	  (tprint "y: " (j2s->list stmt))
 	  ;; in order to inline code generator, the j2sreturn CPS
 	  ;; transformation must know how to map its lbl to a contination
 	  (error "cps" "generator cannot use inline expression" loc))
@@ -1268,6 +1269,8 @@
 	 ((memq from localrets)
 	  '())
 	 (else
+	  (tprint "YIELD " (j2s->list this)
+	     " from=" (typeof from) " " (map typeof localrets))
 	  (list this)))))
 
 ;*---------------------------------------------------------------------*/
