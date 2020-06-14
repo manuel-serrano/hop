@@ -893,8 +893,6 @@
 	 ((null? stack)
 	  ;; don't inline at toplevel
 	  (call-default-walker))
-	 ((or (any yield-expr? args) (any yield-expr? thisarg))
-	  (call-default-walker))
 	 (cache
 	  (call-default-walker))
 	 ((eq? protocol 'spread)
@@ -2187,27 +2185,3 @@
 	       :parse-error (lambda (msg fname loc)
 			       (error/location "fprofile" "Wrong JSON file" msg
 				  fname loc)))))))
-
-;*---------------------------------------------------------------------*/
-;*    yield-expr? ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (yield-expr? this::J2SExpr)
-   (let ((cell (make-cell #f)))
-      (yield-expr this cell)
-      (cell-ref cell)))
-
-;*---------------------------------------------------------------------*/
-;*    yield-expr ::J2SNode ...                                         */
-;*    -------------------------------------------------------------    */
-;*    Returns #t iff a statement contains a YIELD. Otherwise           */
-;*    returns #f.                                                      */
-;*---------------------------------------------------------------------*/
-(define-walk-method (yield-expr this::J2SNode cell)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    yield-expr ::J2SYield ...                                        */
-;*---------------------------------------------------------------------*/
-(define-walk-method (yield-expr this::J2SYield cell)
-   (cell-set! cell #t))
-
