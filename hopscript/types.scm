@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/types.scm                 */
+;*    serrano/prgm/project/hop/3.3.x/hopscript/types.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Apr 13 11:29:56 2020 (serrano)                */
+;*    Last change :  Sun Jun 14 06:29:03 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -112,7 +112,7 @@
 	      (emap::obj (default #f))
 	      (cmap::obj (default #f))
 	      (pmap::obj (default (js-not-a-pmap)))
-	      (nmap::obj (default #t))
+	      (nmap::obj (default (js-not-a-pmap)))
 	      (amap::obj (default #t))
 	      (index::long (default -1))
 	      (vindex::long (default (js-not-a-index)))
