@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/ecma51.js         */
+/*    serrano/prgm/project/hop/3.3.x/test/hopjs/noserv/ecma51.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Thu Apr  9 10:59:59 2020 (serrano)                */
+/*    Last change :  Fri Jun 12 12:13:13 2020 (serrano)                */
 /*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -693,3 +693,44 @@ assert.ok( function() {
       return typeof( _global_ ) === "undefined";
    }(this);
 }(), "strict global object" );
+
+/*---------------------------------------------------------------------*/
+/*    exceptions                                                       */
+/*---------------------------------------------------------------------*/
+console.log( "exceptions..." );
+
+function fin1() {
+   let tmp = 0;
+   try {
+      tmp = 6666;
+      throw 8888;
+   } finally {
+      return 33 + tmp;
+   }
+}
+
+function fin2() {
+   let tmp = 0;
+   try {
+      tmp = 6666;
+      throw 8888;
+   } finally {
+      tmp++;
+   }
+}
+
+function fin3() {
+   let tmp = 0;
+   try {
+      tmp = 6666;
+      throw 8888;
+   } catch( e ) {
+      return 8;
+   } finally {
+      return 9;
+   }
+}
+
+assert.ok( fin1() === 6699, "fin.1" );
+assert.throws( function() { fin2() }, 8888, "fin.2" );
+assert.ok( fin3() === 9, "fin.3" );

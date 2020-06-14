@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
 ;*    Last change :  Mon Aug 26 08:20:53 2019 (serrano)                */
-;*    Copyright   :  2018-19 Manuel Serrano                            */
+;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
 ;*=====================================================================*/
