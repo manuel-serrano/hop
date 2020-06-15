@@ -214,7 +214,7 @@
 				     ,@(or (hidden-class this) '()))
 				  %%tmp))
 			   `(define ,ident ,value)))))
-	       ((memq scope '(letblock letvar))
+	       ((memq scope '(letblock letvar kont))
 		(if (decl-ronly? this)
 		    `(,(vtype-ident ident vtype (context-conf ctx)) ,value)
 		    `(,ident ,value)))

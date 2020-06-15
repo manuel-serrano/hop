@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Thu Jun  4 10:35:53 2020 (serrano)                */
+;*    Last change :  Wed Jun 10 17:52:25 2020 (serrano)                */
 ;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -673,8 +673,9 @@
 		       'js-make-procedure-hopscript
 		       'js-make-procedure)
 		  %this
-		  ,(jsfun->lambda this mode return ctx
-		      (j2s-fun-prototype this) #f)
+		  ,(or tmp
+		       (jsfun->lambda this mode return ctx
+			  (j2s-fun-prototype this) #f))
 		  ,arity))
 	       ((and (or src prototype __proto__ method new-target)
 		     (memq mode '(strict hopscript))

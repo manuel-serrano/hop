@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/types.scm                 */
+;*    serrano/prgm/project/hop/3.3.x/hopscript/types.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Jun  8 07:05:42 2020 (serrano)                */
+;*    Last change :  Sun Jun 14 06:29:03 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -21,7 +21,6 @@
    (use __hopscript_object
 	__hopscript_string
 	__hopscript_symbol
-	;; __hopscript_number
 	__hopscript_date
 	__hopscript_error
 	__hopscript_boolean
@@ -29,7 +28,6 @@
 	__hopscript_function
 	__hopscript_property
 	__hopscript_profile
-	;; __hopscript_public
 	__hopscript_lib)
 
    (extern (include "bglhopscript_malloc.h"))
@@ -112,7 +110,7 @@
 	      (emap::obj (default #f))
 	      (cmap::obj (default #f))
 	      (pmap::obj (default (js-not-a-pmap)))
-	      (nmap::obj (default #t))
+	      (nmap::obj (default (js-not-a-pmap)))
 	      (amap::obj (default #t))
 	      (index::long (default -1))
 	      (vindex::long (default (js-not-a-index)))
@@ -137,7 +135,6 @@
 	   (final-class JsConstructMap
 	      (%id::uint32 read-only (default (gencmapid)))
 	      (lock read-only (default (make-spinlock "JsConstructMap")))
-;* 	      (ctorsize::long (default 0))                             */
 	      (props::vector (default '#()))
 	      (methods::vector (default '#()))
 	      (transitions::pair-nil (default '()))

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/return.scm                */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/return.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sat Aug  3 07:47:01 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Fri Jun 12 12:02:07 2020 (serrano)                */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
 ;*    -------------------------------------------------------------    */
@@ -67,16 +67,6 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unreturn! this::J2SNode target tail? in-handler args)
    (default-walk! this target tail? in-handler args))
-
-;*---------------------------------------------------------------------*/
-;*    unreturn! ::J2STry ...                                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (unreturn! this::J2STry target tail? in-handler args)
-   (with-access::J2STry this (body catch finally)
-      (unreturn! body target (and tail? (isa? finally J2SNop)) #t args)
-      (unreturn! catch target (and tail? (isa? finally J2SNop)) #f args)
-      (unreturn! finally target tail? in-handler args))
-   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SSeq ...                                           */
@@ -171,9 +161,13 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unreturn! this::J2STry target tail? in-handler args)
    (with-access::J2STry this (body catch finally)
-      (set! body (walk! body target tail? in-handler args))
+      (set! body
+	 (walk! body target (and tail? (isa? finally J2SNop)) in-handler args))
       (unless (isa? catch J2SNop)
 	 (set! catch (walk! catch target tail? in-handler args)))
+      ;; don't consider finally as tail-rec as a return inside the
+      ;; finally block should act as an exception handler
+      ;; (see bug fin2 @ ecma51.js)
       (set! finally (walk! finally target #f in-handler args)))
    this)
    
@@ -441,8 +435,8 @@
 ;*    return? ::J2STry ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (return? this::J2STry in-handler)
-   (with-access::J2STry this (body)
-      (return? body #t)))
+   (with-access::J2STry this (body finally)
+      (or (return? body #t) (return? finally #t))))
 
 ;*---------------------------------------------------------------------*/
 ;*    return-or-break? ::J2SNode ...                                   */

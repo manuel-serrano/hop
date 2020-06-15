@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Jun  4 10:45:52 2020 (serrano)                */
+;*    Last change :  Sun Jun 14 06:56:47 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -12,7 +12,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __js2scheme_scheme-call
+ (module __js2scheme_scheme-call
 
    (include "ast.sch"
 	    "usage.sch"
@@ -1062,11 +1062,11 @@
 
    (define (call-scheme-this-arity this fun thisarg args)
       (let ((len (length args)))
-	 `(js-calln/procedure
+	 `(js-calln-procedure
 	     ,(j2s-scheme fun mode return ctx)
 	     ,@(j2s-scheme thisarg mode return ctx)
 	     (list ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))
-	 `(,(string->symbol (format "js-call~a/procedure" len))
+	 `(,(string->symbol (format "js-call~a-procedure" len))
 	   ,(j2s-scheme fun mode return ctx)
 	   ,@(j2s-scheme thisarg mode return ctx)
 	   ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args))))
