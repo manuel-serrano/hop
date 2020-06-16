@@ -50,7 +50,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    cspecs ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-struct cspecs access assig call)
+(define-struct cspecs access assig assigop call)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cspecs ...                                                   */
@@ -62,11 +62,13 @@
 		       (cspecs
 			  '(imap)
 			  '(imap nmap)
+			  '(imap nmap)
 			  '(pmap))
 		       ;; fast code
 		       (cspecs
 			  '(imap emap cmap pmap amap vtable)
 			  '(imap emap cmap nmap amap vtable)
+			  '(imap cmap)
 			  '(pmap cmap vtable)))))
 	 (cspecs-default! this csdef)
 	 (when (or (config-get conf :optim-cspecs) (config-get conf :cspecs))
@@ -673,25 +675,40 @@
 ;*    cspecs-default! ::J2SPrefix ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cspecs-default! this::J2SPrefix csdef)
-   (with-access::J2SPrefix this (cspecs)
-      (set! cspecs (cspecs-assig csdef)))
-   (call-default-walker))
+   (let ((oldaccess (cspecs-access csdef))
+	 (oldassig (cspecs-assig csdef)))
+      (cspecs-assig-set! csdef (cspecs-assigop csdef))
+      (cspecs-access-set! csdef (cspecs-assigop csdef))
+      (let ((n (call-default-walker)))
+	 (cspecs-access-set! csdef oldaccess)
+	 (cspecs-assig-set! csdef oldassig)
+	 n)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cspecs-default! ::J2SPostfix ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cspecs-default! this::J2SPostfix csdef)
-   (with-access::J2SPostfix this (cspecs)
-      (set! cspecs (cspecs-assig csdef)))
-   (call-default-walker))
+   (let ((oldaccess (cspecs-access csdef))
+	 (oldassig (cspecs-assig csdef)))
+      (cspecs-assig-set! csdef (cspecs-assigop csdef))
+      (cspecs-access-set! csdef (cspecs-assigop csdef))
+      (let ((n (call-default-walker)))
+	 (cspecs-access-set! csdef oldaccess)
+	 (cspecs-assig-set! csdef oldassig)
+	 n)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cspecs-default! ::J2SAssigOp ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cspecs-default! this::J2SAssigOp csdef)
-   (with-access::J2SAssigOp this (cspecs)
-      (set! cspecs (cspecs-assig csdef)))
-   (call-default-walker))
+   (let ((oldaccess (cspecs-access csdef))
+	 (oldassig (cspecs-assig csdef)))
+      (cspecs-assig-set! csdef (cspecs-assigop csdef))
+      (cspecs-access-set! csdef (cspecs-assigop csdef))
+      (let ((n (call-default-walker)))
+	 (cspecs-access-set! csdef oldaccess)
+	 (cspecs-assig-set! csdef oldassig)
+	 n)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cspecs-default! ::J2SCall ...                                    */

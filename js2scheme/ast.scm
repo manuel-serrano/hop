@@ -385,15 +385,12 @@
 	   
 	   (final-class J2SPrefix::J2SAssig
 	      (cache (default #f) (info '("nojson" "notraverse")))
-	      (cspecs (default '()) (info '("nojson" "notraverse")))
 	      op::symbol)
 	   (final-class J2SPostfix::J2SAssig
 	      (cache (default #f) (info '("nojson" "notraverse")))
-	      (cspecs (default '()) (info '("nojson" "notraverse")))
 	      op::symbol)
 	   (final-class J2SAssigOp::J2SAssig
 	      (cache (default #f) (info '("nojson" "notraverse")))
-	      (cspecs (default '()) (info '("nojson" "notraverse")))
 	      op::symbol)
 	   
 	   (final-class J2SObjInit::J2SExpr
