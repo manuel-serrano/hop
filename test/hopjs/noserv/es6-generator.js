@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../project/hop/3.2.x/test/hopjs/noserv/es6-generator.js         */
+/*    .../project/hop/3.3.x/test/hopjs/noserv/es6-generator.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 30 17:54:07 2015                          */
-/*    Last change :  Fri Oct 26 21:40:35 2018 (serrano)                */
-/*    Copyright   :  2015-18 Manuel Serrano                            */
+/*    Last change :  Wed Jun 10 06:51:25 2020 (serrano)                */
+/*    Copyright   :  2015-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 generators                                */
 /*=====================================================================*/
@@ -21,7 +21,12 @@ var g;
 /*    equal ...                                                        */
 /*---------------------------------------------------------------------*/
 function equal( v1, v2 ) {
-   return v1.value == v2.value && v1.done == v2.done;
+   if( v1.value == v2.value && v1.done == v2.done ) {
+      return true;
+   } else {
+      console.log( "equal failed ", v1, "/", v2 );
+      return false;
+   }
 }
 
 /*---------------------------------------------------------------------*/
@@ -1362,16 +1367,18 @@ function* tryg() {
 }
 
 function* tryh() {
+   let x = 4444;
    try {
       try {
 	 yield 1111;
 	 throw 3;
       } finally {
+	 x = 5555;
       }
    } catch( _ ) {
-      ;
+      x++;
    }
-   return 5555;
+   return x;
 }
 
 function* tryi() {
@@ -1421,6 +1428,45 @@ function* tryl() {
    }
 }
    
+function* trym() {
+   try {
+      yield 1;
+   } finally {
+      return 324;
+   }
+}
+
+function* tryn() {
+   try {
+      yield 1;
+      return 2;
+   } finally {
+      return 324;
+   }
+}
+
+function* tryo() {
+   try {
+      throw( 2345 );
+      return 12;
+   } catch( e ) {
+      yield e;
+   } finally {
+      return 324;
+   }
+}
+
+function* tryp() {
+   let tmp = 0;
+   try {
+      yield 5555;
+      tmp = 6666;
+      throw 8888;
+   } finally {
+      return 33 + tmp;
+   }
+}
+
 console.log( "try..." );
 
 console.log( "   trya()" );
@@ -1483,7 +1529,7 @@ assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 console.log( "   tryh()" );
 g = tryh();
 assert.ok( equal( g.next(), { value: 1111, done: false } ) );
-assert.ok( equal( g.next(), { value: 5555, done: true } ) );
+assert.ok( equal( g.next(), { value: 5556, done: true } ) );
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 
@@ -1518,6 +1564,27 @@ g = tryl();
 g.next();
 g.next();
 assert.ok( !lerr, "tryl" );
+
+console.log( "   trym()" );
+g = trym();
+assert.ok( equal( g.next(), {value: 1, done: false }), "trym.1" );
+assert.ok( equal( g.next(), { value: 324, done: true } ), "trym.2" );
+
+console.log( "   tryn()" );
+g = tryn();
+assert.ok( equal( g.next(), {value: 1, done: false } ), "tryn.1" );
+assert.ok( equal( g.next(), { value: 324,done : true } ), "tryn.2" );
+
+console.log( "   tryo()" );
+g = tryo();
+assert.ok( equal( g.next(), { value: 2345, done: false } ), "tryo.1" );
+assert.ok( equal( g.next(), { value: 324, done: true } ), "tryo.2" );
+
+console.log( "   tryp()" );
+g = tryp();
+assert.ok( equal( g.next(), { value: 5555, done: false } ), "tryp" );
+assert.ok( equal( g.next(), { value: 6699, done: true } ), "tryp" );
+assert.ok( equal( g.next(), { value: undefined, done: true } ), "tryp" );
 
 /*---------------------------------------------------------------------*/
 /*    switch                                                           */

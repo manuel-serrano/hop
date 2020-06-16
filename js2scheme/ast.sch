@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Tue Jun  2 07:33:59 2020 (serrano)                */
+;*    Last change :  Sat Jun 13 05:34:02 2020 (serrano)                */
 ;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -246,6 +246,15 @@
    `(instantiate::J2SFun
        (loc loc)
        (mode 'hopscript)
+       (name ,name)
+       (params ,params)
+       (body ,body)))
+
+(define-macro (J2SFun* name params body . opts)
+   `(instantiate::J2SFun
+       (loc loc)
+       (mode 'hopscript)
+       (generator #t)
        (name ,name)
        (params ,params)
        (body ,body)))

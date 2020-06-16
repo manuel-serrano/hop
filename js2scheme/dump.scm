@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/dump.scm                  */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/dump.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Jun  4 13:52:23 2020 (serrano)                */
+;*    Last change :  Wed Jun 10 17:56:34 2020 (serrano)                */
 ;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -654,6 +654,7 @@
 	  (with-access::J2SDecl decl (key usage scope)
 	     `(,@(call-next-method) ,@(if generator '(*) '())
 		 :name ,name
+		 :mode ,mode
 		 ,@(dump-loc loc)
 		 ,@(dump-key key)
 		 ,@(dump-scope scope)
@@ -662,19 +663,19 @@
 		 ,@(dump-type this)
 		 ,@(dump-rtype this)
 		 ,@(dump-need-bind-exit-return need-bind-exit-return)
-		 :optimize ,optimize
-		 :mode ,mode
+		 ,@(if optimize '() `(:optimize ,optimize))
 		 ,@(if new-target '(:new-target #t) '())
 		 ,@(dump-range this)
-		 :thisp ,(when thisp (j2s->list thisp))
-		 :argumentsp ,(when argumentsp (j2s->list argumentsp))
-		 :vararg (typeof vararg)
+		 ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
+		 ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
+		 ,@(if vararg `(:vararg ,vararg) '())
 		 ,@(dump-size this)
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 ((isa? decl J2SDecl)
 	  (with-access::J2SDecl decl (key scope)
 	     `(,@(call-next-method) ,@(if generator '(*) '())
 		 :name ,name
+		 :mode ,mode
 		 ,@(dump-loc loc)
 		 ,@(dump-key key)
 		 ,@(dump-scope scope)
@@ -683,28 +684,27 @@
 		 ,@(dump-type this)
 		 ,@(dump-rtype this)
 		 ,@(dump-need-bind-exit-return need-bind-exit-return)
-		 :optimize ,optimize
-		 :mode ,mode
+		 ,@(if optimize '() `(:optimize ,optimize))
 		 ,@(if new-target '(:new-target #t) '())
 		 ,@(dump-range this)
-		 :thisp ,(when thisp (j2s->list thisp))
-		 :argumentsp ,(when argumentsp (j2s->list argumentsp))
-		 :vararg (typeof vararg)
+		 ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
+		 ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
+		 ,@(if vararg `(:vararg ,vararg) '())
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 (else
 	  `(,@(call-next-method) ,@(if generator '(*) '())
 	      :name ,name
+	      :mode ,mode
 	      ,@(dump-loc loc)
 	      ,@(dump-info this)
 	      ,@(dump-type this)
 	      ,@(dump-rtype this)
 	      ,@(dump-need-bind-exit-return need-bind-exit-return)
-	      :optimize ,optimize
-	      :mode ,mode
+	      ,@(if optimize '() `(:optimize ,optimize))
 	      ,@(if new-target '(:new-target #t) '())
 	      ,@(dump-range this)
-	      :thisp ,(when thisp (j2s->list thisp))
-	      :argumentsp ,(when argumentsp (j2s->list argumentsp))
+	      ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
+	      ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
 	      ,@(if vararg `(:vararg ,vararg) '())
 	      ,(map j2s->list params) ,(j2s->list body))))))
 

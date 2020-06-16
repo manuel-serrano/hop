@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-call.scm           */
+;*    serrano/prgm/project/hop/3.3.x/js2scheme/scheme-call.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Jun  4 10:45:52 2020 (serrano)                */
+;*    Last change :  Sat Jun 13 12:49:47 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1062,11 +1062,11 @@
 
    (define (call-scheme-this-arity this fun thisarg args)
       (let ((len (length args)))
-	 `(js-calln/procedure
+	 `(js-calln-procedure
 	     ,(j2s-scheme fun mode return ctx)
 	     ,@(j2s-scheme thisarg mode return ctx)
 	     (list ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))
-	 `(,(string->symbol (format "js-call~a/procedure" len))
+	 `(,(string->symbol (format "js-call~a-procedure" len))
 	   ,(j2s-scheme fun mode return ctx)
 	   ,@(j2s-scheme thisarg mode return ctx)
 	   ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args))))
