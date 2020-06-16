@@ -62,7 +62,7 @@
 		       (cspecs
 			  '(imap)
 			  '(imap nmap)
-			  '(imap nmap)
+			  '(imap cmap)
 			  '(pmap))
 		       ;; fast code
 		       (cspecs
