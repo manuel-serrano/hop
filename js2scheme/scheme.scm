@@ -2088,22 +2088,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SAssigOp mode return ctx)
 
-   (define (nocall? expr::J2SExpr)
-      (cond
-	 ((isa? expr J2SRef)
-	  #t)
-	 ((and (isa? expr J2SLiteral) (not (isa? expr J2SArray)))
-	  #t)
-	 ((isa? expr J2SUnary)
-	  (with-access::J2SUnary expr (expr)
-	     (nocall? expr)))
-	 ((isa? expr J2SBinary)
-	  (with-access::J2SBinary expr (lhs rhs)
-	     (and (nocall? lhs) (nocall? rhs))))
-	 (else
-	  #f)))
-   
-   (define (aput-assigop otmp::symbol pro prov op
+   (define (aput-assigop-cache-miss otmp::symbol pro prov op
 	      tl::symbol lhs::J2SAccess rhs::J2SExpr field cachep ctx)
       (with-access::J2SAssigOp this ((typea type) cache)
 	 (with-access::J2SAccess lhs (cspecs obj field loc (typel type))
@@ -2131,6 +2116,34 @@
 			  :cspecs (if (mightbe-number? field) '() cspecs)
 			  :cachefun #f)
 		      ,vtmp))))))
+
+   (define (aput-assigop otmp::symbol pro prov op
+	      tl::symbol lhs::J2SAccess rhs::J2SExpr field cachep ctx)
+      (with-access::J2SAssigOp this ((typea type))
+	 (with-access::J2SAccess lhs (cspecs obj field loc (typel type) cache)
+	    (with-access::J2SExpr obj ((typeo type) loc)
+	       (if (and cachep (not (cancall? rhs #t)))
+		   (let ((els (gensym '%els))
+			 (idx (gensym '%idx))
+			 (tmp (gensym '%tmp))
+			 (res (gensym '%res)))
+		      `(with-access::JsObject ,otmp (cmap elements)
+			  (if (eq? cmap (js-pcache-cmap (js-pcache-ref %pcache ,cache)))
+			      (let* ((,els elements)
+				     (,idx (js-pcache-index (js-pcache-ref %pcache ,cache)))
+				     (,tmp (vector-ref ,els ,idx))
+				     (,res ,(js-binop2 loc op typea
+					       (instantiate::J2SHopRef
+						  (loc loc)
+						  (id tmp)
+						  (type tl))
+					       rhs mode return ctx)))
+				 (vector-set! ,els ,idx ,res)
+				 ,res)
+			      ,(aput-assigop-cache-miss otmp pro prov op
+				  tl lhs rhs field cachep ctx))))
+		   (aput-assigop-cache-miss otmp pro prov op
+		      tl lhs rhs field cachep ctx))))))
 
    (define (access-assigop/otmp obj otmp::symbol op tl::symbol lhs::J2SAccess rhs::J2SExpr)
       ;; WARNING: because of the caching of cache misses that uses the
@@ -2621,14 +2634,14 @@
       (let ((fun (j2sdeclinit-val-fun decl)))
 	 (when (isa? fun J2SFun)
 	    (with-access::J2SFun fun (body)
-	       (not (cancall? body))))))
+	       (not (cancall? body #f))))))
 
    (define (object-alloc clazz::J2SRef fun)
       (with-access::J2SRef clazz (decl loc)
 	 (if (and (isa? decl J2SDeclFun)
 		  (with-access::J2SDecl decl (scope)
 		     (eq? scope '%scope)))
-	     (if (cancall? decl)
+	     (if (cancall? decl #f)
 		 `(js-object-alloc %this ,fun)
 		 `(js-object-alloc-fast %this ,fun))
 	     `(js-object-alloc %this ,fun))))

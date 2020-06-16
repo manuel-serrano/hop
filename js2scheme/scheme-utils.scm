@@ -106,7 +106,7 @@
 	   (expr-asuint32 expr::J2SExpr)
 	   (uncast::J2SExpr ::J2SExpr)
 
-	   (cancall?::bool ::J2SNode)
+	   (cancall?::bool ::J2SNode ::bool)
 	   (optimized-ctor ::J2SNode ctx)
 
 	   (with-tmp-flip flip lhs rhs mode return ::struct gen::procedure)
@@ -1047,43 +1047,57 @@
 ;*---------------------------------------------------------------------*/
 ;*    cancall? ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (cancall? node)
+(define (cancall? node accessp)
    (let ((cell (make-cell #f)))
-      (cancall node cell)
+      (cancall node accessp cell)
       (cell-ref cell)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cancall ::J2SNode ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (cancall this::J2SNode cell)
+(define-walk-method (cancall this::J2SNode accessp cell)
    (or (cell-ref cell) (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cancall ::J2SCall ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (cancall this::J2SCall cell)
+(define-walk-method (cancall this::J2SCall accessp cell)
    (cell-set! cell #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    cancall ::J2SNew ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (cancall this::J2SNew cell)
+(define-walk-method (cancall this::J2SNew accessp cell)
    (cell-set! cell #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    cancall ::J2SAssig ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (cancall this::J2SAssig cell)
+(define-walk-method (cancall this::J2SAssig accessp cell)
    (with-access::J2SAssig this (lhs rhs)
       (if (isa? lhs J2SAccess)
 	  (with-access::J2SAccess lhs (obj field)
 	     (unless (isa? obj J2SThis)
-		(cancall field cell)
-		(cancall rhs cell)))
+		(cancall field accessp cell)
+		(cancall rhs accessp cell)))
 	  (begin
-	     (cancall lhs cell)
-	     (cancall rhs cell)))))
+	     (cancall lhs accessp cell)
+	     (cancall rhs accessp cell)))))
 
+;*---------------------------------------------------------------------*/
+;*    cancall ::J2SAccess ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cancall this::J2SAccess accessp cell)
+   (if accessp
+       (cell-set! cell #t)
+       (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    cancall ::J2SBindExit ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cancall this::J2SBindExit accessp cell)
+   (cell-set! cell #t))
+   
 ;*---------------------------------------------------------------------*/
 ;*    optimized-ctor ...                                               */
 ;*---------------------------------------------------------------------*/
