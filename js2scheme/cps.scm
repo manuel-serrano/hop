@@ -1269,8 +1269,6 @@
 	 ((memq from localrets)
 	  '())
 	 (else
-	  (tprint "YIELD " (j2s->list this)
-	     " from=" (typeof from) " " (map typeof localrets))
 	  (list this)))))
 
 ;*---------------------------------------------------------------------*/
