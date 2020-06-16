@@ -336,7 +336,7 @@
       (let ((fun (make-function-sans-alloc this)))
 	 (if (decl-usage-has? this '(new ref))
 	     (with-access::J2SFun (declfun-fun this) (body loc)
-		(if (cancall? this)
+		(if (cancall? this #f)
 		    fun
 		    (epairify loc
 		       `(js-function-set-constrmap! ,fun))))
@@ -565,7 +565,7 @@
 	    (cond
 	       (new-target
 		`(js-object-alloc/new-target %this ,f))
-	       ((cancall? body)
+	       ((cancall? body #f)
 		`(js-object-alloc %this ,f))
 	       (else
 		`(js-object-alloc-fast %this ,f))))))
