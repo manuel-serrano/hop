@@ -1878,7 +1878,7 @@
 			      ,tmp))))))))
    
    (define (aput-inc tyobj otmp prop op lhs field::J2SExpr cache inc cs cache-missp::bool)
-      (with-access::J2SAccess lhs (loc obj cspecs (loca loc) type)
+      (with-access::J2SAccess lhs (loc obj cspecs (loca loc) type cache)
 	 (let* ((tmp (gensym 'aput))
 		(oref (instantiate::J2SHopRef
 			 (loc loc)
@@ -1914,45 +1914,65 @@
 				      cache #t :cspecs cs :cachefun #f)
 				  ,tmp))))))
 	       (else
-		`(let ((,tmp ,scmlhs))
-		    (if (fixnum? ,tmp)
-			,(let ((tref (instantiate::J2SHopRef
-					(loc loc)
-					(id tmp)
-					(type 'bint))))
-			    (new-or-old tmp
-			       (js-binop2 loc '+ 'number
-				  tref rhs mode return ctx)
-			       (lambda (val tmp)
-				  `(begin
-				      ,(j2s-put! loc otmp #f tyobj
-					  fexpr
-					  (j2s-vtype field)
-					  val 'number
-					  (strict-mode? mode) ctx
-					  cache #t
-					  :cspecs cs :cachefun #f)
-				      ,tmp))))
-			,(let* ((tmp2 (gensym 'tmp))
-				(tref (instantiate::J2SHopRef
-					 (loc loc)
-					 (id tmp2)
-					 (type 'number))))
-			    `(let ((,tmp2 (js-tonumber ,tmp %this)))
-				,(new-or-old tmp2
-				    (js-binop2 loc '+ 'any
-				       tref rhs mode return ctx)
-				    (lambda (val tmp)
-				       `(begin
-					   ,(j2s-put! loc otmp #f tyobj
-					       fexpr
-					       (j2s-vtype field)
-					       val 'number
-					       (strict-mode? mode) ctx
-					       cache #t
-					       :cspecs (min-cspecs cs '(cmap))
-					       :cachefun #f)
-					   ,tmp))))))))))))
+		(let ((els (gensym '%els))
+		      (idx (gensym '%idx)))
+		   `(with-access::JsObject ,otmp (cmap elements)
+		       (if (eq? cmap (js-pcache-cmap (js-pcache-ref %pcache ,cache)))
+			   (let* ((,els elements)
+				  (,idx (js-pcache-index (js-pcache-ref %pcache ,cache))))
+			      ,(if (eq? retval 'new)
+				   (let ((new (gensym '%new)))
+				       `(let* ((,tmp (vector-ref ,els ,idx))
+					      (,new (if (fixnum? ,tmp)
+							(js-int53-inc ,tmp)
+							(js+ ,tmp 1 %this))))
+					  (vector-set! ,els ,idx ,new)
+					  ,new))
+				   `(let ((,tmp (vector-ref ,els ,idx)))
+				       (vector-set! ,els ,idx 
+					  (if (fixnum? ,tmp)
+					      (js-int53-inc ,tmp)
+					      (js+ ,tmp 1 %this)))
+				       ,tmp)))
+			   (let ((,tmp ,scmlhs))
+			      (if (fixnum? ,tmp)
+				  ,(let ((tref (instantiate::J2SHopRef
+						  (loc loc)
+						  (id tmp)
+						  (type 'bint))))
+				      (new-or-old tmp
+					 (js-binop2 loc '+ 'number
+					    tref rhs mode return ctx)
+					 (lambda (val tmp)
+					    `(begin
+						,(j2s-put! loc otmp #f tyobj
+						    fexpr
+						    (j2s-vtype field)
+						    val 'number
+						    (strict-mode? mode) ctx
+						    cache #t
+						    :cspecs cs :cachefun #f)
+						,tmp))))
+				  ,(let* ((tmp2 (gensym 'tmp))
+					  (tref (instantiate::J2SHopRef
+						   (loc loc)
+						   (id tmp2)
+						   (type 'number))))
+				      `(let ((,tmp2 (js-tonumber ,tmp %this)))
+					  ,(new-or-old tmp2
+					      (js-binop2 loc '+ 'any
+						 tref rhs mode return ctx)
+					      (lambda (val tmp)
+						 `(begin
+						     ,(j2s-put! loc otmp #f tyobj
+							 fexpr
+							 (j2s-vtype field)
+							 val 'number
+							 (strict-mode? mode) ctx
+							 cache #t
+							 :cspecs (min-cspecs cs '(cmap))
+							 :cachefun #f)
+						     ,tmp)))))))))))))))
 
    (define (rhs-cache rhs)
       (if (isa? rhs J2SCast)
@@ -2085,8 +2105,8 @@
    
    (define (aput-assigop otmp::symbol pro prov op
 	      tl::symbol lhs::J2SAccess rhs::J2SExpr field cachep ctx)
-      (with-access::J2SAssigOp this ((typea type) cache cspecs)
-	 (with-access::J2SAccess lhs (obj field loc (typel type))
+      (with-access::J2SAssigOp this ((typea type) cache)
+	 (with-access::J2SAccess lhs (cspecs obj field loc (typel type))
 	    (with-access::J2SExpr obj ((typeo type) loc)
 	       (let* ((oref (instantiate::J2SHopRef
 			       (loc loc)
