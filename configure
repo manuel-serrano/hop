@@ -75,7 +75,7 @@ hostbigloo=bigloo
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="3.3.0"
+version="3.3.1"
 devel=
 license=academic
 licenseforced=false
