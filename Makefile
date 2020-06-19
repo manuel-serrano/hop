@@ -419,7 +419,13 @@ distrib-native: distrib-tmp
            ./configure && \
            $(MAKE) predistrib && \
            $(MAKE) distclean) && \
-          tar cvfz hop-$$distrib.tar.gz --exclude .hg --exclude .git --exclude arch/debian/makedeb.sh --exclude arch/homebrew/makebrew.sh -C $(HOPTMPDIR) hop-$$distrib; \
+          tar cvfz hop-$$distrib.tar.gz \
+             --sort=name \
+             --exclude .hg \
+             --exclude .git \
+             --exclude arch/debian/makedeb.sh \
+             --exclude arch/homebrew/makebrew.sh \
+             -C $(HOPTMPDIR) hop-$$distrib; \
           if [ $(HOPDISTRIBDIR) != "." ]; then \
             if [ $(HOPDISTRIBDIR) != "" ]; then \
               $(RM) -f $(HOPDISTRIBDIR)/hop-$(HOPRELEASE)*.tar.gz && \

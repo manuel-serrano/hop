@@ -650,8 +650,15 @@
 	 (cond
 	    ((evmodule? %module)
 	     (call-with-eval-module %module
-		(lambda () (eval `(@ ,(car sym) ,(evmodule-name %module))))))
-	    ((string? %module)
+		(lambda ()
+		   (let ((dyn::dynamic-env (current-dynamic-env))
+			 (mod (evmodule-name %module)))
+		      (let ()
+			 ($env-push-trace dyn mod loc)
+			 (let ((v (eval `(@ ,(car sym) ,mod))))
+			    ($env-pop-trace dyn)
+			    v))))))
+	     ((string? %module)
 	     (dynamic-load-symbol-get
 		(dynamic-load-symbol sopath
 		   (if (eq? (cdr sym) 'procedure)

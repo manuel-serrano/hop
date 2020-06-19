@@ -328,9 +328,7 @@
 		     (else
 		      `(js-make-function-simple %this ,fastid
 			  ,len ,(& id (context-program ctx))
-			  ,arity
-			  ',mode
-			  ,constrsize))))))))
+			  ,arity ',mode ,constrsize ,src))))))))
 
    (with-access::J2SDeclFun this (val)
       (let ((fun (make-function-sans-alloc this)))
@@ -729,7 +727,7 @@
 	       (else
 		`(js-make-function-simple %this ,tmp ,len
 		    ,(& name (context-program ctx))
-		    ,arity ',mode ,constrsize)))))))
+		    ,arity ',mode ,constrsize ,src)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SFun ...                                          */
@@ -1074,7 +1072,7 @@
 ;*    j2s-function-src ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (j2s-function-src loc val::J2SFun ctx)
-   (with-access::J2SFun val (src body)
+   (with-access::J2SFun val (src body loc)
       (when src
 	 (match-case loc
 	    ((at ?path ?start)

@@ -430,7 +430,9 @@
       
       ;; array pcache
       (set! js-array-pcache
-	 ((@ js-make-pcache-table __hopscript_property) 20 "array"))
+	 ((@ js-make-pcache-table __hopscript_property) 21 "array"))
+      (js-validate-pmap-pcache!
+	 (js-pcache-ref js-array-pcache 20))
       
       ;; default arrays cmap
       (set! js-array-cmap
@@ -3573,7 +3575,7 @@
 ;*    js-for-of ::JsArray ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (js-for-of o::JsArray proc close %this)
-
+   
    (define cmap-fast-forof #f)
    
    (define (vector-forof o len::uint32 proc i::uint32)
@@ -3594,18 +3596,22 @@
 	    (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
 	       (proc (if (js-absent? pv) (js-undefined) pv) %this)
 	       (loop (+u32 i 1))))))
-
+   
    (with-access::JsGlobalObject %this (js-symbol-iterator js-array-pcache)
-      (let ((fun (js-get-jsobject-name/cache o js-symbol-iterator #f %this
-		    (js-pcache-ref js-array-pcache 19))))
-	 (if (and (js-function? fun)
-		  (with-access::JsProcedure fun (elements)
-		     (not (eq? (vector-ref elements 2) (& "@@iterator")))))
-	     (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
-	     (with-access::JsArray o (length vec ilen)
-		(if (js-array-inlined? o)
-		    (vector-forof o length proc #u32:0)
-		    (array-forof o length proc #u32:0)))))))
+      (with-access::JsArray o (cmap length vec ilen)
+	 (if (eq? cmap (js-pcache-pmap (js-pcache-ref js-array-pcache 20)))
+	     (vector-forof o length proc #u32:0)
+	     (let ((fun (js-get-jsobject-name/cache o js-symbol-iterator #f %this
+			   (js-pcache-ref js-array-pcache 19))))
+		(if (and (js-function? fun)
+			 (with-access::JsProcedure fun (elements)
+			    (not (eq? (vector-ref elements 2) (& "@@iterator")))))
+		    (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
+		    (if (js-array-inlined? o)
+			(with-access::JsPropertyCache (js-pcache-ref js-array-pcache 20) (pmap)
+			   (set! pmap cmap)
+			   (vector-forof o length proc #u32:0))
+			(array-forof o length proc #u32:0))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-concat1 ...                                   */

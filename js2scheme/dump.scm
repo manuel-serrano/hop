@@ -646,7 +646,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFun)
    (with-access::J2SFun this (name thisp argumentsp params body decl mode
-				rtype optimize
+				rtype optimize src 
 				need-bind-exit-return new-target
 				idthis generator loc vararg)
       (cond
@@ -669,6 +669,7 @@
 		 ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
 		 ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
 		 ,@(if vararg `(:vararg ,vararg) '())
+		 ,@(if src '() `(:src #f))
 		 ,@(dump-size this)
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 ((isa? decl J2SDecl)
@@ -685,6 +686,7 @@
 		 ,@(dump-rtype this)
 		 ,@(dump-need-bind-exit-return need-bind-exit-return)
 		 ,@(if optimize '() `(:optimize ,optimize))
+		 ,@(if src '() `(:src #f))
 		 ,@(if new-target '(:new-target #t) '())
 		 ,@(dump-range this)
 		 ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
@@ -701,6 +703,7 @@
 	      ,@(dump-rtype this)
 	      ,@(dump-need-bind-exit-return need-bind-exit-return)
 	      ,@(if optimize '() `(:optimize ,optimize))
+	      ,@(if src '() `(:src #f))
 	      ,@(if new-target '(:new-target #t) '())
 	      ,@(dump-range this)
 	      ,@(if thisp `(:thisp ,(j2s->list thisp)) '())

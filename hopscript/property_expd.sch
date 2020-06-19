@@ -84,7 +84,7 @@
    (match-case x
       ((?- (and (? integer?) ?num) ?src . ?profile-table-info)
        (e `(cond-expand
-	      ((and bigloo-c (not hopjs-worker-slave))
+	      ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
 	       ,(if (pair? profile-table-info)
 		    `((@ js-pcache-table-profile-init __hopscript_property)
 		      ($js-make-pcache-table (pragma::obj "(obj_t)(__bgl_pcache)")
@@ -112,7 +112,7 @@
    (match-case x
       ((js-pcache-ref %pcache ?-)
        (e `(cond-expand
-	      ((and bigloo-c (not hopjs-worker-slave))
+	      ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
 	       (free-pragma::JsPropertyCache "(BgL_jspropertycachez00_bglt)BOBJECT(&(__bgl_pcache[ $1 ]))" ,(caddr x)))
 	      (else
 	       ((@ js-pcache-ref __hopscript_property) ,(cadr x) ,(caddr x))))
@@ -127,7 +127,7 @@
    (e (match-case x
 	 ((js-pcache-imap (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
-	     ((and bigloo-c (not hopjs-worker-slave))
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
 	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_pctablez00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (pctable) pctable))))
@@ -144,7 +144,7 @@
    (e (match-case x
 	 ((js-pcache-imap (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
-	     ((and bigloo-c (not hopjs-worker-slave))
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
 	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_imapz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (imap) imap))))
@@ -161,7 +161,7 @@
    (e (match-case x
 	 ((js-pcache-cmap (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
-	     ((and bigloo-c (not hopjs-worker-slave))
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
 	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_cmapz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (cmap) cmap))))
@@ -178,7 +178,7 @@
    (e (match-case x
 	 ((js-pcache-pmap (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
-	     ((and bigloo-c (not hopjs-worker-slave))
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
 	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_pmapz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (pmap) pmap))))
@@ -195,7 +195,7 @@
    (e (match-case x
 	 ((js-pcache-nmap (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
-	     ((and bigloo-c (not hopjs-worker-slave))
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
 	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_nmapz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (nmap) nmap))))
@@ -212,7 +212,7 @@
    (e (match-case x
 	 ((js-pcache-emap (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
-	     ((and bigloo-c (not hopjs-worker-slave))
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
 	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_emapz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (emap) emap))))
@@ -229,7 +229,7 @@
    (e (match-case x
 	 ((js-pcache-amap (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
-	     ((and bigloo-c (not hopjs-worker-slave))
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
 	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_amapz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (amap) amap))))
@@ -246,7 +246,7 @@
    (e (match-case x
 	 ((js-pcache-index (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
-	     ((and bigloo-c (not hopjs-worker-slave))
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
 	      `(free-pragma::long "(__bgl_pcache[ $1 ].BgL_indexz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (index) index))))
@@ -263,7 +263,7 @@
    (e (match-case x
 	 ((js-pcache-vindex (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
-	     ((and bigloo-c (not hopjs-worker-slave))
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
 	      `(free-pragma::long "(__bgl_pcache[ $1 ].BgL_vindexz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (vindex) vindex))))
@@ -280,7 +280,7 @@
    (e (match-case x
 	 ((js-pcache-owner (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
-	     ((and bigloo-c (not hopjs-worker-slave))
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
 	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_ownerz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (owner) owner))))
@@ -297,7 +297,7 @@
    (e (match-case x
 	 ((js-pcache-method (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
-	     ((and bigloo-c (not hopjs-worker-slave))
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
 	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_methodz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (method) method))))
@@ -314,7 +314,7 @@
    (e (match-case x
 	 ((js-pcache-function (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
-	     ((and bigloo-c (not hopjs-worker-slave))
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
 	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_functionz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (function) function))))

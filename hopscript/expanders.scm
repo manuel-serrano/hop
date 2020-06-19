@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_expanders
 
+   (option  (register-srfi! 'hop-eval))
+   
    (library hop)
    
    (include "property_expd.sch"
