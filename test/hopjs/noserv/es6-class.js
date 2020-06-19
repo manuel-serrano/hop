@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
 /*    Last change :  Wed Feb 27 17:08:04 2019 (serrano)                */
-/*    Copyright   :  2017-19 Manuel Serrano                            */
+/*    Copyright   :  2017-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
 /*=====================================================================*/
@@ -171,6 +171,41 @@ function basicj() {
    }
 }
 
+function basick() {
+   class basick {
+      constructor() {
+      	 this._x = 0; this._y = 0;
+      }
+      
+      getX() {
+      	 return this._x;
+      }
+
+      get x() {
+      	 return this._x + 100;
+      }
+   }
+
+   class basicl extends basick {
+      constructor() {
+      	 super();
+      	 this._z = 0;
+      }
+      
+      getX() {
+      	 return super.getX() + 666;
+      }
+
+      get x() {
+      	 return super.getX() + 555;
+      }
+   }
+
+   const p = new basicl();
+   return p.x === 555;
+}
+
+
 console.log( "basic" );
 console.log( "   basica()" ); assert.ok( basica(), "basica" );
 console.log( "   basicb()" ); assert.ok( basicb(), "basicb" );
@@ -181,6 +216,8 @@ console.log( "   basicf()" ); assert.ok( basicf(), "basicf" );
 console.log( "   basicg()" ); assert.ok( basicg(), "basicg" );
 console.log( "   basich()" ); assert.ok( basich(), "basich" );
 console.log( "   basici()" ); assert.ok( basici(), "basici" );
+console.log( "   basicj()" ); assert.ok( basicj(), "basicj" );
+console.log( "   basick()" ); assert.ok( basick(), "basick" );
 
 /*---------------------------------------------------------------------*/
 /*    misc                                                             */
