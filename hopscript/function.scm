@@ -65,7 +65,7 @@
 	   (inline js-make-procedure-hopscript::JsProcedure ::JsGlobalObject ::procedure
 	      ::int)
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
-	      ::int ::JsStringLiteral ::int ::symbol ::int)
+	      ::int ::JsStringLiteral ::int ::symbol ::int ::obj)
 	   
 	   (inline js-function-prototype-get ::obj ::JsFunction ::obj ::JsGlobalObject)
 	   (js-function-setup-prototype!::JsObject ::JsGlobalObject ::JsFunction)
@@ -784,11 +784,11 @@
 ;*---------------------------------------------------------------------*/
 (define (js-make-function-simple %this::JsGlobalObject proc::procedure
 	   len::int name::JsStringLiteral arity::int strict::symbol
-	   constrsize::int)
+	   constrsize::int src)
    (js-make-function %this proc len name
       :prototype #f :__proto__ #f
       :arity arity :strict strict
-      :src #f
+      :src src
       :alloc js-object-alloc
       :construct proc :constrsize constrsize))
 

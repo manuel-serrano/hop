@@ -39,7 +39,7 @@
    (define debug-function (>= (config-get conf :debug 0) 2))
    (define current-mode 'normal)
    (define source-map (config-get conf :source-map #f))
-   (define fun-src (config-get conf :fun-src #f))
+   (define fun-src (config-get conf :fun-src #t))
 
    (define es-module #f)
    
