@@ -2120,7 +2120,7 @@
    (if (js-object? obj)
        (let ((__proto__ (js-object-proto obj)))
 	  (if (js-object? __proto__)
-	      __proto__
+	      (js-object-proto __proto__)
 	      (js-raise-type-error/loc %this loc
 		 "Prototype of prototype not an object" obj)))
        (js-raise-type-error/loc %this loc "Not an object" obj)))
