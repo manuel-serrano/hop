@@ -1138,6 +1138,28 @@ bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj
 
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
+/*    bgl_jsarray_shift_builtin ...                                    */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_jsarray_shift_builtin( obj_t array ) {
+   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)COBJECT( array );
+   obj_t vec = CVECTOR( o->BgL_vecz00 );
+   obj_t res = VECTOR_REF( BVECTOR( vec ), 0 );
+   long size = VECTOR_LENGTH( BVECTOR( vec ) );
+   obj_t nvec = (obj_t)(((obj_t *)vec) + 1);
+
+#if( !defined( TAG_VECTOR ) )
+   nvec->vector.header = MAKE_HEADER( VECTOR_TYPE, 0 );
+#endif		
+   nvec->vector.length = size - 1;
+   nvec = BVECTOR( nvec );
+
+   o->BgL_vecz00 = nvec;
+   return res;
+}
+   
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
 /*    bgl_init_vector ...                                              */
 /*---------------------------------------------------------------------*/
 obj_t

@@ -76,6 +76,36 @@
 		%s %p ,%this))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-jsstring-codepointat ...                                      */
+;*---------------------------------------------------------------------*/
+(define-macro (js-jsstring-codepointat this position %this)
+   (cond
+      ((and (fixnum? position) (>=fx position 0))
+       `(let ((%s ,this))
+	   (if (and (js-jsstring-ascii? %s) (js-jsstring-normalized? %s))
+	       (with-access::JsStringLiteral %s (left)
+		  (let ((%val left))
+		     (if (<fx ,position (string-length %val))
+			 (char->integer (string-ref-ur %val ,position))
+			 +nan.0)))
+	       ((@ js-jsstring-codepointat __hopscript_stringliteral)
+		%s ,position ,%this))))
+      ((fixnum? position)
+       +nan.0)
+      (else
+       `(let ((%s ,this)
+	      (%p ,position))
+	   (if (and (js-jsstring-ascii? %s) (js-jsstring-normalized? %s)
+		    (fixnum? %p))
+	       (with-access::JsStringLiteral %s (left)
+		  (let ((%val left))
+		     (if (and (>=fx %p 0) (<fx %p (string-length %val)))
+			 (char->integer (string-ref-ur %val %p))
+			 +nan.0)))
+	       ((@ js-jsstring-codepointat __hopscript_stringliteral)
+		%s %p ,%this))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-jsstring->string ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-macro (js-jsstring->string str)

@@ -33,6 +33,7 @@
 	   (j2s-jsstring-replace obj args mode return ::struct)
 	   (j2s-jsstring-maybe-replace obj args mode return ::struct)
 	   (j2s-jsstring-charcodeat obj args mode return ::struct)
+	   (j2s-jsstring-codepointat obj args mode return ::struct)
 	   (j2s-jsstring-match-string obj args mode return ::struct)
 	   (j2s-jsstring-match-regexp obj args mode return ::struct)
 	   (j2s-jsstring-substr obj args mode return ::struct)
@@ -226,6 +227,26 @@
 		   `(fixnum->uint32 ,sexp)))))
       (else
        `(js-jsstring-charcodeat
+	   ,(j2s-scheme obj mode return ctx)
+	   ,@(map (lambda (arg)
+		     (j2s-scheme arg mode return ctx))
+		args)))))
+       
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-codepointat ...                                     */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-codepointat obj args mode return ctx)
+   (match-case args
+      (((and ?pos (? expr-asuint32)) ?%this)
+       (let* ((expr (expr-asuint32 pos))
+	      (sexp (j2s-scheme expr mode return ctx)))
+	  `(js-jsstring-codepointatu32
+	      ,(j2s-scheme obj mode return ctx)
+	      ,(if (eq? (j2s-vtype expr) 'uint32)
+		   sexp
+		   `(fixnum->uint32 ,sexp)))))
+      (else
+       `(js-jsstring-codepointat
 	   ,(j2s-scheme obj mode return ctx)
 	   ,@(map (lambda (arg)
 		     (j2s-scheme arg mode return ctx))

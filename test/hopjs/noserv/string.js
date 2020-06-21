@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
 /*    Last change :  Sat Oct  5 07:30:49 2019 (serrano)                */
-/*    Copyright   :  2014-19 Manuel Serrano                            */
+/*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing strings                                                  */
 /*=====================================================================*/
@@ -60,6 +60,18 @@ assert.equal( s7.charCodeAt( 0 ), 0xd801 );
 assert.equal( s7a.charCodeAt( 0 ), 0xd801 );
 assert.equal( s7.charCodeAt( 1 ), 0xdc37 );
 assert.equal( s7b.charCodeAt( 0 ), 0xdc37 );
+
+const s8 = "\u{1f0a1}\u{1f0a2}a\uD835\uDC68C";
+
+assert.equal( s8.length, 8 );
+assert.equal( s8.charCodeAt( 0 ), 55356 );
+assert.equal( s8.charCodeAt( 1 ), 56481 );
+assert.equal( s8.charCodeAt( 2 ), 55356 );
+assert.equal( s8.codePointAt( 0 ), 0x1f0a1 );
+assert.equal( s8.codePointAt( 2 ), 0x1f0a2 );
+assert.equal( s8.codePointAt( 4 ), 97 );
+assert.equal( s8.codePointAt( 5 ), 119912 );
+assert.equal( s8.codePointAt( 7 ), 67 );
 
 /*---------------------------------------------------------------------*/
 /*    generic                                                          */

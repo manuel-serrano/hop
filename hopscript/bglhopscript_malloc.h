@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  1 13:46:07 2017                          */
 /*    Last change :  Thu Nov  2 07:30:05 2017 (serrano)                */
-/*    Copyright   :  2017 Manuel Serrano                               */
+/*    Copyright   :  2017-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    bglhopscript allocation                                          */
 /*=====================================================================*/
@@ -66,8 +66,11 @@ bgl_gc_bump_malloc( long sz ) {
 /*    Used to detect when to reset array inline elements before an     */
 /*    expansion. This helps the collector not to retain dead arrays    */
 /*    still pointed to by these inlined elements.                      */
+/*    -------------------------------------------------------------    */
+/*    Used also to implement fast vector shift.                        */
 /*---------------------------------------------------------------------*/
 #define HOP_JSARRAY_VECTOR_INLINEP( _o ) \
-  CVECTOR( ((BgL_jsarrayz00_bglt)COBJECT(_o))->BgL_vecz00 ) == \
-  (obj_t)(&(((BgL_jsarrayz00_bglt)COBJECT(_o))->BgL_vecz00) + 1)
-
+   ((CVECTOR( ((BgL_jsarrayz00_bglt)COBJECT(_o))->BgL_vecz00 ) >=      \
+     (obj_t)(&(((BgL_jsarrayz00_bglt)COBJECT(_o))->BgL_vecz00) + 1)) && \
+    (CVECTOR( ((BgL_jsarrayz00_bglt)COBJECT(_o))->BgL_vecz00 ) <=	\
+     (obj_t)(&(((BgL_jsarrayz00_bglt)COBJECT(_o))->BgL_vecz00) + 1 + ((BgL_jsarrayz00_bglt)COBJECT(_o))->BgL_ilenz00 )))
