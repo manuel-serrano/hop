@@ -746,7 +746,10 @@
 ;*    js-function-prototype-get ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function-prototype-get obj owner::JsFunction propname %this)
-   (with-access::JsFunction owner (prototype)
+   (with-access::JsFunction owner (%prototype prototype alloc)
+      (unless %prototype
+	 (js-function-setup-prototype! %this owner)
+	 (set! alloc js-object-alloc))
       prototype))
 
 ;*---------------------------------------------------------------------*/
