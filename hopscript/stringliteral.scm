@@ -1202,32 +1202,35 @@
 ;*    string.                                                          */
 ;*---------------------------------------------------------------------*/
 (define (utf8-codepoint-ref this::JsStringLiteralUTF8 str::bstring i::long)
+
+   (define (return-utf8-sans-adjust str c s r)
+      (case s
+	 ((1)
+	  c)
+	 ((2)
+	  (let ((c1 (char->integer (string-ref-ur str (+fx r 1)))))
+	     (bit-or (bit-lsh (bit-and c #x1f) 6)
+		(bit-and c1 #x3f))))
+	 ((3)
+	  (let ((c1 (char->integer (string-ref-ur str (+fx r 1))))
+		(c2 (char->integer (string-ref-ur str (+fx r 2)))))
+	     (bit-or (bit-lsh (bit-and c #xf) 12)
+		(bit-or (bit-lsh (bit-and c1 #x3f) 6)
+		   (bit-and c2 #x3f)))))
+	 (else
+	  (let ((c1 (char->integer (string-ref-ur str (+fx r 1))))
+		(c2 (char->integer (string-ref-ur str (+fx r 2))))
+		(c3 (char->integer (string-ref-ur str (+fx r 3)))))
+	     (bit-or (bit-lsh (bit-and c #x7) 18)
+		(bit-or (bit-lsh (bit-and c1 #x3f) 12)
+		   (bit-or (bit-lsh (bit-and c2 #x3f) 6)
+		      (bit-and c3 #x3f))))))))
    
-   (define (return-utf8 this str i j c s r u)
+   (define (return-utf8 this str c s r u)
       (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
 	 (set! %idxstr r)
 	 (set! %idxutf8 u)
-	 (case s
-	    ((1)
-	     c)
-	    ((2)
-	     (let ((c1 (char->integer (string-ref-ur str (+fx r 1)))))
-		(bit-or (bit-lsh (bit-and c #x1f) 6)
-		   (bit-and c1 #x3f))))
-	    ((3)
-	     (let ((c1 (char->integer (string-ref-ur str (+fx r 1))))
-		   (c2 (char->integer (string-ref-ur str (+fx r 2)))))
-		(bit-or (bit-lsh (bit-and c #xf) 12)
-		   (bit-or (bit-lsh (bit-and c1 #x3f) 6)
-		      (bit-and c2 #x3f)))))
-	    (else
-	     (let ((c1 (char->integer (string-ref-ur str (+fx r 1))))
-		   (c2 (char->integer (string-ref-ur str (+fx r 2))))
-		   (c3 (char->integer (string-ref-ur str (+fx r 3)))))
-		(bit-or (bit-lsh (bit-and c #x7) 18)
-		   (bit-or (bit-lsh (bit-and c1 #x3f) 12)
-		      (bit-or (bit-lsh (bit-and c2 #x3f) 6)
-			 (bit-and c3 #x3f)))))))))
+	 (return-utf8-sans-adjust str c s r)))
    
    (define (rollback-utf8 this str i)
       (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
@@ -1245,17 +1248,23 @@
 		   (let* ((c (string-ref-ur str r))
 			  (u (codepoint-length c)))
 		      (if (<fx (-fx j u) i)
-			  (return-utf8 this str i j (char->integer c) s r j)
+			  (return-utf8 this str (char->integer c) s r j)
 			  (loop (-fx r 1) (-fx j u))))))))))
    
    (let ((len (string-length str)))
       (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
-	 ;; adjust with respect to the last position
-	 (if (and (<fx i %idxutf8)
+	 (cond
+	    ((=fx i 0)
+	     (let* ((c (string-ref-ur str 0))
+		    (s (utf8-char-size c)))
+		(return-utf8-sans-adjust str (char->integer c) s 0)))
+	    ;; adjust with respect to the last position
+	    ((and (<fx i %idxutf8)
 		  (>fx i 0)
 		  (>=fx i (- %idxutf8 i)))
 	     ;; rollback utf8 indexes
-	     (rollback-utf8 this str i)
+	     (rollback-utf8 this str i))
+	    (else
 	     ;; look forward
 	     (let loop ((r (if (>=fx i %idxutf8) %idxstr 0))
 			(j (if (>=fx i %idxutf8) (-fx i %idxutf8) i)))
@@ -1266,7 +1275,7 @@
 			   (u (codepoint-length c)))
 		       (if (>=fx j u)
 			   (loop (+fx r s) (-fx j u))
-			   (return-utf8 this str i j (char->integer c) s r (-fx i j))))))))))
+			   (return-utf8 this str (char->integer c) s r (-fx i j)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-utf8-ref ...                                                  */

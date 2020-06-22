@@ -728,6 +728,7 @@
    (with-access::J2SBindExit this (lbl stmt loc)
       `(,@(call-next-method)
 	  ,@(dump-type this)
+	  ,@(dump-hint this)
 	  ,@(dump-loc loc)
 	  (,lbl) ,(j2s->list stmt))))
 
