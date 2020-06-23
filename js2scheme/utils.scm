@@ -57,6 +57,7 @@
 	   
 	   (class-of ::J2SExpr)
 
+	   (best-hint::pair ::J2SExpr)
 	   (is-hint?::bool ::J2SExpr ::symbol)
 
 	   (string-method-type name #!optional (default '(any any)))
@@ -593,24 +594,31 @@
 	    (else 'unknown)))))
 
 ;*---------------------------------------------------------------------*/
+;*    best-hint ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (best-hint this::J2SExpr)
+   (with-access::J2SExpr this (hint)
+      (if (pair? hint)
+	  (let loop ((hint (cdr hint))
+		     (h (car hint)))
+	     (cond
+		((null? hint)
+		 h)
+		((>fx (cdr (car hint)) (cdr h))
+		 (loop (cdr hint) (car hint)))
+		((=fx (cdr (car hint)) (cdr h))
+		 (loop (cdr hint) (cons '_ (cdr h))))
+		(else
+		 (loop (cdr hint) h))))
+	  '(any . 0))))
+
+;*---------------------------------------------------------------------*/
 ;*    is-hint? ...                                                     */
 ;*    -------------------------------------------------------------    */
 ;*    Is the most likely hint of type TYPE?                            */
 ;*---------------------------------------------------------------------*/
 (define (is-hint? this::J2SExpr type)
-   (with-access::J2SExpr this (hint)
-      (when (pair? hint)
-	 (let loop ((hint (cdr hint))
-		    (h (car hint)))
-	    (cond
-	       ((null? hint)
-		(eq? (car h) type))
-	       ((>fx (cdr (car hint)) (cdr h))
-		(loop (cdr hint) (car hint)))
-	       ((=fx (cdr (car hint)) (cdr h))
-		(loop (cdr hint) (cons '_ (cdr h))))
-	       (else
-		(loop (cdr hint) h)))))))
+   (eq? type (car (best-hint this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    assoc-method-type ...                                            */

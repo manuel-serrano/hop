@@ -82,6 +82,11 @@
 	   (js-jsstring-charcodeatu32 ::JsStringLiteral ::uint32)
 	   (js-jsstring-charcodeatu32-as-int32::int32 ::JsStringLiteral ::uint32)
 	   (js-jsstring-maybe-charcodeat ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-jsstring-codepointat ::JsStringLiteral ::obj ::JsGlobalObject)
+	   (js-jsstring-codepointat-as-int32::int32 ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-codepointatu32 ::JsStringLiteral ::uint32)
+	   (js-jsstring-codepointatu32-as-int32::int32 ::JsStringLiteral ::uint32)
+	   (js-jsstring-maybe-codepointat ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-charat ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-charat ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-substring::JsStringLiteral ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
@@ -1191,6 +1196,88 @@
 			   (return-utf8 this str i j c s r (-fx i j))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    utf8-codepoint-ref ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Returns the ith code point (UTF16 code point) of the UTF8 source */
+;*    string.                                                          */
+;*---------------------------------------------------------------------*/
+(define (utf8-codepoint-ref this::JsStringLiteralUTF8 str::bstring i::long)
+
+   (define (return-utf8-sans-adjust str c s r)
+      (case s
+	 ((1)
+	  c)
+	 ((2)
+	  (let ((c1 (char->integer (string-ref-ur str (+fx r 1)))))
+	     (bit-or (bit-lsh (bit-and c #x1f) 6)
+		(bit-and c1 #x3f))))
+	 ((3)
+	  (let ((c1 (char->integer (string-ref-ur str (+fx r 1))))
+		(c2 (char->integer (string-ref-ur str (+fx r 2)))))
+	     (bit-or (bit-lsh (bit-and c #xf) 12)
+		(bit-or (bit-lsh (bit-and c1 #x3f) 6)
+		   (bit-and c2 #x3f)))))
+	 (else
+	  (let ((c1 (char->integer (string-ref-ur str (+fx r 1))))
+		(c2 (char->integer (string-ref-ur str (+fx r 2))))
+		(c3 (char->integer (string-ref-ur str (+fx r 3)))))
+	     (bit-or (bit-lsh (bit-and c #x7) 18)
+		(bit-or (bit-lsh (bit-and c1 #x3f) 12)
+		   (bit-or (bit-lsh (bit-and c2 #x3f) 6)
+		      (bit-and c3 #x3f))))))))
+   
+   (define (return-utf8 this str c s r u)
+      (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
+	 (set! %idxstr r)
+	 (set! %idxutf8 u)
+	 (return-utf8-sans-adjust str c s r)))
+   
+   (define (rollback-utf8 this str i)
+      (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
+	 (let loop ((r %idxstr)
+		    (j %idxutf8))
+	    (let liip ((r r)
+		       (s 1))
+	       (cond
+		  ((<fx r 0)
+		   +nan.0)
+		  ((=fx (bit-and (char->integer (string-ref-ur str r)) #xc0)
+		      #x80)
+		   (liip (-fx r 1) (+fx s 1)))
+		  (else
+		   (let* ((c (string-ref-ur str r))
+			  (u (codepoint-length c)))
+		      (if (<fx (-fx j u) i)
+			  (return-utf8 this str (char->integer c) s r j)
+			  (loop (-fx r 1) (-fx j u))))))))))
+   
+   (let ((len (string-length str)))
+      (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
+	 (cond
+	    ((=fx i 0)
+	     (let* ((c (string-ref-ur str 0))
+		    (s (utf8-char-size c)))
+		(return-utf8-sans-adjust str (char->integer c) s 0)))
+	    ;; adjust with respect to the last position
+	    ((and (<fx i %idxutf8)
+		  (>fx i 0)
+		  (>=fx i (- %idxutf8 i)))
+	     ;; rollback utf8 indexes
+	     (rollback-utf8 this str i))
+	    (else
+	     ;; look forward
+	     (let loop ((r (if (>=fx i %idxutf8) %idxstr 0))
+			(j (if (>=fx i %idxutf8) (-fx i %idxutf8) i)))
+		(if (>=fx r len)
+		    +nan.0
+		    (let* ((c (string-ref-ur str r))
+			   (s (utf8-char-size c))
+			   (u (codepoint-length c)))
+		       (if (>=fx j u)
+			   (loop (+fx r s) (-fx j u))
+			   (return-utf8 this str (char->integer c) s r (-fx i j)))))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-utf8-ref ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-utf8-ref this::JsStringLiteralUTF8 str::bstring index::long %this)
@@ -1630,6 +1717,124 @@
 	    ((js-object? this)
 	     (js-call1 %this
 		(js-get-jsobject-name/cache this (& "charCodeAt") #f %this
+		   (or cache (js-pcache-ref js-string-pcache 3)))
+		this index))
+	    (else
+	     (loop (js-toobject %this this)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-codepointat ...                                      */
+;*    -------------------------------------------------------------    */
+;*    https://tc39.es/ecma262/#sec-string.prototype.codepointat        */
+;*    -------------------------------------------------------------    */
+;*    See stringliteral_expd.sch                                       */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-codepointat this position %this)
+   
+   (define (ascii-codepointat val::bstring)
+      (if (fixnum? position)
+	  (cond
+	     ((<fx position 0)
+	      +nan.0)
+	     ((>=fx position (string-length val))
+	      +nan.0)
+	     (else
+	      (char->integer (string-ref-ur val position))))
+	  (let ((pos (js-tointeger position %this)))
+	     (if (or (< pos 0) (>= pos (string-length val)))
+		 +nan.0
+		 (char->integer (string-ref val (->fixnum pos)))))))
+
+   (define (utf8-codepointat val::bstring)
+      (if (fixnum? position)
+	  (utf8-codepoint-ref this val position)
+	  (let ((pos (js-tointeger position %this)))
+	     (utf8-codepoint-ref this val (->fixnum pos)))))
+
+   (string-dispatch codepointat this))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-codepointat-as-int32 ...                             */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-codepointat-as-int32::int32 this position %this)
+   
+   (define (ascii-codepointat val::bstring)
+      (if (fixnum? position)
+	  (cond
+	     ((<fx position 0)
+	      #s32:0)
+	     ((>=fx position (string-length val))
+	      #s32:0)
+	     (else
+	      (fixnum->int32
+		 (char->integer (string-ref-ur val position)))))
+	  (let ((pos (js-tointeger position %this)))
+	     (if (or (< pos 0) (>= pos (string-length val)))
+		 #s32:0
+		 (fixnum->int32
+		    (char->integer (string-ref val (->fixnum pos))))))))
+
+   (define (utf8-codepointat val::bstring)
+      (let ((r (if (fixnum? position)
+		   (utf8-codepoint-ref this val position)
+		   (let ((pos (js-tointeger position %this)))
+		      (utf8-codepoint-ref this val (->fixnum pos))))))
+	 (if (fixnum? r)
+	     (fixnum->int32 r)
+	     #s32:0)))
+
+   (string-dispatch codepointat this))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-codepointatu32 ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-codepointatu32 this position::uint32)
+   
+   (define (ascii-codepointat val::bstring)
+      (if (>=u32 position (fixnum->uint32 (string-length val)))
+	  +nan.0
+	  (char->integer (string-ref-ur val (uint32->fixnum position)))))
+
+   (define (utf8-codepointat val::bstring)
+      (if (>=u32 position (fixnum->uint32 (string-length val)))
+	  +nan.0
+	  (utf8-codepoint-ref this val (uint32->fixnum position))))
+
+   (string-dispatch codepointat this))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-codepointatu32-as-int32 ...                          */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-codepointatu32-as-int32::int32 this position::uint32)
+   
+   (define (ascii-codepointat val::bstring)
+      (if (>=u32 position (fixnum->uint32 (string-length val)))
+	  #s32:0
+	  (fixnum->int32
+	     (char->integer (string-ref-ur val (uint32->fixnum position))))))
+
+   (define (utf8-codepointat val::bstring)
+      (if (>=u32 position (fixnum->uint32 (string-length val)))
+	  #s32:0
+	  (let ((r (utf8-codepoint-ref this val (uint32->fixnum position))))
+	     (if (fixnum? r)
+		 (fixnum->int32 r)
+		 #s32:0))))
+
+   (string-dispatch codepointat this))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-maybe-codepointat ...                                */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-maybe-codepointat this index %this cache)
+   (with-access::JsGlobalObject %this (js-string-pcache)
+      (let loop ((this this))
+	 (cond
+	    ((js-jsstring? this)
+	     (js-jsstring-codepointat this index %this))
+	    ((js-object? this)
+	     (js-call1 %this
+		(js-get-jsobject-name/cache this (& "codePointAt") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 3)))
 		this index))
 	    (else
@@ -3054,7 +3259,9 @@
       ((js-jsstring? this)
        (js-jsstring-slice this start (js-jsstring-lengthfx this) %this))
       ((js-array? this)
-       (js-array-prototype-slice this start (js-undefined) %this))
+       (if (eq? start 0)
+	   (js-array-maybe-slice0 this %this cache)
+	   (js-array-prototype-slice this start (js-undefined) %this)))
       (else
        (with-access::JsGlobalObject %this (js-string-pcache)
 	  (let ((slice (js-get-name/cache this (& "slice") #f %this

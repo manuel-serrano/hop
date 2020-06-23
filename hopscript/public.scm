@@ -1276,9 +1276,7 @@
 (define-inline (js-object-alloc %this ctor::JsFunction)
    (with-access::JsFunction ctor (constrsize constrmap %prototype)
       (when (eq? constrmap (js-not-a-cmap))
-;*       (with-access::JsConstructMap constrmap (size)                 */
-;* 	 (unless (=fx size constrsize)                                 */
-	    (js-function-set-constrmap! ctor))
+	 (js-function-set-constrmap! ctor))
       (js-make-jsobject constrsize constrmap %prototype)))
 
 ;*---------------------------------------------------------------------*/
@@ -1331,7 +1329,6 @@
       (set! constrmap
 	 (instantiate::JsConstructMap
 	    (ctor ctor)
-;* 	    (size constrsize)                                          */
 	    (inline #t)))
       ctor))
    
@@ -2120,7 +2117,7 @@
    (if (js-object? obj)
        (let ((__proto__ (js-object-proto obj)))
 	  (if (js-object? __proto__)
-	      __proto__
+	      (js-object-proto __proto__)
 	      (js-raise-type-error/loc %this loc
 		 "Prototype of prototype not an object" obj)))
        (js-raise-type-error/loc %this loc "Not an object" obj)))

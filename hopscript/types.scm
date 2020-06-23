@@ -514,10 +514,12 @@
 	   (inline JS-REGEXP-FLAG-IGNORECASE::uint32)
 	   (inline JS-REGEXP-FLAG-MULTILINE::uint32)
 	   (inline JS-REGEXP-FLAG-GLOBAL::uint32)
+	   (inline JS-REGEXP-FLAG-UNICODE::uint32)
 
 	   (inline js-regexp-flags-ignorecase?::bool ::uint32)
 	   (inline js-regexp-flags-multiline?::bool ::uint32)
 	   (inline js-regexp-flags-global?::bool ::uint32)
+	   (inline js-regexp-flags-unicode?::bool ::uint32)
 
 	   (inline js-object-inline-elements?::bool ::JsObject)
 	   (inline js-object-inline-ref ::JsObject ::long)
@@ -908,6 +910,7 @@
 (define-inline (JS-REGEXP-FLAG-IGNORECASE) #u32:1)
 (define-inline (JS-REGEXP-FLAG-MULTILINE) #u32:2)
 (define-inline (JS-REGEXP-FLAG-GLOBAL) #u32:4)
+(define-inline (JS-REGEXP-FLAG-UNICODE) #u32:8)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-flags-XXX ...                                          */
@@ -918,6 +921,8 @@
    (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-MULTILINE)) #u32:0))
 (define-inline (js-regexp-flags-global? flags)
    (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-GLOBAL)) #u32:0))
+(define-inline (js-regexp-flags-unicode? flags)
+   (>u32 (bit-andu32 flags (JS-REGEXP-FLAG-UNICODE)) #u32:0))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-inline-elements? ...                                   */

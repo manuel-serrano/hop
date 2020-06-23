@@ -1066,7 +1066,7 @@
    (with-access::J2SCall this (fun)
       (when (isa? fun J2SSuper)
 	 ;; direct calls to super are only permitted from within constructors
-	 (unless (ctx-ctor? ctx)
+	 (unless (or #t (ctx-ctor? ctx))
 	    (with-access::J2SSuper fun (loc)
 	       (raise
 		  (instantiate::&io-parse-error

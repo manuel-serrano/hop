@@ -146,6 +146,10 @@
 ;*    hintnum-binary ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (hintnum-binary this op lhs rhs fix)
+   (when (memq (j2s-type lhs) '(any number))
+      (add-expr-hint! lhs (expr-hint this) #t fix))
+   (when (memq (j2s-type rhs) '(any number))
+      (add-expr-hint! rhs (expr-hint this) #t fix))
    (case op
       ((+)
        (when (memq (j2s-type lhs) '(any number))
@@ -269,6 +273,34 @@
 	 ((is-hint? rhs 'real)
 	  (add-expr-hint! lhs (expr-hint rhs) #f fix)
 	  (add-expr-hint! this (expr-hint rhs) #f fix)))))
+
+;*---------------------------------------------------------------------*/
+;*    hinthum ::J2SCall ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (hintnum this::J2SCall fix::cell)
+   
+   (define (math-call? fun args)
+      (when (and (pair? args) (isa? fun J2SAccess))
+	 (with-access::J2SAccess fun (field)
+	    (when (isa? field J2SString)
+	       (with-access::J2SString field (val)
+		  (member val '("floor" "round" "ceil")))))))
+
+   (define (math-callfl? fun args)
+      (when (and (pair? args) (isa? fun J2SAccess))
+	 (with-access::J2SAccess fun (field)
+	    (when (isa? field J2SString)
+	       (with-access::J2SString field (val)
+		  (member val '("asin" "sin" "acos" "cos" "sqrt" "log")))))))
+   
+   (call-default-walker)
+   (with-access::J2SCall this (fun args)
+      (cond
+	 ((math-callfl? fun args)
+	  (add-expr-hint! (car args) '((real . 20)) #f fix)
+	  (add-expr-hint! this '((real . 20)) #f fix))
+	 ((math-call? fun args)
+	  (add-expr-hint! (car args) '((real . 20)) #f fix)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type<? ...                                                       */

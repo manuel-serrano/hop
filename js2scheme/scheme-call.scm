@@ -71,6 +71,8 @@
 	("charAt" js-jsstring-maybe-charat any (any) %this #t)
 	("charCodeAt" ,j2s-jsstring-charcodeat string (any) %this)
 	("charCodeAt" js-jsstring-maybe-charcodeat any (any) %this #t)
+	("codePointAt" ,j2s-jsstring-codepointat string (any) %this)
+	("codePointAt" js-jsstring-maybe-codepointat any (any) %this #t)
 	("indexOf" js-jsstring-maybe-indexof any (any (any 0)) %this #t)
 	("lastIndexOf" js-jsstring-lastindexof string (string (any +nan.0)) %this)
 	("lastIndexOf" js-jsstring-maybe-lastindexof string (any (any +nan.0)) %this #t)
@@ -142,6 +144,7 @@
 	("pop" js-array-pop array () %this #t ,j2s-array-plain?)
 	("pop" js-array-maybe-pop any () %this #t ,j2s-array-plain?)
 	("slice" js-array-maybe-slice0 any () %this #t)
+	("shift" js-array-maybe-shift0 any () %this #t)
 	;; functions
 	("apply",j2s-apply any (any any) %this #t)
 	("call" ,j2s-call0 any (any) %this #t)

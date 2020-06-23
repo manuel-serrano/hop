@@ -2654,6 +2654,12 @@
        (binop-int53-int53 op type left (asfixnum right tr) flip))
       ((int53)
        (binop-int53-int53 op type left right flip))
+      ((real)
+       (if (memq type '(int32 uint32 integer bint real number))
+	   (binop-number-number op type
+	      (box left tl ctx) (box right tr ctx) flip)
+	   (binop-any-any op type
+	      (box left tl ctx) (box right tr ctx) flip)))
       (else
        `(if (fixnum? ,right)
 	    ,(binop-int53-int53 op type left right flip)

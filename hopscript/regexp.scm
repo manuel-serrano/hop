@@ -476,7 +476,8 @@
 	     (let* ((f (js-tostring uflags %this))
 		    (i (string-index f #\i))
 		    (m (string-index f #\m))
-		    (g (string-index f #\g)))
+		    (g (string-index f #\g))
+		    (u (string-index f #\u)))
 		(set! flags
 		   (bit-oru32
 		      (if (integer? i)
@@ -486,16 +487,22 @@
 			 (if (integer? m)
 			     (JS-REGEXP-FLAG-MULTILINE)
 			     #u32:0)
-			 (if (integer? g)
-			     (JS-REGEXP-FLAG-GLOBAL)
-			     #u32:0))))
-		(when (or (string-skip f "igm")
+			 (bit-oru32
+			    (if (integer? g)
+				(JS-REGEXP-FLAG-GLOBAL)
+				#u32:0)
+			    (if (integer? u)
+				(JS-REGEXP-FLAG-UNICODE)
+				#u32:0)))))
+		(when (or (string-skip f "igmu")
 			  (and (integer? i)
 			       (string-index f #\i (+fx 1 i)))
 			  (and (integer? m)
 			       (string-index f #\m (+fx 1 m)))
 			  (and (integer? g)
-			       (string-index f #\g (+fx 1 g))))
+			       (string-index f #\g (+fx 1 g)))
+			  (and (integer? u)
+			       (string-index f #\u (+fx 1 u))))
 		   (js-raise-syntax-error %this "Illegal flags \"~a\"" f))))))
       (with-handler
 	 (lambda (e)
@@ -509,7 +516,9 @@
 	    (let ((rx (pregexp pat
 			 (when (js-regexp-flags-ignorecase? flags) 'CASELESS)
 			 'JAVASCRIPT_COMPAT
-			 (if (eq? enc 'ascii) 'JAVASCRIPT_COMPAT 'UTF8)
+			 (if (and (eq? enc 'ascii)
+				  (not (js-regexp-flags-unicode? flags)))
+			     'JAVASCRIPT_COMPAT 'UTF8)
 			 (when (js-regexp-flags-multiline? flags) 'MULTILINE))))
 	       (with-access::JsGlobalObject %this (js-regexp js-regexp-cmap js-regexp-prototype)
 		  (instantiateJsRegExp

@@ -166,14 +166,9 @@
    
    (define (push-open-token token)
       (set! *open-tokens* (cons token *open-tokens*))
-;*       (print (make-string (- (length *open-tokens*) 1) #\space) "PUSHING " */
-;* 	 (cdr token) " " (token-loc token) " " (- (length *open-tokens*) 1)) */
       token)
    
    (define (pop-open-token token)
-;*       (print (make-string (- (length *open-tokens*) 1) #\space) "POPING  " */
-;* 	 (cdr token) "/" (cdar *open-tokens*) " "                      */
-;* 	 (token-loc token) "/" (token-loc (car *open-tokens*)) " " (- (length *open-tokens*) 1)) */
       (if (null? *open-tokens*)
 	  (error "js2scheme" (format "cannot pop token \"~s\"" (cdr token))
 	     (token-loc token))
@@ -1793,6 +1788,7 @@
 				  (name (loc->funname "met" loc))
 				  (generator gen)
 				  (body body)
+				  (ismethodof super?)
 				  (vararg (rest-params params))))
 			  (prop (instantiate::J2SAccessorPropertyInit
 				   (loc loc)

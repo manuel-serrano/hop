@@ -25,6 +25,8 @@
 	      "bgl_make_jsarray")
 	   ($js-make-jsarray-sans-init::JsArray (::long ::uint32 ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsarray_sans_init")
+	   ($js-jsarray-shift-builtin::obj (::JsArray)
+	      "bgl_jsarray_shift_builtin")
 	   ($js-vector-bytesize::long (::long)
 	      "bgl_vector_bytesize")
 	   ($js-init-vector::vector (::void* ::long ::obj)
@@ -132,6 +134,7 @@
 	   (js-array-indexof ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-prototype-slice ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-array-maybe-slice0 ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-shift0 ::obj ::JsGlobalObject ::obj)
 	   (js-array-sort ::JsArray ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-sort ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-iterator-to-array ::obj ::long ::JsGlobalObject)
@@ -2230,6 +2233,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-species-create %this origin new-len)
    (with-access::JsGlobalObject %this (js-symbol-species js-array js-array-prototype js-array-pcache)
+      
       (define (check-array val)
 	 (if (js-array? val)
 	     val
@@ -2241,6 +2245,7 @@
 	     (fixnum->uint32 new-len))
 	  (let ((ctor (js-get-name/cache origin (& "constructor") #f %this
 			 (js-pcache-ref js-array-pcache 13))))
+	     (tprint "PAS BON... create")
 	     (if (and (js-function? ctor) (not (eq? js-array ctor)))
 		 (let ((species (js-get ctor js-symbol-species %this)))
 		    (check-array
@@ -2359,6 +2364,8 @@
       this)
 
    (cond
+      ((<=u32 len #u32:1024)
+       (js-array-construct-alloc-small %this len))
       ((<=u32 len (bit-lshu32 #u32:1 16))
        ;; MS CARE: the max boundary for a concrete vector
        ;; is pure heuristic. This should be confirmed by
@@ -4383,6 +4390,39 @@
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call0 %this
 	     (js-get-name/cache this (& "slice") #f %this
+		(or cache (js-pcache-ref js-array-pcache 17)))
+	     this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-shift0 ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-shift0 this %this cache)
+   (if (and (js-array? this)
+	    (js-object-mode-plain? this)
+	    (js-object-mode-inline? this))
+       (with-access::JsArray this (vec ilen length)
+	  (if ($jsobject-vector-inline? this)
+	      ;; fast path for shifting an array. when the the array
+	      ;; is builtin (the JsArray object contains the Scheme vector)
+	      ;; instead of shifting inside the Scheme array, we merely
+	      ;; shift the inner pointer to the Scheme array
+	      (let ((first ($js-jsarray-shift-builtin this))
+		    (len (-u32 ilen 1)))
+		 (set! length len)
+		 (set! ilen len)
+		 first)
+	      (with-access::JsArray this (vec length ilen)
+		 (let ((first (vector-ref vec 0))
+		       (nlen (-u32 ilen #u32:1))
+		       (vlen (vector-length vec)))
+		    (vector-copy! vec 0 vec 1)
+		    (vector-set! vec (-fx vlen 1) (js-absent))
+		    (set! length nlen)
+		    (set! ilen (-u32 ilen 1))
+		    first))))
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call0 %this
+	     (js-get-name/cache this (& "shift") #f %this
 		(or cache (js-pcache-ref js-array-pcache 17)))
 	     this))))
 

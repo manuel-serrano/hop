@@ -665,7 +665,7 @@
 (define-walk-method (cspecs-default! this::J2SAssig csdef)
    (with-access::J2SAssig this (lhs rhs)
       (cspecs-default! rhs csdef)
-      (if (isa? lhs J2SAccess)
+      (when (isa? lhs J2SAccess)
 	  (with-access::J2SAccess lhs (cspecs)
 	     (set! cspecs (cspecs-assig csdef)))
 	  (cspecs-default! lhs csdef))

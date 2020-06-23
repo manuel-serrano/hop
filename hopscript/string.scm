@@ -398,6 +398,17 @@
       :enumerable #f
       :hidden-class #t)
    
+   ;; codePointAt
+   ;; https://tc39.es/ecma262/#sec-string.prototype.codepointat
+   (define (codepointat this index)
+      (js-jsstring-codepointat (js-cast-string-normalize! %this this) index %this))
+   
+   (js-bind! %this obj (& "codePointAt")
+      :value (js-make-function %this codepointat 1 (& "codePointAt")
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
    ;; concat
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.6
    (define (concat this . rest)

@@ -89,7 +89,7 @@
 	      `(let ((,tmp ,x))
 		  (js-int53-inc ,tmp)))))
       (else
-       `((@ js-int53-inc __hopscript_arithmetic32) ,x))))
+       `(+fx/overflow ,x 1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-int53-dec ...                                                 */
@@ -103,4 +103,4 @@
 	      `(let ((,tmp ,x))
 		  (js-int53-dec ,tmp)))))
       (else
-       `((@ js-int53-dec __hopscript_arithmetic32) ,x))))
+       `(-fx/overflow ,x 1))))

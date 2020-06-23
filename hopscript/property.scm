@@ -408,7 +408,6 @@
 		" length=" (vector-length elements)
 		" plain=" (js-object-mode-plain? obj)
 		" inline=" (js-object-inline-elements? obj)
-;* 		" size=" size                                          */
 		" extensible=" (js-object-mode-extensible? obj)
 		" mlengths=" (vector-length methods)
 		"\n   cmap.%id=" %id
@@ -505,13 +504,6 @@
 (define (js-object-add! obj::JsObject idx::long value)
    (with-access::JsObject obj (elements cmap)
       (let ((nlen (+fx 1 (vector-length elements))))
-;* 	    (cond                                                      */
-;* 		     ((>fx (vector-length elements) 16)                */
-;* 		      (+fx 2 (vector-length elements)))                */
-;* 		     ((<fx (vector-length elements) 2)                 */
-;* 		      2)                                               */
-;* 		     (else                                             */
-;* 		      (*fx 2 (vector-length elements))))))             */
 	 (let ((nels (copy-vector elements nlen)))
 	    (cond-expand (profile (profile-cache-extension nlen)))
 	    (vector-set! nels idx value)
@@ -568,11 +560,11 @@
 		   (when (<fx constrsize maxconstrsize)
 		      (with-access::JsConstructMap cmap (props)
 			 (set! constrsize (+fx 1 (vector-length props))))
-		      (set! constrmap
-			 (instantiate::JsConstructMap
-			    (ctor ctor)
-;* 			    (size constrsize)                          */
-			    ))))))
+;* 		      (set! constrmap                                  */
+;* 			 (instantiate::JsConstructMap                  */
+;* 			    (ctor ctor)                                */
+;* 			    ))                                         */
+		      ))))
 	  (vector-set! elements idx value))))
 
 ;*---------------------------------------------------------------------*/

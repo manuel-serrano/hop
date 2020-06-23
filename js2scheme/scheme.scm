@@ -1956,6 +1956,7 @@
 				      cache #t :cspecs cs :cachefun #f)
 				  ,tmp))))))
 	       ((not cache)
+		;; MS
 		(aput-inc-sans-cache fexpr scmlhs rhs tyobj otmp prop op lhs field cache inc cs cache-missp loc))
 	       (else
 		(let ((els (gensym '%els))
@@ -1968,15 +1969,15 @@
 				   (let ((new (gensym '%new)))
 				      `(let* ((,tmp (vector-ref ,els ,idx))
 					      (,new (if (fixnum? ,tmp)
-							(js-int53-inc ,tmp)
-							(js+ ,tmp 1 %this))))
+							(,(if (=fx inc -1) 'js-int53-dec 'js-int53-inc) ,tmp)
+							(js+ ,tmp ,inc %this))))
 					  (vector-set! ,els ,idx ,new)
 					  ,new))
 				   `(let ((,tmp (vector-ref ,els ,idx)))
 				       (vector-set! ,els ,idx 
 					  (if (fixnum? ,tmp)
-					      (js-int53-inc ,tmp)
-					      (js+ ,tmp 1 %this)))
+					      (,(if (=fx inc -1) 'js-int53-dec 'js-int53-inc) ,tmp)
+					      (js+ ,tmp ,inc %this)))
 				       ,tmp)))
 			   ,(aput-inc-sans-cache fexpr scmlhs rhs tyobj otmp prop op lhs field cache inc cs cache-missp loc)))))))))
 

@@ -227,7 +227,9 @@
 	 :configurable #t
 	 :enumerable #f
 	 :hidden-class #f)
-      
+
+      ;; floor
+      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.9
       (js-bind! %this js-math (& "floor")
 	 :value (js-make-function %this
 		   (lambda (this x) (js-math-floor x %this)) 1 (& "floor"))
@@ -464,13 +466,13 @@
 	  ((or bint30 bint32)
 	   (cond
 	      ((>fl x (fixnum->flonum (bit-lsh 1 29)))
-	       (floor x))
+	       (floorfl x))
 	      ((<fl x (- (fixnum->flonum (bit-lsh 1 29))))
-	       (floor x))
+	       (floorfl x))
 	      (else
-	       (flonum->fixnum (floor x)))))
+	       (flonum->fixnum (floorfl x)))))
 	  (else
-	   (flonum->fixnum (floor x)))))))
+	   (flonum->fixnum (floorfl x)))))))
       
 ;*---------------------------------------------------------------------*/
 ;*    js-math-abs ...                                                  */
