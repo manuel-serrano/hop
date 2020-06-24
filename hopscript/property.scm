@@ -3897,7 +3897,6 @@
        (apply js-method-jsobject-call-name/cache %this obj name
 	  ccache ocache point ccspecs ocspecs args)
        (let ((o (js-toobject %this obj)))
-	  (tprint "js-method-call-name/cache APPLYING " (typeof o) " name=" name)
 	  (js-apply %this (js-get/name-cache o name %this) o args))))
 
 ;*---------------------------------------------------------------------*/
