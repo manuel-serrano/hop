@@ -424,7 +424,7 @@
 	     (if (pair? bk)
 		 (multiple-value-bind (tyr envr bkr)
 		    (node-type-seq (cdr nodes) envn fix initty)
-		    (return tyr (env-merge envn envr) (append bk bk bks)))
+		    (return tyr (env-merge envn envr) (append bk bks)))
 		 (loop (cdr nodes) tyn envn (append bk bks)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -782,7 +782,7 @@
 	 (when (isa? thisp J2SDecl)
 	    (decl-itype-add! thisp 'object fix))))
    
-   (with-access::J2SDeclFun this (val scope id)
+   (with-access::J2SDeclFun this (val scope id loc)
       (if (decl-ronly? this)
 	  (decl-vtype-set! this 'function fix)
 	  (decl-vtype-add! this 'function fix))
@@ -819,10 +819,6 @@
 	 (node-type val env fix)
 	 (return 'class env bk))))
 
-;* (define-walk-method (node-type this::J2SMeta env::pair-nil fix::cell) */
-;*    (tprint "META " (j2s->list this))                                */
-;*    (call-default-walker))                                           */
-      
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SAssig ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -1001,7 +997,7 @@
 ;*    node-type-fun ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (node-type-fun this::J2SFun env::pair-nil fix::cell)
-   (with-access::J2SFun this (body thisp params %info vararg argumentsp type)
+   (with-access::J2SFun this (body thisp params %info vararg argumentsp type loc)
       (let ((envp (map (lambda (p::J2SDecl)
 			  (with-access::J2SDecl p (utype itype)
 			     (cond
@@ -1123,7 +1119,7 @@
 ;*    detailed in the code below.                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SCall env::pair-nil fix::cell)
-   (with-access::J2SCall this (fun thisarg args protocol)
+   (with-access::J2SCall this (fun thisarg args protocol loc)
       (multiple-value-bind (tty env bkt)
 	 (if (pair? thisarg)
 	     (node-type (car thisarg) env fix)
