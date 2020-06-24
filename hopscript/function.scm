@@ -156,7 +156,7 @@
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache)
    (if (eq? (js-toname p %this) (& "prototype"))
-       (with-access::JsFunction o (prototype) prototype)
+       (js-function-prototype-get o o p %this)
        (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
@@ -733,23 +733,23 @@
 ;*---------------------------------------------------------------------*/
 (define (js-function-setup-prototype! %this fun::JsFunction)
    (with-access::JsGlobalObject %this (js-function-prototype-cmap)
-      (with-access::JsFunction fun (prototype %prototype)
+      (with-access::JsFunction fun (prototype %prototype alloc)
 	 (let ((p (instantiateJsObject
 		     (cmap js-function-prototype-cmap)
 		     (__proto__ (js-object-proto %this))
 		     (elements (vector fun)))))
 	    (set! prototype p)
 	    (set! %prototype p)
+	    (set! alloc js-object-alloc)
 	    p))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-get ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function-prototype-get obj owner::JsFunction propname %this)
-   (with-access::JsFunction owner (%prototype prototype alloc)
+   (with-access::JsFunction owner (%prototype prototype alloc name src)
       (unless %prototype
-	 (js-function-setup-prototype! %this owner)
-	 (set! alloc js-object-alloc))
+	 (js-function-setup-prototype! %this owner))
       prototype))
 
 ;*---------------------------------------------------------------------*/

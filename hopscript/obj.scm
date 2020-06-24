@@ -151,7 +151,7 @@
 	      (js-make-function %this (lambda (this) #t) 1 (& "isFrozen")))
 	     (else
 	      (js-raise-type-error %this
-		 (format "no such field \"~a\" ~~a" name) o)))
+		 (format "get: no such field \"~a\" ~~a" name) o)))
 	  (let ((v ((class-field-accessor field) o)))
 	     (js-obj->jsobject v %this)))))
 
@@ -166,7 +166,7 @@
 	  (field (find-class-field clazz name)))
       (cond
 	 ((not field)
-	  (js-raise-type-error %this (format "no such field \"~a\" ~~a" name) o))
+	  (js-raise-type-error %this (format "put!: no such field \"~a\" ~~a" name) o))
 	 ((not (class-field-mutable? field))
 	  (if throw
 	      (js-raise-type-error %this (format "field \"~a\" read-only ~~a" name) o)

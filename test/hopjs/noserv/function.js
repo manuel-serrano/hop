@@ -14,19 +14,13 @@ var f = function ( x ) {
    if( !this instanceof f ) throw "Bad prototype";
 }
 
-#:tprint( 0 );
 var g = f.bind();
-#:tprint( -1 );
 var p = new f("f");
 var o = new g("g");
 
-#:tprint( 1 );
 assert.ok( (Object.getPrototypeOf(p) === f.prototype), "f.prototype" );
-#:tprint( 2 );
 assert.ok( undefined === g.prototype, "g.prototype" );
-#:tprint( 3 );
 assert.ok( (Object.getPrototypeOf(o) === f.prototype), "f.bind.prototype" );
-#:tprint( 4 );
 
 function f2() {
    if( !this instanceof f2 ) throw "Bad prototype";
@@ -53,4 +47,14 @@ var o3 = new g3("g3");
 assert.ok( proto2 === g3.prototype, "g3.prototype" );
 assert.ok( (Object.getPrototypeOf(o3) === f2.prototype), "f3.bind.prototype" );
 assert.ok( (Object.getPrototypeOf(o3) !== proto2), "f3.bind.prototype" );
+
+function argtest() {
+   return function( obj, n ) {
+      var l = arguments.length;
+      return arguments[ n ].a === 1;
+   }
+}
+
+assert.ok( argtest()( { a: 1 }, { b: 2 } ), "arguments" );
+
 
