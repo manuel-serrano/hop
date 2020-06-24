@@ -58,3 +58,15 @@ function argtest() {
 assert.ok( argtest()( { a: 1 }, { b: 2 } ), "arguments" );
 
 
+function argmany() {
+   function documentModule(moduleName /* ... */) {
+      console.log( Array.prototype.slice.call( arguments, 1) );
+      return moduleName === "module1" && Array.prototype.slice.call( arguments, 1).length > 15;
+   }
+
+   var exp = {};
+   exp.documentModule = documentModule;
+   return exp.documentModule( "module1", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r" );
+}
+
+assert.ok( argmany(), "arguments many" );
