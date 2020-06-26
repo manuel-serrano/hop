@@ -14,19 +14,13 @@ var f = function ( x ) {
    if( !this instanceof f ) throw "Bad prototype";
 }
 
-#:tprint( 0 );
 var g = f.bind();
-#:tprint( -1 );
 var p = new f("f");
 var o = new g("g");
 
-#:tprint( 1 );
 assert.ok( (Object.getPrototypeOf(p) === f.prototype), "f.prototype" );
-#:tprint( 2 );
 assert.ok( undefined === g.prototype, "g.prototype" );
-#:tprint( 3 );
 assert.ok( (Object.getPrototypeOf(o) === f.prototype), "f.bind.prototype" );
-#:tprint( 4 );
 
 function f2() {
    if( !this instanceof f2 ) throw "Bad prototype";
@@ -54,3 +48,25 @@ assert.ok( proto2 === g3.prototype, "g3.prototype" );
 assert.ok( (Object.getPrototypeOf(o3) === f2.prototype), "f3.bind.prototype" );
 assert.ok( (Object.getPrototypeOf(o3) !== proto2), "f3.bind.prototype" );
 
+function argtest() {
+   return function( obj, n ) {
+      var l = arguments.length;
+      return arguments[ n ].a === 1;
+   }
+}
+
+assert.ok( argtest()( { a: 1 }, { b: 2 } ), "arguments" );
+
+
+function argmany() {
+   function documentModule(moduleName /* ... */) {
+      console.log( Array.prototype.slice.call( arguments, 1) );
+      return moduleName === "module1" && Array.prototype.slice.call( arguments, 1).length > 15;
+   }
+
+   var exp = {};
+   exp.documentModule = documentModule;
+   return exp.documentModule( "module1", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r" );
+}
+
+assert.ok( argmany(), "arguments many" );

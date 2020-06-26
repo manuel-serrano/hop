@@ -598,17 +598,17 @@
    
    (define (optim-arguments-prelude argumentsp params body)
       (with-access::J2SDeclArguments argumentsp (alloc-policy argid mode)
-	 `(let ((arguments ,(if (eq? alloc-policy 'lazy)
-				`',mode
-				`(js-strict-arguments-vector %this ,rest))))
-	     (let* ((%len (vector-length ,argid))
-		    ,@(map (lambda (p i)
-			      (list (j2s-decl-scheme-id p)
-				 `(if (<fx ,i %len)
-				      (vector-ref ,argid ,i)
-				      (js-undefined))))
-			 params (iota (length params))))
-		,body))))
+	 `(let* ((%len (vector-length ,argid))
+		 ,@(map (lambda (p i)
+			   (list (j2s-decl-scheme-id p)
+			      `(if (<fx ,i %len)
+				   (vector-ref ,argid ,i)
+				   (js-undefined))))
+		      params (iota (length params)))
+		 (arguments ,(if (eq? alloc-policy 'lazy)
+				 `',mode
+				 `(js-strict-arguments-vector %this ,rest))))
+	     ,body)))
    
    (define (regular-arguments-prelude argumentsp params body)
       `(let ((arguments (js-strict-arguments %this ,rest)))

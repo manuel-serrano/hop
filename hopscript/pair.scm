@@ -121,7 +121,7 @@
 	  (if (epair? o)
 	      (js-obj->jsobject (cer o) %this)
 	      (js-raise-type-error %this
-		 (format "no such field \"~a\" ~~a" (js-toname prop %this)) o)))
+		 (format "get: no such field \"~a\" ~~a" (js-toname prop %this)) o)))
 	 ((eq? n (& "length"))
 	  (js-make-function %this length
 	     0 (& "length")))
@@ -189,7 +189,7 @@
 	  (js-vector->jsarray (list->vector o) %this))
 	 (else
 	  (js-raise-type-error %this
-	     (format "no such field \"~a\" ~~a" (js-tostring prop %this))
+	     (format "get: no such field \"~a\" ~~a" (js-tostring prop %this))
 	     o)))))
    
 ;*---------------------------------------------------------------------*/
@@ -197,7 +197,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-get-null o::nil prop %this)
    (js-raise-type-error %this
-      (format "no such field \"~a\" ~~a" (js-tostring prop %this)) o))
+      (format "get: no such field \"~a\" ~~a" (js-tostring prop %this)) o))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-put-pair! ...                                                 */
