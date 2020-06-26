@@ -4075,10 +4075,8 @@
 			      ((js-function? (vector-ref methods i))
 			       (let ((f (funval obj el-or-desc)))
 				  (cond
-				     ((procedure? f)
-				      (error "js-method-jsobject-call/cache-fill" "should not be here" f))
 				     ((js-function? f)
-				      (with-access::JsFunction f (len method arity)
+				      (with-access::JsFunction f (len method arity src)
 					 (cond
 					    ((<fx arity 0)
 					     ;; varargs functions, currently not cached...
@@ -4115,7 +4113,9 @@
 					     (with-access::JsPropertyCache ccache (pmap emap cmap)
 						(set! pmap (js-not-a-pmap))
 						(set! emap #t)
-						(set! cmap #t)))))))
+						(set! cmap #t))))))
+				     ((procedure? f)
+				      (error "js-method-jsobject-call/cache-fill" "should not be here" f)))
 				  (jsapply f)))
 			      ((eq? obj o)
 			       (with-access::JsPropertyCache ccache (pmap cmap emap index)

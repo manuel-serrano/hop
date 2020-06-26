@@ -1914,14 +1914,27 @@
 ;*---------------------------------------------------------------------*/
 (define (js-toobject %this::JsGlobalObject o)
    (or (js-toobject-failsafe %this o)
-       (js-raise-type-error %this "toObject: cannot convert ~s" o)))
+       (begin
+	  (tprint "-- o=" (typeof o))
+	  (tprint "   o=" o)
+	  (js-raise-type-error %this
+	     (format "toObject: cannot convert ~a~~a"
+		(if (or (symbol? o) (string? o) (number? o) (boolean? o))
+		    (format "~s " o)
+		    ""))
+	     o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toobject/debug ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-toobject/debug %this::JsGlobalObject loc o)
    (or (js-toobject-failsafe %this o)
-       (js-raise-type-error/loc %this loc "toObject: cannot convert ~s" o)))
+       (js-raise-type-error/loc %this loc
+	  (format "toObject: cannot convert ~a~~a"
+	     (if (or (symbol? o) (string? o) (number? o) (boolean? o))
+		 (format "~s " o)
+		 ""))
+	  o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equal? ...                                                    */

@@ -4401,7 +4401,10 @@
 	    (js-object-mode-plain? this)
 	    (js-object-mode-inline? this))
        (with-access::JsArray this (vec ilen length)
-	  (if ($jsobject-vector-inline? this)
+	  (cond
+	     ((=u32 ilen 0)
+	      (js-undefined))
+	     (($jsobject-vector-inline? this)
 	      ;; fast path for shifting an array. when the the array
 	      ;; is builtin (the JsArray object contains the Scheme vector)
 	      ;; instead of shifting inside the Scheme array, we merely
@@ -4410,7 +4413,8 @@
 		    (len (-u32 ilen 1)))
 		 (set! length len)
 		 (set! ilen len)
-		 first)
+		 first))
+	     (else
 	      (with-access::JsArray this (vec length ilen)
 		 (let ((first (vector-ref vec 0))
 		       (nlen (-u32 ilen #u32:1))
@@ -4419,7 +4423,7 @@
 		    (vector-set! vec (-fx vlen 1) (js-absent))
 		    (set! length nlen)
 		    (set! ilen (-u32 ilen 1))
-		    first))))
+		    first)))))
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call0 %this
 	     (js-get-name/cache this (& "shift") #f %this
