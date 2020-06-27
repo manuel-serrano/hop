@@ -55,7 +55,7 @@ function argtest() {
    }
 }
 
-assert.ok( argtest()( { a: 1 }, { b: 2 } ), "arguments" );
+assert.ok( argtest()( { a: 1 }, 0 ), "arguments" );
 
 
 function argmany() {
