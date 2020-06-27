@@ -315,7 +315,7 @@
 	   (final-class J2SThis::J2SRef)
 	   
 	   (final-class J2SSuper::J2SRef
-	      (clazz (default #unspecified) (info '("notraverse"))))
+	      (context (default 'plain) (info '("notraverse"))))
 
 	   (final-class J2SCond::J2SExpr
 	      (test::J2SExpr (info '("ast")))

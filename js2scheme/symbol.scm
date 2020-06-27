@@ -80,7 +80,7 @@
 	       (append (filter (lambda (d) (not (isa? d J2SDecl))) vdecls)
 		  nodes))
 	    (set! nodes
-	       (map! (lambda (o) (resolve! o env mode '() '() genv #f conf))
+	       (map! (lambda (o) (resolve! o env mode '() '() genv 'plain conf))
 		  nodes))
 	    (when (config-get conf :commonjs-export #f)
 	       (commonjs-export this (find-decl 'module env)))
@@ -241,7 +241,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (bind! this::J2SDeclFun env genv mode conf)
    (with-access::J2SDeclFun this (val id)
-      (set! val (resolve! val env mode '() '() genv #f conf))
+      (set! val (resolve! val env mode '() '() genv 'plain conf))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -249,12 +249,6 @@
 ;*---------------------------------------------------------------------*/
 (define (make-ctx typ val)
    (cons typ val))
-
-;*---------------------------------------------------------------------*/
-;*    ctx-ctor? ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (ctx-ctor? ctx)
-   (and (pair? ctx) (eq? (car ctx) 'ctor)))
 
 ;*---------------------------------------------------------------------*/
 ;*    ctx-value ...                                                    */
@@ -265,7 +259,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SNode ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (resolve! this::J2SNode env mode withs wenv genv ctx conf)
+(define-walk-method (resolve! this::J2SNode env mode withs wenv genv ctx::symbol conf)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -318,6 +312,7 @@
 
    (with-access::J2SFun this (body params thisp loc (fmode mode) decl name
 				ismethodof)
+      (when ismethodof (tprint "name=" name " ctx=" ctx))
       (let ((id (or name (j2sfun-id this))))
 	 ;; check parameter correctness
 	 (if (eq? fmode 'normal)
@@ -347,8 +342,7 @@
 			  (append ldecls env1)
 			  (cons arguments (append ldecls env1))))
 		(bdenv (if (isa? thisp J2SDecl) (cons thisp nenv) nenv))
-		(nwenv (cons arguments (append decls params wenv)))
-		(ctx (and ismethodof (or ctx (make-ctx 'proto '__proto__)))))
+		(nwenv (cons arguments (append decls params wenv))))
 	    (for-each (lambda (decl::J2SDecl)
 			 (with-access::J2SDecl decl (scope)
 			    (set! scope 'fun)))
@@ -875,8 +869,7 @@
 (define-walk-method (resolve! this::J2SClass env mode withs wenv genv ctx conf)
    (with-access::J2SClass this (name decl elements super)
       (set! super (resolve! super env mode withs wenv genv ctx conf))
-      (let ((nenv (if decl (cons decl env) env))
-	    (ctx (make-ctx 'class this)))
+      (let ((nenv (if decl (cons decl env) env)))
 	 (set! elements
 	    (map! (lambda (m) (resolve! m nenv mode withs wenv genv ctx conf))
 	       elements))
@@ -889,19 +882,16 @@
    (with-access::J2SClassElement this (static prop)
       (cond
 	 (static
-	  (set! prop (resolve! prop env mode withs withs genv #f conf)))
+	  (set! prop (resolve! prop env mode withs withs genv ctx conf)))
 	 ((not (isa? prop J2SDataPropertyInit))
-	  (set! prop (resolve! prop env mode withs withs genv #f conf)))
+	  (set! prop (resolve! prop env mode withs withs genv 'class conf)))
 	 (else
 	  (with-access::J2SDataPropertyInit prop (name)
 	     (if (and (isa? name J2SString)
 		      (with-access::J2SString name (val)
 			 (string=? val "constructor")))
-		 (let ((nctx (make-ctx 'ctor (ctx-value ctx))))
-		    (set! prop
-		       (resolve! prop env mode withs withs genv nctx conf)))
-		 (set! prop
-		    (resolve! prop env mode withs withs genv ctx conf)))))))
+		 (set! prop (resolve! prop env mode withs withs genv 'ctor conf))
+		 (set! prop (resolve! prop env mode withs withs genv 'class conf)))))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -994,7 +984,7 @@
 		(set! inits (reverse! ninits))
 		this)
 	     (with-access::J2SPropertyInit (car inits) (name loc)
-		(walk! (car inits) env mode withs wenv genv ctx conf)
+		(resolve! (car inits) env mode withs wenv genv 'literal conf)
 		(if (isa? name J2SLiteralValue)
 		    (with-access::J2SLiteralValue name (val)
 		       (let ((old (find-property val ninits)))
@@ -1066,7 +1056,7 @@
    (with-access::J2SCall this (fun)
       (when (isa? fun J2SSuper)
 	 ;; direct calls to super are only permitted from within constructors
-	 (unless (or #t (ctx-ctor? ctx))
+	 (when (eq? ctx 'plain)
 	    (with-access::J2SSuper fun (loc)
 	       (raise
 		  (instantiate::&io-parse-error
@@ -1081,18 +1071,18 @@
 ;*    resolve! ::J2SSuper ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SSuper env mode withs wenvs genv ctx conf)
-   (with-access::J2SSuper this (loc clazz)
-      (if ctx
-	  (begin
-	     (set! clazz (ctx-value ctx))
-	     this)
+   (with-access::J2SSuper this (loc context)
+      (if (eq? ctx 'plain)
 	  (raise
 	     (instantiate::&io-parse-error
 		(proc "symbol resolution (symbol)")
 		(msg "`super' keyword unexpected here")
 		(obj (j2s-expression-src loc conf "super"))
 		(fname (cadr loc))
-		(location (caddr loc)))))))
+		(location (caddr loc))))
+	  (begin
+	     (set! context ctx)
+	     this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SDProducer ...                                      */

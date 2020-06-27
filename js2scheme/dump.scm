@@ -591,6 +591,13 @@
       `(,@(call-next-method) ,id ,@(dump-type this) ,withs ,(j2s->list expr))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SSuper ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SSuper)
+   (with-access::J2SSuper this (context)
+      `(,@(call-next-method) :context ,context)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SLiteral ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SLiteral)

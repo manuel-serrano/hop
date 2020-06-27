@@ -206,7 +206,7 @@
 	   (inline js-null-or-undefined?::bool ::obj)
 	   (inline js-object-or-null?::bool ::obj)
 
-	   (js-super ::obj ::obj ::JsGlobalObject)
+	   (js-super ::obj ::bool ::obj ::JsGlobalObject)
 	   
 	   (%js-eval-hss ::input-port ::JsGlobalObject ::obj ::obj)
 	   (%js-direct-eval ::obj ::bool ::JsGlobalObject ::obj ::JsObject)
@@ -1914,15 +1914,12 @@
 ;*---------------------------------------------------------------------*/
 (define (js-toobject %this::JsGlobalObject o)
    (or (js-toobject-failsafe %this o)
-       (begin
-	  (tprint "-- o=" (typeof o))
-	  (tprint "   o=" o)
-	  (js-raise-type-error %this
-	     (format "toObject: cannot convert ~a~~a"
-		(if (or (symbol? o) (string? o) (number? o) (boolean? o))
-		    (format "~s " o)
-		    ""))
-	     o))))
+       (js-raise-type-error %this
+	  (format "toObject: cannot convert ~a~~a"
+	     (if (or (symbol? o) (string? o) (number? o) (boolean? o))
+		 (format "~s " o)
+		 ""))
+	  o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toobject/debug ...                                            */
@@ -2129,11 +2126,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-super ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-super obj loc %this)
+(define (js-super obj inclass loc %this)
    (if (js-object? obj)
        (let ((__proto__ (js-object-proto obj)))
 	  (if (js-object? __proto__)
-	      (js-object-proto __proto__)
+	      (if inclass
+		  (js-object-proto __proto__)
+		  __proto__)
 	      (js-raise-type-error/loc %this loc
 		 "Prototype of prototype not an object" obj)))
        (js-raise-type-error/loc %this loc "Not an object" obj)))

@@ -429,10 +429,11 @@
 ;*    j2s-scheme ::J2SSuper ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SSuper mode return ctx)
-   (with-access::J2SSuper this (decl loc clazz)
-      (if (eq? clazz '__proto__)
-	  `(js-super ,(call-next-method) ',loc %this)
-	  '%super)))
+   (with-access::J2SSuper this (decl loc context)
+      (case context
+;* 	 ((class) `(js-super ,(call-next-method) #t ',loc %this))      */
+	 ((literal) `(js-super ,(call-next-method) #f ',loc %this))
+	 (else '%super))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SWithRef ...                                      */
