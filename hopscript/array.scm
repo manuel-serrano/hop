@@ -3604,9 +3604,9 @@
 	 (let loop ((i i))
 	    (cond
 	       ((>=u32 i ilen)
-		(js-undefined))
-	       ((not (js-object-mode-inline? o))
-		(array-forof o len proc i))
+		(if (js-array-inlined? o)
+		    (js-undefined)
+		    (array-forof o len proc i)))
 	       (else
 		(proc (vector-ref vec (uint32->fixnum i)) %this)
 		(loop (+u32 i 1)))))))
