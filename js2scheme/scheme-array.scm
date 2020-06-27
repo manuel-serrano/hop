@@ -125,12 +125,11 @@
 
    (define (alloc-length arg k)
       (cond
-	 ((smaller-than? arg 16)
+	 ((smaller-than? arg 1024)
 	  `(js-array-construct-alloc-small %this 
 	      ,(k (j2s-scheme arg mode return ctx))))
 	 ((smaller-than? arg (bit-lsh 1 29))
-	  `(js-array-construct/lengthu32 %this
-	      (js-array-alloc %this)
+	  `(js-array-construct/lengthu32 %this (js-array-alloc %this)
 	      ,(k (j2s-scheme arg mode return ctx))))
 	 (else
 	  `(js-array-construct1 %this (js-array-alloc %this)

@@ -163,7 +163,7 @@
 (define j2s-builtin-functions
    (map (lambda (e)
 	   (apply builtin-function e))
-      `((parseInt js-parseint-string-uint32 (string uint32) #f)
+      '((parseInt js-parseint-string-uint32 (string uint32) #f)
 	(parseInt js-parseint-string (string) #f)
 	(parseInt js-parseint-any (any) %this)
 	(parseInt js-parseint (any any) %this)
@@ -1104,6 +1104,8 @@
 		   (jsfun->lambda fun mode return ctx (j2s-fun-prototype fun) #f)
 		   '()
 		   args))
+	       ((Array? fun)
+		(j2s-scheme (J2SNew* fun args) mode return ctx))
 	       ((isa? fun J2SGlobalRef)
 		(with-access::J2SGlobalRef fun (decl)
 		   (with-access::J2SDecl decl (id scope)

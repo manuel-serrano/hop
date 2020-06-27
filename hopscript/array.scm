@@ -102,7 +102,8 @@
 	   (js-array-set-ur! ::JsArray ::uint32 ::obj ::bool ::JsGlobalObject)
 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
 	   (js-vector->sparse-jsarray::JsArray ::vector ::JsGlobalObject)
-	   
+
+	   (js-array-new1::JsArray ::obj ::JsGlobalObject)
 	   (js-array-alloc::JsArray ::JsGlobalObject)
 	   (js-array-construct::JsArray ::JsGlobalObject ::JsArray ::obj)
 	   (js-array-construct1::JsArray ::JsGlobalObject ::JsArray ::obj)
@@ -165,7 +166,7 @@
       (fprint (current-error-port)
 	 " ilen=" ilen " length=" length " vlen=" (vector-length vec)
 	 " plain=" (js-object-mode-plain? obj)
-	 " inl=" (js-object-mode-inline? obj)
+	 " inl=" (js-array-inlined? obj)
 	 " holey=" (js-object-mode-holey? obj))
       (if (<fx (vector-length vec) 20)
 	  (fprint (current-error-port) " vec=" vec)
@@ -2066,7 +2067,8 @@
 	    (let loop ((i i))
 	       (cond
 		  ((>=u32 i ilen)
-		   (if (js-object-mode-inline? o)
+		   (tprint "INC " (js-array-inlined? o))
+		   (if (js-array-inlined? o)
 		       #f
 		       (array-includes o len i)))
 		  ((js-strict-equal? (vector-ref vec (uint32->fixnum i)) val)
@@ -2245,7 +2247,6 @@
 	     (fixnum->uint32 new-len))
 	  (let ((ctor (js-get-name/cache origin (& "constructor") #f %this
 			 (js-pcache-ref js-array-pcache 13))))
-	     (tprint "PAS BON... create")
 	     (if (and (js-function? ctor) (not (eq? js-array ctor)))
 		 (let ((species (js-get ctor js-symbol-species %this)))
 		    (check-array
@@ -2274,6 +2275,29 @@
 		(js-array-construct %this arr items)
 		arr)
 	     (js-array-construct %this this items)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-new1 ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-array-new1 item-or-len %this)
+   (cond
+      ((fixnum? item-or-len)
+       (if (<fx item-or-len (bit-lsh 1 16))
+	   (js-array-construct-alloc-small %this (fixnum->uint32 item-or-len))
+	   (let ((arr (js-array-alloc %this)))
+	      (js-array-construct/length %this arr item-or-len)
+	      arr)))
+      ((js-number? item-or-len)
+       (let ((arr (js-array-alloc %this)))
+	  (js-array-construct/length %this arr item-or-len)
+	  arr))
+      (else
+       (let* ((arr (js-array-construct-alloc-small %this #u32:1)))
+	  (with-access::JsArray arr (vec ilen length)
+	     (set! ilen #u32:1)
+	     (set! length #u32:1)
+	     (vector-set! vec 0 item-or-len)
+	     arr)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-alloc ...                                               */
@@ -2312,16 +2336,13 @@
 	     js-array-prototype
 	     (js-absent) (js-array-default-mode))))
       (else
-       (define (array-set! this v::vector iln::uint32 ulen::uint32)
-	  (with-access::JsArray this (vec ilen length)
-	     (set! length ulen)
-	     (set! ilen iln)
-	     (set! vec v))
-	  this)
-       
        (let* ((this (js-array-alloc %this))
-	      (vec (js-create-vector (uint32->fixnum len))))
-	  (array-set! this vec #u32:0 len)))))
+	      (v (js-create-vector (uint32->fixnum len))))
+	  (with-access::JsArray this (vec ilen length)
+	     (set! length len)
+	     (set! ilen #u32:0)
+	     (set! vec v))
+	  this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-construct-alloc-small-sans-init ...                     */
@@ -2338,16 +2359,13 @@
 	     js-array-prototype
 	     (js-array-default-mode))))
       (else
-       (define (array-set! this v::vector iln::uint32 ulen::uint32)
-	  (with-access::JsArray this (vec ilen length)
-	     (set! length ulen)
-	     (set! ilen iln)
-	     (set! vec v))
-	  this)
-       
        (let* ((this (js-array-alloc %this))
-	      (vec (js-create-vector (uint32->fixnum len))))
-	  (array-set! this vec #u32:0 len)))))
+	      (v (js-create-vector (uint32->fixnum len))))
+	  (with-access::JsArray this (vec ilen length)
+	     (set! length #u32:0)
+	     (set! ilen len)
+	     (set! vec v)
+	     this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-construct/lengthu32 ...                                 */
@@ -2364,8 +2382,6 @@
       this)
 
    (cond
-      ((<=u32 len #u32:1024)
-       (js-array-construct-alloc-small %this len))
       ((<=u32 len (bit-lshu32 #u32:1 16))
        ;; MS CARE: the max boundary for a concrete vector
        ;; is pure heuristic. This should be confirmed by
@@ -2373,7 +2389,7 @@
        (let ((vec (js-create-vector (uint32->fixnum len))))
 	  (array-set! vec #u32:0 len)))
       (else
-       (array-set! (js-create-vector 10) #u32:0 len))))
+       (array-set! (js-create-vector 8) #u32:0 len))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-construct/length ...                                    */
@@ -2427,8 +2443,6 @@
       this)
 
    (cond
-      ((null? item-or-len)
-       (js-array-construct/length %this this 0))
       ((fixnum? item-or-len)
        (js-array-construct/length %this this item-or-len))
       ((js-number? item-or-len)
