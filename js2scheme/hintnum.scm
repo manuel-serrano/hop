@@ -290,15 +290,15 @@
    
    (define (math-call? fun args)
       (when (and (pair? args) (isa? fun J2SAccess))
-	 (with-access::J2SAccess fun (field)
-	    (when (isa? field J2SString)
+	 (with-access::J2SAccess fun (obj field)
+	    (when (and (is-builtin-ref? obj 'Math) (isa? field J2SString))
 	       (with-access::J2SString field (val)
 		  (member val '("floor" "round" "ceil")))))))
 
    (define (math-callfl? fun args)
       (when (and (pair? args) (isa? fun J2SAccess))
-	 (with-access::J2SAccess fun (field)
-	    (when (isa? field J2SString)
+	 (with-access::J2SAccess fun (obj field)
+	    (when (and (is-builtin-ref? obj 'Math) (isa? field J2SString))
 	       (with-access::J2SString field (val)
 		  (member val '("asin" "sin" "acos" "cos" "sqrt" "log")))))))
    
@@ -339,18 +339,16 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propagate-types this::J2SBinary fix::cell)
    (call-default-walker)
-   (with-access::J2SBinary this (op lhs rhs type)
-      (case op
-	 ((- / *)
-	  (when (or (eq? (j2s-vtype lhs) 'real) (eq? (j2s-vtype rhs) 'real))
-	     (unless (eq? type 'real)
-		(set! type 'real)
-		(cell-set! fix #f))))
-	 ((+)
-	  (when (and (eq? (j2s-vtype lhs) 'real) (eq? (j2s-vtype rhs) 'real))
-	     (unless (eq? type 'real)
-		(set! type 'real)
-		(cell-set! fix #f)))))))
+   (with-access::J2SBinary this (op lhs rhs type loc)
+      (when (memq op '(- / * +))
+	 (when (or (eq? (j2s-vtype lhs) 'real) (eq? (j2s-vtype rhs) 'real))
+	    (unless (eq? (j2s-vtype lhs) 'real)
+	       (set! lhs (J2SCast 'real lhs)))
+	    (unless (eq? (j2s-vtype rhs) 'real)
+	       (set! lhs (J2SCast 'real rhs)))
+	    (unless (eq? type 'real)
+	       (set! type 'real)
+	       (cell-set! fix #f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    propagate-types ::J2SUnary ...                                   */
@@ -396,52 +394,57 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propagate-real! this::J2SExpr)
    (call-default-walker)
-   (if (and (is-hint? this 'real) (memq (j2s-vtype this) '(any number)))
-       (with-access::J2SExpr this (loc)
-	  (J2SCast 'real this))
-       this))
+   (with-access::J2SExpr this (type)
+      (if (and (is-hint? this 'real) (not (eq? type 'real)))
+	  (as-real! this)
+	  this)))
 
-;*---------------------------------------------------------------------*/
-;*    propagate-real! ::J2SBinary ...                                  */
-;*---------------------------------------------------------------------*/
-(define-walk-method (propagate-real! this::J2SBinary)
-   (call-default-walker)
-   (as-real! this))
-   
-;*---------------------------------------------------------------------*/
-;*    propagate-real! ::J2SUnary ...                                   */
-;*---------------------------------------------------------------------*/
-(define-walk-method (propagate-real! this::J2SUnary)
-   (call-default-walker)
-   (as-real! this))
-   
-;*---------------------------------------------------------------------*/
-;*    propagate-real! ::J2SBindExit ...                                */
-;*---------------------------------------------------------------------*/
-(define-walk-method (propagate-real! this::J2SBindExit)
-   (call-default-walker)
-   (as-real! this))
-   
 ;*---------------------------------------------------------------------*/
 ;*    propagate-real! ::J2SCast ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propagate-real! this::J2SCast)
-   (call-default-walker)
-   (as-real! this))
-
-;*---------------------------------------------------------------------*/
-;*    propagate-real! ::J2SParen ...                                   */
-;*---------------------------------------------------------------------*/
-(define-walk-method (propagate-real! this::J2SParen)
-   (call-default-walker)
-   (as-real! this))
+   (with-access::J2SCast this (type)
+      (when (and (is-hint? this 'real) (not (eq? type 'real)))
+	 (set! type 'real)))
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    as-real! ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (as-real! this::J2SExpr)
-   (when (and (is-hint? this 'real) (memq (j2s-vtype this) '(any number)))
-      (with-access::J2SExpr this (type loc)
-	 (set! type 'real)))
-   this)
+(define-walk-method (as-real! this::J2SNode)
+   (call-default-walker))
 
+;*---------------------------------------------------------------------*/
+;*    as-real! ::J2SExpr ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (as-real! this::J2SExpr)
+   (if (eq? (j2s-vtype this) 'real)
+       this
+       (with-access::J2SExpr this (loc)
+	  (J2SCast 'real this))))
+
+;*---------------------------------------------------------------------*/
+;*    as-real! ::J2SBinary ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (as-real! this::J2SBinary)
+   (call-default-walker)
+   (with-access::J2SBinary this (type)
+      (set! type 'real))
+   this)
+   
+;*---------------------------------------------------------------------*/
+;*    as-real! ::J2SUnary ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (as-real! this::J2SUnary)
+   (call-default-walker)
+   (with-access::J2SUnary this (type)
+      (set! type 'real))
+   this)
+   
+;*---------------------------------------------------------------------*/
+;*    as-real! ::J2SCast ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (as-real! this::J2SCast)
+   (with-access::J2SCast this (type)
+      (set! type 'real)
+      this))

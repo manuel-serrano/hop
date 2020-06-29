@@ -925,6 +925,7 @@
 	  ,@(dump-type this)
 	  ,@(dump-rtype fun)
 	  ,@(dump-info this)
+	  ,@(dump-hint this)
 	  ,@(dump-range this)
 	  ,@(dump-protocol protocol)
 	  ,@(if (or (>= (bigloo-debug) 2)

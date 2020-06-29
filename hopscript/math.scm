@@ -38,7 +38,8 @@
 	   (js-math-floor ::obj ::JsGlobalObject)
 	   (js-math-floorfl ::double)
 	   (js-math-abs ::obj ::JsGlobalObject)
-	   (js-math-round ::obj)))
+	   (js-math-round ::obj)
+	   (js-math-roundfl ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -504,6 +505,21 @@
 	  (else
 	   (inexact->exact (floorfl (+fl x 0.5))))))))
 
+;*---------------------------------------------------------------------*/
+;*    js-math-roundfl ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-math-roundfl x)
+   (cond
+      ((nanfl? x) x)
+      ((=fl x +inf.0) x)
+      ((=fl x -inf.0) x)
+      (else
+       (cond-expand
+	  ((or bint61 bint63)
+	   (flonum->fixnum (floorfl (+fl x 0.5))))
+	  (else
+	   (inexact->exact (floorfl (+fl x 0.5))))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

@@ -82,6 +82,7 @@
 	 (uint32 js-int53-touint32)
 	 (integer nop)
 	 (number nop)
+	 (real fixnum->flonum)
 	 (string ,js-fixnum->string)
 	 (scmstring fixnum->string)
 	 (object ,js-number->jsobject)
