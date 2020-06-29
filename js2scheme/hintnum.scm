@@ -81,7 +81,7 @@
 		   (loop (+fx i 1)))
 		  ((>fx i 1)
 		   (global-loop)))))))
-   this)
+   (propagate-real! this))
 
 ;*---------------------------------------------------------------------*/
 ;*    expr-hint ...                                                    */
@@ -143,6 +143,16 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
+;*    hintnum ::J2SReturn ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (hintnum this::J2SReturn fix::cell)
+   (with-access::J2SReturn this (from expr)
+      (when (isa? from J2SBindExit)
+	 (with-access::J2SBindExit from (hint)
+	    (add-expr-hint! expr hint #t fix)))
+      (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
 ;*    hintnum-binary ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (hintnum-binary this op lhs rhs fix)
@@ -182,7 +192,6 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    unhint-string-ref ...                                            */
-;*                                                                     */
 ;*---------------------------------------------------------------------*/
 (define (unhint-string-ref expr fix)
    (when (isa? expr J2SAccess)
@@ -316,7 +325,7 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    propagate-types! ::J2SRef ...                                    */
+;*    propagate-types ::J2SRef ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propagate-types this::J2SRef fix::cell)
    (with-access::J2SRef this (decl type)
@@ -329,7 +338,7 @@
 ;*    propagate-types ::J2SBinary ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propagate-types this::J2SBinary fix::cell)
-   (call-next-method)
+   (call-default-walker)
    (with-access::J2SBinary this (op lhs rhs type)
       (case op
 	 ((- / *)
@@ -347,7 +356,7 @@
 ;*    propagate-types ::J2SUnary ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propagate-types this::J2SUnary fix::cell)
-   (call-next-method)
+   (call-default-walker)
    (with-access::J2SUnary this (op expr type)
       (when (memq op '(- +))
 	 (when (eq? (j2s-vtype expr) 'real)
@@ -359,7 +368,7 @@
 ;*    propagate-types ::J2SParen ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propagate-types this::J2SParen fix::cell)
-   (call-next-method)
+   (call-default-walker)
    (with-access::J2SParen this (expr type)
       (when (eq? (j2s-vtype expr) 'real)
 	 (unless (eq? type 'real)
@@ -370,8 +379,69 @@
 ;*    propagate-types ::J2SDeclInit ...                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propagate-types this::J2SDeclInit fix::cell)
-   (call-next-method)
+   (call-default-walker)
    (with-access::J2SDeclInit this (val vtype)
       (when (and (eq? vtype 'number) (eq? (j2s-vtype val) 'real))
 	 (set! vtype 'real)
 	 (cell-set! fix #f))))
+
+;*---------------------------------------------------------------------*/
+;*    propagate-real! ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-real! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    propagate-real! ::J2SExpr ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-real! this::J2SExpr)
+   (call-default-walker)
+   (if (and (is-hint? this 'real) (memq (j2s-vtype this) '(any number)))
+       (with-access::J2SExpr this (loc)
+	  (J2SCast 'real this))
+       this))
+
+;*---------------------------------------------------------------------*/
+;*    propagate-real! ::J2SBinary ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-real! this::J2SBinary)
+   (call-default-walker)
+   (as-real! this))
+   
+;*---------------------------------------------------------------------*/
+;*    propagate-real! ::J2SUnary ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-real! this::J2SUnary)
+   (call-default-walker)
+   (as-real! this))
+   
+;*---------------------------------------------------------------------*/
+;*    propagate-real! ::J2SBindExit ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-real! this::J2SBindExit)
+   (call-default-walker)
+   (as-real! this))
+   
+;*---------------------------------------------------------------------*/
+;*    propagate-real! ::J2SCast ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-real! this::J2SCast)
+   (call-default-walker)
+   (as-real! this))
+
+;*---------------------------------------------------------------------*/
+;*    propagate-real! ::J2SParen ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-real! this::J2SParen)
+   (call-default-walker)
+   (as-real! this))
+
+;*---------------------------------------------------------------------*/
+;*    as-real! ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (as-real! this::J2SExpr)
+   (when (and (is-hint? this 'real) (memq (j2s-vtype this) '(any number)))
+      (with-access::J2SExpr this (type loc)
+	 (set! type 'real)))
+   this)
+

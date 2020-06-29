@@ -312,7 +312,6 @@
 
    (with-access::J2SFun this (body params thisp loc (fmode mode) decl name
 				ismethodof)
-      (when ismethodof (tprint "name=" name " ctx=" ctx))
       (let ((id (or name (j2sfun-id this))))
 	 ;; check parameter correctness
 	 (if (eq? fmode 'normal)

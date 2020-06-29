@@ -869,8 +869,8 @@
 ;*    j2s->list ::J2SWhile ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SWhile)
-   (with-access::J2SWhile this (op test body)
-      `(,@(call-next-method) ,@(dump-info this)
+   (with-access::J2SWhile this (op test body loc)
+      `(,@(call-next-method) ,@(dump-loc loc) ,@(dump-info this)
 	  ,(j2s->list test) ,(j2s->list body))))
    
 ;*---------------------------------------------------------------------*/
@@ -878,8 +878,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFor)
    (with-access::J2SFor this (init test incr body loc)
-      `(,@(call-next-method) ,@(dump-info this)
-	  ,@(dump-loc loc)
+      `(,@(call-next-method) ,@(dump-loc loc) ,@(dump-info this)
 	  ,(j2s->list init)
 	  ,(j2s->list test)
 	  ,(j2s->list incr)
@@ -889,8 +888,8 @@
 ;*    j2s->list ::J2SForIn ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SForIn)
-   (with-access::J2SForIn this (lhs obj body)
-      `(,@(call-next-method) ,@(dump-info this)
+   (with-access::J2SForIn this (lhs obj body loc)
+      `(,@(call-next-method) ,@(dump-loc loc) ,@(dump-info this)
 	  ,(j2s->list lhs)
 	  ,(j2s->list obj)
 	  ,(j2s->list body))))
@@ -964,8 +963,9 @@
 ;*    j2s->list ::J2SStmtExpr ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SStmtExpr)
-   (with-access::J2SStmtExpr this (expr)
-      `(,@(call-next-method) ,@(dump-info this) ,(j2s->list expr))))
+   (with-access::J2SStmtExpr this (expr loc)
+      `(,@(call-next-method) ,@(dump-loc loc)
+	  ,@(dump-info this) ,(j2s->list expr))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SObjectInit ...                                    */

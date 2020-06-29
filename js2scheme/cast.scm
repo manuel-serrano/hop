@@ -34,8 +34,7 @@
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_syntax
-	   __js2scheme_utils
-	   __js2scheme_type-hint)
+	   __js2scheme_utils)
 
    (export j2s-cast-stage))
 
@@ -229,7 +228,8 @@
 	 (or (and (eq? totype 'bool)
 		  (memq type '(int32 uint32 integer number))))))
 
-   (with-access::J2SCast this (expr type)
+   (with-access::J2SCast this (expr type loc)
+      (type-cast! expr '*)
       (if (optimize-cast? totype type)
 	  (begin
 	     (set! type totype)
@@ -305,7 +305,7 @@
 ;*    type-cast! ::J2SCall ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SCall totype)
-   (with-access::J2SCall this (fun args thisarg)
+   (with-access::J2SCall this (fun args thisarg loc)
       (when (pair? thisarg)
 	 (set-car! thisarg (type-cast! (car thisarg) 'any)))
       (type-call-cast! this fun args totype)))
@@ -363,7 +363,7 @@
 ;*    type-cast! ::J2SStmtExpr ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SStmtExpr totype)
-   (with-access::J2SStmtExpr this (expr)
+   (with-access::J2SStmtExpr this (expr loc)
       (set! expr (type-cast! expr '*))
       this))
    
@@ -481,7 +481,7 @@
 ;*    type-cast! ::J2SBinary ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SBinary totype)
-   (with-access::J2SBinary this (op lhs rhs type hint)
+   (with-access::J2SBinary this (op lhs rhs type)
       (case op
 	 ((>> <<)
 	  (if (eq? type 'int32)
@@ -527,7 +527,7 @@
 ;*    type-cast! ::J2SLoop ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SLoop totype)
-   (with-access::J2SLoop this (body)
+   (with-access::J2SLoop this (body loc)
       (set! body (type-cast! body totype))
       this))
 
