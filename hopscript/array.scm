@@ -651,17 +651,6 @@
        o))
 
 ;*---------------------------------------------------------------------*/
-;*    js-array-find-length-property ...                                */
-;*---------------------------------------------------------------------*/
-(define (js-array-find-length-property arr::JsArray)
-   (with-access::JsArray arr (elements)
-      (when (>=fx (vector-length elements) 1)
-	 (when (isa? (vector-ref elements 0) JsPropertyDescriptor)
-	    (with-access::JsPropertyDescriptor (vector-ref elements 0) (name)
-	       (when (eq? name (& "length"))
-		  (vector-ref elements 0)))))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-array-update-ilen! ...                                        */
 ;*    -------------------------------------------------------------    */
 ;*    This function is called when a inline/holey array is added       */
@@ -681,6 +670,17 @@
 	     (js-object-mode-inline-set! arr #t))
 	    (else
 	     (set! ilen (+u32 end 1)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-find-length-property ...                                */
+;*---------------------------------------------------------------------*/
+(define (js-array-find-length-property arr::JsArray)
+   (with-access::JsArray arr (elements)
+      (when (>=fx (vector-length elements) 1)
+	 (when (isa? (vector-ref elements 0) JsPropertyDescriptor)
+	    (with-access::JsPropertyDescriptor (vector-ref elements 0) (name)
+	       (when (eq? name (& "length"))
+		  (vector-ref elements 0)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-update-length-property! ...                             */
@@ -2638,7 +2638,6 @@
 	 (cond
 	    ((<u32 i ilen)
 	     (u32vref vec i))
-	    ;; MS: 23 feb 2017
 	    ((not (js-isindex? i))
 	     (set! p (js-toname p %this))
 	     (if (eq? p (& "length"))
@@ -2666,7 +2665,6 @@
 	     (cond
 		((<u32 i ilen)
 		 (u32vref vec i))
-		;; MS: 23 feb 2017
 		((not (js-isindex? i))
 		 (set! p (js-toname p %this))
 		 (call-next-method))

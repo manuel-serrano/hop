@@ -227,14 +227,21 @@
       (unless (eq? totype '*)
 	 (or (and (eq? totype 'bool)
 		  (memq type '(int32 uint32 integer number))))))
-
+   
    (with-access::J2SCast this (expr type loc)
       (type-cast! expr '*)
-      (if (optimize-cast? totype type)
-	  (begin
-	     (set! type totype)
-	     this)
-	  (cast expr totype))))
+      (cond
+	 ((optimize-cast? totype type)
+	  (set! type totype)
+	  this)
+	 ((eq? type totype)
+	  this)
+	 ((need-cast? (j2s-vtype expr) totype)
+	  (J2SCast totype expr))
+	 ((need-cast? (j2s-vtype expr) type)
+	  this)
+	 (else
+	  expr))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-call-cast! ...                                              */
