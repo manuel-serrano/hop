@@ -253,7 +253,7 @@
 		  +0.0))
 	     (else
 	      (if (eq? type 'real)
-		  (epairify loc `(js-toflonum ,sexpr))
+		  (epairify loc `(js-toflonum (js-tonumber ,sexpr)))
 		  (epairify loc `(js-tonumber ,sexpr %this)))))))
       ((-)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7
@@ -1908,7 +1908,6 @@
 	 ((eq? tl 'integer)
 	  `(/integer ,(todouble left tl ctx) ,(todouble right tr ctx)))
 	 ((or (eq? tl 'real) (eq? tr 'real))
-	  (tprint "LEFT=" left " " tl)
 	  `(/fl ,(todouble left tl ctx) ,(todouble right tr ctx)))
 	 ((eq? tr 'integer)
 	  `(/integer ,(todouble left tl ctx) ,(asreal right tr)))
