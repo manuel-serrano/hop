@@ -65,7 +65,7 @@
 		  (fprintf (current-error-port) "~a." i)
 		  (flush-output-port (current-error-port)))
 	       (cell-set! fix #t)
-	       (hintnum this fix)
+	       (hintnum this #f fix)
 	       (unless (cell-ref fix)
 		  (loop (+fx i 1)))))
 	 (when (>=fx j2s-verbose 3) (fprintf (current-error-port) "/"))
@@ -139,13 +139,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SNode ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (hintnum this::J2SNode fix::cell)
+(define-walk-method (hintnum this::J2SNode assig::bool fix::cell)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SReturn ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (hintnum this::J2SReturn fix::cell)
+(define-walk-method (hintnum this::J2SReturn assig::bool fix::cell)
    (with-access::J2SReturn this (from expr)
       (when (isa? from J2SBindExit)
 	 (with-access::J2SBindExit from (hint)
@@ -201,7 +201,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SBinary ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (hintnum this::J2SBinary fix::cell)
+(define-walk-method (hintnum this::J2SBinary assig fix::cell)
    (call-default-walker)
    (with-access::J2SBinary this (lhs rhs op)
       (hintnum-binary this op lhs rhs fix)))
@@ -209,7 +209,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SUnary ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (hintnum this::J2SUnary fix::cell)
+(define-walk-method (hintnum this::J2SUnary assig fix::cell)
    (call-default-walker)
    (with-access::J2SUnary this (expr)
       (when (memq (j2s-type expr) '(any number))
@@ -218,7 +218,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SParen ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (hintnum this::J2SParen fix::cell)
+(define-walk-method (hintnum this::J2SParen assig fix::cell)
    (call-default-walker)
    (with-access::J2SParen this (expr)
       (when (memq (j2s-type expr) '(any number))
@@ -227,7 +227,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SAssigOp ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (hintnum this::J2SAssigOp fix::cell)
+(define-walk-method (hintnum this::J2SAssigOp assig fix::cell)
    (with-access::J2SAssigOp this (op lhs rhs)
       (call-default-walker)
       (hintnum-binary this op lhs rhs fix)))
@@ -235,7 +235,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SPostfix ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (hintnum this::J2SPostfix fix::cell)
+(define-walk-method (hintnum this::J2SPostfix assig fix::cell)
    (with-access::J2SPostfix this (op lhs rhs)
       (call-default-walker)
       (hintnum-binary this op lhs rhs fix)))
@@ -243,7 +243,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SPrefix ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (hintnum this::J2SPrefix fix::cell)
+(define-walk-method (hintnum this::J2SPrefix assig fix::cell)
    (with-access::J2SPrefix this (op lhs rhs)
       (call-default-walker)
       (hintnum-binary this op lhs rhs fix)))
@@ -251,15 +251,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SRef ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (hintnum this::J2SRef fix::cell)
-   (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (hint)
-	 (add-expr-hint! this hint #f fix))))
+(define-walk-method (hintnum this::J2SRef assig fix::cell)
+   (unless assig
+      (with-access::J2SRef this (decl)
+	 (with-access::J2SDecl decl (hint)
+	    (add-expr-hint! this hint #f fix)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SDeclInit ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (hintnum this::J2SDeclInit fix::cell)
+(define-walk-method (hintnum this::J2SDeclInit assig fix::cell)
    (call-default-walker)
    (with-access::J2SDeclInit this (hint val vtype)
       (unless (isa? this J2SDeclFun)
@@ -273,20 +274,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SAssig ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (hintnum this::J2SAssig fix::cell)
-   (call-default-walker)
+(define-walk-method (hintnum this::J2SAssig assig fix::cell)
    (with-access::J2SAssig this (lhs rhs)
-      (cond
-	 ((is-hint? lhs 'real)
-	  (add-expr-hint! rhs (expr-hint lhs) #f fix))
-	 ((is-hint? rhs 'real)
-	  ;;(add-expr-hint! lhs (expr-hint rhs) #f fix)
-	  (add-expr-hint! this (expr-hint rhs) #f fix)))))
+      (hintnum lhs #t fix)
+      (hintnum rhs #f fix)
+      (with-access::J2SAssig this (lhs rhs)
+	 (cond
+	    ((is-hint? lhs 'real)
+	     (add-expr-hint! rhs (expr-hint lhs) #f fix))
+	    ((is-hint? rhs 'real)
+	     ;;(add-expr-hint! lhs (expr-hint rhs) #f fix)
+	     (add-expr-hint! this (expr-hint rhs) #f fix))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hinthum ::J2SCall ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (hintnum this::J2SCall fix::cell)
+(define-walk-method (hintnum this::J2SCall assig fix::cell)
    
    (define (math-call? fun args)
       (when (and (pair? args) (isa? fun J2SAccess))
