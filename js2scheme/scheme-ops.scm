@@ -238,13 +238,23 @@
 	     (vtyp (j2s-vtype expr)))
 	  (cond
 	     ((eqv? sexpr 0)
-	      +0.0)
+	      (if (memq type '(int32 uint32 int53 integer))
+		  0
+		  +0.0))
 	     ((memq vtyp '(int32 uint32 int53 integer number))
 	      sexpr)
 	     ((memq typ '(int32 uint32 int53 integer number))
 	      (j2s-cast sexpr expr vtyp typ ctx))
+	     ((eq? typ 'real)
+	      `(+fl ,sexpr 0.0 ))
+	     ((eq? typ 'null)
+	      (if (memq type '(int32 uint32 int53 integer))
+		  0
+		  +0.0))
 	     (else
-	      (epairify loc `(js-tonumber ,sexpr %this))))))
+	      (if (eq? type 'real)
+		  (epairify loc `(js-toflonum ,sexpr))
+		  (epairify loc `(js-tonumber ,sexpr %this)))))))
       ((-)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7
        (let ((sexpr (j2s-scheme expr mode return ctx))

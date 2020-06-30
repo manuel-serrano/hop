@@ -140,12 +140,19 @@
      (null
 	((object ,js-toobject)
 	 (scmstring ,js->scmstring)
+	 (number ,(lambda (v expr ctx) 0))
+	 (int32 ,(lambda (v expr ctx) #s32:0))
+	 (uint32 ,(lambda (v expr ctx) #u32:0))
+	 (integer ,(lambda (v expr ctx) 0))
+	 (real ,(lambda (v expr ctx) 0.0))
 	 (iterable error)
 	 (any nop)))
      (undefined
 	((object ,js-toobject)
 	 (bool ,(lambda (v expr ctx) #f))
 	 (scmstring ,js->scmstring)
+	 (number ,(lambda (v expr ctx) +nan.0))
+	 (real ,(lambda (v expr ctx) +nan.0))
 	 (iterable error)
 	 (any nop)))
      (regexp
