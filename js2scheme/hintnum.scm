@@ -280,7 +280,7 @@
 	 ((is-hint? lhs 'real)
 	  (add-expr-hint! rhs (expr-hint lhs) #f fix))
 	 ((is-hint? rhs 'real)
-	  (add-expr-hint! lhs (expr-hint rhs) #f fix)
+	  ;;(add-expr-hint! lhs (expr-hint rhs) #f fix)
 	  (add-expr-hint! this (expr-hint rhs) #f fix)))))
 
 ;*---------------------------------------------------------------------*/
@@ -408,15 +408,6 @@
 	 (set! type 'real)))
    this)
 
-;*---------------------------------------------------------------------*/
-;*    propagate-real! ::J2SAssig ...                                   */
-;*---------------------------------------------------------------------*/
-(define-walk-method (propagate-real! this::J2SAssig)
-   (if (eq? (j2s-vtype this) 'real)
-       this
-       (with-access::J2SExpr this (loc)
-	  (J2SCast 'real this))))
-   
 ;*---------------------------------------------------------------------*/
 ;*    as-real! ...                                                     */
 ;*---------------------------------------------------------------------*/
