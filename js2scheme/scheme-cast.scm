@@ -129,6 +129,9 @@
 	 (array nop)
 	 (scmstring ,js->scmstring)
 	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))
+	 (real ,(lambda (v expr ctx) `(js-toflonum (js-tonumber ,v %this))))
+	 (integer ,(lambda (v expr ctx) `(js-tointeger ,v %this)))
+	 (number ,(lambda (v expr ctx) `(js-tonumber ,v %this)))
 	 (any nop)))
      (bool
 	((int32 ,js-bool->int32)
@@ -136,7 +139,7 @@
 	 (object ,js-bool->jsobject)
 	 (scmstring ,js->scmstring)
 	 (real ,(lambda (v expr ctx) `(js-toflonum (js-tonumber ,v %this))))
-	 (integer ,(lambda (v expr ctx) `(js-tonumber ,v %this)))
+	 (integer ,(lambda (v expr ctx) `(js-tointeger ,v %this)))
 	 (number ,(lambda (v expr ctx) `(js-tonumber ,v %this)))
 	 (iterable error)
 	 (any nop)))
