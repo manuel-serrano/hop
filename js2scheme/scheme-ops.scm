@@ -246,7 +246,7 @@
 	     ((memq typ '(int32 uint32 int53 integer number))
 	      (j2s-cast sexpr expr vtyp typ ctx))
 	     ((eq? typ 'real)
-	      `(+fl ,sexpr 0.0 ))
+	      sexpr)
 	     ((eq? typ 'null)
 	      (if (memq type '(int32 uint32 int53 integer))
 		  0
