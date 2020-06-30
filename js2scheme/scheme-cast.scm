@@ -135,6 +135,9 @@
 	 (uint32 ,js-bool->uint32)
 	 (object ,js-bool->jsobject)
 	 (scmstring ,js->scmstring)
+	 (real ,(lambda (v expr ctx) `(js-toflonum (js-tonumber ,v %this))))
+	 (integer ,(lambda (v expr ctx) `(js-tonumber ,v %this)))
+	 (number ,(lambda (v expr ctx) `(js-tonumber ,v %this)))
 	 (iterable error)
 	 (any nop)))
      (null
