@@ -345,11 +345,11 @@
    (with-access::J2SBinary this (op lhs rhs type loc)
       (when (memq op '(- / * +))
 	 (when (or (eq? (j2s-vtype lhs) 'real) (eq? (j2s-vtype rhs) 'real))
-	    (unless (eq? (j2s-vtype lhs) 'real)
+	    (when (memq (j2s-vtype lhs) '(number integer))
 	       (set! lhs (J2SCast 'real lhs)))
-	    (unless (eq? (j2s-vtype rhs) 'real)
-	       (set! lhs (J2SCast 'real rhs)))
-	    (unless (eq? type 'real)
+	    (when (memq (j2s-vtype rhs) '(number integer))
+	       (set! rhs (J2SCast 'real rhs)))
+	    (when (memq type '(number integer))
 	       (set! type 'real)
 	       (cell-set! fix #f))))))
 
@@ -361,7 +361,7 @@
    (with-access::J2SUnary this (op expr type)
       (when (memq op '(- +))
 	 (when (eq? (j2s-vtype expr) 'real)
-	    (unless (eq? type 'real)
+	    (when (memq type '(number integer))
 	       (set! type 'real)
 	       (cell-set! fix #f))))))
 
@@ -372,7 +372,7 @@
    (call-default-walker)
    (with-access::J2SParen this (expr type)
       (when (eq? (j2s-vtype expr) 'real)
-	 (unless (eq? type 'real)
+	 (when (memq type '(number integer))
 	    (set! type 'real)
 	    (cell-set! fix #f)))))
 
