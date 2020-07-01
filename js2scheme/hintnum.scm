@@ -252,7 +252,10 @@
       (unless (isa? this J2SDeclFun)
 	 (add-expr-hint! val hint  #f fix)
 	 (when (is-hint? val 'real)
-	    (set! vtype 'real)))))
+	    (set! vtype 'real)
+	    (when (isa? val J2SUndefined)
+	       (with-access::J2SUndefined val (loc)
+	       (set! val (J2SNumber 0.0))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SAssig ...                                           */
