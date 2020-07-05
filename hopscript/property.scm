@@ -407,7 +407,8 @@
 	     (fprint (current-error-port) "===" msg (typeof obj) " MAPPED"
 		" length=" (vector-length elements)
 		" plain=" (js-object-mode-plain? obj)
-		" inline=" (js-object-inline-elements? obj)
+		" inline=" (js-object-mode-inline? obj)
+		" inline-els=" (js-object-inline-elements? obj)
 		" extensible=" (js-object-mode-extensible? obj)
 		" mlengths=" (vector-length methods)
 		"\n   cmap.%id=" %id

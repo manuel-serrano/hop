@@ -71,10 +71,12 @@
 (define-method (xml-unpack obj::JsArguments ctx)
    (if (isa? ctx JsGlobalObject)
        (with-access::JsArguments obj (vec)
-	  (map! (lambda (desc)
-		   (unless (eq? desc (js-absent))
-		      (with-access::JsPropertyDescriptor desc (name)
-			 (js-property-value obj obj name desc ctx))))
+	  (map! (lambda (v)
+		   (unless (eq? v (js-absent))
+		      (if (isa? v JsPropertyDescriptor)
+			  (with-access::JsPropertyDescriptor v (name)
+			     (js-property-value obj obj name v ctx))
+			  v)))
 	     (vector->list vec)))
        (error "xml-unpack ::JsArguments" "Not a JavaScript context" ctx)))
 
@@ -237,7 +239,7 @@
    (js-put! arr idx val #f %this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-argument-index-set! ...                                       */
+;*    js-arguments-index-set! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-arguments-index-set! arr::JsArguments idx val %this)
    (js-put! arr (js-uint32-tointeger idx) val #f %this))
@@ -315,6 +317,7 @@
 		(call-next-method))
 	       ((and (<uint32 i (vector-length vec))
 		     (not (eq? (u32vref vec i) (js-absent))))
+		(js-object-mode-inline-set! o #f)
 		(u32vset! vec i new))
 	       (else
 		(call-next-method)))))))
@@ -326,9 +329,16 @@
    (with-access::JsArguments o (vec)
       (let ((i::uint32 (js-toindex p)))
 	 (when (and (js-isindex? i) (<uint32 i (vector-length vec)))
-	    (let ((o (u32vref vec i)))
-	       (unless (eq? o (js-absent))
-		  o))))))
+	    (let ((v (u32vref vec i)))
+	       (unless (eq? v (js-absent))
+		  (if (isa? v JsPropertyDescriptor)
+		      v
+		      (instantiate::JsValueDescriptor
+			 (name (js-index-name (uint32->fixnum i)))
+			 (value v)
+			 (writable #t)
+			 (configurable #t)
+			 (enumerable #t)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    function1->proc ...                                              */
@@ -420,9 +430,13 @@
       (if (js-isindex? index)
 	  (with-access::JsArguments o (vec)
 	     (let ((len (vector-length vec)))
-		(if (<=u32 (fixnum->uint32 len) index)
-		    (call-next-method)
-		    #t)))
+		(cond
+		   ((<=u32 (fixnum->uint32 len) index)
+		    (call-next-method))
+		   ((eq? (vector-ref vec (uint32->fixnum index)) (js-absent))
+		    #f)
+		   (else
+		    #t))))
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
@@ -460,9 +474,15 @@
 		(if (<=u32 (fixnum->uint32 len) index)
 		    (call-next-method)
 		    (let ((d (u32vref vec index)))
-		       (if (eq? d (js-absent))
-			   (call-next-method)
-			   (js-property-value o o p d %this))))))
+		       (cond
+			  ((eq? d (js-absent))
+			   (call-next-method))
+			  ((js-object-mode-inline? o)
+			   d)
+			  ((isa? d JsPropertyDescriptor)
+			   (js-property-value o o p d %this))
+			  (else
+			   d))))))
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
@@ -483,9 +503,15 @@
 		 (call-next-method)))
 	    ((<uint32 i (vector-length vec))
 	     (let ((desc (u32vref vec i)))
-		(if (eq? desc (js-absent))
-		    (call-next-method)
-		    (js-property-value o o p desc %this))))
+		(cond
+		   ((eq? desc (js-absent))
+		    (call-next-method))
+		   ((js-object-mode-inline? o)
+		    desc)
+		   ((isa? desc JsPropertyDescriptor)
+		    (js-property-value o o p desc %this))
+		   (else
+		    desc))))
 	    (else
 	     (call-next-method))))))
 
@@ -517,42 +543,19 @@
 ;*---------------------------------------------------------------------*/
 (define (js-arguments %this::JsGlobalObject vec::vector)
    (with-access::JsGlobalObject %this (js-arguments-cmap)
-      (instantiateJsArguments
-	 (vec vec)
-	 (cmap js-arguments-cmap)
-	 (elements (vector (vector-length vec) (js-undefined)))
-	 (__proto__ (js-object-proto %this)))))
+      (let ((a (instantiateJsArguments
+		  (vec vec)
+		  (cmap js-arguments-cmap)
+		  (elements (vector (vector-length vec) (js-undefined)))
+		  (__proto__ (js-object-proto %this)))))
+	 (js-object-mode-inline-set! a #f)
+	 a)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-arguments ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-strict-arguments %this::JsGlobalObject lst::pair-nil)
-   
-   (define (value->descriptor v i)
-      (instantiate::JsValueDescriptor
-	 (name (js-integer->jsstring i))
-	 (value v)
-	 (writable #t)
-	 (configurable #t)
-	 (enumerable #t)))
-   
-   (let* ((len (length lst))
-	  (vec (make-vector len)))
-      ;; initialize the vector of descriptors
-      (let loop ((i 0)
-		 (lst lst))
-	 (when (pair? lst)
-	    (vector-set! vec i (value->descriptor (car lst) i))
-	    (loop (+fx i 1) (cdr lst))))
-      ;; build the arguments object
-      (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
-	 (instantiateJsArguments
-	    (vec vec)
-	    (cmap js-strict-arguments-cmap)
-	    (elements (vector (vector-length vec)
-			 strict-callee-property
-			 strict-caller-property))
-	    (__proto__ (js-object-proto %this))))))
+   (js-strict-arguments-vector %this (apply vector lst)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-arguments-vector ...                                   */
@@ -569,19 +572,21 @@
    
    (let* ((len (vector-length vec)))
       ;; initialize the vector of descriptors
-      (let loop ((i (-fx (vector-length vec) 1)))
-	 (when (>=fx i 0)
-	    (vector-set! vec i (value->descriptor (vector-ref vec i) i))
-	    (loop (-fx i 1))))
+;*       (let loop ((i (-fx (vector-length vec) 1)))                   */
+;* 	 (when (>=fx i 0)                                              */
+;* 	    (vector-set! vec i (value->descriptor (vector-ref vec i) i)) */
+;* 	    (loop (-fx i 1))))                                         */
       ;; build the arguments object
-      (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
-	 (instantiateJsArguments
-	    (vec vec)
-	    (cmap js-strict-arguments-cmap)
-	    (elements (vector (vector-length vec)
-			 strict-callee-property
-			 strict-caller-property))
-	    (__proto__ (js-object-proto %this))))))
+      (let ((a (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
+		  (instantiateJsArguments
+		     (vec vec)
+		     (cmap js-strict-arguments-cmap)
+		     (elements (vector (vector-length vec)
+				  strict-callee-property
+				  strict-caller-property))
+		     (__proto__ (js-object-proto %this))))))
+	 (js-object-mode-inline-set! a #t)
+	 a)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments->vector..                                           */
@@ -671,8 +676,10 @@
 				 (js-touint32 (js-get o (& "length") %this) %this)))))
 		   (let loop ((i 0))
 		      (when (<fx i len)
-			 (proc (js-property-value o o i (vector-ref vec i) %this)
-			    %this)
+			 (let ((v (vector-ref vec i)))
+			    (if (isa? v JsPropertyDescriptor)
+				(proc (js-property-value o o i v %this) %this)
+				(proc v %this)))
 			 (loop (+fx i 1))))))))))
 
 

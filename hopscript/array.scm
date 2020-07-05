@@ -4372,7 +4372,19 @@
 		(else
 		 (array-slice! o k final)))))
 	 ((not (js-array? o))
-	  (array-slice! o k final))
+	  (if (and (isa? o JsArguments) (js-object-mode-inline? o))
+	      (with-access::JsArguments o (vec)
+		 (let ((vlen (vector-length vec)))
+		    (cond
+		       ((<= final vlen)
+			(vector-slice! o vec (->fixnum k) (->fixnum final)))
+		       ((>fx vlen 0)
+			(let* ((arr (vector-slice! o vec (->fixnum k) vlen))
+			       (vlen (->fixnum (js-get-length arr %this))))
+			   (array-copy! o vlen arr (- len vlen) final)))
+		       (else
+			(array-slice! o k final)))))
+	      (array-slice! o k final)))
 	 (else
 	  (with-access::JsArray o (vec ilen)
 	     (let ((vlen (uint32->fixnum ilen)))

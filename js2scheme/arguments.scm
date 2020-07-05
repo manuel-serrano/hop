@@ -9,8 +9,8 @@
 ;*    Arguments optimization                                           */
 ;*    -------------------------------------------------------------    */
 ;*    This stage annotates ARGUMENTS and OPTIONAL arguments usages     */
-;*    so that the Scheme code generation can better allocates and      */
-;*    uses this special variable.                                      */
+;*    so that the Scheme code generation can better allocate and       */
+;*    use this special variable.                                       */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -47,31 +47,32 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-arguments this conf)
    (when (isa? this J2SProgram)
-      (annotate-arguments this this))
+      (annotate-arguments this this #f))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    annotate-arguments ::obj ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-generic (annotate-arguments this::obj parent)
+(define-generic (annotate-arguments this::obj parent lhs::bool)
    (when (pair? this)
-      (for-each (lambda (n) (annotate-arguments n parent)) this)))
+      (for-each (lambda (n) (annotate-arguments n parent lhs)) this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    annotate-arguments ::J2SNode ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (annotate-arguments this::J2SNode parent)
+(define-method (annotate-arguments this::J2SNode parent lhs)
    (vector-for-each (lambda (f)
 		       (let ((info (class-field-info f)))
 			  (when (and (pair? info) (member "ast" info))
 			     (annotate-arguments
-				((class-field-accessor f) this) this))))
+				((class-field-accessor f) this) this
+				(or lhs (eq? (class-field-name f) 'lhs))))))
       (class-all-fields (object-class this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    annotate-arguments ::J2SFun ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (annotate-arguments this::J2SFun parent)
+(define-method (annotate-arguments this::J2SFun parent lhs)
    (with-access::J2SFun this (body argumentsp mode params loc)
       (when (and argumentsp
 		 (or (memq mode '(strict hopscript)) (null? params)))
@@ -82,12 +83,12 @@
 	    (when (isa? decl J2SDeclRest)
 	       (with-access::J2SDeclRest decl (alloc-policy)
 		  (set! alloc-policy 'lazy)))))
-      (annotate-arguments body parent)))
-      
+      (annotate-arguments body parent #f)))
+
 ;*---------------------------------------------------------------------*/
 ;*    annotate-arguments ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (annotate-arguments this::J2SRef parent)
+(define-method (annotate-arguments this::J2SRef parent lhs)
    
    (define (arguments-invalidate! decl)
       (with-access::J2SDeclRest decl (alloc-policy)
@@ -95,7 +96,8 @@
    
    (define (get-length? node::J2SAccess)
       (with-access::J2SAccess node (field)
-	 (and (isa? field J2SString)
+	 (and (not lhs)
+	      (isa? field J2SString)
 	      (with-access::J2SString field (val)
 		 (string=? val "length")))))
    
