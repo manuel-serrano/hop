@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 07:04:23 2019                          */
 ;*    Last change :  Sun Dec 15 17:53:12 2019 (serrano)                */
-;*    Copyright   :  2019 Manuel Serrano                               */
+;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Ast node usage API                                               */
 ;*=====================================================================*/
@@ -81,8 +81,8 @@
 ;*    decl-usage-has? ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (decl-usage-has? decl keys)
-   (with-access::J2SDecl decl (_usage)
-      (usage-has? _usage keys)))
+   (with-access::J2SDecl decl (usage)
+      (usage-has? usage keys)))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage-strict? ...                                                */
@@ -94,8 +94,8 @@
 ;*    decl-usage-strict? ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (decl-usage-strict? decl keys)
-   (with-access::J2SDecl decl (_usage)
-      (usage-strict? _usage keys)))
+   (with-access::J2SDecl decl (usage)
+      (usage-strict? usage keys)))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage-add ...                                                    */
@@ -107,8 +107,8 @@
 ;*    decl-usage-add! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (decl-usage-add! decl key)
-   (with-access::J2SDecl decl ((_usage _usage))
-      (set! _usage (usage-add _usage key))))
+   (with-access::J2SDecl decl (usage)
+      (set! usage (usage-add usage key))))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage-rem ...                                                    */
@@ -120,8 +120,8 @@
 ;*    decl-usage-rem! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (decl-usage-rem! decl key)
-   (with-access::J2SDecl decl ((_usage _usage))
-      (set! _usage (usage-rem _usage key))))
+   (with-access::J2SDecl decl (usage)
+      (set! usage (usage-rem usage key))))
 
 ;*---------------------------------------------------------------------*/
 ;*    decl-ronly? ...                                                  */

@@ -194,20 +194,20 @@
 	       `(:hidden-class #f)))))
 
    (with-access::J2SDecl this (loc scope id vtype)
-      (let ((ident (j2s-decl-scheme-id this)))
+      (let ((ident (j2s-decl-scm-id this ctx)))
 	 (epairify-deep loc
 	    (cond
 	       ((memq scope '(global %scope))
 		(let ((fun-name (format "function:~a:~a"
 				   (cadr loc) (caddr loc))))
 		   (if (and (not (isa? this J2SDeclExtern)) (in-eval? return))
-		       `(js-decl-eval-put! %scope ,(j2s-scheme-name id ctx)
+		       `(js-decl-eval-put! %scope ,(j2s-decl-name this ctx)
 			   ,value ,(strict-mode? mode) %this)
 		       (if (js-need-global? this scope mode)
 			   `(define ,ident
 			       (let ((%%tmp ,value))
 				  (js-define %this %scope
-				     ,(j2s-scheme-name id ctx)
+				     ,(j2s-decl-name this ctx)
 				     (lambda (%) ,ident)
 				     (lambda (% %v) (set! ,ident %v))
 				     %source ,(caddr loc)
@@ -230,7 +230,7 @@
    
    (define (j2s-scheme-param this)
       (with-access::J2SDecl this (vtype)
-	 (vtype-ident (j2s-decl-scheme-id this) vtype (context-conf ctx))))
+	 (vtype-ident (j2s-decl-scm-id this ctx) vtype (context-conf ctx))))
    
    (define (j2s-scheme-var this)
       (with-access::J2SDecl this (loc id writable)
@@ -245,8 +245,8 @@
       (with-access::J2SDecl this (loc scope id utype)
 	 (epairify loc
 	    (if (memq scope '(global))
-		`(define ,(j2s-decl-scheme-id this) ,(decl-init-val this))
-		(let ((var (j2s-decl-scheme-id this)))
+		`(define ,(j2s-decl-scm-id this ctx) ,(decl-init-val this))
+		(let ((var (j2s-decl-scm-id this ctx)))
 		   `(,var ,(decl-init-val this)))))))
 
    (cond
@@ -270,7 +270,7 @@
    
    (define (j2s-scheme-var this)
       (with-access::J2SDeclInit this (loc val writable)
-	 (let ((ident (j2s-decl-scheme-id this)))
+	 (let ((ident (j2s-decl-scm-id this ctx)))
 	    (epairify loc
 	       (if writable
 		   `(begin
@@ -310,9 +310,9 @@
 	 ((not (and (j2s-let? decl) (not (j2s-let-opt? decl))))
 	  `(set! ,(j2s-scheme lhs mode return ctx) ,val))
 	 (init?
-	  `(set! ,(j2s-decl-scheme-id decl) ,val))
+	  `(set! ,(j2s-decl-scm-id decl ctx) ,val))
 	 (else
-	  `(js-let-set! ,(j2s-decl-scheme-id decl) ,val ',loc %this))))
+	  `(js-let-set! ,(j2s-decl-scm-id decl ctx) ,val ',loc %this))))
 
    (with-access::J2SRef lhs (decl)
       (with-access::J2SDecl decl (writable writable scope id hint exports)
@@ -412,18 +412,18 @@
 	     (with-access::J2SExport (car exports) (index decl)
 		`(vector-ref %evars ,index)))
 	    ((j2s-let-opt? decl)
-	     (j2s-decl-scheme-id decl))
+	     (j2s-decl-scm-id decl ctx))
 	    ((j2s-let? decl)
 	     (if (decl-usage-has? decl '(uninit))
 		 (epairify loc
-		    `(js-let-ref ,(j2s-decl-scheme-id decl) ',id ',loc %this))
-		 (j2s-decl-scheme-id decl)))
+		    `(js-let-ref ,(j2s-decl-scm-id decl ctx) ',id ',loc %this))
+		 (j2s-decl-scm-id decl ctx)))
 	    ((and (memq scope '(global %scope export)) (in-eval? return))
 	     (epairify loc
 		`(js-global-object-get-name %scope
 		    ,(& id (context-program ctx)) #f %this)))
 	    (else
-	     (j2s-decl-scheme-id decl))))))
+	     (j2s-decl-scm-id decl ctx))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SSuper ...                                        */
@@ -431,7 +431,6 @@
 (define-method (j2s-scheme this::J2SSuper mode return ctx)
    (with-access::J2SSuper this (decl loc context)
       (case context
-;* 	 ((class) `(js-super ,(call-next-method) #t ',loc %this))      */
 	 ((literal) `(js-super ,(call-next-method) #f ',loc %this))
 	 (else '%super))))
 
@@ -461,7 +460,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SThis mode return ctx)
    (with-access::J2SThis this (loc type decl)
-      (let ((id (j2s-decl-scheme-id decl)))
+      (let ((id (j2s-decl-scm-id decl ctx)))
 	 (if (and (j2s-let? decl) (not (j2s-let-opt? decl)))
 	     `(js-let-ref ,id ,id ',loc %this)
 	     id))))
@@ -802,47 +801,60 @@
 ;*    j2s-let-decl-toplevel ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (j2s-let-decl-toplevel::pair-nil d::J2SDeclInit mode return ctx)
-   (with-access::J2SDeclInit d (val id hint scope loc)
-      (let ((ident (j2s-decl-profile-id d ctx)))
-	 (cond
-	    ((or (not (isa? val J2SFun))
-		 (isa? val J2SSvc)
-		 (decl-usage-has? d '(assig)))
+   (with-access::J2SDeclInit d (val hint scope loc)
+      (if (or (not (isa? val J2SFun))
+	      (isa? val J2SSvc)
+	      (decl-usage-has? d '(assig)))
+	  (let ((ident (j2s-decl-scm-id d ctx)))
 	     (if (decl-usage-has? d '(eval))
 		 `(begin
-		     (define ,ident ,(j2s-scheme val mode return ctx))
-		     (js-define %this ,scope ,(j2s-scheme-name id ctx)
+		     (define ,(j2s-decl-scm-id d ctx)
+			,(j2s-scheme val mode return ctx))
+		     (js-define %this ,scope ,(j2s-decl-name d ctx)
 			(lambda (%) ,ident)
 			(lambda (% %v) (set! ,ident %v))
 			%source
 			,(caddr loc)))
-		 `(define ,ident ,(j2s-scheme val mode return ctx))))
-	    ((decl-usage-has? d '(ref get new set eval))
-	     (let ((fun (jsfun->lambda val mode return ctx
-			   `(js-get ,ident
-			       ,(& "prototype" (context-program ctx))
-			       %this) #f))
-		   (tmp (j2s-profile-id (j2s-fast-id id) loc ctx)))
-		`(begin
-		    (define ,tmp ,fun)
-		    (define ,ident
-		       ,(j2sfun->scheme val tmp #f mode return ctx))
-		    ,@(if (decl-usage-has? d '(eval))
-			  `((js-define %this ,scope ,(j2s-scheme-name id ctx)
-			       (lambda (%) ,ident)
-			       (lambda (% %v) (set! ,ident %v))
-			       %source
-			       ,(caddr loc)))
-			  '()))))
-	    ((decl-usage-has? d '(call))
-	     (let ((fastid (j2s-profile-id (j2s-fast-id id) loc ctx)))
-		`(define ,fastid
-		    ,(jsfun->lambda val mode return ctx
-			`(js-get ,fastid
-			    ,(& "prototype" (context-program ctx))
-			    %this) #f))))
-	    (else
-	     '())))))
+		 `(define ,(j2s-decl-scm-id d ctx)
+		     ,(j2s-scheme val mode return ctx))))
+	  (j2s-let-decl-toplevel-fun d mode return ctx))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-let-decl-toplevel-fun ...                                    */
+;*---------------------------------------------------------------------*/
+(define (j2s-let-decl-toplevel-fun::pair-nil d::J2SDeclInit mode return ctx)
+   (with-access::J2SDeclInit d (val hint scope loc)
+      (cond
+	 ((decl-usage-has? d '(ref get new set eval))
+	  (let* ((id (j2s-decl-fast-id d ctx))
+		 (^id (j2s-decl-scm-id d ctx))
+		 (fun (jsfun->lambda val mode return ctx
+			 `(js-get ,^id
+			     ,(& "prototype" (context-program ctx))
+			     %this) #f)))
+	     `(begin
+		 (define ,id ,fun)
+		 (define ,^id
+		    ,(with-access::J2SFun val (type)
+			(if (eq? type 'procedure)
+			    id
+			    (j2sfun->scheme val #f #f mode return ctx))))
+		 ,@(if (decl-usage-has? d '(eval))
+		       `((js-define %this ,scope ,(j2s-decl-name d ctx)
+			    (lambda (%) ,^id)
+			    (lambda (% %v) (set! ,^id %v))
+			    %source
+			    ,(caddr loc)))
+		       '()))))
+	 ((decl-usage-has? d '(call))
+	  (let ((id (j2s-decl-fast-id d ctx)))
+	     `(define ,id
+		 ,(jsfun->lambda val mode return ctx
+		     `(js-get ,id
+			 ,(& "prototype" (context-program ctx))
+			 %this) #f))))
+	 (else
+	  '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SLetBlock ...                                     */
@@ -851,8 +863,8 @@
    
    (define (j2s-let-decl-inner::pair-nil d::J2SDecl mode return ctx singledecl
 	      typed)
-      (with-access::J2SDeclInit d (id vtype loc)
-	 (let* ((ident (j2s-decl-scheme-id d))
+      (with-access::J2SDeclInit d (vtype loc)
+	 (let* ((ident (j2s-decl-scm-id d ctx))
 		(var (if typed (type-ident ident vtype (context-conf ctx)) ident))
 		(val (j2sdeclinit-val-fun d)))
 	    (cond
@@ -863,10 +875,9 @@
 	       ((decl-usage-has? d '(ref get new set))
 		(with-access::J2SFun val (decl)
 		   (if (isa? decl J2SDecl)
-		       (let ((id (j2sfun-id val))
-			     (tmp (j2s-profile-id (j2s-fast-id id) loc ctx))
+		       (let ((tmp (j2s-decl-fast-id d ctx))
 			     (proc (gensym 'proc))
-			     (^tmp (j2s-decl-scheme-id decl))
+			     (^tmp (j2s-decl-scm-id decl ctx))
 			     (fun (jsfun->lambda val mode return ctx
 				     `(js-get ,ident
 					 ,(& "prototype" (context-program ctx))
@@ -880,11 +891,11 @@
 				     `(js-get ,ident
 					 ,(& "prototype" (context-program ctx))
 					 %this) #f))
-			     (tmp (j2s-profile-id (j2s-fast-id id) loc ctx)))
+			     (tmp (j2s-decl-fast-id d ctx)))
 			  `((,tmp ,fun)
 			    (,var ,(j2sfun->scheme val tmp #f mode return ctx)))))))
 	       ((decl-usage-has? d '(call))
-		`((,(j2s-profile-id (j2s-fast-id id) loc ctx)
+		`((,(j2s-decl-fast-id d ctx)
 		   ,(jsfun->lambda val mode return ctx (j2s-fun-prototype val) #f))))
 	       (else
 		'())))))
@@ -2658,8 +2669,7 @@
       (with-access::J2SRef clazz (decl loc)
 	 (let* ((len (length args))
 		(fun (j2s-scheme clazz mode return ctx))
-		(fid (with-access::J2SDecl decl (id loc)
-			(j2s-profile-id (j2s-fast-id id) loc ctx)))
+		(fid (j2s-decl-fast-id decl ctx))
 		(obj (gensym '%obj)))
 	    `(let ((,obj ,(object-alloc clazz fun)))
 		,(if (constructor-no-return? decl)

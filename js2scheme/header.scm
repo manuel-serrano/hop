@@ -60,7 +60,7 @@
 	 (loc loc)
 	 (id js)
 	 (writable writable)
-	 (_usage (if (not writable) (usage '()) (usage '(assig))))
+	 (usage (if (not writable) (usage '()) (usage '(assig))))
 	 (scope scope)
 	 (bind bind)
 	 (itype type)

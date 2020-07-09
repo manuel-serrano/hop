@@ -71,7 +71,8 @@
 	   __js2scheme_pce
 	   __js2scheme_module
 	   __js2scheme_newtarget
-	   __js2scheme_procedure)
+	   __js2scheme_procedure
+	   __js2scheme_cnstlift)
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
@@ -210,6 +211,7 @@
 	  j2s-varpreinit-stage
 	  j2s-tyflow-stage
 	  j2s-sweep-stage
+	  j2s-cnstlift-stage
 	  j2s-hintnum-stage
 	  j2s-propcache-stage
 	  j2s-instanceof-stage
@@ -493,6 +495,8 @@
 	    (set! o (cons* :optim-arguments #t o)))
 	 (unless (memq :optim-procedure o)
 	    (set! o (cons* :optim-procedure #t o)))
+	 (unless (memq :optim-cnstlift o)
+	    (set! o (cons* :optim-cnstlift #t o)))
 	 )
       (when (>=fx l 3)
 	 (unless (memq :optim-method o)

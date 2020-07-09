@@ -462,8 +462,8 @@
 	    (scmarg (j2s-scheme arg mode return ctx)))
 	 (if (isa? obj J2SAref)
 	     (with-access::J2SAref obj (array alen)
-		(let ((scmarr (j2s-decl-scheme-id array))
-		      (scmalen (j2s-decl-scheme-id alen)))
+		(let ((scmarr (j2s-decl-scm-id array ctx))
+		      (scmalen (j2s-decl-scm-id alen ctx)))
 		   `(let ((%l:len (js-array-length ,scmobj))
 			  (%o:item ,scmarg))
 		       (if (<u32 %l:len (fixnum->uint32 ,scmalen))
@@ -929,16 +929,15 @@
    (define (call-known-function protocol profid fun::J2SDecl thisarg::pair-nil args)
       (cond
 	 ((isa? fun J2SDeclFun)
-	  (with-access::J2SDeclFun fun (id loc)
-	     (let ((val (j2sdeclinit-val-fun fun)))
-		(check-hopscript-fun-arity val id args)
-		(let ((%gen (if (typed-generator? fun) '(%gen) '())))
-		   (call-fun-function profid val thisarg protocol
-		      (j2s-profile-id (j2s-fast-id id) loc ctx) %gen args)))))
+	  (let ((val (j2sdeclinit-val-fun fun))
+		(id (j2s-decl-fast-id fun ctx)))
+	     (check-hopscript-fun-arity val id args)
+	     (let ((%gen (if (typed-generator? fun) '(%gen) '())))
+		(call-fun-function profid val thisarg protocol id %gen args))))
 	 ((j2s-let-opt? fun)
-	  (with-access::J2SDeclInit fun (id val loc)
+	  (with-access::J2SDeclInit fun (val)
 	     (call-fun-function profid val thisarg protocol
-		(j2s-profile-id (j2s-fast-id id) loc ctx) '() args)))
+		(j2s-decl-fast-id fun ctx) '() args)))
 	 (else
 	  (error "js-scheme" "Should not be here" (j2s->list fun)))))
 
@@ -1053,9 +1052,8 @@
    (define (call-scheme-nothis this fun args)
       (if (isa? fun J2SRef)
 	  (with-access::J2SRef fun (decl)
-	     (with-access::J2SDecl decl (id loc)
-		`(,(j2s-profile-id (j2s-fast-id id) loc ctx)
-		  ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args))))
+	     `(,(j2s-decl-fast-id decl ctx)
+	       ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))
 	  (call-scheme this fun args)))
 
    (define (call-scheme-this this fun thisarg args)
@@ -1099,7 +1097,9 @@
 		(call-hop-function fun thisarg args))
 	       ((isa? fun J2SSuper)
 		(j2s-scheme-super this mode return ctx))
-	       ((and (isa? fun J2SFun) (not (j2sfun-id fun)))
+	       ((and (isa? fun J2SFun)
+		     (with-access::J2SFun fun (decl)
+			(not decl)))
 		(call-fun-function profid fun thisarg protocol
 		   (jsfun->lambda fun mode return ctx (j2s-fun-prototype fun) #f)
 		   '()

@@ -173,6 +173,9 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-index-ref this::J2SAccess mode return ctx)
 
+   (define (j2s-decl-scheme-id d::J2SDecl)
+      (j2s-decl-scm-id d ctx))
+   
    (define (aref/cache this::J2SAccess)
       (with-access::J2SAccess this (obj field)
 	 (with-access::J2SAref obj (array alen amark deps)
@@ -188,7 +191,7 @@
 			  `(JS-ARRAY-INDEX-MARK-REF ,scmobj
 			      ,idx
 			      ,scmarray ,scmalen
-			      ,(j2s-decl-scheme-id amark)
+			      ,(j2s-decl-scm-id amark ctx)
 			      %this)
 			  `(JS-ARRAY-INDEX-FAST-REF ,scmobj
 			      ,idx
@@ -291,6 +294,9 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-set! this::J2SAssig mode return ctx)
 
+   (define (j2s-decl-scheme-id d::J2SDecl)
+      (j2s-decl-scm-id d ctx))
+   
    (define (aset/cache this)
       (with-access::J2SAssig this (lhs rhs)
 	 ;; an optimized array set in a loop (see array.scm)

@@ -312,14 +312,17 @@
 
    (with-access::J2SFun this (body params thisp loc (fmode mode) decl name
 				ismethodof)
-      (let ((id (or name (j2sfun-id this))))
+      (let ((nm (or name
+		    (when (isa? decl J2SDecl)
+		       (with-access::J2SDecl decl (id)
+			  id)))))
 	 ;; check parameter correctness
 	 (if (eq? fmode 'normal)
 	     (nonstrict-params! params)
 	     (begin
 		(check-strict-mode-params params loc)
-		(when (symbol? id)
-		   (check-strict-mode-eval id "Function name" loc))))
+		(when (symbol? nm)
+		   (check-strict-mode-eval nm "Function name" loc))))
 	 ;; walk throught the function body
 	 (let* ((env0 (if (j2sfun-expression? this) (cons decl env) env))
 		(decls (filter (lambda (d)
@@ -361,7 +364,7 @@
 		(set! body (walk! body bdenv fmode withs nwenv genv ctx conf)))
 	    (with-access::J2SDeclArguments arguments (usecnt)
 	       (when (>fx usecnt 0)
-		  (with-access::J2SFun this (vararg argumentsp params)
+		  (with-access::J2SFun this (vararg argumentsp params loc)
 		     (if vararg
 			 (with-access::J2SDecl (car (last-pair params)) (id loc)
 			    (raise
@@ -690,7 +693,7 @@
 		       (decl decl)))))
 	    (else
 	     (let ((decl (instantiate::J2SDecl
-			    (_usage (usage '()))
+			    (usage (usage '()))
 			    (utype 'any)
 			    (scope 'unbound)
 			    (loc loc)

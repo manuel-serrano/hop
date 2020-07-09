@@ -1098,7 +1098,7 @@
 				       (decl (instantiate::J2SDeclFun
 						(loc loc)
 						(writable (not (eq? mode 'hopscript)))
-						(_usage (if (eq? mode 'hopscript)
+						(usage (if (eq? mode 'hopscript)
 							   (usage '())
 							   (usage '(assig))))
 						(id (cdr id))
@@ -1121,7 +1121,7 @@
 						(loc (token-loc id))
 						(id (cdr id))
 						(writable #f)
-						(_usage (usage '()))
+						(usage (usage '()))
 						(expression #t)
 						(val fun))))
 			 fun))
@@ -1160,7 +1160,7 @@
 				       (id (cdr id))
 ;* 				       (scope 'global)                 */
 				       (writable #f)
-				       (_usage (usage '()))
+				       (usage (usage '()))
 				       (val val))))
 		decl))
 	    (id
@@ -1181,7 +1181,7 @@
 				       (loc (token-loc id))
 				       (id (cdr id))
 				       (writable #f)
-				       (_usage (usage '()))
+				       (usage (usage '()))
 				       (expression #t)
 ;* 				       (scope  'global)                */
 				       (val svc))))
@@ -1542,7 +1542,7 @@
 	 (instantiate::J2SDeclRest
 	    (binder 'param)
 	    (loc loc)
-	    (_usage (usage '(rest)))
+	    (usage (usage '(rest)))
 	    (id (token-value token)))))
       
    (define (function-params maybe-expr?)
@@ -1681,7 +1681,7 @@
 					  (loc (token-loc id))
 					  (id (token-value id))
 					  (writable #f)
-					  (_usage (usage '(uninit)))
+					  (usage (usage '(uninit)))
 					  (scope 'global)
 					  (binder 'let)
 					  (val clazz))))
@@ -1695,7 +1695,7 @@
 					  (loc (token-loc id))
 					  (id (token-value id))
 					  (writable #f)
-					  (_usage (usage '(uninit)))
+					  (usage (usage '(uninit)))
 					  (scope 'global)
 					  (binder 'let)
 					  (val clazz))))

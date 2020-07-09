@@ -677,7 +677,7 @@
 (define (cspecs-assigop-default! this csdef)
    (let ((oldaccess (cspecs-access csdef))
 	 (oldassig (cspecs-assig csdef)))
-      (with-access::J2SAssigOp this (lhs rhs)
+      (with-access::J2SAssig this (lhs rhs)
 	 (set! rhs (cspecs-default! rhs csdef))
 	 (cspecs-assig-set! csdef (cspecs-assigop csdef))
 	 (cspecs-access-set! csdef (cspecs-assigop csdef))

@@ -838,18 +838,49 @@
 (define-macro (gen-call-procedure proc this . args)
    (let ((n (+fx 1 (length args))))
       `(let ((arity (procedure-arity ,proc)))
-	  (cond
-	     ((=fx arity ,n)
-	      (,proc ,this ,@args))
-	     ((>fx arity ,n)
-	      (apply ,proc ,this ,@args
-		 (make-list (-fx arity ,n) (js-undefined))))
+	  (case arity
+	     ;; too many arguments
 	     ,@(map (lambda (i)
-		       `((=fx arity ,i)
+		       `((,i)
 			 (,proc ,this ,@(take args (-fx i 1)))))
 		(iota (length args) 1))
+	     ;; good number of arguments
+	     ((,n)
+	      (,proc ,this ,@args))
+	     ;; arguments missing
+	     ,@(map (lambda (i)
+		       `((,(+fx n i))
+			 (,proc ,this ,@args ,@(make-list i '(js-undefined)))))
+		(iota 4 1))
 	     (else
-	      (js-undefined))))))
+	      ;; many arguments missing
+	      (apply ,proc ,this ,@args
+		 (make-list (-fx arity ,n) (js-undefined))))))))
+
+;*    (let ((n (+fx 1 (length args))))                                 */
+;*       `(let ((arity (procedure-arity ,proc)))                       */
+;* 	  (cond                                                        */
+;* 	     ((=fx arity ,n)                                           */
+;* 	      (,proc ,this ,@args))                                    */
+;* 	     ((>fx arity ,n)                                           */
+;* 	      (case (-fx arity ,n)                                     */
+;* 		 ((1)                                                  */
+;* 		  (,proc ,this ,@args (js-undefined)))                 */
+;* 		 ((2)                                                  */
+;* 		  (,proc ,this ,@args (js-undefined) (js-undefined)))  */
+;* 		 ((3)                                                  */
+;* 		  (,proc ,this ,@args (js-undefined) (js-undefined) (js-undefined))) */
+;* 		 ((4)                                                  */
+;* 		  (,proc ,this ,@args (js-undefined) (js-undefined) (js-undefined) (js-undefined))) */
+;* 		 (else                                                 */
+;* 		  (apply ,proc ,this ,@args                            */
+;* 		     (make-list (-fx arity ,n) (js-undefined))))))     */
+;* 	     ,@(map (lambda (i)                                        */
+;* 		       `((=fx arity ,i)                                */
+;* 			 (,proc ,this ,@(take args (-fx i 1)))))       */
+;* 		(iota (length args) 1))                                */
+;* 	     (else                                                     */
+;* 	      (js-undefined)))))                                       */
    
 (define (js-call0-procedure proc this)
    (gen-call-procedure proc this))

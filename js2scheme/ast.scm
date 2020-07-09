@@ -71,8 +71,7 @@
 	      (useinloop::bool (default #f) (info '("notraverse")))
 	      (escape::bool (default #f) (info '("notraverse")))
 	      ;; see usage-bit.sch
-	      (_usage::uint32 (default (usage '(assig))))
-	      ;;(usage::pair-nil (default '(assig)) (info '("notraverse")))
+	      (usage::uint32 (default (usage '(assig))))
 	      ;; variable range
 	      (binder::symbol (default 'var) (info '("notraverse")))
 	      ;; user declared type, if set, assign will be guarded
@@ -292,6 +291,7 @@
 	      (decl::J2SDecl (info '("jsonref"))))
 	   
 	   (class J2SRef::J2SExpr
+	      ;; the declaration
 	      (decl::J2SDecl (info '("jsonref" "notraverse"))))
 	   
 	   (class J2SWithRef::J2SExpr
@@ -532,7 +532,6 @@
 	   (node-loc ::J2SNode)
 	   (node-endloc ::J2SNode)
 	   
-	   (j2sfun-id ::J2SFun)
 	   (j2sfun-expression? ::J2SFun)
 	   
 	   (ast-decl-key::int)
@@ -678,15 +677,6 @@
 (define (j2s-export? decl::J2SDecl)
    (with-access::J2SDecl decl (binder scope id loc)
       (or (eq? binder 'export) (eq? scope 'export))))
-
-;*---------------------------------------------------------------------*/
-;*    j2sfun-id ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (j2sfun-id this::J2SFun)
-   (with-access::J2SFun this (decl)
-      (when (isa? decl J2SDecl)
-	 (with-access::J2SDecl decl (id)
-	    id))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun-expression? ...                                           */

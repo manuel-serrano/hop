@@ -406,7 +406,7 @@
    `(instantiate::J2SDecl
        (loc loc)
        (binder ,binder)
-       (_usage (usage ,_usage))
+       (usage (usage ,_usage))
        (id ,id)))
 
 (define-macro (J2SDeclGlobal binder _usage id)
@@ -414,14 +414,14 @@
        (loc loc)
        (binder ,binder)
        (scope 'global)
-       (_usage (usage ,_usage))
+       (usage (usage ,_usage))
        (id ,id)))
 
 (define-macro (J2SParam _usage id . opts)
    `(instantiate::J2SDecl
        (loc loc)
        (binder 'param)
-       (_usage (usage ,_usage))
+       (usage (usage ,_usage))
        (itype ,(let ((c (memq :type opts)))
 		  (if (pair? c)
 		      (cadr c)
@@ -435,7 +435,7 @@
    `(instantiate::J2SDeclInit
        (loc loc)
        (binder 'var)
-       (_usage (usage ,_usage))
+       (usage (usage ,_usage))
        (val ,val)
        (id ,id)))
 
@@ -445,7 +445,7 @@
        (writable (usage-has? (usage ,_usage) '(assig)))
        (usecnt 1)
        (binder 'let-opt)
-       (_usage (usage ,_usage))
+       (usage (usage ,_usage))
        (val ,val)
        (id ,id)))
 
@@ -455,7 +455,7 @@
        (writable #f)
        (usecnt 1)
        (binder 'let-opt)
-       (_usage (usage-rem (usage ,_usage) 'assig))
+       (usage (usage-rem (usage ,_usage) 'assig))
        (val ,val)
        (id ,id)))
 
@@ -466,7 +466,7 @@
        (scope 'global)
        (usecnt 1)
        (binder 'let-opt)
-       (_usage (usage-rem (usage ,_usage) 'assig))
+       (usage (usage-rem (usage ,_usage) 'assig))
        (val ,val)
        (id ,id)))
 
@@ -480,7 +480,7 @@
        (vtype ,typ)
        (usecnt 1)
        (binder 'let-opt)
-       (_usage (usage ,_usage))
+       (usage (usage ,_usage))
        (val ,val)
        (id ,id)))
 
@@ -492,7 +492,7 @@
        (utype ,typ)
        (usecnt 1)
        (binder 'let-opt)
-       (_usage (usage ,_usage))
+       (usage (usage ,_usage))
        (val ,val)
        (id ,id)))
 

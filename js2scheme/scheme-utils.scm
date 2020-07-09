@@ -40,13 +40,12 @@
 	   (epairify loc expr)
 	   (epairify-deep loc expr)
 	   (strict-mode? mode)
-	   (j2s-profile-id id id conf)
-	   (j2s-fast-id id)
 	   (j2s-fast-constructor-id id)
 	   (j2s-scheme-id id pref)
-	   (j2s-scheme-name ::symbol ::struct)
-	   (j2s-decl-scheme-id ::J2SDecl)
-	   (j2s-decl-profile-id ::J2SDecl conf)
+	   (j2s-decl-name ::J2SDecl ::struct)
+	   (j2s-decl-fast-id ::J2SDecl conf)
+	   (j2s-decl-scm-id ::J2SDecl conf)
+	   (j2s-class-id clazz::J2SClass ctx)
 	   (js-need-global? ::J2SDecl scope mode)
 	   (flatten-stmt stmt)
 	   (flatten-nodes nodes)
@@ -169,14 +168,6 @@
        id))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-fast-id ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (j2s-fast-id id)
-   (if (eq? id '||)
-       '@_
-       (symbol-append '@ id)))
-
-;*---------------------------------------------------------------------*/
 ;*    j2s-fast-constructor-id ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-fast-constructor-id id)
@@ -192,36 +183,63 @@
       (else (symbol-append pref id))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-scheme-name ...                                              */
+;*    j2s-decl-name ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (j2s-scheme-name id ctx)
-   (& id (context-program ctx)))
+(define (j2s-decl-name decl ctx)
+   (with-access::J2SDecl decl (id)
+      (& id (context-program ctx))))
    
 ;*---------------------------------------------------------------------*/
-;*    j2s-decl-scheme-id ...                                           */
+;*    j2s-decl-scm-id ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (j2s-decl-scheme-id decl::J2SDecl)
-   (with-access::J2SDecl decl (_scmid id scope key)
-      (if _scmid
-	  _scmid
-	  (let ((sid (j2s-scheme-id id
-			(if (eq? scope '%scope)
-			    '!
-			    (string->symbol
-			       (string-append "^"
-				  (integer->string key) "-"))))))
-	     (set! _scmid sid)
-	     sid))))
+(define (j2s-decl-scm-id decl::J2SDecl ctx)
 
-;*---------------------------------------------------------------------*/
-;*    j2s-decl-profile-id ...                                          */
-;*---------------------------------------------------------------------*/
-(define (j2s-decl-profile-id decl conf)
-   (let ((id (j2s-decl-scheme-id decl)))
+   (define (scheme-id decl::J2SDecl)
+      (with-access::J2SDecl decl (_scmid id scope key)
+	 (if _scmid
+	     _scmid
+	     (let ((sid (j2s-scheme-id id
+			   (if (eq? scope '%scope)
+			       '!
+			       (string->symbol
+				  (string-append "^"
+				     (integer->string key) "-"))))))
+		(set! _scmid sid)
+		sid))))
+   
+   (let ((id (scheme-id decl)))
       (if (isa? decl J2SDeclFun)
 	  (with-access::J2SDecl decl (loc)
-	     (j2s-profile-id id loc conf))
+	     (j2s-profile-id id loc ctx))
 	  id)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-decl-fast-id ...                                             */
+;*---------------------------------------------------------------------*/
+(define (j2s-decl-fast-id decl::J2SDecl ctx)
+
+   (define (j2s-fast-id decl::J2SDecl)
+      (with-access::J2SDecl decl (id)
+	 (if (eq? id '||)
+	     '@_
+	     (symbol-append '@ id))))
+   
+   (let ((id (j2s-fast-id decl)))
+      (if (isa? decl J2SDeclFun)
+	  (with-access::J2SDecl decl (loc)
+	     (j2s-profile-id id loc ctx))
+	  id)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-class-id ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-class-id this::J2SClass ctx)
+   (with-access::J2SClass this (decl name)
+      (when decl
+	 (with-access::J2SDecl decl (_scmid)
+	    (unless _scmid
+	       (set! _scmid (symbol-append '@ name)))
+	    _scmid))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-need-global? ...                                              */
