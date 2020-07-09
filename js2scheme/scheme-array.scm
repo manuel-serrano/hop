@@ -162,11 +162,11 @@
 		    (with-access::J2SCast arg (type expr)
 		       (if (eq? type 'any)
 			   (loop expr)
-			   `(js-array-construct %this (js-array-alloc %this)
-			       (list ,(j2s-scheme arg mode return ctx))))))
+			   `(js-array-construct1 %this (js-array-alloc %this)
+			       ,(j2s-scheme arg mode return ctx)))))
 		   (else
-		    `(js-array-construct %this (js-array-alloc %this)
-			(list ,(j2s-scheme arg mode return ctx)))))))))))
+		    `(js-array-construct1 %this (js-array-alloc %this)
+			,(j2s-scheme arg mode return ctx))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-index-ref ...                                          */
