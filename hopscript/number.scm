@@ -99,8 +99,14 @@
 ;*    js-number->jsNumber ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-number->jsNumber o %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (js-number)
-      (js-new1 %this js-number o)))
+   (with-access::JsGlobalObject %this (js-number-prototype js-initial-cmap)
+      (let ((n (instantiate::JsNumber
+		  (cmap js-initial-cmap)
+		  (val o))))
+	 (js-object-proto-set! n js-number-prototype)
+	 n)))
+;*    (with-access::JsGlobalObject %this (js-number)                   */
+;*       (js-new1 %this js-number o)))                                 */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-number! ...                                              */
@@ -109,11 +115,12 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-number! %this)
    (unless (vector? __js_strings) (set! __js_strings (&init!)))
-   (with-access::JsGlobalObject %this (js-number js-function js-number-pcache)
+   (with-access::JsGlobalObject %this (js-number js-function js-number-pcache
+					 js-number-prototype)
       (set! js-number-pcache
 	 ((@ js-make-pcache-table __hopscript_property) 2 "number"))
       
-      (define js-number-prototype
+      (set! js-number-prototype
 	 (instantiateJsNumber
 	    (val 0)
 	    (__proto__ (js-object-proto %this))))

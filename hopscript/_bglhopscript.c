@@ -108,7 +108,7 @@ typedef struct BgL_jspropertycachez00_bgl pcache_t;
 /* #undef HOP_ALLOC_JSFUNCTION_POLICY                                  */
 /* #define HOP_ALLOC_JSFUNCTION_POLICY HOP_ALLOC_CLASSIC               */
 
-extern obj_t bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode );
+extern obj_t bgl_make_jsobject( uint16_t constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode );
 
 #if HOP_ALLOC_JSOBJECT_POLICY != HOP_ALLOC_CLASSIC
 static obj_t bgl_make_jsobject_sans( int constrsize, obj_t constrmap,
@@ -644,7 +644,7 @@ BGL_MAKE_JSOBJECT( 6 )
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_JSOBJECT_POLICY != HOP_ALLOC_CLASSIC
 obj_t
-bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
+bgl_make_jsobject( uint16_t constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
    obj_t o;
    
    switch( constrsize ) {
@@ -654,7 +654,7 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mo
       case 4: return bgl_make_jsobject4( constrmap, __proto__, mode );
       case 5: return bgl_make_jsobject5( constrmap, __proto__, mode );
       case 6: return bgl_make_jsobject6( constrmap, __proto__, mode );
-      default: return bgl_make_jsobject_sans( constrsize, constrmap, __proto__, mode );
+      default: return bgl_make_jsobject_sans( (int)constrsize, constrmap, __proto__, mode );
    }
 }
 #endif

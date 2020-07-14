@@ -1415,7 +1415,7 @@
 (define-macro (gen-new %this ctor . args)
    `(cond
        ((js-function? ,ctor)
-	(with-access::JsFunction ,ctor (src construct alloc)
+	(with-access::JsFunction ,ctor (construct alloc)
 	   (let ((o (alloc %this ,ctor)))
 	      (let ((r (gen-calln ,ctor construct o ,@args)))
 		 (js-new-return ,ctor r o)))))
@@ -1906,22 +1906,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-toobject-failsafe ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (js-toobject-failsafe %this::JsGlobalObject o)
+(define-inline (js-toobject-failsafe %this::JsGlobalObject o)
    (cond
+      ((js-object? o)
+       o)
       ((js-jsstring? o)
        (with-access::JsGlobalObject %this (js-string)
 	  (js-new1 %this js-string o)))
       ((js-number? o)
-       (with-access::JsGlobalObject %this (js-number)
-	  (js-new1 %this js-number o)))
+       (js-number->jsNumber o %this))
       ((boolean? o)
        (with-access::JsGlobalObject %this (js-boolean)
 	  (js-new1 %this js-boolean o)))
       ((isa? o JsSymbolLiteral)
        (with-access::JsGlobalObject %this (js-symbol-ctor)
 	  (js-symbol-ctor (js-undefined) o)))
-      ((js-object? o)
-       o)
       ((isa? o object)
        o)
       ((pair? o)
