@@ -43,7 +43,7 @@
 	   ($js-init-jsalloc-procedure::int (::JsConstructMap
 					       ::uint32)
 	      "bgl_init_jsalloc_procedure")
-	   ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
+	   ($js-make-jsobject::JsObject (::uint16 ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsobject")
 	   ($js-make-jsproxy::JsProxy (::obj ::obj ::obj ::obj ::obj ::uint32)
 	      "bgl_make_jsproxy")
@@ -237,8 +237,8 @@
 	      prototype
 	      %prototype
 	      (len::int read-only)
-	      (constrsize::int (default 3))
-	      (maxconstrsize::int read-only (default 100)))
+	      (constrsize::uint16 (default #u16:3))
+	      (maxconstrsize::uint16 read-only (default #u16:100)))
 	   
 	   (class JsService::JsFunction
 	      (worker::obj read-only)
@@ -342,6 +342,7 @@
 	      (js-string-prototype::JsString (default (class-nil JsString)))
 	      (js-symbol::JsFunction (default (class-nil JsFunction)))
 	      (js-number::JsFunction (default (class-nil JsFunction)))
+	      (js-number-prototype::JsNumber (default (class-nil JsNumber)))
 	      (js-function::JsFunction (default (class-nil JsFunction)))
 	      (js-function-prototype::JsFunction (default (class-nil JsFunction)))
 	      (js-function-strict-prototype::JsObject (default (class-nil JsObject)))
@@ -428,7 +429,7 @@
 
 	   (js-property-cache-init!::JsPropertyCache ::obj)
 	   
-	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
+	   (inline js-make-jsobject::JsObject ::uint16 ::obj ::obj)
 
 	   (inline js-object-default-mode::uint32)
 	   (inline js-array-default-mode::uint32)
@@ -625,7 +626,7 @@
 	 (else
 	  (let ((o (instantiate::JsObject
 		      (cmap constrmap)
-		      (elements (make-vector constrsize (js-undefined))))))
+		      (elements (make-vector (uint16->fixnum constrsize) (js-undefined))))))
 	     (js-object-proto-set! o __proto__)
 	     (js-object-mode-set! o mode)
 	     (js-object-mode-inline-set! o #f)

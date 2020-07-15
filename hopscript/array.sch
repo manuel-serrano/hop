@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
 ;*    Last change :  Sat Dec  7 18:59:46 2019 (serrano)                */
-;*    Copyright   :  2016-19 Manuel Serrano                            */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
 ;*=====================================================================*/
@@ -241,4 +241,4 @@
 	   (error "js-call-with-stack-vector" "bad form"
 	      `(js-call-with-stack-vector ,vec ,proc)))))
       (else
-       `((@ js-call-with-stack-vector ...) ,vec ,proc))))
+       `((@ js-call-with-stack-vector __hopscript_array) ,vec ,proc))))

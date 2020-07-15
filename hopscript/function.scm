@@ -740,7 +740,6 @@
 		     (elements (vector fun)))))
 	    (set! prototype p)
 	    (set! %prototype p)
-	    ;; (set! alloc js-object-alloc)
 	    p))))
 
 ;*---------------------------------------------------------------------*/

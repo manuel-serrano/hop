@@ -240,7 +240,13 @@
 	   (js-call/cache-miss7 ::JsGlobalObject ::JsPropertyCache obj this a0 a1 a2 a3 a4 a5 a6)
 	   (js-call/cache-miss8 ::JsGlobalObject ::JsPropertyCache obj this a0 a1 a2 a3 a4 a5 a6 a7)
 	   
-	   (js-get-vindex::long ::JsGlobalObject)))
+	   (js-get-vindex::long ::JsGlobalObject))
+
+   (cond-expand
+      ((not bigloo-4.3h)
+       (pragma
+	  (js-for-in (args-noescape))
+	  (js-for-of (args-noescape))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -525,8 +531,8 @@
       (with-access::JsConstructMap cmap (ctor)
 	 (when (js-function? ctor)
 	    (with-access::JsFunction ctor (constrsize maxconstrsize)
-	       (when (<fx constrsize maxconstrsize)
-		  (set! constrsize (+fx 1 constrsize)))))))
+	       (when (<u16 constrsize maxconstrsize)
+		  (set! constrsize (+u16 #u16:1 constrsize)))))))
    (js-object-add! obj idx value)
    obj)
 
@@ -558,14 +564,11 @@
 	     (js-object-add! obj idx value)
 	     (when (js-function? ctor)
 		(with-access::JsFunction ctor (constrmap constrsize maxconstrsize)
-		   (when (<fx constrsize maxconstrsize)
+		   (when (<u16 constrsize maxconstrsize)
 		      (with-access::JsConstructMap cmap (props)
-			 (set! constrsize (+fx 1 (vector-length props))))
-;* 		      (set! constrmap                                  */
-;* 			 (instantiate::JsConstructMap                  */
-;* 			    (ctor ctor)                                */
-;* 			    ))                                         */
-		      ))))
+			 (set! constrsize
+			    (fixnum->uint16
+			       (+fx 1 (vector-length props)))))))))
 	  (vector-set! elements idx value))))
 
 ;*---------------------------------------------------------------------*/
