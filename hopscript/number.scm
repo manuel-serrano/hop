@@ -127,8 +127,8 @@
 	 this)
       
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.1
-      (define (%js-number this . arg)
-	 (let ((num (js-tonumber (if (pair? arg) (car arg) 0) %this)))
+      (define (%js-number this #!optional (arg 0))
+	 (let ((num (if (eq? arg 0) arg (js-tonumber arg %this))))
 	    (with-access::JsGlobalObject %this (js-new-target)
 	       (if (eq? js-new-target (js-undefined))
 		   num
@@ -150,6 +150,7 @@
       ;; Create a HopScript number object constructor
       (set! js-number
 	 (js-make-function %this %js-number 1 (& "Number")
+	    :arity (js-function-arity 0 1 'scheme-optional)
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-number-prototype
 	    :construct js-number-construct

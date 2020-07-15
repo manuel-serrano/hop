@@ -41,6 +41,12 @@
 		   (negfx (+fx (+fx 1 req) 1)))
 		  (else
 		   (negfx (+fx (+fx 1 req) opt)))))
+	      (((kwote quote) scheme-optional)
+	       (cond
+		  ((and (=fx opt 1) (=fx req 0))
+		   -512)
+		  (else
+		   (error "js-function-arity" "Illegal scheme-optional" (cons opt req)))))
 	      (((kwote quote) optional)
 	       (if (=fx opt 0)
 		   (+fx req 1)
@@ -82,6 +88,10 @@
 	   (negfx (+fx (+fx 1 req) 1)))
 	  (else
 	   (negfx (+fx (+fx 1 req) opt)))))
+      ((scheme-optional)
+       (if (and (=fx opt 1) (=fx req 0))
+	   -512
+	   (error "js-function-arity" "Illegal scheme-optional" (cons opt req))))
       ((optional)
        (if (=fx opt 0)
 	   (+fx req 1)

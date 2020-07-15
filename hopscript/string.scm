@@ -170,7 +170,7 @@
       (set! js-string
 	 (js-make-function %this
 	    (%js-string %this) 1 (& "String")
-	    :arity (js-function-arity 0 -1 'scheme)
+	    :arity (js-function-arity 0 1 'scheme-optional)
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-string-prototype
 	    :size 17
@@ -288,10 +288,10 @@
 ;*    %js-string ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (%js-string %this)
-   (lambda (this . args)
-      (let ((str (if (null? args)
+   (lambda (this #!optional (arg '()))
+      (let ((str (if (null? arg)
 		     (js-ascii->jsstring "")
-		     (js-string->jsstring (js-tostring (car args) %this)))))
+		     (js-string->jsstring (js-tostring arg %this)))))
 	 (with-access::JsGlobalObject %this (js-new-target js-string)
 	    (if (eq? js-new-target (js-undefined))
 		str

@@ -576,6 +576,11 @@
 	      (js-call-with-stack-vector
 		 (vector ,@args)
 		 (lambda (v) (,procedure ,this v))))
+	     ((-512)
+	      ;; scheme optional/default arguments
+	      ,(if (=fx n 1)
+		   `(,procedure ,this)
+		   `(,procedure ,this ,(car args))))
 	     ;; opt missing required arguments
 	     ,@(map call-opt-missing (reverse (iota (-fx 10 n) n)))
 	     ;; opt ok or too many arguments
@@ -654,6 +659,11 @@
 	    ((or (=fx arity -2048) (=fx arity -2047))
 	      ;; eager "arguments" call
 	     (procedure this (apply vector args)))
+	    ((=fx arity -512)
+	     (if (null? args)
+		 (procedure this)
+		 (procedure this (car args))))
+	     ;; scheme one optional/default argument
 	    ((<fx required n)
 	     ;; required arguments missing
 	     (if (js-procedure-hopscript-mode? fun)
