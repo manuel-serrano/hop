@@ -16,7 +16,7 @@
 
    (library hop)
 
-   (include "stringliteral.sch")
+   (include "stringliteral.sch" "types_expd.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic
@@ -124,28 +124,34 @@
 		 (format "get: no such field \"~a\" ~~a" (js-toname prop %this)) o)))
 	 ((eq? n (& "length"))
 	  (js-make-function %this length
-	     0 (& "length")))
+	     (js-function-arity length)
+	     (js-function-info :name "length" :len 0)))
 	 ((eq? n (& "map"))
 	  (js-make-function %this
 	     (lambda (this proc)
 		(map (lambda (x) (js-call1 %this proc o x)) o))
-	     1 (& "map")))
+	     (js-function-arity 1 0)
+	     (js-function-info :name "map" :len 1)))
 	 ((eq? n (& "forEach"))
 	  (js-make-function %this
 	     (lambda (this proc)
 		(for-each (lambda (x) (js-call1 %this proc o x)) o))
-	     1 (& "forEach")))
+	     (js-function-arity 1 0)
+	     (js-function-info :name "forEach" :len 1)))
 	 ((eq? n (& "assoc"))
 	  (js-make-function %this
 	     (lambda (this key) (assoc o key))
-	     1 (& "assoc")))
+	     (js-function-arity 1 0)
+	     (js-function-info :name "assoc" :len 1)))
 	 ((eq? n (& "reverse"))
 	  (js-make-function %this reverse
-	     0 (& "reverse")))
+	     (js-function-arity reverse)
+	     (js-function-info :name "reverse" :len 0)))
 	 ((eq? n (& "concat"))
 	  (js-make-function %this
 	     (lambda (this . l) (apply append this l))
-	     -1 (& "concat")))
+	     (js-function-arity 1 -1 'scheme)
+	     (js-function-info :name "concact" :len -1)))
 	 ((eq? n (& "keys"))
 	  (js-make-function %this
 	     (lambda (this . l)
@@ -154,12 +160,14 @@
 		       (vector "car" "cdr" "cer")
 		       (vector "car" "cdr"))
 		   %this))
-	     0 (& "keys")))
+	     (js-function-arity 0 0)
+	     (js-function-info :name "keys" :len 0)))
 	 ((eq? n (& "toArray"))
 	  (js-make-function %this
 	     (lambda (this)
 		(js-vector->jsarray (list->vector this) %this))
-	     0 (& "toArray")))
+	     (js-function-arity 0 0)
+	     (js-function-info :name "toArray" :len 0)))
 	 ((eq? n (& "inspect"))
 	  (js-undefined))
 	 ((eq? n (& "nodeType"))
@@ -168,7 +176,8 @@
 	  (js-make-function %this
 	     (lambda (this id)
 		(dom-get-element-by-id this (js-tostring id %this)))
-	     1 (& "getElementById")))
+	     (js-function-arity 1 0)
+	     (js-function-info :name "getElementById" :len 1)))
 	 ((eq? n (& "getElementsByTagName"))
 	  (js-make-function %this
 	     (lambda (this tag)
@@ -176,7 +185,8 @@
 		   (list->vector
 		      (dom-get-elements-by-tag-name this (js-tostring tag %this)))
 		   %this))
-	     1 (& "getElementsByTagName")))
+	     (js-function-arity 1 0)
+	     (js-function-info :name "getElementsByTagName" :len 1)))
 	 ((eq? n (& "getElementsByClassName"))
 	  (js-make-function %this
 	     (lambda (this tag)
@@ -184,7 +194,8 @@
 		   (list->vector
 		      (dom-get-elements-by-class this (js-tostring tag %this)))
 		   %this))
-	     1 (& "getElementsByClassName")))
+	     (js-function-arity 1 0)
+	     (js-function-info :name "getElementsByClassName" :len 1)))
 	 ((eq? n (& "childNodes"))
 	  (js-vector->jsarray (list->vector o) %this))
 	 (else

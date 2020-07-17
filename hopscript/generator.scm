@@ -100,7 +100,8 @@
 	       :value (js-make-function %this
 			 (lambda (this)
 			    this)
-			 0 (& "@@iterator")
+			 (js-function-arity 0 0)
+			 (js-function-info :name "@@iterator" :len 0)
 			 :prototype (js-undefined))
 	       :writable #t :enumerable #f :configurable #t)
 	    proto))
@@ -166,7 +167,8 @@
 	 :value (js-make-function %this
 		   (lambda (this val)
 		      (js-generator-next this val #f))
-		   1 (& "next"))
+		   (js-function-arity 1 0)
+		   (js-function-info :name "next" :len 1))
 	 :hidden-class #t)
       
       (js-bind! %this js-gen-proto (& "return")
@@ -174,7 +176,8 @@
 	 :value (js-make-function %this
 		   (lambda (this val)
 		      (js-generator-return this val #f))
-		   1 (& "return"))
+		   (js-function-arity 1 0)
+		   (js-function-info :name "return" :len 1))
 	 :hidden-class #t)
       
       (js-bind! %this js-gen-proto (& "throw")
@@ -182,7 +185,8 @@
 	 :value (js-make-function %this
 		   (lambda (this val)
 		      (js-generator-next this val #t))
-		   1 (& "throw"))
+		   (js-function-arity 1 0)
+		   (js-function-info :name "throw" :len 1))
 	 :hidden-class #t)
       
       (js-bind! %this js-gen-proto js-symbol-tostringtag
@@ -192,9 +196,9 @@
       
       (js-bind! %this js-genfun-proto (& "constructor")
 	 :configurable #t :enumerable #f :writable #f
-	 :value (js-make-function %this
-		   js-generator-construct
-		   1 (& "constructor")
+	 :value (js-make-function %this js-generator-construct
+		   (js-function-arity js-generator-construct)
+		   (js-function-info :name "constructor" :len 1)
 		   :alloc js-no-alloc
 		   :construct js-generator-construct)
 	 :hidden-class #t)
@@ -231,7 +235,9 @@
    (lambda (this . args)
       (if (null? args)
 	  (js-make-function %this (lambda (this) (js-undefined))
-	     0 (& "") :construct (lambda (_) (js-undefined)))
+	     (js-function-arity 0 0)
+	     (js-function-info :name "" :len 0)
+	     :construct (lambda (_) (js-undefined)))
 	  (let* ((len (length args))
 		 (formals (take args (-fx len 1)))
 		 (body (car (last-pair args)))

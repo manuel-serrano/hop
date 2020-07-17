@@ -63,7 +63,9 @@
 	    (__proto__ (js-object-proto %this))))
       ;; parse
       (js-bind! %this js-json (& "parse")
-	 :value (js-make-function %this (js-json-parse %this) 2 (& "parse"))
+	 :value (js-make-function %this (js-json-parse %this)
+		   (js-function-arity 2 0)
+		   (js-function-info :name "parse" :len 2))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -73,7 +75,8 @@
 	 :value (js-make-function %this
 		   (lambda (this value replacer space)
 		      (js-json-stringify this value replacer space %this))
-		   3 (& "stringify"))
+		   (js-function-arity 3 0)
+		   (js-function-info :name "stringify" :len 3))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f

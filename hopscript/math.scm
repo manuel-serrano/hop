@@ -127,7 +127,8 @@
       (js-bind! %this js-math (& "abs")
 	 :value (js-make-function %this
 		   (lambda (this x) (js-math-abs x %this))
-		   1 (& "abs"))
+		   (js-function-arity 1 0)
+		   (js-function-info :name "abs" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -139,7 +140,9 @@
 	 (acos x))
       
       (js-bind! %this js-math (& "acos")
-	 :value (js-make-function %this js-math-acos 1 (& "acos"))
+	 :value (js-make-function %this js-math-acos
+		   (js-function-arity js-math-acos)
+		   (js-function-info :name "acos" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -151,7 +154,9 @@
 	 (asin x))
       
       (js-bind! %this js-math (& "asin")
-	 :value (js-make-function %this js-math-asin 1 (& "asin"))
+	 :value (js-make-function %this js-math-asin
+		   (js-function-arity js-math-asin)
+		   (js-function-info :name "asin" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -163,7 +168,9 @@
 	 (atan x))
       
       (js-bind! %this js-math (& "atan")
-	 :value (js-make-function %this js-math-atan 1 (& "atan"))
+	 :value (js-make-function %this js-math-atan
+		   (js-function-arity js-math-atan)
+		   (js-function-info :name "atan" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -191,7 +198,9 @@
 	     (atan y x)))
       
       (js-bind! %this js-math (& "atan2")
-	 :value (js-make-function %this js-math-atan2 2 (& "atan2"))
+	 :value (js-make-function %this js-math-atan2
+		   (js-function-arity js-math-atan2)
+		   (js-function-info :name "atan2" :len 2))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -199,7 +208,9 @@
       
       (js-bind! %this js-math (& "ceil")
 	 :value (js-make-function %this
-		   (lambda (this x) (js-math-ceil x)) 1 (& "ceil"))
+		   (lambda (this x) (js-math-ceil x))
+		   (js-function-arity 1 0)
+		   (js-function-info :name "ceil" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -211,7 +222,9 @@
 	 (cos x))
       
       (js-bind! %this js-math (& "cos")
-	 :value (js-make-function %this js-math-cos 1 (& "cos"))
+	 :value (js-make-function %this js-math-cos
+		   (js-function-arity js-math-cos)
+		   (js-function-info :name "cos" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -223,7 +236,9 @@
 	 (exp x))
       
       (js-bind! %this js-math (& "exp")
-	 :value (js-make-function %this js-math-exp 1 (& "exp"))
+	 :value (js-make-function %this js-math-exp
+		   (js-function-arity js-math-exp)
+		   (js-function-info :name "exp" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -233,7 +248,9 @@
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.9
       (js-bind! %this js-math (& "floor")
 	 :value (js-make-function %this
-		   (lambda (this x) (js-math-floor x %this)) 1 (& "floor"))
+		   (lambda (this x) (js-math-floor x %this))
+		   (js-function-arity 1 0)
+		   (js-function-info :name "floor" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -245,7 +262,9 @@
 	 (log (js-tonumber x %this)))
       
       (js-bind! %this js-math (& "log")
-	 :value (js-make-function %this js-math-log 1 (& "log"))
+	 :value (js-make-function %this js-math-log
+		   (js-function-arity js-math-log)
+		   (js-function-info :name "log" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -264,7 +283,9 @@
 		       (loop (cdr l) (if (> n r) n r)))))))
       
       (js-bind! %this js-math (& "max")
-	 :value (js-make-function %this js-math-max 2 (& "max"))
+	 :value (js-make-function %this js-math-max
+		   (js-function-arity js-math-max)
+		   (js-function-info :name "max" :len 2))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -283,7 +304,9 @@
 		       (loop (cdr l) (if (< n r) n r)))))))
       
       (js-bind! %this js-math (& "min")
-	 :value (js-make-function %this js-math-min 2 (& "min"))
+	 :value (js-make-function %this js-math-min
+		   (js-function-arity js-math-min)
+		   (js-function-info :name "min" :len 2))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -327,7 +350,9 @@
 		       (bignum->js-number (* x (loop x (- y 1)))))))))))
       
       (js-bind! %this js-math (& "pow")
-	 :value (js-make-function %this js-math-pow 1 (& "pow"))
+	 :value (js-make-function %this js-math-pow
+		   (js-function-arity js-math-pow)
+		   (js-function-info :name "pow" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -339,7 +364,9 @@
 	 (randomfl))
       
       (js-bind! %this js-math (& "random")
-	 :value (js-make-function %this js-math-random 1 (& "random"))
+	 :value (js-make-function %this js-math-random
+		   (js-function-arity js-math-random)
+		   (js-function-info :name "random" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -349,7 +376,9 @@
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.15
       (js-bind! %this js-math (& "round")
 	 :value (js-make-function %this
-		   (lambda (this x) (js-math-round x)) 1 (& "round"))
+		   (lambda (this x) (js-math-round x))
+		   (js-function-arity 1 0)
+		   (js-function-info :name "round" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -361,7 +390,9 @@
 	 (sin x))
       
       (js-bind! %this js-math (& "sin")
-	 :value (js-make-function %this js-math-sin 1 (& "sin"))
+	 :value (js-make-function %this js-math-sin
+		   (js-function-arity js-math-sin)
+		   (js-function-info :name "sin" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -374,7 +405,9 @@
       
       (js-bind! %this js-math (& "sqrt")
 	 :value (js-make-function %this
-		   (lambda (this x) (js-math-sqrt x %this)) 1 (& "sqrt"))
+		   (lambda (this x) (js-math-sqrt x %this))
+		   (js-function-arity 1 0)
+		   (js-function-info :name "sqrt" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -386,7 +419,9 @@
 	 (tan x))
       
       (js-bind! %this js-math (& "tan")
-	 :value (js-make-function %this js-math-tan 1 (& "tan"))
+	 :value (js-make-function %this js-math-tan
+		   (js-function-arity js-math-tan)
+		   (js-function-info :name "tan" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f

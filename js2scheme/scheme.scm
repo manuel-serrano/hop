@@ -3116,7 +3116,6 @@
 	 ((let ?- (js-make-function-strict-lazy . ?-)) #t)
 	 ((let ?- (js-make-function-strict . ?-)) #t)
 	 ((let ?- (js-make-function . ?-)) #t)
-	 ((let ?- (js-make-function-simple . ?-)) #t)
 	 (else #f))))
 
 ;*---------------------------------------------------------------------*/

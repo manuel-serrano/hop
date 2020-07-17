@@ -272,7 +272,7 @@
 			  ((>fx arity -5049) (+fx arity 4049))
 			  (else (+fx arity 5049))))))
 	 (if (js-function? fun)
-	     (with-access::JsFunction fun (arity len src)
+	     (with-access::JsFunction fun (arity len)
 		(let* ((name (js-get fun (& "name") %this))
 		       (m (format "~a: wrong number of arguments ~a provided, ~a expected"
 			     (if (js-jsstring? name) (js-jsstring->string name) "")
@@ -280,9 +280,10 @@
 			     (cond
 				((>fx arity 0) arity)
 				((>fx arity -2049) (format ">= ~a" minlen))
-				(else (format "[~a..~a]" minlen (procedure-arity procedure)))))))
-		   (if (pair? src)
-		       (js-raise-type-error/loc %this (car src) m fun)
+				(else (format "[~a..~a]" minlen (procedure-arity procedure))))))
+		       (src (js-function-src fun)))
+		   (if src
+		       (js-raise-type-error/loc %this src m fun)
 		       (js-raise-type-error %this m fun))))
 	     (let ((m (format "~a: wrong number of arguments ~a provided, ~a expected"
 			 n
@@ -2587,7 +2588,8 @@
 	    (filter (lambda (n)
 		       (or (isa? n xml-tilde) (isa? n xml-markup)))
 	       nodes)))
-      2 (& "HEAD")))
+      (js-function-arity 1 -1 'scheme)
+      (js-function-info :name "HEAD" :len 2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-html-script ...                                               */
@@ -2604,7 +2606,8 @@
 	    (filter (lambda (n)
 		       (or (isa? n xml-tilde) (isa? n xml-markup)))
 	       nodes)))
-      2 (& "SCRIPT")))
+      (js-function-arity 1 -1 'scheme)
+      (js-function-info :name "SCRIPT" :len 2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-parseint ...                                                  */

@@ -165,7 +165,9 @@
 	    items))
       
       (set! js-arraybuffer
-	 (js-make-function %this %js-arraybuffer 1 (& "ArrayBuffer")
+	 (js-make-function %this %js-arraybuffer
+	    (js-function-arity %js-arraybuffer)
+	    (js-function-info :name "ArrayBuffer" :len 1)
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-arraybuffer-prototype
 	    :alloc js-arraybuffer-alloc
@@ -232,8 +234,9 @@
 				 new)))))
 		  
 		  (js-bind! %this this (& "slice")
-		     :value (js-make-function %this
-			       arraybuffer-slice 2 (& "slice"))
+		     :value (js-make-function %this arraybuffer-slice
+			       (js-function-arity arraybuffer-slice)
+			       (js-function-info :name "slice" :len 2))
 		     :configurable #f
 		     :writable #t
 		     :enumerable #t

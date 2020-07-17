@@ -166,7 +166,8 @@
 		      (js-proxy-mode-revoked-set! prox #t)
 		      (js-raise-type-error %this
 			 "Not a Revocable proxy" this))))
-	    0 (& "revoke")
+	    (js-function-arity 0 0)
+	    (js-function-info :name "revoke" :len 0)
 	    :prototype '()))
 
       ;; create a HopScript object
@@ -181,7 +182,9 @@
 	    %this))
 
       (set! js-proxy
-	 (js-make-function %this %js-proxy 2 (& "Proxy")
+	 (js-make-function %this %js-proxy
+	    (js-function-arity %js-proxy)
+	    (js-function-info :name "Proxy" :len 2)
 	    :__proto__ js-function-prototype
 	    :prototype '()
 	    :alloc js-proxy-alloc
@@ -193,7 +196,9 @@
       
       (js-bind! %this js-proxy (& "revocable")
 	 :writable #t :configurable #t :enumerable #f
-	 :value (js-make-function %this %js-revocable 2 (& "revocable")
+	 :value (js-make-function %this %js-revocable
+		   (js-function-arity %js-revocable)
+		   (js-function-info :name "revocable" :len 2)
 		   :__proto__ js-function-prototype
 		   :prototype '())
 	 :hidden-class #t)

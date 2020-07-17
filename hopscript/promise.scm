@@ -226,8 +226,9 @@
    ;; then, create a HopScript object
    (define js-promise
       (with-access::JsGlobalObject %this (js-function-prototype)
-	 (js-make-function %this
-	    js-promise-construct 1 (& "Promise")
+	 (js-make-function %this js-promise-construct
+	    (js-function-arity js-promise-construct)
+	    (js-function-info :name "Promise" :len 1)
 	    :__proto__ js-function-prototype
 	    :prototype js-promise-prototype
 	    :construct js-promise-construct
@@ -252,11 +253,13 @@
 				  (promise-resolve promise
 				     (js-vector->jsarray it %this))
 				  js-unresolved))
-			   1 (& "onfullfilled"))
+			   (js-function-arity 1 0)
+			   (js-function-info :name "onfullfilled" :len 1))
 			(js-make-function %this
 			   (lambda (this reason)
 			      (promise-reject promise reason))
-			   1 (& "onrejected"))
+			   (js-function-arity 1 0)
+			   (js-function-info :name "onrejected" :len 1))
 			promise)
 		     (loop (-fx i 1)))
 		  it)))
@@ -264,7 +267,9 @@
 
    (js-bind! %this js-promise (& "all")
       :configurable #f :enumerable #f
-      :value (js-make-function %this js-promise-all 1 (& "all"))
+      :value (js-make-function %this js-promise-all
+		(js-function-arity js-promise-all)
+		(js-function-info :name "all" :len 1))
       :hidden-class #t)
    
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.race
@@ -279,11 +284,13 @@
 			(js-make-function %this
 			   (lambda (this result)
 			      (promise-resolve promise result))
-			   1 (& "onfullfilled"))
+			   (js-function-arity 1 0)
+			   (js-function-info :name "onfullfilled" :len 1))
 			(js-make-function %this
 			   (lambda (this reason)
 			      (promise-reject promise reason))
-			   1 (& "onrejected"))
+			   (js-function-arity 1 0)
+			   (js-function-info :name "onrejected" :len 1))
 			promise)
 		     (loop (+fx i 1)))
 		  it)))
@@ -291,7 +298,9 @@
 
    (js-bind! %this js-promise (& "race")
       :configurable #f :enumerable #f
-      :value (js-make-function %this js-promise-race 1 (& "race"))
+      :value (js-make-function %this js-promise-race
+		(js-function-arity js-promise-race)
+		(js-function-info :name "race" :len 1))
       :hidden-class #t)
    
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.reject
@@ -311,7 +320,9 @@
    
    (js-bind! %this js-promise (& "reject")
       :configurable #f :enumerable #f
-      :value (js-make-function %this promise-reject 1 (& "reject"))
+      :value (js-make-function %this promise-reject
+		(js-function-arity promise-reject)
+		(js-function-info :name "reject" :len 1))
       :hidden-class #t)
 
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.resolve
@@ -334,7 +345,9 @@
    
    (js-bind! %this js-promise (& "resolve")
       :configurable #f :enumerable #f
-      :value (js-make-function %this promise-resolve 1 (& "resolve"))
+      :value (js-make-function %this promise-resolve
+		(js-function-arity promise-resolve)
+		(js-function-info :name "resolve" :len 1))
       :hidden-class #t)
    
    ;; prototype properties
@@ -343,7 +356,9 @@
    (with-access::JsGlobalObject %this (js-symbol-species)
       (js-bind! %this js-promise js-symbol-species
 	 :configurable #f :enumerable #f :writable #f
-	 :get (js-make-function %this (lambda (o) js-promise) 0 (& "@@species"))
+	 :get (js-make-function %this (lambda (o) js-promise)
+		 (js-function-arity 0 0)
+		 (js-function-info :name "@@species" :len 0))
 	 :hidden-class #t))
    
    ;; bind Promise in the global object
@@ -419,7 +434,8 @@
 		   (then-catch this
 		      (js-make-procedure %this (lambda (this v) v) 2)
 		      fail))
-		1 (& "catch"))
+		(js-function-arity 1 0)
+		(js-function-info :name "catch" :len 1))
       :enumerable #f
       :hidden-class #t)
    
@@ -429,7 +445,8 @@
       :value (js-make-function %this
 		(lambda (this proc fail)
 		   (then-catch this proc fail))
-		2 (& "then"))
+		(js-function-arity 2 0)
+		(js-function-info :name "then" :len 2))
       :enumerable #f
       :hidden-class #t))
 
@@ -448,7 +465,8 @@
 				  (begin
 				     (set! resolved #t)
 				     (js-promise-resolve o resolution))))
-			   1 (& "resolve") :src 'builtin))
+			   (js-function-arity 1 0)
+			   (js-function-info :name "resolve" :len 1)))
 	       (reject (js-make-function %this
 			  (lambda (_ reason)
 			     (if resolved
@@ -456,7 +474,8 @@
 				 (begin
 				    (set! resolved #t)
 				    (js-promise-reject o reason))))
-			  1 (& "reject") :src 'builtin)))
+			  (js-function-arity 1 0)
+			  (js-function-info :name "reject" :len 1))))
 	    (values resolve reject)))))
 
 ;*---------------------------------------------------------------------*/

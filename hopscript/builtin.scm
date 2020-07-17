@@ -59,9 +59,9 @@
                            (apply ,(symbol-append '< tag '>)
 			      :%context ,%this
                               nodes)))
-                    2 (& ,(symbol->string tag))
-		    :__proto__ ,__proto__
-		    :src "object.scm")
+		    (js-function-arity 2 0)
+		    (js-function-info :name ,(symbol->string tag) :len 2)
+		    :__proto__ ,__proto__)
           :writable #t :configurable #f :enumerable #f :hidden-class #f)))
 
 ;*---------------------------------------------------------------------*/
@@ -141,9 +141,9 @@
 		   (lambda (this data)
 		      (instantiate::xml-comment
 			 (data data)))
-		   1 (& "<!--")
-		   :__proto__ js-function-prototype
-		   :src "object.scm")
+		   (js-function-arity 1 0)
+		   (js-function-info :name "<!--" :len 1)
+		   :__proto__ js-function-prototype)
 	 :enumerable #f :writable #f :configurable #f :hidden-class #f)
       
       builtin))

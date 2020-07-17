@@ -240,16 +240,17 @@
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-funcall table idx fun source)
    (when (js-function? fun)
-      (with-access::JsFunction fun (src)
-	 (when (and (pair? src) (string=? (cadr (car src)) source))
-	    (let* ((id (caddr (car src)))
-		   (bucket (vector-ref table idx)))
-	       (if (pair? bucket)
-		   (let ((c (assq id bucket)))
-		      (if (pair? c)
-			  (set-cdr! c (+llong (cdr c) #l1))
-			  (vector-set! table idx (cons (cons id #l1) bucket))))
-		   (vector-set! table idx (list (cons id #l1)))))))))
+      (with-access::JsFunction fun (info)
+	 (let ((src (vector-ref info 3)))
+	    (when (string=? src source)
+	       (let* ((id (vector-ref info 4))
+		      (bucket (vector-ref table idx)))
+		  (if (pair? bucket)
+		      (let ((c (assq id bucket)))
+			 (if (pair? c)
+			     (set-cdr! c (+llong (cdr c) #l1))
+			     (vector-set! table idx (cons (cons id #l1) bucket))))
+		      (vector-set! table idx (list (cons id #l1))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-cmap ...                                          */

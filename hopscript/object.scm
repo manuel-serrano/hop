@@ -19,7 +19,7 @@
    
    (library hop hopwidget js2scheme)
    
-   (include "types.sch" "stringliteral.sch" "property.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch" "arity.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic
@@ -353,7 +353,7 @@
 	    (js-bind! %this %this (& "eval")
 	       :value (js-make-function %this js-eval
 			 (procedure-arity js-eval)
-			 '#("eval" 1 "function eval() { [native code] }")
+			 (js-function-info :name "eval" :len 1)
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 	    
@@ -361,8 +361,8 @@
 	       :value (js-make-function %this
 			 (lambda (this string radix)
 			    (js-parseint string radix %this))
-			 (procedure-arity 3 0)
-			 '#("parseInt" 2 "function parseInit() { [native code] }")
+			 (js-function-arity 3 0)
+			 (js-function-info :name "parseInt" :len 2)
 			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
@@ -370,9 +370,9 @@
 	       :value (js-make-function %this
 			 (lambda (this string)
 			    (js-parsefloat string %this))
-			 1 (& "parseFloat")
-			 :prototype (js-undefined)
-			 :src "object.scm")
+			 (js-function-arity 1 0)
+			 (js-function-info :name "parseFloat" :len 1)
+			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; isNaN
@@ -381,9 +381,10 @@
 	       (js-isnan? val %this))
 
 	    (js-bind! %this %this (& "isNaN")
-	       :value (js-make-function %this isnan 1 (& "isNaN")
-			 :prototype (js-undefined)
-			 :src "object.scm")
+	       :value (js-make-function %this isnan
+			 (js-function-arity isnan)
+			 (js-function-info :name "isNaN" :len 1)
+			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; isFinite
@@ -396,9 +397,10 @@
 		     (else #t))))
 
 	    (js-bind! %this %this (& "isFinite")
-	       :value (js-make-function %this isfinite 1 (& "isFinite")
-			 :prototype (js-undefined)
-			 :src "object.scm")
+	       :value (js-make-function %this isfinite
+			 (js-function-arity isfinite)
+			 (js-function-info :name "isFinite" :len 1)
+			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; check-utf8-validity
@@ -416,9 +418,10 @@
 		      (js-raise-uri-error %this "Badly formed url ~s" string))))
    
 	    (js-bind! %this %this (& "decodeURI")
-	       :value (js-make-function %this decodeuri 1 (& "decodeURI")
-			 :prototype (js-undefined)
-			 :src "object.scm")
+	       :value (js-make-function %this decodeuri
+			 (js-function-arity decodeuri)
+			 (js-function-info :name "decodeURI" :len 1)
+			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; decodeURIComponent
@@ -431,9 +434,9 @@
 		
 	    (js-bind! %this %this (& "decodeURIComponent")
 	       :value (js-make-function %this decodeuricomponent
-			 1 (& "decodeURIComponent")
-			 :prototype (js-undefined)
-			 :src "object.scm")
+			 (js-function-arity decodeuricomponent)
+			 (js-function-info :name "decodeURIComponent" :len 1)
+			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; encodeURI
@@ -445,9 +448,10 @@
 		      (js-raise-uri-error %this "Badly formed url ~s" string))))
 
 	    (js-bind! %this %this (& "encodeURI")
-	       :value (js-make-function %this encodeuri 1 (& "encodeURI")
-			 :prototype (js-undefined)
-			 :src "object.scm")
+	       :value (js-make-function %this encodeuri
+			 (js-function-arity encodeuri)
+			 (js-function-info :name "encodeURI" :len 1)
+			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; encodeURIComponent
@@ -460,9 +464,9 @@
 
 	    (js-bind! %this %this (& "encodeURIComponent")
 	       :value (js-make-function %this encodeuricomponent
-			 1 (& "encodeURIComponent")
-			 :prototype (js-undefined)
-			 :src "object.scm")
+			 (js-function-arity encodeuricomponent)
+			 (js-function-info :name "encodeURIComponent" :len 1)
+			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; escape
@@ -471,9 +475,10 @@
 	       (js-jsstring-escape (js-tojsstring string %this)))
 	    
 	    (js-bind! %this %this (& "escape")
-	       :value (js-make-function %this escape 1 (& "escape")
-			 :prototype (js-undefined)
-			 :src "object.scm")
+	       :value (js-make-function %this escape
+			 (js-function-arity escape)
+			 (js-function-info :name "escape" :len 1)
+			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; unescape
@@ -482,9 +487,10 @@
 	       (js-jsstring-unescape (js-tojsstring string %this) %this))
 
 	    (js-bind! %this %this (& "unescape")
-	       :value (js-make-function %this unescape 1 (& "unescape")
-			 :prototype (js-undefined)
-			 :src "object.scm")
+	       :value (js-make-function %this unescape
+			 (js-function-arity unescape)
+			 (js-function-info :name "unescape" :len 1)
+			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; html
@@ -497,9 +503,8 @@
 			       (js-jsobject->keyword-plist attrs %this)
 			       nodes))
 			 (apply <HTML> :idiom "javascript" nodes)))
-		  1 (& "HTML")
-		  :arity (js-function-arity 1 -1 'scheme)
-		  :src "object.scm"))
+		  (js-function-arity 1 -1 'scheme)
+		  (js-function-info :name "HTML" :len 1)))
 	    
 	    (js-bind! %this %this (& "HTML")
 	       :value (js-html-html %this) :enumerable #f :hidden-class #f)
@@ -526,11 +531,11 @@
 	       :value (js-make-function %this
 			 (lambda (this body)
 			    (string->xml-tilde body))
-			 1 (& "Tilde")
+			 (js-function-arity 1 0)
+			 (js-function-info :name "Tilde" :len 1)
 			 :__proto__ js-function-prototype
 			 :construct (lambda (this body)
-				       (string->xml-tilde body))
-			 :src "object.scm")
+				       (string->xml-tilde body)))
 	       :enumerable #f :writable #f :configurable #f :hidden-class #f)
 
 	    ;; return the newly created object
@@ -585,14 +590,15 @@
       (let ((js-function-prototype (js-object-proto js-function)))
 	 (set! js-object
 	    (js-function-set-constrmap!
-	       (js-make-function %this %js-object 1 (& "Object")
+	       (js-make-function %this %js-object
+		  (js-function-arity %js-object)
+		  (js-function-info :name "Object" :len 1)
 		  :__proto__ js-function-prototype
 		  :constrsize 3 :maxconstrsize 4
 		  :prototype %proto
 		  :alloc js-no-alloc
 		  :size 21
 		  :construct js-object-construct
-		  :src "object.scm"
 		  :shared-cmap #f))))
 
       ;; getPrototypeOf
@@ -601,8 +607,9 @@
 	 (js-getprototypeof o %this "getPrototypeOf"))
       
       (js-bind! %this js-object (& "getPrototypeOf")
-	 :value (js-make-function %this getprototypeof 1 (& "getPrototypeOf")
-		   :src "object.scm")
+	 :value (js-make-function %this getprototypeof
+		   (js-function-arity getprototypeof)
+		   (js-function-info :name "getPrototypeOf" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -615,9 +622,9 @@
 	 (js-setprototypeof o v %this "setPrototypeOf"))
       
       (js-bind! %this js-object (& "setPrototypeOf")
-	 :value (js-make-function %this setprototypeof 1 (& "setPrototypeOf")
-		   :arity (js-function-arity 2 0 'scheme)
-		   :src "object.scm")
+	 :value (js-make-function %this setprototypeof
+		   (js-function-arity setprototypeof)
+		   (js-function-info :name "setPrototypeOf" :len 2))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -630,9 +637,9 @@
       
       (js-bind! %this js-object (& "getOwnPropertyDescriptor")
 	 :value (js-make-function %this
-		   getownpropertydescriptor 2 (& "getOwnPropertyDescriptor")
-		   :arity (js-function-arity 2 0 'scheme)
-		   :src "object.scm")
+		   getownpropertydescriptor
+		   (js-function-arity getownpropertydescriptor)
+		   (js-function-info :name "getOwnPropertyDescriptor" :len 2))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -657,9 +664,9 @@
       
       (js-bind! %this js-object (& "getOwnPropertyDescriptors")
 	 :value (js-make-function %this
-		   getownpropertydescriptors 1 (& "getOwnPropertyDescriptors")
-		   :arity (js-function-arity 2 0 'scheme)
-		   :src "object.scm")
+		   getownpropertydescriptors
+		   (js-function-arity getownpropertydescriptors)
+		   (js-function-info :name "getOwnPropertyDescriptors" :len 2))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -674,9 +681,9 @@
       
       (js-bind! %this js-object (& "getOwnPropertyNames")
 	 :value (js-make-function %this
-		   getownpropertynames 1 (& "getOwnPropertyNames")
-		   :arity (js-function-arity 2 0)
-		   :src "object.scm")
+		   getownpropertynames
+		   (js-function-arity getownpropertynames)
+		   (js-function-info :name "getOwnPropertyNames" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -690,9 +697,9 @@
       
       (js-bind! %this js-object (& "getOwnPropertySymbols")
 	 :value (js-make-function %this
-		   getownpropertysymbols 1 (& "getOwnPropertySymbols")
-		   :arity (js-function-arity 2 0)
-		   :src "object.scm")
+		   getownpropertysymbols
+		   (js-function-arity getownpropertysymbols)
+		   (js-function-info :name "getOwnPropertySymbols" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -711,8 +718,9 @@
 		obj)))
 
       (js-bind! %this js-object (& "create")
-	 :value (js-make-function %this create 2 (& "create")
-		   :src "object.scm")
+	 :value (js-make-function %this create
+		   (js-function-arity create)
+		   (js-function-info :name "create" :len 2))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -729,8 +737,10 @@
 		o)))
       
       (js-bind! %this js-object (& "defineProperty")
-	 :value (js-make-function %this defineproperty 3 (& "defineProperty")
-		   :src "object.scm")
+	 :value (js-make-function %this
+		   defineproperty
+		   (js-function-arity defineproperty)
+		   (js-function-info :name "defineProperty" :len 3))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -772,9 +782,9 @@
 	    to))
 
       (js-bind! %this js-object (& "assign")
-	 :value (js-make-function %this assign 2 (& "assign")
-		   :arity (js-function-arity 1 -1 'scheme)
-		   :src "object.scm")
+	 :value (js-make-function %this assign
+		   (js-function-arity 1 -1 'scheme)
+		   (js-function-info :name "assign" :len 2))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -786,8 +796,8 @@
 	 :value (js-make-function %this
 		   (lambda (this obj properties)
 		      (object-defineproperties %this this obj properties))
-		   2 (& "defineProperties")
-		   :src "object.scm")
+		   (js-function-arity 2 0)
+		   (js-function-info :name "defineProperties" :len 2))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -801,8 +811,9 @@
 	     (js-seal obj obj)))
       
       (js-bind! %this js-object (& "seal")
-	 :value (js-make-function %this seal 1 (& "seal")
-		   :src "object.scm")
+	 :value (js-make-function %this seal
+		   (js-function-arity seal)
+		   (js-function-info :name "seal" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -816,8 +827,9 @@
 	     (js-freeze obj obj)))
       
       (js-bind! %this js-object (& "freeze")
-	 :value (js-make-function %this freeze 1 (& "freeze")
-		   :src "object.scm")
+	 :value (js-make-function %this freeze
+		   (js-function-arity freeze)
+		   (js-function-info :name "freeze" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -827,8 +839,8 @@
 	 :value (js-make-function %this
 		   (lambda (this obj)
 		      (js-preventextensions obj %this))
-		   1 (& "preventExtensions")
-		   :src "object.scm")
+		   (js-function-arity 1 0)
+		   (js-function-info :name "preventExtensions" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -852,8 +864,9 @@
 		      (and (nanfl? x) (nanfl? y))))))
 
       (js-bind! %this js-object (& "is")
-	 :value (js-make-function %this is 2 (& "is")
-		   :src "object.scm")
+	 :value (js-make-function %this is
+		   (js-function-arity is)
+		   (js-function-info :name "is" :len 2))
 	 :enumerable #f :configurable #t :writable #t :hidden-class #f)
 	    
       ;; isSealed
@@ -880,8 +893,9 @@
 		(not (js-object-mode-extensible? o))))))
       
       (js-bind! %this js-object (& "isSealed")
-	 :value (js-make-function %this issealed 1 (& "isSealed")
-		   :src "object.scm")
+	 :value (js-make-function %this issealed
+		   (js-function-arity issealed)
+		   (js-function-info :name "isSealed" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -915,8 +929,9 @@
 		(not (js-object-mode-extensible? o))))))
       
       (js-bind! %this js-object (& "isFrozen")
-	 :value (js-make-function %this isfrozen 1 (& "isFrozen")
-		   :src "object.scm")
+	 :value (js-make-function %this isfrozen
+		   (js-function-arity isfrozen)
+		   (js-function-info :name "isFrozen" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -932,8 +947,8 @@
 	 :value (js-make-function %this
 		   (lambda (this obj)
 		      (js-extensible? obj %this))
-		   1 (& "isExtensible")
-		   :src "object.scm")
+		   (js-function-arity 1 0)
+		   (js-function-info :name "isExtensible" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -945,8 +960,8 @@
 	 :value (js-make-function %this
 		   (lambda (this obj)
 		      (js-ownkeys obj %this))
-		   1 (& "keys")
-		   :src "object.scm")
+		   (js-function-arity 1 0)
+		   (js-function-info :name "keys" :len 1))
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -969,13 +984,13 @@
 	 :get (js-make-function %this
 		 (lambda (o)
 		    (js-getprototypeof o %this "__proto__"))
-		 0 (& "get")
-		 :src "object.scm")
+		 (js-function-arity 0 0)
+		 (js-function-info :name "get" :len 0))
 	 :set (js-make-function %this
 		 (lambda (o v)
 		    (js-setprototypeof o v %this "__proto__"))
-		 1 (& "set")
-		 :src "object.scm")
+		 (js-function-arity 1 0)
+		 (js-function-info :name "set" :len 1))
 	 :hidden-class #f)
       
       ;; constructor
@@ -1033,9 +1048,10 @@
       
       (js-bind! %this obj (& "toString")
 	 :value (js-make-function %this
-		   js-object-prototype-tostring 0 (& "toString")
-		   :prototype (js-undefined)
-		   :src "function() { ... object.scm ... }")
+		   js-object-prototype-tostring
+		   (js-function-arity js-object-prototype-tostring)
+		   (js-function-info :name "toString" :len 0)
+		   :prototype (js-undefined))
 	 :enumerable #f
 	 :hidden-class #f)
       
@@ -1046,18 +1062,20 @@
       
       (js-bind! %this obj (& "toLocaleString")
 	 :value (js-make-function %this
-		   js-object-prototype-tolocalestring 0 (& "toLocaleString")
-		   :prototype (js-undefined)
-		   :src "object.scm")
+		   js-object-prototype-tolocalestring
+		   (js-function-arity js-object-prototype-tolocalestring)
+		   (js-function-info :name "toLocaleString" :len 0)
+		   :prototype (js-undefined))
 	 :enumerable #f
 	 :hidden-class #f)
       
       ;; valueOf
       (js-bind! %this obj (& "valueOf")
-	 :value (js-make-function %this (lambda (o) (js-valueof o %this))
-		   0 (& "valueOf")
-		   :prototype (js-undefined)
-		   :src "object.scm")
+	 :value (js-make-function %this
+		   (lambda (o) (js-valueof o %this))
+		   (js-function-arity 0 0)
+		   (js-function-info :name "valueOf" :len 0)
+		   :prototype (js-undefined))
 	 :enumerable #f
 	 :hidden-class #f)
       
@@ -1066,9 +1084,9 @@
 	 :value (js-make-function %this
 		   (lambda (this v)
 		      (js-object-prototype-hasownproperty this v %this))
-		   1 (& "hasOwnProperty")
-		   :prototype (js-undefined)
-		   :src "object.scm")
+		   (js-function-arity 1 0)
+		   (js-function-info :name "hasOwnProperty" :len 1)
+		   :prototype (js-undefined))
 	 :enumerable #f
 	 :hidden-class #f)
       
@@ -1084,9 +1102,10 @@
       
       (js-bind! %this obj (& "isPrototypeOf")
 	 :value (js-make-function %this
-		   js-object-prototype-isprototypeof 1 (& "isPrototypeOf")
-		   :prototype (js-undefined)
-		   :src "object.scm")
+		   js-object-prototype-isprototypeof
+		   (js-function-arity js-object-prototype-isprototypeof)
+		   (js-function-info :name "isPrototypeOf" :len 1)
+		   :prototype (js-undefined))
 	 :enumerable #f
 	 :hidden-class #f)
       
@@ -1102,9 +1121,10 @@
       
       (js-bind! %this obj (& "propertyIsEnumerable")
 	 :value (js-make-function %this
-		   js-object-prototype-propertyisenumerable 1 (& "propertyIsEnumerable")
-		   :prototype (js-undefined)
-		   :src "object.scm")
+		   js-object-prototype-propertyisenumerable
+		   (js-function-arity js-object-prototype-propertyisenumerable)
+		   (js-function-info :name "propertyIsEnumerable" :len 1)
+		   :prototype (js-undefined))
 	 :enumerable #f
 	 :hidden-class #f)))
 

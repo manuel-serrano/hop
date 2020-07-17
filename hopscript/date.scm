@@ -261,7 +261,9 @@
 	    (date-prototype-tostring dt)))
       
       (set! js-date
-	 (js-make-function %this %js-date 7 (& "Date")
+	 (js-make-function %this %js-date
+	    (js-function-arity %js-date)
+	    (js-function-info :name "Date" :len 7)
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-date-prototype
 	    :alloc js-date-alloc
@@ -278,7 +280,9 @@
 		+nan.0)))
       
       (js-bind! %this js-date (& "parse")
-	 :value (js-make-function %this js-date-parse 1 (& "parse"))
+	 :value (js-make-function %this js-date-parse
+		   (js-function-arity js-date-parse)
+		   (js-function-info :name "parse" :len 1))
 	 :writable #t :configurable #t :enumerable #f :hidden-class #t)
       
       ;; UTC
@@ -304,11 +308,15 @@
 			 #l1000000)))))))
       
       (js-bind! %this js-date (& "UTC")
-	 :value (js-make-function %this js-date-utc 7 (& "UTC"))
+	 :value (js-make-function %this js-date-utc
+		   (js-function-arity js-date-utc)
+		   (js-function-info :name "UTC" :len 7))
 	 :writable #t :configurable #t :enumerable #f :hidden-class #f)
       
       (js-bind! %this js-date (& "now")
-	 :value (js-make-function %this (lambda (this) (js-date-now)) 0 (& "now"))
+	 :value (js-make-function %this (lambda (this) (js-date-now))
+		   (js-function-arity 0 0)
+		   (js-function-info :name "now" :len 0))
 	 :writable #t :configurable #t :enumerable #f :hidden-class #f)
       
       ;; prototype properties
@@ -351,7 +359,9 @@
    ;; toString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.2
    (js-bind! %this obj (& "toString")
-      :value (js-make-function %this date-prototype-tostring 0 (& "toString"))
+      :value (js-make-function %this date-prototype-tostring
+		(js-function-arity date-prototype-tostring)
+		(js-function-info :name "toString" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toDateString
@@ -369,7 +379,8 @@
 
    (js-bind! %this obj (& "toDateString")
       :value (js-make-function %this date-prototype-todatestring
-		0 (& "toDateString"))
+		(js-function-arity date-prototype-todatestring)
+		(js-function-info :name "toDateString" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toTimeString
@@ -387,7 +398,8 @@
 
    (js-bind! %this obj (& "toTimeString")
       :value (js-make-function %this date-prototype-totimestring
-		0 (& "toTimeString"))
+		(js-function-arity date-prototype-totimestring)
+		(js-function-info :name "toTimeString" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toLocaleString
@@ -397,7 +409,8 @@
 
    (js-bind! %this obj (& "toLocaleString")
       :value (js-make-function %this date-prototype-tolocalestring
-		0 (& "toLocaleString"))
+		(js-function-arity date-prototype-tolocalestring)
+		(js-function-info :name "toLocaleString" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toLocaleDateString
@@ -407,7 +420,8 @@
 
    (js-bind! %this obj (& "toLocaleDateString")
       :value (js-make-function %this date-prototype-tolocaledatestring
-		0 (& "toLocaleDateString"))
+		(js-function-arity date-prototype-tolocaledatestring)
+		(js-function-info :name "toLocaleDateString" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toLocaleTimeString
@@ -417,7 +431,8 @@
 
    (js-bind! %this obj (& "toLocaleTimeString")
       :value (js-make-function %this date-prototype-tolocaletimestring
-		0 (& "toLocaleTimeString"))
+		(js-function-arity date-prototype-tolocaletimestring)
+		(js-function-info :name "toLocaleTimeString" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toUTCString
@@ -429,7 +444,9 @@
 	     "Invalid date")))
 
    (js-bind! %this obj (& "toUTCString")
-      :value (js-make-function %this date-prototype-toutcstring 0 (& "toUTCString"))
+      :value (js-make-function %this date-prototype-toutcstring
+		(js-function-arity date-prototype-toutcstring)
+		(js-function-info :name "toUTCString" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toISOString
@@ -473,7 +490,9 @@
 		 (js-raise-range-error %this "Invalid date ~s" val)))))
    
    (js-bind! %this obj (& "toISOString")
-      :value (js-make-function %this date-prototype-toisostring 0 (& "toISOString"))
+      :value (js-make-function %this date-prototype-toisostring
+		(js-function-arity date-prototype-toisostring)
+		(js-function-info :name "toISOString" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toJSON
@@ -490,7 +509,9 @@
 		       "toJSON: argument not a function ~s" p))))))
 
    (js-bind! %this obj (& "toJSON")
-      :value (js-make-function %this date-prototype-toJSON 1 (& "toJSON"))
+      :value (js-make-function %this date-prototype-toJSON
+		(js-function-arity date-prototype-toJSON)
+		(js-function-info :name "toJSON" :len 1))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
 
    ;; valueOf
@@ -502,7 +523,9 @@
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "valueOf")
-      :value (js-make-function %this date-prototype-valueof 0 (& "valueOf"))
+      :value (js-make-function %this date-prototype-valueof
+		(js-function-arity date-prototype-valueof)
+		(js-function-info :name "valueOf" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getTime
@@ -514,7 +537,9 @@
 	     +nan.0)))
  	 
    (js-bind! %this obj (& "getTime")
-      :value (js-make-function %this date-prototype-gettime 0 (& "getTime"))
+      :value (js-make-function %this date-prototype-gettime
+		(js-function-arity date-prototype-gettime)
+		(js-function-info :name "getTime" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getFullYear
@@ -526,7 +551,9 @@
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getFullYear")
-      :value (js-make-function %this date-prototype-getfullyear 0 (& "getFullYear"))
+      :value (js-make-function %this date-prototype-getfullyear
+		(js-function-arity date-prototype-getfullyear)
+		(js-function-info :name "getFullYear" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getUTCFullYear
@@ -540,7 +567,9 @@
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getUTCFullYear")
-      :value (js-make-function %this date-prototype-getutcfullyear 0 (& "getUTCFullYear"))
+      :value (js-make-function %this date-prototype-getutcfullyear
+		(js-function-arity date-prototype-getutcfullyear)
+		(js-function-info :name "getUTCFullYear" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getMonth
@@ -552,7 +581,9 @@
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getMonth")
-      :value (js-make-function %this date-prototype-getmonth 0 (& "getMonth"))
+      :value (js-make-function %this date-prototype-getmonth
+		(js-function-arity date-prototype-getmonth)
+		(js-function-info :name "getMonth" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getUTCMonth
@@ -566,7 +597,9 @@
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getUTCMonth")
-      :value (js-make-function %this date-prototype-getutcmonth 0 (& "getUTCMonth"))
+      :value (js-make-function %this date-prototype-getutcmonth
+		(js-function-arity date-prototype-getutcmonth)
+		(js-function-info :name "getUTCMonth" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getDate
@@ -578,7 +611,9 @@
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getDate")
-      :value (js-make-function %this date-prototype-getdate 0 (& "getDate"))
+      :value (js-make-function %this date-prototype-getdate
+		(js-function-arity date-prototype-getdate)
+		(js-function-info :name "getDate" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getUTCDate
@@ -592,7 +627,9 @@
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getUTCDate")
-      :value (js-make-function %this date-prototype-getutcdate 0 (& "getUTCDate"))
+      :value (js-make-function %this date-prototype-getutcdate
+		(js-function-arity date-prototype-getutcdate)
+		(js-function-info :name "getUTCDate" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getDay
@@ -604,7 +641,9 @@
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getDay")
-      :value (js-make-function %this date-prototype-getday 0 (& "getDay"))
+      :value (js-make-function %this date-prototype-getday
+		(js-function-arity date-prototype-getday)
+		(js-function-info :name "getDay" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getUTCDay
@@ -616,7 +655,9 @@
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getUTCDay")
-      :value (js-make-function %this date-prototype-getutcday 0 (& "getUTCDay"))
+      :value (js-make-function %this date-prototype-getutcday
+		(js-function-arity date-prototype-getutcday)
+		(js-function-info :name "getUTCDay" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getHours
@@ -628,7 +669,9 @@
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getHours")
-      :value (js-make-function %this date-prototype-gethours 0 (& "getHours"))
+      :value (js-make-function %this date-prototype-gethours
+		(js-function-arity date-prototype-gethours)
+		(js-function-info :name "getHours" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getUTCHours
@@ -646,7 +689,9 @@
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getUTCHours")
-      :value (js-make-function %this date-prototype-getutchours 0 (& "getUTCHours"))
+      :value (js-make-function %this date-prototype-getutchours
+		(js-function-arity date-prototype-getutchours)
+		(js-function-info :name "getUTCHours" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getMinutes
@@ -658,7 +703,9 @@
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getMinutes")
-      :value (js-make-function %this date-prototype-getminutes 0 (& "getMinutes"))
+      :value (js-make-function %this date-prototype-getminutes
+		(js-function-arity date-prototype-getminutes)
+		(js-function-info :name "getMinutes" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getUTCMinutes
@@ -670,7 +717,9 @@
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getUTCMinutes")
-      :value (js-make-function %this date-prototype-getutcminutes 0 (& "getUTCMinutes"))
+      :value (js-make-function %this date-prototype-getutcminutes
+		(js-function-arity date-prototype-getutcminutes)
+		(js-function-info :name "getUTCMinutes" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getSeconds
@@ -682,7 +731,9 @@
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getSeconds")
-      :value (js-make-function %this date-prototype-getseconds 0 (& "getSeconds"))
+      :value (js-make-function %this date-prototype-getseconds
+		(js-function-arity date-prototype-getseconds)
+		(js-function-info :name "getSeconds" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getUTCSeconds
@@ -694,7 +745,9 @@
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getUTCSeconds")
-      :value (js-make-function %this date-prototype-getutcseconds 0 (& "getUTCSeconds"))
+      :value (js-make-function %this date-prototype-getutcseconds
+		(js-function-arity date-prototype-getutcseconds)
+		(js-function-info :name "getUTCSeconds" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getMilliseconds
@@ -706,7 +759,9 @@
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getMilliseconds")
-      :value (js-make-function %this date-prototype-getmilliseconds 0 (& "getMilliseconds"))
+      :value (js-make-function %this date-prototype-getmilliseconds
+		(js-function-arity date-prototype-getmilliseconds)
+		(js-function-info :name "getMilliseconds" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getUTCMilliseconds
@@ -718,7 +773,9 @@
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getUTCMilliseconds")
-      :value (js-make-function %this date-prototype-getutcmilliseconds 0 (& "getUTCMilliseconds"))
+      :value (js-make-function %this date-prototype-getutcmilliseconds
+		(js-function-arity date-prototype-getutcmilliseconds)
+		(js-function-info :name "getUTCMilliseconds" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getTimezoneOffset
@@ -730,7 +787,9 @@
 	     +nan.0)))
 
    (js-bind! %this obj (& "getTimezoneOffset")
-      :value (js-make-function %this date-prototype-gettimezoneoffset 0 (& "getTimezoneOffset"))
+      :value (js-make-function %this date-prototype-gettimezoneoffset
+		(js-function-arity date-prototype-gettimezoneoffset)
+		(js-function-info :name "getTimezoneOffset" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setTime
@@ -755,7 +814,9 @@
 		       (date->milliseconds val))))))))
 
    (js-bind! %this obj (& "setTime")
-      :value (js-make-function %this date-prototype-settime 1 (& "setTime"))
+      :value (js-make-function %this date-prototype-settime
+		(js-function-arity date-prototype-settime)
+		(js-function-info :name "setTime" :len 1))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getYear
@@ -767,7 +828,9 @@
 	     +nan.0)))
    
    (js-bind! %this obj (& "getYear")
-      :value (js-make-function %this date-prototype-getyear 0 (& "getYear"))
+      :value (js-make-function %this date-prototype-getyear
+		(js-function-arity date-prototype-getyear)
+		(js-function-info :name "getYear" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setYear
@@ -790,7 +853,9 @@
 		   r)))))
 
    (js-bind! %this obj (& "setYear")
-      :value (js-make-function %this date-prototype-setyear 1 (& "setYear"))
+      :value (js-make-function %this date-prototype-setyear
+		(js-function-arity date-prototype-setyear)
+		(js-function-info :name "setYear" :len 1))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setMilliseconds
@@ -816,7 +881,9 @@
 	     val)))
 
    (js-bind! %this obj (& "setMilliseconds")
-      :value (js-make-function %this date-prototype-setmilliseconds 1 (& "setMilliseconds"))
+      :value (js-make-function %this date-prototype-setmilliseconds
+		(js-function-arity date-prototype-setmilliseconds)
+		(js-function-info :name "setMilliseconds" :len 1))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setUTCMilliseconds
@@ -842,7 +909,9 @@
 	     val)))
 
    (js-bind! %this obj (& "setUTCMilliseconds")
-      :value (js-make-function %this date-prototype-setutcmilliseconds 1 (& "setUTCMilliseconds"))
+      :value (js-make-function %this date-prototype-setutcmilliseconds
+		(js-function-arity date-prototype-setutcmilliseconds)
+		(js-function-info :name "setUTCMilliseconds" :len 1))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
 
    ;; setSeconds
@@ -861,7 +930,9 @@
 	     val)))
 
    (js-bind! %this obj (& "setSeconds")
-      :value (js-make-function %this date-prototype-setseconds 2 (& "setSeconds"))
+      :value (js-make-function %this date-prototype-setseconds
+		(js-function-arity date-prototype-setseconds)
+		(js-function-info :name "setSeconds" :len 2))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setUTCSeconds
@@ -880,7 +951,9 @@
 	     val)))
 
    (js-bind! %this obj (& "setUTCSeconds")
-      :value (js-make-function %this date-prototype-setutcseconds 2 (& "setUTCSeconds"))
+      :value (js-make-function %this date-prototype-setutcseconds
+		(js-function-arity date-prototype-setutcseconds)
+		(js-function-info :name "setUTCSeconds" :len 2))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setMinutes
@@ -901,7 +974,9 @@
 	     val)))
 
    (js-bind! %this obj (& "setMinutes")
-      :value (js-make-function %this date-prototype-setminutes 3 (& "setMinutes"))
+      :value (js-make-function %this date-prototype-setminutes
+		(js-function-arity date-prototype-setminutes)
+		(js-function-info :name "setMinutes" :len 3))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setUTCMinutes
@@ -922,7 +997,9 @@
 	     val)))
 
    (js-bind! %this obj (& "setUTCMinutes")
-      :value (js-make-function %this date-prototype-setutcminutes 3 (& "setUTCMinutes"))
+      :value (js-make-function %this date-prototype-setutcminutes
+		(js-function-arity date-prototype-setutcminutes)
+		(js-function-info :name "setUTCMinutes" :len 3))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setHours
@@ -946,7 +1023,9 @@
 	     val)))
 
    (js-bind! %this obj (& "setHours")
-      :value (js-make-function %this date-prototype-sethours 4 (& "setHours"))
+      :value (js-make-function %this date-prototype-sethours
+		(js-function-arity date-prototype-sethours)
+		(js-function-info :name "setHours" :len 4))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setUTCHours
@@ -975,7 +1054,9 @@
 	     val)))
 
    (js-bind! %this obj (& "setUTCHours")
-      :value (js-make-function %this date-prototype-setutchours 4 (& "setUTCHours"))
+      :value (js-make-function %this date-prototype-setutchours
+		(js-function-arity date-prototype-setutchours)
+		(js-function-info :name "setUTCHours" :len 4))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setDate
@@ -998,7 +1079,9 @@
 	     val)))
 
    (js-bind! %this obj (& "setDate")
-      :value (js-make-function %this date-prototype-setdate 1 (& "setDate"))
+      :value (js-make-function %this date-prototype-setdate
+		(js-function-arity date-prototype-setdate)
+		(js-function-info :name "setDate" :len 1))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setUTCDate
@@ -1017,7 +1100,9 @@
 	     val)))
 
    (js-bind! %this obj (& "setUTCDate")
-      :value (js-make-function %this date-prototype-setutcdate 1 (& "setUTCDate"))
+      :value (js-make-function %this date-prototype-setutcdate
+		(js-function-arity date-prototype-setutcdate)
+		(js-function-info :name "setUTCDate" :len 1))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setMonth
@@ -1040,7 +1125,9 @@
 	     val)))
 
    (js-bind! %this obj (& "setMonth")
-      :value (js-make-function %this date-prototype-setmonth 2 (& "setMonth"))
+      :value (js-make-function %this date-prototype-setmonth
+		(js-function-arity date-prototype-setmonth)
+		(js-function-info :name "setMonth" :len 2))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setUTCMonth
@@ -1062,7 +1149,9 @@
 	     val)))
 
    (js-bind! %this obj (& "setUTCMonth")
-      :value (js-make-function %this date-prototype-setutcmonth 2 (& "setUTCMonth"))
+      :value (js-make-function %this date-prototype-setutcmonth
+		(js-function-arity date-prototype-setutcmonth)
+		(js-function-info :name "setUTCMonth" :len 2))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setFullYear
@@ -1107,7 +1196,9 @@
 		       (date->milliseconds val)))))))
 
    (js-bind! %this obj (& "setFullYear")
-      :value (js-make-function %this date-prototype-setfullyear 3 (& "setFullYear"))
+      :value (js-make-function %this date-prototype-setfullyear
+		(js-function-arity date-prototype-setfullyear)
+		(js-function-info :name "setFullYear" :len 3))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setUTCFullYear
@@ -1131,7 +1222,9 @@
 	     val)))
 
    (js-bind! %this obj (& "setUTCFullYear")
-      :value (js-make-function %this date-prototype-setutcfullyear 3 (& "setUTCFullYear"))
+      :value (js-make-function %this date-prototype-setutcfullyear
+		(js-function-arity date-prototype-setutcfullyear)
+		(js-function-info :name "setUTCFullYear" :len 3))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; toGMTString
@@ -1140,7 +1233,9 @@
       (date-prototype-toutcstring this))
 
    (js-bind! %this obj (& "toGMTString")
-      :value (js-make-function %this date-prototype-togmtstring 0 (& "toGMTString"))
+      :value (js-make-function %this date-prototype-togmtstring
+		(js-function-arity date-prototype-togmtstring)
+		(js-function-info :name "toGMTString" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    obj)

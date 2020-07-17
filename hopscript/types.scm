@@ -49,7 +49,7 @@
 	      "bgl_make_jsproxy")
 	   ($js-make-jsfunction::JsFunction (::procedure ::procedure
 					       ::procedure
-					       ::long ::long ::long
+					       ::long ::long
 					       ::obj ::obj)
 	      "bgl_make_jsfunction")
 	   ($js-make-jsprocedure::JsProcedure (::procedure ::long ::obj)

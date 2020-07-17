@@ -124,7 +124,7 @@ static obj_t bgl_make_jsproxy_sans( obj_t target, obj_t handler,
 #if HOP_ALLOC_JSFUNCTION_POLICY != HOP_ALLOC_CLASSIC
 static obj_t bgl_make_jsfunction_sans( obj_t procedure, obj_t method,
 				       obj_t construct,
-				       long arity, long len,
+				       long arity,
 				       long constrsize,
 				       obj_t __proto__, obj_t info );
 #endif
@@ -348,7 +348,7 @@ jsfunction_fill_buffer( apool_t *pool, void *arg ) {
 
    for( i = 0; i < size; i++ ) {
       buffer[ i ] =
-	 bgl_make_jsfunction_sans( 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L );
+	 bgl_make_jsfunction_sans( 0L, 0L, 0L, 0L, 0L, 0L, 0L );
    }
 #endif   
 }
@@ -806,7 +806,7 @@ bgl_make_jsproxy( obj_t target, obj_t handler,
 #endif
 
 BGL_MAKE_JSFUNCTION_SANS( obj_t procedure, obj_t method, obj_t construct,
-			  long arity, long len, long constrsize,
+			  long arity, long constrsize,
 			  obj_t __proto__, obj_t info ) {
    BgL_jsfunctionz00_bglt o = (BgL_jsfunctionz00_bglt)HOP_MALLOC( JSFUNCTION_SIZE );
 
@@ -863,7 +863,7 @@ BGL_MAKE_JSFUNCTION_SANS( obj_t procedure, obj_t method, obj_t construct,
 #if HOP_ALLOC_JSFUNCTION_POLICY != HOP_ALLOC_CLASSIC
 obj_t
 bgl_make_jsfunction( obj_t procedure, obj_t method, obj_t construct,
-		     long arity, long len, long constrsize,
+		     long arity, long constrsize,
 		     obj_t __proto__, obj_t info ) {
    alloc_spin_lock( &lockfunction );
 
@@ -878,7 +878,6 @@ bgl_make_jsfunction( obj_t procedure, obj_t method, obj_t construct,
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_constructz00 = construct;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_arityz00 = arity;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_infoz00 = info;
-      ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_namez00 = name;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_constrsiza7eza7 = constrsize;
       
       ALLOC_STAT( inlfunction++ ); 
@@ -930,7 +929,7 @@ bgl_make_jsfunction( obj_t procedure, obj_t method, obj_t construct,
       ALLOC_STAT( (slowfunction % 1000000 == 0) ? fprintf( stderr, "inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", inlfunction, sndfunction, slowfunction, (long)(100*(double)slowfunction/(double)(inlfunction+sndfunction)), inlfunction + sndfunction + slowfunction, qszfunction) : 0 ); 
       alloc_spin_unlock( &lockfunction ); 
       return bgl_make_jsfunction_sans( procedure, method, construct,
-				       arity, len, constrsize,
+				       arity, constrsize,
 				       __proto__, info );
    } 
 }

@@ -211,7 +211,7 @@
       (with-access::J2SFun (declfun-fun this) (new-target)
 	 (cond
 	    (new-target 'js-object-alloc/new-target)
-	    ((decl-usage-has? this '(new get set))  'js-object-alloc)
+	    ((decl-usage-has? this '(new get set ref))  'js-object-alloc)
 	    (else 'js-object-alloc-lazy))))
 
    (define (make-function-sans-alloc this::J2SDeclFun)
@@ -308,17 +308,13 @@
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return ctx #f #f))))
-		     ((or (decl-usage-has? this '(new ref)) new-target)
+		     (else
 		      `(js-make-function %this ,fastid
 			  ,arity ,(j2s-function-info val name loc ctx)
 			  :strict ',mode
 			  :alloc ,alloc
 			  :construct ,fastid
-			  :constrsize ,constrsize))
-		     (else
-		      `(js-make-function-simple %this
-			  ,arity ,(j2s-function-info val name loc ctx)
-			  ',mode ,constrsize))))))))
+			  :constrsize ,constrsize))))))))
 
    (with-access::J2SDeclFun this (val)
       (let ((fun (make-function-sans-alloc this)))
@@ -1158,7 +1154,7 @@
    
    (define (absolute-path path)
       (file-name-canonicalize (make-file-name (pwd) path)))
-
+   
    (define (function-len val)
       (with-access::J2SFun val (params mode vararg body name generator
 				  constrsize method new-target)
@@ -1171,10 +1167,11 @@
 	    ((at ?path ?start)
 	     (match-case endloc
 		((at ?- ?end)
-		 `'#(,(symbol->string name)
-		     ,(function-len val)
-		     #f
-		     ,(absolute-path path) ,start ,(+fx 1 end)))
+		 `(js-function-info
+		     :name ,(symbol->string name)
+		     :len ,(function-len val)
+		     :path ,(absolute-path path)
+		     :start ,start :end ,(+fx 1 end)))
 		(else
 		 (error "j2s-function-src" "bad location" loc))))
 	    (else

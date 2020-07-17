@@ -110,7 +110,9 @@
       
       ;; then, Create a HopScript worker object constructor
       (set! js-worker
-	 (js-make-function %this (%js-worker %this) 2 (& "Worker")
+	 (js-make-function %this (%js-worker %this)
+	    (js-function-arity 1 0)
+	    (js-function-info :name "Worker" :len 2)
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-worker-prototype
 	    :alloc js-no-alloc
@@ -147,7 +149,8 @@
 	 :value (js-make-function %this
 		   (lambda (this data)
 		      (js-worker-post-slave-message worker data))
-		   1 (& "postMessage"))
+		   (js-function-arity 1 0)
+		   (js-function-info :name "postMessage" :len 1))
 	 :writable #f
 	 :configurable #f
 	 :enumerable #f
@@ -158,7 +161,8 @@
 	 :value (js-make-function %this
 		   (lambda (this)
 		      (js-worker-self-terminate! worker #f))
-		   0 (& "close"))
+		   (js-function-arity 0 0)
+		   (js-function-info :name "close" :len 0))
 	 :writable #f
 	 :configurable #f
 	 :enumerable #f
@@ -171,13 +175,15 @@
 		    (lambda (this)
 		       (with-access::WorkerHopThread thread (onmessage)
 			  onmessage))
-		    0 (& "onmessage"))
+		    (js-function-arity 0 0)
+		    (js-function-info :name "onmessage.set" :len 0))
 	    :set (js-make-function %this
 		    (lambda (this v)
 		       (with-access::WorkerHopThread thread (onmessage keep-alive)
 			  (set! keep-alive #t)
 			  (set! onmessage v)))
-		    1 (& "onmessage"))
+		    (js-function-arity 1 0)
+		    (js-function-info :name "onmessage.get" :len 1))
 	    :configurable #f
 	    :writable #t
 	    :enumerable #t
@@ -227,7 +233,8 @@
 			      (onexit (js-make-function %this
 					 (lambda (this process retval)
 					    (onexit thread))
-					 2 (& "onexit")))
+					 (js-function-arity 2 0)
+					 (js-function-info :name "onexit" :len 2)))
 			      (keep-alive #f)
 			      (body (lambda ()
 				       (setup)
@@ -263,42 +270,48 @@
 		  (js-bind! %this worker (& "onmessage")
 		     :get (js-make-function %this
 			     (lambda (this) onmessage)
-			     0 (& "onmessage"))
+			     (js-function-arity 0 0)
+			     (js-function-info :name "onmessage.get" :len 0))
 		     :set (js-make-function %this
 			     (lambda (this v)
 				(set! onmessage v)
 				(add-event-listener! this "message"
 				   (lambda (this e)
 				      (js-call1 %this v this e))))
-			     2 (& "onmessage"))
+			     (js-function-arity 1 0)
+			     (js-function-info :name "onmessage.set" :len 1))
 		     :configurable #t
 		     :enumerable #t
 		     :hidden-class #t)
 		  (js-bind! %this worker (& "onerror")
 		     :get (js-make-function %this
 			     (lambda (this) onerror)
-			     0 (& "onerror"))
+			     (js-function-arity 0 0)
+			     (js-function-info :name "onerror.get" :len 0))
 		     :set (js-make-function %this
 			     (lambda (this v)
 				(set! onerror v)
 				(add-event-listener! this "error"
 				   (lambda (this e)
 				      (js-call0 %this v this))))
-			     1 (& "onerror"))
+			     (js-function-arity 1 0)
+			     (js-function-info :name "onerror.set" :len 1))
 		     :configurable #t
 		     :enumerable #t
 		     :hidden-class #t)
 		  (js-bind! %this worker (& "onexit")
 		     :get (js-make-function %this
 			     (lambda (this) onexit)
-			     0 (& "onexit"))
+			     (js-function-arity 0 0)
+			     (js-function-info :name "onexit.get" :len 0))
 		     :set (js-make-function %this
 			     (lambda (this v)
 				(set! onexit v)
 				(add-event-listener! this "exit"
 				   (lambda (this e)
 				      (js-call1 %this v this e))))
-			     2 (& "onexit"))
+			     (js-function-arity 1 0)
+			     (js-function-info :name "onexit.set" :len 1))
 		     :configurable #t
 		     :enumerable #t
 		     :hidden-class #t))
@@ -319,7 +332,8 @@
    (js-bind! %this obj (& "toString")
       :value (js-make-function %this
 		(lambda (this) (js-string->jsstring "[object Worker]"))
-		0 (& "toString"))
+		(js-function-arity 0 0)
+		(js-function-info :name "toString" :len 0))
       :writable #t
       :configurable #t
       :enumerable #f
@@ -330,7 +344,8 @@
 		(lambda (this::JsWorker data)
 		   (with-access::JsWorker this (thread)
 		      (js-worker-post-master-message this data)))
-		1 (& "postMessage"))
+		(js-function-arity 1 0)
+		(js-function-info :name "postMessage" :len 1))
       :writable #f
       :configurable #t
       :enumerable #f
@@ -341,7 +356,8 @@
 		(lambda (this::JsWorker)
 		   (with-access::JsWorker this (thread)
 		      (js-worker-terminate! thread #f)))
-		1 (& "terminate"))
+		(js-function-arity 1 0)
+		(js-function-info :name "terminate" :len 1))
       :writable #f
       :enumerable #t
       :configurable #f

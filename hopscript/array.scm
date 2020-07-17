@@ -479,13 +479,17 @@
       ;; '#(#unspecified))))
       
       ;; create the array object constructor
-      (set! js-array
-	 (js-make-function %this (%js-array %this) 1 (& "Array")
-	    :__proto__ (js-object-proto js-function)
-	    :prototype js-array-prototype
-	    :size 17
-	    :alloc js-array-alloc-ctor
-	    :construct (lambda (this . is) (js-array-construct %this this is))))
+      (let ((proc (%js-array %this)))
+	 (set! js-array
+	    (js-make-function %this proc
+	       (js-function-arity proc)
+	       (js-function-info :name  "Array" :len 1)
+	       :__proto__ (js-object-proto js-function)
+	       :prototype js-array-prototype
+	       :size 17
+	       :alloc js-array-alloc-ctor
+	       :construct (lambda (this . is)
+			     (js-array-construct %this this is)))))
       
       ;; other properties of the Array constructor
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.5.1
@@ -493,7 +497,8 @@
 	 :value (js-make-function %this
 		   (lambda (this arg)
 		      (or (js-array? arg) (js-proxy-array? arg)))
-		   1 (& "isArray"))
+		   (js-function-arity 1 0)
+		   (js-function-info :name "isArray" :len 1))
 	 :writable #t
 	 :enumerable #f
 	 :hidden-class #t)
@@ -546,7 +551,8 @@
       
       (js-bind! %this js-array (& "from")
 	 :value (js-make-function %this array-from
-		   0 (& "from")
+		   (js-function-arity array-from)
+		   (js-function-info :name "from" :len 0)
 		   :prototype (js-undefined))
 	 :enumerable #f
 	 :hidden-class #t)
@@ -568,7 +574,8 @@
       
       (js-bind! %this js-array (& "of")
 	 :value (js-make-function %this array-of
-		   0 (& "of")
+		   (js-function-arity array-of)
+		   (js-function-info :name "of" :len 0)
 		   :prototype (js-undefined))
 	 :enumerable #f
 	 :hidden-class #t)
@@ -586,7 +593,8 @@
       (with-access::JsGlobalObject %this (js-symbol-species)
 	 (js-bind! %this js-array js-symbol-species
 	    :get (js-make-function %this (lambda (this) this)
-		    0 (& "get [Symbol.species]"))
+		    (js-function-arity 0 0)
+		    (js-function-info :name "get [Symbol.species]" :len 0))
 	    :enumerable #f
 	    :configurable #t))
       
@@ -1064,7 +1072,9 @@
 	     (js-tojsstring this %this))))
    
    (js-bind! %this js-array-prototype (& "toString")
-      :value (js-make-function %this array-prototype-tostring 0 (& "toString")
+      :value (js-make-function %this array-prototype-tostring
+		(js-function-arity array-prototype-tostring)
+		(js-function-info :name "toString" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1099,7 +1109,9 @@
 			  (+u32 i #u32:1))))))))
    
    (js-bind! %this js-array-prototype (& "toLocaleString")
-      :value (js-make-function %this array-prototype-tolocalestring 0 (& "toLocaleString")
+      :value (js-make-function %this array-prototype-tolocalestring
+		(js-function-arity array-prototype-tolocalestring)
+		(js-function-info :name "toLocaleString" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1190,7 +1202,9 @@
 		   (loop (cdr l) (+u32 i #u32:1))))))))
    
    (js-bind! %this js-array-prototype (& "concat")
-      :value (js-make-function %this array-prototype-concat 1 (& "concat")
+      :value (js-make-function %this array-prototype-concat
+		(js-function-arity array-prototype-concat)
+		(js-function-info :name "concat" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1252,7 +1266,9 @@
 	 o))
 
    (js-bind! %this js-array-prototype (& "copyWithin")
-      :value (js-make-function %this array-prototype-copywithin 2 (& "copyWithin")
+      :value (js-make-function %this array-prototype-copywithin
+		(js-function-arity array-prototype-copywithin)
+		(js-function-info :name "copyWithin" :len 2)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1266,7 +1282,9 @@
 	 %this))
    
    (js-bind! %this js-array-prototype (& "entries")
-      :value (js-make-function %this array-prototype-entries 0 (& "entries")
+      :value (js-make-function %this array-prototype-entries
+		(js-function-arity array-prototype-entries)
+		(js-function-info :name "entries" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1298,7 +1316,9 @@
 			      (+u32 i #u32:1)))))))))
    
    (js-bind! %this js-array-prototype (& "join")
-      :value (js-make-function %this array-prototype-join 1 (& "join")
+      :value (js-make-function %this array-prototype-join
+		(js-function-arity array-prototype-join)
+		(js-function-info :name "join" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1322,7 +1342,9 @@
 	  (js-array-prototype-pop this %this)))
 
    (js-bind! %this js-array-prototype (& "pop")
-      :value (js-make-function %this array-prototype-pop 0 (& "pop")
+      :value (js-make-function %this array-prototype-pop
+		(js-function-arity array-prototype-pop)
+		(js-function-info :name "pop" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1346,7 +1368,9 @@
 	     (js-get-length this %this))))
    
    (js-bind! %this js-array-prototype (& "push")
-      :value (js-make-function %this array-prototype-push 1 (& "push")
+      :value (js-make-function %this array-prototype-push
+		(js-function-arity array-prototype-push)
+		(js-function-info :name "push" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1408,7 +1432,9 @@
 	     (array-reverse! o))))
    
    (js-bind! %this js-array-prototype (& "reverse")
-      :value (js-make-function %this array-prototype-reverse 0 (& "reverse")
+      :value (js-make-function %this array-prototype-reverse
+		(js-function-arity array-prototype-reverse)
+		(js-function-info :name "reverse" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1467,7 +1493,9 @@
 		    (array-shift! o len)))))))
 
    (js-bind! %this js-array-prototype (& "shift")
-      :value (js-make-function %this array-prototype-shift 0 (& "shift")
+      :value (js-make-function %this array-prototype-shift
+		(js-function-arity array-prototype-shift)
+		(js-function-info :name "shift" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1478,7 +1506,9 @@
       (js-array-prototype-slice this start end %this))
       
    (js-bind! %this js-array-prototype (& "slice")
-      :value (js-make-function %this array-prototype-slice 2 (& "slice")
+      :value (js-make-function %this array-prototype-slice
+		(js-function-arity array-prototype-slice)
+		(js-function-info :name "slice" :len 2)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1489,7 +1519,9 @@
       (js-array-prototype-sort (js-toobject %this this) comparefn %this))
 
    (js-bind! %this js-array-prototype (& "sort")
-      :value (js-make-function %this array-prototype-sort 1 (& "sort")
+      :value (js-make-function %this array-prototype-sort
+		(js-function-arity array-prototype-sort)
+		(js-function-info :name "sort" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1595,7 +1627,9 @@
 		    (array-splice this len actualstart actualdeletecount)))))))
 
    (js-bind! %this js-array-prototype (& "splice")
-      :value (js-make-function %this array-prototype-splice 2 (& "splice")
+      :value (js-make-function %this array-prototype-splice
+		(js-function-arity array-prototype-splice)
+		(js-function-info :name "splice" :len 2)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1664,7 +1698,9 @@
 		    (array-unshift this len))))))
 
    (js-bind! %this js-array-prototype (& "unshift")
-      :value (js-make-function %this array-prototype-unshift 1 (& "unshift")
+      :value (js-make-function %this array-prototype-unshift
+		(js-function-arity array-prototype-unshift)
+		(js-function-info :name "unshift" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1681,7 +1717,9 @@
 	     %this)))
 
    (js-bind! %this js-array-prototype (& "indexOf")
-      :value (js-make-function %this array-prototype-indexof 1 (& "indexOf")
+      :value (js-make-function %this array-prototype-indexof
+		(js-function-arity array-prototype-indexof)
+		(js-function-info :name "indexOf" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1760,7 +1798,9 @@
 			(lastindexof o (-u32 len #u32:1))))))))
 
    (js-bind! %this js-array-prototype (& "lastIndexOf")
-      :value (js-make-function %this array-prototype-lastindexof 1 (& "lastIndexOf")
+      :value (js-make-function %this array-prototype-lastindexof
+		(js-function-arity array-prototype-lastindexof)
+		(js-function-info :name "lastIndexOf" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1808,7 +1848,9 @@
       (array-prototype-iterator this proc t array-every vector-every %this))
    
    (js-bind! %this js-array-prototype (& "every")
-      :value (js-make-function %this array-prototype-every 1 (& "every")
+      :value (js-make-function %this array-prototype-every
+		(js-function-arity array-prototype-every)
+		(js-function-info :name "every" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1851,8 +1893,9 @@
       (array-prototype-iterator this proc t array-some vector-some %this))
 
    (js-bind! %this js-array-prototype (& "some")
-      :value (js-make-function %this
-		array-prototype-some 1 (& "some")
+      :value (js-make-function %this array-prototype-some
+		(js-function-arity array-prototype-some)
+		(js-function-info :name "some" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1863,7 +1906,9 @@
       (js-array-prototype-foreach this proc t %this))
 
    (js-bind! %this js-array-prototype (& "forEach")
-      :value (js-make-function %this array-prototype-foreach 1 (& "forEach")
+      :value (js-make-function %this array-prototype-foreach
+		(js-function-arity array-prototype-foreach)
+		(js-function-info :name "forEach" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1874,7 +1919,9 @@
       (js-array-prototype-map this proc t %this))
 
    (js-bind! %this js-array-prototype (& "map")
-      :value (js-make-function %this array-prototype-map 1 (& "map")
+      :value (js-make-function %this array-prototype-map
+		(js-function-arity array-prototype-map)
+		(js-function-info :name "map" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1946,8 +1993,9 @@
       (array-prototype-iterator this proc t array-filter vector-filter %this))
 
    (js-bind! %this js-array-prototype (& "filter")
-      :value (js-make-function %this
-		array-prototype-filter 1 (& "filter")
+      :value (js-make-function %this array-prototype-filter
+		(js-function-arity array-prototype-filter)
+		(js-function-info :name "filter" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -1976,7 +2024,9 @@
 	     o)))
    
    (js-bind! %this js-array-prototype (& "fill")
-      :value (js-make-function %this array-prototype-fill 1 (& "fill")
+      :value (js-make-function %this array-prototype-fill
+		(js-function-arity array-prototype-fill)
+		(js-function-info :name "fill" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -2013,8 +2063,9 @@
       (array-prototype-iterator this proc t array-find vector-find %this))
 
    (js-bind! %this js-array-prototype (& "find")
-      :value (js-make-function %this
-		array-prototype-find 1 (& "find")
+      :value (js-make-function %this array-prototype-find
+		(js-function-arity array-prototype-find)
+		(js-function-info :name "find" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -2052,8 +2103,9 @@
       (array-prototype-iterator this proc t array-find-idx vector-find-idx %this))
 
    (js-bind! %this js-array-prototype (& "findIndex")
-      :value (js-make-function %this
-		array-prototype-find-index 1 (& "findIndex")
+      :value (js-make-function %this array-prototype-find-index
+		(js-function-arity array-prototype-find-index)
+		(js-function-info :name "findIndex" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -2114,8 +2166,9 @@
 		    (array-includes o length (startidx length i))))))))
    
    (js-bind! %this js-array-prototype (& "includes")
-      :value (js-make-function %this
-		array-prototype-includes 1 (& "includes")
+      :value (js-make-function %this array-prototype-includes
+		(js-function-arity array-prototype-includes)
+		(js-function-info :name "includes" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -2154,8 +2207,9 @@
 		 (reduce/accumulator o len #u32:0 (car init))))))
    
    (js-bind! %this js-array-prototype (& "reduce")
-      :value (js-make-function %this
-		array-prototype-reduce 1 (& "reduce")
+      :value (js-make-function %this array-prototype-reduce
+		(js-function-arity array-prototype-reduce)
+		(js-function-info :name "reduce" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -2195,7 +2249,9 @@
 		 (reduce/accumulator o len (-u32 len #u32:1) (car init))))))
    
    (js-bind! %this js-array-prototype (& "reduceRight")
-      :value (js-make-function %this array-prototype-reduceright 1 (& "reduceRight")
+      :value (js-make-function %this array-prototype-reduceright
+		(js-function-arity array-prototype-reduceright)
+		(js-function-info :name "reduceRight" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -2208,7 +2264,8 @@
    (with-access::JsGlobalObject %this (js-symbol-iterator)
       (js-bind! %this js-array-prototype js-symbol-iterator
 	 :value (js-make-function %this array-prototype-array-values
-		   0 (& "@@iterator")
+		   (js-function-arity array-prototype-array-values)
+		   (js-function-info :name "@@iterator" :len 0)
 		   :prototype (js-undefined))
 	 :enumerable #f
 	 :hidden-class #t))
@@ -3959,7 +4016,8 @@
        (js-array-prototype-foreach-procedure this proc thisarg %this)
        (let ((jsproc (js-make-function %this
 			(lambda (_this x y z) (proc _this x y z %this))
-			3 (& "forEachProc")
+			(js-function-arity 3 0)
+			(js-function-info :name "forEachProc" :len 3)
 			:constrsize 0
 			:alloc js-object-alloc)))
 	  (js-array-foreach this jsproc thisarg %this cache))))
@@ -3972,7 +4030,8 @@
        (js-array-foreach-procedure this proc thisarg %this cache)
        (let ((jsproc (js-make-function %this
 			(lambda (_this x y z) (proc _this x y z %this))
-			3 (& "forEachProc")
+			(js-function-arity 3 0)
+			(js-function-info :name "forEachProc" :len 3)
 			:constrsize 0
 			:alloc js-object-alloc)))
 	  (with-access::JsGlobalObject %this (js-array-pcache)
@@ -4132,7 +4191,9 @@
    (if (js-object-mode-plain? this)
        (js-array-prototype-map-procedure this proc thisarg %this)
        (let ((jsproc (js-make-function %this
-			(lambda (_this x y z) (proc _this x y z %this)) 3 (& "mapProc")
+			(lambda (_this x y z) (proc _this x y z %this))
+			(js-function-arity 3 0)
+			(js-function-info :name "mapProc" :len 3)
 			:constrsize 0
 			:alloc js-object-alloc)))
 	  (js-array-map this jsproc thisarg %this cache))))
@@ -4144,7 +4205,9 @@
    (if (js-array? this)
        (js-array-map-procedure this proc thisarg %this cache)
        (let ((jsproc (js-make-function %this
-			(lambda (_this x y z) (proc _this x y z %this)) 3 (& "mapProc")
+			(lambda (_this x y z) (proc _this x y z %this))
+			(js-function-arity 3 0)
+			(js-function-info :name "mapProc" :len 3)
 			:constrsize 0
 			:alloc js-object-alloc)))
 	  (with-access::JsGlobalObject %this (js-array-pcache)

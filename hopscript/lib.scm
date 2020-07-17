@@ -410,7 +410,9 @@
 ;*    js-procedure->jsobject ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-procedure->jsobject obj %this)
-   (js-make-function %this obj (procedure-arity obj) (& "native")))
+   (js-make-function %this obj
+      (js-function-arity obj)
+      (js-function-info :name "native" :len 0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsobject->obj ...                                             */

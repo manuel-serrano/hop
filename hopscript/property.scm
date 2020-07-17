@@ -3077,13 +3077,17 @@
 ;*---------------------------------------------------------------------*/
 (define (js-define %this obj id::JsStringLiteral
 	   get set src pos #!key (hidden-class #t))
-   (let ((name (js-name->jsstring
-		  (string-append src ":" (integer->string pos)))))
+   (let ((name (string-append src ":" (integer->string pos))))
       (js-bind! %this obj id
 	 :configurable #f
 	 :hidden-class hidden-class
-	 :get (js-make-function %this get 1 name)
-	 :set (when set (js-make-function %this set 2 name)))))
+	 :get (js-make-function %this get
+		 (js-function-arity get)
+		 (js-function-info :name name :len 1))
+	 :set (when set
+		 (js-make-function %this set
+		    (js-function-arity set)
+		    (js-function-info :name name :len 2))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-delete! ...                                                   */
@@ -3765,8 +3769,8 @@
 	    ((eq? owner obj)
 	     (apply method this args))
 	    ((and (js-function? obj)
-		  (with-access::JsFunction obj (len arity)
-		     (and (>=fx arity 0) (=fx len largs))))
+		  (with-access::JsFunction obj (arity info)
+		     (and (>=fx arity 0) (=fx (vector-ref info 1) largs))))
 	     (with-access::JsFunction obj (procedure)
 		(set! owner obj)
 		(set! method procedure)

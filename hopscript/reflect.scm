@@ -129,55 +129,81 @@
    
    (js-bind! %this js-reflect (& "apply")
       :configurable #t :enumerable #f :writable #t
-      :value (js-make-function %this js-reflect-apply 3 (& "apply")))
+      :value (js-make-function %this js-reflect-apply
+		(js-function-arity js-reflect-apply)
+		(js-function-info :name "apply" :len 3)))
    
    (js-bind! %this js-reflect (& "construct")
       :configurable #t :enumerable #f :writable #t
-      :value (js-make-function %this js-reflect-construct 2 (& "construct")))
+      :value (js-make-function %this js-reflect-construct
+		(js-function-arity js-reflect-construct)
+		(js-function-info :name "construct" :len 2)))
    
    (js-bind! %this js-reflect (& "defineProperty")
       :configurable #t :enumerable #f :writable #t
-      :value (js-make-function %this js-reflect-defprop 3 (& "defineProperty")))
+      :value (js-make-function %this js-reflect-defprop
+		(js-function-arity js-reflect-defprop)
+		(js-function-info :name "defineProperty" :len 3)))
    
    (js-bind! %this js-reflect (& "deleteProperty")
       :configurable #t :enumerable #f :writable #t
-      :value (js-make-function %this js-reflect-delete 2 (& "deleteProperty")))
+      :value (js-make-function %this js-reflect-delete
+		(js-function-arity js-reflect-delete)
+		(js-function-info :name "deleteProperty" :len 2)))
    
    (js-bind! %this js-reflect (& "get")
       :configurable #t :enumerable #f :writable #t
-      :value (js-make-function %this js-reflect-get 3 (& "get")))
+      :value (js-make-function %this js-reflect-get
+		(js-function-arity js-reflect-get)
+		(js-function-info :name "get" :len 3)))
    
    (js-bind! %this js-reflect (& "getOwnPropertyDescriptor")
       :configurable #t :enumerable #f :writable #t
-      :value (js-make-function %this js-reflect-getown 2 (& "getOwnPropertyDescriptor")))
+      :value (js-make-function %this js-reflect-getown
+		(js-function-arity js-reflect-getown)
+		(js-function-info :name "getOwnPropertyDescriptor" :len 2)))
    
    (js-bind! %this js-reflect (& "getPrototypeOf")
       :configurable #t :enumerable #f :writable #t
-      :value (js-make-function %this js-reflect-getproto 1 (& "getPrototypeof")))
+      :value (js-make-function %this js-reflect-getproto
+		(js-function-arity js-reflect-getproto)
+		(js-function-info :name "getPrototypeof" :len 1)))
    
    (js-bind! %this js-reflect (& "has")
       :configurable #t :enumerable #f :writable #t
-      :value (js-make-function %this js-reflect-hasown 2 (& "has")))
+      :value (js-make-function %this js-reflect-hasown
+		(js-function-arity js-reflect-hasown)
+		(js-function-info :name "has" :len 2)))
    
    (js-bind! %this js-reflect (& "isExtensible")
       :configurable #t :enumerable #f :writable #t
-      :value (js-make-function %this js-reflect-is-extensible 1 (& "isExtensible")))
+      :value (js-make-function %this js-reflect-is-extensible
+		(js-function-arity js-reflect-is-extensible)
+		(js-function-info :name "isExtensible" :len 1)))
    
    (js-bind! %this js-reflect (& "ownKeys")
       :configurable #t :enumerable #f :writable #t
-      :value (js-make-function %this js-reflect-ownkeys 1 (& "ownKeys")))
+      :value (js-make-function %this js-reflect-ownkeys
+		(js-function-arity js-reflect-ownkeys)
+		(js-function-info :name "ownKeys" :len 1)))
    
    (js-bind! %this js-reflect (& "preventExtensions")
       :configurable #t :enumerable #f :writable #t
-      :value (js-make-function %this js-reflect-preventext 1 (& "preventExtensions")))
+      :value (js-make-function %this js-reflect-preventext
+		(js-function-arity js-reflect-preventext)
+		(js-function-info :name "preventExtensions" :len 1)))
    
    (js-bind! %this js-reflect (& "set")
       :configurable #t :enumerable #f :writable #t
-      :value (js-make-function %this js-reflect-set 3 (& "set")))
+      :value (js-make-function %this js-reflect-set
+		(js-function-arity js-reflect-set)
+		(js-function-info :name "set" :len 3)))
    
    (js-bind! %this js-reflect (& "setPrototypeOf")
       :configurable #t :enumerable #f :writable #t
-      :value (js-make-function %this js-reflect-setproto 2 (& "setPrototypeOf")))
+      :value (js-make-function %this js-reflect-setproto
+		(js-function-arity js-reflect-setproto)
+		(js-function-info :name "setPrototypeOf" :len 2)))
    
    ;; bind Reflect in the global object
    (js-bind! %this %this (& "Reflect")
