@@ -43,14 +43,14 @@
 	   ($js-init-jsalloc-procedure::int (::JsConstructMap
 					       ::uint32)
 	      "bgl_init_jsalloc_procedure")
-	   ($js-make-jsobject::JsObject (::uint16 ::JsConstructMap ::obj ::uint32)
+	   ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsobject")
 	   ($js-make-jsproxy::JsProxy (::obj ::obj ::obj ::obj ::obj ::uint32)
 	      "bgl_make_jsproxy")
 	   ($js-make-jsfunction::JsFunction (::procedure ::procedure
 					       ::procedure
 					       ::long ::long ::long
-					       ::obj ::obj ::obj)
+					       ::obj ::obj)
 	      "bgl_make_jsfunction")
 	   ($js-make-jsprocedure::JsProcedure (::procedure ::long ::obj)
 	      "bgl_make_jsprocedure")
@@ -229,16 +229,10 @@
 	      ;; alloc cannot be read-only, see _buffer.scm
 	      alloc::procedure
 	      (constrmap::JsConstructMap (default (js-not-a-cmap)))
-	      (src read-only (default #f))
-	      (name read-only)
-	      ;; MS 2019-01-10: two prototype fields are required,
-	      ;; see isPrototypeOf in ECMAScript specification
-	      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.6
+	      (info::vector read-only (default '#()))
 	      prototype
-	      %prototype
-	      (len::int read-only)
-	      (constrsize::uint16 (default #u16:3))
-	      (maxconstrsize::uint16 read-only (default #u16:100)))
+	      (constrsize::int (default 3))
+	      (maxconstrsize::int read-only (default 100)))
 	   
 	   (class JsService::JsFunction
 	      (worker::obj read-only)
@@ -429,7 +423,7 @@
 
 	   (js-property-cache-init!::JsPropertyCache ::obj)
 	   
-	   (inline js-make-jsobject::JsObject ::uint16 ::obj ::obj)
+	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
 
 	   (inline js-object-default-mode::uint32)
 	   (inline js-array-default-mode::uint32)
@@ -626,7 +620,7 @@
 	 (else
 	  (let ((o (instantiate::JsObject
 		      (cmap constrmap)
-		      (elements (make-vector (uint16->fixnum constrsize) (js-undefined))))))
+		      (elements (make-vector constrsize (js-undefined))))))
 	     (js-object-proto-set! o __proto__)
 	     (js-object-mode-set! o mode)
 	     (js-object-mode-inline-set! o #f)
@@ -1265,7 +1259,6 @@
 (define *js-not-a-pmap*
    (instantiate::JsConstructMap
       (inline #f)
-;*       (size -200)                                                   */
       (%id -1)))
 
 ;*---------------------------------------------------------------------*/

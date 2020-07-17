@@ -169,8 +169,9 @@
       ;; then, create a HopScript object
       (set! js-string
 	 (js-make-function %this
-	    (%js-string %this) 1 (& "String")
-	    :arity (js-function-arity 0 1 'scheme-optional)
+	    (%js-string %this)
+	    (js-function-arity 0 1 'scheme-optional)
+	    '#("String" 1 "function String() { [native code] }")
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-string-prototype
 	    :size 17

@@ -243,7 +243,7 @@
 	   (js-get-vindex::long ::JsGlobalObject))
 
    (cond-expand
-      ((not bigloo-4.3h)
+      ((config stackable #t)
        (pragma
 	  (js-for-in (args-noescape))
 	  (js-for-of (args-noescape))))))
@@ -399,8 +399,8 @@
    (with-access::JsObject obj (cmap elements)
       (if (not (js-object-mapped? obj))
 	  (with-access::JsConstructMap cmap (%id props)
-	     (fprint (current-error-port) "=== " msg (typeof obj) " UNMAPPED"
-		" length=" (vector-length elements)
+	     (fprint (current-error-port) "== " msg (typeof obj) " UNMAPPED"
+		" els.vlen=" (vector-length elements)
 		"\n   prop.names="
 		(map (lambda (d)
 			(with-access::JsPropertyDescriptor d (name)
@@ -410,13 +410,12 @@
 		(map (lambda (p) (format "~s" p))
 		   (vector->list elements))))
 	  (with-access::JsConstructMap cmap (%id props methods)
-	     (fprint (current-error-port) "===" msg (typeof obj) " MAPPED"
+	     (fprint (current-error-port) "== " msg (typeof obj) " MAPPED"
 		" length=" (vector-length elements)
 		" plain=" (js-object-mode-plain? obj)
-		" inline=" (js-object-mode-inline? obj)
 		" inline-els=" (js-object-inline-elements? obj)
 		" extensible=" (js-object-mode-extensible? obj)
-		" mlengths=" (vector-length methods)
+		" met.vlen=" (vector-length methods)
 		"\n   cmap.%id=" %id
 		"\n   elements=" (vector-map
 				    (lambda (v)
@@ -432,52 +431,35 @@
 ;*---------------------------------------------------------------------*/
 (define (js-debug-pcache pcache #!optional (msg ""))
    (if (isa? pcache JsPropertyCache)
-       (with-access::JsPropertyCache pcache (src imap cmap pmap nmap amap index vindex cntmiss)
-	  (fprint (current-error-port) "--- " msg (typeof pcache)
-	     " src=" src
+       (with-access::JsPropertyCache pcache (point src imap cmap pmap nmap amap index vindex cntmiss)
+	  (fprint (current-error-port) "-- " msg (typeof pcache)
+	     " loc=" point ":" src
 	     " index=" index " vindex=" vindex " cntmiss=" cntmiss)
-	  (cond
-	     ((isa? cmap JsConstructMap)
-	      (when (isa? imap JsConstructMap)
-		 (with-access::JsConstructMap imap ((%iid %id) (iprops props))
-		    (fprint (current-error-port) "  imap.%id=" %iid
-		       " imap.props=" iprops)))
-	      (when (isa? cmap JsConstructMap)
-		 (with-access::JsConstructMap cmap ((%cid %id) (cprops props))
-		    (fprint (current-error-port) "  cmap.%id=" %cid
-		       " cmap.props=" cprops)))
-	      (when (not (eq? pmap (js-not-a-pmap)))
-		 (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
-		    (fprint (current-error-port) "  pmap.%id=" %pid
-		       " pmap.props=" pprops)))
-	      (when (and (isa? nmap JsConstructMap) (not (eq? nmap (js-not-a-pmap))))
-		 (with-access::JsConstructMap nmap ((%pid %id) (pprops props))
-		    (fprint (current-error-port) "  nmap.%id=" %pid
-		       " nmap.props=" pprops)))
-	      (when (isa? amap JsConstructMap)
-		 (with-access::JsConstructMap amap ((%aid %id) (aprops props))
-		    (fprint (current-error-port) "  amap.%id=" %aid
-		       " amap.props=" aprops
-		       " owner=" (typeof (js-pcache-owner pcache))))))
-	     ((isa? imap JsConstructMap)
-	      (with-access::JsConstructMap imap ((%iid %id) (iprops props))
-		 (fprint (current-error-port) "  imap.%id=" %iid
-		    " imap.props=" iprops)))
-	     ((isa? nmap JsConstructMap)
-	      (with-access::JsConstructMap nmap ((%pid %id) (pprops props))
-		 (fprint (current-error-port) "  nmap.%id=" %pid
-		    " nmap.props=" pprops)))
-	     ((isa? pmap JsConstructMap)
-	      (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
-		 (fprint (current-error-port) "  pmap.%id=" %pid
-		    " pmap.props=" pprops)))
-	     ((isa? amap JsConstructMap)
-	      (with-access::JsConstructMap amap ((%aid %id) (aprops props))
-		 (fprint (current-error-port) "  amap.%id=" %aid
-		    " amap.props=" aprops
-		    " owner=" (typeof (js-pcache-owner pcache)))))
-	     (else
-	      (fprint (current-error-port) " no map"))))
+	  (if (isa? imap JsConstructMap)
+	      (with-access::JsConstructMap imap (%id props)
+		 (fprint (current-error-port) "  imap %id=" %id
+		    " props=" (vector-map prop-name props)))
+	      (fprint (current-error-port) "  imap " imap))
+	  (if (isa? cmap JsConstructMap)
+	      (with-access::JsConstructMap cmap (%id props)
+		 (fprint (current-error-port) "  cmap %id=" %id
+		    " props=" (vector-map prop-name props)))
+	      (fprint (current-error-port) "  cmap " cmap))
+	  (if (isa? pmap JsConstructMap)
+	      (with-access::JsConstructMap pmap (%id props)
+		 (fprint (current-error-port) "  pmap %id=" %id
+		    " props=" (vector-map prop-name props)))
+	      (fprint (current-error-port) "  pmap " pmap))
+	  (if (isa? nmap JsConstructMap)
+	      (with-access::JsConstructMap nmap (%id props)
+		 (fprint (current-error-port) "  nmap %id=" %id
+		    " props=" (vector-map prop-name props)))
+	      (fprint (current-error-port) "  nmap " nmap))
+	  (if (isa? amap JsConstructMap)
+	      (with-access::JsConstructMap amap (%id props)
+		 (fprint (current-error-port) "  amap %id=" %id
+		    " props=" (vector-map prop-name props)))
+	      (fprint (current-error-port) "  amap " amap)))
        (fprint (current-error-port) msg (typeof pcache))))
 
 ;*---------------------------------------------------------------------*/
@@ -485,16 +467,16 @@
 ;*---------------------------------------------------------------------*/
 (define (js-debug-cmap cmap #!optional (msg ""))
    (with-access::JsConstructMap cmap (%id props methods transitions inline sibling vlen)
-      (fprint (current-error-port) "~~~~ " msg (typeof cmap)
+      (fprint (current-error-port) "~~ " msg (typeof cmap)
 	 " cmap.%id=" %id
 	 " inline=" inline
 	 " sibling=" (typeof sibling)
-	 " plength=" (vector-length props)
-	 " mlength=" (vector-length methods)
-	 " vlen=" vlen
-	 "\nprops.names=" (vector-map prop-name props)
-	 "\nprops=" props
-	 "\ntransitions="
+	 " prop.vlen=" (vector-length props)
+	 " met.vlen=" (vector-length methods)
+	 " vtable.len=" vlen
+	 "\n  props.names=" (vector-map prop-name props)
+	 "\n  props=" props
+	 "\n  transitions="
 	 (map (lambda (tr)
 		 (format "~a:~a[~a]->~a"
 		    (transition-name tr)
@@ -502,8 +484,7 @@
 		    (transition-flags tr)
 		    (with-access::JsConstructMap (transition-nextmap tr) (%id)
 		       %id)))
-	    transitions)
-	 "\n")))
+	    transitions))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-add! ...                                               */
@@ -531,8 +512,8 @@
       (with-access::JsConstructMap cmap (ctor)
 	 (when (js-function? ctor)
 	    (with-access::JsFunction ctor (constrsize maxconstrsize)
-	       (when (<u16 constrsize maxconstrsize)
-		  (set! constrsize (+u16 #u16:1 constrsize)))))))
+	       (when (<fx constrsize maxconstrsize)
+		  (set! constrsize (+fx 1 constrsize)))))))
    (js-object-add! obj idx value)
    obj)
 
@@ -564,11 +545,10 @@
 	     (js-object-add! obj idx value)
 	     (when (js-function? ctor)
 		(with-access::JsFunction ctor (constrmap constrsize maxconstrsize)
-		   (when (<u16 constrsize maxconstrsize)
+		   (when (<fx constrsize maxconstrsize)
 		      (with-access::JsConstructMap cmap (props)
 			 (set! constrsize
-			    (fixnum->uint16
-			       (+fx 1 (vector-length props)))))))))
+			    (+fx 1 (vector-length props))))))))
 	  (vector-set! elements idx value))))
 
 ;*---------------------------------------------------------------------*/
@@ -2629,7 +2609,6 @@
 					 "exptend-mapped non-function" name)
 				      (when cache
 					 (js-pcache-next-direct! cache o nextmap index))))
-			       (link-cmap! cmap nextmap name v flags)
 			       (js-object-push/ctor! o index v ctor))
 			    (set! cmap nextmap)
 			    v)))))))))
@@ -2842,7 +2821,6 @@
 	    (set! cntmiss (+u32 #u32:1 cntmiss))
 	    (set! name prop)
 	    (set! cpoint point))
-;* 	    (set! usage 'put))                                         */
 	 (unless (or (eq? %omap (js-not-a-cmap))
 		     (eq? prop (& "__proto__")))
 	    (with-access::JsPropertyCache cache (index vindex cntmiss)

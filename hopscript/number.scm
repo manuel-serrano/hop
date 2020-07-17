@@ -100,13 +100,10 @@
 ;*---------------------------------------------------------------------*/
 (define (js-number->jsNumber o %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-number-prototype js-initial-cmap)
-      (let ((n (instantiate::JsNumber
-		  (cmap js-initial-cmap)
-		  (val o))))
-	 (js-object-proto-set! n js-number-prototype)
-	 n)))
-;*    (with-access::JsGlobalObject %this (js-number)                   */
-;*       (js-new1 %this js-number o)))                                 */
+      (instantiateJsNumber
+	 (val o)
+	 (__proto__ js-number-prototype)
+	 (cmap js-initial-cmap))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-number! ...                                              */
@@ -156,8 +153,9 @@
       
       ;; Create a HopScript number object constructor
       (set! js-number
-	 (js-make-function %this %js-number 1 (& "Number")
-	    :arity (js-function-arity 0 1 'scheme-optional)
+	 (js-make-function %this %js-number
+	    (js-function-arity 0 1 'scheme-optional)
+	    `#("Number" 1 ,(& "builtin"))
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-number-prototype
 	    :construct js-number-construct
@@ -276,9 +274,9 @@
       (js-jsnumber-tostring (js-cast-number this typeof %this) radix %this))
 
    (js-bind! %this obj (& "toString")
-      :value (js-make-function %this js-number-tostring
-		2 (& "toString")
-		:arity (js-function-arity 0 1 'scheme))
+      :value (js-make-function %this
+		js-number-tostring (js-function-arity 0 1 'scheme)
+		'#("toString" 2 "function toString() { [native code] }"))
       :writable #t
       :configurable #t
       :enumerable #f
@@ -290,9 +288,9 @@
       (js-number-tostring this radix))
 
    (js-bind! %this obj (& "toLocaleString")
-      :value (js-make-function %this js-number-tolocalestring
-		2 (& "toLocaleString")
-		:arity (js-function-arity 0 1 'scheme))
+      :value (js-make-function %this
+		js-number-tolocalestring (js-function-arity 0 1 'scheme)
+		'#("toLocaleString" 2 "function toLocalString() { [native code] }"))
       :writable #t
       :configurable #t
       :enumerable #f

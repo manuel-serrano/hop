@@ -1318,24 +1318,26 @@
 ;*    js-object-alloc ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-alloc %this ctor::JsFunction)
-   (with-access::JsFunction ctor (constrsize constrmap %prototype)
+   (with-access::JsFunction ctor (constrsize constrmap prototype)
       (when (eq? constrmap (js-not-a-cmap))
 	 (js-function-set-constrmap! ctor))
-      (js-make-jsobject constrsize constrmap %prototype)))
+      (js-make-jsobject constrsize constrmap
+	 (if (js-object? prototype) prototype (js-object-proto %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc-fast ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-alloc-fast %this ctor::JsFunction)
-   (with-access::JsFunction ctor (constrsize constrmap %prototype)
-      (js-make-jsobject constrsize constrmap %prototype)))
+   (with-access::JsFunction ctor (constrsize constrmap prototype)
+      (js-make-jsobject constrsize constrmap
+	 (if (js-object? prototype) prototype (js-object-proto %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc-lazy ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-object-alloc-lazy %this ctor::JsFunction)
-   (with-access::JsFunction ctor (constrmap %prototype alloc)
-      (unless %prototype
+   (with-access::JsFunction ctor (constrmap alloc)
+      (unless (eq? alloc js-object-alloc)
 	 (js-function-setup-prototype! %this ctor)
 	 (set! alloc js-object-alloc))
       (js-object-alloc %this ctor)))
@@ -1521,21 +1523,20 @@
 ;*    js-ordinary-instanceof? ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-ordinary-instanceof? %this v f)
-   (with-access::JsFunction f (%prototype prototype)
-      (when %prototype
-	 (let ((o prototype))
-	    (if (not (js-object? o))
-		(js-raise-type-error %this "instanceof: no prototype ~s" v)
-		(let loop ((v v))
-		   (let ((nv (js-object-proto v)))
-		      (cond
-			 ((eq? o nv)
-			  #t)
-			 ((eq? nv (js-null))
-			  (when (eq? (object-class v) JsProxy)
-			     (loop (js-proxy-target v))))
-			 (else
-			  (loop nv))))))))))
+   (with-access::JsFunction f (prototype)
+      (let ((o prototype))
+	 (if (not (js-object? o))
+	     (js-raise-type-error %this "instanceof: no prototype ~s" v)
+	     (let loop ((v v))
+		(let ((nv (js-object-proto v)))
+		   (cond
+		      ((eq? o nv)
+		       #t)
+		      ((eq? nv (js-null))
+		       (when (eq? (object-class v) JsProxy)
+			  (loop (js-proxy-target v))))
+		      (else
+		       (loop nv)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-instanceof? ...                                      */
@@ -1551,21 +1552,20 @@
 	     (if (js-function? h)
 		 (js-call1 %this h f v)
 		 (js-ordinary-instanceof? %this v f))))
-       (with-access::JsFunction f (prototype %prototype)
-	  (when %prototype
-	     (let ((o prototype))
-		(if (not (js-object? o))
-		    (js-raise-type-error %this "instanceof: no prototype ~s" v)
-		    (let loop ((v v))
-		       (let ((nv (js-object-proto v)))
-			  (cond
-			     ((eq? o nv)
-			      #t)
-			     ((eq? nv (js-null))
-			      (when (eq? (object-class v) JsProxy)
-				 (loop (js-proxy-target v))))
-			     (else
-			      (loop nv)))))))))))
+       (with-access::JsFunction f (prototype)
+	  (let ((o prototype))
+	     (if (not (js-object? o))
+		 (js-raise-type-error %this "instanceof: no prototype ~s" v)
+		 (let loop ((v v))
+		    (let ((nv (js-object-proto v)))
+		       (cond
+			  ((eq? o nv)
+			   #t)
+			  ((eq? nv (js-null))
+			   (when (eq? (object-class v) JsProxy)
+			      (loop (js-proxy-target v))))
+			  (else
+			   (loop nv))))))))))
 
 (define (js-function-instanceof? %this v f::JsFunction)
    (when (js-object? v)

@@ -514,10 +514,10 @@
       (with-access::JsGlobalObject %this (js-slowbuffer-proto js-object)
 	 (unless js-slowbuffer-proto
 	    (set! js-slowbuffer-proto
-	       (with-access::JsFunction js-object (constrmap %prototype)
+	       (with-access::JsFunction js-object (constrmap prototype)
 		  (js-make-jsobject 25
 		     (duplicate::JsConstructMap constrmap (%id (gencmapid)))
-		     %prototype))))
+		     prototype))))
 	 js-slowbuffer-proto))
    
    (define (slowbuffer-constr this a0)

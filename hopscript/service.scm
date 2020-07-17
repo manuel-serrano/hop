@@ -277,7 +277,6 @@
 				(js-raise-type-error %this "not a constructor ~s"
 				   js-function-prototype)))
 		  (prototype (js-object-proto %this))
-		  (%prototype (js-object-proto %this))
 		  (name (& ""))
 		  (len -1)
 		  (procedure list)
@@ -1052,7 +1051,6 @@
 	 (arity arity)
 	 (worker worker)
 	 (prototype (js-object-proto %this))
-	 (%prototype (js-object-proto %this))
 	 (__proto__ js-service-prototype)
 	 (alloc (lambda (_)
 		   (js-raise-type-error %this

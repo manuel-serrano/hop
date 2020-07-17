@@ -555,7 +555,8 @@
 			  (lambda ()
 			     (with-handler
 				(lambda (e)
-				   (tprint "RECEIVER HANDLER TBR " (typeof e)))
+				   (tprint "RECEIVER HANDLER TBR " (typeof e))
+				   (exception-notify e))
 				(hdl p status header clength tenc)))))
 		    hdl)
 		:args args))))))

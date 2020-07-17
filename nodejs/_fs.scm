@@ -270,8 +270,8 @@
 
    (define (create-fs-watcher-proto)
       (with-access::JsGlobalObject %this (js-object)
-	 (with-access::JsFunction js-object (%prototype constrmap)
-	    (let ((obj (js-make-jsobject 2 constrmap %prototype)))
+	 (with-access::JsFunction js-object (prototype constrmap)
+	    (let ((obj (js-make-jsobject 2 constrmap prototype)))
 	       
 	       (js-put! obj (& "start")
 		  (js-make-function %this

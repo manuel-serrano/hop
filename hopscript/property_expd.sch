@@ -925,7 +925,8 @@
 		  `(if (or ,iso (not (or (eq? ,obj (js-undefined)) (null? ,obj))))
 		       (let ,bindings
 			  ,(expand-call %this iso obj name ccache ocache loc cs os nargs))
-		       (js-raise-type-error %this "toObject: cannot convert ~s"
+		       (js-raise-type-error/loc %this ,loc
+			  ,(format "toObject: cannot convert ~~s (~a)" name)
 			  ,obj))
 		  (expand-call %this iso obj name ccache ocache loc cs os args)))))
 

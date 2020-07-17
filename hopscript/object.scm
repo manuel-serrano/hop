@@ -351,18 +351,19 @@
 			 (%js-eval ip 'eval %this %this %this)))))
 	    
 	    (js-bind! %this %this (& "eval")
-	       :value (js-make-function %this js-eval 1 (& "eval")
-			 :prototype (js-undefined)
-			 :src "object.scm")
+	       :value (js-make-function %this js-eval
+			 (procedure-arity js-eval)
+			 '#("eval" 1 "function eval() { [native code] }")
+			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 	    
 	    (js-bind! %this %this (& "parseInt")
 	       :value (js-make-function %this
 			 (lambda (this string radix)
 			    (js-parseint string radix %this))
-			 2 (& "parseInt")
-			 :prototype (js-undefined)
-			 :src "object.scm")
+			 (procedure-arity 3 0)
+			 '#("parseInt" 2 "function parseInit() { [native code] }")
+			 :prototype (js-undefined))
 	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    (js-bind! %this %this (& "parseFloat")

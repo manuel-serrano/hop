@@ -838,7 +838,10 @@
 		    ,(with-access::J2SFun val (type)
 			(if (eq? type 'procedure)
 			    id
-			    (j2sfun->scheme val #f #f mode return ctx))))
+			    (let ((tmp (gensym 'p)))
+			       `(let ((,tmp ,(jsfun->lambda val mode return ctx
+						(j2s-fun-prototype val) #f)))
+				   ,(j2sfun->scheme val tmp #f mode return ctx))))))
 		 ,@(if (decl-usage-has? d '(eval))
 		       `((js-define %this ,scope ,(j2s-decl-name d ctx)
 			    (lambda (%) ,^id)
