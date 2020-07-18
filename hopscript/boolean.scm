@@ -91,7 +91,9 @@
       
       ;; then, Create a HopScript string object
       (set! js-boolean
-	 (js-make-function %this %js-boolean 1 (& "Boolean")
+	 (js-make-function %this %js-boolean
+	    (js-function-arity %js-boolean)
+	    (js-function-info :name "Boolean" :len 1)
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-boolean-prototype
 	    :alloc js-boolean-alloc
@@ -156,8 +158,8 @@
 		      (if val
 			  (js-string->jsstring "true")
 			  (js-string->jsstring "false"))))
-		0
-		(& "toString"))
+		(js-function-arity 0 0)
+		(js-function-info :name "toString" :len 0))
       :enumerable #f
       :hidden-class #t)
    ;; valueOf
@@ -165,7 +167,8 @@
       :value (js-make-function %this
 		(lambda (this)
 		   (js-cast-boolean this #f))
-		0 (& "valueOf"))
+		(js-function-arity 0 0)
+		(js-function-info :name "valueOf" :len 0))
       :enumerable #f
       :hidden-class #t))
       

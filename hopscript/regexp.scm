@@ -145,7 +145,9 @@
       ;; create a HopScript regexp object constructor
       (set! js-regexp
 	 (js-make-function %this
-	    (%js-regexp %this) 2 (& "RegExp")
+	    (%js-regexp %this)
+	    (js-function-arity 2 0)
+	    (js-function-info :name "RegExp" :len 2)
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-regexp-prototype
 	    :alloc js-no-alloc
@@ -550,8 +552,8 @@
 			 (if (js-totest (js-get this (& "global") %this)) "g" "")
 			 (if (js-totest (js-get this (& "ignoreCase") %this)) "i" "")
 			 (if (js-totest (js-get this (& "multiline") %this)) "m" ""))))
-		
-		0 (& "toString")
+		(js-function-arity 0 0)
+		(js-function-info :name "toString" :len 0)
 		:prototype (js-undefined))
       :writable #t
       :configurable #t
@@ -565,7 +567,8 @@
 		     (with-access::JsRegExp this (flags)
 			(js-regexp-flags-ignorecase? flags))
 		     (js-raise-type-error %this "Not a regexp" this)))
-	      0 (& "ignoreCase")
+	      (js-function-arity 0 0)
+	      (js-function-info :name "ignoreCase" :len 0)
 	      :prototype (js-undefined))
       :set (js-undefined)
       :writable #f
@@ -579,7 +582,8 @@
 		     (with-access::JsRegExp this (flags)
 			(js-regexp-flags-multiline? flags))
 		     (js-raise-type-error %this "Not a regexp" this)))
-	      0 (& "multiline")
+	      (js-function-arity 0 0)
+	      (js-function-info :name "multiline" :len 0)
 	      :prototype (js-undefined))
       :set (js-undefined)
       :writable #f
@@ -593,7 +597,8 @@
 		     (with-access::JsRegExp this (flags)
 			(js-regexp-flags-global? flags))
 		     (js-raise-type-error %this "Not a regexp" this)))
-	      0 (& "global")
+	      (js-function-arity 0 0)
+	      (js-function-info :name "global" :len 0)
 	      :prototype (js-undefined))
       :set (js-undefined)
       :writable #f
@@ -607,7 +612,8 @@
 		     (with-access::JsRegExp this (source)
 			(js-string->jsstring source))
 		     (js-raise-type-error %this "Not a regexp" this)))
-	      0 (& "source")
+	      (js-function-arity 0 0)
+	      (js-function-info :name "source" :len 0)
 	      :prototype (js-undefined))
       :set (js-undefined)
       :writable #f
@@ -620,7 +626,8 @@
 		   (if (not (js-regexp? this))
 		       (js-raise-type-error %this "Not a RegExp ~s" this)
 		       (js-regexp-prototype-exec this string %this)))
-		1 (& "exec")
+		(js-function-arity 1 0)
+		(js-function-info :name "exec" :len 1)
 		:prototype (js-undefined))
       :writable #t
       :configurable #t
@@ -628,7 +635,9 @@
       :hidden-class #t)
    ;; test
    (js-bind! %this obj (& "test")
-      :value (js-make-function %this (make-regexp-prototype-test %this) 1 (& "test")
+      :value (js-make-function %this (make-regexp-prototype-test %this)
+		(js-function-arity 1 0)
+		(js-function-info :name "test" :len 1)
 		:prototype (js-undefined))
       :writable #t
       :configurable #t
@@ -636,7 +645,9 @@
       :hidden-class #t)
    ;; compile
    (js-bind! %this obj (& "compile")
-      :value (js-make-function %this regexp-prototype-compile 1 (& "compile")
+      :value (js-make-function %this regexp-prototype-compile
+		(js-function-arity 1 0)
+		(js-function-info :name "compile" :len 1)
 		:prototype (js-undefined))
       :writable #t
       :configurable #t

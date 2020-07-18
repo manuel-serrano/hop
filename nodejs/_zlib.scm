@@ -64,19 +64,23 @@
 		      (js-new %this js-object))))
 	 (js-put! proto (& "write")
 	    (js-make-function %this zlib-write
-	       7 (& "write"))
+	       (js-function-arity 7 0)
+	       (js-function-info :name "write" :len 7))
 	    #f %this)
 	 (js-put! proto (& "init")
 	    (js-make-function %this zlib-init
-	       5 (& "init"))
+	       (js-function-arity 5 0)
+	       (js-function-info :name "init" :len 5))
 	    #f %this)
 	 (js-put! proto (& "close")
 	    (js-make-function %this zlib-close
-	       0 (& "close"))
+	       (js-function-arity 0 0)
+	       (js-function-info :name "close" :len 0))
 	    #f %this)
 	 (js-put! proto (& "reset")
 	    (js-make-function %this zlib-reset
-	       0 (& "reset"))
+	       (js-function-arity 0 0)
+	       (js-function-info :name "reset" :len 0))
 	    #f %this)
 	 proto))
    
@@ -84,7 +88,9 @@
       (instantiateJsZlib
 	 (__proto__ zlib-proto)))
 
-   (let* ((zlib (js-make-function %this zlib 0 (& "Zlib")
+   (let* ((zlib (js-make-function %this zlib
+		   (js-function-arity 0 0)
+		   (js-function-info :name "Zlib" :len 0)
 		   :construct zlib
 		   :prototype zlib-proto)))
       (js-alist->jsobject

@@ -66,8 +66,10 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (define-js name arity proc . opt)
    `(cons ',name
-       (js-make-function %this ,proc ,arity (& ,(symbol->string name))
-	  ,@opt :src "_hop.scm")))
+       (js-make-function %this ,proc
+	  (js-function-arity ,arity 0)
+	  (js-function-info :name ,(symbol->string name) :len ,arity)
+	  ,@opt)))
 		 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-process-hop ...                                            */
@@ -86,7 +88,8 @@
 	 (js-make-function %this
 	    (lambda (this url args)
 	       (js-new %this js-webservice url args))
-	    2 (& "webService")
+	    (js-function-arity 2 0)
+	    (js-function-info :name "webService" :len 2)
 	    :__proto__ js-function-prototype
 	    :prototype js-urlframe-prototype
 	    :alloc js-no-alloc
@@ -104,7 +107,8 @@
 	 (js-make-function %this
 	    (lambda (this host port auth ssl)
 	       (js-new %this host port auth))
-	    4 (& "Server")
+	    (js-function-arity 4 0)
+	    (js-function-info :name "Server" :len 4)
 	    :__proto__ js-function-prototype
 	    :prototype server-prototype
 	    :alloc js-no-alloc
@@ -149,19 +153,22 @@
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (nodejs-compile-pending))
-		       0 (& "get"))
+		       (js-function-arity 0 0)
+		       (js-function-info :name "get" :len 0))
 	       :writable #f
 	       :configurable #f)
 	    (js-bind! %this driver (& "addEventListener")
 	       :value (js-make-function %this
 			 js-compiler-driver-add-event-listener
-			 3 (& "addEventListener"))
+			 (js-function-arity 3 0)
+			 (js-function-info :name "addEventListener" :len 3))
 	       :writable #f
 	       :configurable #f)
 	    (js-bind! %this driver (& "removeEventListener")
 	       :value (js-make-function %this
 			 js-compiler-driver-remove-event-listener
-			 3 (& "removeEventListener"))
+			 (js-function-arity 3 0)
+			 (js-function-info :name "removeEventListener" :len 3))
 	       :writable #f
 	       :configurable #f)
 	    (js-bind! %this driver (& "policy")
@@ -169,13 +176,15 @@
 		       (lambda (this)
 			  (js-string->jsstring
 			     (symbol->string (hop-sofile-compile-policy))))
-		       0 (& "get"))
+		       (js-function-arity 0 0)
+		       (js-function-info :name "get" :len 0))
 	       :set (js-make-function %this
 		       (lambda (this v)
 			  (hop-sofile-compile-policy-set!
 			     (string->symbol
 				(js-tostring v %this))))
-		       1 (& "set"))
+		       (js-function-arity 1 0)
+		       (js-function-info :name "set" :len 1))
 	       :writable #t
 	       :configurable #f)
 	    driver))
@@ -186,28 +195,33 @@
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame success opt)
 		      (post-url this success opt %this #f))
-		   2 (& "post")))
+		   (js-function-arity 2 0)
+		   (js-function-info :name "post" :len 2)))
       (js-bind! %this js-urlframe-prototype (& "postSync")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame opt)
 		      (post-url this #f opt %this #t))
-		   1 (& "postSync")))
+		   (js-function-arity 1 0)
+		   (js-function-info :name "postSync" :len 1)))
       (js-bind! %this js-urlframe-prototype (& "toString")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame)
 		      (js-string->jsstring (urlframe->string this %this)))
-		   0 (& "toString")))
+		   (js-function-arity 0 0)
+		   (js-function-info :name "toString" :len 0)))
       (js-bind! %this js-urlframe-prototype (& "getHeader")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame hd)
 		      (js-get this (& "header") %this))
-		   0 (& "getHeader")))
+		   (js-function-arity 0 0)
+		   (js-function-info :name "getHeader" :len 0)))
       (js-bind! %this js-urlframe-prototype (& "setHeader")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame hd)
 		      (js-put! this (& "header") hd #f %this)
 		      this)
-		   1 (& "setHeader")))
+		   (js-function-arity 1 0)
+		   (js-function-info :name "setHeader" :len 1)))
 
       (js-bind! %this server-prototype (& "addEventListener")
 	 :value (js-make-function %this
@@ -221,7 +235,8 @@
 			    (when (isa? obj server)
 			       (add-event-listener! obj
 				     (js-tostring event %this) f)))))
-		   3 (& "addEventListener"))
+		   (js-function-arity 3 0)
+		   (js-function-info :name "addEventListener" :len 3))
 	 :enumerable #f)
       (js-bind! %this server-prototype (& "removeEventListener")
 	 :value (js-make-function %this
@@ -232,7 +247,8 @@
 			       (when (pair? f)
 				  (remove-event-listener! obj
 					(js-tostring event %this) (cdr f)))))))
-		   3 (& "removeEventListener"))
+		   (js-function-arity 3 0)
+		   (js-function-info :name "removeEventListener" :len 3))
 	 :enumerable #f)
       (js-bind! %this server-prototype (& "port")
 	 :get (js-make-function %this
@@ -241,7 +257,8 @@
 		       (when (isa? obj server)
 			  (with-access::server obj (port)
 			     port))))
-		 0 (& "port"))
+		 (js-function-arity 0 0)
+		 (js-function-info :name "port" :len 0))
 	 :writable #f)
       (js-bind! %this server-prototype (& "host")
 	 :get (js-make-function %this
@@ -250,7 +267,8 @@
 		       (when (isa? obj server)
 			  (with-access::server obj (host)
 			     (js-string->jsstring host)))))
-		 0 (& "host"))
+		 (js-function-arity 0 0)
+		 (js-function-info :name "host" :len 0))
 	 :writable #f)
       (js-bind! %this server-prototype (& "authorization")
 	 :get (js-make-function %this
@@ -260,7 +278,8 @@
 			  (with-access::server obj (authorization)
 			     (when (string? authorization)
 				(js-string->jsstring authorization))))))
-		 0 (& "authorization"))
+		 (js-function-arity 0 0)
+		 (js-function-info :name "authorization" :len 0))
 	 :writable #f)
       (js-bind! %this server-prototype (& "ssl")
 	 :get (js-make-function %this
@@ -269,7 +288,8 @@
 		       (when (isa? obj server)
 			  (with-access::server obj (ssl)
 			     ssl))))
-		 0 (& "ssl"))
+		 (js-function-arity 0 0)
+		 (js-function-info :name "ssl" :len 0))
 	 :writable #f)
 
       (with-access::JsGlobalObject %this (js-object js-server-prototype)
@@ -317,7 +337,8 @@
 			(js-make-function %this
 			   (lambda (this args)
 			      (js-new %this js-webservice base args))
-			   1 (js-name->jsstring name)))))
+			   (js-function-arity 1 0)
+			   (js-function-info :name name :len 1)))))
 	       
 	       ;; charset
 	       (define-js charsetConvert 3
@@ -637,7 +658,8 @@
 							     (js-promise-async p
 								(lambda ()
 								   (js-promise-reject p x))))))))))))
-			       2 (& "executor")))))
+			       (js-function-arity 2 0)
+			       (js-function-info :name "executor" :len 2)))))
 		p))))))
 
 ;*---------------------------------------------------------------------*/
@@ -768,7 +790,8 @@
 			 (js-make-function %this
 			    (lambda (this resp)
 			       (k (scheme->response resp req %this)))
-			    1 (& "reply") :src 'builtin))))))
+			    (js-function-arity 1 0)
+			    (js-function-info :name "reply" :len 1)))))))
 	  (js-raise-type-error %this "not a request" req)))
    
    (if (js-object? req)

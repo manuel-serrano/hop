@@ -702,8 +702,8 @@
 		    :alloc ,alloc
 		    :constrsize ,constrsize))
 	       (else
-		`(js-make-function-simple %this ,tmp
-		    ,arity  ,(j2s-function-info this name loc ctx)
+		`(js-make-function %this ,tmp
+		    ,arity ,(j2s-function-info this name loc ctx)
 		    ',mode ,constrsize)))))))
 
 ;*---------------------------------------------------------------------*/

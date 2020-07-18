@@ -50,7 +50,7 @@
 			 ((and (=fx opt 1) (=fx req 0))
 			  -512)
 			 (else
-			  (error "js-function-arity" "Illegal scheme-optional" (cons opt req)))))
+			  (error "js-function-arity" "Illegal scheme-optional" (cons req opt)))))
 		     (((kwote quote) optional)
 		      (if (=fx opt 0)
 			  (+fx req 1)
@@ -103,6 +103,8 @@
 	       (+fx req 1)
 	       (negfx (+fx req 1024))))
 	  ((fix)
+	   (unless (number? opt)
+	      (tprint "req=" req " opt=" opt))
 	   (if (=fx opt 0)
 	       (+fx req 1)
 	       (error "js-function-arity" "illegal optional for fix args" opt)))

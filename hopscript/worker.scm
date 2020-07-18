@@ -18,7 +18,7 @@
    
    (library web hop js2scheme)
    
-   (include "types.sch" "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch" "arity.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic

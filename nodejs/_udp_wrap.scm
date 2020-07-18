@@ -54,7 +54,8 @@
 			(let ((p (->fixnum (js-tointeger port %this))))
 			   (nodejs-udp-bind %this process handle addr p 4
 			      (if (eq? flags (js-undefined)) 0 flags)))))
-		  3 (& "bind"))
+		  (js-function-arity 3 0)
+		  (js-function-info :name "bind" :len 3))
 	       #f %this)
 	    
 	    (js-put! obj (& "send")
@@ -62,7 +63,8 @@
 		  (lambda (this buffer offset length port address callback)
 		     (udp-send %worker process %this this
 			buffer offset length port address 4 callback))
-		  6 (& "send"))
+		  (js-function-arity 6 0)
+		  (js-function-info :name "send" :len 6))
 	       #f %this)
 	    
 	    (js-put! obj (& "bind6")
@@ -72,7 +74,8 @@
 			(let ((p (->fixnum (js-tointeger port %this))))
 			   (nodejs-udp-bind %this process handle addr p 6
 			      (if (eq? flags (js-undefined)) 0 flags)))))
-		  3 (& "bind6"))
+		  (js-function-arity 3 0)
+		  (js-function-info :name "bind6" :len 3))
 	       #f %this)
 	    
 	    (js-put! obj (& "send6")
@@ -80,21 +83,24 @@
 		  (lambda (this buffer offset length port address callback)
 		     (udp-send %worker process %this this 
 			buffer offset length port address 6 callback))
-		  5 (& "send6"))
+		  (js-function-arity 5 0)
+		  (js-function-info :name "send6" :len 5))
 	       #f %this)
 	    
 	    (js-put! obj (& "close")
 	       (js-make-function %this
 		  (lambda (this cb)
 		     (nodejs-close %worker %this process this cb))
-		  1 (& "close"))
+		  (js-function-arity 1 0)
+		  (js-function-info :name "close" :len 1))
 	       #f %this)
 	    
 	    (js-put! obj (& "recvStart")
 	       (js-make-function %this
 		  (lambda (this)
 		     (udp-recv-start %worker %this process slab this))
-		  0 (& "recvStart"))
+		  (js-function-arity 0 0)
+		  (js-function-info :name "recvStart" :len 0))
 	       #f %this)
 	    
 	    (js-put! obj (& "recvStop")
@@ -102,7 +108,8 @@
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-udp-recv-stop handle)))
-		  1 (& "recvStop"))
+		  (js-function-arity 1 0)
+		  (js-function-info :name "recvStop" :len 1))
 	       #f %this)
 	    
 	    (js-put! obj (& "getsockname")
@@ -110,7 +117,8 @@
 		  (lambda (this val)
 		     (with-access::JsHandle this (handle)
 			(nodejs-udp-getsockname %this handle)))
-		  1 (& "getsockname"))
+		  (js-function-arity 1 0)
+		  (js-function-info :name "getsockname" :len 1))
 	       #f %this)
 	    
 	    (js-put! obj (& "addMembership")
@@ -123,7 +131,8 @@
 			      (unless (eq? iface (js-undefined))
 				 (js-tostring iface %this))
 			      'join-group))))
-		  3 (& "addMembership"))
+		  (js-function-arity 3 0)
+		  (js-function-info :name "addMembership" :len 3))
 	       #f %this)
 	    
 	    (js-put! obj (& "dropMembership")
@@ -135,7 +144,8 @@
 			   (unless (eq? iface (js-undefined))
 			      (js-tostring iface %this))
 			   'leave-group)))
-		  3 (& "dropMembership"))
+		  (js-function-arity 3 0)
+		  (js-function-info :name "dropMembership" :len 3))
 	       #f %this)
 	    
 	    (js-put! obj (& "setMulticastTTL")
@@ -144,7 +154,8 @@
 		     (with-access::JsHandle this (handle)
 			(nodejs-udp-set-multicast-ttl handle
 			   (->fixnum (js-tointeger ttl %this) ))))
-		  2 (& "setMulticastTTL"))
+		  (js-function-arity 2 0)
+		  (js-function-info :name "setMulticastTTL" :len 2))
 	       #f %this)
 	    
 	    (js-put! obj (& "setMulticastLoopback")
@@ -153,7 +164,8 @@
 		     (with-access::JsHandle this (handle)
 			(nodejs-udp-set-multicast-loop handle
 			   (js-toboolean on))))
-		  2 (& "setMulticastLoopback"))
+		  (js-function-arity 2 0)
+		  (js-function-info :name "setMulticastLoopback" :len 2))
 	       #f %this)
 	    
 	    (js-put! obj (& "setBroadcast")
@@ -162,7 +174,8 @@
 		     (with-access::JsHandle this (handle)
 			(nodejs-udp-set-broadcast handle
 			   (js-toboolean on))))
-		  2 (& "setBroadcast"))
+		  (js-function-arity 2 0)
+		  (js-function-info :name "setBroadcast" :len 2))
 	       #f %this)
 	    
 	    (js-put! obj (& "setTTL")
@@ -171,7 +184,8 @@
 		     (with-access::JsHandle this (handle)
 			(nodejs-udp-set-ttl handle
 			   (->fixnum (js-tointeger ttl %this) ))))
-		  2 (& "setTTL"))
+		  (js-function-arity 2 0)
+		  (js-function-info :name "setTTL" :len 2))
 	       #f %this)
 	    
 	    (js-put! obj (& "ref")
@@ -179,7 +193,8 @@
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-ref handle %worker)))
-		  0 (& "ref"))
+		  (js-function-arity 0 0)
+		  (js-function-info :name "ref" :len 0))
 	       #f %this)
 	    
 	    (js-put! obj (& "unref")
@@ -187,7 +202,8 @@
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-unref handle %worker)))
-		  0 (& "unref"))
+		  (js-function-arity 0 0)
+		  (js-function-info :name "unref" :len 0))
 	       #f %this)
 	    
 	    obj)))
@@ -209,7 +225,8 @@
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (nodejs-stream-fd %worker hdl))
-		       0 (& "GetFD"))
+		       (js-function-arity 0 0)
+		       (js-function-info :name "GetFD" :len 0))
 	       :writable #f :configurable #f)
 	    obj)))
    
@@ -222,7 +239,9 @@
       (with-access::JsProcess process (js-udp)
 	 (let ((obj (js-new %this js-object)))
 	    (set! js-udp
-	       (js-make-function %this UDP 0 (& "UDP")
+	       (js-make-function %this UDP
+		  (js-function-arity 0 0)
+		  (js-function-info :name "UDP" :len 0)
 		  :alloc (lambda (%this o) #unspecified)
 		  :prototype (get-udp-proto)
 		  :construct UDP))

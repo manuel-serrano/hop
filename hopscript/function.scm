@@ -658,6 +658,9 @@
 	 ;; length
 	 (vector-set! els 1 (vector-ref info 1))
 	 ;; name
+	 (unless (string? (vector-ref info 0))
+	    (tprint "PAS BON " info)
+	    (print (/fx 1 0)))
 	 (vector-set! els 2 (js-string->jsstring (vector-ref info 0)))
 	 ;; strict properties
 	 (unless (eq? strict 'normal)

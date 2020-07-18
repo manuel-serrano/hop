@@ -143,7 +143,8 @@
 			 (begin
 			    (reset-parser! this)
 			    (js-undefined))))
-		  1 (& "reinitialize"))
+		  (js-function-arity 1 0)
+		  (js-function-info :name "reinitialize" :len 1))
 	       #f %this)
 	    (js-put! proto (& "execute")
 	       (js-make-function %this
@@ -151,7 +152,8 @@
 		     (let ((off (->fixnum (js-tointeger offset %this)))
 			   (len (->fixnum (js-tointeger length %this))))
 			(http-parser-execute %this this buf off len)))
-		  1 (& "execute"))
+		  (js-function-arity 1 0)
+		  (js-function-info :name "execute" :len 1))
 	       #f %this)
 	    (js-put! proto (& "finish")
 	       (js-make-function %this
@@ -161,7 +163,8 @@
 			(when (input-port? ip)
 			   (close-input-port ip)
 			   (set! ip #f))))
-		  0 (& "finish"))
+		  (js-function-arity 0 0)
+		  (js-function-info :name "finish" :len 0))
 	       #f %this)
 	    (js-put! proto (& "pause")
 	       (js-make-function %this
@@ -169,7 +172,8 @@
 		     (with-access::JsHttpParser this (errno)
 			(set! errno 1)) 
 		     (js-undefined))
-		  0 (& "pause"))
+		  (js-function-arity 0 0)
+		  (js-function-info :name "pause" :len 0))
 	       #f %this)
 	    (js-put! proto (& "resume")
 	       (js-make-function %this
@@ -177,7 +181,8 @@
 		     (with-access::JsHttpParser this (errno)
 			(set! errno 0) )
 		     (js-undefined))
-		  0 (& "resume"))
+		  (js-function-arity 0 0)
+		  (js-function-info :name "resume" :len 0))
 	       #f %this)
 	    proto)))
    
@@ -194,7 +199,9 @@
 	    (__proto__ http-parser-proto)
 	    (state http-line-state))))
 
-   (let ((http (js-make-function %this http-parser 1 (& "HTTPParser")
+   (let ((http (js-make-function %this http-parser
+		  (js-function-arity 1 0)
+		  (js-function-info :name "HTTPParser" :len 1)
 		  :alloc js-no-alloc
 		  :construct http-parser
 		  :prototype http-parser-proto)))

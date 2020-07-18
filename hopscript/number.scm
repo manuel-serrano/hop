@@ -155,7 +155,7 @@
       (set! js-number
 	 (js-make-function %this %js-number
 	    (js-function-arity 0 1 'scheme-optional)
-	    `#("Number" 1 ,(& "builtin"))
+	    (js-function-info :name "Number" :len 1)
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-number-prototype
 	    :construct js-number-construct
@@ -186,7 +186,9 @@
 	 :value +nan.0
 	 :writable #f :enumerable #f :configurable #f :hidden-class #f)
       (js-bind! %this js-number (& "isInteger")
-	 :value (js-make-function %this is-integer? 1 (& "isInteger"))
+	 :value (js-make-function %this is-integer?
+		   (js-function-arity 1 0)
+		   (js-function-info :name "isInteger" :len 1))
 	 :writable #f :configurable #f :enumerable #f :hidden-class #f)
       ;; bind the builtin prototype properties
       (init-builtin-number-prototype! %this js-number js-number-prototype)
@@ -275,8 +277,9 @@
 
    (js-bind! %this obj (& "toString")
       :value (js-make-function %this
-		js-number-tostring (js-function-arity 0 1 'scheme)
-		'#("toString" 2 "function toString() { [native code] }"))
+		js-number-tostring
+		(js-function-arity 0 1 'scheme)
+		(js-function-info :name "toString" :len 2))
       :writable #t
       :configurable #t
       :enumerable #f
@@ -289,8 +292,9 @@
 
    (js-bind! %this obj (& "toLocaleString")
       :value (js-make-function %this
-		js-number-tolocalestring (js-function-arity 0 1 'scheme)
-		'#("toLocaleString" 2 "function toLocalString() { [native code] }"))
+		js-number-tolocalestring
+		(js-function-arity 0 1 'scheme)
+		(js-function-info :name "toLocaleString" :len 2))
       :writable #t
       :configurable #t
       :enumerable #f
@@ -302,7 +306,9 @@
       (js-cast-number this #f %this))
 
    (js-bind! %this obj (& "valueOf")
-      :value (js-make-function %this js-number-valueof 0 (& "valueOf"))
+      :value (js-make-function %this js-number-valueof
+		(js-function-arity 0 0)
+		(js-function-info :name "valueOf" :len 0))
       :writable #t
       :configurable #t
       :enumerable #f
@@ -314,7 +320,9 @@
       (js-number-tofixed (js-cast-number this #f %this) fractiondigits %this))
 
    (js-bind! %this obj (& "toFixed")
-      :value (js-make-function %this number-tofixed 1 (& "toFixed"))
+      :value (js-make-function %this number-tofixed
+		(js-function-arity 1 0)
+		(js-function-info :name "toFixed" :len 1))
       :writable #t
       :configurable #t
       :enumerable #f
@@ -326,7 +334,8 @@
       :value (js-make-function %this
 		(lambda (this val)
 		   (error "toExponential" "not implemented" "yet"))
-		1 (& "toExponential"))
+		(js-function-arity 1 0)
+		(js-function-info :name "toExponential" :len 1))
       :writable #t
       :configurable #t
       :enumerable #f
@@ -338,7 +347,8 @@
       :value (js-make-function %this
 		(lambda (this val)
 		   (error "toPrecision" "not implemented" "yet"))
-		1 (& "toPrecision"))
+		(js-function-arity 1 0)
+		(js-function-info :name "toPrecision" :len 1))
       :writable #t
       :configurable #t
       :enumerable #f
