@@ -144,15 +144,15 @@
       
       ;; create a HopScript regexp object constructor
       (set! js-regexp
-	 (js-make-function %this
-	    (%js-regexp %this)
-	    (js-function-arity 2 0)
-	    (js-function-info :name "RegExp" :len 2)
-	    :__proto__ (js-object-proto js-function)
-	    :prototype js-regexp-prototype
-	    :alloc js-no-alloc
-	    :construct (lambda (_ pattern uflags loc)
-			  (js-regexp-construct %this pattern uflags loc))))
+	 (let ((proc (%js-regexp %this)))
+	    (js-make-function %this proc
+	       (js-function-arity proc)
+	       (js-function-info :name "RegExp" :len 2)
+	       :__proto__ (js-object-proto js-function)
+	       :prototype js-regexp-prototype
+	       :alloc js-no-alloc
+	       :construct (lambda (_ pattern uflags loc)
+			     (js-regexp-construct %this pattern uflags loc)))))
       (init-builtin-regexp-prototype! %this js-regexp js-regexp-prototype)
       
       ;; bind Regexp in the global object

@@ -1118,8 +1118,8 @@
 			      (utf8-string-length (js-jsstring->string string)))
 			     (else
 			      (utf8-string-length (js-jsstring->string string)))))))
-		(js-function-arity 1 0)
-		(js-function-info :name "byteLength" :len 1))
+		(js-function-arity 2 0)
+		(js-function-info :name "byteLength" :len 2))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this js-slowbuffer (& "makeFastBuffer")

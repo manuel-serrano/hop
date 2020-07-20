@@ -59,7 +59,7 @@
                            (apply ,(symbol-append '< tag '>)
 			      :%context ,%this
                               nodes)))
-		    (js-function-arity 2 0)
+		    (js-function-arity 1 -1 'scheme)
 		    (js-function-info :name ,(symbol->string tag) :len 2)
 		    :__proto__ ,__proto__)
           :writable #t :configurable #f :enumerable #f :hidden-class #f)))

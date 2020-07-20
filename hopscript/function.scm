@@ -18,7 +18,7 @@
    
    (library hop js2scheme)
    
-   (include "types.sch" "stringliteral.sch" "property.sch" "arity.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch" "function.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic
@@ -38,10 +38,12 @@
 	   thrower-set
 
 	   (js-function-src ::JsFunction)
+	   (inline js-function-path ::JsFunction)
 	   (js-function-debug-name::bstring ::JsProcedure ::JsGlobalObject)
-	   (js-function-arity ::obj #!optional opt (protocol 'fix))
+	   (js-function-arity::long ::obj #!optional opl (protocol 'fix))
+	   (js-function-info #!key name len tostring path start end)
 	   (js-make-function::JsFunction ::JsGlobalObject
-	      ::procedure ::int ::obj
+	      ::procedure ::int ::vector
 	      #!key
 	      method construct alloc
 	      __proto__ prototype
@@ -49,12 +51,13 @@
 	      (size 0) (constrsize 3) (maxconstrsize 100)
 	      (constrmap (js-not-a-cmap)) (shared-cmap #t))
 	   (js-make-function-strict::JsFunction ::JsGlobalObject
-	      ::procedure ::int ::obj
+	      ::procedure ::int ::vector
 	      #!key
 	      method alloc
 	      (minlen -1) (constrsize 3) (constrmap (js-not-a-cmap)))
 	   (inline js-make-function-strict-lazy::JsFunction
-	      ::JsGlobalObject ::procedure ::int ::obj
+	      ::JsGlobalObject
+	      ::procedure ::int ::vector
 	      #!key
 	      method (minlen -1) (constrsize 3))
 	   (inline js-make-procedure::JsProcedure ::JsGlobalObject
@@ -155,6 +158,13 @@
 	  (let ((jstr (js-ascii->jsstring "[Function]")))
 	     (vector-set! info 2 jstr)
 	     jstr)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-path ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-function-path obj::JsFunction)
+   (with-access::JsFunction obj (info)
+      (vector-ref info 3)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-debug-name ...                                       */
@@ -658,9 +668,6 @@
 	 ;; length
 	 (vector-set! els 1 (vector-ref info 1))
 	 ;; name
-	 (unless (string? (vector-ref info 0))
-	    (tprint "PAS BON " info)
-	    (print (/fx 1 0)))
 	 (vector-set! els 2 (js-string->jsstring (vector-ref info 0)))
 	 ;; strict properties
 	 (unless (eq? strict 'normal)
@@ -750,6 +757,7 @@
 (define-inline (js-function-prototype-get obj owner::JsFunction propname %this)
    (with-access::JsFunction owner (prototype alloc name src)
       (when (eq? prototype #\F)
+	 (tprint "GET proto...")
 	 (js-function-setup-prototype! %this owner))
       prototype))
 
@@ -1316,12 +1324,85 @@
 (define (read-function-source info path start end)
    (if (file-exists? path)
        (let ((mmap (open-mmap path :write #f)))
-	  (string-for-read
-	     (mmap-substring mmap
-		(fixnum->elong start) (fixnum->elong end))))
+	  (mmap-substring mmap
+	     (fixnum->elong start) (fixnum->elong end)))
        (format "[~a:$a-~a]" path start end)))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-info ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-function-info #!key name len tostring path start end)
+   (vector name len tostring path start end))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-arity ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-function-arity req #!optional opl (protocol 'fix))
+   (cond
+      ((procedure? req)
+       (procedure-arity req))
+      ((not opl)
+       (if (eq? protocol 'fix)
+	   ((@ js-function-arity __hopscript_function) req 0)
+	   (error "js-function-arity"
+	      "illegal oplional" opl)))
+      ((and (integer? req) (integer? opl))
+       (if (null? protocol)
+	   (if (=fx opl 0)
+	       (+ req 1)
+	       (error "js-function-arity"
+		  "illegal optional for fix args"
+		  (vector req opl protocol)))
+	   (case protocol
+	      ((arguments-lazy)
+	       -2047)
+	      ((arguments-eager)
+	       -2047)
+	      ((arguments-eager)
+	       -2048)
+	      ((arguments)
+	       0)
+	      ((rest-lazy)
+	       (let ((offset (if (=fx opl 0) 2049 4049)))
+		  (negfx (+fx offset (-fx req 1)))))
+	      ((rest)
+	       (let ((offset (if (=fx opl 0) 3049 5049)))
+		  (negfx (+fx offset (-fx req 1)))))
+	      ((scheme)
+	       (cond
+		  ((=fx opl 0)
+		   (+fx req 1))
+		  ((=fx opl -1)
+		   (negfx (+fx (+fx 1 req) 1)))
+		  (else
+		   (negfx (+fx (+fx 1 req) opl)))))
+	      ((scheme-optional)
+	       (cond
+		  ((and (=fx opl 1) (=fx req 0))
+		   -512)
+		  (else
+		   (error "js-function-arity"
+		      "Illegal scheme-optional"
+		      (vector req opl protocol)))))
+	      ((optional)
+	       (if (=fx opl 0)
+		   (+fx req 1)
+		   (negfx (+fx req 1024))))
+	      ((fix)
+	       (if (=fx opl 0)
+		   (+fx req 1)
+		   (error "js-function-arity"
+		      "illegal optional for fix args"
+		      (vector req opl protocol))))
+	      (else
+	       (error "js-function-arity"
+		  "illegal protocol" (vector req opl protocol))))))
+      (else
+       (error "js-function-arity"
+	  "illegal arity" (vector req opl protocol)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/
 (&end!)
+

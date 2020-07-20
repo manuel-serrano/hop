@@ -96,7 +96,7 @@
       (js-make-function %this
 	 (lambda (this . l)
 	    (error "timer_wrap" "binding not implemented" name))
-	 (js-function-arity 0 )
+	 (js-function-arity 0 0)
 	 (js-function-info :name name :len 0)))
    
    (js-bind! %this obj (& "start")

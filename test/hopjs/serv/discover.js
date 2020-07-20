@@ -16,8 +16,6 @@ remote.onmessage = function( message ) {
    console.log( 'client: server worker running' );
   // remoteServer.register = service register(); // comment out when fixed.
 
-  #:js-debug-object( remoteServer );
-  #:tprint( remoteServer.register );
    remoteServer.register( localServer )
       .post(
 	 function( server ) {

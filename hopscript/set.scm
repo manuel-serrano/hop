@@ -99,7 +99,7 @@
       
       (define js-set
 	 (js-make-function %this %js-set
-	    (js-function-arity 0 0)
+	    (js-function-arity 0 -1 'scheme)
 	    (js-function-info :name name :len 0)
 	    :__proto__ js-function-prototype
 	    :prototype js-set-prototype

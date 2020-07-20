@@ -157,13 +157,14 @@
       (substring path (string-length (hop-service-base))))
    
    (with-access::WorkerHopThread worker (%this)
-      (with-access::JsService obj (svc)
+      (with-access::JsService obj (svc info arity)
 	 (with-access::hop-service svc (path)
 	    (let* ((path (relative-path path))
 		   (proc (js-make-function %this
 			    (lambda (this) (js-undefined))
-			    (js-function-arity 0 0)
-			    (js-function-info :name (relative-path path) :len 0)
+			    arity
+			    (js-function-info :name (vector-ref info 0)
+			       :len (vector-ref info 1))
 			    :prototype #f
 			    :__proto__ #f
 			    :strict 'strict
@@ -385,7 +386,7 @@
 		      (lambda (this::JsHopFrame opt)
 			 (with-access::JsHopFrame this (url args)
 			    (post this #f opt %this #f)))
-		      (js-function-arity 2 0)
+		      (js-function-arity 1 0)
 		      (js-function-info :name "postSync" :len 2))
 	    :hidden-class #t)
 	 (js-bind! %this js-hopframe-prototype (& "toString")
@@ -896,11 +897,8 @@
 (define (js-create-service %this::JsGlobalObject proc path loc register import worker::WorkerHopThread)
    
    (define (source::bstring proc)
-      (if (js-procedure? proc)
-	  (with-access::JsFunction proc (info)
-	     (if (>=fx (vector-length info) 4)
-		 (vector-ref info 3)
-		 (pwd)))
+      (if (js-function? proc)
+	  (or (js-function-path proc) (pwd))
 	  (pwd)))
    
    (define (fix-args len)
@@ -1070,7 +1068,7 @@
       (instantiateJsService
 	 (procedure proc)
 	 (method proc)
-	 (info (js-function-info :name name :len arity))
+	 (info (js-function-info :name (symbol->string! name) :len arity))
 	 (arity arity)
 	 (worker worker)
 	 (prototype (js-object-proto %this))

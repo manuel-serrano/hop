@@ -666,7 +666,7 @@
 			  (with-access::JsSSLConnection this (ssl)
 			     (with-access::ssl-connection ssl (received-shutdown)
 				(or received-shutdown (js-undefined)))))
-		       (js-function-arity 0)
+		       (js-function-arity 0 0)
 		       (js-function-info :name "receivedShutdown" :len 0)))
 	    (js-bind! %this conn (& "sentShutdown")
 	       :get (js-make-function %this
@@ -674,7 +674,7 @@
 			  (with-access::JsSSLConnection this (ssl)
 			     (with-access::ssl-connection ssl (sent-shutdown)
 				(or sent-shutdown (js-undefined)))))
-		       (js-function-arity 0)
+		       (js-function-arity 0 0)
 		       (js-function-info :name "sentShutdown" :len 0)))
 	    (js-bind! %this conn (& "error")
 	       :get (js-make-function %this
@@ -686,7 +686,7 @@
 				       (js-new %this js-error
 					  (js-string->jsstring err)))
 				    err))))
-		       (js-function-arity 0)
+		       (js-function-arity 0 0)
 		       (js-function-info :name "error.get" :len 0))
 	       :set (js-make-function %this
 		       (lambda (this v)
@@ -695,7 +695,7 @@
 				(if (js-jsstring? v)
 				    (set! err (js-jsstring->string v))
 				    (set! err #f)))))
-		       (js-function-arity 1)
+		       (js-function-arity 1 0)
 		       (js-function-info :name "error.set" :len 0)))
 	    conn)))
    

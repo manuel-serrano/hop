@@ -10,47 +10,6 @@
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
-;*    js-function-info ...                                             */
-;*---------------------------------------------------------------------*/
-(define-expander js-function-info
-   (lambda (x e)
-      (match-case x
-	 ((?- :name (and (? string?) ?name)
-	     :len (and (? fixnum?) ?len)
-	     :tostring (and (? string?) ?tostring))
-	  (e `'#(,name ,len ,tostring "?" -1 -1) e))
-	 ((?- :name (and (? string?) ?name)
-	     :len (and (? fixnum?) ?len)
-	     :tostring #f
-	     :path (and (? string?) ?path)
-	     :start (and (? fixnum?) ?start)
-	     :end (and (? fixnum?) ?end))
-	  (e `'#(,name ,len #f ,path ,start ,end) e))
-	 ((?- :name (and (? string?) ?name)
-	     :len (and (? integer?) ?len)
-	     :path (and (? string?) ?path)
-	     :start (and (? fixnum?) ?start)
-	     :end (and (? fixnum?) ?end))
-	  (e `'#(,name ,len #f ,path ,start ,end) e))
-	 ((?- :name (and (? string?) ?name)
-	     :len (and (? integer?) ?len))
-	  (if (epair? x)
-	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) ,(cadr (cer x)) ,(caddr (cer x)) -1) e)
-	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) "?" -1 -1) e)))
-	 ((?- :name ?name :len ?len)
-	  (let ((tmp (gensym 'name)))
-	     (if (epair? x)
-		 (e `(let ((,tmp ,name))
-			(vector ,tmp ,len (format "function ~a() { [native code] }" ,tmp)
-			   ,(cadr (cer x)) ,(caddr (cer x)) -1))
-		    e)
-		 (e `(let ((,tmp ,name))
-			(vector ,tmp ,len (format "function ~a() { [native code] }" ,tmp) "?" -1 -1))
-		    e))))
-	 (else
-	  (error "js-function-info" "bad form" x)))))
-
-;*---------------------------------------------------------------------*/
 ;*    define-instantiate ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-expander define-instantiate-expander

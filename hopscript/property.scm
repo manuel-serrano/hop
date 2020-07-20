@@ -2609,6 +2609,7 @@
 					 "exptend-mapped non-function" name)
 				      (when cache
 					 (js-pcache-next-direct! cache o nextmap index))))
+			       (link-cmap! cmap nextmap name v flags)
 			       (js-object-push/ctor! o index v ctor))
 			    (set! cmap nextmap)
 			    v)))))))))
@@ -4062,7 +4063,7 @@
 			       (let ((f (funval obj el-or-desc)))
 				  (cond
 				     ((js-function? f)
-				      (with-access::JsFunction f (len method arity src)
+				      (with-access::JsFunction f (len method arity)
 					 (cond
 					    ((<fx arity 0)
 					     ;; varargs functions, currently not cached...

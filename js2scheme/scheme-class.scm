@@ -144,17 +144,14 @@
 					o)))
 				(else
 				 `(js-new-sans-construct %this ,super))))
-		    (,clazz (js-make-function %this
-			       ,ctor
-			       ,length
-			       ,(& cname (context-program ctx))
-			       :src ,(when src (class-src loc this ctx))
+		    (,clazz (js-make-function %this ,ctor
+			       (js-function-arity ,ctor)
+			       (js-function-info :name ,(symbol->string cname) :len ,length)
 			       :strict ',mode
 			       :alloc ,(if (or (eq? super #f) (null? super))
 					   'js-object-alloc/new-target
 					   `(with-access::JsFunction ,super (alloc) alloc))
 			       :prototype  ,proto
-			       :arity ,arity
 			       :__proto__ ,(if (null? super)
 					       '(with-access::JsGlobalObject %this (js-function-prototype)
 						 js-function-prototype)

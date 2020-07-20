@@ -537,7 +537,7 @@
 			 (warning "%nodejs-process"
 			    "binding not implemented: " mod)
 			 (js-new %this js-object)))))
-	       (js-function-arity 2 0)
+	       (js-function-arity 1 0)
 	       (js-function-info :name "binding" :len 2))
 	    #f %this)
 	 (js-put! proc (& "env")

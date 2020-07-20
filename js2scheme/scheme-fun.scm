@@ -16,8 +16,7 @@
 
    (include "ast.sch"
 	    "usage.sch"
-	    "context.sch"
-	    "../hopscript/arity.sch")
+	    "context.sch")
 
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -189,18 +188,18 @@
 	     (if (context-get ctx :optim-arguments)
 		 (with-access::J2SDeclArguments argumentsp (alloc-policy)
 		    (if (eq? alloc-policy 'lazy)
-			(js-function-arity req opt 'arguments-lazy)
-			(js-function-arity req opt 'arguments-eager)))
-		 (js-function-arity req opt 'arguments)))
+			`(js-function-arity ,req ,opt 'arguments-lazy)
+			`(js-function-arity ,req ,opt 'arguments-eager)))
+		 `(js-function-arity ,req ,opt 'arguments)))
 	    ((eq? vararg 'rest)
 	     (with-access::J2SDeclRest (car (last-pair params)) (alloc-policy)
 		(if (eq? alloc-policy 'lazy)
-		    (js-function-arity req opt 'rest-lazy)
-		    (js-function-arity req opt 'rest))))
+		    `(js-function-arity ,req ,opt 'rest-lazy)
+		    `(js-function-arity ,req ,opt 'rest))))
 	    ((=fx opt 0)
-	     (js-function-arity req opt))
+	     `(js-function-arity ,req ,opt))
 	    (else
-	     (js-function-arity req opt 'optional))))))
+	     `(js-function-arity ,req ,opt 'optional))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-make-function ...                                            */
@@ -667,7 +666,8 @@
 		`(,(if (eq? alloc 'js-object-alloc-lazy)
 		       'js-make-function-strict-lazy
 		       'js-make-function-strict)
-		  %this ,tmp ,arity ,(j2s-function-info this name loc ctx)
+		  %this ,tmp
+		  ,arity ,(j2s-function-info this name loc ctx)
 		  :constrsize ,constrsize
 		  :method ,(or tmpm
 			       (and method (jsfun->lambda method mode return ctx #f #f))
@@ -676,8 +676,8 @@
 			'()
 			`(:alloc ,alloc))))
 	       ((or src prototype __proto__ method new-target)
-		`(js-make-function %this
-		    ,tmp ,arity ,(j2s-function-info this name loc ctx)
+		`(js-make-function %this ,tmp
+		    ,arity ,(j2s-function-info this name loc ctx)
 		    :prototype ,prototype
 		    :__proto__ ,__proto__
 		    :strict ',mode
@@ -689,22 +689,24 @@
 		`(,(if (eq? alloc 'js-object-alloc-lazy)
 		       'js-make-function-strict-lazy
 		       'js-make-function-strict)
-		  %this ,tmp ,arity ,(j2s-function-info this name loc ctx)
+		  %this ,tmp
+		  ,arity ,(j2s-function-info this name loc ctx)
 		  :constrsize ,constrsize
 		  :method ,tmp
 		  ,@(if (eq? alloc 'js-object-alloc-lazy)
 			`()
 			`(:alloc ,alloc))))
 	       ((eq? vararg 'arguments)
-		`(js-make-function %this
-		    ,tmp ,arity ,(j2s-function-info this name loc ctx)
+		`(js-make-function %this ,tmp
+		    ,arity ,(j2s-function-info this name loc ctx)
 		    :strict ',mode
 		    :alloc ,alloc
 		    :constrsize ,constrsize))
 	       (else
 		`(js-make-function %this ,tmp
 		    ,arity ,(j2s-function-info this name loc ctx)
-		    ',mode ,constrsize)))))))
+		    :alloc ,alloc
+		    :strict ',mode :constrsize ,constrsize)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SFun ...                                          */
@@ -956,11 +958,11 @@
 		(instantiate::JsAccessorDescriptor
 		   (name (js-integer-name->jsstring ,indx))
 		   (get (js-make-function %this
-			   (lambda (%) ,id) 0
-			   ,(& "get" (context-program ctx))))
+			   (lambda (%) ,id)
+			   0 (js-function-info :name "get" :len 0)))
 		   (set (js-make-function %this
-			   (lambda (% %v) (set! ,id %v)) 1
-			   ,(& "set" (context-program ctx))))
+			   (lambda (% %v) (set! ,id %v))
+			   1 (js-function-info :name "set" :len 1)))
 		   (%get (lambda (%) ,id))
 		   (%set (lambda (% %v) (set! ,id %v)))
 		   (configurable #t)
@@ -996,8 +998,8 @@
 		       ,(init-argument `(car ,rest) '%i)
 		       (loop (cdr ,rest) (+fx %i 1))))
 		 (js-bind! %this arguments ,(& "callee" (context-program ctx))
-		    :value (js-make-function %this
-			      ,id 0 ,(& id (context-program ctx)))
+		    :value (js-make-function %this ,id
+			      0 (js-function-info :name ,(symbol->string id) :len 0))
 		    :enumerable #f)
 		 ,body))))
 	     
@@ -1032,7 +1034,9 @@
 		,(init-argument `(car ,rest) '%i)
 		(loop (cdr ,rest) (+fx %i 1))))
 	  (js-bind! %this arguments ,(& "callee" (context-program ctx))
-	     :value (js-make-function %this ,id 0 ,(& id (context-program ctx)))
+	     :value (js-make-function %this ,id
+		       0
+		       (js-function-info :name ,(symbol->string id) :len 0))
 	     :enumerable #f)
 	  ,body))
    

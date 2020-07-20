@@ -117,6 +117,7 @@ o/_bglhopscript.o: _bglhopscript.c bglhopscript.h bglhopscript_malloc.h
 	@ $(call compile2,$(CCOMP),$(CCFLAGS), -c $< -o $@)
 
 o/expanders.o: expanders.sch
+o/function.o: types.sch stringliteral.sch property.sch function.sch
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/

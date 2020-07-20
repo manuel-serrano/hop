@@ -165,7 +165,7 @@
 	 (let ((obj (js-new %this js-object)))
 	    (set! js-tty
 	       (js-make-function %this TTY
-		  (js-function-arity 0 0)
+		  (js-function-arity TTY)
 		  (js-function-info :name "TTY" :len 0)
 		  :alloc (lambda (%this o) #unspecified)
 		  :prototype (get-tty-proto)

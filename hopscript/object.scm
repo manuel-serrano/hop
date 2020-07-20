@@ -19,7 +19,7 @@
    
    (library hop hopwidget js2scheme)
    
-   (include "types.sch" "stringliteral.sch" "property.sch" "arity.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch" "function.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic

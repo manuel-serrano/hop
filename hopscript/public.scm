@@ -1337,8 +1337,9 @@
 ;*    js-object-alloc-lazy ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-object-alloc-lazy %this ctor::JsFunction)
-   (with-access::JsFunction ctor (constrmap alloc)
-      (unless (eq? alloc js-object-alloc)
+   (with-access::JsFunction ctor (constrmap alloc prototype)
+      (when (eq? prototype #\F)
+	 (tprint "js-object-alloc-lazy...")
 	 (js-function-setup-prototype! %this ctor)
 	 (set! alloc js-object-alloc))
       (js-object-alloc %this ctor)))
@@ -1428,7 +1429,7 @@
 (define-macro (gen-new %this ctor . args)
    `(cond
        ((js-function? ,ctor)
-	(with-access::JsFunction ,ctor (construct alloc)
+	(with-access::JsFunction ,ctor (construct alloc info arity)
 	   (let ((o (alloc %this ,ctor)))
 	      (let ((r (gen-calln ,ctor construct o ,@args)))
 		 (js-new-return ,ctor r o)))))
