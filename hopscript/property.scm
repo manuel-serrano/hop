@@ -243,7 +243,7 @@
 	   (js-get-vindex::long ::JsGlobalObject))
 
    (cond-expand
-      ((config stackable #t)
+      ((config have-c99-stack-alloc #t)
        (pragma
 	  (js-for-in (args-noescape))
 	  (js-for-of (args-noescape))))))
@@ -850,7 +850,7 @@
 ;*---------------------------------------------------------------------*/
 (define (link-cmap! omap::JsConstructMap nmap::JsConstructMap
 	   name value flags::int)
-   (with-access::JsConstructMap omap (transitions lock)
+   (with-access::JsConstructMap omap (transitions)
       (let ((val (when (eq? name (& "__proto__"))
 		    value)))
 	 (set! transitions (cons (transition name val flags nmap) transitions)))
@@ -943,7 +943,7 @@
 	   (or (not (transition-value t))
 	       (eq? (transition-value t) val))))
    
-   (with-access::JsConstructMap omap (transitions lock)
+   (with-access::JsConstructMap omap (transitions)
       (cond
 	 ((null? transitions)
 	  #f)

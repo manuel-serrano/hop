@@ -143,12 +143,16 @@
 	      (js-make-function %this
 		 (lambda (this)
 		    (js-tostring this %this))
-		 0
-		 (& "toString")))
+		 (js-function-arity 0 0)
+		 (js-function-info :name "toString" :len 0)))
 	     ((isSealed)
-	      (js-make-function %this (lambda (this) #t) 1 (& "isSealed")))
+	      (js-make-function %this (lambda (this) #t)
+		 (js-function-arity 0 0)
+		 (js-function-info :name "isSealed" :len 0)))
 	     ((isFrozen)
-	      (js-make-function %this (lambda (this) #t) 1 (& "isFrozen")))
+	      (js-make-function %this (lambda (this) #t)
+		 (js-function-arity 0 0)
+		 (js-function-info :name "isForzen" :len 0)))
 	     (else
 	      (js-raise-type-error %this
 		 (format "get: no such field \"~a\" ~~a" name) o)))

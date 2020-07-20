@@ -757,7 +757,6 @@
 (define-inline (js-function-prototype-get obj owner::JsFunction propname %this)
    (with-access::JsFunction owner (prototype alloc name src)
       (when (eq? prototype #\F)
-	 (tprint "GET proto...")
 	 (js-function-setup-prototype! %this owner))
       prototype))
 
