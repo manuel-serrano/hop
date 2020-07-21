@@ -636,14 +636,17 @@
 	    ((null? (cdr xs))
 	     (car xs))
 	    (else
-	     (epairify loc
-		`(js-jsstring-append ,(car xs)
-		    ,(let loop ((xs (cdr xs)))
-			(if (null? (cdr xs))
-			    (car xs)
-			    (epairify loc
-			       `(js-jsstring-append ,(car xs)
-				   ,(loop (cdr xs)))))))))))))
+	     (let ((js-jsstring-append (if (context-get ctx :profile-mem #t)
+					   'js-jsstring-append-no-inline
+					   'js-jsstring-append)))
+		(epairify loc
+		   `(,js-jsstring-append ,(car xs)
+		       ,(let loop ((xs (cdr xs)))
+			   (if (null? (cdr xs))
+			       (car xs)
+			       (epairify loc
+				  `(,js-jsstring-append ,(car xs)
+				      ,(loop (cdr xs))))))))))))))
  
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SNativeString ...                                 */

@@ -88,10 +88,3 @@
 	  (set-car! x '(@ isa? __object))
 	  (e x e)))))
 
-(define-macro (js-make-function %this procedure arity info . rest)
-   `(let ((arity ,arity)
-	  (info ,info))
-       (unless (vector? info)
-	  (tprint "PAS BON " ',procedure " " arity " " ',info))
-       ((@ js-make-function __hopscript_function)
-	,%this ,procedure arity info ,@rest)))
