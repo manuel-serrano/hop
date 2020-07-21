@@ -757,10 +757,13 @@
 	  ,(calln %this 'f obj args)))
 
    (define (calln-miss %this obj prop args ccache ocache loc cspecs ospecs)
-      `(begin
-	  (js-method-jsobject-call/cache-miss %this ,obj ,prop
-	     ,(if (pair? args) `(list ,@args) ''())
-	     ,ccache ,ocache ,loc ',cspecs ',ospecs)))
+      (if (pair? args)
+	  `(js-call-with-stack-list (list ,@args)
+	      (lambda (l)
+		 (js-method-jsobject-call/cache-miss %this ,obj ,prop
+		    l ,ccache ,ocache ,loc ',cspecs ',ospecs)))
+	  `(js-method-jsobject-call/cache-miss %this ,obj ,prop
+	      '() ,ccache ,ocache ,loc ',cspecs ',ospecs)))
    
    (define (expand-cache-specs/args ccspecs ocspecs %this obj prop args ccache ocache loc)
       `(with-access::JsObject ,obj (cmap)
@@ -1024,3 +1027,39 @@
 	      ,(ne body ne))))
       (else
        (error "js-pcache-prefetch-index" "wrong form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-call-with-stack-list ...                                      */
+;*    -------------------------------------------------------------    */
+;*    List stack allocation (when supported by the back-end).          */
+;*---------------------------------------------------------------------*/
+(define-macro (js-call-with-stack-list lst proc)
+   (match-case lst
+      ((list . ?args)
+       (match-case proc
+	  ((lambda (?l) . ?body)
+	   (cond-expand
+	      ((and bigloo-c (config have-c99-stack-alloc #t))
+	       (let ((stk (gensym 'stk))
+		     (p (gensym 'p))
+		     (aux (gensym 'aux))
+		     (len (length args)))
+		  `(let ()
+		      (pragma ,(format "char ~a[ PAIR_SIZE * ~a ]; obj_t ~a = BNIL, ~a;"
+				  stk len p aux))
+		      ,@(map (lambda (v i)
+				`(begin
+				    (pragma ,(format "~a = BPAIR(&(~a[~a * PAIR_SIZE ])); SET_CDR( ~a, ~a ); ~a = ~a" aux stk i aux p p aux))
+				    (set-car! (pragma::pair ,(symbol->string p)) ,v)))
+			   (reverse args)
+			   (iota len))
+		      (let ((,l (pragma::pair-nil ,(symbol->string p))))
+			 ,@body))))
+	      (else
+	       `(,proc ,lst))))
+	  (else
+	   (error "js-call-with-stack-list" "bad form"
+	      `(js-call-with-stack-list ,lst ,proc)))))
+      (else
+       `((@ js-call-with-stack-list __hopscript_property) ,lst ,proc))))
+

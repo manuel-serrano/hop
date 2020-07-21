@@ -86,26 +86,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-call-XXX ...                                                  */
 ;*---------------------------------------------------------------------*/
-;* (define-expander js-call                                            */
-;*    js-call-expander)                                                */
-;* (define-expander js-call1                                           */
-;*    js-call-expander)                                                */
-;* (define-expander js-call2                                           */
-;*    js-call-expander)                                                */
-;* (define-expander js-call3                                           */
-;*    js-call-expander)                                                */
-;* (define-expander js-call4                                           */
-;*    js-call-expander)                                                */
-;* (define-expander js-call/function                                   */
-;*    js-call/function-expander)                                       */
-;* (define-expander js-call1/function                                  */
-;*    js-call/function-expander)                                       */
-;* (define-expander js-call2/function                                  */
-;*    js-call/function-expander)                                       */
-;* (define-expander js-call3/function                                  */
-;*    js-call/function-expander)                                       */
-;* (define-expander js-call4/function                                  */
-;*    js-call/function-expander)                                       */
 (define-expander js-call/cache
    js-call/cache-expander)
 (define-expander js-method-call-name/cache
@@ -154,3 +134,5 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (property-flags-default)
    '(property-flags #t #t #t #f))
+
+	   

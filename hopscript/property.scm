@@ -22,7 +22,7 @@
    (include "stringliteral.sch"
 	    "property.sch"
 	    "types.sch")
-   
+
    (import __hopscript_types
 	   __hopscript_object
 	   __hopscript_error
@@ -83,8 +83,6 @@
 	   (js-property-value ::obj ::JsObject ::obj ::JsPropertyDescriptor ::JsGlobalObject)
 	   (js-property-value-set! ::obj ::JsObject ::obj ::JsPropertyDescriptor ::obj ::JsGlobalObject)
 	   
-	   (js-object-add! obj::JsObject index::long value)
-	   (js-object-ctor-add! obj::JsObject index::long value)
 	   (js-object-ctor-push! obj::JsObject index::long value)
 	   
 	   (generic js-properties-names::pair-nil ::obj ::bool ::JsGlobalObject)
@@ -240,7 +238,8 @@
 	   (js-call/cache-miss7 ::JsGlobalObject ::JsPropertyCache obj this a0 a1 a2 a3 a4 a5 a6)
 	   (js-call/cache-miss8 ::JsGlobalObject ::JsPropertyCache obj this a0 a1 a2 a3 a4 a5 a6 a7)
 	   
-	   (js-get-vindex::long ::JsGlobalObject))
+	   (js-get-vindex::long ::JsGlobalObject)
+	   (inline js-call-with-stack-list ::pair-nil ::procedure))
 
    (cond-expand
       ((config have-c99-stack-alloc #t)
@@ -489,9 +488,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-object-add! ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-add! obj::JsObject idx::long value)
+(define (js-object-add! obj::JsObject idx::long value inc::long)
    (with-access::JsObject obj (elements cmap)
-      (let ((nlen (+fx 1 (vector-length elements))))
+      (let ((nlen (+fx inc (vector-length elements))))
 	 (let ((nels (copy-vector elements nlen)))
 	    (cond-expand (profile (profile-cache-extension nlen)))
 	    (vector-set! nels idx value)
@@ -509,12 +508,14 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-ctor-add! obj::JsObject idx::long value)
    (with-access::JsObject obj (cmap)
-      (with-access::JsConstructMap cmap (ctor)
-	 (when (js-function? ctor)
-	    (with-access::JsFunction ctor (constrsize maxconstrsize)
-	       (when (<fx constrsize maxconstrsize)
-		  (set! constrsize (+fx 1 constrsize)))))))
-   (js-object-add! obj idx value)
+      (with-access::JsConstructMap cmap (ctor props)
+	 (if (js-function? ctor)
+	     (with-access::JsFunction ctor (constrsize maxconstrsize info)
+		(when (<fx constrsize maxconstrsize)
+		   (set! constrsize (+fx 1 constrsize)))
+		(js-object-add! obj idx value 1))
+	     (let ((inc (maxfx 1 (minfx (vector-length props) 8))))
+		(js-object-add! obj idx value inc)))))
    obj)
 
 ;*---------------------------------------------------------------------*/
@@ -523,7 +524,8 @@
 (define (js-object-push! obj::JsObject idx::long value)
    (with-access::JsObject obj (elements)
       (if (>=fx idx (vector-length elements))
-	  (js-object-add! obj idx value)
+	  ;;(js-object-add! obj idx value (minfx idx 8))
+	  (js-object-add! obj idx value 1)
 	  (vector-set! elements idx value))))
 
 ;*---------------------------------------------------------------------*/
@@ -540,16 +542,16 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-push/ctor! obj::JsObject idx::long value ctor)
    (with-access::JsObject obj (elements cmap)
-      (if (>=fx idx (vector-length elements))
-	  (begin
-	     (js-object-add! obj idx value)
-	     (when (js-function? ctor)
-		(with-access::JsFunction ctor (constrmap constrsize maxconstrsize)
-		   (when (<fx constrsize maxconstrsize)
-		      (with-access::JsConstructMap cmap (props)
-			 (set! constrsize
-			    (+fx 1 (vector-length props))))))))
-	  (vector-set! elements idx value))))
+      (with-access::JsConstructMap cmap (props)
+	 (if (>=fx idx (vector-length elements))
+	     (if (js-function? ctor)
+		 (with-access::JsFunction ctor (constrsize maxconstrsize)
+		    (js-object-add! obj idx value 1)
+		    (when (<fx constrsize maxconstrsize)
+		       (set! constrsize (+fx 1 (vector-length props)))))
+		 (let ((inc (maxfx 1 (minfx (vector-length props) 8))))
+		    (js-object-add! obj idx value inc)))
+	     (vector-set! elements idx value)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    function0->proc ...                                              */
@@ -4135,6 +4137,14 @@
 	    ;; loop
 	    loop))))
 
+;*---------------------------------------------------------------------*/
+;*    js-call-with-stack-list ...                                      */
+;*    -------------------------------------------------------------    */
+;*    Overriden by a macro in property.sch                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-call-with-stack-list lst proc)
+   (proc lst))
+   
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

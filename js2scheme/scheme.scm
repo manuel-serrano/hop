@@ -2509,10 +2509,12 @@
 		     inits)))
 	 (cond
 	    ((null? props)
+	     ;; empty objects are likely to be populate later on
 	     '(with-access::JsGlobalObject %this (js-initial-cmap)
 	       (instantiateJsObject
 		  (cmap js-initial-cmap)
-		  (__proto__ (js-object-proto %this)))))
+		  (__proto__ (js-object-proto %this))
+		  (elements ($create-vector 4)))))
 	    ((every (match-lambda ((& (? string?) . ?-) #t) (else #f)) props)
 	     `(let ((,names (vector ,@props))
 		    (,elements (vector ,@vals)))
