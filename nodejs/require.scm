@@ -2393,7 +2393,7 @@
    (define js-function
       (with-access::JsGlobalObject %this (js-function-prototype)
 	 (js-make-function %this js-function-construct
-	    (js-function-arity 1 0)
+	    (js-function-arity js-function-construct)
 	    (js-function-info :name "Function" :len 1)
 	    :__proto__ js-function-prototype
 	    :prototype js-function-prototype

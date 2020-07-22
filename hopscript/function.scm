@@ -180,8 +180,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-debug-object obj::JsFunction #!optional (msg ""))
    (call-next-method)
-   (with-access::JsFunction obj (info)
-      (fprint (current-error-port) "   src=" (js-function-src obj))))
+   (with-access::JsFunction obj (info arity)
+      (fprint (current-error-port) "   src=" (js-function-src obj))
+      (fprint (current-error-port) "   arity=" arity)
+      (fprint (current-error-port) "   path=" (js-function-path obj))))
       
 ;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject-name/cache-miss ...                              */
@@ -327,13 +329,14 @@
       
       ;; then, create the properties of the function contructor
       (set! js-function
-	 (js-make-function %this
-	    (%js-function %this)
-	    (js-function-arity 0 -1 'scheme)
-	    (js-function-info :name "Function" :len 1)
-	    :alloc js-no-alloc
-	    :__proto__ js-function-prototype
-	    :prototype js-function-prototype))
+	 (let ((proc (%js-function %this)))
+	    (js-make-function %this
+	       proc
+	       (js-function-arity proc)
+	       (js-function-info :name "Function" :len 1)
+	       :alloc js-no-alloc
+	       :__proto__ js-function-prototype
+	       :prototype js-function-prototype)))
       ;; throwers
       (let* ((throwget (lambda (o)
 			  (js-raise-type-error %this
