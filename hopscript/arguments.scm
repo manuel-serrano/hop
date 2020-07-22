@@ -279,7 +279,8 @@
 			      v)
 			   (js-undefined))))
 		   (else
-		    (vector-set! vec (uint32->fixnum i) v)))))
+		    (vector-set! vec (uint32->fixnum i) v)
+		    v))))
 	    (else
 	     (call-next-method))))))
 
