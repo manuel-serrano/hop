@@ -139,14 +139,14 @@
 (define (js-function-src obj::JsFunction)
    (with-access::JsFunction obj (info)
       (match-case info
-	 (#(?name ?len (and (? js-jsstring?) ?src . ?-))
+	 (#(?- ?- (and (? js-jsstring?) ?src) ?- ?- ?-)
 	  src)
 	 (#(?name ?len #f ?path ?start ?end)
 	  (let* ((str (read-function-source info path start end))
 		 (jstr (js-string->jsstring str)))
 	     (vector-set! info 2 jstr)
 	     jstr))
-	 (#(?name ?len #f . ?-)
+	 (#(?name ?len #f ?- ?- ?-)
 	  (let ((jstr (js-jsstring-append
 			 (js-ascii->jsstring "[function ")
 			 (js-jsstring-append
