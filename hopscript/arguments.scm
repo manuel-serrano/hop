@@ -296,13 +296,19 @@
 	    ((not (js-isindex? i))
 	     (call-next-method))
 	    ((<uint32 i (vector-length vec))
-	     (with-access::JsPropertyDescriptor (u32vref vec i) (configurable)
-		(if configurable
+	     (let ((desc (u32vref vec i)))
+		(if (isa? desc JsPropertyDescriptor)
+		    (with-access::JsPropertyDescriptor desc (configurable)
+		       (if configurable
+			   (begin
+			      (js-object-mode-inline-set! o #f)
+			      (u32vset! vec i (js-absent))
+			      #t)
+			   #f))
 		    (begin
 		       (js-object-mode-inline-set! o #f)
 		       (u32vset! vec i (js-absent))
-		       #t)
-		    #f)))
+		       #t))))
 	    (else
 	     (call-next-method))))))
 
