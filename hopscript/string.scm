@@ -38,6 +38,7 @@
 	   __hopscript_worker)
 
    (export (js-init-string! ::JsGlobalObject)
+	   (js-jsstring->JsString ::JsStringLiteral ::JsGlobalObject)
 	   (js-template-raw ::JsArray ::JsArray ::JsGlobalObject))
 
    ;; bmem profiling
@@ -261,6 +262,16 @@
 	 (__proto__ (js-get-jsobject-name/cache constructor (& "prototype") #f
 		       %this (js-pcache-ref js-string-pcache 34))))))
 
+;*---------------------------------------------------------------------*/
+;*    js-jsstring->JsString ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring->JsString o %this)
+   (with-access::JsGlobalObject %this (js-string-prototype js-initial-cmap)
+      (instantiateJsString
+	 (val o)
+	 (__proto__ js-string-prototype)
+	 (cmap js-initial-cmap))))
+	    
 ;*---------------------------------------------------------------------*/
 ;*    js-cast-string ...                                               */
 ;*---------------------------------------------------------------------*/

@@ -519,7 +519,7 @@
    (with-access::JsStringLiteral js (left right)
       (js-jsstring-normalized! js)
       (set! left buffer)
-      (set! right #f)
+      (set! right (js-not-a-string-cache))
       js))
    
 ;*---------------------------------------------------------------------*/
@@ -545,7 +545,8 @@
 		   (with-access::JsStringLiteral left (length)
 		      (let ((len (uint32->fixnum length)))
 			 (loop i left)
-			 (loop (+fx i len) right))))))
+			 (unless (js-jsstring-normalized? s)
+			    (loop (+fx i len) right)))))))
 	 (js-jsstring-mark-normalized! js buffer)
 	 buffer))
    
@@ -573,18 +574,17 @@
 		      (blit-buffer! str buffer i (string-length str))
 		      (loop (+fx i (string-length str)) right stack)))
 		  ((not (js-jsstring-normalized? s))
-		   (with-access::JsStringLiteral s (left)
-		      (with-access::JsStringLiteral left (length)
-			 (let ((len (uint32->fixnum length)))
-			    (if (js-jsstring-normalized? right)
-				(with-access::JsStringLiteral right ((str left))
-				   ;; write the rhs in advance
-				   (let ((rlen (string-length str)))
-				      (blit-buffer! str buffer (+fx i len) rlen)
-				      (loop i left stack)))
-				(let* ((ni (+fx i len))
-				       (nstack (cons (cons ni right) stack)))
-				   (loop i left nstack)))))))
+		   (with-access::JsStringLiteral left (length)
+		      (let ((len (uint32->fixnum length)))
+			 (if (js-jsstring-normalized? right)
+			     (with-access::JsStringLiteral right ((str left))
+				;; write the rhs in advance
+				(let ((rlen (string-length str)))
+				   (blit-buffer! str buffer (+fx i len) rlen)
+				   (loop i left stack)))
+			     (let* ((ni (+fx i len))
+				    (nstack (cons (cons ni right) stack)))
+				(loop i left nstack))))))
 		  
 		  (else
 		   (tprint "SHOULD NOT BE HERE, remove previous test")
@@ -627,7 +627,8 @@
 			    (if (string? left)
 				(blit-utf8-buffer! left buffer i)
 				(let ((ni (loop i left)))
-				   (loop ni right)))))))
+				   (unless (js-jsstring-normalized? s)
+				      (loop ni right))))))))
 	       (string-shrink! buffer ni)
 	       (js-jsstring-mark-normalized! js buffer)
 	       (set! length (fixnum->uint32 (string-length buffer)))

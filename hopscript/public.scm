@@ -1339,7 +1339,6 @@
 (define (js-object-alloc-lazy %this ctor::JsFunction)
    (with-access::JsFunction ctor (constrmap alloc prototype)
       (when (eq? prototype #\F)
-	 (tprint "js-object-alloc-lazy...")
 	 (js-function-setup-prototype! %this ctor)
 	 (set! alloc js-object-alloc))
       (js-object-alloc %this ctor)))
@@ -1867,14 +1866,16 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toprimitive-for-string ...                                    */
+;*    -------------------------------------------------------------    */
+;*    Overriden by a macro in public_expd.sch.                         */
 ;*---------------------------------------------------------------------*/
 (define (js-toprimitive-for-string obj %this::JsGlobalObject)
    (cond
-      ((js-jsstring? obj) obj)
       ((fixnum? obj) (js-integer->jsstring obj))
       ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
       ((eq? obj #t) (& "true"))
       ((eq? obj #f) (& "false"))
+      ((js-jsstring? obj) obj)
       (else (js-tojsstring (js-toprimitive obj 'any %this) %this))))
    
 ;*---------------------------------------------------------------------*/
@@ -1923,8 +1924,7 @@
       ((js-object? o)
        o)
       ((js-jsstring? o)
-       (with-access::JsGlobalObject %this (js-string)
-	  (js-new1 %this js-string o)))
+       (js-jsstring->JsString o %this))
       ((js-number? o)
        (js-number->jsNumber o %this))
       ((boolean? o)
@@ -1938,8 +1938,7 @@
       ((pair? o)
        o)
       ((string? o)
-       (with-access::JsGlobalObject %this (js-string)
-	  (js-new1 %this js-string o)))
+       (js-jsstring->JsString (js-string->jsstring o) %this))
       (else
        #f)))
 

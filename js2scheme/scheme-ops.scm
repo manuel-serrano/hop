@@ -1350,7 +1350,7 @@
    
    (define (j2s-jsstring-append x y)
       (cond
-	 ((context-get ctx :profile-mem #t)
+	 ((context-get ctx :profile-mem)
 	  `(js-jsstring-append-no-inline ,x ,y))
 	 ((and (ascii? x) (ascii? y))
 	  `(js-jsstring-append-ascii ,x ,y))

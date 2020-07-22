@@ -149,13 +149,12 @@
 	      (inline::bool read-only (default #f))
 	      (parent::JsConstructMap (default (class-nil JsConstructMap))))
 	   
-	   ;; Literal strings that are not plain Scheme string
-	   ;; for the sake of concat performance
+	   ;; Literal strings that are not plain Scheme strings.
+	   ;; For performance sake they are trees.
 	   (abstract-class JsStringLiteral
 	      length::uint32
 	      left::obj
-	      (right::obj (default #f))
-	      (pcacher (default #f)))
+	      (right::obj (default (js-not-a-string-cache))))
 	   
 	   (class JsStringLiteralASCII::JsStringLiteral)
 	   
@@ -544,9 +543,11 @@
 	   
 	   *js-not-a-cmap*
 	   *js-not-a-pmap*
+	   *js-not-a-string-cache*
 	   (inline js-not-a-cmap::JsConstructMap)
 	   (inline js-not-a-pmap::JsConstructMap)
 	   (inline js-not-a-index::long)
+	   (inline js-not-a-string-cache::pair)
 	   
 	   (inline js-object?::bool ::obj)
 	   (inline js-object-mapped?::bool ::JsObject)
@@ -1250,7 +1251,6 @@
 (define *js-not-a-cmap*
    (instantiate::JsConstructMap
       (inline #f)
-;*       (size -100)                                                   */
       (%id 0)))
 
 ;*---------------------------------------------------------------------*/
@@ -1260,6 +1260,12 @@
    (instantiate::JsConstructMap
       (inline #f)
       (%id -1)))
+
+;*---------------------------------------------------------------------*/
+;*    *js-not-a-string-cache* ...                                      */
+;*---------------------------------------------------------------------*/
+(define *js-not-a-string-cache*
+   (cons #f #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-not-a-cmap ...                                                */
@@ -1278,6 +1284,12 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-not-a-index::long)
    (bit-lsh 1 28))
+
+;*---------------------------------------------------------------------*/
+;*    js-not-a-string-cache ...                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (js-not-a-string-cache::pair)
+   *js-not-a-string-cache*)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object? ...                                                   */

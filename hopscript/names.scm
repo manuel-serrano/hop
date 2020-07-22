@@ -179,31 +179,38 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-pcacher ...                                              */
+;*    -------------------------------------------------------------    */
+;*    String caches are only used on normalized strings so the         */
+;*    RIGHT field can be used to store the read and write caches.      */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-name-pcacher::obj o::JsStringLiteral)
-   (with-access::JsStringLiteral o (pcacher)
-      pcacher))
+   (with-access::JsStringLiteral o ((cache right))
+      (car cache)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-pcacher-set! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-name-pcacher-set! o::JsStringLiteral c::JsPropertyCache)
-   (with-access::JsStringLiteral o (pcacher)
-      (set! pcacher c)))
+   (with-access::JsStringLiteral o ((cache right))
+      (if (eq? cache (js-not-a-string-cache))
+	  (set! cache (cons c #f))
+	  (set-car! cache c))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-pcachew ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-name-pcachew::obj o::JsStringLiteral)
-   (with-access::JsStringLiteral o ((pcachew right))
-      pcachew))
+   (with-access::JsStringLiteral o ((cache right))
+      (cdr cache)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-pcachew-set! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-name-pcachew-set! o::JsStringLiteral c::JsPropertyCache)
-   (with-access::JsStringLiteral o ((pcachew right))
-      (set! pcachew c)))
+   (with-access::JsStringLiteral o ((cache right))
+      (if (eq? cache (js-not-a-string-cache))
+	  (set! cache (cons #f c))
+	  (set-cdr! cache c))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsname? ...                                                   */

@@ -1005,6 +1005,10 @@
 	 (cond
 	    ((js-jsstring? this)
 	     (& "[object String]"))
+	    ((js-number? this)
+	     (& "[object Number]"))
+	    ((boolean? this)
+	     (& "[object Boolean]"))
 	    ((eq? this (js-undefined))
 	     (& "[object Undefined]"))
 	    ((eq? this (js-null))

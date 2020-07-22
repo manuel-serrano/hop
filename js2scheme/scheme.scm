@@ -636,7 +636,7 @@
 	    ((null? (cdr xs))
 	     (car xs))
 	    (else
-	     (let ((js-jsstring-append (if (context-get ctx :profile-mem #t)
+	     (let ((js-jsstring-append (if (context-get ctx :profile-mem)
 					   'js-jsstring-append-no-inline
 					   'js-jsstring-append)))
 		(epairify loc

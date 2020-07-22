@@ -92,6 +92,8 @@
 	     ,js-null-or-undefined?-expander))
    (eval `(define-expander js-tonumber
 	     ,js-tonumber-expander))
+   (eval `(define-expander js-toprimitive-for-string
+	     ,js-toprimitive-for-string-expander))
    
    (eval `(define-expander &
 	     ,&-expander))
