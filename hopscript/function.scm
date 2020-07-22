@@ -141,12 +141,12 @@
       (match-case info
 	 (#(?- ?- (and (? js-jsstring?) ?src) ?- ?- ?-)
 	  src)
-	 (#(?name ?len #f ?path ?start ?end)
+	 (#(?- ?- #f ?path ?start ?end)
 	  (let* ((str (read-function-source info path start end))
 		 (jstr (js-string->jsstring str)))
 	     (vector-set! info 2 jstr)
 	     jstr))
-	 (#(?name ?len #f ?- ?- ?-)
+	 (#(?- ?- #f ?- ?- ?-)
 	  (let ((jstr (js-jsstring-append
 			 (js-ascii->jsstring "[function ")
 			 (js-jsstring-append

@@ -959,10 +959,12 @@
 		   (name (js-integer-name->jsstring ,indx))
 		   (get (js-make-function %this
 			   (lambda (%) ,id)
-			   0 (js-function-info :name "get" :len 0)))
+			   (js-function-arity 0 0)
+			   (js-function-info :name "get" :len 0)))
 		   (set (js-make-function %this
 			   (lambda (% %v) (set! ,id %v))
-			   1 (js-function-info :name "set" :len 1)))
+			   (js-function-arity 1 0)
+			   (js-function-info :name "set" :len 1)))
 		   (%get (lambda (%) ,id))
 		   (%set (lambda (% %v) (set! ,id %v)))
 		   (configurable #t)
@@ -994,12 +996,13 @@
 		      params (iota (length params)))
 		 (let loop ((,rest ,rest)
 			    (%i ,(length params)))
-		    (when (pair? ,rest)
-		       ,(init-argument `(car ,rest) '%i)
+		    (when (<fx %i (vector-length ,rest))
+		       ,(init-argument `(vector-ref ,rest %i) '%i)
 		       (loop (cdr ,rest) (+fx %i 1))))
 		 (js-bind! %this arguments ,(& "callee" (context-program ctx))
 		    :value (js-make-function %this ,id
-			      0 (js-function-info :name ,(symbol->string id) :len 0))
+			      (js-function-arity 0 0)
+			      (js-function-info :name ,(symbol->string id) :len 0))
 		    :enumerable #f)
 		 ,body))))
 	     
