@@ -151,7 +151,7 @@
 	 
 	 (with-access::JsGlobalObject %this (js-new-target)
 	    (set! js-new-target (js-undefined)))
-	 
+
 	 (if (null? arg)
 	     ;; 2
 	     (set-ascii-string! "")
@@ -302,8 +302,8 @@
 ;*    %js-string ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (%js-string %this)
-   (lambda (this #!optional (arg '()))
-      (let ((str (if (null? arg)
+   (lambda (this #!optional (arg #\F))
+      (let ((str (if (eq? arg #\F)
 		     (js-ascii->jsstring "")
 		     (js-string->jsstring (js-tostring arg %this)))))
 	 (with-access::JsGlobalObject %this (js-new-target js-string)
