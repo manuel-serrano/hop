@@ -3960,11 +3960,12 @@
       (if (procedure? method)
 	  (apply method args)
 	  (case (length args)
+	     ((0) (js-call0 %this method o))
 	     ((1) (js-call1 %this method o (car args)))
 	     ((2) (js-call2 %this method o (car args) (cadr args)))
 	     ((3) (js-call3 %this method o (car args) (cadr args) (caddr args)))
 	     (else (js-calln %this method o args)))))
-
+   
    (define (funval obj el-or-desc)
       (let loop ((el-or-desc el-or-desc))
 	 (cond
@@ -3993,7 +3994,7 @@
 	  (lambda (_ this a0 a1 a2 a3 a4 a5 a6) (f this a0 a1 a2 a3 a4 a5 a6)))
 	 (else
 	  (lambda (_ . args) (apply f args)))))
-
+   
    (define (procedureN procedure largs)
       (case (procedure-arity procedure)
 	 ((1)
@@ -4042,9 +4043,9 @@
 	     (else (lambda (this a0 a1 a2 a3 a4 a5 a6 . _) (procedure this a0 a1)))))
 	 (else
 	  #f)))
-
+   
    (js-profile-log-method name point)
-
+   
    (let ((n (js-toname name %this)))
       (let loop ((obj o))
 	 (jsobject-find obj o n

@@ -618,7 +618,7 @@
        `((define (%jsexit n) (exit n))
 	 ,@(apply append body)))
       ((context-get ctx :return-as-exit)
-       `((bind-exit (%jsexit) ,@(apply append body))))
+       `((bind-exit (%jsexit) #unspecified ,@(apply append body))))
       (else
        (apply append body))))
 

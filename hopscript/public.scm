@@ -62,6 +62,7 @@
 	   (js-object-alloc-lazy ::JsGlobalObject ::JsFunction)
 	   (inline js-object-alloc/new-target ::JsGlobalObject ::JsFunction)
 	   (inline js-no-alloc ::JsGlobalObject ::JsFunction)
+	   (inline js-no-alloc/new-target ::JsGlobalObject ::JsFunction)
 	   (js-not-a-constructor-alloc ::JsGlobalObject ::JsFunction)
 	   
 	   (inline js-function-set-constrmap!::JsFunction ::JsFunction)
@@ -996,24 +997,56 @@
 ;*    js-callXXX ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-call0 %this fun this)
-   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 1))
-       ((js-procedure-procedure fun) this)
-       (js-call0-obj %this fun this)))
+   (with-handler
+      (lambda (e)
+	 (tprint "ERR...call0")
+	 (when (isa? fun JsFunction)
+	    (with-access::JsFunction fun (info)
+	       (tprint "info=" info)
+	       (exception-notify e)))
+	 (raise e))
+      (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 1))
+	  ((js-procedure-procedure fun) this)
+	  (js-call0-obj %this fun this))))
 
 (define-inline (js-call1 %this fun this a0)
-   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 2))
-       ((js-procedure-procedure fun) this a0)
-       (js-call1-obj %this fun this a0)))
+   (with-handler
+      (lambda (e)
+	 (tprint "ERR...call1")
+	 (when (isa? fun JsFunction)
+	    (with-access::JsFunction fun (info)
+	       (tprint "info=" info)
+	       (exception-notify e)))
+	 (raise e))
+      (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 2))
+	  ((js-procedure-procedure fun) this a0)
+	  (js-call1-obj %this fun this a0))))
 
 (define-inline (js-call2 %this fun this a0 a1)
-   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 3))
-       ((js-procedure-procedure fun) this a0 a1)
-       (js-call2-obj %this fun this a0 a1)))
+   (with-handler
+      (lambda (e)
+	 (tprint "ERR...call2")
+	 (when (isa? fun JsFunction)
+	    (with-access::JsFunction fun (info)
+	       (tprint "info=" info)
+	       (exception-notify e)))
+	 (raise e))
+      (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 3))
+	  ((js-procedure-procedure fun) this a0 a1)
+	  (js-call2-obj %this fun this a0 a1))))
 
 (define-inline (js-call3 %this fun this a0 a1 a2)
-   (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 4))
-       ((js-procedure-procedure fun) this a0 a1 a2)
-       (js-call3-obj %this fun this a0 a1 a2)))
+   (with-handler
+      (lambda (e)
+	 (tprint "ERR...call3")
+	 (when (isa? fun JsFunction)
+	    (with-access::JsFunction fun (info)
+	       (tprint "info=" info)
+	       (exception-notify e)))
+	 (raise e))
+      (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 4))
+	  ((js-procedure-procedure fun) this a0 a1 a2)
+	  (js-call3-obj %this fun this a0 a1 a2))))
 
 (define-inline (js-call4 %this fun this a0 a1 a2 a3)
    (if (and (js-procedure? fun) (=fx (js-procedure-arity fun) 5))
@@ -1360,6 +1393,16 @@
    (js-undefined))
 
 ;*---------------------------------------------------------------------*/
+;*    js-no-alloc/new-target ...                                       */
+;*    -------------------------------------------------------------    */
+;*    This is used by functions that allocate ad-hoc constructors.     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-no-alloc/new-target %this ctor::JsFunction)
+   (with-access::JsGlobalObject %this (js-new-target)
+      (set! js-new-target ctor)
+      (js-undefined)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-not-a-constructor-alloc ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    Used by functions that are not allowed to be used in NEW expr.   */
@@ -1438,7 +1481,13 @@
 	(js-raise-type-error ,%this "new: object is not a function ~s" ,ctor))))
 
 (define (js-new0 %this ctor)
-   (gen-new %this ctor))
+   (with-handler
+      (lambda (e)
+	 (exception-notify e)
+	 (with-access::JsFunction ctor (info)
+	    (tprint info))
+	 (raise e))
+      (gen-new %this ctor)))
 (define (js-new1 %this ctor a0)
    (gen-new %this ctor a0))
 (define (js-new2 %this ctor a0 a1)

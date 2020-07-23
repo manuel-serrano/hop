@@ -88,7 +88,7 @@
       (js-alist->jsobject
 	 `((Process . ,(js-make-function %this
 			  (lambda (this) this)
-			  (js-function-arity 1 0)
+			  (js-function-arity 0 0)
 			  (js-function-info :name "Process" :len 1)
 			  :alloc (lambda (%this o)
 				    (instantiateJsHandle

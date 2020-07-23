@@ -83,8 +83,8 @@
 		  (lambda (this buffer offset length port address callback)
 		     (udp-send %worker process %this this 
 			buffer offset length port address 6 callback))
-		  (js-function-arity 5 0)
-		  (js-function-info :name "send6" :len 5))
+		  (js-function-arity 6 0)
+		  (js-function-info :name "send6" :len 6))
 	       #f %this)
 	    
 	    (js-put! obj (& "close")
@@ -108,8 +108,8 @@
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-udp-recv-stop handle)))
-		  (js-function-arity 1 0)
-		  (js-function-info :name "recvStop" :len 1))
+		  (js-function-arity 0 0)
+		  (js-function-info :name "recvStop" :len 0))
 	       #f %this)
 	    
 	    (js-put! obj (& "getsockname")
@@ -131,8 +131,8 @@
 			      (unless (eq? iface (js-undefined))
 				 (js-tostring iface %this))
 			      'join-group))))
-		  (js-function-arity 3 0)
-		  (js-function-info :name "addMembership" :len 3))
+		  (js-function-arity 2 0)
+		  (js-function-info :name "addMembership" :len 2))
 	       #f %this)
 	    
 	    (js-put! obj (& "dropMembership")
@@ -144,8 +144,8 @@
 			   (unless (eq? iface (js-undefined))
 			      (js-tostring iface %this))
 			   'leave-group)))
-		  (js-function-arity 3 0)
-		  (js-function-info :name "dropMembership" :len 3))
+		  (js-function-arity 2 0)
+		  (js-function-info :name "dropMembership" :len 2))
 	       #f %this)
 	    
 	    (js-put! obj (& "setMulticastTTL")
@@ -154,8 +154,8 @@
 		     (with-access::JsHandle this (handle)
 			(nodejs-udp-set-multicast-ttl handle
 			   (->fixnum (js-tointeger ttl %this) ))))
-		  (js-function-arity 2 0)
-		  (js-function-info :name "setMulticastTTL" :len 2))
+		  (js-function-arity 1 0)
+		  (js-function-info :name "setMulticastTTL" :len 1))
 	       #f %this)
 	    
 	    (js-put! obj (& "setMulticastLoopback")
@@ -164,8 +164,8 @@
 		     (with-access::JsHandle this (handle)
 			(nodejs-udp-set-multicast-loop handle
 			   (js-toboolean on))))
-		  (js-function-arity 2 0)
-		  (js-function-info :name "setMulticastLoopback" :len 2))
+		  (js-function-arity 1 0)
+		  (js-function-info :name "setMulticastLoopback" :len 1))
 	       #f %this)
 	    
 	    (js-put! obj (& "setBroadcast")
@@ -174,8 +174,8 @@
 		     (with-access::JsHandle this (handle)
 			(nodejs-udp-set-broadcast handle
 			   (js-toboolean on))))
-		  (js-function-arity 2 0)
-		  (js-function-info :name "setBroadcast" :len 2))
+		  (js-function-arity 1 0)
+		  (js-function-info :name "setBroadcast" :len 1))
 	       #f %this)
 	    
 	    (js-put! obj (& "setTTL")
@@ -184,8 +184,8 @@
 		     (with-access::JsHandle this (handle)
 			(nodejs-udp-set-ttl handle
 			   (->fixnum (js-tointeger ttl %this) ))))
-		  (js-function-arity 2 0)
-		  (js-function-info :name "setTTL" :len 2))
+		  (js-function-arity 1 0)
+		  (js-function-info :name "setTTL" :len 1))
 	       #f %this)
 	    
 	    (js-put! obj (& "ref")

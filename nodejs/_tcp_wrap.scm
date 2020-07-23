@@ -216,7 +216,7 @@
 	       (js-make-function %this
 		  (lambda (this)
 		     (stream-shutdown %worker %this process this))
-		  (js-function-arity 1 0)
+		  (js-function-arity 0 0)
 		  (js-function-info :name "shutdown" :len 1))
 	       #f %this)
 	    

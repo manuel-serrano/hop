@@ -54,13 +54,12 @@
    (init-timer-prototype! %this js-timer-prototype)
    
    (define Timer
-      (js-make-function %this 
-	 (lambda (this) this)
+      (js-make-function %this
+	 (js-timer-construct! %worker %this process js-timer-prototype)
 	 (js-function-arity 0 0)
 	 (js-function-info :name "Timer" :len 0)
 	 :prototype js-timer-prototype
-	 :alloc js-no-alloc
-	 :construct (js-timer-construct! %worker %this process js-timer-prototype)))
+	 :alloc js-no-alloc/new-target))
 
    (js-bind! %this Timer (& "now")
       :value (js-make-function %this
@@ -79,13 +78,18 @@
 ;*    js-timer-construct! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-timer-construct! %worker %this::JsGlobalObject process js-timer-prototype)
-   (lambda (_)
-      (let ((obj (instantiateJsTimer
-		    (__proto__ js-timer-prototype)
-		    (worker (js-current-worker)))))
-	 (with-access::JsTimer obj (timer)
-	    (set! timer (nodejs-make-timer %worker %this process obj)))
-	 obj)))
+   (lambda (this)
+      (with-access::JsGlobalObject %this (js-new-target)
+	 (if (eq? js-new-target (js-undefined))
+	     (js-raise-type-error %this
+		"Timer can only be used as a constructor" this)
+	     (set! js-new-target (js-undefined)))
+	 (let ((obj (instantiateJsTimer
+		       (__proto__ js-timer-prototype)
+		       (worker (js-current-worker)))))
+	    (with-access::JsTimer obj (timer)
+	       (set! timer (nodejs-make-timer %worker %this process obj)))
+	    obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-timer-prototype! ...                                        */

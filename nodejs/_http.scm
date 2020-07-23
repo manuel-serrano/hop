@@ -152,8 +152,8 @@
 		     (let ((off (->fixnum (js-tointeger offset %this)))
 			   (len (->fixnum (js-tointeger length %this))))
 			(http-parser-execute %this this buf off len)))
-		  (js-function-arity 1 0)
-		  (js-function-info :name "execute" :len 1))
+		  (js-function-arity 3 0)
+		  (js-function-info :name "execute" :len 3))
 	       #f %this)
 	    (js-put! proto (& "finish")
 	       (js-make-function %this
@@ -200,7 +200,7 @@
 	    (state http-line-state))))
 
    (let ((http (js-make-function %this http-parser
-		  (js-function-arity 1 0)
+		  (js-function-arity http-parser)
 		  (js-function-info :name "HTTPParser" :len 1)
 		  :alloc js-no-alloc
 		  :prototype http-parser-proto)))

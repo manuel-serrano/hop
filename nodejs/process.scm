@@ -876,7 +876,7 @@
 		     (js-put! this (& "initialized_") #f #f %this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-fs-event-stop handle)))
-		  (js-function-arity 1 0)
+		  (js-function-arity 0 0)
 		  (js-function-info :name "close" :len 1))
 	       #f %this)
 	    

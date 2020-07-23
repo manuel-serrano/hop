@@ -1182,7 +1182,7 @@
 	 (js-put! proto (& "update")
 	    (js-make-function %this cipher-update
 	       (js-function-arity cipher-update)
-	       (js-function-info :name "update" :len 1))
+	       (js-function-info :name "update" :len 3))
 	    #f %this)
 	 (js-put! proto (& "final")
 	    (js-make-function %this cipher-final
@@ -1208,17 +1208,17 @@
 	 (js-put! proto (& "initiv")
 	    (js-make-function %this cipher-initiv
 	       (js-function-arity cipher-initiv)
-	       (js-function-info :name "init" :len 1))
+	       (js-function-info :name "initv" :len 1))
 	    #f %this)
 	 (js-put! proto (& "update")
 	    (js-make-function %this cipher-update
 	       (js-function-arity cipher-update)
-	       (js-function-info :name "init" :len 1))
+	       (js-function-info :name "update" :len 1))
 	    #f %this)
 	 (js-put! proto (& "final")
 	    (js-make-function %this cipher-final
 	       (js-function-arity cipher-final)
-	       (js-function-info :name "init" :len 1))
+	       (js-function-info :name "final" :len 1))
 	    #f %this)
 	 (js-put! proto (& "finaltol")
 	    (js-make-function %this cipher-final

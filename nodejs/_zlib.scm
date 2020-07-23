@@ -74,7 +74,7 @@
 	    #f %this)
 	 (js-put! proto (& "close")
 	    (js-make-function %this zlib-close
-	       (js-function-arity 0 0)
+	       (js-function-arity zlib-close)
 	       (js-function-info :name "close" :len 0))
 	    #f %this)
 	 (js-put! proto (& "reset")
