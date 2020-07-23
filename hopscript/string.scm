@@ -266,11 +266,18 @@
 ;*    js-jsstring->JsString ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring->JsString o %this)
-   (with-access::JsGlobalObject %this (js-string-prototype js-initial-cmap)
-      (instantiateJsString
-	 (val o)
-	 (__proto__ js-string-prototype)
-	 (cmap js-initial-cmap))))
+   (let ((len (instantiate::JsValueDescriptor
+		 (name (& "length"))
+		 (writable #f)
+		 (configurable #f)
+		 (enumerable #f)
+		 (value (uint32->fixnum
+			   (js-jsstring-codeunit-length o))))))
+      (with-access::JsGlobalObject %this (js-string-prototype js-initial-cmap)
+	 (instantiateJsString
+	    (val o)
+	    (__proto__ js-string-prototype)
+	    (elements (vector len))))))
 	    
 ;*---------------------------------------------------------------------*/
 ;*    js-cast-string ...                                               */
