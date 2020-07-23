@@ -2378,8 +2378,7 @@
 	  (js-make-function %this (lambda (this) (js-undefined))
 	     (js-function-arity 0 0)
 	     (js-function-info :name "" :len 0)
-	     :alloc js-object-alloc
-	     :construct (lambda (_) (js-undefined)))
+	     :alloc js-object-alloc)
 	  (let* ((len (length args))
 		 (formals (take args (-fx len 1)))
 		 (body (car (last-pair args)))
@@ -2397,8 +2396,7 @@
 	    (js-function-info :name "Function" :len 1)
 	    :__proto__ js-function-prototype
 	    :prototype js-function-prototype
-	    :alloc js-no-alloc
-	    :construct js-function-construct)))
+	    :alloc js-no-alloc)))
 
    (js-bind! %this scope (& "Function")
       :value js-function

@@ -582,7 +582,6 @@
 	 (js-function-info :name "SlowBuffer" :len 1)
 	 :alloc (lambda (%this o) #unspecified)
 	 :size 10
-	 :construct slowbuffer-constr
 	 :prototype slowbuffer-proto
 	 :shared-cmap #f))
    

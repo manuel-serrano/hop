@@ -91,7 +91,6 @@
    (let* ((zlib (js-make-function %this zlib
 		   (js-function-arity 0 0)
 		   (js-function-info :name "Zlib" :len 0)
-		   :construct zlib
 		   :prototype zlib-proto)))
       (js-alist->jsobject
 	 `((Zlib . ,zlib))

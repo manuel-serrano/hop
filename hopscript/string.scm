@@ -266,19 +266,49 @@
 ;*    js-jsstring->JsString ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring->JsString o %this)
-   (let ((len (instantiate::JsValueDescriptor
-		 (name (& "length"))
-		 (writable #f)
-		 (configurable #f)
-		 (enumerable #f)
-		 (value (uint32->fixnum
-			   (js-jsstring-codeunit-length o))))))
-      (with-access::JsGlobalObject %this (js-string-prototype js-initial-cmap)
-	 (instantiateJsString
-	    (val o)
-	    (__proto__ js-string-prototype)
-	    (elements (vector len))))))
-	    
+   (with-access::JsGlobalObject %this (js-string-prototype js-initial-cmap)
+      (instantiateJsString
+	 (val o)
+	 (__proto__ js-string-prototype)
+	 (elements '#()))))
+
+;*---------------------------------------------------------------------*/
+;*    js-string-update-length-property! ...                            */
+;*---------------------------------------------------------------------*/
+(define (js-string-update-length-property! str::JsString)
+   
+   (define (js-string-find-length-property arr::JsString)
+      (with-access::JsString arr (elements)
+	 (when (>=fx (vector-length elements) 1)
+	    (when (isa? (vector-ref elements 0) JsPropertyDescriptor)
+	       (with-access::JsPropertyDescriptor (vector-ref elements 0) (name)
+		  (when (eq? name (& "length"))
+		     (vector-ref elements 0)))))))
+   
+   (define (add-length-property! str::JsString)
+      (with-access::JsString str (elements val)
+	 (let ((prop (instantiate::JsValueDescriptor
+			(name (& "length"))
+			(writable #f)
+			(configurable #f)
+			(enumerable #f)
+			(value (uint32->fixnum
+				  (js-jsstring-codeunit-length val)))))
+	       (vec (make-vector (+fx 1 (vector-length elements)))))
+	    (vector-set! vec 0 prop)
+	    (vector-copy! vec 1 elements)
+	    (set! elements vec)
+	    prop)))
+   
+   (or (js-string-find-length-property str) (add-length-property! str)))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-length ::JsString ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-length str::JsString %this #!optional cache)
+   (with-access::JsString str (val)
+      (uint32->fixnum (js-jsstring-codeunit-length val))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-cast-string ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -764,24 +794,35 @@
 	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-isname? ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-isname?::bool p name::JsStringLiteral %this::JsGlobalObject)
+   (or (eq? p name) (eq? (js-toname p %this) name)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsString ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.5.2     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-property o::JsString p %this)
    (let ((index (js-toindex p)))
-      (if (js-isindex? index)
+      (cond
+	 ((js-isindex? index)
 	  (let* ((len (js-jsstring-character-length (js-cast-string %this o))))
 	     (if (<=u32 len index)
 		 (call-next-method)
-		 #t))
-	  (call-next-method))))
+		 #t)))
+	 ((js-isname? p (& "length") %this)
+	  #t)
+	 (else
+	  (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-own-property ::JsString ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-own-property o::JsString p %this::JsGlobalObject)
-   (not (eq? (js-get-own-property o p %this) (js-undefined))))
+   (or (js-isname? p (& "length") %this)
+       (not (eq? (js-get-own-property o p %this) (js-undefined)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ::JsString ...                               */
@@ -815,7 +856,8 @@
 		(configurable #f)))))
    
    (let ((index (js-toindex p)))
-      (if (js-isindex? index)
+      (cond
+	 ((js-isindex? index)
 	  (with-access::JsString o (val)
 	     (let ((index (uint32->fixnum index)))
 		(cond
@@ -824,8 +866,11 @@
 		   ((isa? val JsStringLiteralASCII)
 		    (ascii-get-own-property (js-jsstring->string val) index))
 		   (else
-		    (utf8-get-own-property val index)))))
-	  (call-next-method))))
+		    (utf8-get-own-property val index))))))
+	 ((js-isname? p (& "length") %this)
+	  (js-string-update-length-property! o))
+	 (else
+	  (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property-descriptor ::JsString ...                    */

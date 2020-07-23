@@ -243,8 +243,7 @@
 		  (js-function-arity 0 0)
 		  (js-function-info :name "UDP" :len 0)
 		  :alloc (lambda (%this o) #unspecified)
-		  :prototype (get-udp-proto)
-		  :construct UDP))
+		  :prototype (get-udp-proto)))
 	    (js-put! obj (& "UDP") js-udp #f %this)
 	    obj))))
 

@@ -1707,18 +1707,14 @@
 
    ;; indexOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.14
-   (define (array-prototype-indexof this::obj el . indx)
+   (define (array-prototype-indexof this::obj el #!optional (indx 0))
       (if (js-array? this)
-	  (js-array-prototype-indexof this el
-	     (if (pair? indx) (car indx) 0)
-	     %this)
-	  (js-array-prototype-indexof (js-toobject %this this) el
-	     (if (pair? indx) (car indx) 0)
-	     %this)))
+	  (js-array-prototype-indexof this el indx %this)
+	  (js-array-prototype-indexof (js-toobject %this this) el indx %this)))
 
    (js-bind! %this js-array-prototype (& "indexOf")
       :value (js-make-function %this array-prototype-indexof
-		(js-function-arity array-prototype-indexof)
+		(js-function-arity 1 1 'optional)
 		(js-function-info :name "indexOf" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
@@ -2794,7 +2790,7 @@
 	     (js-has-property o idx %this))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-jsobject-name/cache-miss ...                                */
+;*    js-get-jsobject-name/cache-miss ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-jsobject-name/cache-miss o::JsArray p::obj
 		  throw::bool %this::JsGlobalObject cache::JsPropertyCache)

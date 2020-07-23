@@ -168,8 +168,7 @@
 		  (js-function-arity TTY)
 		  (js-function-info :name "TTY" :len 0)
 		  :alloc (lambda (%this o) #unspecified)
-		  :prototype (get-tty-proto)
-		  :construct TTY))
+		  :prototype (get-tty-proto)))
 	    (js-put! obj (& "isTTY")
 	       (js-make-function %this
 		  (lambda (this fd)

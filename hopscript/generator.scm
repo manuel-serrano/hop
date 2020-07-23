@@ -199,8 +199,7 @@
 	 :value (js-make-function %this js-generator-construct
 		   (js-function-arity js-generator-construct)
 		   (js-function-info :name "constructor" :len 1)
-		   :alloc js-no-alloc
-		   :construct js-generator-construct)
+		   :alloc js-no-alloc)
 	 :hidden-class #t)
       
       (js-bind! %this js-genfun-proto js-symbol-tostringtag
@@ -236,8 +235,7 @@
       (if (null? args)
 	  (js-make-function %this (lambda (this) (js-undefined))
 	     (js-function-arity 0 0)
-	     (js-function-info :name "" :len 0)
-	     :construct (lambda (_) (js-undefined)))
+	     (js-function-info :name "" :len 0))
 	  (let* ((len (length args))
 		 (formals (take args (-fx len 1)))
 		 (body (car (last-pair args)))

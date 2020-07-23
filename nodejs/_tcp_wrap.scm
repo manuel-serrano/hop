@@ -299,8 +299,7 @@
 		  (js-function-arity 0 0)
 		  (js-function-info :name "TCP" :len 0)
 		  :alloc (lambda (%this o) #unspecified)
-		  :prototype (get-tcp-proto)
-		  :construct TCP))
+		  :prototype (get-tcp-proto)))
 	    (js-put! obj (& "TCP") js-tcp #f %this)
 	    obj))))
 

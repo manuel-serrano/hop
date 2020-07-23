@@ -418,8 +418,7 @@
 	(StatWatcher . ,(js-make-function %this fs-watcher
 			   (js-function-arity fs-watcher)
 			   (js-function-info :name "StatWatcher" :len 0)
-			   :alloc (lambda (%this o) #unspecified)
-			   :construct fs-watcher)))
+			   :alloc (lambda (%this o) #unspecified))))
       %this))
 
 ;*---------------------------------------------------------------------*/

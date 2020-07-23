@@ -1912,6 +1912,8 @@
        (js-jsstring-codeunit-length o))
       ((isa? o JsTypedArray)
        (js-typedarray-lengthu32 o %this cache))
+      ((isa? o JsString)
+       (fixnum->uint32 (js-get-length o %this cache)))
       (else
        (js-touint32
 	  (if cache

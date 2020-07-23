@@ -203,7 +203,6 @@
 		  (js-function-arity 1 0)
 		  (js-function-info :name "HTTPParser" :len 1)
 		  :alloc js-no-alloc
-		  :construct http-parser
 		  :prototype http-parser-proto)))
       (js-object-proto-set! http http-proto)
       (js-alist->jsobject

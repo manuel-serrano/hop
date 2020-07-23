@@ -179,8 +179,7 @@
 		 (js-function-arity 3 0)
 		 (js-function-info :name "NodeScript" :len 3)
 		 :alloc (lambda (%this o) #unspecified)
-		 :prototype nodescript-proto
-		 :construct NodeScript)))
+		 :prototype nodescript-proto)))
       (js-put! obj (& "createContext") createContext #f %this)
       (js-put! obj (& "runInContext") runInContextVM #f %this)
       (js-put! obj (& "runInNewContext") runInNewContextVM #f %this)

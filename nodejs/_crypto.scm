@@ -1269,61 +1269,51 @@
 		(js-function-arity secure-context)
 		(js-function-info :name "SecureContext" :len 1)
 		:alloc js-no-alloc
-		:construct secure-context
 		:prototype secure-context-proto))
 	 (conn (js-make-function %this connection
 		  (js-function-arity connection)
 		  (js-function-info :name "Connection" :len 1)
 		  :alloc js-no-alloc
-		  :construct connection
 		  :prototype connection-proto))
 	 (dh (js-make-function %this diffie-hellman
 		(js-function-arity diffie-hellman)
 		(js-function-info :name "DiffieHellman" :len 1)
 		:alloc js-no-alloc
-		:construct diffie-hellman
 		:prototype diffie-hellman-proto))
 	 (dhg (js-make-function %this diffie-hellman-group
 		 (js-function-arity diffie-hellman-group)
 		 (js-function-info :name "DiffieHellmanGroup" :len 1)
 		 :alloc js-no-alloc
-		 :construct diffie-hellman-group
 		 :prototype diffie-hellman-proto))
 	 (hm (js-make-function %this hmac
 		(js-function-arity hmac)
 		(js-function-info :name "Hmac" :len 1)
 		:alloc js-no-alloc
-		:construct hmac
 		:prototype hmac-proto))
 	 (hs (js-make-function %this hash
 		(js-function-arity hash)
 		(js-function-info :name "Hash" :len 1)
 		:alloc js-no-alloc
-		:construct hash
 		:prototype hash-proto))
 	 (sn (js-make-function %this sign
 		(js-function-arity sign)
 		(js-function-info :name "Sign" :len 1)
 		:alloc js-no-alloc
-		:construct sign
 		:prototype sign-proto))
-	 (vf (js-make-function %this sign
+	 (vf (js-make-function %this verify
 		(js-function-arity sign)
 		(js-function-info :name "Verify" :len 1)
 		:alloc js-no-alloc
-		:construct verify
 		:prototype verify-proto))
-	 (ci (js-make-function %this sign
+	 (ci (js-make-function %this cipher
 		(js-function-arity sign)
 		(js-function-info :name "cipher" :len 1)
 		:alloc js-no-alloc
-		:construct cipher
 		:prototype cipher-proto))
-	 (dc (js-make-function %this sign
+	 (dc (js-make-function %this decipher
 		(js-function-arity sign)
 		(js-function-info :name "decipher" :len 1)
 		:alloc js-no-alloc
-		:construct decipher
 		:prototype decipher-proto)))
       
       (with-access::JsGlobalObject %this (js-object)

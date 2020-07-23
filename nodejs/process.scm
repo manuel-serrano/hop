@@ -899,8 +899,7 @@
 	 `((FSEvent . ,(js-make-function %this fs-event
 			  (js-function-arity 0 0)
 			  (js-function-info :name "FSEvent" :len 0)
-			  :alloc (lambda (%this o) #unspecified)
-			  :construct fs-event)))
+			  :alloc (lambda (%this o) #unspecified))))
 	 %this)))
 
 ;*---------------------------------------------------------------------*/

@@ -232,7 +232,6 @@
 			  :alloc ,alloc
 			  :prototype ,(j2s-fun-prototype val)
 			  :__proto__ ,(j2s-fun-__proto__ val)
-			  :construct ,fastid
 			  :constrsize ,constrsize))
 		     ((and src (memq mode '(strict hopscript)))
 		      `(,(if (eq? alloc 'js-object-alloc-lazy)
@@ -253,7 +252,6 @@
 			  ,arity ,(j2s-function-info val name loc ctx)
 			  :strict ',mode
 			  :alloc ,alloc
-			  :construct ,fastid
 			  :constrsize ,constrsize
 			  :method ,(when method
 				      (jsfun->lambda method
@@ -302,7 +300,6 @@
 			  ,arity ,(j2s-function-info val name loc ctx)
 			  :strict ',mode
 			  :alloc ,alloc
-			  :construct ,fastid
 			  :constrsize ,constrsize
 			  :method ,(when method
 				      (jsfun->lambda method
@@ -312,7 +309,6 @@
 			  ,arity ,(j2s-function-info val name loc ctx)
 			  :strict ',mode
 			  :alloc ,alloc
-			  :construct ,fastid
 			  :constrsize ,constrsize))))))))
 
    (with-access::J2SDeclFun this (val)
