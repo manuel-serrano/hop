@@ -1154,9 +1154,15 @@
 ;*    j2s-function-info ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-function-info val::J2SFun name loc ctx)
+
+   (define (file-relative? path)
+      (or (=fx (string-length path) 0)
+	  (not (char=? (string-ref path 0) (file-separator)))))
    
    (define (absolute-path path)
-      (file-name-canonicalize (make-file-name (pwd) path)))
+      (if (file-relative? path)
+	  (file-name-canonicalize (make-file-name (pwd) path))
+	  (file-name-canonicalize path)))
    
    (define (function-len val)
       (with-access::J2SFun val (params mode vararg body name generator

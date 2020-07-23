@@ -142,7 +142,9 @@
 			 (if (eq? (car c) 'SIGTERM)
 			     (hop-sigterm-handler-set!
 				(lambda (n)
-				   (js-call0 %this proc this)
+				   (js-worker-push-thunk! %worker "SIGTERM"
+				      (lambda ()
+					 (js-call0 %this proc this)))
 				   '(js-worker-tick %worker)))
 			     (signal (cdr c)
 				(lambda (s)

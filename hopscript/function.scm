@@ -1328,7 +1328,7 @@
        (let ((mmap (open-mmap path :write #f)))
 	  (mmap-substring mmap
 	     (fixnum->elong start) (fixnum->elong end)))
-       (format "[~a:$a-~a]" path start end)))
+       (format "[~a:~a..~a]" path start end)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-info ...                                             */

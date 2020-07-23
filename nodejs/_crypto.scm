@@ -1151,7 +1151,7 @@
 	 (let* ((s (buf->string data "cipher-update" %this))
 		(str (string-decode s ienc %this))
 		(so (ssl-cipher-update! cipher str 0 (string-length str))))
-	    (string-encode %this so "buffer"))))
+	    (string-encode %this so (& "buffer")))))
    
    (define (cipher-final this enc)
       (with-access::JsCipher this (cipher)
