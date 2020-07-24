@@ -1021,9 +1021,8 @@
 		    (tag (js-get obj js-symbol-tostringtag %this)))
 		(if (js-jsstring? tag)
 		    (js-jsstring-append
-		       (js-string->jsstring "[object")
-		       (js-jsstring-append tag
-			  (js-string->jsstring "]")))
+		       (& "[object")
+		       (js-jsstring-append tag (& "]")))
 		    (let* ((clazz (cond
 				     ((js-function? obj) JsFunction)
 				     ((js-procedure? obj) JsProcedure)
@@ -1039,10 +1038,10 @@
 			   (&  "[object Object]"))
 			  ((isa? obj JsArrayBufferView)
 			   (let ((ctor (js-get obj (& "constructor") %this)))
-			      (js-string->jsstring
-				 (string-append "[object "
-				    (js-get ctor (& "name") %this)
-				    "]"))))
+			      (js-jsstring-append
+				 (& "[object ")
+				 (js-jsstring-append
+				    (js-get ctor (& "name") %this) (& "]")))))
 			  
 			  (else
 			   (js-string->jsstring

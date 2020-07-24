@@ -869,31 +869,6 @@
 	      (apply ,proc ,this ,@args
 		 (make-list (-fx arity ,n) (js-undefined))))))))
 
-;*    (let ((n (+fx 1 (length args))))                                 */
-;*       `(let ((arity (procedure-arity ,proc)))                       */
-;* 	  (cond                                                        */
-;* 	     ((=fx arity ,n)                                           */
-;* 	      (,proc ,this ,@args))                                    */
-;* 	     ((>fx arity ,n)                                           */
-;* 	      (case (-fx arity ,n)                                     */
-;* 		 ((1)                                                  */
-;* 		  (,proc ,this ,@args (js-undefined)))                 */
-;* 		 ((2)                                                  */
-;* 		  (,proc ,this ,@args (js-undefined) (js-undefined)))  */
-;* 		 ((3)                                                  */
-;* 		  (,proc ,this ,@args (js-undefined) (js-undefined) (js-undefined))) */
-;* 		 ((4)                                                  */
-;* 		  (,proc ,this ,@args (js-undefined) (js-undefined) (js-undefined) (js-undefined))) */
-;* 		 (else                                                 */
-;* 		  (apply ,proc ,this ,@args                            */
-;* 		     (make-list (-fx arity ,n) (js-undefined))))))     */
-;* 	     ,@(map (lambda (i)                                        */
-;* 		       `((=fx arity ,i)                                */
-;* 			 (,proc ,this ,@(take args (-fx i 1)))))       */
-;* 		(iota (length args) 1))                                */
-;* 	     (else                                                     */
-;* 	      (js-undefined)))))                                       */
-   
 (define (js-call0-procedure proc this)
    (gen-call-procedure proc this))
 

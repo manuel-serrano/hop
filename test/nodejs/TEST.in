@@ -113,7 +113,7 @@ for chapter in $chapters; do
       
       rm -rf $basedir/tmp/a
       echo "(cd $basedir; $hopexec $path)" >> /tmp/TEST-NODEJS.out
-      (cd $basedir; $hopexec $path > /tmp/TEST-NODEJS.out.tmp 2>&1)
+      (cd $basedir; timeout 20s $hopexec $path > /tmp/TEST-NODEJS.out.tmp 2>&1)
   
       if [ $? = 0 ]; then
         success=`expr $success + 1`

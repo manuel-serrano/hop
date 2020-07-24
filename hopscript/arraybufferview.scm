@@ -410,6 +410,48 @@
 			       (else
 				#f))))))))
 	  (js-raise-type-error %this "Object must be a TypedArray" this)))
+
+;*    (define (js-typedarray-tostring this::obj)                       */
+;*       (with-access::JsTypedArray this (vref buffer bpe byteoffset)  */
+;* 	 (with-access::JsArrayBuffer buffer (data)                     */
+;* 	    (let ((len (js-typedarray-lengthu32 this %this))           */
+;* 		  (vref (js-typedarray-ref this)))                     */
+;* 	       (if (=u32 len #u32:0)                                   */
+;* 		   ""                                                  */
+;* 		   (let ((data data))                                  */
+;* 		      (let loop ((i #u32:1)                            */
+;* 				 (s (js-string->jsstring               */
+;* 				       (number->string                 */
+;* 					  (vref data (uint32->fixnum (/u32 byteoffset bpe))))))) */
+;* 			 (if (=u32 i len)                              */
+;* 			     s                                         */
+;* 			     (let ((v (vref data (uint32->fixnum (+u32 (/u32 byteoffset bpe) i))))) */
+;* 				(loop (+u32 i #u32:1)                  */
+;* 				   (js-jsstring-append s               */
+;* 				      (js-jsstring-append (& ",")      */
+;* 					 (js-string->jsstring          */
+;* 					    (number->string v)))))))))))))) */
+   
+   (define (js-typedarray-tostring this::obj)
+      (with-access::JsTypedArray this (vref buffer bpe byteoffset)
+	 (with-access::JsArrayBuffer buffer (data)
+	    (let ((len (js-typedarray-lengthu32 this %this))
+		  (vref (js-typedarray-ref this)))
+	       (if (=u32 len #u32:0)
+		   ""
+		   (let ((data data))
+		      (let loop ((i #u32:1)
+				 (s (js-string->jsstring
+				       (number->string
+					  (vref data (uint32->fixnum (/u32 byteoffset bpe)))))))
+			 (if (=u32 i len)
+			     s
+			     (let ((v (vref data (uint32->fixnum (+u32 (/u32 byteoffset bpe) i)))))
+				(loop (+u32 i #u32:1)
+				   (js-jsstring-append s
+				      (js-jsstring-append (& ",")
+					 (js-string->jsstring
+					    (number->string v))))))))))))))
    
    (js-bind! %this proto (& "includes")
       :value (js-make-function %this js-typedarray-includes
@@ -419,19 +461,34 @@
       :writable #t
       :enumerable #f)
 
-   (let ((not-implemented (js-not-implemented %this)))
-      (for-each (lambda (id)
-		   (js-bind! %this proto (js-ascii-name->jsstring id)
-		      :value (js-make-function %this not-implemented
-				(js-function-arity 1 0)
-				(js-function-info :name id :len 1))
-		      :configurable #t
-		      :writable #t
-		      :enumerable #f))
-	 '("copyWithin" "entries" "every" "fill" "filter" "find" "findIndex"
-	   "forEach" "indexOf" "join" "keys" "reduce" "reduceRight" "reverse"
-	   "set" "slice" "some" "sort" "subarray" "toLocaleString" "toString"
-	   "values" "@@iterator"))))
+;*    (js-bind! %this proto (& "toString")                             */
+;*       :value (js-make-function %this js-typedarray-tostring         */
+;* 		(js-function-arity js-typedarray-tostring)             */
+;* 		(js-function-info :name "toString" :len 0))            */
+;*       :configurable #t                                              */
+;*       :writable #t                                                  */
+;*       :enumerable #f)                                               */
+;*                                                                     */
+;*    (js-bind! %this proto (& "toLocaleString")                       */
+;*       :value (js-make-function %this js-typedarray-tostring         */
+;* 		(js-function-arity js-typedarray-tostring)             */
+;* 		(js-function-info :name "toLocaleString" :len 0))      */
+;*       :configurable #t                                              */
+;*       :writable #t                                                  */
+;*       :enumerable #f)                                               */
+   
+   (for-each (lambda (id)
+		(js-bind! %this proto (js-ascii-name->jsstring id)
+		   :value (js-make-function %this (js-not-implemented id %this)
+			     (js-function-arity 1 0)
+			     (js-function-info :name id :len 1))
+		   :configurable #t
+		   :writable #t
+		   :enumerable #f))
+      '("copyWithin" "entries" "every" "fill" "filter" "find" "findIndex"
+	"forEach" "indexOf" "join" "keys" "reduce" "reduceRight" "reverse"
+	"set" "slice" "some" "sort" "subarray"
+	"values" "@@iterator")))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-typedarray! ...                                          */
@@ -734,11 +791,11 @@
 		     (uint32->fixnum beg) (uint32->fixnum len))))))
       
       (js-bind! %this js-typedarray (& "from")
-	 :configurable #f :enumerable #f :value (js-not-implemented %this)
+	 :configurable #f :enumerable #f :value (js-not-implemented "from" %this)
 	 :hidden-class #t)
       
       (js-bind! %this js-typedarray (& "of")
-	 :configurable #f :enumerable #f :value (js-not-implemented %this)
+	 :configurable #f :enumerable #f :value (js-not-implemented "of" %this)
 	 :hidden-class #t)
       
       ;; bind the Typedarray in the global object
@@ -1484,9 +1541,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-not-implemented ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-not-implemented %this)
+(define (js-not-implemented id %this)
    (lambda (js-not-implemented this::obj)
-      (js-raise-type-error %this "Not implemented" this)))
+      (js-raise-type-error %this (format "Not implemented (~a)" id) this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

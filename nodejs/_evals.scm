@@ -44,7 +44,9 @@
 ;*    http://nodejs.org/api/vm.html                                    */
 ;*---------------------------------------------------------------------*/
 (define (process-evals %worker %this)
-   
+
+   (define _ (set! __js_strings (&init!)))
+
    (define (%createContext this obj)
       (let ((this (js-new-global-object)))
 	 (when (js-object? obj)
@@ -82,7 +84,7 @@
    
    (define createContext
       (js-make-function %this %createContext
-	 (js-function-arity 1 0)
+	 (js-function-arity %createContext)
 	 (js-function-info :name "createContext" :len 1)))
    
    (define runInContext
@@ -145,7 +147,7 @@
 		  (lambda (ip)
 		     (input-port-name-set! ip filename)
 		     (%js-eval ip 'eval %this this %this)))))
-	 (js-function-arity 1 0)
+	 (js-function-arity 0 0)
 	 (js-function-info :name "runInThisContext" :len 1)))
 
    (define runInThisContextVM
@@ -155,8 +157,8 @@
 	       (lambda (ip)
 		  (input-port-name-set! ip (js-tostring filename %this))
 		  (%js-eval ip 'eval %this this %this))))
-	 (js-function-arity 3 0)
-	 (js-function-info :name "runInThisContext" :len 3)))
+	 (js-function-arity 2 0)
+	 (js-function-info :name "runInThisContext" :len 2)))
 
    (define nodescript-proto
       (with-access::JsGlobalObject %this (js-object)
@@ -174,9 +176,8 @@
 	 (filename (js-tostring filename %this))
 	 (__proto__ nodescript-proto)))
 
-   (set! __js_strings (&init!))
    (let ((obj (js-make-function %this NodeScript
-		 (js-function-arity 3 0)
+		 (js-function-arity NodeScript)
 		 (js-function-info :name "NodeScript" :len 3)
 		 :alloc (lambda (%this o) #unspecified)
 		 :prototype nodescript-proto)))
