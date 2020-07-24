@@ -205,9 +205,7 @@
 			     (js-function-info :name "removeAllListeners" :len 1))))
 	       (js-put! %process (& "removeAllListeners") remall #f %this)))
 	 ;; stdios
-	 (let* (;; (oldstdout (js-get %process 'stdout %this))
-		;; (oldstderr (js-get %process 'stderr %this))
-		(m (nodejs-require-core "node_stdio" %worker %this))
+	 (let* ((m (nodejs-require-core "node_stdio" %worker %this))
 		(stdio (js-get m (& "initNodeStdio") %this)))
 	    (js-call1 %this stdio (js-undefined) %process))
 	 ;; console finalization
