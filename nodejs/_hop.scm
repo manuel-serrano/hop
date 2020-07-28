@@ -87,16 +87,14 @@
       (define js-webservice
 	 (js-make-function %this
 	    (lambda (this url args)
-	       (js-new %this js-webservice url args))
+	       (js-make-urlframe %this
+		  js-urlframe-prototype
+		  url args))
 	    (js-function-arity 2 0)
 	    (js-function-info :name "webService" :len 2)
 	    :__proto__ js-function-prototype
 	    :prototype js-urlframe-prototype
-	    :alloc js-no-alloc
-	    :construct (lambda (this url args)
-			  (js-make-urlframe %this
-			     js-urlframe-prototype
-			     url args))))
+	    :alloc js-no-alloc))
 
       (define server-prototype
 	 (instantiateJsObject
@@ -106,26 +104,24 @@
       (define js-server
 	 (js-make-function %this
 	    (lambda (this host port auth ssl)
-	       (js-new %this host port auth))
+	       (instantiateJsServer
+		  (__proto__ server-prototype)
+		  (data '())
+		  (obj (instantiate::server
+			  (ssl (js-toboolean ssl))
+			  (host (if (eq? host (js-undefined))
+				    "localhost"
+				    (js-tostring host %this)))
+			  (port (if (eq? port (js-undefined))
+				    (hop-default-port)
+				    (js-tointeger port %this)))
+			  (authorization (when (js-totest auth)
+					    (js-tostring auth %this)))))))
 	    (js-function-arity 4 0)
 	    (js-function-info :name "Server" :len 4)
 	    :__proto__ js-function-prototype
 	    :prototype server-prototype
-	    :alloc js-no-alloc
-	    :construct (lambda (this host port auth ssl)
-			  (instantiateJsServer
-			     (__proto__ server-prototype)
-			     (data '())
-			     (obj (instantiate::server
-				     (ssl (js-toboolean ssl))
-				     (host (if (eq? host (js-undefined))
-					       "localhost"
-					       (js-tostring host %this)))
-				     (port (if (eq? port (js-undefined))
-					       (hop-default-port)
-					       (js-tointeger port %this)))
-				     (authorization (when (js-totest auth)
-						       (js-tostring auth %this)))))))))
+	    :alloc js-no-alloc))
 
       (define compiler-driver-alist '())
       

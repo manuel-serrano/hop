@@ -611,7 +611,8 @@
 	      `(js-get/debug ,obj ,prop %this ',loc)
 	      `(js-get/debug ,obj ,(box prop typrop ctx) %this ',loc)))
 	 ((equal? propstr "__proto__")
-	  `(js-getprototypeof ,obj %this "j2scheme"))
+	  `(js-getprototypeof ,obj %this
+	      ,(format "~a:~a" (cadr loc) (caddr loc))))
 	 ((eq? tyobj 'array)
 	  (js-array-get obj prop typrop))
 	 ((eq? tyobj 'string)

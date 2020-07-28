@@ -202,9 +202,13 @@
       #f %this)
 
    ;; pipe
-   (define (pipe . val)
-      (with-access::JsGlobalObject %this (js-object)
-	 (let* ((hdl (nodejs-new-pipe %worker (and (pair? val) (car val))))
+   (define (pipe this #!optional val)
+      (with-access::JsGlobalObject %this (js-object js-new-target)
+	 (if (eq? js-new-target (js-undefined))
+	     (js-raise-type-error %this
+		"Pipe can only be used as a constructor" this)
+	     (set! js-new-target (js-undefined)))
+	 (let* ((hdl (nodejs-new-pipe %worker val))
 		(obj (instantiateJsHandle
 			(handle hdl)
 			(__proto__ pipe-prototype)
@@ -230,11 +234,10 @@
 	    (set! js-pipe
 	       (js-make-function %this
 		  (lambda (this . args) #unspecified)
-		  (js-function-arity 1 0)
+		  (js-function-arity 0 1 'optional)
 		  (js-function-info :name "Pipe" :len 1)
-		  :construct pipe
 		  :prototype pipe-prototype
-		  :alloc (lambda (%this o) #unspecified)))
+		  :alloc js-no-alloc/new-target))
 	    (js-put! obj (& "Pipe") js-pipe #t %this)
 	    obj))))
 ;*---------------------------------------------------------------------*/

@@ -467,9 +467,16 @@
 (define (js-debug-cmap cmap #!optional (msg ""))
    (with-access::JsConstructMap cmap (%id props methods transitions inline sibling vlen)
       (fprint (current-error-port) "~~ " msg (typeof cmap)
-	 " cmap.%id=" %id
+	 " %id=" %id
 	 " inline=" inline
-	 " sibling=" (typeof sibling)
+	 " sibling=" (cond
+			((boolean? sibling)
+			 sibling)
+			((isa? sibling JsConstructMap)
+			 (with-access::JsConstructMap sibling (%id)
+			    %id))
+			(else
+			 (typeof sibling)))
 	 " prop.vlen=" (vector-length props)
 	 " met.vlen=" (vector-length methods)
 	 " vtable.len=" vlen
@@ -809,7 +816,7 @@
 
    (define (next-noinline! pcache omap)
       (with-access::JsPropertyCache pcache (imap cmap emap pmap nmap amap index owner)
-	 (with-access::JsConstructMap omap (sibling)
+	 (with-access::JsConstructMap nextmap (sibling)
 	    (if sibling
 		(set! imap sibling)
 		(set! imap #t)))
@@ -919,6 +926,7 @@
    (with-access::JsConstructMap cmap (sibling inline)
       (unless sibling
 	 (let ((ncmap (duplicate::JsConstructMap cmap
+			 (%id (gencmapid))
 			 (inline inl)
 			 (sibling cmap)
 			 (lock (make-spinlock "JsConstructMap")))))

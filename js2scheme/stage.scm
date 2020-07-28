@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
 ;*    Last change :  Wed Sep 11 11:23:29 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
 ;*=====================================================================*/
@@ -156,6 +156,6 @@
 	  (let ((stage (hop-load path)))
 	     (if (isa? stage J2SStage)
 		 (stage-exec stage ast tmp count args)
-		 (error "j2scheme" "Illegal plugin file" path))))
+		 (error "js2scheme" "Illegal plugin file" path))))
 	 (else
-	  (error "j2sscheme" "Illegal plugin file" path)))))
+	  (error "js2scheme" "Illegal plugin file" path)))))
