@@ -858,7 +858,8 @@
       (with-access::J2SSvc this (init register name)
 	 (let ((proc (service-proc->scheme this args)))
 	    `(let ((@worker (js-current-worker)))
-		(js-make-service %this ,tmp ',scmid ,register #f ,arity @worker
+		(js-make-service %this ,tmp ,(symbol->string scmid)
+		   ,register #f ,arity @worker
 		   (instantiate::hop-service
 		      (ctx %this)
 		      (proc ,proc)
@@ -910,6 +911,14 @@
 		       ,(when (symbol? path) (symbol->string path))
 		       ',loc
 		       ,register ,import (js-current-worker))))
+	       ((?- . ?-)
+		(let ((tmp (gensym)))
+		   `(let ((,tmp ,lam))
+		       (js-create-service %this
+			  ,(j2sfun->scheme this tmp #f mode return ctx)
+			  ,(when (symbol? path) (symbol->string path))
+			  ',loc
+			  ,register ,import (js-current-worker)))))
 	       (else
 		`(js-create-service %this
 		   ,(j2sfun->scheme this lam #f mode return ctx)

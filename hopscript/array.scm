@@ -2986,7 +2986,7 @@
       (when (js-jsstring? p) (js-profile-log-put p #f))
       (if (not (js-can-put o q %this))
 	  ;; 1
-	  (if throw
+	  (if throw 
 	      (js-raise-type-error %this
 		 (if (js-object-mode-extensible? o)
 		     "Can't add property ~a"

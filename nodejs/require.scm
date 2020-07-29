@@ -2419,21 +2419,18 @@
 		(format "Cannot load worker module ~a" filename)
 		filename))))
 
-   (define (%js-worker %this)
-      (with-access::JsGlobalObject %this (js-worker)
-	 (lambda (this proc)
-	    (js-new %this js-worker proc))))
-   
+   (define %js-worker
+      (js-worker-construct %this loader))
+
    (define js-worker
       (with-access::JsGlobalObject %this (js-function-prototype
 					    js-worker-prototype)
-	 (js-make-function %this (%js-worker %this)
-	    (js-function-arity 2 0)
-	    (js-function-info :name "JsWorker" :len 2)
+	 (js-make-function %this %js-worker
+	    (js-function-arity %js-worker)
+	    (js-function-info :name "JsWorker" :len 1)
 	    :__proto__ js-function-prototype
 	    :prototype js-worker-prototype
-	    :alloc js-no-alloc
-	    :construct (js-worker-construct %this loader))))
+	    :alloc js-no-alloc)))
 
    (js-bind! %this scope (& "Worker") :value js-worker
       :configurable #f :enumerable #f)

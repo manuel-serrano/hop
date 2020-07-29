@@ -95,10 +95,9 @@
    (with-access::JsGlobalObject %this (js-worker js-worker-prototype
 					 js-function)
       
-      (define (%js-worker %this)
-	 (with-access::JsGlobalObject %this (js-worker)
-	    (lambda (this proc)
-	       (js-new %this js-worker proc))))
+      ;; create the builder
+      (define %js-worker
+	 (js-worker-construct %this (js-worker-load)))
       
       ;; local constant strings
       (unless (vector? __js_strings) (set! __js_strings (&init!)))
@@ -107,16 +106,15 @@
       (set! js-worker-prototype
 	 (instantiateJsWorker
 	    (__proto__ (js-object-proto %this))))
-      
+
       ;; then, Create a HopScript worker object constructor
       (set! js-worker
-	 (js-make-function %this (%js-worker %this)
+	 (js-make-function %this %js-worker
 	    (js-function-arity 1 0)
 	    (js-function-info :name "Worker" :len 2)
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-worker-prototype
-	    :alloc js-no-alloc
-	    :construct (js-worker-construct %this (js-worker-load))))
+	    :alloc js-no-alloc))
       
       ;; prototype properties
       (init-builtin-worker-prototype! %this js-worker js-worker-prototype)
@@ -356,8 +354,8 @@
 		(lambda (this::JsWorker)
 		   (with-access::JsWorker this (thread)
 		      (js-worker-terminate! thread #f)))
-		(js-function-arity 1 0)
-		(js-function-info :name "terminate" :len 1))
+		(js-function-arity 0 0)
+		(js-function-info :name "terminate" :len 0))
       :writable #f
       :enumerable #t
       :configurable #f

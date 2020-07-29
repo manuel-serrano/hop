@@ -37,7 +37,7 @@
    (export (js-init-service! ::JsGlobalObject)
 	   (js-make-hopframe ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-create-service::JsService ::JsGlobalObject ::obj ::obj ::obj ::bool ::bool ::WorkerHopThread)
-	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::bool ::int ::obj ::obj)))
+	   (js-make-service::JsService ::JsGlobalObject ::procedure ::bstring ::bool ::bool ::int ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -73,7 +73,7 @@
 			    (path path)
 			    (resource (vector-ref o 1)))))))
 	 (js-make-service ctx svcp
-	    (js-string->jsstring (basename path))
+	    (basename path)
 	    #f #f -1 (js-current-worker)
 	    hopsvc))))
 
@@ -436,32 +436,31 @@
 		      (js-function-arity 1 0)
 		      (js-function-info :name "setOptions" :len 1))
 	    :hidden-class #t)
+
+	 (define (%js-service this proc path)
+	    (js-create-service %this proc
+	       (unless (eq? path (js-undefined))
+		  (js-tostring path %this))
+	       #f #t #f (js-current-worker)))
+
+	 (define (%js-hopframe this path args)
+	    (js-make-hopframe %this this path args))
 	 
 	 (letrec ((js-service (js-make-function %this
-				 (lambda (this proc path)
-				    (js-new %this js-service proc path))
-				 (js-function-arity 2 0)
+				 %js-service
+				 (js-function-arity %js-service)
 				 (js-function-info :name "Service" :len 2)
 				 :__proto__ js-function-prototype
 				 :prototype js-service-prototype
 				 :size 5
-				 :alloc js-no-alloc
-				 :construct (lambda (this proc path)
-					       (js-create-service %this proc
-						  (unless (eq? path (js-undefined))
-						     (js-tostring path %this))
-						  #f #t #f (js-current-worker)))))
+				 :alloc js-no-alloc))
 		  (js-hopframe (js-make-function %this
-				  (lambda (this url args)
-				     (js-new %this js-hopframe url args))
-				  (js-function-arity 2 0)
+				  %js-hopframe
+				  (js-function-arity %js-hopframe)
 				  (js-function-info :name "HopFrame" :len 1)
 				  :__proto__ js-function-prototype
 				  :prototype js-hopframe-prototype
-				  :alloc js-no-alloc
-				  :construct (lambda (this path args)
-						(js-make-hopframe %this 
-						   this path args)))))
+				  :alloc js-no-alloc)))
 	    (js-bind! %this %this (& "Service")
 	       :configurable #f :enumerable #f :value js-service
 	       :hidden-class #t)
@@ -924,7 +923,8 @@
 			    (with-access::JsService svcjs (svc)
 			       (with-access::hop-service svc (path)
 				  (js-make-hopframe %this this path args)))))
-		   (svcjs (js-make-service %this svcp id register import
+		   (svcjs (js-make-service %this svcp (symbol->string! id)
+			     register import
 			     -1 worker
 			     (instantiate::hop-service
 				(ctx %this)
@@ -1068,7 +1068,7 @@
       (instantiateJsService
 	 (procedure proc)
 	 (method proc)
-	 (info (js-function-info :name (symbol->string! name) :len arity))
+	 (info (js-function-info :name name :len arity))
 	 (arity arity)
 	 (worker worker)
 	 (prototype (js-object-proto %this))

@@ -398,25 +398,21 @@
       ;; two constructors
       (define js-websocket
 	 (js-make-function %this
-	    (lambda (this url options)
-	       (js-new %this js-websocket url options))
-	    (js-function-arity 2 0)
+	    js-websocket-construct
+	    (js-function-arity js-websocket-construct)
 	    (js-function-info :name "WebSocket" :len 2)
 	    :__proto__ (js-object-proto js-function)
 	    :size 4
 	    :alloc js-no-alloc
-	    :construct js-websocket-construct
 	    :shared-cmap #f))
       
       (define js-websocket-server
 	 (js-make-function %this
-	    (lambda (this path)
-	       (js-new %this js-websocket-server path))
-	    (js-function-arity 1 0)
+	    js-websocket-server-construct
+	    (js-function-arity js-websocket-server-construct)
 	    (js-function-info :name "WebSocketServer" :len 1)
 	    :__proto__ (js-object-proto js-function)
 	    :alloc js-no-alloc
-	    :construct js-websocket-server-construct
 	    :shared-cmap #f))
       
       (js-bind! %this %this (& "WebSocket")
