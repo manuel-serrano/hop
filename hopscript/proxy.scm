@@ -136,6 +136,8 @@
    (with-access::JsGlobalObject %this (js-function-prototype js-proxy js-proxy-pcache)
 
       (define (js-proxy-alloc %this constructor::JsFunction)
+	 (with-access::JsGlobalObject %this (js-new-target)
+	    (set! js-new-target constructor))
 	 ;; not used in optimized code, see below
 	 ;; js-new-proxy and js-new-proxy/caches
 	 (js-new-proxy %this '() (class-nil JsObject)))
@@ -172,7 +174,26 @@
 
       ;; create a HopScript object
       (define (%js-proxy this t h)
-	 (js-raise-type-error %this "Constructor Proxy requires 'new'" this))
+	 (with-access::JsGlobalObject %this (js-new-target)
+	    (cond
+	       ((eq? js-new-target (js-undefined))
+		(js-raise-type-error %this "Constructor Proxy requires 'new'" this))
+	       ((not (js-object? h))
+		(js-raise-type-error %this
+		   "Cannot create proxy with a non-object as handler" this))
+	       ((not (js-object? t))
+		(js-raise-type-error %this
+		   "Cannot create proxy with a non-object as target" this))
+	       (else
+		(with-access::JsProxy this (handler id)
+		   (js-proxy-target-set! this t)
+		   (when (js-procedure? t)
+		      ;; mark proxy targetting function to enable
+		      ;; fast js-proxy-function? predicate (see types.scm)
+		      (js-proxy-mode-function-set! this #t))
+		   (set! handler h))))
+	    (set! js-new-target (js-undefined))
+	    this))
 
       ;; create a revokable proxy
       (define (%js-revocable this t h)
@@ -188,8 +209,7 @@
 	    :__proto__ js-function-prototype
 	    :prototype '()
 	    :alloc js-proxy-alloc
-	    :size 1
-	    :construct js-proxy-construct))
+	    :size 1))
 
       (set! js-proxy-pcache
 	 ((@ js-make-pcache-table __hopscript_property) 3 "proxy"))

@@ -150,10 +150,7 @@
 	       (js-function-info :name "RegExp" :len 2)
 	       :__proto__ (js-object-proto js-function)
 	       :prototype js-regexp-prototype
-	       :alloc js-no-alloc
-;* 	       :construct (lambda (_ pattern uflags loc)               */
-;* 			     (js-regexp-construct %this pattern uflags loc)) */
-	    )))
+	       :alloc js-no-alloc)))
       (init-builtin-regexp-prototype! %this js-regexp js-regexp-prototype)
       
       ;; bind Regexp in the global object
