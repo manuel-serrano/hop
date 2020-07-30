@@ -122,17 +122,9 @@
 	    (val 0)
 	    (__proto__ (js-object-proto %this))))
       
-      (define (js-number-construct this . args)
-	 (with-access::JsGlobalObject %this (js-new-target)
-	    (set! js-new-target (js-undefined)))
-	 (when (pair? args)
-	    (with-access::JsNumber this (val)
-	       (set! val (js-tonumber (car args) %this))))
-	 this)
-      
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.1
       (define (%js-number this #!optional (arg 0))
-	 (let ((num (if (eq? arg 0) arg (js-tonumber arg %this))))
+	 (let ((num (if (number? arg) arg (js-tonumber arg %this))))
 	    (with-access::JsGlobalObject %this (js-new-target)
 	       (if (eq? js-new-target (js-undefined))
 		   num
@@ -158,7 +150,6 @@
 	    (js-function-info :name "Number" :len 1)
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-number-prototype
-	    :construct js-number-construct
 	    :size 8
 	    :alloc js-number-alloc
 	    :shared-cmap #f))

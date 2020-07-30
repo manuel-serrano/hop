@@ -552,7 +552,7 @@
       ;; Object.constructor
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.2.1
       (define (%js-object _ value)
-	 (with-access::JsGlobalObject %this (js-string js-boolean js-number js-object)
+	 (with-access::JsGlobalObject %this (js-string js-boolean js-number js-object js-symbol)
 	    (cond
 	       ((or (eq? value (js-null)) (eq? value (js-undefined)))
 		;; 2
@@ -571,7 +571,7 @@
 		;; 1.c
 		(js-new %this js-number value))
 	       (else
-		(js-raise-type-error %this "illegal value ~s" value)))))
+		(js-toobject %this value)))))
 
       (let ((js-function-prototype (js-object-proto js-function)))
 	 (set! js-object

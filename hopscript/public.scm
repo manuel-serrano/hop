@@ -245,21 +245,6 @@
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
 
-(define-expander check-js-new-target
-   (lambda (x e)
-      (match-case x
-	 ((?- ?%this ?v)
-	  (let ((tmp (gensym 'tmp)))
-	     (e `(let ((,tmp ,v))
-		    (with-access::JsGlobalObject %this (js-new-target)
-		       (unless (eq? js-new-target (js-undefined))
-			  (error "check-js-new-target" "bad target"
-			     ',(if (epair? x) (cer x) x)))
-		       ,tmp))
-		e)))
-	 (else
-	  (error "check-js-new-target" "bad form" x)))))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-init-public! ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -1284,14 +1269,13 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.2.2       */
 ;*---------------------------------------------------------------------*/
 (define (js-new %this f . args)
-   (check-js-new-target %this
-      (cond
-	 ((js-function? f)
-	  (js-new/function %this f args))
-	 ((js-proxy? f)
-	  (js-new/proxy %this f args))
-	 (else
-	  (js-raise-type-error %this "new: constructor is not a function ~s" f)))))
+   (cond
+      ((js-function? f)
+       (js-new/function %this f args))
+      ((js-proxy? f)
+       (js-new/proxy %this f args))
+      (else
+       (js-raise-type-error %this "new: constructor is not a function ~s" f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new/debug ...                                                 */
@@ -1299,14 +1283,13 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.2.2       */
 ;*---------------------------------------------------------------------*/
 (define (js-new/debug %this loc f . args)
-   (check-js-new-target %this
-      (cond
-	 ((js-function? f)
-	  (js-new/function %this f args))
-	 ((js-proxy? f)
-	  (js-new/proxy %this f args))
-	 (else
-	  (js-raise-type-error/loc %this loc "new: constructor is not a function ~s" f)))))
+   (cond
+      ((js-function? f)
+       (js-new/function %this f args))
+      ((js-proxy? f)
+       (js-new/proxy %this f args))
+      (else
+       (js-raise-type-error/loc %this loc "new: constructor is not a function ~s" f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc ...                                              */
@@ -1429,17 +1412,16 @@
 ;*    js-newXXX ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-macro (gen-new %this ctor . args)
-   `(check-js-new-target %this
-       (cond
-	  ((js-function? ,ctor)
-	   (with-access::JsFunction ,ctor (construct alloc info arity)
-	      (let ((o (alloc %this ,ctor)))
-		 (let ((r (gen-calln ,ctor construct o ,@args)))
-		    (js-new-return ,ctor r o)))))
-	  ((js-proxy? ,ctor)
-	   (js-new/proxy ,%this ,ctor (list ,@args)))
-	  (else
-	   (js-raise-type-error ,%this "new: object is not a function ~s" ,ctor)))))
+   `(cond
+       ((js-function? ,ctor)
+	(with-access::JsFunction ,ctor (construct alloc info arity)
+	   (let ((o (alloc %this ,ctor)))
+	      (let ((r (gen-calln ,ctor construct o ,@args)))
+		 (js-new-return ,ctor r o)))))
+       ((js-proxy? ,ctor)
+	(js-new/proxy ,%this ,ctor (list ,@args)))
+       (else
+	(js-raise-type-error ,%this "new: object is not a function ~s" ,ctor))))
 
 (define (js-new0 %this ctor)
    (gen-new %this ctor))
