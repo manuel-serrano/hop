@@ -73,12 +73,16 @@
 
    (with-access::JsGlobalObject %this (js-function-prototype)
       
-      (define (%js-set this . args)
+      (define (%js-set this #!optional (iterable #\F))
 	 (with-access::JsGlobalObject %this (js-new-target)
-	    (when (eq? js-new-target (js-undefined))
-	       (js-raise-type-error %this
-		  (format "Constructor ~a requires 'new'" name) this))
-	    (set! js-new-target (js-undefined))))
+	    (if (eq? js-new-target (js-undefined))
+		(js-raise-type-error %this
+		   (format "Constructor ~a requires 'new'" name) this)
+		(begin
+		   (set! js-new-target (js-undefined))
+		   (unless (eq? iterable #\F)
+		      (js-set-construct %this this iterable))
+		   this))))
       
       (define (js-set-alloc %this constructor::JsFunction)
 	 (with-access::JsGlobalObject %this (js-new-target)
@@ -99,18 +103,12 @@
       
       (define js-set
 	 (js-make-function %this %js-set
-	    (js-function-arity 0 -1 'scheme)
+	    (js-function-arity %js-set)
 	    (js-function-info :name name :len 0)
 	    :__proto__ js-function-prototype
 	    :prototype js-set-prototype
 	    :size 0
-	    :alloc js-set-alloc
-	    :construct (lambda (this . iterable)
-			  (with-access::JsGlobalObject %this (js-new-target)
-			     (set! js-new-target (js-undefined)))
-			  (if (pair? iterable)
-			      (js-set-construct %this this (car iterable))
-			      this))))
+	    :alloc js-set-alloc))
       
       ;; init the prototype properties
       (init-prototype! %this js-set js-set-prototype)

@@ -135,37 +135,37 @@
 	    (val (js-ascii->jsstring ""))
 	    (__proto__ (js-object-proto %this))))
       
-      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5
-      (define (js-string-construct o::JsString . arg)
-	 
-	 (define (set-ascii-string! str)
-	    (let ((len (instantiate::JsValueDescriptor
-			  (name (& "length"))
-			  (writable #f)
-			  (configurable #f)
-			  (enumerable #f)
-			  (value (string-length str)))))
-	       (with-access::JsString o (val elements)
-		  (set! val (js-ascii->jsstring str))
-		  (set! elements (vector len)))))
-	 
-	 (with-access::JsGlobalObject %this (js-new-target)
-	    (set! js-new-target (js-undefined)))
-
-	 (if (null? arg)
-	     ;; 2
-	     (set-ascii-string! "")
-	     (let ((value (car arg)))
-		(cond
-		   ((string? value)
-		    (set-ascii-string! value))
-		   ((js-jsstring? value)
-		    (js-set-string! %this o value))
-		   ((js-object? value)
-		    (js-set-string! %this o (js-cast-string %this value)))
-		   (else
-		    (let ((str (js-tojsstring value %this)))
-		       (js-set-string! %this o str)))))))
+;*       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5   */
+;*       (define (js-string-construct o::JsString . arg)               */
+;* 	                                                               */
+;* 	 (define (set-ascii-string! str)                               */
+;* 	    (let ((len (instantiate::JsValueDescriptor                 */
+;* 			  (name (& "length"))                          */
+;* 			  (writable #f)                                */
+;* 			  (configurable #f)                            */
+;* 			  (enumerable #f)                              */
+;* 			  (value (string-length str)))))               */
+;* 	       (with-access::JsString o (val elements)                 */
+;* 		  (set! val (js-ascii->jsstring str))                  */
+;* 		  (set! elements (vector len)))))                      */
+;* 	                                                               */
+;* 	 (with-access::JsGlobalObject %this (js-new-target)            */
+;* 	    (set! js-new-target (js-undefined)))                       */
+;*                                                                     */
+;* 	 (if (null? arg)                                               */
+;* 	     ;; 2                                                      */
+;* 	     (set-ascii-string! "")                                    */
+;* 	     (let ((value (car arg)))                                  */
+;* 		(cond                                                  */
+;* 		   ((string? value)                                    */
+;* 		    (set-ascii-string! value))                         */
+;* 		   ((js-jsstring? value)                               */
+;* 		    (js-set-string! %this o value))                    */
+;* 		   ((js-object? value)                                 */
+;* 		    (js-set-string! %this o (js-cast-string %this value))) */
+;* 		   (else                                               */
+;* 		    (let ((str (js-tojsstring value %this)))           */
+;* 		       (js-set-string! %this o str)))))))              */
       
       ;; then, create a HopScript object
       (set! js-string
@@ -176,7 +176,6 @@
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-string-prototype
 	    :size 17
-	    :construct js-string-construct
 	    :alloc js-string-alloc))
       
       ;; fromCharCode
@@ -337,12 +336,18 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-string ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5         */
 ;*---------------------------------------------------------------------*/
 (define (%js-string %this)
-   (lambda (this #!optional (arg #\F))
-      (let ((str (if (eq? arg #\F)
-		     (js-ascii->jsstring "")
-		     (js-string->jsstring (js-tostring arg %this)))))
+   (lambda (this #!optional (arg (js-ascii->jsstring "")))
+      (let ((str (cond
+		    ((js-jsstring? arg)
+		     arg)
+		    ((js-object? arg)
+		     (js-cast-string %this arg))
+		    (else
+		     (js-tojsstring arg %this)))))
 	 (with-access::JsGlobalObject %this (js-new-target js-string)
 	    (if (eq? js-new-target (js-undefined))
 		str

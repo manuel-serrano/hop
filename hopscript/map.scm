@@ -73,12 +73,16 @@
    
    (with-access::JsGlobalObject %this (js-function-prototype)
       
-      (define (%js-map this . args)
+      (define (%js-map this #!optional (iterable #\F))
 	 (with-access::JsGlobalObject %this (js-new-target)
-	    (when (eq? js-new-target (js-undefined))
-	       (js-raise-type-error %this
-		  (format "Constructor ~a requires 'new'" name) this))
-	    (set! js-new-target (js-undefined))))
+	    (if (eq? js-new-target (js-undefined))
+		(js-raise-type-error %this
+		   (format "Constructor ~a requires 'new'" name) this)
+		(begin
+		   (set! js-new-target (js-undefined))
+		   (unless (eq? iterable #\F)
+		      (js-map-construct %this this iterable))
+		   this))))
       
       (define (js-map-alloc %this constructor::JsFunction)
 	 (with-access::JsGlobalObject %this (js-new-target)
@@ -104,13 +108,7 @@
 	    :__proto__ js-function-prototype
 	    :prototype js-map-prototype
 	    :size 0
-	    :alloc js-map-alloc
-	    :construct (lambda (this . iterable)
-			  (with-access::JsGlobalObject %this (js-new-target)
-			     (set! js-new-target (js-undefined)))
-			  (if (pair? iterable)
-			      (js-map-construct %this this (car iterable))
-			      this))))
+	    :alloc js-map-alloc))
       
       ;; init the prototype properties
       (init-prototype! %this js-map js-map-prototype)
