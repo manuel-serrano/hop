@@ -533,9 +533,7 @@
 			    (string->xml-tilde body))
 			 (js-function-arity 1 0)
 			 (js-function-info :name "Tilde" :len 1)
-			 :__proto__ js-function-prototype
-			 :construct (lambda (this body)
-				       (string->xml-tilde body)))
+			 :__proto__ js-function-prototype)
 	       :enumerable #f :writable #f :configurable #f :hidden-class #f)
 
 	    ;; return the newly created object
@@ -551,21 +549,14 @@
 
       (define %proto (js-object-proto %this))
       
-      ;; Object.prototype
-      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.1
-      (define (%js-object this value)
-	 (if (or (null? value) (eq? value (js-undefined)))
-	     (js-new %this js-object (js-undefined))
-	     (js-toobject %this value)))
-
       ;; Object.constructor
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.2.1
-      (define (js-object-constructor %this f value)
-	 (with-access::JsGlobalObject %this (js-string js-boolean js-number)
+      (define (%js-object _ value)
+	 (with-access::JsGlobalObject %this (js-string js-boolean js-number js-object)
 	    (cond
 	       ((or (eq? value (js-null)) (eq? value (js-undefined)))
 		;; 2
-		(with-access::JsFunction f (constrmap constrsize)
+		(with-access::JsFunction js-object (constrmap constrsize)
 		   (js-make-jsobject constrsize constrmap %proto)))
 	       ((js-object? value)
 		;; 1.a
@@ -582,11 +573,6 @@
 	       (else
 		(js-raise-type-error %this "illegal value ~s" value)))))
 
-      (define (js-object-construct f . arg)
-	 (with-access::JsGlobalObject %this (js-object)
-	    (js-object-constructor %this js-object
-	       (if (pair? arg) (car arg) (js-undefined)))))
-      
       (let ((js-function-prototype (js-object-proto js-function)))
 	 (set! js-object
 	    (js-function-set-constrmap!
@@ -598,7 +584,6 @@
 		  :prototype %proto
 		  :alloc js-no-alloc
 		  :size 21
-		  :construct js-object-construct
 		  :shared-cmap #f))))
 
       ;; getPrototypeOf

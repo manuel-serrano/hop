@@ -231,7 +231,6 @@
 	    (js-function-info :name "Promise" :len 1)
 	    :__proto__ js-function-prototype
 	    :prototype js-promise-prototype
-	    :construct js-promise-construct
 	    :size 7
 	    :alloc js-promise-alloc)))
 

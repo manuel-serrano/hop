@@ -497,7 +497,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-add! obj::JsObject idx::long value inc::long)
    (with-access::JsObject obj (elements cmap)
-      (let ((nlen (+fx inc (vector-length elements))))
+      (let ((nlen (maxfx (+fx inc (vector-length elements)) (+fx inc idx))))
 	 (let ((nels (copy-vector elements nlen)))
 	    (cond-expand (profile (profile-cache-extension nlen)))
 	    (vector-set! nels idx value)

@@ -236,7 +236,7 @@
 			      (iota len) args)
 			 ,@body))))
 	      (else
-	       (,proc ,vec))))
+	       `(js-call-with-stack-vector ,vec ,proc))))
 	  (else
 	   (error "js-call-with-stack-vector" "bad form"
 	      `(js-call-with-stack-vector ,vec ,proc)))))
