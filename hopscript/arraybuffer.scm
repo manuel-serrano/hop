@@ -160,31 +160,32 @@
 	    (elements ($create-vector 1))))
       
       (define (%js-arraybuffer this . items)
-	 (apply js-arraybuffer-construct 
-	    (js-arraybuffer-alloc %this js-arraybuffer)
-	    items))
+	 (with-access::JsGlobalObject %this (js-new-target)
+	    (if (eq? js-new-target (js-undefined))
+		(js-arraybuffer-construct
+		   (js-arraybuffer-alloc-sans-new-target %this js-arraybuffer)
+		   items)
+		(begin
+		   (set! js-new-target (js-undefined))
+		   (js-arraybuffer-construct this items)))))
       
-      (set! js-arraybuffer
-	 (js-make-function %this %js-arraybuffer
-	    (js-function-arity %js-arraybuffer)
-	    (js-function-info :name "ArrayBuffer" :len 1)
-	    :__proto__ (js-object-proto js-function)
-	    :prototype js-arraybuffer-prototype
-	    :alloc js-arraybuffer-alloc
-	    :construct (lambda (this . items)
-			  (apply js-arraybuffer-construct this items))))
-      
-      (define (js-arraybuffer-alloc %this constructor::JsFunction)
+      (define (js-arraybuffer-alloc-sans-new-target %this ctor::JsFunction)
 	 (instantiateJsArrayBuffer
 	    (cmap (js-not-a-cmap))
-	    (__proto__ (js-get constructor (& "prototype") %this))))
+	    (__proto__ (if (eq? ctor js-arraybuffer)
+			   js-arraybuffer-prototype
+			   (js-get ctor (& "prototype") %this)))))
       
-      (define (js-arraybuffer-construct this::JsArrayBuffer . items)
+      (define (js-arraybuffer-alloc %this constructor::JsFunction)
+	 (with-access::JsGlobalObject %this (js-new-target)
+	    (set! js-new-target constructor))
+	 (js-arraybuffer-alloc-sans-new-target %this constructor))
+      
+      (define (js-arraybuffer-construct this::JsArrayBuffer items)
 	 (with-access::JsArrayBuffer this (data)
 	    (when (pair? items)
 	       (let ((i (car items))
 		     (f 0))
-		  
 		  ;; data
 		  (cond
 		     ((u8vector? i)
@@ -224,7 +225,7 @@
 			   (set! b (min b l))
 			   (set! e (min e l))
 			   (let* ((l (max (min (- e b) l) 0))
-				  (new (%js-arraybuffer %this l)))
+				  (new (%js-arraybuffer (js-undefined) l)))
 			      (with-access::JsArrayBuffer new ((dst data))
 				 (let loop ((i 0))
 				    (when (<fx i l)
@@ -243,6 +244,14 @@
 		     :hidden-class #t)))
 	    
 	    this))
+      
+      (set! js-arraybuffer
+	 (js-make-function %this %js-arraybuffer
+	    (js-function-arity %js-arraybuffer)
+	    (js-function-info :name "ArrayBuffer" :len 1)
+	    :__proto__ (js-object-proto js-function)
+	    :prototype js-arraybuffer-prototype
+	    :alloc js-arraybuffer-alloc))
       
       ;; bind the ArrayBuffer in the global object
       (js-bind! %this %this (& "ArrayBuffer")

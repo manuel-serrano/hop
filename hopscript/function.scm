@@ -924,15 +924,20 @@
 		;; force creating the true prototype before binding
 		(js-function-setup-prototype! %this this)
 		(set! alloc js-object-alloc))
-	     (let* ((bproc (lambda (_ . actuals)
-			      (js-apply %this this
-				 thisarg (append args actuals))))
-		    (bctor (lambda (self . actuals)
-			      (js-apply %this this
-				 self (append args actuals))))
+	     (let* ((bproc (lambda (self . actuals)
+			      (with-access::JsGlobalObject %this (js-new-target)
+				 (if (eq? js-new-target (js-undefined))
+				     (js-apply %this this
+					thisarg (append args actuals))
+				     (begin
+					(set! js-new-target (js-undefined))
+					(js-apply %this this
+					   self (append args actuals)))))))
 		    (bproto (js-getprototypeof this %this "getPrototypeOf"))
 		    (balloc (lambda (%this ctor)
-			       (alloc %this this))))
+			       (with-access::JsGlobalObject %this (js-new-target)
+				  (set! js-new-target ctor)
+				  (alloc %this this)))))
 		(js-make-function %this bproc
 		   (js-function-arity 0 -1 'scheme)
 		   (js-function-info
@@ -944,8 +949,7 @@
 		   :__proto__ bproto
 		   :prototype 'bind
 		   :strict 'strict
-		   :alloc balloc
-		   :construct bctor)))))
+		   :alloc balloc)))))
 
    (js-bind! %this obj (& "bind")
       :value (js-make-function %this bind

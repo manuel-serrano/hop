@@ -117,11 +117,8 @@ console.log( "   fillkangaxa()"); assert.ok( fillkangaxa(), true );
 /*    includes                                                         */
 /*---------------------------------------------------------------------*/
 function includesa() {
-   console.log( [1, 2, 3].includes(1),
-      ![1, 2, 3].includes(4), 
-      ![1, 2, 3].includes(1, 1), 
-      [NaN].includes(NaN), 
-      Array(1).includes() );
+   console.log( Array( 1 ).includes() );
+   console.log( Array( 1 ).includes() );
    return [1, 2, 3].includes(1)
       && ![1, 2, 3].includes(4)
       && ![1, 2, 3].includes(1, 1)
@@ -174,12 +171,12 @@ function includesf() {
 }
 
 console.log( "include" );
-console.log( "   includesa" ); assert.ok( includesa(), "includesa" );
-console.log( "   includesb" ); assert.ok( includesb(), "includesb" );
-console.log( "   includesc" ); assert.ok( includesc(), "includesc" );
-console.log( "   includesd" ); assert.ok( includesd(), "includesd" );
-console.log( "   includese" ); assert.ok( includese(), "includese" );
-console.log( "   includesf" ); assert.ok( includesf(), "includesf" );
+console.log( "   includesa()" ); assert.ok( includesa(), "includesa" );
+console.log( "   includesb()" ); assert.ok( includesb(), "includesb" );
+console.log( "   includesc()" ); assert.ok( includesc(), "includesc" );
+console.log( "   includesd()" ); assert.ok( includesd(), "includesd" );
+console.log( "   includese()" ); assert.ok( includese(), "includese" );
+console.log( "   includesf()" ); assert.ok( includesf(), "includesf" );
 
 /*---------------------------------------------------------------------*/
 /*    iterator ...                                                     */

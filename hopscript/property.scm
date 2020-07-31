@@ -2056,10 +2056,10 @@
    
    (define (js-pcache-vtable! omap cache i)
       (with-access::JsPropertyCache cache (cntmiss vindex)
-         (when (=fx vindex (js-not-a-index))
-            (set! vindex (js-get-vindex %this)))
-         (js-cmap-vtable-add! omap vindex i cache)))
-   
+	 (when (=fx vindex (js-not-a-index))
+	    (set! vindex (js-get-vindex %this)))
+	 (js-cmap-vtable-add! omap vindex i cache)))
+
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 

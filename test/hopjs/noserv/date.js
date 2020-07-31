@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
 /*    Last change :  Mon Oct  7 08:44:23 2019 (serrano)                */
-/*    Copyright   :  2014-19 Manuel Serrano                            */
+/*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing Date                                                     */
 /*=====================================================================*/
@@ -383,3 +383,16 @@ checkDate( new Date('2014-11-03 19:23:22.478+01:00'), 2014, 10, 03, 19, 23, 22, 
 var utc = Date.UTC( 2014, 10, 3, 19, 23, 22, 478 );
 
 assert.ok( utc === 1415042602478, "Date.UTC" );
+
+/*---------------------------------------------------------------------*/
+/*    Date no constructor                                              */
+/*---------------------------------------------------------------------*/
+console.log( Date( 1332403882588 ) );
+assert.equal( Date( 1332403882588 ), new Date( 1332403882588 ).toString(), "f1" );
+assert.equal( Date( 2015, 9, 19, 12, 22, 44, 999 ), new Date( 2015, 9, 19, 12, 22, 44, 999 ).toString(), "f2" );
+assert.equal( Date( 2015, 9, 19, 12, 22, 44 ), new Date( 2015, 9, 19, 12, 22, 44 ).toString(), "f3" );
+assert.equal( Date( 2015, 9, 19, 12, 22 ), new Date( 2015, 9, 19, 12, 22 ).toString(), "f4" );
+assert.equal( Date( 2015, 9, 19, 12 ), new Date( 2015, 9, 19, 12 ).toString(), "f5" );
+assert.equal( Date( 2015, 9, 19 ), new Date( 2015, 9, 19 ).toString(), "f6" );
+assert.equal( Date( 2015, 9 ), new Date( 2015, 9 ).toString(), "f7" );
+assert.equal( Date( 2015 ), new Date( 2015 ).toString(), "f8" );

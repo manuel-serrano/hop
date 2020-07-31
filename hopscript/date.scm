@@ -132,8 +132,12 @@
 	    (__proto__ (js-object-proto %this))))
       
       (define (js-date-alloc %this constructor::JsFunction)
-	 (instantiateJsDate
-	    (__proto__ (js-get constructor (& "prototype") %this))))
+	 (with-access::JsGlobalObject %this (js-new-target js-date)
+	    (set! js-new-target constructor)
+	    (instantiateJsDate
+	       (__proto__ (if (eq? constructor js-date)
+			      js-date-prototype
+			      (js-get constructor (& "prototype") %this))))))
       
       (define (parse-date-arguments args)
 	 (match-case args
@@ -239,26 +243,21 @@
 	     (current-date))))
       
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9
-      (define (js-date-construct this::JsDate . args)
+      (define (%js-date this . args)
 	 
-	 (define (js-date->jsdate v)
+	 (define (set-date! this v)
 	    (with-access::JsDate this (val)
 	       (set! val v)
 	       this))
 	 
-	 (if (any (lambda (a) (eq? a (js-undefined))) args)
-	     (instantiateJsDate
-		(__proto__ js-date-prototype))
-	     (let ((d (parse-date-arguments args)))
-		(cond
-		   ((date? d) (js-date->jsdate d))
-		   ((string? d) (js-string->jsstring d))
-		   (else d)))))
-      
-      ;; create a HopScript object
-      (define (%js-date this . args)
-	 (let ((dt (js-date-construct (js-date-alloc %this js-date))))
-	    (date-prototype-tostring dt)))
+	 (with-access::JsGlobalObject %this (js-new-target)
+	    (let ((val (parse-date-arguments args)))
+	       (if (eq? js-new-target (js-undefined))
+		   (js-date->jsstring val)
+		   (begin
+		      (set-date! this val)
+		      (set! js-new-target (js-undefined))
+		      this)))))
       
       (set! js-date
 	 (js-make-function %this %js-date
@@ -267,7 +266,6 @@
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-date-prototype
 	    :alloc js-date-alloc
-	    :construct js-date-construct
 	    :size 3
 	    :shared-cmap #f))
       
@@ -1241,16 +1239,22 @@
    obj)
 
 ;*---------------------------------------------------------------------*/
+;*    js-date->jsstring ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-date->jsstring val)
+   (if (date? val)
+       (js-string->jsstring
+	  (date->rfc2822-date (seconds->date (date->seconds val))))
+       (js-string->jsstring "Invalid Date")))
+
+;*---------------------------------------------------------------------*/
 ;*    date-prototype-tostring ...                                      */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.2     */
 ;*---------------------------------------------------------------------*/
 (define (date-prototype-tostring this::JsDate)
    (with-access::JsDate this (val)
-      (if (date? val)
-	  (js-string->jsstring
-	     (date->rfc2822-date (seconds->date (date->seconds val))))
-	  (js-string->jsstring "Invalid Date"))))
+      (js-date->jsstring val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    date->milliseconds ...                                           */

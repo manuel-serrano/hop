@@ -487,9 +487,7 @@
 	       :__proto__ (js-object-proto js-function)
 	       :prototype js-array-prototype
 	       :size 17
-	       :alloc js-array-alloc-ctor
-	       :construct (lambda (this . is)
-			     (js-array-construct %this this is)))))
+	       :alloc js-array-alloc-ctor)))
       
       ;; other properties of the Array constructor
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.5.1
@@ -2115,7 +2113,6 @@
 	    (let loop ((i i))
 	       (cond
 		  ((>=u32 i ilen)
-		   (tprint "INC " (js-array-inlined? o))
 		   (if (js-array-inlined? o)
 		       #f
 		       (array-includes o len i)))
@@ -2327,7 +2324,9 @@
 	     (let ((arr (js-array-alloc %this)))
 		(js-array-construct %this arr items)
 		arr)
-	     (js-array-construct %this this items)))))
+	     (begin
+		(set! js-new-target (js-undefined))
+		(js-array-construct %this this items))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-new1 ...                                                */
@@ -2365,11 +2364,12 @@
 ;*    js-array-alloc-ctor ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-array-alloc-ctor::JsArray %this constructor::JsFunction)
-   (with-access::JsGlobalObject %this (js-array js-array-prototype js-array-pcache)
+   (with-access::JsGlobalObject %this (js-array js-array-prototype js-array-pcache js-new-target)
       (let ((proto (if (eq? constructor js-array)
 		       js-array-prototype
 		       (js-get-jsobject-name/cache constructor (& "prototype") #f %this
 			  (js-pcache-ref js-array-pcache 0)))))
+	 (set! js-new-target constructor)
 	 (instantiateJsArray
 	    (cmap (js-not-a-cmap))
 	    (__proto__ proto)))))

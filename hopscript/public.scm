@@ -1370,7 +1370,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-new-return f r o)
    [assert (r o) (or (js-object? r) (js-object? o))]
-   (with-access::JsFunction f (constrsize)
+   (with-access::JsFunction f (constrsize info)
       (if (js-object? r)
 	  (with-access::JsObject r (elements)
 	     (when (vector? elements)

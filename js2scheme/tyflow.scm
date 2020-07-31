@@ -1669,8 +1669,14 @@
    
    (define (isa-and? test)
       (when (isa? test J2SBinary)
+	 (with-access::J2SBinary test (op lhs rhs)
+	    (when (eq? op '&&)
+	       (node-type-one-positive-test? lhs)))))
+
+   (define (node-type-one-positive-test? test)
+      (when (isa? test J2SBinary)
 	 (with-access::J2SBinary test (op)
-	    (eq? op '&&))))
+	    (memq op '(== === eq? instanceof)))))
    
    (define (node-type-one-test test envt enve)
       (multiple-value-bind (op decl typ ref)

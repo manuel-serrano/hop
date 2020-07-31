@@ -299,7 +299,7 @@ while : ; do
 
     --devel)
       devmode="devel";
-      bcflagsrts=;
+      bcflagsrts=-cg;
       bcflagsdev=-cg;
       bscm2jsflags=;
       bcflags="$bcflags -Wall -Wno-slot -srfi devel";;

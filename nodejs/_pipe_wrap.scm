@@ -232,8 +232,7 @@
       (with-access::JsProcess process (js-pipe)
 	 (let ((obj (js-new %this js-object)))
 	    (set! js-pipe
-	       (js-make-function %this
-		  (lambda (this . args) #unspecified)
+	       (js-make-function %this pipe
 		  (js-function-arity 0 1 'optional)
 		  (js-function-info :name "Pipe" :len 1)
 		  :prototype pipe-prototype

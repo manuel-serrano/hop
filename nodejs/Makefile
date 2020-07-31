@@ -24,7 +24,6 @@ install: install-library
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = nodejs
-BCFLAGSRTS = -unsafe
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
   -ljs2scheme_s-$(HOPRELEASE) -lhopscript_s-$(HOPRELEASE) \
   -lhop_s-$(HOPRELEASE)

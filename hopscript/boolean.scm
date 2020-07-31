@@ -86,8 +86,22 @@
 	    (__proto__ (js-object-proto %this))))
       
       (define (js-boolean-alloc %this constructor::JsFunction)
+	 (with-access::JsGlobalObject %this (js-new-target)
+	    (set! js-new-target constructor))
 	 (instantiateJsBoolean
 	    (__proto__ (js-get constructor (& "prototype") %this))))
+
+      (define (%js-boolean this value)
+	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.6.1.1
+	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.6.2
+	 (with-access::JsGlobalObject %this (js-new-target)
+	    (let ((v (js-toboolean value)))
+	       (if (eq? js-new-target (js-undefined))
+		   v
+		   (with-access::JsBoolean this (val)
+		      (set! js-new-target (js-undefined))
+		      (set! val v)
+		      this)))))
       
       ;; then, Create a HopScript string object
       (set! js-boolean
@@ -96,8 +110,7 @@
 	    (js-function-info :name "Boolean" :len 1)
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-boolean-prototype
-	    :alloc js-boolean-alloc
-	    :construct js-boolean-construct))
+	    :alloc js-boolean-alloc))
       ;; now the boolean constructor is fully built,
       ;; initialize the prototype properties
       (init-builtin-boolean-prototype! %this js-boolean js-boolean-prototype)
@@ -106,24 +119,6 @@
 	 :configurable #f :enumerable #f :value js-boolean
 	 :hidden-class #t)
       js-boolean))
-
-;*---------------------------------------------------------------------*/
-;*    %js-boolean ...                                                  */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.6.1.1     */
-;*---------------------------------------------------------------------*/
-(define (%js-boolean this value)
-   (js-toboolean value))
-
-;*---------------------------------------------------------------------*/
-;*    js-boolean-construct ...                                         */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.6.2       */
-;*---------------------------------------------------------------------*/
-(define (js-boolean-construct this::JsBoolean arg)
-   (with-access::JsBoolean this (val)
-      (set! val (js-toboolean arg)))
-   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-valueof ::JsBoolean ...                                       */
