@@ -1236,9 +1236,9 @@
       ((4)
        (js-new4 %this f (car args) (cadr args) (caddr args) (cadddr args)))
       (else
-       (with-access::JsFunction f (construct alloc)
+       (with-access::JsFunction f (procedure alloc)
 	  (let* ((o (alloc %this f))
-		 (r (js-apply% %this f construct o args)))
+		 (r (js-apply% %this f procedure o args)))
 	     (if (js-object? r) r o))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1414,9 +1414,9 @@
 (define-macro (gen-new %this ctor . args)
    `(cond
        ((js-function? ,ctor)
-	(with-access::JsFunction ,ctor (construct alloc info arity)
+	(with-access::JsFunction ,ctor (procedure alloc info arity)
 	   (let ((o (alloc %this ,ctor)))
-	      (let ((r (gen-calln ,ctor construct o ,@args)))
+	      (let ((r (gen-calln ,ctor procedure o ,@args)))
 		 (js-new-return ,ctor r o)))))
        ((js-proxy? ,ctor)
 	(js-new/proxy ,%this ,ctor (list ,@args)))

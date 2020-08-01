@@ -578,9 +578,9 @@
 	    (js-function-set-constrmap!
 	       (js-make-function %this %js-object
 		  (js-function-arity %js-object)
-		  (js-function-info :name "Object" :len 1)
+		  (js-function-info :name "Object" :len 1 :maxconstrsize 4)
 		  :__proto__ js-function-prototype
-		  :constrsize 3 :maxconstrsize 4
+		  :constrsize 3
 		  :prototype %proto
 		  :alloc js-no-alloc
 		  :size 21

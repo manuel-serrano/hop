@@ -225,8 +225,8 @@
 		  (lambda (this fd)
 		     (with-access::JsHandle this (handle)
 			(nodejs-tcp-open %worker %this handle fd)))
-		  (js-function-arity 2 0)
-		  (js-function-info :name "open" :len 2))
+		  (js-function-arity 1 0)
+		  (js-function-info :name "open" :len 1))
 	       #f %this)
 	    
 	    (js-put! obj (& "bind")

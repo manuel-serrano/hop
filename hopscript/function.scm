@@ -41,14 +41,15 @@
 	   (inline js-function-path ::JsFunction)
 	   (js-function-debug-name::bstring ::JsProcedure ::JsGlobalObject)
 	   (js-function-arity::long ::obj #!optional opl (protocol 'fix))
-	   (js-function-info #!key name len tostring path start end)
+	   (js-function-info #!key name len tostring path start end
+	      (maxconstrsize 100))
 	   (js-make-function::JsFunction ::JsGlobalObject
 	      ::procedure ::int ::vector
 	      #!key
 	      method construct alloc
 	      __proto__ prototype
 	      (strict 'normal) (minlen -1)
-	      (size 0) (constrsize 3) (maxconstrsize 100)
+	      (size 0) (constrsize 3)
 	      (constrmap (js-not-a-cmap)) (shared-cmap #t))
 	   (js-make-function-strict::JsFunction ::JsGlobalObject
 	      ::procedure ::int ::vector
@@ -312,7 +313,6 @@
 	    (instantiateJsFunction
 	       (procedure proc)
 	       (method proc)
-	       (construct proc)
 	       (cmap (instantiate::JsConstructMap))
 	       (alloc js-not-a-constructor-alloc)
 	       (info (js-function-info :name "" :len 0))
@@ -390,7 +390,7 @@
 	 ($js-init-jsalloc-function (js-not-a-cmap)
 	    js-function-writable-strict-cmap
 	    js-function-strict-elements js-object-alloc-lazy
-	    100 (js-function-default-mode))
+	    (js-function-default-mode))
 	 ($js-init-jsalloc-procedure
 	    js-initial-cmap
 	    (js-procedure-default-mode)))
@@ -572,7 +572,7 @@
 	   method construct alloc
 	   __proto__ prototype
 	   (strict 'normal) (minlen -1) 
-	   (size 0) (constrsize 3) (maxconstrsize 100)
+	   (size 0) (constrsize 3)
 	   (constrmap (js-not-a-cmap)) (shared-cmap #t))
    (with-access::JsGlobalObject %this (js-function js-object
 					 js-function-cmap
@@ -611,14 +611,12 @@
 	     (fun (instantiateJsFunction
 		     (procedure procedure)
 		     (method (or method procedure))
-		     (construct (or construct procedure))
 		     (alloc (or alloc js-not-a-constructor-alloc))
 		     (arity arity)
 		     (__proto__ (or __proto__ %__proto__))
 		     (info info)
 		     (constrsize constrsize)
 		     (constrmap constrmap)
-		     (maxconstrsize maxconstrsize)
 		     (elements els)
 		     (cmap (if shared-cmap
 			       ;; normal functions, i.e., user functions,
@@ -696,14 +694,12 @@
       (let ((fun (instantiateJsFunction
 		    (procedure procedure)
 		    (method method)
-		    (construct procedure)
 		    (alloc alloc)
 		    (arity arity)
 		    (__proto__ (js-object-proto js-function))
 		    (info info)
 		    (constrsize constrsize)
 		    (constrmap constrmap)
-		    (maxconstrsize 100)
 		    (elements js-function-strict-elements)
 		    (cmap js-function-writable-strict-cmap)
 		    (prototype #\F))))
@@ -717,7 +713,7 @@
 (define-inline (js-make-function-strict-lazy %this procedure arity info
 		  #!key method (minlen -1) (constrsize 3))
    (with-access::JsGlobalObject %this (js-function)
-      ($js-make-jsfunction procedure method procedure
+      ($js-make-jsfunction procedure method
 	 arity constrsize
 	 (js-object-proto js-function)
 	 info)))
@@ -1337,8 +1333,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-function-info ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (js-function-info #!key name len tostring path start end)
-   (vector name len tostring path start end))
+(define (js-function-info #!key name len tostring path start end (maxconstrsize 100))
+   (vector name len tostring path start end maxconstrsize))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-arity ...                                            */

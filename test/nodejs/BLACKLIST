@@ -13,6 +13,7 @@
 #*    unimplemented (yet) features                                     */
 #*---------------------------------------------------------------------*/
 # failures that need to be fixed
+simple/test-domain-timers.js # Hop does not implemented time unref methods
 simple/test-http-pipeline-flood.js # Hop too slow start (need 500 setTimeout)
 pummel/test-tls-ci-reneg-attack.js
 

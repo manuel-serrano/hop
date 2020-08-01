@@ -67,7 +67,6 @@ static obj_t jsproxy_constrmap, jsproxy_elements;
 
 static obj_t jsfunction_elements, jsfunction_alloc;
 static BgL_jsconstructmapz00_bglt jsfunction_constrmap, jsfunction_cmap;
-static long jsfunction_maxconstrsize;
 static uint32_t jsfunction_mode;
 
 static uint32_t jsprocedure_mode;
@@ -123,7 +122,6 @@ static obj_t bgl_make_jsproxy_sans( obj_t target, obj_t handler,
 
 #if HOP_ALLOC_JSFUNCTION_POLICY != HOP_ALLOC_CLASSIC
 static obj_t bgl_make_jsfunction_sans( obj_t procedure, obj_t method,
-				       obj_t construct,
 				       long arity,
 				       long constrsize,
 				       obj_t __proto__, obj_t info );
@@ -348,7 +346,7 @@ jsfunction_fill_buffer( apool_t *pool, void *arg ) {
 
    for( i = 0; i < size; i++ ) {
       buffer[ i ] =
-	 bgl_make_jsfunction_sans( 0L, 0L, 0L, 0L, 0L, 0L, 0L );
+	 bgl_make_jsfunction_sans( 0L, 0L, 0L, 0L, 0L, 0L );
    }
 #endif   
 }
@@ -477,7 +475,6 @@ int
 bgl_init_jsalloc_function( BgL_jsconstructmapz00_bglt constrmap,
 			   BgL_jsconstructmapz00_bglt cmap,
 			   obj_t elements, obj_t alloc,
-			   long maxconstrsize,
 			   uint32_t mode ) {
    static int jsinit = 0;
    int i;
@@ -490,7 +487,6 @@ bgl_init_jsalloc_function( BgL_jsconstructmapz00_bglt constrmap,
    jsfunction_cmap = cmap;
    jsfunction_elements = elements;
    jsfunction_alloc = alloc;
-   jsfunction_maxconstrsize = maxconstrsize;
    jsfunction_mode = mode;
 }
 
@@ -805,7 +801,7 @@ bgl_make_jsproxy( obj_t target, obj_t handler,
 #   define BGL_MAKE_JSFUNCTION_SANS obj_t bgl_make_jsfunction
 #endif
 
-BGL_MAKE_JSFUNCTION_SANS( obj_t procedure, obj_t method, obj_t construct,
+BGL_MAKE_JSFUNCTION_SANS( obj_t procedure, obj_t method,
 			  long arity, long constrsize,
 			  obj_t __proto__, obj_t info ) {
    BgL_jsfunctionz00_bglt o = (BgL_jsfunctionz00_bglt)HOP_MALLOC( JSFUNCTION_SIZE );
@@ -816,7 +812,6 @@ BGL_MAKE_JSFUNCTION_SANS( obj_t procedure, obj_t method, obj_t construct,
    // immutable fields init
    BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)jsfunction_mode );
    o->BgL_allocz00 = jsfunction_alloc;
-   o->BgL_maxconstrsiza7eza7 = jsfunction_maxconstrsize;
    o->BgL_constrmapz00 = jsfunction_constrmap;
    o->BgL_elementsz00 = jsfunction_elements;
    o->BgL_cmapz00 = jsfunction_cmap;
@@ -830,7 +825,6 @@ BGL_MAKE_JSFUNCTION_SANS( obj_t procedure, obj_t method, obj_t construct,
       BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), __proto__ );
       o->BgL_procedurez00 = procedure;
       o->BgL_methodz00 = method;
-      o->BgL_constructz00 = construct;
       o->BgL_arityz00 = arity;
       o->BgL_infoz00 = info;
       o->BgL_constrsiza7eza7 = constrsize;
@@ -862,7 +856,7 @@ BGL_MAKE_JSFUNCTION_SANS( obj_t procedure, obj_t method, obj_t construct,
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_JSFUNCTION_POLICY != HOP_ALLOC_CLASSIC
 obj_t
-bgl_make_jsfunction( obj_t procedure, obj_t method, obj_t construct,
+bgl_make_jsfunction( obj_t procedure, obj_t method,
 		     long arity, long constrsize,
 		     obj_t __proto__, obj_t info ) {
    alloc_spin_lock( &lockfunction );
@@ -875,7 +869,6 @@ bgl_make_jsfunction( obj_t procedure, obj_t method, obj_t construct,
       BGL_OBJECT_WIDENING_SET( o, __proto__ );
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_procedurez00 = procedure;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_methodz00 = method;
-      ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_constructz00 = construct;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_arityz00 = arity;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_infoz00 = info;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_constrsiza7eza7 = constrsize;
@@ -900,7 +893,6 @@ bgl_make_jsfunction( obj_t procedure, obj_t method, obj_t construct,
       BGL_OBJECT_WIDENING_SET( o, __proto__ );
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_procedurez00 = procedure;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_methodz00 = method;
-      ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_constructz00 = construct;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_arityz00 = arity;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_infoz00 = info;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_constrsiza7eza7 = constrsize;
@@ -928,7 +920,7 @@ bgl_make_jsfunction( obj_t procedure, obj_t method, obj_t construct,
       ALLOC_STAT( pool_queue_idx > qszfunction ? qszfunction = pool_queue_idx : 0 ); 
       ALLOC_STAT( (slowfunction % 1000000 == 0) ? fprintf( stderr, "inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", inlfunction, sndfunction, slowfunction, (long)(100*(double)slowfunction/(double)(inlfunction+sndfunction)), inlfunction + sndfunction + slowfunction, qszfunction) : 0 ); 
       alloc_spin_unlock( &lockfunction ); 
-      return bgl_make_jsfunction_sans( procedure, method, construct,
+      return bgl_make_jsfunction_sans( procedure, method, 
 				       arity, constrsize,
 				       __proto__, info );
    } 

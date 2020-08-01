@@ -21,7 +21,8 @@
    
    (include "stringliteral.sch"
 	    "property.sch"
-	    "types.sch")
+	    "types.sch"
+	    "function.sch")
 
    (import __hopscript_types
 	   __hopscript_object
@@ -517,8 +518,8 @@
    (with-access::JsObject obj (cmap)
       (with-access::JsConstructMap cmap (ctor props)
 	 (if (js-function? ctor)
-	     (with-access::JsFunction ctor (constrsize maxconstrsize info)
-		(when (<fx constrsize maxconstrsize)
+	     (with-access::JsFunction ctor (constrsize info)
+		(when (<fx constrsize (js-function-info-maxconstrsize info))
 		   (set! constrsize (+fx 1 constrsize)))
 		(js-object-add! obj idx value 1))
 	     (let ((inc (maxfx 1 (minfx (vector-length props) 8))))
@@ -552,9 +553,9 @@
       (with-access::JsConstructMap cmap (props)
 	 (if (>=fx idx (vector-length elements))
 	     (if (js-function? ctor)
-		 (with-access::JsFunction ctor (constrsize maxconstrsize)
+		 (with-access::JsFunction ctor (constrsize info)
 		    (js-object-add! obj idx value 1)
-		    (when (<fx constrsize maxconstrsize)
+		    (when (<fx constrsize (js-function-info-maxconstrsize info))
 		       (set! constrsize (+fx 1 (vector-length props)))))
 		 (let ((inc (maxfx 1 (minfx (vector-length props) 8))))
 		    (js-object-add! obj idx value inc)))

@@ -65,13 +65,13 @@
 	 ((not (js-function? newtarget))
 	  (js-raise-type-error %this "construct: Not an object ~s" newtarget))
 	 ((js-function? target)
-	  (with-access::JsFunction target (construct alloc)
+	  (with-access::JsFunction target (procedure alloc)
 	     (with-access::JsFunction newtarget (prototype alloc)
 		(unless prototype
 		   (js-function-setup-prototype! %this newtarget)
 		   (set! alloc js-object-alloc)))
 	     (let* ((o (alloc %this newtarget))
-		    (t (js-apply% %this target construct o
+		    (t (js-apply% %this target procedure o
 			  (js-iterable->list argarray %this)))
 		    (r (if (js-object? t) t o))
 		    (p (js-get newtarget (& "prototype") %this)))

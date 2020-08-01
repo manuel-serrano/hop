@@ -305,8 +305,8 @@
 				 onstop this)))
 			(with-access::JsHandle this (handle)
 			   (nodejs-fs-poll-stop handle)))
-		     (js-function-arity 1 0)
-		     (js-function-info :name "stop" :len 1))
+		     (js-function-arity 0 0)
+		     (js-function-info :name "stop" :len 0))
 		  #f %this)
 	       
 	       obj))))

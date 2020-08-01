@@ -685,11 +685,18 @@
 	     (js-typedarray-construct this '()))))
       
       (define (%js-typedarray this . items)
-	 (js-typedarray-construct 
-	    (js-typedarray-alloc %this js-typedarray)
-	    items))
+	 (with-access::JsGlobalObject %this (js-new-target)
+	    (if (eq? js-new-target (js-undefined))
+		(js-typedarray-construct 
+		   (js-typedarray-alloc %this js-typedarray)
+		   items)
+		(begin
+		   (set! js-new-target (js-undefined))
+		   (js-typedarray-construct this items)))))
       
       (define (js-typedarray-alloc %this constructor::JsFunction)
+	 (with-access::JsGlobalObject %this (js-new-target)
+	    (set! js-new-target constructor))
 	 (let ((o (allocate-instance (string->symbol (string-append "Js" name)))))
 	    (with-access::JsTypedArray o (cmap bpe elements)
 	       (js-object-mode-set! o (js-object-default-mode))
@@ -708,9 +715,7 @@
 	    :__proto__ (js-object-proto js-function)
 	    :size 2
 	    :prototype js-typedarray-prototype
-	    :alloc js-typedarray-alloc
-	    :construct (lambda (this . items)
-			  (js-typedarray-construct this items))))
+	    :alloc js-typedarray-alloc))
       
       (define (js-set this::JsTypedArray array offset)
 	 (let ((off (if (eq? offset (js-undefined))
@@ -1285,11 +1290,18 @@
 		   "Object must be an ArrayBuffer" (car items)))))
 	 
 	 (define (%js-dataview this . items)
-	    (js-dataview-construct 
-	       (js-dataview-alloc %this js-dataview)
-	       items))
+	    (with-access::JsGlobalObject %this (js-new-target)
+	       (if (eq? js-new-target (js-undefined))
+		   (js-dataview-construct 
+		      (js-dataview-alloc %this js-dataview)
+		      items)
+		   (begin
+		      (set! js-new-target (js-undefined))
+		      (js-dataview-construct this items)))))
 	 
 	 (define (js-dataview-alloc %this constructor::JsFunction)
+	    (with-access::JsGlobalObject %this (js-new-target)
+	       (set! js-new-target constructor))
 	    (instantiateJsDataView
 	       (cmap (js-not-a-cmap))
 	       (__proto__ (js-get constructor (& "prototype") %this))))
@@ -1300,9 +1312,7 @@
 	       (js-function-info :name "DataView" :len 1)
 	       :__proto__ (js-object-proto js-function)
 	       :prototype js-dataview-prototype
-	       :alloc js-dataview-alloc
-	       :construct (lambda (this . items)
-			     (js-dataview-construct this items))))
+	       :alloc js-dataview-alloc))
 
 	 (define (js-dataview-get this::JsDataView offset lendian get)
 	    (let ((off (uint32->fixnum (js-touint32 offset %this))))

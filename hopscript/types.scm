@@ -38,7 +38,7 @@
 	      "bgl_init_jsalloc_proxy")
 	   ($js-init-jsalloc-function::int (::JsConstructMap ::JsConstructMap
 					      ::obj ::obj
-					      ::long ::uint32)
+					      ::uint32)
 	      "bgl_init_jsalloc_function")
 	   ($js-init-jsalloc-procedure::int (::JsConstructMap
 					       ::uint32)
@@ -48,7 +48,6 @@
 	   ($js-make-jsproxy::JsProxy (::obj ::obj ::obj ::obj ::obj ::uint32)
 	      "bgl_make_jsproxy")
 	   ($js-make-jsfunction::JsFunction (::procedure ::procedure
-					       ::procedure
 					       ::long ::long
 					       ::obj ::obj)
 	      "bgl_make_jsfunction")
@@ -224,14 +223,12 @@
 	      
 	   (class JsFunction::JsProcedure
 	      (method::procedure read-only)
-	      (construct::procedure read-only)
 	      ;; alloc cannot be read-only, see _buffer.scm
 	      alloc::procedure
 	      (constrmap::JsConstructMap (default (js-not-a-cmap)))
 	      (info::vector read-only (default '#()))
 	      prototype
-	      (constrsize::int (default 3))
-	      (maxconstrsize::int read-only (default 100)))
+	      (constrsize::int (default 3)))
 	   
 	   (class JsService::JsFunction
 	      (worker::obj read-only)
@@ -481,6 +478,7 @@
 	   
 	   (inline JS-OBJECT-MODE-JSSTRINGTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSFUNCTIONTAG::uint32)
+	   (inline JS-OBJECT-MODE-JSMETHODTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSOBJECTTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSPROCEDURETAG::uint32)
@@ -711,11 +709,15 @@
 (define-inline (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:2)
 (define-inline (JS-OBJECT-MODE-JSOBJECTTAG) #u32:4)
 (define-inline (JS-OBJECT-MODE-JSPROCEDURETAG) #u32:8192)
+(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:16384)
+(define-inline (JS-OBJECT-MODE-JSMETHODTAG) #u32:32768)
 
 (define-macro (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1)
 (define-macro (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:2)
 (define-macro (JS-OBJECT-MODE-JSOBJECTTAG) #u32:4)
 (define-macro (JS-OBJECT-MODE-JSPROCEDURETAG) #u32:8192)
+(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:16384)
+(define-macro (JS-OBJECT-MODE-JSMETHODTAG) #u32:32768)
 
 ;; common objects attributes
 (define-inline (JS-OBJECT-MODE-INLINE) #u32:8)
@@ -744,13 +746,11 @@
 (define-inline (JS-OBJECT-MODE-JSPROXYFUNCTION) #u32:4096)
 (define-inline (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT) #u32:4096)
 ;; WARNING: must be the two last constants (see js-array?)
-(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:16384)
 (define-inline (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:32768)
 
 (define-macro (JS-OBJECT-MODE-JSPROXYREVOKED) #u32:1024)
 (define-macro (JS-OBJECT-MODE-JSPROXYFUNCTION) #u32:4096)
 (define-macro (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT) #u32:4096)
-(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:16384)
 (define-macro (JS-OBJECT-MODE-JSARRAYHOLEY) #u32:32768)
 
 ;; string types and attributed

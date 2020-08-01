@@ -274,11 +274,7 @@
 	       (instantiateJsService
 		  (__proto__ js-function-prototype)
 		  (worker (class-nil WorkerHopThread))
-		  (alloc (lambda (_) #unspecified))
-		  (construct (lambda (constructor args)
-				(js-raise-type-error %this
-				   "not a constructor ~s"
-				   js-function-prototype)))
+		  (alloc js-not-a-constructor-alloc)
 		  (prototype (js-object-proto %this))
 		  (info (js-function-info :name "" :len -1))
 		  (procedure list)
@@ -1073,12 +1069,7 @@
 	 (worker worker)
 	 (prototype (js-object-proto %this))
 	 (__proto__ js-service-prototype)
-	 (alloc (lambda (_)
-		   (js-raise-type-error %this
-		      "service not a constructor" #f)))
-	 (construct (lambda (_ arg)
-		       (js-raise-type-error %this
-			  "service not a constructor" arg)))
+	 (alloc js-not-a-constructor-alloc)
 	 (svc (or svc (default-service)))
 	 (elements (vector
 			(instantiate::JsValueDescriptor
