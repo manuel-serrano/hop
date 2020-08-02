@@ -676,7 +676,7 @@
 		  ,arity ,(j2s-function-info this name loc ctx)
 		  ,constrsize
 		  ,@(if (or tmpm method)
-			`((or tmpm (jsfun->lambda method mode return ctx #f #f)))
+			(list (or tmpm (jsfun->lambda method mode return ctx #f #f)))
 			'())
 		  ,@(if (eq? alloc 'js-object-alloc-lazy)
 			'()
