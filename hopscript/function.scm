@@ -52,15 +52,20 @@
 	      (size 0) (constrsize 3)
 	      (constrmap (js-not-a-cmap)) (shared-cmap #t))
 	   (js-make-function-strict::JsFunction ::JsGlobalObject
-	      ::procedure ::int ::vector
+	      ::procedure ::int ::vector ::long
 	      #!key
-	      method alloc
-	      (minlen -1) (constrsize 3) (constrmap (js-not-a-cmap)))
+	      alloc (constrmap (js-not-a-cmap)))
 	   (inline js-make-function-strict-lazy::JsFunction
 	      ::JsGlobalObject
-	      ::procedure ::int ::vector
+	      ::procedure ::int ::vector ::long)
+	   (js-make-method-strict::JsMethod ::JsGlobalObject
+	      ::procedure ::int ::vector ::long ::procedure
 	      #!key
-	      method (minlen -1) (constrsize 3))
+	      alloc (constrmap (js-not-a-cmap)))
+	   (inline js-make-method-strict-lazy::JsMethod
+	      ::JsGlobalObject
+	      ::procedure ::int ::vector ::long
+	      ::procedure)
 	   (inline js-make-procedure::JsProcedure ::JsGlobalObject
 	      ::procedure ::int)
 	   (inline js-make-procedure-hopscript::JsProcedure ::JsGlobalObject
@@ -391,6 +396,10 @@
 	    js-function-writable-strict-cmap
 	    js-function-strict-elements js-object-alloc-lazy
 	    (js-function-default-mode))
+	 ($js-init-jsalloc-method (js-not-a-cmap)
+	    js-function-writable-strict-cmap
+	    js-function-strict-elements js-object-alloc-lazy
+	    (js-method-default-mode))
 	 ($js-init-jsalloc-procedure
 	    js-initial-cmap
 	    (js-procedure-default-mode)))
@@ -586,8 +595,7 @@
 					 js-function-prototype-property-ro
 					 js-function-prototype-property-null
 					 js-function-prototype-property-undefined)
-      (let* ((%__proto__ (js-object-proto js-function))
-	     (els ($create-vector (+fx size (if (eq? strict 'normal) 3 5))))
+      (let* ((els ($create-vector (+fx size (if (eq? strict 'normal) 3 5))))
 	     (cmap (if (eq? strict 'normal)
 		       (cond
 			  ((js-object? prototype)
@@ -613,7 +621,7 @@
 		     (method (or method procedure))
 		     (alloc (or alloc js-not-a-constructor-alloc))
 		     (arity arity)
-		     (__proto__ (or __proto__ %__proto__))
+		     (__proto__ (or __proto__ (js-object-proto js-function)))
 		     (info info)
 		     (constrsize constrsize)
 		     (constrmap constrmap)
@@ -681,39 +689,52 @@
 ;*    -------------------------------------------------------------    */
 ;*    specialized function constructor for regular strict functions.   */
 ;*---------------------------------------------------------------------*/
-(define (js-make-function-strict %this procedure arity info
-	   #!key
-	   method alloc
-	   (minlen -1)
-	   (constrsize 3)
-	   (constrmap (js-not-a-cmap)))
-   (with-access::JsGlobalObject %this (js-function 
-					 js-function-writable-strict-cmap
-					 js-function-prototype-property-rw
-					 js-function-strict-elements)
-      (let ((fun (instantiateJsFunction
-		    (procedure procedure)
-		    (method method)
-		    (alloc alloc)
-		    (arity arity)
-		    (__proto__ (js-object-proto js-function))
-		    (info info)
-		    (constrsize constrsize)
-		    (constrmap constrmap)
-		    (elements js-function-strict-elements)
-		    (cmap js-function-writable-strict-cmap)
-		    (prototype #\F))))
-	 (unless (eq? alloc js-object-alloc-lazy)
-	    (js-function-setup-prototype! %this fun))
+(define (js-make-function-strict %this procedure arity info constrsize
+	   #!key alloc (constrmap (js-not-a-cmap)))
+   (let ((fun (js-make-function-strict-lazy %this procedure arity info constrsize)))
+      (with-access::JsFunction fun ((falloc alloc)
+				    (fconstrmap constrmap))
+	 (set! falloc alloc)
+	 (set! fconstrmap constrmap)
+	 (js-function-setup-prototype! %this fun)
 	 fun)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-function-strict-lazy ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-make-function-strict-lazy %this procedure arity info
-		  #!key method (minlen -1) (constrsize 3))
+(define-inline (js-make-function-strict-lazy %this procedure arity info constrsize)
    (with-access::JsGlobalObject %this (js-function)
-      ($js-make-jsfunction procedure method
+      ($js-make-jsfunction procedure
+	 arity constrsize
+	 (js-object-proto js-function)
+	 info)))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-method-strict ...                                        */
+;*    -------------------------------------------------------------    */
+;*    specialized method constructor for regular strict methods.       */
+;*---------------------------------------------------------------------*/
+(define (js-make-method-strict %this procedure
+	   arity info constrsize method
+	   #!key
+	    alloc
+	   (constrmap (js-not-a-cmap)))
+   (let ((fun (js-make-method-strict-lazy %this procedure arity
+		 info constrsize method)))
+      (with-access::JsMethod fun ((falloc alloc)
+				  (fconstrmap constrmap))
+	 (set! falloc alloc)
+	 (set! fconstrmap constrmap)
+	 (js-function-setup-prototype! %this fun)
+	 fun)))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-method-strict-lazy ...                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-make-method-strict-lazy %this procedure
+		  arity info constrsize method)
+   (with-access::JsGlobalObject %this (js-function)
+      ($js-make-jsmethod procedure method
 	 arity constrsize
 	 (js-object-proto js-function)
 	 info)))

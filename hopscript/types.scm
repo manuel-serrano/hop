@@ -40,6 +40,10 @@
 					      ::obj ::obj
 					      ::uint32)
 	      "bgl_init_jsalloc_function")
+	   ($js-init-jsalloc-method::int (::JsConstructMap ::JsConstructMap
+					    ::obj ::obj
+					    ::uint32)
+	      "bgl_init_jsalloc_method")
 	   ($js-init-jsalloc-procedure::int (::JsConstructMap
 					       ::uint32)
 	      "bgl_init_jsalloc_procedure")
@@ -47,10 +51,14 @@
 	      "bgl_make_jsobject")
 	   ($js-make-jsproxy::JsProxy (::obj ::obj ::obj ::obj ::obj ::uint32)
 	      "bgl_make_jsproxy")
-	   ($js-make-jsfunction::JsFunction (::procedure ::procedure
+	   ($js-make-jsfunction::JsFunction (::procedure
 					       ::long ::long
 					       ::obj ::obj)
 	      "bgl_make_jsfunction")
+	   ($js-make-jsmethod::JsMethod (::procedure ::procedure
+					   ::long ::long
+					   ::obj ::obj)
+	      "bgl_make_jsmethod")
 	   ($js-make-jsprocedure::JsProcedure (::procedure ::long ::obj)
 	      "bgl_make_jsprocedure")
 	   (macro $jsobject-elements-inline?::bool (::JsObject)
@@ -218,17 +226,19 @@
 
 	   (class JsProcedure::JsObject
 	      ;; see js-call@public.scm for arity documentation
-	      (arity::int read-only (default -1))
-	      (procedure::procedure read-only))
+	      (procedure::procedure read-only)
+	      (arity::int read-only (default -1)))
 	      
 	   (class JsFunction::JsProcedure
-	      (method::procedure read-only)
+	      (constrsize::int (default 3))
 	      ;; alloc cannot be read-only, see _buffer.scm
 	      alloc::procedure
 	      (constrmap::JsConstructMap (default (js-not-a-cmap)))
 	      (info::vector read-only (default '#()))
 	      prototype
-	      (constrsize::int (default 3)))
+	      (method::procedure read-only))
+	   
+	   (class JsMethod::JsFunction)
 	   
 	   (class JsService::JsFunction
 	      (worker::obj read-only)
@@ -424,6 +434,7 @@
 	   (inline js-object-default-mode::uint32)
 	   (inline js-array-default-mode::uint32)
 	   (inline js-function-default-mode::uint32)
+	   (inline js-method-default-mode::uint32)
 	   (inline js-procedure-default-mode::uint32)
 	   (inline js-procedure-hopscript-mode::uint32)
 	   (inline js-jsstring-default-ascii-mode::uint32)
@@ -686,6 +697,10 @@
 		  (bit-oru32 (JS-OBJECT-MODE-JSPROCEDURETAG)
 		     (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
 			(JS-OBJECT-MODE-HASNUMERALPROP)))))))))
+
+(define-inline (js-method-default-mode)
+   (bit-oru32 (js-function-default-mode)
+      (JS-OBJECT-MODE-JSMETHODTAG)))
 
 (define-inline (js-procedure-default-mode)
    (bit-oru32 (JS-OBJECT-MODE-EXTENSIBLE)

@@ -205,14 +205,23 @@
 ;*    j2s-make-function ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-make-function this::J2SDeclFun mode return ctx)
-
+   
    (define (allocator::symbol this::J2SDecl)
       (with-access::J2SFun (declfun-fun this) (new-target)
 	 (cond
 	    (new-target 'js-object-alloc/new-target)
 	    ((decl-usage-has? this '(new get set ref))  'js-object-alloc)
 	    (else 'js-object-alloc-lazy))))
-
+   
+   (define (constructor alloc method)
+      (if (eq? alloc 'js-object-alloc-lazy)
+	  (if method
+	      'js-make-method-strict-lazy
+	      'js-make-function-strict-lazy)
+	  (if method
+	      'js-make-method-strict
+	      'js-make-function-strict)))
+   
    (define (make-function-sans-alloc this::J2SDeclFun)
       (with-access::J2SDeclFun this (loc id scope val key)
 	 (let ((val (declfun-fun this)))
@@ -234,16 +243,14 @@
 			  :__proto__ ,(j2s-fun-__proto__ val)
 			  :constrsize ,constrsize))
 		     ((and src (memq mode '(strict hopscript)))
-		      `(,(if (eq? alloc 'js-object-alloc-lazy)
-			     'js-make-function-strict-lazy
-			     'js-make-function-strict)
+		      `(,(constructor alloc method)
 			%this ,fastid
 			,arity ,(j2s-function-info val name loc ctx)
-			:constrsize ,constrsize
-			:method ,(if method
-				     (jsfun->lambda method
-					mode return ctx #f #f)
-				     fastid)
+			,constrsize
+			,@(if method
+			      `((jsfun->lambda method
+				   mode return ctx #f #f))
+			      '())
 			,@(if (eq? alloc 'js-object-alloc-lazy)
 			      '()
 			      `(:alloc ,alloc))))
@@ -258,16 +265,14 @@
 					 mode return ctx #f #f))))
 		     ((and (eq? vararg 'arguments)
 			   (memq mode '(strict hopscript)))
-		      `(,(if (eq? alloc 'js-object-alloc-lazy)
-			     'js-make-function-strict-lazy
-			     'js-make-function-strict)
+		      `(,(constructor alloc method)
 			%this ,fastid
 			,arity ,(j2s-function-info val name loc ctx)
-			:constrsize ,constrsize
-			:method ,(if method
-				     (jsfun->lambda method
-					mode return ctx #f #f)
-				     fastid)
+			,constrsize
+			,@(if method
+			      `((jsfun->lambda method
+				   mode return ctx #f #f))
+			      '())
 			:arity ,arity
 			,@(if (eq? alloc 'js-object-alloc-lazy)
 			      '()
@@ -282,16 +287,14 @@
 				      (jsfun->lambda method
 					 mode return ctx #f #f))))
 		     ((and method (memq mode '(strict hopscript)))
-		      `(,(if (eq? alloc 'js-object-alloc-lazy)
-			     'js-make-function-strict-lazy
-			     'js-make-function-strict)
+		      `(,(constructor alloc method)
 			%this ,fastid
 			,arity ,(j2s-function-info val name loc ctx)
-			:constrsize ,constrsize
-			:method ,(if method
-				     (jsfun->lambda method
-					mode return ctx #f #f)
-				     fastid)
+			,constrsize
+			,@(if method
+			      `((jsfun->lambda method
+				   mode return ctx #f #f))
+			      '())
 			,@(if (eq? alloc 'js-object-alloc-lazy)
 			      '()
 			      `(:alloc ,alloc))))
@@ -310,7 +313,7 @@
 			  :strict ',mode
 			  :alloc ,alloc
 			  :constrsize ,constrsize))))))))
-
+   
    (with-access::J2SDeclFun this (val)
       (let ((fun (make-function-sans-alloc this)))
 	 (if (decl-usage-has? this '(new ref))
@@ -630,6 +633,15 @@
 	    ((isa? this J2SSvc) 'js-not-a-constructor-alloc)
 	    (new-target 'js-object-alloc/new-target)
 	    (else 'js-object-alloc-lazy))))
+
+   (define (constructor alloc method)
+      (if (eq? alloc 'js-object-alloc-lazy)
+	  (if (or tmpm method)
+	      'js-make-method-strict-lazy
+	      'js-make-function-strict-lazy)
+	  (if (or tmpm method)
+	      'js-make-method-strict
+	      'js-make-function-strict)))
    
    (with-access::J2SFun this (loc name params mode vararg mode generator
 				constrsize method new-target type)
@@ -659,15 +671,13 @@
 		     (memq mode '(strict hopscript))
 		     (not prototype)
 		     (not __proto__))
-		`(,(if (eq? alloc 'js-object-alloc-lazy)
-		       'js-make-function-strict-lazy
-		       'js-make-function-strict)
+		`(,(constructor alloc method)
 		  %this ,tmp
 		  ,arity ,(j2s-function-info this name loc ctx)
-		  :constrsize ,constrsize
-		  :method ,(or tmpm
-			       (and method (jsfun->lambda method mode return ctx #f #f))
-			       tmp)
+		  ,constrsize
+		  ,@(if (or tmpm method)
+			`((or tmpm (jsfun->lambda method mode return ctx #f #f)))
+			'())
 		  ,@(if (eq? alloc 'js-object-alloc-lazy)
 			'()
 			`(:alloc ,alloc))))
@@ -687,8 +697,7 @@
 		       'js-make-function-strict)
 		  %this ,tmp
 		  ,arity ,(j2s-function-info this name loc ctx)
-		  :constrsize ,constrsize
-		  :method ,tmp
+		  ,constrsize
 		  ,@(if (eq? alloc 'js-object-alloc-lazy)
 			`()
 			`(:alloc ,alloc))))

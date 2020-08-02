@@ -267,6 +267,7 @@
 (define-instantiate-expander JsString)
 (define-instantiate-expander JsSymbol)
 (define-instantiate-expander JsFunction (js-function-default-mode))
+(define-instantiate-expander JsMethod (js-method-default-mode))
 (define-instantiate-expander JsService (js-function-default-mode))
 (define-instantiate-expander JsHopFrame)
 (define-instantiate-expander JsServer)
