@@ -3964,7 +3964,7 @@
 	   o::JsObject name::obj args::pair-nil
 	   ccache::JsPropertyCache ocache::JsPropertyCache
 	   point::long ccspecs::pair-nil ospecs::pair-nil)
-   
+
    (define (jsapply method)
       (if (procedure? method)
 	  (apply method args)
@@ -4077,7 +4077,7 @@
 			       (let ((f (funval obj el-or-desc)))
 				  (cond
 				     ((js-function? f)
-				      (with-access::JsFunction f (len method arity)
+				      (with-access::JsFunction f (len procedure arity info)
 					 (cond
 					    ((<fx arity 0)
 					     ;; varargs functions, currently not cached...
@@ -4085,7 +4085,7 @@
 						(set! pmap (js-not-a-pmap))
 						(set! emap #t)
 						(set! cmap #t)))
-					    ((=fx (procedure-arity method) (+fx 1 (length args)))
+					    ((=fx (procedure-arity procedure) (+fx 1 (length args)))
 					     (with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method) function)
 						;; correct arity, put in cache
 						(js-validate-pmap-pcache! ccache)
@@ -4094,11 +4094,17 @@
 						(set! cmap #f)
 						(set! index i)
 						(set! function f)
-						(procedure-attr-set! method f)
-						(set! cmethod method)))
-					    ((procedureN method (length args))
+						(let ((proc (if (js-method? f)
+								(with-access::JsMethod f (method) method)
+								procedure)))
+						   (procedure-attr-set! proc f)
+						   (set! cmethod proc))))
+					    ((procedureN (if (js-method? f)
+							     (with-access::JsMethod f (method) method)
+							     procedure)
+						(length args))
 					     =>
-					     (lambda (procedure)
+					     (lambda (proc)
 						(with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method) function)
 						   ;; correct arity, put in cache
 						   (js-validate-pmap-pcache! ccache)
@@ -4107,8 +4113,8 @@
 						   (set! cmap #f)
 						   (set! index i)
 						   (set! function f)
-						   (procedure-attr-set! procedure f)
-						   (set! cmethod procedure))))
+						   (procedure-attr-set! proc f)
+						   (set! cmethod proc))))
 					    (else
 					     ;; arity missmatch, never cache
 					     (with-access::JsPropertyCache ccache (pmap emap cmap)

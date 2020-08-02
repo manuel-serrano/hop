@@ -317,7 +317,6 @@
 	 (set! js-function-prototype
 	    (instantiateJsFunction
 	       (procedure proc)
-	       (method proc)
 	       (cmap (instantiate::JsConstructMap))
 	       (alloc js-not-a-constructor-alloc)
 	       (info (js-function-info :name "" :len 0))
@@ -616,26 +615,46 @@
 			   js-function-strict-bind-cmap)
 			  (else
 			   js-function-writable-strict-cmap))))
-	     (fun (instantiateJsFunction
-		     (procedure procedure)
-		     (method (or method procedure))
-		     (alloc (or alloc js-not-a-constructor-alloc))
-		     (arity arity)
-		     (__proto__ (or __proto__ (js-object-proto js-function)))
-		     (info info)
-		     (constrsize constrsize)
-		     (constrmap constrmap)
-		     (elements els)
-		     (cmap (if shared-cmap
-			       ;; normal functions, i.e., user functions,
-			       ;; use shared-cmap
-			       cmap
-			       ;; non shared-cmap are used by builtin
-			       ;; objects, such as Date or Number to create
-			       ;; a single cmap for all their fields
-			       (duplicate::JsConstructMap cmap
-				  (%id (gencmapid)))))
-		     (prototype #\F))))
+	     (fun (if method
+		      (instantiateJsMethod
+			 (procedure procedure)
+			 (method method)
+			 (alloc (or alloc js-not-a-constructor-alloc))
+			 (arity arity)
+			 (__proto__ (or __proto__ (js-object-proto js-function)))
+			 (info info)
+			 (constrsize constrsize)
+			 (constrmap constrmap)
+			 (elements els)
+			 (cmap (if shared-cmap
+				   ;; normal functions, i.e., user functions,
+				   ;; use shared-cmap
+				   cmap
+				   ;; non shared-cmap are used by builtin
+				   ;; objects, such as Date or Number to create
+				   ;; a single cmap for all their fields
+				   (duplicate::JsConstructMap cmap
+				      (%id (gencmapid)))))
+			 (prototype #\F))
+		      (instantiateJsFunction
+			 (procedure procedure)
+			 (alloc (or alloc js-not-a-constructor-alloc))
+			 (arity arity)
+			 (__proto__ (or __proto__ (js-object-proto js-function)))
+			 (info info)
+			 (constrsize constrsize)
+			 (constrmap constrmap)
+			 (elements els)
+			 (cmap (if shared-cmap
+				   ;; normal functions, i.e., user functions,
+				   ;; use shared-cmap
+				   cmap
+				   ;; non shared-cmap are used by builtin
+				   ;; objects, such as Date or Number to create
+				   ;; a single cmap for all their fields
+				   (duplicate::JsConstructMap cmap
+				      (%id (gencmapid)))))
+			 (prototype #\F)))))
 	 ;; the prototype property
 	 (with-access::JsFunction fun ((fprototype prototype) alloc)
 	    (vector-set! els 0

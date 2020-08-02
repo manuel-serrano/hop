@@ -47,6 +47,7 @@
 (define-instantiate-sans JsString)
 (define-instantiate-sans JsSymbol)
 (define-instantiate-sans JsFunction)
+(define-instantiate-sans JsMethod)
 (define-instantiate-sans JsService)
 (define-instantiate-sans JsHopFrame)
 (define-instantiate-sans JsServer)

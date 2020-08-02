@@ -900,7 +900,6 @@ BGL_MAKE_JSFUNCTION_SANS( obj_t procedure,
    {
       BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), __proto__ );
       o->BgL_procedurez00 = procedure;
-      o->BgL_methodz00 = procedure;
       o->BgL_arityz00 = arity;
       o->BgL_infoz00 = info;
       o->BgL_constrsiza7eza7 = constrsize;
@@ -944,7 +943,6 @@ bgl_make_jsfunction( obj_t procedure,
       
       BGL_OBJECT_WIDENING_SET( o, __proto__ );
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_procedurez00 = procedure;
-      ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_methodz00 = procedure;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_arityz00 = arity;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_infoz00 = info;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_constrsiza7eza7 = constrsize;
@@ -968,7 +966,6 @@ bgl_make_jsfunction( obj_t procedure,
       
       BGL_OBJECT_WIDENING_SET( o, __proto__ );
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_procedurez00 = procedure;
-      ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_methodz00 = procedure;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_arityz00 = arity;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_infoz00 = info;
       ((BgL_jsfunctionz00_bglt)(COBJECT( o )))->BgL_constrsiza7eza7 = constrsize;

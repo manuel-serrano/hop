@@ -235,10 +235,10 @@
 	      alloc::procedure
 	      (constrmap::JsConstructMap (default (js-not-a-cmap)))
 	      (info::vector read-only (default '#()))
-	      prototype
-	      (method::procedure read-only))
+	      prototype)
 	   
-	   (class JsMethod::JsFunction)
+	   (class JsMethod::JsFunction
+	      (method::procedure read-only))
 	   
 	   (class JsService::JsFunction
 	      (worker::obj read-only)
@@ -570,6 +570,7 @@
 	   (inline js-jsstring-normalized! ::JsStringLiteral)
 	   (inline js-array?::bool ::obj)
 	   (inline js-function?::bool ::obj)
+	   (inline js-method?::bool ::obj)
 	   (inline js-procedure-proxy?::bool ::obj)
 	   (inline js-procedure?::bool ::obj)
 	   (inline js-callable?::bool ::obj)
@@ -1388,6 +1389,14 @@
    (and (%object? o)
 	(=u32 (JS-OBJECT-MODE-JSFUNCTIONTAG)
 	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSFUNCTIONTAG)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-method? ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-method? o)
+   (and (%object? o)
+	(=u32 (JS-OBJECT-MODE-JSMETHODTAG)
+	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSMETHODTAG)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-procedure-proxy? ...                                          */

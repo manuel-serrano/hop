@@ -278,7 +278,6 @@
 		  (prototype (js-object-proto %this))
 		  (info (js-function-info :name "" :len -1))
 		  (procedure list)
-		  (method list)
 		  (svc #f))))
 
 	 (js-bind! %this js-service-prototype (& "name")
@@ -1063,7 +1062,6 @@
    (with-access::JsGlobalObject %this (js-service-prototype)
       (instantiateJsService
 	 (procedure proc)
-	 (method proc)
 	 (info (js-function-info :name name :len arity))
 	 (arity arity)
 	 (worker worker)
