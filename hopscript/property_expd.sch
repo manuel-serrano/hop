@@ -757,13 +757,16 @@
 	  ,(calln %this 'f obj args)))
 
    (define (calln-miss %this obj prop args ccache ocache loc cspecs ospecs)
-      (if (pair? args)
-	  `(js-call-with-stack-list (list ,@args)
-	      (lambda (l)
-		 (js-method-jsobject-call/cache-miss %this ,obj ,prop
-		    l ,ccache ,ocache ,loc ',cspecs ',ospecs)))
-	  `(js-method-jsobject-call/cache-miss %this ,obj ,prop
-	      '() ,ccache ,ocache ,loc ',cspecs ',ospecs)))
+      `(with-access::JsPropertyCache ,ccache (cntmiss)
+	  (if (>u32 cntmiss #u32:1024)
+	      ,(calln-uncachable %this ospecs obj prop args ccache ocache loc)
+	      ,(if (pair? args)
+		   `(js-call-with-stack-list (list ,@args)
+		       (lambda (l)
+			  (js-method-jsobject-call/cache-miss %this ,obj ,prop
+			     l ,ccache ,ocache ,loc ',cspecs ',ospecs)))
+		   `(js-method-jsobject-call/cache-miss %this ,obj ,prop
+		       '() ,ccache ,ocache ,loc ',cspecs ',ospecs)))))
    
    (define (expand-cache-specs/args ccspecs ocspecs %this obj prop args ccache ocache loc)
       `(with-access::JsObject ,obj (cmap)

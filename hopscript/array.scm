@@ -107,6 +107,7 @@
 	   (js-array-alloc::JsArray ::JsGlobalObject)
 	   (js-array-construct::JsArray ::JsGlobalObject ::JsArray ::obj)
 	   (js-array-construct1::JsArray ::JsGlobalObject ::JsArray ::obj)
+	   (js-array-construct-alloc ::JsGlobalObject ::obj)
 	   (inline js-array-construct-alloc-small::JsArray ::JsGlobalObject ::uint32)
 	   (inline js-array-construct-alloc-small-sans-init::JsArray ::JsGlobalObject ::uint32)
 	   (js-array-construct/lengthu32::JsArray ::JsGlobalObject ::JsArray ::uint32)
@@ -2505,6 +2506,16 @@
 	      (len (vector-length vec)))
 	  (array-set! vec #u32:1 #u32:1)))))
 
+;*---------------------------------------------------------------------*/
+;*    js-array-construct-alloc ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-array-construct-alloc %this::JsGlobalObject item-or-len)
+   (if (fixnum? item-or-len)
+       (if (and (>=fx item-or-len 0) (<fx item-or-len 1024))
+	   (js-array-construct-alloc-small %this (fixnum->uint32 item-or-len))
+	   (js-array-construct/length %this (js-array-alloc %this) item-or-len))
+       (js-array-construct1 %this (js-array-alloc %this) item-or-len)))
+       
 ;*---------------------------------------------------------------------*/
 ;*    js-vector->jsarray ...                                           */
 ;*---------------------------------------------------------------------*/

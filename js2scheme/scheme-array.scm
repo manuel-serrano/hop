@@ -132,7 +132,7 @@
 	  `(js-array-construct/lengthu32 %this (js-array-alloc %this)
 	      ,(k (j2s-scheme arg mode return ctx))))
 	 (else
-	  `(js-array-construct1 %this (js-array-alloc %this)
+	  `(js-array-construct-alloc %this
 	      ,(box (j2s-scheme arg mode return ctx)
 		  (j2s-vtype arg) ctx)))))
    
