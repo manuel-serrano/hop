@@ -9,7 +9,7 @@
 ;*    Constant lifting optimization.                                   */
 ;*                                                                     */
 ;*    This optimization moves constant expressions that reference      */
-;*    captured constant variable before the procedure creation.        */
+;*    captured constant variables before the procedure creation.       */
 ;*    For instance:                                                    */
 ;*      function f( x ) {                                              */
 ;*         return f() {                                                */
@@ -58,7 +58,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-cnstlift! this conf)
    (when (isa? this J2SProgram)
-      (j2s-free-var this #f)
+      (j2s-free-var this #f '())
       (j2s-cnstlift-expression! this #f))
    this)
 
@@ -69,6 +69,53 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-cnstlift-expression! ::J2SLetBlock ...                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-cnstlift-expression! this::J2SLetBlock vars)
+
+   (define (decompose-bindexit stmt::J2SBindExit)
+      (with-access::J2SBindExit stmt (stmt)
+	 (with-access::J2SLetBlock stmt (decls nodes)
+	    (if (and (pair? nodes)
+		     (null? (cdr nodes))
+		     (isa? (car nodes) J2SReturn))
+		(with-access::J2SReturn (car nodes) (expr)
+		   (unless (isa? expr J2SFun)
+		      (error "cnstlift"
+			 "unexpected function transformation"
+			 (j2s->list stmt)))
+		   (values decls expr))
+		(error "cnstlift"
+		   "unexpected function transformation"
+		   (j2s->list stmt))))))
+
+   (with-access::J2SLetBlock this (decls nodes)
+      ;; compile the declaration and lift one level up the potential
+      ;; variable declarations introduced by the function
+      ;; transformation
+      (for-each (lambda (decl)
+		   (cond
+		      ((isa? decl J2SDeclFun)
+		       (with-access::J2SDeclFun decl (val)
+			  (let ((nval (j2s-cnstlift-expression! val vars)))
+			     (cond
+				((isa? nval J2SBindExit)
+				 (multiple-value-bind (ndecls fun)
+				    (decompose-bindexit nval)
+				    (set! decls (append ndecls decls))
+				    (set! val fun)))
+				((not (isa? nval J2SFun))
+				 (error "cnstlift"
+				    "unexpected function transformation"
+				    (j2s->list nval)))))))
+		      ((isa? decl J2SDeclInit)
+		       (with-access::J2SDeclInit decl (val)
+			  (set! val (j2s-cnstlift-expression! val vars))))))
+	 decls)
+      (set! nodes (map (lambda (n) (j2s-cnstlift-expression! n vars)) nodes))
+      this))
+   
+;*---------------------------------------------------------------------*/
 ;*    j2s-cnstlift-expression! ::J2SMethod ...                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-cnstlift-expression! this::J2SMethod vars)
@@ -78,7 +125,7 @@
       (with-access::J2SFun method (body loc)
 	 (set! body (j2s-cnstlift-expression! body #f)))
       this))
-      
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cnstlift-expression! ::J2SFun ...                            */
 ;*---------------------------------------------------------------------*/
@@ -181,9 +228,9 @@
 	       ((decl-usage-has? decl '(assig))
 		(cell-set! iscnst #f))
 	       ((not free)
-		(when (eq? scope 'local)
+		(when (memq scope '(local letblock))
 		   (cell-set! iscnst #f)))
-	       ((and (eq? scope 'local)
+	       ((and (memq scope '(local letblock))
 		     (not (memq decl (cell-ref freevars))))
 		(cell-set! freevars (cons decl (cell-ref freevars))))))))
    (cell-ref iscnst))
@@ -200,40 +247,51 @@
 ;*    -------------------------------------------------------------    */
 ;*    Mark the free variable references                                */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-free-var this::J2SNode infun)
+(define-walk-method (j2s-free-var this::J2SNode infun env)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-free-var ::J2SRef ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-free-var this::J2SRef infun)
+(define-walk-method (j2s-free-var this::J2SRef infun env)
    (with-access::J2SRef this (decl (free %info))
       (with-access::J2SDecl decl (%info escape id)
-	 (set! free (not (eq? infun %info))))))
+	 (set! free (and (not (eq? infun %info)) (not (memq decl env)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-free-var ::J2SLetBlock ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-free-var this::J2SLetBlock infun)
+(define-walk-method (j2s-free-var this::J2SLetBlock infun env)
    (with-access::J2SLetBlock this (decls nodes)
       (for-each (lambda (d)
 		   (with-access::J2SDecl d (%info) (set! %info infun)))
 	 decls)
-      (for-each (lambda (d) (j2s-free-var d infun)) decls)
-      (for-each (lambda (n) (j2s-free-var n infun)) nodes))
+      ;; when traversing a declaration initialization, the list
+      ;; of defined variables is added to the environment in order
+      ;; to prevent lifting expressions that might contain a
+      ;; variable declared in the current block but not yet initialized
+      (for-each (lambda (d) (j2s-free-var d infun (append decls env))) decls)
+      (for-each (lambda (n) (j2s-free-var n infun env)) nodes))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-free-var ::J2SFun ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-free-var this::J2SFun infun)
+(define-walk-method (j2s-free-var this::J2SFun infun env)
    (with-access::J2SFun this (params body)
       (for-each (lambda (p)
 		   (with-access::J2SDecl p (%info)
 		      (set! %info this)))
 	 params)
-      (j2s-free-var body this)))
+      (j2s-free-var body this env)))
 
-
-
-
+;*---------------------------------------------------------------------*/
+;*    j2s-free-var ::J2SKont ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-free-var this::J2SKont infun env)
+   (with-access::J2SKont this (param exn body)
+      (with-access::J2SDecl param (%info)
+	 (set! %info this))
+      (with-access::J2SDecl exn (%info)
+	 (set! %info this))
+      (j2s-free-var body this env)))

@@ -251,14 +251,17 @@
 	       this))
 	 
 	 (with-access::JsGlobalObject %this (js-new-target)
-	    (if (eq? js-new-target (js-undefined))
-		(js-date->jsstring (current-date))
-		(let ((val (if (any (lambda (a) (eq? a (js-undefined))) args)
-			       (current-date)
-			       (parse-date-arguments args))))
+	    (cond
+	       ((eq? js-new-target (js-undefined))
+		(js-date->jsstring (current-date)))
+	       ((any (lambda (a) (eq? a (js-undefined))) args)
+		(set! js-new-target (js-undefined))
+		this)
+	       (else
+		(let ((val (parse-date-arguments args)))
 		   (set-date! this val)
 		   (set! js-new-target (js-undefined))
-		   this))))
+		   this)))))
       
       (set! js-date
 	 (js-make-function %this %js-date

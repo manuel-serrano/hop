@@ -488,6 +488,22 @@
 	   (error "js-get-jsobject-name/cache" "bad form" x))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-getprototypeof-expander ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-getprototypeof-expander x e)
+   (match-case x
+      ((?- (and (? symbol?) ?obj))
+       (e `(if (js-object? ,obj)
+	       (js-object-proto ,obj)
+	       ((@ js-getprototypeof __hopscript_property) ,obj))
+	  e))
+      ((?- ?obj)
+       (let ((tmp (gensym 'obj)))
+	  (e `(let ((,tmp ,obj)) (js-getprototypeof ,tmp)) e)))
+      (else
+       (map (lambda (x) (e x e)) x))))
+       
+;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache-expander ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (js-get-name/cache-expander x e)
