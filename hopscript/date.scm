@@ -262,7 +262,7 @@
       
       (set! js-date
 	 (js-make-function %this %js-date
-	    (js-function-arity 7 0)
+	    (js-function-arity 0 -1 'scheme)
 	    (js-function-info :name "Date" :len 7)
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-date-prototype

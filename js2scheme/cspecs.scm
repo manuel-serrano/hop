@@ -69,7 +69,7 @@
 			  '(imap emap cmap pmap amap vtable)
 			  '(imap emap cmap nmap amap vtable)
 			  '(imap cmap)
-			  '(pmap cmap vtable)))))
+			  '(pmap cmap vtable poly)))))
 	 (cspecs-default! this csdef)
 	 (when (or (config-get conf :optim-cspecs) (config-get conf :cspecs))
 	    (let loop ((log (config-get conf :profile-log #f)))

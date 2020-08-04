@@ -132,7 +132,7 @@
 	  `(js-array-construct/lengthu32 %this (js-array-alloc %this)
 	      ,(k (j2s-scheme arg mode return ctx))))
 	 (else
-	  `(js-array-construct-alloc %this
+	  `(js-array-construct-alloc/length %this
 	      ,(box (j2s-scheme arg mode return ctx)
 		  (j2s-vtype arg) ctx)))))
    
@@ -162,10 +162,10 @@
 		    (with-access::J2SCast arg (type expr)
 		       (if (eq? type 'any)
 			   (loop expr)
-			   `(js-array-construct1 %this (js-array-alloc %this)
-			       ,(j2s-scheme arg mode return ctx)))))
+			   `(js-array-construct-alloc %this
+			       ,(box (j2s-scheme arg mode return ctx) type ctx)))))
 		   (else
-		    `(js-array-construct1 %this (js-array-alloc %this)
+		    `(js-array-construct-alloc %this 
 			,(j2s-scheme arg mode return ctx))))))))))
 
 ;*---------------------------------------------------------------------*/
