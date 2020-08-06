@@ -41,6 +41,7 @@
    (use    __hopscript_array
 	   __hopscript_stringliteral
 	   __hopscript_names
+	   __hopscript_arguments
 	   __hopscript_arraybufferview)
    
    (extern ($js-make-pcache-table::obj (::obj ::int ::obj ::obj ::JsPropertyCache)
@@ -1979,6 +1980,8 @@
 			   cache -1 '()))))))))
       ((js-array? o)
        (js-array-ref o prop %this))
+      ((eq? (object-class o) JsArguments)
+       (js-arguments-ref o prop %this))
       (else
        (js-get o prop %this))))
 
