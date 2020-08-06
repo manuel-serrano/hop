@@ -108,8 +108,9 @@
 	("trim" js-jsstring-trim string () #f)
 	("trim" js-jsstring-maybe-trim any () %this #t)
 	("slice" js-jsstring-slice string (any any) %this)
-	("slice" js-jsstring-maybe-slice1 any (any) %this #t)
-	("slice" js-jsstring-maybe-slice any (any any) %this #t)
+	;; array are prefered to string for slice1 and slice2
+;* 	("slice" js-jsstring-maybe-slice1 any (any) %this #t)          */
+;* 	("slice" js-jsstring-maybe-slice2 any (any any) %this #t)      */
 	;; regexp
 	("test" ,j2s-regexp-test regexp (any) %this)
 	("exec" js-regexp-prototype-exec regexp (any) %this #f ,j2s-regexp-plain?)
@@ -144,6 +145,8 @@
 	("pop" js-array-pop array () %this #t ,j2s-array-plain?)
 	("pop" js-array-maybe-pop any () %this #t ,j2s-array-plain?)
 	("slice" js-array-maybe-slice0 any () %this #t)
+	("slice" js-array-maybe-slice1 any (any) %this #t)
+	("slice" js-array-maybe-slice2 any (any any) %this #t)
 	("shift" js-array-maybe-shift0 any () %this #t)
 	;; functions
 	("apply",j2s-apply any (any any) %this #t)

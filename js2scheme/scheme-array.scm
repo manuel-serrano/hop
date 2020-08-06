@@ -129,7 +129,7 @@
 	  `(js-array-construct-alloc-small %this 
 	      ,(k (j2s-scheme arg mode return ctx))))
 	 ((smaller-than? arg (bit-lsh 1 29))
-	  `(js-array-construct/lengthu32 %this (js-array-alloc %this)
+	  `(js-array-construct-alloc/lengthu32 %this (js-array-alloc %this)
 	      ,(k (j2s-scheme arg mode return ctx))))
 	 (else
 	  `(js-array-construct-alloc/length %this

@@ -1652,9 +1652,9 @@
 (define (js-toboolean-no-boolean obj)
    (cond
       ((js-null-or-undefined? obj) #f)
+      ((fixnum? obj) (not (=fx obj 0)))
       ((js-jsstring? obj) (js-jsstring-toboolean obj))
       ((object? obj) #t)
-      ((fixnum? obj) (not (=fx obj 0)))
       ((flonum? obj) (not (or (=fl obj 0.0) (nanfl? obj))))
       (else #t)))
 

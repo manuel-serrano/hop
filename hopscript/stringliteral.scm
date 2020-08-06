@@ -124,8 +124,8 @@
 	   (js-jsstring-escape ::JsStringLiteral)
 	   (js-jsstring-unescape ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring-slice ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
-	   (js-jsstring-maybe-slice ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-maybe-slice1 ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-jsstring-maybe-slice2 ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring->jsarray ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring->list ::obj ::JsGlobalObject))
 
@@ -3237,22 +3237,6 @@
 	  jss)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring-maybe-slice ...                                      */
-;*---------------------------------------------------------------------*/
-(define (js-jsstring-maybe-slice this start end %this cache)
-   (cond
-      ((js-jsstring? this)
-       (js-jsstring-slice this start end %this))
-      ((js-array? this)
-       (js-array-prototype-slice this start end %this))
-      (else
-       (with-access::JsGlobalObject %this (js-string-pcache)
-	  (let ((slice (js-get-name/cache this (& "slice") #f %this
-			  (or cache (js-pcache-ref js-string-pcache 22))
-			  -1 '(imap+))))
-	     (js-call2 %this slice this start end))))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-slice1 ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-maybe-slice1 this start %this cache)
@@ -3260,15 +3244,29 @@
       ((js-jsstring? this)
        (js-jsstring-slice this start (js-jsstring-lengthfx this) %this))
       ((js-array? this)
-       (if (eq? start 0)
-	   (js-array-maybe-slice0 this %this cache)
-	   (js-array-prototype-slice this start (js-undefined) %this)))
+       (js-array-maybe-slice1 this %this cache start))
       (else
        (with-access::JsGlobalObject %this (js-string-pcache)
 	  (let ((slice (js-get-name/cache this (& "slice") #f %this
 			  (or cache (js-pcache-ref js-string-pcache 37))
 			  -1 '(imap+))))
 	     (js-call1 %this slice this start))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-maybe-slice2 ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-maybe-slice2 this start end %this cache)
+   (cond
+      ((js-jsstring? this)
+       (js-jsstring-slice this start end %this))
+      ((js-array? this)
+       (js-array-maybe-slice2 this %this cache start end))
+      (else
+       (with-access::JsGlobalObject %this (js-string-pcache)
+	  (let ((slice (js-get-name/cache this (& "slice") #f %this
+			  (or cache (js-pcache-ref js-string-pcache 22))
+			  -1 '(imap+))))
+	     (js-call2 %this slice this start end))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->jsarray ...                                         */
