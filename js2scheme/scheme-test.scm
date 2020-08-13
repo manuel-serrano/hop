@@ -60,6 +60,9 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-totest ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    This function tries to push the totest conversion as deeply      */
+;*    as possible to help the forthcoming register allocation.         */
 ;*---------------------------------------------------------------------*/
 (define (j2s-totest expr)
    (match-case expr
@@ -71,6 +74,15 @@
        `(js-jsstring-match-regexp-from-string-as-bool ,obj ,arg ,rx ,%this))
       ((let ((?var ?-)) ((kwote or) (js-array? ?var) (js-proxy-array? ?var)))
        expr)
+      ((let ?bindings ?body)
+       `(let ,bindings
+	   ,(match-case body
+	       ((cond . ?clauses)
+		`(cond
+		    ,@(map (lambda (c) `(,(car c) (js-totest ,@(cdr c))))
+		       clauses)))
+	       (else
+		`(js-totest ,body)))))
       (else
        `(js-totest ,expr))))
 

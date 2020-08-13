@@ -556,7 +556,9 @@
 		       :optim-ctor #f
 		       :optim-size #t
 		       o))))
-	 
+
+      (unless (memq :=fx-as-eq o)
+	 (set! o (cons* :=fx-as-eq #t o)))
       (unless (memq :filename o)
 	 (set! o (cons* :filename filename o)))
 

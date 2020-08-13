@@ -842,7 +842,8 @@
       ;; https://www.ecma-international.org/ecma-262/6.0/#sec-object.is
       (define (is this x y)
 	 ;; SameValue algorithm
-	 (or (js-eqstring? x y)
+	 (or (eq? x y)
+	     (if (or (js-jsstring? x) (js-jsstring? y)) (js-eqstring? x y))
 	     ;; eqstring test eq first
 	     (and (flonum? x) (flonum? y)
 		  (or (and (=fl x y) (=fx (signbitfl x) (signbitfl y)))

@@ -201,7 +201,7 @@
 	   (inline js-strict-equal-no-string?::bool ::obj ::obj)
 	   (js-eq?::bool ::obj ::obj)
 	   (js-eq-no-string?::bool ::obj ::obj)
-	   (inline js-eqstring?::bool ::obj ::obj)
+	   (inline js-eqstring?::bool ::JsStringLiteral ::obj)
 	   (inline js-eqil?::bool ::long ::obj)
 	   (inline js-eqir?::bool ::obj ::long)
 	   (inline js-null-or-undefined?::bool ::obj)
@@ -2084,8 +2084,7 @@
 (define (js-eq? x y)
    (cond
       ((js-jsstring? x)
-       (and (js-jsstring? y)
-	    (string=? (js-jsstring->string x) (js-jsstring->string y))))
+       (js-eqstring? x y))
       ((fixnum? x)
        (if (fixnum? y) (=fx x y) (when (flonum? y) (=fl (fixnum->flonum x) y))))
       ((flonum? x)
@@ -2108,10 +2107,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-eqstring? ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-eqstring?::bool x y)
-   (or (eq? x y)
-       (and (js-jsstring? x) (js-jsstring? y)
-	    (string=? (js-jsstring->string x) (js-jsstring->string y)))))
+(define-inline (js-eqstring?::bool s x)
+   (or (eq? s x)
+       (and (js-jsstring? x)
+	    (=u32 (js-jsstring-length s) (js-jsstring-length x))
+	    (string=? (js-jsstring->string s) (js-jsstring->string x)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-eqil? ...                                                     */

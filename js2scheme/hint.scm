@@ -110,16 +110,56 @@
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
+;*    add-hints! ::J2SNode ...                                         */
+;*---------------------------------------------------------------------*/
+(define-generic (add-hints! this::J2SNode hints::pair-nil)
+   #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    add-hints! ::J2SExpr ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (add-hints! expr::J2SExpr hints::pair-nil)
+   
+   (define (add-hint! expr type::symbol inc)
+      (with-access::J2SExpr expr (hint)
+	 (let ((c (assq type hint)))
+	    (if (pair? c)
+		(set-cdr! c (+fx inc (cdr c)))
+		(set! hint (cons (cons type inc) hint))))))
+
+   (with-access::J2SExpr expr (hint)
+      (when (pair? hints)
+	 (for-each (lambda (hi)
+		      (let ((ty (car hi))
+			    (inc (cdr hi)))
+			 (unless (memq ty '(unknown any))
+			    (case ty
+			       ((string)
+				(unless (assq 'no-string hint)
+				   (add-hint! expr ty inc)))
+			       ((no-string)
+				(let ((c (assq 'string hint)))
+				   (set! hint (delete! c hint))
+				   (add-hint! expr ty inc)))
+			       ((no-integer)
+				(let ((c (assq 'integer hint)))
+				   (set! hint (delete! c hint))
+				   (add-hint! expr ty inc)))
+			       (else
+				(add-hint! expr ty inc))))))
+	    hints))))
+   
+;*---------------------------------------------------------------------*/
 ;*    add-hints! ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (add-hints! decl::J2SDecl hints::pair-nil reason)
+(define-method (add-hints! decl::J2SDecl hints::pair-nil)
    
    (define (add-hint! decl type::symbol inc)
       (with-access::J2SDecl decl (id hint vtype)
 	 (let ((c (assq type hint)))
 	    (if (pair? c)
 		(set-cdr! c (+fx inc (cdr c)))
-		(set! hint (cons (cons type inc) hint))))))
+		(set! hint (cons (cons type inc) hint))))))   
    
    (with-access::J2SDecl decl (id hint itype vtype)
       (when (and (pair? hints)
@@ -152,11 +192,20 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-hint ::J2SIf ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint this::J2SIf hints::pair-nil)
+   (with-access::J2SIf this (test then else)
+      (j2s-hint test (cons '(bool . 20) hints))
+      (j2s-hint then hints)
+      (j2s-hint else hints)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SRef ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SRef hints)
    (with-access::J2SRef this (decl loc type)
-      (add-hints! decl hints this)))
+      (add-hints! decl hints)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SExpr ...                                           */
@@ -165,7 +214,7 @@
    (multiple-value-bind (op decl type ref loc)
       (j2s-expr-type-test this)
       (if op
-	  (add-hints! decl `((,type . 2)) this)
+	  (add-hints! decl `((,type . 2)))
 	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
@@ -177,6 +226,9 @@
 	 ((<< >> >>> ^ & BIT_OR)
 	  (j2s-hint rhs  '((integer . 5)))
 	  (j2s-hint lhs '((integer . 5))))
+	 ((&& OR)
+	  (j2s-hint rhs  (cons '(bool . 10) hints))
+	  (j2s-hint lhs  (cons '(bool . 10) hints)))
 	 ((< <= >= > - * /)
 	  (case (j2s-type lhs)
 	     ((real)
@@ -328,7 +380,7 @@
    (with-access::J2SDeclInit this (val vtype hint loc id)
       (let ((ty (j2s-type val)))
 	 (when (symbol? ty)
-	    (add-hints! this `((,ty . 3)) this)))
+	    (add-hints! this `((,ty . 3)))))
       (let ((bc (if (decl-usage-has? this '(get))
 		    100
 		    (multiple-value-bind (bt bc)
@@ -371,6 +423,7 @@
 ;*    j2s-hint ::J2SAccess ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SAccess hints)
+   (add-hints! this hints)
    (j2s-hint-access this #t))
 
 ;*---------------------------------------------------------------------*/

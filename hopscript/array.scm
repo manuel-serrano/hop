@@ -763,12 +763,9 @@
 	   (js-array-index-ref arr (fixnum->uint32 idx) %this)
 	   (js-array-noindex-ref arr idx %this)))
       (else
-       (with-access::JsArray arr (ilen vec)
-	  (if (fixnum? idx)
-	      (if (and (>=fx idx 0) (<fx idx (uint32->fixnum ilen)))
-		  (vector-ref vec idx)
-		  (js-array-fixnum-ref arr idx %this))
-	      (js-array-noindex-ref arr idx %this))))))
+       (if (fixnum? idx)
+	   (js-array-fixnum-ref arr idx %this)
+	   (js-array-noindex-ref arr idx %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-inl-ref ...                                             */

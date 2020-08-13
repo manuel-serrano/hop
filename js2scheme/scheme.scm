@@ -370,7 +370,7 @@
 ;*    j2s-scheme ::J2SCast ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SCast mode return ctx)
-
+   
    (define (src-type expr)
       (let ((ty (j2s-type expr))
 	    (vty (j2s-vtype expr)))
@@ -382,18 +382,30 @@
 	    (else ty))))
    
    (with-access::J2SCast this (expr type)
-      (cond
-	 ((isa? expr J2SBinary)
-	  (or (j2s-scheme-binary-as expr mode return ctx type)
-	      (j2s-cast (j2s-scheme expr mode return ctx)
-		 expr (src-type expr) type ctx)))
-	 ((isa? expr J2SUnary)
-	  (or (j2s-scheme-unary-as expr mode return ctx type)
-	      (j2s-cast (j2s-scheme expr mode return ctx)
-		 expr (src-type expr) type ctx)))
-	 (else
-	  (j2s-cast (j2s-scheme expr mode return ctx)
-	     expr (src-type expr) type ctx)))))
+      (let loop ((expr expr))
+	 (cond
+	    ((isa? expr J2SBinary)
+	     (or (j2s-scheme-binary-as expr mode return ctx type)
+		 (j2s-cast (j2s-scheme expr mode return ctx)
+		    expr (src-type expr) type ctx)))
+	    ((isa? expr J2SUnary)
+	     (or (j2s-scheme-unary-as expr mode return ctx type)
+		 (j2s-cast (j2s-scheme expr mode return ctx)
+		    expr (src-type expr) type ctx)))
+	    ((isa? expr J2SParen)
+	     (with-access::J2SParen expr (expr)
+		;; push the cast inside the parenthesis
+		(loop expr)))
+	    ((isa? expr J2SSequence)
+	     ;; push the cast to the last sequence expression
+	     (with-access::J2SSequence expr (exprs)
+		(with-access::J2SCast this ((cexpr expr))
+		   (set! cexpr (car (last-pair exprs)))
+		   (set-car! (last-pair exprs) this)
+		   (j2s-scheme expr mode return ctx))))
+	    (else
+	     (j2s-cast (j2s-scheme expr mode return ctx)
+		expr (src-type expr) type ctx))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SRef ...                                          */
@@ -2263,11 +2275,16 @@
       (when (memq (j2s-type obj) '(any unknown string))
 	 (with-access::J2SExpr obj (hint)
 	    (let ((cs (assq 'string hint))
+		  (cb (assq 'bool hint))
 		  (ca (assq 'array hint))
 		  (ns (assq 'no-string hint)))
 	       (cond
 		  ((pair? ns)
 		   #f)
+		  ((pair? cb)
+		   (if (pair? cs)
+		       (<fx (cdr cb) (cdr cs))
+		       #f))
 		  ((pair? cs)
 		   (if (pair? ca)
 		       (=fx (cdr cs) (cdr ca))

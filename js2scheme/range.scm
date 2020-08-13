@@ -143,9 +143,15 @@
 	 (set! *dump-stop* #t))
       (let ((i (string-contains env "j2s:stop")))
 	 (when i
-	    (call-with-input-string (substring env (+fx i 9))
-	       (lambda (ip)
-		  (set! *dump-stop* (read ip)))))))
+	    (cond
+	       ((=fx (+fx i 8) (string-length env))
+		(set! *dump-stop* 0))
+	       ((char=? (string-ref env (+fx i 8)) #\space)
+		(set! *dump-stop* 0))
+	       (else
+		(call-with-input-string (substring env (+fx i 8))
+		   (lambda (ip)
+		      (set! *dump-stop* (read ip)))))))))
    (when (isa? this J2SProgram)
       ;; init range intervals
       (j2s-range-init!)
@@ -724,6 +730,9 @@
 		((>= oi #l-10)
 		 (let ((min #l-10))
 		    (interval min (max oa min))))
+		((>= oi *min-int53*)
+		 (let ((min *min-int53*))
+		    (interval min (max oa min))))
 		(else
 		 (interval *-inf.0* oa))))
 	    (else
@@ -743,6 +752,12 @@
       (cond
 	 ((and (=llong x #l1) (=llong y *max-int53*)) *max-int53*)
 	 ((and (=llong y #l1) (=llong x *max-int53*)) *max-int53*)
+	 ((and (=llong x #l-1) (=llong y *min-int53*)) *min-int53*)
+	 ((and (=llong y #l-1) (=llong x *min-int53*)) *min-int53*)
+	 ((and (=llong x *+inf.0*) (>=llong y #l0)) *+inf.0*)
+	 ((and (=llong y *+inf.0*) (>=llong x #l0)) *+inf.0*)
+	 ((and (=llong x *-inf.0*) (<=llong y #l0)) *-inf.0*)
+	 ((and (=llong y *-inf.0*) (<=llong x #l0)) *-inf.0*)
 	 (else (+llong x y))))
    
    (define (interval-add64 left right)
@@ -772,6 +787,13 @@
    (define (-safe53 x y)
       (cond
 	 ((and (=llong x *min-int53*) (=llong y #l1)) *min-int53*)
+	 ((and (=llong y *min-int53*) (=llong x #l1)) *min-int53*)
+	 ((and (=llong x *max-int53*) (=llong y #l-1)) *min-int53*)
+	 ((and (=llong y *min-int53*) (=llong x #l-1)) *min-int53*)
+	 ((and (=llong x *+inf.0*) (<=llong y #l0)) *+inf.0*)
+	 ((and (=llong y *+inf.0*) (<=llong x #l0)) *+inf.0*)
+	 ((and (=llong x *-inf.0*) (>=llong y #l0)) *-inf.0*)
+	 ((and (=llong y *-inf.0*) (>=llong x #l0)) *-inf.0*)
 	 (else (-llong x y))))
    
    (define (interval-sub64 left right)
@@ -1264,7 +1286,7 @@
 ;*    node-range ::J2SAssigOp ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SAssigOp env::pair-nil conf mode::symbol fix::cell)
-   (with-access::J2SAssigOp this (op lhs rhs type)
+   (with-access::J2SAssigOp this (op lhs rhs type range)
       (multiple-value-bind (intv nenv)
 	 (node-range-binary this op lhs rhs env conf mode fix)
 	 (cond
@@ -1655,10 +1677,14 @@
    (debug *debug-range-binary* "env=" (dump-env env))
    (multiple-value-bind (intl envl)
       (node-range lhs env conf mode fix)
-      (debug *debug-range-binary* "envl=" (dump-env envl))
       (multiple-value-bind (intr envr)
 	 (node-range rhs envl conf mode fix)
 	 (debug *debug-range-binary* "envr=" (dump-env envr))
+	 (debug *debug-range-binary* "envl=" (dump-env envl))
+	 (debug *debug-range-binary*
+	    `(,op
+		,(when (interval? intl) (j2s-dump-range intl))
+		,(when (interval? intr) (j2s-dump-range intr))))
 	 (case op
 	    ((+)
 	     (expr-range-add! this env fix (interval-add intl intr conf)))

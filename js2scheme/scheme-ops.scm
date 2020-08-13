@@ -929,13 +929,20 @@
 		  ((eq? tr 'real)
 		   `(=fl ,(asreal left tl) ,right))
 		  ((eq? op '===)
-		   (if (memq (j2s-type rhs) '(int32 uint32))
-		       `(=fx ,(asfixnum left tl) ,right)
+		   (cond
+		      ((memq (j2s-type rhs) '(int32 uint32))
+		       `(=fx ,(asfixnum left tl) ,right))
+		      ((context-get ctx :=fx-as-eq #f)
+		       `(or (eq? ,(asfixnum left tl) ,right)
+			    (js-eqil?
+			       ,(box left tl ctx)
+			       ,(box right tr ctx))))
+		      (else
 		       `(if (fixnum? ,right)
 			    (=fx ,(asfixnum left tl) ,right)
 			    (js-eqil?
 			       ,(box left tl ctx)
-			       ,(box right tr ctx)))))
+			       ,(box right tr ctx))))))
 		  ((not (eq? tr 'any))
 		   `(js-equal-sans-flonum? ,(asfixnum left tl) ,right %this))
 		  (else
@@ -967,11 +974,21 @@
 		  ((eq? tr 'real)
 		   `(=fl ,(asreal left tl) ,right))
 		  ((eq? op '===)
-		   (if (memq (j2s-type rhs) '(int32 uint32))
+		   (cond
+		      ((memq (j2s-type rhs) '(int32 uint32))
 		       (if (inrange-int32? lhs)
 			   `(=fx ,(asfixnum left tl) ,right)
 			   `(and (=fx ,(asfixnum left tl) ,right)
-				 (>=fx ,right 0)))
+				 (>=fx ,right 0))))
+		      ((context-get ctx :=fx-as-eq #f)
+		       (or (if (inrange-int32? lhs)
+			       `(eq? ,(asfixnum left tl) ,right)
+			       `(and (eq? ,(asfixnum left tl) ,right)
+				     (>=fx ,right 0)))
+			   `(js-eqil?
+			       ,(box left tl ctx)
+			       ,(box right tr ctx))))
+		      (else
 		       `(if (fixnum? ,right)
 			    ,(if (inrange-int32? lhs)
 				 `(=fx ,(asfixnum left tl) ,right)
@@ -979,12 +996,15 @@
 				       (>=fx ,right 0)))
 			    (js-eqil?
 			       ,(box left tl ctx)
-			       ,(box right tr ctx)))))
+			       ,(box right tr ctx))))))
 		  (else
 		   (if (inrange-int32? lhs)
-		       `(if (fixnum? ,right)
-			    (=fx ,(asfixnum left tl) ,right)
-			    (js-equal? ,(asfixnum left tl) ,right %this))
+		       (if (context-get ctx :=fx-as-eq #f)
+			   `(or (eq? ,(asfixnum left tl) ,right)
+				(js-equal? ,(asfixnum left tl) ,right %this))
+			   `(if (fixnum? ,right)
+				(=fx ,(asfixnum left tl) ,right)
+				(js-equal? ,(asfixnum left tl) ,right %this)))
 		       (if (memq (j2s-type rhs) '(int32 uint32))
 			   `(and (=fx ,(asfixnum left tl) ,right)
 				  (>=fx ,right 0))
@@ -1139,7 +1159,7 @@
 	 ((eq? tr 'uint32)
 	  (equality-uint32 op rhs tr lhs tl mode return ctx #t))
 	 ((and (memq op '(=== !==)) (eq? tl 'string))
-	  (equality-string op rhs tr lhs tl mode return ctx #f))
+	  (equality-string op lhs tl rhs tr mode return ctx #f))
 	 ((and (memq op '(=== !==)) (eq? tr 'string))
 	  (equality-string op rhs tr lhs tl mode return ctx #t))
 	 ((and (eq? tl 'real) (eq? tr 'real))
@@ -3044,3 +3064,5 @@
 	 ((int53) `(,op ,expr))
 	 ((real) `(fixnum->flonum (,op ,expr)))
 	 (else `(,op ,expr)))))
+
+       

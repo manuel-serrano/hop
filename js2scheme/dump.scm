@@ -271,10 +271,12 @@
 	 ((<=llong int *-inf.0*) '-inf)
 	 (else int)))
 
-   (interval
-      (interval-type rng)
-      (j2s-dump-range-int (interval-min rng))
-      (j2s-dump-range-int (interval-max rng))))
+   (if (interval? rng)
+       (interval
+	  (j2s-dump-range-int (interval-min rng))
+	  (j2s-dump-range-int (interval-max rng))
+	  (interval-type rng))
+       rng))
    
 ;*---------------------------------------------------------------------*/
 ;*    dump-range ...                                                   */
@@ -737,6 +739,7 @@
 	  ,@(dump-type this)
 	  ,@(dump-hint this)
 	  ,@(dump-loc loc)
+	  ,@(dump-range this)
 	  (,lbl) ,(j2s->list stmt))))
 
 ;*---------------------------------------------------------------------*/
