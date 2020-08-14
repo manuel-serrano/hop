@@ -736,23 +736,22 @@
    ;; setTime
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.27
    (define (date-prototype-settime this::JsDate time)
-      (with-access::JsDate this (val)
-	 (let ((s (js-tonumber time %this)))
-	    (cond
-	       ((fixnum? s)
-		(set! val (seconds->date (fixnum->elong s)))
-		(date->milliseconds val))
-	       ((elong? s)
-		(set! val (seconds->date s))
-		(date->milliseconds val))
-	       ((flonum? s)
-		(if (nanfl? s)
-		    (begin
-		       (set! val s)
-		       s)
-		    (begin
-		       (set! val (seconds->date (flonum->fixnum s)))
-		       (date->milliseconds val))))))))
+      
+      (define (setllong ll::llong)
+	 (with-access::JsDate this (val)
+	    (set! val (nanoseconds->date (*llong ll #l1000000)))
+	    (llong->flonum (/llong (date->nanoseconds val) #l1000000))))
+      
+      (let ((s (js-tonumber time %this)))
+	 (cond
+	    ((fixnum? s)
+	     (setllong (fixnum->llong s)))
+	    ((flonum? s)
+	     (if (nanfl? s)
+		 (with-access::JsDate this (val)
+		    (set! val s)
+		    s)
+		 (setllong (flonum->llong s)))))))
 
    (js-bind! %this obj (& "setTime")
       :value (js-make-function %this date-prototype-settime 1 (& "setTime"))

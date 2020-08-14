@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
 /*    Last change :  Mon Oct  7 08:44:23 2019 (serrano)                */
-/*    Copyright   :  2014-19 Manuel Serrano                            */
+/*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing Date                                                     */
 /*=====================================================================*/
@@ -383,3 +383,14 @@ checkDate( new Date('2014-11-03 19:23:22.478+01:00'), 2014, 10, 03, 19, 23, 22, 
 var utc = Date.UTC( 2014, 10, 3, 19, 23, 22, 478 );
 
 assert.ok( utc === 1415042602478, "Date.UTC" );
+
+/*---------------------------------------------------------------------*/
+/*    setTime                                                          */
+/*---------------------------------------------------------------------*/
+function testSetTime() {
+   var d = new Date();
+   const tc = d.setTime( 1318392428550 );
+   return tc === 1318392428550 && d.getYear() === 111, d.getMonth() === 9;
+}
+
+assert.ok( testSetTime(), "setTime" );
