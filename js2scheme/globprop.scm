@@ -94,21 +94,23 @@
 		  (collect-globprops this)
 		  (collect-globprops-toplevel! this)
 		  (rewrite-accesses! this)
-		  (let ((ndecls (append-map (lambda (d)
-					       (with-access::J2SDecl d (id %info)
-						  (if (and (propinfo? %info)
-							   (pair? (propinfo-props %info)))
-						      (filter-map (lambda (i)
-								     (when (and (pair? (cdr i))
-										(isa? (cadr i) J2SDecl))
-									(cadr i)))
-							 (propinfo-props %info))
-						      '())))
-				   gcnsts)))
+		  (let ((ndecls (append-map globprop-const gcnsts)))
 		     (set! decls (append decls ndecls))
 		     (when (>=fx (config-get args :verbose 0) 3)
 			(globprop-verb gcnsts))))))))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    globprop-const ...                                               */
+;*---------------------------------------------------------------------*/
+(define (globprop-const d)
+   (with-access::J2SDecl d (id %info)
+      (if (and (propinfo? %info) (pair? (propinfo-props %info)))
+	  (filter-map (lambda (i)
+			 (when (and (pair? (cdr i)) (isa? (cadr i) J2SDecl))
+			    (cadr i)))
+	     (propinfo-props %info))
+	  '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    globprop-verb ...                                                */
@@ -265,18 +267,15 @@
 		this)
 	       ((isa? rhs J2SLiteralCnst)
 		(let ((ndecl (J2SLetOptRoGlobal '(ref init)
-				(gensym val)
-				rhs)))
+				(gensym val) rhs)))
 		   (set! rhs (J2SRef ndecl))
 		   (set-cdr! c (list ndecl))))
 	       ((propinfo-needcheckp %info)
 		(let ((ndecl (J2SDeclGlobal 'let
 				'(ref init)
 				(gensym val)))
-		      (ndeclo (J2SLetOptVUtype 'bool
-				 '(ref init assig)
-				 (gensym val)
-				 (J2SBool #f))))
+		      (ndeclo (J2SLetOptVUtype 'bool '(ref init assig)
+				 (gensym val) (J2SBool #f))))
 		   (with-access::J2SDeclInit ndeclo (scope)
 		      (set! scope 'global))
 		   (set-cdr! c (list ndecl ndeclo))
@@ -291,8 +290,7 @@
 			    field
 			    (J2SPragma '%this))))))
 	       (else
-		(let ((ndecl (J2SDeclGlobal 'let
-				'(ref init)
+		(let ((ndecl (J2SDeclGlobal 'let '(ref init)
 				(gensym val))))
 		   (set-cdr! c (list ndecl))
 		   (J2SSequence
@@ -320,7 +318,7 @@
 ;*    collect-globprops-toplevel! ::J2SInit ...                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-globprops-toplevel! this::J2SInit)
-
+   
    (define (collect-init! init::J2SDataPropertyInit %info)
       (with-access::J2SDataPropertyInit init (loc val name)
 	 (with-access::J2SString name ((str val))
@@ -329,17 +327,24 @@
 		  ((not (and (pair? c) (cdr c)))
 		   #f)
 		  ((isa? val J2SLiteralCnst)
-		   (let* ((ndecl (J2SLetOptRoGlobal '(ref init) (gensym str) val))
+		   (let* ((ndecl (J2SLetOptRoGlobal '(ref init) (gensym str)
+				    val))
 			  (init (J2SInit (J2SRef ndecl) val)))
 		      (set-cdr! c (list ndecl))
 		      (set! val (J2SRef ndecl))
 		      init))
 		  (else
-		   (let* ((ndecl (J2SDeclGlobal 'let '(ref init) (gensym str)))
+		   (let* ((ndecl (J2SDeclGlobal 'let '(ref init)
+				    (gensym str)))
 			  (init (J2SInit (J2SRef ndecl) val)))
 		      (set-cdr! c (list ndecl))
 		      (set! val (J2SRef ndecl))
 		      init)))))))
+   
+   (define (col init %info)
+      (when (isa? init J2SDataPropertyInit)
+	 (with-access::J2SDataPropertyInit init (name val)
+	    (collect-init! init %info))))
    
    (with-access::J2SInit this (lhs rhs)
       (with-access::J2SRef lhs (decl)
@@ -349,20 +354,14 @@
 		     (pair? (propinfo-props %info))
 		     (isa? rhs J2SObjInit))
 		(with-access::J2SObjInit rhs (inits loc)
-		   (let ((assigs (filter-map (lambda (init)
-						(when (isa? init J2SDataPropertyInit)
-						   (with-access::J2SDataPropertyInit init (name val)
-						      (collect-init!  init %info))))
+		   (let ((assigs (filter-map (lambda (i) (col i %info))
 				    inits)))
 		      (if (pair? assigs)
 			  (J2SSequence* (append assigs (list this)))
 			  this)))
-		(call-default-walker))))))
-
-;*---------------------------------------------------------------------*/
-;*    collect-globprops-init ...                                       */
-;*---------------------------------------------------------------------*/
-
+		(begin
+		   (set! lhs (collect-globprops-toplevel! lhs))
+		   this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-globpprops-toplevel! ::J2SFun ...                        */
