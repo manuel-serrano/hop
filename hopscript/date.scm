@@ -252,7 +252,7 @@
 	     (let ((d (parse-date-arguments args)))
 		(cond
 		   ((date? d) (js-date->jsdate d))
-		   ((string? d) (js-string->jsstring d))
+		   ((string? d) (js-ascii->jsstring d))
 		   (else d)))))
       
       ;; create a HopScript object
@@ -359,13 +359,13 @@
    (define (date-prototype-todatestring this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (js-string->jsstring
+	     (js-ascii->jsstring
 		(format "~a ~a ~2,0d ~d"
 		   (day-aname (date-wday val))
 		   (month-aname (date-month val))
 		   (date-day val)
 		   (date-year val)))
-	     (js-string->jsstring "Invalid date"))))
+	     (js-ascii->jsstring "Invalid date"))))
 
    (js-bind! %this obj (& "toDateString")
       :value (js-make-function %this date-prototype-todatestring
@@ -377,13 +377,13 @@
    (define (date-prototype-totimestring this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (js-string->jsstring
+	     (js-ascii->jsstring
 		(format "~2,0d:~2,0d:~2,0d ~a"
 		   (date-hour val)
 		   (date-minute val)
 		   (date-second val)
 		   (date-timezone val)))
-	     (js-string->jsstring "Invalid date"))))
+	     (js-ascii->jsstring "Invalid date"))))
 
    (js-bind! %this obj (& "toTimeString")
       :value (js-make-function %this date-prototype-totimestring
@@ -425,7 +425,7 @@
    (define (date-prototype-toutcstring this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (js-string->jsstring (date->utc-string val))
+	     (js-ascii->jsstring (date->utc-string val))
 	     "Invalid date")))
 
    (js-bind! %this obj (& "toUTCString")
@@ -726,7 +726,7 @@
    (define (date-prototype-gettimezoneoffset this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (negfx (/fx (date-timezone (seconds->date (date->seconds val))) 60))
+	     (negfx (/fx (date-timezone (date->local-date val)) 60))
 	     +nan.0)))
 
    (js-bind! %this obj (& "getTimezoneOffset")
@@ -736,22 +736,21 @@
    ;; setTime
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.27
    (define (date-prototype-settime this::JsDate time)
-      
-      (define (setllong ll::llong)
-	 (with-access::JsDate this (val)
-	    (set! val (nanoseconds->date (*llong ll #l1000000)))
-	    (llong->flonum (/llong (date->nanoseconds val) #l1000000))))
-      
-      (let ((s (js-tonumber time %this)))
-	 (cond
-	    ((fixnum? s)
-	     (setllong (fixnum->llong s)))
-	    ((flonum? s)
-	     (if (nanfl? s)
-		 (with-access::JsDate this (val)
-		    (set! val s)
-		    s)
-		 (setllong (flonum->llong s)))))))
+      (with-access::JsDate this (val)
+	 (let ((s (js-tonumber time %this)))
+	    (cond
+	       ((fixnum? s)
+		(let ((nv (*llong (fixnum->llong s) #l1000000)))
+		   (set! val (nanoseconds->date nv))
+		   (date->milliseconds val)))
+	       ((flonum? s)
+		(if (nanfl? s)
+		    (begin
+		       (set! val s)
+		       s)
+		    (let ((nv (*llong (flonum->llong s) #l1000000)))
+		       (set! val (nanoseconds->date nv))
+		       (date->milliseconds val))))))))
 
    (js-bind! %this obj (& "setTime")
       :value (js-make-function %this date-prototype-settime 1 (& "setTime"))
@@ -1030,11 +1029,44 @@
 		    (begin
 		       (set! val month)
 		       month)
+		    (let* ((hour (date-hour val))
+			   (tz (date-timezone val))
+			   (nval (date-copy val
+				    :hour hour
+				    :month (->fixnum-safe (+ 1 month))
+				    :day (->fixnum-safe day)))
+			   (ntz (date-timezone nval)))
+		       (if (=fx ntz tz)
+			   (set! val nval)
+			   (set! val
+			      (nanoseconds->date
+				 (-llong (date->nanoseconds nval)
+				    (*llong #l1000000000
+				       (fixnum->llong (- ntz tz)))))))
+		       (date->milliseconds val))))
+	     val)))
+   
+   (define (date-prototype-setmonth-wrong this::JsDate month date)
+      (with-access::JsDate this (val)
+	 (if (date? val)
+	     (let ((month (js-tonumber month %this))
+		   (day (if (eq? date (js-undefined))
+			    (date-day val)
+			    (->fixnum-safe (js-tonumber date %this)))))
+		(if (and (flonum? month) (nanfl? month))
 		    (begin
+		       (set! val month)
+		       month)
+		    (let ((utcval (date->utc-date val))
+			  (hour (date-hour val)))
 		       (set! val
-			  (date-copy val :timezone 0
-			     :month (->fixnum-safe (+ 1 month))
-			     :day (->fixnum-safe day)))
+			  (date-copy
+			     (date->local-date
+				(date-copy utcval
+				   :timezone 0
+				   :month (+fx (->fixnum-safe month) 1)
+				   :day day))
+			     :hour hour))
 		       (date->milliseconds val))))
 	     val)))
 
@@ -1057,6 +1089,27 @@
 		       (set! val (date-copy val
 				    :month (->fixnum-safe (+ 1 month))
 				    :day (->fixnum-safe date)))
+		       (date->milliseconds val))))
+	     val)))
+   
+   (define (date-prototype-setutcmonth-wrong this::JsDate month date)
+      (with-access::JsDate this (val)
+	 (if (date? val)
+	     (let ((month (js-tonumber month %this))
+		   (day (if (eq? date (js-undefined))
+			    (date-day val)
+			    (->fixnum-safe (js-tonumber date %this)))))
+		(if (and (flonum? month) (nanfl? month))
+		    (begin
+		       (set! val month)
+		       month)
+		    (let ((utcval val)
+			  (hour (date-hour val)))
+		       (set! val
+			  (date-copy utcval
+			     :month (+fx (->fixnum-safe month) 1)
+			     :hour hour
+			     :day day))
 		       (date->milliseconds val))))
 	     val)))
 
@@ -1152,16 +1205,25 @@
 (define (date-prototype-tostring this::JsDate)
    (with-access::JsDate this (val)
       (if (date? val)
-	  (js-string->jsstring
-	     (date->rfc2822-date (seconds->date (date->seconds val))))
-	  (js-string->jsstring "Invalid Date"))))
+	  (js-ascii->jsstring (date->rfc2822-date val))
+	  (js-ascii->jsstring "Invalid Date"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    date->milliseconds ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (date->milliseconds dt::date)
-   (js-flonum->integer
-      (roundfl (/fl (llong->flonum (date->nanoseconds dt)) 1000000.0))))
+(define-inline (date->milliseconds dt::date)
+   (cond-expand
+      ((or bint61 bint64)
+       (llong->fixnum (/llong (date->nanoseconds dt) #l1000000)))
+      (else
+       (js-flonum->integer
+	  (roundfl (/fl (llong->flonum (date->nanoseconds dt)) 1000000.0))))))
+
+;*---------------------------------------------------------------------*/
+;*    date->local-date ...                                             */
+;*---------------------------------------------------------------------*/
+(define (date->local-date dt::date)
+   (nanoseconds->date (date->nanoseconds dt)))
 
 ;*---------------------------------------------------------------------*/
 ;*    date->utc-date ...                                               */
