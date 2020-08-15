@@ -1647,7 +1647,7 @@
 ;*    js-has-own-property-jsobject ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-has-own-property-jsobject o::JsObject p::obj %this)
-   (jsobject-find o o (if (js-jsname? p) p (js-toname p %this))
+   (jsobject-find o o (js-toname p %this)
       ;; cmap search
       (lambda (owner i) #t)
       ;; prototype search
