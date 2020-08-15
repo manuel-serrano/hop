@@ -271,7 +271,6 @@
 			,@(if method
 			      (list (jsfun->lambda method mode return ctx #f #f))
 			      '())
-			:arity ,arity
 			,@(if (eq? alloc 'js-object-alloc-lazy)
 			      '()
 			      `(:alloc ,alloc))))
