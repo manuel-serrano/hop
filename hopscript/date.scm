@@ -97,7 +97,7 @@
    (display "new Date(" op)
    (with-access::JsDate o (val)
       (if (date? val)
-	  (display (llong->flonum (/llong (date->nanoseconds val) #l1000000)) op)
+	  (display (llong->flonum (date->milliseconds val)) op)
 	  (display "undefined" op)))
    (display ")" op))
 
@@ -223,16 +223,14 @@
 			(if (flonum? v)
 			    (if (or (nanfl? v) (=fl v +inf.0) (=fl v -inf.0))
 				+nan.0
-				(nanoseconds->date
-				   (flonum->llong
-				      (*fl 1000000. (floorfl v)))))
+				(milliseconds->date
+				   (flonum->llong (floorfl v))))
 			    (let ((n (cond
 					((fixnum? v) (fixnum->llong v))
 					((llong? v) v)
 					((elong? v) (elong->llong v))
 					(else #l0))))
-			       (nanoseconds->date
-				  (*llong #l1000000 n)))))
+			       (milliseconds->date n))))
 		       (else
 			v)))))
 	    (else
@@ -297,11 +295,9 @@
 	     (let* ((dt (parse-date-arguments args))
 		    (ctz (date-timezone dt)))
 		(js-flonum->integer
-		   (llong->flonum 
-		      (/llong (+ (date->nanoseconds dt)
-				 (*llong (fixnum->llong ctz)
-				    #l1000000000))
-			 #l1000000)))))))
+		   (llong->flonum
+		      (+llong (date->milliseconds dt)
+			 (*llong (fixnum->llong ctz) #l1000))))))))
       
       (js-bind! %this js-date (& "UTC")
 	 :value (js-make-function %this js-date-utc 7 (& "UTC"))
@@ -438,7 +434,7 @@
    (define (date-prototype-toisostring this)
       (if (not (isa? this JsDate))
 	  (js-raise-type-error %this "Not a date ~s" (typeof this))
-	  (with-access::JsDate this (val ms)
+	  (with-access::JsDate this (val)
 	     (if (date? val)
 		 (let loop ((val val))
 		    (if (=fx (date-timezone val) 0)
@@ -451,8 +447,7 @@
                            ;;    (date-hour val)
                            ;;    (date-minute val)
                            ;;    (date-second val)
-                           ;;    (llong->fixnum
-                           ;;       (/llong (date-nanosecond val) #l1000000)))
+                           ;;    (llong->fixnum (date-millisecond val))
 			   (string-set! buf 4 #\-)
 			   (string-set! buf 7 #\-)
 			   (string-set! buf 10 #\T)
@@ -466,7 +461,7 @@
 			   (blit-fixnum! buf (date-hour val) 11 2)
 			   (blit-fixnum! buf (date-minute val) 14 2)
 			   (blit-fixnum! buf (date-second val) 17 2)
-			   (let ((ms (llong->fixnum (/llong (date-nanosecond val) #l1000000))))
+			   (let ((ms (llong->fixnum (date-millisecond val))))
 			      (blit-fixnum! buf ms 20 3))
 			   (js-ascii->jsstring buf))
 			(loop (date->utc-date val))))
@@ -498,7 +493,7 @@
    (define (date-prototype-valueof this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (llong->flonum (/llong (date->nanoseconds val) #l1000000))
+	     (llong->flonum (date->milliseconds val))
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "valueOf")
@@ -510,7 +505,7 @@
    (define (date-prototype-gettime this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (date->milliseconds val)
+	     (js-date->milliseconds val)
 	     +nan.0)))
  	 
    (js-bind! %this obj (& "getTime")
@@ -702,7 +697,7 @@
    (define (date-prototype-getmilliseconds this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (llong->fixnum (/llong (date-nanosecond val) #l1000000))
+	     (llong->fixnum (date-millisecond val))
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getMilliseconds")
@@ -714,7 +709,7 @@
    (define (date-prototype-getutcmilliseconds this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (llong->fixnum (/llong (date-nanosecond val) #l1000000))
+	     (llong->fixnum (date-millisecond val))
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "getUTCMilliseconds")
@@ -740,17 +735,16 @@
 	 (let ((s (js-tonumber time %this)))
 	    (cond
 	       ((fixnum? s)
-		(let ((nv (*llong (fixnum->llong s) #l1000000)))
-		   (set! val (nanoseconds->date nv))
-		   (date->milliseconds val)))
+		(set! val (milliseconds->date (fixnum->llong s)))
+		(js-date->milliseconds val))
 	       ((flonum? s)
 		(if (nanfl? s)
 		    (begin
 		       (set! val s)
 		       s)
-		    (let ((nv (*llong (flonum->llong s) #l1000000)))
-		       (set! val (nanoseconds->date nv))
-		       (date->milliseconds val))))))))
+		    (begin
+		       (set! val (milliseconds->date (flonum->llong s)))
+		       (js-date->milliseconds val))))))))
 
    (js-bind! %this obj (& "setTime")
       :value (js-make-function %this date-prototype-settime 1 (& "setTime"))
@@ -805,12 +799,12 @@
 			   ms)
 			(begin
 			   (set! val (date-copy val :nsec (*llong #l1000000 (flonum->llong ms))))
-			   (date->milliseconds val))))
+			   (js-date->milliseconds val))))
 		   ((fixnum? ms)
 		    (set! val (date-copy val :nsec (*llong #l1000000 (fixnum->llong ms))))
-		    (date->milliseconds val))
+		    (js-date->milliseconds val))
 		   (else
-		    (date->milliseconds val))))
+		    (js-date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj (& "setMilliseconds")
@@ -831,12 +825,12 @@
 			   ms)
 			(begin
 			   (set! val (date-copy val :nsec (*llong #l1000000 (flonum->llong ms))))
-			   (date->milliseconds val))))
+			   (js-date->milliseconds val))))
 		   ((fixnum? ms)
 		    (set! val (date-copy val :nsec (*llong #l1000000 (fixnum->llong ms))))
-		    (date->milliseconds val))
+		    (js-date->milliseconds val))
 		   (else
-		    (date->milliseconds val))))
+		    (js-date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj (& "setUTCMilliseconds")
@@ -855,7 +849,7 @@
 		       sec)
 		    (begin
 		       (set! val (date-copy val :sec (->fixnum-safe sec)))
-		       (date->milliseconds val))))
+		       (js-date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj (& "setSeconds")
@@ -874,7 +868,7 @@
 		       sec)
 		    (begin
 		       (set! val (date-copy val :sec (->fixnum-safe sec)))
-		       (date->milliseconds val))))
+		       (js-date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj (& "setUTCSeconds")
@@ -895,7 +889,7 @@
 		    (begin
 		       (set! val
 			  (date-copy val :min (->fixnum-safe min) :sec sec))
-		       (date->milliseconds val))))
+		       (js-date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj (& "setMinutes")
@@ -916,7 +910,7 @@
 		    (begin
 		       (set! val (date-copy val
 				    :min (->fixnum-safe min) :sec (->fixnum-safe sec)))
-		       (date->milliseconds val))))
+		       (js-date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj (& "setUTCMinutes")
@@ -940,7 +934,7 @@
 				    :hour (->fixnum-safe hour)
 				    :min (->fixnum-safe min)
 				    :sec (->fixnum-safe sec)))
-		       (date->milliseconds val))))
+		       (js-date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj (& "setHours")
@@ -963,13 +957,13 @@
 				  :hour (->fixnum-safe hour)
 				  :min (->fixnum-safe min)
 				  :sec (->fixnum-safe sec)))
-			   (ns (date->nanoseconds dt)))
+			   (ms (date->milliseconds dt)))
 		       (set! val
-			  (nanoseconds->date
-			     (+llong ns
-				(*llong #l1000000000
+			  (milliseconds->date
+			     (+llong ms
+				(*llong #l1000
 				   (fixnum->llong (date-timezone dt))))))
-		       (date->milliseconds val))))
+		       (js-date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj (& "setUTCHours")
@@ -992,7 +986,7 @@
 		       date)
 		    (begin
 		       (set! val (date-copy val :day (->fixnum-safe day)))
-		       (date->milliseconds val))))
+		       (js-date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj (& "setDate")
@@ -1011,7 +1005,7 @@
 		       date)
 		    (begin
 		       (set! val (date-copy val :day (->fixnum-safe date)))
-		       (date->milliseconds val))))
+		       (js-date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj (& "setUTCDate")
@@ -1039,11 +1033,11 @@
 		       (if (=fx ntz tz)
 			   (set! val nval)
 			   (set! val
-			      (nanoseconds->date
-				 (-llong (date->nanoseconds nval)
-				    (*llong #l1000000000
+			      (milliseconds->date
+				 (-llong (date->milliseconds nval)
+				    (*llong #l1000
 				       (fixnum->llong (- ntz tz)))))))
-		       (date->milliseconds val))))
+		       (js-date->milliseconds val))))
 	     val)))
    
    (define (date-prototype-setmonth-wrong this::JsDate month date)
@@ -1067,7 +1061,7 @@
 				   :month (+fx (->fixnum-safe month) 1)
 				   :day day))
 			     :hour hour))
-		       (date->milliseconds val))))
+		       (js-date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj (& "setMonth")
@@ -1089,7 +1083,7 @@
 		       (set! val (date-copy val
 				    :month (->fixnum-safe (+ 1 month))
 				    :day (->fixnum-safe date)))
-		       (date->milliseconds val))))
+		       (js-date->milliseconds val))))
 	     val)))
    
    (define (date-prototype-setutcmonth-wrong this::JsDate month date)
@@ -1110,7 +1104,7 @@
 			     :month (+fx (->fixnum-safe month) 1)
 			     :hour hour
 			     :day day))
-		       (date->milliseconds val))))
+		       (js-date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj (& "setUTCMonth")
@@ -1136,7 +1130,7 @@
 				    :year (->fixnum-safe year)
 				    :month (->fixnum-safe month)
 				    :day (->fixnum-safe date)))
-		       (date->milliseconds val))))
+		       (js-date->milliseconds val))))
 	     ;; 1. Let t be the result of LocalTime(this time value)
 	     ;; but if this time value is NaN, let t be +0.
 	     (let ((year (js-tonumber year %this))
@@ -1156,7 +1150,7 @@
 				    :month (->fixnum-safe month)
 				    :day (->fixnum-safe date)
 				    :hour 0 :min 0 :sec 0))
-		       (date->milliseconds val)))))))
+		       (js-date->milliseconds val)))))))
 
    (js-bind! %this obj (& "setFullYear")
       :value (js-make-function %this date-prototype-setfullyear 3 (& "setFullYear"))
@@ -1179,7 +1173,7 @@
 				    :year (->fixnum-safe year)
 				    :month (->fixnum-safe month)
 				    :day (->fixnum-safe date)))
-		       (date->milliseconds val))))
+		       (js-date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj (& "setUTCFullYear")
@@ -1198,6 +1192,16 @@
    obj)
 
 ;*---------------------------------------------------------------------*/
+;*    js-date->milliseconds ...                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (js-date->milliseconds dt)
+   (cond-expand
+      ((or bint61 bint64)
+       (llong->fixnum (date->milliseconds dt)))
+      (else
+       (llong->flonum (date->milliseconds dt)))))
+
+;*---------------------------------------------------------------------*/
 ;*    date-prototype-tostring ...                                      */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.2     */
@@ -1209,21 +1213,10 @@
 	  (js-ascii->jsstring "Invalid Date"))))
 
 ;*---------------------------------------------------------------------*/
-;*    date->milliseconds ...                                           */
-;*---------------------------------------------------------------------*/
-(define-inline (date->milliseconds dt::date)
-   (cond-expand
-      ((or bint61 bint64)
-       (llong->fixnum (/llong (date->nanoseconds dt) #l1000000)))
-      (else
-       (js-flonum->integer
-	  (roundfl (/fl (llong->flonum (date->nanoseconds dt)) 1000000.0))))))
-
-;*---------------------------------------------------------------------*/
 ;*    date->local-date ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (date->local-date dt::date)
-   (nanoseconds->date (date->nanoseconds dt)))
+   (milliseconds->date (date->milliseconds dt)))
 
 ;*---------------------------------------------------------------------*/
 ;*    date->utc-date ...                                               */
@@ -1232,10 +1225,8 @@
    (let ((tz (date-timezone dt))
 	 (ctz (date-timezone (date-copy dt))))
       (date-copy
-	 (nanoseconds->date
-	    (- (date->nanoseconds dt)
-	       (*llong (fixnum->llong ctz)
-		  #l1000000000)))
+	 (milliseconds->date
+	    (-llong (date->milliseconds dt) (*llong (fixnum->llong ctz) #l1000)))
 	 :timezone 0)))
 
 ;*---------------------------------------------------------------------*/
@@ -1274,11 +1265,9 @@
 (define (js-date-now)
    (cond-expand
       ((or bint61 bint64)
-       (let ((ns (llong->fixnum (current-nanoseconds))))
-	  (/fx ns 1000000)))
+       (llong->fixnum (current-milliseconds)))
       (else
-       (let ((ns (llong->flonum (current-nanoseconds))))
-	  (roundfl (/fl ns 1000000.))))))
+       (llong->flonum (current-milliseconds)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
