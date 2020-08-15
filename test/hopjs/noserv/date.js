@@ -144,16 +144,23 @@ assert.ok( d.getHours() == 0, "getHours" );
 
 // Month
 d = new Date( s );
-assert.ok( d.setMonth( 0 ) == 1421783945260, "setMonth" );
+assert.ok( d.setMonth( 0 ) == 1421783945260, "setMonth.1" );
 assert.ok( d.getMonth() == 0, "getMonth" );
-assert.ok( d.setMonth( 12 ) == 1453319945260, "setMonth" );
+assert.ok( d.setMonth( 12 ) == 1453319945260, "setMonth.2" );
 assert.ok( d.getMonth() == 0, "getMonth" );
+
+d = new Date(2011, 6, 12, 5, 0, 0);
+let d2 = new Date(2011, 2, 12, 5, 0, 0);
+d.setMonth( 2 );
+assert.ok( d.getMonth() === d2.getMonth(), "setMonth.3" );
+assert.ok( d.getHours() === 5, "setMonth.4" );
+assert.ok( d2.getHours() === 5, "setMonth.5" );
 
 // Month + day
 d = new Date( s );
-assert.ok( d.setMonth( 0, 14 ) == 1421265545260, "setMonthDay" );
+assert.ok( d.setMonth( 0, 14 ) == 1421265545260, "setMonthDay.1" );
 assert.ok( d.getMonth() == 0, "getMonth" );
-assert.ok( d.setMonth( 12, 14 ) == 1452801545260, "setMonthDay" );
+assert.ok( d.setMonth( 12, 14 ) == 1452801545260, "setMonthDay.2" );
 assert.ok( d.getMonth() == 0, "getMonth" );
 
 // UTCDate
@@ -200,9 +207,9 @@ assert.ok( d.getHours() == 2, "getHours" );
 
 // UTCMonth
 d = new Date( s );
-assert.ok( d.setUTCMonth( 0 ) == 1421780345260, "setUTCMonth" );
+assert.ok( d.setUTCMonth( 0 ) == 1421780345260, "setUTCMonth.1" );
 assert.ok( d.getUTCMonth() == 0, "getUTCMonth" );
-assert.ok( d.setUTCMonth( 12 ) == 1453316345260, "setUTCMonth" );
+assert.ok( d.setUTCMonth( 12 ) == 1453316345260, "setUTCMonth.2" );
 assert.ok( d.getUTCMonth() == 0, "getUTCMonth" );
 
 d = new Date( Date.parse( "2015-10-20T18:59:05+02:00" ) );
@@ -244,14 +251,20 @@ assert.ok( isNaN( d.getHours() ), 'getHours');
 assert.ok( d.toString(), "Invalid date", "toString" );
 
 d = new Date( Date.parse( "2015-10-20T18:59:05+02:00" ) );
-assert.ok( isNaN( d.setMonth() ), 'setMonth');
+assert.ok( isNaN( d.setMonth() ), 'setMonth.3');
 assert.ok( isNaN( d.getMonth() ), 'getMonth');
 assert.ok( d.toString(), "Invalid date", "toString" );
 
 d = new Date( Date.parse( "2015-10-20T18:59:05+02:00" ) );
-assert.ok( isNaN( d.setTime() ), 'setTime');
-assert.ok( isNaN( d.getTime() ), 'getTime');
+assert.ok( isNaN( d.setTime() ), 'setTime.1');
+assert.ok( isNaN( d.getTime() ), 'getTime.2');
 assert.ok( d.toString(), "Invalid date", "toString" );
+
+d = new Date();
+const tc = d.setTime( 1318392428550 );
+assert.ok( tc === 1318392428550, "setTime.3" );
+assert.ok( d.getYear() === 111, "setTime.4" );
+assert.ok(d.getMonth() === 9, "setTime.5" );
 
 d = new Date( Date.parse( "2015-10-20T18:59:05+02:00" ) );
 assert.ok( isNaN( d.setUTCDate() ), 'setUTCDate');
@@ -284,7 +297,7 @@ assert.ok( isNaN( d.getUTCHours() ), 'getUTCHours');
 assert.ok( d.toString(), "Invalid date", "toString" );
 
 d = new Date( Date.parse( "2015-10-20T18:59:05+02:00" ) );
-assert.ok( isNaN( d.setUTCMonth() ), 'setUTCMonth');
+assert.ok( isNaN( d.setUTCMonth() ), 'setUTCMonth.3');
 assert.ok( isNaN( d.getUTCMonth() ), 'getUTCMonth');
 assert.ok( d.toString(), "Invalid date", "toString" );
 
@@ -383,6 +396,16 @@ checkDate( new Date('2014-11-03 19:23:22.478+01:00'), 2014, 10, 03, 19, 23, 22, 
 var utc = Date.UTC( 2014, 10, 3, 19, 23, 22, 478 );
 
 assert.ok( utc === 1415042602478, "Date.UTC" );
+
+/*---------------------------------------------------------------------*/
+/*    timezone                                                         */
+/*---------------------------------------------------------------------*/
+var s = Date.parse( "2015-10-20T18:59:05+00:00" ) + 260;
+
+d = new Date( s );
+assert.ok( d.getTimezoneOffset() === -120, "getTimezoneOffset.1" );
+d.setMonth( 0 );
+assert.ok( d.getTimezoneOffset() === -60, "getTimezoneOffset.2" );
 
 /*---------------------------------------------------------------------*/
 /*    Date no constructor                                              */

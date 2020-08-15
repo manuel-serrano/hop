@@ -248,8 +248,7 @@
 			,arity ,(j2s-function-info val name loc ctx)
 			,constrsize
 			,@(if method
-			      `((jsfun->lambda method
-				   mode return ctx #f #f))
+			      (list (jsfun->lambda method mode return ctx #f #f))
 			      '())
 			,@(if (eq? alloc 'js-object-alloc-lazy)
 			      '()
@@ -270,8 +269,7 @@
 			,arity ,(j2s-function-info val name loc ctx)
 			,constrsize
 			,@(if method
-			      `((jsfun->lambda method
-				   mode return ctx #f #f))
+			      (list (jsfun->lambda method mode return ctx #f #f))
 			      '())
 			:arity ,arity
 			,@(if (eq? alloc 'js-object-alloc-lazy)
@@ -292,8 +290,7 @@
 			,arity ,(j2s-function-info val name loc ctx)
 			,constrsize
 			,@(if method
-			      `((jsfun->lambda method
-				   mode return ctx #f #f))
+			      (list (jsfun->lambda method mode return ctx #f #f))
 			      '())
 			,@(if (eq? alloc 'js-object-alloc-lazy)
 			      '()
