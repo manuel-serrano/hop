@@ -321,13 +321,16 @@
 ;*---------------------------------------------------------------------*/
 (define (parse-date v::bstring)
    (let ((ip (open-input-string v)))
+      (tprint (with-handler (lambda (e) "err") (rfc2822-parse-date ip))))
+   (let ((ip (open-input-string v)))
+      (tprint (with-handler (lambda (e) "err") (iso8601-parse-date ip))))
+   (let ((ip (open-input-string v)))
       (unwind-protect
 	 (with-handler
 	    (lambda (e)
 	       (input-port-reopen! ip)
 	       (with-handler
-		  (lambda (e)
-		     "Invalid Date")
+		  (lambda (e) "Invalid Date")
 		  (iso8601-parse-date ip)))
 	    (rfc2822-parse-date ip))
 	 (close-input-port ip))))
