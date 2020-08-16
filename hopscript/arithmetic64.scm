@@ -439,6 +439,7 @@
 ;*---------------------------------------------------------------------*/
 (define (todouble::double x)
    (cond
+      ((flonum? x) x)
       ((fixnum? x) (fixnum->flonum x))
       ((int32? x) (int32->flonum x))
       ((uint32? x) (uint32->flonum x))

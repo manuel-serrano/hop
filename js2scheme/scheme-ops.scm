@@ -1542,20 +1542,30 @@
 			 (asreal left tl)
 			 (asreal right tr)
 			 #f)
-		      (binop-number-number op type
-			 (box left tl ctx)
-			 (box right tr ctx)
-			 #f)))
+		      (if (and (eq? tl 'number) (eq? tr 'number))
+			  (binop-number-number op type
+			     (box left tl ctx)
+			     (box right tr ctx)
+			     #f)
+			  (binop-any-any op type
+			     (box left tl ctx)
+			     (box right tr ctx)
+			     #f))))
 		  ((and (eq? op '-) (or (is-hint? lhs 'real) (is-hint? rhs 'real)))
 		   (if-flonums? left tl right tr
 		      (binop-flonum-flonum (real-op op lhs rhs #f) type
 			 (asreal left tl)
 			 (asreal right tr)
 			 #f)
-		      (binop-number-number op type
-			 (box left tl ctx)
-			 (box right tr ctx)
-			 #f)))
+		      (if (and (eq? tl 'number) (eq? tr 'number))
+			  (binop-number-number op type
+			     (box left tl ctx)
+			     (box right tr ctx)
+			     #f)
+			  (binop-any-any op type
+			     (box left tl ctx)
+			     (box right tr ctx)
+			     #f))))
 		  ((and (eq? tl 'number) (eq? tr 'number))
 		   (if-fixnums? left tl right tr
 		      (binop-fixnum-fixnum/ctx ctx op type
