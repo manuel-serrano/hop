@@ -1165,8 +1165,10 @@
 		(else
 		 (js-apply %this this thisarg (vector->sublist vec n)))))
 	    ((=fx arity -2048)
+	     (vector-shrink! vec n)
 	     (procedure thisarg vec))
 	    ((=fx arity -2047)
+	     (vector-shrink! vec n)
 	     (procedure thisarg vec))
 	    (else
 	     (js-apply %this this thisarg (vector->sublist vec n)))))))

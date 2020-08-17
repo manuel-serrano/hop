@@ -289,9 +289,13 @@
 ;*    j2s-use ::J2SRef ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-use this::J2SRef ctx deval infun)
-   (with-access::J2SRef this (decl)
+   (with-access::J2SRef this (decl loc)
       (with-access::J2SDecl decl (%info escape id)
 	 (unless (eq? infun %info)
+	    (when (eq? id 'prefix)
+	       (tprint "MARK ESCAPE " id " " loc)
+	       (tprint "  infun=" (j2s->list infun))
+	       (tprint "   info=" (j2s->list %info)))
 	    (set! escape #t))
 	 (when ctx
 	    (decl-usage-add! decl ctx))))
@@ -408,6 +412,18 @@
       (j2s-use clazz 'new deval infun)
       (for-each (lambda (a) (j2s-use a 'ref deval infun)) args))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    j2s-use ::J2SBlock ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-use this::J2SBlock ctx deval infun)
+   (with-access::J2SBlock this (nodes)
+      (for-each (lambda (b)
+		   (when (isa? b J2SDecl)
+		      (with-access::J2SDecl b (%info)
+			 (set! %info infun))))
+	 nodes))
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-use ::J2SLetBlock ...                                        */

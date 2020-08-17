@@ -1390,7 +1390,7 @@
 	 (else
 	  (str-append flip left `(js-toprimitive-for-string ,right %this)))))
 
-   (define (fast-add tl tr loc type lhs rhs mode return ctx)
+   (define (fast-string-add tl tr loc type lhs rhs mode return ctx)
       (with-tmp lhs rhs mode return ctx
 	 (lambda (left right)
 	    (cond
@@ -1425,20 +1425,12 @@
 	       ((eq? tr 'real)
 		(binop-real-xxx '+ type rhs tr right lhs tl left ctx #t))
 	       (else
-		(if-fixnums? left tl right tr
-		   (binop-fixnum-fixnum/ctx ctx '+ type
-		      (asfixnum left tl)
-		      (asfixnum right tr)
-		      #f)
-		   (if-flonums? left tl right tr
-		      (binop-flonum-flonum (real-op '+ lhs rhs #f) type
-			 (asreal left tl)
-			 (asreal right tr)
-			 #f)
-		      (binop-any-any '+ type
+		`(if (and (js-jsstring? ,left) (js-jsstring? ,right))
+		     (js-jsstring-append ,left ,right)
+		     ,(binop-any-any '+ type
 			 (box left tl ctx)
 			 (box right tr ctx)
-			 #f))))))))
+			 #f)))))))
 
    (define (is-binary-string-add? x)
       (when (isa? x J2SBinary)
@@ -1451,7 +1443,7 @@
 	     x
 	     `(js-toprimitive-for-string ,x %this))))
    
-   (define (small-add tl tr loc type lhs rhs mode return ctx)
+   (define (small-string-add tl tr loc type lhs rhs mode return ctx)
       ;; when optimizing code size, avoid deep nested calls generated
       ;; for long string concatenation that forces register allocation
       ;; to cleanup a lot of the temporaries
@@ -1472,22 +1464,22 @@
 			     (set-cdr! target
 				(list (j2s-scheme-as-string expr mode return ctx)))
 			     '())))
-		 ,(fast-add tl tr loc 'string
+		 ,(fast-string-add tl tr loc 'string
 		     (instantiate::J2SHopRef
 			(loc loc)
 			(id %str)
 			(type 'string))
 		     rhs mode return ctx)))
-	  (fast-add tl tr loc type lhs rhs mode return ctx)))
+	  (fast-string-add tl tr loc type lhs rhs mode return ctx)))
    
    (define (add loc type lhs rhs mode return ctx)
-      (let ((tl (j2s-vtype lhs))
-	    (tr (j2s-vtype rhs)))
+      (let ((tl (j2s-type lhs))
+	    (tr (j2s-type rhs)))
 	 (if (and (or (eq? tl 'string) (eq? tr 'string))
 		  (context-get ctx :optim-size))
-	     (small-add tl tr loc type lhs rhs mode return ctx)
-	     (fast-add tl tr loc type lhs rhs mode return ctx))))
-   
+	     (small-string-add tl tr loc type lhs rhs mode return ctx)
+	     (fast-string-add tl tr loc type lhs rhs mode return ctx))))
+
    (if (type-number? type)
        (js-arithmetic-addsub loc '+ type lhs rhs mode return ctx)
        (add loc type lhs rhs mode return ctx)))
@@ -1581,6 +1573,13 @@
 			    (box left tl ctx)
 			    (box right tr ctx)
 			    #f))))
+		  ((and (eq? op '+) (eq? type 'string))
+		   `(if (and (js-jsstring? ,left) (js-jsstring? ,right))
+			(js-jsstring-append ,left ,right)
+			,(binop-any-any op type
+			    (box left tl ctx)
+			    (box right tr ctx)
+			    #f)))
 		  (else
 		   (if-fixnums? left tl right tr
 		      (binop-fixnum-fixnum/ctx ctx op type
