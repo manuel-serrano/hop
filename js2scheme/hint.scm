@@ -205,7 +205,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SRef hints)
    (with-access::J2SRef this (decl loc type)
-      (add-hints! decl hints)))
+      (let ((dh (if (isa? decl J2SThis) (cons '(object . 100) hints) hints)))
+	 (add-hints! decl dh))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SExpr ...                                           */
