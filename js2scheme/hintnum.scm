@@ -122,7 +122,8 @@
       (when (and propagate (isa? this J2SRef))
 	 (with-access::J2SRef this (decl)
 	    (with-access::J2SDecl decl (hint id)
-	       (set! hint (add-hint! hint newhint)))))))
+	       (unless (isa? decl J2SThis)
+		  (set! hint (add-hint! hint newhint))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    union-hint! ...                                                  */
