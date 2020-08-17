@@ -331,10 +331,6 @@
 ;*---------------------------------------------------------------------*/
 (define (parse-date v::bstring)
    (let ((ip (open-input-string v)))
-      (tprint (with-handler (lambda (e) "err") (rfc2822-parse-date ip))))
-   (let ((ip (open-input-string v)))
-      (tprint (with-handler (lambda (e) "err") (iso8601-parse-date ip))))
-   (let ((ip (open-input-string v)))
       (unwind-protect
 	 (with-handler
 	    (lambda (e)
@@ -1306,9 +1302,9 @@
 ;*---------------------------------------------------------------------*/
 (define (js-date->jsstring val)
    (if (date? val)
-       (js-string->jsstring
+       (js-ascii->jsstring
 	  (date->rfc2822-date (seconds->date (date->seconds val))))
-       (js-string->jsstring "Invalid Date")))
+       (js-ascii->jsstring "Invalid Date")))
 
 ;*---------------------------------------------------------------------*/
 ;*    date-prototype-tostring ...                                      */
