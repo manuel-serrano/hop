@@ -284,7 +284,7 @@
 (define (env-nocapture env::pair-nil)
    (map (lambda (c)
 	   (with-access::J2SDecl (car c) (escape)
-	      (if escape
+	      (if (and escape (decl-usage-has? (car c) '(assig)))
 		  (cons (car c) 'any)
 		  c)))
       env))

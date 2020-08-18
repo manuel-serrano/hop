@@ -118,6 +118,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.14    */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-ownkeys obj %this)
+   (tprint "js-ownkeys obj=" (typeof obj))
    (let ((o (js-cast-object obj %this "Object.keys")))
       (js-ownkeys o %this)))
 
@@ -1131,11 +1132,7 @@
 ;*    js-ownkeys ::JsObject ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-ownkeys obj::JsObject %this)
-   (tprint ">>> JS-OWNKEYS..." (typeof obj))
-   (let ((r (js-vector->jsarray (js-properties-name obj #t %this) %this)))
-      (tprint "r=" (typeof r))
-      (js-debug-object r)
-      r))
+   (js-vector->jsarray (js-properties-name obj #t %this) %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tonumber ::JsObject ...                                       */
