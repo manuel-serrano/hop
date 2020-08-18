@@ -492,7 +492,7 @@
    (define (date-prototype-valueof this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (llong->flonum (date->milliseconds val))
+	     (js-date->milliseconds val)
 	     +nan.0)))
 	 
    (js-bind! %this obj (& "valueOf")
