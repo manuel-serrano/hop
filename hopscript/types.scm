@@ -1026,7 +1026,7 @@
 	     (if (=fx i len)
 		 (display #\| port)
 		 (begin
-		    (class-field-write/display (vector-ref-ur fields i))
+		    (class-field-write/display (vector-ref fields i))
 		    (loop (+fx i 1))))))))
 
 ;*---------------------------------------------------------------------*/

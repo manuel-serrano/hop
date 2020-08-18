@@ -314,7 +314,7 @@
 	 (let ((len (vector-length vec)))
 	    (let loop ((i 0))
 	       (when (<fx i len)
-		  (proc (vector-ref-ur vec i))
+		  (proc (vector-ref vec i))
 		  (loop (+fx i 1))))))
       
       (define (vfor-each3 proc vec vecname)
