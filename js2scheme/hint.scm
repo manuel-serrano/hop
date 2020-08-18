@@ -679,13 +679,18 @@
    
    (define (param-best-hint-type p::J2SDecl)
       (with-access::J2SDecl p (hint usecnt useinloop vtype id)
-	 (if (and (>=fx (length hint) 4)
+	 (cond
+	    ((and (>=fx (length hint) 4)
 		  (let* ((w (map cdr hint))
 			 (max (apply max w))
 			 (min (apply min w)))
 		     (<fx (-fx max min) 6)))
 	     ;; a megamorphic parameter, don't specialize it
-	     (cons 'any 0)
+	     (cons 'any 0))
+	    ((decl-usage-has? p '(assig))
+	     ;; a writable parameter, don't specialize it
+	     (cons 'any 0))
+	    (else
 	     (multiple-value-bind (bt bc)
 		(best-hint-type p #t)
 		(if (or (eq? vtype 'unknown)
@@ -693,7 +698,7 @@
 			(and (eq? vtype 'number) (or (assq 'integer hint))))
 		    (let ((c (if useinloop (*fx 2 (* bc usecnt)) (* bc usecnt))))
 		       (cons bt c))
-		    (cons 'any 0))))))
+		    (cons 'any 0)))))))
    
    (define (fun-duplicable? decl::J2SDeclFun)
       ;; returns #t iff the function is duplicable, returns #f otherwise

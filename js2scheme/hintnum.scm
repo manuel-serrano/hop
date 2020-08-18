@@ -81,7 +81,8 @@
 		   (loop (+fx i 1)))
 		  ((>fx i 1)
 		   (global-loop)))))))
-   (propagate-real! this))
+   (propagate-real! this)
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    expr-hint ...                                                    */
@@ -399,7 +400,8 @@
 (define-walk-method (propagate-real! this::J2SExpr)
    (call-default-walker)
    (with-access::J2SExpr this (type)
-      (if (and (is-hint? this 'real) (not (eq? type 'real)))
+      (if (and (is-hint? this 'real) (not (eq? type 'real))
+	       (memq type '(number integer)))
 	  (as-real! this)
 	  this)))
 
