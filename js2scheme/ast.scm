@@ -69,6 +69,7 @@
 	      (scope::symbol (default 'local) (info '("notraverse")))
 	      (usecnt::int (default 0) (info '("notraverse")))
 	      (useinloop::bool (default #f) (info '("notraverse")))
+	      ;; #t (after use) if the variable is captured by a closure
 	      (escape::bool (default #f) (info '("notraverse")))
 	      ;; see usage-bit.sch
 	      (usage::uint32 (default (usage '(assig))))

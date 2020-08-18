@@ -82,8 +82,6 @@
    
    (with-access::J2SProgram this (headers decls nodes)
       (when (>=fx j2s-verbose 3) (display " " (current-error-port)))
-      ;; mark local captured variables
-      (program-capture! this)
       ;; main fix point
       (if (config-get args :optim-tyflow #f)
 	  (let ((fix (make-cell 0)))
@@ -144,80 +142,6 @@
 	 (set! decls (filter-dead-declarations decls))
 	 (for-each j2s-hint-meta-noopt! decls))
       this))
-   
-;*---------------------------------------------------------------------*/
-;*    program-capture! ...                                             */
-;*---------------------------------------------------------------------*/
-(define (program-capture! this::J2SProgram)
-   (with-access::J2SProgram this (decls nodes direct-eval)
-      (unless direct-eval
-	 (for-each (lambda (d) (mark-capture d '())) decls)
-	 (for-each (lambda (n) (mark-capture n '())) nodes))))
-
-;*---------------------------------------------------------------------*/
-;*    mark-capture ::J2SNode ...                                       */
-;*    -------------------------------------------------------------    */
-;*    Mark variables declaration that are captured by a closure.       */
-;*---------------------------------------------------------------------*/
-(define-walk-method (mark-capture this::J2SNode env::pair-nil)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    mark-capture ::J2SAssig ...                                      */
-;*---------------------------------------------------------------------*/
-(define-walk-method (mark-capture this::J2SAssig env::pair-nil)
-   (with-access::J2SAssig this (lhs rhs)
-      (if (isa? lhs J2SRef)
-	  (with-access::J2SRef lhs (decl)
-	     (with-access::J2SDecl decl (scope %info)
-		(unless (memq decl env)
-		   (set! %info 'capture))))
-	  (mark-capture lhs env))
-      (mark-capture rhs env)))
-
-;*---------------------------------------------------------------------*/
-;*    mark-capture ::J2SDeclFun ...                                    */
-;*---------------------------------------------------------------------*/
-(define-walk-method (mark-capture this::J2SDeclFun env::pair-nil)
-   (with-access::J2SDeclFun this (%info)
-      ;; cleanup the DeclFun %info field for preparing the hint typing
-      (set! %info #f)
-      (call-default-walker)))
-
-;*---------------------------------------------------------------------*/
-;*    mark-capture ::J2SFun ...                                        */
-;*---------------------------------------------------------------------*/
-(define-walk-method (mark-capture this::J2SFun env::pair-nil)
-   (with-access::J2SFun this (params body %info)
-      (for-each (lambda (p::J2SDecl)
-		   (with-access::J2SDecl p (%info)
-		      (set! %info 'nocapture)))
-	 params)
-      (mark-capture body params)))
-
-;*---------------------------------------------------------------------*/
-;*    mark-capture ::J2SKont ...                                       */
-;*---------------------------------------------------------------------*/
-(define-walk-method (mark-capture this::J2SKont env::pair-nil)
-   (with-access::J2SKont this (param exn body)
-      (with-access::J2SDecl param (%info)
-	 (set! %info 'nocapture))
-      (with-access::J2SDecl exn (%info)
-	 (set! %info 'nocapture))
-      (mark-capture body (list param exn))))
-      
-;*---------------------------------------------------------------------*/
-;*    mark-capture ::J2SLetBlock ...                                   */
-;*---------------------------------------------------------------------*/
-(define-walk-method (mark-capture this::J2SLetBlock env::pair-nil)
-   (with-access::J2SLetBlock this (decls nodes)
-      (for-each (lambda (p::J2SDecl)
-		   (with-access::J2SDecl p (%info)
-		      (set! %info 'nocapture)))
-	 decls)
-      (let ((nenv (append decls env)))
-	 (for-each (lambda (d) (mark-capture d nenv)) decls)
-	 (for-each (lambda (n) (mark-capture n nenv)) nodes))))
    
 ;*---------------------------------------------------------------------*/
 ;*    dump-env ...                                                     */
@@ -359,8 +283,8 @@
 ;*---------------------------------------------------------------------*/
 (define (env-nocapture env::pair-nil)
    (map (lambda (c)
-	   (with-access::J2SDecl (car c) (%info)
-	      (if (eq? %info 'capture)
+	   (with-access::J2SDecl (car c) (escape)
+	      (if (not escape)
 		  (cons (car c) 'any)
 		  c)))
       env))
@@ -1137,10 +1061,10 @@
       ;; compute a new node-type environment where all mutated globals
       ;; and all mutated captured locals are removed
       (filter (lambda (e)
-		 (with-access::J2SDecl (car e) (writable scope %info id)
+		 (with-access::J2SDecl (car e) (writable scope escape id)
 		    (or (decl-ronly? (car e))
 			(not writable)
-			(and (eq? scope 'local) (eq? %info 'nocapture)))))
+			(and (memq scope '(local letblock inner)) (not escape)))))
 	 env))
    
    (define (type-known-call-args fun::J2SFun args env bk)
