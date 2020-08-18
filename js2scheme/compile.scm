@@ -493,6 +493,8 @@
 	    (set! o (cons* :optim-loopspec #t o)))
 	 (unless (memq :optim-arguments o)
 	    (set! o (cons* :optim-arguments #t o)))
+	 (unless (memq :optim-stack-alloc o)
+	    (set! o (cons* :optim-stack-alloc #t o)))
 	 (unless (memq :optim-procedure o)
 	    (set! o (cons* :optim-procedure #t o)))
 	 (unless (memq :optim-cnstlift o)
