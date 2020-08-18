@@ -2707,6 +2707,7 @@
 		;; 8.12.5, step 6
 		(extend-properties-object!))))))
 
+   (tprint "js-put-jsobject o=" (typeof o) " name=" name)
    (check-unplain! o name)
    (let loop ((obj o))
       (jsobject-find obj o name

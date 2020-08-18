@@ -24,7 +24,8 @@
 	   __js2scheme_syntax
 	   __js2scheme_utils
 	   __js2scheme_use
-	   __js2scheme_alpha)
+	   __js2scheme_alpha
+	   __js2scheme_node-size)
 
    (static (class FunHintInfo
 	      hinted
@@ -196,7 +197,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SIf hints::pair-nil)
    (with-access::J2SIf this (test then else)
-      (j2s-hint test (cons '(bool . 20) hints))
+      (j2s-hint test (cons '(bool . 2) hints))
       (j2s-hint then hints)
       (j2s-hint else hints)))
 
@@ -415,7 +416,7 @@
 	     (with-access::J2SLiteralCnst field (val)
 		(loop val)))
 	    (else
-	     (j2s-hint field '())
+	     (j2s-hint field '((string . 2) (integer . 2)))
 	     (if maybe-string
 		 (j2s-hint obj '((object . 5)))
 		 (j2s-hint obj '((object . 5) (no-string . 0)))))))))
@@ -686,10 +687,10 @@
 			 (min (apply min w)))
 		     (<fx (-fx max min) 6)))
 	     ;; a megamorphic parameter, don't specialize it
-	     (cons 'any 0))
+	     (list 'any 0 0))
 	    ((decl-usage-has? p '(assig))
 	     ;; a writable parameter, don't specialize it
-	     (cons 'any 0))
+	     (list 'any 0 0))
 	    (else
 	     (multiple-value-bind (bt bc)
 		(best-hint-type p #t)
@@ -697,8 +698,8 @@
 			(eq? vtype 'any)
 			(and (eq? vtype 'number) (or (assq 'integer hint))))
 		    (let ((c (if useinloop (*fx 2 (* bc usecnt)) (* bc usecnt))))
-		       (cons bt c))
-		    (cons 'any 0)))))))
+		       (list bt c usecnt))
+		    (list 'any 0 0)))))))
    
    (define (fun-duplicable? decl::J2SDeclFun)
       ;; returns #t iff the function is duplicable, returns #f otherwise
@@ -780,17 +781,22 @@
 	    (dup
 	     (with-access::J2SFun (j2sdeclinit-val-fun this) (params body)
 		(let ((besthints (map param-best-hint-type params)))
-		   (if (<fx (apply max (map cdr besthints)) 10)
-		       ;; no benefit in duplicating this function
+		   (if (or (<fx (apply max (map cadr besthints)) 10)
+			   (<fx (*fx 20 (apply + (map caddr besthints)))
+			      (node-size body)))
+		       ;; no benefit in duplicating this function because
+		       ;; the hintted parameters are not used frequently
+		       ;; enough or because their hints are unlikely to
+		       ;; improve the overall function compilation
 		       (loop #f)
 		       (let ((htypes (map (lambda (bh p)
 					     (cond
-						((< (cdr bh) 3)
+						((< (cadr bh) 3)
 						 (with-access::J2SDecl p (vtype)
 						    vtype))
 						((and (or (eq? (car bh) 'null)
 							  (eq? (car bh) 'undefined))
-						      (< (cdr bh) 12))
+						      (< (cadr bh) 12))
 						 ;; only specialize on NULL
 						 ;; and UNDEFINED if it is
 						 ;; tested intensively
@@ -1006,7 +1012,6 @@
 			    (usage (usage '()))
 			    (writable #f)
 			    (binder 'let)
-			    ;;(scope 'none)
 			    (usecnt 1)
 			    (utype 'function)
 			    (%info fun)
