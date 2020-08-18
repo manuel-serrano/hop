@@ -284,7 +284,7 @@
 (define (env-nocapture env::pair-nil)
    (map (lambda (c)
 	   (with-access::J2SDecl (car c) (escape)
-	      (if (not escape)
+	      (if escape
 		  (cons (car c) 'any)
 		  c)))
       env))
@@ -1384,7 +1384,7 @@
 	 (with-access::J2SUnresolvedRef expr (id)
 	    (eq? id 'Number))))
    
-   (with-access::J2SAccess this (obj field)
+   (with-access::J2SAccess this (obj field loc)
       (multiple-value-bind (tyo envo bko)
 	 (node-type obj env fix)
 	 (multiple-value-bind (tyf envf bkf)
@@ -1499,11 +1499,13 @@
    (with-trace 'j2s-tyflow "node-type ::J2SLetBlock"
       (with-access::J2SLetBlock this (decls nodes loc)
 	 (trace-item "loc=" loc)
-	 (let ((ienv (map (lambda (d::J2SDecl)
-			     (with-access::J2SDecl d (utype vtype)
-				(if (eq? utype 'unknown)
-				    (cons d vtype)
-				    (cons d utype))))
+	 (let ((ienv (filter-map (lambda (d::J2SDecl)
+				    (with-access::J2SDecl d (utype vtype)
+				       (if (eq? utype 'unknown)
+					   (if (eq? vtype 'unknown)
+					       #f
+					       (cons d vtype))
+					   (cons d utype))))
 			decls)))
 	    (multiple-value-bind (_ denv bk)
 	       (node-type-seq decls (append ienv env) fix 'void)

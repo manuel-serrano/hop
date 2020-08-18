@@ -1131,7 +1131,11 @@
 ;*    js-ownkeys ::JsObject ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-ownkeys obj::JsObject %this)
-   (js-vector->jsarray (js-properties-name obj #t %this) %this))
+   (tprint ">>> JS-OWNKEYS..." (typeof obj))
+   (let ((r (js-vector->jsarray (js-properties-name obj #t %this) %this)))
+      (tprint "r=" (typeof r))
+      (js-debug-object r)
+      r))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tonumber ::JsObject ...                                       */

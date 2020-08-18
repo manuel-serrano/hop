@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:41:17 2017                          */
 ;*    Last change :  Fri Jul 12 09:27:41 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme test code generation                                      */
 ;*=====================================================================*/
@@ -87,7 +87,7 @@
    (with-access::J2SExpr this (type)
       (if (eq? type 'bool)
 	  (j2s-scheme this mode return conf)
-	  (j2s-test this mode return conf))))
+	  `(js-toboolean ,(j2s-scheme this mode return conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-bool-test ::J2SParen ...                                     */

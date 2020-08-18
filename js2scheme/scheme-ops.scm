@@ -1390,7 +1390,7 @@
 	 (else
 	  (str-append flip left `(js-toprimitive-for-string ,right %this)))))
 
-   (define (fast-string-add tl tr loc type lhs rhs mode return ctx)
+   (define (fast-add tl tr loc type lhs rhs mode return ctx)
       (with-tmp lhs rhs mode return ctx
 	 (lambda (left right)
 	    (cond
@@ -1424,13 +1424,18 @@
 		(binop-real-xxx '+ type lhs tl left rhs tr right ctx #f))
 	       ((eq? tr 'real)
 		(binop-real-xxx '+ type rhs tr right lhs tl left ctx #t))
-	       (else
+	       ((and (eq? type 'string) (eq? tl 'any) (eq? tr 'any))
 		`(if (and (js-jsstring? ,left) (js-jsstring? ,right))
 		     (js-jsstring-append ,left ,right)
 		     ,(binop-any-any '+ type
 			 (box left tl ctx)
 			 (box right tr ctx)
-			 #f)))))))
+			 #f)))
+	       (else
+		(binop-any-any '+ type
+		   (box left tl ctx)
+		   (box right tr ctx)
+		   #f))))))
 
    (define (is-binary-string-add? x)
       (when (isa? x J2SBinary)
@@ -1443,7 +1448,7 @@
 	     x
 	     `(js-toprimitive-for-string ,x %this))))
    
-   (define (small-string-add tl tr loc type lhs rhs mode return ctx)
+   (define (small-add tl tr loc type lhs rhs mode return ctx)
       ;; when optimizing code size, avoid deep nested calls generated
       ;; for long string concatenation that forces register allocation
       ;; to cleanup a lot of the temporaries
@@ -1464,21 +1469,21 @@
 			     (set-cdr! target
 				(list (j2s-scheme-as-string expr mode return ctx)))
 			     '())))
-		 ,(fast-string-add tl tr loc 'string
+		 ,(fast-add tl tr loc 'string
 		     (instantiate::J2SHopRef
 			(loc loc)
 			(id %str)
 			(type 'string))
 		     rhs mode return ctx)))
-	  (fast-string-add tl tr loc type lhs rhs mode return ctx)))
+	  (fast-add tl tr loc type lhs rhs mode return ctx)))
    
    (define (add loc type lhs rhs mode return ctx)
       (let ((tl (j2s-type lhs))
 	    (tr (j2s-type rhs)))
 	 (if (and (or (eq? tl 'string) (eq? tr 'string))
 		  (context-get ctx :optim-size))
-	     (small-string-add tl tr loc type lhs rhs mode return ctx)
-	     (fast-string-add tl tr loc type lhs rhs mode return ctx))))
+	     (small-add tl tr loc type lhs rhs mode return ctx))
+	     (fast-add tl tr loc type lhs rhs mode return ctx)))
 
    (if (type-number? type)
        (js-arithmetic-addsub loc '+ type lhs rhs mode return ctx)

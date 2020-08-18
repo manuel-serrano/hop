@@ -952,8 +952,11 @@
 ;*    j2s->list ::J2SStmtExpr ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SStmtExpr)
-   (with-access::J2SStmtExpr this (expr)
-      `(,@(call-next-method) ,@(dump-info this) ,(j2s->list expr))))
+   (with-access::J2SStmtExpr this (expr loc)
+      `(,@(call-next-method)
+	  ,@(dump-loc loc)
+	  ,@(dump-info this)
+	  ,(j2s->list expr))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SObjectInit ...                                    */
