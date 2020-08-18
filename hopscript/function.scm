@@ -18,7 +18,7 @@
    
    (library hop js2scheme)
    
-   (include "types.sch" "stringliteral.sch" "property.sch" "arity.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch" "arity.sch" "array.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic
@@ -1165,11 +1165,10 @@
 		(else
 		 (js-apply %this this thisarg (vector->sublist vec n)))))
 	    ((=fx arity -2048)
-	     (vector-shrink! vec n)
-	     (procedure thisarg vec))
+	     (procedure thisarg (vector-copy vec 0 n)))
 	    ((=fx arity -2047)
-	     (vector-shrink! vec n)
-	     (procedure thisarg vec))
+	     (js-call-with-stack-vector (vector-copy vec 0 n)
+		(lambda (v) (procedure thisarg v))))
 	    (else
 	     (js-apply %this this thisarg (vector->sublist vec n)))))))
 

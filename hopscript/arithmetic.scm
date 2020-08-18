@@ -126,9 +126,6 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.1       */
 ;*---------------------------------------------------------------------*/
 (define (*js x::obj y::obj %this)
-   (when (or (int32? x) (int32? y))
-      (tprint "*js pas bon " x " " (typeof x ) " " y " " (typeof y))
-      (tprint (/fx 1 0)))
    (let* ((nx (if (js-number? x) x (js-tonumber x %this)))
 			 (ny (if (js-number? y) y (js-tonumber y %this))))
       (*/overflow nx ny)))
