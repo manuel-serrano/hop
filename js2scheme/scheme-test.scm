@@ -99,7 +99,7 @@
    (with-access::J2SExpr this (type)
       (if (eq? type 'bool)
 	  (j2s-scheme this mode return conf)
-	  (j2s-test this mode return conf))))
+	  `(js-toboolean ,(j2s-scheme this mode return conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-bool-test ::J2SParen ...                                     */

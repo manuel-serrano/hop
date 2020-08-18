@@ -2445,9 +2445,10 @@
 ;*    map-types ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SDecl tmap)
-   (with-access::J2SDecl this (vtype id vrange)
+   (with-access::J2SDecl this (vtype id vrange escape)
       (when (range-type? vtype)
-	 (set! vtype (interval->type vrange tmap 'number))))
+	 (let ((ty (interval->type vrange tmap 'number)))
+	    (set! vtype (if escape (type->boxed-type ty) ty)))))
    (call-default-walker))
 	 
 ;*---------------------------------------------------------------------*/
