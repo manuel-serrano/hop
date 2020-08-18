@@ -512,7 +512,7 @@
 	    ((eq? tr 'int32)
 	     (strict-equal-int32 rhs lhs tl))
 	    ((or (type-cannot? tr '(string)) (type-cannot? tl '(string)))
-	     (if (or (type-cannot? tr '(real)) (type-cannot? tl '(real)))
+	     (if (and (type-cannot? tr '(real)) (type-cannot? tl '(real)))
 		 `(eq? ,lhs ,rhs)
 		 `(js-strict-equal-no-string? ,lhs ,rhs)))
 	    (else
@@ -523,8 +523,6 @@
        `(js-equal? ,lhs ,rhs %this))
       ((!=)
        `(not (js-equal? ,lhs ,rhs %this)))
-      ((eq?)
-       `(eq? ,lhs ,rhs))
       ((===)
        (strict-equal lhs rhs))
       ((!==)
