@@ -1292,7 +1292,6 @@ bgl_make_jsarray_sans_init( long size, uint32_t len, obj_t constrmap, obj_t __pr
    obj_t vector;
    int i;
 
-   //fprintf( stderr, "bgl_make_jsarray_sans size=%d\n", size );
    // class initialization
    BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSARRAY_CLASS_INDEX );
    
@@ -1329,7 +1328,6 @@ bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj
    obj_t vector = o->BgL_vecz00;
    int i;
 
-   //fprintf( stderr, "bgl_make_jsarray size=%d\n", size );
    for( i = 0; i < size; i++ ) {
       VECTOR_SET( vector, i, absent );
    }

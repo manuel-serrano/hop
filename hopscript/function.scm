@@ -1198,8 +1198,8 @@
 	    ((=fx arity -2048)
 	     (procedure thisarg (vector-copy vec 0 n)))
 	    ((=fx arity -2047)
-	     (js-call-with-stack-vector (vector-copy vec 0 n)
-		(lambda (v) (procedure thisarg v))))
+	     (vector-shrink! vec n)
+	     (procedure thisarg vec))
 	    (else
 	     (js-apply %this this thisarg (vector->sublist vec n)))))))
 
@@ -1398,8 +1398,6 @@
 		  (vector req opl protocol)))
 	   (case protocol
 	      ((arguments-lazy)
-	       -2047)
-	      ((arguments-eager)
 	       -2047)
 	      ((arguments-eager)
 	       -2048)

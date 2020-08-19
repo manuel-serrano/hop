@@ -223,7 +223,7 @@
        (match-case proc
 	  ((lambda (?v) . ?body)
 	   (cond-expand
-	      ((and bigloo-c (config have-c99-stack-alloc #t))
+	      ((and NOOPT bigloo-c (config have-c99-stack-alloc #t))
 	       (let ((p (gensym 'p))
 		     (len (length args)))
 		  `(let ()
@@ -236,7 +236,7 @@
 			      (iota len) args)
 			 ,@body))))
 	      (else
-	       `(js-call-with-stack-vector ,vec ,proc))))
+	       `((@ js-call-with-stack-vector __hopscript_array) ,vec ,proc))))
 	  (else
 	   (error "js-call-with-stack-vector" "bad form"
 	      `(js-call-with-stack-vector ,vec ,proc)))))
@@ -246,7 +246,7 @@
        (match-case proc
 	  ((lambda (?v) . ?body)
 	   (cond-expand
-	      ((and bigloo-c (config have-c99-stack-alloc #t))
+	      ((and NOOPT bigloo-c (config have-c99-stack-alloc #t))
 	       (let* ((p (gensym 'p))
 		      (i (gensym 'i))
 		      (len (gensym 'l))
@@ -262,7 +262,7 @@
 			       (loop (+fx ,i 1))))
 			 ,@body))))
 	      (else
-	       (,proc ,vec))))
+	       `(,proc ,vec))))
 	  (else
 	   (error "js-call-with-stack-vector" "bad form"
 	      `(js-call-with-stack-vector ,vec ,proc)))))

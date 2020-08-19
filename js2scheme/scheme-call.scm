@@ -790,10 +790,10 @@
    (define (call-arguments-function fun::J2SFun thisarg::pair-nil f %gen args)
       (with-access::J2SFun fun (params vararg idthis loc argumentsp)
 	 (let ((self (if idthis (j2s-self thisarg) '())))
-	    (if (and (context-get ctx :optim-arguments)
-		     (context-get ctx :optim-stack-alloc))
+	    (if (context-get ctx :optim-arguments)
 		(with-access::J2SDeclArguments argumentsp (alloc-policy)
-		   (if (eq? alloc-policy 'lazy)
+		   (if (and (eq? alloc-policy 'lazy)
+			    (context-get ctx :optim-stack-alloc))
 		       (let ((v (gensym 'vec)))
 			  `(js-call-with-stack-vector
 			      (vector ,@(j2s-scheme args mode return ctx))
@@ -815,7 +815,8 @@
 		;; the rest argument
 		(with-access::J2SDeclRest (car params) (alloc-policy)
 		   (if (and (eq? alloc-policy 'lazy)
-			    (context-get ctx :optim-arguments))
+			    (context-get ctx :optim-arguments)
+			    (context-get ctx :optim-stack-alloc))
 		       (let ((v (gensym 'vec)))
 			  `(js-call-with-stack-vector
 			      (vector ,@(j2s-scheme args mode return ctx))

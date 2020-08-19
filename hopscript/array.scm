@@ -147,7 +147,7 @@
 	   (js-call-with-stack-vector ::vector ::procedure))
    
    (cond-expand
-      (bigloo-c
+      ((and bigloo-c (not devel) (not debug))
        (export
 	  (inline js-empty-vector->jsarray::JsArray ::JsGlobalObject)
 	  (inline DEFAULT-EMPTY-ARRAY-SIZE::long)))
@@ -2385,7 +2385,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-construct-alloc-small %this::JsGlobalObject len::uint32)
    (cond-expand
-      (bigloo-c
+      ((and bigloo-c (not devel) (not debug))
        (with-access::JsGlobalObject %this (js-array-prototype)
 	  ($js-make-jsarray (uint32->fixnum len) len
 	     (js-not-a-cmap)
@@ -2393,7 +2393,8 @@
 	     (js-absent) (js-array-default-mode))))
       (else
        (let* ((this (js-array-alloc %this))
-	      (v (js-create-vector (uint32->fixnum len))))
+	      (v (make-vector (uint32->fixnum len) (js-absent))))
+	  (js-object-mode-set! this (js-array-default-mode))
 	  (with-access::JsArray this (vec ilen length)
 	     (set! length len)
 	     (set! ilen #u32:0)
@@ -2408,7 +2409,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-construct-alloc-small-sans-init %this::JsGlobalObject len::uint32)
    (cond-expand
-      (bigloo-c
+      ((and bigloo-c (not devel) (not debug))
        (with-access::JsGlobalObject %this (js-array-prototype)
 	  ($js-make-jsarray-sans-init (uint32->fixnum len) len
 	     (js-not-a-cmap)
@@ -2416,7 +2417,8 @@
 	     (js-array-default-mode))))
       (else
        (let* ((this (js-array-alloc %this))
-	      (v (js-create-vector (uint32->fixnum len))))
+	      (v (make-vector (uint32->fixnum len) (js-absent))))
+	  (js-object-mode-set! this (js-array-default-mode))
 	  (with-access::JsArray this (vec ilen length)
 	     (set! length #u32:0)
 	     (set! ilen len)
@@ -2562,22 +2564,24 @@
 ;*    js-empty-vector->jsarray ...                                     */
 ;*---------------------------------------------------------------------*/
 (cond-expand
-   (bigloo-c
+   ((and bigloo-c (not devel) (not debug))
     (define-inline (js-empty-vector->jsarray::JsArray %this::JsGlobalObject)
        (let ((mode (js-array-default-mode)))
 	  (with-access::JsGlobalObject %this (js-array-prototype)
 	     ($js-make-jsarray (DEFAULT-EMPTY-ARRAY-SIZE) #u32:0 (js-not-a-cmap)
 		js-array-prototype (js-absent) mode)))))
    (else
-    (define (js-empty-vector->jsarray::JsArray %this::JsGlobalObject)
+    (define-inline (js-empty-vector->jsarray::JsArray %this::JsGlobalObject)
        (let ((mode (js-array-default-mode)))
 	  (with-access::JsGlobalObject %this (js-array-prototype)
-	     (let ((vec (js-create-vector (DEFAULT-EMPTY-ARRAY-SIZE))))
-		(instantiateJsArray
-		   (__proto__ js-array-prototype)
-		   (length #u32:0)
-		   (ilen #u32:0)
-		   (vec vec))))))))
+	     (let* ((vec (make-vector (DEFAULT-EMPTY-ARRAY-SIZE) (js-absent)))
+		    (o (instantiate::JsArray
+			  (length #u32:0)
+			  (ilen #u32:0)
+			  (vec vec))))
+		(js-object-mode-set! o mode)
+		(js-object-proto-set! o js-array-prototype)
+		o))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-species->jsarray ...                                          */

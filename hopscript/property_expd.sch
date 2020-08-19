@@ -591,7 +591,7 @@
 		     `(let ((idx (js-pcache-index ,cache)))
 			 (js-profile-log-cache ,cache :emap #t)
 			 (js-profile-log-index idx)
-			 (js-object-inline-set! ,obj idx ,tmp)
+			  (js-object-inline-set! ,obj idx ,tmp)
 			 (set! cmap (js-pcache-cmap ,cache))
 			 ,tmp))
 		    ((eq? cs 'cmap)
@@ -769,8 +769,9 @@
 	 `(,call ,%this ,m ,obj ,@(if (>=fx len 11) `((list ,@args)) args))))
    
    (define (calln-uncachable %this ocspecs obj prop args ccache ocache loc)
-      `(let ((f (js-get-jsobject-name/cache ,obj ,prop #f ,%this ,ocache ,loc ',ocspecs)))
-	  ,(calln %this 'f obj args)))
+      (let ((f (gensym 'f)))
+	 `(let ((,f (js-get-jsobject-name/cache ,obj ,prop #f ,%this ,ocache ,loc ',ocspecs)))
+	     ,(calln %this f obj args))))
 
    (define (calln-miss %this obj prop args ccache ocache loc cspecs ospecs)
       (if (pair? args)
@@ -892,7 +893,7 @@
 	  ((js-method-jsobject-call-name/cache ?%this ?obj . ?rest)
 	   (let ((o (gensym '%o)))
 	      (e `(let ((,o ,obj))
-		     (js-method-jsobject-call-name/cache %this ,o ,@rest))
+		     (js-method-jsobject-call-name/cache ,%this ,o ,@rest))
 		 e)))
 	  (else
 	   (error "js-method-jsobject-call-name/cache" "bad form" x))))))
@@ -1060,7 +1061,7 @@
        (match-case proc
 	  ((lambda (?l) . ?body)
 	   (cond-expand
-	      ((and bigloo-c (config have-c99-stack-alloc #t))
+	      ((and bigloo-c (config have-c99-stack-alloc #t) (not devel) (not debug))
 	       (let ((stk (gensym 'stk))
 		     (p (gensym 'p))
 		     (aux (gensym 'aux))

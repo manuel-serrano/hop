@@ -521,7 +521,9 @@
 	 (if (js-function? ctor)
 	     (with-access::JsFunction ctor (constrsize info)
 		(when (<fx constrsize (js-function-info-maxconstrsize info))
-		   (set! constrsize (+fx 1 constrsize)))
+		   (if (<fx idx (js-function-info-maxconstrsize info))
+		       (set! constrsize idx)
+		       (set! constrsize (+fx 1 constrsize))))
 		(js-object-add! obj idx value 1))
 	     (let ((inc (maxfx 1 (minfx (vector-length props) 8))))
 		(js-object-add! obj idx value inc)))))
@@ -533,7 +535,6 @@
 (define (js-object-push! obj::JsObject idx::long value)
    (with-access::JsObject obj (elements)
       (if (>=fx idx (vector-length elements))
-	  ;;(js-object-add! obj idx value (minfx idx 8))
 	  (js-object-add! obj idx value 1)
 	  (vector-set! elements idx value))))
 
@@ -2058,55 +2059,55 @@
 		   throw::bool %this::JsGlobalObject
 		   cache::JsPropertyCache)
    
-   (define (js-pcache-vtable! omap cache i)
+   (define (js-pcache-vtable! omap cache i %this)
       (with-access::JsPropertyCache cache (cntmiss vindex)
 	 (when (=fx vindex (js-not-a-index))
 	    (set! vindex (js-get-vindex %this)))
 	 (js-cmap-vtable-add! omap vindex i cache)))
-
+   
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
-
+   
    (let loop ((obj o))
       (jsobject-find obj o name
-         ;; map search
-         (lambda (obj i)
-            (with-access::JsObject o ((omap cmap))
-               (with-access::JsObject obj (elements)
-                  (with-access::JsPropertyCache cache (index owner cntmiss)
-                     (let ((el-or-desc (vector-ref elements i)))
-                        (cond
-                           ((isa? el-or-desc JsPropertyDescriptor)
-                            ;; accessor property
-                            (js-pcache-update-descriptor! cache i o obj)
-                            (js-property-value o obj name el-or-desc %this))
-                           ((eq? o obj)
-                            ;; direct access to the direct object
-                            [assert (i) (<=fx i (vector-length elements))]
-                            (cond
-                               ((<u32 cntmiss (inline-threshold))
-                                (js-pcache-get-direct! cache i o #t))
-                               ((<u32 cntmiss (vtable-threshold))
-                                (js-pcache-get-direct! cache i o #f))
-                               ((not (eq? prop (& "__proto__")))
-                                (js-pcache-vtable! omap cache i)))
-                            el-or-desc)
-                           (else
-                            ;; direct access to a prototype object
-                            (js-pcache-update-owner! cache i o obj)
-                            el-or-desc)))))))
-         ;; property search
-         (lambda (obj desc i)
+	 ;; map search
+	 (lambda (obj i)
+	    (with-access::JsObject o ((omap cmap))
+	       (with-access::JsObject obj (elements)
+		  (with-access::JsPropertyCache cache (index owner cntmiss)
+		     (let ((el-or-desc (vector-ref elements i)))
+			(cond
+			   ((isa? el-or-desc JsPropertyDescriptor)
+			    ;; accessor property
+			    (js-pcache-update-descriptor! cache i o obj)
+			    (js-property-value o obj name el-or-desc %this))
+			   ((eq? o obj)
+			    ;; direct access to the direct object
+			    [assert (i) (<=fx i (vector-length elements))]
+			    (cond
+			       ((<u32 cntmiss (inline-threshold))
+				(js-pcache-get-direct! cache i o #t))
+			       ((<u32 cntmiss (vtable-threshold))
+				(js-pcache-get-direct! cache i o #f))
+			       ((not (eq? prop (& "__proto__")))
+				(js-pcache-vtable! omap cache i %this)))
+			    el-or-desc)
+			   (else
+			    ;; direct access to a prototype object
+			    (js-pcache-update-owner! cache i o obj)
+			    el-or-desc)))))))
+	 ;; property search
+	 (lambda (obj desc i)
 	    (with-access::JsObject obj (elements)
 	       (js-property-value o obj name desc %this)))
-         ;; not found
-         (lambda (_o)
+	 ;; not found
+	 (lambda (_o)
 	    (with-access::JsObject o (cmap)
 	       (unless (or (eq? cmap (js-not-a-cmap)) throw)
 		  (js-pcache-update-owner! cache 0 o miss-object)))
-            (js-get-notfound name throw %this))
-         ;; loop
-         loop)))
+	    (js-get-notfound name throw %this))
+	 ;; loop
+	 loop)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-method-jsobject-get-name/cache-miss ...                       */

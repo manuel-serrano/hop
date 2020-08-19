@@ -485,8 +485,6 @@
 	   (inline js-procedure-hopscript-mode?::bool ::JsProcedure)
 	   (inline js-procedure-hopscript-mode-set! ::JsProcedure ::bool)
 	   
-	   (js-object-elements-inline?::bool ::JsObject)
-	   
 	   (inline JS-OBJECT-MODE-JSSTRINGTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSFUNCTIONTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSMETHODTAG::uint32)
@@ -626,7 +624,7 @@
 (define-inline (js-make-jsobject constrsize constrmap __proto__)
    (let ((mode (js-object-default-mode)))
       (cond-expand
-	 (bigloo-c
+	 ((and bigloo-c (not devel) (not debug))
 	  ($js-make-jsobject constrsize constrmap __proto__ mode))
 	 (else
 	  (let ((o (instantiate::JsObject
@@ -635,7 +633,6 @@
 	     (js-object-proto-set! o __proto__)
 	     (js-object-mode-set! o mode)
 	     (js-object-mode-inline-set! o #f)
-	     (%object-widening-set! o '())
 	     o)))))
 
 ;*---------------------------------------------------------------------*/
@@ -912,10 +909,6 @@
 	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT))
 	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT))))))
 
-(define (js-object-elements-inline? o)
-   ;; only used for debugging
-   ($jsobject-elements-inline? o))
-
 ;*---------------------------------------------------------------------*/
 ;*    regexp                                                           */
 ;*---------------------------------------------------------------------*/
@@ -956,7 +949,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-inline-ref o::JsObject idx::long)
    (cond-expand
-      ((and bigloo-c (not devel))
+      ((and bigloo-c (not devel) (not debug))
        (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx))
       (else
        (with-access::JsObject o (elements)
@@ -967,7 +960,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-inline-set! o::JsObject idx::long val::obj)
    (cond-expand
-      ((and bigloo-c (not devel))
+      ((and bigloo-c (not devel) (not debug))
        (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val))
       (else
        (with-access::JsObject o (elements)
