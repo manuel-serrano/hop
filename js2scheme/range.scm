@@ -2327,6 +2327,18 @@
       this))
 
 ;*---------------------------------------------------------------------*/
+;*    type-range! ::J2SRef ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-range! this::J2SRef tymap)
+   (with-access::J2SRef this (range type decl)
+      (when (range-type? type)
+	 (with-access::J2SDecl decl (escape)
+	    (let* ((ity (interval->type range tymap 'number))
+		   (mty (min-type type ity)))
+	       (set! type (if escape (type->boxed-type mty) mty))))))
+   this)
+
+;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SExpr ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-range! this::J2SExpr tymap)
@@ -2379,6 +2391,16 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SNode tmap)
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    map-types ::J2SRef ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SRef tmap)
+   (with-access::J2SRef this (range type decl)
+      (when (range-type? type)
+	 (with-access::J2SDecl decl (escape)
+	    (let ((ty (interval->type range tmap type)))
+	       (set! type (if escape (type->boxed-type ty) ty)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    map-types ::J2SExpr ...                                          */
