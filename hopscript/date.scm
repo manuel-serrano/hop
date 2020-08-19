@@ -43,6 +43,8 @@
 	   (js-date-construct1 ::JsGlobalObject ::obj)
 	   (js-date-construct2 ::JsGlobalObject ::obj ::obj)
 	   (js-date-construct3 ::JsGlobalObject ::obj ::obj ::obj)
+	   (js-date-construct4 ::JsGlobalObject ::obj ::obj ::obj ::obj)
+	   (js-date-construct5 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
 	   (js-date-construct6 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj)
 	   (js-date-construct7 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj ::obj)
 	   (js-date-now)))
@@ -170,27 +172,9 @@
 	    ((?year ?month ?date ?hours ?minutes ?seconds)
 	     (js-date-value6 %this year month date hours minutes seconds))
 	    ((?year ?month ?date ?hours ?minutes)
-	     (let* ((y (tofixnum year %this))
-		    (m (tofixnum month %this))
-		    (d (tofixnum date %this))
-		    (h (tofixnum hours %this))
-		    (mi (tofixnum minutes %this)))
-		(when (and (fixnum? y) (>fx y 0)
-			   (fixnum? m) (fixnum? d) (fixnum? h)
-			   (fixnum? mi))
-		   (make-date
-		      :year y :month (+ m 1) :day d
-		      :hour h :min mi :sec 0))))
+	     (js-date-value5 %this year month date hours minutes))
 	    ((?year ?month ?date ?hours)
-	     (let* ((y (tofixnum year %this))
-		    (m (tofixnum month %this))
-		    (d (tofixnum date %this))
-		    (h (tofixnum hours %this)))
-		(when (and (fixnum? y) (>fx y 0)
-			   (fixnum? m) (fixnum? d) (fixnum? h))
-		   (make-date
-		      :year y :month (+ m 1) :day d
-		      :hour h :min 0 :sec 0))))
+	     (js-date-value4 %this year month date hours))
 	    ((?year ?month ?date)
 	     (js-date-value3 %this year month date))
 	    ((?year ?month)
@@ -348,6 +332,36 @@
 	    :hour 0 :min 0 :sec 0))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-date-value4 ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-date-value4 %this year month date hours)
+   (let* ((y (tofixnum year %this))
+	  (m (tofixnum month %this))
+	  (d (tofixnum date %this))
+	  (h (tofixnum hours %this)))
+      (when (and (fixnum? y) (>fx y 0)
+		 (fixnum? m) (fixnum? d) (fixnum? h))
+	 (make-date
+	    :year y :month (+ m 1) :day d
+	    :hour h :min 0 :sec 0))))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-value5 ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-date-value5 %this year month date hours minutes)
+   (let* ((y (tofixnum year %this))
+	  (m (tofixnum month %this))
+	  (d (tofixnum date %this))
+	  (h (tofixnum hours %this))
+	  (mi (tofixnum minutes %this)))
+      (when (and (fixnum? y) (>fx y 0)
+		 (fixnum? m) (fixnum? d) (fixnum? h)
+		 (fixnum? mi))
+	 (make-date
+	    :year y :month (+ m 1) :day d
+	    :hour h :min mi :sec 0))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-date-value6 ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-date-value6 %this year month date hours minutes seconds)
@@ -420,6 +434,22 @@
 (define (js-date-construct3 %this year month date)
    (let ((this (js-date-alloc %this)))
       (set-date! this (js-date-value3 %this year month date))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-construct4 ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-date-construct4 %this year month date hours)
+   (let ((this (js-date-alloc %this)))
+      (set-date! this (js-date-value4 %this year month date hours))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-construct5 ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-date-construct5 %this year month date hours minutes)
+   (let ((this (js-date-alloc %this)))
+      (set-date! this (js-date-value5 %this year month date hours minutes))
       this))
 
 ;*---------------------------------------------------------------------*/

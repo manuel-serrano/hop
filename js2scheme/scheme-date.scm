@@ -42,33 +42,14 @@
    
    (with-access::J2SNew this (args)
       (case (length args)
-	 ((0)
-	  `(js-date-construct0 %this))
-	 ((1)
-	  `(js-date-construct1 %this
-	      ,@(map (lambda (a)
-			(j2s-scheme-box a mode return ctx))
-		   args)))
-	 ((2)
-	  `(js-date-construct2 %this
-	      ,@(map (lambda (a)
-			(j2s-scheme-box a mode return ctx))
-		   args)))
-	 ((3)
-	  `(js-date-construct3 %this
-	      ,@(map (lambda (a)
-			(j2s-scheme-box a mode return ctx))
-		   args)))
-	 ((6)
-	  `(js-date-construct3 %this
-	      ,@(map (lambda (a)
-			(j2s-scheme-box a mode return ctx))
-		   args)))
-	 ((7)
-	  `(js-date-construct3 %this
-	      ,@(map (lambda (a)
-			(j2s-scheme-box a mode return ctx))
-		   args)))
+	 ((0 1 2 3 4 5 6 7)
+	  (let ((ctor (symbol-append 'js-date-construct
+			 (string->symbol
+			    (integer->string (length args))))))
+	     `(,ctor %this
+		 ,@(map (lambda (a)
+			   (j2s-scheme-box a mode return ctx))
+		      args))))
 	 (else
 	  (tprint "NEW DATE nop " (length args))
 	  #f))))
