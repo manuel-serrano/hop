@@ -39,6 +39,12 @@
    
    (export (js-init-date! ::JsObject)
 	   (js-date->jsdate::JsDate ::date ::JsGlobalObject)
+	   (js-date-construct0 ::JsGlobalObject)
+	   (js-date-construct1 ::JsGlobalObject ::obj)
+	   (js-date-construct2 ::JsGlobalObject ::obj ::obj)
+	   (js-date-construct3 ::JsGlobalObject ::obj ::obj ::obj)
+	   (js-date-construct6 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj)
+	   (js-date-construct7 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj ::obj)
 	   (js-date-now)))
 
 ;*---------------------------------------------------------------------*/
@@ -121,8 +127,16 @@
 (define (tofixnum val %this)
    (cond
       ((fixnum? val) val)
-      ((flonum? val) (flonum->fixnum val))
+      ((flonum? val) (if (nanfl? val) val (flonum->fixnum val)))
       (else (tofixnum (js-tonumber val %this) %this))))
+
+;*---------------------------------------------------------------------*/
+;*    set-date! ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (set-date! this v)
+   (with-access::JsDate this (val)
+      (set! val v)
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-date! ...                                                */
@@ -132,9 +146,9 @@
    (unless (vector? __js_strings) (set! __js_strings (&init!)))
    
    ;; first, bind the builtin date prototype
-   (with-access::JsGlobalObject %this (js-date js-function)
+   (with-access::JsGlobalObject %this (js-date js-function js-date-prototype)
       
-      (define js-date-prototype
+      (set! js-date-prototype
 	 (instantiateJsDate
 	    (val (current-date))
 	    (cmap (instantiate::JsConstructMap))
@@ -152,40 +166,9 @@
       (define (parse-date-arguments args)
 	 (match-case args
 	    ((?year ?month ?date ?hours ?minutes ?seconds ?ms)
-	     (let* ((y (tofixnum year %this))
-		    (m (tofixnum month %this))
-		    (d (tofixnum date %this))
-		    (h (tofixnum hours %this))
-		    (mi (tofixnum minutes %this))
-		    (se (tofixnum seconds %this))
-		    (us (tofixnum ms %this))
-		    (ns (cond
-			   ((fixnum? us)
-			    (*llong #l1000000 (fixnum->llong us)))
-			   ((flonum? us)
-			    (*llong #l1000000
-			       (fixnum->llong (flonum->fixnum us))))
-			   (else
-			    #l0))))
-		(when (and (fixnum? y) (>fx y 0)
-			   (fixnum? m) (fixnum? d) (fixnum? h)
-			   (fixnum? mi) (fixnum? se) (llong? ns))
-		   (make-date
-		      :year y :month (+ m 1) :day d
-		      :hour h :min mi :sec se :nsec ns))))
+	     (js-date-value7 %this year month date hours minutes seconds ms))
 	    ((?year ?month ?date ?hours ?minutes ?seconds)
-	     (let* ((y (tofixnum year %this))
-		    (m (tofixnum month %this))
-		    (d (tofixnum date %this))
-		    (h (tofixnum hours %this))
-		    (mi (tofixnum minutes %this))
-		    (se (tofixnum seconds %this)))
-		(when (and (fixnum? y) (>fx y 0)
-			   (fixnum? m) (fixnum? d) (fixnum? h)
-			   (fixnum? mi) (fixnum? se))
-		   (make-date
-		      :year y :month (+ m 1) :day d
-		      :hour h :min mi :sec se))))
+	     (js-date-value6 %this year month date hours minutes seconds))
 	    ((?year ?month ?date ?hours ?minutes)
 	     (let* ((y (tofixnum year %this))
 		    (m (tofixnum month %this))
@@ -209,55 +192,16 @@
 		      :year y :month (+ m 1) :day d
 		      :hour h :min 0 :sec 0))))
 	    ((?year ?month ?date)
-	     (let* ((y (tofixnum year %this))
-		    (m (tofixnum month %this))
-		    (d (tofixnum date %this)))
-		(when (and (fixnum? y) (>fx y 0)
-			   (fixnum? m) (fixnum? d))
-		   (make-date
-		      :year y :month (+ m 1) :day d
-		      :hour 0 :min 0 :sec 0))))
+	     (js-date-value3 %this year month date))
 	    ((?year ?month)
-	     (let* ((y (tofixnum year %this))
-		    (m (tofixnum month %this)))
-		(when (and (fixnum? y) (>fx y 0)
-			   (fixnum? m))
-		   (make-date
-		      :year y :month (+ m 1)
-		      :day 1 :hour 0 :min 0 :sec 0))))
+	     (js-date-value2 %this year month))
 	    ((?value)
-	     (if (isa? value JsDate)
-		 (with-access::JsDate value (val)
-		    val)
-		 (let ((v (js-toprimitive value 'any %this)))
-		    (cond
-		       ((js-jsstring? v)
-			(parse-date (js-jsstring->string v)))
-		       ((js-number? v)
-			(if (flonum? v)
-			    (if (or (nanfl? v) (=fl v +inf.0) (=fl v -inf.0))
-				+nan.0
-				(milliseconds->date
-				   (flonum->llong (floorfl v))))
-			    (let ((n (cond
-					((fixnum? v) (fixnum->llong v))
-					((llong? v) v)
-					((elong? v) (elong->llong v))
-					(else #l0))))
-			       (milliseconds->date n))))
-		       (else
-			v)))))
+	     (js-date-value1 %this value))
 	    (else
-	     (current-date))))
+	     (js-date-value0 %this))))
       
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9
       (define (%js-date this . args)
-	 
-	 (define (set-date! this v)
-	    (with-access::JsDate this (val)
-	       (set! val v)
-	       this))
-	 
 	 (with-access::JsGlobalObject %this (js-new-target)
 	    (cond
 	       ((eq? js-new-target (js-undefined))
@@ -337,6 +281,162 @@
       (js-bind! %this %this (& "Date")
 	 :configurable #f :enumerable #f :value js-date :hidden-class #t)
       js-date))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-alloc ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-date-alloc %this)
+   (with-access::JsGlobalObject %this (js-date-prototype)
+      (instantiateJsDate
+	 (__proto__ js-date-prototype))))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-value0 ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-date-value0 %this)
+   (current-date))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-value1 ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-date-value1 %this value)
+   (if (isa? value JsDate)
+       (with-access::JsDate value (val)
+	  val)
+       (let ((v (js-toprimitive value 'any %this)))
+	  (cond
+	     ((js-jsstring? v)
+	      (parse-date (js-jsstring->string v)))
+	     ((js-number? v)
+	      (if (flonum? v)
+		  (if (or (nanfl? v) (=fl v +inf.0) (=fl v -inf.0))
+		      +nan.0
+		      (milliseconds->date
+			 (flonum->llong (floorfl v))))
+		  (let ((n (cond
+			      ((fixnum? v) (fixnum->llong v))
+			      ((llong? v) v)
+			      ((elong? v) (elong->llong v))
+			      (else #l0))))
+		     (milliseconds->date n))))
+	     (else
+	      v)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-value2 ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-date-value2 %this year month)
+   (let* ((y (tofixnum year %this))
+	  (m (tofixnum month %this)))
+      (when (and (fixnum? y) (>fx y 0)
+		 (fixnum? m))
+	 (make-date
+	    :year y :month (+ m 1)
+	    :day 1 :hour 0 :min 0 :sec 0))))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-value3 ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-date-value3 %this year month date)
+   (let* ((y (tofixnum year %this))
+	  (m (tofixnum month %this))
+	  (d (tofixnum date %this)))
+      (when (and (fixnum? y) (>fx y 0)
+		 (fixnum? m) (fixnum? d))
+	 (make-date
+	    :year y :month (+ m 1) :day d
+	    :hour 0 :min 0 :sec 0))))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-value6 ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-date-value6 %this year month date hours minutes seconds)
+   (let* ((y (tofixnum year %this))
+	  (m (tofixnum month %this))
+	  (d (tofixnum date %this))
+	  (h (tofixnum hours %this))
+	  (mi (tofixnum minutes %this))
+	  (se (tofixnum seconds %this)))
+      (when (and (fixnum? y) (>fx y 0)
+		 (fixnum? m) (fixnum? d) (fixnum? h)
+		 (fixnum? mi) (fixnum? se))
+	 (make-date
+	    :year y :month (+ m 1) :day d
+	    :hour h :min mi :sec se))))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-value7 ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-date-value7 %this year month date hours minutes seconds ms)
+   (let* ((y (tofixnum year %this))
+	  (m (tofixnum month %this))
+	  (d (tofixnum date %this))
+	  (h (tofixnum hours %this))
+	  (mi (tofixnum minutes %this))
+	  (se (tofixnum seconds %this))
+	  (us (tofixnum ms %this))
+	  (ns (cond
+		 ((fixnum? us)
+		  (*llong #l1000000 (fixnum->llong us)))
+		 ((flonum? us)
+		  (*llong #l1000000
+		     (fixnum->llong (flonum->fixnum us))))
+		 (else
+		  #l0))))
+      (when (and (fixnum? y) (>fx y 0)
+		 (fixnum? m) (fixnum? d) (fixnum? h)
+		 (fixnum? mi) (fixnum? se) (llong? ns))
+	 (make-date
+	    :year y :month (+ m 1) :day d
+	    :hour h :min mi :sec se :nsec ns))))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-construct0 ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-date-construct0 %this)
+   (let ((this (js-date-alloc %this)))
+      (set-date! this (js-date-value0 %this))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-construct1 ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-date-construct1 %this value)
+   (let ((this (js-date-alloc %this)))
+      (set-date! this (js-date-value1 %this value))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-construct2 ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-date-construct2 %this year month)
+   (let ((this (js-date-alloc %this)))
+      (set-date! this (js-date-value2 %this year month))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-construct3 ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-date-construct3 %this year month date)
+   (let ((this (js-date-alloc %this)))
+      (set-date! this (js-date-value3 %this year month date))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-construct6 ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-date-construct6 %this year month date hours minutes seconds)
+   (let ((this (js-date-alloc %this)))
+      (set-date! this (js-date-value6 %this year month date hours minutes seconds))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-construct7 ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-date-construct7 %this year month date hours minutes seconds ms)
+   (let ((this (js-date-alloc %this)))
+      (set-date! this (js-date-value7 %this year month date hours minutes seconds ms))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    parse-date ...                                                   */

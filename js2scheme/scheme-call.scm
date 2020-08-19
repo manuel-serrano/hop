@@ -703,18 +703,6 @@
 	       (else
 		#f)))))
 
-   (define (call-new-method obj::J2SNew field args mode return ctx)
-      (with-access::J2SNew obj (clazz)
-	 (when (isa? clazz J2SGlobalRef)
-	    (with-access::J2SGlobalRef clazz (id decl)
-	       (unless (decl-usage-has? decl '(assig))
-		  (case id
-		     ((Date)
-		      (j2s-date-new-method obj field args mode return
-			 ctx))
-		     (else
-		      #f)))))))
-   
    (define (call-method this ccache ccspecs fun::J2SAccess args)
       (with-access::J2SCall this (profid cache)
 	 (with-access::J2SAccess fun (loc obj field (acache cache) (acspecs cspecs))
@@ -759,10 +747,6 @@
 		  ((isa? obj J2SParen)
 		   (with-access::J2SParen obj (expr)
 		      (loop expr)))
-		  ((and (isa? obj J2SNew)
-			(call-new-method obj field args mode return ctx))
-		   =>
-		   (lambda (sexp) sexp))
 		  (else
 		   (let ((tmp (gensym 'obj)))
 		      `(let ((,tmp ,(box (j2s-scheme obj mode return ctx)

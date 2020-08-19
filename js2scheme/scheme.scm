@@ -2673,6 +2673,9 @@
    (define (new-proxy? clazz)
       (new-builtin? clazz 'Proxy))
 
+   (define (new-date? clazz)
+      (new-builtin? clazz 'Date))
+
    (define (constructor-no-call? decl)
       ;; does this constructor call another function?
       (let ((fun (j2sdeclinit-val-fun decl)))
@@ -2759,6 +2762,10 @@
 	 ((and (new-proxy? clazz) (=fx (length args) 2))
 	  (epairify loc
 	     (j2s-new-proxy this mode return ctx)))
+	 ((and (new-date? clazz) (j2s-new-date this mode return ctx))
+	  =>
+	  (lambda (sexp)
+	     (epairify loc sexp)))
 	 ((optimized-ctor clazz ctx)
 	  =>
 	  (lambda (decl)

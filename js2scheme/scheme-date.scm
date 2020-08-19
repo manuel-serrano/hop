@@ -27,22 +27,51 @@
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-fun)
    
-   (export (j2s-date-new-method fun::J2SNew field args
-	      mode return::procedure conf)
+   (export (j2s-new-date fun::J2SNew mode return::procedure ctx)
 	   (j2s-date-builtin-method fun::J2SAccess args
 	      expr mode return::procedure conf)))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-date-new-method ...                                          */
+;*    j2s-new-date ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (j2s-date-new-method clazz field args mode return::procedure conf)
-   (when (isa? field J2SString)
-      (with-access::J2SString field (val)
-	 (cond
-	    ((string=? val "getTime")
-	     `(llong->flonum (/llong (current-microseconds) #l1000)))
-	    (else
-	     #f)))))
+(define (j2s-new-date this::J2SNew mode return::procedure ctx)
+   
+   (define (j2s-scheme-box o mode return ctx)
+      (let ((t (j2s-type o)))
+	 (box (j2s-scheme o mode return ctx) t ctx)))
+   
+   (with-access::J2SNew this (args)
+      (case (length args)
+	 ((0)
+	  `(js-date-construct0 %this))
+	 ((1)
+	  `(js-date-construct1 %this
+	      ,@(map (lambda (a)
+			(j2s-scheme-box a mode return ctx))
+		   args)))
+	 ((2)
+	  `(js-date-construct2 %this
+	      ,@(map (lambda (a)
+			(j2s-scheme-box a mode return ctx))
+		   args)))
+	 ((3)
+	  `(js-date-construct3 %this
+	      ,@(map (lambda (a)
+			(j2s-scheme-box a mode return ctx))
+		   args)))
+	 ((6)
+	  `(js-date-construct3 %this
+	      ,@(map (lambda (a)
+			(j2s-scheme-box a mode return ctx))
+		   args)))
+	 ((7)
+	  `(js-date-construct3 %this
+	      ,@(map (lambda (a)
+			(j2s-scheme-box a mode return ctx))
+		   args)))
+	 (else
+	  (tprint "NEW DATE nop " (length args))
+	  #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-date-builtin-method ...                                      */
