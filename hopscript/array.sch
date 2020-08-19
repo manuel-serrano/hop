@@ -223,7 +223,7 @@
        (match-case proc
 	  ((lambda (?v) . ?body)
 	   (cond-expand
-	      ((and NOOPT bigloo-c (config have-c99-stack-alloc #t))
+	      ((and bigloo-c (config have-c99-stack-alloc #t) (not devel) (not debug))
 	       (let ((p (gensym 'p))
 		     (len (length args)))
 		  `(let ()
@@ -246,7 +246,7 @@
        (match-case proc
 	  ((lambda (?v) . ?body)
 	   (cond-expand
-	      ((and NOOPT bigloo-c (config have-c99-stack-alloc #t))
+	      ((and bigloo-c (config have-c99-stack-alloc #t) (not devel) (not debug))
 	       (let* ((p (gensym 'p))
 		      (i (gensym 'i))
 		      (len (gensym 'l))
