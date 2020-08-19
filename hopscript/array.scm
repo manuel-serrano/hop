@@ -2571,7 +2571,7 @@
 	     ($js-make-jsarray (DEFAULT-EMPTY-ARRAY-SIZE) #u32:0 (js-not-a-cmap)
 		js-array-prototype (js-absent) mode)))))
    (else
-    (define-inline (js-empty-vector->jsarray::JsArray %this::JsGlobalObject)
+    (define (js-empty-vector->jsarray::JsArray %this::JsGlobalObject)
        (let ((mode (js-array-default-mode)))
 	  (with-access::JsGlobalObject %this (js-array-prototype)
 	     (let* ((vec (make-vector (DEFAULT-EMPTY-ARRAY-SIZE) (js-absent)))

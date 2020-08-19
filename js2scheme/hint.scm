@@ -784,10 +784,13 @@
 		   (if (or (<fx (apply max (map cadr besthints)) 10)
 			   (<fx (*fx 20 (apply + (map caddr besthints)))
 			      (node-size body)))
-		       ;; no benefit in duplicating this function because
-		       ;; the hintted parameters are not used frequently
-		       ;; enough or because their hints are unlikely to
-		       ;; improve the overall function compilation
+		       ;; no benefit in duplicating this function because:
+		       ;;   - the hintted parameters are not used frequently
+		       ;;     enough;
+		       ;;   - or because their hints are unlikely to
+		       ;;     improve the overall function compilation
+		       ;;   - or because the ratio of hinted parameters is
+		       ;;     too low
 		       (loop #f)
 		       (let ((htypes (map (lambda (bh p)
 					     (cond
