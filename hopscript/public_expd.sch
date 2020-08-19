@@ -47,7 +47,7 @@
 (define (js-tonumber-expander x e)
    (match-case x
       ((?- (and (? symbol?) ?expr) ?%this)
-       (e `(if (fixnum? ,expr)
+       (e `(if (js-number? ,expr)
 	       ,expr
 	       ((@ js-tonumber __hopscript_public) ,expr ,%this))
 	  e))

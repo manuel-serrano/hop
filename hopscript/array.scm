@@ -4545,10 +4545,11 @@
        (js-jsstring-slice this start (js-jsstring-lengthfx this) %this))
       (else
        (with-access::JsGlobalObject %this (js-array-pcache)
-	  (js-call0 %this
+	  (js-call1 %this
 	     (js-get-name/cache this (& "slice") #f %this
 		(or cache (js-pcache-ref js-array-pcache 17)))
-	     this)))))
+	     this
+	     start)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-slice2 ...                                        */
@@ -4565,10 +4566,10 @@
        (js-jsstring-slice this start end %this))
       (else
        (with-access::JsGlobalObject %this (js-array-pcache)
-	  (js-call0 %this
+	  (js-call2 %this
 	     (js-get-name/cache this (& "slice") #f %this
 		(or cache (js-pcache-ref js-array-pcache 17)))
-	     this)))))
+	     this start end)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-inlined-slice2 ...                                      */

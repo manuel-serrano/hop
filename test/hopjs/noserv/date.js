@@ -407,16 +407,3 @@ d = new Date( s );
 assert.ok( d.getTimezoneOffset() === -120, "getTimezoneOffset.1" );
 d.setMonth( 0 );
 assert.ok( d.getTimezoneOffset() === -60, "getTimezoneOffset.2" );
-
-/*---------------------------------------------------------------------*/
-/*    Date no constructor                                              */
-/*---------------------------------------------------------------------*/
-console.log( Date( 1332403882588 ) );
-assert.equal( Date( 1332403882588 ), new Date( 1332403882588 ).toString(), "f1" );
-assert.equal( Date( 2015, 9, 19, 12, 22, 44, 999 ), new Date( 2015, 9, 19, 12, 22, 44, 999 ).toString(), "f2" );
-assert.equal( Date( 2015, 9, 19, 12, 22, 44 ), new Date( 2015, 9, 19, 12, 22, 44 ).toString(), "f3" );
-assert.equal( Date( 2015, 9, 19, 12, 22 ), new Date( 2015, 9, 19, 12, 22 ).toString(), "f4" );
-assert.equal( Date( 2015, 9, 19, 12 ), new Date( 2015, 9, 19, 12 ).toString(), "f5" );
-assert.equal( Date( 2015, 9, 19 ), new Date( 2015, 9, 19 ).toString(), "f6" );
-assert.equal( Date( 2015, 9 ), new Date( 2015, 9 ).toString(), "f7" );
-assert.equal( Date( 2015 ), new Date( 2015 ).toString(), "f8" );

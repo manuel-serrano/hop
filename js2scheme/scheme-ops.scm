@@ -234,27 +234,26 @@
       ((+)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.6
        (let ((sexpr (j2s-scheme expr mode return ctx))
-	     (typ (j2s-type expr))
-	     (vtyp (j2s-vtype expr)))
-	  (cond
-	     ((eqv? sexpr 0)
-	      (if (memq type '(int32 uint32 int53 integer))
-		  0
-		  +0.0))
-	     ((memq vtyp '(int32 uint32 int53 integer number))
-	      sexpr)
-	     ((memq typ '(int32 uint32 int53 integer number))
-	      (j2s-cast sexpr expr vtyp typ ctx))
-	     ((eq? typ 'real)
-	      sexpr)
-	     ((eq? typ 'null)
-	      (if (memq type '(int32 uint32 int53 integer))
-		  0
-		  +0.0))
-	     (else
-	      (if (eq? type 'real)
-		  (epairify loc `(js-toflonum (js-tonumber ,sexpr)))
-		  (epairify loc `(js-tonumber ,sexpr %this)))))))
+             (typ (j2s-type expr))
+             (vtyp (j2s-vtype expr))
+	     (etyp (j2s-type expr)))
+          (cond
+             ((eqv? sexpr 0)
+              (if (memq type '(int32 uint32 int53 integer))
+                  0
+                  +0.0))
+	     ((memq etyp '(int32 uint32 int53 integer number))
+	      (j2s-cast sexpr expr etyp type ctx))
+             ((eq? typ 'real)
+              sexpr)
+             ((eq? typ 'null)
+              (if (memq type '(int32 uint32 int53 integer))
+                  0
+                  +0.0))
+             (else
+              (if (eq? type 'real)
+                  (epairify loc `(js-toflonum (js-tonumber ,sexpr)))
+                  (epairify loc `(js-tonumber ,sexpr %this)))))))
       ((-)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7
        (let ((sexpr (j2s-scheme expr mode return ctx))
