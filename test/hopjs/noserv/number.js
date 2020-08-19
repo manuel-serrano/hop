@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:25 2014                          */
 /*    Last change :  Mon Dec  2 10:52:26 2019 (serrano)                */
-/*    Copyright   :  2014-19 Manuel Serrano                            */
+/*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JS numbers                                               */
 /*=====================================================================*/
@@ -76,10 +76,10 @@ assert.ok( Math.abs( null ) === 0, "Math.abs( null )" );
 /*---------------------------------------------------------------------*/
 /*    integer limits                                                   */
 /*---------------------------------------------------------------------*/
-var x = 4294967295;
+var xxx = 4294967295;
 
-assert.equal( x, +x, "+x" );
-assert.equal( x, Math.ceil( x ), "ceil" );
+assert.equal( xxx, +xxx, "+x" );
+assert.equal( xxx, Math.ceil( xxx ), "ceil" );
 
 assert.ok( Math.floor( 2147483647.0 ) > 0, "floor" );
 
