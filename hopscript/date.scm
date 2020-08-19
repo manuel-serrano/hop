@@ -113,7 +113,17 @@
        (call-next-method))
       (else
        (call-next-method))))
-       
+
+
+;*---------------------------------------------------------------------*/
+;*    tofixnum ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (tofixnum val %this)
+   (cond
+      ((fixnum? val) val)
+      ((flonum? val) (flonum->fixnum val))
+      (else (tofixnum (js-tonumber val %this) %this))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-init-date! ...                                                */
 ;*---------------------------------------------------------------------*/
@@ -142,13 +152,13 @@
       (define (parse-date-arguments args)
 	 (match-case args
 	    ((?year ?month ?date ?hours ?minutes ?seconds ?ms)
-	     (let* ((y (js-tonumber year %this))
-		    (m (js-tonumber month %this))
-		    (d (js-tonumber date %this))
-		    (h (js-tonumber hours %this))
-		    (mi (js-tonumber minutes %this))
-		    (se (js-tonumber seconds %this))
-		    (us (js-tonumber ms %this))
+	     (let* ((y (tofixnum year %this))
+		    (m (tofixnum month %this))
+		    (d (tofixnum date %this))
+		    (h (tofixnum hours %this))
+		    (mi (tofixnum minutes %this))
+		    (se (tofixnum seconds %this))
+		    (us (tofixnum ms %this))
 		    (ns (cond
 			   ((fixnum? us)
 			    (*llong #l1000000 (fixnum->llong us)))
@@ -164,12 +174,12 @@
 		      :year y :month (+ m 1) :day d
 		      :hour h :min mi :sec se :nsec ns))))
 	    ((?year ?month ?date ?hours ?minutes ?seconds)
-	     (let* ((y (js-tonumber year %this))
-		    (m (js-tonumber month %this))
-		    (d (js-tonumber date %this))
-		    (h (js-tonumber hours %this))
-		    (mi (js-tonumber minutes %this))
-		    (se (js-tonumber seconds %this)))
+	     (let* ((y (tofixnum year %this))
+		    (m (tofixnum month %this))
+		    (d (tofixnum date %this))
+		    (h (tofixnum hours %this))
+		    (mi (tofixnum minutes %this))
+		    (se (tofixnum seconds %this)))
 		(when (and (fixnum? y) (>fx y 0)
 			   (fixnum? m) (fixnum? d) (fixnum? h)
 			   (fixnum? mi) (fixnum? se))
@@ -177,11 +187,11 @@
 		      :year y :month (+ m 1) :day d
 		      :hour h :min mi :sec se))))
 	    ((?year ?month ?date ?hours ?minutes)
-	     (let* ((y (js-tonumber year %this))
-		    (m (js-tonumber month %this))
-		    (d (js-tonumber date %this))
-		    (h (js-tonumber hours %this))
-		    (mi (js-tonumber minutes %this)))
+	     (let* ((y (tofixnum year %this))
+		    (m (tofixnum month %this))
+		    (d (tofixnum date %this))
+		    (h (tofixnum hours %this))
+		    (mi (tofixnum minutes %this)))
 		(when (and (fixnum? y) (>fx y 0)
 			   (fixnum? m) (fixnum? d) (fixnum? h)
 			   (fixnum? mi))
@@ -189,27 +199,27 @@
 		      :year y :month (+ m 1) :day d
 		      :hour h :min mi :sec 0))))
 	    ((?year ?month ?date ?hours)
-	     (let* ((y (js-tonumber year %this))
-		    (m (js-tonumber month %this))
-		    (d (js-tonumber date %this))
-		    (h (js-tonumber hours %this)))
+	     (let* ((y (tofixnum year %this))
+		    (m (tofixnum month %this))
+		    (d (tofixnum date %this))
+		    (h (tofixnum hours %this)))
 		(when (and (fixnum? y) (>fx y 0)
 			   (fixnum? m) (fixnum? d) (fixnum? h))
 		   (make-date
 		      :year y :month (+ m 1) :day d
 		      :hour h :min 0 :sec 0))))
 	    ((?year ?month ?date)
-	     (let* ((y (js-tonumber year %this))
-		    (m (js-tonumber month %this))
-		    (d (js-tonumber date %this)))
+	     (let* ((y (tofixnum year %this))
+		    (m (tofixnum month %this))
+		    (d (tofixnum date %this)))
 		(when (and (fixnum? y) (>fx y 0)
 			   (fixnum? m) (fixnum? d))
 		   (make-date
 		      :year y :month (+ m 1) :day d
 		      :hour 0 :min 0 :sec 0))))
 	    ((?year ?month)
-	     (let* ((y (js-tonumber year %this))
-		    (m (js-tonumber month %this)))
+	     (let* ((y (tofixnum year %this))
+		    (m (tofixnum month %this)))
 		(when (and (fixnum? y) (>fx y 0)
 			   (fixnum? m))
 		   (make-date
@@ -298,12 +308,16 @@
 		      (elong->flonum
 			 (- (date->seconds d) (date-timezone d)))))))
 	    (else
-	     (let* ((dt (parse-date-arguments args))
-		    (ctz (date-timezone dt)))
-		(js-flonum->integer
-		   (llong->flonum
-		      (+llong (date->milliseconds dt)
-			 (*llong (fixnum->llong ctz) #l1000))))))))
+	     (let ((dt (parse-date-arguments args)))
+		(if (date? dt)
+		    (let ((ctz (date-timezone dt)))
+		       (js-flonum->integer
+			  (llong->flonum
+			     (+llong (date->milliseconds dt)
+				(*llong (fixnum->llong ctz) #l1000)))))
+		    (begin
+		       (tprint "PAS DATE args=" args)
+		       0))))))
       
       (js-bind! %this js-date (& "UTC")
 	 :value (js-make-function %this js-date-utc

@@ -780,10 +780,16 @@
 	 (cond
 	    (dup
 	     (with-access::J2SFun (j2sdeclinit-val-fun this) (params body)
-		(let ((besthints (map param-best-hint-type params)))
-		   (if (or (<fx (apply max (map cadr besthints)) 10)
+		(let* ((besthints (map param-best-hint-type params))
+		       (score (apply max (map cadr besthints))))
+		   (if (or (<fx score (*fx 5 (length besthints)))
 			   (<fx (*fx 20 (apply + (map caddr besthints)))
-			      (node-size body)))
+			      (node-size body))
+			   (< (/
+				  (length (filter (lambda (d) (> (cadr d) 0))
+					     besthints))
+				  (length besthints))
+			      0.4))
 		       ;; no benefit in duplicating this function because:
 		       ;;   - the hintted parameters are not used frequently
 		       ;;     enough;
@@ -808,8 +814,8 @@
 						(else
 						 (car bh))))
 					besthints params)))
-			  (if (or (not (every (lambda (t)
-						 (eq? t 'object)) htypes))
+			  (if (or (not (every (lambda (t) (eq? t 'object))
+					  htypes))
 				  (not (self-recursive? this)))
 			      ;; only hints non-recursive or
 			      ;; non-object functions

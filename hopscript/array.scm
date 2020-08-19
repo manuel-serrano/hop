@@ -52,7 +52,7 @@
 	   __hopscript_generator
 	   __hopscript_profile
 	   __hopscript_names)
-
+   
    (cond-expand
       (profile (import __hopscript_profile)))
    
@@ -95,14 +95,14 @@
 	      ::vector ::uint32 ::obj ::bool ::JsGlobalObject)
 	   (inline js-array-string-set! ::JsArray ::obj ::obj
 	      ::bool ::JsGlobalObject)
-
+	   
 	   (js-get-fixnum ::JsArray ::long ::JsGlobalObject)
 	   (js-array-put! ::JsArray p ::obj ::bool ::JsGlobalObject)
 	   
 	   (js-array-set-ur! ::JsArray ::uint32 ::obj ::bool ::JsGlobalObject)
 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
 	   (js-vector->sparse-jsarray::JsArray ::vector ::JsGlobalObject)
-
+	   
 	   (js-array-new1::JsArray ::obj ::JsGlobalObject)
 	   (js-array-alloc::JsArray ::JsGlobalObject)
 	   (js-array-construct::JsArray ::JsGlobalObject ::JsArray ::obj)
@@ -144,16 +144,11 @@
 	   (js-array-sort ::JsArray ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-sort ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-iterator-to-array ::obj ::long ::JsGlobalObject)
-	   (js-call-with-stack-vector ::vector ::procedure))
+	   (js-call-with-stack-vector ::vector ::procedure)
+	   
+	   (inline js-empty-vector->jsarray::JsArray ::JsGlobalObject)
+	   (inline DEFAULT-EMPTY-ARRAY-SIZE::long))
    
-   (cond-expand
-      ((and bigloo-c (not devel) (not debug))
-       (export
-	  (inline js-empty-vector->jsarray::JsArray ::JsGlobalObject)
-	  (inline DEFAULT-EMPTY-ARRAY-SIZE::long)))
-      (else
-       (export (js-empty-vector->jsarray::JsArray ::JsGlobalObject))))
-
    ;; export for bmem profiling
    (export (js-array-alloc-ctor::JsArray ::JsGlobalObject ::JsFunction)))
 
@@ -2563,16 +2558,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-empty-vector->jsarray ...                                     */
 ;*---------------------------------------------------------------------*/
-(cond-expand
-   ((and bigloo-c (not devel) (not debug))
-    (define-inline (js-empty-vector->jsarray::JsArray %this::JsGlobalObject)
-       (let ((mode (js-array-default-mode)))
+(define-inline (js-empty-vector->jsarray::JsArray %this::JsGlobalObject)
+   (let ((mode (js-array-default-mode)))
+      (cond-expand
+	 ((and bigloo-c (not devel) (not debug))
 	  (with-access::JsGlobalObject %this (js-array-prototype)
 	     ($js-make-jsarray (DEFAULT-EMPTY-ARRAY-SIZE) #u32:0 (js-not-a-cmap)
-		js-array-prototype (js-absent) mode)))))
-   (else
-    (define (js-empty-vector->jsarray::JsArray %this::JsGlobalObject)
-       (let ((mode (js-array-default-mode)))
+		js-array-prototype (js-absent) mode)))
+	 (else
 	  (with-access::JsGlobalObject %this (js-array-prototype)
 	     (let* ((vec (make-vector (DEFAULT-EMPTY-ARRAY-SIZE) (js-absent)))
 		    (o (instantiate::JsArray

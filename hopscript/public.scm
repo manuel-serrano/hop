@@ -1681,7 +1681,7 @@
        (bigloo-type-error "toNumber" "JsObject" obj))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-tofixnum ...                                                  */
+;*    js-tointeger ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-macro (js-tointeger obj %this)
    (if (symbol? obj)
