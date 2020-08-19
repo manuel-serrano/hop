@@ -535,14 +535,14 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SPrefix)
    (with-access::J2SPrefix this (lhs rhs loc op)
-      `(,@(call-next-method) ,@(dump-cache this) ,op)))
+      `(,@(call-next-method) ,@(dump-cache this) ,@(dump-range this) ,op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPostfix ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SPostfix)
    (with-access::J2SPostfix this (lhs rhs loc op)
-      `(,@(call-next-method) ,@(dump-cache this) ,op)))
+      `(,@(call-next-method) ,@(dump-cache this) ,@(dump-range this) ,op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SUnresolvedRef ...                                 */

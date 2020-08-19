@@ -1102,10 +1102,12 @@
 ;*    node-range ::J2SDataPropertyInit ...                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SDataPropertyInit env::pair-nil conf mode::symbol fix::cell)
-   (with-access::J2SDataPropertyInit this (val)
+   (with-access::J2SDataPropertyInit this (val name)
       (multiple-value-bind (intv env)
-	 (node-range val env conf mode fix)
-	 (return #f env))))
+	 (node-range name env conf mode fix)
+	 (multiple-value-bind (intv env)
+	    (node-range val env conf mode fix)
+	    (return #f env)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SAccessorPropertyInit ...                         */
