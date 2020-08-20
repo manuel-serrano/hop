@@ -177,7 +177,7 @@
 	("getMilliseconds" js-date-maybe-getmilliseconds any () %this #t)
 	;; object
 	("hasOwnProperty" js-has-own-property any (any) %this #f ,j2s-object-plain?)
-	("isFrozen" js-object-isfrozen any (any) %this #f ,j2s-object-plain?)
+	("isFrozen" ,j2s-object-isfrozen any (any) #f #f ,j2s-object-plain?)
 	)))
 
 ;*---------------------------------------------------------------------*/

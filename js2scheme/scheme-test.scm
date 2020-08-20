@@ -72,6 +72,8 @@
        `(js-regexp-prototype-maybe-exec-as-bool ,rx ,arg ,%this ,cache))
       ((js-jsstring-match-regexp-from-string ?obj ?arg ?rx ?%this)
        `(js-jsstring-match-regexp-from-string-as-bool ,obj ,arg ,rx ,%this))
+      ((js-object-isfrozen ?a ?b)
+       expr)
       ((let ((?var ?-)) ((kwote or) (js-array? ?var) (js-proxy-array? ?var)))
        expr)
       ((let ?bindings ?body)
