@@ -119,6 +119,7 @@
 	      (pmap::obj (default (js-not-a-pmap)))
 	      (nmap::obj (default (js-not-a-pmap)))
 	      (amap::obj (default #t))
+	      (xmap::obj (default (js-not-a-pmap)))
 	      (index::long (default -1))
 	      (vindex::long (default (js-not-a-index)))
 	      (owner::obj (default #f))
@@ -421,6 +422,7 @@
 	      (js-regexp-cmap (default (class-nil JsConstructMap)))
 	      (js-regexp-exec-cmap (default (class-nil JsConstructMap)))
 	      (js-scope-cmap (default (class-nil JsConstructMap)))
+	      (js-date-cmap (default (class-nil JsConstructMap)))
 	      (js-property-descriptor-value-cmap (default (class-nil JsConstructMap)))
 	      (js-property-descriptor-getter-cmap (default (class-nil JsConstructMap))))
 
@@ -459,8 +461,8 @@
 	   (inline js-object-mode-inline?::bool ::JsObject)
 	   (inline js-object-mode-inline-set! ::JsObject ::bool)
 	   
-	   (inline js-object-mode-getter?::bool ::JsObject)
-	   (inline js-object-mode-getter-set! ::JsObject ::bool)
+	   (inline js-object-mode-isprotoof?::bool ::JsObject)
+	   (inline js-object-mode-isprotoof-set! ::JsObject ::bool)
 	   
 	   (inline js-object-mode-hasinstance?::bool ::JsObject)
 	   (inline js-object-mode-hasinstance-set! ::JsObject ::bool)
@@ -497,7 +499,7 @@
 	   (inline JS-OBJECT-MODE-SEALED::uint32)
 	   (inline JS-OBJECT-MODE-FROZEN::uint32)
 	   (inline JS-OBJECT-MODE-INLINE::uint32)
-	   (inline JS-OBJECT-MODE-GETTER::uint32)
+	   (inline JS-OBJECT-MODE-ISPROTOOF::uint32)
 	   (inline JS-OBJECT-MODE-HASINSTANCE::uint32)
 	   (inline JS-OBJECT-MODE-ENUMERABLE::uint32)
 	   (inline JS-OBJECT-MODE-HASNUMERALPROP::uint32)
@@ -574,6 +576,7 @@
 	   (inline js-procedure?::bool ::obj)
 	   (inline js-callable?::bool ::obj)
 	   (inline js-symbol?::bool ::obj)
+	   (inline js-date?::bool ::obj)
 	   (inline js-proxy?::bool ::obj)
 	   (js-proxy-array?::bool ::obj)
 	   (inline js-proxy-function?::bool ::obj)
@@ -735,7 +738,8 @@
 
 ;; common objects attributes
 (define-inline (JS-OBJECT-MODE-INLINE) #u32:8)
-(define-inline (JS-OBJECT-MODE-GETTER) #u32:16)
+;; used to mark objects used has __proto__ of others
+(define-inline (JS-OBJECT-MODE-ISPROTOOF) #u32:16)
 (define-inline (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
 (define-inline (JS-OBJECT-MODE-ENUMERABLE) #u32:64)
 (define-inline (JS-OBJECT-MODE-PLAIN) #u32:128)
@@ -745,7 +749,7 @@
 (define-inline (JS-OBJECT-MODE-FROZEN) #u32:2048)
 
 (define-macro (JS-OBJECT-MODE-INLINE) #u32:8)
-(define-macro (JS-OBJECT-MODE-GETTER) #u32:16)
+(define-macro (JS-OBJECT-MODE-ISPROTOOF) #u32:16)
 (define-macro (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
 (define-macro (JS-OBJECT-MODE-ENUMERABLE) #u32:64)
 (define-macro (JS-OBJECT-MODE-PLAIN) #u32:128)
@@ -820,15 +824,15 @@
 	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-INLINE))
 	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-INLINE))))))
 
-(define-inline (js-object-mode-getter? o)
-   (=u32 (bit-andu32 (JS-OBJECT-MODE-GETTER) (js-object-mode o))
-      (JS-OBJECT-MODE-GETTER)))
+(define-inline (js-object-mode-isprotoof? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-ISPROTOOF) (js-object-mode o))
+      (JS-OBJECT-MODE-ISPROTOOF)))
 
-(define-inline (js-object-mode-getter-set! o flag)
+(define-inline (js-object-mode-isprotoof-set! o flag)
    (js-object-mode-set! o
       (if flag
-	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-GETTER))
-	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-GETTER))))))
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-ISPROTOOF))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-ISPROTOOF))))))
 
 (define-inline (js-object-mode-hasinstance? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-HASINSTANCE) (js-object-mode o))
@@ -1425,6 +1429,13 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-symbol? o)
    (isa? o JsSymbolLiteral))
+
+;*---------------------------------------------------------------------*/
+;*    js-date? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-date? o)
+   (when (js-object? o)
+      (eq? (object-class o) JsDate)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-proxy? ...                                                    */

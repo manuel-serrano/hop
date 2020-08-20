@@ -156,8 +156,28 @@
 	("call" ,j2s-call3 any (any any any any) %this #t)
 	;; math
 	("toFixed" js-maybe-tofixed any (any) %this #t)
+	;; date
+	("getTime" js-date-gettime date () #f #f)
+	("getTime" js-date-maybe-gettime any () %this #t)
+	("getFullYear" js-date-getfullyear date () #f #f)
+	("getFullYear" js-date-maybe-getfullyear any () %this #t)
+	("getMonth" js-date-getmonth date () #f #f)
+	("getMonth" js-date-maybe-getmonth any () %this #t)
+	("getDate" js-date-getdate date () #f #f)
+	("getDate" js-date-maybe-getdate any () %this #t)
+	("getUTCDate" js-date-getutcdate date () #f #f)
+	("getUTCDate" js-date-maybe-getutcdate any () %this #t)
+	("getHours" js-date-gethours date () #f #f)
+	("getHours" js-date-maybe-gethours any () %this #t)
+	("getMinutes" js-date-getminutes date () #f #f)
+	("getMinutes" js-date-maybe-getminutes any () %this #t)
+	("getSeconds" js-date-getseconds date () #f #f)
+	("getSeconds" js-date-maybe-getseconds any () %this #t)
+	("getMilliseconds" js-date-getmilliseconds date () #f #f)
+	("getMilliseconds" js-date-maybe-getmilliseconds any () %this #t)
 	;; object
 	("hasOwnProperty" js-has-own-property any (any) %this #f ,j2s-object-plain?)
+	("isFrozen" js-isfrozen any (any) %this #f ,j2s-object-plain?)
 	)))
 
 ;*---------------------------------------------------------------------*/

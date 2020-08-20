@@ -193,8 +193,11 @@
 (define (js-profile-log-index idx)
    (let* ((len (vector-length js-profile-accesses))
 	  (i (if (>= idx len) (- len 1) idx)))
-      (vector-set! js-profile-accesses i
-	 (+llong #l1 (vector-ref js-profile-accesses i)))))
+      (if (=fx idx -1)
+	  (set! js-profile-dynamic-accesses
+	     (+llong #l1 js-profile-dynamic-accesses))
+	  (vector-set! js-profile-accesses i
+	     (+llong #l1 (vector-ref js-profile-accesses i))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-get ...                                           */
@@ -578,6 +581,7 @@
 (define js-profile-extensions (make-vector 32 #l0))
 (define js-profile-vectors (make-vector 256 #l0))
 (define js-profile-vector-maxlen 0)
+(define js-profile-dynamic-accesses #l0)
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-allocs ...                                               */
@@ -1125,6 +1129,10 @@
 	  (fprint *profile-port*
 	     "total accesses           : "
 	     (padding total 12 'right))
+	  (fprint *profile-port*
+	     "dynamic accesses         : "
+	     (padding js-profile-dynamic-accesses 12 'right)
+	     " (" (percent js-profile-dynamic-accesses total) "%)")
 	  (fprint *profile-port*
 	     "total cache hits         : "
 	     (padding (filecaches-hits filecaches) 12 'right)

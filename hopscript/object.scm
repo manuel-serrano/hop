@@ -59,6 +59,8 @@
 	   (generic js-extensible?::bool ::obj ::JsGlobalObject)
 	   (generic js-preventextensions ::obj ::JsGlobalObject)
 	   (generic js-ownkeys ::obj ::JsGlobalObject)
+	   
+	   (js-object-isfrozen o %this::JsGlobalObject)
 
 	   (js-object-no-setter? ::JsObject)))
 
@@ -831,12 +833,7 @@
 	 :enumerable #f
 	 :hidden-class #f)
 
-      (define (vector-every proc v)
-	 (let loop ((i (-fx (vector-length v) 1)))
-	    (cond
-	       ((=fx i -1) #t)
-	       ((proc (vector-ref v i)) (loop (-fx i 1)))
-	       (else #f))))
+      
       
       ;; is
       ;; https://www.ecma-international.org/ecma-262/6.0/#sec-object.is
@@ -889,34 +886,9 @@
       
       ;; isFrozen
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.12
-      (define (isfrozen this o)
-	 ;; 1
-	 (let ((o (js-cast-object o %this "isFrozen")))
-	    (with-access::JsObject o (cmap elements)
-	       (and
-		;; 2
-		(or
-		 (and (js-object-mapped? o)
-		      (with-access::JsConstructMap cmap (props)
-			 (vector-every (lambda (p)
-					  (let ((flags (prop-flags p)))
-					     (and (not (flags-writable? flags))
-						  (not (flags-configurable? flags)))))
-			    props)))
-		 (and (not (js-object-mapped? o))
-		      (vector-every (lambda (desc::JsPropertyDescriptor)
-				       (with-access::JsPropertyDescriptor desc (configurable)
-					  (and (not (eq? configurable #t))
-					       (or (not (isa? desc JsValueDescriptor))
-						   (with-access::JsValueDescriptor desc (writable)
-						      (not (eq? writable #t)))))))
-			 elements)))
-		;; 3
-		(not (js-object-mode-extensible? o))))))
-      
       (js-bind! %this js-object (& "isFrozen")
-	 :value (js-make-function %this isfrozen
-		   (js-function-arity isfrozen)
+	 :value (js-make-function %this (lambda (o) (js-object-isfrozen o %this))
+		   (js-function-arity 1 0)
 		   (js-function-info :name "isFrozen" :len 1))
 	 :writable #t
 	 :configurable #t
@@ -1288,6 +1260,42 @@
 	  (with-access::JsObject o (elements)
 	     (vector-for-each js-freeze-property! elements))))
    obj)
+
+;*---------------------------------------------------------------------*/
+;*    js-object-isfrozen ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-object-isfrozen o %this::JsGlobalObject)
+   ;; 1
+   (let ((o (js-cast-object o %this "isFrozen")))
+      (with-access::JsObject o (cmap elements)
+	 (and
+	  ;; 3
+	  (not (js-object-mode-extensible? o))
+	  ;; 2
+	  (if (js-object-mapped? o)
+	      (with-access::JsConstructMap cmap (props)
+		 (vector-every (lambda (p)
+				  (let ((flags (prop-flags p)))
+				     (and (not (flags-writable? flags))
+					  (not (flags-configurable? flags)))))
+		    props))
+	      (vector-every (lambda (desc::JsPropertyDescriptor)
+			       (with-access::JsPropertyDescriptor desc (configurable)
+				  (and (not (eq? configurable #t))
+				       (or (not (isa? desc JsValueDescriptor))
+					   (with-access::JsValueDescriptor desc (writable)
+					      (not (eq? writable #t)))))))
+		 elements))))))
+
+;*---------------------------------------------------------------------*/
+;*    vector-every ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (vector-every proc v)
+   (let loop ((i (-fx (vector-length v) 1)))
+      (cond
+	 ((=fx i -1) #t)
+	 ((proc (vector-ref v i)) (loop (-fx i 1)))
+	 (else #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toprimitive ...                                               */

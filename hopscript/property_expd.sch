@@ -240,6 +240,23 @@
       e))
 
 ;*---------------------------------------------------------------------*/
+;*    js-pcache-xmap-expander ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-pcache-xmap-expander x e)
+   (e (match-case x
+	 ((js-pcache-xmap (and ?c (js-pcache-ref %pcache ?idx)))
+	  (cond-expand
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
+	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_xmapz00)" ,idx))
+	     (else
+	      `(with-access::JsPropertyCache ,c (xmap) xmap))))
+	 ((js-pcache-xmap ?c)
+	  `(with-access::JsPropertyCache ,c (xmap) xmap))
+	 (else
+	  (error "js-pcache-xmap" "bad syntax" x)))
+      e))
+
+;*---------------------------------------------------------------------*/
 ;*    js-pcache-index-expander ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-pcache-index-expander x e)
@@ -369,6 +386,9 @@
 			  (js-profile-log-index idx)
 			  (js-property-value ,obj
 			     propowner ,prop desc ,%this)))))
+	       ((eq? cs 'xmap)
+		;; cached cache miss
+		`(js-undefined))
 	       ((not (pair? cs))
 		(error "js-get-jsobject-name/cache" "bad form" x))
 	       (else
@@ -407,6 +427,11 @@
 		    `(if (eq? %cmap (js-pcache-amap ,cache))
 			 ,(loop 'amap)
 			 ,(loop (cdr cs))))
+		   ((xmap)
+		    `(if (eq? %cmap (js-pcache-xmap ,cache))
+			 ,(loop 'xmap)
+			 ,(loop (cdr cs))))
+		    ;; cached cache miss
 		   ((pmap-dummy-profile)
 		    (loop (cdr cs)))
 		   ((vtable-dummy-profile)

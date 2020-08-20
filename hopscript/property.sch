@@ -51,6 +51,8 @@
    js-pcache-pmap-expander)
 (define-expander js-pcache-nmap
    js-pcache-nmap-expander)
+(define-expander js-pcache-xmap
+   js-pcache-xmap-expander)
 (define-expander js-pcache-index
    js-pcache-index-expander)
 (define-expander js-pcache-vindex

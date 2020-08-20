@@ -30,7 +30,7 @@
 	   __hopscript_lib
 	   __hopscript_error
 	   __hopscript_names)
-
+   
    (cond-expand
       ((or bint30 bint32)
        (import __hopscript_arithmetic32))
@@ -47,7 +47,26 @@
 	   (js-date-construct5 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
 	   (js-date-construct6 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj)
 	   (js-date-construct7 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj ::obj)
-	   (js-date-now)))
+	   (js-date-now)
+	   (js-date-gettime ::JsDate)
+	   (js-date-maybe-gettime ::obj ::JsGlobalObject ::obj)
+	   (js-date-getfullyear ::JsDate)
+	   (js-date-maybe-getfullyear ::obj ::JsGlobalObject ::obj)
+	   (js-date-getmonth ::JsDate)
+	   (js-date-maybe-getmonth ::obj ::JsGlobalObject ::obj)
+	   (js-date-getdate ::JsDate)
+	   (js-date-maybe-getdate ::obj ::JsGlobalObject ::obj)
+	   (js-date-getutcdate ::JsDate)
+	   (js-date-maybe-getutcdate ::obj ::JsGlobalObject ::obj)
+	   (js-date-gethours ::JsDate)
+	   (js-date-maybe-gethours ::obj ::JsGlobalObject ::obj)
+	   (js-date-getminutes ::JsDate)
+	   (js-date-maybe-getminutes ::obj ::JsGlobalObject ::obj)
+	   (js-date-getseconds ::JsDate)
+	   (js-date-maybe-getseconds ::obj ::JsGlobalObject ::obj)
+	   (js-date-getmilliseconds ::JsDate)
+	   (js-date-maybe-getmilliseconds ::obj ::JsGlobalObject ::obj)
+	   ))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -148,7 +167,13 @@
    (unless (vector? __js_strings) (set! __js_strings (&init!)))
    
    ;; first, bind the builtin date prototype
-   (with-access::JsGlobalObject %this (js-date js-function js-date-prototype)
+   (with-access::JsGlobalObject %this (js-date js-function js-date-prototype js-date-cmap)
+
+      (set! js-date-cmap
+	 (instantiate::JsConstructMap
+	    (inline #t)
+	    (methods '#())
+	    (props '#())))
       
       (set! js-date-prototype
 	 (instantiateJsDate
@@ -158,9 +183,10 @@
 	    (__proto__ (js-object-proto %this))))
       
       (define (js-date-alloc %this constructor::JsFunction)
-	 (with-access::JsGlobalObject %this (js-new-target js-date)
+	 (with-access::JsGlobalObject %this (js-new-target js-date js-date-cmap)
 	    (set! js-new-target constructor)
 	    (instantiateJsDate
+	       (cmap js-date-cmap)
 	       (__proto__ (if (eq? constructor js-date)
 			      js-date-prototype
 			      (js-get constructor (& "prototype") %this))))))
@@ -214,7 +240,7 @@
       (define (js-date-parse this str)
 	 (let ((d (parse-date (js-tostring str %this))))
 	    (if (date? d)
-		(*fl 1000. (elong->flonum (date->seconds d)))
+		(js-date->milliseconds d)
 		+nan.0)))
       
       (js-bind! %this js-date (& "parse")
@@ -270,8 +296,9 @@
 ;*    js-date-alloc ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-date-alloc %this)
-   (with-access::JsGlobalObject %this (js-date-prototype)
+   (with-access::JsGlobalObject %this (js-date-prototype js-date-cmap)
       (instantiateJsDate
+	 (cmap js-date-cmap)
 	 (__proto__ js-date-prototype))))
 
 ;*---------------------------------------------------------------------*/
@@ -594,39 +621,43 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.43
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.1.15
    (define (date-prototype-toisostring this)
+      
+      (define (utc-isostring val)
+	 (let ((buf (make-string 24 #\0)))
+	    ;; equivalent to
+	    ;; (format "~4,0d-~2,0d-~2,0dT~2,0d:~2,0d:~2,0d.~3,0dZ"
+	    ;;    (date-year val)
+	    ;;    (date-month val)
+	    ;;    (date-day val)
+	    ;;    (date-hour val)
+	    ;;    (date-minute val)
+	    ;;    (date-second val)
+	    ;;    (llong->fixnum (date-millisecond val))
+	    (string-set! buf 4 #\-)
+	    (string-set! buf 7 #\-)
+	    (string-set! buf 10 #\T)
+	    (string-set! buf 13 #\:)
+	    (string-set! buf 16 #\:)
+	    (string-set! buf 19 #\.)
+	    (string-set! buf 23 #\Z)
+	    (blit-fixnum! buf (date-year val) 0 4)
+	    (blit-fixnum! buf (date-month val) 5 2)
+	    (blit-fixnum! buf (date-day val) 8 2)
+	    (blit-fixnum! buf (date-hour val) 11 2)
+	    (blit-fixnum! buf (date-minute val) 14 2)
+	    (blit-fixnum! buf (date-second val) 17 2)
+	    (let ((ms (llong->fixnum (date-millisecond val))))
+	       (blit-fixnum! buf ms 20 3))
+	    (js-ascii->jsstring buf)))
+      
       (if (not (isa? this JsDate))
 	  (js-raise-type-error %this "Not a date ~s" (typeof this))
 	  (with-access::JsDate this (val)
 	     (if (date? val)
 		 (let loop ((val val))
 		    (if (=fx (date-timezone val) 0)
-			(let ((buf (make-string 24 #\0)))
-			   ;; equivalent to
-			   ;; (format "~4,0d-~2,0d-~2,0dT~2,0d:~2,0d:~2,0d.~3,0dZ"
-                           ;;    (date-year val)
-                           ;;    (date-month val)
-                           ;;    (date-day val)
-                           ;;    (date-hour val)
-                           ;;    (date-minute val)
-                           ;;    (date-second val)
-                           ;;    (llong->fixnum (date-millisecond val))
-			   (string-set! buf 4 #\-)
-			   (string-set! buf 7 #\-)
-			   (string-set! buf 10 #\T)
-			   (string-set! buf 13 #\:)
-			   (string-set! buf 16 #\:)
-			   (string-set! buf 19 #\.)
-			   (string-set! buf 23 #\Z)
-			   (blit-fixnum! buf (date-year val) 0 4)
-			   (blit-fixnum! buf (date-month val) 5 2)
-			   (blit-fixnum! buf (date-day val) 8 2)
-			   (blit-fixnum! buf (date-hour val) 11 2)
-			   (blit-fixnum! buf (date-minute val) 14 2)
-			   (blit-fixnum! buf (date-second val) 17 2)
-			   (let ((ms (llong->fixnum (date-millisecond val))))
-			      (blit-fixnum! buf ms 20 3))
-			   (js-ascii->jsstring buf))
-			(loop (date->utc-date val))))
+			(utc-isostring val)
+			(utc-isostring (date->utc-date val))))
 		 (js-raise-range-error %this "Invalid date ~s" val)))))
    
    (js-bind! %this obj (& "toISOString")
@@ -670,29 +701,17 @@
    
    ;; getTime
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.9
-   (define (date-prototype-gettime this::JsDate)
-      (with-access::JsDate this (val)
-	 (if (date? val)
-	     (js-date->milliseconds val)
-	     +nan.0)))
- 	 
    (js-bind! %this obj (& "getTime")
-      :value (js-make-function %this date-prototype-gettime
-		(js-function-arity date-prototype-gettime)
+      :value (js-make-function %this js-date-gettime
+		(js-function-arity js-date-gettime)
 		(js-function-info :name "getTime" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getFullYear
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.10
-   (define (date-prototype-getfullyear this::JsDate)
-      (with-access::JsDate this (val)
-	 (if (date? val)
-	     (date-year val)
-	     +nan.0)))
-	 
    (js-bind! %this obj (& "getFullYear")
-      :value (js-make-function %this date-prototype-getfullyear
-		(js-function-arity date-prototype-getfullyear)
+      :value (js-make-function %this js-date-getfullyear
+		(js-function-arity js-date-getfullyear)
 		(js-function-info :name "getFullYear" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
@@ -714,15 +733,9 @@
    
    ;; getMonth
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.12
-   (define (date-prototype-getmonth this::JsDate)
-      (with-access::JsDate this (val)
-	 (if (date? val)
-	     (-fx (date-month val) 1)
-	     +nan.0)))
-	 
    (js-bind! %this obj (& "getMonth")
-      :value (js-make-function %this date-prototype-getmonth
-		(js-function-arity date-prototype-getmonth)
+      :value (js-make-function %this js-date-getmonth
+		(js-function-arity js-date-getmonth)
 		(js-function-info :name "getMonth" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
@@ -744,31 +757,17 @@
    
    ;; getDate
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.14
-   (define (date-prototype-getdate this::JsDate)
-      (with-access::JsDate this (val)
-	 (if (date? val)
-	     (date-day val)
-	     +nan.0)))
-	 
    (js-bind! %this obj (& "getDate")
-      :value (js-make-function %this date-prototype-getdate
-		(js-function-arity date-prototype-getdate)
+      :value (js-make-function %this js-date-getdate
+		(js-function-arity js-date-getdate)
 		(js-function-info :name "getDate" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; getUTCDate
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.15
-   (define (date-prototype-getutcdate this::JsDate)
-      (with-access::JsDate this (val)
-	 (if (date? val)
-	     (let* ((tz (date-timezone val))
-		    (d (seconds->date (-elong (date->seconds val) tz))))
-		(date-day d))
-	     +nan.0)))
-	 
    (js-bind! %this obj (& "getUTCDate")
-      :value (js-make-function %this date-prototype-getutcdate
-		(js-function-arity date-prototype-getutcdate)
+      :value (js-make-function %this js-date-getutcdate
+		(js-function-arity js-date-getutcdate)
 		(js-function-info :name "getUTCDate" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
@@ -802,15 +801,9 @@
    
    ;; getHours
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.18
-   (define (date-prototype-gethours this::JsDate)
-      (with-access::JsDate this (val)
-	 (if (date? val)
-	     (date-hour val)
-	     +nan.0)))
-	 
    (js-bind! %this obj (& "getHours")
-      :value (js-make-function %this date-prototype-gethours
-		(js-function-arity date-prototype-gethours)
+      :value (js-make-function %this js-date-gethours
+		(js-function-arity js-date-gethours)
 		(js-function-info :name "getHours" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
@@ -836,15 +829,9 @@
    
    ;; getMinutes
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.20
-   (define (date-prototype-getminutes this::JsDate)
-      (with-access::JsDate this (val)
-	 (if (date? val)
-	     (date-minute val)
-	     +nan.0)))
-	 
    (js-bind! %this obj (& "getMinutes")
-      :value (js-make-function %this date-prototype-getminutes
-		(js-function-arity date-prototype-getminutes)
+      :value (js-make-function %this js-date-getminutes
+		(js-function-arity js-date-getminutes)
 		(js-function-info :name "getMinutes" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
@@ -864,15 +851,9 @@
    
    ;; getSeconds
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.22
-   (define (date-prototype-getseconds this::JsDate)
-      (with-access::JsDate this (val)
-	 (if (date? val)
-	     (date-second val)
-	     +nan.0)))
-	 
    (js-bind! %this obj (& "getSeconds")
-      :value (js-make-function %this date-prototype-getseconds
-		(js-function-arity date-prototype-getseconds)
+      :value (js-make-function %this js-date-getseconds
+		(js-function-arity js-date-getseconds)
 		(js-function-info :name "getSeconds" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
@@ -892,15 +873,9 @@
    
    ;; getMilliseconds
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.24
-   (define (date-prototype-getmilliseconds this::JsDate)
-      (with-access::JsDate this (val)
-	 (if (date? val)
-	     (llong->fixnum (date-millisecond val))
-	     +nan.0)))
-	 
    (js-bind! %this obj (& "getMilliseconds")
-      :value (js-make-function %this date-prototype-getmilliseconds
-		(js-function-arity date-prototype-getmilliseconds)
+      :value (js-make-function %this js-date-getmilliseconds
+		(js-function-arity js-date-getmilliseconds)
 		(js-function-info :name "getMilliseconds" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
@@ -923,7 +898,7 @@
    (define (date-prototype-gettimezoneoffset this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (negfx (/fx (date-timezone (date->local-date val)) 60))
+	     (negfx (/fx (date-timezone val) 60))
 	     +nan.0)))
 
    (js-bind! %this obj (& "getTimezoneOffset")
@@ -984,7 +959,7 @@
 			       (+fx r2i 1900)
 			       r2))
 		       (r (if (date? val)
-			      (date-copy val :year r4)
+			      (date-update! val :year r4)
 			      (make-date :year r4))))
 		   (set! val r)
 		   r)))))
@@ -1008,10 +983,10 @@
 			   (set! val ms)
 			   ms)
 			(begin
-			   (set! val (date-copy val :nsec (*llong #l1000000 (flonum->llong ms))))
+			   (set! val (date-update! val :nsec (*llong #l1000000 (flonum->llong ms))))
 			   (js-date->milliseconds val))))
 		   ((fixnum? ms)
-		    (set! val (date-copy val :nsec (*llong #l1000000 (fixnum->llong ms))))
+		    (set! val (date-update! val :nsec (*llong #l1000000 (fixnum->llong ms))))
 		    (js-date->milliseconds val))
 		   (else
 		    (js-date->milliseconds val))))
@@ -1036,10 +1011,10 @@
 			   (set! val ms)
 			   ms)
 			(begin
-			   (set! val (date-copy val :nsec (*llong #l1000000 (flonum->llong ms))))
+			   (set! val (date-update! val :nsec (*llong #l1000000 (flonum->llong ms))))
 			   (js-date->milliseconds val))))
 		   ((fixnum? ms)
-		    (set! val (date-copy val :nsec (*llong #l1000000 (fixnum->llong ms))))
+		    (set! val (date-update! val :nsec (*llong #l1000000 (fixnum->llong ms))))
 		    (js-date->milliseconds val))
 		   (else
 		    (js-date->milliseconds val))))
@@ -1062,7 +1037,7 @@
 		       (set! val sec)
 		       sec)
 		    (begin
-		       (set! val (date-copy val :sec (->fixnum-safe sec)))
+		       (set! val (date-update! val :sec (->fixnum-safe sec)))
 		       (js-date->milliseconds val))))
 	     val)))
 
@@ -1083,7 +1058,7 @@
 		       (set! val sec)
 		       sec)
 		    (begin
-		       (set! val (date-copy val :sec (->fixnum-safe sec)))
+		       (set! val (date-update! val :sec (->fixnum-safe sec)))
 		       (js-date->milliseconds val))))
 	     val)))
 
@@ -1106,7 +1081,7 @@
 		       min)
 		    (begin
 		       (set! val
-			  (date-copy val :min (->fixnum-safe min) :sec sec))
+			  (date-update! val :min (->fixnum-safe min) :sec sec))
 		       (js-date->milliseconds val))))
 	     val)))
 
@@ -1128,7 +1103,7 @@
 		       (set! val min)
 		       min)
 		    (begin
-		       (set! val (date-copy val
+		       (set! val (date-update! val
 				    :min (->fixnum-safe min) :sec (->fixnum-safe sec)))
 		       (js-date->milliseconds val))))
 	     val)))
@@ -1152,7 +1127,7 @@
 		       (set! val hour)
 		       hour)
 		    (begin
-		       (set! val (date-copy val
+		       (set! val (date-update! val
 				    :hour (->fixnum-safe hour)
 				    :min (->fixnum-safe min)
 				    :sec (->fixnum-safe sec)))
@@ -1177,7 +1152,7 @@
 		       hour)
 		    (let* ((min (unless (eq? min (js-undefined)) (js-tonumber min %this)))
 			   (sec (unless (eq? sec (js-undefined)) (js-tonumber sec %this)))
-			   (dt (date-copy val
+			   (dt (date-update! val
 				  :hour (->fixnum-safe hour)
 				  :min (->fixnum-safe min)
 				  :sec (->fixnum-safe sec)))
@@ -1211,7 +1186,7 @@
 		       (set! val date)
 		       date)
 		    (begin
-		       (set! val (date-copy val :day (->fixnum-safe day)))
+		       (set! val (date-update! val :day (->fixnum-safe day)))
 		       (js-date->milliseconds val))))
 	     val)))
 
@@ -1232,7 +1207,7 @@
 		       (set! val date)
 		       date)
 		    (begin
-		       (set! val (date-copy val :day (->fixnum-safe date)))
+		       (set! val (date-update! val :day (->fixnum-safe date)))
 		       (js-date->milliseconds val))))
 	     val)))
 
@@ -1255,7 +1230,7 @@
 		       month)
 		    (let* ((hour (date-hour val))
 			   (tz (date-timezone val))
-			   (nval (date-copy val
+			   (nval (date-update! val
 				    :hour hour
 				    :month (->fixnum-safe (+ 1 month))
 				    :day (->fixnum-safe day)))
@@ -1312,7 +1287,7 @@
 		       (set! val month)
 		       month)
 		    (begin
-		       (set! val (date-copy val
+		       (set! val (date-update! val
 				    :month (->fixnum-safe (+ 1 month))
 				    :day (->fixnum-safe date)))
 		       (js-date->milliseconds val))))
@@ -1360,7 +1335,7 @@
 		       (set! val year)
 		       year)
 		    (begin
-		       (set! val (date-copy val
+		       (set! val (date-update! val
 				    :year (->fixnum-safe year)
 				    :month (->fixnum-safe month)
 				    :day (->fixnum-safe date)))
@@ -1405,7 +1380,7 @@
 		       (set! val year)
 		       year)
 		    (begin
-		       (set! val (date-copy val
+		       (set! val (date-update! val
 				    :year (->fixnum-safe year)
 				    :month (->fixnum-safe month)
 				    :day (->fixnum-safe date)))
@@ -1446,8 +1421,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-date->jsstring val)
    (if (date? val)
-       (js-ascii->jsstring
-	  (date->rfc2822-date (seconds->date (date->seconds val))))
+       (js-ascii->jsstring (date->rfc2822-date val))
        (js-ascii->jsstring "Invalid Date")))
 
 ;*---------------------------------------------------------------------*/
@@ -1469,12 +1443,7 @@
 ;*    date->utc-date ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (date->utc-date dt::date)
-   (let ((tz (date-timezone dt))
-	 (ctz (date-timezone (date-copy dt))))
-      (date-copy
-	 (milliseconds->date
-	    (-llong (date->milliseconds dt) (*llong (fixnum->llong ctz) #l1000)))
-	 :timezone 0)))
+   (milliseconds->gmtdate (date->milliseconds dt)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-date->jsdate ...                                              */
@@ -1515,6 +1484,203 @@
        (llong->fixnum (current-milliseconds)))
       (else
        (llong->flonum (current-milliseconds)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-plain-date? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-plain-date? this)
+   (and (js-date? this) (or (js-object-mode-plain? this) #t)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-gettime ...                                              */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.9     */
+;*---------------------------------------------------------------------*/
+(define (js-date-gettime this::JsDate)
+   (with-access::JsDate this (val)
+      (if (date? val)
+	  (js-date->milliseconds val)
+	  +nan.0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-maybe-gettime ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-date-maybe-gettime this::obj %this cache)
+   (if (js-plain-date? this)
+       (js-date-gettime this)
+       (js-call0 %this
+	  (js-get-name/cache this (& "getTime") #f %this cache)
+	  this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-getfullyear ...                                          */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.10    */
+;*---------------------------------------------------------------------*/
+(define (js-date-getfullyear this::JsDate)
+   (with-access::JsDate this (val)
+      (if (date? val)
+	  (date-year val)
+	  +nan.0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-maybe-getfullyear ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-date-maybe-getfullyear this::obj %this cache)
+   (if (js-plain-date? this)
+       (js-date-getfullyear this)
+       (js-call0 %this
+	  (js-get-name/cache this (& "getFullYear") #f %this cache)
+	  this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-getmonth ...                                             */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.12    */
+;*---------------------------------------------------------------------*/
+(define (js-date-getmonth this::JsDate)
+   (with-access::JsDate this (val)
+      (if (date? val)
+	  (-fx (date-month val) 1)
+	  +nan.0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-maybe-getmonth ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-date-maybe-getmonth this::obj %this cache)
+   (if (js-plain-date? this)
+       (js-date-getmonth this)
+       (js-call0 %this
+	  (js-get-name/cache this (& "getMonth") #f %this cache)
+	  this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-getdate ...                                              */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.14    */
+;*---------------------------------------------------------------------*/
+(define (js-date-getdate this::JsDate)
+   (with-access::JsDate this (val)
+      (if (date? val)
+	  (date-day val)
+	  +nan.0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-maybe-getdate ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-date-maybe-getdate this::obj %this cache)
+   (if (js-plain-date? this)
+       (js-date-getdate this)
+       (js-call0 %this
+	  (js-get-name/cache this (& "getDate") #f %this cache)
+	  this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-getutcdate ...                                           */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.15    */
+;*---------------------------------------------------------------------*/
+(define (js-date-getutcdate this::JsDate)
+   (with-access::JsDate this (val)
+      (if (date? val)
+	  (let* ((tz (date-timezone val))
+		 (d (seconds->date (-elong (date->seconds val) tz))))
+	     (date-day d))
+	  +nan.0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-maybe-getutcdate ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-date-maybe-getutcdate this::obj %this cache)
+   (if (js-plain-date? this)
+       (js-date-getutcdate this)
+       (js-call0 %this
+	  (js-get-name/cache this (& "getUTCDate") #f %this cache)
+	  this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-gethours ...                                             */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.18    */
+;*---------------------------------------------------------------------*/
+(define (js-date-gethours this::JsDate)
+   (with-access::JsDate this (val)
+      (if (date? val)
+	  (date-hour val)
+	  +nan.0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-maybe-gethours ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-date-maybe-gethours this::obj %this cache)
+   (if (js-plain-date? this)
+       (js-date-gethours this)
+       (js-call0 %this
+	  (js-get-name/cache this (& "getHours") #f %this cache)
+	  this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-getminutes ...                                           */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.20    */
+;*---------------------------------------------------------------------*/
+(define (js-date-getminutes this::JsDate)
+   (with-access::JsDate this (val)
+      (if (date? val)
+	  (date-minute val)
+	  +nan.0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-maybe-getminutes ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-date-maybe-getminutes this::obj %this cache)
+   (if (js-plain-date? this)
+       (js-date-getminutes this)
+       (js-call0 %this
+	  (js-get-name/cache this (& "getminutes") #f %this cache)
+	  this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-getseconds ...                                           */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.22    */
+;*---------------------------------------------------------------------*/
+(define (js-date-getseconds this::JsDate)
+   (with-access::JsDate this (val)
+      (if (date? val)
+	  (date-second val)
+	  +nan.0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-maybe-getseconds ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-date-maybe-getseconds this::obj %this cache)
+   (if (js-plain-date? this)
+       (js-date-getseconds this)
+       (js-call0 %this
+	  (js-get-name/cache this (& "getseconds") #f %this cache)
+	  this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-getmilliseconds ...                                      */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.24    */
+;*---------------------------------------------------------------------*/
+(define (js-date-getmilliseconds this::JsDate)
+   (with-access::JsDate this (val)
+      (if (date? val)
+	  (llong->fixnum (date-millisecond val))
+	  +nan.0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-maybe-getmilliseconds ...                                */
+;*---------------------------------------------------------------------*/
+(define (js-date-maybe-getmilliseconds this::obj %this cache)
+   (if (js-plain-date? this)
+       (js-date-getmilliseconds this)
+       (js-call0 %this
+	  (js-get-name/cache this (& "getmilliseconds") #f %this cache)
+	  this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

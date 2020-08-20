@@ -309,11 +309,13 @@
 (define (js-invalidate-pmap-pcaches! %this::JsGlobalObject reason who)
    
    (define (invalidate-pcache-pmap! pcache)
-      (with-access::JsPropertyCache pcache (pmap emap amap nmap)
+      (with-access::JsPropertyCache pcache (pmap emap amap nmap xmap)
 	 (when (object? pmap) (reset-cmap-vtable! pmap))
 	 (when (object? amap) (reset-cmap-vtable! amap))
+	 (when (object? xmap) (reset-cmap-vtable! xmap))
 	 (set! pmap (js-not-a-pmap))
 	 (set! nmap (js-not-a-pmap))
+	 (set! xmap (js-not-a-pmap))
 	 (set! emap #t)
 	 (set! amap #t)))
 
@@ -779,6 +781,15 @@
 	     (update-noinline! pcache cmap)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-pcache-update-miss! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-pcache-update-miss! pcache::JsPropertyCache o::JsObject)
+   (with-access::JsObject o ((omap cmap))
+      (unless (eq? omap (js-not-a-cmap))
+	 (with-access::JsPropertyCache pcache (xmap)
+	    (set! xmap omap)))))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-pcache-update-owner! ...                                      */
 ;*    -------------------------------------------------------------    */
 ;*    Used to access a prototype object property.                      */
@@ -1187,7 +1198,9 @@
 		   ,(if (pair? loop)
 			`(let ((__proto__ (js-object-proto ,obj)))
 			    (if (js-object? __proto__)
-				(,(car loop) __proto__)
+				(begin
+				   (js-object-mode-isprotoof-set! __proto__ #t)
+				   (,(car loop) __proto__))
 				(,notfound ,base)))
 			`(,notfound ,base))))
 	     (jsobject-properties-find ,obj ,name ,foundinprop
@@ -1195,7 +1208,9 @@
 		   ,(if (pair? loop)
 			`(let ((__proto__ (js-object-proto ,obj)))
 			    (if (js-object? __proto__)
-				(,(car loop) __proto__)
+				(begin
+				   (js-object-mode-isprotoof-set! __proto__ #t)
+				   (,(car loop) __proto__))
 				(,notfound ,base)))
 			`(,notfound ,base)))))))
 
@@ -1967,7 +1982,7 @@
 		     (lambda (cache)
 			(js-get-jsobject-name/cache o pname #f
 			   %this
-			   cache -1 '(imap emap cmap pmap amap vtable omiss))))
+			   cache -1 '(imap emap cmap pmap amap xmap vtable omiss))))
 		    ((js-jsstring-index? pname)
 		     (js-get o prop %this))
 		    (else
@@ -2104,6 +2119,7 @@
 	 (lambda (_o)
 	    (with-access::JsObject o (cmap)
 	       (unless (or (eq? cmap (js-not-a-cmap)) throw)
+		  (js-pcache-update-miss! cache o)
 		  (js-pcache-update-owner! cache 0 o miss-object)))
 	    (js-get-notfound name throw %this))
 	 ;; loop
@@ -2615,7 +2631,8 @@
 			 (let ((nextmap (extend-cmap cmap name flags
 					   (and (js-object-inline-elements? o)
 						(<fx index (vector-length elements))))))
-			    (js-invalidate-pmap-pcaches! %this "extend-mapped.5" name)
+			    (when (js-object-mode-isprotoof? o)
+			       (js-invalidate-pmap-pcaches! %this "extend-mapped.5" name))
 			    (with-access::JsConstructMap nextmap (methods ctor)
 			       (if (and cachefun (js-function? v))
 				   ;; validate cache method and don't cache
@@ -3147,7 +3164,8 @@
 		       (delete-configurable o
 			  (configurable-mapped-property? o i)
 			  (lambda (o)
-			     (js-invalidate-pmap-pcaches! %this "js-delete" p)
+			     (when (js-object-mode-isprotoof? o)
+				(js-invalidate-pmap-pcaches! %this "js-delete" p))
 			     ;; create a new cmap for the object
 			     (let ((nextmap (clone-cmap cmap)))
 				(link-cmap! cmap nextmap n #f -1)

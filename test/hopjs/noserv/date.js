@@ -23,16 +23,23 @@ assert.strictEqual( (new Date( 1245 ).__proto__), Date.prototype );
 /*---------------------------------------------------------------------*/
 assert.strictEqual(
    Date.parse( "2011-10-10T14:48:00" ),
-   new Date( "2011-10-10T14:48:00" ).valueOf() );
+   new Date( "2011-10-10T14:48:00" ).valueOf(),
+   "parse.1" );
 
 assert.strictEqual(
    Date.parse( "2011-05-10T14:48:00" ),
-   new Date( "2011-05-10T14:48:00" ).valueOf() );
+   new Date( "2011-05-10T14:48:00" ).valueOf(),
+   "parse.2" );
 
 assert.strictEqual(
    new Date( "2011-10-10T14:48:00.000" ).valueOf(),
-   new Date( "2011-10-10T14:48:00" ).valueOf() );
-assert.strictEqual( 123, new Date("2011-10-10T14:48:00.123").getMilliseconds() );
+   new Date( "2011-10-10T14:48:00" ).valueOf(),
+   "parse.3" );
+
+assert.strictEqual( 
+   123, 
+   new Date("2011-10-10T14:48:00.123").getMilliseconds(),
+   "getMilliseconds" );
 
 /*---------------------------------------------------------------------*/
 /*    Month                                                            */
@@ -40,8 +47,8 @@ assert.strictEqual( 123, new Date("2011-10-10T14:48:00.123").getMilliseconds() )
 var dm = new Date();
 dm.setMonth( 0 );
 
-assert.ok( dm.getMonth() == 0 );
-assert.ok( dm.getYear() >= 116 );
+assert.ok( dm.getMonth() == 0, "getMonth" );
+assert.ok( dm.getYear() >= 116, "getYear" );
 
 /*---------------------------------------------------------------------*/
 /*    ISO string conversions ::Iso string conversion ...               */
@@ -69,9 +76,9 @@ function test( date ) {
    var x = new Date( date );
    var val = x.valueOf();
 
-   assert.strictEqual( val, Date.parse(x.toString()) );
-   assert.strictEqual( val, Date.parse(x.toUTCString()) );
-   assert.strictEqual( val, Date.parse(x.toISOString()) );
+   assert.strictEqual( val, Date.parse(x.toString()), "toString" );
+   assert.strictEqual( val, Date.parse(x.toUTCString()), "toUTCString" );
+   assert.strictEqual( val, Date.parse(x.toISOString()), "toISOString" );
 }
 
 test( "1997-07-16T12:00:00+04:00" );
@@ -152,6 +159,7 @@ assert.ok( d.getMonth() == 0, "getMonth" );
 
 d = new Date(2011, 6, 12, 5, 0, 0);
 let d2 = new Date(2011, 2, 12, 5, 0, 0);
+
 d.setMonth( 2 );
 assert.ok( d.getMonth() === d2.getMonth(), "setMonth.3" );
 assert.ok( d.getHours() === 5, "setMonth.4" );
@@ -328,7 +336,7 @@ d = new Date( 2015, 9 );
 assert.ok( d.getTime() === 1443650400000, "year+month" );
 
 d = new Date( 2015 );
-assert.ok( d.getTime() === 2015, "year" );
+assert.ok( d.getTime() === 2015, "time" );
 
 /*---------------------------------------------------------------------*/
 /*    creation                                                         */
@@ -407,3 +415,12 @@ d = new Date( s );
 assert.ok( d.getTimezoneOffset() === -120, "getTimezoneOffset.1" );
 d.setMonth( 0 );
 assert.ok( d.getTimezoneOffset() === -60, "getTimezoneOffset.2" );
+
+/*---------------------------------------------------------------------*/
+/*    utc                                                              */
+/*---------------------------------------------------------------------*/
+var s = new Date( "2015-05-31T23:30:00+02:00" );
+
+assert.ok( s.valueOf() === 1433107800000, "valueOf" );
+assert.ok( s.getMonth() === 4, "getMonth" );
+assert.ok( s.getUTCMonth() === 4, "getUTCMonth" );
