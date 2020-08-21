@@ -887,7 +887,7 @@
       ;; isFrozen
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.12
       (js-bind! %this js-object (& "isFrozen")
-	 :value (js-make-function %this (lambda (o) (js-object-isfrozen o %this))
+	 :value (js-make-function %this (lambda (this o) (js-object-isfrozen o %this))
 		   (js-function-arity 1 0)
 		   (js-function-info :name "isFrozen" :len 1))
 	 :writable #t
