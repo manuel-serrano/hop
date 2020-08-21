@@ -2155,6 +2155,98 @@
    (with-access::JsGlobalObject %this (js-array)
       (let* ((jsS this)
 	     (S (js-jsstring->string jsS))
+	     (A (js-empty-vector->jsarray %this))
+	     (lim (if (eq? limit (js-undefined))
+		      (+fx (string-length S) 1)
+		      (elong->fixnum
+			 (minelong2
+			    (uint32->elong (js-touint32 limit %this))
+			    (fixnum->elong (+fx 1 (string-length S)))))))
+	     (s (string-length S))
+	     (p 0)
+	     (R (if (isa? separator JsRegExp)
+		    separator
+		    (js-tostring separator %this))))
+	 (cond
+	    ((=fx lim 0)
+	     ;; 9
+	     A)
+	    ((eq? separator (js-undefined))
+	     ;; 10
+	     (js-array-index-set! A #u32:0 jsS #f %this)
+	     A)
+	    ((=fx s 0)
+	     ;; 11
+	     (let ((z (split-match S 0 R)))
+		(when (eq? z 'failure)
+		   (js-array-index-set! A #u32:0 jsS #f %this))
+		A))
+	    (else
+	     ;; 13
+	     (let loop ((q p)
+			(p p))
+		(if (not (=fx q s))
+		    (let ((z (split-match S q R)))
+		       (if (eq? z 'failure)
+			   (loop (+fx q (utf8-char-size (string-ref S q))) p)
+			   ;; 13.c.i
+			   (let ((e (cdar z))
+				 (q (caar z))
+				 (cap (cdr z)))
+			      (if (=fx e p)
+				  ;; 13.c.ii
+				  (loop (+fx q (utf8-char-size (string-ref S q))) p)
+				  ;; 13.c.iii.1
+				  (let ((T (substring S p q))
+					(l (js-get-lengthu32 A %this)))
+				     ;; 13.c.iii.2
+				     (js-array-index-set! A l
+					(js-string->jsstring T) #f %this)
+				     (if (=fx (uint32->fixnum (+u32 l #u32:1)) lim)
+					 ;; 13.c.iii.4
+					 A
+					 ;; 13.c.iii.5
+					 (let ((p e))
+					    (let repeat ((cap cap)
+							 (l (+u32 l #u32:1)))
+					       (if (pair? cap)
+						   (begin
+						      ;; 13.c.iii.7.b
+						      (js-array-index-set! A l
+							 (js-string->jsstring (car cap)) #f %this)
+						      (if (=fx (uint32->fixnum (+u32 l #u32:1)) lim)
+							  ;; 13.c.iii.7.d
+							  A
+							  ;; 13.c.iii.8
+							  (repeat (cdr cap) (+u32 l #u32:1))))
+						   (loop p e))))))))))
+		    ;; 14
+		    (let ((T (substring S p s))
+			  (l (js-get-lengthu32 A %this)))
+		       ;; 15
+		       (js-array-index-set! A l (js-string->jsstring T) #f %this)
+		       ;;16
+		       A))))))))
+
+(define (js-jsstring-split.OLD-21aug2020 this::JsStringLiteral separator limit %this)
+   
+   (define (minelong2::elong n1::elong n2::elong)
+      (if (<elong n1 n2) n1 n2))
+   
+   (define (split-match S::bstring q R)
+      (if (isa? R JsRegExp)
+	  (with-access::JsRegExp R (rx)
+	     (or (pregexp-match-positions rx S q) 'failure))
+	  (let ((r (string-length R))
+		(s (string-length S)))
+	     (cond
+		((>fx (+fx q r) s) 'failure)
+		((substring-at? S R q) (list (cons q (+fx q r))))
+		(else 'failure)))))
+
+   (with-access::JsGlobalObject %this (js-array)
+      (let* ((jsS this)
+	     (S (js-jsstring->string jsS))
 	     (A (js-new %this js-array 0))
 	     (lim (if (eq? limit (js-undefined))
 		      (+fx (string-length S) 1)
@@ -2833,16 +2925,18 @@
 				       (set! previousLastIndex (+ 1 thisIndex)))
 				    (set! previousLastIndex thisIndex))
 				(when (eq? a (js-null))
-				   (set! a (js-new %this js-array 1)))
+				   (set! a (js-array-construct-alloc/length %this 1)))
 				(let ((matchStr (js-get result 0 %this)))
-				   (js-define-own-property a n
-				      (instantiate::JsValueDescriptor
-					 (name (js-toname n %this))
-					 (value matchStr)
-					 (writable #t)
-					 (enumerable #t)
-					 (configurable #t))
-				      #f %this))
+				   (js-array-index-set! a (fixnum->uint32 n)
+				      matchStr #f %this))
+;* 				   (js-define-own-property a n         */
+;* 				      (instantiate::JsValueDescriptor  */
+;* 					 (name (js-toname n %this))    */
+;* 					 (value matchStr)              */
+;* 					 (writable #t)                 */
+;* 					 (enumerable #t)               */
+;* 					 (configurable #t))            */
+;* 				      #f %this))                       */
 				(loop (+fx 1 n))))))))))))
 
 ;*---------------------------------------------------------------------*/

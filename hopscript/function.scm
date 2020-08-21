@@ -1151,7 +1151,8 @@
    (with-access::JsProcedure this (arity procedure)
       (let ((n (uint32->fixnum ilen)))
 	 (cond
-	    ((=fx arity (+fx 1 n))
+;* 	    ((=fx arity (+fx 1 n))                                     */
+	    ((>=fx arity 0)
 	     (case n
 		((0)
 		 (js-call0-jsprocedure %this this thisarg))

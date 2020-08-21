@@ -667,7 +667,7 @@
    (vector-ref pcache index))
 
 ;*---------------------------------------------------------------------*/
-;*    js-pcache-Xmap ...                                               */
+;*    js-pcache-XXXmap ...                                             */
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden in property_expd.sch                               */
 ;*---------------------------------------------------------------------*/
@@ -2082,7 +2082,7 @@
    
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
-   
+
    (let loop ((obj o))
       (jsobject-find obj o name
 	 ;; map search

@@ -66,7 +66,8 @@
 			  '(pmap))
 		       ;; fast code
 		       (cspecs
-			  '(imap emap cmap pmap amap vtable)
+;* 			  '(imap emap cmap pmap amap vtable)           */
+			  '(imap emap cmap vtable)
 			  '(imap emap cmap nmap amap vtable)
 			  '(imap cmap)
 			  '(pmap cmap vtable poly)))))

@@ -34,7 +34,7 @@
 	   (js-profile-register-pcache ::JsPropertyCache)
 	   
 	   (js-profile-log-cache ::JsPropertyCache
-	      #!key imap emap cmap pmap nmap amap vtable)
+	      #!key imap emap cmap pmap nmap amap vtable xmap)
 	   (js-profile-log-index ::long)
 	   
 	   (js-profile-log-get ::obj loc)
@@ -175,8 +175,8 @@
 ;*    js-profile-log-cache ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-cache cache::JsPropertyCache
-	   #!key imap emap cmap pmap nmap amap vtable)
-   (with-access::JsPropertyCache cache (cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
+	   #!key imap emap cmap pmap nmap amap xmap vtable)
+   (with-access::JsPropertyCache cache (cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable cntxmap)
       (when *profile-cache*
 	 (cond
 	    (imap (set! cntimap (+u32 #u32:1 cntimap)))
@@ -185,6 +185,7 @@
 	    (pmap (set! cntpmap (+u32 #u32:1 cntpmap)))
 	    (nmap (set! cntnmap (+u32 #u32:1 cntnmap)))
 	    (amap (set! cntamap (+u32 #u32:1 cntamap)))
+	    (xmap (set! cntxmap (+u32 #u32:1 cntxmap)))
 	    (vtable (set! cntvtable (+u32 #u32:1 cntvtable)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -825,23 +826,25 @@
 	 (if m (string->integer (cadr m)) 100)))
 
    (define (pcache-hits::llong pc)
-      (with-access::JsPropertyCache pc (cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
+      (with-access::JsPropertyCache pc (cntimap cntemap cntcmap cntpmap cntnmap cntamap cntxmap cntvtable)
 	 (+llong (uint32->llong cntimap)
 	    (+llong (uint32->llong cntemap)
 	       (+llong (uint32->llong cntcmap)
 		  (+llong (uint32->llong cntpmap)
 		     (+llong (uint32->llong cntnmap)
 			(+llong (uint32->llong cntamap)
-			   (uint32->llong cntvtable)))))))))
+			   (+llong (uint32->llong cntxmap)
+			      (uint32->llong cntvtable))))))))))
 
    (define (pcache-multi pc)
-      (with-access::JsPropertyCache pc (name cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
+      (with-access::JsPropertyCache pc (name cntimap cntemap cntcmap cntpmap cntnmap cntamap cntxmap cntvtable)
 	 (when (> (+ (if (>u32 cntimap 0) 1 0)
 		     (if (>u32 cntemap 0) 1 0)
 		     (if (>u32 cntcmap 0) 1 0)
 		     (if (>u32 cntpmap 0) 1 0)
 		     (if (>u32 cntnmap 0) 1 0)
 		     (if (>u32 cntamap 0) 1 0)
+		     (if (>u32 cntxmap 0) 1 0)
 		     (if (>u32 cntvtable 0) 1 0))
 		  1)
 	    (cons name (pcache-hits pc)))))
@@ -894,6 +897,9 @@
 
    (define (filecaches-amaps filecaches)
       (filecache-sum-field filecaches 'cntamap))
+
+   (define (filecaches-xmaps filecaches)
+      (filecache-sum-field filecaches 'cntxmap))
 
    (define (filecaches-vtables filecaches)
       (filecache-sum-field filecaches 'cntvtable))
@@ -999,7 +1005,7 @@
 				   (<= xpoint ypoint))))
 		       fc))))
 	 (vfor-each (lambda (i pc)
-		       (with-access::JsPropertyCache pc (point usage cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
+		       (with-access::JsPropertyCache pc (point usage cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntxmap cntvtable)
 			  (when (or (> (pcache-hits pc) 0) (> cntmiss *log-miss-threshold*))
 			     (display* "      { \"point\": " point)
 			     (display* ", \"usage\": \"" usage "\"")
@@ -1010,6 +1016,7 @@
 			     (when (> cntpmap 0) (display* ", \"pmap\": " cntpmap))
 			     (when (> cntnmap 0) (display* ", \"nmap\": " cntnmap))
 			     (when (> cntamap 0) (display* ", \"amap\": " cntamap))
+			     (when (> cntxmap 0) (display* ", \"xmap\": " cntxmap))
 			     (when (> cntvtable 0) (display* ", \"vtable\": " cntvtable))
 			     (if (>fx i 0)
 				 (print " }, ")
@@ -1034,8 +1041,9 @@
 							(xcntpmap cntpmap)
 							(xcntnmap cntnmap)
 							(xcntamap cntamap)
+							(xcntxmap cntxmap)
 							(xcntvtable cntvtable))
-			  (with-access::JsPropertyCache old (point usage cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
+			  (with-access::JsPropertyCache old (point usage cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntxmap cntvtable)
 			     (if (and (= point xpoint) (eq? xusage usage))
 				 (begin
 				    (set! cntmiss (+u32 cntmiss xcntmiss))
@@ -1045,6 +1053,7 @@
 				    (set! cntpmap (+u32 cntpmap xcntpmap))
 				    (set! cntnmap (+u32 cntnmap xcntnmap))
 				    (set! cntamap (+u32 cntamap xcntamap))
+				    (set! cntxmap (+u32 cntxmap xcntxmap))
 				    (set! cntvtable (+u32 cntvtable xcntvtable))
 				    (loop (+fx i 1) old res))
 				 (loop (+fx i 1) x (cons old res))))))))
@@ -1232,7 +1241,10 @@
 		 "UNCACHED METHODS:\n=================")
 	      (profile-uncached calls *profile-methods*)
 	      (newline *profile-port*))
-	   (fprint *profile-port* "\n(use HOPTRACE=\"hopscript:uncache\" for uncached accesses)")))))
+	   (fprint *profile-port* "\n(use HOPTRACE=\"hopscript:uncache\" for uncached accesses)"))
+       (cond-expand
+	  (profile #f)
+	  (else (fprint *profile-port* "reconfigure with --profile for loging xmap, amap, and pmap"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-uncached ...                                             */
@@ -1265,8 +1277,9 @@
 						     cntpmap
 						     cntnmap
 						     cntamap
+						     cntxmap
 						     cntvtable)
-		    (> (+ cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
+		    (> (+ cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntxmap cntvtable)
 		       *log-miss-threshold*)))
 	    pcaches)
       (newline *profile-port*)
@@ -1319,8 +1332,9 @@
 							  cntpmap
 							  cntnmap
 							  cntamap
+							  cntxmap
 							  cntvtable)
-			 (when (> (+ cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
+			 (when (> (+ cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntxmap cntvtable)
 				  *log-miss-threshold*)
 			    (fprint *profile-port*
 			       (padding (number->string point) ppading 'right)
@@ -1342,6 +1356,8 @@
 			       (padding cntnmap cwidth 'right)
 			       " " 
 			       (padding cntamap cwidth 'right)
+			       " " 
+			       (padding cntxmap cwidth 'right)
 			       " " 
 			       (padding cntvtable cwidth 'right)))))
 	    pcaches))))

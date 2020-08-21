@@ -39,14 +39,14 @@
    
    (export (js-init-date! ::JsObject)
 	   (js-date->jsdate::JsDate ::date ::JsGlobalObject)
-	   (js-date-construct0 ::JsGlobalObject)
-	   (js-date-construct1 ::JsGlobalObject ::obj)
-	   (js-date-construct2 ::JsGlobalObject ::obj ::obj)
-	   (js-date-construct3 ::JsGlobalObject ::obj ::obj ::obj)
-	   (js-date-construct4 ::JsGlobalObject ::obj ::obj ::obj ::obj)
-	   (js-date-construct5 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
-	   (js-date-construct6 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj)
-	   (js-date-construct7 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj ::obj)
+	   (js-new-date0 ::JsGlobalObject)
+	   (js-new-date1 ::JsGlobalObject ::obj)
+	   (js-new-date2 ::JsGlobalObject ::obj ::obj)
+	   (js-new-date3 ::JsGlobalObject ::obj ::obj ::obj)
+	   (js-new-date4 ::JsGlobalObject ::obj ::obj ::obj ::obj)
+	   (js-new-date5 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
+	   (js-new-date6 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj)
+	   (js-new-date7 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj ::obj)
 	   (js-date-now)
 	   (js-date-gettime ::JsDate)
 	   (js-date-maybe-gettime ::obj ::JsGlobalObject ::obj)
@@ -432,65 +432,65 @@
 	    :hour h :min mi :sec se :nsec ns))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-date-construct0 ...                                           */
+;*    js-new-date0 ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-date-construct0 %this)
+(define (js-new-date0 %this)
    (let ((this (js-date-alloc %this)))
       (set-date! this (js-date-value0 %this))
       this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-date-construct1 ...                                           */
+;*    js-new-date1 ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-date-construct1 %this value)
+(define (js-new-date1 %this value)
    (let ((this (js-date-alloc %this)))
       (set-date! this (js-date-value1 %this value))
       this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-date-construct2 ...                                           */
+;*    js-new-date2 ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-date-construct2 %this year month)
+(define (js-new-date2 %this year month)
    (let ((this (js-date-alloc %this)))
       (set-date! this (js-date-value2 %this year month))
       this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-date-construct3 ...                                           */
+;*    js-new-date3 ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-date-construct3 %this year month date)
+(define (js-new-date3 %this year month date)
    (let ((this (js-date-alloc %this)))
       (set-date! this (js-date-value3 %this year month date))
       this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-date-construct4 ...                                           */
+;*    js-new-date4 ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-date-construct4 %this year month date hours)
+(define (js-new-date4 %this year month date hours)
    (let ((this (js-date-alloc %this)))
       (set-date! this (js-date-value4 %this year month date hours))
       this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-date-construct5 ...                                           */
+;*    js-new-date5 ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-date-construct5 %this year month date hours minutes)
+(define (js-new-date5 %this year month date hours minutes)
    (let ((this (js-date-alloc %this)))
       (set-date! this (js-date-value5 %this year month date hours minutes))
       this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-date-construct6 ...                                           */
+;*    js-new-date6 ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-date-construct6 %this year month date hours minutes seconds)
+(define (js-new-date6 %this year month date hours minutes seconds)
    (let ((this (js-date-alloc %this)))
       (set-date! this (js-date-value6 %this year month date hours minutes seconds))
       this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-date-construct7 ...                                           */
+;*    js-new-date7 ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-date-construct7 %this year month date hours minutes seconds ms)
+(define (js-new-date7 %this year month date hours minutes seconds ms)
    (let ((this (js-date-alloc %this)))
       (set-date! this (js-date-value7 %this year month date hours minutes seconds ms))
       this))

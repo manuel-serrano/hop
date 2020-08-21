@@ -27,7 +27,7 @@
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-fun)
    
-   (export (j2s-new-date fun::J2SNew mode return::procedure ctx)
+   (export (j2s-new-date ::J2SNew mode return::procedure ctx)
 	   (j2s-date-builtin-method fun::J2SAccess args
 	      expr mode return::procedure conf)))
 
@@ -43,7 +43,7 @@
    (with-access::J2SNew this (args)
       (case (length args)
 	 ((0 1 2 3 4 5 6 7)
-	  (let ((ctor (symbol-append 'js-date-construct
+	  (let ((ctor (symbol-append 'js-new-date
 			 (string->symbol
 			    (integer->string (length args))))))
 	     `(,ctor %this
@@ -51,7 +51,6 @@
 			   (j2s-scheme-box a mode return ctx))
 		      args))))
 	 (else
-	  (tprint "NEW DATE nop " (length args))
 	  #f))))
 
 ;*---------------------------------------------------------------------*/

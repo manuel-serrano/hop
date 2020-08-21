@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 25 17:49:28 2017                          */
 ;*    Last change :  Thu Mar 28 15:57:16 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript regexp functions            */
 ;*=====================================================================*/
@@ -27,8 +27,17 @@
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-fun)
 
-   (export (j2s-regexp-test obj args mode return conf)))
+   (export (j2s-new-regexp ::J2SNew mode return::procedure ctx)
+	   (j2s-regexp-test obj args mode return conf)))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-new-regexp ...                                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-new-regexp this::J2SNew mode return::procedure ctx)
+   (with-access::J2SNew this (args)
+      (when (and (pair? args) (null? (cdr args)))
+	 `(js-new-regexp1 %this ,(j2s-scheme (car args) mode return ctx)))))
+ 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-regexp-test ...                                              */
 ;*---------------------------------------------------------------------*/

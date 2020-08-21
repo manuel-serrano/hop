@@ -138,6 +138,7 @@
 	      (cntpmap::uint32 (default #u32:0))
 	      (cntnmap::uint32 (default #u32:0))
 	      (cntamap::uint32 (default #u32:0))
+	      (cntxmap::uint32 (default #u32:0))
 	      (cntvtable::uint32 (default #u32:0)))
 	   
 	   (final-class JsConstructMap

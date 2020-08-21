@@ -1309,8 +1309,26 @@
 	 (format "toPrimitive: illegal default value \"~~a\" (~a)"
 	    preferredtype)
 	 (symbol->string! (class-name (object-class o)))))
+
+   (define (get-field-value2 f)
+      (let ((proc (js-get o f %this)))
+	 (if (js-procedure? proc)
+	     (let ((r (js-call0 %this proc o)))
+		(if (not (js-object? r))
+		    r
+		    (err)))
+	     (err))))
    
-   (define (get-field-value . fields)
+   (define (get-field-value f1 f2)
+      (let ((proc (js-get o f1 %this)))
+	 (if (js-procedure? proc)
+	     (let ((r (js-call0 %this proc o)))
+		(if (not (js-object? r))
+		    r
+		    (get-field-value2 f2)))
+	     (get-field-value2 f2))))
+
+   (define (get-field-valueOLD . fields)
       (let loop ((fields fields))
 	 (if (null? fields)
 	     (err)
@@ -1321,7 +1339,6 @@
 			   r
 			   (loop (cdr fields))))
 		    (loop (cdr fields)))))))
-   
    (define (primitive-as-string)
       (get-field-value (& "toString") (& "valueOf")))
    

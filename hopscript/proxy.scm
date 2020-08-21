@@ -411,12 +411,40 @@
 ;*    cost of an expensive generic function dispatch.                  */
 ;*---------------------------------------------------------------------*/
 (define (js-get-proxy-name/cache-miss o::JsObject
-		   name::obj
-		   throw::bool %this::JsGlobalObject
-		   cache::JsPropertyCache)
+	   name::obj
+	   throw::bool %this::JsGlobalObject
+	   cache::JsPropertyCache)
    (if (js-proxy? o)
        (js-jsproxy-get o name %this)
-       (js-get-jsobject-name/cache-miss o name throw %this cache)))
+       (with-access::JsPropertyCache cache (xmap pmap amap)
+	  (with-access::JsObject o (cmap)
+	     (let ((omap cmap))
+		(cond
+		   ((eq? omap pmap)
+		    (let ((idx (js-pcache-index cache)))
+		       (with-access::JsObject (js-pcache-owner cache) (elements)
+			  (cond-expand
+			     (profile
+			      (js-profile-log-cache cache :pmap #t)
+			      (js-profile-log-index idx)))
+			  (vector-ref elements idx))))
+		   ((eq? omap amap)
+		    (let* ((idx (js-pcache-index cache))
+			   (propowner (js-pcache-owner cache)))
+		       (with-access::JsObject propowner (elements)
+			  (let ((desc (vector-ref elements idx)))
+			     (cond-expand
+				(profile
+				 (js-profile-log-cache cache :amap #t)
+				 (js-profile-log-index idx)))
+			     (js-property-value o
+				propowner name desc %this)))))
+		   ((eq? omap xmap)
+		    (cond-expand
+		       (profile (js-profile-log-cache cache :xmap #t)))
+		    (js-undefined))
+		   (else
+		    (js-get-jsobject-name/cache-miss o name throw %this cache))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject-name/cache-miss ::JsProxy ...                    */

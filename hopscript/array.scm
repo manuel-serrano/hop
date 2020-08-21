@@ -166,7 +166,8 @@
       (fprint (current-error-port)
 	 " ilen=" ilen " length=" length " vlen=" (vector-length vec)
 	 " plain=" (js-object-mode-plain? obj)
-	 " inl=" (js-array-inlined? obj)
+	 " a.inl=" (js-array-inlined? obj)
+	 " mode.inl=" (js-object-mode-inline? obj)
 	 " holey=" (js-object-mode-holey? obj))
       (if (<fx (vector-length vec) 20)
 	  (fprint (current-error-port) " vec=" vec)
@@ -3111,7 +3112,9 @@
 		       (aput! o (js-toname p %this) v))))))
 	    ((and (=u32 idx (fixnum->uint32 (vector-length vec)))
 		  (array-extensible? o)
-		  (js-object-mode-inline? o))
+		  ;; MS: 21 aug 2020
+		  ;; used to be (js-object-mode-inline? o) only
+		  (or (js-object-mode-inline? o) (js-object-mode-holey? o)))
 	     (js-object-mode-hasnumeralprop-set! o #t)
 	     ;; extend the inlined vector
 	     (with-access::JsArray o (length vec ilen)

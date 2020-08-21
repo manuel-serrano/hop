@@ -305,6 +305,7 @@
       (#unspecified #unspecified #unspecified #unspecified)
       (#unspecified #unspecified #unspecified #unspecified #unspecified)
       (#unspecified #unspecified #unspecified #unspecified #unspecified #unspecified)
+      (#unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified)
       (#unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified)
       (#unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified)
       (#unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified)
@@ -325,7 +326,15 @@
 		 (struct-ref attr 0)
 		 a))
 	  a)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    make-args-list ...                                               */
+;*---------------------------------------------------------------------*/
+(define (make-args-list n)
+   (if (<fx n (vector-length optionals))
+       (vector-ref optionals n)
+       (make-list n (js-undefined))))
+
 ;*---------------------------------------------------------------------*/
 ;*    gen-calln ...                                                    */
 ;*    -------------------------------------------------------------    */
@@ -385,8 +394,7 @@
 		  (else
 		   (if (<fx ,parity 0)
 		       (apply ,procedure ,this ,@args
-			  (make-list (-fx (negfx ,parity) ,n)
-			     (js-undefined)))
+			  (make-args-list (-fx (negfx ,parity) ,n)))
 		       (apply ,procedure ,this ,@args
 			  (vector-ref optionals (-fx ,parity ,n))))))))))
 
@@ -416,7 +424,7 @@
 	       (if (<fx ,parity 0)
 		   (,procedure ,this ,@args)
 		   (apply ,procedure ,this ,@args
-		      (make-list (-fx ,parity ,n) (js-undefined)))))))))
+		      (make-args-list (-fx ,parity ,n)))))))))
 
    (define (call-scheme-vararg-missing i)
       ;; missing scheme var args
@@ -453,12 +461,10 @@
 	      (if (js-procedure-hopscript-mode? ,fun)
 		  (js-raise-arity-error %this ,fun ,(-fx n 1))
 		  (apply ,procedure ,this
-		     ,@args (make-list (-fx ,parity ,n)
-			       (js-undefined)))))
+		     ,@args (make-args-list (-fx ,parity ,n)))))
 	     ((<fx ,n ,parity)
 	      (apply ,procedure ,this
-		 ,@args (make-list (-fx ,parity ,n)
-			   (js-undefined))))
+		 ,@args (make-args-list (-fx ,parity ,n))))
 	     (else
 	      (if (js-procedure-hopscript-mode? ,fun)
 		  (js-raise-arity-error %this ,fun ,(-fx n 1))
@@ -498,7 +504,7 @@
 		  (apply ,procedure ,this
 		     ,@args
 		     (append
-			(make-list (-fx ,parity ,(+fx n 1)) (js-undefined))
+			(make-args-list (-fx ,parity ,(+fx n 1)))
 			(list ,(rest-argument-empty arity)))))
 		 ((<fx ,parity 0)
 		  ;; this schema does not support optional and rest
@@ -508,8 +514,7 @@
 			  (if (<=fx ,n ,required)
 			      (apply ,procedure ,this
 				 (append ,l
-				    (make-list (-fx ,required ,(-fx n 1))
-				       (js-undefined))
+				    (make-args-list (-fx ,required ,(-fx n 1)))
 				    (list ,(rest-argument-empty arity))))
 			      (append (take ,l ,required)
 				 (list ,(rest-argument arity
@@ -529,7 +534,7 @@
 	  (if (>=fx ,n (negfx ,parity))
 	      (,procedure ,this ,@args)
 	      (apply ,procedure ,this ,@args
-		 (make-list (-fx ,n ,required) (js-undefined))))))
+		 (make-args-list (-fx ,n ,required))))))
 	  
    (define (call-many-arguments)
       ;; dyamic call sequence for many arguments
@@ -541,7 +546,7 @@
 	       (if (>fx ,arity ,n)
 		   ;; missing arguments
 		   (apply ,procedure ,this ,@args 
-		      (make-list (-fx ,arity ,n) (js-undefined)))
+		      (make-args-list (-fx ,arity ,n)))
 		   ;; too many arguments
 		   (apply ,procedure ,this (take (list ,@args) ,arity)))))
 	  (else

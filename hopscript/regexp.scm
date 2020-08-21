@@ -33,6 +33,7 @@
 	   __hopscript_proxy)
 
    (export (js-init-regexp! ::JsGlobalObject)
+	   (js-new-regexp1 ::JsGlobalObject ::obj)
 	   (inline js-regexp?::bool ::obj)
 	   (js-regexp->jsregexp ::regexp ::JsGlobalObject)
 	   (js-regexp-literal-test::bool ::JsRegExp ::obj ::JsGlobalObject)
@@ -170,7 +171,14 @@
 	 (if (and (js-regexp? pattern) (eq? flags (js-undefined)))
 	     pattern
 	     (js-regexp-construct %this pattern flags loc)))))
-;* 	     (js-new3 %this js-regexp pattern flags loc)))))           */
+
+;*---------------------------------------------------------------------*/
+;*    js-new-regexp1 ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-new-regexp1 %this::JsGlobalObject pattern)
+   (if (js-regexp? pattern)
+       pattern
+       (js-regexp-construct %this pattern (js-undefined) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-js-regexp-pattern ...                                       */
@@ -473,6 +481,9 @@
 	  (if (eq? pattern (js-undefined))
 	      (set! pattern "")
 	      (set! pattern (js-tostring pattern %this)))
+;* 	  (tprint "js-regexp-construct pattern=" (string-for-read pattern) " uflags=" uflags " loc=" loc) */
+;* 	  (if (string=? pattern "\\-")                                 */
+;* 	      (tprint (/fx 1 0)))                                      */
 	  (unless (eq? uflags (js-undefined))
 	     (let* ((f (js-tostring uflags %this))
 		    (i (string-index f #\i))
@@ -700,6 +711,7 @@
 			    (js-put-jsobject-name/cache! this (& "lastIndex") lastindex
 			       #f %this (js-pcache-ref js-regexp-pcache 0)))
 			 (let* ((n (length r))
+				;;(_ (tprint "match-positions n=" n))
 				(vec ($create-vector n))
 				(a (js-vector->jsarray vec %this))
 				(matchindex (caar r))
