@@ -72,7 +72,7 @@
 	      ;; #t (after use) if the variable is captured by a closure
 	      (escape::bool (default #f) (info '("notraverse")))
 	      ;; see usage-bit.sch
-	      (usage::uint32 (default (usage '(assig))))
+	      (usage::uint32 (default (usage '())))
 	      ;; variable range
 	      (binder::symbol (default 'var) (info '("notraverse")))
 	      ;; user declared type, if set, assign will be guarded

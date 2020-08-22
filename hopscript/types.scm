@@ -395,6 +395,8 @@
 	      (js-xml-markups (default #f))
 	      ;; char table
 	      (char-table::vector (default '#()))
+	      ;; regexp tmp position buffer
+	      (js-regexp-positions::vector (default '#()))
 	      ;; pcaches
 	      (js-nodejs-pcache::vector (default '#()))
 	      (js-array-pcache::vector (default '#()))

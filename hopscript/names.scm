@@ -155,6 +155,7 @@
 	    (let ((table (create-hashtable
 			    :eqtest string-compare?
 			    :hash string-hash-number
+			    :size 512
 			    :max-length 65536
 			    :max-bucket-length 20)))
 	       (cond-expand (enable-tls (set! gcroots (cons table gcroots))))

@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
 ;*    Last change :  Sat Dec 21 06:49:59 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (constant propagation).            */
 ;*=====================================================================*/
@@ -109,13 +109,12 @@
       ;; no need to scan rhs as we are only looking for variable decls/inits
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
-	     (with-access::J2SDecl decl (val %info id writable)
-		(if (and (or (not (decl-usage-has? decl '(assig uninit)))
-			     (and (not (decl-usage-has? decl '(uninit)))
-				  (not writable)))
-			 (constant? rhs))
+	     (with-access::J2SDecl decl (%info)
+		(if (not (decl-usage-has? decl '(assig uninit)))
 		    (begin
-		       (set! %info (cons 'init rhs))
+		       (if (constant? rhs)
+			   (set! %info (cons 'init rhs))
+			   (set! %info (cons 'init 'no-constant)))
 		       (list decl))
 		    '())))
 	  '())))
@@ -125,7 +124,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-gloconst* this::J2SDeclInit)
    (with-access::J2SDeclInit this (val %info %%dump id)
-      (if (and (not (decl-usage-has? this '(assig))) (constant? val))
+      (if (and (not (decl-usage-has? this '(assig uninit)))
+	       (constant? val)
+	       (or (not (pair? %info)) (not (eq? (car %info) 'init))))
 	  (begin
 	     (set! %info (cons 'init this))
 	     (list this))
@@ -151,6 +152,8 @@
       (with-access::J2SDecl decl (%info id)
 	 (cond
 	    ((or (not (pair? %info)) (not (eq? (car %info) 'init)))
+	     (call-default-walker))
+	    ((eq? (cdr %info) 'no-constant)
 	     (call-default-walker))
 	    ((isa? (cdr %info) J2SExpr)
 	     (j2s-alpha (propagate-constant! (cdr %info)) '() '()))

@@ -48,6 +48,8 @@
        (let ((u::uint32 #u32:0))
 	  (for-each (lambda (k) (set! u (bit-oru32 u (usage-key->bit k)))) keys)
 	  u))
+      ((null? keys)
+       #u32:0)
       ((uint32? keys)
        keys)
       (else

@@ -375,9 +375,11 @@
 		       (loc loc)
 		       (val (not (string=? lval rval)))))
 		   ((+)
-		    (let ((ns (duplicate::J2SString (unparen lhs)
-				 (val (string-append lval rval)))))
-		       (constant! ns env nesting conf)))
+		    (if (eq? (string-minimal-charset lval) 'ascii )
+			(let ((ns (duplicate::J2SString (unparen lhs)
+				     (val (string-append lval rval)))))
+			   (constant! ns env nesting conf))
+			this))
 		   (else
 		    this)))))
 	 (else

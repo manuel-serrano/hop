@@ -683,7 +683,7 @@
 	 (else
 	  (js-ascii->jsstring (substring s start end)))))
 
-   (with-access::JsGlobalObject %this (js-regexp-pcache)
+   (with-access::JsGlobalObject %this (js-regexp-pcache js-regexp-positions)
       (with-access::JsRegExp this (rx flags)
 	 (let ((lastindex (js-get-jsobject-name/cache this (& "lastIndex")
 			     #f %this (js-pcache-ref js-regexp-pcache 0)))
@@ -692,7 +692,8 @@
 		   (s (js-jsstring->string jss))
 		   (len (string-length s))
 		   (i (js-tointeger lastindex %this))
-		   (enc (isa? s JsStringLiteralUTF8)))
+		   (enc (isa? s JsStringLiteralUTF8))
+		   (clen (regexp-capture-count rx)))
 	       (unless global (set! i 0))
 	       (cond
 		  ((or (<fx i 0) (>fx i len))
@@ -700,6 +701,57 @@
 		   (js-put-jsobject-name/cache! this (& "lastIndex") lastindex
 		      #f %this (js-pcache-ref js-regexp-pcache 0))
 		   (js-null))
+		  ((>=fx clen 0)
+		   (when (>fx (*fx (+fx clen 1) 2)
+			    (vector-length js-regexp-positions))
+		      (set! js-regexp-positions
+			 (make-vector (* (+fx clen 1) 2))))
+		   (let* ((r js-regexp-positions)
+			  (l (pregexp-match-n-positions! rx s r i len)))
+		      (if (<fx l 0)
+			  (begin
+			     (set! lastindex 0)
+			     (js-put-jsobject-name/cache! this (& "lastIndex") lastindex
+				#f %this (js-pcache-ref js-regexp-pcache 0))
+			     (js-null))
+			  ;; 10
+			  (let ((e (vector-ref r 1)))
+			     ;; 11
+			     (when global
+				(set! lastindex e)
+				(js-put-jsobject-name/cache! this (& "lastIndex") lastindex
+				   #f %this (js-pcache-ref js-regexp-pcache 0)))
+			     (let* ((n (+fx clen 1))
+				    ;;(_ (tprint "match-positions n=" n))
+				    (vec ($create-vector n))
+				    (a (js-vector->jsarray vec %this))
+				    (matchindex (vector-ref r 0))
+				    (els ($create-vector 2)))
+				;; bind the result cmap and add the elements
+				(with-access::JsArray a (elements cmap)
+				   (with-access::JsGlobalObject %this (js-regexp-exec-cmap)
+				      (set! cmap js-regexp-exec-cmap))
+				   (set! elements els))
+				;; 15
+				(vector-set! els 0 matchindex)
+				;; (js-bind! %this a 'index :value matchindex)
+				;; 16
+				(vector-set! els 1 jss)
+				;; (js-bind! %this a 'input :value jss)
+				;; 17
+				;; no need as already automatically set
+				;; 19 & 20
+				;; 20
+				(let loop ((i 0))
+				   (when (<fx i n)
+				      (let ((j (*fx i 2)))
+					 (vector-set! vec i
+					    (js-substring s
+					       (vector-ref r j)
+					       (vector-ref r (+fx j 1))
+					       enc))
+					 (loop (+fx i 1)))))
+				a)))))
 		  ((pregexp-match-positions rx s i)
 		   =>
 		   (lambda (r)
@@ -780,52 +832,90 @@
 	  (js-utf8->jsstring (substring s start end)))
 	 (else
 	  (js-ascii->jsstring (substring s start end)))))
-
-   (with-access::JsGlobalObject %this (js-regexp-pcache)
+   
+   (with-access::JsGlobalObject %this (js-regexp-pcache js-regexp-positions)
       (with-access::JsRegExp this (rx)
 	 (let* ((jss (js-tojsstring string %this))
 		(s (js-jsstring->string jss))
 		(len (string-length s))
-		(enc (isa? s JsStringLiteralUTF8)))
+		(enc (isa? s JsStringLiteralUTF8))
+		(clen (regexp-capture-count rx)))
 	    (cond
+	       ((>=fx clen 0)
+		(when (>fx (*fx (+fx clen 1) 2)
+			 (vector-length js-regexp-positions))
+		   (set! js-regexp-positions
+		      (make-vector (* clen 2))))
+		(let* ((r js-regexp-positions)
+		       (l (pregexp-match-n-positions! rx s r 0 len)))
+		   (if (<fx l 0)
+		       (js-null)
+		       ;; 10 & 11
+		       (let* ((n (+fx clen 1))
+			      (vec ($create-vector n))
+			      (a (js-vector->jsarray vec %this))
+			      (matchindex (vector-ref r 0))
+			      (els ($create-vector 2)))
+			  ;; bind the result cmap and add the elements
+			  (with-access::JsArray a (elements cmap)
+			     (with-access::JsGlobalObject %this (js-regexp-exec-cmap)
+				(set! cmap js-regexp-exec-cmap))
+			     (set! elements els))
+			  ;; 15
+			  (vector-set! els 0 matchindex)
+			  ;; (js-bind! %this a 'index :value matchindex)
+			  ;; 16
+			  (vector-set! els 1 jss)
+			  ;; (js-bind! %this a 'input :value jss)
+			  ;; 17
+			  ;; no need as already automatically set
+			  ;; 19 & 20
+			  (let loop ((i 0))
+			     (when (<fx i n)
+				(let ((j (*fx i 2)))
+				   (vector-set! vec i
+				      (js-substring s
+					 (vector-ref r j)
+					 (vector-ref r (+fx j 1))
+					 enc))
+				   (loop (+fx i 1)))))
+			  a))))
 	       ((pregexp-match-positions rx s 0)
 		=>
 		(lambda (r)
-		   ;; 10
-		   (let ((e (cdar r)))
-		      ;; 11
-		      (let* ((n (length r))
-			     (vec ($create-vector n))
-			     (a (js-vector->jsarray vec %this))
-			     (matchindex (caar r))
-			     (els ($create-vector 2)))
-			 ;; bind the result cmap and add the elements
-			 (with-access::JsArray a (elements cmap)
-			    (with-access::JsGlobalObject %this (js-regexp-exec-cmap)
-			       (set! cmap js-regexp-exec-cmap))
-			    (set! elements els))
-			 ;; 15
-			 (vector-set! els 0 matchindex)
-			 ;; (js-bind! %this a 'index :value matchindex)
-			 ;; 16
-			 (vector-set! els 1 jss)
-			 ;; (js-bind! %this a 'input :value jss)
-			 ;; 17
-			 ;; no need as already automatically set
-			 ;; 19
-			 (vector-set! vec 0
-			    (js-substring s (caar r) (cdar r) enc))
-			 ;; 20
-			 (let loop ((c (cdr r))
-				    (i 1))
-			    (when (pair? c)
-			       (let ((r (car c)))
-				  (vector-set! vec i
-				     (if (pair? r)
-					 (js-substring s (car r) (cdr r) enc)
-					 (js-undefined))))
-			       (loop (cdr c) (+fx i 1))))
-			 a))))
+		   ;; 10 & 11
+		   (let* ((n (length r))
+			  (vec ($create-vector n))
+			  (a (js-vector->jsarray vec %this))
+			  (matchindex (caar r))
+			  (els ($create-vector 2)))
+		      ;; bind the result cmap and add the elements
+		      (with-access::JsArray a (elements cmap)
+			 (with-access::JsGlobalObject %this (js-regexp-exec-cmap)
+			    (set! cmap js-regexp-exec-cmap))
+			 (set! elements els))
+		      ;; 15
+		      (vector-set! els 0 matchindex)
+		      ;; (js-bind! %this a 'index :value matchindex)
+		      ;; 16
+		      (vector-set! els 1 jss)
+		      ;; (js-bind! %this a 'input :value jss)
+		      ;; 17
+		      ;; no need as already automatically set
+		      ;; 19
+		      (vector-set! vec 0
+			 (js-substring s (caar r) (cdar r) enc))
+		      ;; 20
+		      (let loop ((c (cdr r))
+				 (i 1))
+			 (when (pair? c)
+			    (let ((r (car c)))
+			       (vector-set! vec i
+				  (if (pair? r)
+				      (js-substring s (car r) (cdr r) enc)
+				      (js-undefined))))
+			    (loop (cdr c) (+fx i 1))))
+		      a)))
 	       (else
 		(js-null)))))))
 
