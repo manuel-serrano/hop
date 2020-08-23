@@ -125,7 +125,7 @@
 			  ((force-type this 'unknown 'any)
 			   (loop (+fx i 1)))))))))
 	  (force-type this 'unknown 'any))
-      (when (config-get conf :optim-hintblock #f)
+      (when (config-get conf :optim-hintblock)
 	 (j2s-hint-block! this))
       (unless (config-get conf :optim-integer)
 	 (force-type this 'integer 'number))

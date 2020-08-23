@@ -2198,6 +2198,8 @@
        (if (uint32? val) (uint32->flonum val) `(uint32->flonum ,val)))
       ((int53 bint)
        (if (fixnum? val) (fixnum->flonum val) `(fixnum->flonum ,val)))
+      ((integer)
+       (if (fixnum? val) (fixnum->flonum val) `(fixnum->flonum ,val)))
       (else
        val)))
 
