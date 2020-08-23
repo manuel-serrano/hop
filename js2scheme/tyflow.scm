@@ -76,14 +76,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    type-program! ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (type-program! this::J2SProgram args)
+(define (type-program! this::J2SProgram conf)
    
-   (define j2s-verbose (config-get args :verbose 0))
+   (define j2s-verbose (config-get conf :verbose 0))
    
    (with-access::J2SProgram this (headers decls nodes)
       (when (>=fx j2s-verbose 3) (display " " (current-error-port)))
       ;; main fix point
-      (if (config-get args :optim-tyflow #f)
+      (if (config-get conf :optim-tyflow #f)
 	  (let ((fix (make-cell 0)))
 	     (let loop ((i 1))
 		(when (>=fx j2s-verbose 3)
@@ -95,17 +95,17 @@
 		   (cond
 		      ((not (=fx (cell-ref fix) ofix))
 		       (loop (+fx i 1)))
-		      ((config-get args :optim-tyflow-resolve #f)
+		      ((config-get conf :optim-tyflow-resolve #f)
 		       ;; type check resolution
-		       (j2s-resolve! this args fix)
+		       (j2s-resolve! this conf fix)
 		       (cond
 			  ((not (=fx (cell-ref fix) ofix))
 			   (loop (+fx i 1)))
-			  ((config-get args :optim-hint #f)
+			  ((config-get conf :optim-hint #f)
 			   ;; hint node-type optimization
 			   (when (>=fx j2s-verbose 3)
 			      (fprintf (current-error-port) "hint"))
-			   (let ((dups (j2s-hint! this args)))
+			   (let ((dups (j2s-hint! this conf)))
 			      (cond
 				 ((pair? dups)
 				  (when (>=fx j2s-verbose 3)
@@ -125,10 +125,12 @@
 			  ((force-type this 'unknown 'any)
 			   (loop (+fx i 1)))))))))
 	  (force-type this 'unknown 'any))
-      (unless (config-get args :optim-integer)
+      (when (config-get conf :optim-hintblock #f)
+	 (j2s-hint-block! this))
+      (unless (config-get conf :optim-integer)
 	 (force-type this 'integer 'number))
 	 ;;(force-unary-type! this))
-      ;;(cleanup-hint! this)
+      (cleanup-hint! this)
       (program-cleanup! this))
    this)
 

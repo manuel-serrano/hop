@@ -2262,7 +2262,7 @@
 	    :cspecs cspecs)))
 
    (define (canbe-array? obj)
-      (memq (j2s-type obj) '(any undefined unknown object array)))
+      (memq (j2s-type obj) '(array any undefined unknown)))
 
    (define (canbe-string? obj)
       (when (memq (j2s-type obj) '(any unknown string))

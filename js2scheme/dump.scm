@@ -450,8 +450,8 @@
 ;*    j2s->list ::J2SMeta ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SMeta)
-   (with-access::J2SMeta this (stmt optim debug)
-      `(,(string->symbol (typeof this)) :optim ,optim :debug ,debug
+   (with-access::J2SMeta this (stmt meta optim debug)
+      `(,(string->symbol (typeof this)) ,meta :optim ,optim :debug ,debug
 	  ,(j2s->list stmt))))
 
 ;*---------------------------------------------------------------------*/

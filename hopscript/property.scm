@@ -150,6 +150,8 @@
 	   (js-put/debug! ::obj ::obj ::obj ::bool ::JsGlobalObject loc)
 	   (generic js-put/cache! ::obj ::obj ::obj ::bool ::JsGlobalObject
 	      #!optional (point -1) (cspecs '()) (src "") (cachefun #t))
+	   (js-put-jsobject/cache! o::JsObject prop v::obj throw::bool %this
+		  #!optional (point -1) (cspecs '()) (src "") (cachefun #t))
 	   (js-put-name/cache! ::obj ::JsStringLiteral ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache
@@ -2762,6 +2764,13 @@
 ;*    js-put/cache! ::JsObject ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put/cache! o::JsObject prop v::obj throw::bool %this
+		  #!optional (point -1) (cspecs '()) (src "") (cachefun #t))
+   (js-put-jsobject/cache! o prop v throw %this point cspecs src cachefun))
+
+;*---------------------------------------------------------------------*/
+;*    js-put-jsobject/cache! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-put-jsobject/cache! o::JsObject prop v::obj throw::bool %this
 		  #!optional (point -1) (cspecs '()) (src "") (cachefun #t))
    (cond
       ((js-jsstring? prop)

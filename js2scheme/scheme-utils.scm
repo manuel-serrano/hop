@@ -780,9 +780,13 @@
 		  ,mode %this
 		  ,(loc->point loc) ',cspecs))
 	     ((maybe-string? prop typrop)
-	      `(js-put/cache! ,obj ,prop
-		  ,(box val tyval ctx) ,mode %this
-		  ,(loc->point loc) ,(loc->src loc)))
+	      (if (memq tyobj '(object global this))
+		  `(js-put-jsobject/cache! ,obj ,prop
+		      ,(box val tyval ctx) ,mode %this
+		      ,(loc->point loc) ,(loc->src loc))
+		  `(js-put/cache! ,obj ,prop
+		      ,(box val tyval ctx) ,mode %this
+		      ,(loc->point loc) ,(loc->src loc))))
 	     (else
 	      `(js-put! ,obj ,prop ,(box val tyval ctx) ,mode %this))))
 	 ((and field optim-arrayp (mightbe-number? field))
