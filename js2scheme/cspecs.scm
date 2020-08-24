@@ -608,23 +608,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    cspecs-update! ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (cspecs-update! this::J2SNode cs)
+(define-walk-method (cspecs-update! this::J2SNode cs::struct)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    cspecs-update! ::J2SAccess ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (cspecs-update! this::J2SAccess cs)
+(define-walk-method (cspecs-update! this::J2SAccess cs::struct)
    (with-access::J2SAccess this (cspecs)
-      (set! cspecs cs)
+      (set! cspecs (cspecs-access cs))
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cspecs-update! ::J2SCall ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cspecs-update! this::J2SCall cs)
-   (with-access::J2SCall this (cspecs)
-      (set! cspecs cs)
+   (with-access::J2SCall this (cspecs loc)
+      (when (eq? (caddr loc) 6598)
+	 (tprint "CS=" cs))
+      (set! cspecs (cspecs-call cs))
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
@@ -632,8 +634,12 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cspecs-update! this::J2SDeclFun cs)
    (if (decl-usage-has? this '(new))
-       (with-access::J2SDeclFun this (val)
-	  (cspecs-update! val (remq 'imap (remq 'pmap cs))))
+       (with-access::J2SDeclFun this (val loc)
+	  (cspecs-update! val
+	     (cspecs (remq 'pmap (remq 'imap (cspecs-access cs)))
+		(cspecs-assig cs)
+		(cspecs-assigop cs)
+		(cspecs-call cs))))
        (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
@@ -648,7 +654,11 @@
 (define-walk-method (cspecs-default! this::J2SDeclFun csdef)
    (if (decl-usage-has? this '(new))
        (with-access::J2SDeclFun this (val c)
-	  (cspecs-update! val '(emap amap))
+	  (cspecs-update! val
+	     (cspecs '(emap amap)
+		(cspecs-assig csdef)
+		(cspecs-assigop csdef)
+		(cspecs-call csdef)))
 	  this)
        (call-default-walker)))
 

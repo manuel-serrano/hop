@@ -436,7 +436,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-debug-pcache pcache #!optional (msg ""))
    (if (isa? pcache JsPropertyCache)
-       (with-access::JsPropertyCache pcache (point src imap cmap pmap nmap amap index vindex cntmiss)
+       (with-access::JsPropertyCache pcache (point src imap cmap pmap nmap amap xmap index vindex cntmiss)
 	  (fprint (current-error-port) "-- " msg (typeof pcache)
 	     " loc=" point ":" src
 	     " index=" index " vindex=" vindex " cntmiss=" cntmiss)
@@ -464,7 +464,12 @@
 	      (with-access::JsConstructMap amap (%id props)
 		 (fprint (current-error-port) "  amap %id=" %id
 		    " props=" (vector-map prop-name props)))
-	      (fprint (current-error-port) "  amap " amap)))
+	      (fprint (current-error-port) "  amap " amap))
+	  (if (isa? xmap JsConstructMap)
+	      (with-access::JsConstructMap xmap (%id props)
+		 (fprint (current-error-port) "  xmap %id=" %id
+		    " props=" (vector-map prop-name props)))
+	      (fprint (current-error-port) "  xmap " xmap)))
        (fprint (current-error-port) msg (typeof pcache))))
 
 ;*---------------------------------------------------------------------*/
@@ -789,7 +794,8 @@
    (with-access::JsObject o ((omap cmap))
       (unless (eq? omap (js-not-a-cmap))
 	 (with-access::JsPropertyCache pcache (xmap)
-	    (set! xmap omap)))))
+	    (set! xmap omap)
+	    (js-validate-pmap-pcache! pcache)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache-update-owner! ...                                      */
@@ -1835,7 +1841,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-notfound ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-get-notfound name throw %this)
+(define-inline (js-get-notfound name throw %this)
    (cond
       ((not throw)
        (js-undefined))
@@ -2064,6 +2070,8 @@
 	    (else
 	     (js-get-jsobject-name/cache-miss o name throw %this cache))))))
 
+(define K 0)
+
 ;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject-name/cache-miss ...                              */
 ;*    -------------------------------------------------------------    */
@@ -2085,10 +2093,19 @@
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 
+   (when (eq? name (& "isValid"))
+      (set! K (+fx K 1))
+      (with-access::JsObject o (cmap)
+	 (with-access::JsConstructMap cmap (%id)
+	    (with-access::JsPropertyCache cache (xmap point)
+	       (with-access::JsConstructMap xmap ((%xid %id))
+		  (tprint "******* js-get-jsobject-name/cache-miss..." K " "
+		     (typeof o) " " name " " %id "/" %xid " " point))))))
    (let loop ((obj o))
       (jsobject-find obj o name
 	 ;; map search
 	 (lambda (obj i)
+	    
 	    (with-access::JsObject o ((omap cmap))
 	       (with-access::JsObject obj (elements)
 		  (with-access::JsPropertyCache cache (index owner cntmiss)
@@ -2120,10 +2137,13 @@
 	 ;; not found
 	 (lambda (_o)
 	    (with-access::JsObject o (cmap)
-	       (unless (or (eq? cmap (js-not-a-cmap)) throw)
-		  (js-pcache-update-miss! cache o)
-		  (js-pcache-update-owner! cache 0 o miss-object)))
-	    (js-get-notfound name throw %this))
+	       (when (eq? name (& "isValid"))
+		  (tprint "ICI..." (eq? cmap (js-not-a-cmap)) " " throw))
+	       (if (or (eq? cmap (js-not-a-cmap)) throw)
+		   (js-get-notfound name throw %this)
+		   (begin
+		      (js-pcache-update-miss! cache o)
+		      (js-undefined)))))
 	 ;; loop
 	 loop)))
 
