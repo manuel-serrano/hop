@@ -513,8 +513,8 @@
 	    (set! o (cons* :optim-hintnum #t o)))
 	 (unless (memq :optim-hintblock o)
 	    (set! o (cons* :optim-hintblock #t o)))
-;* 	 (unless (memq :optim-range o)                                 */
-;* 	    (set! o (cons* :optim-range #t o)))                        */
+	 (unless (memq :optim-range o)
+	    (set! o (cons* :optim-range #t o)))
 	 (unless (memq :optim-ctor o)
 	    (set! o (cons* :optim-ctor #t o)))
 	 (unless (memq :optim-vector o)
