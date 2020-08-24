@@ -45,7 +45,8 @@
 	    `(define %pcache
 		(js-make-pcache-table ,pcache-size
 		   ,(context-get ctx :filename)
-		   ,@(if (context-get ctx :profile-cache #f)
+		   ,@(if (or (context-get ctx :profile-cache #f)
+			     (context-get ctx :profile-location #f))
 			 (list `',(j2s-profile-cache this))
 			 '())))
 	    '(define %source (or (the-loading-file) "/"))
@@ -87,7 +88,8 @@
 		   (define %pcache
 		      (js-make-pcache-table ,pcache-size
 			 ,(context-get ctx :filename)
-			 ,@(if (context-get ctx :profile-cache #f)
+			 ,@(if (or (context-get ctx :profile-cache #f)
+				   (context-get ctx :profile-location #f))
 			       (list `',(j2s-profile-cache this))
 			       '())))
 		   ,@(if (context-get ctx :profile-call #f)
@@ -123,7 +125,8 @@
 		(define %pcache
 		   (js-make-pcache-table ,pcache-size
 		      ,(context-get ctx :filename)
-		      ,@(if (context-get ctx :profile-cache #f)
+		      ,@(if (or (context-get ctx :profile-cache #f)
+				(context-get ctx :profile-location #f))
 			    (list `',(j2s-profile-cache this))
 			    '())))
 		,@(if (context-get ctx :profile-call #f)
@@ -193,7 +196,8 @@
 		(define %pcache
 		   (js-make-pcache-table ,pcache-size
 		      ,(context-get ctx :filename)
-		      ,@(if (context-get ctx :profile-cache #f)
+		      ,@(if (or (context-get ctx :profile-cache #f)
+				(context-get ctx :profile-location #f))
 			    (list `',(j2s-profile-cache this))
 			    '())))
 		,@(if (context-get ctx :profile-call #f)
@@ -309,7 +313,8 @@
 		(define %pcache
 		   (js-make-pcache-table ,pcache-size
 		      ,(context-get ctx :filename)
-		      ,@(if (context-get ctx :profile-cache #f)
+		      ,@(if (or (context-get ctx :profile-cache #f)
+				(context-get ctx :profile-location #f))
 			    (list `',(j2s-profile-cache this))
 			    '())))
 		,@(if (context-get ctx :profile-call #f)

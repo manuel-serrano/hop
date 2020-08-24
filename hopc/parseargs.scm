@@ -399,6 +399,8 @@
 	    (("--profile-cache" (help "Cache profiling mode (see HOPTRACE)"))
 	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
 	     (hopc-j2s-flags-set! (cons* :profile-cache #t (hopc-j2s-flags))))
+	    (("--profile-location" (help "Location profiling mode"))
+	     (hopc-j2s-flags-set! (cons* :profile-location #t (hopc-j2s-flags))))
 	    (("--profile-hint" (help "Hint profiling mode (see HOPTRACE)"))
 	     (hopc-j2s-flags-set! (cons* :profile-hint #t (hopc-j2s-flags))))
 	    (("--profile-call" (help "Call profiling mode (see HOPTRACE)"))

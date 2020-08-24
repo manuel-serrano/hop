@@ -1990,7 +1990,7 @@
 		     (lambda (cache)
 			(js-get-jsobject-name/cache o pname #f
 			   %this
-			   cache -1 '(imap emap cmap pmap amap xmap vtable omiss))))
+			   cache -2 '(imap emap cmap pmap amap xmap vtable omiss))))
 		    ((js-jsstring-index? pname)
 		     (js-get o prop %this))
 		    (else
@@ -2001,7 +2001,7 @@
 			(js-name-pcacher-set! pname cache)
 			(js-get-jsobject-name/cache o pname #f
 			   %this
-			   cache -1 '()))))))))
+			   cache -3 '()))))))))
       ((js-array? o)
        (js-array-ref o prop %this))
       ((eq? (object-class o) JsArguments)
@@ -2070,8 +2070,6 @@
 	    (else
 	     (js-get-jsobject-name/cache-miss o name throw %this cache))))))
 
-(define K 0)
-
 ;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject-name/cache-miss ...                              */
 ;*    -------------------------------------------------------------    */
@@ -2085,7 +2083,7 @@
 		   cache::JsPropertyCache)
    
    (define (js-pcache-vtable! omap cache i %this)
-      (with-access::JsPropertyCache cache (cntmiss vindex)
+      (with-access::JsPropertyCache cache (cntmiss vindex point)
 	 (when (=fx vindex (js-not-a-index))
 	    (set! vindex (js-get-vindex %this)))
 	 (js-cmap-vtable-add! omap vindex i cache)))
@@ -2093,19 +2091,10 @@
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 
-   (when (eq? name (& "isValid"))
-      (set! K (+fx K 1))
-      (with-access::JsObject o (cmap)
-	 (with-access::JsConstructMap cmap (%id)
-	    (with-access::JsPropertyCache cache (xmap point)
-	       (with-access::JsConstructMap xmap ((%xid %id))
-		  (tprint "******* js-get-jsobject-name/cache-miss..." K " "
-		     (typeof o) " " name " " %id "/" %xid " " point))))))
    (let loop ((obj o))
       (jsobject-find obj o name
 	 ;; map search
 	 (lambda (obj i)
-	    
 	    (with-access::JsObject o ((omap cmap))
 	       (with-access::JsObject obj (elements)
 		  (with-access::JsPropertyCache cache (index owner cntmiss)
@@ -2137,8 +2126,6 @@
 	 ;; not found
 	 (lambda (_o)
 	    (with-access::JsObject o (cmap)
-	       (when (eq? name (& "isValid"))
-		  (tprint "ICI..." (eq? cmap (js-not-a-cmap)) " " throw))
 	       (if (or (eq? cmap (js-not-a-cmap)) throw)
 		   (js-get-notfound name throw %this)
 		   (begin

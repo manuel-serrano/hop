@@ -655,8 +655,8 @@
    (if (decl-usage-has? this '(new))
        (with-access::J2SDeclFun this (val c)
 	  (cspecs-update! val
-	     (cspecs '(emap amap)
-		(cspecs-assig csdef)
+	     (cspecs (cspecs-access csdef)
+		'(imap nmap)
 		(cspecs-assigop csdef)
 		(cspecs-call csdef)))
 	  this)
