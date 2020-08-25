@@ -129,7 +129,9 @@
 (define (add-cmap! loc keys env::struct)
    (let* ((t (env-inits-table env))
 	  (k keys)
-	  (old (hashtable-get t k)))
+	  (old (when (pair? keys) (hashtable-get t k))))
+      ;; don't store empty cmap in the hash table in order to get
+      ;; separated cmap for all empty object create sites
       (or old
 	  (let ((n (env-cnt env)))
 	     (hashtable-put! t k n)
@@ -193,39 +195,56 @@
 				    #f)))))
 		     inits)))
 	 (call-default-walker)
-	 (if (and (pair? keys)
-		  (every (lambda (x) x) keys)
-		  (=fx (config-get conf :debug 0) 0))
-	     (begin
-		;; WARNING: Constant cmap are only computed in non-debug mode
-		;; because the debug initialization does not support
-		;; recursivity between the objects that use cmaps and
-		;; cmaps themselves (see js-constant-init@hopscript/lib.scm
-		;; and j2sscheme/scheme-program.scm)
-		(let ((n (add-cmap! loc (list->vector keys) env)))
-		   (set! cmap
-		      (instantiate::J2SLiteralCnst
-			 (loc loc)
-			 (index n)
-			 (val (env-list-ref env n)))))
-		(if (and ronly
-			 (every (lambda (init)
-				   (with-access::J2SDataPropertyInit init (val)
-				      (or (isa? val J2SLiteralCnst)
-					  (isa? val J2SString)
-					  (isa? val J2SNumber)
-					  (isa? val J2SBool)
-					  (isa? val J2SUndefined))))
-			    inits))
-		    (let ((index (add-env! this this env #t)))
-		       (with-access::J2SExpr this (loc)
-			  (instantiate::J2SLiteralCnst
-			     (loc loc)
-			     (type 'object)
-			     (index index)
-			     (val this))))
-		    this))
-	     this))))
+	 (cond
+	    ((>fx (config-get conf :debug 0) 0)
+	     ;; WARNING: Constant cmap are only computed in non-debug mode
+	     ;; because the debug initialization does not support
+	     ;; recursivity between the objects that use cmaps and
+	     ;; cmaps themselves (see js-constant-init@hopscript/lib.scm
+	     ;; and j2sscheme/scheme-program.scm)
+	     this)
+	    ((and #f (null? keys))
+	     (let ((n (add-cmap! loc '#() env)))
+		(set! cmap
+		   (instantiate::J2SLiteralCnst
+		      (loc loc)
+		      (index n)
+		      (val (env-list-ref env n)))))
+	     (if ronly
+		 (let ((index (add-env! this this env #t)))
+		    (with-access::J2SExpr this (loc)
+		       (instantiate::J2SLiteralCnst
+			  (loc loc)
+			  (type 'object)
+			  (index index)
+			  (val this))))
+		 this))
+	    ((and (pair? keys) (every (lambda (x) x) keys))
+	     (let ((n (add-cmap! loc (list->vector keys) env)))
+		(set! cmap
+		   (instantiate::J2SLiteralCnst
+		      (loc loc)
+		      (index n)
+		      (val (env-list-ref env n)))))
+	     (if (and ronly
+		      (every (lambda (init)
+				(with-access::J2SDataPropertyInit init (val)
+				   (or (isa? val J2SLiteralCnst)
+				       (isa? val J2SString)
+				       (isa? val J2SNumber)
+				       (isa? val J2SBool)
+				       (isa? val J2SUndefined))))
+			 inits))
+		 (let ((index (add-env! this this env #t)))
+		    (with-access::J2SExpr this (loc)
+		       (instantiate::J2SLiteralCnst
+			  (loc loc)
+			  (type 'object)
+			  (index index)
+			  (val this))))
+		 this))
+	    (else
+	     this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SAccess ...                                        */

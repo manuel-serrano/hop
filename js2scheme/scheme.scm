@@ -2529,7 +2529,6 @@
 		     inits)))
 	 (cond
 	    ((null? props)
-	     ;; empty objects are likely to be populate later on
 	     '(with-access::JsGlobalObject %this (js-initial-cmap)
 	       (instantiateJsObject
 		  (cmap js-initial-cmap)
@@ -2558,7 +2557,8 @@
 			  (with-access::J2SDataPropertyInit i (val)
 			     (j2s-scheme val mode return ctx)))
 		     inits)))
-	 (if (any (lambda (i)
+	 (cond
+	    ((any (lambda (i)
 		     (with-access::J2SDataPropertyInit i (val)
 			(maybe-function? (uncast val))))
 		inits)
@@ -2566,11 +2566,20 @@
 		 (instantiateJsObject
 		    (cmap ,(j2s-scheme cmap mode return ctx))
 		    (__proto__ (js-object-proto %this))
-		    (elements (vector ,@vals))))
+		    (elements (vector ,@vals)))))
+	    ((null? vals)
+	     (let ((omap (gensym 'cmap)))
+		`(let ((,omap ,(j2s-scheme cmap mode return ctx)))
+		    (with-access::JsConstructMap ,omap ((constrsize ctor))
+		       (instantiateJsObject
+			  (cmap ,omap)
+			  (__proto__ (js-object-proto %this))
+			  (elements (make-vector constrsize)))))))
+	    (else
 	     `(instantiateJsObject
 		 (cmap ,(j2s-scheme cmap mode return ctx))
 		 (__proto__ (js-object-proto %this))
-		 (elements (vector ,@vals))))))
+		 (elements (vector ,@vals)))))))
    
    (define (new->jsobj loc inits)
       (let ((tmp (gensym)))

@@ -506,36 +506,55 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-object-add! ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (js-object-add! obj::JsObject idx::long value inc::long)
+(define (js-object-add! obj::JsObject idx::long value nlen::long)
    (with-access::JsObject obj (elements cmap)
-      (let ((nlen (maxfx (+fx inc (vector-length elements)) (+fx inc idx))))
-	 (let ((nels (copy-vector elements nlen)))
-	    (cond-expand (profile (profile-cache-extension nlen)))
-	    (vector-set! nels idx value)
-	    (when ($jsobject-elements-inline? obj)
-	       ;; cleanup for the GC
-	       (vector-fill! elements #unspecified)
-	       ;; when switching from inlined properties to non-inlined
-	       ;; properties, the object cmap must change
-	       (set! cmap (sibling-cmap! cmap #f)))
-	    (set! elements nels)
-	    obj))))
+      (let ((nels (copy-vector elements nlen)))
+	 (cond-expand (profile (profile-cache-extension nlen)))
+	 (vector-set! nels idx value)
+	 (when ($jsobject-elements-inline? obj)
+	    ;; cleanup for the GC
+	    (vector-fill! elements #unspecified)
+	    ;; when switching from inlined properties to non-inlined
+	    ;; properties, the object cmap must change
+	    (set! cmap (sibling-cmap! cmap #f)))
+	 (set! elements nels)
+	 obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-ctor-add! ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-object-ctor-add! obj::JsObject idx::long value)
+(define (js-object-ctor-add! obj::JsObject idx::long value ctor)
    (with-access::JsObject obj (cmap)
-      (with-access::JsConstructMap cmap (ctor props)
-	 (if (js-function? ctor)
+      (with-access::JsConstructMap cmap (props)
+	 (cond
+	    ((js-function? ctor)
 	     (with-access::JsFunction ctor (constrsize info)
-		(when (<fx constrsize (js-function-info-maxconstrsize info))
-		   (if (<fx idx (js-function-info-maxconstrsize info))
-		       (set! constrsize idx)
-		       (set! constrsize (+fx 1 constrsize))))
-		(js-object-add! obj idx value 1))
-	     (let ((inc (maxfx 1 (minfx (vector-length props) 8))))
-		(js-object-add! obj idx value inc)))))
+		(cond
+		   ((>fx constrsize idx)
+		    #unspecified)
+		   ((>=fx constrsize (js-function-info-maxconstrsize info))
+		    #unspecified)
+		   ((<fx idx (js-function-info-maxconstrsize info))
+		    (set! constrsize (+fx idx 1)))
+		   (else
+		    (set! constrsize (+fx constrsize 1))))
+		(js-object-add! obj idx value (maxfx (+fx idx 1) constrsize))))
+	    ((integer? ctor)
+	     (cond
+		((>fx ctor idx)
+		 #unspecified)
+		((>=fx ctor 100)
+		 #unspecified)
+		((<fx idx 100)
+		 (set! ctor (+fx idx 1)))
+		(else
+		 (set! ctor (+fx ctor 1))))
+	     (js-object-add! obj idx value (maxfx (+fx idx 1) ctor)))
+	    (else
+	     '(with-access::JsObject obj (elements)
+	       (tprint "ADD NO CTOR idx=" idx " len=" (vector-length elements) " " (typeof ctor)
+		  " " (vector-map prop-name props)))
+	     (js-object-add! obj idx value (+fx idx 1))))))
    obj)
 
 ;*---------------------------------------------------------------------*/
@@ -544,16 +563,17 @@
 (define (js-object-push! obj::JsObject idx::long value)
    (with-access::JsObject obj (elements)
       (if (>=fx idx (vector-length elements))
-	  (js-object-add! obj idx value 1)
+	  (js-object-add! obj idx value (+fx idx 1))
 	  (vector-set! elements idx value))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-ctor-push! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-object-ctor-push! obj::JsObject idx::long value)
-   (with-access::JsObject obj (elements)
+   (with-access::JsObject obj (elements cmap)
       (if (>=fx idx (vector-length elements))
-	  (js-object-ctor-add! obj idx value)
+	  (with-access::JsConstructMap cmap (ctor)
+	     (js-object-ctor-add! obj idx value ctor))
 	  (vector-set! elements idx value))))
 
 ;*---------------------------------------------------------------------*/
@@ -563,13 +583,7 @@
    (with-access::JsObject obj (elements cmap)
       (with-access::JsConstructMap cmap (props)
 	 (if (>=fx idx (vector-length elements))
-	     (if (js-function? ctor)
-		 (with-access::JsFunction ctor (constrsize info)
-		    (js-object-add! obj idx value 1)
-		    (when (<fx constrsize (js-function-info-maxconstrsize info))
-		       (set! constrsize (+fx 1 (vector-length props)))))
-		 (let ((inc (maxfx 1 (minfx (vector-length props) 8))))
-		    (js-object-add! obj idx value inc)))
+	     (js-object-ctor-add! obj idx value ctor)
 	     (vector-set! elements idx value)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1078,13 +1092,15 @@
 ;*    Used by j2sscheme to create literal objects.                     */
 ;*---------------------------------------------------------------------*/
 (define (js-strings->cmap names %this)
-   (instantiate::JsConstructMap
-      (inline #t)
-      (props (vector-map (lambda (n)
-			    (prop (js-name->jsstring n)
-			       (property-flags #t #t #t #f)))
-		names))
-      (methods (make-vector (vector-length names) #unspecified))))
+   (let ((len (vector-length names)))
+      (instantiate::JsConstructMap
+	 (inline #t)
+	 (ctor len)
+	 (props (vector-map (lambda (n)
+			       (prop (js-name->jsstring n)
+				  (property-flags #t #t #t #f)))
+		   names))
+	 (methods (make-vector len #unspecified)))))
       
 ;*---------------------------------------------------------------------*/
 ;*    js-object-literal-init! ...                                      */
@@ -2091,6 +2107,7 @@
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 
+   (set! L (+fx L 1))
    (let loop ((obj o))
       (jsobject-find obj o name
 	 ;; map search
@@ -2130,26 +2147,23 @@
 		   (js-get-notfound name throw %this)
 		   (begin
 		      (set! K (+fx K 1))
-		      (when (eq? name (& "millisecond"))
+		      '(when (eq? name (& "millisecond"))
 			 (with-access::JsObject o (cmap)
 			    (with-access::JsPropertyCache cache (xmap point)
-			       '(tprint K " " name " " point
+			       (tprint K "/" L " " name " " point
 				  " cmap="
 				  (with-access::JsConstructMap cmap (%id)
 				     %id)
 				  " xmap="
-				  '(map (lambda (xmap)
-					   (with-access::JsConstructMap xmap (%id)
-					      %id))
-				    xmap))
-			       '(with-access::JsConstructMap cmap (props)
-				  (tprint "   " (vector-map prop-name props))))))
+				  (with-access::JsConstructMap xmap (%id)
+				     %id)))))
 		      (js-pcache-update-miss! cache o)
 		      (js-undefined)))))
 	 ;; loop
 	 loop)))
 
 (define K 0)
+(define L 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-method-jsobject-get-name/cache-miss ...                       */
