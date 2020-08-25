@@ -815,7 +815,17 @@
    (with-access::JsObject o ((omap cmap))
       (unless (eq? omap (js-not-a-cmap))
 	 (with-access::JsPropertyCache pcache (xmap)
-	    (set! xmap omap)
+	    (unless (eq? xmap (js-not-a-cmap))
+	       (with-access::JsPropertyCache pcache (imap cmap nmap pmap emap amap index owner)
+		  (set! imap #t)
+		  (set! cmap #t)
+		  (set! pmap xmap)
+		  (set! nmap xmap)
+		  (set! emap #t)
+		  (set! amap #t)
+		  (set! owner miss-object)
+		  (set! index 0))
+	       (set! xmap omap))
 	    (js-validate-pmap-pcache! pcache)))))
    
 ;*---------------------------------------------------------------------*/
