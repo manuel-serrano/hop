@@ -2129,10 +2129,27 @@
 	       (if (or (eq? cmap (js-not-a-cmap)) throw)
 		   (js-get-notfound name throw %this)
 		   (begin
+		      (set! K (+fx K 1))
+		      (when (eq? name (& "millisecond"))
+			 (with-access::JsObject o (cmap)
+			    (with-access::JsPropertyCache cache (xmap point)
+			       '(tprint K " " name " " point
+				  " cmap="
+				  (with-access::JsConstructMap cmap (%id)
+				     %id)
+				  " xmap="
+				  '(map (lambda (xmap)
+					   (with-access::JsConstructMap xmap (%id)
+					      %id))
+				    xmap))
+			       '(with-access::JsConstructMap cmap (props)
+				  (tprint "   " (vector-map prop-name props))))))
 		      (js-pcache-update-miss! cache o)
 		      (js-undefined)))))
 	 ;; loop
 	 loop)))
+
+(define K 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-method-jsobject-get-name/cache-miss ...                       */
