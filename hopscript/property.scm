@@ -523,38 +523,36 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-object-ctor-add! ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-object-ctor-add! obj::JsObject idx::long value ctor)
-   (with-access::JsObject obj (cmap)
-      (with-access::JsConstructMap cmap (props)
-	 (cond
-	    ((js-function? ctor)
-	     (with-access::JsFunction ctor (constrsize info)
+(define (js-object-ctor-add! obj::JsObject idx::long value ctormap::JsConstructMap)
+   (with-access::JsConstructMap ctormap (ctor)
+      (with-access::JsObject obj (cmap)
+	 (with-access::JsConstructMap cmap (props)
+	    (cond
+	       ((js-function? ctor)
+		(with-access::JsFunction ctor (constrsize info)
+		   (cond
+		      ((>fx constrsize idx)
+		       #unspecified)
+		      ((>=fx constrsize (js-function-info-maxconstrsize info))
+		       #unspecified)
+		      ((<fx idx (js-function-info-maxconstrsize info))
+		       (set! constrsize (+fx idx 1)))
+		      (else
+		       (set! constrsize (+fx constrsize 1))))
+		   (js-object-add! obj idx value (+fx idx 1))))
+	       ((cell? ctor)
 		(cond
-		   ((>fx constrsize idx)
+		   ((>fx (cell-ref ctor) idx)
 		    #unspecified)
-		   ((>=fx constrsize (js-function-info-maxconstrsize info))
+		   ((>=fx (cell-ref ctor) 100)
 		    #unspecified)
-		   ((<fx idx (js-function-info-maxconstrsize info))
-		    (set! constrsize (+fx idx 1)))
+		   ((<fx (cell-ref ctor) 100)
+		    (cell-set! ctor (+fx idx 1)))
 		   (else
-		    (set! constrsize (+fx constrsize 1))))
-		(js-object-add! obj idx value (maxfx (+fx idx 1) constrsize))))
-	    ((integer? ctor)
-	     (cond
-		((>fx ctor idx)
-		 #unspecified)
-		((>=fx ctor 100)
-		 #unspecified)
-		((<fx idx 100)
-		 (set! ctor (+fx idx 1)))
-		(else
-		 (set! ctor (+fx ctor 1))))
-	     (js-object-add! obj idx value (maxfx (+fx idx 1) ctor)))
-	    (else
-	     '(with-access::JsObject obj (elements)
-	       (tprint "ADD NO CTOR idx=" idx " len=" (vector-length elements) " " (typeof ctor)
-		  " " (vector-map prop-name props)))
-	     (js-object-add! obj idx value (+fx idx 1))))))
+		    (cell-set! ctor (+fx (cell-ref ctor) 1))))
+		(js-object-add! obj idx value (+fx idx 1)))
+	       (else
+		(js-object-add! obj idx value (+fx idx 1)))))))
    obj)
 
 ;*---------------------------------------------------------------------*/
@@ -572,18 +570,27 @@
 (define (js-object-ctor-push! obj::JsObject idx::long value)
    (with-access::JsObject obj (elements cmap)
       (if (>=fx idx (vector-length elements))
-	  (with-access::JsConstructMap cmap (ctor)
-	     (js-object-ctor-add! obj idx value ctor))
+	  (js-object-ctor-add! obj idx value cmap)
 	  (vector-set! elements idx value))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-push/ctor! ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (js-object-push/ctor! obj::JsObject idx::long value ctor)
+(define (js-object-push/ctor! obj::JsObject idx::long value _)
    (with-access::JsObject obj (elements cmap)
       (with-access::JsConstructMap cmap (props)
 	 (if (>=fx idx (vector-length elements))
-	     (js-object-ctor-add! obj idx value ctor)
+	     (js-object-ctor-add! obj idx value cmap)
+	     (vector-set! elements idx value)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-push/cmap! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-object-push/cmap obj::JsObject idx::long value nmap)
+   (with-access::JsObject obj (elements cmap)
+      (with-access::JsConstructMap cmap (props)
+	 (if (>=fx idx (vector-length elements))
+	     (js-object-ctor-add! obj idx value nmap)
 	     (vector-set! elements idx value)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1095,7 +1102,7 @@
    (let ((len (vector-length names)))
       (instantiate::JsConstructMap
 	 (inline #t)
-	 (ctor len)
+	 (ctor (make-cell len))
 	 (props (vector-map (lambda (n)
 			       (prop (js-name->jsstring n)
 				  (property-flags #t #t #t #f)))
@@ -2632,7 +2639,8 @@
 			 (vector-set! methods index v))
 		      (set! nextmap detachedmap)
 		      v)))
-	       (js-object-push/ctor! o index v ctor)
+	       ;(tprint "js-object-push/cmap index=" index " name=" name)
+	       (js-object-push/cmap o index v nextmap)
 	       (set! cmap nextmap)
 	       v))))
    
@@ -3196,6 +3204,17 @@
 	 (else
 	  #f)))
 
+   (define (check-cmap-parent cmap n)
+      (with-access::JsConstructMap cmap (parent)
+	 (with-access::JsConstructMap parent (transitions)
+	    (let loop ((transitions transitions))
+	       (when (pair? transitions)
+		  (let ((tr (car transitions)))
+		     (if (and (eq? (transition-name tr) n)
+			      (eq? (transition-nextmap tr) cmap))
+			 parent
+			 (loop (cdr transitions)))))))))
+   
    (define (vector-delete! v i)
       (vector-copy! v i v (+fx i 1))
       (vector-shrink! v (-fx (vector-length v) 1)))
@@ -3213,17 +3232,50 @@
 			  (lambda (o)
 			     (when (js-object-mode-isprotoof? o)
 				(js-invalidate-pmap-pcaches! %this "js-delete" p))
-			     ;; create a new cmap for the object
-			     (let ((nextmap (clone-cmap cmap)))
-				(link-cmap! cmap nextmap n #f -1)
-				[assert (o) (isa? nextmap JsConstructMap)]
-				(set! cmap
-				   (cmap-find-sibling nextmap
-				      (js-object-inline-elements? o)))
-				(with-access::JsConstructMap nextmap (props)
-				   ;; remove the prop from the cmap
-				   (vector-set! props i (prop #f 0))
-				   #t)))))
+			     (cond
+				((cmap-find-transition cmap n #f -1)
+				 =>
+				 (lambda (prevmap)
+				    ;; re-use the existing previous map for that deletion
+				    (set! cmap
+				       (cmap-find-sibling prevmap
+					  (js-object-inline-elements? o)))
+				    #t))
+				((check-cmap-parent cmap n)
+				 =>
+				 (lambda (parentmap)
+				    ;; re-use the existing previous map for that deletion
+				    (set! cmap
+				       (cmap-find-sibling parentmap
+					  (js-object-inline-elements? o)))
+				    #t))
+				(else
+				 ;; create a new cmap for the object
+				 (let ((nextmap (clone-cmap cmap)))
+				    (with-access::JsConstructMap cmap (%id parent)
+				       (tprint "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! DELETE p=" p)
+				       (tprint "CLONE FOR DELETE " %id
+					  " name=" n " "
+					  (vector-map prop-name props)
+					  " parent="
+					  (with-access::JsConstructMap parent (%id)
+					     %id)
+					  (with-access::JsConstructMap parent (props)
+					     (vector-map prop-name props))
+					  " next="
+					  (with-access::JsConstructMap nextmap (%id)
+					     %id)))
+				    (link-cmap! cmap nextmap n #f -1)
+				    [assert (o) (isa? nextmap JsConstructMap)]
+				    (set! cmap
+				       (cmap-find-sibling nextmap
+					  (js-object-inline-elements? o)))
+				    (with-access::JsConstructMap nextmap (props)
+				       ;; remove the prop from the cmap
+				       (if (=fx i (-fx (vector-length props) 1))
+					   (vector-shrink! props (-fx (vector-length props) 1))
+					   (vector-set! props i (prop #f 0)))
+				       #t)))))))
 		    (lambda () #t))
 		 (jsobject-properties-find o n
 		    (lambda (o d i)

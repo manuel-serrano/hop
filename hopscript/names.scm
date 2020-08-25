@@ -134,12 +134,9 @@
 (define (string-compare? x y)
    (cond-expand
       (bigloo-c
-       (when (pragma::bool "BSTRING_TO_STRING( $1 )[ 0 ] == BSTRING_TO_STRING( $2 )[ 0 ]" x y)
-	  (let ((l1 (string-length x)))
-	     (when (=fx l1 (string-length y))
-		(if (>fx l1 0)
-		    (pragma::bool "!memcmp( (void *)BSTRING_TO_STRING( $1 ), (void *)BSTRING_TO_STRING( $2 ), $3 )" x y l1)
-		    #t)))))
+       (let ((l1 (string-length x)))
+	  (when (=fx l1 (string-length y))
+	     (pragma::bool "!memcmp( (void *)BSTRING_TO_STRING( $1 ), (void *)BSTRING_TO_STRING( $2 ), $3 )" x y l1))))
       (else
        (string=? x y))))
 

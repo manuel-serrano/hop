@@ -100,6 +100,27 @@
 		((instantiateJsObject
 		    (cmap ?cmap)
 		    (__proto__ ?__proto__)
+		    (elements (subvector ?ctorsize . ?elements)))
+		 ;; The purpose of this special expansion is to force allocate
+		 ;; the object with the JS-MAKE-JSOBJECT that creates
+		 ;;; properties inline, in contrast to the regular
+		 ;; constructor that allocates properties in a separate vector.
+		 (let ((obj (gensym 'o))
+		       (vec (gensym 'v)))
+		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
+				      ,ctorsize
+				      ,cmap
+				      ,__proto__))
+			       (,vec (with-access::JsObject ,obj (elements)
+					elements)))
+			   ,@(map (lambda (el idx)
+				     `(vector-set! ,vec ,idx ,el))
+				elements (iota (length elements)))
+			   ,obj)
+		       e)))
+		((instantiateJsObject
+		    (cmap ?cmap)
+		    (__proto__ ?__proto__)
 		    (elements (make-vector (and (? integer?) ?n))))
 		 ;; The purpose of this special expansion is to force allocate
 		 ;; the object with the JS-MAKE-JSOBJECT that creates

@@ -203,7 +203,7 @@
 	     ;; cmaps themselves (see js-constant-init@hopscript/lib.scm
 	     ;; and j2sscheme/scheme-program.scm)
 	     this)
-	    ((and #f (null? keys))
+	    ((and #t (null? keys))
 	     (let ((n (add-cmap! loc '#() env)))
 		(set! cmap
 		   (instantiate::J2SLiteralCnst

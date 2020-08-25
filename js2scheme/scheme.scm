@@ -2574,12 +2574,15 @@
 		       (instantiateJsObject
 			  (cmap ,omap)
 			  (__proto__ (js-object-proto %this))
-			  (elements (make-vector constrsize)))))))
+			  (elements (make-vector (cell-ref constrsize))))))))
 	    (else
-	     `(instantiateJsObject
-		 (cmap ,(j2s-scheme cmap mode return ctx))
-		 (__proto__ (js-object-proto %this))
-		 (elements (vector ,@vals)))))))
+	     (let ((omap (gensym 'cmap)))
+		`(let ((,omap ,(j2s-scheme cmap mode return ctx)))
+		    (with-access::JsConstructMap ,omap ((constrsize ctor))
+		       (instantiateJsObject
+			  (cmap ,omap)
+			  (__proto__ (js-object-proto %this))
+			  (elements (subvector (cell-ref constrsize) ,@vals))))))))))
    
    (define (new->jsobj loc inits)
       (let ((tmp (gensym)))
