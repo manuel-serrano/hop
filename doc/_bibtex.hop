@@ -44,7 +44,6 @@
 			       (map (lambda (b) (bibentry->jsobject b %this))
 				  bibs))
 			    %this)))
-		   (& "load")
 		   (js-function-arity 2 0)
 		   (js-function-info :name "load" :len 2))
 	 :writable #f
