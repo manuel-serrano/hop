@@ -1399,9 +1399,6 @@
 	  (& "[object Undefined]"))
 	 ((eq? this (js-null))
 	  (& "[object Null]"))
-	 ((isa? this JsWrapper)
-	  (with-access::JsWrapper this (obj)
-	     (js-string->jsstring (js-tostring obj %this))))
 	 (else
 	  (let* ((obj (js-toobject %this this))
 		 ;; don't cache this field access as it is unlikely that
@@ -1425,28 +1422,29 @@
 			(& "[object RegExp]"))
 		       ((eq? clazz JsArguments)
 			(& "[object Arguments]"))
+		       ((eq? clazz JsString)
+			(& "[object String]"))
 		       ((eq? clazz JsNumber)
 			(& "[object Number]"))
 		       ((eq? clazz JsBoolean)
 			(& "[object Boolean]"))
+		       ((or (eq? clazz JsGlobalObject) (eq? clazz JsProxy))
+			(& "[object Object]"))
+		       ((isa? this JsWrapper)
+			(with-access::JsWrapper this (obj)
+			   (js-string->jsstring (js-tostring obj %this))))
 		       (else
 			(let ((name (symbol->string! (class-name clazz))))
-			   (tprint "ICI name=" name)
 			   (cond
 			      ((not (string-prefix? "Js" name))
 			       (js-string->jsstring
 				  (string-append "[object " name "]")))
-			      ((string=? name "JsGlobalObject")
-			       (& "[object Object]"))
-			      ((string=? name "JsProxy")
-			       (&  "[object Object]"))
 			      ((isa? obj JsArrayBufferView)
 			       (let ((ctor (js-get obj (& "constructor") %this)))
 				  (js-jsstring-append
 				     (& "[object ")
 				     (js-jsstring-append
 					(js-get ctor (& "name") %this) (& "]")))))
-			      
 			      (else
 			       (js-string->jsstring
 				  (string-append "[object "
