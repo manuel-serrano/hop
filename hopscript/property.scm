@@ -824,8 +824,8 @@
 		  (set! emap #t)
 		  (set! amap #t)
 		  (set! owner miss-object)
-		  (set! index 0))
-	       (set! xmap omap))
+		  (set! index 0)))
+	    (set! xmap omap)
 	    (js-validate-pmap-pcache! pcache)))))
    
 ;*---------------------------------------------------------------------*/
@@ -1701,22 +1701,48 @@
    (not (eq? (js-get-own-property o p %this) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-has-own-property-jsobject ...                                 */
-;*---------------------------------------------------------------------*/
-(define (js-has-own-property-jsobject o::JsObject p::obj %this)
-   (jsobject-find o o (js-toname p %this)
-      ;; cmap search
-      (lambda (owner i) #t)
-      ;; prototype search
-      (lambda (owner d i) #t)
-      ;; not found
-      (lambda (o) #f)))
-
-;*---------------------------------------------------------------------*/
 ;*    js-has-own-property ::JsObject ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-own-property o::JsObject p::obj %this)
    (js-has-own-property-jsobject o p %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-has-own-property-jsobject ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-has-own-property-jsobject o::JsObject p::obj %this)
+   
+   (define (js-has-own-property/w-cache o pname)
+      (jsobject-find o o pname
+	 ;; cmap search
+	 (lambda (owner i) #t)
+	 ;; prototype search
+	 (lambda (owner d i) #t)
+	 ;; not found
+	 (lambda (o) #f)))
+   
+   (define (js-has-own-property/cache o pname cache)
+      (with-access::JsObject o ((omap cmap))
+	 (with-access::JsPropertyCache cache (cmap)
+	    (or (eq? cmap omap)
+		(jsobject-find o o pname
+		   ;; cmap search
+		   (lambda (owner i)
+		      (set! cmap omap)
+		      #t)
+		   ;; prototype search
+		   (lambda (owner d i)
+		      #t)
+		   ;; not found
+		   (lambda (o)
+		      #f))))))
+   
+   (if (js-jsstring? p)
+       (let ((pname (js-toname p %this)))
+	  (let ((cacher (js-name-pcacher pname)))
+	     (if cacher
+		 (js-has-own-property/cache o pname cacher)
+		 (js-has-own-property/w-cache o pname))))
+       (js-has-own-property/w-cache o p)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-upto-property ...                                         */
