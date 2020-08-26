@@ -965,7 +965,7 @@
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.2
       (js-bind! %this obj (& "toString")
 	 :value (js-make-function %this
-		   (lambda (this) (js-object-prototype-tostring this %this))
+		   (lambda (this) (%js-object-prototype-tostring this %this))
 		   (js-function-arity js-object-prototype-tostring)
 		   (js-function-info :name "toString" :len 0)
 		   :prototype (js-undefined))
@@ -1382,11 +1382,11 @@
 	     (js-object-no-setter? __proto__)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-prototype-tostring ...                                 */
+;*    %js-object-prototype-tostring ...                                */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.2     */
 ;*---------------------------------------------------------------------*/
-(define (js-object-prototype-tostring this %this)
+(define-inline (%js-object-prototype-tostring this %this)
    (with-access::JsGlobalObject %this (js-symbol-tostringtag js-object-pcache)
       (cond
 	 ((js-jsstring? this)
@@ -1437,6 +1437,12 @@
 			   (string-append "[object "
 			      (substring name 2)
 			      "]")))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-prototype-tostring ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-object-prototype-tostring this %this)
+   (%js-object-prototype-tostring this %this))
    
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
