@@ -1060,13 +1060,19 @@
 (define-inline (js-jsstring-append-ascii::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
    (with-access::JsStringLiteral left ((llen length))
       (with-access::JsStringLiteral right ((rlen length))
-	 (let ((s (instantiate::JsStringLiteralASCII
-		     (length (+u32 llen rlen))
-		     (left left)
-		     (right right))))
-	    (js-object-mode-set! s (js-jsstring-default-ascii-mode))
-	    (object-widening-set! s #f)
-	    s))))
+	 (cond
+	    ((=u32 llen 0)
+	     right)
+	    ((=u32 rlen 0)
+	     left)
+	    (else
+	     (let ((s (instantiate::JsStringLiteralASCII
+			 (length (+u32 llen rlen))
+			 (left left)
+			 (right right))))
+		(js-object-mode-set! s (js-jsstring-default-ascii-mode))
+		(object-widening-set! s #f)
+		s))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-concat ...                                           */

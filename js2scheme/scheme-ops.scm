@@ -1358,20 +1358,40 @@
 (define (js-binop-add loc type lhs::J2SExpr rhs::J2SExpr
 	   mode return ctx)
 
-   (define (ascii? x)
+   (define (j2sexpr-ascii? expr)
+      (cond
+	 ((isa? expr J2SParen)
+	  (with-access::J2SParen expr (expr)
+	     (j2sexpr-ascii? expr)))
+	 ((isa? expr J2SString)
+	  (with-access::J2SString expr (val)
+	     (eq? (string-minimal-charset val) 'ascii)))
+	 ((isa? expr J2SNumber)
+	  #t)
+	 ((isa? expr J2SCond)
+	  (with-access::J2SCond expr (then else)
+	     (and (j2sexpr-ascii? then) (j2sexpr-ascii? else))))
+	 ((isa? expr J2SBinary)
+	  (with-access::J2SBinary expr (lhs rhs)
+	     (and (j2sexpr-ascii? lhs) (j2sexpr-ascii? rhs))))
+	 (else
+	  #f)))
+      
+   (define (ascii? expr x)
       (match-case x
 	 ((& (and (? string?) (? (lambda (s) (eq? (string-minimal-charset s) 'ascii)))) . ?-)
 	  #t)
 	 ((js-integer->jsstring ?-)
 	  #t)
 	 (else
-	  #f)))
+	  (when (isa? expr J2SExpr)
+	     (j2sexpr-ascii? expr)))))
    
-   (define (j2s-jsstring-append x y)
+   (define (j2s-jsstring-append lhs rhs x y)
       (cond
 	 ((context-get ctx :profile-mem)
 	  `(js-jsstring-append-no-inline ,x ,y))
-	 ((and (ascii? x) (ascii? y))
+	 ((and (ascii? lhs x) (ascii? rhs y))
 	  `(js-jsstring-append-ascii ,x ,y))
 	 ((context-get ctx :optim-size)
 	  `(js-jsstring-append-no-inline ,x ,y))
@@ -1382,8 +1402,8 @@
       (cond
 	 ((equal? left (& "" (context-program ctx))) right)
 	 ((equal? right (& "" (context-program ctx))) left)
-	 (flip (j2s-jsstring-append right left))
-	 (else (j2s-jsstring-append left right))))
+	 (flip (j2s-jsstring-append rhs lhs right left))
+	 (else (j2s-jsstring-append lhs rhs left right))))
    
    (define (add-string loc type left tl lhs right tr rhs
 	      mode return ctx flip)
