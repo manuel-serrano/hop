@@ -1026,21 +1026,27 @@
 (define-inline (js-jsstring-append::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
    (with-access::JsStringLiteral left ((llen length))
       (with-access::JsStringLiteral right ((rlen length))
-	 (if (or (js-jsstring-utf8? left) (js-jsstring-utf8? right))
+	 (cond
+	    ((=u32 llen 0)
+	     right)
+	    ((=u32 rlen 0)
+	     left)
+	    ((or (js-jsstring-utf8? left) (js-jsstring-utf8? right))
 	     (let ((s (instantiate::JsStringLiteralUTF8
 			 (length (+u32 llen rlen))
 			 (left left)
 			 (right right))))
 		(js-object-mode-set! s (js-jsstring-default-utf8-mode))
 		(object-widening-set! s #f)
-		s)
+		s))
+	    (else
 	     (let ((s (instantiate::JsStringLiteralASCII
 			 (length (+u32 llen rlen))
 			 (left left)
 			 (right right))))
 		(js-object-mode-set! s (js-jsstring-default-ascii-mode))
 		(object-widening-set! s #f)
-		s)))))
+		s))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append-no-inline ...                                 */
