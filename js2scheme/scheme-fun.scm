@@ -123,10 +123,6 @@
 		  ;; (see beautiful-define)
 		  (unless decl
 		     (set! name fastid)))
-	       (when (memq id '(toISOString$1))
-		  (tprint id " scmid=" scmid " fastid=" fastid " scope=" scope
-		     " mode=" mode " name=" name " idgen=" idgen
-		     " has-new=" (decl-usage-has? this '(new))))
 	       (epairify-deep loc
 		  (case scope
 		     ((none)

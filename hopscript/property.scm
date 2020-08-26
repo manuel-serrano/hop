@@ -3288,19 +3288,6 @@
 				(else
 				 ;; create a new cmap for the object
 				 (let ((nextmap (clone-cmap cmap)))
-				    (with-access::JsConstructMap cmap (%id parent)
-				       (tprint "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! DELETE p=" p)
-				       (tprint "CLONE FOR DELETE " %id
-					  " name=" n " "
-					  (vector-map prop-name props)
-					  " parent="
-					  (with-access::JsConstructMap parent (%id)
-					     %id)
-					  (with-access::JsConstructMap parent (props)
-					     (vector-map prop-name props))
-					  " next="
-					  (with-access::JsConstructMap nextmap (%id)
-					     %id)))
 				    (link-cmap! cmap nextmap n #f -1)
 				    [assert (o) (isa? nextmap JsConstructMap)]
 				    (set! cmap
