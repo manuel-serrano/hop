@@ -1948,9 +1948,6 @@
 ;*    to keep the base object (the actual receiver) available.         */
 ;*---------------------------------------------------------------------*/
 (define (js-get-jsobject o::JsObject base prop %this)
-   (when (isa? o JsNumber)
-      (set! L (+fx L 1))
-      (tprint "js-get-jsobject o=" (typeof o) " prop=" (typeof prop) " " prop " " L))
    (let ((pval (js-get-property-value o base prop %this)))
       (if (eq? pval (js-absent))
           (js-undefined)

@@ -294,7 +294,7 @@
       ;; pcache for object
       (with-access::JsGlobalObject %this (js-object-pcache)
 	 (set! js-object-pcache
-	    ((@ js-make-pcache-table __hopscript_property) 3 "object")))
+	    ((@ js-make-pcache-table __hopscript_property) 2 "object")))
       
       ;; init the builtin function class
       (js-init-function! %this)
@@ -1387,7 +1387,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.2     */
 ;*---------------------------------------------------------------------*/
 (define-inline (%js-object-prototype-tostring this %this)
-   (with-access::JsGlobalObject %this (js-symbol-tostringtag js-object-pcache)
+   (with-access::JsGlobalObject %this (js-symbol-tostringtag)
       (cond
 	 ((js-jsstring? this)
 	  (& "[object String]"))
@@ -1404,39 +1404,54 @@
 	     (js-string->jsstring (js-tostring obj %this))))
 	 (else
 	  (let* ((obj (js-toobject %this this))
-		 (tag (js-get-jsobject-name/cache obj js-symbol-tostringtag
-			 #f %this (js-pcache-ref js-object-pcache 2))))
-	     '(tprint "js-object-prototype-tostring this=" (typeof this)
-	       " tag=" tag)
+		 ;; don't cache this field access as it is unlikely that
+		 ;; obj has a toStringTag prop
+		 (tag (js-get obj js-symbol-tostringtag %this)))
 	     (if (js-jsstring? tag)
 		 (js-jsstring-append
 		    (& "[object")
 		    (js-jsstring-append tag (& "]")))
-		 (let* ((clazz (cond
-				  ((js-function? obj) JsFunction)
-				  ((js-procedure? obj) JsProcedure)
-				  (else (object-class obj))))
-			(name (symbol->string! (class-name clazz))))
+		 (let ((clazz (object-class obj)))
 		    (cond
-		       ((not (string-prefix? "Js" name))
-			(js-string->jsstring
-			   (string-append "[object " name "]")))
-		       ((string=? name "JsGlobalObject")
+		       ((eq? clazz JsObject)
 			(& "[object Object]"))
-		       ((string=? name "JsProxy")
-			(&  "[object Object]"))
-		       ((isa? obj JsArrayBufferView)
-			(let ((ctor (js-get obj (& "constructor") %this)))
-			   (js-jsstring-append
-			      (& "[object ")
-			      (js-jsstring-append
-				 (js-get ctor (& "name") %this) (& "]")))))
-		       
+		       ((eq? clazz JsArray)
+			(& "[object Array]"))
+		       ((js-procedure? obj)
+			(& "[object Function]"))
+		       ((eq? clazz JsDate)
+			(& "[object Date]"))
+		       ((eq? clazz JsRegExp)
+			(& "[object RegExp]"))
+		       ((eq? clazz JsArguments)
+			(& "[object Arguments]"))
+		       ((eq? clazz JsNumber)
+			(& "[object Number]"))
+		       ((eq? clazz JsBoolean)
+			(& "[object Boolean]"))
 		       (else
-			(js-string->jsstring
-			   (string-append "[object "
-			      (substring name 2)
-			      "]")))))))))))
+			(let ((name (symbol->string! (class-name clazz))))
+			   (tprint "ICI name=" name)
+			   (cond
+			      ((not (string-prefix? "Js" name))
+			       (js-string->jsstring
+				  (string-append "[object " name "]")))
+			      ((string=? name "JsGlobalObject")
+			       (& "[object Object]"))
+			      ((string=? name "JsProxy")
+			       (&  "[object Object]"))
+			      ((isa? obj JsArrayBufferView)
+			       (let ((ctor (js-get obj (& "constructor") %this)))
+				  (js-jsstring-append
+				     (& "[object ")
+				     (js-jsstring-append
+					(js-get ctor (& "name") %this) (& "]")))))
+			      
+			      (else
+			       (js-string->jsstring
+				  (string-append "[object "
+				     (substring name 2)
+				     "]"))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-prototype-tostring ...                                 */
