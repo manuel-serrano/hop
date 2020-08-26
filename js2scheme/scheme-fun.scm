@@ -114,12 +114,18 @@
    
    (with-access::J2SDeclFun this (loc id scope val exports vtype)
       (let ((val (declfun-fun this)))
-	 (with-access::J2SFun val (params mode vararg body name generator)
+	 (with-access::J2SFun val (params mode vararg body name generator idgen decl)
 	    (let* ((scmid (j2s-decl-scm-id this ctx))
 		   (fastid (j2s-decl-fast-id this ctx)))
-	       (when (memq id '(isMoment isMoment%% isMoment%%O))
+	       (when (context-get ctx :function-nice-name #f)
+		  ;; adjust the function name used only for debugging in
+		  ;; order to avoid creating useless Scheme closures
+		  ;; (see beautiful-define)
+		  (unless decl
+		     (set! name fastid)))
+	       (when (memq id '(toISOString$1))
 		  (tprint id " scmid=" scmid " fastid=" fastid " scope=" scope
-		     " mode=" mode " name=" name
+		     " mode=" mode " name=" name " idgen=" idgen
 		     " has-new=" (decl-usage-has? this '(new))))
 	       (epairify-deep loc
 		  (case scope

@@ -1424,14 +1424,6 @@
 	     ;; dig in the block body to check how these variables are
 	     ;; actually used (typed or untyped access and used on loop or not)
 	     (let ((decls (hint-block-access-usages! this decls)))
-		(when (eq? (caddr loc) 57474)
-		   (tprint "######### CHECKOVERFLOW " loc " "
-		      (map (lambda (d) (with-access::J2SDecl d (id) id))
-			 decls))
-		   (tprint "gains=" (map hint-decl-gain decls)
-		      " nodesize=" (node-size this)
-		      " -> " (/ (apply + (map hint-decl-gain decls))
-				(* (node-size this) (node-size this)))))
 		(if (block-duplicable? this decls)
 		    (let ((htypes (map (lambda (p)
 					  (multiple-value-bind (bt _)
