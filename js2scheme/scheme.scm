@@ -2357,9 +2357,17 @@
 		(else
 		 #f)))))
 
+   (define (is-object-prototype? obj field)
+      (when (isa? field J2SString)
+	 (with-access::J2SString field (val)
+	    (when (string=? val "prototype")
+	       (is-builtin-ref? obj 'Object)))))
+
    (with-access::J2SAccess this (loc obj field cache cspecs type)
       (epairify-deep loc 
 	 (cond
+	    ((is-object-prototype? obj field)
+	     `(js-object-proto %this))
 	    ((eq? (j2s-type obj) 'vector)
 	     (j2s-vector-ref this mode return ctx))
 	    ((eq? (j2s-type obj) 'array)

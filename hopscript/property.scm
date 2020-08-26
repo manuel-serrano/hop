@@ -1948,7 +1948,7 @@
 ;*    to keep the base object (the actual receiver) available.         */
 ;*---------------------------------------------------------------------*/
 (define (js-get-jsobject o::JsObject base prop %this)
-   (tprint "js-get-jsobject o=" (typeof o) " prop=" prop)
+   (tprint "js-get-jsobject o=" (typeof o) " prop=" (typeof prop) " " prop)
    (let ((pval (js-get-property-value o base prop %this)))
       (if (eq? pval (js-absent))
           (js-undefined)
@@ -2151,7 +2151,7 @@
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 
-   (set! L (+fx L 1))
+   '(set! L (+fx L 1))
    (let loop ((obj o))
       (jsobject-find obj o name
 	 ;; map search

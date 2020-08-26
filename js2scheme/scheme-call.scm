@@ -248,6 +248,17 @@
        (def obj args mode return conf))))
 
 ;*---------------------------------------------------------------------*/
+;*    is-object-prototype? ...                                         */
+;*---------------------------------------------------------------------*/
+(define (is-object-prototype? obj)
+   (when (isa? obj J2SAccess)
+      (with-access::J2SAccess obj (obj field)
+	 (when (isa? field J2SString)
+	    (with-access::J2SString field (val)
+	       (when (string=? val "prototype")
+		  (is-builtin-ref? obj 'Object)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-call0 ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (j2s-call0 obj args mode return conf)
@@ -258,7 +269,22 @@
 	  ,(j2s-scheme (car args) mode return conf)
 	  ,(cadr args)))
 
+   (define (is-object-prototype-tostring? obj args)
+      (when (=fx (length args) 3)
+	 ;; a method called with exactly 1 argument
+	 ;; (%this and cache have been added)
+	 (when (isa? obj J2SAccess)
+	    (with-access::J2SAccess obj (obj field)
+	       (when (isa? field J2SString)
+		  (with-access::J2SString field (val)
+		     (when (string=? val "toString")
+			(is-object-prototype? obj))))))))
+
    (cond
+      ((is-object-prototype-tostring? obj args)
+       `(js-object-prototype-tostring 
+	   ,(j2s-scheme (car args) mode return conf)
+	   ,(cadr args)))
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (loc decl)
 	  (cond
@@ -294,8 +320,24 @@
 	  ,(j2s-scheme (car args) mode return conf)
 	  ,(j2s-scheme (cadr args) mode return conf)
 	  ,(caddr args)))
-      
+
+   (define (is-object-prototype-has-own-property? obj args)
+      (when (=fx (length args) 4)
+	 ;; a method called with exactly two arguments
+	 ;; (%this and cache have been added)
+	 (when (isa? obj J2SAccess)
+	    (with-access::J2SAccess obj (obj field)
+	       (when (isa? field J2SString)
+		  (with-access::J2SString field (val)
+		     (when (string=? val "hasOwnProperty")
+			(is-object-prototype? obj))))))))
+   
    (cond
+      ((is-object-prototype-has-own-property? obj args)
+       `(js-has-own-property
+	   ,(j2s-scheme (car args) mode return conf)
+	   ,(j2s-scheme (cadr args) mode return conf)
+	   ,(caddr args)))
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (loc decl)
 	  (cond
