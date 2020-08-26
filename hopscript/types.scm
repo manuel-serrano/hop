@@ -399,6 +399,7 @@
 	      (js-regexp-positions::vector (default '#()))
 	      ;; pcaches
 	      (js-nodejs-pcache::vector (default '#()))
+	      (js-object-pcache::vector (default '#()))
 	      (js-array-pcache::vector (default '#()))
 	      (js-function-pcache::vector (default '#()))
 	      (js-regexp-pcache::vector (default '#()))

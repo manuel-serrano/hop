@@ -289,6 +289,11 @@
 	 (set! js-symbol-hasinstance
 	    (instantiate::JsSymbolLiteral
 	       (val (& "hasInstance")))))
+
+      ;; pcache for object
+      (with-access::JsGlobalObject %this (js-object-pcache)
+	 (set! js-object-pcache
+	    ((@ js-make-pcache-table __hopscript_property) 2 "object")))
       
       ;; init the builtin function class
       (js-init-function! %this)
@@ -1310,56 +1315,71 @@
 	    preferredtype)
 	 (symbol->string! (class-name (object-class o)))))
 
-   (define (get-field-value2 f)
-      (let ((proc (js-get o f %this)))
-	 (if (js-procedure? proc)
-	     (let ((r (js-call0 %this proc o)))
-		(if (not (js-object? r))
-		    r
-		    (err)))
-	     (err))))
-   
-   (define (get-field-value f1 f2)
-      (let ((proc (js-get o f1 %this)))
-	 (if (js-procedure? proc)
-	     (let ((r (js-call0 %this proc o)))
-		(if (not (js-object? r))
-		    r
-		    (get-field-value2 f2)))
-	     (get-field-value2 f2))))
+   (define (get-tostring o)
+      (with-access::JsGlobalObject %this (js-object-pcache)
+	 (js-get-jsobject-name/cache o (& "toString")
+	    #f %this (js-pcache-ref js-object-pcache 0))))
 
-   (define (get-field-valueOLD . fields)
-      (let loop ((fields fields))
-	 (if (null? fields)
-	     (err)
-	     (let ((proc (js-get o (car fields) %this)))
-		(if (js-procedure? proc)
-		    (let ((r (js-call0 %this proc o)))
-		       (if (not (js-object? r))
-			   r
-			   (loop (cdr fields))))
-		    (loop (cdr fields)))))))
-   (define (primitive-as-string)
-      (get-field-value (& "toString") (& "valueOf")))
-   
-   (define (primitive-as-number)
-      (get-field-value (& "valueOf") (& "toString")))
+   (define (get-valueof o)
+      (with-access::JsGlobalObject %this (js-object-pcache)
+	 (js-get-jsobject-name/cache o (& "valueOf")
+	    #f %this (js-pcache-ref js-object-pcache 1))))
+
+   ;; toprimitive-as-string
+   (define (toprimitive-as-string)
+
+      (define (toprimitive-as-string-valueof)
+	 (let ((proc (get-valueof o)))
+	    (if (js-procedure? proc)
+		(let ((r (js-call0 %this proc o)))
+		   (if (not (js-object? r))
+		       r
+		       (err)))
+		(err))))
+      
+      (let ((proc (get-tostring o)))
+	 (if (js-procedure? proc)
+	     (let ((r (js-call0 %this proc o)))
+		(if (not (js-object? r))
+		    r
+		    (toprimitive-as-string-valueof)))
+	     (toprimitive-as-string-valueof))))
+
+   ;; toprimitive-as-number
+   (define (toprimitive-as-number)
+
+      (define (toprimitive-as-number-tostring)
+	 (let ((proc (get-tostring o)))
+	    (if (js-procedure? proc)
+		(let ((r (js-call0 %this proc o)))
+		   (if (not (js-object? r))
+		       r
+		       (err)))
+		(err))))
+
+      (let ((proc (get-valueof o)))
+	 (if (js-procedure? proc)
+	     (let ((r (js-call0 %this proc o)))
+		(if (not (js-object? r))
+		    r
+		    (toprimitive-as-number-tostring)))
+	     (toprimitive-as-number-tostring))))
 
    (cond
       ((eq? preferredtype 'string)
-       (primitive-as-string))
+       (toprimitive-as-string))
       ((eq? preferredtype 'number)
-       (primitive-as-number))
+       (toprimitive-as-number))
       ((isa? o JsDate)
-       (primitive-as-string))
+       (toprimitive-as-string))
       ((isa? o JsGlobalObject)
        ;; according to
        ;;   http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.8
        ;; the GlobalObject might be considered as a host object, which gives
        ;; the freedom to default to string instead of number
-       (primitive-as-string))
+       (toprimitive-as-string))
       (else
-       (primitive-as-number))))
+       (toprimitive-as-number))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ::JsObject ...                                         */
