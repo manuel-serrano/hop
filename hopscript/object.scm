@@ -1387,7 +1387,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.2     */
 ;*---------------------------------------------------------------------*/
 (define (js-object-prototype-tostring this %this)
-   (with-access::JsGlobalObject %this (js-symbol-tostringtag)
+   (with-access::JsGlobalObject %this (js-symbol-tostringtag js-object-pcache)
       (cond
 	 ((js-jsstring? this)
 	  (& "[object String]"))
