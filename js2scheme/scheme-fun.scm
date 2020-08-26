@@ -117,6 +117,10 @@
 	 (with-access::J2SFun val (params mode vararg body name generator)
 	    (let* ((scmid (j2s-decl-scm-id this ctx))
 		   (fastid (j2s-decl-fast-id this ctx)))
+	       (when (memq id '(isMoment isMoment%% isMoment%%O))
+		  (tprint id " scmid=" scmid " fastid=" fastid " scope=" scope
+		     " mode=" mode " name=" name
+		     " has-new=" (decl-usage-has? this '(new))))
 	       (epairify-deep loc
 		  (case scope
 		     ((none)

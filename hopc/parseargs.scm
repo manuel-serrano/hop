@@ -301,7 +301,7 @@
 	    (("-fhintblock" (help "Enable hintblock typing"))
 	     (hopc-j2s-flags-set! (cons* :optim-hintblock #t (hopc-j2s-flags))))
 	    (("-fno-hintblock" (help "Disable hintblock typing"))
-	     (hopc-j2s-flags-set! (cons* :optim-hintnum #f (hopc-j2s-flags))))
+	     (hopc-j2s-flags-set! (cons* :optim-hintblock #f (hopc-j2s-flags))))
 	    (("-fmultivar" (help "Enable multivar split"))
 	     (hopc-j2s-flags-set! (cons* :optim-multivar #t (hopc-j2s-flags))))
 	    (("-fno-multivar" (help "Disable multivar split"))

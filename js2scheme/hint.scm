@@ -35,7 +35,7 @@
 
    (export (j2s-hint!::pair-nil ::J2SProgram ::obj)
 	   (generic j2s-call-hint!::J2SNode ::J2SNode ::bool conf)
-	   (generic j2s-hint-block!::J2SNode ::J2SNode)
+	   (generic j2s-hint-block!::J2SNode ::J2SNode conf)
 	   (j2s-hint-meta-noopt! ::J2SDecl)
 	   (j2s-known-type ::symbol)
 	   (j2s-hint-type::symbol ::symbol)))
@@ -44,6 +44,7 @@
 ;*    *j2s-hint-block-node-size-factor* ...                            */
 ;*---------------------------------------------------------------------*/
 (define *j2s-hint-block-node-size-factor* 30)
+(define *j2s-hint-block-node-expansion-ratio* .00007)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint! ...                                                    */
@@ -722,12 +723,14 @@
 	    (else
 	     (multiple-value-bind (bt bc)
 		(best-hint-type p #t)
-		(if (or (eq? vtype 'unknown)
-			(eq? vtype 'any)
-			(and (eq? vtype 'number) (or (assq 'integer hint))))
-		    (let ((c (if useinloop (*fx 2 (* bc usecnt)) (* bc usecnt))))
-		       (list bt c usecnt))
-		    (list 'any 0 0)))))))
+		(if (memq bt '(any unknown undefined null))
+		    (list 'any 0 0)
+		    (if (or (eq? vtype 'unknown)
+			    (eq? vtype 'any)
+			    (and (eq? vtype 'number) (or (assq 'integer hint))))
+			(let ((c (if useinloop (*fx 2 (* bc usecnt)) (* bc usecnt))))
+			   (list bt c usecnt))
+			(list 'any 0 0))))))))
    
    (define (fun-duplicable? decl::J2SDeclFun)
       ;; returns #t iff the function is duplicable, returns #f otherwise
@@ -802,6 +805,14 @@
 	       (when (isa? hintinfo FunHintInfo)
 		  (with-access::FunHintInfo hintinfo (unhinted hinted)
 		     (or (eq? hinted fun) (eq? unhinted fun))))))))
+
+   (define (worse-duplicate? score besthints body)
+      (or (<fx score (*fx 5 (length besthints)))
+	  (<fx (*fx 20 (apply + (map caddr besthints)))
+	     (node-size body))
+	  (< (/ (length (filter (lambda (d) (> (cadr d) 0)) besthints))
+		(length besthints))
+	     0.4)))
    
    (with-access::J2SDeclFun this (id %info hintinfo)
       (let loop ((dup (fun-duplicable? this)))
@@ -810,14 +821,8 @@
 	     (with-access::J2SFun (j2sdeclinit-val-fun this) (params body)
 		(let* ((besthints (map param-best-hint-type params))
 		       (score (apply max (map cadr besthints))))
-		   (if (or (<fx score (*fx 5 (length besthints)))
-			   (<fx (*fx 20 (apply + (map caddr besthints)))
-			      (node-size body))
-			   (< (/
-				  (length (filter (lambda (d) (> (cadr d) 0))
-					     besthints))
-				  (length besthints))
-			      0.4))
+		   (if (worse-duplicate? score besthints body)
+		       
 		       ;; no benefit in duplicating this function because:
 		       ;;   - the hintted parameters are not used frequently
 		       ;;     enough;
@@ -827,22 +832,12 @@
 		       ;;     too low
 		       (loop #f)
 		       (let ((htypes (map (lambda (bh p)
-					     (cond
-						((< (cadr bh) 3)
+					     (if (< (cadr bh) 3)
 						 (with-access::J2SDecl p (vtype)
-						    vtype))
-						((and (or (eq? (car bh) 'null)
-							  (eq? (car bh) 'undefined))
-						      (< (cadr bh) 12))
-						 ;; only specialize on NULL
-						 ;; and UNDEFINED if it is
-						 ;; tested intensively
-						 (with-access::J2SDecl p (vtype)
-						    vtype))
-						(else
-						 (car bh))))
+						    vtype)
+						 (car bh)))
 					besthints params)))
-			  (if (or (not (every (lambda (t) (eq? t 'object))
+			  (if (or (not (every (lambda (t) (memq t '(object any)))
 					  htypes))
 				  (not (self-recursive? this)))
 			      ;; only hints non-recursive or
@@ -1065,7 +1060,12 @@
 				    (params params)
 				    (body nbody))))))
 	       (with-access::J2SDeclFun nfun ((nval val))
-		  (with-access::J2SFun nval (body)
+		  (with-access::J2SFun nval (body decl)
+		     ;; MS 26aug2020: previous version were missing the
+		     ;; assigment so untyped functions were always generated
+		     ;; as scheme closures (see beautiful-define in
+		     ;; scheme-fun.scm) and called as such!
+		     (set! decl nfun)
 		     ;; force a copy of the three to avoid sharing with the
 		     ;; typed version
 		     (set! body
@@ -1340,19 +1340,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint-block! ::J2SNode ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint-block! this::J2SNode)
+(define-walk-method (j2s-hint-block! this::J2SNode conf)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint-block! ::J2SLetBlock ...                                */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint-block! this::J2SLetBlock)
+(define-walk-method (j2s-hint-block! this::J2SLetBlock conf)
    
    (define (hint-decl-gain decl::J2SDecl)
       (with-access::J2SDecl decl (%info)
 	 %info))
    
-   (define (block-duplicable? this decls::pair-nil)
+   (define (block-duplicableold? this decls::pair-nil)
       ;; returns #t iff it is worth duplicating this loop
       (when (pair? decls)
 	 (let ((gains (map hint-decl-gain decls)))
@@ -1360,6 +1360,16 @@
 	       (or (>fx (*fx *j2s-hint-block-node-size-factor* (apply + gains))
 		      (node-size this))
 		   (>fx (apply max gains) 12))))))
+
+   (define (block-duplicable? this decls::pair-nil)
+      ;; returns #t iff it is worth duplicating this block
+      (when (pair? decls)
+	 (let* ((gains (map hint-decl-gain decls))
+		(gain (apply + gains)))
+	    (when (>fx gain 10)
+	       (let ((sz (node-size this)))
+		  (>= (/ gain (* sz sz))
+		     *j2s-hint-block-node-expansion-ratio*))))))
    
    (define (dispatch-body this pred then otherwise)
       (with-access::J2SBlock this (loc)
@@ -1414,18 +1424,24 @@
 	     ;; dig in the block body to check how these variables are
 	     ;; actually used (typed or untyped access and used on loop or not)
 	     (let ((decls (hint-block-access-usages! this decls)))
+		(when (eq? (caddr loc) 57474)
+		   (tprint "######### CHECKOVERFLOW " loc " "
+		      (map (lambda (d) (with-access::J2SDecl d (id) id))
+			 decls))
+		   (tprint "gains=" (map hint-decl-gain decls)
+		      " nodesize=" (node-size this)
+		      " -> " (/ (apply + (map hint-decl-gain decls))
+				(* (node-size this) (node-size this)))))
 		(if (block-duplicable? this decls)
 		    (let ((htypes (map (lambda (p)
 					  (multiple-value-bind (bt _)
 					     (best-hint-type p #t)
 					     bt))
 				     decls)))
-		       (when (or #t (eq? (caddr loc) 57474))
-			  (tprint "######### DUC " loc " "
-			     (map (lambda (d) (with-access::J2SDecl d (id) id))
-				decls))
-			  (tprint "gains=" (map hint-decl-gain decls))
-			  (tprint "nodesize=" (node-size this)))
+		       (when (>=fx (config-get conf :verbose 0) 4)
+			  (with-output-to-port (current-error-port)
+			     (lambda ()
+				(display* "{" (cadr loc) ":" (caddr loc) "," (apply + (map hint-decl-gain decls)) "}"))))
 		       (set! nodes (list (block-dispatch this decls htypes)))
 		       this)
 		    (call-default-walker)))
@@ -1434,7 +1450,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint-block! ::J2SMeta ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint-block! this::J2SMeta)
+(define-walk-method (j2s-hint-block! this::J2SMeta conf)
    (with-access::J2SMeta this (meta optim)
       (if (eq? meta 'hint-block)
 	  (if (=fx optim 0)

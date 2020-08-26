@@ -624,8 +624,6 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cspecs-update! this::J2SCall cs)
    (with-access::J2SCall this (cspecs loc)
-      (when (eq? (caddr loc) 6598)
-	 (tprint "CS=" cs))
       (set! cspecs (cspecs-call cs))
       (call-default-walker)))
 

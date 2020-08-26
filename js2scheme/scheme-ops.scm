@@ -1210,9 +1210,14 @@
 		   (memq tr '(bool string object array))))
 	  (with-tmp lhs rhs mode return ctx
 	     (lambda (left right)
-		(if (eq? op '!=)
-		    `(not (js-equal-sans-flonum? ,left ,right %this))
-		    `(js-equal-sans-flonum? ,left ,right %this)))))
+		(if (or (memq tl '(null undefined bool integer int53))
+			(memq tr '(null undefined bool integer int53)))
+		    (if (eq? op '!=)
+			`(not (eq? ,left ,right))
+			`(eq? ,left ,right))
+		    (if (eq? op '!=)
+			`(not (js-equal-sans-flonum? ,left ,right %this))
+			`(js-equal-sans-flonum? ,left ,right %this))))))
 	 ((or (memq tl '(undefined null)) (memq tr '(undefined null)))
 	  (with-tmp lhs rhs mode return ctx
 	     (lambda (left right)

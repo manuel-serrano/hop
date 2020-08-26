@@ -38,7 +38,7 @@
       (cond
 	 ((eq? ty 'bool)
 	  (j2s-bool-test test mode return conf))
-	 ((eq? ty 'object)
+	 ((memq ty '(object array))
 	  #t)
 	 ((eq? ty 'int32)
 	  `(not (=s32 ,(j2s-scheme test mode return conf) #s32:0)))
