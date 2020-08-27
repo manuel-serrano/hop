@@ -717,9 +717,9 @@
 		     (<fx (-fx max min) 6)))
 	     ;; a megamorphic parameter, don't specialize it
 	     (list 'any 0 0))
-	    ((decl-usage-has? p '(assig))
-	     ;; a writable parameter, don't specialize it
-	     (list 'any 0 0))
+;* 	    ((decl-usage-has? p '(assig))                              */
+;* 	     ;; a writable parameter, don't specialize it              */
+;* 	     (list 'any 0 0))                                          */
 	    (else
 	     (multiple-value-bind (bt bc)
 		(best-hint-type p #t)
@@ -806,11 +806,10 @@
 		  (with-access::FunHintInfo hintinfo (unhinted hinted)
 		     (or (eq? hinted fun) (eq? unhinted fun))))))))
 
-   (define (worse-duplicate? score besthints body)
-      (or (<fx score (*fx 5 (length besthints)))
-	  (<fx (*fx 20 (apply + (map caddr besthints)))
-	     (node-size body))
-	  (< (/ (length (filter (lambda (d) (> (cadr d) 0)) besthints))
+   (define (score-duplicate? score besthints body)
+      (or (>fx score (*fx 5 (length besthints)))
+	  (>fx (*fx 20 (apply + (map caddr besthints))) (node-size body))
+	  (> (/ (length (filter (lambda (d) (> (cadr d) 0)) besthints))
 		(length besthints))
 	     0.4)))
    
@@ -821,8 +820,7 @@
 	     (with-access::J2SFun (j2sdeclinit-val-fun this) (params body)
 		(let* ((besthints (map param-best-hint-type params))
 		       (score (apply max (map cadr besthints))))
-		   (if (worse-duplicate? score besthints body)
-		       
+		   (if (not (score-duplicate? score besthints body))
 		       ;; no benefit in duplicating this function because:
 		       ;;   - the hintted parameters are not used frequently
 		       ;;     enough;
@@ -1087,6 +1085,7 @@
 	 ((string) #\S)
 	 ((unknown) #\X)
 	 ((any) #\_)
+	 ((arrow) #\F)
 	 (else (string-ref (symbol->string t) 0))))
    
    (with-access::J2SDeclFun fun (id hintinfo)

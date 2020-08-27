@@ -1607,9 +1607,15 @@
 	       (node-type-one-positive-test? lhs)))))
 
    (define (node-type-one-positive-test? test)
-      (when (isa? test J2SBinary)
-	 (with-access::J2SBinary test (op)
-	    (memq op '(== === eq? instanceof)))))
+      (cond
+	 ((isa? test J2SBinary)
+	  (with-access::J2SBinary test (op)
+	     (memq op '(== === eq? instanceof))))
+	 ((isa? test J2SCall)
+	  ;; we assume that the only type predicate are positive tests
+	  #t)
+	 (else
+	  #f)))
    
    (define (node-type-one-test test envt enve)
       (multiple-value-bind (op decl typ ref)
@@ -2232,23 +2238,26 @@
 ;*    cleanup-hint-node! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (cleanup-hint-node! this::J2SNode)
-   (let ((fields (class-all-fields (object-class this))))
-      (let loop ((i (-fx (vector-length fields) 1)))
-	 (when (>=fx i 0)
-	    (let* ((f (vector-ref fields i))
-		   (info (class-field-info f)))
-	       (cond
-		  ((eq? (class-field-name f) 'hint)
-		   (let* ((get (class-field-accessor f))
-			  (set (class-field-mutator f))
-			  (hint (get this)))
-		      (when (and (pair? hint) (pair? (assq 'no-string hint)))
-			 (let ((c (assq 'string hint)))
-			    (set! hint (delete! c hint))
-			    (set this hint))))
-		   (loop (-fx i 1)))
-		  ((and (pair? info) (member "notraverse" info))
-		   (loop (-fx i 1)))
-		  (else
-		   (cleanup-hint! ((class-field-accessor f) this))
-		   (loop (-fx i 1)))))))))
+   (if (isa? this J2SDProducer)
+       (with-access::J2SDProducer this (expr)
+	  (cleanup-hint-node! expr))
+       (let ((fields (class-all-fields (object-class this))))
+	  (let loop ((i (-fx (vector-length fields) 1)))
+	     (when (>=fx i 0)
+		(let* ((f (vector-ref fields i))
+		       (info (class-field-info f)))
+		   (cond
+		      ((eq? (class-field-name f) 'hint)
+		       (let* ((get (class-field-accessor f))
+			      (set (class-field-mutator f))
+			      (hint (get this)))
+			  (when (and (pair? hint) (pair? (assq 'no-string hint)))
+			     (let ((c (assq 'string hint)))
+				(set! hint (delete! c hint))
+				(set this hint))))
+		       (loop (-fx i 1)))
+		      ((and (pair? info) (member "notraverse" info))
+		       (loop (-fx i 1)))
+		      (else
+		       (cleanup-hint! ((class-field-accessor f) this))
+		       (loop (-fx i 1))))))))))

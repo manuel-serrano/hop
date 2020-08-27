@@ -78,7 +78,7 @@
 	    (else
 	     ;; collect all the globals used by all global functions
 	     (for-each function-collect-globals decls)
-	     ;; scan in sequence all the declaratins and all the nodes
+	     ;; scan in sequence all the declarations and all the nodes
 	     (for-each scan-decl decls)
 	     (for-each scan-node nodes)))))
    this)
@@ -130,7 +130,11 @@
 ;*---------------------------------------------------------------------*/
 (define (scan-decl decl::J2SDecl)
    (when (and (isa? decl J2SDeclInit) (not (isa? decl J2SDeclFun)))
-      (with-access::J2SDeclInit decl (val)
+      (with-access::J2SDeclInit decl (val %info binder)
+	 (when (eq? binder 'let-opt)
+	    (unless (decl-usage-has? decl '(uninit))
+	       (with-access::J2SDecl decl (%info)
+		  (set! %info 'init))))
 	 (invalidate! val))))
 
 ;*---------------------------------------------------------------------*/

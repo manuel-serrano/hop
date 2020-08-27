@@ -1319,10 +1319,12 @@
 	    " " 
 	    (padding "amap" cwidth 'right)
 	    " " 
+	    (padding "xmap" cwidth 'right)
+	    " " 
 	    (padding "vtable" cwidth 'right))
 	 (fprint *profile-port* (make-string (+ ppading 1 cwidth 1 4) #\-)
 	    "-+-"
-	    (make-string (* 8 (+ cwidth 1)) #\-))
+	    (make-string (* 9 (+ cwidth 1)) #\-))
 	 (for-each (lambda (pc)
 		      (with-access::JsPropertyCache pc (point name usage
 							  cntmiss

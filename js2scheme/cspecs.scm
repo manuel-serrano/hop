@@ -50,7 +50,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    cspecs ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-struct cspecs access assig assigop call)
+(define-struct cspecs access assig assigop assignew call)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cspecs ...                                                   */
@@ -63,6 +63,7 @@
 			  '(imap)
 			  '(imap nmap)
 			  '(imap cmap)
+			  '(emap)
 			  '(pmap))
 		       ;; fast code
 		       (cspecs
@@ -70,6 +71,7 @@
 			  '(imap emap cmap vtable)
 			  '(imap emap cmap nmap amap vtable)
 			  '(imap cmap)
+			  '(emap)
 			  '(pmap cmap vtable poly)))))
 	 (cspecs-default! this csdef)
 	 (when (or (config-get conf :optim-cspecs) (config-get conf :cspecs))
@@ -635,8 +637,9 @@
        (with-access::J2SDeclFun this (val loc)
 	  (cspecs-update! val
 	     (cspecs (remq 'pmap (remq 'imap (cspecs-access cs)))
-		(cspecs-assig cs)
+		(cspecs-assignew cs)
 		(cspecs-assigop cs)
+		(cspecs-assignew cs)
 		(cspecs-call cs))))
        (call-default-walker)))
 
@@ -651,11 +654,12 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cspecs-default! this::J2SDeclFun csdef)
    (if (decl-usage-has? this '(new))
-       (with-access::J2SDeclFun this (val c)
-	  (cspecs-update! val
+       (with-access::J2SDeclFun this (val c id)
+	  (cspecs-default! val
 	     (cspecs (cspecs-access csdef)
-		'(imap nmap)
+		(cspecs-assignew csdef)
 		(cspecs-assigop csdef)
+		(cspecs-assignew csdef)
 		(cspecs-call csdef)))
 	  this)
        (call-default-walker)))
@@ -674,9 +678,12 @@
 (define-walk-method (cspecs-default! this::J2SAssig csdef)
    (with-access::J2SAssig this (lhs rhs)
       (cspecs-default! rhs csdef)
-      (when (isa? lhs J2SAccess)
-	  (with-access::J2SAccess lhs (cspecs)
-	     (set! cspecs (cspecs-assig csdef)))
+      (if (isa? lhs J2SAccess)
+	  (with-access::J2SAccess lhs (cspecs obj field)
+	     (set! cspecs (cspecs-assig csdef))
+	     (cspecs-default! obj csdef)
+	     (cspecs-default! field csdef)
+	     this)
 	  (cspecs-default! lhs csdef))
       this))
 

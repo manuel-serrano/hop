@@ -290,15 +290,10 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-use this::J2SRef ctx deval infun)
    (with-access::J2SRef this (decl loc)
-      (with-access::J2SDecl decl (%info escape id)
-	 (when (eq? id 'tmpXXX)
-	    (tprint "eq fun=" (eq? infun %info) " " (typeof infun)
-	       " " (if (symbol? infun) infun)))
-	 (unless (eq? infun %info)
-	    (when (eq? id 'prefix)
-	       (tprint "MARK ESCAPE " id " " loc)
-	       (tprint "  infun=" (j2s->list infun))
-	       (tprint "   info=" (j2s->list %info)))
+      (with-access::J2SDecl decl (%info escape id scope)
+	 (when (and infun
+		    (not (eq? infun %info))
+		    (not (memq scope '(global scope))))
 	    (set! escape #t))
 	 (when ctx
 	    (decl-usage-add! decl ctx))))
