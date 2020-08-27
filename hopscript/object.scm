@@ -966,7 +966,7 @@
       (js-bind! %this obj (& "toString")
 	 :value (js-make-function %this
 		   (lambda (this) (%js-object-prototype-tostring this %this))
-		   (js-function-arity js-object-prototype-tostring)
+		   (js-function-arity 0 0)
 		   (js-function-info :name "toString" :len 0)
 		   :prototype (js-undefined))
 	 :enumerable #f

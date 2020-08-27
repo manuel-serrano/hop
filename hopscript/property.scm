@@ -56,7 +56,6 @@
 	   (js-make-pcache-table ::int ::obj #!optional profile-info-table)
 	   (js-pcache-table-profile-init::obj ::obj ::long ::obj)
 	   (js-validate-pmap-pcache! ::JsPropertyCache)
-	   (js-pcache-update-descriptor! ::JsPropertyCache ::long ::JsObject ::obj)
 	   (inline js-pcache-ref ::obj ::int)
 	   (inline js-pcache-imap ::JsPropertyCache)
 	   (inline js-pcache-emap ::JsPropertyCache)
@@ -313,13 +312,12 @@
    (define (invalidate-pcache-pmap! pcache)
       (with-access::JsPropertyCache pcache (pmap emap amap nmap xmap)
 	 (when (object? pmap) (reset-cmap-vtable! pmap))
-	 (when (object? amap) (reset-cmap-vtable! amap))
 	 (when (object? xmap) (reset-cmap-vtable! xmap))
 	 (set! pmap (js-not-a-pmap))
 	 (set! nmap (js-not-a-pmap))
 	 (set! xmap (js-not-a-pmap))
 	 (set! emap #t)
-	 (set! amap #t)))
+	 ))
 
    (when js-pmap-valid
       (synchronize js-cache-table-lock
@@ -418,6 +416,7 @@
 	     (fprint (current-error-port) "== " msg (typeof obj) " MAPPED"
 		" length=" (vector-length elements)
 		" plain=" (js-object-mode-plain? obj)
+		" isproto=" (js-object-mode-isprotoof? obj)
 		" inline-els=" (js-object-inline-elements? obj)
 		" extensible=" (js-object-mode-extensible? obj)
 		" met.vlen=" (vector-length methods)
@@ -641,6 +640,7 @@
 	    (vector-set! pctable i
 	       (instantiate::JsPropertyCache
 		  (src src)
+		  (name (& "?"))
 		  (pmap (js-not-a-pmap))
 		  (pctable pctable)))
 	    (loop (+fx i 1))))
@@ -730,7 +730,7 @@
 	    (set! cmap #t)
 	    (set! pmap (js-not-a-pmap))
 	    (set! emap #t)
-	    (set! amap omap)
+	    (when (eq? o obj) (set! amap omap))
 	    (set! owner obj)
 	    (set! index i)))))
 
@@ -1277,6 +1277,7 @@
 (define (js-object-unmap! o::JsObject)
    (js-object-mode-enumerable-set! o #t)
    (js-object-mode-plain-set! o #f)
+   (js-object-mode-isprotoof-set! o #t)
    (with-access::JsObject o (cmap elements)
       (when (js-object-mapped? o)
 	 (with-access::JsConstructMap cmap (props)
@@ -2150,7 +2151,6 @@
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 
-   '(set! L (+fx L 1))
    (let loop ((obj o))
       (jsobject-find obj o name
 	 ;; map search
@@ -2189,24 +2189,10 @@
 	       (if (or (eq? cmap (js-not-a-cmap)) throw)
 		   (js-get-notfound name throw %this)
 		   (begin
-		      (set! K (+fx K 1))
-		      '(when (eq? name (& "millisecond"))
-			 (with-access::JsObject o (cmap)
-			    (with-access::JsPropertyCache cache (xmap point)
-			       (tprint K "/" L " " name " " point
-				  " cmap="
-				  (with-access::JsConstructMap cmap (%id)
-				     %id)
-				  " xmap="
-				  (with-access::JsConstructMap xmap (%id)
-				     %id)))))
 		      (js-pcache-update-miss! cache o)
 		      (js-undefined)))))
 	 ;; loop
 	 loop)))
-
-(define K 0)
-(define L 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-method-jsobject-get-name/cache-miss ...                       */
@@ -2626,9 +2612,6 @@
 		      ;; invalidate cache method and cache
 		      (js-invalidate-cache-method! nextmap index
 			 "extend-mapped with non-function" v)
-		      (js-invalidate-pmap-pcaches! %this "extend-mapped.3" name)
-		      (when cache
-			 (js-pcache-next-direct! cache o nextmap index))
 		      (reset-cmap-vtable! nextmap))
 		   (when cache
 		      (js-pcache-next-direct! cache o nextmap index)))
@@ -2639,7 +2622,6 @@
 		   ;; invalidate the pmap caches as it might
 		   ;; be that this function will be now be used
 		   ;; when searching for a prototype chain
-		   (js-invalidate-pmap-pcaches! %this "extend-method" name)
 		   (when cache
 		      (js-pcache-next-direct! cache o nextmap index)))
 		  ((or (>=fx detachcnt (method-invalidation-threshold))
@@ -2653,8 +2635,6 @@
 		   ;; invalidate cache method and cache
 		   (js-invalidate-cache-method! nextmap index
 		      "extend-mapped polymorphic threshold" name)
-		   (when (<=fx detachcnt (method-invalidation-threshold))
-		      (js-invalidate-pmap-pcaches! %this "extend-mapped.1" name))
 		   (reset-cmap-vtable! nextmap)
 		   (when cache
 		      ;; MS 9may2019 CARE INVALIDATE
@@ -2675,7 +2655,6 @@
 			 (vector-set! methods index v))
 		      (set! nextmap detachedmap)
 		      v)))
-	       ;(tprint "js-object-push/cmap index=" index " name=" name)
 	       (js-object-push/cmap o index v nextmap)
 	       (set! cmap nextmap)
 	       v))))
@@ -2689,48 +2668,46 @@
 	 (with-access::JsConstructMap cmap (props single lock)
 	    (let* ((index (vector-length props))
 		   (flags (property-flags writable enumerable configurable #f)))
+	       (when (js-object-mode-isprotoof? o)
+		  (js-invalidate-pmap-pcaches! %this "extend-mapped.5" name))
 	       (synchronize lock
-		  (let loop ()
-		     (cond
-			((cmap-find-transition cmap name v flags)
-			 =>
-			 (lambda (nmap)
-			    (extend-mapped-object/nmap nmap index flags)))
-			(single
-			 (js-invalidate-pmap-pcaches! %this "extend-mapped.4" name)
-			 (extend-cmap! cmap name flags)
-			 (with-access::JsConstructMap cmap (ctor methods)
+		  (cond
+		     ((cmap-find-transition cmap name v flags)
+		      =>
+		      (lambda (nmap)
+			 (extend-mapped-object/nmap nmap index flags)))
+		     (single
+		      (extend-cmap! cmap name flags)
+		      (with-access::JsConstructMap cmap (ctor methods)
+			 (if (and cachefun (js-function? v))
+			     ;; validate cache method and don't cache
+			     (vector-set! methods index v)
+			     (begin
+				(js-invalidate-cache-method! cmap index
+				   "extend-mapped single non-function" name)
+				(when cache
+				   (js-pcache-next-direct! cache o cmap index))))
+			 (js-object-push/ctor! o index v ctor))
+		      v)
+		     (else
+		      ;; create a new map
+		      (let ((nextmap (extend-cmap cmap name flags
+					(and (js-object-inline-elements? o)
+					     (<fx index (vector-length elements))))))
+			 (with-access::JsConstructMap nextmap (methods ctor)
 			    (if (and cachefun (js-function? v))
 				;; validate cache method and don't cache
 				(vector-set! methods index v)
+				;; invalidate cache method and cache
 				(begin
-				   (js-invalidate-cache-method! cmap index
-				      "extend-mapped single non-function" name)
+				   (js-invalidate-cache-method! nextmap index
+				      "exptend-mapped non-function" name)
 				   (when cache
-				      (js-pcache-next-direct! cache o cmap index))))
+				      (js-pcache-next-direct! cache o nextmap index))))
+			    (link-cmap! cmap nextmap name v flags)
 			    (js-object-push/ctor! o index v ctor))
-			 v)
-			(else
-			 ;; create a new map
-			 (let ((nextmap (extend-cmap cmap name flags
-					   (and (js-object-inline-elements? o)
-						(<fx index (vector-length elements))))))
-			    (when (js-object-mode-isprotoof? o)
-			       (js-invalidate-pmap-pcaches! %this "extend-mapped.5" name))
-			    (with-access::JsConstructMap nextmap (methods ctor)
-			       (if (and cachefun (js-function? v))
-				   ;; validate cache method and don't cache
-				   (vector-set! methods index v)
-				   ;; invalidate cache method and cache
-				   (begin
-				      (js-invalidate-cache-method! nextmap index
-					 "exptend-mapped non-function" name)
-				      (when cache
-					 (js-pcache-next-direct! cache o nextmap index))))
-			       (link-cmap! cmap nextmap name v flags)
-			       (js-object-push/ctor! o index v ctor))
-			    (set! cmap nextmap)
-			    v)))))))))
+			 (set! cmap nextmap)
+			 v))))))))
    
    (define (update-properties-object! obj desc i::long)
       (with-trace 'prop "update-properties-object!"
@@ -2871,6 +2848,7 @@
 		(else
 		 (let ((cache (instantiate::JsPropertyCache
 				 (usage 'dput)
+				 (name pname)
 				 (src src))))
 		    (js-name-pcachew-set! pname cache)
 		    (js-put-jsobject-name/cache! o pname v throw
@@ -2899,6 +2877,7 @@
 	    (else
 	     (let ((cache (instantiate::JsPropertyCache
 			     (usage 'dput)
+			     (name pname)
 			     (src src))))
 		(js-name-pcachew-set! pname cache)
 		(js-put-jsobject-name/cache! o pname v throw
@@ -3523,7 +3502,7 @@
 
    (define (define-own-property-extend-unmapped o name desc)
       (js-invalidate-pmap-pcaches! %this
-	 "js-define-own-property%, one accessor" name)
+	  "define-own-property-extend-unmapped" name)
       (let ((ndesc (cond
 		      ((isa? desc JsValueDescriptor)
 		       ;; 4.a
@@ -3679,8 +3658,8 @@
 			     (propagate-accessor-descriptor! current desc)))
 			 (propagate-accessor-descriptor! current desc)))
 		    (else
-
-		     (js-invalidate-pmap-pcaches! %this "js-define-own-property%, one accessor" name)
+		     (js-invalidate-pmap-pcaches! %this
+			"js-define-own-property%, one accessor" name)
 		     ;; 12 & 13
 		     (propagate-property-descriptor! current desc)))))))))
 
@@ -3712,10 +3691,10 @@
 	     "Prototype of non-extensible object mutated" v)
 	  (with-access::JsObject o (cmap)
 	     (unless (eq? (js-object-proto o) v)
-		(js-invalidate-pmap-pcaches! %this "js-setprototypeof" "__proto__")
+		(when (js-object-mode-isprotoof? o)
+		   (js-invalidate-pmap-pcaches! %this "js-setprototypeof" "__proto__"))
 		(unless (eq? cmap (js-not-a-cmap))
 		   (with-access::JsConstructMap cmap (parent single)
-		      
 		      (if single
 			  (set! cmap
 			     (duplicate::JsConstructMap cmap

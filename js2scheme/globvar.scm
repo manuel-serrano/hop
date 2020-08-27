@@ -35,7 +35,7 @@
       (name "globvar")
       (comment "Global variable initialization optimization")
       (proc j2s-globvar!)
-      (optional 2)))
+      (optional :optim-globvar)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-globvar! ::J2SProgram ...                                    */

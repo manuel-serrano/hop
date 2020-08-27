@@ -39,7 +39,7 @@
       (name "letfun")
       (comment "Implicit function declarations")
       (proc j2s-letfun)
-      (optional 2)))
+      (optional :optim-letfun)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-letfun ...                                                   */

@@ -48,7 +48,7 @@
       (name "letopt")
       (comment "Allocate let/const variables to registers")
       (proc j2s-letopt)
-      (optional 2)))
+      (optional :optim-letopt)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-letopt ...                                                   */

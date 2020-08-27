@@ -379,7 +379,8 @@
 		       (vector-ref elements idx))))
 	       ((eq? cs 'amap)
 		`(let* ((idx (js-pcache-index ,cache))
-			(propowner (js-pcache-owner ,cache)))
+;* 			(propowner (js-pcache-owner ,cache))           */
+			(propowner ,obj))
 		    (with-access::JsObject propowner (elements)
 		       (let ((desc (vector-ref elements idx)))
 			  (js-profile-log-cache ,cache :amap #t)
@@ -634,7 +635,9 @@
 			 ,tmp))
 		    ((eq? cs 'amap)
 		     `(let* ((idx (js-pcache-index ,cache))
-			     (propowner (js-pcache-owner ,cache)))
+;* 			     (propowner (js-pcache-owner ,cache))      */
+			     (propowner ,obj)
+			     )
 			 (with-access::JsObject propowner (elements)
 			    (let ((desc (vector-ref elements idx)))
 			       (js-profile-log-cache ,cache :amap #t)

@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
 ;*    Last change :  Tue Dec 31 13:55:23 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
 ;*    -------------------------------------------------------------    */
@@ -33,9 +33,9 @@
 (define j2s-propcache-stage
    (instantiate::J2SStageProc
       (name "propcache")
-      (comment "Add a cache to each object propcache lookup")
+      (comment "Add a cache to each object property lookup")
       (proc j2s-propcache)
-      (optional 2)))
+      (optional :optim-propcache)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-propcache ...                                                */

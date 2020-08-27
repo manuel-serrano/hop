@@ -208,7 +208,9 @@
    (with-access::JsStringLiteral o ((cache right))
       (if (eq? cache (js-not-a-string-cache))
 	  (set! cache (cons #f c))
-	  (set-cdr! cache c))))
+	  (if (not (pair? cache))
+	      (error "not" "a" "cache")
+	      (set-cdr! cache c)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsname? ...                                                   */

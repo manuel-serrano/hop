@@ -38,7 +38,7 @@
 			   (list (list nobj
 				    (cons id
 				       (append
-					  (if (or #t (pair? (assq 'cmap (cdr x))))
+					  (if (pair? (assq 'cmap (cdr x)))
 					      '()
 					      '((cmap (instantiate::JsConstructMap))))
 					  (filter (lambda (f)

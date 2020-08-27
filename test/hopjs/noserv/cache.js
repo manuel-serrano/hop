@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
 /*    Last change :  Wed May  8 09:34:36 2019 (serrano)                */
-/*    Copyright   :  2014-19 Manuel Serrano                            */
+/*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hiddent class and caches testing.                                */
 /*=====================================================================*/
@@ -171,3 +171,54 @@ function method() {
 
 console.log( "method caching" );
 assert.ok( method(), "method caching" );
+
+/*---------------------------------------------------------------------*/
+/*    pmap invalidation                                                */
+/*---------------------------------------------------------------------*/
+function pmapinvA() {
+   function read( o ) {
+      var res;
+      for( let i = 0; i < 1000; i++ ) {      
+	 res = o.a;
+      }
+      return res;
+   }
+   
+   var p0a = { a: 1 };
+   var p0b = { a: 2 };
+   var p1 = { __proto__: p0a };
+   var o = { __proto__: p1 };
+   
+   var x = read( o );
+   p1.__proto__ = p0b;
+   var y = read( o );
+   
+   return x === p0a.a && y === p0b.a;
+}
+
+function pmapinvB() {
+   function read( o ) {
+      var res;
+      for( let i = 0; i < 1000; i++ ) {      
+	 res = o.a;
+      }
+      return res;
+   }
+   
+   var p0 = { a: 1 };
+   var p1 = { __proto__: p0 };
+   var p2 = { __proto__: p0 };
+   var o = { __proto__: p2 };
+   
+   var x = read( o );
+   p2.__proto__ = p1;
+   var y = read( o );
+   p1.a = 2;
+   var z = read( o );
+   
+   return x === p0.a && y === p0.a && z === p1.a;
+}
+
+console.log( "pmap invalidation" );
+assert.ok( pmapinvA(), "pmapinv, proto assignment" );
+assert.ok( pmapinvB(), "pmapinv, proto extension" );

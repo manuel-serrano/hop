@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 21 09:27:29 2017                          */
 ;*    Last change :  Mon Dec 30 09:56:14 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This optimization removes the THIS argument of functions that    */
 ;*    don't need it, i.e., that do not escape and that do not use it.  */
@@ -35,7 +35,7 @@
       (name "unthis")
       (comment "this elimination")
       (proc j2s-unthis)
-      (optional 2)))
+      (optional :optim-unthis)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unthis ...                                                   */
