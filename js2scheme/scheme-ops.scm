@@ -234,7 +234,6 @@
       ((+)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.6
        (let ((sexpr (j2s-scheme expr mode return ctx))
-             (typ (j2s-type expr))
              (vtyp (j2s-vtype expr))
 	     (etyp (j2s-type expr)))
           (cond
@@ -243,10 +242,10 @@
                   0
                   +0.0))
 	     ((memq etyp '(int32 uint32 int53 integer number))
-	      (j2s-cast sexpr expr etyp type ctx))
-             ((eq? typ 'real)
+	      (j2s-cast sexpr expr vtyp type ctx))
+             ((eq? etyp 'real)
               sexpr)
-             ((eq? typ 'null)
+             ((eq? etyp 'null)
               (if (memq type '(int32 uint32 int53 integer))
                   0
                   +0.0))
@@ -1210,8 +1209,8 @@
 		   (memq tr '(bool string object array))))
 	  (with-tmp lhs rhs mode return ctx
 	     (lambda (left right)
-		(if (or (memq tl '(null undefined bool integer int53))
-			(memq tr '(null undefined bool integer int53)))
+		(if (and (memq tl '(null undefined bool integer int53))
+			 (memq tr '(null undefined bool integer int53)))
 		    (if (eq? op '!=)
 			`(not (eq? ,left ,right))
 			`(eq? ,left ,right))

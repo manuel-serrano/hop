@@ -388,8 +388,14 @@
 ;*    j2s-use ::J2SInit ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-use this::J2SInit ctx deval infun)
+
+   (define (already-init? lhs)
+      (when (isa? lhs J2SRef)
+	 (with-access::J2SRef lhs (decl)
+	    (decl-usage-has? decl '(init)))))
+   
    (with-access::J2SInit this (lhs rhs)
-      (j2s-use lhs 'init deval infun)
+      (j2s-use lhs (if (already-init? lhs) 'assig 'init) deval infun)
       (j2s-use rhs 'ref deval infun))
    this)
 

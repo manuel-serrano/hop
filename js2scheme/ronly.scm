@@ -130,7 +130,8 @@
       (when (isa? lhs J2SRef)
 	 (with-access::J2SRef lhs (decl)
 	    (with-access::J2SDecl decl ( id)
-	       (decl-usage-add! decl 'init))))
+	       (decl-usage-add! decl
+		  (if (decl-usage-has? decl '(init)) 'assig 'init)))))
       (ronly! rhs mode deval))
    this)
 
