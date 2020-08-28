@@ -707,31 +707,6 @@
 	       (((? check-node?)) #t)
 	       (else #f)))))
    
-   (define (param-best-hint-type p::J2SDecl)
-      (with-access::J2SDecl p (hint usecnt useinloop vtype id)
-	 (cond
-	    ((and (>=fx (length hint) 4)
-		  (let* ((w (map cdr hint))
-			 (max (apply max w))
-			 (min (apply min w)))
-		     (<fx (-fx max min) 6)))
-	     ;; a megamorphic parameter, don't specialize it
-	     (list 'any 0 0))
-;* 	    ((decl-usage-has? p '(assig))                              */
-;* 	     ;; a writable parameter, don't specialize it              */
-;* 	     (list 'any 0 0))                                          */
-	    (else
-	     (multiple-value-bind (bt bc)
-		(best-hint-type p #t)
-		(if (memq bt '(any unknown undefined null))
-		    (list 'any 0 0)
-		    (if (or (eq? vtype 'unknown)
-			    (eq? vtype 'any)
-			    (and (eq? vtype 'number) (or (assq 'integer hint))))
-			(let ((c (if useinloop (*fx 2 (* bc usecnt)) (* bc usecnt))))
-			   (list bt c usecnt))
-			(list 'any 0 0))))))))
-   
    (define (fun-duplicable? decl::J2SDeclFun)
       ;; returns #t iff the function is duplicable, returns #f otherwise
       (with-access::J2SDeclFun this (val id %info hintinfo)
@@ -806,6 +781,40 @@
 		  (with-access::FunHintInfo hintinfo (unhinted hinted)
 		     (or (eq? hinted fun) (eq? unhinted fun))))))))
 
+   (define (megamorphic-hint? hint)
+      ;; a hint is megamorphic if more than N=4 types are hinted
+      ;; and if the maximal type is no greater than twice the hint mean
+      (and (>=fx (length hint) 4)
+	   (let* ((w (map cdr hint))
+		  (max (apply max w))
+		  (mean (/ (apply + w) (length w))))
+	      (< max (* mean 2)))))
+
+   (define (interesting-hint-type? hint)
+      ;; some types are not intereting for duplicating functions
+      ;; ignore this hints
+      (not (memq (car hint)
+	      '(any unknown undefined null bool
+		no-string no-object))))
+   
+   (define (param-best-hint-type p::J2SDecl)
+      (with-access::J2SDecl p (hint usecnt useinloop vtype id)
+	 (let ((hint (filter interesting-hint-type? hint)))
+	    (cond
+	       ((null? hint)
+		'(any 0 0))
+	       ((megamorphic-hint? hint)
+		;; a megamorphic parameter, don't specialize it
+		'(any 0 0))
+;* 	    ((decl-usage-has? p '(assig))                              */
+;* 	     ;; a writable parameter, don't specialize it              */
+;* 	     (list 'any 0 0))                                          */
+	       (else
+		(multiple-value-bind (bt bc)
+		   (best-hint-type p #t)
+		   (let ((c (if useinloop (*fx 2 (* bc usecnt)) (* bc usecnt))))
+		      (list bt c usecnt))))))))
+   
    (define (score-duplicate? score besthints body)
       (or (>fx score (*fx 5 (length besthints)))
 	  (>fx (*fx 20 (apply + (map caddr besthints))) (node-size body))

@@ -69,6 +69,7 @@
 	  (if (isa? ctx JsGlobalObject)
 	      (with-access::JsGlobalObject ctx (js-error)
 		 (instantiateJsError
+		    (cmap (instantiate::JsConstructMap))
 		    (%this ctx)
 		    (__proto__ (js-get js-error (& "prototype") ctx))
 		    (name (js-string->jsstring (vector-ref o 0)))
@@ -194,6 +195,7 @@
       
       (define js-error-prototype
 	 (instantiateJsError
+	    (cmap (instantiate::JsConstructMap))
 	    (%this %this)
 	    (__proto__ (js-object-proto %this))
 	    (name (& "Error"))
@@ -203,6 +205,7 @@
 	 (with-access::JsGlobalObject %this (js-new-target)
 	    (set! js-new-target constructor)
 	    (instantiateJsError
+	       (cmap (instantiate::JsConstructMap))
 	       (%this %this)
 	       (name (js-get constructor (& "name") %this))
 	       (msg (& ""))
@@ -466,6 +469,7 @@
 	    (js-function-info :name "SyntaxError" :len 1)
 	    :__proto__ js-function-prototype
 	    :prototype (instantiateJsError
+			  (cmap (instantiate::JsConstructMap))
 			  (%this %this)
 			  (__proto__ js-error-prototype)
 			  (name (& "error"))
@@ -478,6 +482,7 @@
 	    (js-function-info :name "TypeError" :len 1)
 	    :__proto__ js-function-prototype
 	    :prototype (instantiateJsError
+			  (cmap (instantiate::JsConstructMap))
 			  (%this %this)
 			  (__proto__ js-error-prototype)
 			  (name (& "error"))
@@ -490,6 +495,7 @@
 	    (js-function-info :name "URIError" :len 1)
 	    :__proto__ js-function-prototype
 	    :prototype (instantiateJsError
+			  (cmap (instantiate::JsConstructMap))
 			  (%this %this)
 			  (__proto__ js-error-prototype)
 			  (name (& "error"))
@@ -502,6 +508,7 @@
 	    (js-function-info :name "EvalError" :len 1)
 	    :__proto__ js-function-prototype
 	    :prototype (instantiateJsError 
+			  (cmap (instantiate::JsConstructMap))
 			  (%this %this)
 			  (__proto__ js-error-prototype)
 			  (name (& "error"))
@@ -514,6 +521,7 @@
 	    (js-function-info :name "RangeError" :len 1)
 	    :__proto__ js-function-prototype
 	    :prototype (instantiateJsError 
+			  (cmap (instantiate::JsConstructMap))
 			  (%this %this)
 			  (__proto__ js-error-prototype)
 			  (name (& "error"))
@@ -526,6 +534,7 @@
 	    (js-function-info :name "ReferenceError" :len 1)
 	    :__proto__ js-function-prototype
 	    :prototype (instantiateJsError 
+			  (cmap (instantiate::JsConstructMap))
 			  (%this %this)
 			  (__proto__ js-error-prototype)
 			  (name (& "error"))

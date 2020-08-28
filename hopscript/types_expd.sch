@@ -37,13 +37,9 @@
 		    (nx (list 'let
 			   (list (list nobj
 				    (cons id
-				       (append
-					  (if (pair? (assq 'cmap (cdr x)))
-					      '()
-					      '((cmap (instantiate::JsConstructMap))))
-					  (filter (lambda (f)
-						     (not (builtin? f)))
-					     (cdr x))))))
+				       (filter (lambda (f)
+						  (not (builtin? f)))
+					  (cdr x)))))
 			   (cons 'begin
 			      (map (lambda (f)
 				      (let ((c (assq (car f) (cdr x)))

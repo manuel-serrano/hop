@@ -127,7 +127,7 @@
 	  (force-type this 'unknown 'any))
       (when (config-get conf :optim-hintblock)
 	 (when (>=fx (config-get conf :verbose 0) 4)
-	    (display " hint-block:" (current-error-port)))
+	    (display " hint-block" (current-error-port)))
 	 (j2s-hint-block! this conf))
       (unless (config-get conf :optim-integer)
 	 (force-type this 'integer 'number))
