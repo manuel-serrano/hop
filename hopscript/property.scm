@@ -596,8 +596,8 @@
 ;*    function0->proc ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (function0->proc fun %this::JsGlobalObject)
-   (if (js-function? fun)
-       (with-access::JsFunction fun (procedure)
+   (if (js-procedure? fun)
+       (with-access::JsProcedure fun (procedure)
 	  (if (correct-arity? procedure 1)
 	      procedure
 	      (lambda (this)
@@ -609,8 +609,8 @@
 ;*    function1->proc ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (function1->proc fun %this::JsGlobalObject)
-   (if (js-function? fun)
-       (with-access::JsFunction fun (procedure)
+   (if (js-procedure? fun)
+       (with-access::JsProcedure fun (procedure)
 	  (if (correct-arity? procedure 2)
 	      procedure
 	      (lambda (this v)

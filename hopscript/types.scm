@@ -1044,6 +1044,20 @@
 	 enumerable)))
 
 ;*---------------------------------------------------------------------*/
+;*    object-print ::JsAccessorDescriptor ...                          */
+;*---------------------------------------------------------------------*/
+(define-method (object-print p::JsAccessorDescriptor port pslot::procedure)
+   (with-access::JsAccessorDescriptor p (name configurable enumerable get set)
+      (fprintf port
+	 "#|~s name=~a configurable=~a enumerable=~a get=~a set=~a|"
+	 (class-name (object-class p))
+	 name
+	 configurable
+	 enumerable
+	 (typeof get)
+	 (typeof set))))
+
+;*---------------------------------------------------------------------*/
 ;*    object-print ::JsWrapperDescriptor ...                          */
 ;*---------------------------------------------------------------------*/
 (define-method (object-print p::JsWrapperDescriptor port pslot::procedure)

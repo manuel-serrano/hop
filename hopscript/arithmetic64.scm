@@ -443,7 +443,7 @@
       ((fixnum? x) (fixnum->flonum x))
       ((int32? x) (int32->flonum x))
       ((uint32? x) (uint32->flonum x))
-      (else x)))
+      (else +nan.0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-int53-inc ...                                                 */

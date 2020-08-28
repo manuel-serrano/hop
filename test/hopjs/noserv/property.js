@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 05:40:26 2014                          */
 /*    Last change :  Thu Jul 25 06:21:50 2019 (serrano)                */
-/*    Copyright   :  2014-19 Manuel Serrano                            */
+/*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Property access (get/set) tests.                                 */
 /*=====================================================================*/
@@ -91,6 +91,18 @@ assert.strictEqual( o.cdr, 8 );
 
 assert.deepEqual( Object.keys( o ), [ "car", "cdr" ] );
 assert.deepEqual( Object.keys( o.__proto__ ), [ "type", "sum3" ] );
+
+Object.defineProperty( Cons.prototype, "sum4",
+   { enumerable: true,
+     get: () => { return this.car + this.cdr; },
+     set: ( v ) => { this.car = v/2; this.cdr = v/2; } } );
+
+o.sum4 = 16;
+assert.strictEqual( o.car, 8 );
+assert.strictEqual( o.cdr, 8 );
+
+assert.deepEqual( Object.keys( o ), [ "car", "cdr" ] );
+assert.deepEqual( Object.keys( o.__proto__ ), [ "type", "sum3", "sum4" ] );
 
 /*---------------------------------------------------------------------*/
 /*    Accessor properties with array prototypes                        */
