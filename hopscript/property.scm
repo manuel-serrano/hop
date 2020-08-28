@@ -1412,7 +1412,9 @@
 		   :configurable configurable
 		   :value (%get owner owner propname %this))))
 	    (else
-	     (error "js-from-property-descriptor" "Illegal descriptor" desc)))))
+	     (error "js-from-property-descriptor"
+		(format "Illegal descriptor (~a)" (typeof desc))
+		desc)))))
 
    (cond
       ((eq? desc (js-undefined))
@@ -1444,12 +1446,14 @@
 		    (set (js-get obj (& "set") %this)))
 		 (if (or (js-has-property obj (& "writable") %this)
 			 (js-has-property obj (& "value") %this)
-			 (and (not (js-function? get))
+			 (and (not (js-procedure? get))
 			      (not (eq? get (js-undefined))))
-			 (and (not (js-function? set))
+			 (and (not (js-procedure? set))
 			      (not (eq? set (js-undefined)))))
 		     (js-raise-type-error %this
-			"Illegal property descriptor ~s" obj)
+			(format "Illegal property descriptor (~a) ~~s"
+			   (typeof obj))
+			obj)
 		     (instantiate::JsAccessorDescriptor
 			(name name)
 			(get (when hasget get))
@@ -2464,13 +2468,12 @@
    (define (update-from-descriptor! o propobj index::long v desc)
       ;; 8.12.5
       (with-access::JsAccessorDescriptor desc (set %set)
-	 (if (js-function? set)
+	 (if (js-procedure? set)
 	     ;; 8.12.5, step 5
 	     (begin
 		(when (and (>=fx index 0) cache)
 		   (js-pcache-update-descriptor! cache index o propobj))
 		(%set o v)
-		;;(js-call1 %this set o v)
 		v)
 	     ;; 8.12.4, setp 2.a
 	     (reject "No setter defined"))))
@@ -3016,11 +3019,11 @@
    
    (define (check-accessor-property! get set)
       (cond
-	 ((not (or (js-function? get) (eq? get (js-undefined))))
+	 ((not (or (js-procedure? get) (eq? get (js-undefined))))
 	  (js-raise-type-error %this
 	     (format "wrong getter for property \"~a\", ~~a" name)
 	     get))
-	 ((and set (not (eq? set (js-undefined))) (not (js-function? set)))
+	 ((and set (not (eq? set (js-undefined))) (not (js-procedure? set)))
 	  (js-raise-type-error %this
 	     (format "wrong setter for property \"~a\", ~~a" name) set))))
    
@@ -3607,9 +3610,9 @@
 			 ;; 9.b
 			 (when (isa? desc JsAccessorDescriptor)
 			    (with-access::JsAccessorDescriptor desc (set get)
-			       (unless (js-function? get)
+			       (unless (js-procedure? get)
 				  (set! get (js-undefined)))
-			       (unless (js-function? set)
+			       (unless (js-procedure? set)
 				  (set! set (js-undefined)))))
 			 (propagate-property-descriptor2! desc current)
 			 (replace-property-descriptor! current desc))
@@ -3863,8 +3866,8 @@
        (js-jsstring-for-of obj proc %this)
        (with-access::JsGlobalObject %this (js-symbol-iterator)
 	  (let ((fun (js-get obj js-symbol-iterator %this)))
-	     (when (js-function? fun)
-		(js-for-of-iterator (js-call0 %this fun obj)
+	     (when (js-procedure? fun)
+		(js-for-of-iterator (js-call0-jsprocedure %this fun obj)
 		   obj proc close %this))))))
 
 ;*---------------------------------------------------------------------*/
@@ -3890,8 +3893,8 @@
 		    (set! exn #f))
 		 (when exn
 		    (let ((return (js-get iterator (& "return") %this)))
-		       (when (js-function? return)
-			  (js-call0 %this return iterator)))))
+		       (when (js-procedure? return)
+			  (js-call0-jsprocedure %this return iterator)))))
 	      (for next)))))
 			 
 ;*---------------------------------------------------------------------*/
