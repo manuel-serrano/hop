@@ -36,8 +36,7 @@
 	   __hopscript_arraybufferview
 	   __hopscript_arguments)
 
-   (export 
-	   (js-constant-init ::obj ::obj ::JsGlobalObject)
+   (export (js-constant-init ::obj ::obj ::JsGlobalObject)
 	   (js-with-context ::obj ::bstring ::procedure)
 	   (generic js-obj->jsobject ::obj ::JsGlobalObject)
 	   (js-literal->jsobject::JsObject ::vector ::vector ::JsGlobalObject)

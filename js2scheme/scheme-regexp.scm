@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_scheme-regexp
 
-   (include "ast.sch")
+   (include "ast.sch"
+	    "context.sch")
    
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -36,7 +37,15 @@
 (define (j2s-new-regexp this::J2SNew mode return::procedure ctx)
    (with-access::J2SNew this (args)
       (when (and (pair? args) (null? (cdr args)))
-	 `(js-new-regexp1 %this ,(j2s-scheme (car args) mode return ctx)))))
+	 (let ((prog (context-program ctx))
+	       (pat (j2s-scheme (car args) mode return ctx)))
+	    (if prog
+		(with-access::J2SProgram prog (rxcache-size)
+		   (let ((idx rxcache-size))
+		      (set! rxcache-size (+fx rxcache-size 1))
+		      `(js-new-regexp1/cache %this ,pat
+			  (vector-ref __js_rxcaches ,idx))))
+		`(js-new-regexp1 %this ,pat))))))
  
 ;*---------------------------------------------------------------------*/
 ;*    j2s-regexp-test ...                                              */

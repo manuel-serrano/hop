@@ -24,6 +24,9 @@ install: install-library
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = js2scheme
+BIGLOOEXTRALIBS = biglooweb
+HOPAPPLIBS = hop
+
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
   -lhop_s-$(HOPRELEASE)
 HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
@@ -65,11 +68,11 @@ INCLUDES = ast.sch usage.sch usage-bit.sch scheme.sch
 #*---------------------------------------------------------------------*/
 POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile walk.sch token.sch
 
-include ../etc/Makefile.library
-
 #*---------------------------------------------------------------------*/
 #*    all                                                              */
 #*---------------------------------------------------------------------*/
+include ../etc/Makefile.library
+
 .PHONY: build native jvm
 
 build: $(BACKEND)

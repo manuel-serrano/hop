@@ -46,6 +46,7 @@
 	      (mode::symbol read-only (default 'normal))
 	      (path::bstring read-only)
 	      (pcache-size::long (default 0))
+	      (rxcache-size::long (default 0))
 	      (call-size::long (default 0))
 	      (name read-only (default #f))
 	      (main read-only (default #f))

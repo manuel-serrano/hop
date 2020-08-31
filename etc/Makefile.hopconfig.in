@@ -86,8 +86,13 @@ BHOPCFLAGS	= @BHOPCFLAGS@
 #*---------------------------------------------------------------------*/
 #*    Linking                                                          */
 #*---------------------------------------------------------------------*/
+HOPEXTRALIBS	= @EXTRALIBS@
+HOPBIGLOOEXTRALIBS = @BIGLOOEXTRALIBS@
+HOPAPPLIBS	=
+
 BGLCLOSELIBS_S	= $(BIGLOOPTHLIBS) $(BIGLOOSSLLIBS) @BGLCLOSELIBS_S@
 BGLCLOSELIBS_U	= $(BIGLOOPTHLIBU) $(BIGLOOSSLLIBU) @BGLCLOSELIBS_U@
+
 
 #*---------------------------------------------------------------------*/
 #*    Build                                                            */
@@ -136,7 +141,7 @@ HOPDISTRIBDIR	= @HOPDISTRIBDIR@
 #*---------------------------------------------------------------------*/
 #*    compile                                                          */
 #*---------------------------------------------------------------------*/
-.PHONY: compile compile2 link mkdir
+.PHONY: compile compile2 link
 
 COLOR		= yes
 

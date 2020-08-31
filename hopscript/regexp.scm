@@ -33,7 +33,9 @@
 	   __hopscript_proxy)
 
    (export (js-init-regexp! ::JsGlobalObject)
+	   (js-init-regexp-caches! ::JsGlobalObject ::long)
 	   (js-new-regexp1 ::JsGlobalObject ::obj)
+	   (js-new-regexp1/cache ::JsGlobalObject ::obj ::struct)
 	   (inline js-regexp?::bool ::obj)
 	   (js-regexp->jsregexp ::regexp ::JsGlobalObject)
 	   (js-regexp-literal-test::bool ::JsRegExp ::obj ::JsGlobalObject)
@@ -46,12 +48,72 @@
    ;; export for memory profiling
    (export (js-regexp-construct ::JsGlobalObject pattern uflags loc)))
 
-
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
 
+;*---------------------------------------------------------------------*/
+;*    regexp-cache ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-struct regexp-cache index patterns regexps)
+
+(define regexp-cache-default-pattern "")
+(define regexp-cache-default-regexp (pregexp ""))
+
+(define regexp-cache-size-default 5)
+
+;*---------------------------------------------------------------------*/
+;*    js-init-regexp-caches! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-init-regexp-caches! %this len)
+   (let ((caches (make-vector len)))
+      (let loop ((i 0))
+	 (if (=fx i len)
+	     caches
+	     (let ((cache (js-make-regexp-cache regexp-cache-size-default)))
+		(vector-set! caches i cache)
+		(loop (+fx i 1)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-regexp-cache ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-make-regexp-cache sz)
+   (regexp-cache 0
+      (make-vector sz regexp-cache-default-pattern)
+      (make-vector sz regexp-cache-default-regexp)))
+
+;*---------------------------------------------------------------------*/
+;*    js-regexp-cache-get ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-regexp-cache-get cache pat)
+   (let ((idx (regexp-cache-index cache))
+	 (pats (regexp-cache-patterns cache)))
+      (let loop ((i 0))
+	 (cond
+	    ((=fx i idx)
+	     #f)
+	    ((string=? pat (vector-ref pats i))
+	     (vector-ref (regexp-cache-regexps cache) i))
+	    (else
+	     (loop (+fx i 1)))))))
+      
+;*---------------------------------------------------------------------*/
+;*    js-regexp-cache-put! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-regexp-cache-put! cache pat regexp)
+   (let ((idx (regexp-cache-index cache))
+	 (pats (regexp-cache-patterns cache))
+	 (rxs (regexp-cache-regexps cache)))
+      (if (<fx idx (vector-length pats))
+	  (begin
+	     (vector-set! pats idx pat)
+	     (vector-set! rxs idx regexp)
+	     (regexp-cache-index-set! cache (+fx idx 1)))
+	  (let ((idx (random (vector-length pats))))
+	     (vector-set! pats idx pat)
+	     (vector-set! rxs idx regexp)))))
+	     
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsRegExp ...                                 */
 ;*---------------------------------------------------------------------*/
@@ -179,6 +241,21 @@
    (if (js-regexp? pattern)
        pattern
        (js-regexp-construct %this pattern (js-undefined) (js-undefined))))
+
+;*---------------------------------------------------------------------*/
+;*    js-new-regexp1/cache ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-new-regexp1/cache %this::JsGlobalObject pattern cache)
+   (if (js-regexp? pattern)
+       pattern
+       (let* ((pat (js-jsstring->string pattern))
+	      (oldrx (js-regexp-cache-get cache pat)))
+	  (if oldrx
+	      (js-regexp-construct/rx %this oldrx pattern (js-undefined))
+	      (let ((new (js-regexp-construct %this pattern (js-undefined) (js-undefined))))
+		 (with-access::JsRegExp new (rx)
+		    (js-regexp-cache-put! cache pat rx)
+		    new))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-js-regexp-pattern ...                                       */
@@ -495,6 +572,19 @@
 	  (ucs2-string->utf8-string u)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-regexp-construct/rx ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-regexp-construct/rx %this::JsGlobalObject rx pattern flags)
+   (with-access::JsGlobalObject %this (js-regexp js-regexp-cmap js-regexp-prototype)
+      (instantiateJsRegExp
+	 (cmap js-regexp-cmap)
+	 (__proto__ js-regexp-prototype)
+	 (elements (vector 0))
+	 (rx rx)
+	 (source pattern)
+	 (flags flags))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-regexp-construct ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.4.1    */
@@ -546,7 +636,6 @@
 		   (js-raise-syntax-error %this "Illegal flags \"~a\"" f))))))
       (multiple-value-bind (pat enc)
 	 (make-js-regexp-pattern %this pattern)
-	 ;;(tprint "pattern=" pattern " -> " pat)
 	 (let ((rx (pregexp pat
 		      (when (js-regexp-flags-ignorecase? flags) 'CASELESS)
 		      'JAVASCRIPT_COMPAT
@@ -554,14 +643,7 @@
 			       (not (js-regexp-flags-unicode? flags)))
 			  'JAVASCRIPT_COMPAT 'UTF8)
 		      (when (js-regexp-flags-multiline? flags) 'MULTILINE))))
-	    (with-access::JsGlobalObject %this (js-regexp js-regexp-cmap js-regexp-prototype)
-	       (instantiateJsRegExp
-		  (cmap js-regexp-cmap)
-		  (__proto__ js-regexp-prototype)
-		  (elements (vector 0))
-		  (rx rx)
-		  (source pattern)
-		  (flags flags)))))))
+	    (js-regexp-construct/rx %this rx pattern flags)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-regexp-prototype! ...                               */
@@ -724,7 +806,7 @@
 		      #f %this (js-pcache-ref js-regexp-pcache 0))
 		   (js-null))
 		  ((>=fx clen 0)
-		   (when (>fx (*fx (+fx clen 1) 2)
+		   (when (>=fx (*fx (+fx clen 1) 2)
 			    (vector-length js-regexp-positions))
 		      (set! js-regexp-positions
 			 (make-vector (* (+fx clen 1) 2))))
@@ -864,7 +946,7 @@
 		(clen (regexp-capture-count rx)))
 	    (cond
 	       ((>=fx clen 0)
-		(when (>fx (*fx (+fx clen 1) 2)
+		(when (>=fx (*fx (+fx clen 1) 2)
 			 (vector-length js-regexp-positions))
 		   (set! js-regexp-positions
 		      (make-vector (* clen 2))))
@@ -992,7 +1074,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.6.3    */
 ;*    -------------------------------------------------------------    */
 ;*    This function is used when the REGEXP is given as a literal.     */
-;*    In that particular, there is no need to store all the            */
+;*    In that particular situation, there is no need to store all the  */
 ;*    EXEC variables.                                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-regexp-literal-test-string::bool this::JsRegExp str::obj %this)

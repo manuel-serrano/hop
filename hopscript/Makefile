@@ -24,6 +24,8 @@ install: install-library
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = hopscript
+HOPAPPLIBS = js2scheme hop hopwidget
+
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
   -ljs2scheme_s-$(HOPRELEASE) \
   -lhop_s-$(HOPRELEASE) \
@@ -68,11 +70,11 @@ C_INCLUDES = bglhopscript.h bglhopscript_malloc.h
 #*---------------------------------------------------------------------*/
 POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile
 
-include ../etc/Makefile.library
-
 #*---------------------------------------------------------------------*/
 #*    all                                                              */
 #*---------------------------------------------------------------------*/
+include ../etc/Makefile.library
+
 .PHONY: build native jvm
 
 build: $(BACKEND)
