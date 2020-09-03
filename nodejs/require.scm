@@ -639,7 +639,7 @@
 	   path::bstring checksum::long loc)
    (let* ((respath (nodejs-resolve path %this %module 'import))
 	  (mod (nodejs-load-module respath worker %this %module
-		 :commonjs-export #t)))
+		 :commonjs-export #t :loc loc)))
       (with-access::JsModule mod ((mc checksum))
 	 (if (or (=fx checksum 0) (=fx checksum mc) (=fx mc 0))
 	     mod
@@ -1938,7 +1938,8 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-load-module path::bstring worker::WorkerHopThread
 	   %this %module
-	   #!key (lang "hopscript") compiler compiler-options commonjs-export)
+	   #!key (lang "hopscript") compiler
+	   compiler-options commonjs-export loc)
    
    (define (load-json path)
       (let ((mod (nodejs-new-module path path worker %this))
@@ -2008,7 +2009,12 @@
 	    (trace-item "path=" path)
 	    (trace-item "mod=" (if (eq? mod (js-absent)) 'absent (typeof mod)))
 	    (if (eq? mod (js-absent))
-		(load-module path path worker %this %module lang compiler #f)
+		(let ((env (current-dynamic-env)))
+		   (let ()
+		      ($env-push-trace env path loc)
+		      (let ((v (load-module path path worker %this %module lang compiler #f)))
+			 ($env-pop-trace env)
+			 v)))
 		mod)))))
 
 ;*---------------------------------------------------------------------*/

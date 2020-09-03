@@ -62,7 +62,7 @@
 	   (js-string-parsefloat ::bstring ::bool)
 	   (js-string->bool::bool ::bstring)
 	   (inline js-jsstring-toboolean::bool ::JsStringLiteral)
-	   (generic js-jsstring-normalize!::JsStringLiteral ::JsStringLiteral)
+	   (js-jsstring-normalize!::JsStringLiteral ::JsStringLiteral)
 	   
 	   (js-jsstring-normalize-ASCII!::bstring ::JsStringLiteral)
 	   (js-jsstring-normalize-UTF8!::bstring ::JsStringLiteral)
@@ -677,29 +677,16 @@
 ;*    -------------------------------------------------------------    */
 ;*    Tailrec normalization (with explicit stack management).          */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-jsstring-normalize!::JsStringLiteral js::JsStringLiteral))
-
-;*---------------------------------------------------------------------*/
-;*    js-jsstring-normalize! ::JsStringLiteralASCII ...                */
-;*---------------------------------------------------------------------*/
-(define-method (js-jsstring-normalize!::JsStringLiteral js::JsStringLiteralASCII)
-   (js-jsstring-normalize-ASCII! js)
-   js)
-
-;*---------------------------------------------------------------------*/
-;*    js-jsstring-normalize! ::JsStringLiteralIndex ...                */
-;*---------------------------------------------------------------------*/
-(define-method (js-jsstring-normalize!::JsStringLiteral js::JsStringLiteralIndex)
-   js)
-
-;*---------------------------------------------------------------------*/
-;*    js-jsstring-normalize! ::JsStringLiteralUTF8 ...                 */
-;*    -------------------------------------------------------------    */
-;*    Tailrec normalization (with explicit stack management).          */
-;*---------------------------------------------------------------------*/
-(define-method (js-jsstring-normalize!::JsStringLiteral js::JsStringLiteralUTF8)
-   (js-jsstring-normalize-UTF8! js)
-   js)
+(define (js-jsstring-normalize!::JsStringLiteral js::JsStringLiteral)
+   (cond
+      ((js-jsstring-normalized? js)
+       js)
+      ((js-jsstring-utf8? js)
+       (js-jsstring-normalize-UTF8! js)
+       js)
+      (else
+       (js-jsstring-normalize-ASCII! js)
+       js)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-length ...                                           */
