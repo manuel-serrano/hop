@@ -4180,7 +4180,7 @@
 	  #f)))
    
    (js-profile-log-method name point)
-   
+
    (let ((n (js-toname name %this)))
       (let loop ((obj o))
 	 (jsobject-find obj o n

@@ -101,6 +101,7 @@
 		       `(vector-set! v ,i ,o))
 		  (iota (length args)) args)
 	     (set! ilen ,(fixnum->uint32 (length args)))
+	     (set! length ,(fixnum->uint32 (length args)))
 	     a))))
 
 ;*---------------------------------------------------------------------*/

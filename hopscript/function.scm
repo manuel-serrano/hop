@@ -145,14 +145,14 @@
 (define (js-function-src obj::JsFunction)
    (with-access::JsFunction obj (info)
       (match-case info
-	 (#(?- ?- (and (? js-jsstring?) ?src) ?- ?- ?-)
+	 (#(?- ?- (and (? js-jsstring?) ?src) ?- ?- ?- ?-)
 	  src)
-	 (#(?- ?- #f ?path ?start ?end)
+	 (#(?- ?- #f ?path ?start ?end ?-)
 	  (let* ((str (read-function-source info path start end))
 		 (jstr (js-string->jsstring str)))
 	     (vector-set! info 2 jstr)
 	     jstr))
-	 (#(?- ?- #f ?- ?- ?-)
+	 (#(?- ?- #f ?- ?- ?- ?-)
 	  (let ((jstr (js-jsstring-append
 			 (js-ascii->jsstring "[function ")
 			 (js-jsstring-append
@@ -1151,7 +1151,6 @@
    (with-access::JsProcedure this (arity procedure)
       (let ((n (uint32->fixnum ilen)))
 	 (cond
-;* 	    ((=fx arity (+fx 1 n))                                     */
 	    ((>=fx arity 0)
 	     (case n
 		((0)
@@ -1315,18 +1314,19 @@
 ;*    js-function-maybe-call1 ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-function-maybe-call1 %this this thisarg arg cache)
-   (let loop ((this this))
-      (cond
-	 ((js-procedure? this)
-	  (js-function-call1 %this this thisarg arg cache))
-	 ((js-object? this)
-	  (with-access::JsGlobalObject %this (js-function-pcache)
-	     (js-call2 %this
-		(js-get-jsobject-name/cache this (& "call") #f %this
-		   (or cache (js-pcache-ref js-function-pcache 5)))
-		this thisarg arg)))
-	 (else
-	  (loop (js-toobject %this this))))))
+   (with-access::JsFunction this (info)
+      (let loop ((this this))
+	 (cond
+	    ((js-procedure? this)
+	     (js-function-call1 %this this thisarg arg cache))
+	    ((js-object? this)
+	     (with-access::JsGlobalObject %this (js-function-pcache)
+		(js-call2 %this
+		   (js-get-jsobject-name/cache this (& "call") #f %this
+		      (or cache (js-pcache-ref js-function-pcache 5)))
+		   this thisarg arg)))
+	    (else
+	     (loop (js-toobject %this this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-call2 ...                                      */

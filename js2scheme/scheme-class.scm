@@ -126,7 +126,7 @@
 				%this))
 		     (%superctor ,superid))
 		 ,(proc superid))))))
-   
+
    (define (make-class this name super els constructor arity length ctorsz src loc)
       (let* ((cname (or name (gensym 'class)))
 	     (clazz (symbol-append cname '%CLASS))
@@ -145,7 +145,7 @@
 				(else
 				 `(js-new-sans-construct %this ,super))))
 		    (,clazz (js-make-function %this ,ctor
-			       (js-function-arity ,ctor)
+			       ,arity
 			       (js-function-info :name ,(symbol->string cname) :len ,length)
 			       :strict ',mode
 			       :alloc ,(if (or (eq? super #f) (null? super))

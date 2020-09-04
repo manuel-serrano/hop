@@ -2392,10 +2392,7 @@
 (define (error-obj->string::bstring %this obj)
    (cond
       ((js-object? obj)
-       (with-handler
-	  (lambda (e)
-	     (js-jsstring->string (js-typeof obj %this)))
-	  (js-jsstring->string (js-typeof obj %this))))
+       (js-jsstring->string (js-typeof obj %this)))
       ((eq? obj #unspecified)
        "undefined")
       ((eq? obj #f)
