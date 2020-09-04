@@ -667,7 +667,7 @@
       (cond
 	 ((js-jsstring-normalized? js)
 	  left)
-	 ((<u32 length #u32:8192)
+	 ((<u32 length #u32:16384)
 	  (normalize-small! js))
 	 (else
 	  (normalize-big! js)))))

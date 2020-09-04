@@ -151,7 +151,7 @@
 	 (set! js-names
 	    (let ((table (create-hashtable
 			    :eqtest string-compare?
-			    :hash string-hash-number
+			    :hash (lambda (s) ($string-hash s 0 (string-length s)))
 			    :size 512
 			    :max-length 65536
 			    :max-bucket-length 20)))
