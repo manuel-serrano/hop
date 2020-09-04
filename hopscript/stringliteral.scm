@@ -35,6 +35,7 @@
 	   (js-jsstring-for-of str ::procedure ::JsGlobalObject)
 	   (inline js-ascii->jsstring::JsStringLiteralASCII ::bstring)
 	   (inline js-utf8->jsstring::JsStringLiteralUTF8 ::bstring)
+	   (inline js-utf8->jsstring/ulen::JsStringLiteralUTF8 ::bstring ::uint32)
 	   (js-string->jsstring::JsStringLiteral ::bstring)
 	   (js-symbol->jsstring::JsStringLiteral ::symbol)
 	   (js-keyword->jsstring::JsStringLiteral ::keyword)
@@ -177,9 +178,10 @@
 	 (let loop ((i 128))
 	    (when (<=fx i 255)
 	       (vector-set! vec i
-		  (js-utf8->jsstring
+		  (js-utf8->jsstring/ulen
 		     (ucs2-string->utf8-string
-			(make-ucs2-string 1 (integer->ucs2 i)))))
+			(make-ucs2-string 1 (integer->ucs2 i)))
+		     #u32:1))
 	       (loop (+fx i 1))))
 	 (set! char-table vec))))
 
@@ -423,6 +425,18 @@
       o))
 
 ;*---------------------------------------------------------------------*/
+;*    js-utf8->jsstring ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (js-utf8->jsstring/ulen::JsStringLiteralUTF8 val::bstring ulen::uint32)
+   (let ((o (instantiate::JsStringLiteralUTF8
+	       (length (fixnum->uint32 (string-length val)))
+	       (%culen ulen)
+	       (left val))))
+      (js-object-mode-set! o (js-jsstring-normalized-utf8-mode))
+      (object-widening-set! o #f)
+      o))
+
+;*---------------------------------------------------------------------*/
 ;*    js-string->jsstring ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    Create a JsStringLiteral from a Scheme string literal.           */
@@ -573,7 +587,7 @@
 		   (with-access::JsStringLiteral left ((str left))
 		      (blit-buffer! str buffer i (string-length str))
 		      (loop (+fx i (string-length str)) right stack)))
-		  ((not (js-jsstring-normalized? s))
+		  (else
 		   (with-access::JsStringLiteral left (length)
 		      (let ((len (uint32->fixnum length)))
 			 (if (js-jsstring-normalized? right)
@@ -584,11 +598,7 @@
 				   (loop i left stack)))
 			     (let* ((ni (+fx i len))
 				    (nstack (cons (cons ni right) stack)))
-				(loop i left nstack))))))
-		  
-		  (else
-		   (tprint "SHOULD NOT BE HERE, remove previous test")
-		   (loop i left stack)))))))
+				(loop i left nstack)))))))))))
    
    (with-access::JsStringLiteral js (length left)
       (cond
@@ -598,6 +608,8 @@
 	  (normalize-small! js))
 	 (else
 	  (normalize-big! js)))))
+
+
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-UTF8! ...                                  */
@@ -611,6 +623,12 @@
 	    ((1) (begin (string-set! buffer i (string-ref s 0)) (+fx i 1)))
 	    (else (utf8-string-append-fill! buffer i s)))))
    
+   (define (blit-buffer!::long s::bstring buffer::bstring i::long len::long)
+      (case len
+	 ((0) #unspecified)
+	 ((1) (string-set! buffer i (string-ref s 0)))
+	 (else (blit-string! s 0 buffer i len))))
+
    (define (string-weight js::JsStringLiteral)
       (with-access::JsStringLiteral js (left)
 	 (with-access::JsStringLiteral left (length)
@@ -633,8 +651,66 @@
 	       (js-jsstring-mark-normalized! js buffer)
 	       (set! length (fixnum->uint32 (string-length buffer)))
 	       buffer))))
+
+   (define (depth s limit)
+      (with-access::JsStringLiteral s (left right)
+	 (if (js-jsstring-normalized? s)
+	     0
+	     (let ((ld (depth left limit)))
+		(if (>=fx ld limit)
+		    ld
+		    (let ((rd (depth right limit)))
+		       (if (>=fx rd limit)
+			   rd
+			   (+fx 1 (maxfx ld rd)))))))))
+
+   (define (normalize-big! js::JsStringLiteral)
+      ;; tail recursive with heap allocated stack
+      (let ((buffer (with-access::JsStringLiteral js (length)
+		       (make-string (uint32->fixnum length)))))
+	 (let loop ((i 0)
+		    (s js)
+		    (stack '()))
+	    (with-access::JsStringLiteral s (left right)
+	       (cond
+		  ((string? left)
+		   (let ((ni (if (js-jsstring-ascii? s)
+				 (let ((len (string-length left)))
+				    (blit-buffer! left buffer i len)
+				    (+fx i len))
+				 (blit-utf8-buffer! left buffer i))))
+		      (if (pair? stack)
+			  (let* ((top (car stack))
+				 (ni (car top))
+				 (s (cdr top)))
+			     (loop ni s (cdr stack)))
+			  (begin
+			     (js-jsstring-mark-normalized! js buffer)
+			     buffer))))
+		  ((js-jsstring-normalized? left)
+		   (with-access::JsStringLiteral left ((str left))
+		      (if (js-jsstring-ascii? left)
+			  (let ((len (string-length str)))
+			     (blit-buffer! str buffer i len)
+			     (loop (+fx i len) right stack))
+			  (let ((ni (blit-utf8-buffer! str buffer i)))
+			     (loop ni right stack)))))
+		  (else
+		   (if (and (js-jsstring-normalized? right)
+			    (js-jsstring-ascii? left))
+		       (with-access::JsStringLiteral right ((str left))
+			  ;; write the rhs in advance
+			  (with-access::JsStringLiteral left (length)
+			     (let ((ni (blit-utf8-buffer! str buffer
+					  (+fx i (uint32->fixnum length)))))
+				(loop i left stack))))
+		       ;; full recursive call with pushed right
+		       (let* ((ni (+fx i (string-weight s)))
+			      (nstack (cons (cons ni right) stack)))
+			  (loop i left nstack)))))))))
    
-   (define (normalize-big! js)
+   (define (normalize-big!OLD js)
+;;      (tprint "js-jsstring-normalize-UTF*-big...")
       (with-access::JsStringLiteralUTF8 js (length %idxutf8 %idxstr)
 	 (let* ((len (js-jsstring-length js))
 		(buffer (make-string (uint32->fixnum len))))
@@ -661,6 +737,8 @@
 			  ;; full recursive call with pushed right
 			  (let* ((ni (+fx i (string-weight s)))
 				 (nstack (cons (cons ni right) stack)))
+;* 			     (tprint "d.left=" (depth left) " d.right=" */
+;* 				(depth right))                         */
 			     (loop i left nstack)))))))))
    
    (with-access::JsStringLiteralUTF8 js (length left)
@@ -668,6 +746,8 @@
 	 ((js-jsstring-normalized? js)
 	  left)
 	 ((<u32 length #u32:16384)
+	  (normalize-small! js))
+	 ((< (depth js 1024) 1024)
 	  (normalize-small! js))
 	 (else
 	  (normalize-big! js)))))
@@ -728,7 +808,9 @@
 	  length)
        (with-access::JsStringLiteralUTF8 js (%culen)
 	  (when (=u32 %culen #u32:0)
-	     (set! %culen (utf8-codeunit-length (js-jsstring->string js))))
+	     (set! %culen
+		(fixnum->uint32
+		   (utf8-codeunit-length (js-jsstring->string js)))))
 	  %culen)))
 
 ;*---------------------------------------------------------------------*/
@@ -1289,10 +1371,11 @@
 	  (with-access::JsGlobalObject %this (char-table)
 	     (vector-ref char-table n)))
 	 (else
-	  (js-utf8->jsstring
+	  (js-utf8->jsstring/ulen
 	     (ucs2-string->utf8-string
 		(ucs2-string
-		   (integer->ucs2 n))))))))
+		   (integer->ucs2 n)))
+	     #u32:1)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-ref ...                                              */
@@ -1360,7 +1443,7 @@
    (define (utf8-string-character-ref val fxpos)
       (if (=u32 (fixnum->uint32 fxpos) (js-jsstring-codeunit-length o))
 	  (js-undefined)
-	  (js-utf8->jsstring (utf8-string-ref val fxpos))))
+	  (js-utf8->jsstring/ulen (utf8-string-ref val fxpos) #u32:1)))
    
    (string-dispatch string-character-ref o (uint32->fixnum index)))
 
@@ -2009,9 +2092,11 @@
       (js-ascii->jsstring (string-downcase s)))
 
    (define (utf8-tolowercase s)
-      (js-utf8->jsstring
-	 (ucs2-string->utf8-string
-	    (ucs2-string-downcase (utf8-string->ucs2-string s)))))
+      (with-access::JsStringLiteralUTF8 this (%culen)
+	 (js-utf8->jsstring/ulen
+	    (ucs2-string->utf8-string
+	       (ucs2-string-downcase (utf8-string->ucs2-string s)))
+	    %culen)))
 
    (string-dispatch tolowercase this))
 
@@ -2043,7 +2128,8 @@
       (js-ascii->jsstring (string-downcase s)))
 
    (define (utf8-tolowercase s)
-      (js-utf8->jsstring (utf8-string-locale-downcase s)))
+      (with-access::JsStringLiteralUTF8 this (%culen)
+	 (js-utf8->jsstring/ulen (utf8-string-locale-downcase s) %culen)))
 
    (string-dispatch tolowercase this))
 
@@ -2109,7 +2195,8 @@
       (js-ascii->jsstring (string-upcase s)))
 
    (define (utf8-touppercase s)
-      (js-utf8->jsstring (utf8-string-locale-upcase s)))
+      (with-access::JsStringLiteralUTF8 this (%culen)
+	 (js-utf8->jsstring/ulen (utf8-string-locale-upcase s) %culen)))
 
    (string-dispatch touppercase this))
 
@@ -2224,131 +2311,6 @@
 			  (l (js-get-lengthu32 A %this)))
 		       ;; 15
 		       (js-array-index-set! A l (js-string->jsstring T) #f %this)
-		       ;;16
-		       A))))))))
-
-(define (js-jsstring-split.OLD-21aug2020 this::JsStringLiteral separator limit %this)
-   
-   (define (minelong2::elong n1::elong n2::elong)
-      (if (<elong n1 n2) n1 n2))
-   
-   (define (split-match S::bstring q R)
-      (if (isa? R JsRegExp)
-	  (with-access::JsRegExp R (rx)
-	     (or (pregexp-match-positions rx S q) 'failure))
-	  (let ((r (string-length R))
-		(s (string-length S)))
-	     (cond
-		((>fx (+fx q r) s) 'failure)
-		((substring-at? S R q) (list (cons q (+fx q r))))
-		(else 'failure)))))
-
-   (with-access::JsGlobalObject %this (js-array)
-      (let* ((jsS this)
-	     (S (js-jsstring->string jsS))
-	     (A (js-new %this js-array 0))
-	     (lim (if (eq? limit (js-undefined))
-		      (+fx (string-length S) 1)
-		      (elong->fixnum
-			 (minelong2
-			    (uint32->elong (js-touint32 limit %this))
-			    (fixnum->elong (+fx 1 (string-length S)))))))
-	     (s (string-length S))
-	     (p 0)
-	     (R (if (isa? separator JsRegExp)
-		    separator
-		    (js-tostring separator %this))))
-	 (cond
-	    ((=fx lim 0)
-	     ;; 9
-	     A)
-	    ((eq? separator (js-undefined))
-	     ;; 10
-	     (js-define-own-property A 0
-		(instantiate::JsValueDescriptor
-		   (name (js-toname 0 %this))
-		   (value jsS)
-		   (writable #t)
-		   (enumerable #t)
-		   (configurable #t))
-		#f %this)
-	     A)
-	    ((=fx s 0)
-	     ;; 11
-	     (let ((z (split-match S 0 R)))
-		(when (eq? z 'failure)
-		   (js-define-own-property A 0
-		      (instantiate::JsValueDescriptor
-			 (name (js-toname 0 %this))
-			 (value jsS)
-			 (writable #t)
-			 (enumerable #t)
-			 (configurable #t))
-		      #f %this))
-		A))
-	    (else
-	     ;; 13
-	     (let loop ((q p)
-			(p p))
-		(if (not (=fx q s))
-		    (let ((z (split-match S q R)))
-		       (if (eq? z 'failure)
-			   (loop (+fx q (utf8-char-size (string-ref S q))) p)
-			   ;; 13.c.i
-			   (let ((e (cdar z))
-				 (q (caar z))
-				 (cap (cdr z)))
-			      (if (=fx e p)
-				  ;; 13.c.ii
-				  (loop (+fx q (utf8-char-size (string-ref S q))) p)
-				  ;; 13.c.iii.1
-				  (let ((T (substring S p q))
-					(l (->fixnum (js-get-length A %this))))
-				     ;; 13.c.iii.2
-				     (js-define-own-property A l
-					(instantiate::JsValueDescriptor
-					   (name (js-toname l %this))
-					   (value (js-string->jsstring T))
-					   (writable #t)
-					   (enumerable #t)
-					   (configurable #t))
-					#f %this)
-				     (if (=fx (+fx l 1) lim)
-					 ;; 13.c.iii.4
-					 A
-					 ;; 13.c.iii.5
-					 (let ((p e))
-					    (let repeat ((cap cap)
-							 (l (+fx l 1)))
-					       (if (pair? cap)
-						   (begin
-						      ;; 13.c.iii.7.b
-						      (js-define-own-property A l
-							 (instantiate::JsValueDescriptor
-							    (name (js-toname l %this))
-							    (value (js-string->jsstring (car cap)))
-							    (writable #t)
-							    (enumerable #t)
-							    (configurable #t))
-							 #f %this)
-						      (if (=fx (+fx l 1) lim)
-							  ;; 13.c.iii.7.d
-							  A
-							  ;; 13.c.iii.8
-							  (repeat (cdr cap) (+fx l 1))))
-						   (loop p e))))))))))
-		    ;; 14
-		    (let ((T (substring S p s))
-			  (l (js-get-length A %this)))
-		       ;; 15
-		       (js-define-own-property A l
-			  (instantiate::JsValueDescriptor
-			     (name (js-toname l %this))
-			     (value (js-string->jsstring T))
-			     (writable #t)
-			     (enumerable #t)
-			     (configurable #t))
-			  #f %this)
 		       ;;16
 		       A))))))))
 
