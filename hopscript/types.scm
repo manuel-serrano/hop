@@ -177,7 +177,7 @@
 	   
 	   (class JsObject
 	      (cmap::JsConstructMap (default (js-not-a-cmap)))
-	      (elements::vector (default '#())))
+	      (elements (default '#())))
 	   
 	   (class JsWrapper::JsObject
 	      obj
@@ -565,6 +565,7 @@
 	   
 	   (inline js-object?::bool ::obj)
 	   (inline js-object-mapped?::bool ::JsObject)
+	   (inline js-object-hashed?::bool ::JsObject)
 	   
 	   (inline js-number?::bool ::obj)
 	   (inline js-jsstring?::bool ::obj)
@@ -1337,6 +1338,13 @@
 (define-inline (js-object-mapped? o::JsObject)
    (with-access::JsObject o (cmap)
       (not (eq? cmap (js-not-a-cmap)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-hashed? ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-hashed? o::JsObject)
+   (with-access::JsObject o (cmap elements)
+      (and (eq? cmap (js-not-a-cmap)) (not (vector? elements)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-number? ...                                                   */

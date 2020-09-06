@@ -147,7 +147,7 @@
       (match-case info
 	 (#(?- ?- (and (? js-jsstring?) ?src) ?- ?- ?- ?-)
 	  src)
-	 (#(?- ?- #f ?path ?start ?end ?-)
+	 (#(?- ?- #f (and (? string?) ?path) ?start ?end ?-)
 	  (let* ((str (read-function-source info path start end))
 		 (jstr (js-string->jsstring str)))
 	     (vector-set! info 2 jstr)
@@ -1366,7 +1366,7 @@
 ;*    read-function-source ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (read-function-source info path start end)
-   (if (file-exists? path)
+   (if (and (string? path) (file-exists? path))
        (let ((mmap (open-mmap path :write #f)))
 	  (mmap-substring mmap
 	     (fixnum->elong start) (fixnum->elong end)))

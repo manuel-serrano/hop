@@ -535,15 +535,30 @@
       (set! left buffer)
       (set! right (js-not-a-string-cache))
       js))
-   
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-depth ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-depth s limit)
+   (if (js-jsstring-normalized? s)
+       0
+       (with-access::JsStringLiteral s (left right)
+	  (let ((ld (js-jsstring-depth left limit)))
+	     (if (>=fx ld limit)
+		 ld
+		 (let ((rd (js-jsstring-depth right limit)))
+		    (if (>=fx rd limit)
+			rd
+			(+fx 1 (maxfx ld rd)))))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-ASCII! ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-normalize-ASCII!::bstring js::JsStringLiteral)
+   ;; BGl_jszd2jsstringzd2normaliza7ezd2ASCIIz12z67zz__hopscript_stringliteralz00
    
    (define (blit-buffer!::long s::bstring buffer::bstring i::long len::long)
       (case len
-	 ((0) #unspecified)
 	 ((1) (string-set! buffer i (string-ref s 0)))
 	 (else (blit-string! s 0 buffer i len))))
    
@@ -554,13 +569,12 @@
 	 (let loop ((i 0)
 		    (s js))
 	    (with-access::JsStringLiteral s (left right)
-	       (if (string? left)
+	       (if (js-jsstring-normalized? s)
 		   (blit-buffer! left buffer i (string-length left))
 		   (with-access::JsStringLiteral left (length)
 		      (let ((len (uint32->fixnum length)))
 			 (loop i left)
-			 (unless (js-jsstring-normalized? s)
-			    (loop (+fx i len) right)))))))
+			 (loop (+fx i len) right))))))
 	 (js-jsstring-mark-normalized! js buffer)
 	 buffer))
    
@@ -573,7 +587,7 @@
 		    (stack '()))
 	    (with-access::JsStringLiteral s (left right)
 	       (cond
-		  ((string? left)
+		  ((js-jsstring-normalized? s)
 		   (blit-buffer! left buffer i (string-length left))
 		   (if (pair? stack)
 		       (let* ((top (car stack))
@@ -606,15 +620,16 @@
 	  left)
 	 ((<u32 length #u32:16384)
 	  (normalize-small! js))
+	 ((< (js-jsstring-depth js 1024) 1024)
+	  (normalize-small! js))
 	 (else
 	  (normalize-big! js)))))
-
-
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-UTF8! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-normalize-UTF8! js::JsStringLiteral)
+   ;; BGl_jszd2jsstringzd2normaliza7ezd2UTF8z12z67zz__hopscript_stringliteralz00
    
    (define (blit-utf8-buffer!::long s::bstring buffer::bstring i::long)
       (let ((len (string-length s)))
@@ -625,7 +640,6 @@
    
    (define (blit-buffer!::long s::bstring buffer::bstring i::long len::long)
       (case len
-	 ((0) #unspecified)
 	 ((1) (string-set! buffer i (string-ref s 0)))
 	 (else (blit-string! s 0 buffer i len))))
 
@@ -652,17 +666,7 @@
 	       (set! length (fixnum->uint32 (string-length buffer)))
 	       buffer))))
 
-   (define (depth s limit)
-      (with-access::JsStringLiteral s (left right)
-	 (if (js-jsstring-normalized? s)
-	     0
-	     (let ((ld (depth left limit)))
-		(if (>=fx ld limit)
-		    ld
-		    (let ((rd (depth right limit)))
-		       (if (>=fx rd limit)
-			   rd
-			   (+fx 1 (maxfx ld rd)))))))))
+   
 
    (define (normalize-big! js::JsStringLiteral)
       ;; tail recursive with heap allocated stack
@@ -673,7 +677,7 @@
 		    (stack '()))
 	    (with-access::JsStringLiteral s (left right)
 	       (cond
-		  ((string? left)
+		  ((js-jsstring-normalized? s)
 		   (let ((ni (if (js-jsstring-ascii? s)
 				 (let ((len (string-length left)))
 				    (blit-buffer! left buffer i len)
@@ -737,8 +741,6 @@
 			  ;; full recursive call with pushed right
 			  (let* ((ni (+fx i (string-weight s)))
 				 (nstack (cons (cons ni right) stack)))
-;* 			     (tprint "d.left=" (depth left) " d.right=" */
-;* 				(depth right))                         */
 			     (loop i left nstack)))))))))
    
    (with-access::JsStringLiteralUTF8 js (length left)
@@ -747,7 +749,7 @@
 	  left)
 	 ((<u32 length #u32:16384)
 	  (normalize-small! js))
-	 ((< (depth js 1024) 1024)
+	 ((< (js-jsstring-depth js 1024) 1024)
 	  (normalize-small! js))
 	 (else
 	  (normalize-big! js)))))
