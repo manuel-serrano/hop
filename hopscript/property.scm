@@ -2130,7 +2130,7 @@
 ;*    A variant of js-get-property-value that does not use             */
 ;*    hashed property names.                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-get-property-value/string o::obj base p::obj %this::JsGlobalObject)
+(define (js-get-property-value/string o::obj base p::JsStringLiteral %this::JsGlobalObject)
    (if (and (js-object? o) (eq? (object-class o) JsObject))
        (js-get-jsobject-property-value/string o base p %this)
        (js-get-property-value o base p %this)))
@@ -2170,9 +2170,9 @@
 ;*    A variant of js-get-jsobject-property-value that does not use    */
 ;*    hashed property names.                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-get-jsobject-property-value/string o::JsObject base p::obj %this::JsGlobalObject)
+(define (js-get-jsobject-property-value/string o::JsObject base p::JsStringLiteral %this::JsGlobalObject)
    ;; JsObject x obj x JsGlobalObject -> value | Absent
-   (jsobject-find/string o o (js-tostring p %this)
+   (jsobject-find/string o o (js-jsstring->string p)
       ;; cmap search
       (lambda (owner i)
 	 (with-access::JsObject owner (elements)
@@ -2257,7 +2257,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject-hashed ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (js-get-jsobject-hashed o::JsObject base prop %this)
+(define (js-get-jsobject-hashed o::JsObject base prop::JsStringLiteral %this)
    (jsobject-hash-find o prop
       (lambda (owner e)
 	 (let ((d (cell-ref e)))
@@ -2265,8 +2265,7 @@
 		(js-property-value base o prop d %this)
 		d)))
       (lambda ()
-	 (let ((pval (if (and (js-jsstring? prop)
-			      (>u32 (js-jsstring-length prop) (hash-object-name-threshold)))
+	 (let ((pval (if (>u32 (js-jsstring-length prop) (hash-object-name-threshold))
 			 (js-get-property-value/string o base prop %this)
 			 (js-get-property-value o base prop %this))))
 	    (if (eq? pval (js-absent))
