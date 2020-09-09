@@ -2257,16 +2257,17 @@
 ;*    js-get-jsobject-hashed ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-get-jsobject-hashed o::JsObject base prop::JsStringLiteral %this)
-   (jsobject-hash-find o prop
+   (jsobject-hash-find/string o (js-jsstring->string prop)
       (lambda (owner e)
 	 (let ((d (cell-ref e)))
 	    (if (isa? d JsPropertyDescriptor)
 		(js-property-value base o prop d %this)
 		d)))
       (lambda ()
-	 (let ((pval (if (>u32 (js-jsstring-length prop) (hash-object-name-threshold))
-			 (js-get-property-value/string o base prop %this)
-			 (js-get-property-value o base prop %this))))
+	 (let* ((__proto__ (js-object-proto o))
+		(pval (if (>u32 (js-jsstring-length prop) (hash-object-name-threshold))
+			  (js-get-property-value/string __proto__ base prop %this)
+			  (js-get-property-value __proto__ base prop %this))))
 	    (if (eq? pval (js-absent))
 		(js-undefined)
 		pval)))))
