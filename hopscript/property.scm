@@ -1478,8 +1478,7 @@
    (js-object-mode-enumerable-set! o #t)
    (js-object-mode-plain-set! o #f)
    (let ((table (create-hashtable
-		   :eqtest string=?
-		   :hash (lambda (s) ($string-hash s 0 (string-length s)))
+		   :weak 'string
 		   :size 64
 		   :max-length 65536
 		   :max-bucket-length 20)))

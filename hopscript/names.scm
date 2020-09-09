@@ -129,18 +129,6 @@
 		    (else #f)))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    string-compare? ...                                              */
-;*---------------------------------------------------------------------*/
-(define (string-compare? x y)
-   (cond-expand
-      (bigloo-c
-       (let ((l1 (string-length x)))
-	  (when (=fx l1 (string-length y))
-	     (pragma::bool "!memcmp( (void *)BSTRING_TO_STRING( $1 ), (void *)BSTRING_TO_STRING( $2 ), $3 )" x y l1))))
-      (else
-       (string=? x y))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-init-names! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-init-names!)
@@ -150,8 +138,7 @@
 	    100)
 	 (set! js-names
 	    (let ((table (create-hashtable
-			    :eqtest string-compare?
-			    :hash (lambda (s) ($string-hash s 0 (string-length s)))
+			    :weak 'string
 			    :size 512
 			    :max-length 65536
 			    :max-bucket-length 20)))
