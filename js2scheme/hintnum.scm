@@ -105,6 +105,16 @@
 	     (cell-set! fix #f)
 	     newhint)
 	  (begin
+	     ;; handle the no-string/string relationship
+	     (when (assq 'no-string newhint)
+		(let ((c (assq 'string hint)))
+		   (when (pair? c)
+		      (set! hint (remq! c hint))
+		      (cell-set! fix #f))))
+	     (when (assq 'string newhint)
+		(let ((c (assq 'no-string hint)))
+		   (when (pair? c)
+		      (set! newhint (remq! c hint)))))
 	     (for-each (lambda (h)
 			  (let ((o (assq (car h) hint)))
 			     (if (pair? o)
@@ -122,8 +132,8 @@
 	 (set! hint (add-hint! hint newhint)))
       (when (and propagate (isa? this J2SRef))
 	 (with-access::J2SRef this (decl)
-	    (with-access::J2SDecl decl (hint id)
-	       (unless (isa? decl J2SThis)
+	    (with-access::J2SDecl decl (hint id loc)
+	       '(unless (isa? decl J2SThis)
 		  (set! hint (add-hint! hint newhint))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -169,15 +179,15 @@
 	     (add-expr-hint! lhs hint #t fix)
 	     (add-expr-hint! this hint #f fix))))
       ((- * / %)
+       (unhint-string-ref lhs fix)
+       (unhint-string-ref rhs fix)
        (when (memq (j2s-type lhs) '(any number))
-	  (unhint-string-ref lhs fix)
 	  (let ((hint (union-hint! (expr-hint this) (expr-hint rhs))))
-	     (add-expr-hint! lhs hint #t fix)
+	     (add-expr-hint! lhs (cons (cons 'no-string 20) hint) #t fix)
 	     (add-expr-hint! this hint #f fix)))
        (when (memq (j2s-type rhs) '(any number))
-	  (unhint-string-ref rhs fix)
 	  (let ((hint (union-hint! (expr-hint this) (expr-hint lhs))))
-	     (add-expr-hint! rhs hint #t fix)
+	     (add-expr-hint! rhs (cons (cons 'no-string 20) hint) #t fix)
 	     (add-expr-hint! this hint #f fix))))
       ((< > <= >= == === != !==)
        (when (memq (j2s-type lhs) '(any number))
@@ -205,8 +215,12 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (hintnum this::J2SBinary assig fix::cell)
    (call-default-walker)
-   (with-access::J2SBinary this (lhs rhs op)
-      (hintnum-binary this op lhs rhs fix)))
+   (with-access::J2SBinary this (lhs rhs op loc hint)
+      (when (eq? (caddr loc) 14100)
+	 (tprint ">>> binary=" (j2s->list this)))
+      (hintnum-binary this op lhs rhs fix)
+      (when (eq? (caddr loc) 14100)
+	 (tprint "<<< binary=" (j2s->list this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SUnary ...                                           */
@@ -255,8 +269,10 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (hintnum this::J2SRef assig fix::cell)
    (unless assig
-      (with-access::J2SRef this (decl)
-	 (with-access::J2SDecl decl (hint)
+      (with-access::J2SRef this (decl loc)
+	 (with-access::J2SDecl decl (hint (loc2 loc))
+	    (when (eq? (caddr loc) 14102)
+	       (tprint "*** DECL=" hint " " loc2))
 	    (add-expr-hint! this hint #f fix)))))
 
 ;*---------------------------------------------------------------------*/
@@ -264,10 +280,12 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (hintnum this::J2SDeclInit assig fix::cell)
    (call-default-walker)
-   (with-access::J2SDeclInit this (hint val vtype)
+   (with-access::J2SDeclInit this (hint val vtype loc)
       (unless (isa? this J2SDeclFun)
-	 (add-expr-hint! val hint  #f fix)
+	 (add-expr-hint! val hint #f fix)
 	 (when (is-hint? val 'real)
+	    (when (eq? (caddr loc) 14075)
+	       (tprint "+++++++++++ is-hin real ..." (j2s->list val)))
 	    (set! vtype 'real)
 	    (when (isa? val J2SUndefined)
 	       (with-access::J2SUndefined val (loc)
@@ -285,7 +303,6 @@
 	    ((is-hint? lhs 'real)
 	     (add-expr-hint! rhs (expr-hint lhs) #f fix))
 	    ((is-hint? rhs 'real)
-	     ;;(add-expr-hint! lhs (expr-hint rhs) #f fix)
 	     (add-expr-hint! this (expr-hint rhs) #f fix))))))
 
 ;*---------------------------------------------------------------------*/
@@ -399,7 +416,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propagate-real! this::J2SExpr)
    (call-default-walker)
-   (with-access::J2SExpr this (type)
+   (with-access::J2SExpr this (type loc)
       (if (and (is-hint? this 'real) (not (eq? type 'real))
 	       (memq type '(number integer)))
 	  (as-real! this)
