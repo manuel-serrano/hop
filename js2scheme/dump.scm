@@ -815,8 +815,9 @@
 ;*    j2s->list ::J2SParen ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SParen)
-   (with-access::J2SParen this (expr)
+   (with-access::J2SParen this (expr loc)
       `(,@(call-next-method)
+	  ,@(dump-loc loc)
 	  ,@(dump-type this)
 	  ,@(dump-range this)
 	  ,@(dump-hint this)

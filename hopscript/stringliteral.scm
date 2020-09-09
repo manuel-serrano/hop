@@ -564,7 +564,7 @@
 	 ((1) (string-set! buffer i (string-ref s 0)))
 	 (else (blit-string! s 0 buffer i len))))
    
-   (define (normalize-small! js::JsStringLiteral)
+   (define (normalize-small!TMP js::JsStringLiteral)
       ;; small strings, no need for tail recursion
       (let ((buffer (with-access::JsStringLiteral js (length)
 		       (make-string (uint32->fixnum length)))))
@@ -594,6 +594,37 @@
 				  (if (js-jsstring-normalized? left)
 				      (blit-buffer! lstr buffer i len)
 				      (loop i left))))))))))
+	 (js-jsstring-mark-normalized! js buffer)
+	 buffer))
+
+   (define (normalize-small! js::JsStringLiteral)
+      ;; small strings, no need for tail recursion
+      (let ((buffer (with-access::JsStringLiteral js (length)
+		       (make-string (uint32->fixnum length)))))
+	 (let loop ((i 0)
+		    (s js))
+	    (with-access::JsStringLiteral s (left right)
+	       (with-access::JsStringLiteral left ((llength length)
+						   (lstr left))
+		  (with-access::JsStringLiteral right ((rlength length)
+						       (rstr left))
+		     (let ((len (uint32->fixnum llength)))
+			(cond
+			   ((js-jsstring-normalized? left)
+			    (blit-buffer! lstr buffer i len)
+			    (if (js-jsstring-normalized? right)
+				(blit-buffer! rstr buffer (+fx i len) (uint32->fixnum rlength))
+				(loop (+fx i len) right)))
+			   ((js-jsstring-normalized? right)
+			    (blit-buffer! rstr buffer (+fx i len) (uint32->fixnum rlength))
+			    (loop i left))
+			   ((<u32 len (uint32->fixnum rlength))
+			    ;; left is smaller, recurse over left
+			    (loop i left)
+			    (loop (+fx i len) right))
+			   (else
+			    (loop (+fx i len) right)
+			    (loop i left))))))))
 	 (js-jsstring-mark-normalized! js buffer)
 	 buffer))
    
@@ -684,8 +715,6 @@
 	       (js-jsstring-mark-normalized! js buffer)
 	       (set! length (fixnum->uint32 (string-length buffer)))
 	       buffer))))
-
-   
 
    (define (normalize-big! js::JsStringLiteral)
       ;; tail recursive with heap allocated stack

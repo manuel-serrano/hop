@@ -263,7 +263,7 @@
 (define (method-invalidation-threshold) 8)
 
 (define (hash-object-threshold) 64)
-(define (hash-object-name-threshold) #u32:32)
+(define (hash-object-name-threshold) #u32:24)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-cache-table ...                                               */
