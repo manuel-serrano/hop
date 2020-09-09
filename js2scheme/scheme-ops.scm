@@ -2424,7 +2424,11 @@
       ((int53)
        (if (m64? (context-conf ctx)) `(fixnum->flonum ,val) `(js-toflonum ,val %this)))
       (else
-       `(if (flonum? ,val) ,val (js-toflonum (js-tonumber ,val %this))))))
+       `(if (flonum? ,val)
+	    ,(let ((f (gensym 'f)))
+	       `(let ((,(symbol-append f '|::double|) ,val))
+		   ,f))
+	    (js-toflonum (js-tonumber ,val %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fixnums? ...                                                     */
