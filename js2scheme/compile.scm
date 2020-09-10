@@ -60,6 +60,7 @@
 	   __js2scheme_sweep
 	   __js2scheme_uninit
 	   __js2scheme_globprop
+	   __js2scheme_cse
 	   __js2scheme_globvar
 	   __js2scheme_varpreinit
 	   __js2scheme_method
@@ -213,6 +214,7 @@
 	  j2s-sweep-stage
 	  j2s-cnstlift-stage
 	  j2s-hintnum-stage
+	  j2s-cse-stage
 	  j2s-propcache-stage
 	  j2s-instanceof-stage
 	  j2s-propcce-stage
@@ -489,6 +491,8 @@
 	    (set! o (cons* :optim-inline-method #t o)))
 	 (unless (memq :optim-globprop o)
 	    (set! o (cons* :optim-globprop #t o)))
+	 (unless (memq :optim-cse o)
+	    (set! o (cons* :optim-cse #t o)))
 	 (unless (memq :optim-loopspec o)
 	    (set! o (cons* :optim-loopspec #t o)))
 	 (unless (memq :optim-arguments o)

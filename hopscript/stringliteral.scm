@@ -30,7 +30,7 @@
 
    (export (js-init-stringliteral! ::JsGlobalObject)
 	   (&jsstring-init ::bstring)
-	   (js-jsstring-debug msg obj)
+	   (js-debug-jsstring ::JsStringLiteral #!optional (msg ""))
 	   (js-jsstring-for-in str ::procedure ::JsGlobalObject)
 	   (js-jsstring-for-of str ::procedure ::JsGlobalObject)
 	   (inline js-ascii->jsstring::JsStringLiteralASCII ::bstring)
@@ -224,10 +224,24 @@
       cnsts))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring-debug ...                                            */
+;*    js-debug-jsstring ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-debug msg obj)
+(define (js-debug-jsstring obj #!optional (msg ""))
+   (let loop ((obj obj)
+	      (margin ""))
+      (with-access::JsStringLiteral obj (left right length)
+	 (tprint msg margin (typeof obj)
+	    " length=" length " depth=" (js-jsstring-depth obj 1024))
+	 (unless (js-jsstring-normalized? obj)
+	    (let ((nm (string-append " " margin)))
+	       (loop left nm)
+	       (loop right nm))))))
    
+;*---------------------------------------------------------------------*/
+;*    js-debug-object ::JsStringLiteral ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (js-debug-object obj::JsStringLiteral #!optional (msg ""))
+      
    (define (excerpt str)
       (if (<fx (string-length str) 20)
 	  (format "~s" str)
@@ -238,14 +252,11 @@
 	  (excerpt obj)
 	  (typeof obj)))
    
-   (cond
-      ((string? obj)
-       (tprint msg " [string length=" (string-length obj) ":" (excerpt obj) "]"))
-      (else
-       (with-access::JsStringLiteral obj (left right length)
-	  (tprint msg "[" (typeof obj)
-	     " length=" length " left=" (literal-or-string left) " right="
-	     (literal-or-string right) "]")))))
+   (with-access::JsStringLiteral obj (left right length)
+      (tprint msg "[" (typeof obj)
+	 " length=" length " depth=" (js-jsstring-depth obj 1024)
+	 " left=" (literal-or-string left) " right="
+	 (literal-or-string right) "]")))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsString ...                                 */
@@ -567,7 +578,7 @@
    (define (normalize-small!TMP js::JsStringLiteral)
       ;; small strings, no need for tail recursion
       (let ((buffer (with-access::JsStringLiteral js (length)
-		       (make-string (uint32->fixnum length)))))
+		       ($make-string/wo-fill (uint32->fixnum length)))))
 	 (let loop ((i 0)
 		    (s js))
 	    (with-access::JsStringLiteral s (left right)
@@ -1148,7 +1159,7 @@
       (with-access::JsStringLiteral right ((rlen length)
 					   (rstr left))
 	 (let ((len (+u32 llen rlen)))
-	    (if (<u32 len #u32:13)
+	    (if (<u32 len #u32:18)
 		(let ((s (instantiate::JsStringLiteralASCII
 			    (length len)
 			    (left (string-append lstr rstr))
@@ -1173,7 +1184,7 @@
       (with-access::JsStringLiteral right ((rlen length)
 					   (rstr left))
 	 (let ((len (+u32 llen rlen)))
-	    (if (<u32 len #u32:13)
+	    (if (<u32 len #u32:18)
 		(let ((s (instantiate::JsStringLiteralUTF8
 			    (length len)
 			    (left (utf8-string-append lstr rstr))

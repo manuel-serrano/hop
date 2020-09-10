@@ -50,8 +50,7 @@
       (name "cnstlift")
       (comment "Cnstlift optimization")
       (proc j2s-cnstlift!)
-      (optional (lambda (conf)
-		   (and (config-get conf :optim-cnstlift #f))))))
+      (optional :optim-cnstlift)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cnstlift! ...                                                */
