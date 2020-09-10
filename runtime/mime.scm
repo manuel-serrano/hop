@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 07:59:54 2006                          */
 ;*    Last change :  Wed Feb 20 07:43:05 2013 (serrano)                */
-;*    Copyright   :  2006-13 Manuel Serrano                            */
+;*    Copyright   :  2006-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP mime types management.                                       */
 ;*=====================================================================*/
@@ -53,7 +53,7 @@
 ;*    mime-type-add! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (mime-type-add! mimetype suffix)
-   (hashtable-add! *mime-types-table* suffix cons mimetype '()))
+    (hashtable-add! *mime-types-table* suffix cons mimetype '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    mime-type-add-list! ...                                          */
