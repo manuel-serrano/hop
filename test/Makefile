@@ -63,7 +63,7 @@ POPULATION = Makefile \
   hopjs/noserv/es6-generator.js \
   hopjs/noserv/es6-generator-mdn.js \
   hopjs/noserv/es6-generator-kangax.js \
-  hopjs/noserv/es6-cps.js
+  hopjs/noserv/es6-cps.js \
   hopjs/noserv/es6-destructuring-param.js \
   hopjs/noserv/es6-destructuring-assig.js \
   hopjs/noserv/es6-rest.js \
