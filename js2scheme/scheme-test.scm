@@ -51,7 +51,7 @@
 	 ((eq? ty 'string)
 	  `(js-jsstring-toboolean ,(j2s-scheme test mode return conf)))
 	 ((notbool-expr? test)
-	  `(js-toboolean ,(j2s-scheme test mode return conf)))
+	  (j2s-toboolean (j2s-scheme test mode return conf)))
 	 (else
 	  (with-access::J2SExpr test (hint)
 	     (if (pair? (assq 'object hint))
@@ -74,6 +74,10 @@
        `(js-jsstring-match-regexp-from-string-as-bool ,obj ,arg ,rx ,%this))
       ((js-object-isfrozen ?a ?b)
        expr)
+      ((js-has-own-property . ?-)
+       expr)
+      (((or let let*) ?- (js-has-own-property . ?-))
+       expr)
       ((let ((?var ?-)) ((kwote or) (js-array? ?var) (js-proxy-array? ?var)))
        expr)
       ((let ?bindings ?body)
@@ -81,10 +85,10 @@
 	   ,(match-case body
 	       ((cond . ?clauses)
 		`(cond
-		    ,@(map (lambda (c) `(,(car c) (js-totest ,@(cdr c))))
+		    ,@(map (lambda (c) `(,(car c) ,(j2s-totest (cadr c))))
 		       clauses)))
 	       (else
-		`(js-totest ,body)))))
+		(j2s-totest body)))))
       (else
        `(js-totest ,expr))))
 
@@ -101,7 +105,7 @@
    (with-access::J2SExpr this (type)
       (if (eq? type 'bool)
 	  (j2s-scheme this mode return conf)
-	  `(js-toboolean ,(j2s-scheme this mode return conf)))))
+	  (j2s-toboolean (j2s-scheme this mode return conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-bool-test ::J2SParen ...                                     */
@@ -164,3 +168,15 @@
 	   (not (eq? ty 'obj))
 	   (not (eq? ty 'any)))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-toboolean ...                                                */
+;*---------------------------------------------------------------------*/
+(define (j2s-toboolean expr)
+   (match-case expr
+      (((or let let*) ?- (js-has-own-property . ?-))
+       expr)
+      (else
+       `(js-toboolean ,expr))))
+
+
+   

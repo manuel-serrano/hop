@@ -62,10 +62,16 @@
 	   (js-date-maybe-gethours ::obj ::JsGlobalObject ::obj)
 	   (js-date-getminutes ::JsDate)
 	   (js-date-maybe-getminutes ::obj ::JsGlobalObject ::obj)
+	   (js-date-getutcminutes ::JsDate)
+	   (js-date-maybe-getutcminutes ::obj ::JsGlobalObject ::obj)
 	   (js-date-getseconds ::JsDate)
 	   (js-date-maybe-getseconds ::obj ::JsGlobalObject ::obj)
 	   (js-date-getmilliseconds ::JsDate)
 	   (js-date-maybe-getmilliseconds ::obj ::JsGlobalObject ::obj)
+	   (js-date-setminutes ::JsDate min sec ms ::JsGlobalObject)
+	   (js-date-maybe-setminutes ::obj min sec ms ::JsGlobalObject ::obj)
+	   (js-date-setutcminutes ::JsDate min sec ms ::JsGlobalObject)
+	   (js-date-maybe-setutcminutes ::obj min sec ms ::JsGlobalObject ::obj)
 	   ))
 
 ;*---------------------------------------------------------------------*/
@@ -834,18 +840,12 @@
 		(js-function-arity js-date-getminutes)
 		(js-function-info :name "getMinutes" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
-   
+
    ;; getUTCMinutes
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.21
-   (define (date-prototype-getutcminutes this::JsDate)
-      (with-access::JsDate this (val)
-	 (if (date? val)
-	     (date-minute val)
-	     +nan.0)))
-	 
    (js-bind! %this obj (& "getUTCMinutes")
-      :value (js-make-function %this date-prototype-getutcminutes
-		(js-function-arity date-prototype-getutcminutes)
+      :value (js-make-function %this js-date-getutcminutes
+		(js-function-arity js-date-getutcminutes)
 		(js-function-info :name "getUTCMinutes" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
@@ -970,22 +970,13 @@
 		(js-function-info :name "setYear" :len 1))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
 
-   ;; date-setmilliseconds!
-   (define (date-setmilliseconds! val ms)
-      (let ((ms (js-tonumber ms %this)))
-	 (if (flonum? ms)
-	     (if (nanfl? ms)
-		 ms
-		 (date-update-millisecond! val (flonum->fixnum ms)))
-	     (date-update-millisecond! val ms))))
-
    ;; setMilliseconds
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.28
    (define (date-prototype-setmilliseconds this::JsDate ms)
       (with-access::JsDate this (val)
 	 (if (date? val)
 	     (begin
-		(set! val (date-setmilliseconds! val ms))
+		(set! val (date-setmilliseconds! val ms %this))
 		(if (date? val)
 		    (js-date->milliseconds val)
 		    +nan.0))
@@ -1003,7 +994,7 @@
       (with-access::JsDate this (val)
 	 (if (date? val)
 	     (begin
-		(set! val (date-setmilliseconds! val ms))
+		(set! val (date-setmilliseconds! val ms %this))
 		(if (date? val)
 		    (js-date->milliseconds val)
 		    +nan.0))
@@ -1015,15 +1006,6 @@
 		(js-function-info :name "setUTCMilliseconds" :len 1))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
 
-   ;; date-setseconds!
-   (define (date-setseconds! val sec)
-      (let ((sec (js-tonumber sec %this)))
-	 (if (flonum? sec)
-	     (if (nanfl? sec)
-		 sec
-		 (date-update-second! val (flonum->fixnum sec)))
-	     (date-update-second! val sec))))
-   
    ;; setSeconds
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.30
    (define (date-prototype-setseconds this::JsDate sec ms)
@@ -1031,14 +1013,14 @@
 	 (if (date? val)
 	     (if (eq? ms (js-undefined))
 		 (begin
-		    (set! val (date-setseconds! val sec))
+		    (set! val (date-setseconds! val sec %this))
 		    (if (date? val)
 			(js-date->milliseconds val)
 			+nan.0))
 		 (begin
-		    (set! val (date-setmilliseconds! val ms))
+		    (set! val (date-setmilliseconds! val ms %this))
 		    (when (date? val)
-		       (set! val (date-setseconds! val sec)))
+		       (set! val (date-setseconds! val sec %this)))
 		    (if (date? val)
 			(js-date->milliseconds val)
 			+nan.0)))
@@ -1057,14 +1039,14 @@
 	 (if (date? val)
 	     (if (eq? ms (js-undefined))
 		 (begin
-		    (set! val (date-setseconds! val sec))
+		    (set! val (date-setseconds! val sec %this))
 		    (if (date? val)
 			(js-date->milliseconds val)
 			+nan.0))
 		 (begin
-		    (set! val (date-setmilliseconds! val ms))
+		    (set! val (date-setmilliseconds! val ms %this))
 		    (when (date? val)
-		       (set! val (date-setseconds! val sec)))
+		       (set! val (date-setseconds! val sec %this)))
 		    (if (date? val)
 			(js-date->milliseconds val)
 			+nan.0)))
@@ -1076,58 +1058,25 @@
 		(js-function-info :name "setUTCSeconds" :len 2))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
-   ;; date-setminutes!
-   (define (date-setminutes! val min)
-      (let ((min (js-tonumber min %this)))
-	 (if (flonum? min)
-	     (if (nanfl? min)
-		 min
-		 (date-update-minute! val (flonum->fixnum min)))
-	     (date-update-minute! val min))))
+   
    
    ;; setMinutes
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.32
-   (define (date-prototype-setminutes this::JsDate min sec ms)
-      (with-access::JsDate this (val)
-	 (if (date? val)
-	     (begin
-		(unless (eq? ms (js-undefined))
-		   (set! val (date-setmilliseconds! val ms)))
-		(when (and (date? val) (not (eq? sec (js-undefined))))
-		   (set! val (date-setseconds! val sec)))
-		(when (date? val)
-		   (set! val (date-setminutes! val min)))
-		(if (date? val)
-		    (js-date->milliseconds val)
-		    +nan.0))
-	     val)))
-
    (js-bind! %this obj (& "setMinutes")
-      :value (js-make-function %this date-prototype-setminutes
-		(js-function-arity date-prototype-setminutes)
+      :value (js-make-function %this
+		(lambda (this min sec ms)
+		   (js-date-setminutes this min sec ms %this))
+		(js-function-arity 3 0)
 		(js-function-info :name "setMinutes" :len 3))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
    ;; setUTCMinutes
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.33
-   (define (date-prototype-setutcminutes this::JsDate min sec ms)
-      (with-access::JsDate this (val)
-	 (if (date? val)
-	     (begin
-		(unless (eq? ms (js-undefined))
-		   (set! val (date-setmilliseconds! val ms)))
-		(when (and (date? val) (not (eq? sec (js-undefined))))
-		   (set! val (date-setseconds! val sec)))
-		(when (date? val)
-		   (set! val (date-setminutes! val min)))
-		(if (date? val)
-		    (js-date->milliseconds val)
-		    +nan.0))
-	     val)))
-
    (js-bind! %this obj (& "setUTCMinutes")
-      :value (js-make-function %this date-prototype-setutcminutes
-		(js-function-arity date-prototype-setutcminutes)
+      :value (js-make-function %this
+		(lambda (this min sec ms)
+		   (js-date-setutcminutes this min sec ms %this))
+		(js-function-arity 3 0)
 		(js-function-info :name "setUTCMinutes" :len 3))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
    
@@ -1615,6 +1564,27 @@
 	  this)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-date-getutcminutes ...                                        */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.21    */
+;*---------------------------------------------------------------------*/
+(define (js-date-getutcminutes this::JsDate)
+   (with-access::JsDate this (val)
+      (if (date? val)
+	  (date-minute val)
+	  +nan.0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-maybe-getutcminutes ...                                  */
+;*---------------------------------------------------------------------*/
+(define (js-date-maybe-getutcminutes this::obj %this cache)
+   (if (js-plain-date? this)
+       (js-date-getutcminutes this)
+       (js-call0 %this
+	  (js-get-name/cache this (& "getUTCminutes") #f %this cache)
+	  this)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-date-getseconds ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.22    */
@@ -1655,6 +1625,99 @@
        (js-call0 %this
 	  (js-get-name/cache this (& "getmilliseconds") #f %this cache)
 	  this)))
+
+;*---------------------------------------------------------------------*/
+;*    date-setmilliseconds! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (date-setmilliseconds! val ms %this)
+   (let ((ms (js-tonumber ms %this)))
+      (if (flonum? ms)
+	  (if (nanfl? ms)
+	      ms
+	      (date-update-millisecond! val (flonum->fixnum ms)))
+	  (date-update-millisecond! val ms))))
+
+;*---------------------------------------------------------------------*/
+;*    date-setseconds! ...                                             */
+;*---------------------------------------------------------------------*/
+(define (date-setseconds! val sec %this)
+   (let ((sec (js-tonumber sec %this)))
+      (if (flonum? sec)
+	  (if (nanfl? sec)
+	      sec
+	      (date-update-second! val (flonum->fixnum sec)))
+	  (date-update-second! val sec))))
+
+;*---------------------------------------------------------------------*/
+;*    date-setminutes! ...                                             */
+;*---------------------------------------------------------------------*/
+(define (date-setminutes! val min %this)
+   (let ((min (js-tonumber min %this)))
+      (if (flonum? min)
+	  (if (nanfl? min)
+	      min
+	      (date-update-minute! val (flonum->fixnum min)))
+	  (date-update-minute! val min))))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-setminutes ...                                           */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.32    */
+;*---------------------------------------------------------------------*/
+(define (js-date-setminutes this::JsDate min sec ms %this)
+   (with-access::JsDate this (val)
+      (if (date? val)
+	  (begin
+	     (unless (eq? ms (js-undefined))
+		(set! val (date-setmilliseconds! val ms %this)))
+	     (when (and (date? val) (not (eq? sec (js-undefined))))
+		(set! val (date-setseconds! val sec %this)))
+	     (when (date? val)
+		(set! val (date-setminutes! val min %this)))
+	     (if (date? val)
+		 (js-date->milliseconds val)
+		 +nan.0))
+	  val)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-maybe-setminutes ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-date-maybe-setminutes this min sec ms %this cache)
+   (if (js-plain-date? this)
+       (js-date-setminutes this min sec ms %this)
+       (js-call3 %this
+	  (js-get-name/cache this (& "setMinutes") #f %this cache)
+	  this min sec ms)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-setutcminutes ...                                        */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.33    */
+;*---------------------------------------------------------------------*/
+(define (js-date-setutcminutes this::JsDate min sec ms %this)
+   (with-access::JsDate this (val)
+      (if (date? val)
+	  (begin
+	     (unless (eq? ms (js-undefined))
+		(set! val (date-setmilliseconds! val ms %this)))
+	     (when (and (date? val) (not (eq? sec (js-undefined))))
+		(set! val (date-setseconds! val sec %this)))
+	     (when (date? val)
+		(set! val (date-setminutes! val min %this)))
+	     (if (date? val)
+		 (js-date->milliseconds val)
+		 +nan.0))
+	  val)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-maybe-setutcminutes ...                                  */
+;*---------------------------------------------------------------------*/
+(define (js-date-maybe-setutcminutes this min sec ms %this cache)
+   (if (js-plain-date? this)
+       (js-date-setutcminutes this min sec ms %this)
+       (js-call3 %this
+	  (js-get-name/cache this (& "setUTCMinutes") #f %this cache)
+	  this min sec ms)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

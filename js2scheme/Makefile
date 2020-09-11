@@ -51,7 +51,7 @@ _OBJECTS = lexer header parser html ast usage dump utils \
   scheme-fun scheme-ops scheme-test scheme-class scheme-string scheme-math \
   scheme-date scheme-array scheme-regexp scheme-cast scheme-arguments \
   scheme-call scheme-spread scheme-json scheme-bexit scheme-object \
-  scheme-constant
+  scheme-constant scheme-process
 
 OBJECTS = $(_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o

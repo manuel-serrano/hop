@@ -66,7 +66,8 @@
 
    (export (nodejs-compiler-options-add! ::keyword ::obj)
 	   (nodejs-process ::WorkerHopThread ::JsGlobalObject)
-	   (process-ares-fail ::JsGlobalObject ::JsProcess ::int)))
+	   (process-ares-fail ::JsGlobalObject ::JsProcess ::int)
+	   (nodejs-process-exit proc status ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -455,15 +456,7 @@
 	 (js-put! proc (& "exit")
 	    (js-make-function %this
 	       (lambda (this status)
-		  (let ((r (if (eq? status (js-undefined))
-			       0
-			       (js-tointeger status %this))))
-		     (unless (js-totest (js-get proc (& "_exiting") %this))
-			(js-put! proc (& "_exiting") #t #f %this)
-			(let ((emit (js-get proc (& "emit") %this)))
-			   (js-call2 %this emit proc "exit" r))
-			(nodejs-compile-abort-all!)
-			(exit r))))
+		  (nodejs-process-exit proc status %this))
 	       (js-function-arity 1 0)
 	       (js-function-info :name "exit" :len 1))
 	    #f %this)
@@ -1178,6 +1171,21 @@
 		       (js-function-arity 0 0)
 		       (js-function-info :name "getCPUs" :len 0))))
       %this))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-process-exit ...                                          */
+;*---------------------------------------------------------------------*/
+(define (nodejs-process-exit proc status %this)
+   (let ((r (if (eq? status (js-undefined))
+		0
+		(js-tointeger status %this))))
+      (unless (js-totest (js-get proc (& "_exiting") %this))
+	 (js-put! proc (& "_exiting") #t #f %this)
+	 (let ((emit (js-get proc (& "emit") %this)))
+	    (js-call2 %this emit proc (& "exit") r))
+	 (nodejs-compile-abort-all!)
+	 (exit r))))
+
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

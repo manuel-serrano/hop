@@ -724,6 +724,47 @@
 ;*    cspecs-default! ::J2SCall ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cspecs-default! this::J2SCall csdef)
-   (with-access::J2SCall this (cspecs)
-      (set! cspecs (cspecs-call csdef)))
-   (call-default-walker))
+
+   (define (is-special-ref? expr clazz)
+      (cond
+	 ((isa? expr J2SUnresolvedRef)
+	  (with-access::J2SUnresolvedRef expr (id)
+	     (eq? id clazz)))
+	 ((isa? expr J2SGlobalRef)
+	  (with-access::J2SGlobalRef expr (decl)
+	     (with-access::J2SDecl decl (id)
+		(and (eq? id clazz) (not (decl-usage-has? decl '(assig)))))))
+	 ((isa? expr J2SRef)
+	  (with-access::J2SRef expr (decl)
+	     (with-access::J2SDecl decl (id scope)
+		(and (eq? id clazz)
+		     (eq? scope '%scope)
+		     (not (decl-usage-has? decl '(assig assig set delete eval)))))))
+	 (else
+	  #f)))
+
+  (define (cspecs-method fun)
+      ;; find specific method cache policy to save generated code space
+      (if (isa? fun J2SAccess)
+	  (with-access::J2SAccess fun (obj field)
+	     (cond
+		((is-special-ref? obj 'console)
+		 (values '(pmap) '()))
+		(else
+		 (values #f #f))))
+	  (values #f #f)))
+   
+   (with-access::J2SCall this (cspecs fun args loc)
+      
+      (multiple-value-bind (ccall caccess)
+	 (cspecs-method fun)
+	 (if ccall
+	     (begin
+		(set! args (map! (lambda (a) (cspecs-default! a csdef)) args))
+		(set! cspecs ccall)
+		(with-access::J2SAccess fun (cspecs)
+		   (set! cspecs caccess)
+		   this))
+	     (begin
+		(set! cspecs (cspecs-call csdef))
+		(call-default-walker))))))

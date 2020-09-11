@@ -34,6 +34,7 @@
 	   __js2scheme_scheme-object
 	   __js2scheme_scheme-json
 	   __js2scheme_scheme-date
+	   __js2scheme_scheme-process
 	   __js2scheme_scheme-array
 	   __js2scheme_scheme-class
 	   __js2scheme_scheme-ops
@@ -171,10 +172,24 @@
 	("getHours" js-date-maybe-gethours any () %this #t)
 	("getMinutes" js-date-getminutes date () #f #f)
 	("getMinutes" js-date-maybe-getminutes any () %this #t)
+	("getUTCMinutes" js-date-getutcminutes date () #f #f)
+	("getUTCMinutes" js-date-maybe-getutcminutes any () %this #t)
 	("getSeconds" js-date-getseconds date () #f #f)
 	("getSeconds" js-date-maybe-getseconds any () %this #t)
 	("getMilliseconds" js-date-getmilliseconds date () #f #f)
 	("getMilliseconds" js-date-maybe-getmilliseconds any () %this #t)
+	("setMinutes" ,j2s-date-maybe-setminutes any (any) #t #t)
+	("setMinutes" ,j2s-date-maybe-setminutes any (any any) #t #t)
+	("setMinutes" ,j2s-date-maybe-setminutes any (any any any) #t #t)
+	("setMinutes" ,j2s-date-setminutes date (any) #f #f)
+	("setMinutes" ,j2s-date-setminutes date (any any) #f #f)
+	("setMinutes" ,j2s-date-setminutes date (any any any) #f #f)
+	("setUTCMinutes" ,j2s-date-maybe-setminutes any (any) #t #t)
+	("setUTCMinutes" ,j2s-date-maybe-setminutes any (any any) #t #t)
+	("setUTCMinutes" ,j2s-date-maybe-setminutes any (any any any) #t #t)
+	("setUTCMinutes" ,j2s-date-setminutes date (any) #f #f)
+	("setUTCMinutes" ,j2s-date-setutcminutes date (any any) #f #f)
+	("setUTCMinutes" ,j2s-date-setutcminutes date (any any any) #t #t)
 	;; object
 	("hasOwnProperty" js-has-own-property any (any) %this #f ,j2s-object-plain?)
 	("isFrozen" ,j2s-object-isfrozen any (any) #f #f ,j2s-object-plain?)
@@ -676,6 +691,9 @@
    (define (Object? self)
       (is-builtin-ref? self 'Object))
 
+   (define (Process? self)
+      (is-builtin-ref? self 'process))
+
    (define (mincspecs x y)
       (filter (lambda (c) (memq c y)) x))
    
@@ -703,6 +721,10 @@
 	     (lambda (expr) expr))
 	    ((and (Object? self)
 		  (j2s-object-builtin-method fun args this mode return ctx))
+	     =>
+	     (lambda (expr) expr))
+	    ((and (Process? self)
+		  (j2s-process-builtin-method fun args this mode return ctx))
 	     =>
 	     (lambda (expr) expr))
 	    ((and ccache (= (context-get ctx :debug 0) 0) ccspecs)
