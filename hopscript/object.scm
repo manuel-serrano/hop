@@ -170,9 +170,6 @@
    (if (isa? ctx JsGlobalObject)
        (js-jsobject->keyword-plist o ctx)
        o))
-;*        (error "xml-unpack ::JsObject"                               */
-;* 	  (format "Not a JavaScript context (~a)" (typeof o))          */
-;* 	  ctx)))                                                       */
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->json ::JsObject ...                                         */
@@ -865,21 +862,30 @@
 	       (and
 		;; 2
 		(or
-		 (and (js-object-mapped? o)
-		      (with-access::JsConstructMap cmap (props)
-			 (vector-every (lambda (p)
-					  (let ((flags (prop-flags p)))
-					     (not (flags-configurable? flags))))
-			    props)))
-		 (and (not (js-object-mapped? o))
-		      (if (js-object-hashed? o)
-			  (begin
-			     (tprint "HASHED TODO")
-			     (error "hashed" "not implemented" (typeof o)))
-			  (vector-every (lambda (desc::JsPropertyDescriptor)
-					   (with-access::JsPropertyDescriptor desc (configurable)
-					      (not (eq? configurable #t))))
-			     elements))))
+		 (cond
+		    ((js-object-mapped? o)
+		     (with-access::JsConstructMap cmap (props)
+			(vector-every (lambda (p)
+					 (let ((flags (prop-flags p)))
+					    (not (flags-configurable? flags))))
+			   props)))
+		    ((js-object-hashed? o)
+		     (let ((sealed #t))
+			(hashtable-for-each elements
+			   (lambda (key e)
+			      (when sealed
+				 (let ((d (cell-ref e)))
+				    (if (isa? d JsPropertyDescriptor)
+					(with-access::JsPropertyDescriptor d (configurable)
+					   (when (eq? configurable #t)
+					      (set! sealed #f)))
+					(set! sealed #f))))))
+			sealed))
+		    (else
+		     (vector-every (lambda (desc::JsPropertyDescriptor)
+				      (with-access::JsPropertyDescriptor desc (configurable)
+					 (not (eq? configurable #t))))
+			elements))))
 		;; 3
 		(not (js-object-mode-extensible? o))))))
       
@@ -1147,6 +1153,24 @@
 			(define-own-property obj (prop-name d) prop properties))))
 	       props))))
    
+   (define (defineproperties/hash oprops obj properties)
+      (hashtable-for-each oprops
+	 (lambda (k e)
+	    (let ((prop (cell-ref e)))
+	       (if (isa? prop JsPropertyDescriptor)
+		   (with-access::JsPropertyDescriptor prop (name enumerable)
+		      (when (eq? enumerable #t)
+			 (define-own-property obj name prop properties)))
+		   (let* ((name (js-string->name k))
+			  (nprop (instantiate::JsValueDescriptor
+				    (configurable #t)
+				    (enumerable #t)
+				    (writable #t)
+				    (name name)
+				    (value prop))))
+		      (cell-set! e nprop)
+		      (define-own-property obj name nprop properties)))))))
+
    (define (defineproperties/properties oprops obj properties)
       (vector-for-each (lambda (prop)
 			  (with-access::JsPropertyDescriptor prop (name enumerable)
@@ -1164,8 +1188,7 @@
 		((js-object-mapped? properties)
 		 (defineproperties/cmap cmap _obj properties))
 		((js-object-hashed? properties)
-		 (tprint "HASHED TODO")
-		 (error "hashed" "not implemented" (typeof properties)))
+		 (defineproperties/hash elements _obj properties))
 		(else
 		 (defineproperties/properties elements _obj properties))))
 	  _obj)))
@@ -1196,8 +1219,19 @@
 			     (props (vector-map prop-seal props)))))
 		(set! cmap ncmap)))))
       ((js-object-hashed? o)
-       (tprint "HASHED TODO")
-       (error "hashed" "not implemented" (typeof o)))
+       (with-access::JsObject o (elements)
+	  (hashtable-for-each elements
+	     (lambda (k e)
+		(let ((d (cell-ref e)))
+		   (if (isa? d JsPropertyDescriptor)
+		       (js-seal-property! d)
+		       (cell-set! d
+			  (instantiate::JsValueDescriptor
+			     (name (js-string->name k))
+			     (writable #t)
+			     (enumerable #t)
+			     (configurable #f)
+			     (value d)))))))))
       (else
        (with-access::JsObject o (elements)
 	  (vector-for-each js-seal-property! elements))))
@@ -1229,8 +1263,19 @@
 			     (props (vector-map prop-freeze props)))))
 		(set! cmap ncmap))))
 	 ((js-object-hashed? o)
-	  (tprint "HASHED TODO")
-	  (error "hashed" "not implemented" (typeof o)))
+	  (with-access::JsObject o (elements)
+	     (hashtable-for-each elements
+		(lambda (k e)
+		   (let ((d (cell-ref e)))
+		      (if (isa? d JsPropertyDescriptor)
+			  (js-freeze-property! d)
+			  (cell-set! d
+			     (instantiate::JsValueDescriptor
+				(name (js-string->name k))
+				(writable #f)
+				(enumerable #t)
+				(configurable #f)
+				(value d)))))))))
 	 (else
 	  (with-access::JsObject o (elements)
 	     (vector-for-each js-freeze-property! elements)))))
@@ -1256,8 +1301,22 @@
 					  (not (flags-configurable? flags)))))
 		    props)))
 	     ((js-object-hashed? o)
-	      (tprint "HASHED TODO")
-	      (error "hashed" "not implemented" (typeof o)))
+	      (let ((frozen #t))
+		 (hashtable-for-each elements
+		    (lambda (key e)
+		       (when frozen
+			  (let ((d (cell-ref e)))
+			     (if (isa? d JsPropertyDescriptor)
+				 (with-access::JsPropertyDescriptor d (configurable)
+				    (cond
+				       ((eq? configurable #t)
+					(set! frozen #f))
+				       ((isa? d JsDataDescriptor)
+					(with-access::JsDataDescriptor d (writable)
+					   (when (eq? writable #t)
+					      (set! frozen #f))))))
+				 (set! frozen #f))))))
+		 frozen))
 	     (else
 	      (vector-every (lambda (desc::JsPropertyDescriptor)
 			       (with-access::JsPropertyDescriptor desc (configurable)

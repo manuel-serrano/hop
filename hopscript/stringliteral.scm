@@ -174,7 +174,7 @@
 	 (let loop ((i 0))
 	    (when (<=fx i 127)
 	       (vector-set! vec i
-		  (js-name->jsstring
+		  (js-string->name
 		     (make-string 1 (integer->char i))))
 	       (loop (+fx i 1))))
 	 (let loop ((i 128))

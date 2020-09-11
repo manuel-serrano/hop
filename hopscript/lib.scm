@@ -132,7 +132,7 @@
 			 ((0)
 			  ;; a plain string
 			  (let ((str (vector-ref el 1)))
-			     (js-name->jsstring str)))
+			     (js-string->name str)))
 			 ((6)
 			  ;; an ascii name
 			  (let ((str (vector-ref el 1)))
@@ -266,9 +266,9 @@
 ;*---------------------------------------------------------------------*/
 (define (js-key-name->jsstring s)
    (cond
-      ((keyword? s) (js-name->jsstring (keyword->string! s)))
-      ((string? s) (js-name->jsstring s))
-      ((symbol? s) (js-name->jsstring (symbol->string! s)))
+      ((keyword? s) (js-string->name (keyword->string! s)))
+      ((string? s) (js-string->name s))
+      ((symbol? s) (js-string->name (symbol->string! s)))
       (else s)))
 
 ;*---------------------------------------------------------------------*/

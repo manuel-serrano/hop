@@ -804,7 +804,7 @@
 	 :hidden-class #t)
       
       ;; bind the Typedarray in the global object
-      (js-bind! %this %this (js-name->jsstring name)
+      (js-bind! %this %this (js-string->name name)
 	 :configurable #f :enumerable #f :value js-typedarray
 	 :hidden-class #t)
       

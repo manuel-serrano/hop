@@ -675,7 +675,7 @@
 		  (e (vector-ref profile-info-table i)))
 	       (with-access::JsPropertyCache c (name point usage)
 		  (set! point (vector-ref e 0))
-		  (set! name (js-name->jsstring (vector-ref e 1)))
+		  (set! name (js-string->name (vector-ref e 1)))
 		  (set! usage (vector-ref e 2)))
 	       (loop (-fx i 1))))))
    pctable)
@@ -696,7 +696,7 @@
 		  (e (vector-ref profile-info-table i)))
 	       (with-access::JsPropertyCache c (name point usage)
 		  (set! point (vector-ref e 0))
-		  (set! name (js-name->jsstring (vector-ref e 1)))
+		  (set! name (js-string->name (vector-ref e 1)))
 		  (set! usage (vector-ref e 2)))
 	       (loop (-fx i 1))))))
    pctable)
@@ -1127,7 +1127,7 @@
 	 (inline #t)
 	 (ctor (make-cell len))
 	 (props (vector-map (lambda (n)
-			       (prop (js-name->jsstring n)
+			       (prop (js-string->name n)
 				  (property-flags #t #t #t #f)))
 		   names))
 	 (methods (make-vector len #unspecified)))))
@@ -1249,8 +1249,7 @@
 		(,prop
 		 (,succeed ,o ,prop))
 		((js-proxy? ,o)
-		 (error "jsobject-hash-find" "should not be here"
-		    (typeof ,o)))
+		 (,succeed ,o (make-cell (js-proxy-property-descriptor-index ,o ,p))))
 		(else
 		 (set! ,p (js-toname ,p %this))
 		 (,fail)))))))
@@ -1271,8 +1270,7 @@
 		(,prop
 		 (,succeed ,o ,prop))
 		((js-proxy? ,o)
-		 (error "jsobject-hash-find" "should not be here"
-		    (typeof ,o)))
+		 (,succeed ,o (make-cell (js-proxy-property-descriptor-index ,o ,p))))
 		(else
 		 (,fail)))))))
 
@@ -1497,7 +1495,6 @@
 (define (js-object-hash! o::JsObject)
    (js-object-mode-enumerable-set! o #t)
    (js-object-mode-plain-set! o #f)
-   (js-debug-object o)
    (let ((table (create-hashtable
 		   :weak 'string
 		   :size (hash-object-threshold)
@@ -3966,6 +3963,58 @@
 	   (js-object-unmap! o)
 	   (define-own-property-extend-unmapped o name desc))))
 
+   (define (define-own-property-extend-hashed o name desc)
+      (js-invalidate-pmap-pcaches! %this
+	 "define-own-property-extend-unmapped" name)
+      (let ((ndesc (cond
+		      ((isa? desc JsValueDescriptor)
+		       ;; 4.a
+		       (with-access::JsValueDescriptor desc
+			     (writable enumerable configurable)
+			  (unless (boolean? writable)
+			     (set! writable #f))
+			  (unless (boolean? enumerable)
+			     (set! enumerable #f))
+			  (unless (boolean? configurable)
+			     (set! configurable #f)))
+		       desc)
+		      ((isa? desc JsDataDescriptor)
+		       (with-access::JsDataDescriptor desc
+			     (enumerable configurable name writable)
+			  (instantiate::JsValueDescriptor
+			     (name name)
+			     (writable (boolify writable))
+			     (enumerable (boolify enumerable))
+			     (configurable (boolify configurable))
+			     (value (js-undefined)))))
+		      ;; 4.b
+		      ((isa? desc JsAccessorDescriptor)
+		       (with-access::JsAccessorDescriptor desc
+			     (enumerable configurable get set name)
+			  (unless (boolean? enumerable)
+			     (set! enumerable #f))
+			  (unless (boolean? configurable)
+			     (set! configurable #f))
+			  (unless get
+			     (set! get (js-undefined)))
+			  (unless set
+			     (set! set (js-undefined))))
+		       desc)
+		      (else
+		       ;; 4.a
+		       (with-access::JsPropertyDescriptor desc
+			     (enumerable configurable name)
+			  (instantiate::JsValueDescriptor
+			     (name name)
+			     (writable #f)
+			     (enumerable (boolify enumerable))
+			     (configurable (boolify configurable))
+			     (value (js-undefined))))))))
+	 (with-access::JsObject o (elements)
+	    (hashtable-put! elements (js-jsstring->string name)
+	       (make-cell ndesc)))
+	 #t))
+
    (define (define-own-property-extend-unmapped o name desc)
       (js-invalidate-pmap-pcaches! %this
 	  "define-own-property-extend-unmapped" name)
@@ -4029,8 +4078,7 @@
 	  ((js-object-mapped? o)
 	   (define-own-property-extend-mapped o name desc))
 	  ((js-object-hashed? o)
-	   (tprint "HASHED TODO")
-	   (error "hashed" "not implemented" name))
+	   (define-own-property-extend-hashed o name desc))
 	  (else
 	   (define-own-property-extend-unmapped o name desc)))
        (let ((current (js-get-own-property o name %this)))
@@ -4228,8 +4276,12 @@
 				      name value flags)))
 			     (loop parent)))))))))
       ((js-object-hashed? o)
-       (tprint "HASHED TODO")
-       (error "hashed" "not implemented" (typeof o)))
+       (with-access::JsObject o (elements)
+	  (with-access::JsPropertyDescriptor new (name)
+	     (let ((e (hashtable-get elements (js-jsstring->string name))))
+		(if (cell? e)
+		    (cell-set! e new)
+		    (js-replace-own-property! (js-object-proto o) old new))))))
       (else
        ;; update the unmapped object
        (with-access::JsObject o (elements)
@@ -4290,6 +4342,15 @@
 	    (when (<fx i len)
 	       (in-mapped-property (vector-ref vecname i))
 	       (loop (+fx i 1))))))
+
+   (define (in-hash k c)
+      (let ((p (cell-ref c)))
+	 (if (isa? p JsPropertyDescriptor)
+	     (with-access::JsPropertyDescriptor p (name enumerable)
+		(when (js-jsstring? name)
+		   (when (eq? enumerable #t)
+		      (proc name %this))))
+	     (proc (js-string->jsstring k) %this))))
    
    (define (in-property p)
       (when (isa? p JsPropertyDescriptor)
@@ -4306,8 +4367,9 @@
 	     (with-access::JsConstructMap cmap (props)
 		(vfor-in props)))
 	    ((js-object-hashed? obj)
-	     (tprint "HASHED TODO")
-	     (error "hashed" "not implemented" proc))
+	     (with-access::JsObject obj (elements)
+		(hashtable-for-each elements
+		   in-hash)))
 	    (else
 	     (with-access::JsObject obj (elements)
 		(vector-for-each in-property elements)))))

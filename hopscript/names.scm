@@ -44,7 +44,7 @@
 	   (js-integer-name->jsstring::JsStringLiteralASCII ::long)
 	   (js-integer-name::obj ::long)
 	   (js-index-name::obj ::long)
-	   (js-name->jsstring::JsStringLiteral ::bstring))
+	   (js-string->name::JsStringLiteral ::bstring))
 
    (export js-name-lock
 	   (macro synchronize-name))
@@ -218,14 +218,14 @@
    (object-widening-set! o name))
 
 ;*---------------------------------------------------------------------*/
-;*    js-name->jsstring ...                                            */
+;*    js-string->name ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-name->jsstring::JsStringLiteral str::bstring)
+(define (js-string->name::JsStringLiteral str::bstring)
    (let ((enc (string-minimal-charset str)))
       (case enc
 	 ((ascii) (js-ascii-name->jsstring str))
 	 ((latin1 utf8) (js-utf8-name->jsstring str))
-	 (else (error "js-name->jsstring" "unsupported encoding" enc)))))
+	 (else (error "js-string->name" "unsupported encoding" enc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-toname ...                                           */
@@ -284,7 +284,7 @@
       ((string? p)
        (error "js-toname" "Illegal `string'" p))
       (else
-       (js-name->jsstring (js-tostring p %this)))))
+       (js-string->name (js-tostring p %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name->string ...                                              */

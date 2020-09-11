@@ -973,7 +973,7 @@
 		   (vecks '()))
 		;; first step
 		(for-each (lambda (arg)
-			     (let ((k (js-name->jsstring (car arg)))
+			     (let ((k (js-string->name (car arg)))
 				   (val (js-string->jsstring (cdr arg))))
 				(cond
 				   ((not (js-in? obj k ctx))
