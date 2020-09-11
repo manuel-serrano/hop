@@ -427,7 +427,9 @@
 	     (fprint (current-error-port) "== " msg (typeof obj) " HASHED"
 		" els.vlen=" (hashtable-size elements)
 		"\n   prop.names="
-		(hashtable-key-list elements))))
+		(hashtable-key-list elements)
+		"\n   prop.values="
+		(hashtable-map elements (lambda (k v) (typeof (cell-ref v)))))))
 	 (else
 	  (with-access::JsConstructMap cmap (%id props)
 	     (fprint (current-error-port) "== " msg (typeof obj) " UNMAPPED"
@@ -1479,7 +1481,7 @@
    (js-object-mode-plain-set! o #f)
    (let ((table (create-hashtable
 		   :weak 'string
-		   :size 64
+		   :size (hash-object-threshold)
 		   :max-length 65536
 		   :max-bucket-length 20)))
       (with-access::JsObject o (cmap elements)
@@ -1780,7 +1782,10 @@
 			  (loop (-fx i 1) acc)))))
 	       (else
 		(loop (-fx i 1) acc))))))
-   
+
+   (define (hash->names elements)
+      (map! js-string->jsstring (hashtable-key-list elements)))
+
    (define (desc->names elements)
       (let loop ((i (-fx (vector-length elements) 1))
 		 (acc '()))
@@ -1804,6 +1809,8 @@
       (cond
 	 ((js-object-mapped? o)
 	  (cmap->names cmap))
+	 ((js-object-hashed? o)
+	  (hash->names elements))
 	 ((not enump)
 	  (desc->names elements))
 	 (else
@@ -3060,7 +3067,9 @@
 		;; 8.12.5, step 3
 		(let ((owndesc desc))
 		   (if (not (isa? owndesc JsPropertyDescriptor))
-		       (cell-set! owndesc v)
+		       (begin
+			  (cell-set! prop v)
+			  v)
 		       (with-access::JsDataDescriptor owndesc (writable name)
 			  (if (not writable)
 			      ;; 8.12.4, step 2.b
@@ -3583,13 +3592,17 @@
 	 (js-undefined)))
    
    (with-access::JsObject o (cmap)
-      (if (js-object-mapped? o)
+      (cond
+	 ((js-object-mapped? o)
 	  (jsobject-map-find o name
 	     update-mapped-object!
-	     extend-mapped-object!)
+	     extend-mapped-object!))
+	 ((js-object-hashed? o)
+	  (error "js-bind!" "js-bind cannot be used on hashed object" name))
+	 (else
 	  (jsobject-properties-find o name
 	     update-properties-object!
-	     extend-properties-object!))))
+	     extend-properties-object!)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-define ...                                                    */
@@ -3655,7 +3668,8 @@
       (cond
 	 ((js-object? o)
 	  (with-access::JsObject o (cmap)
-	     (if (js-object-mapped? o)
+	     (cond
+		((js-object-mapped? o)
 		 (jsobject-map-find o n
 		    (lambda (o i)
 		       (delete-configurable o
@@ -3694,7 +3708,11 @@
 					   (vector-shrink! props (-fx (vector-length props) 1))
 					   (vector-set! props i (prop #f 0)))
 				       #t)))))))
-		    (lambda () #t))
+		    (lambda () #t)))
+		((js-object-hashed? o)
+		 (tprint "HASHED TODO")
+		 (error "hashed" "not implemented" (typeof o)))
+		(else
 		 (jsobject-properties-find o n
 		    (lambda (o d i)
 		       (with-access::JsPropertyDescriptor d (configurable)
@@ -3703,7 +3721,7 @@
 				(with-access::JsObject o (elements)
 				   (vector-delete! elements i))
 				#t))))
-		    (lambda () #t)))))
+		    (lambda () #t))))))
 	 (else
 	  (js-raise-type-error %this
 	     "delete: not an object ~s" _o)))))
@@ -3978,6 +3996,9 @@
 	   (reject (format "\"~a\" not extensible" (js-typeof o %this))))
 	  ((js-object-mapped? o)
 	   (define-own-property-extend-mapped o name desc))
+	  ((js-object-hashed? o)
+	   (tprint "HASHED TODO")
+	   (error "hashed" "not implemented" name))
 	  (else
 	   (define-own-property-extend-unmapped o name desc)))
        (let ((current (js-get-own-property o name %this)))
@@ -4128,7 +4149,7 @@
 ;*    js-replace-own-property! ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-replace-own-property! o::JsObject old new)
-
+   
    (define (descriptor->flags desc::JsPropertyDescriptor)
       (cond
 	 ((isa? desc JsDataDescriptor)
@@ -4139,7 +4160,7 @@
 	 (else
 	  (with-access::JsPropertyDescriptor desc (enumerable configurable)
 	     (property-flags #t enumerable configurable #f)))))
-
+   
    (define (replace-vector! vec old new)
       (let loop ((i (-fx (vector-length vec) 1)))
 	 (cond
@@ -4150,16 +4171,17 @@
 	     #t)
 	    (else
 	     (loop (-fx i 1))))))
-
+   
    (define (find-transition cmap name)
       (with-access::JsConstructMap cmap (transitions)
 	 (find (lambda (t) (eq? (transition-name t) name)) transitions)))
-
+   
    (unless (isa? new JsValueDescriptor)
       ;; to be improved
       (js-object-unmap! o))
-
-   (if (js-object-mapped? o)
+   
+   (cond
+      ((js-object-mapped? o)
        ;; update the mapped object
        (with-access::JsPropertyDescriptor new (name)
 	  (with-access::JsObject o (cmap)
@@ -4172,11 +4194,15 @@
 				(let ((flags (descriptor->flags new)))
 				   (link-cmap! cmap (transition-nextmap tr)
 				      name value flags)))
-			     (loop parent))))))))
+			     (loop parent)))))))))
+      ((js-object-hashed? o)
+       (tprint "HASHED TODO")
+       (error "hashed" "not implemented" (typeof o)))
+      (else
        ;; update the unmapped object
        (with-access::JsObject o (elements)
 	  (unless (replace-vector! elements old new)
-	     (js-replace-own-property! (js-object-proto o) old new)))))
+	     (js-replace-own-property! (js-object-proto o) old new))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-seal ::JsObject ...                                           */
@@ -4243,11 +4269,16 @@
    
    (with-access::JsObject obj (cmap elements)
       (when (js-object-mode-enumerable? obj)
-	 (if (js-object-mapped? obj)
+	 (cond
+	    ((js-object-mapped? obj)
 	     (with-access::JsConstructMap cmap (props)
-		(vfor-in props))
+		(vfor-in props)))
+	    ((js-object-hashed? obj)
+	     (tprint "HASHED TODO")
+	     (error "hashed" "not implemented" proc))
+	    (else
 	     (with-access::JsObject obj (elements)
-		(vector-for-each in-property elements))))
+		(vector-for-each in-property elements)))))
       (let ((__proto__ (js-object-proto obj)))
 	 (when (js-object? __proto__)
 	    (js-for-in-prototype __proto__ owner proc %this)))))

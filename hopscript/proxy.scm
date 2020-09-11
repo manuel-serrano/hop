@@ -681,8 +681,11 @@
 (define (proxy-check-property-value target owner prop %this v get-or-set)
    (cond
       ((and (not (js-object-mapped? target))
-	    (with-access::JsObject target (elements)
-	       (=fx (vector-length elements) 0)))
+	    (if (js-object-hashed? target)
+		(with-access::JsObject target (elements)
+		   (=fx (hashtable-size elements) 0))
+		(with-access::JsObject target (elements)
+		   (=fx (vector-length elements) 0))))
        v)
       (else
        (let ((prop (js-get-own-property target prop %this)))
@@ -880,8 +883,11 @@
       ((all-symbol-or-string? r)
        (err))
       ((and (not (js-object-mapped? target))
-	    (with-access::JsObject target (elements)
-	       (=fx (vector-length elements) 0)))
+	    (if (js-object-hashed? target)
+		(with-access::JsObject target (elements)
+		   (=fx (hashtable-size elements) 0))
+		(with-access::JsObject target (elements)
+		   (=fx (vector-length elements) 0))))
        (if (js-extensible? target %this)
 	   r
 	   (same-list (js-properties-name target #t %this) r)))

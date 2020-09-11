@@ -872,10 +872,14 @@
 					     (not (flags-configurable? flags))))
 			    props)))
 		 (and (not (js-object-mapped? o))
-		      (vector-every (lambda (desc::JsPropertyDescriptor)
-				       (with-access::JsPropertyDescriptor desc (configurable)
-					  (not (eq? configurable #t))))
-			 elements)))
+		      (if (js-object-hashed? o)
+			  (begin
+			     (tprint "HASHED TODO")
+			     (error "hashed" "not implemented" (typeof o)))
+			  (vector-every (lambda (desc::JsPropertyDescriptor)
+					   (with-access::JsPropertyDescriptor desc (configurable)
+					      (not (eq? configurable #t))))
+			     elements))))
 		;; 3
 		(not (js-object-mode-extensible? o))))))
       
@@ -1156,9 +1160,14 @@
        (let ((properties (js-cast-object (js-toobject %this _properties) %this
 			    "defineProperties")))
 	  (with-access::JsObject properties (cmap elements)
-	     (if (js-object-mapped? properties)
-		 (defineproperties/cmap cmap _obj properties)
-		 (defineproperties/properties elements _obj properties)))
+	     (cond
+		((js-object-mapped? properties)
+		 (defineproperties/cmap cmap _obj properties))
+		((js-object-hashed? properties)
+		 (tprint "HASHED TODO")
+		 (error "hashed" "not implemented" (typeof properties)))
+		(else
+		 (defineproperties/properties elements _obj properties))))
 	  _obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -1179,14 +1188,19 @@
 
    (js-object-mode-extensible-set! o #f)
    (js-object-mode-sealed-set! o #t)
-   (if (js-object-mapped? o)
+   (cond
+      ((js-object-mapped? o)
        (with-access::JsObject o (cmap)
 	  (with-access::JsConstructMap cmap (props)
 	     (let ((ncmap (duplicate::JsConstructMap cmap
 			     (props (vector-map prop-seal props)))))
-		(set! cmap ncmap))))
+		(set! cmap ncmap)))))
+      ((js-object-hashed? o)
+       (tprint "HASHED TODO")
+       (error "hashed" "not implemented" (typeof o)))
+      (else
        (with-access::JsObject o (elements)
-	  (vector-for-each js-seal-property! elements)))
+	  (vector-for-each js-seal-property! elements))))
    obj)
 
 ;*---------------------------------------------------------------------*/
@@ -1208,13 +1222,18 @@
    (js-object-mode-extensible-set! o #f)
    (js-object-mode-frozen-set! o #t)
    (with-access::JsObject o (cmap elements)
-      (if (js-object-mapped? o)
+      (cond
+	 ((js-object-mapped? o)
 	  (with-access::JsConstructMap cmap (props)
 	     (let ((ncmap (duplicate::JsConstructMap cmap
 			     (props (vector-map prop-freeze props)))))
-		(set! cmap ncmap)))
+		(set! cmap ncmap))))
+	 ((js-object-hashed? o)
+	  (tprint "HASHED TODO")
+	  (error "hashed" "not implemented" (typeof o)))
+	 (else
 	  (with-access::JsObject o (elements)
-	     (vector-for-each js-freeze-property! elements))))
+	     (vector-for-each js-freeze-property! elements)))))
    obj)
 
 ;*---------------------------------------------------------------------*/
@@ -1228,20 +1247,25 @@
 	  ;; 3
 	  (not (js-object-mode-extensible? o))
 	  ;; 2
-	  (if (js-object-mapped? o)
+	  (cond
+	     ((js-object-mapped? o)
 	      (with-access::JsConstructMap cmap (props)
 		 (vector-every (lambda (p)
 				  (let ((flags (prop-flags p)))
 				     (and (not (flags-writable? flags))
 					  (not (flags-configurable? flags)))))
-		    props))
+		    props)))
+	     ((js-object-hashed? o)
+	      (tprint "HASHED TODO")
+	      (error "hashed" "not implemented" (typeof o)))
+	     (else
 	      (vector-every (lambda (desc::JsPropertyDescriptor)
 			       (with-access::JsPropertyDescriptor desc (configurable)
 				  (and (not (eq? configurable #t))
 				       (or (not (isa? desc JsValueDescriptor))
 					   (with-access::JsValueDescriptor desc (writable)
 					      (not (eq? writable #t)))))))
-		 elements))))))
+		 elements)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    vector-every ...                                                 */
@@ -1359,14 +1383,29 @@
 	    (when (js-jsstring? name)
 	       (when (eq? enumerable #t)
 		  (proc name %this))))))
+
+   (define (in-hash k c)
+      (let ((p (cell-ref c)))
+	 (if (isa? p JsPropertyDescriptor)
+	     (with-access::JsPropertyDescriptor p (name enumerable)
+		(when (js-jsstring? name)
+		   (when (eq? enumerable #t)
+		      (proc name %this))))
+	     (proc (js-string->jsstring k) %this))))
    
    (with-access::JsObject obj (cmap)
       (when (js-object-mode-enumerable? obj)
-	 (if (js-object-mapped? obj)
+	 (cond
+	    ((js-object-mapped? obj)
 	     (with-access::JsConstructMap cmap (props)
-		(vfor-in props))
+		(vfor-in props)))
+	    ((js-object-hashed? obj)
 	     (with-access::JsObject obj (elements)
-		(vector-for-each in-property elements))))
+		(hashtable-for-each elements
+		   in-hash)))
+	    (else
+	     (with-access::JsObject obj (elements)
+		(vector-for-each in-property elements)))))
       (let ((__proto__ (js-object-proto obj)))
 	 (when (js-object? __proto__)
 	    (js-for-in-prototype __proto__ obj proc %this)))))
