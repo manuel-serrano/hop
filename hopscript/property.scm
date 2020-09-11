@@ -262,7 +262,7 @@
 (define (vtable-threshold) #u32:200)
 (define (method-invalidation-threshold) 8)
 
-(define (hash-object-threshold) 64)
+(define (hash-object-threshold) 192)
 (define (hash-object-name-threshold) #u32:24)
 
 ;*---------------------------------------------------------------------*/
@@ -1471,6 +1471,24 @@
    o)
 
 ;*---------------------------------------------------------------------*/
+;*    js-object-hashable? ...                                          */
+;*    -------------------------------------------------------------    */
+;*    An object can be hashed if all the property names are strings.   */
+;*---------------------------------------------------------------------*/
+(define (js-object-hashable? o::JsObject)
+   (with-access::JsObject o (cmap)
+      (with-access::JsConstructMap cmap (props)
+	 (let ((props props))
+	    (let loop ((i (-fx (vector-length props) 1)))
+	       (cond
+		  ((=fx i -1)
+		   #t)
+		  ((js-jsstring? (prop-name (vector-ref props i)))
+		   (loop (-fx i 1)))
+		  (else
+		   #f)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-object-hash! ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    This function turns a mapped object into a hash table when the   */
@@ -1479,6 +1497,7 @@
 (define (js-object-hash! o::JsObject)
    (js-object-mode-enumerable-set! o #t)
    (js-object-mode-plain-set! o #f)
+   (js-debug-object o)
    (let ((table (create-hashtable
 		   :weak 'string
 		   :size (hash-object-threshold)
@@ -3006,7 +3025,8 @@
       (with-access::JsObject o (cmap elements)
 	 (with-access::JsConstructMap cmap (props single lock %id)
 	    (let ((index (vector-length props)))
-	       (if (=fx index (hash-object-threshold))
+	       (if (and (=fx index (hash-object-threshold))
+			(js-object-hashable? o))
 		   (begin
 		      (js-object-hash! o)
 		      (extend-hashed-object!))
@@ -3710,8 +3730,20 @@
 				       #t)))))))
 		    (lambda () #t)))
 		((js-object-hashed? o)
-		 (tprint "HASHED TODO")
-		 (error "hashed" "not implemented" (typeof o)))
+		 (jsobject-hash-find o n
+		    (lambda (o e)
+		       (let ((d (cell-ref e)))
+			  (delete-configurable o
+			     (if (isa? d JsPropertyDescriptor)
+				 (with-access::JsPropertyDescriptor d (configurable)
+				    configurable)
+				 #t)
+			     (lambda (o)
+				(with-access::JsObject o (elements)
+				   (hashtable-remove! elements
+				      (js-jsstring->string n)))
+				#t))))
+		    (lambda () #t)))
 		(else
 		 (jsobject-properties-find o n
 		    (lambda (o d i)

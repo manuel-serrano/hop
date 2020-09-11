@@ -251,7 +251,7 @@
        (let* ((pat (js-jsstring->string pattern))
 	      (oldrx (js-regexp-cache-get cache pat)))
 	  (if oldrx
-	      (js-regexp-construct/rx %this oldrx pattern (js-undefined))
+	      (js-regexp-construct/rx %this oldrx pattern #u32:0)
 	      (let ((new (js-regexp-construct %this pattern (js-undefined) (js-undefined))))
 		 (with-access::JsRegExp new (rx)
 		    (js-regexp-cache-put! cache pat rx)
@@ -574,7 +574,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-construct/rx ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (js-regexp-construct/rx %this::JsGlobalObject rx pattern flags)
+(define (js-regexp-construct/rx %this::JsGlobalObject rx pattern flags::uint32)
    (with-access::JsGlobalObject %this (js-regexp js-regexp-cmap js-regexp-prototype)
       (instantiateJsRegExp
 	 (cmap js-regexp-cmap)
@@ -769,24 +769,24 @@
       :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
+;*    js-sbustring ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-substring s start end utf8 %this)
+   (cond
+      ((=fx end (+fx start 1))
+       (js-jsstring-fromcharcode
+	  (char->integer (string-ref s start)) %this))
+      (utf8
+       (js-utf8->jsstring (substring s start end)))
+      (else
+       (js-ascii->jsstring (substring s start end)))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-regexp-prototype-exec ...                                     */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.6.2    */
 ;*---------------------------------------------------------------------*/
 (define (js-regexp-prototype-exec this::JsRegExp string::obj %this::JsGlobalObject)
-
-   (define X %this)
-   
-   (define (js-substring s start end utf8)
-      (cond
-	 ((=fx end (+fx start 1))
-	  (js-jsstring-fromcharcode
-	     (char->integer (string-ref s start)) %this))
-	 (utf8
-	  (js-utf8->jsstring (substring s start end)))
-	 (else
-	  (js-ascii->jsstring (substring s start end)))))
-
    (with-access::JsGlobalObject %this (js-regexp-pcache js-regexp-positions)
       (with-access::JsRegExp this (rx flags)
 	 (let ((lastindex (js-get-jsobject-name/cache this (& "lastIndex")
@@ -826,7 +826,6 @@
 				(js-put-jsobject-name/cache! this (& "lastIndex") lastindex
 				   #f %this (js-pcache-ref js-regexp-pcache 0)))
 			     (let* ((n (+fx clen 1))
-				    ;;(_ (tprint "match-positions n=" n))
 				    (vec ($create-vector n))
 				    (a (js-vector->jsarray vec %this))
 				    (matchindex (vector-ref r 0))
@@ -847,13 +846,21 @@
 				;; 19 & 20
 				;; 20
 				(let loop ((i 0))
-				   (when (<fx i n)
+				   (when (<fx i l)
 				      (let ((j (*fx i 2)))
 					 (vector-set! vec i
-					    (js-substring s
-					       (vector-ref r j)
-					       (vector-ref r (+fx j 1))
-					       enc))
+					    (if (>=fx (vector-ref r j) 0)
+						(js-substring s
+						   (vector-ref r j)
+						   (vector-ref r (+fx j 1))
+						   enc
+						   %this)
+						(js-undefined)))
+					 (loop (+fx i 1)))))
+				(let loop ((i (+fx l 1)))
+				   (when (<fx i n)
+				      (let ((j (*fx i 2)))
+					 (vector-set! vec i (js-undefined))
 					 (loop (+fx i 1)))))
 				a)))))
 		  ((pregexp-match-positions rx s i)
@@ -887,7 +894,7 @@
 			    ;; no need as already automatically set
 			    ;; 19
 			    (vector-set! vec 0
-			       (js-substring s (caar r) (cdar r) enc))
+			       (js-substring s (caar r) (cdar r) enc %this))
 			    ;; 20
 			    (let loop ((c (cdr r))
 				       (i 1))
@@ -895,7 +902,7 @@
 				  (let ((r (car c)))
 				     (vector-set! vec i
 					(if (pair? r)
-					    (js-substring s (car r) (cdr r) enc)
+					    (js-substring s (car r) (cdr r) enc %this)
 					    (js-undefined))))
 				  (loop (cdr c) (+fx i 1))))
 			    a))))
@@ -926,17 +933,6 @@
 ;*    no need to manage the lastIndex property.                        */
 ;*---------------------------------------------------------------------*/
 (define (js-regexp-prototype-exec-for-match-string %this::JsGlobalObject this::JsRegExp string::obj)
-   
-   (define (js-substring s start end utf8)
-      (cond
-	 ((=fx end (+fx start 1))
-	  (js-jsstring-fromcharcode
-	     (char->integer (string-ref s start)) %this))
-	 (utf8
-	  (js-utf8->jsstring (substring s start end)))
-	 (else
-	  (js-ascii->jsstring (substring s start end)))))
-   
    (with-access::JsGlobalObject %this (js-regexp-pcache js-regexp-positions)
       (with-access::JsRegExp this (rx)
 	 (let* ((jss (js-tojsstring string %this))
@@ -975,13 +971,21 @@
 			  ;; no need as already automatically set
 			  ;; 19 & 20
 			  (let loop ((i 0))
+				   (when (<fx i l)
+				      (let ((j (*fx i 2)))
+					 (vector-set! vec i
+					    (if (>=fx (vector-ref r j) 0)
+						(js-substring s
+						   (vector-ref r j)
+						   (vector-ref r (+fx j 1))
+						   enc
+						   %this)
+						(js-undefined)))
+					 (loop (+fx i 1)))))
+			  (let loop ((i (+fx l 1)))
 			     (when (<fx i n)
 				(let ((j (*fx i 2)))
-				   (vector-set! vec i
-				      (js-substring s
-					 (vector-ref r j)
-					 (vector-ref r (+fx j 1))
-					 enc))
+				   (vector-set! vec i (js-undefined))
 				   (loop (+fx i 1)))))
 			  a))))
 	       ((pregexp-match-positions rx s 0)
@@ -1008,7 +1012,7 @@
 		      ;; no need as already automatically set
 		      ;; 19
 		      (vector-set! vec 0
-			 (js-substring s (caar r) (cdar r) enc))
+			 (js-substring s (caar r) (cdar r) enc %this))
 		      ;; 20
 		      (let loop ((c (cdr r))
 				 (i 1))
@@ -1016,7 +1020,7 @@
 			    (let ((r (car c)))
 			       (vector-set! vec i
 				  (if (pair? r)
-				      (js-substring s (car r) (cdr r) enc)
+				      (js-substring s (car r) (cdr r) enc %this)
 				      (js-undefined))))
 			    (loop (cdr c) (+fx i 1))))
 		      a)))
