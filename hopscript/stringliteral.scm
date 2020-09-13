@@ -390,14 +390,10 @@
 ;*    js-substring ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-substring s::bstring start::long end::long %this)
-   (cond
-      ((=fx end (+fx start 1))
+   (if (=fx end (+fx start 1))
        (with-access::JsGlobalObject %this (char-table)
-	  (vector-ref char-table (char->integer (string-ref s start)))))
-      ((>=fx start end)
-       (& ""))
-      (else
-       (js-string->jsstring (substring s start end)))))
+          (vector-ref char-table (char->integer (string-ref s start))))
+       (js-substring->jsstring s start (-fx end start))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-substring/enc ...                                             */
@@ -406,13 +402,10 @@
    (cond
       ((=fx end (+fx start 1))
        (with-access::JsGlobalObject %this (char-table)
-	  (vector-ref char-table (char->integer (string-ref s start)))))
-      ((>=fx start end)
-       (& ""))
+          (vector-ref char-table (char->integer (string-ref s start)))))
       (utf8
        (js-utf8->jsstring (substring s start end)))
       (else
-       ;;(js-ascii->jsstring (substring s start end))
        (js-substring->jsstring s start (-fx end start)))))
 
 ;*---------------------------------------------------------------------*/
@@ -448,11 +441,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-substring->jsstring ...                                       */
 ;*---------------------------------------------------------------------*/
-;* (define-inline (js-substring->jsstring::JsStringLiteralSubstring val::bstring start::long len::long) */
 (define (js-substring->jsstring::JsStringLiteral val::bstring start::long len::long)
    (cond
       ((=fx len 0)
        (& ""))
+      ((and (=fx start 0) (=fx len (string-length val)))
+       (js-ascii->jsstring val))
       ((<u32 (fixnum->uint32 len) (string-append-auto-normalize-threshold))
        (js-ascii->jsstring (substring val start (+fx start len))))
       (else
@@ -463,9 +457,6 @@
 	  (js-object-mode-set! o (js-jsstring-default-substring-mode))
 	  (object-widening-set! o #f)
 	  o))))
-
-(define-inline (js-substring->jsstringxxx::JsStringLiteral val::bstring start::long len::long)
-   (js-ascii->jsstring (substring val start (+fx start len))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-utf8->jsstring ...                                            */
@@ -1230,7 +1221,9 @@
       (with-access::JsStringLiteral right ((rlen length)
 					   (rstr left))
 	 (let ((len (+u32 llen rlen)))
-	    (if (<u32 len (string-append-auto-normalize-threshold))
+	    (if (and (<u32 len (string-append-auto-normalize-threshold))
+		     (js-jsstring-normalized? left)
+		     (js-jsstring-normalized? right))
 		;; if the sum len if smaller than 18, both string 
 		;; lengthes are smaller than 18 too!
 		(let ((s (instantiate::JsStringLiteralASCII
@@ -1325,16 +1318,22 @@
       (with-access::JsStringLiteral middle ((mlen length) (mstr left))
 	 (with-access::JsStringLiteral right ((rlen length) (rstr left))
 	    (let ((len (+u32 llen (+u32 mlen rlen))))
-	       (if (<u32 len (string-append-auto-normalize-threshold))
+	       (cond
+		  ((<u32 len (string-append-auto-normalize-threshold))
 		   (let ((s (instantiate::JsStringLiteralASCII
 			       (length len)
 			       (left (string-append lstr mstr rstr))
 			       (right (js-not-a-string-cache)))))
 		      (js-object-mode-set! s (js-jsstring-normalized-ascii-mode))
 		      (object-widening-set! s #f)
-		      s)
+		      s))
+		  ((>u32 llen rlen)
 		   (js-jsstring-append-ASCII left
-		      (js-jsstring-append-ASCII middle right))))))))
+		      (js-jsstring-append-ASCII middle right)))
+		  (else
+		   (js-jsstring-append-ASCII 
+		      (js-jsstring-append-ASCII left middle)
+		      right))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-concat ...                                           */
