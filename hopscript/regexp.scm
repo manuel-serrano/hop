@@ -778,8 +778,10 @@
 	  (char->integer (string-ref s start)) %this))
       (utf8
        (js-utf8->jsstring (substring s start end)))
+      ((and (=fx start 0) (=fx end (string-length s)))
+       (js-ascii->jsstring s))
       (else
-       (js-ascii->jsstring (substring s start end)))))
+       (js-substring->jsstring s start (-fx end start)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-prototype-exec ...                                     */

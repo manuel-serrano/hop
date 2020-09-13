@@ -1387,10 +1387,16 @@
 	  #t)
 	 ((js-integer->jsstring ?-)
 	  #t)
+	 ((js-real->jsstring ?-)
+	  #t)
+	 ((js-string-append-ascii ?- ?-)
+	  #t)
+	 ((if ?- (js-integer->jsstring ?-) (js-real->jsstring ?-))
+	  #t)
 	 (else
 	  (when (isa? expr J2SExpr)
 	     (j2sexpr-ascii? expr)))))
-   
+
    (define (j2s-jsstring-append lhs rhs x y)
       (cond
 	 ((context-get ctx :profile-mem)
@@ -1402,6 +1408,14 @@
 	 (else
 	  `(js-jsstring-append ,x ,y))))
    
+   (define (j2s-jsstring-append3 lhs mhs rhs mode return ctx)
+      (let ((x (tostring (j2s-scheme lhs mode return ctx) (j2s-type lhs) ctx))
+	    (u (tostring (j2s-scheme mhs mode return ctx) (j2s-type mhs) ctx))
+	    (y (tostring (j2s-scheme rhs mode return ctx) (j2s-type rhs) ctx)))
+	 (if (and (ascii? lhs x) (ascii? mhs u) (ascii? rhs y))
+	     `(js-jsstring-append-ascii3 ,x ,u ,y)
+	     `(js-jsstring-append3 ,x ,u ,y))))
+   
    (define (str-append flip left right)
       (cond
 	 ((equal? left (& "" (context-program ctx))) right)
@@ -1409,42 +1423,25 @@
 	 (flip (j2s-jsstring-append rhs lhs right left))
 	 (else (j2s-jsstring-append lhs rhs left right))))
    
-   (define (add-string loc type left tl lhs right tr rhs
-	      mode return ctx flip)
-      (cond
-	 ((or (eq? tr 'string) (eq? (j2s-type right) 'string))
-	  (str-append flip left right))
-	 ((eq? tr 'int32)
-	  (str-append flip
-	     left
-	     `(js-integer->jsstring (int32->fixnum ,right))))
-	 ((eq? tr 'uint32)
-	  (str-append flip
-	     left
-	     `(js-integer->jsstring ,(asfixnum right 'uint32))))
-	 ((memq tr '(integer int53))
-	  (str-append flip
-	     left
-	     `(js-integer->jsstring ,right)))
-	 ((eq? tr 'real)
-	  (str-append flip
-	     left
-	     `(js-real->jsstring ,right)))
-	 ((eq? tl 'number)
-	  (str-append flip
-	     `(if (fixnum? ,left)
-		  (js-integer->jsstring ,left)
-		  (js-real->jsstring ,left))
-	     right))
-	 ((eq? tr 'number)
-	  (str-append flip
-	     left
-	     `(if (fixnum? ,right)
-		  (js-integer->jsstring ,right)
-		  (js-real->jsstring ,right))))
-	 (else
-	  (str-append flip left `(js-toprimitive-for-string ,right %this)))))
+   (define (add-string loc type left tl lhs right tr rhs mode return ctx flip)
+      (str-append flip (tostring left tl ctx) (tostring right tr ctx)))
 
+   (define (string-add? expr)
+      (when (isa? expr J2SBinary)
+	 (with-access::J2SBinary expr (op type lhs rhs)
+	    (when (and (eq? op '+) (eq? type 'string))
+	       (or (eq? (j2s-type lhs) 'string) (eq? (j2s-type rhs) 'string))))))
+   
+   (define (string-add tl tr loc type lhs rhs mode return ctx)
+      (cond
+	 ((string-add? lhs)
+	  (with-access::J2SBinary lhs ((llhs lhs) (lrhs rhs))
+	     (j2s-jsstring-append3 llhs lrhs rhs mode return ctx)))
+	 ((string-add? rhs)
+	  (with-access::J2SBinary rhs ((lrhs lhs) (rrhs rhs))
+	     (j2s-jsstring-append3 lhs lrhs rrhs mode return ctx)))
+	 (else (fast-add  tl tr loc type lhs rhs mode return ctx))))
+   
    (define (fast-add tl tr loc type lhs rhs mode return ctx)
       (with-tmp lhs rhs mode return ctx
 	 (lambda (left right)
@@ -1481,7 +1478,7 @@
 		(binop-real-xxx '+ type rhs tr right lhs tl left ctx #t))
 	       ((and (eq? type 'string) (eq? tl 'any) (eq? tr 'any))
 		`(if (and (js-jsstring? ,left) (js-jsstring? ,right))
-		     (js-jsstring-append ,left ,right)
+		     (j2s-jsstring-append ,left ,right)
 		     ,(binop-any-any '+ type
 			 (box left tl ctx)
 			 (box right tr ctx)
@@ -1535,10 +1532,14 @@
    (define (add loc type lhs rhs mode return ctx)
       (let ((tl (j2s-type lhs))
 	    (tr (j2s-type rhs)))
-	 (if (and (or (eq? tl 'string) (eq? tr 'string))
+	 (cond
+	    ((and (or (eq? tl 'string) (eq? tr 'string))
 		  (context-get ctx :optim-size))
 	     (small-add tl tr loc type lhs rhs mode return ctx))
-	     (fast-add tl tr loc type lhs rhs mode return ctx)))
+	    ((and (eq? tl 'string) (eq? tr 'string))
+	     (string-add tl tr loc type lhs rhs mode return ctx))
+	    (else
+	     (fast-add tl tr loc type lhs rhs mode return ctx)))))
 
    (if (type-number? type)
        (js-arithmetic-addsub loc '+ type lhs rhs mode return ctx)
@@ -1635,7 +1636,7 @@
 			    #f))))
 		  ((and (eq? op '+) (eq? type 'string))
 		   `(if (and (js-jsstring? ,left) (js-jsstring? ,right))
-			(js-jsstring-append ,left ,right)
+			(j2s-jsstring-append ,left ,right)
 			,(binop-any-any op type
 			    (box left tl ctx)
 			    (box right tr ctx)
@@ -2429,6 +2430,28 @@
 	       `(let ((,(symbol-append f '|::double|) ,val))
 		   ,f))
 	    (js-toflonum (js-tonumber ,val %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    tostring ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (tostring val type::symbol ctx)
+   (case type
+      ((string)
+       val)
+      ((integer int53)
+       `(js-integer->jsstring ,val))
+      ((int32)
+       `(js-integer->jsstring (int32->fixnum ,val)))
+      ((uint32)
+       `(js-integer->jsstring ,(asfixnum val 'uint32)))
+      ((real)
+       `(js-real->jsstring ,val))
+      ((number)
+       `(if (fixnum? ,val)
+	    (js-integer->jsstring ,val)
+	    (js-real->jsstring ,val)))
+      (else
+       `(js-toprimitive-for-string ,val %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fixnums? ...                                                     */
