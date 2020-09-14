@@ -79,7 +79,7 @@ native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
 
 heap-c: .afile
-lib-c: .afile
+lib-c: .afile heap-c
 
 #*---------------------------------------------------------------------*/
 #*    uv.sch ...                                                       */
