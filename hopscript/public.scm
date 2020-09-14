@@ -2115,7 +2115,6 @@
 (define-inline (js-eqstring?::bool s x)
    (or (eq? s x)
        (and (js-jsstring? x)
-	    (=u32 (js-jsstring-length s) (js-jsstring-length x))
 	    (string=? (js-jsstring->string s) (js-jsstring->string x)))))
 
 ;*---------------------------------------------------------------------*/
