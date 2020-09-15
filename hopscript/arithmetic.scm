@@ -127,7 +127,7 @@
 ;*---------------------------------------------------------------------*/
 (define (*js x::obj y::obj %this)
    (let* ((nx (if (js-number? x) x (js-tonumber x %this)))
-	  (ny (if (js-number? y) y (js-tonumber y %this))))
+			 (ny (if (js-number? y) y (js-tonumber y %this))))
       (*/overflow nx ny)))
 
 ;*---------------------------------------------------------------------*/

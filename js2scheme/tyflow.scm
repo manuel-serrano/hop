@@ -82,8 +82,6 @@
    
    (with-access::J2SProgram this (headers decls nodes)
       (when (>=fx j2s-verbose 3) (display " " (current-error-port)))
-      ;; mark local captured variables
-      (program-capture! this)
       ;; main fix point
       (if (config-get args :optim-tyflow #f)
 	  (let ((fix (make-cell 0)))
@@ -144,80 +142,6 @@
 	 (set! decls (filter-dead-declarations decls))
 	 (for-each j2s-hint-meta-noopt! decls))
       this))
-   
-;*---------------------------------------------------------------------*/
-;*    program-capture! ...                                             */
-;*---------------------------------------------------------------------*/
-(define (program-capture! this::J2SProgram)
-   (with-access::J2SProgram this (decls nodes direct-eval)
-      (unless direct-eval
-	 (for-each (lambda (d) (mark-capture d '())) decls)
-	 (for-each (lambda (n) (mark-capture n '())) nodes))))
-
-;*---------------------------------------------------------------------*/
-;*    mark-capture ::J2SNode ...                                       */
-;*    -------------------------------------------------------------    */
-;*    Mark variables declaration that are captured by a closure.       */
-;*---------------------------------------------------------------------*/
-(define-walk-method (mark-capture this::J2SNode env::pair-nil)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    mark-capture ::J2SAssig ...                                      */
-;*---------------------------------------------------------------------*/
-(define-walk-method (mark-capture this::J2SAssig env::pair-nil)
-   (with-access::J2SAssig this (lhs rhs)
-      (if (isa? lhs J2SRef)
-	  (with-access::J2SRef lhs (decl)
-	     (with-access::J2SDecl decl (scope %info)
-		(unless (memq decl env)
-		   (set! %info 'capture))))
-	  (mark-capture lhs env))
-      (mark-capture rhs env)))
-
-;*---------------------------------------------------------------------*/
-;*    mark-capture ::J2SDeclFun ...                                    */
-;*---------------------------------------------------------------------*/
-(define-walk-method (mark-capture this::J2SDeclFun env::pair-nil)
-   (with-access::J2SDeclFun this (%info)
-      ;; cleanup the DeclFun %info field for preparing the hint typing
-      (set! %info #f)
-      (call-default-walker)))
-
-;*---------------------------------------------------------------------*/
-;*    mark-capture ::J2SFun ...                                        */
-;*---------------------------------------------------------------------*/
-(define-walk-method (mark-capture this::J2SFun env::pair-nil)
-   (with-access::J2SFun this (params body %info)
-      (for-each (lambda (p::J2SDecl)
-		   (with-access::J2SDecl p (%info)
-		      (set! %info 'nocapture)))
-	 params)
-      (mark-capture body params)))
-
-;*---------------------------------------------------------------------*/
-;*    mark-capture ::J2SKont ...                                       */
-;*---------------------------------------------------------------------*/
-(define-walk-method (mark-capture this::J2SKont env::pair-nil)
-   (with-access::J2SKont this (param exn body)
-      (with-access::J2SDecl param (%info)
-	 (set! %info 'nocapture))
-      (with-access::J2SDecl exn (%info)
-	 (set! %info 'nocapture))
-      (mark-capture body (list param exn))))
-      
-;*---------------------------------------------------------------------*/
-;*    mark-capture ::J2SLetBlock ...                                   */
-;*---------------------------------------------------------------------*/
-(define-walk-method (mark-capture this::J2SLetBlock env::pair-nil)
-   (with-access::J2SLetBlock this (decls nodes)
-      (for-each (lambda (p::J2SDecl)
-		   (with-access::J2SDecl p (%info)
-		      (set! %info 'nocapture)))
-	 decls)
-      (let ((nenv (append decls env)))
-	 (for-each (lambda (d) (mark-capture d nenv)) decls)
-	 (for-each (lambda (n) (mark-capture n nenv)) nodes))))
    
 ;*---------------------------------------------------------------------*/
 ;*    dump-env ...                                                     */
@@ -359,8 +283,8 @@
 ;*---------------------------------------------------------------------*/
 (define (env-nocapture env::pair-nil)
    (map (lambda (c)
-	   (with-access::J2SDecl (car c) (%info)
-	      (if (eq? %info 'capture)
+	   (with-access::J2SDecl (car c) (escape)
+	      (if (and escape (decl-usage-has? (car c) '(assig)))
 		  (cons (car c) 'any)
 		  c)))
       env))
@@ -424,7 +348,7 @@
 	     (if (pair? bk)
 		 (multiple-value-bind (tyr envr bkr)
 		    (node-type-seq (cdr nodes) envn fix initty)
-		    (return tyr (env-merge envn envr) (append bk bk bks)))
+		    (return tyr (env-merge envn envr) (append bk bks)))
 		 (loop (cdr nodes) tyn envn (append bk bks)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -782,7 +706,7 @@
 	 (when (isa? thisp J2SDecl)
 	    (decl-itype-add! thisp 'object fix))))
    
-   (with-access::J2SDeclFun this (val scope id)
+   (with-access::J2SDeclFun this (val scope id loc)
       (if (decl-ronly? this)
 	  (decl-vtype-set! this 'function fix)
 	  (decl-vtype-add! this 'function fix))
@@ -819,10 +743,6 @@
 	 (node-type val env fix)
 	 (return 'class env bk))))
 
-;* (define-walk-method (node-type this::J2SMeta env::pair-nil fix::cell) */
-;*    (tprint "META " (j2s->list this))                                */
-;*    (call-default-walker))                                           */
-      
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SAssig ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -1001,7 +921,7 @@
 ;*    node-type-fun ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (node-type-fun this::J2SFun env::pair-nil fix::cell)
-   (with-access::J2SFun this (body thisp params %info vararg argumentsp type)
+   (with-access::J2SFun this (body thisp params %info vararg argumentsp type loc)
       (let ((envp (map (lambda (p::J2SDecl)
 			  (with-access::J2SDecl p (utype itype)
 			     (cond
@@ -1123,7 +1043,7 @@
 ;*    detailed in the code below.                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SCall env::pair-nil fix::cell)
-   (with-access::J2SCall this (fun thisarg args protocol)
+   (with-access::J2SCall this (fun thisarg args protocol loc)
       (multiple-value-bind (tty env bkt)
 	 (if (pair? thisarg)
 	     (node-type (car thisarg) env fix)
@@ -1141,10 +1061,10 @@
       ;; compute a new node-type environment where all mutated globals
       ;; and all mutated captured locals are removed
       (filter (lambda (e)
-		 (with-access::J2SDecl (car e) (writable scope %info id)
+		 (with-access::J2SDecl (car e) (writable scope escape id)
 		    (or (decl-ronly? (car e))
 			(not writable)
-			(and (eq? scope 'local) (eq? %info 'nocapture)))))
+			(and (memq scope '(local letblock inner)) (not escape)))))
 	 env))
    
    (define (type-known-call-args fun::J2SFun args env bk)
@@ -1464,7 +1384,7 @@
 	 (with-access::J2SUnresolvedRef expr (id)
 	    (eq? id 'Number))))
    
-   (with-access::J2SAccess this (obj field)
+   (with-access::J2SAccess this (obj field loc)
       (multiple-value-bind (tyo envo bko)
 	 (node-type obj env fix)
 	 (multiple-value-bind (tyf envf bkf)
@@ -1579,11 +1499,13 @@
    (with-trace 'j2s-tyflow "node-type ::J2SLetBlock"
       (with-access::J2SLetBlock this (decls nodes loc)
 	 (trace-item "loc=" loc)
-	 (let ((ienv (map (lambda (d::J2SDecl)
-			     (with-access::J2SDecl d (utype vtype)
-				(if (eq? utype 'unknown)
-				    (cons d vtype)
-				    (cons d utype))))
+	 (let ((ienv (filter-map (lambda (d::J2SDecl)
+				    (with-access::J2SDecl d (utype vtype)
+				       (if (eq? utype 'unknown)
+					   (if (eq? vtype 'unknown)
+					       #f
+					       (cons d vtype))
+					   (cons d utype))))
 			decls)))
 	    (multiple-value-bind (_ denv bk)
 	       (node-type-seq decls (append ienv env) fix 'void)

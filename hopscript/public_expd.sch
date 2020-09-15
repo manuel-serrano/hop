@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
 ;*    Last change :  Wed Dec 18 09:18:57 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
 ;*    -------------------------------------------------------------    */
@@ -47,7 +47,7 @@
 (define (js-tonumber-expander x e)
    (match-case x
       ((?- (and (? symbol?) ?expr) ?%this)
-       (e `(if (fixnum? ,expr)
+       (e `(if (js-number? ,expr)
 	       ,expr
 	       ((@ js-tonumber __hopscript_public) ,expr ,%this))
 	  e))

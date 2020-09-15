@@ -122,7 +122,8 @@
       (when (and propagate (isa? this J2SRef))
 	 (with-access::J2SRef this (decl)
 	    (with-access::J2SDecl decl (hint id)
-	       (set! hint (add-hint! hint newhint)))))))
+	       (unless (isa? decl J2SThis)
+		  (set! hint (add-hint! hint newhint))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    union-hint! ...                                                  */
@@ -252,7 +253,10 @@
       (unless (isa? this J2SDeclFun)
 	 (add-expr-hint! val hint  #f fix)
 	 (when (is-hint? val 'real)
-	    (set! vtype 'real)))))
+	    (set! vtype 'real)
+	    (when (isa? val J2SUndefined)
+	       (with-access::J2SUndefined val (loc)
+	       (set! val (J2SNumber 0.0))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SAssig ...                                           */

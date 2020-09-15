@@ -1659,7 +1659,7 @@
 ;*    js-has-own-property-jsobject ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-has-own-property-jsobject o::JsObject p::obj %this)
-   (jsobject-find o o (if (js-jsname? p) p (js-toname p %this))
+   (jsobject-find o o (js-toname p %this)
       ;; cmap search
       (lambda (owner i) #t)
       ;; prototype search
@@ -3900,7 +3900,6 @@
        (apply js-method-jsobject-call-name/cache %this obj name
 	  ccache ocache point ccspecs ocspecs args)
        (let ((o (js-toobject %this obj)))
-	  (tprint "js-method-call-name/cache APPLYING " (typeof o) " name=" name)
 	  (js-apply %this (js-get/name-cache o name %this) o args))))
 
 ;*---------------------------------------------------------------------*/

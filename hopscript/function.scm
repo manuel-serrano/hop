@@ -18,7 +18,7 @@
    
    (library hop js2scheme)
    
-   (include "types.sch" "stringliteral.sch" "property.sch" "arity.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch" "arity.sch" "array.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic
@@ -156,7 +156,7 @@
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache)
    (if (eq? (js-toname p %this) (& "prototype"))
-       (with-access::JsFunction o (prototype) prototype)
+       (js-function-prototype-get o o p %this)
        (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
@@ -733,20 +733,23 @@
 ;*---------------------------------------------------------------------*/
 (define (js-function-setup-prototype! %this fun::JsFunction)
    (with-access::JsGlobalObject %this (js-function-prototype-cmap)
-      (with-access::JsFunction fun (prototype %prototype)
+      (with-access::JsFunction fun (prototype %prototype alloc)
 	 (let ((p (instantiateJsObject
 		     (cmap js-function-prototype-cmap)
 		     (__proto__ (js-object-proto %this))
 		     (elements (vector fun)))))
 	    (set! prototype p)
 	    (set! %prototype p)
+	    ;; (set! alloc js-object-alloc)
 	    p))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-get ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function-prototype-get obj owner::JsFunction propname %this)
-   (with-access::JsFunction owner (prototype)
+   (with-access::JsFunction owner (%prototype prototype alloc name src)
+      (unless %prototype
+	 (js-function-setup-prototype! %this owner))
       prototype))
 
 ;*---------------------------------------------------------------------*/
@@ -1162,9 +1165,10 @@
 		(else
 		 (js-apply %this this thisarg (vector->sublist vec n)))))
 	    ((=fx arity -2048)
-	     (procedure thisarg vec))
+	     (procedure thisarg (vector-copy vec 0 n)))
 	    ((=fx arity -2047)
-	     (procedure thisarg vec))
+	     (js-call-with-stack-vector (vector-copy vec 0 n)
+		(lambda (v) (procedure thisarg v))))
 	    (else
 	     (js-apply %this this thisarg (vector->sublist vec n)))))))
 

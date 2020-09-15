@@ -256,10 +256,11 @@
 ;*    The cmap structure is defined in property.scm.                   */
 ;*---------------------------------------------------------------------*/
 (define (js-literal->jsobject::JsObject elements::vector names::vector %this)
-   (instantiateJsObject
-      (cmap (js-names->cmap names #f))
-      (__proto__ (js-object-proto %this))
-      (elements elements)))
+   (let ((cm (js-names->cmap names #f)))
+      (instantiateJsObject
+	 (cmap cm)
+	 (__proto__ (js-object-proto %this))
+	 (elements elements))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-key-name->jsstring ...                                        */

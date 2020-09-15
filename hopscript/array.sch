@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
 ;*    Last change :  Sat Dec  7 18:59:46 2019 (serrano)                */
-;*    Copyright   :  2016-19 Manuel Serrano                            */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
 ;*=====================================================================*/
@@ -240,5 +240,31 @@
 	  (else
 	   (error "js-call-with-stack-vector" "bad form"
 	      `(js-call-with-stack-vector ,vec ,proc)))))
+      ((vector-copy (and (? symbol?) ?vec)
+	  (and (or (? integer?) (? symbol?)) ?start)
+	  (and (or (? integer?) (? symbol?)) ?end))
+       (match-case proc
+	  ((lambda (?v) . ?body)
+	   (cond-expand
+	      ((and bigloo-c (config have-c99-stack-alloc #t))
+	       (let* ((p (gensym 'p))
+		      (i (gensym 'i))
+		      (len (gensym 'l))
+		      (tlen (symbol-append len '|::long|)))
+		  `(let ((,tlen (-fx ,end ,start)))
+		      (pragma
+			 ,(format "extern obj_t bgl_init_vector_sans_fill(); extern long bgl_vector_bytesize(); char ~a[ bgl_vector_bytesize( $1 ) ]"
+			     p) ,len)
+		      (let ((,v (pragma::vector ,(format "bgl_init_vector_sans_fill( &(~a), $1 )" p) ,len)))
+			 (let loop ((,i ,start))
+			    (when (<fx ,i ,end)
+			       (vector-set-ur! ,v (-fx ,i ,start) (vector-ref-ur ,vec ,i))
+			       (loop (+fx ,i 1))))
+			 ,@body))))
+	      (else
+	       (,proc ,vec))))
+	  (else
+	   (error "js-call-with-stack-vector" "bad form"
+	      `(js-call-with-stack-vector ,vec ,proc)))))
       (else
-       `((@ js-call-with-stack-vector ...) ,vec ,proc))))
+       `((@ js-call-with-stack-vector __hopscript_array) a b ,vec ,proc))))

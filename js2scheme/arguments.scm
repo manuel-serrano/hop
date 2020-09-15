@@ -113,7 +113,7 @@
 	    ((isa? parent J2SAccess)
 	     (with-access::J2SAccess parent (field)
 		(unless (or (memq (j2s-type field)
-			       '(integer uint32 int32 fixnum))
+			       '(integer uint32 int32 fixnum int53))
 			    (get-length? parent))
 		   (arguments-invalidate! decl))))
 	    ((isa? parent J2SCall)

@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
 ;*    Last change :  Fri Dec 20 19:10:37 2019 (serrano)                */
-;*    Copyright   :  2019 Manuel Serrano                               */
+;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
 ;*=====================================================================*/
@@ -42,7 +42,7 @@
 ;*---------------------------------------------------------------------*/
 (define j2s-uninit-globprop-stage
    (instantiate::J2SStageProc
-      (name "uninit")
+      (name "uninit.globprop")
       (comment "Global variable initialization optimization")
       (proc (lambda (n args) (j2s-uninit! n args)))
       (optional :optim-globprop)))
@@ -52,7 +52,7 @@
 ;*---------------------------------------------------------------------*/
 (define j2s-uninit-force-stage
    (instantiate::J2SStageProc
-      (name "uninit")
+      (name "uninit.force")
       (comment "Global variable initialization optimization")
       (proc (lambda (n args) (j2s-uninit-force! n args)))))
 
@@ -91,43 +91,6 @@
       (with-access::J2SProgram this (nodes decls direct-eval)
 	 (for-each uninit-force! decls)
 	 (for-each uninit-force! nodes)))
-   this)
-
-;*---------------------------------------------------------------------*/
-;*    j2s-uninit! ::J2SProgram ...                                     */
-;*---------------------------------------------------------------------*/
-(define (j2s-uninit-TBR! this args)
-   (when (isa? this J2SProgram)
-      (with-access::J2SProgram this (nodes decls direct-eval)
-	 (if direct-eval
-	     (for-each (lambda (decl)
-			  (unless (isa? decl J2SDeclFun)
-			     (decl-usage-add! decl 'uninit)))
-		decls)
-	     (begin
-		;; initialize all global variables
-		(for-each (lambda (decl)
-			     (with-access::J2SDecl decl (%info)
-				(if (isa? decl J2SDeclInit)
-				    (set! %info 'init0)
-				    (set! %info 'unknown))))
-		   decls)
-		;; mark single decl init initialization
-		(for-each invalidate-overridden-decl nodes)
-		;; mark global declinit single init
-		(for-each (lambda (decl)
-			     (with-access::J2SDecl decl (%info)
-				(when (and (isa? decl J2SDeclInit) (eq? %info 'init0))
-				   (set! %info 'init))))
-		   decls)
-		;; mark variables used before initialized
-		(for-each (lambda (n) (invalidate-early-decl n #t)) nodes)
-		;; mark all variables not initialized for sure
-		(for-each (lambda (decl)
-			     (with-access::J2SDecl decl (%info id)
-				(when (memq %info '(init0 unknown overridden))
-				   (decl-usage-add! decl 'uninit))))
-		   decls)))))
    this)
 
 ;*---------------------------------------------------------------------*/

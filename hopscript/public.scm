@@ -651,6 +651,9 @@
 	 (cond
 	    ((=fx n parity)
 	     (apply procedure this args))
+	    ((or (=fx arity -2048) (=fx arity -2047))
+	      ;; eager "arguments" call
+	     (procedure this (apply vector args)))
 	    ((<fx required n)
 	     ;; required arguments missing
 	     (if (js-procedure-hopscript-mode? fun)

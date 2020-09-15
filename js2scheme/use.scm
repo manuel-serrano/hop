@@ -289,9 +289,16 @@
 ;*    j2s-use ::J2SRef ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-use this::J2SRef ctx deval infun)
-   (with-access::J2SRef this (decl)
+   (with-access::J2SRef this (decl loc)
       (with-access::J2SDecl decl (%info escape id)
+	 (when (eq? id 'tmpXXX)
+	    (tprint "eq fun=" (eq? infun %info) " " (typeof infun)
+	       " " (if (symbol? infun) infun)))
 	 (unless (eq? infun %info)
+	    (when (eq? id 'prefix)
+	       (tprint "MARK ESCAPE " id " " loc)
+	       (tprint "  infun=" (j2s->list infun))
+	       (tprint "   info=" (j2s->list %info)))
 	    (set! escape #t))
 	 (when ctx
 	    (decl-usage-add! decl ctx))))
@@ -410,13 +417,27 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-use ::J2SBlock ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-use this::J2SBlock ctx deval infun)
+   (with-access::J2SBlock this (nodes)
+      (when (isa? infun J2SFun)
+	 (for-each (lambda (b)
+		      (when (isa? b J2SDecl)
+			 (with-access::J2SDecl b (%info)
+			    (set! %info infun))))
+	    nodes)))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-use ::J2SLetBlock ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-use this::J2SLetBlock ctx deval infun)
    (with-access::J2SLetBlock this (decls nodes)
-      (for-each (lambda (d)
-		   (with-access::J2SDecl d (%info) (set! %info infun)))
-	 decls)
+      (when (isa? infun J2SFun)
+	 (for-each (lambda (d)
+		      (with-access::J2SDecl d (%info) (set! %info infun)))
+	    decls))
       (for-each (lambda (d) (j2s-use d 'init deval infun)) decls)
       (for-each (lambda (n) (j2s-use n 'ref deval infun)) nodes))
    this)
@@ -451,12 +472,13 @@
 ;*    j2s-use ::J2SFun ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-use this::J2SFun ctx deval infun)
-   (with-access::J2SFun this (params body)
-      (for-each (lambda (p)
-		   (with-access::J2SDecl p (%info)
-		      (set! %info this)))
-	 params)
-      (j2s-use body 'ref deval this)))
+   (with-access::J2SFun this (params body generator)
+      (unless generator
+	 (for-each (lambda (p)
+		      (with-access::J2SDecl p (%info)
+			 (set! %info this)))
+	    params))
+      (j2s-use body 'ref deval (if generator 'dummy-to-escape-all-tmps this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-use ::J2SForIn ...                                           */

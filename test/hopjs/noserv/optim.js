@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
 /*    Last change :  Thu Jul 25 06:39:08 2019 (serrano)                */
-/*    Copyright   :  2014-19 Manuel Serrano                            */
+/*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optimization testing (i.e., optimizations that were wrong).      */
 /*=====================================================================*/
@@ -63,3 +63,14 @@ function unboxedCTOR() {
 
 assert.ok( unboxedCTOR, "constructors with unboxed arguments" );
    
+/*---------------------------------------------------------------------*/
+/*    glop prop on double assignments                                  */
+/*    up to commit: f2a84ad64a872426c1ddd955b769863ae96978fe           */
+/*---------------------------------------------------------------------*/
+function moment() {
+   return hookCallback.apply(null, arguments);
+}
+
+var momentProperties = (moment.momentProperties = []);
+
+assert.ok( momentProperties.length === 0, "globprop" );

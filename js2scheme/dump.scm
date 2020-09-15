@@ -533,14 +533,14 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SPrefix)
    (with-access::J2SPrefix this (lhs rhs loc op)
-      `(,@(call-next-method) ,@(dump-cache this) ,op)))
+      `(,@(call-next-method) ,@(dump-cache this) ,@(dump-range this) ,op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPostfix ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SPostfix)
    (with-access::J2SPostfix this (lhs rhs loc op)
-      `(,@(call-next-method) ,@(dump-cache this) ,op)))
+      `(,@(call-next-method) ,@(dump-cache this) ,@(dump-range this) ,op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SUnresolvedRef ...                                 */
@@ -953,8 +953,11 @@
 ;*    j2s->list ::J2SStmtExpr ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SStmtExpr)
-   (with-access::J2SStmtExpr this (expr)
-      `(,@(call-next-method) ,@(dump-info this) ,(j2s->list expr))))
+   (with-access::J2SStmtExpr this (expr loc)
+      `(,@(call-next-method)
+	  ,@(dump-loc loc)
+	  ,@(dump-info this)
+	  ,(j2s->list expr))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SObjectInit ...                                    */

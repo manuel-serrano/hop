@@ -25,8 +25,6 @@
 	      (((kwote quote) arguments-lazy)
 	       -2047)
 	      (((kwote quote) arguments-eager)
-	       -2047)
-	      (((kwote quote) arguments-eager)
 	       -2048)
 	      (((kwote quote) arguments)
 	       0)

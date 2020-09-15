@@ -156,7 +156,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SRef hints)
    (with-access::J2SRef this (decl loc type)
-      (add-hints! decl hints this)))
+      (let ((dh (if (isa? decl J2SThis) (cons '(object . 100) hints) hints)))
+	 (add-hints! decl dh this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SExpr ...                                           */
@@ -460,17 +461,19 @@
 			 (guess-builtin-method-type obj fn)
 			 '(any any))))
 	    ;; hint the receiver object
-	    (unless (eq? (cadr tys) 'any)
-	       (let ((hints (cond
-			       ((pair? (cadr tys))
+	    (let ((hints (cond
+			    ((eq? (cadr tys) 'any)
+			     '((object . 5)))
+			    ((pair? (cadr tys))
+			     (cons '(object . 5)
 				(map (lambda (t)
 					`(,(j2s-hint-type t) . 2))
-				   (cadr tys)))
-			       ((eq? (cadr tys) 'any)
-				'())
-			       (else
-				`((,(j2s-hint-type (cadr tys)) . 4))))))
-		  (j2s-hint obj hints)))
+				   (cadr tys))))
+			    ((eq? (cadr tys) 'any)
+			     '((object . 5)))
+			    (else
+			     `((object . 5) (,(j2s-hint-type (cadr tys)) . 4))))))
+	       (j2s-hint obj (cons '(object . 5) hints)))
 	    ;; hint the arguments
 	    (let loop ((args args)
 		       (tys (cddr tys)))

@@ -234,15 +234,12 @@
       ((+)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.6
        (let ((sexpr (j2s-scheme expr mode return ctx))
-	     (typ (j2s-type expr))
-	     (vtyp (j2s-vtype expr)))
+	     (etyp (j2s-type expr)))
 	  (cond
 	     ((eqv? sexpr 0)
 	      +0.0)
-	     ((memq vtyp '(int32 uint32 int53 integer number))
-	      sexpr)
-	     ((memq typ '(int32 uint32 int53 integer number))
-	      (j2s-cast sexpr expr vtyp typ ctx))
+	     ((memq etyp '(int32 uint32 int53 integer number))
+	      (j2s-cast sexpr expr etyp type ctx))
 	     (else
 	      (epairify loc `(js-tonumber ,sexpr %this))))))
       ((-)
@@ -512,7 +509,7 @@
 	    ((eq? tr 'int32)
 	     (strict-equal-int32 rhs lhs tl))
 	    ((or (type-cannot? tr '(string)) (type-cannot? tl '(string)))
-	     (if (or (type-cannot? tr '(real)) (type-cannot? tl '(real)))
+	     (if (and (type-cannot? tr '(real)) (type-cannot? tl '(real)))
 		 `(eq? ,lhs ,rhs)
 		 `(js-strict-equal-no-string? ,lhs ,rhs)))
 	    (else
@@ -523,8 +520,6 @@
        `(js-equal? ,lhs ,rhs %this))
       ((!=)
        `(not (js-equal? ,lhs ,rhs %this)))
-      ((eq?)
-       `(eq? ,lhs ,rhs))
       ((===)
        (strict-equal lhs rhs))
       ((!==)
@@ -1424,21 +1419,19 @@
 		(binop-real-xxx '+ type lhs tl left rhs tr right ctx #f))
 	       ((eq? tr 'real)
 		(binop-real-xxx '+ type rhs tr right lhs tl left ctx #t))
-	       (else
-		(if-fixnums? left tl right tr
-		   (binop-fixnum-fixnum/ctx ctx '+ type
-		      (asfixnum left tl)
-		      (asfixnum right tr)
-		      #f)
-		   (if-flonums? left tl right tr
-		      (binop-flonum-flonum (real-op '+ type lhs rhs #f) type
-			 (asreal left tl)
-			 (asreal right tr)
-			 #f)
-		      (binop-any-any '+ type
+	       ((and (eq? type 'string) (eq? tl 'any) (eq? tr 'any))
+		`(if (and (js-jsstring? ,left) (js-jsstring? ,right))
+		     (js-jsstring-append ,left ,right)
+		     ,(binop-any-any '+ type
 			 (box left tl ctx)
 			 (box right tr ctx)
-			 #f))))))))
+			 #f)))
+	       (else
+		      (binop-flonum-flonum (real-op '+ type lhs rhs #f) type
+		(binop-any-any '+ type
+		   (box left tl ctx)
+		   (box right tr ctx)
+		   #f))))))
 
    (define (is-binary-string-add? x)
       (when (isa? x J2SBinary)
@@ -1481,13 +1474,13 @@
 	  (fast-add tl tr loc type lhs rhs mode return ctx)))
    
    (define (add loc type lhs rhs mode return ctx)
-      (let ((tl (j2s-vtype lhs))
-	    (tr (j2s-vtype rhs)))
+      (let ((tl (j2s-type lhs))
+	    (tr (j2s-type rhs)))
 	 (if (and (or (eq? tl 'string) (eq? tr 'string))
 		  (context-get ctx :optim-size))
-	     (small-add tl tr loc type lhs rhs mode return ctx)
-	     (fast-add tl tr loc type lhs rhs mode return ctx))))
-   
+	     (small-add tl tr loc type lhs rhs mode return ctx))
+	     (fast-add tl tr loc type lhs rhs mode return ctx)))
+
    (if (type-number? type)
        (js-arithmetic-addsub loc '+ type lhs rhs mode return ctx)
        (add loc type lhs rhs mode return ctx)))
@@ -1542,20 +1535,30 @@
 			 (asreal left tl)
 			 (asreal right tr)
 			 #f)
-		      (binop-number-number op type
-			 (box left tl ctx)
-			 (box right tr ctx)
-			 #f)))
+		      (if (and (eq? tl 'number) (eq? tr 'number))
+			  (binop-number-number op type
+			     (box left tl ctx)
+			     (box right tr ctx)
+			     #f)
+			  (binop-any-any op type
+			     (box left tl ctx)
+			     (box right tr ctx)
+			     #f))))
 		  ((and (eq? op '-) (or (is-hint? lhs 'real) (is-hint? rhs 'real)))
 		   (if-flonums? left tl right tr
 		      (binop-flonum-flonum (real-op op type lhs rhs #f) type
 			 (asreal left tl)
 			 (asreal right tr)
 			 #f)
-		      (binop-number-number op type
-			 (box left tl ctx)
-			 (box right tr ctx)
-			 #f)))
+		      (if (and (eq? tl 'number) (eq? tr 'number))
+			  (binop-number-number op type
+			     (box left tl ctx)
+			     (box right tr ctx)
+			     #f)
+			  (binop-any-any op type
+			     (box left tl ctx)
+			     (box right tr ctx)
+			     #f))))
 		  ((and (eq? tl 'number) (eq? tr 'number))
 		   (if-fixnums? left tl right tr
 		      (binop-fixnum-fixnum/ctx ctx op type
@@ -1571,6 +1574,13 @@
 			    (box left tl ctx)
 			    (box right tr ctx)
 			    #f))))
+		  ((and (eq? op '+) (eq? type 'string))
+		   `(if (and (js-jsstring? ,left) (js-jsstring? ,right))
+			(js-jsstring-append ,left ,right)
+			,(binop-any-any op type
+			    (box left tl ctx)
+			    (box right tr ctx)
+			    #f)))
 		  (else
 		   (if-fixnums? left tl right tr
 		      (binop-fixnum-fixnum/ctx ctx op type
