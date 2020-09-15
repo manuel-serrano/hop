@@ -265,7 +265,7 @@
 	      ,(j2s-scheme (car args) mode return ctx)
 	      %this
 	      #f)
-	  (with-access::J2SProgram (context-get ctx :program) (cnsts)
+	  (with-access::J2SProgram (context-program ctx) (cnsts)
 	     (with-access::J2SString str (loc val)
 		(let* ((len (length cnsts))
 		       (rx (instantiate::J2SRegExp

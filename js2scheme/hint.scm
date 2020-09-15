@@ -258,7 +258,7 @@
 	 ((&& OR)
 	  (j2s-hint rhs  (cons '(bool . 10) hints))
 	  (j2s-hint lhs  (cons '(bool . 10) hints)))
-	 ((< <= >= > - * /)
+	 ((- * /)
 	  (case (j2s-type lhs)
 	     ((real)
 	      (j2s-hint lhs '())
@@ -279,6 +279,25 @@
 	     (else
 	      (j2s-hint lhs '((integer . 2) (real . 2) (no-string . 1)))
 	      (j2s-hint rhs '((no-string . 1))))))
+	 ((< <= >= >)
+	  (case (j2s-type lhs)
+	     ((real)
+	      (j2s-hint lhs '())
+	      (j2s-hint rhs '((real . 5) (no-string . 1))))
+	     ((integer)
+	      (j2s-hint lhs '())
+	      (j2s-hint rhs '((integer . 3) (no-string . 1))))
+	     (else
+	      (j2s-hint rhs '((integer . 2) (real . 2)))))
+	  (case (j2s-type rhs)
+	     ((real)
+	      (j2s-hint lhs '((real . 5) (no-string . 1)))
+	      (j2s-hint rhs '()))
+	     ((integer)
+	      (j2s-hint lhs '((integer . 3) (no-string . 1)))
+	      (j2s-hint rhs '()))
+	     (else
+	      (j2s-hint lhs '((integer . 2) (real . 2))))))
 	 ((%)
 	  (case (j2s-type lhs)
 	     ((real)
@@ -455,7 +474,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SAccess hints)
    (add-hints! this hints)
-   (j2s-hint-access this (not (assq 'no-string hints))))
+   (j2s-hint-access this #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SAssig ...                                          */
@@ -555,8 +574,8 @@
 			    ((eq? (cadr tys) 'any)
 			     '((object . 5)))
 			    (else
-			     `((object . 5) (,(j2s-hint-type (cadr tys)) . 4))))))
-	       (j2s-hint obj (cons '(object . 5) hints)))
+			     `((object . 3) (,(j2s-hint-type (cadr tys)) . 5))))))
+	       (j2s-hint obj hints))
 	    ;; hint the arguments
 	    (let loop ((args args)
 		       (tys (cddr tys)))

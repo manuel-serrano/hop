@@ -2192,7 +2192,6 @@
 	     (finalend (->fixnum (min (max intend 0) len)))
 	     (frm (minfx finalstart finalend))
 	     (to (maxfx finalstart finalend)))
-	 ;;(js-ascii->jsstring (substring s frm to))
 	 (js-substring->jsstring s frm (-fx to frm))))
    
    (define (utf8-substr s)

@@ -1209,14 +1209,24 @@
 		   (memq tr '(bool string object array))))
 	  (with-tmp lhs rhs mode return ctx
 	     (lambda (left right)
-		(if (and (memq tl '(null undefined bool integer int53))
+		(cond
+		   ((and (memq tl '(null undefined bool integer int53))
 			 (memq tr '(null undefined bool integer int53)))
 		    (if (eq? op '!=)
 			`(not (eq? ,left ,right))
-			`(eq? ,left ,right))
+			`(eq? ,left ,right)))
+		   ((eq? tl 'string)
+		    (if (eq? op '!=)
+			`(not (js-equal-string? ,left ,right %this))
+			`(js-equal-string? ,left ,right %this)))
+		   ((eq? tr 'string)
+		    (if (eq? op '!=)
+			`(not (js-equal-string? ,right ,left %this))
+			`(js-equal-string? ,right ,left %this)))
+		   (else
 		    (if (eq? op '!=)
 			`(not (js-equal-sans-flonum? ,left ,right %this))
-			`(js-equal-sans-flonum? ,left ,right %this))))))
+			`(js-equal-sans-flonum? ,left ,right %this)))))))
 	 ((or (memq tl '(undefined null)) (memq tr '(undefined null)))
 	  (with-tmp lhs rhs mode return ctx
 	     (lambda (left right)
