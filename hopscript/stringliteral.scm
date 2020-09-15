@@ -47,7 +47,7 @@
 	   (js-jsstring-character-ref ::obj ::uint32)
 	   (js-jsstring-ref ::obj ::uint32 ::JsGlobalObject)
 	   (js-ascii-ref ::JsStringLiteralASCII ::uint32 ::JsGlobalObject)
-	   (js-jsstring-length::uint32 ::JsStringLiteral)
+	   (inline js-jsstring-length::uint32 ::JsStringLiteral)
 	   (js-string-ref ::obj ::obj ::JsGlobalObject)
 	   (js-string-ref-as-string ::obj ::obj ::JsGlobalObject)
 	   (inline js-jsstring-lengthfx::long ::obj)
@@ -893,7 +893,7 @@
 ;*    string. For an UTF* string, this number differs from the number  */
 ;*    of letters of that string.                                       */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-length::uint32 js::JsStringLiteral)
+(define-inline (js-jsstring-length::uint32 js::JsStringLiteral)
    (with-access::JsStringLiteral js (length)
       length))
 
