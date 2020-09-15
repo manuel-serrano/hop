@@ -68,7 +68,7 @@
    ;; when the new (12apr2020) version is stabilized, these checks
    ;; could be removed
    (case key
-      ((:program) (error "context-get" "should use context-" key))
+      ((:program) (error "context-get" "should use context-program" key))
       ((:array) (error "context-get" "should use context-array" key))
       ((:string) (error "context-get" "should use context-string" key))
       ((:regexp) (error "context-get" "should use context-regexp" key))

@@ -195,6 +195,7 @@
 	   (inline js-equal?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-equal-fixnum?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-equal-sans-flonum?::bool ::obj ::obj ::JsGlobalObject)
+	   (inline js-equal-string?::bool ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-equality?::bool ::obj ::obj ::JsGlobalObject)
 	   (js-same-value-zero?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-strict-equal?::bool ::obj ::obj)
@@ -1989,6 +1990,17 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-equal-sans-flonum? o1 o2 %this::JsGlobalObject)
    (or (eq? o1 o2) (js-equality? o1 o2 %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-equal-string? ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Equality test used when the compiler knows that one of the       */
+;*    argument is a non empy string.                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-equal-string? s x %this::JsGlobalObject)
+   (if (js-jsstring? x)
+       (js-jsstring=? s x)
+       (js-equality? s x %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equality? ...                                                 */
