@@ -40,13 +40,12 @@
 	   (epairify loc expr)
 	   (epairify-deep loc expr)
 	   (strict-mode? mode)
-	   (j2s-profile-id id id conf)
-	   (j2s-fast-id id)
 	   (j2s-fast-constructor-id id)
 	   (j2s-scheme-id id pref)
-	   (j2s-scheme-name ::symbol ::struct)
-	   (j2s-decl-scheme-id ::J2SDecl)
-	   (j2s-decl-profile-id ::J2SDecl conf)
+	   (j2s-decl-name ::J2SDecl ::struct)
+	   (j2s-decl-fast-id ::J2SDecl conf)
+	   (j2s-decl-scm-id ::J2SDecl conf)
+	   (j2s-class-id clazz::J2SClass ctx)
 	   (js-need-global? ::J2SDecl scope mode)
 	   (flatten-stmt stmt)
 	   (flatten-nodes nodes)
@@ -106,7 +105,7 @@
 	   (expr-asuint32 expr::J2SExpr)
 	   (uncast::J2SExpr ::J2SExpr)
 
-	   (cancall?::bool ::J2SNode)
+	   (cancall?::bool ::J2SNode ::bool)
 	   (optimized-ctor ::J2SNode ctx)
 
 	   (with-tmp-flip flip lhs rhs mode return ::struct gen::procedure)
@@ -169,14 +168,6 @@
        id))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-fast-id ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (j2s-fast-id id)
-   (if (eq? id '||)
-       '@_
-       (symbol-append '@ id)))
-
-;*---------------------------------------------------------------------*/
 ;*    j2s-fast-constructor-id ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-fast-constructor-id id)
@@ -192,36 +183,63 @@
       (else (symbol-append pref id))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-scheme-name ...                                              */
+;*    j2s-decl-name ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (j2s-scheme-name id ctx)
-   (& id (context-program ctx)))
+(define (j2s-decl-name decl ctx)
+   (with-access::J2SDecl decl (id)
+      (& id (context-program ctx))))
    
 ;*---------------------------------------------------------------------*/
-;*    j2s-decl-scheme-id ...                                           */
+;*    j2s-decl-scm-id ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (j2s-decl-scheme-id decl::J2SDecl)
-   (with-access::J2SDecl decl (_scmid id scope key)
-      (if _scmid
-	  _scmid
-	  (let ((sid (j2s-scheme-id id
-			(if (eq? scope '%scope)
-			    '!
-			    (string->symbol
-			       (string-append "^"
-				  (integer->string key) "-"))))))
-	     (set! _scmid sid)
-	     sid))))
+(define (j2s-decl-scm-id decl::J2SDecl ctx)
 
-;*---------------------------------------------------------------------*/
-;*    j2s-decl-profile-id ...                                          */
-;*---------------------------------------------------------------------*/
-(define (j2s-decl-profile-id decl conf)
-   (let ((id (j2s-decl-scheme-id decl)))
+   (define (scheme-id decl::J2SDecl)
+      (with-access::J2SDecl decl (_scmid id scope key)
+	 (if _scmid
+	     _scmid
+	     (let ((sid (j2s-scheme-id id
+			   (if (eq? scope '%scope)
+			       '!
+			       (string->symbol
+				  (string-append "^"
+				     (integer->string key) "-"))))))
+		(set! _scmid sid)
+		sid))))
+   
+   (let ((id (scheme-id decl)))
       (if (isa? decl J2SDeclFun)
 	  (with-access::J2SDecl decl (loc)
-	     (j2s-profile-id id loc conf))
+	     (j2s-profile-id id loc ctx))
 	  id)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-decl-fast-id ...                                             */
+;*---------------------------------------------------------------------*/
+(define (j2s-decl-fast-id decl::J2SDecl ctx)
+
+   (define (j2s-fast-id decl::J2SDecl)
+      (with-access::J2SDecl decl (id)
+	 (if (eq? id '||)
+	     '@_
+	     (symbol-append '@ id))))
+   
+   (let ((id (j2s-fast-id decl)))
+      (if (isa? decl J2SDeclFun)
+	  (with-access::J2SDecl decl (loc)
+	     (j2s-profile-id id loc ctx))
+	  id)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-class-id ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-class-id this::J2SClass ctx)
+   (with-access::J2SClass this (decl name)
+      (when decl
+	 (with-access::J2SDecl decl (_scmid)
+	    (unless _scmid
+	       (set! _scmid (symbol-append '@ name)))
+	    _scmid))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-need-global? ...                                              */
@@ -593,7 +611,8 @@
 	      `(js-get/debug ,obj ,prop %this ',loc)
 	      `(js-get/debug ,obj ,(box prop typrop ctx) %this ',loc)))
 	 ((equal? propstr "__proto__")
-	  `(js-getprototypeof ,obj %this "j2scheme"))
+	  `(js-getprototypeof ,obj %this
+	      ,(format "~a:~a" (cadr loc) (caddr loc))))
 	 ((eq? tyobj 'array)
 	  (js-array-get obj prop typrop))
 	 ((eq? tyobj 'string)
@@ -761,9 +780,13 @@
 		  ,mode %this
 		  ,(loc->point loc) ',cspecs))
 	     ((maybe-string? prop typrop)
-	      `(js-put/cache! ,obj ,prop
-		  ,(box val tyval ctx) ,mode %this
-		  ,(loc->point loc) ,(loc->src loc)))
+	      (if (memq tyobj '(object global this))
+		  `(js-put-jsobject/cache! ,obj ,prop
+		      ,(box val tyval ctx) ,mode %this
+		      ,(loc->point loc) ,(loc->src loc))
+		  `(js-put/cache! ,obj ,prop
+		      ,(box val tyval ctx) ,mode %this
+		      ,(loc->point loc) ,(loc->src loc))))
 	     (else
 	      `(js-put! ,obj ,prop ,(box val tyval ctx) ,mode %this))))
 	 ((and field optim-arrayp (mightbe-number? field))
@@ -1047,42 +1070,50 @@
 ;*---------------------------------------------------------------------*/
 ;*    cancall? ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (cancall? node)
+(define (cancall? node accessp)
    (let ((cell (make-cell #f)))
-      (cancall node cell)
+      (cancall node accessp cell)
       (cell-ref cell)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cancall ::J2SNode ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (cancall this::J2SNode cell)
+(define-walk-method (cancall this::J2SNode accessp cell)
    (or (cell-ref cell) (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cancall ::J2SCall ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (cancall this::J2SCall cell)
+(define-walk-method (cancall this::J2SCall accessp cell)
    (cell-set! cell #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    cancall ::J2SNew ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (cancall this::J2SNew cell)
+(define-walk-method (cancall this::J2SNew accessp cell)
    (cell-set! cell #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    cancall ::J2SAssig ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (cancall this::J2SAssig cell)
+(define-walk-method (cancall this::J2SAssig accessp cell)
    (with-access::J2SAssig this (lhs rhs)
       (if (isa? lhs J2SAccess)
 	  (with-access::J2SAccess lhs (obj field)
 	     (unless (isa? obj J2SThis)
-		(cancall field cell)
-		(cancall rhs cell)))
+		(cancall field accessp cell)
+		(cancall rhs accessp cell)))
 	  (begin
-	     (cancall lhs cell)
-	     (cancall rhs cell)))))
+	     (cancall lhs accessp cell)
+	     (cancall rhs accessp cell)))))
+
+;*---------------------------------------------------------------------*/
+;*    cancall ::J2SAccess ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cancall this::J2SAccess accessp cell)
+   (if accessp
+       (cell-set! cell #t)
+       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
 ;*    optimized-ctor ...                                               */

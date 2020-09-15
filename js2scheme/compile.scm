@@ -60,6 +60,7 @@
 	   __js2scheme_sweep
 	   __js2scheme_uninit
 	   __js2scheme_globprop
+	   __js2scheme_cse
 	   __js2scheme_globvar
 	   __js2scheme_varpreinit
 	   __js2scheme_method
@@ -71,7 +72,8 @@
 	   __js2scheme_pce
 	   __js2scheme_module
 	   __js2scheme_newtarget
-	   __js2scheme_procedure)
+	   __js2scheme_procedure
+	   __js2scheme_cnstlift)
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
@@ -210,7 +212,9 @@
 	  j2s-varpreinit-stage
 	  j2s-tyflow-stage
 	  j2s-sweep-stage
+	  j2s-cnstlift-stage
 	  j2s-hintnum-stage
+	  j2s-cse-stage
 	  j2s-propcache-stage
 	  j2s-instanceof-stage
 	  j2s-propcce-stage
@@ -487,12 +491,18 @@
 	    (set! o (cons* :optim-inline-method #t o)))
 	 (unless (memq :optim-globprop o)
 	    (set! o (cons* :optim-globprop #t o)))
+	 (unless (memq :optim-cse o)
+	    (set! o (cons* :optim-cse #t o)))
 	 (unless (memq :optim-loopspec o)
 	    (set! o (cons* :optim-loopspec #t o)))
 	 (unless (memq :optim-arguments o)
 	    (set! o (cons* :optim-arguments #t o)))
+	 (unless (memq :optim-stack-alloc o)
+	    (set! o (cons* :optim-stack-alloc #t o)))
 	 (unless (memq :optim-procedure o)
 	    (set! o (cons* :optim-procedure #t o)))
+	 (unless (memq :optim-cnstlift o)
+	    (set! o (cons* :optim-cnstlift #t o)))
 	 )
       (when (>=fx l 3)
 	 (unless (memq :optim-method o)
@@ -505,6 +515,8 @@
 	    (set! o (cons* :optim-hint #t o)))
 	 (unless (memq :optim-hintnum o)
 	    (set! o (cons* :optim-hintnum #t o)))
+	 (unless (memq :optim-hintblock o)
+	    (set! o (cons* :optim-hintblock #t o)))
 	 (unless (memq :optim-range o)
 	    (set! o (cons* :optim-range #t o)))
 	 (unless (memq :optim-ctor o)
@@ -536,7 +548,19 @@
 	 (unless (memq :optim-inline o)
 	    (set! o (cons* :optim-inline #t o)))
 	 (unless (memq :optim-uninit o)
-	    (set! o (cons* :optim-uninit #t o))))
+	    (set! o (cons* :optim-uninit #t o)))
+	 (unless (memq :optim-unthis o)
+	    (set! o (cons* :optim-unthis #t o)))
+	 (unless (memq :optim-varpreinit o)
+	    (set! o (cons* :optim-varpreinit #t o)))
+	 (unless (memq :optim-globvar o)
+	    (set! o (cons* :optim-globvar #t o)))
+	 (unless (memq :optim-letfun o)
+	    (set! o (cons* :optim-letfun #t o)))
+	 (unless (memq :optim-propcache o)
+	    (set! o (cons* :optim-propcache #t o)))
+	 (unless (memq :optim-sweep o)
+	    (set! o (cons* :optim-sweep #t o))))
       (when (>=fx l 1)
 	 (unless (memq :optim-tyflow o)
 	    (set! o (cons* :optim-tyflow #t o))))
@@ -552,7 +576,9 @@
 		       :optim-ctor #f
 		       :optim-size #t
 		       o))))
-	 
+
+      (unless (memq :=fx-as-eq o)
+	 (set! o (cons* :=fx-as-eq #t o)))
       (unless (memq :filename o)
 	 (set! o (cons* :filename filename o)))
 

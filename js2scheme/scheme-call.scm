@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/js2scheme/scheme-call.scm         */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-call.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Jun 13 12:49:47 2020 (serrano)                */
+;*    Last change :  Sun Jun 14 06:56:47 2020 (serrano)                */
 ;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -34,6 +34,7 @@
 	   __js2scheme_scheme-object
 	   __js2scheme_scheme-json
 	   __js2scheme_scheme-date
+	   __js2scheme_scheme-process
 	   __js2scheme_scheme-array
 	   __js2scheme_scheme-class
 	   __js2scheme_scheme-ops
@@ -71,6 +72,8 @@
 	("charAt" js-jsstring-maybe-charat any (any) %this #t)
 	("charCodeAt" ,j2s-jsstring-charcodeat string (any) %this)
 	("charCodeAt" js-jsstring-maybe-charcodeat any (any) %this #t)
+	("codePointAt" ,j2s-jsstring-codepointat string (any) %this)
+	("codePointAt" js-jsstring-maybe-codepointat any (any) %this #t)
 	("indexOf" js-jsstring-maybe-indexof any (any (any 0)) %this #t)
 	("lastIndexOf" js-jsstring-lastindexof string (string (any +nan.0)) %this)
 	("lastIndexOf" js-jsstring-maybe-lastindexof string (any (any +nan.0)) %this #t)
@@ -106,8 +109,9 @@
 	("trim" js-jsstring-trim string () #f)
 	("trim" js-jsstring-maybe-trim any () %this #t)
 	("slice" js-jsstring-slice string (any any) %this)
-	("slice" js-jsstring-maybe-slice1 any (any) %this #t)
-	("slice" js-jsstring-maybe-slice any (any any) %this #t)
+	;; array are prefered to string for slice1 and slice2
+;* 	("slice" js-jsstring-maybe-slice1 any (any) %this #t)          */
+;* 	("slice" js-jsstring-maybe-slice2 any (any any) %this #t)      */
 	;; regexp
 	("test" ,j2s-regexp-test regexp (any) %this)
 	("exec" js-regexp-prototype-exec regexp (any) %this #f ,j2s-regexp-plain?)
@@ -142,6 +146,9 @@
 	("pop" js-array-pop array () %this #t ,j2s-array-plain?)
 	("pop" js-array-maybe-pop any () %this #t ,j2s-array-plain?)
 	("slice" js-array-maybe-slice0 any () %this #t)
+	("slice" js-array-maybe-slice1 any (any) %this #t)
+	("slice" js-array-maybe-slice2 any (any any) %this #t)
+	("shift" js-array-maybe-shift0 any () %this #t)
 	;; functions
 	("apply",j2s-apply any (any any) %this #t)
 	("call" ,j2s-call0 any (any) %this #t)
@@ -150,8 +157,42 @@
 	("call" ,j2s-call3 any (any any any any) %this #t)
 	;; math
 	("toFixed" js-maybe-tofixed any (any) %this #t)
+	;; date
+	("getTime" js-date-gettime date () #f #f)
+	("getTime" js-date-maybe-gettime any () %this #t)
+	("getFullYear" js-date-getfullyear date () #f #f)
+	("getFullYear" js-date-maybe-getfullyear any () %this #t)
+	("getMonth" js-date-getmonth date () #f #f)
+	("getMonth" js-date-maybe-getmonth any () %this #t)
+	("getDate" js-date-getdate date () #f #f)
+	("getDate" js-date-maybe-getdate any () %this #t)
+	("getUTCDate" js-date-getutcdate date () #f #f)
+	("getUTCDate" js-date-maybe-getutcdate any () %this #t)
+	("getHours" js-date-gethours date () #f #f)
+	("getHours" js-date-maybe-gethours any () %this #t)
+	("getMinutes" js-date-getminutes date () #f #f)
+	("getMinutes" js-date-maybe-getminutes any () %this #t)
+	("getUTCMinutes" js-date-getutcminutes date () #f #f)
+	("getUTCMinutes" js-date-maybe-getutcminutes any () %this #t)
+	("getSeconds" js-date-getseconds date () #f #f)
+	("getSeconds" js-date-maybe-getseconds any () %this #t)
+	("getMilliseconds" js-date-getmilliseconds date () #f #f)
+	("getMilliseconds" js-date-maybe-getmilliseconds any () %this #t)
+	("setMinutes" ,j2s-date-maybe-setminutes any (any) #t #t)
+	("setMinutes" ,j2s-date-maybe-setminutes any (any any) #t #t)
+	("setMinutes" ,j2s-date-maybe-setminutes any (any any any) #t #t)
+	("setMinutes" ,j2s-date-setminutes date (any) #f #f)
+	("setMinutes" ,j2s-date-setminutes date (any any) #f #f)
+	("setMinutes" ,j2s-date-setminutes date (any any any) #f #f)
+	("setUTCMinutes" ,j2s-date-maybe-setminutes any (any) #t #t)
+	("setUTCMinutes" ,j2s-date-maybe-setminutes any (any any) #t #t)
+	("setUTCMinutes" ,j2s-date-maybe-setminutes any (any any any) #t #t)
+	("setUTCMinutes" ,j2s-date-setminutes date (any) #f #f)
+	("setUTCMinutes" ,j2s-date-setutcminutes date (any any) #f #f)
+	("setUTCMinutes" ,j2s-date-setutcminutes date (any any any) #t #t)
 	;; object
 	("hasOwnProperty" js-has-own-property any (any) %this #f ,j2s-object-plain?)
+	("isFrozen" ,j2s-object-isfrozen any (any) #f #f ,j2s-object-plain?)
 	)))
 
 ;*---------------------------------------------------------------------*/
@@ -160,7 +201,7 @@
 (define j2s-builtin-functions
    (map (lambda (e)
 	   (apply builtin-function e))
-      `((parseInt js-parseint-string-uint32 (string uint32) #f)
+      '((parseInt js-parseint-string-uint32 (string uint32) #f)
 	(parseInt js-parseint-string (string) #f)
 	(parseInt js-parseint-any (any) %this)
 	(parseInt js-parseint (any any) %this)
@@ -222,6 +263,17 @@
        (def obj args mode return conf))))
 
 ;*---------------------------------------------------------------------*/
+;*    is-object-prototype? ...                                         */
+;*---------------------------------------------------------------------*/
+(define (is-object-prototype? obj)
+   (when (isa? obj J2SAccess)
+      (with-access::J2SAccess obj (obj field)
+	 (when (isa? field J2SString)
+	    (with-access::J2SString field (val)
+	       (when (string=? val "prototype")
+		  (is-builtin-ref? obj 'Object)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-call0 ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (j2s-call0 obj args mode return conf)
@@ -232,7 +284,22 @@
 	  ,(j2s-scheme (car args) mode return conf)
 	  ,(cadr args)))
 
+   (define (is-object-prototype-tostring? obj args)
+      (when (=fx (length args) 3)
+	 ;; a method called with exactly 1 argument
+	 ;; (%this and cache have been added)
+	 (when (isa? obj J2SAccess)
+	    (with-access::J2SAccess obj (obj field)
+	       (when (isa? field J2SString)
+		  (with-access::J2SString field (val)
+		     (when (string=? val "toString")
+			(is-object-prototype? obj))))))))
+
    (cond
+      ((is-object-prototype-tostring? obj args)
+       `(js-object-prototype-tostring 
+	   ,(j2s-scheme (car args) mode return conf)
+	   ,(cadr args)))
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (loc decl)
 	  (cond
@@ -268,8 +335,24 @@
 	  ,(j2s-scheme (car args) mode return conf)
 	  ,(j2s-scheme (cadr args) mode return conf)
 	  ,(caddr args)))
-      
+
+   (define (is-object-prototype-has-own-property? obj args)
+      (when (=fx (length args) 4)
+	 ;; a method called with exactly two arguments
+	 ;; (%this and cache have been added)
+	 (when (isa? obj J2SAccess)
+	    (with-access::J2SAccess obj (obj field)
+	       (when (isa? field J2SString)
+		  (with-access::J2SString field (val)
+		     (when (string=? val "hasOwnProperty")
+			(is-object-prototype? obj))))))))
+   
    (cond
+      ((is-object-prototype-has-own-property? obj args)
+       `(js-has-own-property
+	   ,(j2s-scheme (car args) mode return conf)
+	   ,(j2s-scheme (cadr args) mode return conf)
+	   ,(caddr args)))
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (loc decl)
 	  (cond
@@ -459,8 +542,8 @@
 	    (scmarg (j2s-scheme arg mode return ctx)))
 	 (if (isa? obj J2SAref)
 	     (with-access::J2SAref obj (array alen)
-		(let ((scmarr (j2s-decl-scheme-id array))
-		      (scmalen (j2s-decl-scheme-id alen)))
+		(let ((scmarr (j2s-decl-scm-id array ctx))
+		      (scmalen (j2s-decl-scm-id alen ctx)))
 		   `(let ((%l:len (js-array-length ,scmobj))
 			  (%o:item ,scmarg))
 		       (if (<u32 %l:len (fixnum->uint32 ,scmalen))
@@ -608,6 +691,9 @@
    (define (Object? self)
       (is-builtin-ref? self 'Object))
 
+   (define (Process? self)
+      (is-builtin-ref? self 'process))
+
    (define (mincspecs x y)
       (filter (lambda (c) (memq c y)) x))
    
@@ -635,6 +721,10 @@
 	     (lambda (expr) expr))
 	    ((and (Object? self)
 		  (j2s-object-builtin-method fun args this mode return ctx))
+	     =>
+	     (lambda (expr) expr))
+	    ((and (Process? self)
+		  (j2s-process-builtin-method fun args this mode return ctx))
 	     =>
 	     (lambda (expr) expr))
 	    ((and ccache (= (context-get ctx :debug 0) 0) ccspecs)
@@ -697,18 +787,6 @@
 	       (else
 		#f)))))
 
-   (define (call-new-method obj::J2SNew field args mode return ctx)
-      (with-access::J2SNew obj (clazz)
-	 (when (isa? clazz J2SGlobalRef)
-	    (with-access::J2SGlobalRef clazz (id decl)
-	       (unless (decl-usage-has? decl '(assig))
-		  (case id
-		     ((Date)
-		      (j2s-date-new-method obj field args mode return
-			 ctx))
-		     (else
-		      #f)))))))
-   
    (define (call-method this ccache ccspecs fun::J2SAccess args)
       (with-access::J2SCall this (profid cache)
 	 (with-access::J2SAccess fun (loc obj field (acache cache) (acspecs cspecs))
@@ -753,10 +831,6 @@
 		  ((isa? obj J2SParen)
 		   (with-access::J2SParen obj (expr)
 		      (loop expr)))
-		  ((and (isa? obj J2SNew)
-			(call-new-method obj field args mode return ctx))
-		   =>
-		   (lambda (sexp) sexp))
 		  (else
 		   (let ((tmp (gensym 'obj)))
 		      `(let ((,tmp ,(box (j2s-scheme obj mode return ctx)
@@ -786,7 +860,8 @@
 	 (let ((self (if idthis (j2s-self thisarg) '())))
 	    (if (context-get ctx :optim-arguments)
 		(with-access::J2SDeclArguments argumentsp (alloc-policy)
-		   (if (eq? alloc-policy 'lazy)
+		   (if (and (eq? alloc-policy 'lazy)
+			    (context-get ctx :optim-stack-alloc))
 		       (let ((v (gensym 'vec)))
 			  `(js-call-with-stack-vector
 			      (vector ,@(j2s-scheme args mode return ctx))
@@ -808,7 +883,8 @@
 		;; the rest argument
 		(with-access::J2SDeclRest (car params) (alloc-policy)
 		   (if (and (eq? alloc-policy 'lazy)
-			    (context-get ctx :optim-arguments))
+			    (context-get ctx :optim-arguments)
+			    (context-get ctx :optim-stack-alloc))
 		       (let ((v (gensym 'vec)))
 			  `(js-call-with-stack-vector
 			      (vector ,@(j2s-scheme args mode return ctx))
@@ -926,16 +1002,15 @@
    (define (call-known-function protocol profid fun::J2SDecl thisarg::pair-nil args)
       (cond
 	 ((isa? fun J2SDeclFun)
-	  (with-access::J2SDeclFun fun (id loc)
-	     (let ((val (j2sdeclinit-val-fun fun)))
-		(check-hopscript-fun-arity val id args)
-		(let ((%gen (if (typed-generator? fun) '(%gen) '())))
-		   (call-fun-function profid val thisarg protocol
-		      (j2s-profile-id (j2s-fast-id id) loc ctx) %gen args)))))
+	  (let ((val (j2sdeclinit-val-fun fun))
+		(id (j2s-decl-fast-id fun ctx)))
+	     (check-hopscript-fun-arity val id args)
+	     (let ((%gen (if (typed-generator? fun) '(%gen) '())))
+		(call-fun-function profid val thisarg protocol id %gen args))))
 	 ((j2s-let-opt? fun)
-	  (with-access::J2SDeclInit fun (id val loc)
+	  (with-access::J2SDeclInit fun (val)
 	     (call-fun-function profid val thisarg protocol
-		(j2s-profile-id (j2s-fast-id id) loc ctx) '() args)))
+		(j2s-decl-fast-id fun ctx) '() args)))
 	 (else
 	  (error "js-scheme" "Should not be here" (j2s->list fun)))))
 
@@ -1050,9 +1125,8 @@
    (define (call-scheme-nothis this fun args)
       (if (isa? fun J2SRef)
 	  (with-access::J2SRef fun (decl)
-	     (with-access::J2SDecl decl (id loc)
-		`(,(j2s-profile-id (j2s-fast-id id) loc ctx)
-		  ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args))))
+	     `(,(j2s-decl-fast-id decl ctx)
+	       ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))
 	  (call-scheme this fun args)))
 
    (define (call-scheme-this this fun thisarg args)
@@ -1096,11 +1170,15 @@
 		(call-hop-function fun thisarg args))
 	       ((isa? fun J2SSuper)
 		(j2s-scheme-super this mode return ctx))
-	       ((and (isa? fun J2SFun) (not (j2sfun-id fun)))
+	       ((and (isa? fun J2SFun)
+		     (with-access::J2SFun fun (decl)
+			(not decl)))
 		(call-fun-function profid fun thisarg protocol
 		   (jsfun->lambda fun mode return ctx (j2s-fun-prototype fun) #f)
 		   '()
 		   args))
+	       ((Array? fun)
+		(j2s-scheme (J2SNew* fun args) mode return ctx))
 	       ((isa? fun J2SGlobalRef)
 		(with-access::J2SGlobalRef fun (decl)
 		   (with-access::J2SDecl decl (id scope)

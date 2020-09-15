@@ -1373,7 +1373,7 @@
 		 ((and (ronly-variable? p) (isa? a J2SLiteral))
 		  a)
 		 (else
-		  (with-access::J2SDecl p (_usage id writable)
+		  (with-access::J2SDecl p ((_usage usage) id writable)
 		     (with-access::J2SNode a (loc)
 			(let ((d (J2SLetOpt _usage (gensym id)
 				    (inline! a

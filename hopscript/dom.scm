@@ -16,7 +16,7 @@
 
    (library hop)
    
-   (include "stringliteral.sch")
+   (include "stringliteral.sch" "types_expd.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic
@@ -58,12 +58,6 @@
 	    (& "classname") (& "id") (& "nodeType") (& "attributes")
 	    (& "children") (& "getElementsById") (& "getElementsByTagName")
 	    (& "getElementsByClassName")))))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-cast-object ::xml ...                                         *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-cast-object o::xml %this name)                   */
-;*    o)                                                               */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-inspect ::xml ...                                             */
@@ -158,20 +152,23 @@
 	     (lambda (this txt)
 		(instantiate::xml-verbatim
 		   (data (js-tostring txt %this))))
-	     1 (& "createTextNode")))
+	     (js-function-arity 1 0)
+	     (js-function-info :name "createTextNode" :len 1)))
 	 ((eq? name (& "createComment"))
 	  (js-make-function %this
 	     (lambda (this txt)
 		(instantiate::xml-comment
 		   (data (js-tostring txt %this))))
-	     1 (& "createComment")))
+	     (js-function-arity 1 0)
+	     (js-function-info :name "createComment" :len 1)))
 	 ((eq? name (& "createElement"))
 	  (js-make-function %this
 	     (lambda (this txt)
 		(instantiate::xml-element
 		   (tag (string->symbol (js-tostring txt %this)))
 		   (body '())))
-	     1 (& "createElement")))
+	     (js-function-arity 1 0)
+	     (js-function-info :name "createElement" :len 1)))
 	 (else
 	  (call-next-method)))))
 
@@ -223,9 +220,12 @@
 	  (js-make-function %this
 	     (lambda (this txt)
 		(js-string->jsstring (js-tostring o %this)))
-	     0 (& "toString")))
+	     (js-function-arity 0 0)
+	     (js-function-info :name "toString" :len 0)))
 	 ((eq? name (& "inspect"))
-	  (js-make-function %this js-inspect 1 (& "inspect")))
+	  (js-make-function %this js-inspect
+	     (js-function-arity js-inspect)
+	     (js-function-info :name "inspect" :len 1)))
 	 ((eq? name (& "nodeType"))
 	  3)
 	 ((eq? name (& "parentNode"))
@@ -263,12 +263,15 @@
 	 ((eq? name (& "nodeType"))
 	  8)
 	 ((eq? name (& "inspect"))
-	  (js-make-function %this js-inspect 1 (& "inspect")))
+	  (js-make-function %this js-inspect
+	     (js-function-arity js-inspect)
+	     (js-function-info :name "inspect" :len 1)))
 	 ((eq? name (& "toString"))
 	  (js-make-function %this
 	     (lambda (this txt)
 		(js-string->jsstring (js-tostring o %this)))
-	     0 (& "toString")))
+	     (js-function-arity 0 0)
+	     (js-function-info :name "toString" :len 0)))
 	 ((eq? name (& "parentNode"))
 	  (with-access::xml-comment o (parent) parent))
 	 ((eq? name (& "nextSibling"))
@@ -294,19 +297,23 @@
 	  (with-access::xml-markup o (body)
 	     body))
 	 ((eq? pname (& "inspect"))
-	  (js-make-function %this js-inspect 1 (& "inspect")))
+	  (js-make-function %this js-inspect
+	     (js-function-arity js-inspect)
+	     (js-function-info :name "inspect" :len 1)))
 	 ((eq? pname (& "constructor"))
 	  (js-undefined))
 	 ((eq? pname (& "toString"))
 	  (js-make-function %this
 	     (lambda (this)
 		(js-string->jsstring (js-tostring o %this)))
-	     0 (& "toString")))
+	     (js-function-arity 0 0)
+	     (js-function-info :name "toString" :len 0)))
 	 ((eq? pname (& "getElementById"))
 	  (js-make-function %this
 	     (lambda (this id)
 		(dom-get-element-by-id this (js-tostring id %this)))
-	     1 (& "getElementById")))
+	     (js-function-arity 1 0)
+	     (js-function-info :name "getElementById" :len 1)))
 	 ((eq? pname (& "getElementsByTagName"))
 	  (js-make-function %this
 	     (lambda (this tag)
@@ -315,7 +322,8 @@
 		      (dom-get-elements-by-tag-name this
 			 (js-tostring tag %this)))
 		   %this))
-	     1 (& "getElementsByTagName")))
+	     (js-function-arity 1 0)
+	     (js-function-info :name "getElementsByTagName" :len 1)))
 	 ((eq? pname (& "getElementsByClassName"))
 	  (js-make-function %this
 	     (lambda (this clazz)
@@ -324,17 +332,20 @@
 		      (dom-get-elements-by-class this
 			 (js-tostring clazz %this)))
 		   %this))
-	     1 (& "getElementsByClassName")))
+	     (js-function-arity 1 0)
+	     (js-function-info :name "getElementsByClassName" :len 1)))
 	 ((eq? pname (& "appendChild"))
 	  (js-make-function %this
 	     (lambda (this child)
 		(dom-append-child! this child))
-	     1 (& "appendChild")))
+	     (js-function-arity 1 0)
+	     (js-function-info :name "appendChild" :len 1)))
 	 ((eq? pname (& "removeChild"))
 	  (js-make-function %this
 	     (lambda (this child)
 		(dom-remove-child! this child))
-	     1 (& "removeChild")))
+	     (js-function-arity 1 0)
+	     (js-function-info :name "removeChild" :len 1)))
 	 ((eq? pname (& "previousSibling"))
 	  (dom-previous-sibling o))
 	 ((eq? pname (& "childNodes"))

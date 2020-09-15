@@ -39,7 +39,7 @@
    (define debug-function (>= (config-get conf :debug 0) 2))
    (define current-mode 'normal)
    (define source-map (config-get conf :source-map #f))
-   (define fun-src (config-get conf :fun-src #f))
+   (define fun-src (config-get conf :fun-src #t))
 
    (define es-module #f)
    
@@ -166,14 +166,9 @@
    
    (define (push-open-token token)
       (set! *open-tokens* (cons token *open-tokens*))
-;*       (print (make-string (- (length *open-tokens*) 1) #\space) "PUSHING " */
-;* 	 (cdr token) " " (token-loc token) " " (- (length *open-tokens*) 1)) */
       token)
    
    (define (pop-open-token token)
-;*       (print (make-string (- (length *open-tokens*) 1) #\space) "POPING  " */
-;* 	 (cdr token) "/" (cdar *open-tokens*) " "                      */
-;* 	 (token-loc token) "/" (token-loc (car *open-tokens*)) " " (- (length *open-tokens*) 1)) */
       (if (null? *open-tokens*)
 	  (error "js2scheme" (format "cannot pop token \"~s\"" (cdr token))
 	     (token-loc token))
@@ -1103,7 +1098,7 @@
 				       (decl (instantiate::J2SDeclFun
 						(loc loc)
 						(writable (not (eq? mode 'hopscript)))
-						(_usage (if (eq? mode 'hopscript)
+						(usage (if (eq? mode 'hopscript)
 							   (usage '())
 							   (usage '(assig))))
 						(id (cdr id))
@@ -1126,7 +1121,7 @@
 						(loc (token-loc id))
 						(id (cdr id))
 						(writable #f)
-						(_usage (usage '()))
+						(usage (usage '()))
 						(expression #t)
 						(val fun))))
 			 fun))
@@ -1165,7 +1160,7 @@
 				       (id (cdr id))
 ;* 				       (scope 'global)                 */
 				       (writable #f)
-				       (_usage (usage '()))
+				       (usage (usage '()))
 				       (val val))))
 		decl))
 	    (id
@@ -1186,7 +1181,7 @@
 				       (loc (token-loc id))
 				       (id (cdr id))
 				       (writable #f)
-				       (_usage (usage '()))
+				       (usage (usage '()))
 				       (expression #t)
 ;* 				       (scope  'global)                */
 				       (val svc))))
@@ -1547,7 +1542,7 @@
 	 (instantiate::J2SDeclRest
 	    (binder 'param)
 	    (loc loc)
-	    (_usage (usage '(rest)))
+	    (usage (usage '(rest)))
 	    (id (token-value token)))))
       
    (define (function-params maybe-expr?)
@@ -1686,7 +1681,7 @@
 					  (loc (token-loc id))
 					  (id (token-value id))
 					  (writable #f)
-					  (_usage (usage '(uninit)))
+					  (usage (usage '(uninit)))
 					  (scope 'global)
 					  (binder 'let)
 					  (val clazz))))
@@ -1700,7 +1695,7 @@
 					  (loc (token-loc id))
 					  (id (token-value id))
 					  (writable #f)
-					  (_usage (usage '(uninit)))
+					  (usage (usage '(uninit)))
 					  (scope 'global)
 					  (binder 'let)
 					  (val clazz))))
@@ -1793,6 +1788,7 @@
 				  (name (loc->funname "met" loc))
 				  (generator gen)
 				  (body body)
+				  (ismethodof super?)
 				  (vararg (rest-params params))))
 			  (prop (instantiate::J2SAccessorPropertyInit
 				   (loc loc)

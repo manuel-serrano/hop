@@ -60,7 +60,7 @@
 	 (loc loc)
 	 (id js)
 	 (writable writable)
-	 (_usage (if (not writable) (usage '()) (usage '(assig))))
+	 (usage (if (not writable) (usage '()) (usage '(assig))))
 	 (scope scope)
 	 (bind bind)
 	 (itype type)
@@ -124,6 +124,8 @@
 	    `(with-access::JsGlobalObject %this (js-proxy) js-proxy))
 	 (js-def-extern 'Math #t #t
 	    `(with-access::JsGlobalObject %this (js-math) js-math))
+	 (js-def-extern 'Date #t #t
+	    `(with-access::JsGlobalObject %this (js-date) js-date))
 	 (if (or (string=? id "console.js") (string=? id "node_stdio.js"))
 	     (instantiate::J2SUndefined
 		(type 'undefined)

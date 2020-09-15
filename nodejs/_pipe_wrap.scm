@@ -54,7 +54,8 @@
       (js-make-function %this
 		  (lambda (this cb)
 		     (nodejs-close %worker %this process this cb))
-		  1 (& "close"))
+		  (js-function-arity 1 0)
+		  (js-function-info :name "close" :len 1))
       #f %this)
 
    ;; unref
@@ -63,7 +64,8 @@
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-unref handle %worker)))
-		  0 (& "unref"))
+		  (js-function-arity 0 0)
+		  (js-function-info :name "unref" :len 0))
       #f %this)
 
    ;; ref
@@ -72,7 +74,8 @@
 	 (lambda (this)
 	    (with-access::JsHandle this (handle)
 	       (nodejs-ref handle %worker)))
-	 0 (& "ref"))
+	 (js-function-arity 0 0)
+	 (js-function-info :name "ref" :len 0))
       #f %this)
 
    ;; readStart
@@ -80,7 +83,8 @@
       (js-make-function %this
 	 (lambda (this)
 	    (stream-read-start %worker %this process slab this))
-	 0 (& "readStart"))
+	 (js-function-arity 0 0)
+	 (js-function-info :name "readStart" :len 0))
       #f %this)
    
    ;; readStop
@@ -88,7 +92,8 @@
       (js-make-function %this
 	 (lambda (this)
 	    (stream-read-stop %worker %this this))
-	 0 (& "readStop"))
+	 (js-function-arity 0 0)
+	 (js-function-info :name "readStop" :len 0))
       #f %this)
    
    ;; shutdown
@@ -96,7 +101,8 @@
       (js-make-function %this 
 	 (lambda (this)
 	    (stream-shutdown %worker %this process this))
-	 0 (& "shutdown"))
+	 (js-function-arity 0 0)
+	 (js-function-info :name "shutdown" :len 0))
       #f %this)
    
    ;; writeBuffer
@@ -104,7 +110,8 @@
       (js-make-function %this
 	 (lambda (this buffer)
 	    (stream-write-buffer %worker %this process this buffer))
-	 1 (& "writeBuffer"))
+	 (js-function-arity 1 0)
+	 (js-function-info :name "writeBuffer" :len 1))
       #f %this)
    
    ;; writeAsciiString
@@ -114,7 +121,8 @@
 	    (stream-write-string %worker %this process this
 	       (js-jsstring->string string) 0 (js-jsstring-lengthfx string)
 	       "ascii" #f handle))
-	 2 (& "writeAsciiString"))
+	 (js-function-arity 2 0)
+	 (js-function-info :name "writeAsciiString" :len 2))
       #f %this)
    
    ;; writeUtf8String
@@ -124,7 +132,8 @@
 	    (stream-write-string %worker %this process this
 	       (js-jsstring->string string) 0 (js-jsstring-lengthfx string)
 	       "utf8" #f handle))
-	 2 (& "writeUtf8String"))
+	 (js-function-arity 2 0)
+	 (js-function-info :name "writeUtf8String" :len 2))
       #f %this)
    
    ;; writeUcs2String
@@ -136,7 +145,8 @@
 	       (stream-write-string %worker %this process this
 		  (js-jsstring->string string) 0 (js-jsstring-lengthfx string)
 		  "ascii" #f handle)))
-	 2 (& "writeUcs2String"))
+	 (js-function-arity 2 0)
+	 (js-function-info :name "writeUcs2String" :len 2))
       #f %this)
    
    ;; bind
@@ -145,7 +155,8 @@
 	 (lambda (this name)
 	    (with-access::JsHandle this (handle)
 	       (nodejs-pipe-bind %this process handle name)))
-	 0 (& "bind"))
+	 (js-function-arity 1 0)
+	 (js-function-info :name "bind" :len 1))
       #f %this)
    
    ;; listen
@@ -155,7 +166,8 @@
 		     (with-access::JsHandle this (handle)
 			(nodejs-pipe-listen %worker %this process this handle
 			   (->fixnum (js-tointeger backlog %this)))))
-		  1 (& "listen"))
+		  (js-function-arity 1 0)
+		  (js-function-info :name "listen" :len 1))
       #f %this)
    
    ;; connect
@@ -175,7 +187,8 @@
 				 oncomp req status this req #t #t)
 			      (js-undefined))))
 		     req))))
-	 2 (& "connect"))
+	 (js-function-arity 2 0)
+	 (js-function-info :name "connect" :len 2))
       #f %this)
    
    ;; open
@@ -184,13 +197,18 @@
 	 (lambda (this fd)
 	    (with-access::JsHandle this (handle)
 	       (nodejs-pipe-open %worker %this handle fd)))
-	 1 (& "open"))
+	 (js-function-arity 1 0)
+	 (js-function-info :name "open" :len 1))
       #f %this)
 
    ;; pipe
-   (define (pipe . val)
-      (with-access::JsGlobalObject %this (js-object)
-	 (let* ((hdl (nodejs-new-pipe %worker (and (pair? val) (car val))))
+   (define (pipe this #!optional val)
+      (with-access::JsGlobalObject %this (js-object js-new-target)
+	 (if (eq? js-new-target (js-undefined))
+	     (js-raise-type-error %this
+		"Pipe can only be used as a constructor" this)
+	     (set! js-new-target (js-undefined)))
+	 (let* ((hdl (nodejs-new-pipe %worker val))
 		(obj (instantiateJsHandle
 			(handle hdl)
 			(__proto__ pipe-prototype)
@@ -202,7 +220,8 @@
 		       (lambda (this)
 			  (with-access::JsHandle this (handle)
 			     (nodejs-stream-fd %worker handle)))
-		       0 (& "getGD"))
+		       (js-function-arity 0 0)
+		       (js-function-info :name "getGD" :len 0))
 	       :writable #f :configurable #f)
 	    ;; writeQueueSize
 	    (js-put! obj (& "writeQueueSize")
@@ -213,11 +232,11 @@
       (with-access::JsProcess process (js-pipe)
 	 (let ((obj (js-new %this js-object)))
 	    (set! js-pipe
-	       (js-make-function %this
-		  (lambda (this . args) #unspecified) 1 (& "Pipe")
-		  :construct pipe
+	       (js-make-function %this pipe
+		  (js-function-arity 0 1 'optional)
+		  (js-function-info :name "Pipe" :len 1)
 		  :prototype pipe-prototype
-		  :alloc (lambda (%this o) #unspecified)))
+		  :alloc js-no-alloc/new-target))
 	    (js-put! obj (& "Pipe") js-pipe #t %this)
 	    obj))))
 ;*---------------------------------------------------------------------*/

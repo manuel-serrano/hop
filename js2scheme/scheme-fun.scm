@@ -16,8 +16,7 @@
 
    (include "ast.sch"
 	    "usage.sch"
-	    "context.sch"
-	    "../hopscript/arity.sch")
+	    "context.sch")
 
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -32,7 +31,7 @@
 
    (export (j2s-scheme-closure ::J2SDecl mode return ::struct)
 	   (jsfun->lambda ::J2SFun mode return ::struct proto ::bool)
-	   (j2sfun->scheme ::J2SFun tmp tmpm mode return ::struct)
+	   (j2sfun->scheme ::J2SFun ::symbol tmpm mode return ::struct)
 	   (j2s-fun-prototype ::J2SFun)
 	   (j2s-function-arity ::J2SFun ::struct)))
 
@@ -115,9 +114,15 @@
    
    (with-access::J2SDeclFun this (loc id scope val exports vtype)
       (let ((val (declfun-fun this)))
-	 (with-access::J2SFun val (params mode vararg body name generator)
-	    (let* ((scmid (j2s-decl-scheme-id this))
-		   (fastid (j2s-profile-id (j2s-fast-id id) loc ctx)))
+	 (with-access::J2SFun val (params mode vararg body name generator idgen decl)
+	    (let* ((scmid (j2s-decl-scm-id this ctx))
+		   (fastid (j2s-decl-fast-id this ctx)))
+	       (when (context-get ctx :function-nice-name #f)
+		  ;; adjust the function name used only for debugging in
+		  ;; order to avoid creating useless Scheme closures
+		  ;; (see beautiful-define)
+		  (unless decl
+		     (set! name fastid)))
 	       (epairify-deep loc
 		  (case scope
 		     ((none)
@@ -189,37 +194,46 @@
 	     (if (context-get ctx :optim-arguments)
 		 (with-access::J2SDeclArguments argumentsp (alloc-policy)
 		    (if (eq? alloc-policy 'lazy)
-			(js-function-arity req opt 'arguments-lazy)
-			(js-function-arity req opt 'arguments-eager)))
-		 (js-function-arity req opt 'arguments)))
+			`(js-function-arity ,req ,opt 'arguments-lazy)
+			`(js-function-arity ,req ,opt 'arguments-eager)))
+		 `(js-function-arity ,req ,opt 'arguments)))
 	    ((eq? vararg 'rest)
 	     (with-access::J2SDeclRest (car (last-pair params)) (alloc-policy)
 		(if (eq? alloc-policy 'lazy)
-		    (js-function-arity req opt 'rest-lazy)
-		    (js-function-arity req opt 'rest))))
+		    `(js-function-arity ,req ,opt 'rest-lazy)
+		    `(js-function-arity ,req ,opt 'rest))))
 	    ((=fx opt 0)
-	     (js-function-arity req opt))
+	     `(js-function-arity ,req ,opt))
 	    (else
-	     (js-function-arity req opt 'optional))))))
+	     `(js-function-arity ,req ,opt 'optional))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-make-function ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-make-function this::J2SDeclFun mode return ctx)
-
+   
    (define (allocator::symbol this::J2SDecl)
       (with-access::J2SFun (declfun-fun this) (new-target)
 	 (cond
 	    (new-target 'js-object-alloc/new-target)
-	    ((decl-usage-has? this '(new get set))  'js-object-alloc)
+	    ((decl-usage-has? this '(new get set ref))  'js-object-alloc)
 	    (else 'js-object-alloc-lazy))))
-
+   
+   (define (constructor alloc method)
+      (if (eq? alloc 'js-object-alloc-lazy)
+	  (if method
+	      'js-make-method-strict-lazy
+	      'js-make-function-strict-lazy)
+	  (if method
+	      'js-make-method-strict
+	      'js-make-function-strict)))
+   
    (define (make-function-sans-alloc this::J2SDeclFun)
       (with-access::J2SDeclFun this (loc id scope val key)
 	 (let ((val (declfun-fun this)))
 	    (with-access::J2SFun val (params mode vararg body name generator
 					constrsize method new-target)
-	       (let* ((fastid (j2s-profile-id (j2s-fast-id id) loc ctx))
+	       (let* ((fastid (j2s-decl-fast-id this ctx))
 		      (lparams (length params))
 		      (arity (j2s-function-arity val ctx))
 		      (len (if (eq? vararg 'rest) (-fx lparams 1) lparams))
@@ -228,63 +242,47 @@
 		  (cond
 		     (generator
 		      `(js-make-function %this ,fastid
-			  ,len ,(& id (context-program ctx))
-			  :src ,src
-			  :arity ,arity
+			  ,arity ,(j2s-function-info val name loc ctx)
 			  :strict ',mode
 			  :alloc ,alloc
 			  :prototype ,(j2s-fun-prototype val)
 			  :__proto__ ,(j2s-fun-__proto__ val)
-			  :construct ,fastid
 			  :constrsize ,constrsize))
 		     ((and src (memq mode '(strict hopscript)))
-		      `(,(if (eq? alloc 'js-object-alloc-lazy)
-			     'js-make-function-strict-lazy
-			     'js-make-function-strict)
-			%this ,fastid 
-			,len ,(& id (context-program ctx))
-			:src ,src
-			:constrsize ,constrsize
-			:method ,(if method
-				     (jsfun->lambda method
-					mode return ctx #f #f)
-				     fastid)
-			:arity ,arity
+		      `(,(constructor alloc method)
+			%this ,fastid
+			,arity ,(j2s-function-info val name loc ctx)
+			,constrsize
+			,@(if method
+			      (list (jsfun->lambda method mode return ctx #f #f))
+			      '())
 			,@(if (eq? alloc 'js-object-alloc-lazy)
 			      '()
 			      `(:alloc ,alloc))))
 		     (src
 		      `(js-make-function %this ,fastid
-			  ,len ,(& id (context-program ctx))
-			  :src ,src
-			  :arity ,arity
+			  ,arity ,(j2s-function-info val name loc ctx)
 			  :strict ',mode
 			  :alloc ,alloc
-			  :construct ,fastid
 			  :constrsize ,constrsize
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return ctx #f #f))))
 		     ((and (eq? vararg 'arguments)
 			   (memq mode '(strict hopscript)))
-		      `(,(if (eq? alloc 'js-object-alloc-lazy)
-			     'js-make-function-strict-lazy
-			     'js-make-function-strict)
+		      `(,(constructor alloc method)
 			%this ,fastid
-			,len ,(& id (context-program ctx))
-			:constrsize ,constrsize
-			:method ,(if method
-				     (jsfun->lambda method
-					mode return ctx #f #f)
-				     fastid)
-			:arity ,arity
+			,arity ,(j2s-function-info val name loc ctx)
+			,constrsize
+			,@(if method
+			      (list (jsfun->lambda method mode return ctx #f #f))
+			      '())
 			,@(if (eq? alloc 'js-object-alloc-lazy)
 			      '()
 			      `(:alloc ,alloc))))
 		     ((eq? vararg 'arguments)
 		      `(js-make-function %this ,fastid
-			  ,len ,(& id (context-program ctx))
-			  :arity ,arity
+			  ,arity ,(j2s-function-info val name loc ctx)
 			  :strict ',mode 
 			  :constrsize ,constrsize
 			  :alloc ,alloc
@@ -292,51 +290,37 @@
 				      (jsfun->lambda method
 					 mode return ctx #f #f))))
 		     ((and method (memq mode '(strict hopscript)))
-		      `(,(if (eq? alloc 'js-object-alloc-lazy)
-			     'js-make-function-strict-lazy
-			     'js-make-function-strict)
+		      `(,(constructor alloc method)
 			%this ,fastid
-			,len ,(& id (context-program ctx))
-			:constrsize ,constrsize
-			:method ,(if method
-				     (jsfun->lambda method
-					mode return ctx #f #f)
-				     fastid)
-			:arity ,arity
+			,arity ,(j2s-function-info val name loc ctx)
+			,constrsize
+			,@(if method
+			      (list (jsfun->lambda method mode return ctx #f #f))
+			      '())
 			,@(if (eq? alloc 'js-object-alloc-lazy)
 			      '()
 			      `(:alloc ,alloc))))
 		     (method
 		      `(js-make-function %this ,fastid
-			  ,len ,(& id (context-program ctx))
-			  :arity ,arity
+			  ,arity ,(j2s-function-info val name loc ctx)
 			  :strict ',mode
 			  :alloc ,alloc
-			  :construct ,fastid
 			  :constrsize ,constrsize
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return ctx #f #f))))
-		     ((or (decl-usage-has? this '(new ref)) new-target)
+		     (else
 		      `(js-make-function %this ,fastid
-			  ,len ,(& id (context-program ctx))
-			  :arity ,arity
+			  ,arity ,(j2s-function-info val name loc ctx)
 			  :strict ',mode
 			  :alloc ,alloc
-			  :construct ,fastid
-			  :constrsize ,constrsize))
-		     (else
-		      `(js-make-function-simple %this ,fastid
-			  ,len ,(& id (context-program ctx))
-			  ,arity
-			  ',mode
-			  ,constrsize))))))))
-
+			  :constrsize ,constrsize))))))))
+   
    (with-access::J2SDeclFun this (val)
       (let ((fun (make-function-sans-alloc this)))
 	 (if (decl-usage-has? this '(new ref))
 	     (with-access::J2SFun (declfun-fun this) (body loc)
-		(if (cancall? this)
+		(if (cancall? this #f)
 		    fun
 		    (epairify loc
 		       `(js-function-set-constrmap! ,fun))))
@@ -350,8 +334,8 @@
       (with-access::J2SDeclFun this (loc id scope val vtype)
 	 (let ((val (declfun-fun this)))
 	    (with-access::J2SFun val (params mode vararg body name generator)
-	       (let* ((scmid (j2s-decl-scheme-id this))
-		      (fastid (j2s-profile-id (j2s-fast-id id) loc ctx)))
+	       (let* ((scmid (j2s-decl-scm-id this ctx))
+		      (fastid (j2s-decl-fast-id this ctx)))
 		  (unless (j2s-fun-no-closure? this)
 		     (case scope
 			((none)
@@ -365,7 +349,7 @@
 				`(set! ,scmid
 				    ,(if (js-need-global? this scope mode)
 					 `(js-bind! %this ,scope
-					     ,(j2s-scheme-name id ctx)
+					     ,(j2s-decl-name this ctx)
 					     :configurable #f
 					     :value ,(j2s-make-function this
 							mode return ctx))
@@ -379,9 +363,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclSvc mode return ctx)
    (with-access::J2SDeclSvc this (loc id val scope)
-      (let* ((scmid (j2s-decl-scheme-id this))
-	     (fastid (j2s-profile-id (j2s-fast-id id) loc ctx))
-	     (lamid (j2s-fast-id fastid))
+      (let* ((scmid (j2s-decl-scm-id this ctx))
+	     (fastid (j2s-decl-fast-id this ctx))
+	     (lamid (symbol-append '@ fastid))
 	     (fun (if (isa? val J2SFun)
 		      val
 		      (with-access::J2SMethod val (function)
@@ -396,7 +380,7 @@
 		    (define ,fastid
 		       ,(jssvc->scheme fun lamid id scmid mode return ctx))
 		    (define ,scmid
-		       (js-bind! %this ,scope ,(j2s-scheme-name id ctx)
+		       (js-bind! %this ,scope ,(j2s-decl-name this ctx)
 			  :configurable #f
 			  :writable #f
 			  :value ,fastid)))
@@ -428,8 +412,7 @@
       (let* ((targs (if this (cons this args) args))
 	     (gtargs (if %gen (cons '%gen targs) targs)))
 	 (if id
-	     (let ((%id (j2s-profile-id (j2s-fast-id id) loc ctx)))
-		`(labels ((,%id ,gtargs ,body)) ,%id))
+	     `(labels ((,id ,gtargs ,body)) ,id)
 	     `(,(type-ident 'lambda rtype (context-conf ctx)) ,gtargs ,body))))
 
    (define (j2s-type-scheme p)
@@ -485,10 +468,10 @@
 	       (jsfun-strict-vararg-body fun body id rest ctx)
 	       loc))))
 
-   (with-access::J2SFun this (loc vararg mode params generator name ismethodof)
-      (let* ((id (or (j2sfun-id this)
-		     (and (context-get ctx :function-nice-name #f)
-			  name)))
+   (with-access::J2SFun this (loc vararg mode params generator name decl)
+      (let* ((id (if decl
+		     (j2s-decl-fast-id decl ctx)
+		     (and (context-get ctx :function-nice-name #f) name)))
 	     (fun (cond
 		     ((not vararg)
 		      (fixarg-lambda this id body))
@@ -561,11 +544,11 @@
    
    (define (object-alloc this::J2SFun)
       (with-access::J2SFun this (body expr new-target)
-	 (let ((f (j2s-decl-scheme-id decl)))
+	 (let ((f (j2s-decl-scm-id decl ctx)))
 	    (cond
 	       (new-target
 		`(js-object-alloc/new-target %this ,f))
-	       ((cancall? body)
+	       ((cancall? body #f)
 		`(js-object-alloc %this ,f))
 	       (else
 		`(js-object-alloc-fast %this ,f))))))
@@ -578,7 +561,7 @@
 			(rtype 'object)
 			(idthis #f)
 			(thisp #f)))
-	       (id (j2s-decl-scheme-id thisp))
+	       (id (j2s-decl-scm-id thisp ctx))
 	       (body (let ((ctx (new-compiler-context ctx optim-initseq: #t)))
 			`(let ((,id ,(object-alloc this)))
 			    ,(j2s-scheme (ctor-body! body)
@@ -602,7 +585,7 @@
       (with-access::J2SDeclArguments argumentsp (alloc-policy argid mode)
 	 `(let* ((%len (vector-length ,argid))
 		 ,@(map (lambda (p i)
-			   (list (j2s-decl-scheme-id p)
+			   (list (j2s-decl-scm-id p ctx)
 			      `(if (<fx ,i %len)
 				   (vector-ref ,argid ,i)
 				   (js-undefined))))
@@ -618,19 +601,19 @@
 		(map (lambda (param)
 			(with-access::J2SDecl param (loc)
 			   (epairify loc
-			      `(define ,(j2s-decl-scheme-id param)
+			      `(define ,(j2s-decl-scm-id param ctx)
 				  (js-undefined)))))
 		   params)
 		'())
 	  ,@(if (pair? params)
 		`((when (pair? ,rest)
-		     (set! ,(j2s-decl-scheme-id (car params)) (car ,rest))
+		     (set! ,(j2s-decl-scm-id (car params) ctx) (car ,rest))
 		     ,(let loop ((params (cdr params)))
 			 (if (null? params)
 			     #unspecified
 			     `(when (pair? (cdr ,rest))
 				 (set! ,rest (cdr ,rest))
-				 (set! ,(j2s-decl-scheme-id (car params))
+				 (set! ,(j2s-decl-scm-id (car params) ctx)
 				    (car ,rest))
 				 ,(loop (cdr params)))))))
 		'())
@@ -645,7 +628,7 @@
 ;*    j2sfun->scheme ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (j2sfun->scheme this::J2SFun tmp tmpm mode return ctx)
-
+   
    (define (allocator this::J2SFun)
       (with-access::J2SFun this (new-target)
 	 (cond
@@ -653,6 +636,15 @@
 	    (new-target 'js-object-alloc/new-target)
 	    (else 'js-object-alloc-lazy))))
 
+   (define (constructor alloc method)
+      (if (eq? alloc 'js-object-alloc-lazy)
+	  (if (or tmpm method)
+	      'js-make-method-strict-lazy
+	      'js-make-function-strict-lazy)
+	  (if (or tmpm method)
+	      'js-make-method-strict
+	      'js-make-function-strict)))
+   
    (with-access::J2SFun this (loc name params mode vararg mode generator
 				constrsize method new-target type)
       (let* ((lparams (length params))
@@ -681,25 +673,19 @@
 		     (memq mode '(strict hopscript))
 		     (not prototype)
 		     (not __proto__))
-		`(,(if (eq? alloc 'js-object-alloc-lazy)
-		       'js-make-function-strict-lazy
-		       'js-make-function-strict)
-		  %this ,tmp ,len
-		  ,(& name (context-program ctx))
-		  :src ,src
-		  :constrsize ,constrsize
-		  :method ,(or tmpm
-			       (and method (jsfun->lambda method mode return ctx #f #f))
-			       tmp)
-		  :arity ,arity
+		`(,(constructor alloc method)
+		  %this ,tmp
+		  ,arity ,(j2s-function-info this name loc ctx)
+		  ,constrsize
+		  ,@(if (or tmpm method)
+			(list (or tmpm (jsfun->lambda method mode return ctx #f #f)))
+			'())
 		  ,@(if (eq? alloc 'js-object-alloc-lazy)
 			'()
 			`(:alloc ,alloc))))
 	       ((or src prototype __proto__ method new-target)
-		`(js-make-function %this ,tmp ,len
-		    ,(& name (context-program ctx))
-		    :src ,src
-		    :arity ,arity
+		`(js-make-function %this ,tmp
+		    ,arity ,(j2s-function-info this name loc ctx)
 		    :prototype ,prototype
 		    :__proto__ ,__proto__
 		    :strict ',mode
@@ -711,33 +697,30 @@
 		`(,(if (eq? alloc 'js-object-alloc-lazy)
 		       'js-make-function-strict-lazy
 		       'js-make-function-strict)
-		  %this ,tmp ,len
-		  ,(& name (context-program ctx))
-		  :constrsize ,constrsize
-		  :method ,tmp
-		  :arity ,arity
+		  %this ,tmp
+		  ,arity ,(j2s-function-info this name loc ctx)
+		  ,constrsize
 		  ,@(if (eq? alloc 'js-object-alloc-lazy)
 			`()
 			`(:alloc ,alloc))))
 	       ((eq? vararg 'arguments)
-		`(js-make-function %this ,tmp ,len
-		    ,(& name (context-program ctx))
-		    :arity ,arity ,
+		`(js-make-function %this ,tmp
+		    ,arity ,(j2s-function-info this name loc ctx)
 		    :strict ',mode
 		    :alloc ,alloc
 		    :constrsize ,constrsize))
 	       (else
-		`(js-make-function-simple %this ,tmp ,len
-		    ,(& name (context-program ctx))
-		    ,arity ',mode ,constrsize)))))))
+		`(js-make-function %this ,tmp
+		    ,arity ,(j2s-function-info this name loc ctx)
+		    :alloc ,alloc
+		    :strict ',mode :constrsize ,constrsize)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SFun mode return ctx)
    (with-access::J2SFun this (loc name params mode vararg generator method type decl)
-      (let* ((id (j2sfun-id this))
-	     (tmp (if (eq? name '||)
+      (let* ((tmp (if (eq? name '||)
 		      (gensym (format "~a:~a-"
 				 (basename (cadr loc)) (caddr loc)))
 		      name))
@@ -747,7 +730,7 @@
 			((eq? type 'procedure)
 			 (j2sfun->scheme this tmp tmpm mode return ctx))
 			(generator
-			 (let ((tmp2 (gensym id)))
+			 (let ((tmp2 (gensym '%gen)))
 			    `(letrec* (,@(if method
 					     `((,tmpm ,(jsfun->lambda method mode return ctx #f #f)))
 					     '())
@@ -766,8 +749,8 @@
 					    (j2s-fun-prototype this) #f)))
 			     ,(j2sfun->scheme this tmp tmpm mode return ctx))))))
 	 (epairify-deep loc
-	    (if id
-		(let ((scmid (j2s-decl-scheme-id decl)))
+	    (if decl
+		(let ((scmid (j2s-decl-scm-id decl ctx)))
 		   `(let ((,scmid (js-undefined)))
 		       (set! ,scmid ,fundef)
 		       ,scmid))
@@ -886,7 +869,8 @@
       (with-access::J2SSvc this (init register name)
 	 (let ((proc (service-proc->scheme this args)))
 	    `(let ((@worker (js-current-worker)))
-		(js-make-service %this ,tmp ',scmid ,register #f ,arity @worker
+		(js-make-service %this ,tmp ,(symbol->string scmid)
+		   ,register #f ,arity @worker
 		   (instantiate::hop-service
 		      (ctx %this)
 		      (proc ,proc)
@@ -938,6 +922,14 @@
 		       ,(when (symbol? path) (symbol->string path))
 		       ',loc
 		       ,register ,import (js-current-worker))))
+	       ((?- . ?-)
+		(let ((tmp (gensym)))
+		   `(let ((,tmp ,lam))
+		       (js-create-service %this
+			  ,(j2sfun->scheme this tmp #f mode return ctx)
+			  ,(when (symbol? path) (symbol->string path))
+			  ',loc
+			  ,register ,import (js-current-worker)))))
 	       (else
 		`(js-create-service %this
 		   ,(j2sfun->scheme this lam #f mode return ctx)
@@ -975,18 +967,20 @@
 	     (enumerable #t))))
    
    (define (init-alias-argument argument init indx)
-      (let ((id (j2s-decl-scheme-id argument)))
+      (let ((id (j2s-decl-scm-id argument ctx)))
 	 `(begin
 	     ,@(if init `((set! ,id ,init)) '())
 	     (js-arguments-define-own-property arguments ,indx
 		(instantiate::JsAccessorDescriptor
 		   (name (js-integer-name->jsstring ,indx))
 		   (get (js-make-function %this
-			   (lambda (%) ,id) 0
-			   ,(& "get" (context-program ctx))))
+			   (lambda (%) ,id)
+			   (js-function-arity 0 0)
+			   (js-function-info :name "get" :len 0)))
 		   (set (js-make-function %this
-			   (lambda (% %v) (set! ,id %v)) 1
-			   ,(& "set" (context-program ctx))))
+			   (lambda (% %v) (set! ,id %v))
+			   (js-function-arity 1 0)
+			   (js-function-info :name "set" :len 1)))
 		   (%get (lambda (%) ,id))
 		   (%set (lambda (% %v) (set! ,id %v)))
 		   (configurable #t)
@@ -998,7 +992,7 @@
 	     `(let* ((%len (vector-length ,argid))
 		     (arguments ',mode)
 		     ,@(map (lambda (p i)
-			       (list (j2s-decl-scheme-id p)
+			       (list (j2s-decl-scm-id p ctx)
 				  `(if (<fx ,i %len)
 				       (vector-ref ,argid ,i)
 				       (js-undefined))))
@@ -1007,7 +1001,7 @@
 	     `(let* ((%len (vector-length ,argid))
 		     (arguments (js-arguments %this ,argid))
 		     ,@(map (lambda (p i)
-			       (list (j2s-decl-scheme-id p)
+			       (list (j2s-decl-scm-id p ctx)
 				  `(if (<fx ,i %len)
 				       (vector-ref ,argid ,i)
 				       (js-undefined))))
@@ -1018,13 +1012,13 @@
 		      params (iota (length params)))
 		 (let loop ((,rest ,rest)
 			    (%i ,(length params)))
-		    (when (pair? ,rest)
-		       ,(init-argument `(car ,rest) '%i)
+		    (when (<fx %i (vector-length ,rest))
+		       ,(init-argument `(vector-ref ,rest %i) '%i)
 		       (loop (cdr ,rest) (+fx %i 1))))
 		 (js-bind! %this arguments ,(& "callee" (context-program ctx))
-		    :value (js-make-function %this
-			      ,(j2s-profile-id (j2s-fast-id id) loc ctx)
-			      0 ,(& id (context-program ctx)))
+		    :value (js-make-function %this ,id
+			      (js-function-arity 0 0)
+			      (js-function-info :name ,(symbol->string id) :len 0))
 		    :enumerable #f)
 		 ,body))))
 	     
@@ -1036,7 +1030,7 @@
 		(map (lambda (param)
 			(with-access::J2SDecl param (loc)
 			   (epairify loc
-			      `(define ,(j2s-decl-scheme-id param)
+			      `(define ,(j2s-decl-scm-id param ctx)
 				  (js-undefined)))))
 		   params)
 		'())
@@ -1059,9 +1053,9 @@
 		,(init-argument `(car ,rest) '%i)
 		(loop (cdr ,rest) (+fx %i 1))))
 	  (js-bind! %this arguments ,(& "callee" (context-program ctx))
-	     :value (js-make-function %this
-		       ,(j2s-profile-id (j2s-fast-id id) loc ctx) 0
-		       ,(& id (context-program ctx)))
+	     :value (js-make-function %this ,id
+		       0
+		       (js-function-info :name ,(symbol->string id) :len 0))
 	     :enumerable #f)
 	  ,body))
    
@@ -1074,7 +1068,7 @@
 ;*    j2s-function-src ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (j2s-function-src loc val::J2SFun ctx)
-   (with-access::J2SFun val (src body)
+   (with-access::J2SFun val (src body loc)
       (when src
 	 (match-case loc
 	    ((at ?path ?start)
@@ -1122,7 +1116,7 @@
 (define (j2s-declfun-prototype this::J2SDeclFun ctx)
    (with-access::J2SDeclFun this (parent)
       (let* ((decl (if parent parent this))
-	     (scmid (j2s-decl-scheme-id decl)))
+	     (scmid (j2s-decl-scm-id decl ctx)))
 	 `(js-get ,scmid ,(& "prototype" (context-program ctx)) %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -1175,3 +1169,40 @@
       (if (eq? meta 'unstrict-this)
 	  (ctor-body! (J2SStmtExpr (J2SUndefined)))
 	  (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-function-info ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-function-info val::J2SFun name loc ctx)
+
+   (define (file-relative? path)
+      (or (=fx (string-length path) 0)
+	  (not (char=? (string-ref path 0) (file-separator)))))
+   
+   (define (absolute-path path)
+      (if (file-relative? path)
+	  (file-name-canonicalize (make-file-name (pwd) path))
+	  (file-name-canonicalize path)))
+   
+   (define (function-len val)
+      (with-access::J2SFun val (params mode vararg body name generator
+				  constrsize method new-target)
+	 (let ((lparams (length params)))
+	    (if (eq? vararg 'rest) (-fx lparams 1) lparams))))
+   
+   (with-access::J2SFun val (loc body)
+      (with-access::J2SBlock body (endloc)
+	 (match-case loc
+	    ((at ?path ?start)
+	     (match-case endloc
+		((at ?- ?end)
+		 `(js-function-info
+		     :name ,(symbol->string name)
+		     :len ,(function-len val)
+		     :path ,(absolute-path path)
+		     :start ,start :end ,(+fx 1 end)))
+		(else
+		 (error "j2s-function-src" "bad location" loc))))
+	    (else
+	     (error "j2s-function-src" "bad location" loc))))))
+

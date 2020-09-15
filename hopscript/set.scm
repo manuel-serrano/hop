@@ -73,12 +73,16 @@
 
    (with-access::JsGlobalObject %this (js-function-prototype)
       
-      (define (%js-set this . args)
+      (define (%js-set this #!optional (iterable #\F))
 	 (with-access::JsGlobalObject %this (js-new-target)
-	    (when (eq? js-new-target (js-undefined))
-	       (js-raise-type-error %this
-		  (format "Constructor ~a requires 'new'" name) this))
-	    (set! js-new-target (js-undefined))))
+	    (if (eq? js-new-target (js-undefined))
+		(js-raise-type-error %this
+		   (format "Constructor ~a requires 'new'" name) this)
+		(begin
+		   (set! js-new-target (js-undefined))
+		   (unless (eq? iterable #\F)
+		      (js-set-construct %this this iterable))
+		   this))))
       
       (define (js-set-alloc %this constructor::JsFunction)
 	 (with-access::JsGlobalObject %this (js-new-target)
@@ -98,17 +102,13 @@
 	    (elements ($create-vector (if (eq? weak 'none) 12 4)))))
       
       (define js-set
-	 (js-make-function %this %js-set 0 (js-name->jsstring name)
+	 (js-make-function %this %js-set
+	    (js-function-arity %js-set)
+	    (js-function-info :name name :len 0)
 	    :__proto__ js-function-prototype
 	    :prototype js-set-prototype
 	    :size 0
-	    :alloc js-set-alloc
-	    :construct (lambda (this . iterable)
-			  (with-access::JsGlobalObject %this (js-new-target)
-			     (set! js-new-target (js-undefined)))
-			  (if (pair? iterable)
-			      (js-set-construct %this this (car iterable))
-			      this))))
+	    :alloc js-set-alloc))
       
       ;; init the prototype properties
       (init-prototype! %this js-set js-set-prototype)
@@ -123,7 +123,8 @@
       (with-access::JsGlobalObject %this (js-symbol-species)
 	 (js-bind! %this js-set js-symbol-species
 	    :get (js-make-function %this (lambda (this) js-set)
-		    0 (& "get [Symbol.species]"))
+		    (js-function-arity 0 0)
+		    (js-function-info :name "get [Symbol.species]" :len 0))
 	    :enumerable #f
 	    :configurable #t))
       
@@ -228,7 +229,9 @@
 	  (js-raise-type-error %this "not a Set" this)))
    
    (js-bind! %this js-set-prototype (& "add")
-      :value (js-make-function %this js-set-add 1 (& "add")
+      :value (js-make-function %this js-set-add
+		(js-function-arity js-set-add)
+		(js-function-info :name "add" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -244,7 +247,9 @@
 	  (js-raise-type-error %this "Not a Set" this)))
    
    (js-bind! %this js-set-prototype (& "clear")
-      :value (js-make-function %this map-prototype-clear 0 (& "clear")
+      :value (js-make-function %this map-prototype-clear
+		(js-function-arity map-prototype-clear)
+		(js-function-info :name "clear" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -258,7 +263,9 @@
    ;; delete
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.delete
    (js-bind! %this js-set-prototype (& "delete")
-      :value (js-make-function %this (js-set-delete %this) 1 (& "delete")
+      :value (js-make-function %this (js-set-delete %this)
+		(js-function-arity 1 0)
+		(js-function-info :name "delete" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -275,7 +282,9 @@
 	  (js-raise-type-error %this "Not a Sap" this)))
       
    (js-bind! %this js-set-prototype (& "entries")
-      :value (js-make-function %this js-set-entries 0 (& "entries")
+      :value (js-make-function %this js-set-entries
+		(js-function-arity js-set-entries)
+		(js-function-info :name "entries" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -297,7 +306,9 @@
 	  (js-raise-type-error %this "not a Set" this)))
 
    (js-bind! %this js-set-prototype (& "forEach")
-      :value (js-make-function %this js-set-for-each 1 (& "forEach")
+      :value (js-make-function %this js-set-for-each
+		(js-function-arity js-set-for-each)
+		(js-function-info :name "forEach" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -305,7 +316,9 @@
    ;; has
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.has
    (js-bind! %this js-set-prototype (& "has")
-      :value (js-make-function %this (js-set-has %this) 1 (& "has")
+      :value (js-make-function %this (js-set-has %this)
+		(js-function-arity (js-set-has %this))
+		(js-function-info :name "has" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -313,7 +326,9 @@
    ;; keys
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.keys
    (js-bind! %this js-set-prototype (& "keys")
-      :value (js-make-function %this js-set-values 0 (& "keys")
+      :value (js-make-function %this js-set-values
+		(js-function-arity js-set-values)
+		(js-function-info :name "keys" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -327,7 +342,9 @@
 	  (js-raise-type-error %this "Not a Set" this)))
    
    (js-bind! %this js-set-prototype (& "size")
-      :get (js-make-function %this js-set-size 0 (& "size")
+      :get (js-make-function %this js-set-size
+	      (js-function-arity js-set-size)
+	      (js-function-info :name "size" :len 0)
 	      :prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -340,7 +357,9 @@
 	     (js-make-vector-iterator vec (lambda (%this val) val) %this))
 	  (js-raise-type-error %this "Not a Set" this)))
    (js-bind! %this js-set-prototype (& "values")
-      :value (js-make-function %this js-set-values 0 (& "values")
+      :value (js-make-function %this js-set-values
+		(js-function-arity js-set-values)
+		(js-function-info :name "values" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -349,7 +368,9 @@
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype-@@tostringtag
    (with-access::JsGlobalObject %this (js-symbol-iterator)
       (js-bind! %this js-set-prototype js-symbol-iterator
-	 :value (js-make-function %this js-set-values 0 (& "values")
+	 :value (js-make-function %this js-set-values
+		   (js-function-arity js-set-values)
+		   (js-function-info :name "values" :len 0)
 		   :prototype (js-undefined))
 	 :enumerable #f
 	 :configurable #t))
@@ -405,7 +426,9 @@
 	  (js-raise-type-error %this "not a Set" this))))
    
    (js-bind! %this js-set-prototype (& "add")
-      :value (js-make-function %this js-set-add 2 (& "add")
+      :value (js-make-function %this js-set-add
+		(js-function-arity js-set-add)
+		(js-function-info :name "add" :len 2)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -419,7 +442,9 @@
    ;; delete
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.delete
    (js-bind! %this js-set-prototype (& "delete")
-      :value (js-make-function %this (js-set-delete %this) 1 (& "delete")
+      :value (js-make-function %this (js-set-delete %this)
+		(js-function-arity 1 0)
+		(js-function-info :name "delete" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -427,7 +452,9 @@
    ;; has
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.has
    (js-bind! %this js-set-prototype (& "has")
-      :value (js-make-function %this (js-set-has %this) 1 (& "has")
+      :value (js-make-function %this (js-set-has %this)
+		(js-function-arity 1 0)
+		(js-function-info :name "has" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)

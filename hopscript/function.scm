@@ -18,7 +18,7 @@
    
    (library hop js2scheme)
    
-   (include "types.sch" "stringliteral.sch" "property.sch" "arity.sch" "array.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch" "function.sch" "array.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic
@@ -36,36 +36,40 @@
 	   
 	   thrower-get
 	   thrower-set
-	   
+
+	   (js-function-src ::JsFunction)
+	   (inline js-function-path ::JsFunction)
 	   (js-function-debug-name::bstring ::JsProcedure ::JsGlobalObject)
-	   (js-function-arity ::long ::long #!optional (protocol 'fix))
-	   (js-make-function::JsFunction
-	      ::JsGlobalObject ::procedure ::int ::JsStringLiteral
+	   (js-function-arity::long ::obj #!optional opl (protocol 'fix))
+	   (js-function-info #!key name len tostring path start end
+	      (maxconstrsize 100))
+	   (js-make-function::JsFunction ::JsGlobalObject
+	      ::procedure ::int ::vector
 	      #!key
 	      method construct alloc
 	      __proto__ prototype
-	      (strict 'normal) arity (minlen -1) src 
-	      (size 0) (constrsize 3) (maxconstrsize 100)
+	      (strict 'normal) (minlen -1)
+	      (size 0) (constrsize 3)
 	      (constrmap (js-not-a-cmap)) (shared-cmap #t))
-	   (js-make-function-strict::JsFunction
-	      ::JsGlobalObject ::procedure ::int ::JsStringLiteral
+	   (js-make-function-strict::JsFunction ::JsGlobalObject
+	      ::procedure ::int ::vector ::long
 	      #!key
-	      method alloc
-	      arity (minlen -1) src 
-	      (constrsize 3)
-	      (constrmap (js-not-a-cmap)))
+	      alloc (constrmap (js-not-a-cmap)))
 	   (inline js-make-function-strict-lazy::JsFunction
-	      ::JsGlobalObject ::procedure ::int ::JsStringLiteral
+	      ::JsGlobalObject
+	      ::procedure ::int ::vector ::long)
+	   (js-make-method-strict::JsMethod ::JsGlobalObject
+	      ::procedure ::int ::vector ::long ::procedure
 	      #!key
-	      method 
-	      arity (minlen -1) src 
-	      (constrsize 3))
-	   (inline js-make-procedure::JsProcedure ::JsGlobalObject ::procedure
-	      ::int)
-	   (inline js-make-procedure-hopscript::JsProcedure ::JsGlobalObject ::procedure
-	      ::int)
-	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
-	      ::int ::JsStringLiteral ::int ::symbol ::int)
+	      alloc (constrmap (js-not-a-cmap)))
+	   (inline js-make-method-strict-lazy::JsMethod
+	      ::JsGlobalObject
+	      ::procedure ::int ::vector ::long
+	      ::procedure)
+	   (inline js-make-procedure::JsProcedure ::JsGlobalObject
+	      ::procedure ::int)
+	   (inline js-make-procedure-hopscript::JsProcedure ::JsGlobalObject
+	      ::procedure ::int)
 	   
 	   (inline js-function-prototype-get ::obj ::JsFunction ::obj ::JsGlobalObject)
 	   (js-function-setup-prototype!::JsObject ::JsGlobalObject ::JsFunction)
@@ -132,22 +136,60 @@
 (define-method (js-donate obj::JsFunction worker::WorkerHopThread %_this)
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-function)
-	 (with-access::JsFunction obj (procedure src elements)
-	    (if (eq? src 'builtin)
-		(let ((nobj (duplicate::JsFunction obj
-			       (elements '#()))))
-		   (js-object-proto-set! nobj (js-get js-function (& "prototype") %this))
-		   (js-object-mode-set! nobj (js-object-mode obj))
-		   nobj)
-		(js-undefined))))))
+	 (with-access::JsFunction obj (procedure elements)
+	    (js-undefined)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-src ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-function-src obj::JsFunction)
+   (with-access::JsFunction obj (info)
+      (match-case info
+	 (#(?- ?- (and (? js-jsstring?) ?src) ?- ?- ?- ?-)
+	  src)
+	 (#(?- ?- #f (and (? string?) ?path) ?start ?end ?-)
+	  (let* ((str (read-function-source info path start end))
+		 (jstr (js-string->jsstring str)))
+	     (vector-set! info 2 jstr)
+	     jstr))
+	 (#(?- ?- #f ?- ?- ?- ?-)
+	  (let ((jstr (js-jsstring-append
+			 (js-ascii->jsstring "[function ")
+			 (js-jsstring-append
+			    (js-string->jsstring (vector-ref info 0))
+			    (js-ascii->jsstring "]")))))
+	     (vector-set! info 2 jstr)
+	     jstr))
+	 (else
+	  (let ((jstr (js-ascii->jsstring "[Function]")))
+	     (vector-set! info 2 jstr)
+	     jstr)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-path ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-function-path obj::JsFunction)
+   (with-access::JsFunction obj (info)
+      (vector-ref info 3)))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-debug-name ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-function-debug-name::bstring obj::JsProcedure %this)
+   (if (js-function? obj)
+       (with-access::JsFunction obj (info)
+	  (vector-ref info 0))
+       "procedure"))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ::JsFunction ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (js-debug-object obj::JsFunction #!optional (msg ""))
    (call-next-method)
-   (with-access::JsFunction obj (src)
-      (fprint (current-error-port) "   src=" src)))
+   (with-access::JsFunction obj (info arity)
+      (fprint (current-error-port) "   src=" (js-function-src obj))
+      (fprint (current-error-port) "   arity=" arity)
+      (fprint (current-error-port) "   path=" (js-function-path obj))))
       
 ;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject-name/cache-miss ...                              */
@@ -275,16 +317,11 @@
 	 (set! js-function-prototype
 	    (instantiateJsFunction
 	       (procedure proc)
-	       (method proc)
-	       (construct proc)
 	       (cmap (instantiate::JsConstructMap))
 	       (alloc js-not-a-constructor-alloc)
-	       (src "[Function.__proto__@function.scm]")
-	       (name (& ""))
-	       (len -1)
-	       (arity -1)
+	       (info (js-function-info :name "" :len 0))
+	       (arity (js-function-arity 0 0))
 	       (prototype js-object-prototype)
-	       (%prototype js-object-prototype)
 	       (__proto__ js-object-prototype)
 	       (elements ($create-vector 10)))))
 
@@ -296,12 +333,14 @@
       
       ;; then, create the properties of the function contructor
       (set! js-function
-	 (js-make-function %this
-	    (%js-function %this) 1 (& "Function")
-	    :alloc js-no-alloc
-	    :src (cons (current-loc) "Function() { /* function.scm */}")
-	    :__proto__ js-function-prototype
-	    :prototype js-function-prototype))
+	 (let ((proc (%js-function %this)))
+	    (js-make-function %this
+	       proc
+	       (js-function-arity proc)
+	       (js-function-info :name "Function" :len 1)
+	       :alloc js-no-alloc
+	       :__proto__ js-function-prototype
+	       :prototype js-function-prototype)))
       ;; throwers
       (let* ((throwget (lambda (o)
 			  (js-raise-type-error %this
@@ -313,7 +352,8 @@
 			 (lambda (o v)
 			    (js-raise-type-error %this
 			       "[[ThrowTypeError]] ~a" o))
-			 1 (& "thrower"))))
+			 (js-function-arity 1 0)
+			 (js-function-info :name "thrower" :len 1))))
 	 ;; pre-allocated prototype property descriptors
 	 (js-init-function-property! %this thrower throwget throwset)
 	 (set! thrower-get thrower)
@@ -354,7 +394,11 @@
 	 ($js-init-jsalloc-function (js-not-a-cmap)
 	    js-function-writable-strict-cmap
 	    js-function-strict-elements js-object-alloc-lazy
-	    100 (js-function-default-mode))
+	    (js-function-default-mode))
+	 ($js-init-jsalloc-method (js-not-a-cmap)
+	    js-function-writable-strict-cmap
+	    js-function-strict-elements js-object-alloc-lazy
+	    (js-method-default-mode))
 	 ($js-init-jsalloc-procedure
 	    js-initial-cmap
 	    (js-procedure-default-mode)))
@@ -414,8 +458,8 @@
 	       (configurable #f)
 	       (writable #f)
 	       (%get (lambda (obj owner propname %this)
-			(with-access::JsFunction owner (len)
-			   len)))
+			(with-access::JsFunction owner (info)
+			   (vector-ref info 1))))
 	       (%set list))
 	    (instantiate::JsWrapperDescriptor
 	       (name (& "name"))
@@ -423,8 +467,8 @@
 	       (configurable #f)
 	       (writable #f)
 	       (%get (lambda (obj owner propname %this)
-			(with-access::JsFunction owner (name)
-			   name)))
+			(with-access::JsFunction owner (info)
+			   (js-string->jsstring (vector-ref info 0)))))
 	       (%set list))
 	    (instantiate::JsAccessorDescriptor
 	       (name (& "arguments"))
@@ -512,7 +556,9 @@
 (define (%js-function %this::JsGlobalObject)
    (lambda (this . args)
       (if (null? args)
-	  (js-make-function %this (lambda (this) (js-undefined)) 0 (& "")
+	  (js-make-function %this (lambda (this) (js-undefined))
+	     (js-function-arity 0 0)
+	     (js-function-info :name "" :len 0)
 	     :alloc js-object-alloc)
 	  (let* ((len (length args))
 		 (formals (take args (-fx len 1)))
@@ -525,32 +571,16 @@
 		   (%js-eval ip 'eval %this this %this)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-function-debug-name ...                                       */
-;*---------------------------------------------------------------------*/
-(define (js-function-debug-name::bstring obj::JsProcedure %this)
-   (if (js-function? obj)
-       (with-access::JsFunction obj (src name)
-	  (cond
-	     ((js-jsstring? name)
-	      (js-jsstring->string name))
-	     ((number? name)
-	      name)
-	     ((pair? src)
-	      (format "~a:~a" (cadr (car src)) (caddr (car src))))
-	     (else "function")))
-       "procedure"))
-
-;*---------------------------------------------------------------------*/
 ;*    js-make-function ...                                             */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.3.1     */
 ;*---------------------------------------------------------------------*/
-(define (js-make-function %this procedure length name
+(define (js-make-function %this procedure arity info
 	   #!key
 	   method construct alloc
 	   __proto__ prototype
-	   (strict 'normal) arity (minlen -1) src 
-	   (size 0) (constrsize 3) (maxconstrsize 100)
+	   (strict 'normal) (minlen -1) 
+	   (size 0) (constrsize 3)
 	   (constrmap (js-not-a-cmap)) (shared-cmap #t))
    (with-access::JsGlobalObject %this (js-function js-object
 					 js-function-cmap
@@ -564,8 +594,7 @@
 					 js-function-prototype-property-ro
 					 js-function-prototype-property-null
 					 js-function-prototype-property-undefined)
-      (let* ((%__proto__ (js-object-proto js-function))
-	     (els ($create-vector (+fx size (if (eq? strict 'normal) 3 5))))
+      (let* ((els ($create-vector (+fx size (if (eq? strict 'normal) 3 5))))
 	     (cmap (if (eq? strict 'normal)
 		       (cond
 			  ((js-object? prototype)
@@ -586,34 +615,48 @@
 			   js-function-strict-bind-cmap)
 			  (else
 			   js-function-writable-strict-cmap))))
-	     (fun (instantiateJsFunction
-		     (procedure procedure)
-		     (method (or method procedure))
-		     (construct (or construct procedure))
-		     (alloc (or alloc js-not-a-constructor-alloc))
-		     (arity (or arity (procedure-arity procedure)))
-		     (len length)
-		     (__proto__ (or __proto__ %__proto__))
-		     (src src)
-		     (name name)
-		     (constrsize constrsize)
-		     (constrmap constrmap)
-		     (maxconstrsize maxconstrsize)
-		     (elements els)
-		     (cmap (if shared-cmap
-			       ;; normal functions, i.e., user functions,
-			       ;; use shared-cmap
-			       cmap
-			       ;; non shared-cmap are used by builtin
-			       ;; objects, such as Date or Number to create
-			       ;; a single cmap for all their fields
-			       (duplicate::JsConstructMap cmap
-				  (%id (gencmapid)))))
-		     (prototype #f)
-		     (%prototype #f))))
+	     (fun (if method
+		      (instantiateJsMethod
+			 (procedure procedure)
+			 (method method)
+			 (alloc (or alloc js-not-a-constructor-alloc))
+			 (arity arity)
+			 (__proto__ (or __proto__ (js-object-proto js-function)))
+			 (info info)
+			 (constrsize constrsize)
+			 (constrmap constrmap)
+			 (elements els)
+			 (cmap (if shared-cmap
+				   ;; normal functions, i.e., user functions,
+				   ;; use shared-cmap
+				   cmap
+				   ;; non shared-cmap are used by builtin
+				   ;; objects, such as Date or Number to create
+				   ;; a single cmap for all their fields
+				   (duplicate::JsConstructMap cmap
+				      (%id (gencmapid)))))
+			 (prototype #\F))
+		      (instantiateJsFunction
+			 (procedure procedure)
+			 (alloc (or alloc js-not-a-constructor-alloc))
+			 (arity arity)
+			 (__proto__ (or __proto__ (js-object-proto js-function)))
+			 (info info)
+			 (constrsize constrsize)
+			 (constrmap constrmap)
+			 (elements els)
+			 (cmap (if shared-cmap
+				   ;; normal functions, i.e., user functions,
+				   ;; use shared-cmap
+				   cmap
+				   ;; non shared-cmap are used by builtin
+				   ;; objects, such as Date or Number to create
+				   ;; a single cmap for all their fields
+				   (duplicate::JsConstructMap cmap
+				      (%id (gencmapid)))))
+			 (prototype #\F)))))
 	 ;; the prototype property
-	 ;; the builtin "%prototype" property
-	 (with-access::JsFunction fun (%prototype (fprototype prototype) alloc)
+	 (with-access::JsFunction fun ((fprototype prototype) alloc)
 	    (vector-set! els 0
 	       (cond
 		  ((not prototype)
@@ -627,7 +670,6 @@
 			       (__proto__ (js-object-proto %this))
 			       (elements (vector fun)))))
 		      (set! fprototype p)
-		      (set! %prototype p)
 		      js-function-prototype-property-rw))
 		  ((js-object? prototype)
 		   (js-bind! %this prototype (& "constructor")
@@ -635,7 +677,6 @@
 		      :configurable #t :enumerable #f :writable #t
 		      :hidden-class #t)
 		   (set! fprototype prototype)
-		   (set! %prototype prototype)
 		   js-function-prototype-property-ro)
 		  ((eq? prototype (js-undefined))
 		   (set! fprototype prototype)
@@ -653,9 +694,9 @@
 		   (error "js-make-function" "Illegal :prototype"
 		      prototype)))))
 	 ;; length
-	 (vector-set! els 1 length)
+	 (vector-set! els 1 (vector-ref info 1))
 	 ;; name
-	 (vector-set! els 2 name)
+	 (vector-set! els 2 (js-string->jsstring (vector-ref info 0)))
 	 ;; strict properties
 	 (unless (eq? strict 'normal)
 	    (vector-set! els 3 strict-arguments-property)
@@ -667,47 +708,55 @@
 ;*    -------------------------------------------------------------    */
 ;*    specialized function constructor for regular strict functions.   */
 ;*---------------------------------------------------------------------*/
-(define (js-make-function-strict %this procedure length name
-	   #!key
-	   method alloc
-	   arity (minlen -1) src 
-	   (constrsize 3)
-	   (constrmap (js-not-a-cmap)))
-   (with-access::JsGlobalObject %this (js-function 
-					 js-function-writable-strict-cmap
-					 js-function-prototype-property-rw
-					 js-function-strict-elements)
-      (let ((fun (instantiateJsFunction
-		    (procedure procedure)
-		    (method method)
-		    (construct procedure)
-		    (alloc alloc)
-		    (arity arity)
-		    (len length)
-		    (__proto__ (js-object-proto js-function))
-		    (src src)
-		    (name name)
-		    (constrsize constrsize)
-		    (constrmap constrmap)
-		    (maxconstrsize 100)
-		    (elements js-function-strict-elements)
-		    (cmap js-function-writable-strict-cmap)
-		    (prototype #f)
-		    (%prototype #f))))
-	 (unless (eq? alloc js-object-alloc-lazy)
-	    (js-function-setup-prototype! %this fun))
+(define (js-make-function-strict %this procedure arity info constrsize
+	   #!key alloc (constrmap (js-not-a-cmap)))
+   (let ((fun (js-make-function-strict-lazy %this procedure arity info constrsize)))
+      (with-access::JsFunction fun ((falloc alloc)
+				    (fconstrmap constrmap))
+	 (set! falloc alloc)
+	 (set! fconstrmap constrmap)
+	 (js-function-setup-prototype! %this fun)
 	 fun)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-function-strict-lazy ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-make-function-strict-lazy %this procedure length name
-		  #!key method arity (minlen -1) src (constrsize 3))
+(define-inline (js-make-function-strict-lazy %this procedure arity info constrsize)
    (with-access::JsGlobalObject %this (js-function)
-      ($js-make-jsfunction procedure method procedure
-	 arity length constrsize
+      ($js-make-jsfunction procedure
+	 arity constrsize
 	 (js-object-proto js-function)
-	 src name)))
+	 info)))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-method-strict ...                                        */
+;*    -------------------------------------------------------------    */
+;*    specialized method constructor for regular strict methods.       */
+;*---------------------------------------------------------------------*/
+(define (js-make-method-strict %this procedure
+	   arity info constrsize method
+	   #!key
+	    alloc
+	   (constrmap (js-not-a-cmap)))
+   (let ((fun (js-make-method-strict-lazy %this procedure arity
+		 info constrsize method)))
+      (with-access::JsMethod fun ((falloc alloc)
+				  (fconstrmap constrmap))
+	 (set! falloc alloc)
+	 (set! fconstrmap constrmap)
+	 (js-function-setup-prototype! %this fun)
+	 fun)))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-method-strict-lazy ...                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-make-method-strict-lazy %this procedure
+		  arity info constrsize method)
+   (with-access::JsGlobalObject %this (js-function)
+      ($js-make-jsmethod procedure method
+	 arity constrsize
+	 (js-object-proto js-function)
+	 info)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-procedure ...                                            */
@@ -733,22 +782,20 @@
 ;*---------------------------------------------------------------------*/
 (define (js-function-setup-prototype! %this fun::JsFunction)
    (with-access::JsGlobalObject %this (js-function-prototype-cmap)
-      (with-access::JsFunction fun (prototype %prototype alloc)
+      (with-access::JsFunction fun (prototype alloc)
 	 (let ((p (instantiateJsObject
 		     (cmap js-function-prototype-cmap)
 		     (__proto__ (js-object-proto %this))
 		     (elements (vector fun)))))
 	    (set! prototype p)
-	    (set! %prototype p)
-	    ;; (set! alloc js-object-alloc)
 	    p))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-get ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function-prototype-get obj owner::JsFunction propname %this)
-   (with-access::JsFunction owner (%prototype prototype alloc name src)
-      (unless %prototype
+   (with-access::JsFunction owner (prototype alloc name src)
+      (when (eq? prototype #\F)
 	 (js-function-setup-prototype! %this owner))
       prototype))
 
@@ -778,22 +825,8 @@
 	       ;; (MS, change 2019-01-18)
 	       (unless (eq? constrmap (js-not-a-cmap))
 		  (js-function-set-constrmap! owner))
-	       (set! prototype v)
-	       (set! %prototype (if (js-object? v) v (js-object-proto %this)))))))
+	       (set! prototype v)))))
    v)
-
-;*---------------------------------------------------------------------*/
-;*    js-make-function-simple ...                                      */
-;*---------------------------------------------------------------------*/
-(define (js-make-function-simple %this::JsGlobalObject proc::procedure
-	   len::int name::JsStringLiteral arity::int strict::symbol
-	   constrsize::int)
-   (js-make-function %this proc len name
-      :prototype #f :__proto__ #f
-      :arity arity :strict strict
-      :src #f
-      :alloc js-object-alloc
-      :construct proc :constrsize constrsize))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-function-prototype! ...                             */
@@ -825,25 +858,7 @@
    (define (tostring this)
       (cond
 	 ((js-function? this)
-	  (with-access::JsFunction this (src)
-	     (cond
-		((pair? src)
-		 (if (string? (cdr src))
-		     (js-string->jsstring (cdr src))
-		     (js-string->jsstring
-			(format "[Function ~a:~a]"
-			   (cadr (car src)) (caddr (car src))))))
-		((string? src)
-		 (js-string->jsstring src))
-		(else
-		 (let ((name (js-get this (& "name") %this)))
-		    (if (js-jsstring? name)
-			(js-jsstring-append
-			   (js-ascii->jsstring "[function ")
-			   (js-jsstring-append
-			      name
-			      (js-ascii->jsstring "]")))
-			(& "[Function]")))))))
+	  (js-function-src this))
 	 ((js-procedure? this)
 	  (& "[Function]"))
 	 ((js-proxy-function? this)
@@ -853,7 +868,9 @@
 	     (js-typeof this %this)))))
 
    (js-bind! %this obj (& "toString")
-      :value (js-make-function %this tostring 0 (& "toString")
+      :value (js-make-function %this tostring
+		(js-function-arity tostring)
+		(js-function-info :name "toString" :len 0)
 		:prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
       :hidden-class #t)
@@ -863,10 +880,12 @@
    (define (source this)
       (cond
 	 ((js-function? this)
-	  (with-access::JsFunction this (src)
-	     (when (pair? src)
+	  (with-access::JsFunction this (info)
+	     (when (>=fx (vector-length info) 5)
 		(js-string->jsstring
-		   (format "~a:~a" (cadr (car src)) (caddr (car src)))))))
+		   (format "~a:~a"
+		      (vector-ref info 3)
+		      (vector-ref info 4))))))
 	 ((js-procedure? this)
 	  (js-undefined))
 	 (else
@@ -874,7 +893,9 @@
 	     (js-typeof this %this)))))
    
    (js-bind! %this obj (& "source")
-      :value (js-make-function %this source 0 (& "source")
+      :value (js-make-function %this source
+		(js-function-arity source)
+		(js-function-info :name "source" :len 0)
 		:prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
       :hidden-class #t)
@@ -884,7 +905,9 @@
       (js-bind! %this obj js-symbol-hasinstance
 	 :value (js-make-function %this
 		   (lambda (this o) (js-ordinary-instanceof? %this o this))
-		   1 (& "[Symbol.hasInstance]") :prototype (js-undefined))
+		   (js-function-arity 1 0)
+		   (js-function-info :name "[Symbol.hasInstance]" :len 1)
+		   :prototype (js-undefined))
 	 :enumerable #f :writable #f :configurable #f
 	 :hidden-class #t))
    
@@ -894,7 +917,9 @@
       (js-apply-array %this this thisarg argarray))
 
    (js-bind! %this obj (& "apply")
-      :value (js-make-function %this prototype-apply 2 (& "apply")
+      :value (js-make-function %this prototype-apply
+		(js-function-arity prototype-apply)
+		(js-function-info :name "apply" :len 2)
 		:prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
       :hidden-class #t)
@@ -916,9 +941,9 @@
    
    (with-access::JsGlobalObject %this (js-call)
       (set! js-call
-	 (js-make-function %this call 1
-	    (& "call")
-	    :arity (js-function-arity 1 -1 'scheme)
+	 (js-make-function %this call
+	    (js-function-arity 1 -1 'scheme)
+	    (js-function-info :name "call" :len 1)
 	    :prototype (js-undefined)))
       (js-bind! %this obj (& "call")
 	 :value js-call
@@ -930,36 +955,42 @@
    (define (bind this::obj thisarg . args)
       (if (not (js-function? this))
 	  (js-raise-type-error %this "bind: this not a function ~s" this)
-	  (with-access::JsFunction this (len construct alloc procedure prototype)
+	  (with-access::JsFunction this (info construct alloc procedure prototype)
 	     (when (eq? prototype 'lazy)
 		;; force creating the true prototype before binding
 		(js-function-setup-prototype! %this this)
 		(set! alloc js-object-alloc))
-	     (let* ((bproc (lambda (_ . actuals)
-			      (js-apply %this this
-				 thisarg (append args actuals))))
-		    (bctor (lambda (self . actuals)
-			      (js-apply %this this
-				 self (append args actuals))))
+	     (let* ((bproc (lambda (self . actuals)
+			      (with-access::JsGlobalObject %this (js-new-target)
+				 (if (eq? js-new-target (js-undefined))
+				     (js-apply %this this
+					thisarg (append args actuals))
+				     (begin
+					(set! js-new-target (js-undefined))
+					(js-apply %this this
+					   self (append args actuals)))))))
 		    (bproto (js-getprototypeof this %this "getPrototypeOf"))
 		    (balloc (lambda (%this ctor)
-			       (alloc %this this))))
+			       (with-access::JsGlobalObject %this (js-new-target)
+				  (set! js-new-target ctor)
+				  (alloc %this this)))))
 		(js-make-function %this bproc
-		   (maxfx 0 (-fx len (length args)))
-		   (js-name->jsstring 
+		   (js-function-arity 0 -1 'scheme)
+		   (js-function-info
+		      :name
 		      (string-append "bind:"
 			 (js-tostring (js-get this (& "name") %this)
-			    %this)))
-		   :arity (js-function-arity 0 -1 'scheme)
+			    %this))
+		      :len (maxfx 0 (-fx (vector-ref info 1) (length args))))
 		   :__proto__ bproto
 		   :prototype 'bind
 		   :strict 'strict
-		   :alloc balloc
-		   :construct bctor)))))
+		   :alloc balloc)))))
 
    (js-bind! %this obj (& "bind")
-      :value (js-make-function %this bind 1 (& "bind")
-		:arity (js-function-arity 1 1 'scheme)
+      :value (js-make-function %this bind
+		(js-function-arity 1 1 'scheme)
+		(js-function-info :name "bind" :len 1)
 		:prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
       :hidden-class #t)
@@ -1120,7 +1151,7 @@
    (with-access::JsProcedure this (arity procedure)
       (let ((n (uint32->fixnum ilen)))
 	 (cond
-	    ((=fx arity (+fx 1 n))
+	    ((>=fx arity 0)
 	     (case n
 		((0)
 		 (js-call0-jsprocedure %this this thisarg))
@@ -1167,8 +1198,8 @@
 	    ((=fx arity -2048)
 	     (procedure thisarg (vector-copy vec 0 n)))
 	    ((=fx arity -2047)
-	     (js-call-with-stack-vector (vector-copy vec 0 n)
-		(lambda (v) (procedure thisarg v))))
+	     (vector-shrink! vec n)
+	     (procedure thisarg vec))
 	    (else
 	     (js-apply %this this thisarg (vector->sublist vec n)))))))
 
@@ -1283,18 +1314,19 @@
 ;*    js-function-maybe-call1 ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-function-maybe-call1 %this this thisarg arg cache)
-   (let loop ((this this))
-      (cond
-	 ((js-procedure? this)
-	  (js-function-call1 %this this thisarg arg cache))
-	 ((js-object? this)
-	  (with-access::JsGlobalObject %this (js-function-pcache)
-	     (js-call2 %this
-		(js-get-jsobject-name/cache this (& "call") #f %this
-		   (or cache (js-pcache-ref js-function-pcache 5)))
-		this thisarg arg)))
-	 (else
-	  (loop (js-toobject %this this))))))
+   (with-access::JsFunction this (info)
+      (let loop ((this this))
+	 (cond
+	    ((js-procedure? this)
+	     (js-function-call1 %this this thisarg arg cache))
+	    ((js-object? this)
+	     (with-access::JsGlobalObject %this (js-function-pcache)
+		(js-call2 %this
+		   (js-get-jsobject-name/cache this (& "call") #f %this
+		      (or cache (js-pcache-ref js-function-pcache 5)))
+		   this thisarg arg)))
+	    (else
+	     (loop (js-toobject %this this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-call2 ...                                      */
@@ -1331,6 +1363,88 @@
 	  (loop (js-toobject %this this))))))
 
 ;*---------------------------------------------------------------------*/
+;*    read-function-source ...                                         */
+;*---------------------------------------------------------------------*/
+(define (read-function-source info path start end)
+   (if (and (string? path) (file-exists? path))
+       (let ((mmap (open-mmap path :write #f)))
+	  (mmap-substring mmap
+	     (fixnum->elong start) (fixnum->elong end)))
+       (format "[~a:~a..~a]" path start end)))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-info ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-function-info #!key name len tostring path start end (maxconstrsize 100))
+   (vector name len tostring path start end maxconstrsize))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-arity ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-function-arity req #!optional opl (protocol 'fix))
+   (cond
+      ((procedure? req)
+       (procedure-arity req))
+      ((not opl)
+       (if (eq? protocol 'fix)
+	   ((@ js-function-arity __hopscript_function) req 0)
+	   (error "js-function-arity"
+	      "illegal oplional" opl)))
+      ((and (integer? req) (integer? opl))
+       (if (null? protocol)
+	   (if (=fx opl 0)
+	       (+ req 1)
+	       (error "js-function-arity"
+		  "illegal optional for fix args"
+		  (vector req opl protocol)))
+	   (case protocol
+	      ((arguments-lazy)
+	       -2047)
+	      ((arguments-eager)
+	       -2048)
+	      ((arguments)
+	       0)
+	      ((rest-lazy)
+	       (let ((offset (if (=fx opl 0) 2049 4049)))
+		  (negfx (+fx offset (-fx req 1)))))
+	      ((rest)
+	       (let ((offset (if (=fx opl 0) 3049 5049)))
+		  (negfx (+fx offset (-fx req 1)))))
+	      ((scheme)
+	       (cond
+		  ((=fx opl 0)
+		   (+fx req 1))
+		  ((=fx opl -1)
+		   (negfx (+fx (+fx 1 req) 1)))
+		  (else
+		   (negfx (+fx (+fx 1 req) opl)))))
+	      ((scheme-optional)
+	       (cond
+		  ((and (=fx opl 1) (=fx req 0))
+		   -512)
+		  (else
+		   (error "js-function-arity"
+		      "Illegal scheme-optional"
+		      (vector req opl protocol)))))
+	      ((optional)
+	       (if (=fx opl 0)
+		   (+fx req 1)
+		   (negfx (+fx req 1024))))
+	      ((fix)
+	       (if (=fx opl 0)
+		   (+fx req 1)
+		   (error "js-function-arity"
+		      "illegal optional for fix args"
+		      (vector req opl protocol))))
+	      (else
+	       (error "js-function-arity"
+		  "illegal protocol" (vector req opl protocol))))))
+      (else
+       (error "js-function-arity"
+	  "illegal arity" (vector req opl protocol)))))
+
+;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/
 (&end!)
+

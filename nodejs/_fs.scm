@@ -270,8 +270,8 @@
 
    (define (create-fs-watcher-proto)
       (with-access::JsGlobalObject %this (js-object)
-	 (with-access::JsFunction js-object (%prototype constrmap)
-	    (let ((obj (js-make-jsobject 2 constrmap %prototype)))
+	 (with-access::JsFunction js-object (prototype constrmap)
+	    (let ((obj (js-make-jsobject 2 constrmap prototype)))
 	       
 	       (js-put! obj (& "start")
 		  (js-make-function %this
@@ -292,7 +292,8 @@
 			(unless (js-totest options)
 			   (with-access::JsHandle this (handle)
 			      (nodejs-unref handle %worker))))
-		     3 (& "start"))
+		     (js-function-arity 3 0)
+		     (js-function-info :name "start" :len 3))
 		  #f %this)
 	       
 	       (js-put! obj (& "stop")
@@ -304,7 +305,8 @@
 				 onstop this)))
 			(with-access::JsHandle this (handle)
 			   (nodejs-fs-poll-stop handle)))
-		     1 (& "stop"))
+		     (js-function-arity 0 0)
+		     (js-function-info :name "stop" :len 0))
 		  #f %this)
 	       
 	       obj))))
@@ -324,41 +326,99 @@
    (set! __js_strings (&init!))
    
    (js-alist->jsobject
-      `((rename . ,(js-make-function %this rename 2 (& "rename")))
-	(ftruncate . ,(js-make-function %this ftruncate 2 (& "ftruncate")))
-	(truncate . ,(js-make-function %this truncate 2 (& "truncate")))
-	(chown . ,(js-make-function %this chown 3 (& "chown")))
-	(fchown . ,(js-make-function %this fchown 3 (& "fchown")))
-	(lchown . ,(js-make-function %this lchown 3 (& "lchown")))
-	(chmod . ,(js-make-function %this chmod 2 (& "chmod")))
-	(fchmod . ,(js-make-function %this fchmod 2 (& "fchmod")))
-	(lchmod . ,(js-make-function %this lchmod 2 (& "lchmod")))
-	(fstat . ,(js-make-function %this fstat 2 (& "fstat")))
-	(stat . ,(js-make-function %this stat 2 (& "stat")))
-	(lstat . ,(js-make-function %this lstat 2 (& "lstat")))
-	(link . ,(js-make-function %this link 3 (& "link")))
-	(symlink . ,(js-make-function %this symlink 4 (& "symlink")))
-	(readlink . ,(js-make-function %this readlink 2 (& "readlink")))
-	(unlink . ,(js-make-function %this unlink 2 (& "unlink")))
-	(rmdir . ,(js-make-function %this rmdir 2 (& "rmdir")))
-	(fdatasync . ,(js-make-function %this fdatasync 2 (& "fdatasync")))
-	(mkdir . ,(js-make-function %this mkdir 3 (& "mkdir")))
-	(readdir . ,(js-make-function %this readdir 1 (& "readdir")))
-	(Stats . ,(js-make-function %this (lambda (this) this) 0 (& "Stats")
+      `((rename . ,(js-make-function %this rename
+		      (js-function-arity rename)
+		      (js-function-info :name "rename" :len 2)))
+	(ftruncate . ,(js-make-function %this ftruncate
+			 (js-function-arity ftruncate)
+			 (js-function-info :name "ftruncate" :len 2)))
+	(truncate . ,(js-make-function %this truncate
+			(js-function-arity truncate)
+			(js-function-info :name "truncate" :len 2)))
+	(chown . ,(js-make-function %this chown
+		     (js-function-arity chown)
+		     (js-function-info :name "chown" :len 3)))
+	(fchown . ,(js-make-function %this fchown
+		      (js-function-arity fchown)
+		      (js-function-info :name "fchown" :len 3)))
+	(lchown . ,(js-make-function %this lchown
+		      (js-function-arity lchown)
+		      (js-function-info :name "lchown" :len 3)))
+	(chmod . ,(js-make-function %this chmod
+		     (js-function-arity chmod)
+		     (js-function-info :name "chmod" :len 2)))
+	(fchmod . ,(js-make-function %this fchmod
+		      (js-function-arity fchmod)
+		      (js-function-info :name "fchmod" :len 2)))
+	(lchmod . ,(js-make-function %this lchmod
+		      (js-function-arity lchmod)
+		      (js-function-info :name "lchmod" :len 2)))
+	(fstat . ,(js-make-function %this fstat
+		     (js-function-arity fstat)
+		     (js-function-info :name "fstat" :len 2)))
+	(stat . ,(js-make-function %this stat
+		    (js-function-arity stat)
+		    (js-function-info :name "stat" :len 2)))
+	(lstat . ,(js-make-function %this lstat
+		     (js-function-arity lstat)
+		     (js-function-info :name "lstat" :len 2)))
+	(link . ,(js-make-function %this link
+		    (js-function-arity link)
+		    (js-function-info :name "link" :len 3)))
+	(symlink . ,(js-make-function %this symlink
+		       (js-function-arity symlink)
+		       (js-function-info :name "symlink" :len 4)))
+	(readlink . ,(js-make-function %this readlink
+			(js-function-arity readlink)
+			(js-function-info :name "readlink" :len 2)))
+	(unlink . ,(js-make-function %this unlink
+		      (js-function-arity unlink)
+		      (js-function-info :name "unlink" :len 2)))
+	(rmdir . ,(js-make-function %this rmdir
+		     (js-function-arity rmdir)
+		     (js-function-info :name "rmdir" :len 2)))
+	(fdatasync . ,(js-make-function %this fdatasync
+			 (js-function-arity fdatasync)
+			 (js-function-info :name "fdatasync" :len 2)))
+	(mkdir . ,(js-make-function %this mkdir
+		     (js-function-arity mkdir)
+		     (js-function-info :name "mkdir" :len 3)))
+	(readdir . ,(js-make-function %this readdir
+		       (js-function-arity readdir)
+		       (js-function-info :name "readdir" :len 1)))
+	(Stats . ,(js-make-function %this (lambda (this) this)
+		     (js-function-arity 0 0)
+		     (js-function-info :name "Stats" :len 0)
 		     :alloc (lambda (%this o) #unspecified)
 		     :prototype (get-process-fs-stats %this)))
-	(close . ,(js-make-function %this close 2 (& "close")))
-	(utimes . ,(js-make-function %this utimes 4 (& "utimes")))
-	(futimes . ,(js-make-function %this futimes 4 (& "futimes")))
-	(fsync . ,(js-make-function %this fsync 1 (& "fsync")))
-	(write . ,(js-make-function %this write 5 (& "write")))
-	(writeString . ,(js-make-function %this writeString 5 (& "writeString")))
-	
-	(open . ,(js-make-function %this open 4 (& "open")))
-	(read . ,(js-make-function %this read 6 (& "read")))
-	(StatWatcher . ,(js-make-function %this fs-watcher 0 (& "StatWatcher")
-			   :alloc (lambda (%this o) #unspecified)
-			   :construct fs-watcher)))
+	(close . ,(js-make-function %this close
+		     (js-function-arity close)
+		     (js-function-info :name "close" :len 2)))
+	(utimes . ,(js-make-function %this utimes
+		      (js-function-arity utimes)
+		      (js-function-info :name "utimes" :len 4)))
+	(futimes . ,(js-make-function %this futimes
+		       (js-function-arity futimes)
+		       (js-function-info :name "futimes" :len 4)))
+	(fsync . ,(js-make-function %this fsync
+		     (js-function-arity fsync)
+		     (js-function-info :name "fsync" :len 1)))
+	(write . ,(js-make-function %this write
+		     (js-function-arity write)
+		     (js-function-info :name "write" :len 5)))
+	(writeString . ,(js-make-function %this writeString
+			   (js-function-arity writeString)
+			   (js-function-info :name "writeString" :len 5)))
+	(open . ,(js-make-function %this open
+		    (js-function-arity open)
+		    (js-function-info :name "open" :len 4)))
+	(read . ,(js-make-function %this read
+		    (js-function-arity read)
+		    (js-function-info :name "read" :len 6)))
+	(StatWatcher . ,(js-make-function %this fs-watcher
+			   (js-function-arity fs-watcher)
+			   (js-function-info :name "StatWatcher" :len 0)
+			   :alloc (lambda (%this o) #unspecified))))
       %this))
 
 ;*---------------------------------------------------------------------*/

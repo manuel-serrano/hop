@@ -76,14 +76,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    type-program! ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (type-program! this::J2SProgram args)
+(define (type-program! this::J2SProgram conf)
    
-   (define j2s-verbose (config-get args :verbose 0))
+   (define j2s-verbose (config-get conf :verbose 0))
    
    (with-access::J2SProgram this (headers decls nodes)
       (when (>=fx j2s-verbose 3) (display " " (current-error-port)))
       ;; main fix point
-      (if (config-get args :optim-tyflow #f)
+      (if (config-get conf :optim-tyflow #f)
 	  (let ((fix (make-cell 0)))
 	     (let loop ((i 1))
 		(when (>=fx j2s-verbose 3)
@@ -95,17 +95,17 @@
 		   (cond
 		      ((not (=fx (cell-ref fix) ofix))
 		       (loop (+fx i 1)))
-		      ((config-get args :optim-tyflow-resolve #f)
+		      ((config-get conf :optim-tyflow-resolve #f)
 		       ;; type check resolution
-		       (j2s-resolve! this args fix)
+		       (j2s-resolve! this conf fix)
 		       (cond
 			  ((not (=fx (cell-ref fix) ofix))
 			   (loop (+fx i 1)))
-			  ((config-get args :optim-hint #f)
+			  ((config-get conf :optim-hint #f)
 			   ;; hint node-type optimization
 			   (when (>=fx j2s-verbose 3)
 			      (fprintf (current-error-port) "hint"))
-			   (let ((dups (j2s-hint! this args)))
+			   (let ((dups (j2s-hint! this conf)))
 			      (cond
 				 ((pair? dups)
 				  (when (>=fx j2s-verbose 3)
@@ -125,10 +125,14 @@
 			  ((force-type this 'unknown 'any)
 			   (loop (+fx i 1)))))))))
 	  (force-type this 'unknown 'any))
-      (unless (config-get args :optim-integer)
+      (when (config-get conf :optim-hintblock)
+	 (when (>=fx (config-get conf :verbose 0) 4)
+	    (display " hint-block" (current-error-port)))
+	 (j2s-hint-block! this conf))
+      (unless (config-get conf :optim-integer)
 	 (force-type this 'integer 'number))
 	 ;;(force-unary-type! this))
-      ;;(cleanup-hint! this)
+      (cleanup-hint! this)
       (program-cleanup! this))
    this)
 
@@ -612,6 +616,9 @@
 	    ((eq? id 'undefined)
 	     (decl-vtype-add! decl 'undefined fix)
 	     (expr-type-add! this env fix 'undefined))
+	    ((eq? id 'NaN)
+	     (decl-vtype-add! decl 'real fix)
+	     (expr-type-add! this env fix 'real))
 	    ((memq id '(Math String Error Regex Date Function Array Promise))
 	     (decl-vtype-add! decl 'object fix)
 	     (expr-type-add! this env fix 'object))
@@ -1595,8 +1602,20 @@
    
    (define (isa-and? test)
       (when (isa? test J2SBinary)
-	 (with-access::J2SBinary test (op)
-	    (eq? op '&&))))
+	 (with-access::J2SBinary test (op lhs rhs)
+	    (when (eq? op '&&)
+	       (node-type-one-positive-test? lhs)))))
+
+   (define (node-type-one-positive-test? test)
+      (cond
+	 ((isa? test J2SBinary)
+	  (with-access::J2SBinary test (op)
+	     (memq op '(== === eq? instanceof))))
+	 ((isa? test J2SCall)
+	  ;; we assume that the only type predicate are positive tests
+	  #t)
+	 (else
+	  #f)))
    
    (define (node-type-one-test test envt enve)
       (multiple-value-bind (op decl typ ref)
@@ -2208,34 +2227,31 @@
 ;*---------------------------------------------------------------------*/
 ;*    cleanup-hint! ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (cleanup-hint! this)
-   (cond
-      ((isa? this J2SNode)
-       (cleanup-hint-node! this))
-      ((pair? this)
-       (for-each cleanup-hint! this))))
+(define-walk-method (cleanup-hint! this::J2SNode)
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    cleanup-hint-node! ...                                           */
+;*    cleanup-hint! ::J2SDecl ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (cleanup-hint-node! this::J2SNode)
-   (let ((fields (class-all-fields (object-class this))))
-      (let loop ((i (-fx (vector-length fields) 1)))
-	 (when (>=fx i 0)
-	    (let* ((f (vector-ref fields i))
-		   (info (class-field-info f)))
-	       (cond
-		  ((eq? (class-field-name f) 'hint)
-		   (let* ((get (class-field-accessor f))
-			  (set (class-field-mutator f))
-			  (hint (get this)))
-		      (when (and (pair? hint) (pair? (assq 'no-string hint)))
-			 (let ((c (assq 'string hint)))
-			    (set! hint (delete! c hint))
-			    (set this hint))))
-		   (loop (-fx i 1)))
-		  ((and (pair? info) (member "notraverse" info))
-		   (loop (-fx i 1)))
-		  (else
-		   (cleanup-hint! ((class-field-accessor f) this))
-		   (loop (-fx i 1)))))))))
+(define-walk-method (cleanup-hint! this::J2SDecl)
+   (with-access::J2SDecl this (hint)
+      (when (and (pair? hint) (pair? (assq 'no-string hint)))
+	 (let ((c (assq 'string hint)))
+	    (set! hint (delete! c hint))))
+      (when (and (pair? hint) (pair? (assq 'no-array hint)))
+	 (let ((c (assq 'array hint)))
+	    (set! hint (delete! c hint)))))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    cleanup-hint! ::J2SExpr ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cleanup-hint! this::J2SExpr)
+   (with-access::J2SExpr this (hint)
+      (when (and (pair? hint) (pair? (assq 'no-string hint)))
+	 (let ((c (assq 'string hint)))
+	    (set! hint (delete! c hint))))
+      (when (and (pair? hint) (pair? (assq 'no-array hint)))
+	 (let ((c (assq 'array hint)))
+	    (set! hint (delete! c hint)))))
+   (call-default-walker))

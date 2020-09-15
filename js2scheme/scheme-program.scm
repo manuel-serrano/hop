@@ -40,12 +40,14 @@
 	 (list module
 	    ;; (&begin!) must not be a constant! (_do not_ use quote)
 	    `(define __js_strings #f)
+	    `(define __js_rxcaches #f)
 	    `(%define-cnst-table ,(length cnsts))
 	    `(%define-pcache ,pcache-size)
 	    `(define %pcache
 		(js-make-pcache-table ,pcache-size
 		   ,(context-get ctx :filename)
-		   ,@(if (context-get ctx :profile-cache #f)
+		   ,@(if (or (context-get ctx :profile-cache #f)
+			     (context-get ctx :profile-location #f))
 			 (list `',(j2s-profile-cache this))
 			 '())))
 	    '(define %source (or (the-loading-file) "/"))
@@ -59,6 +61,7 @@
 	    (epairify-deep loc
 	       `(define (hopscript %this this %scope %module)
 		   (define __js_strings ,(j2s-jsstring-init this))
+		   (define __js_rxcaches ,(j2s-regexp-caches-init this))
 		   (define js-string-names (js-get-js-string-names))
 		   (define js-integer-names (js-get-js-integer-names))
 		   (define %worker (js-current-worker))
@@ -77,17 +80,20 @@
 	 (list (append module `((option (register-srfi! 'hopjs-worker-slave))))
 	    ;; (&begin!) must not be a constant! (_do not_ use quote)
 	    `(define __js_strings #f)
+	    `(define __js_rxcaches #f)
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
 	    (epairify-deep loc
 	       `(define (hopscript %this this %scope %module)
 		   (define __js_strings ,(j2s-jsstring-init this))
+		   (define __js_rxcaches ,(j2s-regexp-caches-init this))
 		   (define js-string-names (js-get-js-string-names))
 		   (define js-integer-names (js-get-js-integer-names))
 		   (define %pcache
 		      (js-make-pcache-table ,pcache-size
 			 ,(context-get ctx :filename)
-			 ,@(if (context-get ctx :profile-cache #f)
+			 ,@(if (or (context-get ctx :profile-cache #f)
+				   (context-get ctx :profile-location #f))
 			       (list `',(j2s-profile-cache this))
 			       '())))
 		   ,@(if (context-get ctx :profile-call #f)
@@ -114,16 +120,18 @@
 	  (j2s-master-module module cnsttable esexports esimports scmheaders body)))
 
    (define (j2s-expr module cnsttable esexports esimports scmheaders body)
-      (with-access::J2SProgram this (globals loc pcache-size call-size cnsts)
+      (with-access::J2SProgram this (globals loc cnsts pcache-size call-size)
 	 (epairify-deep loc
 	    `(lambda (%this this %scope %module)
 		(define __js_strings ,(j2s-jsstring-init this))
+		(define __js_rxcaches ,(j2s-regexp-caches-init this))
 		(%define-cnst-table ,(length cnsts))
 		(%define-pcache ,pcache-size)	       
 		(define %pcache
 		   (js-make-pcache-table ,pcache-size
 		      ,(context-get ctx :filename)
-		      ,@(if (context-get ctx :profile-cache #f)
+		      ,@(if (or (context-get ctx :profile-cache #f)
+				(context-get ctx :profile-location #f))
 			    (list `',(j2s-profile-cache this))
 			    '())))
 		,@(if (context-get ctx :profile-call #f)
@@ -171,6 +179,7 @@
 			    (js-new0 %this js-object)))
 		(thunk `(lambda ()
 			   (let ((_ (set! __js_strings ,(j2s-jsstring-init this)))
+				 (__ (set! __js_rxcaches ,(j2s-regexp-caches-init this)))
 				 (%cnst-table ,cnsttable)
 				 (%scope (nodejs-new-scope-object %this))
 				 (this ,jsthis)
@@ -187,13 +196,15 @@
 	    `(,jsmod
 		;;(define __js_strings ,(j2s-jsstring-init this))
 		(define __js_strings #f)
+		(define __js_rxcaches #f)
 		(%define-cnst-table ,(length cnsts))
 		(%define-pcache ,pcache-size)
 		(hop-sofile-compile-policy-set! 'static)
 		(define %pcache
 		   (js-make-pcache-table ,pcache-size
 		      ,(context-get ctx :filename)
-		      ,@(if (context-get ctx :profile-cache #f)
+		      ,@(if (or (context-get ctx :profile-cache #f)
+				(context-get ctx :profile-location #f))
 			    (list `',(j2s-profile-cache this))
 			    '())))
 		,@(if (context-get ctx :profile-call #f)
@@ -295,21 +306,24 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-main-sans-worker-module this name cnsttable toplevel
 	   esexports esimports body ctx)
-   (with-access::J2SProgram this (mode pcache-size call-size %this path globals
+   (with-access::J2SProgram this (mode
+				    pcache-size call-size
+				    %this path globals
 				    cnsts loc name strings)
       (let ((module (js-module/main loc name)))
 	 (epairify-deep loc
 	    `(,module 
-		;;; (&begin!) must not be a constant! (_do not_ use quote)
 		,@(filter fundef? globals)
 		,@(filter fundef? body)
 		(define __js_strings ,(j2s-jsstring-init this))
+		(define __js_rxcaches ,(j2s-regexp-caches-init this))
 		(%define-cnst-table ,(length cnsts))
 		(%define-pcache ,pcache-size)
 		(define %pcache
 		   (js-make-pcache-table ,pcache-size
 		      ,(context-get ctx :filename)
-		      ,@(if (context-get ctx :profile-cache #f)
+		      ,@(if (or (context-get ctx :profile-cache #f)
+				(context-get ctx :profile-location #f))
 			    (list `',(j2s-profile-cache this))
 			    '())))
 		,@(if (context-get ctx :profile-call #f)
@@ -618,7 +632,7 @@
        `((define (%jsexit n) (exit n))
 	 ,@(apply append body)))
       ((context-get ctx :return-as-exit)
-       `((bind-exit (%jsexit) ,@(apply append body))))
+       `((bind-exit (%jsexit) #unspecified ,@(apply append body))))
       (else
        (apply append body))))
 
@@ -970,3 +984,10 @@
 ;*---------------------------------------------------------------------*/
 (define (nofundef? e)
    (not (fundef? e)))
+;*---------------------------------------------------------------------*/
+;*    j2s-regexp-caches-init ...                                       */
+;*---------------------------------------------------------------------*/
+(define (j2s-regexp-caches-init this::J2SProgram)
+   (with-access::J2SProgram this (rxcache-size)
+      `(js-init-regexp-caches! %this ,rxcache-size)))
+   

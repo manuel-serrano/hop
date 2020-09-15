@@ -126,7 +126,7 @@
 			    ,(j2s-scheme field mode return ctx)
 			    ,(j2s-scheme rhs mode return ctx)
 			    %this))
-		     `(js-arguments-index-ref ,(j2s-scheme obj mode return ctx)
+		     `(js-arguments-index-set! ,(j2s-scheme obj mode return ctx)
 			 ,(j2s-scheme field mode return ctx)
 			 ,(j2s-scheme rhs mode return ctx)
 			 %this))

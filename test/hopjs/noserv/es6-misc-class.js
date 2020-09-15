@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Feb 25 11:33:29 2019                          */
 /*    Last change :  Wed Feb 27 18:26:57 2019 (serrano)                */
-/*    Copyright   :  2019 Manuel Serrano                               */
+/*    Copyright   :  2019-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Array subclassing.                       */
 /*=====================================================================*/
@@ -42,12 +42,19 @@ function kangaxc() {
        && c.length === 5;
 }
 
-function kangaxd() {
+function _kangaxd() {
    class C extends Error {}
    var c = new C();
    return c instanceof Error
        && c instanceof C
        && Object.prototype.toString.call(c) === "[object Error]";
+}
+
+function kangaxd() {
+   #:tprint( ">>>" );
+   var e = _kangaxd();
+   console.error( new.target );
+   return e;
 }
 
 function kangaxe() {

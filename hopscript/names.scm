@@ -44,7 +44,7 @@
 	   (js-integer-name->jsstring::JsStringLiteralASCII ::long)
 	   (js-integer-name::obj ::long)
 	   (js-index-name::obj ::long)
-	   (js-name->jsstring::JsStringLiteral ::bstring))
+	   (js-string->name::JsStringLiteral ::bstring))
 
    (export js-name-lock
 	   (macro synchronize-name))
@@ -129,21 +129,6 @@
 		    (else #f)))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    string-compare? ...                                              */
-;*---------------------------------------------------------------------*/
-(define (string-compare? x y)
-   (cond-expand
-      (bigloo-c
-       (when (pragma::bool "BSTRING_TO_STRING( $1 )[ 0 ] == BSTRING_TO_STRING( $2 )[ 0 ]" x y)
-	  (let ((l1 (string-length x)))
-	     (when (=fx l1 (string-length y))
-		(if (>fx l1 0)
-		    (pragma::bool "!memcmp( (void *)BSTRING_TO_STRING( $1 ), (void *)BSTRING_TO_STRING( $2 ), $3 )" x y l1)
-		    #t)))))
-      (else
-       (string=? x y))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-init-names! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-init-names!)
@@ -153,8 +138,8 @@
 	    100)
 	 (set! js-names
 	    (let ((table (create-hashtable
-			    :eqtest string-compare?
-			    :hash string-hash-number
+			    :weak 'string
+			    :size 512
 			    :max-length 65536
 			    :max-bucket-length 20)))
 	       (cond-expand (enable-tls (set! gcroots (cons table gcroots))))
@@ -179,31 +164,40 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-pcacher ...                                              */
+;*    -------------------------------------------------------------    */
+;*    String caches are only used on normalized strings so the         */
+;*    RIGHT field can be used to store the read and write caches.      */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-name-pcacher::obj o::JsStringLiteral)
-   (with-access::JsStringLiteral o (pcacher)
-      pcacher))
+   (with-access::JsStringLiteral o ((cache right))
+      (car cache)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-pcacher-set! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-name-pcacher-set! o::JsStringLiteral c::JsPropertyCache)
-   (with-access::JsStringLiteral o (pcacher)
-      (set! pcacher c)))
+   (with-access::JsStringLiteral o ((cache right))
+      (if (eq? cache (js-not-a-string-cache))
+	  (set! cache (cons c #f))
+	  (set-car! cache c))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-pcachew ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-name-pcachew::obj o::JsStringLiteral)
-   (with-access::JsStringLiteral o ((pcachew right))
-      pcachew))
+   (with-access::JsStringLiteral o ((cache right))
+      (cdr cache)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-pcachew-set! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-name-pcachew-set! o::JsStringLiteral c::JsPropertyCache)
-   (with-access::JsStringLiteral o ((pcachew right))
-      (set! pcachew c)))
+   (with-access::JsStringLiteral o ((cache right))
+      (if (eq? cache (js-not-a-string-cache))
+	  (set! cache (cons #f c))
+	  (if (not (pair? cache))
+	      (error "not" "a" "cache")
+	      (set-cdr! cache c)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsname? ...                                                   */
@@ -224,14 +218,14 @@
    (object-widening-set! o name))
 
 ;*---------------------------------------------------------------------*/
-;*    js-name->jsstring ...                                            */
+;*    js-string->name ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-name->jsstring::JsStringLiteral str::bstring)
+(define (js-string->name::JsStringLiteral str::bstring)
    (let ((enc (string-minimal-charset str)))
       (case enc
 	 ((ascii) (js-ascii-name->jsstring str))
 	 ((latin1 utf8) (js-utf8-name->jsstring str))
-	 (else (error "js-name->jsstring" "unsupported encoding" enc)))))
+	 (else (error "js-string->name" "unsupported encoding" enc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-toname ...                                           */
@@ -290,7 +284,7 @@
       ((string? p)
        (error "js-toname" "Illegal `string'" p))
       (else
-       (js-name->jsstring (js-tostring p %this)))))
+       (js-string->name (js-tostring p %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name->string ...                                              */

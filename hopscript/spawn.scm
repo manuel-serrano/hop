@@ -52,7 +52,7 @@
 
    (library hop)
 
-   (include "names.sch")
+   (include "names.sch" "types_expd.sch")
    
    (import __hopscript_types
 	   __hopscript_property
@@ -105,7 +105,10 @@
 ;*    fun ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define-macro (fun args body)
-   `(js-make-function %this (lambda ,args ,body) ,(length args) (& "fun")))
+   `(let ((proc (lambda ,args ,body)))
+       (js-make-function %this proc
+	  (js-function-arity proc)
+	  (js-function-info :name "fun" :len ,(length args)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-spawn ...                                                     */
@@ -147,8 +150,8 @@
 				     (lambda () (invoke 6 gen (& "throw") e))))))))))
 	       
 	       (step (lambda () (invoke 7 gen (& "next") (js-undefined)))))
-	    
-	    2 (& "AsyncPromise")))))
+	    (js-function-arity 2 0)
+	    (js-function-info :name "AsyncPromise" :len 2)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

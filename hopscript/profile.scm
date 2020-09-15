@@ -34,7 +34,7 @@
 	   (js-profile-register-pcache ::JsPropertyCache)
 	   
 	   (js-profile-log-cache ::JsPropertyCache
-	      #!key imap emap cmap pmap nmap amap vtable)
+	      #!key imap emap cmap pmap nmap amap vtable xmap)
 	   (js-profile-log-index ::long)
 	   
 	   (js-profile-log-get ::obj loc)
@@ -175,8 +175,8 @@
 ;*    js-profile-log-cache ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-cache cache::JsPropertyCache
-	   #!key imap emap cmap pmap nmap amap vtable)
-   (with-access::JsPropertyCache cache (cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
+	   #!key imap emap cmap pmap nmap amap xmap vtable)
+   (with-access::JsPropertyCache cache (cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable cntxmap)
       (when *profile-cache*
 	 (cond
 	    (imap (set! cntimap (+u32 #u32:1 cntimap)))
@@ -185,6 +185,7 @@
 	    (pmap (set! cntpmap (+u32 #u32:1 cntpmap)))
 	    (nmap (set! cntnmap (+u32 #u32:1 cntnmap)))
 	    (amap (set! cntamap (+u32 #u32:1 cntamap)))
+	    (xmap (set! cntxmap (+u32 #u32:1 cntxmap)))
 	    (vtable (set! cntvtable (+u32 #u32:1 cntvtable)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -193,8 +194,11 @@
 (define (js-profile-log-index idx)
    (let* ((len (vector-length js-profile-accesses))
 	  (i (if (>= idx len) (- len 1) idx)))
-      (vector-set! js-profile-accesses i
-	 (+llong #l1 (vector-ref js-profile-accesses i)))))
+      (if (=fx idx -1)
+	  (set! js-profile-dynamic-accesses
+	     (+llong #l1 js-profile-dynamic-accesses))
+	  (vector-set! js-profile-accesses i
+	     (+llong #l1 (vector-ref js-profile-accesses i))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-get ...                                           */
@@ -240,16 +244,17 @@
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-funcall table idx fun source)
    (when (js-function? fun)
-      (with-access::JsFunction fun (src)
-	 (when (and (pair? src) (string=? (cadr (car src)) source))
-	    (let* ((id (caddr (car src)))
-		   (bucket (vector-ref table idx)))
-	       (if (pair? bucket)
-		   (let ((c (assq id bucket)))
-		      (if (pair? c)
-			  (set-cdr! c (+llong (cdr c) #l1))
-			  (vector-set! table idx (cons (cons id #l1) bucket))))
-		   (vector-set! table idx (list (cons id #l1)))))))))
+      (with-access::JsFunction fun (info)
+	 (let ((src (vector-ref info 3)))
+	    (when (string=? src source)
+	       (let* ((id (vector-ref info 4))
+		      (bucket (vector-ref table idx)))
+		  (if (pair? bucket)
+		      (let ((c (assq id bucket)))
+			 (if (pair? c)
+			     (set-cdr! c (+llong (cdr c) #l1))
+			     (vector-set! table idx (cons (cons id #l1) bucket))))
+		      (vector-set! table idx (list (cons id #l1))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-log-cmap ...                                          */
@@ -577,6 +582,7 @@
 (define js-profile-extensions (make-vector 32 #l0))
 (define js-profile-vectors (make-vector 256 #l0))
 (define js-profile-vector-maxlen 0)
+(define js-profile-dynamic-accesses #l0)
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-allocs ...                                               */
@@ -820,23 +826,25 @@
 	 (if m (string->integer (cadr m)) 100)))
 
    (define (pcache-hits::llong pc)
-      (with-access::JsPropertyCache pc (cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
+      (with-access::JsPropertyCache pc (cntimap cntemap cntcmap cntpmap cntnmap cntamap cntxmap cntvtable)
 	 (+llong (uint32->llong cntimap)
 	    (+llong (uint32->llong cntemap)
 	       (+llong (uint32->llong cntcmap)
 		  (+llong (uint32->llong cntpmap)
 		     (+llong (uint32->llong cntnmap)
 			(+llong (uint32->llong cntamap)
-			   (uint32->llong cntvtable)))))))))
+			   (+llong (uint32->llong cntxmap)
+			      (uint32->llong cntvtable))))))))))
 
    (define (pcache-multi pc)
-      (with-access::JsPropertyCache pc (name cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
+      (with-access::JsPropertyCache pc (name cntimap cntemap cntcmap cntpmap cntnmap cntamap cntxmap cntvtable)
 	 (when (> (+ (if (>u32 cntimap 0) 1 0)
 		     (if (>u32 cntemap 0) 1 0)
 		     (if (>u32 cntcmap 0) 1 0)
 		     (if (>u32 cntpmap 0) 1 0)
 		     (if (>u32 cntnmap 0) 1 0)
 		     (if (>u32 cntamap 0) 1 0)
+		     (if (>u32 cntxmap 0) 1 0)
 		     (if (>u32 cntvtable 0) 1 0))
 		  1)
 	    (cons name (pcache-hits pc)))))
@@ -889,6 +897,9 @@
 
    (define (filecaches-amaps filecaches)
       (filecache-sum-field filecaches 'cntamap))
+
+   (define (filecaches-xmaps filecaches)
+      (filecache-sum-field filecaches 'cntxmap))
 
    (define (filecaches-vtables filecaches)
       (filecache-sum-field filecaches 'cntvtable))
@@ -994,7 +1005,7 @@
 				   (<= xpoint ypoint))))
 		       fc))))
 	 (vfor-each (lambda (i pc)
-		       (with-access::JsPropertyCache pc (point usage cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
+		       (with-access::JsPropertyCache pc (point usage cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntxmap cntvtable)
 			  (when (or (> (pcache-hits pc) 0) (> cntmiss *log-miss-threshold*))
 			     (display* "      { \"point\": " point)
 			     (display* ", \"usage\": \"" usage "\"")
@@ -1005,6 +1016,7 @@
 			     (when (> cntpmap 0) (display* ", \"pmap\": " cntpmap))
 			     (when (> cntnmap 0) (display* ", \"nmap\": " cntnmap))
 			     (when (> cntamap 0) (display* ", \"amap\": " cntamap))
+			     (when (> cntxmap 0) (display* ", \"xmap\": " cntxmap))
 			     (when (> cntvtable 0) (display* ", \"vtable\": " cntvtable))
 			     (if (>fx i 0)
 				 (print " }, ")
@@ -1029,8 +1041,9 @@
 							(xcntpmap cntpmap)
 							(xcntnmap cntnmap)
 							(xcntamap cntamap)
+							(xcntxmap cntxmap)
 							(xcntvtable cntvtable))
-			  (with-access::JsPropertyCache old (point usage cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
+			  (with-access::JsPropertyCache old (point usage cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntxmap cntvtable)
 			     (if (and (= point xpoint) (eq? xusage usage))
 				 (begin
 				    (set! cntmiss (+u32 cntmiss xcntmiss))
@@ -1040,6 +1053,7 @@
 				    (set! cntpmap (+u32 cntpmap xcntpmap))
 				    (set! cntnmap (+u32 cntnmap xcntnmap))
 				    (set! cntamap (+u32 cntamap xcntamap))
+				    (set! cntxmap (+u32 cntxmap xcntxmap))
 				    (set! cntvtable (+u32 cntvtable xcntvtable))
 				    (loop (+fx i 1) old res))
 				 (loop (+fx i 1) x (cons old res))))))))
@@ -1124,6 +1138,10 @@
 	  (fprint *profile-port*
 	     "total accesses           : "
 	     (padding total 12 'right))
+	  (fprint *profile-port*
+	     "dynamic accesses         : "
+	     (padding js-profile-dynamic-accesses 12 'right)
+	     " (" (percent js-profile-dynamic-accesses total) "%)")
 	  (fprint *profile-port*
 	     "total cache hits         : "
 	     (padding (filecaches-hits filecaches) 12 'right)
@@ -1223,7 +1241,10 @@
 		 "UNCACHED METHODS:\n=================")
 	      (profile-uncached calls *profile-methods*)
 	      (newline *profile-port*))
-	   (fprint *profile-port* "\n(use HOPTRACE=\"hopscript:uncache\" for uncached accesses)")))))
+	   (fprint *profile-port* "\n(use HOPTRACE=\"hopscript:uncache\" for uncached accesses)"))
+       (cond-expand
+	  (profile #f)
+	  (else (fprint *profile-port* "reconfigure with --profile for loging xmap, amap, and pmap"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-uncached ...                                             */
@@ -1256,8 +1277,9 @@
 						     cntpmap
 						     cntnmap
 						     cntamap
+						     cntxmap
 						     cntvtable)
-		    (> (+ cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
+		    (> (+ cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntxmap cntvtable)
 		       *log-miss-threshold*)))
 	    pcaches)
       (newline *profile-port*)
@@ -1297,10 +1319,12 @@
 	    " " 
 	    (padding "amap" cwidth 'right)
 	    " " 
+	    (padding "xmap" cwidth 'right)
+	    " " 
 	    (padding "vtable" cwidth 'right))
 	 (fprint *profile-port* (make-string (+ ppading 1 cwidth 1 4) #\-)
 	    "-+-"
-	    (make-string (* 8 (+ cwidth 1)) #\-))
+	    (make-string (* 9 (+ cwidth 1)) #\-))
 	 (for-each (lambda (pc)
 		      (with-access::JsPropertyCache pc (point name usage
 							  cntmiss
@@ -1310,8 +1334,9 @@
 							  cntpmap
 							  cntnmap
 							  cntamap
+							  cntxmap
 							  cntvtable)
-			 (when (> (+ cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntvtable)
+			 (when (> (+ cntmiss cntimap cntemap cntcmap cntpmap cntnmap cntamap cntxmap cntvtable)
 				  *log-miss-threshold*)
 			    (fprint *profile-port*
 			       (padding (number->string point) ppading 'right)
@@ -1333,6 +1358,8 @@
 			       (padding cntnmap cwidth 'right)
 			       " " 
 			       (padding cntamap cwidth 'right)
+			       " " 
+			       (padding cntxmap cwidth 'right)
 			       " " 
 			       (padding cntvtable cwidth 'right)))))
 	    pcaches))))

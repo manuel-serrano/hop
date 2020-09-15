@@ -212,7 +212,8 @@
 			   (car args))
 			  (else
 			   (js-string->jsstring (js-tostring (car args) %this)))))))
-	    1 (& "Symbol")
+	    (js-function-arity 0 -1 'scheme)
+	    (js-function-info :name "Symbol" :len 1)
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-symbol-prototype
 	    :size 17
@@ -252,7 +253,9 @@
 		   new))))
       
       (js-bind! %this js-symbol (& "for")
-	 :value (js-make-function %this js-symbol-for 1 (& "for"))
+	 :value (js-make-function %this js-symbol-for
+		   (js-function-arity js-symbol-for)
+		   (js-function-info :name "for" :len 1))
 	 :writable #t
 	 :enumerable #f
 	 :configurable #t
@@ -269,7 +272,9 @@
 	     (js-raise-type-error %this "not a symbol ~a" sym)))
       
       (js-bind! %this js-symbol (& "keyFor")
-	 :value (js-make-function %this js-symbol-keyfor 1 (& "keyFor"))
+	 :value (js-make-function %this js-symbol-keyfor
+		   (js-function-arity js-symbol-keyfor)
+		   (js-function-info :name "keyFor" :len 1))
 	 :writable #t
 	 :enumerable #f
 	 :configurable #t
@@ -337,7 +342,9 @@
 	  (js-raise-type-error %this "not a symbol ~a" this))))
    
    (js-bind! %this obj (& "toString")
-      :value (js-make-function %this tostring 0 (& "toString"))
+      :value (js-make-function %this tostring
+		(js-function-arity tostring)
+		(js-function-info :name "toString" :len 0))
       :enumerable #f
       :hidden-class #t)
    
@@ -354,7 +361,9 @@
 	  (js-raise-type-error %this "not a symbol ~a" this))))
    
    (js-bind! %this obj (& "valueOf")
-      :value (js-make-function %this valueof 0 (& "valueOf"))
+      :value (js-make-function %this valueof
+		(js-function-arity valueof)
+		(js-function-info :name "valueOf" :len 0))
       :enumerable #f
       :hidden-class #t))
 

@@ -136,7 +136,7 @@
    (match-case x
       ((& (and ?str (? string?)))
        (if (not (thread-parameter '&cnsts))
-	   (e `(js-name->jsstring ,str) e)
+	   (e `(js-string->name ,str) e)
 	   (let* ((&cnsts (thread-parameter '&cnsts))
 		  (old (assoc str &cnsts)))
 	      (if (pair? old)

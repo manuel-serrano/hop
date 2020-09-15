@@ -46,6 +46,7 @@
 	      (mode::symbol read-only (default 'normal))
 	      (path::bstring read-only)
 	      (pcache-size::long (default 0))
+	      (rxcache-size::long (default 0))
 	      (call-size::long (default 0))
 	      (name read-only (default #f))
 	      (main read-only (default #f))
@@ -72,8 +73,7 @@
 	      ;; #t (after use) if the variable is captured by a closure
 	      (escape::bool (default #f) (info '("notraverse")))
 	      ;; see usage-bit.sch
-	      (_usage::uint32 (default (usage '(assig))))
-	      ;;(usage::pair-nil (default '(assig)) (info '("notraverse")))
+	      (usage::uint32 (default (usage '())))
 	      ;; variable range
 	      (binder::symbol (default 'var) (info '("notraverse")))
 	      ;; user declared type, if set, assign will be guarded
@@ -293,6 +293,7 @@
 	      (decl::J2SDecl (info '("jsonref"))))
 	   
 	   (class J2SRef::J2SExpr
+	      ;; the declaration
 	      (decl::J2SDecl (info '("jsonref" "notraverse"))))
 	   
 	   (class J2SWithRef::J2SExpr
@@ -316,7 +317,7 @@
 	   (final-class J2SThis::J2SRef)
 	   
 	   (final-class J2SSuper::J2SRef
-	      (clazz (default #unspecified) (info '("notraverse"))))
+	      (context (default 'plain) (info '("notraverse"))))
 
 	   (final-class J2SCond::J2SExpr
 	      (test::J2SExpr (info '("ast")))
@@ -386,15 +387,12 @@
 	   
 	   (final-class J2SPrefix::J2SAssig
 	      (cache (default #f) (info '("nojson" "notraverse")))
-	      (cspecs (default '()) (info '("nojson" "notraverse")))
 	      op::symbol)
 	   (final-class J2SPostfix::J2SAssig
 	      (cache (default #f) (info '("nojson" "notraverse")))
-	      (cspecs (default '()) (info '("nojson" "notraverse")))
 	      op::symbol)
 	   (final-class J2SAssigOp::J2SAssig
 	      (cache (default #f) (info '("nojson" "notraverse")))
-	      (cspecs (default '()) (info '("nojson" "notraverse")))
 	      op::symbol)
 	   
 	   (final-class J2SObjInit::J2SExpr
@@ -536,7 +534,6 @@
 	   (node-loc ::J2SNode)
 	   (node-endloc ::J2SNode)
 	   
-	   (j2sfun-id ::J2SFun)
 	   (j2sfun-expression? ::J2SFun)
 	   
 	   (ast-decl-key::int)
@@ -682,15 +679,6 @@
 (define (j2s-export? decl::J2SDecl)
    (with-access::J2SDecl decl (binder scope id loc)
       (or (eq? binder 'export) (eq? scope 'export))))
-
-;*---------------------------------------------------------------------*/
-;*    j2sfun-id ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (j2sfun-id this::J2SFun)
-   (with-access::J2SFun this (decl)
-      (when (isa? decl J2SDecl)
-	 (with-access::J2SDecl decl (id)
-	    id))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun-expression? ...                                           */

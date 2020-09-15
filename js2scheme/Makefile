@@ -24,6 +24,9 @@ install: install-library
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = js2scheme
+BIGLOOEXTRALIBS = biglooweb
+HOPAPPLIBS = hop
+
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
   -lhop_s-$(HOPRELEASE)
 HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
@@ -42,13 +45,13 @@ _OBJECTS = lexer header parser html ast usage dump utils \
   use propcache bestpractice sourcemap debug stmtassign letopt unletrec \
   cps ecmascript5 narrow constant tyflow hint range loopspec cast vector \
   array alpha letfusion constrsize ctor propcce cspecs sweep inline unthis \
-  instanceof hintnum pce callapply multivar module checksum newtarget \
-  objinit arguments procedure hop-module \
+  instanceof hintnum pce callapply multivar module checksum \
+  newtarget objinit arguments procedure cnstlift hop-module cse \
   scheme scheme-utils scheme-program \
   scheme-fun scheme-ops scheme-test scheme-class scheme-string scheme-math \
   scheme-date scheme-array scheme-regexp scheme-cast scheme-arguments \
   scheme-call scheme-spread scheme-json scheme-bexit scheme-object \
-  scheme-constant
+  scheme-constant scheme-process
 
 OBJECTS = $(_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o
@@ -65,11 +68,11 @@ INCLUDES = ast.sch usage.sch usage-bit.sch scheme.sch
 #*---------------------------------------------------------------------*/
 POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile walk.sch token.sch
 
-include ../etc/Makefile.library
-
 #*---------------------------------------------------------------------*/
 #*    all                                                              */
 #*---------------------------------------------------------------------*/
+include ../etc/Makefile.library
+
 .PHONY: build native jvm
 
 build: $(BACKEND)

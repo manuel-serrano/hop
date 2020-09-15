@@ -109,11 +109,9 @@ function test() {
    } );
 
    req.on( 'response', function( result ) {
-      console.log( "status=", result.statusCode );
       assert.ok( result.statusCode == 200, "statusCode" );
       result.on( 'data', function ( chunk ) {
 	 var c = chunk.toString();
-	 console.log( "chunk=", c );
 	 assert.ok( c == "OK" );
 	 console.log( "upload...test passed" );
       });

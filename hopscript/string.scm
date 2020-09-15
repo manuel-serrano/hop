@@ -38,6 +38,7 @@
 	   __hopscript_worker)
 
    (export (js-init-string! ::JsGlobalObject)
+	   (js-jsstring->JsString ::JsStringLiteral ::JsGlobalObject)
 	   (js-template-raw ::JsArray ::JsArray ::JsGlobalObject))
 
    ;; bmem profiling
@@ -134,47 +135,47 @@
 	    (val (js-ascii->jsstring ""))
 	    (__proto__ (js-object-proto %this))))
       
-      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5
-      (define (js-string-construct o::JsString . arg)
-	 
-	 (define (set-ascii-string! str)
-	    (let ((len (instantiate::JsValueDescriptor
-			  (name (& "length"))
-			  (writable #f)
-			  (configurable #f)
-			  (enumerable #f)
-			  (value (string-length str)))))
-	       (with-access::JsString o (val elements)
-		  (set! val (js-ascii->jsstring str))
-		  (set! elements (vector len)))))
-	 
-	 (with-access::JsGlobalObject %this (js-new-target)
-	    (set! js-new-target (js-undefined)))
-	 
-	 (if (null? arg)
-	     ;; 2
-	     (set-ascii-string! "")
-	     (let ((value (car arg)))
-		(cond
-		   ((string? value)
-		    (set-ascii-string! value))
-		   ((js-jsstring? value)
-		    (js-set-string! %this o value))
-		   ((js-object? value)
-		    (js-set-string! %this o (js-cast-string %this value)))
-		   (else
-		    (let ((str (js-tojsstring value %this)))
-		       (js-set-string! %this o str)))))))
+;*       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5   */
+;*       (define (js-string-construct o::JsString . arg)               */
+;* 	                                                               */
+;* 	 (define (set-ascii-string! str)                               */
+;* 	    (let ((len (instantiate::JsValueDescriptor                 */
+;* 			  (name (& "length"))                          */
+;* 			  (writable #f)                                */
+;* 			  (configurable #f)                            */
+;* 			  (enumerable #f)                              */
+;* 			  (value (string-length str)))))               */
+;* 	       (with-access::JsString o (val elements)                 */
+;* 		  (set! val (js-ascii->jsstring str))                  */
+;* 		  (set! elements (vector len)))))                      */
+;* 	                                                               */
+;* 	 (with-access::JsGlobalObject %this (js-new-target)            */
+;* 	    (set! js-new-target (js-undefined)))                       */
+;*                                                                     */
+;* 	 (if (null? arg)                                               */
+;* 	     ;; 2                                                      */
+;* 	     (set-ascii-string! "")                                    */
+;* 	     (let ((value (car arg)))                                  */
+;* 		(cond                                                  */
+;* 		   ((string? value)                                    */
+;* 		    (set-ascii-string! value))                         */
+;* 		   ((js-jsstring? value)                               */
+;* 		    (js-set-string! %this o value))                    */
+;* 		   ((js-object? value)                                 */
+;* 		    (js-set-string! %this o (js-cast-string %this value))) */
+;* 		   (else                                               */
+;* 		    (let ((str (js-tojsstring value %this)))           */
+;* 		       (js-set-string! %this o str)))))))              */
       
       ;; then, create a HopScript object
       (set! js-string
 	 (js-make-function %this
-	    (%js-string %this) 1 (& "String")
-	    :arity (js-function-arity 0 -1 'scheme)
+	    (%js-string %this)
+	    (js-function-arity 0 1 'scheme-optional)
+	    (js-function-info :name "String" :len 1)
 	    :__proto__ (js-object-proto js-function)
 	    :prototype js-string-prototype
 	    :size 17
-	    :construct js-string-construct
 	    :alloc js-string-alloc))
       
       ;; fromCharCode
@@ -190,8 +191,9 @@
       
       (js-bind! %this js-string (& "fromCharCode")
 	 :value (js-make-function %this
-		   js-string-fromcharcode 1 (& "fromCharCode")
-		   :arity (js-function-arity 0 -1 'scheme)
+		   js-string-fromcharcode
+		   (js-function-arity 0 -1 'scheme)
+		   (js-function-info :name "fromCharCode" :len 1)
 		   :prototype (js-undefined))
 	 :writable #t
 	 :enumerable #f
@@ -229,8 +231,9 @@
 		(js-undefined))))
       
       (js-bind! %this js-string (& "raw")
-	 :value (js-make-function %this js-string-raw 1 (& "raw")
-		   :arity (js-function-arity 0 -1 'scheme)
+	 :value (js-make-function %this js-string-raw
+		   (js-function-arity 0 -1 'scheme)
+		   (js-function-info :name "raw" :len 1)
 		   :prototype (js-undefined))
 	 :writable #t
 	 :enumerable #f
@@ -257,6 +260,53 @@
 	 (val (js-ascii->jsstring ""))
 	 (__proto__ (js-get-jsobject-name/cache constructor (& "prototype") #f
 		       %this (js-pcache-ref js-string-pcache 34))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring->JsString ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring->JsString o %this)
+   (with-access::JsGlobalObject %this (js-string-prototype js-initial-cmap)
+      (instantiateJsString
+	 (val o)
+	 (__proto__ js-string-prototype)
+	 (elements '#()))))
+
+;*---------------------------------------------------------------------*/
+;*    js-string-update-length-property! ...                            */
+;*---------------------------------------------------------------------*/
+(define (js-string-update-length-property! str::JsString)
+   
+   (define (js-string-find-length-property arr::JsString)
+      (with-access::JsString arr (elements)
+	 (when (>=fx (vector-length elements) 1)
+	    (when (isa? (vector-ref elements 0) JsPropertyDescriptor)
+	       (with-access::JsPropertyDescriptor (vector-ref elements 0) (name)
+		  (when (eq? name (& "length"))
+		     (vector-ref elements 0)))))))
+   
+   (define (add-length-property! str::JsString)
+      (with-access::JsString str (elements val)
+	 (let ((prop (instantiate::JsValueDescriptor
+			(name (& "length"))
+			(writable #f)
+			(configurable #f)
+			(enumerable #f)
+			(value (uint32->fixnum
+				  (js-jsstring-codeunit-length val)))))
+	       (vec (make-vector (+fx 1 (vector-length elements)))))
+	    (vector-set! vec 0 prop)
+	    (vector-copy! vec 1 elements)
+	    (set! elements vec)
+	    prop)))
+   
+   (or (js-string-find-length-property str) (add-length-property! str)))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-length ::JsString ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-length str::JsString %this #!optional cache)
+   (with-access::JsString str (val)
+      (uint32->fixnum (js-jsstring-codeunit-length val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-cast-string ...                                               */
@@ -286,12 +336,18 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-string ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5         */
 ;*---------------------------------------------------------------------*/
 (define (%js-string %this)
-   (lambda (this . args)
-      (let ((str (if (null? args)
-		     (js-ascii->jsstring "")
-		     (js-string->jsstring (js-tostring (car args) %this)))))
+   (lambda (this #!optional (arg (js-ascii->jsstring "")))
+      (let ((str (cond
+		    ((js-jsstring? arg)
+		     arg)
+		    ((js-object? arg)
+		     (js-cast-string %this arg))
+		    (else
+		     (js-tojsstring arg %this)))))
 	 (with-access::JsGlobalObject %this (js-new-target js-string)
 	    (if (eq? js-new-target (js-undefined))
 		str
@@ -354,7 +410,9 @@
 	  (js-raise-type-error %this "argument not a string ~a" (typeof this)))))
    
    (js-bind! %this obj (& "toString")
-      :value (js-make-function %this tostring 0 (& "toString")
+      :value (js-make-function %this tostring
+		(js-function-arity tostring)
+		(js-function-info :name "toString" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -371,7 +429,9 @@
 	  (js-raise-type-error %this "argument not a string ~a" this))))
    
    (js-bind! %this obj (& "valueOf")
-      :value (js-make-function %this valueof 0 (& "valueOf")
+      :value (js-make-function %this valueof
+		(js-function-arity valueof)
+		(js-function-info :name "valueOf" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -382,7 +442,9 @@
       (js-jsstring-charat (js-cast-string-normalize! %this this) index %this))
    
    (js-bind! %this obj (& "charAt")
-      :value (js-make-function %this charat 1 (& "charAt")
+      :value (js-make-function %this charat
+		(js-function-arity charat)
+		(js-function-info :name "charAt" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -393,7 +455,22 @@
       (js-jsstring-charcodeat (js-cast-string-normalize! %this this) index %this))
    
    (js-bind! %this obj (& "charCodeAt")
-      :value (js-make-function %this charcodeat 1 (& "charCodeAt")
+      :value (js-make-function %this charcodeat
+		(js-function-arity charcodeat)
+		(js-function-info :name "charCodeAt" :len 1)
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
+   ;; codePointAt
+   ;; https://tc39.es/ecma262/#sec-string.prototype.codepointat
+   (define (codepointat this index)
+      (js-jsstring-codepointat (js-cast-string-normalize! %this this) index %this))
+   
+   (js-bind! %this obj (& "codePointAt")
+      :value (js-make-function %this codepointat
+		(js-function-arity codepointat)
+		(js-function-info :name "codePointAt" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -429,8 +506,9 @@
 		       (cdr rest))))))))
    
    (js-bind! %this obj (& "concat")
-      :value (js-make-function %this concat 1 (& "concat")
-		:arity (js-function-arity 0 -1 'scheme)
+      :value (js-make-function %this concat
+		(js-function-arity 0 -1 'scheme)
+		(js-function-info :name "concat" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -443,8 +521,9 @@
 	    (js-cast-string-normalize! %this this) searchstr position %this)))
 
    (js-bind! %this obj (& "indexOf")
-      :value (js-make-function %this indexof 1 (& "indexOf")
-		:arity (js-function-arity 1 1 'optional)
+      :value (js-make-function %this indexof
+		(js-function-arity 1 1 'optional)
+		(js-function-info :name "indexOf" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -457,8 +536,9 @@
 	    (js-cast-string-normalize! %this this) searchstr position %this)))
    
    (js-bind! %this obj (& "lastIndexOf")
-      :value (js-make-function %this last-indexof 1 (& "lastIndexOf")
-		:arity (js-function-arity 1 1 'optional)
+      :value (js-make-function %this last-indexof
+		(js-function-arity 1 1 'optional)
+		(js-function-info :name "lastIndexOf" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -469,7 +549,9 @@
       (js-jsstring-localecompare (js-cast-string-normalize! %this this) that %this))
    
    (js-bind! %this obj (& "localeCompare")
-      :value (js-make-function %this locale-compare 1 (& "localeCompare")
+      :value (js-make-function %this locale-compare
+		(js-function-arity locale-compare)
+		(js-function-info :name "localeCompare" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -480,7 +562,9 @@
       (js-jsstring-naturalcompare (js-cast-string-normalize! %this this) that %this))
    
    (js-bind! %this obj (& "naturalCompare")
-      :value (js-make-function %this natural-compare 1 (& "naturalCompare")
+      :value (js-make-function %this natural-compare
+		(js-function-arity natural-compare)
+		(js-function-info :name "naturalCompare" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -491,7 +575,9 @@
       (js-jsstring-match (js-cast-string %this this) regexp %this))
    
    (js-bind! %this obj (& "match")
-      :value (js-make-function %this match 1 (& "match")
+      :value (js-make-function %this match
+		(js-function-arity match)
+		(js-function-info :name "match" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -504,7 +590,9 @@
 
       
    (js-bind! %this obj (& "replace")
-      :value (js-make-function %this replace 2 (& "replace")
+      :value (js-make-function %this replace
+		(js-function-arity replace)
+		(js-function-info :name "replace" :len 2)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -523,7 +611,9 @@
 		      (caar pos)
 		      -1))))))
    (js-bind! %this obj (& "search")
-      :value (js-make-function %this search 1 (& "search")
+      :value (js-make-function %this search
+		(js-function-arity search)
+		(js-function-info :name "search" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -535,7 +625,9 @@
 	 (js-jsstring-slice jss start end %this)))
    
    (js-bind! %this obj (& "slice")
-      :value (js-make-function %this slice 2 (& "slice")
+      :value (js-make-function %this slice
+		(js-function-arity slice)
+		(js-function-info :name "slice" :len 2)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -546,7 +638,9 @@
       (js-jsstring-split (js-cast-string %this this) separator limit %this))
    
    (js-bind! %this obj (& "split")
-      :value (js-make-function %this split 2 (& "split")
+      :value (js-make-function %this split
+		(js-function-arity split)
+		(js-function-info :name "split" :len 2)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -557,7 +651,9 @@
       (js-jsstring-substring (js-cast-string-normalize! %this this) start end %this))
    
    (js-bind! %this obj (& "substring")
-      :value (js-make-function %this js-substring 2 (& "substring")
+      :value (js-make-function %this js-substring
+		(js-function-arity js-substring)
+		(js-function-info :name "substring" :len 2)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -568,7 +664,9 @@
       (js-jsstring-tolowercase (js-cast-string-normalize! %this this)))
    
    (js-bind! %this obj (& "toLowerCase")
-      :value (js-make-function %this tolowercase 0 (& "toLowerCase")
+      :value (js-make-function %this tolowercase
+		(js-function-arity tolowercase)
+		(js-function-info :name "toLowerCase" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -579,7 +677,9 @@
       (js-jsstring-tolocalelowercase (js-cast-string-normalize! %this this)))
    
    (js-bind! %this obj (& "toLocaleLowerCase")
-      :value (js-make-function %this tolocalelowercase 0 (& "toLocaleLowerCase")
+      :value (js-make-function %this tolocalelowercase
+		(js-function-arity tolocalelowercase)
+		(js-function-info :name "tolocalelowercase" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -590,7 +690,9 @@
       (js-jsstring-touppercase (js-cast-string-normalize! %this this)))
    
    (js-bind! %this obj (& "toUpperCase")
-      :value (js-make-function %this touppercase 0 (& "toUpperCase")
+      :value (js-make-function %this touppercase
+		(js-function-arity touppercase)
+		(js-function-info :name "touppercase" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -601,7 +703,9 @@
       (js-jsstring-tolocaleuppercase (js-cast-string-normalize! %this this)))
    
    (js-bind! %this obj (& "toLocaleUpperCase")
-      :value (js-make-function %this tolocaleuppercase 0 (& "toLocaleUpperCase")
+      :value (js-make-function %this tolocaleuppercase
+		(js-function-arity tolocaleuppercase)
+		(js-function-info :name "toLocaleUpperCase" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -612,7 +716,9 @@
       (js-jsstring-trim (js-cast-string-normalize! %this this)))
    
    (js-bind! %this obj (& "trim")
-      :value (js-make-function %this trim 0 (& "trim")
+      :value (js-make-function %this trim
+		(js-function-arity trim)
+		(js-function-info :name "trim" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -623,7 +729,9 @@
       (js-jsstring-substr (js-tojsstring this %this) start length %this))
    
    (js-bind! %this obj (& "substr")
-      :value (js-make-function %this substr 2 (& "substr")
+      :value (js-make-function %this substr
+		(js-function-arity substr)
+		(js-function-info :name "substr" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
@@ -656,7 +764,8 @@
    (with-access::JsGlobalObject %this (js-symbol-iterator)
       (js-bind! %this obj js-symbol-iterator
 	 :value (js-make-function %this string-prototype-string-values
-		   0 (& "@@iterator")
+		   (js-function-arity string-prototype-string-values)
+		   (js-function-info :name "@@iterator" :len 0)
 		   :prototype (js-undefined))
 	 :enumerable #f
 	 :hidden-class #t)))
@@ -690,24 +799,35 @@
 	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-isname? ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-isname?::bool p name::JsStringLiteral %this::JsGlobalObject)
+   (or (eq? p name) (eq? (js-toname p %this) name)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsString ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.5.2     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-property o::JsString p %this)
    (let ((index (js-toindex p)))
-      (if (js-isindex? index)
+      (cond
+	 ((js-isindex? index)
 	  (let* ((len (js-jsstring-character-length (js-cast-string %this o))))
 	     (if (<=u32 len index)
 		 (call-next-method)
-		 #t))
-	  (call-next-method))))
+		 #t)))
+	 ((js-isname? p (& "length") %this)
+	  #t)
+	 (else
+	  (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-own-property ::JsString ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-own-property o::JsString p %this::JsGlobalObject)
-   (not (eq? (js-get-own-property o p %this) (js-undefined))))
+   (or (js-isname? p (& "length") %this)
+       (not (eq? (js-get-own-property o p %this) (js-undefined)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ::JsString ...                               */
@@ -741,7 +861,8 @@
 		(configurable #f)))))
    
    (let ((index (js-toindex p)))
-      (if (js-isindex? index)
+      (cond
+	 ((js-isindex? index)
 	  (with-access::JsString o (val)
 	     (let ((index (uint32->fixnum index)))
 		(cond
@@ -750,8 +871,11 @@
 		   ((isa? val JsStringLiteralASCII)
 		    (ascii-get-own-property (js-jsstring->string val) index))
 		   (else
-		    (utf8-get-own-property val index)))))
-	  (call-next-method))))
+		    (utf8-get-own-property val index))))))
+	 ((js-isname? p (& "length") %this)
+	  (js-string-update-length-property! o))
+	 (else
+	  (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property-descriptor ::JsString ...                    */

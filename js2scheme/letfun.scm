@@ -39,7 +39,7 @@
       (name "letfun")
       (comment "Implicit function declarations")
       (proc j2s-letfun)
-      (optional 2)))
+      (optional :optim-letfun)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-letfun ...                                                   */
@@ -112,13 +112,13 @@
    (with-access::J2SInit this (lhs rhs)
       (with-access::J2SRef lhs (decl)
 	 (if (isa? rhs J2SFun)
-	     (with-access::J2SDecl decl (id writable scope _usage binder utype vtype loc)
+	     (with-access::J2SDecl decl (id writable scope usage binder utype vtype loc)
 		(instantiate::J2SDeclFun
 		   (loc loc)
 		   (id id)
 		   (writable writable)
 		   (scope scope)
-		   (_usage _usage)
+		   (usage usage)
 		   (binder binder)
 		   (utype utype)
 		   (vtype vtype)

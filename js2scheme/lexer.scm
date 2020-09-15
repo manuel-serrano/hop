@@ -579,9 +579,42 @@
 	       (when n2
 		  (+fx (*fx n1 256) n2))))))
    
+   (define (hex6 str j len)
+      (let ((n1 (char-alpha (string-ref str j))))
+	 (if n1
+	    (let loop ((n n1)
+		       (j (+fx j 1)))
+	       (if (=fx j len)
+		   (values #f 0)
+		   (let ((c (string-ref str j)))
+		      (cond
+			 ((char=? c #\})
+			  (values n j))
+			 ((char-alpha c)
+			  =>
+			  (lambda (m)
+			     (loop (+fx (bit-lsh n 4) m) (+fx j 1))))
+			 (else
+			  (values #f 0))))))
+	    (values #f 0))))
+   
    (define (integer->utf8 n)
       (let ((u (make-ucs2-string 1 (integer->ucs2 n))))
 	 (ucs2-string->utf8-string u)))
+
+   (define (integer32->utf8 n)
+      (if (>=fx n #xFFFF)
+	  (let ((buf (make-string 4)))
+	     (string-set! buf 0
+		(integer->char (bit-or #xf0 (bit-rsh n 18))))
+	     (string-set! buf 1
+		(integer->char (bit-or #x80 (bit-and #x3f (bit-rsh n 12)))))
+	     (string-set! buf 2
+		(integer->char (bit-or #x80 (bit-and #x3f (bit-rsh n 6)))))
+	     (string-set! buf 3
+		(integer->char (bit-or #x80 (bit-and #x3f n))))
+	     buf)
+	  (integer->utf8 n)))
 
    (define (integer2->utf8 n1 n2)
       (let ((u (make-ucs2-string 2 (integer->ucs2 n1))))
@@ -601,7 +634,7 @@
 	     (values val (-fx i index))
 	     (loop (+fx i 1)
 		(+fx (*fx val 8) (octal-char (string-ref str i)))))))
-   
+
    (let* ((len (string-length str))
 	  (res (make-string len)))
       (let loop ((i 0)
@@ -654,8 +687,21 @@
 				     (loop (+fx j 4) (+fx w l) octal))
 				  (err)))))
 		      ((#\u)
-		       (if (>=fx j (-fx len 5))
-			   (err)
+		       (cond
+			  ((and (<fx j (-fx len 4)) (char=? (string-ref str (+fx j 2)) #\{))
+			   (multiple-value-bind (n nj)
+			      (hex6 str (+fx j 3) len)
+			      (cond
+				 ((not n)
+				  (err))
+				 (else
+				  (let* ((s (integer32->utf8 n))
+					 (l (string-length s)))
+				     (blit-string! s 0 res w l)
+				     (loop (+fx nj 1) (+fx w l) octal))))))
+			  ((>=fx j (-fx len 5))
+			   (err))
+			  (else
 			   (let ((n (hex4 str (+fx j 2))))
 			      (cond
 				 ((not n)
@@ -682,7 +728,7 @@
 				  (let* ((s (integer->utf8 n))
 					 (l (string-length s)))
 				     (blit-string! s 0 res w l)
-				     (loop (+fx j 6) (+fx w l) octal)))))))
+				     (loop (+fx j 6) (+fx w l) octal))))))))
 		      ((#\newline)
 		       (loop (+fx j 2) w octal))
 		      ((#\return)

@@ -129,7 +129,9 @@
 (define (add-cmap! loc keys env::struct)
    (let* ((t (env-inits-table env))
 	  (k keys)
-	  (old (hashtable-get t k)))
+	  (old (when (pair? keys) (hashtable-get t k))))
+      ;; don't store empty cmap in the hash table in order to get
+      ;; separated cmap for all empty object create sites
       (or old
 	  (let ((n (env-cnt env)))
 	     (hashtable-put! t k n)
@@ -193,39 +195,56 @@
 				    #f)))))
 		     inits)))
 	 (call-default-walker)
-	 (if (and (pair? keys)
-		  (every (lambda (x) x) keys)
-		  (=fx (config-get conf :debug 0) 0))
-	     (begin
-		;; WARNING: Constant cmap are only computed in non-debug mode
-		;; because the debug initialization does not support
-		;; recursivity between the objects that use cmaps and
-		;; cmaps themselves (see js-constant-init@hopscript/lib.scm
-		;; and j2sscheme/scheme-program.scm)
-		(let ((n (add-cmap! loc (list->vector keys) env)))
-		   (set! cmap
-		      (instantiate::J2SLiteralCnst
-			 (loc loc)
-			 (index n)
-			 (val (env-list-ref env n)))))
-		(if (and ronly
-			 (every (lambda (init)
-				   (with-access::J2SDataPropertyInit init (val)
-				      (or (isa? val J2SLiteralCnst)
-					  (isa? val J2SString)
-					  (isa? val J2SNumber)
-					  (isa? val J2SBool)
-					  (isa? val J2SUndefined))))
-			    inits))
-		    (let ((index (add-env! this this env #t)))
-		       (with-access::J2SExpr this (loc)
-			  (instantiate::J2SLiteralCnst
-			     (loc loc)
-			     (type 'object)
-			     (index index)
-			     (val this))))
-		    this))
-	     this))))
+	 (cond
+	    ((>fx (config-get conf :debug 0) 0)
+	     ;; WARNING: Constant cmap are only computed in non-debug mode
+	     ;; because the debug initialization does not support
+	     ;; recursivity between the objects that use cmaps and
+	     ;; cmaps themselves (see js-constant-init@hopscript/lib.scm
+	     ;; and j2sscheme/scheme-program.scm)
+	     this)
+	    ((and #t (null? keys))
+	     (let ((n (add-cmap! loc '#() env)))
+		(set! cmap
+		   (instantiate::J2SLiteralCnst
+		      (loc loc)
+		      (index n)
+		      (val (env-list-ref env n)))))
+	     (if ronly
+		 (let ((index (add-env! this this env #t)))
+		    (with-access::J2SExpr this (loc)
+		       (instantiate::J2SLiteralCnst
+			  (loc loc)
+			  (type 'object)
+			  (index index)
+			  (val this))))
+		 this))
+	    ((and (pair? keys) (every (lambda (x) x) keys))
+	     (let ((n (add-cmap! loc (list->vector keys) env)))
+		(set! cmap
+		   (instantiate::J2SLiteralCnst
+		      (loc loc)
+		      (index n)
+		      (val (env-list-ref env n)))))
+	     (if (and ronly
+		      (every (lambda (init)
+				(with-access::J2SDataPropertyInit init (val)
+				   (or (isa? val J2SLiteralCnst)
+				       (isa? val J2SString)
+				       (isa? val J2SNumber)
+				       (isa? val J2SBool)
+				       (isa? val J2SUndefined))))
+			 inits))
+		 (let ((index (add-env! this this env #t)))
+		    (with-access::J2SExpr this (loc)
+		       (instantiate::J2SLiteralCnst
+			  (loc loc)
+			  (type 'object)
+			  (index index)
+			  (val this))))
+		 this))
+	    (else
+	     this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SAccess ...                                        */
@@ -271,17 +290,49 @@
 	  this)))
 
 ;*---------------------------------------------------------------------*/
+;*    arithmetic bounds ...                                            */
+;*---------------------------------------------------------------------*/
+(define *max-int30* (-llong (bit-lshllong #l1 29) #l1))
+(define *min-int30* (negllong (bit-lshllong #l1 29)))
+   
+(define *max-int53* (bit-lshllong #l1 53))
+(define *min-int53* (negllong *max-int53*))
+
+;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SBinary ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constant! this::J2SBinary env nesting conf)
    
+   (define (in-range-53? v)
+      (let ((lv (fixnum->llong v)))
+	 (and (<=llong lv *max-int53*) (>=llong lv *min-int53*))))
+
+   (define (in-range-30? v)
+      (let ((lv (fixnum->llong v)))
+	 (and (<llong lv *max-int30*) (>=llong lv *min-int30*))))
+
    (define (evaluate this op l r)
       (with-access::J2SBinary this (loc)
 	 (cond
-	    ((and (flonum? l) (flonum? r)) (J2SNumber/type 'real (op l r)))
-	    ((flonum? l) (J2SNumber/type 'real (op l (fixnum->flonum r))))
-	    ((flonum? r) (J2SNumber/type 'real (op (fixnum->flonum l) r)))
-	    (else this))))
+	    ((and (flonum? l) (flonum? r))
+	     (J2SNumber/type 'real (op l r)))
+	    ((flonum? l)
+	     (J2SNumber/type 'real (op l (fixnum->flonum r))))
+	    ((flonum? r)
+	     (J2SNumber/type 'real (op (fixnum->flonum l) r)))
+	    ((and (fixnum? l) (fixnum? l))
+	     (let ((v (op l r)))
+		(cond
+		   ((not (fixnum? v))
+		    (J2SNumber/type 'real v))
+		   ((and (in-range-53? v) (>=fx (config-get conf :int-size 0) 53))
+		    (J2SNumber/type 'integer v))
+		   ((in-range-30? v)
+		    (J2SNumber/type 'integer v))
+		   (else
+		    this))))
+	    (else
+	     this))))
    
    (define (unparen expr)
       (if (isa? expr J2SParen)
@@ -375,9 +426,11 @@
 		       (loc loc)
 		       (val (not (string=? lval rval)))))
 		   ((+)
-		    (let ((ns (duplicate::J2SString (unparen lhs)
-				 (val (string-append lval rval)))))
-		       (constant! ns env nesting conf)))
+		    (if (eq? (string-minimal-charset lval) 'ascii )
+			(let ((ns (duplicate::J2SString (unparen lhs)
+				     (val (string-append lval rval)))))
+			   (constant! ns env nesting conf))
+			this))
 		   (else
 		    this)))))
 	 (else

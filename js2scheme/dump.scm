@@ -271,10 +271,12 @@
 	 ((<=llong int *-inf.0*) '-inf)
 	 (else int)))
 
-   (interval
-      (interval-type rng)
-      (j2s-dump-range-int (interval-min rng))
-      (j2s-dump-range-int (interval-max rng))))
+   (if (interval? rng)
+       (interval
+	  (j2s-dump-range-int (interval-min rng))
+	  (j2s-dump-range-int (interval-max rng))
+	  (interval-type rng))
+       rng))
    
 ;*---------------------------------------------------------------------*/
 ;*    dump-range ...                                                   */
@@ -320,14 +322,14 @@
 	   (with-access::J2SNew this (caches)
 	      (if (pair? caches) `(:caches ,@caches) '())))
 	  ((isa? this J2SAssigOp)
-	   (with-access::J2SAssigOp this (cache cspecs)
-	      (if cache `(:cache ,cache :cspecs ,cspecs) `(:cspecs ,cspecs))))
+	   (with-access::J2SAssigOp this (cache)
+	      (if cache `(:cache ,cache) '())))
 	  ((isa? this J2SPrefix)
-	   (with-access::J2SPrefix this (cache cspecs)
-	      (if cache `(:cache ,cache :cspecs ,cspecs) `(:cspecs ,cspecs))))
+	   (with-access::J2SPrefix this (cache)
+	      (if cache `(:cache ,cache) '())))
 	  ((isa? this J2SPostfix)
-	   (with-access::J2SPostfix this (cache cspecs)
-	      (if cache `(:cache ,cache :cspecs ,cspecs) `(:cspecs ,cspecs))))
+	   (with-access::J2SPostfix this (cache)
+	      (if cache `(:cache ,cache) '())))
 	  (else
 	   '()))
        '()))
@@ -339,12 +341,12 @@
    (if (or (>= (bigloo-debug) 2)
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:access")
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:usage"))
-       (with-access::J2SDecl this (usecnt useinloop escape _usage writable scope)
+       (with-access::J2SDecl this (usecnt useinloop escape usage writable scope)
 	  `((:writable ,writable)
 	    (:usecnt ,usecnt)
 	    (:useinloop ,useinloop)
 	    (:escape ,escape)
-	    (:usage ,(usage->keys _usage))
+	    (:usage ,(usage->keys usage))
 	    (:scope ,scope)))
        '()))
 
@@ -448,8 +450,8 @@
 ;*    j2s->list ::J2SMeta ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SMeta)
-   (with-access::J2SMeta this (stmt optim debug)
-      `(,(string->symbol (typeof this)) :optim ,optim :debug ,debug
+   (with-access::J2SMeta this (stmt meta optim debug)
+      `(,(string->symbol (typeof this)) ,meta :optim ,optim :debug ,debug
 	  ,(j2s->list stmt))))
 
 ;*---------------------------------------------------------------------*/
@@ -591,6 +593,13 @@
       `(,@(call-next-method) ,id ,@(dump-type this) ,withs ,(j2s->list expr))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SSuper ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SSuper)
+   (with-access::J2SSuper this (context)
+      `(,@(call-next-method) :context ,context)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SLiteral ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SLiteral)
@@ -646,7 +655,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFun)
    (with-access::J2SFun this (name thisp argumentsp params body decl mode
-				rtype optimize
+				rtype optimize src 
 				need-bind-exit-return new-target
 				idthis generator loc vararg)
       (cond
@@ -669,6 +678,7 @@
 		 ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
 		 ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
 		 ,@(if vararg `(:vararg ,vararg) '())
+		 ,@(if src '() `(:src #f))
 		 ,@(dump-size this)
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 ((isa? decl J2SDecl)
@@ -685,6 +695,7 @@
 		 ,@(dump-rtype this)
 		 ,@(dump-need-bind-exit-return need-bind-exit-return)
 		 ,@(if optimize '() `(:optimize ,optimize))
+		 ,@(if src '() `(:src #f))
 		 ,@(if new-target '(:new-target #t) '())
 		 ,@(dump-range this)
 		 ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
@@ -701,6 +712,7 @@
 	      ,@(dump-rtype this)
 	      ,@(dump-need-bind-exit-return need-bind-exit-return)
 	      ,@(if optimize '() `(:optimize ,optimize))
+	      ,@(if src '() `(:src #f))
 	      ,@(if new-target '(:new-target #t) '())
 	      ,@(dump-range this)
 	      ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
@@ -725,7 +737,9 @@
    (with-access::J2SBindExit this (lbl stmt loc)
       `(,@(call-next-method)
 	  ,@(dump-type this)
+	  ,@(dump-hint this)
 	  ,@(dump-loc loc)
+	  ,@(dump-range this)
 	  (,lbl) ,(j2s->list stmt))))
 
 ;*---------------------------------------------------------------------*/
@@ -801,8 +815,9 @@
 ;*    j2s->list ::J2SParen ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SParen)
-   (with-access::J2SParen this (expr)
+   (with-access::J2SParen this (expr loc)
       `(,@(call-next-method)
+	  ,@(dump-loc loc)
 	  ,@(dump-type this)
 	  ,@(dump-range this)
 	  ,@(dump-hint this)
@@ -858,8 +873,8 @@
 ;*    j2s->list ::J2SWhile ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SWhile)
-   (with-access::J2SWhile this (op test body)
-      `(,@(call-next-method) ,@(dump-info this)
+   (with-access::J2SWhile this (op test body loc)
+      `(,@(call-next-method) ,@(dump-loc loc) ,@(dump-info this)
 	  ,(j2s->list test) ,(j2s->list body))))
    
 ;*---------------------------------------------------------------------*/
@@ -867,8 +882,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFor)
    (with-access::J2SFor this (init test incr body loc)
-      `(,@(call-next-method) ,@(dump-info this)
-	  ,@(dump-loc loc)
+      `(,@(call-next-method) ,@(dump-loc loc) ,@(dump-info this)
 	  ,(j2s->list init)
 	  ,(j2s->list test)
 	  ,(j2s->list incr)
@@ -878,8 +892,8 @@
 ;*    j2s->list ::J2SForIn ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SForIn)
-   (with-access::J2SForIn this (lhs obj body)
-      `(,@(call-next-method) ,@(dump-info this)
+   (with-access::J2SForIn this (lhs obj body loc)
+      `(,@(call-next-method) ,@(dump-loc loc) ,@(dump-info this)
 	  ,(j2s->list lhs)
 	  ,(j2s->list obj)
 	  ,(j2s->list body))))
@@ -915,6 +929,7 @@
 	  ,@(dump-type this)
 	  ,@(dump-rtype fun)
 	  ,@(dump-info this)
+	  ,@(dump-hint this)
 	  ,@(dump-range this)
 	  ,@(dump-protocol protocol)
 	  ,@(if (or (>= (bigloo-debug) 2)
@@ -954,10 +969,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SStmtExpr)
    (with-access::J2SStmtExpr this (expr loc)
-      `(,@(call-next-method)
-	  ,@(dump-loc loc)
-	  ,@(dump-info this)
-	  ,(j2s->list expr))))
+      `(,@(call-next-method) ,@(dump-loc loc)
+	  ,@(dump-info this) ,(j2s->list expr))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SObjectInit ...                                    */

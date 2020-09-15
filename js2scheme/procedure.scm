@@ -677,8 +677,8 @@
    
    (define (correct-arities? funs arity)
       (every (lambda (f)
-		(with-access::J2SFun f (params)
-		   (=fx (length params) arity)))
+		(with-access::J2SFun f (params vararg)
+		   (and (=fx (length params) arity) (not vararg))))
 	 funs))
    
    (with-access::J2SCall this (fun loc protocol args)

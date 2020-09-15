@@ -62,6 +62,7 @@
 	   (js-object-alloc-lazy ::JsGlobalObject ::JsFunction)
 	   (inline js-object-alloc/new-target ::JsGlobalObject ::JsFunction)
 	   (inline js-no-alloc ::JsGlobalObject ::JsFunction)
+	   (inline js-no-alloc/new-target ::JsGlobalObject ::JsFunction)
 	   (js-not-a-constructor-alloc ::JsGlobalObject ::JsFunction)
 	   
 	   (inline js-function-set-constrmap!::JsFunction ::JsFunction)
@@ -200,13 +201,13 @@
 	   (inline js-strict-equal-no-string?::bool ::obj ::obj)
 	   (js-eq?::bool ::obj ::obj)
 	   (js-eq-no-string?::bool ::obj ::obj)
-	   (inline js-eqstring?::bool ::obj ::obj)
+	   (inline js-eqstring?::bool ::JsStringLiteral ::obj)
 	   (inline js-eqil?::bool ::long ::obj)
 	   (inline js-eqir?::bool ::obj ::long)
 	   (inline js-null-or-undefined?::bool ::obj)
 	   (inline js-object-or-null?::bool ::obj)
 
-	   (js-super ::obj ::obj ::JsGlobalObject)
+	   (js-super ::obj ::bool ::obj ::JsGlobalObject)
 	   
 	   (%js-eval-hss ::input-port ::JsGlobalObject ::obj ::obj)
 	   (%js-direct-eval ::obj ::bool ::JsGlobalObject ::obj ::JsObject)
@@ -272,7 +273,7 @@
 			  ((>fx arity -5049) (+fx arity 4049))
 			  (else (+fx arity 5049))))))
 	 (if (js-function? fun)
-	     (with-access::JsFunction fun (arity len src)
+	     (with-access::JsFunction fun (arity len)
 		(let* ((name (js-get fun (& "name") %this))
 		       (m (format "~a: wrong number of arguments ~a provided, ~a expected"
 			     (if (js-jsstring? name) (js-jsstring->string name) "")
@@ -280,9 +281,10 @@
 			     (cond
 				((>fx arity 0) arity)
 				((>fx arity -2049) (format ">= ~a" minlen))
-				(else (format "[~a..~a]" minlen (procedure-arity procedure)))))))
-		   (if (pair? src)
-		       (js-raise-type-error/loc %this (car src) m fun)
+				(else (format "[~a..~a]" minlen (procedure-arity procedure))))))
+		       (src (js-function-src fun)))
+		   (if src
+		       (js-raise-type-error/loc %this src m fun)
 		       (js-raise-type-error %this m fun))))
 	     (let ((m (format "~a: wrong number of arguments ~a provided, ~a expected"
 			 n
@@ -303,6 +305,7 @@
       (#unspecified #unspecified #unspecified #unspecified)
       (#unspecified #unspecified #unspecified #unspecified #unspecified)
       (#unspecified #unspecified #unspecified #unspecified #unspecified #unspecified)
+      (#unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified)
       (#unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified)
       (#unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified)
       (#unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified #unspecified)
@@ -323,7 +326,15 @@
 		 (struct-ref attr 0)
 		 a))
 	  a)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    make-args-list ...                                               */
+;*---------------------------------------------------------------------*/
+(define (make-args-list n)
+   (if (<fx n (vector-length optionals))
+       (vector-ref optionals n)
+       (make-list n (js-undefined))))
+
 ;*---------------------------------------------------------------------*/
 ;*    gen-calln ...                                                    */
 ;*    -------------------------------------------------------------    */
@@ -383,8 +394,7 @@
 		  (else
 		   (if (<fx ,parity 0)
 		       (apply ,procedure ,this ,@args
-			  (make-list (-fx (negfx ,parity) ,n)
-			     (js-undefined)))
+			  (make-args-list (-fx (negfx ,parity) ,n)))
 		       (apply ,procedure ,this ,@args
 			  (vector-ref optionals (-fx ,parity ,n))))))))))
 
@@ -414,7 +424,7 @@
 	       (if (<fx ,parity 0)
 		   (,procedure ,this ,@args)
 		   (apply ,procedure ,this ,@args
-		      (make-list (-fx ,parity ,n) (js-undefined)))))))))
+		      (make-args-list (-fx ,parity ,n)))))))))
 
    (define (call-scheme-vararg-missing i)
       ;; missing scheme var args
@@ -451,12 +461,10 @@
 	      (if (js-procedure-hopscript-mode? ,fun)
 		  (js-raise-arity-error %this ,fun ,(-fx n 1))
 		  (apply ,procedure ,this
-		     ,@args (make-list (-fx ,parity ,n)
-			       (js-undefined)))))
+		     ,@args (make-args-list (-fx ,parity ,n)))))
 	     ((<fx ,n ,parity)
 	      (apply ,procedure ,this
-		 ,@args (make-list (-fx ,parity ,n)
-			   (js-undefined))))
+		 ,@args (make-args-list (-fx ,parity ,n))))
 	     (else
 	      (if (js-procedure-hopscript-mode? ,fun)
 		  (js-raise-arity-error %this ,fun ,(-fx n 1))
@@ -496,7 +504,7 @@
 		  (apply ,procedure ,this
 		     ,@args
 		     (append
-			(make-list (-fx ,parity ,(+fx n 1)) (js-undefined))
+			(make-args-list (-fx ,parity ,(+fx n 1)))
 			(list ,(rest-argument-empty arity)))))
 		 ((<fx ,parity 0)
 		  ;; this schema does not support optional and rest
@@ -506,8 +514,7 @@
 			  (if (<=fx ,n ,required)
 			      (apply ,procedure ,this
 				 (append ,l
-				    (make-list (-fx ,required ,(-fx n 1))
-				       (js-undefined))
+				    (make-args-list (-fx ,required ,(-fx n 1)))
 				    (list ,(rest-argument-empty arity))))
 			      (append (take ,l ,required)
 				 (list ,(rest-argument arity
@@ -527,7 +534,7 @@
 	  (if (>=fx ,n (negfx ,parity))
 	      (,procedure ,this ,@args)
 	      (apply ,procedure ,this ,@args
-		 (make-list (-fx ,n ,required) (js-undefined))))))
+		 (make-args-list (-fx ,n ,required))))))
 	  
    (define (call-many-arguments)
       ;; dyamic call sequence for many arguments
@@ -539,7 +546,7 @@
 	       (if (>fx ,arity ,n)
 		   ;; missing arguments
 		   (apply ,procedure ,this ,@args 
-		      (make-list (-fx ,arity ,n) (js-undefined)))
+		      (make-args-list (-fx ,arity ,n)))
 		   ;; too many arguments
 		   (apply ,procedure ,this (take (list ,@args) ,arity)))))
 	  (else
@@ -576,6 +583,11 @@
 	      (js-call-with-stack-vector
 		 (vector ,@args)
 		 (lambda (v) (,procedure ,this v))))
+	     ((-512)
+	      ;; scheme optional/default arguments
+	      ,(if (=fx n 1)
+		   `(,procedure ,this)
+		   `(,procedure ,this ,(car args))))
 	     ;; opt missing required arguments
 	     ,@(map call-opt-missing (reverse (iota (-fx 10 n) n)))
 	     ;; opt ok or too many arguments
@@ -654,6 +666,11 @@
 	    ((or (=fx arity -2048) (=fx arity -2047))
 	      ;; eager "arguments" call
 	     (procedure this (apply vector args)))
+	    ((=fx arity -512)
+	     (if (null? args)
+		 (procedure this)
+		 (procedure this (car args))))
+	     ;; scheme one optional/default argument
 	    ((<fx required n)
 	     ;; required arguments missing
 	     (if (js-procedure-hopscript-mode? fun)
@@ -838,19 +855,25 @@
 (define-macro (gen-call-procedure proc this . args)
    (let ((n (+fx 1 (length args))))
       `(let ((arity (procedure-arity ,proc)))
-	  (cond
-	     ((=fx arity ,n)
-	      (,proc ,this ,@args))
-	     ((>fx arity ,n)
-	      (apply ,proc ,this ,@args
-		 (make-list (-fx arity ,n) (js-undefined))))
+	  (case arity
+	     ;; too many arguments
 	     ,@(map (lambda (i)
-		       `((=fx arity ,i)
+		       `((,i)
 			 (,proc ,this ,@(take args (-fx i 1)))))
 		(iota (length args) 1))
+	     ;; good number of arguments
+	     ((,n)
+	      (,proc ,this ,@args))
+	     ;; arguments missing
+	     ,@(map (lambda (i)
+		       `((,(+fx n i))
+			 (,proc ,this ,@args ,@(make-list i '(js-undefined)))))
+		(iota 4 1))
 	     (else
-	      (js-undefined))))))
-   
+	      ;; many arguments missing
+	      (apply ,proc ,this ,@args
+		 (make-list (-fx arity ,n) (js-undefined))))))))
+
 (define (js-call0-procedure proc this)
    (gen-call-procedure proc this))
 
@@ -1218,9 +1241,9 @@
       ((4)
        (js-new4 %this f (car args) (cadr args) (caddr args) (cadddr args)))
       (else
-       (with-access::JsFunction f (construct alloc)
+       (with-access::JsFunction f (procedure alloc)
 	  (let* ((o (alloc %this f))
-		 (r (js-apply% %this f construct o args)))
+		 (r (js-apply% %this f procedure o args)))
 	     (if (js-object? r) r o))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1277,26 +1300,26 @@
 ;*    js-object-alloc ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-alloc %this ctor::JsFunction)
-   (with-access::JsFunction ctor (constrsize constrmap %prototype)
+   (with-access::JsFunction ctor (constrsize constrmap prototype)
       (when (eq? constrmap (js-not-a-cmap))
-;*       (with-access::JsConstructMap constrmap (size)                 */
-;* 	 (unless (=fx size constrsize)                                 */
-	    (js-function-set-constrmap! ctor))
-      (js-make-jsobject constrsize constrmap %prototype)))
+	 (js-function-set-constrmap! ctor))
+      (js-make-jsobject constrsize constrmap
+	 (if (js-object? prototype) prototype (js-object-proto %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc-fast ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-alloc-fast %this ctor::JsFunction)
-   (with-access::JsFunction ctor (constrsize constrmap %prototype)
-      (js-make-jsobject constrsize constrmap %prototype)))
+   (with-access::JsFunction ctor (constrsize constrmap prototype)
+      (js-make-jsobject constrsize constrmap
+	 (if (js-object? prototype) prototype (js-object-proto %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc-lazy ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-object-alloc-lazy %this ctor::JsFunction)
-   (with-access::JsFunction ctor (constrmap %prototype alloc)
-      (unless %prototype
+   (with-access::JsFunction ctor (constrmap alloc prototype)
+      (when (eq? prototype #\F)
 	 (js-function-setup-prototype! %this ctor)
 	 (set! alloc js-object-alloc))
       (js-object-alloc %this ctor)))
@@ -1318,6 +1341,16 @@
    (js-undefined))
 
 ;*---------------------------------------------------------------------*/
+;*    js-no-alloc/new-target ...                                       */
+;*    -------------------------------------------------------------    */
+;*    This is used by functions that allocate ad-hoc constructors.     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-no-alloc/new-target %this ctor::JsFunction)
+   (with-access::JsGlobalObject %this (js-new-target)
+      (set! js-new-target ctor)
+      (js-undefined)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-not-a-constructor-alloc ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    Used by functions that are not allowed to be used in NEW expr.   */
@@ -1334,7 +1367,6 @@
       (set! constrmap
 	 (instantiate::JsConstructMap
 	    (ctor ctor)
-;* 	    (size constrsize)                                          */
 	    (inline #t)))
       ctor))
    
@@ -1343,7 +1375,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-new-return f r o)
    [assert (r o) (or (js-object? r) (js-object? o))]
-   (with-access::JsFunction f (constrsize)
+   (with-access::JsFunction f (constrsize info)
       (if (js-object? r)
 	  (with-access::JsObject r (elements)
 	     (when (vector? elements)
@@ -1387,9 +1419,9 @@
 (define-macro (gen-new %this ctor . args)
    `(cond
        ((js-function? ,ctor)
-	(with-access::JsFunction ,ctor (src construct alloc)
+	(with-access::JsFunction ,ctor (procedure alloc info arity)
 	   (let ((o (alloc %this ,ctor)))
-	      (let ((r (gen-calln ,ctor construct o ,@args)))
+	      (let ((r (gen-calln ,ctor procedure o ,@args)))
 		 (js-new-return ,ctor r o)))))
        ((js-proxy? ,ctor)
 	(js-new/proxy ,%this ,ctor (list ,@args)))
@@ -1483,21 +1515,20 @@
 ;*    js-ordinary-instanceof? ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-ordinary-instanceof? %this v f)
-   (with-access::JsFunction f (%prototype prototype)
-      (when %prototype
-	 (let ((o prototype))
-	    (if (not (js-object? o))
-		(js-raise-type-error %this "instanceof: no prototype ~s" v)
-		(let loop ((v v))
-		   (let ((nv (js-object-proto v)))
-		      (cond
-			 ((eq? o nv)
-			  #t)
-			 ((eq? nv (js-null))
-			  (when (eq? (object-class v) JsProxy)
-			     (loop (js-proxy-target v))))
-			 (else
-			  (loop nv))))))))))
+   (with-access::JsFunction f (prototype)
+      (let ((o prototype))
+	 (if (not (js-object? o))
+	     (js-raise-type-error %this "instanceof: no prototype ~s" v)
+	     (let loop ((v v))
+		(let ((nv (js-object-proto v)))
+		   (cond
+		      ((eq? o nv)
+		       #t)
+		      ((eq? nv (js-null))
+		       (when (eq? (object-class v) JsProxy)
+			  (loop (js-proxy-target v))))
+		      (else
+		       (loop nv)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-instanceof? ...                                      */
@@ -1513,21 +1544,20 @@
 	     (if (js-function? h)
 		 (js-call1 %this h f v)
 		 (js-ordinary-instanceof? %this v f))))
-       (with-access::JsFunction f (prototype %prototype)
-	  (when %prototype
-	     (let ((o prototype))
-		(if (not (js-object? o))
-		    (js-raise-type-error %this "instanceof: no prototype ~s" v)
-		    (let loop ((v v))
-		       (let ((nv (js-object-proto v)))
-			  (cond
-			     ((eq? o nv)
-			      #t)
-			     ((eq? nv (js-null))
-			      (when (eq? (object-class v) JsProxy)
-				 (loop (js-proxy-target v))))
-			     (else
-			      (loop nv)))))))))))
+       (with-access::JsFunction f (prototype)
+	  (let ((o prototype))
+	     (if (not (js-object? o))
+		 (js-raise-type-error %this "instanceof: no prototype ~s" v)
+		 (let loop ((v v))
+		    (let ((nv (js-object-proto v)))
+		       (cond
+			  ((eq? o nv)
+			   #t)
+			  ((eq? nv (js-null))
+			   (when (eq? (object-class v) JsProxy)
+			      (loop (js-proxy-target v))))
+			  (else
+			   (loop nv))))))))))
 
 (define (js-function-instanceof? %this v f::JsFunction)
    (when (js-object? v)
@@ -1627,9 +1657,9 @@
 (define (js-toboolean-no-boolean obj)
    (cond
       ((js-null-or-undefined? obj) #f)
+      ((fixnum? obj) (not (=fx obj 0)))
       ((js-jsstring? obj) (js-jsstring-toboolean obj))
       ((object? obj) #t)
-      ((fixnum? obj) (not (=fx obj 0)))
       ((flonum? obj) (not (or (=fl obj 0.0) (nanfl? obj))))
       (else #t)))
 
@@ -1656,7 +1686,7 @@
        (bigloo-type-error "toNumber" "JsObject" obj))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-tofixnum ...                                                  */
+;*    js-tointeger ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-macro (js-tointeger obj %this)
    (if (symbol? obj)
@@ -1827,14 +1857,16 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toprimitive-for-string ...                                    */
+;*    -------------------------------------------------------------    */
+;*    Overriden by a macro in public_expd.sch.                         */
 ;*---------------------------------------------------------------------*/
 (define (js-toprimitive-for-string obj %this::JsGlobalObject)
    (cond
-      ((js-jsstring? obj) obj)
       ((fixnum? obj) (js-integer->jsstring obj))
       ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
       ((eq? obj #t) (& "true"))
       ((eq? obj #f) (& "false"))
+      ((js-jsstring? obj) obj)
       (else (js-tojsstring (js-toprimitive obj 'any %this) %this))))
    
 ;*---------------------------------------------------------------------*/
@@ -1878,29 +1910,26 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-toobject-failsafe ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (js-toobject-failsafe %this::JsGlobalObject o)
+(define-inline (js-toobject-failsafe %this::JsGlobalObject o)
    (cond
+      ((js-object? o)
+       o)
       ((js-jsstring? o)
-       (with-access::JsGlobalObject %this (js-string)
-	  (js-new1 %this js-string o)))
+       (js-jsstring->JsString o %this))
       ((js-number? o)
-       (with-access::JsGlobalObject %this (js-number)
-	  (js-new1 %this js-number o)))
+       (js-number->jsNumber o %this))
       ((boolean? o)
        (with-access::JsGlobalObject %this (js-boolean)
 	  (js-new1 %this js-boolean o)))
       ((isa? o JsSymbolLiteral)
        (with-access::JsGlobalObject %this (js-symbol-ctor)
 	  (js-symbol-ctor (js-undefined) o)))
-      ((js-object? o)
-       o)
       ((isa? o object)
        o)
       ((pair? o)
        o)
       ((string? o)
-       (with-access::JsGlobalObject %this (js-string)
-	  (js-new1 %this js-string o)))
+       (js-jsstring->JsString (js-string->jsstring o) %this))
       (else
        #f)))
 
@@ -1917,14 +1946,24 @@
 ;*---------------------------------------------------------------------*/
 (define (js-toobject %this::JsGlobalObject o)
    (or (js-toobject-failsafe %this o)
-       (js-raise-type-error %this "toObject: cannot convert ~s" o)))
+       (js-raise-type-error %this
+	  (format "toObject: cannot convert ~a~~a"
+	     (if (or (symbol? o) (string? o) (number? o) (boolean? o))
+		 (format "~s " o)
+		 ""))
+	  o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toobject/debug ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-toobject/debug %this::JsGlobalObject loc o)
    (or (js-toobject-failsafe %this o)
-       (js-raise-type-error/loc %this loc "toObject: cannot convert ~s" o)))
+       (js-raise-type-error/loc %this loc
+	  (format "toObject: cannot convert ~a~~a"
+	     (if (or (symbol? o) (string? o) (number? o) (boolean? o))
+		 (format "~s " o)
+		 ""))
+	  o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equal? ...                                                    */
@@ -2050,8 +2089,7 @@
 (define (js-eq? x y)
    (cond
       ((js-jsstring? x)
-       (and (js-jsstring? y)
-	    (string=? (js-jsstring->string x) (js-jsstring->string y))))
+       (js-eqstring? x y))
       ((fixnum? x)
        (if (fixnum? y) (=fx x y) (when (flonum? y) (=fl (fixnum->flonum x) y))))
       ((flonum? x)
@@ -2074,10 +2112,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-eqstring? ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-eqstring?::bool x y)
-   (or (eq? x y)
-       (and (js-jsstring? x) (js-jsstring? y)
-	    (string=? (js-jsstring->string x) (js-jsstring->string y)))))
+(define-inline (js-eqstring?::bool s x)
+   (or (eq? s x)
+       (and (js-jsstring? x)
+	    (string=? (js-jsstring->string s) (js-jsstring->string x)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-eqil? ...                                                     */
@@ -2119,11 +2157,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-super ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-super obj loc %this)
+(define (js-super obj inclass loc %this)
    (if (js-object? obj)
        (let ((__proto__ (js-object-proto obj)))
 	  (if (js-object? __proto__)
-	      __proto__
+	      (if inclass
+		  (js-object-proto __proto__)
+		  __proto__)
 	      (js-raise-type-error/loc %this loc
 		 "Prototype of prototype not an object" obj)))
        (js-raise-type-error/loc %this loc "Not an object" obj)))
@@ -2351,10 +2391,7 @@
 (define (error-obj->string::bstring %this obj)
    (cond
       ((js-object? obj)
-       (with-handler
-	  (lambda (e)
-	     (js-jsstring->string (js-typeof obj %this)))
-	  (js-jsstring->string (js-typeof obj %this))))
+       (js-jsstring->string (js-typeof obj %this)))
       ((eq? obj #unspecified)
        "undefined")
       ((eq? obj #f)
@@ -2538,7 +2575,8 @@
 	    (filter (lambda (n)
 		       (or (isa? n xml-tilde) (isa? n xml-markup)))
 	       nodes)))
-      2 (& "HEAD")))
+      (js-function-arity 1 -1 'scheme)
+      (js-function-info :name "HEAD" :len 2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-html-script ...                                               */
@@ -2555,7 +2593,8 @@
 	    (filter (lambda (n)
 		       (or (isa? n xml-tilde) (isa? n xml-markup)))
 	       nodes)))
-      2 (& "SCRIPT")))
+      (js-function-arity 1 -1 'scheme)
+      (js-function-info :name "SCRIPT" :len 2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-parseint ...                                                  */

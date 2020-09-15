@@ -101,6 +101,7 @@
 		       `(vector-set! v ,i ,o))
 		  (iota (length args)) args)
 	     (set! ilen ,(fixnum->uint32 (length args)))
+	     (set! length ,(fixnum->uint32 (length args)))
 	     a))))
 
 ;*---------------------------------------------------------------------*/
@@ -136,6 +137,8 @@
    (with-access::JsGlobalObject %this (js-function-prototype js-proxy js-proxy-pcache)
 
       (define (js-proxy-alloc %this constructor::JsFunction)
+	 (with-access::JsGlobalObject %this (js-new-target)
+	    (set! js-new-target constructor))
 	 ;; not used in optimized code, see below
 	 ;; js-new-proxy and js-new-proxy/caches
 	 (js-new-proxy %this '() (class-nil JsObject)))
@@ -166,12 +169,32 @@
 		      (js-proxy-mode-revoked-set! prox #t)
 		      (js-raise-type-error %this
 			 "Not a Revocable proxy" this))))
-	    0 (& "revoke")
+	    (js-function-arity 0 0)
+	    (js-function-info :name "revoke" :len 0)
 	    :prototype '()))
 
       ;; create a HopScript object
       (define (%js-proxy this t h)
-	 (js-raise-type-error %this "Constructor Proxy requires 'new'" this))
+	 (with-access::JsGlobalObject %this (js-new-target)
+	    (cond
+	       ((eq? js-new-target (js-undefined))
+		(js-raise-type-error %this "Constructor Proxy requires 'new'" this))
+	       ((not (js-object? h))
+		(js-raise-type-error %this
+		   "Cannot create proxy with a non-object as handler" this))
+	       ((not (js-object? t))
+		(js-raise-type-error %this
+		   "Cannot create proxy with a non-object as target" this))
+	       (else
+		(with-access::JsProxy this (handler id)
+		   (js-proxy-target-set! this t)
+		   (when (js-procedure? t)
+		      ;; mark proxy targetting function to enable
+		      ;; fast js-proxy-function? predicate (see types.scm)
+		      (js-proxy-mode-function-set! this #t))
+		   (set! handler h))))
+	    (set! js-new-target (js-undefined))
+	    this))
 
       ;; create a revokable proxy
       (define (%js-revocable this t h)
@@ -181,19 +204,22 @@
 	    %this))
 
       (set! js-proxy
-	 (js-make-function %this %js-proxy 2 (& "Proxy")
+	 (js-make-function %this %js-proxy
+	    (js-function-arity %js-proxy)
+	    (js-function-info :name "Proxy" :len 2)
 	    :__proto__ js-function-prototype
 	    :prototype '()
 	    :alloc js-proxy-alloc
-	    :size 1
-	    :construct js-proxy-construct))
+	    :size 1))
 
       (set! js-proxy-pcache
 	 ((@ js-make-pcache-table __hopscript_property) 3 "proxy"))
       
       (js-bind! %this js-proxy (& "revocable")
 	 :writable #t :configurable #t :enumerable #f
-	 :value (js-make-function %this %js-revocable 2 (& "revocable")
+	 :value (js-make-function %this %js-revocable
+		   (js-function-arity %js-revocable)
+		   (js-function-info :name "revocable" :len 2)
 		   :__proto__ js-function-prototype
 		   :prototype '())
 	 :hidden-class #t)
@@ -386,12 +412,40 @@
 ;*    cost of an expensive generic function dispatch.                  */
 ;*---------------------------------------------------------------------*/
 (define (js-get-proxy-name/cache-miss o::JsObject
-		   name::obj
-		   throw::bool %this::JsGlobalObject
-		   cache::JsPropertyCache)
+	   name::obj
+	   throw::bool %this::JsGlobalObject
+	   cache::JsPropertyCache)
    (if (js-proxy? o)
        (js-jsproxy-get o name %this)
-       (js-get-jsobject-name/cache-miss o name throw %this cache)))
+       (with-access::JsPropertyCache cache (xmap pmap amap)
+	  (with-access::JsObject o (cmap)
+	     (let ((omap cmap))
+		(cond
+		   ((eq? omap pmap)
+		    (let ((idx (js-pcache-index cache)))
+		       (with-access::JsObject (js-pcache-owner cache) (elements)
+			  (cond-expand
+			     (profile
+			      (js-profile-log-cache cache :pmap #t)
+			      (js-profile-log-index idx)))
+			  (vector-ref elements idx))))
+		   ((eq? omap amap)
+		    (let* ((idx (js-pcache-index cache))
+			   (propowner (js-pcache-owner cache)))
+		       (with-access::JsObject propowner (elements)
+			  (let ((desc (vector-ref elements idx)))
+			     (cond-expand
+				(profile
+				 (js-profile-log-cache cache :amap #t)
+				 (js-profile-log-index idx)))
+			     (js-property-value o
+				propowner name desc %this)))))
+		   ((eq? omap xmap)
+		    (cond-expand
+		       (profile (js-profile-log-cache cache :xmap #t)))
+		    (js-undefined))
+		   (else
+		    (js-get-jsobject-name/cache-miss o name throw %this cache))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject-name/cache-miss ::JsProxy ...                    */
@@ -627,8 +681,11 @@
 (define (proxy-check-property-value target owner prop %this v get-or-set)
    (cond
       ((and (not (js-object-mapped? target))
-	    (with-access::JsObject target (elements)
-	       (=fx (vector-length elements) 0)))
+	    (if (js-object-hashed? target)
+		(with-access::JsObject target (elements)
+		   (=fx (hashtable-size elements) 0))
+		(with-access::JsObject target (elements)
+		   (=fx (vector-length elements) 0))))
        v)
       (else
        (let ((prop (js-get-own-property target prop %this)))
@@ -826,8 +883,11 @@
       ((all-symbol-or-string? r)
        (err))
       ((and (not (js-object-mapped? target))
-	    (with-access::JsObject target (elements)
-	       (=fx (vector-length elements) 0)))
+	    (if (js-object-hashed? target)
+		(with-access::JsObject target (elements)
+		   (=fx (hashtable-size elements) 0))
+		(with-access::JsObject target (elements)
+		   (=fx (vector-length elements) 0))))
        (if (js-extensible? target %this)
 	   r
 	   (same-list (js-properties-name target #t %this) r)))

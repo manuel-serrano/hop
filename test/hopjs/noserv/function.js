@@ -57,7 +57,9 @@ function argtest() {
 
 assert.ok( argtest()( { a: 1 }, 0 ), "arguments" );
 
-
+/*---------------------------------------------------------------------*/
+/*    arguments                                                        */
+/*---------------------------------------------------------------------*/
 function argmany() {
    function documentModule(moduleName /* ... */) {
       console.log( Array.prototype.slice.call( arguments, 1) );
@@ -70,3 +72,11 @@ function argmany() {
 }
 
 assert.ok( argmany(), "arguments many" );
+
+function arglen() {
+   arguments.length = 2;
+   return arguments[ 2 ] + arguments.length;
+}
+
+assert.ok( arglen( 1, 2, 3 ) === 5, "argments length" );
+  

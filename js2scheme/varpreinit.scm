@@ -41,7 +41,7 @@
       (name "varpreinit")
       (comment "Variable pre-initialization")
       (proc j2s-varpreinit)
-      (optional 2)))
+      (optional :optim-varpreinit)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-varpreinit ...                                               */

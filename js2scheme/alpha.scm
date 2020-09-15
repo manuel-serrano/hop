@@ -241,6 +241,7 @@
       (cond
 	 ((memq x '(int32 uint32 int53 index indexof)) x)
 	 ((memq y '(int32 uint32 int53 index indexof)) y)
+	 ((not (memq y '(any unknown))) y)
 	 (else x)))
    
    (with-access::J2SRef this (decl type)

@@ -54,19 +54,19 @@
    (init-timer-prototype! %this js-timer-prototype)
    
    (define Timer
-      (js-make-function %this 
-	 (lambda (this) this)
-	 0 (& "Timer")
+      (js-make-function %this
+	 (js-timer-construct! %worker %this process js-timer-prototype)
+	 (js-function-arity 0 0)
+	 (js-function-info :name "Timer" :len 0)
 	 :prototype js-timer-prototype
-	 :alloc js-no-alloc
-	 :src "_timer_wrap.scm"
-	 :construct (js-timer-construct! %worker %this process js-timer-prototype)))
+	 :alloc js-no-alloc/new-target))
 
    (js-bind! %this Timer (& "now")
       :value (js-make-function %this
 		(lambda (this)
 		   (nodejs-now %worker))
-		0 (& "now"))
+		(js-function-arity 0 0)
+		(js-function-info :name "now" :len 0))
       :writable #f)
    
    (with-access::JsGlobalObject %this (js-object)
@@ -78,13 +78,18 @@
 ;*    js-timer-construct! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-timer-construct! %worker %this::JsGlobalObject process js-timer-prototype)
-   (lambda (_)
-      (let ((obj (instantiateJsTimer
-		    (__proto__ js-timer-prototype)
-		    (worker (js-current-worker)))))
-	 (with-access::JsTimer obj (timer)
-	    (set! timer (nodejs-make-timer %worker %this process obj)))
-	 obj)))
+   (lambda (this)
+      (with-access::JsGlobalObject %this (js-new-target)
+	 (if (eq? js-new-target (js-undefined))
+	     (js-raise-type-error %this
+		"Timer can only be used as a constructor" this)
+	     (set! js-new-target (js-undefined)))
+	 (let ((obj (instantiateJsTimer
+		       (__proto__ js-timer-prototype)
+		       (worker (js-current-worker)))))
+	    (with-access::JsTimer obj (timer)
+	       (set! timer (nodejs-make-timer %worker %this process obj)))
+	    obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-timer-prototype! ...                                        */
@@ -95,32 +100,37 @@
       (js-make-function %this
 	 (lambda (this . l)
 	    (error "timer_wrap" "binding not implemented" name))
-	 0 (js-name->jsstring name)))
+	 (js-function-arity 0 0)
+	 (js-function-info :name name :len 0)))
    
    (js-bind! %this obj (& "start")
       :value (js-make-function %this
 		(lambda (this start rep)
 		   (with-access::JsTimer this (timer worker)
 		      (nodejs-timer-start worker timer start rep)))
-		2 (& "start")))
+		(js-function-arity 2 0)
+		(js-function-info :name "start" :len 2)))
    (js-bind! %this obj (& "close")
       :value (js-make-function %this
 		(lambda (this)
 		   (with-access::JsTimer this (timer worker)
 		      (nodejs-timer-close worker timer)))
-		0 (& "close")))
+		(js-function-arity 0 0)
+		(js-function-info :name "close" :len 0)))
    (js-bind! %this obj (& "stop")
       :value (js-make-function %this
 		(lambda (this)
 		   (with-access::JsTimer this (timer worker)
 		      (nodejs-timer-stop worker timer)))
-		0 (& "stop")))
+		(js-function-arity 0 0)
+		(js-function-info :name "stop" :len 0)))
    (js-bind! %this obj (& "unref")
       :value (js-make-function %this
 		(lambda (this)
 		   (with-access::JsTimer this (timer worker)
 		      (nodejs-timer-unref worker timer)))
-		0 (& "unref")))
+		(js-function-arity 0 0)
+		(js-function-info :name "unref" :len 0)))
 
    (for-each (lambda (id)
 		(js-bind! %this obj (js-ascii-name->jsstring id)

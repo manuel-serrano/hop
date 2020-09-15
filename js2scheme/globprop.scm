@@ -106,9 +106,10 @@
 (define (globprop-const d)
    (with-access::J2SDecl d (id %info)
       (if (and (propinfo? %info) (pair? (propinfo-props %info)))
-	  (filter-map (lambda (i)
-			 (when (and (pair? (cdr i)) (isa? (cadr i) J2SDecl))
-			    (cadr i)))
+	  (append-map (lambda (i)
+			 (if (and (pair? (cdr i)) (isa? (cadr i) J2SDecl))
+			     (cdr i)
+			     '()))
 	     (propinfo-props %info))
 	  '())))
 

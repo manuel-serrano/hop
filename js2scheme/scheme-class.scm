@@ -126,8 +126,8 @@
 				%this))
 		     (%superctor ,superid))
 		 ,(proc superid))))))
-   
-   (define (make-class name super els constructor arity length ctorsz src loc)
+
+   (define (make-class this name super els constructor arity length ctorsz src loc)
       (let* ((cname (or name (gensym 'class)))
 	     (clazz (symbol-append cname '%CLASS))
 	     (ctor (symbol-append cname '%CTOR))
@@ -144,33 +144,27 @@
 					o)))
 				(else
 				 `(js-new-sans-construct %this ,super))))
-		    (,clazz (js-make-function %this
-			       ,ctor
-			       ,length
-			       ,(& cname (context-program ctx))
-			       :src ,(when src (class-src loc this ctx))
+		    (,clazz (js-make-function %this ,ctor
+			       ,arity
+			       (js-function-info :name ,(symbol->string cname) :len ,length)
 			       :strict ',mode
 			       :alloc ,(if (or (eq? super #f) (null? super))
 					   'js-object-alloc/new-target
 					   `(with-access::JsFunction ,super (alloc) alloc))
 			       :prototype  ,proto
-			       :arity ,arity
 			       :__proto__ ,(if (null? super)
 					       '(with-access::JsGlobalObject %this (js-function-prototype)
 						 js-function-prototype)
 					       super)
 			       :constrsize ,ctorsz))
-		    ,@(if name `((,(j2s-fast-id name) (js-make-let))) '()))
+		    ,@(if name `((,(j2s-class-id this ctx) (js-make-let))) '()))
 	     ,@(filter-map (lambda (m) (bind-static clazz m)) els)
 	     ,@(filter-map (lambda (m) (bind-method proto m)) els)
-	     ,@(if name `((set! ,(j2s-fast-id name) ,clazz)) '())
+	     ,@(if name `((set! ,(j2s-class-id this ctx) ,clazz)) '())
 	     ,clazz)))
    
    (with-access::J2SClass this (super elements name src loc decl)
       (let ((ctor (find-constructor elements)))
-	 (when decl
-	    (with-access::J2SDecl decl (_scmid)
-	       (set! _scmid (j2s-fast-id name))))
 	 (let-super super
 	    (lambda (super)
 	       (cond
@@ -178,13 +172,13 @@
 		   (with-access::J2SClassElement ctor (prop)
 		      (with-access::J2SDataPropertyInit prop (val)
 			 (with-access::J2SFun val (constrsize params thisp)
-			    (make-class name super elements
+			    (make-class this name super elements
 			       (ctor->lambda val name mode return ctx #f #t super)
 			       (j2s-function-arity val ctx)
 			       (length params) constrsize
 			       src loc)))))
 		  (super
-		   (make-class name super elements
+		   (make-class this name super elements
 		      `(lambda (this . args)
 			(let ((%nothis this))
 			   (js-apply %this %superctor this args)
@@ -193,7 +187,7 @@
 		      `(with-access::JsFunction %superctor (arity) arity)
 		      0 0 src loc))
 		  (else
-		   (make-class name super elements
+		   (make-class this name super elements
 		      `(lambda (this)
 			  (with-access::JsGlobalObject %this (js-new-target)
 			     (if (eq? js-new-target (js-undefined))

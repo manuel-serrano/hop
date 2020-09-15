@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue May 27 06:09:16 2014                          */
 /*    Last change :  Mon Nov 12 15:08:55 2018 (serrano)                */
-/*    Copyright   :  2014-18 Manuel Serrano                            */
+/*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side implementation of the "require" form                 */
 /*=====================================================================*/
@@ -152,6 +152,10 @@ hop[ '%require' ] = function( name, mod ) {
    }
    
    function resolveError( name ) {
+      console.log( "*** RESOLVE ERROR" );
+      console.log( "name=", name );
+      console.log( "defined requires: ", window.hop[ '%requires' ] );
+      console.log( "%root: ", hop[ '%root' ] );
       throw new Error( "Cannot require client-side module \"" + name + "\"" );
    }
    

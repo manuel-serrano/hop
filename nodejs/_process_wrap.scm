@@ -46,21 +46,24 @@
       (js-make-function %this 
 	 (lambda (this options)
 	    (nodejs-process-spawn %worker %this process this options))
-	 1 (& "spawn"))
+	 (js-function-arity 1 0)
+	 (js-function-info :name "spawn" :len 1))
       #f %this)
    
    (js-put! process-prototype (& "kill")
       (js-make-function %this 
 	 (lambda (this pid)
 	    (nodejs-process-kill %worker %this process this pid))
-	 1 (& "kill"))
+	 (js-function-arity 1 0)
+	 (js-function-info :name "kill" :len 1))
       #f %this)
    
    (js-put! process-prototype (& "close")
       (js-make-function %this
 	 (lambda (this cb)
 	    (nodejs-close %worker %this process this cb))
-	 1 (& "close"))
+	 (js-function-arity 1 0)
+	 (js-function-info :name "close" :len 1))
       #f %this)
    
    (js-put! process-prototype (& "ref")
@@ -68,7 +71,8 @@
 	 (lambda (this)
 	    (with-access::JsHandle this (handle)
 	       (nodejs-ref handle %worker)))
-	 0 (& "ref"))
+	 (js-function-arity 0 0)
+	 (js-function-info :name "ref" :len 0))
       #f %this)
 	    
    (js-put! process-prototype (& "unref")
@@ -76,14 +80,16 @@
 	 (lambda (this)
 	    (with-access::JsHandle this (handle)
 	       (nodejs-unref handle %worker)))
-	 0 (& "unref"))
+	 (js-function-arity 0 0)
+	 (js-function-info :name "unref" :len 0))
       #f %this)
    
    (with-access::JsGlobalObject %this (js-object)
       (js-alist->jsobject
 	 `((Process . ,(js-make-function %this
 			  (lambda (this) this)
-			  1 (& "Process")
+			  (js-function-arity 0 0)
+			  (js-function-info :name "Process" :len 1)
 			  :alloc (lambda (%this o)
 				    (instantiateJsHandle
 				       (handle (nodejs-new-process))

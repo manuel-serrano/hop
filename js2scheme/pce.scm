@@ -545,11 +545,11 @@
 		 (pretest (expand-pce-pretest ncaches loc)))
 	     (with-access::J2SLetBlock lblock (decls nodes)
 		(let* ((ndecls (map (lambda (d)
-				       (with-access::J2SDeclInit d (vtype loc _usage)
+				       (with-access::J2SDeclInit d (vtype loc usage)
 					  (duplicate::J2SDeclInit d
 					     (key (ast-decl-key))
 					     (writable #t)
-					     (_usage (usage-add _usage 'assig))
+					     (usage (usage-add usage 'assig))
 					     (val (neutral vtype loc)))))
 				  decls))
 		       (assig+ (map (lambda (d)

@@ -24,6 +24,8 @@ install: install-library
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = hopwidget
+HOPAPPLIBS = hop
+
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
   -lhopscheme_s-$(HOPRELEASE) -lhop_s-$(HOPRELEASE) 
 HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
@@ -56,11 +58,11 @@ INCLUDES =
 #*---------------------------------------------------------------------*/
 POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile
 
-include ../etc/Makefile.library
-
 #*---------------------------------------------------------------------*/
 #*    all                                                              */
 #*---------------------------------------------------------------------*/
+include ../etc/Makefile.library
+
 .PHONY: build native jvm distrib distrib-clean
 
 build: .afile $(BACKEND)

@@ -12,10 +12,9 @@
 #*---------------------------------------------------------------------*/
 #*    Compilers, Tools and Destinations                                */
 #*---------------------------------------------------------------------*/
-HEAP_FILE	= $(BUILDLIBDIR)/$(TARGETNAME).heap
-LIBVERSION	= $(HOPRELEASE)
+HEAPFILE = $(BUILDLIBDIR)/$(TARGETNAME).heap
 
-RPATH		+= $(HOPLIBDIR)/$(HOPFILDIR)
+RPATH    += $(HOPLIBDIR)/$(HOPFILDIR)
 
 #*---------------------------------------------------------------------*/
 #*    Suffixes                                                         */
@@ -40,16 +39,18 @@ o/%.o: %.js
 #*---------------------------------------------------------------------*/
 .PHONY: heap-c
 
-heap-c: .afile $(HEAP_FILE)
+heap-c: .afile $(HEAPFILE)
 
-$(HEAP_FILE): make_lib.scm .afile
-	@ $(RM) -f $(HEAP_FILE)
+$(HEAPFILE): make_lib.scm .afile
+	@ $(RM) -f $(HEAPFILE)
 	@ $(call heap,$(BIGLOO),$(BCFLAGS),$(BHFLAGS),$<,-heap-library $(TARGETNAME),-addheap, $@)
 
 #*---------------------------------------------------------------------*/
 #*    lib                                                              */
 #*---------------------------------------------------------------------*/
 .PHONY: lib-c
+
+-include $(BIGLOOLIBDIR)/Makefile.misc
 
 lib:
 
@@ -59,112 +60,122 @@ lib-c: $(TAGS) o lib-c-static lib-c-shared
 o:
 	mkdir -p $@
 
-lib-c-static: .afile
+lib-c-static: .afile $(OBJECTS)
 	$(MAKE) lib-c-static-sans-afile
 
-lib-c-static-sans-afile: $(OBJECTS)
-	$(MAKE) LIBVERSION=$(LIBVERSION) \
-                $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a \
-	        $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).a \
-	        $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a \
-	        $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).a
+lib-c-static-sans-afile: \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).a
 
 # lib-c-shared depends on lib-c-static only to force the compilation
 # order when invoking make with --jobs N
 lib-c-shared: lib-c-static
 	@ if [ "$(SHAREDLIBRARYSUPPORT)" = "yes" ]; then \
-           $(MAKE) LIBVERSION=$(LIBVERSION) lib-c.$(SHAREDSUFFIX); \
+           $(MAKE) lib-c.$(SHAREDSUFFIX); \
         fi
 
-# we have 4 versions of each library:
+# we have 8 versions of each library:
 # safe and unsafe, runtime and evaluation time
 # evaltime libs have to link to runtime libs, but with matching safeness
-lib-c.$(SHAREDSUFFIX): \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX) \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX) \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX) \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).$(SHAREDSUFFIX)
+lib-c.$(SHAREDSUFFIX):
+	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_s LIBSUFFIXTHREAD=
+	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_s LIBSUFFIXTHREAD=_mt
+	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_es LIBSUFFIXTHREAD=
+	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_es LIBSUFFIXTHREAD=_mt
+	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_u LIBSUFFIXTHREAD=
+	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_u LIBSUFFIXTHREAD=_mt
+	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_eu LIBSUFFIXTHREAD=
+	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_eu LIBSUFFIXTHREAD=_mt
 
-# safe runtime
-$(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX): \
+one-lib-c.$(SHAREDSUFFIX): \
+  $(BUILDLIBDIR)/lib$(TARGETNAME)$(LIBSUFFIX)$(LIBSUFFIXTHREAD)-$(HOPRELEASE).$(SHAREDSUFFIX)   
+
+$(BUILDLIBDIR)/lib$(TARGETNAME)_s$(LIBSUFFIXTHREAD)-$(HOPRELEASE).$(SHAREDSUFFIX): \
    .afile $(OBJECTS)
-	@ $(MAKE) shared-lib \
-             LDINSTALLNAMEDIR=$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) \
-             BOOTLIBDIR=$(BUILDLIBDIR) \
-             FORCELD=true \
-             LIBDEST=$@ \
-             SONAME=lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX) \
-             LDOPTS="-L$(BUILDLIBDIR) -L$(BIGLOOLIBDIR) $(LDOPTS)" \
-             CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS_S)"
+	$(MAKE) bigloo-shared-lib \
+           LDINSTALLNAMEDIR=$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) \
+           BOOTLIBDIR=$(BUILDLIBDIR) \
+           FORCELD=true \
+           LIBDEST=$@ \
+           SONAME=lib$(TARGETNAME)_s$(LIBSUFFIXTHREAD)-$(HOPRELEASE).$(SHAREDSUFFIX) \
+           LDOPTS="-L$(BUILDLIBDIR) $(LDOPTS)" \
+           EXTRALIBS="$(EXTRALIBS) $(HOPEXTRALIBS)" \
+           BIGLOOEXTRALIBS="$(HOPBIGLOOEXTRALIBS)" \
+           BIGLOOAPPLIBS="$(HOPAPPLIBS)" \
+           APPRELEASE=$(HOPRELEASE)
 	@ $(call done,$@)
 
-# safe evaltime
-$(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX): \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX)
-	@ $(MAKE) shared-lib \
-             LDINSTALLNAMEDIR=$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) \
-             BOOTLIBDIR=$(BUILDLIBDIR) \
-             OBJECTS=$(EOBJECTS) \
-             FORCELD=true \
-             LIBDEST=$@ \
-             SONAME=lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX) \
-             LDOPTS="-L$(BUILDLIBDIR) -L$(BIGLOOLIBDIR) $(LDOPTS)" \
-             CLOSELIBS="-lbigloo_s-$(RELEASE) $(HOPCLOSELIBS_S) $(HOPCLOSELIBS_ES)"
-	@ $(call done,$@)
-
-# unsafe runtime
-$(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX): \
+$(BUILDLIBDIR)/lib$(TARGETNAME)_u$(LIBSUFFIXTHREAD)-$(HOPRELEASE).$(SHAREDSUFFIX): \
    .afile $(OBJECTS)
-	@ $(MAKE) shared-lib \
-             LDINSTALLNAMEDIR=$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) \
-             BOOTLIBDIR=$(BUILDLIBDIR) \
-             FORCELD=true \
-             LIBDEST=$@ \
-             LIBSRC=$< \
-             SONAME=lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX) \
-             LDOPTS="-L$(BUILDLIBDIR) -L$(BIGLOOLIBDIR) $(LDOPTS)" \
-             CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U)"
+	$(MAKE) bigloo-shared-lib \
+           LDINSTALLNAMEDIR=$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) \
+           BOOTLIBDIR=$(BUILDLIBDIR) \
+           FORCELD=true \
+           LIBDEST=$@ \
+           SONAME=lib$(TARGETNAME)_u$(LIBSUFFIXTHREAD)-$(HOPRELEASE).$(SHAREDSUFFIX) \
+           LDOPTS="-L$(BUILDLIBDIR) $(LDOPTS)" \
+           EXTRALIBS="$(EXTRALIBS) $(HOPEXTRALIBS)" \
+           BIGLOOEXTRALIBS="$(HOPBIGLOOEXTRALIBS)" \
+           BIGLOOAPPLIBS="$(HOPAPPLIBS)" \
+           APPRELEASE=$(HOPRELEASE)
 	@ $(call done,$@)
 
-# unsafe evaltime
-$(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).$(SHAREDSUFFIX): \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX)
-	@ $(MAKE) shared-lib \
-             LDINSTALLNAMEDIR=$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) \
-             BOOTLIBDIR=$(BUILDLIBDIR) \
-             OBJECTS=$(EOBJECTS) \
-             FORCELD=true \
-             LIBDEST=$@ \
-             LIBSRC=$< \
-             SONAME=lib$(TARGETNAME)_eu-$(LIBVERSION).$(SHAREDSUFFIX) \
-             LDOPTS="-L$(BUILDLIBDIR) -L$(BIGLOOLIBDIR) $(LDOPTS)" \
-             CLOSELIBS="-lbigloo_u-$(RELEASE) $(HOPCLOSELIBS_U) $(HOPCLOSELIBS_EU)"
+$(BUILDLIBDIR)/lib$(TARGETNAME)_es$(LIBSUFFIXTHREAD)-$(HOPRELEASE).$(SHAREDSUFFIX): $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX)
+	$(MAKE) bigloo-shared-lib \
+           OBJECTS="$(EOBJECTS)" \
+           FORCELD=true \
+           LIBDEST=$@ \
+           LIBPATH=$(BOOTLIBDIR) \
+           SONAME=lib$(TARGETNAME)_es$(LIBSUFFIXTHREAD)-$(HOPRELEASE).$(SHAREDSUFFIX) \
+           LDOPTS="-L$(BUILDLIBDIR) $(LDOPTS)" \
+           LIBSUFFIX=_s \
+           EXTRALIBS="$(EXTRALIBS) $(HOPEXTRALIBS)" \
+           BIGLOOEXTRALIBS="$(HOPBIGLOOEXTRALIBS)" \
+           BIGLOOAPPLIBS="$(HOPAPPLIBS)" \
+           APPRELEASE=$(HOPRELEASE)
+	@ $(call done,$@)
+
+$(BUILDLIBDIR)/lib$(TARGETNAME)_eu$(LIBSUFFIXTHREAD)-$(HOPRELEASE).$(SHAREDSUFFIX): $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX)
+	$(MAKE) bigloo-shared-lib \
+           OBJECTS="$(EOBJECTS)" \
+           FORCELD=true \
+           LIBDEST=$@ \
+           LIBPATH=$(BOOTLIBDIR) \
+           SONAME=lib$(TARGETNAME)_eu$(LIBSUFFIXTHREAD)-$(HOPRELEASE).$(SHAREDSUFFIX) \
+           LDOPTS="-L$(BUILDLIBDIR) $(LDOPTS)" \
+           LIBSUFFIX=_u \
+           EXTRALIBS="$(EXTRALIBS) $(HOPEXTRALIBS)" \
+           BIGLOOEXTRALIBS="$(HOPBIGLOOEXTRALIBS)" \
+           BIGLOOAPPLIBS="$(HOPAPPLIBS)" \
+           APPRELEASE=$(HOPRELEASE)
 	@ $(call done,$@)
 
 # and the static versions
-$(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a: .afile $(OBJECTS)
-	@ $(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a
-	@ $(AR) $(ARFLAGS) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a $(OBJECTS)
-	@ $(RANLIB) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a
+$(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a: .afile $(OBJECTS)
+	@ $(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
+	@ $(AR) $(ARFLAGS) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a $(OBJECTS)
+	@ $(RANLIB) $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
 	@ $(call done,$@)
 
-$(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).a: \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a
+$(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a: \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
 	@ cd $(BUILDLIBDIR) && \
-        $(RM) -f lib$(TARGETNAME)_u-$(LIBVERSION).a && \
-        $(LN_S) lib$(TARGETNAME)_s-$(LIBVERSION).a lib$(TARGETNAME)_u-$(LIBVERSION).a
+        $(RM) -f lib$(TARGETNAME)_u-$(HOPRELEASE).a && \
+        $(LN_S) lib$(TARGETNAME)_s-$(HOPRELEASE).a lib$(TARGETNAME)_u-$(HOPRELEASE).a
 	@ $(call done,$@)
 
-$(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a: $(EOBJECTS)
-	@ $(AR) $(ARFLAGS) $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a $(EOBJECTS)
-	@ $(RANLIB) $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a
+$(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a: $(EOBJECTS)
+	@ $(AR) $(ARFLAGS) $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a $(EOBJECTS)
+	@ $(RANLIB) $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a
 	@ $(call done,$@)
 
-$(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).a: \
-   $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a
+$(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).a: \
+   $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a
 	@ cd $(BUILDLIBDIR) && \
-        $(RM) -f lib$(TARGETNAME)_eu-$(LIBVERSION).a && \
-        $(LN_S) lib$(TARGETNAME)_es-$(LIBVERSION).a lib$(TARGETNAME)_eu-$(LIBVERSION).a
+        $(RM) -f lib$(TARGETNAME)_eu-$(HOPRELEASE).a && \
+        $(LN_S) lib$(TARGETNAME)_es-$(HOPRELEASE).a lib$(TARGETNAME)_eu-$(HOPRELEASE).a
 	@ $(call done,$@)
 
 #*---------------------------------------------------------------------*/
@@ -173,14 +184,18 @@ $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).a: \
 stdclean:
 	$(RM) -f $(OBJECTS) $(_BGL_OBJECTS:%=%.c)
 	$(RM) -f $(EOBJECTS)
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).a
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).a
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).a
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).$(SHAREDSUFFIX)
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).$(SHAREDSUFFIX)
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(LIBVERSION).$(SHAREDSUFFIX)
-	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(LIBVERSION).$(SHAREDSUFFIX)
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).a
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).a
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).a
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).a
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(HOPRELEASE).$(SHAREDSUFFIX)
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(HOPRELEASE).$(SHAREDSUFFIX)
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_es-$(HOPRELEASE).$(SHAREDSUFFIX)
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_eu-$(HOPRELEASE).$(SHAREDSUFFIX)
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_s_mt-$(HOPRELEASE).$(SHAREDSUFFIX)
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_u_mt-$(HOPRELEASE).$(SHAREDSUFFIX)
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_es_mt-$(HOPRELEASE).$(SHAREDSUFFIX)
+	$(RM) -f $(BUILDLIBDIR)/lib$(TARGETNAME)_eu_mt-$(HOPRELEASE).$(SHAREDSUFFIX)
 	$(RM) -f $(BUILDLIBDIR)/$(TARGETNAME).heap
 	$(RM) -f *~
 	$(RM) -f *.mco
@@ -206,8 +221,6 @@ distclean: cleanall
 #*---------------------------------------------------------------------*/
 .PHONY: install-library install-c install-native uninstall
 
--include $(BIGLOOLIBDIR)/Makefile.misc
-
 install-library: install-$(BACKEND)
 
 install-native: install-native-heap install-native-libs
@@ -222,25 +235,49 @@ install-native-libs:
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR)\
                 LIBDIR=$(HOPLIBDIR)\
-                LIB=lib$(TARGETNAME)_s-$(LIBVERSION) && \
-        $(MAKE) install-lib \
+                LIB=lib$(TARGETNAME)_s-$(HOPRELEASE)
+	$(MAKE) install-lib \
+                INSTALL="$(INSTALL)" \
+                BOOTLIBDIR=$(BUILDLIBDIR) \
+                FILDIR=$(HOPFILDIR)\
+                LIBDIR=$(HOPLIBDIR)\
+                LIB=lib$(TARGETNAME)_s_mt-$(HOPRELEASE)
+	$(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
                 LIBDIR=$(HOPLIBDIR) \
-                LIB=lib$(TARGETNAME)_es-$(LIBVERSION) && \
-        $(MAKE) install-lib \
+                LIB=lib$(TARGETNAME)_es-$(HOPRELEASE)
+	$(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
                 LIBDIR=$(HOPLIBDIR) \
-                LIB=lib$(TARGETNAME)_u-$(LIBVERSION) && \
-        $(MAKE) install-lib \
+                LIB=lib$(TARGETNAME)_es_mt-$(HOPRELEASE)
+	$(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
                 LIBDIR=$(HOPLIBDIR) \
-                LIB=lib$(TARGETNAME)_eu-$(LIBVERSION)
+                LIB=lib$(TARGETNAME)_u-$(HOPRELEASE)
+	$(MAKE) install-lib \
+                INSTALL="$(INSTALL)" \
+                BOOTLIBDIR=$(BUILDLIBDIR) \
+                FILDIR=$(HOPFILDIR) \
+                LIBDIR=$(HOPLIBDIR) \
+                LIB=lib$(TARGETNAME)_u_mt-$(HOPRELEASE)
+	$(MAKE) install-lib \
+                INSTALL="$(INSTALL)" \
+                BOOTLIBDIR=$(BUILDLIBDIR) \
+                FILDIR=$(HOPFILDIR) \
+                LIBDIR=$(HOPLIBDIR) \
+                LIB=lib$(TARGETNAME)_eu-$(HOPRELEASE)
+	$(MAKE) install-lib \
+                INSTALL="$(INSTALL)" \
+                BOOTLIBDIR=$(BUILDLIBDIR) \
+                FILDIR=$(HOPFILDIR) \
+                LIBDIR=$(HOPLIBDIR) \
+                LIB=lib$(TARGETNAME)_eu_mt-$(HOPRELEASE)
 
 uninstall: uninstall-native-heap uninstall-native-libs
 
@@ -248,10 +285,14 @@ uninstall-native-heap:
 	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
 
 uninstall-native-libs:
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_s-$(LIBVERSION)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_u-$(LIBVERSION)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_es-$(LIBVERSION)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_eu-$(LIBVERSION)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_s-$(HOPRELEASE)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_u-$(HOPRELEASE)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_es-$(HOPRELEASE)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_eu-$(HOPRELEASE)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_s_mt-$(HOPRELEASE)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_u_mt-$(HOPRELEASE)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_es_mt-$(HOPRELEASE)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_eu_mt-$(HOPRELEASE)
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */

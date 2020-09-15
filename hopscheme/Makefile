@@ -4,7 +4,7 @@
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
 #*    Last change :  Sat May 24 08:58:26 2014 (serrano)                */
-#*    Copyright   :  2006-14 Manuel Serrano                            */
+#*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the hopscheme library.                     */
 #*=====================================================================*/
@@ -25,6 +25,8 @@ install: install-library
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = hopscheme
+HOPAPPLIBS = scheme2js
+
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) -lscheme2js_s-$(HOPRELEASE)
 HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) -lscheme2js_u-$(HOPRELEASE)
 HOPCLOSELIBS_ES = $(BGLCLOSELIBS_ES) -lhopscheme_s-$(HOPRELEASE)
@@ -56,11 +58,11 @@ INCLUDES =
 #*---------------------------------------------------------------------*/
 POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile
 
-include ../etc/Makefile.library
-
 #*---------------------------------------------------------------------*/
 #*    all                                                              */
 #*---------------------------------------------------------------------*/
+include ../etc/Makefile.library
+
 .PHONY: build native jvm
 
 build: $(BACKEND)

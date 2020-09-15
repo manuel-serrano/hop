@@ -72,8 +72,11 @@
 			  ,(j2s-scheme (car args) mode return conf)))))
 	       ((string=? val "round")
 		(when (=fx (length args) 1)
-		   `(js-math-round
-		       ,(j2s-scheme (car args) mode return conf))))
+		   (if (eq? (j2s-vtype (car args)) 'real)
+		       `(js-math-roundfl
+			   ,(j2s-scheme (car args) mode return conf))
+		       `(js-math-round
+			   ,(j2s-scheme (car args) mode return conf)))))
 	       ((string=? val "random")
 		(when (=fx (length args) 0)
 		   `(randomfl)))

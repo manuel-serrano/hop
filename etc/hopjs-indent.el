@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
 ;*    Last change :  Mon Aug 26 08:33:27 2019 (serrano)                */
-;*    Copyright   :  2018-19 Manuel Serrano                            */
+;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
 ;*=====================================================================*/
@@ -1114,7 +1114,7 @@
 			     (point) (hopjs-parse-peek-token))
 	      (setq res '())))
 	   (t
-	    (setq '())))))
+	    (setq res '())))))
      res)))
 
 ;*---------------------------------------------------------------------*/

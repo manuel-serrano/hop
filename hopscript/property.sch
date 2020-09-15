@@ -51,6 +51,8 @@
    js-pcache-pmap-expander)
 (define-expander js-pcache-nmap
    js-pcache-nmap-expander)
+(define-expander js-pcache-xmap
+   js-pcache-xmap-expander)
 (define-expander js-pcache-index
    js-pcache-index-expander)
 (define-expander js-pcache-vindex
@@ -62,6 +64,12 @@
 
 (define-expander js-pcache-prefetch-index
    js-pcache-prefetch-index-expander)
+
+;*---------------------------------------------------------------------*/
+;*    js-getprototypeof ...                                            */
+;*---------------------------------------------------------------------*/
+(define-expander js-getprototypeof
+   js-getprototypeof-expander)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-XXX ...                                                   */
@@ -86,26 +94,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-call-XXX ...                                                  */
 ;*---------------------------------------------------------------------*/
-;* (define-expander js-call                                            */
-;*    js-call-expander)                                                */
-;* (define-expander js-call1                                           */
-;*    js-call-expander)                                                */
-;* (define-expander js-call2                                           */
-;*    js-call-expander)                                                */
-;* (define-expander js-call3                                           */
-;*    js-call-expander)                                                */
-;* (define-expander js-call4                                           */
-;*    js-call-expander)                                                */
-;* (define-expander js-call/function                                   */
-;*    js-call/function-expander)                                       */
-;* (define-expander js-call1/function                                  */
-;*    js-call/function-expander)                                       */
-;* (define-expander js-call2/function                                  */
-;*    js-call/function-expander)                                       */
-;* (define-expander js-call3/function                                  */
-;*    js-call/function-expander)                                       */
-;* (define-expander js-call4/function                                  */
-;*    js-call/function-expander)                                       */
 (define-expander js-call/cache
    js-call/cache-expander)
 (define-expander js-method-call-name/cache
@@ -154,3 +142,5 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (property-flags-default)
    '(property-flags #t #t #t #f))
+
+	   

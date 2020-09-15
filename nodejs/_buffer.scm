@@ -506,7 +506,7 @@
 ;*    make-slowbuffer ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (make-slowbuffer %this::JsGlobalObject)
-
+   
    (define __js_strings_execute_first
       (js-init-buffer! %this))
    
@@ -514,10 +514,10 @@
       (with-access::JsGlobalObject %this (js-slowbuffer-proto js-object)
 	 (unless js-slowbuffer-proto
 	    (set! js-slowbuffer-proto
-	       (with-access::JsFunction js-object (constrmap %prototype)
+	       (with-access::JsFunction js-object (constrmap prototype)
 		  (js-make-jsobject 25
 		     (duplicate::JsConstructMap constrmap (%id (gencmapid)))
-		     %prototype))))
+		     prototype))))
 	 js-slowbuffer-proto))
    
    (define (slowbuffer-constr this a0)
@@ -577,14 +577,14 @@
 	     (error "buffer" "Illegal constructor call" a0)))))
    
    (define js-slowbuffer
-      (js-make-function %this slowbuffer-constr 1 (& "SlowBuffer")
+      (js-make-function %this slowbuffer-constr
+	 (js-function-arity slowbuffer-constr)
+	 (js-function-info :name "SlowBuffer" :len 1)
 	 :alloc (lambda (%this o) #unspecified)
 	 :size 10
-	 :construct slowbuffer-constr
 	 :prototype slowbuffer-proto
-	 :shared-cmap #f
-	 :src "_buffer.scm"))
-
+	 :shared-cmap #f))
+   
    (define (check-offset data::bstring offset fxoffset sizeof action)
       ;; the error messages (case sensitive) are imposed by node_buffer.cc
       (cond
@@ -597,13 +597,13 @@
 	  (js-raise-range-error %this
 	     "Trying to ~a beyond buffer length"
 	     (js-string->jsstring action)))))
-
+   
    (define (byte-ref str i)
       (fixnum->uint8 (char->integer (string-ref-ur str i))))
-
+   
    (define (byte-set! str i v)
       (string-int-set! str i (uint8->fixnum v)))
-
+   
    (define (get-data obj)
       (cond
 	 ((isa? obj JsSlowBuffer)
@@ -630,7 +630,7 @@
 		   (u8vector-set! buf 1 (byte-ref data (+fx i 2)))
 		   (u8vector-set! buf 0 (byte-ref data (+fx i 3)))))
 	    ($f32/u8vector-ref buf 0))))
-
+   
    (define (read-double this offset noassert le)
       (let ((data (get-data this))
 	    (i (->fixnum offset)))
@@ -656,7 +656,7 @@
 		   (u8vector-set! buf 1 (byte-ref data (+fx i 6)))
 		   (u8vector-set! buf 0 (byte-ref data (+fx i 7)))))
 	    ($f64/u8vector-ref buf 0))))
-
+   
    (define (write-float this value offset noassert le)
       (let ((data (get-data this))
 	    (i (->fixnum offset)))
@@ -675,7 +675,7 @@
 		   (byte-set! data (+fx 1 i) (u8vector-ref buf 2))
 		   (byte-set! data (+fx 2 i) (u8vector-ref buf 1))
 		   (byte-set! data (+fx 3 i) (u8vector-ref buf 0)))))))
-
+   
    (define (write-double this value offset noassert le)
       (let ((data (get-data this))
 	    (i (->fixnum offset)))
@@ -702,25 +702,27 @@
 		   (byte-set! data (+fx 5 i) (u8vector-ref buf 2))
 		   (byte-set! data (+fx 6 i) (u8vector-ref buf 1))
 		   (byte-set! data (+fx 7 i) (u8vector-ref buf 0)))))))
-
+   
    ;; binarySlice
    (js-bind! %this slowbuffer-proto (& "binarySlice")
       :value (js-make-function %this
 		(lambda (this::JsSlowBuffer start end)
 		   (with-access::JsSlowBuffer this (data)
 		      (js-string->jsstring (8bits-encode-utf8 data start end))))
-		2 (& "binarySlice"))
+		(js-function-arity 2 0)
+		(js-function-info :name "binarySlice" :len 2))
       :writable #t :enumerable #t :configurable #t :hidden-class #t)
    
    ;; utf8Slice
    (js-bind! %this slowbuffer-proto (& "utf8Slice")
       :value (js-make-function %this
-	 (lambda (this::JsSlowBuffer start end)
-	    (with-access::JsSlowBuffer this (data)
-	       (string-utf8-normalize-utf16 data start end)))
-	 2 (& "utf8Slice"))
+		(lambda (this::JsSlowBuffer start end)
+		   (with-access::JsSlowBuffer this (data)
+		      (string-utf8-normalize-utf16 data start end)))
+		(js-function-arity 2 0)
+		(js-function-info :name "utf8Slice" :len 2))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
-
+   
    
    ;; asciiSlice
    (js-bind! %this slowbuffer-proto (& "asciiSlice")
@@ -732,7 +734,8 @@
 			 (when (>fx len 0)
 			    (blit-string-ascii-clamp! data start string 0 len))
 			 (js-ascii->jsstring string))))
-		2 (& "asciiSlice"))
+		(js-function-arity 2 0)
+		(js-function-info :name "asciiSlice" :len 2))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    ;; base64Slice
@@ -744,7 +747,8 @@
 			    (op (open-output-string)))
 			 (base64-encode-port ip op 0)
 			 (js-ascii->jsstring (close-output-port op)))))
-		2 (& "base64Slice"))
+		(js-function-arity 2 0)
+		(js-function-info :name "base64Slice" :len 2))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    
@@ -755,7 +759,8 @@
 		   (with-access::JsSlowBuffer this (data)
 		      (js-utf8->jsstring
 			 (ucs2-string->utf8-string (string->ucs2-string data start end)))))
-		2 (& "ucs2Slice"))
+		(js-function-arity 2 0)
+		(js-function-info :name "ucs2Slice" :len 2))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    ;; hexSlice
@@ -764,7 +769,8 @@
 		(lambda (this::JsSlowBuffer start end)
 		   (with-access::JsSlowBuffer this (data)
 		      (js-ascii->jsstring (string-hex-extern data start end))))
-		2 (& "hexSlice"))
+		(js-function-arity 2 0)
+		(js-function-info :name "hexSlice" :len 2))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    ;; latin1Slice
@@ -776,7 +782,8 @@
 			 (if (and (=fx start 0) (=fx end (string-length data)))
 			     (iso-latin->utf8 data)
 			     (iso-latin->utf8! (substring data start end))))))
-		2 (& "latin1Slice"))
+		(js-function-arity 2 0)
+		(js-function-info :name "latin1Slice" :len 2))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    ;; _charsWritten is described at
@@ -797,7 +804,8 @@
 				    l)
 				 n)))
 		       (js-raise-type-error %this "not a string" string)))
-		3 (& "binaryWrite"))
+		(js-function-arity 3 0)
+		(js-function-info :name "binaryWrite" :len 3))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this slowbuffer-proto (& "utf8Write")
@@ -819,7 +827,8 @@
 				    (js-put! js-slowbuffer (& "_charsWritten") n #t %this)
 				    n))))
 		       (js-raise-type-error %this "not a string" string)))
-		3 (& "utf8Write"))
+		(js-function-arity 3 0)
+		(js-function-info :name "utf8Write" :len 3))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this slowbuffer-proto (& "asciiWrite")
@@ -838,7 +847,8 @@
 				    l)
 				 n)))
 		       (js-raise-type-error %this "not a string" string)))
-		3 (& "asciiWrite"))
+		(js-function-arity 3 0)
+		(js-function-info :name "asciiWrite" :len 3))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this slowbuffer-proto (& "base64Write")
@@ -860,7 +870,8 @@
 				(js-put! js-slowbuffer (& "_charsWritten") n #t %this)
 				n)))
 		       (js-raise-type-error %this "not a string" string)))
-		3 (& "base64Write"))
+		(js-function-arity 3 0)
+		(js-function-info :name "base64Write" :len 3))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this slowbuffer-proto (& "ucs2Write")
@@ -880,7 +891,8 @@
 				    l)
 				 0)))
 		       (js-raise-type-error %this "not a string" string)))
-		3 (& "ucs2Write"))
+		(js-function-arity 3 0)
+		(js-function-info :name "ucs2Write" :len 3))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this slowbuffer-proto (& "hexWrite")
@@ -900,7 +912,8 @@
 				    n)
 				 0)))
 		       (js-raise-type-error %this "not a string" string)))
-		3 (& "hexWrite"))
+		(js-function-arity 3 0)
+		(js-function-info :name "hexWrite" :len 3))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this slowbuffer-proto (& "latin1Write")
@@ -920,7 +933,8 @@
 				    n)
 				 0)))
 		       (js-raise-type-error %this "not a string" string)))
-		3 (& "latin1Write"))
+		(js-function-arity 3 0)
+		(js-function-info :name "latin1Write" :len 3))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this slowbuffer-proto (& "copy")
@@ -966,7 +980,8 @@
 			     (when (>fx tocopy 0)
 				(blit-string! sdata sstart tdata tstart tocopy))
 			     tocopy)))))
-		4 (& "copy"))
+		(js-function-arity 4 0)
+		(js-function-info :name "copy" :len 4))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this slowbuffer-proto (& "fill")
@@ -1007,63 +1022,72 @@
 				   (string-int-set! sdata i (char->integer v))
 				   (loop (+fx i 1))))
 			     (js-undefined))))))
-		3 (& "fill"))
+		(js-function-arity 3 0)
+		(js-function-info :name "fill" :len 3))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this slowbuffer-proto (& "readFloatLE")
       :value (js-make-function %this
 		(lambda (this offset noassert)
 		   (read-float this offset noassert #t))
-		2 (& "readFloatLE"))
+		(js-function-arity 2 0)
+		(js-function-info :name "readFloatLE" :len 2))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this slowbuffer-proto (& "readFloatBE")
       :value (js-make-function %this
 		(lambda (this offset noassert)
 		   (read-float this offset noassert #f))
-		2 (& "readFloatBE"))
+		(js-function-arity 2 0)
+		(js-function-info :name "readFloatBE" :len 2))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this slowbuffer-proto (& "readDoubleLE")
       :value (js-make-function %this
 		(lambda (this offset noassert)
 		   (read-double this offset noassert #t))
-		2 (& "readDoubleLE"))
+		(js-function-arity 2 0)
+		(js-function-info :name "readDoubleLE" :len 2))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this slowbuffer-proto (& "readDoubleBE")
       :value (js-make-function %this
 		(lambda (this offset noassert)
 		   (read-double this offset noassert #f))
-		2 (& "readDoubleBE"))
+		(js-function-arity 2 0)
+		(js-function-info :name "readDoubleBE" :len 2))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
    
    (js-bind! %this slowbuffer-proto (& "writeFloatLE")
       :value (js-make-function %this
 		(lambda (this value offset noassert)
 		   (write-float this value offset noassert #t))
-		3 (& "writeFloatLE"))
+		(js-function-arity 3 0)
+		(js-function-info :name "writeFloatLE" :len 3))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this slowbuffer-proto (& "writeFloatBE")
       :value (js-make-function %this
 		(lambda (this value offset noassert)
 		   (write-float this value offset noassert #f))
-		3 (& "writeFloatBE"))
+		(js-function-arity 3 0)
+		(js-function-info :name "writeFloatBE" :len 3))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this slowbuffer-proto (& "writeDoubleLE")
       :value (js-make-function %this
 		(lambda (this value offset noassert)
 		   (write-double this value offset noassert #t))
-		3 (& "writeDoubleLE"))
+		(js-function-arity 3 0)
+		(js-function-info :name "writeDoubleLE" :len 3))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this slowbuffer-proto (& "writeDoubleBE")
       :value (js-make-function %this
-	 (lambda (this value offset noassert)
-	    (write-double this value offset noassert #f))
-	 3 (& "writeDoubleBE"))
+		(lambda (this value offset noassert)
+		   (write-double this value offset noassert #f))
+		(js-function-arity 3 0)
+		(js-function-info :name "writeDoubleBE" :len 3))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
    
    (js-bind! %this js-slowbuffer (& "byteLength")
@@ -1093,7 +1117,8 @@
 			      (utf8-string-length (js-jsstring->string string)))
 			     (else
 			      (utf8-string-length (js-jsstring->string string)))))))
-		1 (& "byteLength"))
+		(js-function-arity 2 0)
+		(js-function-info :name "byteLength" :len 2))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    (js-bind! %this js-slowbuffer (& "makeFastBuffer")
@@ -1117,7 +1142,8 @@
 			 ;; as we know it is in range
 			 (js-put! buf (& "length") (->fixnum len) #f %this)
 			 (set! buffer sbuf))))
-		4 (& "makeFastBuffer"))
+		(js-function-arity 4 0)
+		(js-function-info :name "makeFastBuffer" :len 4))
       :writable #t :enumerable #t :configurable #t :hidden-class #f)
 
    js-slowbuffer)

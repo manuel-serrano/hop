@@ -2,13 +2,13 @@
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
 #*    Last change :  Mon May 27 08:43:46 2019 (serrano)                */
-#*    Copyright   :  2006-08 Manuel Serrano                            */
+#*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
 #*=====================================================================*/
 .PHONY: do install
 
-do: exec runtime-build
+do: build
 install: install-library
 
 #*---------------------------------------------------------------------*/
@@ -21,8 +21,8 @@ include Makefile.configs
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = scheme2js
+
 MCO = bglmco -s
-EXEC = $(TARGETNAME)
 
 BLIBFLAGS = $(BSCM2JSFLAGS)
 
@@ -76,17 +76,15 @@ POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile \
              runtime/runtime_callcc.js runtime/dsssl.js runtime/dsssl.scm \
              base64_vlq.sch
 
--include ../etc/Makefile.library
-
 #*---------------------------------------------------------------------*/
 #*    all                                                              */
 #*---------------------------------------------------------------------*/
+include ../etc/Makefile.library
+
 .PHONY: build native jvm 
 
-build: runtime-build
-	$(MAKE) $(BACKEND)
+build: runtime-build $(BACKEND)
 
-#* native: o heap-c lib-c                                              */
 native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
 

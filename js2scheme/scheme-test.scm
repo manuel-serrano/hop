@@ -38,7 +38,7 @@
       (cond
 	 ((eq? ty 'bool)
 	  (j2s-bool-test test mode return conf))
-	 ((eq? ty 'object)
+	 ((memq ty '(object array))
 	  #t)
 	 ((eq? ty 'int32)
 	  `(not (=s32 ,(j2s-scheme test mode return conf) #s32:0)))
@@ -51,7 +51,7 @@
 	 ((eq? ty 'string)
 	  `(js-jsstring-toboolean ,(j2s-scheme test mode return conf)))
 	 ((notbool-expr? test)
-	  `(js-toboolean ,(j2s-scheme test mode return conf)))
+	  (j2s-toboolean (j2s-scheme test mode return conf)))
 	 (else
 	  (with-access::J2SExpr test (hint)
 	     (if (pair? (assq 'object hint))
@@ -60,6 +60,9 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-totest ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    This function tries to push the totest conversion as deeply      */
+;*    as possible to help the forthcoming register allocation.         */
 ;*---------------------------------------------------------------------*/
 (define (j2s-totest expr)
    (match-case expr
@@ -69,8 +72,23 @@
        `(js-regexp-prototype-maybe-exec-as-bool ,rx ,arg ,%this ,cache))
       ((js-jsstring-match-regexp-from-string ?obj ?arg ?rx ?%this)
        `(js-jsstring-match-regexp-from-string-as-bool ,obj ,arg ,rx ,%this))
+      ((js-object-isfrozen ?a ?b)
+       expr)
+      ((js-has-own-property . ?-)
+       expr)
+      (((or let let*) ?- (js-has-own-property . ?-))
+       expr)
       ((let ((?var ?-)) ((kwote or) (js-array? ?var) (js-proxy-array? ?var)))
        expr)
+      ((let ?bindings ?body)
+       `(let ,bindings
+	   ,(match-case body
+	       ((cond . ?clauses)
+		`(cond
+		    ,@(map (lambda (c) `(,(car c) ,(j2s-totest (cadr c))))
+		       clauses)))
+	       (else
+		(j2s-totest body)))))
       (else
        `(js-totest ,expr))))
 
@@ -87,7 +105,7 @@
    (with-access::J2SExpr this (type)
       (if (eq? type 'bool)
 	  (j2s-scheme this mode return conf)
-	  `(js-toboolean ,(j2s-scheme this mode return conf)))))
+	  (j2s-toboolean (j2s-scheme this mode return conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-bool-test ::J2SParen ...                                     */
@@ -150,3 +168,15 @@
 	   (not (eq? ty 'obj))
 	   (not (eq? ty 'any)))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-toboolean ...                                                */
+;*---------------------------------------------------------------------*/
+(define (j2s-toboolean expr)
+   (match-case expr
+      (((or let let*) ?- (js-has-own-property . ?-))
+       expr)
+      (else
+       `(js-toboolean ,expr))))
+
+
+   

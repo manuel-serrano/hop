@@ -82,6 +82,7 @@
 	 (uint32 js-int53-touint32)
 	 (integer nop)
 	 (number nop)
+	 (real fixnum->flonum)
 	 (string ,js-fixnum->string)
 	 (scmstring fixnum->string)
 	 (object ,js-number->jsobject)
@@ -128,23 +129,36 @@
 	 (array nop)
 	 (scmstring ,js->scmstring)
 	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))
+	 (real ,(lambda (v expr ctx) `(js-toflonum (js-tonumber ,v %this))))
+	 (integer ,(lambda (v expr ctx) `(js-tointeger ,v %this)))
+	 (number ,(lambda (v expr ctx) `(js-tonumber ,v %this)))
 	 (any nop)))
      (bool
 	((int32 ,js-bool->int32)
 	 (uint32 ,js-bool->uint32)
 	 (object ,js-bool->jsobject)
 	 (scmstring ,js->scmstring)
+	 (real ,(lambda (v expr ctx) `(js-toflonum (js-tonumber ,v %this))))
+	 (integer ,(lambda (v expr ctx) `(js-tointeger ,v %this)))
+	 (number ,(lambda (v expr ctx) `(js-tonumber ,v %this)))
 	 (iterable error)
 	 (any nop)))
      (null
 	((object ,js-toobject)
 	 (scmstring ,js->scmstring)
+	 (number ,(lambda (v expr ctx) 0))
+	 (int32 ,(lambda (v expr ctx) #s32:0))
+	 (uint32 ,(lambda (v expr ctx) #u32:0))
+	 (integer ,(lambda (v expr ctx) 0))
+	 (real ,(lambda (v expr ctx) 0.0))
 	 (iterable error)
 	 (any nop)))
      (undefined
 	((object ,js-toobject)
 	 (bool ,(lambda (v expr ctx) #f))
 	 (scmstring ,js->scmstring)
+	 (number ,(lambda (v expr ctx) +nan.0))
+	 (real ,(lambda (v expr ctx) +nan.0))
 	 (iterable error)
 	 (any nop)))
      (regexp
@@ -500,7 +514,7 @@
 ;*    js-any->real ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-any->real v expr ctx)
-   (js->real v expr ctx #t))
+   (js->real v expr ctx #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-any->integer ...                                              */
@@ -512,7 +526,7 @@
 ;*    js-number->real ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-number->real v expr ctx)
-   (js->real v expr ctx #f))
+   (js->real v expr ctx #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    js->real ...                                                     */

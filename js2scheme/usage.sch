@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 06:23:31 2019                          */
 ;*    Last change :  Sun Dec 15 07:15:59 2019 (serrano)                */
-;*    Copyright   :  2019 Manuel Serrano                               */
+;*    Copyright   :  2019-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Set of macros for deadling with reference usage attributes.      */
 ;*=====================================================================*/
@@ -60,8 +60,8 @@
    (lambda (x e)
       (match-case x
 	 ((decl-usage-has? ?decl ?keys)
-	  (e `(with-access::J2SDecl ,decl ((_usage _usage))
-		 (usage-has? _usage ,keys))
+	  (e `(with-access::J2SDecl ,decl (usage)
+		 (usage-has? usage ,keys))
 	     e))
 	 (else
 	  (error "decl-usage-has?" "bad form" x)))))
@@ -86,8 +86,8 @@
    (lambda (x e)
       (match-case x
 	 ((decl-usage-strict? ?decl ?keys)
-	  (e `(with-access::J2SDecl ,decl ((_usage _usage))
-		 (usage-strict? _usage ,keys))
+	  (e `(with-access::J2SDecl ,decl (usage)
+		 (usage-strict? usage ,keys))
 	     e))
 	 (else
 	  (error "decl-usage-strict?" "bad form" x)))))
@@ -112,8 +112,8 @@
    (lambda (x e)
       (match-case x
 	 ((decl-usage-add! ?decl ?key)
-	  (e `(with-access::J2SDecl ,decl ((_usage _usage))
-		 (set! _usage (usage-add _usage ,key)))
+	  (e `(with-access::J2SDecl ,decl (usage)
+		 (set! usage (usage-add usage ,key)))
 	     e))
 	 (else
 	  (e `((@ decl-usage-add! __js2scheme_usage) ,@(cdr x)) e)))))
@@ -139,8 +139,8 @@
    (lambda (x e)
       (match-case x
 	 ((decl-usage-rem! ?decl ?key)
-	  (e `(with-access::J2SDecl ,decl ((_usage _usage))
-		 (set! _usage (usage-rem _usage ,key)))
+	  (e `(with-access::J2SDecl ,decl (usage)
+		 (set! usage (usage-rem usage ,key)))
 	     e))
 	 (else
 	  (error "decl-usage-rem!" "bad form" x)))))

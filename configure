@@ -68,6 +68,9 @@ libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite js2scheme hop
 bglcloselibs="web multimedia"
 bglextracloselibs=
 
+extralibs=
+bglextralibs="biglooweb bigloomultimedia"
+
 closure=
 
 hostbigloo=bigloo
@@ -299,7 +302,7 @@ while : ; do
 
     --devel)
       devmode="devel";
-      bcflagsrts=;
+      bcflagsrts=-cg;
       bcflagsdev=-cg;
       bscm2jsflags=;
       bcflags="$bcflags -Wall -Wno-slot -srfi devel";;
@@ -750,6 +753,9 @@ if [ "$ssl" = "yes" ]; then
   hopsrfis="$hopsrfis enable-ssl"
   libraries="$libraries ssl"
   bglcloselibs="$bglcloselibs ssl"
+  
+  extralibs="$""(OPENSSLLIB) $extralibs"
+  bglextralibs="$bglextralibs bigloossl"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -778,6 +784,7 @@ if [ "$threads" = "yes" ]; then
   hopsrfis="$hopsrfis enable-threads"
   libraries="$libraries pthread"
   bglcloselibs="$bglcloselibs pthread"
+  bglextralibs="$bglextralibs bigloopthread"
 else
   if [ "$avahi " = "yes " ]; then
     echo "*** ERROR:configure:bigloo avahi." >&2;
@@ -829,6 +836,7 @@ if [ "$avahi " = "yes " ]; then
   zeroconfbe="avahi"
   libraries="$libraries avahi"
   bglcloselibs="$bglcloselibs avahi"
+  bglextralibs="$bglextralibs biglooavahi"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -857,6 +865,7 @@ if [ "$upnp " = "yes " ]; then
   hopsrfis="$hopsrfis enable-upnp"
   libraries="$libraries upnp"
   bglcloselibs="$bglcloselibs upnp"
+  bglextralibs="$bglextralibs biglooupnp"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -888,6 +897,9 @@ else
   libraries="$libraries libuv"
   bglcloselibs="$bglcloselibs libuv"
   bglextracloselibs="-luv"
+  
+  extralibs="-luv $extralibs"
+  bglextralibs="$bglextralibs bigloolibuv"
 fi
 
 #*---------------------------------------------------------------------*/
@@ -1049,6 +1061,7 @@ if [ "$arch " = "android " ]; then
   hopsrfis="$hopsrfis enable-hopdroid"
   bcflags="$bcflags -srfi enable-hopdroid";
   bglcloselibs="$bglcloselibs phone";
+  bglextralibs="$bglextralibs bigloophone";
 fi
 
 #*---------------------------------------------------------------------*/
@@ -1063,21 +1076,22 @@ mkdir -p lib/hop/$version
 #*    Makefile.hopconfig                                               */
 #*---------------------------------------------------------------------*/
 if [ "$ssl " = "yes " ]; then
-  bigloossllibs="$""(OPENSSLLIBS)";
-  bigloossllibu="$""(OPENSSLLIBS)";
+  bigloossllibs="$""(OPENSSLLIBS)"
+  bigloossllibu="$""(OPENSSLLIBS)"
 else
-  bigloossllibs="";
-  bigloossllibu="";
+  bigloossllibs=""
+  bigloossllibu=""
 fi
 
 if [ "$threads " = "yes " ]; then
-  bigloopthlibs="-lbigloopthread_s-$""(RELEASE)";
-  bigloopthlibu="-lbigloopthread_u-$""(RELEASE)";
+  bigloopthlib="bigloopthread"
+  bigloopthlibs="-lbigloopthread_s-$""(RELEASE)"
+  bigloopthlibu="-lbigloopthread_u-$""(RELEASE)"
   bigloogc="-lbigloogc_fth-$""(RELEASE)"
-  bhopcflags="--js-worker-slave";
+  bhopcflags="--js-worker-slave"
 else
-  bigloopthlibs="";
-  bigloopthlibu="";
+  bigloopthlibs=""
+  bigloopthlibu=""
   bigloogc="-lbigloogc-$""(RELEASE)"
 fi
 
@@ -1204,12 +1218,15 @@ cat $mkmf.in \
         -e "s|@REPODIR@|$repodir|" \
         -e "s|@HOPSVN@|$svn|" \
         -e "s|@HOPDISTRIBDIR@|$distribdir|" \
+        -e "s|@BIGLOOPTHLIB@|$bigloopthlib|" \
         -e "s|@BIGLOOSSLLIBS@|$bigloossllibs|" \
         -e "s|@BIGLOOSSLLIBU@|$bigloossllibu|" \
         -e "s|@BIGLOOPTHLIBS@|$bigloopthlibs|" \
         -e "s|@BIGLOOPTHLIBU@|$bigloopthlibu|" \
         -e "s|@RTSCONFIG@|$rts|" \
         -e "s|@HOPGCCLOSELIB@|$bigloogc|" \
+        -e "s|@BIGLOOEXTRALIBS@|$bglextralibs|" \
+        -e "s|@EXTRALIBS@|$extralibs|" \
         -e "s|@BGLCLOSELIBS_U@|$bglcloselibs_u $bglextracloselibs|" \
         -e "s|@BGLCLOSELIBS_S@|$bglcloselibs_s $bglextracloselibs|" \
         -e "s|@BGLCLOSELIBS@|$bglcloselibs_version|" \

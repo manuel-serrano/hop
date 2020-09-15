@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb 26 07:03:15 2008                          */
 ;*    Last change :  Mon Sep 16 16:47:36 2019 (serrano)                */
-;*    Copyright   :  2008-19 Manuel Serrano                            */
+;*    Copyright   :  2008-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Pool scheduler                                                   */
 ;*    -------------------------------------------------------------    */
@@ -120,15 +120,10 @@
       (signal sigsegv
 	 (lambda (n)
 	    (raise
-	       (if #t
-		   (instantiate::&stack-overflow
-		      (proc "hop")
-		      (msg "Stack overflow")
-		      (obj #f))
-		   (instantiate::&error
-		      (proc "hop")
-		      (msg "segmentation violation")
-		      (obj #f))))))
+	       (instantiate::&stack-overflow
+		  (proc "hop")
+		  (msg "Stack overflow")
+		  (obj #f)))))
       (synchronize mutex
 	 (let loop ()
 	    (condition-variable-wait! condv mutex)

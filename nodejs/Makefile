@@ -24,7 +24,6 @@ install: install-library
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = nodejs
-BCFLAGSRTS = -unsafe
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
   -ljs2scheme_s-$(HOPRELEASE) -lhopscript_s-$(HOPRELEASE) \
   -lhop_s-$(HOPRELEASE)
@@ -80,7 +79,7 @@ native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
 
 heap-c: .afile
-lib-c: .afile
+lib-c: .afile heap-c
 
 #*---------------------------------------------------------------------*/
 #*    uv.sch ...                                                       */

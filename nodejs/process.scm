@@ -66,7 +66,8 @@
 
    (export (nodejs-compiler-options-add! ::keyword ::obj)
 	   (nodejs-process ::WorkerHopThread ::JsGlobalObject)
-	   (process-ares-fail ::JsGlobalObject ::JsProcess ::int)))
+	   (process-ares-fail ::JsGlobalObject ::JsProcess ::int)
+	   (nodejs-process-exit proc status ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -110,7 +111,8 @@
 		     (if (js-procedure? fatal)
 			 (js-call1-jsprocedure %this fatal %process exn)
 			 (raise exn))))
-	       1 (& "fatalException") :src "process.scm"))
+	       (js-function-arity 1 0)
+	       (js-function-info :name "fatalException" :len 1)))
 	 ;; init tick machinery
 	 (let* ((m (nodejs-require-core "node_tick" %worker %this))
                 (tick (js-get m (& "initNodeTick") %this)))
@@ -141,7 +143,9 @@
 			 (if (eq? (car c) 'SIGTERM)
 			     (hop-sigterm-handler-set!
 				(lambda (n)
-				   (js-call0 %this proc this)
+				   (js-worker-push-thunk! %worker "SIGTERM"
+				      (lambda ()
+					 (js-call0 %this proc this)))
 				   '(js-worker-tick %worker)))
 			     (signal (cdr c)
 				(lambda (s)
@@ -186,19 +190,23 @@
 		      (js-call1 %this remall this signame)))))
 	    
 	    ;; on
-	    (let ((add (js-make-function %this on 2 (& "addListener"))))
+	    (let ((add (js-make-function %this on
+			  (js-function-arity 2 0)
+			  (js-function-info :name "addListener" :len 2))))
 	       (js-put! %process (& "on") add #f %this)
 	       (js-put! %process (& "addListener") add #f %this))
 	    ;; remove
-	    (let ((rem (js-make-function %this remove 2 (& "removeListener"))))
+	    (let ((rem (js-make-function %this remove
+			  (js-function-arity 2 0)
+			  (js-function-info :name "removeListener" :len 2))))
 	       (js-put! %process (& "removeListener") rem #f %this))
 	    ;; removeALl
-	    (let ((remall (js-make-function %this removeall 1 (& "removeAllListeners"))))
+	    (let ((remall (js-make-function %this removeall
+			     (js-function-arity 1 0)
+			     (js-function-info :name "removeAllListeners" :len 1))))
 	       (js-put! %process (& "removeAllListeners") remall #f %this)))
 	 ;; stdios
-	 (let* (;; (oldstdout (js-get %process 'stdout %this))
-		;; (oldstderr (js-get %process 'stderr %this))
-		(m (nodejs-require-core "node_stdio" %worker %this))
+	 (let* ((m (nodejs-require-core "node_stdio" %worker %this))
 		(stdio (js-get m (& "initNodeStdio") %this)))
 	    (js-call1 %this stdio (js-undefined) %process))
 	 ;; console finalization
@@ -250,7 +258,8 @@
 	       (js-make-function %this
 		  (lambda (this . l)
 		     (error "process" "binding not implemented" name))
-		  0 (js-name->jsstring name))
+		  (js-function-arity 0 0)
+		  (js-function-info :name name :len 0))
 	       #f %this))
 
 	 (define prog-start-time::uint64 (nodejs-uptime %worker))
@@ -339,7 +348,8 @@
 	       `((write . ,(js-make-function %this
 			      (lambda (this o)
 				 (display-value o (current-output-port)))
-			      1 (& "write")))
+			      (js-function-arity 1 0)
+			      (js-function-info :name "write" :len 1)))
 		 (writable . #t)
 		 (_isStdio . #t)
 		 (fd . 1))
@@ -350,7 +360,8 @@
 	       `((write . ,(js-make-function %this
 			      (lambda (this o)
 				 (display-value o (current-error-port)))
-			      1 (& "write")))
+			      (js-function-arity 1 0)
+			      (js-function-info :name "write" :len 1)))
 		 (writable . #t)
 		 (_isStdio . #t)
 		 (fd . 2))
@@ -361,7 +372,8 @@
 	       `((read . ,(js-make-function %this
 			     (lambda (this o)
 				(tprint "stdin read not implemented"))
-			     1 (& "read")))
+			     (js-function-arity 1 0)
+			     (js-function-info :name "read" :len 1)))
 		 (writable . #f)
 		 (_isStdio . #t)
 		 (fd . 0))
@@ -387,19 +399,22 @@
 	    (js-make-function %this
 	       (lambda (this)
 		  (exit 134))
-	       0 (& "abort"))
+	       (js-function-arity 0 0)
+	       (js-function-info :name "abort" :len 0))
 	    #f %this)
 
 	 (js-bind! %this proc (& "compilerOptions")
 	    :get (js-make-function %this
 		    (lambda (this)
 		       (js-plist->jsobject (j2s-compile-options) %this))
-		    0 (& "compilerOptions"))
+		    (js-function-arity 0 0)
+		    (js-function-info :name "compilerOptions" :len 0))
 	    :set (js-make-function %this
 		    (lambda (this o)
 		       (j2s-compile-options-set!
 			  (js-jsobject->plist o %this)))
-		    1 (& "compilerOptions"))
+		    (js-function-arity 1 0)
+		    (js-function-info :name "compilerOptions" :len 1))
 	    :configurable #f)
 	 
 	 ;; first process name
@@ -409,11 +424,13 @@
 	    :get (js-make-function %this
 		    (lambda (this)
 		       (js-string->jsstring (nodejs-get-process-title)))
-		    0 (& "title"))
+		    (js-function-arity 0 0)
+		    (js-function-info :name "title" :len 0))
 	    :set (js-make-function %this
 		    (lambda (this str)
 		       (nodejs-set-process-title! (js-tostring str %this)))
-		    1 (& "title"))
+		    (js-function-arity 1 0)
+		    (js-function-info :name "title" :len 1))
 	    :configurable #f)
 	 
 	 (js-put! proc (& "version")
@@ -439,23 +456,17 @@
 	 (js-put! proc (& "exit")
 	    (js-make-function %this
 	       (lambda (this status)
-		  (let ((r (if (eq? status (js-undefined))
-			       0
-			       (js-tointeger status %this))))
-		     (unless (js-totest (js-get proc (& "_exiting") %this))
-			(js-put! proc (& "_exiting") #t #f %this)
-			(let ((emit (js-get proc (& "emit") %this)))
-			   (js-call2 %this emit proc "exit" r))
-			(nodejs-compile-abort-all!)
-			(exit r))))
-	       1 (& "exit"))
+		  (nodejs-process-exit proc status %this))
+	       (js-function-arity 1 0)
+	       (js-function-info :name "exit" :len 1))
 	    #f %this)
 	 (js-put! proc (& "reallyExit")
 	    (js-make-function %this
 	       (lambda (this status)
 		  ;;(nodejs-compile-abort-all!)
 		  (exit (js-tointeger status %this)))
-	       1 (& "exit"))
+	       (js-function-arity 1 0)
+	       (js-function-info :name "exit" :len 1))
 	    #f %this)
 	 (js-put! proc (& "arch") (js-string->jsstring (os-arch)) #f %this)
 	 (js-put! proc (& "platform") (js-string->jsstring (os-name)) #f %this)
@@ -519,7 +530,8 @@
 			 (warning "%nodejs-process"
 			    "binding not implemented: " mod)
 			 (js-new %this js-object)))))
-	       2 (& "binding"))
+	       (js-function-arity 1 0)
+	       (js-function-info :name "binding" :len 2))
 	    #f %this)
 	 (js-put! proc (& "env")
 	    (js-alist->jsobject (getenv) %this)
@@ -542,7 +554,8 @@
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (nodejs-check? check))
-		       0 (& "_needImmediateCallback"))
+		       (js-function-arity 0 0)
+		       (js-function-info :name "_needImmediateCallback" :len 0))
 	       :set (js-make-function %this
 		       (lambda (this val)
 			  (let ((v (js-totest val)))
@@ -561,40 +574,47 @@
 				 (set! idle #f)
 				 (nodejs-check-stop %worker %this check)
 				 (set! check #f)))))
-		       1 (& "_needImmediateCallback"))
+		       (js-function-arity 1 0)
+		       (js-function-info :name "_needImmediateCallback" :len 1))
 	       :configurable #f))
 	    
 	 (js-put! proc (& "cwd")
 	    (js-make-function %this
 	       (lambda (this)
 		  (js-string->jsstring (pwd)))
-	       0 (& "cwd"))
+	       (js-function-arity 0 0)
+	       (js-function-info :name "cwd" :len 0))
 	    #f %this)
 	 (js-put! proc (& "chdir")
 	    (js-make-function %this
 	       (lambda (this path)
 		  (chdir (js-jsstring->string path)))
-	       1 (& "chdir"))
+	       (js-function-arity 1 0)
+	       (js-function-info :name "chdir" :len 1))
 	    #f %this)
 	 (js-put! proc (& "getuid")
 	    (js-make-function %this
 	       (lambda (this) (getuid))
-	       0 (& "getuid"))
+	       (js-function-arity 0 0)
+	       (js-function-info :name "getuid" :len 0))
 	    #f %this)
 	 (js-put! proc (& "setuid")
 	    (js-make-function %this
 	       (lambda (this val) (setuid (js-tointeger val %this)))
-	       1 (& "setuid"))
+	       (js-function-arity 1 0)
+	       (js-function-info :name "setuid" :len 1))
 	    #f %this)
 	 (js-put! proc (& "getgid")
 	    (js-make-function %this
 	       (lambda (this) (getgid))
-	       0 (& "getgid"))
+	       (js-function-arity 0 0)
+	       (js-function-info :name "getgid" :len 0))
 	    #f %this)
 	 (js-put! proc (& "setgid")
 	    (js-make-function %this
 	       (lambda (this val) (setgid (js-tointeger val %this)))
-	       1 (& "setgid"))
+	       (js-function-arity 1 0)
+	       (js-function-info :name "setgid" :len 1))
 	    #f %this)
 	 (js-put! proc (& "umask")
 	    (js-make-function %this
@@ -606,7 +626,8 @@
 		      (umask (string->integer (js-jsstring->string val) 8)))
 		     (else
 		      (umask (js-tointeger val %this)))))
-	       1 (& "umask"))
+	       (js-function-arity 1 0)
+	       (js-function-info :name "umask" :len 1))
 	    #f %this)
 	 
 	 (js-put! proc (& "_usingDomains")
@@ -631,7 +652,8 @@
 			   (set! tick-callback #f)
 			   (js-put! this (& "_tickCallback") tdc #f %this)
 			   (js-put! this (& "_currentTickHandler") ndt #f %this)))))
-	       0 (& "_usingDomains"))
+	       (js-function-arity 0 0)
+	       (js-function-info :name "_usingDomains" :len 0))
 	    #f %this)
 
 	 ;; tick
@@ -640,7 +662,8 @@
 	    #f %this)
 	 (js-put! proc (& "_needTickCallback")
 	    (js-make-function %this need-tick-callback
-	       0 (& "needTickCallback"))
+	       (js-function-arity 0 0)
+	       (js-function-info :name "needTickCallback" :len 0))
 	    #f %this)
 
 	 ;; hrtime
@@ -660,7 +683,8 @@
 		     (let ((t0 (uint64->flonum (/u64 t d)))
 			   (t1 (uint64->flonum (remainderu64 t d))))
 			(js-vector->jsarray (vector t0 t1) %this))))
-	       1 (& "hrtime"))
+	       (js-function-arity 1 0)
+	       (js-function-info :name "hrtime" :len 1))
 	    #t %this)
 
 	 ;; uptime
@@ -670,7 +694,8 @@
 		  (let* ((uptime (-u64 (nodejs-uptime %worker) prog-start-time))
 			 (t (uint64->flonum uptime)))
 		     (/fl t 1000.)))
-	       0 (& "uptime"))
+	       (js-function-arity 0 0)
+	       (js-function-info :name "uptime" :len 0))
 	    #t %this)
 
 	 ;; kill
@@ -678,7 +703,8 @@
 	    (js-make-function %this
 	       (lambda (this pid sig)
 		  (nodejs-kill %worker %this proc pid sig))
-	       2 (& "_kill"))
+	       (js-function-arity 2 0)
+	       (js-function-info :name "_kill" :len 2))
 	    #t %this)
 
 	 ;; memoryUsage
@@ -690,7 +716,8 @@
 		       (heapTotal . 0)
 		       (heapUsed . 0))
 		     %this))
-	       0 (& "memoryUsage"))
+	       (js-function-arity 0 0)
+	       (js-function-info :name "memoryUsage" :len 0))
 	    #t %this)
 
 	 ;; getgroups
@@ -698,7 +725,8 @@
 	    (js-make-function %this
 	       (lambda (this)
 		  (js-vector->jsarray (getgroups) %this))
-	       0 (& "getgroups"))
+	       (js-function-arity 0 0)
+	       (js-function-info :name "getgroups" :len 0))
 	    #t %this)
 
 	 ;; ioctl (hop extension)
@@ -708,7 +736,8 @@
 		  (apply ioctl (inexact->exact (js-tointeger fd %this))
 		     (if (number? request) request (js-tostring request %this))
 		     (js-tonumber val %this)))
-	       3 (& "ioctl"))
+	       (js-function-arity 3 0)
+	       (js-function-info :name "ioctl" :len 3))
 	    #t %this)
 
 	 ;; noDeprecation (bound to avoid cache misses)
@@ -718,7 +747,9 @@
 	 ;; mainModule
 	 (with-access::JsGlobalObject %this (js-main) 
 	    (js-bind! %this proc (& "mainModule")
-	       :get (js-make-function %this (lambda (this) js-main) 0 (& "main"))
+	       :get (js-make-function %this (lambda (this) js-main)
+		       (js-function-arity 0 0)
+		       (js-function-info :name "main" :len 0))
 	       :configurable #f
 	       :writable #f))
 
@@ -828,7 +859,8 @@
 		     (unless (js-totest options)
 			(with-access::JsHandle this (handle)
 			   (nodejs-unref handle %worker))))
-		  3 (& "start"))
+		  (js-function-arity 3 0)
+		  (js-function-info :name "start" :len 3))
 	       #f %this)
 	    
 	    (js-put! obj (& "close")
@@ -837,7 +869,8 @@
 		     (js-put! this (& "initialized_") #f #f %this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-fs-event-stop handle)))
-		  1 (& "close"))
+		  (js-function-arity 0 0)
+		  (js-function-info :name "close" :len 1))
 	       #f %this)
 	    
 	    obj)))
@@ -856,9 +889,10 @@
    
    (with-access::JsGlobalObject %this (js-object)
       (js-alist->jsobject
-	 `((FSEvent . ,(js-make-function %this fs-event 0 (& "FSEvent")
-			  :alloc (lambda (%this o) #unspecified)
-			  :construct fs-event)))
+	 `((FSEvent . ,(js-make-function %this fs-event
+			  (js-function-arity 0 0)
+			  (js-function-info :name "FSEvent" :len 0)
+			  :alloc (lambda (%this o) #unspecified))))
 	 %this)))
 
 ;*---------------------------------------------------------------------*/
@@ -1010,18 +1044,41 @@
 	 `((isIP . ,(js-make-function %this
 		       (lambda (this domain)
 			  (nodejs-isip (js-tojsstring domain %this)))
-		       1 (& "isIP")))
-	   (getaddrinfo . ,(js-make-function %this getaddrinfo 2 (& "getaddrinfo")))
-	   (queryA . ,(js-make-function %this query4 2 (& "queryA")))
-	   (queryAaaa . ,(js-make-function %this query6 2 (& "queryAaaa")))
-	   (queryCname . ,(js-make-function %this query-cname 2 (& "queryCname")))
-	   (queryMx . ,(js-make-function %this query-mx 2 (& "queryMx")))
-	   (queryNs . ,(js-make-function %this query-ns 2 (& "queryNs")))
-	   (queryTxt . ,(js-make-function %this query-txt 2 (& "queryTxt")))
-	   (querySrv . ,(js-make-function %this query-srv 2 (& "querySrv")))
-	   (queryNaptr . ,(js-make-function %this query-naptr 2 (& "querySrv")))
-	   (getHostByAddr . ,(js-make-function %this gethostbyaddr 2 (& "gethostbyaddr")))
-	   (getHostByName . ,(js-make-function %this gethostbyname 2 (& "gethostbyname"))))
+		       (js-function-arity 1 0)
+		       (js-function-info :name "isIP" :len 1)))
+	   (getaddrinfo . ,(js-make-function %this getaddrinfo
+			      (js-function-arity 2 0)
+			      (js-function-info :name "getaddrinfo" :len 2)))
+	   (queryA . ,(js-make-function %this query4
+			 (js-function-arity 2 0)
+			 (js-function-info :name "queryA" :len 2)))
+	   (queryAaaa . ,(js-make-function %this query6
+			    (js-function-arity 2 0)
+			    (js-function-info :name "queryAaaa" :len 2)))
+	   (queryCname . ,(js-make-function %this query-cname
+			     (js-function-arity 2 0)
+			     (js-function-info :name "queryCname" :len 2)))
+	   (queryMx . ,(js-make-function %this query-mx
+			  (js-function-arity 2 0)
+			  (js-function-info :name "queryMx" :len 2)))
+	   (queryNs . ,(js-make-function %this query-ns
+			  (js-function-arity 2 0)
+			  (js-function-info :name "queryNs" :len 2)))
+	   (queryTxt . ,(js-make-function %this query-txt
+			   (js-function-arity 2 0)
+			   (js-function-info :name "queryTxt" :len 2)))
+	   (querySrv . ,(js-make-function %this query-srv
+			   (js-function-arity 2 0)
+			   (js-function-info :name "querySrv" :len 2)))
+	   (queryNaptr . ,(js-make-function %this query-naptr
+			     (js-function-arity 2 0)
+			     (js-function-info :name "querySrv" :len 2)))
+	   (getHostByAddr . ,(js-make-function %this gethostbyaddr
+				(js-function-arity 2 0)
+				(js-function-info :name "gethostbyaddr" :len 2)))
+	   (getHostByName . ,(js-make-function %this gethostbyname
+				(js-function-arity 2 0)
+				(js-function-info :name "gethostbyname" :len 2))))
 	 %this)))
 
 ;*---------------------------------------------------------------------*/
@@ -1058,27 +1115,33 @@
 				(if (eq? (bigloo-config 'endianess) 'little-endian)
 				    (js-ascii->jsstring "LE")
 				    (js-ascii->jsstring "BE")))
-			     0 (& "endianness")))
+			     (js-function-arity 0 0)
+			     (js-function-info :name "endianness" :len 0)))
 	(getHostname . ,(js-make-function %this
 			   (lambda (this)
 			      (js-string->jsstring (hostname)))
-			   0 (& "getHostname")))
+			   (js-function-arity 0 0)
+			   (js-function-info :name "getHostname" :len 0)))
 	(getOSType . ,(js-make-function %this
 			 (lambda (this)
 			    (js-string->jsstring (os-name)))
-			 0 (& "getOSType")))
+			 (js-function-arity 0 0)
+			 (js-function-info :name "getOSType" :len 0)))
 	(getOSRelease . ,(js-make-function %this
 			    (lambda (this)
 			       (js-string->jsstring (os-version)))
-			    0 (& "getOSRelease")))
+			    (js-function-arity 0 0)
+			    (js-function-info :name "getOSRelease" :len 0)))
 	(getInterfaceAddresses . ,(js-make-function %this
 				     (lambda (this)
 					(interfaces->js))
-				     0 (& "getInterfaceAddresses")))
+				     (js-function-arity 0 0)
+				     (js-function-info :name "getInterfaceAddresses" :len 0)))
 	(getUptime . ,(js-make-function %this
 			 (lambda (this)
 			    (nodejs-getuptime))
-			 0 (& "getUptime")))
+			 (js-function-arity 0 0)
+			 (js-function-info :name "getUptime" :len 0)))
 	(getLoadAvg . ,(js-make-function %this
 			  (lambda (this)
 			     (let* ((f64 (js-get %this (& "Float64Array") %this))
@@ -1086,15 +1149,18 @@
 				(with-access::JsTypedArray obj (buffer)
 				   (with-access::JsArrayBuffer buffer (data)
 				      (nodejs-loadavg data))) obj))
-			  0 (& "getLoadAvg")))
+			  (js-function-arity 0 0)
+			  (js-function-info :name "getLoadAvg" :len 0)))
 	(getFreeMem . ,(js-make-function %this
 			  (lambda (this)
 			     (nodejs-getfreemem))
-			  0 (& "getFreeMem")))
+			  (js-function-arity 0 0)
+			  (js-function-info :name "getFreeMem" :len 0)))
 	(getTotalMem . ,(js-make-function %this
 			   (lambda (this)
 			      (nodejs-gettotalmem))
-			   0 (& "getTotalMem")))
+			   (js-function-arity 0 0)
+			   (js-function-info :name "getTotalMem" :len 0)))
 	(getCPUs . ,(js-make-function %this
 		       (lambda (this)
 			  (js-vector->jsarray
@@ -1102,8 +1168,24 @@
 					     (js-alist->jsobject cpu %this))
 				(nodejs-getcpus))
 			     %this))
-		       0 (& "getCPUs"))))
+		       (js-function-arity 0 0)
+		       (js-function-info :name "getCPUs" :len 0))))
       %this))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-process-exit ...                                          */
+;*---------------------------------------------------------------------*/
+(define (nodejs-process-exit proc status %this)
+   (let ((r (if (eq? status (js-undefined))
+		0
+		(js-tointeger status %this))))
+      (unless (js-totest (js-get proc (& "_exiting") %this))
+	 (js-put! proc (& "_exiting") #t #f %this)
+	 (let ((emit (js-get proc (& "emit") %this)))
+	    (js-call2 %this emit proc (& "exit") r))
+	 (nodejs-compile-abort-all!)
+	 (exit r))))
+
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

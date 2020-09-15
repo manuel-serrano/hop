@@ -45,7 +45,8 @@
 	       (js-make-function %this
 		  (lambda (this cb)
 		     (nodejs-close %worker %this process this cb))
-		  1 (& "close"))
+		  (js-function-arity 1 0)
+		  (js-function-info :name "close" :len 1))
 	       #f %this)
 	    
 	    (js-put! obj (& "unref")
@@ -53,28 +54,32 @@
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-unref handle %worker)))
-		  0 (& "unref"))
+		  (js-function-arity 0 0)
+		  (js-function-info :name "unref" :len 0))
 	       #f %this)
 	    
 	    (js-put! obj (& "readStart")
 	       (js-make-function %this
 		  (lambda (this)
 		     (stream-read-start %worker %this process slab this))
-		  0 (& "readStart"))
+		  (js-function-arity 0 0)
+		  (js-function-info :name "readStart" :len 0))
 	       #f %this)
 	    
 	    (js-put! obj (& "readStop")
 	       (js-make-function %this
 		  (lambda (this)
 		     (stream-read-stop %worker %this this))
-		  0 (& "readStop"))
+		  (js-function-arity 0 0)
+		  (js-function-info :name "readStop" :len 0))
 	       #f %this)
 	    
 	    (js-put! obj (& "writeBuffer")
 	       (js-make-function %this
 		  (lambda (this buffer)
 		     (stream-write-buffer %worker %this process this buffer))
-		  1 (& "writeBuffer"))
+		  (js-function-arity 1 0)
+		  (js-function-info :name "writeBuffer" :len 1))
 	       #f %this)
 	    
 	    (js-put! obj (& "writeAsciiString")
@@ -83,7 +88,8 @@
 		     (stream-write-string %worker %this process this
 			(js-jsstring->string string) 0 (js-jsstring-lengthfx string)
 			"ascii" #f handle))
-		  2 (& "writeAsciiString"))
+		  (js-function-arity 2 0)
+		  (js-function-info :name "writeAsciiString" :len 2))
 	       #f %this)
 	    
 	    (js-put! obj (& "writeUtf8String")
@@ -92,7 +98,8 @@
 		     (stream-write-string %worker %this process this
 			(js-jsstring->string string) 0 (js-jsstring-lengthfx string)
 			"utf8" #f handle))
-		  2 (& "writeUtf8String"))
+		  (js-function-arity 2 0)
+		  (js-function-info :name "writeUtf8String" :len 2))
 	       #f %this)
 	    
 	    (js-put! obj (& "writeUcs2String")
@@ -103,7 +110,8 @@
 			(stream-write-string %worker %this process this
 			   (js-jsstring->string string) 0 (js-jsstring-lengthfx string)
 			   "ascii" #f handle)))
-		  2 (& "writeUcs2String"))
+		  (js-function-arity 2 0)
+		  (js-function-info :name "writeUcs2String" :len 2))
 	       #f %this)
 	    
 	    (js-put! obj (& "getWindowSize")
@@ -111,7 +119,8 @@
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-tty-get-window-size %worker %this handle)))
-		  0 (& "getWindowSize"))
+		  (js-function-arity 0 0)
+		  (js-function-info :name "getWindowSize" :len 0))
 	       #f %this)
 	    
 	    (js-put! obj (& "setRawMode")
@@ -119,7 +128,8 @@
 		  (lambda (this)
 		     (with-access::JsHandle this (handle)
 			(nodejs-tty-set-raw-mode handle)))
-		  0 (& "setRawMode"))
+		  (js-function-arity 0 0)
+		  (js-function-info :name "setRawMode" :len 0))
 	       #f %this)
 	    
 	    obj)))
@@ -141,7 +151,8 @@
 	       :get (js-make-function %this
 		       (lambda (this)
 			  (nodejs-stream-fd %worker hdl))
-		       0 (& "GetFD"))
+		       (js-function-arity 0 0)
+		       (js-function-info :name "GetFD" :len 0))
 	       :writable #f :configurable #f)
 	    obj)))
    
@@ -153,15 +164,17 @@
       (with-access::JsProcess process (js-tty)
 	 (let ((obj (js-new %this js-object)))
 	    (set! js-tty
-	       (js-make-function %this TTY 0 (& "TTY")
+	       (js-make-function %this TTY
+		  (js-function-arity TTY)
+		  (js-function-info :name "TTY" :len 0)
 		  :alloc (lambda (%this o) #unspecified)
-		  :prototype (get-tty-proto)
-		  :construct TTY))
+		  :prototype (get-tty-proto)))
 	    (js-put! obj (& "isTTY")
 	       (js-make-function %this
 		  (lambda (this fd)
 		     (nodejs-istty %worker %this fd))
-		  1 (& "isTTY"))
+		  (js-function-arity 1 0)
+		  (js-function-info :name "isTTY" :len 1))
 	       #f %this)
 	    
 	    (js-put! obj (& "guessHandleType")
@@ -169,7 +182,8 @@
 		  (lambda (this fd)
 		     (nodejs-guess-handle-type
 			%worker %this fd))
-		  1 (& "guessHandleType"))
+		  (js-function-arity 1 0)
+		  (js-function-info :name "guessHandleType" :len 1))
 	       #f %this)
 	    
 	    (js-put! obj (& "TTY") js-tty #f %this)

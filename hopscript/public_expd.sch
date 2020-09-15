@@ -57,3 +57,24 @@
       (else
        (map (lambda (x) (e x e)) x))))
       
+;*---------------------------------------------------------------------*/
+;*    js-toprimitive-for-string ...                                    */
+;*    -------------------------------------------------------------    */
+;*    See JS-TOPRIMITIVE-FOR-STRING in public.scm                      */
+;*---------------------------------------------------------------------*/
+(define (js-toprimitive-for-string-expander x e)
+   (match-case x
+      ((?- (and (? symbol?) ?s) ?this)
+       (e `(if (js-jsstring? ,s)
+	       ,s
+	       ((@ js-toprimitive-for-string __hopscript_public) ,s ,this))
+	  e))
+      ((?- ?s ?this)
+       (let ((t (gensym 's)))
+	  (e `(let ((,t ,s))
+		 (if (js-jsstring? ,t)
+		     ,t
+		     ((@ js-toprimitive-for-string __hopscript_public) ,t ,this)))
+	     e)))
+      (else
+       (map (lambda (x) (e x e)) x))))

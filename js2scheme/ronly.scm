@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
 ;*    Last change :  Mon Dec 16 17:55:25 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Copyright   :  2013-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
 ;*=====================================================================*/
@@ -130,7 +130,8 @@
       (when (isa? lhs J2SRef)
 	 (with-access::J2SRef lhs (decl)
 	    (with-access::J2SDecl decl ( id)
-	       (decl-usage-add! decl 'assig))))
+	       (decl-usage-add! decl
+		  (if (decl-usage-has? decl '(init)) 'assig 'init)))))
       (ronly! rhs mode deval))
    this)
 

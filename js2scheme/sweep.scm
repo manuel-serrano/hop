@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
 ;*    Last change :  Sat Dec 14 18:48:11 2019 (serrano)                */
-;*    Copyright   :  2017-19 Manuel Serrano                            */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removal                                                */
 ;*=====================================================================*/
@@ -34,7 +34,7 @@
       (name "sweep")
       (comment "Remove unreachable definitions")
       (proc (lambda (n args) (j2s-sweep! n args)))
-      (optional 2)))
+      (optional :optim-sweep)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-sweep! ::J2SNode ...                                         */

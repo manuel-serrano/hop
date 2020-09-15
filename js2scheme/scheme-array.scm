@@ -125,15 +125,14 @@
 
    (define (alloc-length arg k)
       (cond
-	 ((smaller-than? arg 16)
+	 ((smaller-than? arg 1024)
 	  `(js-array-construct-alloc-small %this 
 	      ,(k (j2s-scheme arg mode return ctx))))
 	 ((smaller-than? arg (bit-lsh 1 29))
-	  `(js-array-construct/lengthu32 %this
-	      (js-array-alloc %this)
+	  `(js-array-construct-alloc/lengthu32 %this
 	      ,(k (j2s-scheme arg mode return ctx))))
 	 (else
-	  `(js-array-construct1 %this (js-array-alloc %this)
+	  `(js-array-construct-alloc/length %this
 	      ,(box (j2s-scheme arg mode return ctx)
 		  (j2s-vtype arg) ctx)))))
    
@@ -163,17 +162,20 @@
 		    (with-access::J2SCast arg (type expr)
 		       (if (eq? type 'any)
 			   (loop expr)
-			   `(js-array-construct %this (js-array-alloc %this)
-			       (list ,(j2s-scheme arg mode return ctx))))))
+			   `(js-array-construct-alloc %this
+			       ,(box (j2s-scheme arg mode return ctx) type ctx)))))
 		   (else
-		    `(js-array-construct %this (js-array-alloc %this)
-			(list ,(j2s-scheme arg mode return ctx)))))))))))
+		    `(js-array-construct-alloc %this 
+			,(j2s-scheme arg mode return ctx))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-index-ref ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-index-ref this::J2SAccess mode return ctx)
 
+   (define (j2s-decl-scheme-id d::J2SDecl)
+      (j2s-decl-scm-id d ctx))
+   
    (define (aref/cache this::J2SAccess)
       (with-access::J2SAccess this (obj field)
 	 (with-access::J2SAref obj (array alen amark deps)
@@ -189,7 +191,7 @@
 			  `(JS-ARRAY-INDEX-MARK-REF ,scmobj
 			      ,idx
 			      ,scmarray ,scmalen
-			      ,(j2s-decl-scheme-id amark)
+			      ,(j2s-decl-scm-id amark ctx)
 			      %this)
 			  `(JS-ARRAY-INDEX-FAST-REF ,scmobj
 			      ,idx
@@ -292,6 +294,9 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-set! this::J2SAssig mode return ctx)
 
+   (define (j2s-decl-scheme-id d::J2SDecl)
+      (j2s-decl-scm-id d ctx))
+   
    (define (aset/cache this)
       (with-access::J2SAssig this (lhs rhs)
 	 ;; an optimized array set in a loop (see array.scm)

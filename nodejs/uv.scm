@@ -438,7 +438,8 @@
 			(with-access::JsLoop loop (exiting)
 			   (set! exiting (not (=fx %retval 0))))
 			(uv-async-send async)
-			(run))
+			;;(run)
+			)
 		     (uv-run loop)))
 	       ;; call the cleanup function
 	       (when (=fx %retval 0)

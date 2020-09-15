@@ -30,7 +30,8 @@
 	   __js2scheme_scheme-ops)
 
    (export (j2s-object-builtin-method fun::J2SAccess args
-	      expr mode return::procedure conf)))
+	      expr mode return::procedure conf)
+	   (j2s-object-isfrozen obj args mode return ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-object-builtin-method ...                                    */
@@ -54,3 +55,11 @@
 			  %this))))
 	       (else
 		#f))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-object-isfrozen ...                                          */
+;*---------------------------------------------------------------------*/
+(define (j2s-object-isfrozen obj args mode return ctx)
+   `(js-object-isfrozen
+       ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)
+       %this))
