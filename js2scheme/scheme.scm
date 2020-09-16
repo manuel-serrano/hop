@@ -972,6 +972,8 @@
 					       (with-access::J2SFun function (generator)
 						  generator)))))))
 			     decls))))
+	     (when (eq? (caddr loc) 9179)
+		(tprint "BON.3" (typeof ds)))
 	     (epairify loc
 		(cond
 		   ((null? ds)
