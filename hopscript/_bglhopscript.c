@@ -181,9 +181,9 @@ static pthread_spinlock_t lockprocedure;
 /* #  define alloc_spin_init( x, attr ) pthread_spin_init( x, attr )   */
 /* #  define alloc_spin_lock( x ) pthread_spin_lock( x )               */
 /* #  define alloc_spin_unlock( x ) pthread_spin_unlock( x )           */
-#  define alloc_spin_init( x, attr ) 
-#  define alloc_spin_lock( x ) 
-#  define alloc_spin_unlock( x ) 
+#  define alloc_spin_init( x, attr )
+#  define alloc_spin_lock( x )
+#  define alloc_spin_unlock( x )
 #else
 #  define alloc_spin_init( x, attr ) 
 #  define alloc_spin_lock( x ) 

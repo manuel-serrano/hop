@@ -1160,6 +1160,10 @@
 	  (equality-string op lhs tl rhs tr mode return ctx #f))
 	 ((and (memq op '(=== !==)) (eq? tr 'string))
 	  (equality-string op rhs tr lhs tl mode return ctx #t))
+	 ((and (memq op '(== !==)) (eq? tl 'string) (charat? rhs))
+	  (equality-string op lhs tl rhs tr mode return ctx #f))
+	 ((and (memq op '(== !==)) (eq? tr 'string) (charat? lhs))
+	  (equality-string op rhs tr lhs tl mode return ctx #t))
 	 ((and (eq? tl 'real) (eq? tr 'real))
 	  (with-tmp lhs rhs mode return ctx 
 	     (lambda (left right)
