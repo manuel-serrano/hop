@@ -236,9 +236,9 @@
 	   (js-html-script ::JsGlobalObject)
 
 	   (js-parseint ::obj ::obj ::JsGlobalObject)
-	   (js-parseint-string ::obj)
-	   (js-parseint-any ::obj ::JsGlobalObject)
-	   (js-parseint-string-uint32 ::obj ::uint32)
+	   (inline js-parseint-string ::obj)
+	   (inline js-parseint-any ::obj ::JsGlobalObject)
+	   (inline js-parseint-string-uint32 ::obj ::uint32)
 	   (js-parsefloat ::obj ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
@@ -2623,26 +2623,27 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
 ;*---------------------------------------------------------------------*/
-(define (js-parseint-string string)
-   (js-string-parseint (trim-whitespaces+ (js-jsstring->string string) :plus #t)
-      #s32:0 #f))
+(define-inline (js-parseint-string string)
+   (js-string-parseint10
+      (trim-whitespaces+ (js-jsstring->string string) :plus #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-parseint-any ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
 ;*---------------------------------------------------------------------*/
-(define (js-parseint-any string %this)
-   (js-string-parseint (trim-whitespaces+ (js-tostring string %this) :plus #t)
-      #s32:0 #f))
+(define-inline (js-parseint-any string %this)
+   (js-string-parseint10
+      (trim-whitespaces+ (js-tostring string %this) :plus #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-parseint-string-uint32 ...                                    */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
 ;*---------------------------------------------------------------------*/
-(define (js-parseint-string-uint32 string radix::uint32)
-   (js-string-parseint (trim-whitespaces+ (js-jsstring->string string) :plus #t)
+(define-inline (js-parseint-string-uint32 string radix::uint32)
+   (js-string-parseint
+      (trim-whitespaces+ (js-jsstring->string string) :plus #t)
       (uint32->int32 radix) #f))
 
 ;*---------------------------------------------------------------------*/
@@ -2651,7 +2652,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.3     */
 ;*---------------------------------------------------------------------*/
 (define (js-parsefloat string %this)
-   (js-string-parsefloat (trim-whitespaces+ (js-tostring string %this) :plus #t)
+   (js-string-parsefloat
+      (trim-whitespaces+ (js-tostring string %this) :plus #t)
       #f))
 
 ;*---------------------------------------------------------------------*/

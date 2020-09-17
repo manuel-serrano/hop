@@ -61,6 +61,7 @@
 	   (inline js-jsstring>=?::bool ::obj ::obj)
 	   (js-string->number::obj ::bstring ::JsGlobalObject)
 	   (js-string-parseint ::bstring ::int32 ::bool)
+	   (js-string-parseint10 ::bstring)
 	   (js-string-parsefloat ::bstring ::bool)
 	   (js-string->bool::bool ::bstring)
 	   (inline js-jsstring-toboolean::bool ::JsStringLiteral)
@@ -1023,23 +1024,24 @@
 	  (js-string-parseint str #s32:10 #t)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-string-parseint ...                                           */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
+;*    js-string-integer ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-string-parseint s::bstring r::int32 strict-syntax::bool)
-   
-   (define (integer v s r)
-      (if (and (fixnum? v) (=fx v 0))
-	  (cond
-	     ((string-prefix? "0" s) v)
-	     ((string-prefix? "+0" s) v)
-	     ((string-prefix? "-0" s) -0.0)
-	     ((string=? s "+inf.0") +nan.0)
-	     ((string=? s "-inf.0") +nan.0)
-	     ((string=? s "+nan.0") +nan.0)
-	     (else +nan.0))
-	  v))
+(define (js-string-integer v s)
+   (if (and (fixnum? v) (=fx v 0))
+       (cond
+	  ((string-prefix? "0" s) v)
+	  ((string-prefix? "+0" s) v)
+	  ((string-prefix? "-0" s) -0.0)
+	  ((string=? s "+inf.0") +nan.0)
+	  ((string=? s "-inf.0") +nan.0)
+	  ((string=? s "+nan.0") +nan.0)
+	  (else +nan.0))
+       v))
+
+;*---------------------------------------------------------------------*/
+;*    string->bignum-safe ...                                          */
+;*---------------------------------------------------------------------*/
+(define (string->bignum-safe s r strict-syntax)
    
    (define (shrink n)
       (let ((r (+ n 0)))
@@ -1085,20 +1087,26 @@
 	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxX"
 	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyY"
 	 "0123456789aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ"))
-	 
-   (define (string->bignum-safe s r)
-      (let ((v (string->bignum s r)))
-	 (if (=bx v #z0)
-	     (if strict-syntax
-		 (let ((i (string-skip s (vector-ref radix-charset r))))
-		    (if i
-			+nan.0
-			0))
-		 (let ((i (string-skip s (vector-ref radix-charset r))))
-		    (if i
-			(shrink (string->bignum (substring s 0 i) r))
-			0)))
-	     (shrink v))))
+   
+   (let ((v (string->bignum s r)))
+      (if (=bx v #z0)
+	  (if strict-syntax
+	      (let ((i (string-skip s (vector-ref radix-charset r))))
+		 (if i
+		     +nan.0
+		     0))
+	      (let ((i (string-skip s (vector-ref radix-charset r))))
+		 (if i
+		     (shrink (string->bignum (substring s 0 i) r))
+		     0)))
+	  (shrink v))))
+
+;*---------------------------------------------------------------------*/
+;*    js-string-parseint ...                                           */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
+;*---------------------------------------------------------------------*/
+(define (js-string-parseint s::bstring r::int32 strict-syntax::bool)
    
    (define (str->integer s r)
       (if strict-syntax
@@ -1128,20 +1136,31 @@
 		   (char=? (string-ref s 1) #\X)))
 	  (let ((s (substring s 2)))
 	     (if (<=fx l 9)
-		 (integer (str->integer s 16) s 16)
-		 (integer (string->bignum-safe s 16) s 16))))
+		 (js-string-integer (str->integer s 16) s)
+		 (js-string-integer (string->bignum-safe s 16 strict-syntax) s))))
 	 ((zeros32? r)
 	  (if (<=fx l 8)
-	      (integer (str->integer s 10) s 10)
-	      (integer (string->bignum-safe s 10) s 10)))
+	      (js-string-integer (str->integer s 10) s)
+	      (js-string-integer (string->bignum-safe s 10 strict-syntax) s)))
 	 (else
 	  (let ((r (int32->fixnum r)))
 	     (if (<=fx l (cond
 			    ((<=fx r 10) (max-int-string))
 			    ((<=fx r 16) (max-hex-string))
 			    (else 5)))
-		 (integer (str->integer s r) s 10)
-		 (integer (string->bignum-safe s r) s r)))))))
+		 (js-string-integer (str->integer s r) s)
+		 (js-string-integer (string->bignum-safe s r strict-syntax) s)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-string-parseint10 ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-string-parseint10 s::bstring)
+   (let ((l (string-length s)))
+      (if (cond-expand
+	     ((or bint61 bint64) (<=fx l 16))
+	     (else (<fx l 8)))
+	  (js-string-integer (string->integer s 10) s)
+	  (js-string-integer (string->bignum-safe s 10 #f) s))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-parsefloat ...                                                */

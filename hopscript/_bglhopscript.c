@@ -178,9 +178,12 @@ static pthread_spinlock_t lockfunction;
 static pthread_spinlock_t lockmethod;
 static pthread_spinlock_t lockprocedure;
 
-#  define alloc_spin_init( x, attr ) pthread_spin_init( x, attr )
-#  define alloc_spin_lock( x ) pthread_spin_lock( x )
-#  define alloc_spin_unlock( x ) pthread_spin_unlock( x )
+/* #  define alloc_spin_init( x, attr ) pthread_spin_init( x, attr )   */
+/* #  define alloc_spin_lock( x ) pthread_spin_lock( x )               */
+/* #  define alloc_spin_unlock( x ) pthread_spin_unlock( x )           */
+#  define alloc_spin_init( x, attr ) 
+#  define alloc_spin_lock( x ) 
+#  define alloc_spin_unlock( x ) 
 #else
 #  define alloc_spin_init( x, attr ) 
 #  define alloc_spin_lock( x ) 
@@ -545,7 +548,7 @@ bgl_init_jsalloc_function( BgL_jsconstructmapz00_bglt constrmap,
 
 /*---------------------------------------------------------------------*/
 /*    int                                                              */
-/*    bgl_init_jsalloc_method ...                                    */
+/*    bgl_init_jsalloc_method ...                                      */
 /*---------------------------------------------------------------------*/
 int
 bgl_init_jsalloc_method( BgL_jsconstructmapz00_bglt constrmap,
@@ -798,7 +801,7 @@ obj_t
 bgl_make_jsproxy( obj_t target, obj_t handler,
 		  obj_t getcache, obj_t setcache, obj_t applycache,
 		  uint32_t md ) {
-      alloc_spin_lock( &lockproxy ); 
+   alloc_spin_lock( &lockproxy ); 
    if( poolproxy.idx < JSPROXY_POOLSZ ) { 
       obj_t o = poolproxy.buffer[ poolproxy.idx ]; 
       poolproxy.buffer[ poolproxy.idx++ ] = 0; 
@@ -1061,14 +1064,14 @@ BGL_MAKE_JSMETHOD_SANS( obj_t procedure, obj_t method,
 
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
-/*    bgl_make_jsmethod ...                                          */
+/*    bgl_make_jsmethod ...                                            */
 /*    -------------------------------------------------------------    */
 /*    Fast C allocation, equivalent to                                 */
 /*                                                                     */
-/*      (instantiate::JsMethod                                       */
+/*      (instantiate::JsMethod                                         */
 /*         (__proto__ __proto__)                                       */
 /*         (cmap constrmap)                                            */
-/*         (elements method-elements))                               */
+/*         (elements method-elements))                                 */
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_JSMETHOD_POLICY != HOP_ALLOC_CLASSIC
 obj_t
