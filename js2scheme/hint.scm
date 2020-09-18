@@ -760,7 +760,7 @@
 				    params) " " 
 				 (not (type-checker? val))
 				 "]"))))
-		     dup))))))
+		     (and dup (config-get conf :optim-hintfun #f))))))))
    
    (define (typed? decl::J2SDeclFun)
       ;; return #t iff the function's arguments are all typed

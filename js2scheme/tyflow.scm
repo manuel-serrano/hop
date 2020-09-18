@@ -1327,7 +1327,7 @@
 			    'number)))
 		       ((/)
 			(cond
-			   ((eq? typr 'real)
+			   ((or (eq? typl 'real) (eq? typr 'real))
 			    'real)
 			   ((eq? typr 'integer)
 			    'number)

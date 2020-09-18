@@ -415,6 +415,17 @@
 	  this)))
 
 ;*---------------------------------------------------------------------*/
+;*    propagate-real! ::J2SParen ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-real! this::J2SParen)
+   (call-default-walker)
+   (with-access::J2SParen this (expr type loc)
+      (when (eq? (j2s-type expr) 'real)
+	 (when (memq type '(number integer))
+	    (set! type 'real))))
+   this)
+   
+;*---------------------------------------------------------------------*/
 ;*    propagate-real! ::J2SCast ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propagate-real! this::J2SCast)
