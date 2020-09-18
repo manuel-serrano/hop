@@ -91,6 +91,15 @@
 	       ((string=? val "sqrt")
 		(when (=fx (length args) 1)
 		   (j2s-math-inline-sqrt (car args) mode return conf)))
+	       ((member val '("cos" "sin" "acos" "asin"))
+		(when (=fx (length args) 1)
+		   (j2s-math-inline-trigonometry
+		      (symbol-append (string->symbol val) 'fl)
+		      (car args) mode return conf)))
+	       ((string=? val "atan2")
+		(when (=fx (length args) 2)
+		   (j2s-math-inline-atan2
+		      (car args) (cadr args) mode return conf)))
 	       (else
 		#f))))))
 
@@ -232,6 +241,43 @@
 		  (js-math-sqrtfl (fixnum->flonum ,tmp))))))
       (else
        `(js-math-sqrt ,(j2s-scheme arg mode return conf) %this))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-math-inline-trigonometry ...                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-math-inline-trigonometry fun::symbol arg mode return conf)
+   (case (j2s-vtype arg)
+      ((int32)
+       (let ((tmp (gensym 'int)))
+	  `(let ((,tmp ,(j2s-scheme arg mode return conf)))
+	      (if (<s32 ,tmp 0) +nan.0
+		  (,fun (int32->flonum ,tmp))))))
+      ((uint32)
+       `(,fun (uint32->flonum ,(j2s-scheme arg mode return conf))))
+      ((int53 bint)
+       (let ((tmp (gensym 'int)))
+	  `(let ((,tmp ,(j2s-scheme arg mode return conf)))
+	      (,fun (fixnum->flonum ,tmp)))))
+      ((real)
+       `(,fun ,(j2s-scheme arg mode return conf)))
+      ((number)
+       (let ((tmp (gensym 'num)))
+	  `(let ((,tmp ,(j2s-scheme arg mode return conf)))
+	      (if (flonum? ,tmp)
+		  (,fun ,tmp)
+		  (,fun (fixnum->flonum ,tmp))))))
+      (else
+       `(,fun ,(j2s-scheme arg mode return conf) %this))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-math-inline-atan2 ...                                        */
+;*---------------------------------------------------------------------*/
+(define (j2s-math-inline-atan2 x y mode return conf)
+   (if (and (eq? (j2s-vtype x) 'real) (eq? (j2s-vtype y) 'real))
+       `(js-math-atan2fl ,(j2s-scheme x mode return conf)
+	   ,(j2s-scheme y mode return conf))
+       `(js-math-atan2 ,(j2s-scheme x mode return conf)
+	   ,(j2s-scheme y mode return conf))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-math-inline-min-max ...                                      */

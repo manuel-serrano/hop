@@ -39,7 +39,9 @@
 	   (js-math-floorfl ::double)
 	   (js-math-abs ::obj ::JsGlobalObject)
 	   (js-math-round ::obj)
-	   (js-math-roundfl ::obj)))
+	   (js-math-roundfl ::double)
+	   (js-math-atan2fl::double ::double ::double)
+	   (js-math-atan2::double ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -179,23 +181,7 @@
       ;; atan2
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.5
       (define (js-math-atan2 this y x)
-	 (if (and (= x 0) (= y 0))
-	     (cond
-		((and (flonum? y) (=fx (signbitfl y) 0))
-		 (cond
-		    ((and (flonum? x) (>fx (signbitfl x) 0))
-		     (*fl 2. (atanfl 1. 0.)))
-		    (else
-		     0.)))
-		((and (flonum? y) (>fx (signbitfl y) 0))
-		 (cond
-		    ((and (flonum? x) (>fx (signbitfl x) 0))
-		     (*fl -2. (atan 1. 0.)))
-		    (else
-		     0.0)))
-		(else
-		 0.0))
-	     (atan y x)))
+	 (js-math-atan2 this y x))
       
       (js-bind! %this js-math (& "atan2")
 	 :value (js-make-function %this js-math-atan2
@@ -554,7 +540,47 @@
 	   (flonum->fixnum (floorfl (+fl x 0.5))))
 	  (else
 	   (inexact->exact (floorfl (+fl x 0.5))))))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    js-math-atan2fl ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-math-atan2fl y x)
+   (if (and (=fl x 0.0) (=fl y 0.0))
+       (cond
+	  ((=fx (signbitfl y) 0)
+	   (if (>fx (signbitfl x) 0)
+	       (*fl 2. (atanfl 1. 0.))
+	       0.))
+	  ((>fx (signbitfl y) 0)
+	   (if (>fx (signbitfl x) 0)
+	       (*fl -2. (atan 1. 0.))
+	       0.0))
+	  (else
+	   0.0))
+       (atan y x)))
+
+;*---------------------------------------------------------------------*/
+;*    js-math-atan2 ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-math-atan2 y x)
+   (if (and (= x 0) (= y 0))
+       (cond
+	  ((and (flonum? y) (=fx (signbitfl y) 0))
+	   (cond
+	      ((and (flonum? x) (>fx (signbitfl x) 0))
+	       (*fl 2. (atanfl 1. 0.)))
+	      (else
+	       0.)))
+	  ((and (flonum? y) (>fx (signbitfl y) 0))
+	   (cond
+	      ((and (flonum? x) (>fx (signbitfl x) 0))
+	       (*fl -2. (atan 1. 0.)))
+	      (else
+	       0.0)))
+	  (else
+	   0.0))
+       (atan y x)))
+
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/
