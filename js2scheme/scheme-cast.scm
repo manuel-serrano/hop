@@ -536,7 +536,9 @@
 	      (return #f))
       (match-case v
 	 ((? symbol?)
-	  `(js-toflonum ,v))
+	  (if numberp
+	      `(js-toflonum ,v)
+	      `(js-toflonum (js-tonumber ,v %this))))
 	 ((? fixnum?)
 	  (fixnum->flonum v))
 	 ((? flonum?)
