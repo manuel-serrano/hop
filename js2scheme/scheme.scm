@@ -923,6 +923,15 @@
 	 ((null? decls)
 	  (epairify loc
 	     `(begin ,@(j2s-nodes* loc nodes mode return ctx))))
+	 ((and (pair? decls)
+	       (null? (cdr decls))
+	       (pair? nodes)
+	       (null? (cdr nodes))
+	       (isa? (car nodes) J2SForIn)
+	       (with-access::J2SDecl (car decls) (binder)
+		  (eq? binder 'let-forin)))
+	  ;; a for( let v in ... ) {} statement
+	  (j2s-scheme (car nodes) mode return ctx))
 	 ((any (lambda (decl::J2SDecl)
 		  (with-access::J2SDecl decl (scope)
 		     (memq scope '(global export))))
@@ -972,8 +981,6 @@
 					       (with-access::J2SFun function (generator)
 						  generator)))))))
 			     decls))))
-	     (when (eq? (caddr loc) 9179)
-		(tprint "BON.3" (typeof ds)))
 	     (epairify loc
 		(cond
 		   ((null? ds)
@@ -1340,7 +1347,7 @@
       (with-access::J2SForIn this (need-bind-exit-break need-bind-exit-continue id)
 	 (let ((for `(,(js-for-in op) ,(j2s-scheme obj mode return ctx)
 			(lambda (,name %this)
-			   ,set
+			   ;;,set
 			   ,(if need-bind-exit-continue
 				`(bind-exit (,(escape-name '%continue id))
 				    ,(j2s-scheme body mode return ctx))
@@ -1419,14 +1426,28 @@
    
    (with-access::J2SForIn this (loc lhs obj body op
 				  need-bind-exit-break need-bind-exit-continue)
-      (let* ((tmp (gensym))
-	     (name (gensym))
-	     (props (gensym))
-	     (set (set lhs name loc)))
-	 (epairify-deep loc
-	    (if (or need-bind-exit-continue need-bind-exit-break)
-		(for-in/break tmp name props obj body set op)
-		(for-in/w-break tmp name props obj body set op))))))
+      (if (and (isa? lhs J2SRef)
+	       (with-access::J2SRef lhs (decl)
+		  (with-access::J2SDecl decl (binder)
+		     (eq? binder 'let-forin))))
+	  (with-access::J2SRef lhs (decl)
+	     (with-access::J2SDecl decl (binder)
+		(let* ((tmp (gensym))
+		       (name (j2s-decl-scm-id decl ctx))
+		       (props (gensym))
+		       (set #unspecified))
+		(epairify-deep loc
+		   (if (or need-bind-exit-continue need-bind-exit-break)
+		       (for-in/break tmp name props obj body set op)
+		       (for-in/w-break tmp name props obj body set op))))))
+	  (let* ((tmp (gensym))
+		 (name (gensym))
+		 (props (gensym))
+		 (set (set lhs name loc)))
+	     (epairify-deep loc
+		(if (or need-bind-exit-continue need-bind-exit-break)
+		    (for-in/break tmp name props obj body set op)
+		    (for-in/w-break tmp name props obj body set op)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SLabel ...                                        */

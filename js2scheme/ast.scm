@@ -608,7 +608,7 @@
    (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((var) #t)
-	 ((let let-opt) #t)
+	 ((let let-opt let-forin) #t)
 	 ((param class export) #f)
 	 (else (error "j2s-var?" "wrong binder" (vector loc id binder))))))
 
@@ -618,7 +618,7 @@
 (define (j2s-let? decl::J2SDecl)
    (with-access::J2SDecl decl (binder id loc)
       (case binder
-	 ((let let-opt) #t)
+	 ((let let-opt let-forin) #t)
 	 ((var param class export) #f)
 	 (else (error "j2s-let?" "wrong binder" (vector loc id binder))))))
 
@@ -629,7 +629,7 @@
    (with-access::J2SDecl decl (binder writable id loc)
       (unless writable
 	 (case binder
-	    ((let let-opt export) #t)
+	    ((let let-opt let-forin export) #t)
 	    ((var param class) #f)
 	    (else (error "j2s-const?" "wrong binder" (vector loc id binder)))))))
 
@@ -639,7 +639,7 @@
 (define (j2s-let-opt? decl::J2SDecl)
    (with-access::J2SDecl decl (binder id loc)
       (case binder
-	 ((let-opt) #t)
+	 ((let-opt let-forin) #t)
 	 ((let var param class export) #f)
 	 (else (error "j2s-let-opt?" "wrong binder" (vector loc id binder))))))
 
@@ -670,7 +670,7 @@
    (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((param) #t)
-	 ((var let const let-opt const-opt class export) #f)
+	 ((var let const let-opt let-forin const-opt class export) #f)
 	 (else (error "j2s-param?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/

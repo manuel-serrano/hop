@@ -137,7 +137,6 @@
 		  (unless (isa? decl J2SThis)
 		     (set! hint (add-hint! hint newhint))
 		     (when (and (pair? %info) (eq? (car %info) 'hintnum-alias))
-			(tprint "ALIAS..." (j2s->list (cdr %info)))
 			(loop (cdr %info))))))))))
 
 ;*---------------------------------------------------------------------*/

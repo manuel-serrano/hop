@@ -131,7 +131,7 @@
 (define (scan-decl decl::J2SDecl)
    (when (and (isa? decl J2SDeclInit) (not (isa? decl J2SDeclFun)))
       (with-access::J2SDeclInit decl (val %info binder)
-	 (when (eq? binder 'let-opt)
+	 (when (memq binder '(let-opt let-forin))
 	    (unless (decl-usage-has? decl '(uninit))
 	       (with-access::J2SDecl decl (%info)
 		  (set! %info 'init))))

@@ -3707,8 +3707,8 @@
 	     (let ((fun (js-get-jsobject-name/cache o js-symbol-iterator #f %this
 			   (js-pcache-ref js-array-pcache 19))))
 		(if (and (js-function? fun)
-			 (with-access::JsProcedure fun (elements)
-			    (not (eq? (vector-ref elements 2) (& "@@iterator")))))
+			 (with-access::JsFunction fun (info)
+			    (not (string=? (vector-ref info 0) "@@iterator"))))
 		    (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
 		    (if (js-array-inlined? o)
 			(with-access::JsPropertyCache (js-pcache-ref js-array-pcache 20) (pmap)
