@@ -3311,7 +3311,7 @@
 	     =>
 	     (lambda (cache)
 		(js-put-jsobject-name/cache! o pname v throw
-		   %this cache point '(imap emap cmap nmap pmap amap) #f)))
+		   %this cache point '(imap emap cmap nmap pmap amap vtable) #f)))
 	    ((eq? pname (& "length"))
 	     (js-put-length! o v throw #f %this))
 	    ((isa? pname JsStringLiteralIndex)
