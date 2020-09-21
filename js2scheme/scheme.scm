@@ -1769,7 +1769,8 @@
 					      (is-prototype? obj))))))))))
 
    (with-access::J2SAssig this (loc lhs rhs)
-      (let loop ((lhs lhs))
+      (let loop ((lhs lhs)
+		 (rhs rhs))
 	 (cond
 	    ((isa? lhs J2SAccess)
 	     (with-access::J2SAccess lhs (obj field cache cspecs (loca loc))
@@ -1825,7 +1826,7 @@
 		(epairify loc
 		   (let liip ((withs withs))
 		      (if (null? withs)
-			  (loop expr)
+			  (loop expr rhs)
 			  `(if ,(j2s-in? loc
 				   (& id (context-program ctx)) (car withs) ctx)
 			       ,(j2s-put! loc (car withs) #f 'object
@@ -1838,7 +1839,10 @@
 	     (j2s-scheme rhs mode return ctx))
 	    ((isa? lhs J2SParen)
 	     (with-access::J2SParen lhs (expr)
-		(loop expr)))
+		(loop expr rhs)))
+	    ((isa? lhs J2SCast)
+	     (with-access::J2SCast lhs (expr type loc)
+		(loop expr (J2SCast type rhs))))
 	    (else
 	     (j2s-error "assignment" "Illegal assignment" this))))))
 

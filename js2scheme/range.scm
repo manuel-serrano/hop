@@ -1240,9 +1240,13 @@
 		 (node-range-ctor-only function)
 		 (node-range-ctor-only method)))))
       (multiple-value-bind (intvf env _)
-	 (if (isa? val J2SMethod)
-	     (node-range val env conf mode fix)
+	 (cond
+	    ((isa? val J2SMethod)
+	     (node-range val env conf mode fix))
+	    ((isa? val J2SFun)
 	     (node-range-fun val (node-range-fun-decl val env conf mode fix) conf mode fix))
+	    (else
+	     (error "js2scheme" "bad declfun value" (j2s->list val))))
 	 (return *infinity-intv* (extend-env env this intvf)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1523,11 +1527,15 @@
 	    ((isa? decl J2SDeclFun)
 	     (with-access::J2SDeclFun decl (val)
 		(if (decl-ronly? decl)
-		    (if (isa? val J2SMethod)
+		    (cond
+		       ((isa? val J2SMethod)
 			(with-access::J2SMethod val (function method)
 			   (range-known-call callee function iargs env)
-			   (range-known-call callee method iargs env))
+			   (range-known-call callee method iargs env)))
+		       ((isa? val J2SFun)
 			(range-known-call callee val iargs env))
+		       (else
+			(error "js2scheme" "bad declfun value" (j2s->list val))))
 		    (range-unknown-call callee env))))
 	    ((isa? decl J2SDeclInit)
 	     (with-access::J2SDeclInit decl (val)

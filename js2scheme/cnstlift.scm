@@ -129,18 +129,20 @@
 ;*    j2s-cnstlift-expression! ::J2SFun ...                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-cnstlift-expression! this::J2SFun vars)
-   (let ((vars (make-cell '())))
-      (with-access::J2SFun this (body loc)
-	 (set! body (j2s-cnstlift-expression! body vars))
-	 (if (pair? (cell-ref vars))
-	     (let* ((lbl (gensym '%flift))
-		    (be (J2SBindExit/type 'function lbl (J2SNop))))
-		(with-access::J2SBindExit be (stmt)
-		   (set! stmt
-		      (J2SLetBlock (cell-ref vars)
-			 (J2SReturn #t this be)))
-		   be))
-	     this))))
+   (with-access::J2SFun this (body loc generator)
+      (if generator
+	  this
+	  (let ((vars (make-cell '())))
+	     (set! body (j2s-cnstlift-expression! body vars))
+	     (if (pair? (cell-ref vars))
+		 (let* ((lbl (gensym '%flift))
+			(be (J2SBindExit/type 'function lbl (J2SNop))))
+		    (with-access::J2SBindExit be (stmt)
+		       (set! stmt
+			  (J2SLetBlock (cell-ref vars)
+			     (J2SReturn #t this be)))
+		       be))
+		 this)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cnstlift-expression! ::J2SExpr ...                           */

@@ -299,10 +299,14 @@
 	  (cond
 	     ((isa? decl J2SDeclFun)
 	      (with-access::J2SDeclFun decl (val)
-		 (if (isa? val J2SFun)
-		     (known-fun this val)
+		 (cond
+		    ((isa? val J2SFun)
+		     (known-fun this val))
+		    ((isa? val J2SMethod)
 		     (with-access::J2SMethod val (function method)
-			(known-fun this function)))))
+			(known-fun this function)))
+		    (else
+		     (error "js2scheme" "Bad declfun value" (j2s->list val))))))
 	     (else
 	      (unknown-fun this)))))
       (else
