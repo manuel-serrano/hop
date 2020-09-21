@@ -113,7 +113,17 @@
 	 decls)
       (set! nodes (map (lambda (n) (j2s-cnstlift-expression! n vars)) nodes))
       this))
-   
+
+;*---------------------------------------------------------------------*/
+;*    j2s-cnstlift-expression! ::J2STry ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-cnstlift-expression! this::J2STry vars)
+   (with-access::J2STry this (body catch finally)
+      (set! body (j2s-cnstlift-expression! body vars))
+      (set! catch (j2s-cnstlift-expression! catch #f))
+      (set! finally (j2s-cnstlift-expression! finally #f))
+      this))
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cnstlift-expression! ::J2SMethod ...                         */
 ;*---------------------------------------------------------------------*/

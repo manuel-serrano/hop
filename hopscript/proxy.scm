@@ -40,7 +40,7 @@
 	   (inline js-new-proxy/caches ::JsGlobalObject ::obj ::obj
 	      ::JsPropertyCache ::JsPropertyCache ::JsPropertyCache)
 	   (js-proxy-debug-name::bstring ::JsProxy ::JsGlobalObject)
-	   (js-proxy-property-value ::JsObject ::JsProxy ::JsStringLiteral ::JsGlobalObject)
+	   (js-proxy-property-value ::JsObject ::JsProxy ::obj ::JsGlobalObject)
 	   (js-get-proxy ::JsProxy prop ::JsGlobalObject)
 	   (js-get-proxy-name/cache-miss ::JsObject
 	      ::obj ::bool ::JsGlobalObject ::JsPropertyCache)
