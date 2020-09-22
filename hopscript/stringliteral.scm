@@ -2679,121 +2679,86 @@
 	       (else
 		(set! res (cons (& "") res))
 		(loop (+fx i 1)))))))
-   
-   (define (match-n-positions! rx s i len)
+
+   (define (adjust-regexp-match-positions! %this)
       (with-access::JsGlobalObject %this (js-regexp-positions)
 	 (let ((r js-regexp-positions)
 	       (clen (regexp-capture-count rx)))
 	    (when (>=fx (*fx (+fx clen 1) 2) (vector-length r))
-	       (set! js-regexp-positions (make-vector (* (+fx clen 1) 2))))
-	    (pregexp-match-n-positions! rx s r i len))))
+	       (set! js-regexp-positions (make-vector (* (+fx clen 1) 2)))))))
 
    (define (apply-match %this fun this l r s enc)
       (case l
 	 ((1)
-	  (js-jsstring-append3
-	     (js-substring/enc s 0 (vector-ref r 0) enc %this)
-	     (js-tojsstring
-		(js-call1 %this replacevalue (js-undefined)
-		   (js-substring/enc s
-		      (vector-ref r 0)
-		      (vector-ref r 1)
-		      enc
-		      %this))
-		%this)
+	  (js-call1 %this replacevalue (js-undefined)
 	     (js-substring/enc s
-		(vector-ref r 1) (string-length s) enc %this)))
+		(vector-ref r 0)
+		(vector-ref r 1)
+		enc
+		%this)))
 	 ((2)
-	  (js-jsstring-append3
-	     (js-substring/enc s 0 (vector-ref r 0) enc %this)
-	     (js-tojsstring
-		(js-call2 %this replacevalue (js-undefined)
-		   (js-substring/enc s
-		      (vector-ref r 0) (vector-ref r 1) enc %this)
-		   (js-substring/enc s
-		      (vector-ref r 2) (vector-ref r 3) enc %this))
-		%this)
+	  (js-call2 %this replacevalue (js-undefined)
 	     (js-substring/enc s
-		(vector-ref r 1) (string-length s) enc %this)))
+		(vector-ref r 0) (vector-ref r 1) enc %this)
+	     (js-substring/enc s
+		(vector-ref r 2) (vector-ref r 3) enc %this)))
 	 ((3)
-	  (js-jsstring-append3
-	     (js-substring/enc s 0 (vector-ref r 0) enc %this)
-	     (js-tojsstring
-		(js-call3 %this replacevalue (js-undefined)
-		   (js-substring/enc s
-		      (vector-ref r 0) (vector-ref r 1) enc %this)
-		   (js-substring/enc s
-		      (vector-ref r 2) (vector-ref r 3) enc %this)
-		   (js-substring/enc s
-		      (vector-ref r 4) (vector-ref r 5) enc %this))
-		%this)
+	  (js-call3 %this replacevalue (js-undefined)
 	     (js-substring/enc s
-		(vector-ref r 1) (string-length s) enc %this)))
+		(vector-ref r 0) (vector-ref r 1) enc %this)
+	     (js-substring/enc s
+		(vector-ref r 2) (vector-ref r 3) enc %this)
+	     (js-substring/enc s
+		(vector-ref r 4) (vector-ref r 5) enc %this)))
 	 ((4)
-	  (js-jsstring-append3
-	     (js-substring/enc s 0 (vector-ref r 0) enc %this)
-	     (js-tojsstring
-		(js-call4 %this replacevalue (js-undefined)
-		   (js-substring/enc s
-		      (vector-ref r 0) (vector-ref r 1) enc %this)
-		   (js-substring/enc s
-		      (vector-ref r 2) (vector-ref r 3) enc %this)
-		   (js-substring/enc s
-		      (vector-ref r 4) (vector-ref r 5) enc %this)
-		   (js-substring/enc s
-		      (vector-ref r 6) (vector-ref r 7) enc %this))
-		%this)
+	  (js-call4 %this replacevalue (js-undefined)
 	     (js-substring/enc s
-		(vector-ref r 1) (string-length s) enc %this)))
+		(vector-ref r 0) (vector-ref r 1) enc %this)
+	     (js-substring/enc s
+		(vector-ref r 2) (vector-ref r 3) enc %this)
+	     (js-substring/enc s
+		(vector-ref r 4) (vector-ref r 5) enc %this)
+	     (js-substring/enc s
+		(vector-ref r 6) (vector-ref r 7) enc %this)))
 	 ((5)
-	  (js-jsstring-append3
-	     (js-substring/enc s 0 (vector-ref r 0) enc %this)
-	     (js-tojsstring
-		(js-call5 %this replacevalue (js-undefined)
-		   (js-substring/enc s
-		      (vector-ref r 0) (vector-ref r 1) enc %this)
-		   (js-substring/enc s
-		      (vector-ref r 2) (vector-ref r 3) enc %this)
-		   (js-substring/enc s
-		      (vector-ref r 4) (vector-ref r 5) enc %this)
-		   (js-substring/enc s
-		      (vector-ref r 6) (vector-ref r 7) enc %this)
-		   (js-substring/enc s
-		      (vector-ref r 8) (vector-ref r 9) enc %this))
-		%this)
+	  (js-call5 %this replacevalue (js-undefined)
 	     (js-substring/enc s
-		(vector-ref r 1) (string-length s) enc %this)))
+		(vector-ref r 0) (vector-ref r 1) enc %this)
+	     (js-substring/enc s
+		(vector-ref r 2) (vector-ref r 3) enc %this)
+	     (js-substring/enc s
+		(vector-ref r 4) (vector-ref r 5) enc %this)
+	     (js-substring/enc s
+		(vector-ref r 6) (vector-ref r 7) enc %this)
+	     (js-substring/enc s
+		(vector-ref r 8) (vector-ref r 9) enc %this)))
 	 ((6)
-	  (js-jsstring-append3
-	     (js-substring/enc s 0 (vector-ref r 0) enc %this)
-	     (js-tojsstring
-		(js-call6 %this replacevalue (js-undefined)
-		   (js-substring/enc s
-		      (vector-ref r 0) (vector-ref r 1) enc %this)
-		   (js-substring/enc s
-		      (vector-ref r 2) (vector-ref r 3) enc %this)
-		   (js-substring/enc s
-		      (vector-ref r 4) (vector-ref r 5) enc %this)
-		   (js-substring/enc s
-		      (vector-ref r 6) (vector-ref r 7) enc %this)
-		   (js-substring/enc s
-		      (vector-ref r 8) (vector-ref r 9) enc %this)
-		   (js-substring/enc s
-		      (vector-ref r 10) (vector-ref r 11) enc %this))
-		%this)
+	  (js-call6 %this replacevalue (js-undefined)
 	     (js-substring/enc s
-		(vector-ref r 1) (string-length s) enc %this)))
+		(vector-ref r 0) (vector-ref r 1) enc %this)
+	     (js-substring/enc s
+		(vector-ref r 2) (vector-ref r 3) enc %this)
+	     (js-substring/enc s
+		(vector-ref r 4) (vector-ref r 5) enc %this)
+	     (js-substring/enc s
+		(vector-ref r 6) (vector-ref r 7) enc %this)
+	     (js-substring/enc s
+		(vector-ref r 8) (vector-ref r 9) enc %this)
+	     (js-substring/enc s
+		(vector-ref r 10) (vector-ref r 11) enc %this)))
 	 (else
 	  (js-apply %this replacevalue (js-undefined)
 	     (matches-n->string-list l r s enc)))))
    
    (with-access::JsGlobalObject %this (js-regexp js-array js-regexp-positions)
+      (adjust-regexp-match-positions! %this)
       (let* ((s (js-jsstring->string this))
 	     (len (string-length s))
-	     (enc (js-jsstring-utf8? this)))
+	     (enc (js-jsstring-utf8? this))
+	     (r js-regexp-positions))
 	 (if (not global)
-	     (let ((l (match-n-positions! rx s 0 len)))
-		(if (<fx l 0)
+	     (let ((l (pregexp-match-n-positions! rx s r 0 len)))
+		(if (<=fx l 0)
 		    this
 		    (let ((r js-regexp-positions))
 		       (js-jsstring-append3
@@ -2802,12 +2767,11 @@
 			     (apply-match %this replacevalue
 				(js-undefined) l r s enc)
 			     %this)
-			  (js-substring/enc s
-			     (vector-ref r 1) (string-length s) enc %this)))))
+			  (js-substring/enc s (vector-ref r 1) len enc %this)))))
 	     (let loop ((i 0)
 			(res (& "")))
-		(let ((l (match-n-positions! rx s i len)))
-		   (if (<fx l 0)
+		(let ((l (pregexp-match-n-positions! rx s r i len)))
+		   (if (<=fx l 0)
 		       (cond
 			  ((=fx i 0)
 			   this)
@@ -2816,11 +2780,10 @@
 			  (else
 			   (js-jsstring-append res
 			      (js-substring/enc s i len enc %this))))
-		       (let* ((r js-regexp-positions)
-			      (v (js-tojsstring
-				    (apply-match %this replacevalue
-				       (js-undefined) l r s enc)
-				    %this)))
+		       (let ((v (js-tojsstring
+				   (apply-match %this replacevalue
+				      (js-undefined) l r s enc)
+				   %this)))
 			  (cond
 			     ((>fx (vector-ref r 1) i)
 			      (loop (vector-ref r 1)
