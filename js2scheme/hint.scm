@@ -446,7 +446,7 @@
 ;*    j2s-hint-access ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-hint-access this maybe-string)
-   (with-access::J2SAccess this (obj field)
+   (with-access::J2SAccess this (obj field loc)
       (let loop ((field field))
 	 (cond
 	    ((isa? field J2SString)
@@ -480,7 +480,7 @@
 ;*    j2s-hint ::J2SAssig ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SAssig hints)
-   (with-access::J2SAssig this (lhs rhs)
+   (with-access::J2SAssig this (lhs rhs loc)
       (when (isa? lhs J2SAccess) (j2s-hint-access lhs #f))
       (j2s-hint rhs '())))
 
@@ -539,6 +539,11 @@
 			 (j2s-hint (car args) hints)
 			 (loop (cdr args) (cdr params))))
 		   (for-each (lambda (a) (j2s-hint a '())) args))))))
+
+   (define (hint-fun-call callee args)
+      (with-access::J2SFun callee (body)
+	 (j2s-hint body '())
+	 (hint-known-call callee args)))
    
    (define (hint-ref-call callee args)
       (with-access::J2SRef callee (decl)
@@ -592,7 +597,7 @@
    
    (with-access::J2SCall this (fun args)
       (cond
-	 ((isa? fun J2SFun) (hint-known-call fun args))
+	 ((isa? fun J2SFun) (hint-fun-call fun args))
 	 ((isa? fun J2SRef) (hint-ref-call fun args))
 	 ((isa? fun J2SAccess) (hint-access-call fun args))
 	 ((isa? fun J2SGlobalRef) (hint-unknown-call fun args))

@@ -1648,6 +1648,21 @@
 			    (box left tl ctx)
 			    (box right tr ctx)
 			    #f))))
+		  ((or (eq? tl 'number) (eq? tr 'number))
+		   (if-fixnums? left tl right tr
+		      (binop-fixnum-fixnum/ctx ctx op type
+			 (asfixnum left tl)
+			 (asfixnum right tr)
+			 #f)
+		      (if-flonums? left tl right tr
+			 (binop-flonum-flonum (real-op op type lhs rhs #f) type
+			    (asreal left tl)
+			    (asreal right tr)
+			    #f)
+			 (binop-any-any op type
+			    (box left tl ctx)
+			    (box right tr ctx)
+			    #f))))
 		  ((and (eq? op '+) (eq? type 'string))
 		   `(if (and (js-jsstring? ,left) (js-jsstring? ,right))
 			(j2s-jsstring-append ,left ,right)
