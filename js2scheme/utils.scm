@@ -668,7 +668,7 @@
 ;*---------------------------------------------------------------------*/
 (define (math-static-method-type name #!optional (default '(any any)))
    (assoc-method-type name default
-      '(("abs" . (number undefined number))
+      '(("abs" . (anumber undefined number))
 	("acos" . (real4 undefined real))
 	("asin" . (real4 undefined real))
 	("atan" . (real undefined real))
@@ -678,8 +678,8 @@
 	("exp" . (number undefined real))
 	("floor" . (number undefined real))
 	("log" . (real undefined real))
-	("max" . (number undefined number))
-	("min" . (number undefined number))
+	("max" . (anumber undefined number))
+	("min" . (anumber undefined number))
 	("pow" . (number undefined number))
 	("random" . (ureal1 undefined))
 	("round" . (number undefined real))

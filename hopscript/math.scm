@@ -38,6 +38,7 @@
 	   (js-math-floor ::obj ::JsGlobalObject)
 	   (js-math-floorfl ::double)
 	   (js-math-abs ::obj ::JsGlobalObject)
+	   (inline js-math-absfl::double ::double)
 	   (js-math-round ::obj)
 	   (js-math-roundfl ::double)
 	   (js-math-atan2fl::double ::double ::double)
@@ -507,6 +508,14 @@
       ((not (= x x)) x)
       ((< x 0) (- x))
       (else x)))
+
+;*---------------------------------------------------------------------*/
+;*    js-math-absfl ...                                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.1     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-math-absfl x)
+   (absfl x))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-math-round ...                                                */

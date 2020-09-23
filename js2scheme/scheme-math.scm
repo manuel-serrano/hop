@@ -55,9 +55,12 @@
 	       ((string=? val "abs")
 		(when (=fx (length args) 1)
 		   (cast-math
-		      `(js-math-abs
-			  ,(j2s-scheme (car args) mode return conf)
-			  %this))))
+		      (if (eq? (j2s-vtype (car args)) 'real)
+			  `(js-math-absfl
+			      ,(j2s-scheme (car args) mode return conf))
+			  `(js-math-abs
+			      ,(j2s-scheme (car args) mode return conf)
+			      %this)))))
 	       ((string=? val "floor")
 		(when (=fx (length args) 1)
 		   (cast-math

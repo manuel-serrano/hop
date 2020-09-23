@@ -1171,12 +1171,21 @@
 	 (with-access::J2SAccess callee (obj field)
 	    (let* ((fn (j2s-field-name field))
 		   (ty (if (string? fn)
-			   (tyflow-type (car (find-builtin-method-type obj fn)))
+			   (car (find-builtin-method-type obj fn))
 			   'any)))
-	       (if (eq? ty 'any)
+	       (cond
+		  ((eq? ty 'any)
 		   ;; the method is unknown, filter out the node-type env
-		   (return ty (unknown-call-env env) bk)
-		   (return ty env bk))))))
+		   (return ty (unknown-call-env env) bk))
+		  ((eq? ty 'anumber)
+		   (if (pair? args)
+		       (let ((aty (j2s-type (car args))))
+			  (if (memq aty '(integer real))
+			      (return aty env bk)
+			      (return 'number env bk)))
+		       (return 'number env bk)))
+		  (else
+		   (return (tyflow-type ty) env bk)))))))
    
    (define (type-hop-call callee args env bk)
       ;; type a hop (foreign function) call: H( ... )

@@ -260,6 +260,7 @@
 ;*---------------------------------------------------------------------*/
 (define (inline-threshold) #u32:100)
 (define (vtable-threshold) #u32:200)
+(define (vtable-max-threshold) #u32:300)
 (define (method-invalidation-threshold) 8)
 
 (define (hash-object-threshold) 192)
@@ -3371,7 +3372,8 @@
 	 (unless (or (eq? %omap (js-not-a-cmap))
 		     (eq? prop (& "__proto__")))
 	    (with-access::JsPropertyCache cache (index vindex cntmiss)
-	       (when (>=u32 cntmiss (vtable-threshold))
+	       (when (and (>=u32 cntmiss (vtable-threshold))
+			  (<=u32 cntmiss (vtable-max-threshold)))
 		  (when (>=fx index 0)
 		     (when (=fx vindex (js-not-a-index))
 			(set! vindex (js-get-vindex %this)))
