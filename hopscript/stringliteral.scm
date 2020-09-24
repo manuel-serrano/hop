@@ -2635,43 +2635,52 @@
 			 (& " ")
 			 (js-tojsstring fillstring %this))))
 	 (with-access::JsStringLiteral filler (length left)
-	    (case (uint32->fixnum length)
-	       ((0)
-		this)
-	       ((1)
-		(let ((fill (js-ascii->jsstring
-			       (make-string filllen (string-ref left 0)))))
-		   (if place
-		       (js-jsstring-append fill this)
-		       (js-jsstring-append this fill))))
-	       (else
-		(cond
-		   ((=fx filllen 0)
-		    this)
-		   (place
-		    (let loop ((len (-fx filllen (uint32->fixnum length)))
-			       (res filler))
-		       (cond
-			  ((<=fx len 0)
-			   (js-jsstring-append res this))
-			  ((<u32 length (fixnum->uint32 len))
-			   (loop (-fx len (uint32->fixnum length))
-			      (js-jsstring-append filler res)))
-			  (else
-			   (let ((sub (js-jsstring-substring filler 0 len %this)))
-			      (js-jsstring-append3 res sub this))))))
-		   (else
-		    (let loop ((len filllen)
-			       (res this))
-		       (cond
-			  ((<=fx len 0)
-			   res)
-			  ((<u32 length (fixnum->uint32 len))
-			   (loop (-fx len (uint32->fixnum length))
-			      (js-jsstring-append res filler)))
-			  (else
-			   (let ((sub (js-jsstring-substring filler 0 len %this)))
-			      (js-jsstring-append res sub)))))))))))))
+	    (let ((len (uint32->fixnum length)))
+	       (case len
+		  ((0)
+		   this)
+		  ((1)
+		   (let ((fill (js-ascii->jsstring
+				  (make-string filllen (string-ref left 0)))))
+		      (if place
+			  (js-jsstring-append fill this)
+			  (js-jsstring-append this fill))))
+		  (else
+		   (cond
+		      ((<=fx filllen 0)
+		       this)
+		      ((<fx filllen len)
+		       (if place
+			   (js-jsstring-append
+			      (js-jsstring-substring filler 0 filllen %this)
+			      this)
+			   (js-jsstring-append
+			      this
+			      (js-jsstring-substring filler 0 filllen %this))))
+		      (place
+		       (let loop ((len (-fx filllen len))
+				  (res filler))
+			  (cond
+			     ((<=fx len 0)
+			      (js-jsstring-append res this))
+			     ((<u32 length (fixnum->uint32 len))
+			      (loop (-fx len (uint32->fixnum length))
+				 (js-jsstring-append filler res)))
+			     (else
+			      (let ((sub (js-jsstring-substring filler 0 len %this)))
+				 (js-jsstring-append3 res sub this))))))
+		      (else
+		       (let loop ((len filllen)
+				  (res this))
+			  (cond
+			     ((<=fx len 0)
+			      res)
+			     ((<u32 length (fixnum->uint32 len))
+			      (loop (-fx len (uint32->fixnum length))
+				 (js-jsstring-append res filler)))
+			     (else
+			      (let ((sub (js-jsstring-substring filler 0 len %this)))
+				 (js-jsstring-append res sub))))))))))))))
 			
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-prototype-padstart ...                               */
