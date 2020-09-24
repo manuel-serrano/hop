@@ -521,7 +521,7 @@
 ;*    j2s-scheme ::J2SCall ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SCall mode return ctx)
-   
+
    (define (call-profile profid call)
       (if (and (context-get ctx :profile-call #f) (>=fx profid 0))
 	  `(begin
@@ -634,23 +634,23 @@
 	       (cond
 		  ((symbol? met)
 		   ;; builtin simple
-		   `(,met ,(j2s-scheme obj mode return ctx)
-		       ,@(map (lambda (arg)
-				 (j2s-scheme arg mode return ctx))
-			    args)
-		       ,@(if (=fx len arity)
-			     '()
-			     (let* ((lopt (length opt))
-				    (nopt (-fx arity len)))
-				(map cadr (list-tail opt (-fx lopt nopt)))))
-		       ,@(if (builtin-method-%this m)
-			     '(%this)
-			     '())
-		       ,@(if (builtin-method-cache m)
-			     (if cache
-				 `((js-pcache-ref %pcache ,cache))
-				 '(#f))
-			     '())))
+		   (with-tmp-args args mode return ctx
+		      (lambda (args)
+			 `(,met ,(j2s-scheme obj mode return ctx)
+			     ,@args
+			     ,@(if (=fx len arity)
+				   '()
+				   (let* ((lopt (length opt))
+					  (nopt (-fx arity len)))
+				      (map cadr (list-tail opt (-fx lopt nopt)))))
+			     ,@(if (builtin-method-%this m)
+				   '(%this)
+				   '())
+			     ,@(if (builtin-method-cache m)
+				   (if cache
+				       `((js-pcache-ref %pcache ,cache))
+				       '(#f))
+				   '())))))
 		  ((procedure? met)
 		   ;; builtin procedure
 		   (met obj

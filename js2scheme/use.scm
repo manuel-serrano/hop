@@ -361,7 +361,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-use this::J2SCall ctx deval infun)
    (with-access::J2SCall this (fun args protocol)
-      (j2s-use fun 'call deval infun)
+      (j2s-use fun (if (isa? fun J2SFun) 'call 'ref) deval infun)
       (when (eq? protocol 'spread)
 	 (j2s-use fun 'get deval infun))
       (for-each (lambda (a) (j2s-use a 'ref deval infun)) args))
