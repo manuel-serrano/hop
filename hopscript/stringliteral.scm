@@ -111,6 +111,7 @@
 	   (js-jsstring-maybe-tolocaleuppercase ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-split ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-split ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-jsstring-prototype-padstart ::obj ::obj ::obj ::bool ::JsGlobalObject)
 	   (js-jsstring-replace-regexp ::obj ::regexp ::long ::bool ::obj ::JsGlobalObject)
 	   (js-jsstring-replace-regexp-fun1 ::obj ::regexp ::long ::bool ::procedure ::JsGlobalObject)
 	   (js-jsstring-replace-regexp-string ::obj ::regexp ::long ::bool ::obj ::JsGlobalObject)
@@ -2622,6 +2623,74 @@
 		 ;; MS, 2019-01-09: used to be:
 		 ;; (loop (+fx i 2) j res)
 		 (loop (+fx i 1) j res))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-padstart ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-padstart this::JsStringLiteral maxlength fillstring place %this)
+   (with-access::JsStringLiteral this (length)
+      (let* ((imaxlen (uint32->fixnum (js-touint32 maxlength %this)))
+	     (filllen (-fx imaxlen (uint32->fixnum length)))
+	     (filler (if (eq? fillstring (js-undefined))
+			 (& " ")
+			 (js-tojsstring fillstring %this))))
+	 (with-access::JsStringLiteral filler (length left)
+	    (case (uint32->fixnum length)
+	       ((0)
+		this)
+	       ((1)
+		(let ((fill (js-ascii->jsstring
+			       (make-string filllen (string-ref left 0)))))
+		   (if place
+		       (js-jsstring-append fill this)
+		       (js-jsstring-append this fill))))
+	       (else
+		(cond
+		   ((=fx filllen 0)
+		    this)
+		   (place
+		    (let loop ((len (-fx filllen (uint32->fixnum length)))
+			       (res filler))
+		       (cond
+			  ((<=fx len 0)
+			   (js-jsstring-append res this))
+			  ((<u32 length (fixnum->uint32 len))
+			   (loop (-fx len (uint32->fixnum length))
+			      (js-jsstring-append filler res)))
+			  (else
+			   (let ((sub (js-jsstring-substring filler 0 len %this)))
+			      (js-jsstring-append3 res sub this))))))
+		   (else
+		    (let loop ((len filllen)
+			       (res this))
+		       (cond
+			  ((<=fx len 0)
+			   res)
+			  ((<u32 length (fixnum->uint32 len))
+			   (loop (-fx len (uint32->fixnum length))
+			      (js-jsstring-append res filler)))
+			  (else
+			   (let ((sub (js-jsstring-substring filler 0 len %this)))
+			      (js-jsstring-append res sub)))))))))))))
+			
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-prototype-padstart ...                               */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/#21.1.3.14            */
+;*    http://www.ecma-international.org/ecma-262/#21.1.3.15            */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-prototype-padstart this maxlength fillstring place %this)
+   (let loop ((this this))
+      (cond
+	 ((js-jsstring? this)
+	  (js-jsstring-padstart this maxlength fillstring place %this))
+	 ((isa? this JsString)
+	  (with-access::JsString this (val)
+	     (loop val)))
+	 ((js-object? this)
+	  (loop (js-tojsstring this %this)))
+	 (else
+	  (loop (js-tojsstring (js-toobject %this this) %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-replace-regexp ...                                   */
