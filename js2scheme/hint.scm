@@ -88,10 +88,11 @@
       ((memq ty
 	  '(any unknown
 	    integer real number bool string
-	    regexp array date arguments function arrow procedure
+	    regexp array no-array date arguments function arrow procedure
 	    class object promise
 	    null undefined void
-	    cmap scmstring tilde pair no-string no-integer))
+	    cmap scmstring tilde pair no-string no-integer
+	    int8array uint8array))
        ty)
       ((memq ty '(index indexof length)) 'integer)
       ((memq ty '(ureal1 real1 real4)) 'real)
@@ -135,6 +136,10 @@
 	 (when (pair? hs)
 	    (when (pair? (assq 'no-string hint))
 	       (set! hint (remq! hint hs)))))
+      (let ((hs (assq 'array hint)))
+	 (when (pair? hs)
+	    (when (pair? (assq 'no-array hint))
+	       (set! hint (remq! hint hs)))))
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
@@ -173,6 +178,13 @@
 				(let ((c (assq 'integer hint)))
 				   (set! hint (delete! c hint))
 				   (add-hint! expr ty inc)))
+			       ((array)
+				(unless (assq 'no-array hint)
+				   (add-hint! expr ty inc)))
+			       ((no-array)
+				(let ((c (assq 'array hint)))
+				   (set! hint (delete! c hint))
+				   (add-hint! expr ty inc)))
 			       (else
 				(add-hint! expr ty inc))))))
 	    hints))))
@@ -203,6 +215,13 @@
 				   (add-hint! decl ty inc)))
 			       ((no-string)
 				(let ((c (assq 'string hint)))
+				   (set! hint (delete! c hint))
+				   (add-hint! decl ty inc)))
+			       ((array)
+				(unless (assq 'no-array hint)
+				   (add-hint! decl ty inc)))
+			       ((no-array)
+				(let ((c (assq 'array hint)))
 				   (set! hint (delete! c hint))
 				   (add-hint! decl ty inc)))
 			       ((no-integer)

@@ -20,6 +20,7 @@
 ;*      instanceof: variable used as an instanceof rhs                 */
 ;*      uninit: variable potentially used before initialization        */
 ;*      rest: is a rest argument                                       */
+;*      method: a method of the object is called (e.g. o.f())          */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -39,7 +40,7 @@
       ((init) #u32:2)
       ((new) #u32:4)
       ((ref) #u32:8)
-      ((assig) #u32:16)
+      ((eval) #u32:16)
       ((get) #u32:32)
       ((set) #u32:64)
       ((call) #u32:128)
@@ -47,7 +48,7 @@
       ((instanceof) #u32:512)
       ((uninit) #u32:1024)
       ((rest) #u32:2048)
-      ((eval) #u32:4096)
+      ((method) #u32:4096)
       (else (error "usage-key->bit" "Illegal key" key))))
 
 ;*---------------------------------------------------------------------*/
@@ -59,7 +60,7 @@
       ((#u32:2) 'init)
       ((#u32:4) 'new)
       ((#u32:8) 'ref)
-      ((#u32:16) 'assig)
+      ((#u32:16) 'eval)
       ((#u32:32) 'get)
       ((#u32:64) 'set)
       ((#u32:128) 'call)
@@ -67,6 +68,6 @@
       ((#u32:512) 'instanceof)
       ((#u32:1024) 'uninit)
       ((#u32:2048) 'rest)
-      ((#u32:4096) 'eval)
+      ((#u32:4096) 'method)
       (else (error "usage-bit->key" "Illegal key" bit))))
    

@@ -1121,7 +1121,7 @@
 	    (with-access::J2SFun fun (rtype %info)
 	       (let ((nenv (if (env? %info) (env-override env %info) env)))
 		  (return rtype nenv bk))))))
-   
+
    (define (type-ref-call callee args env bk)
       ;; call a JS variable, check is it a known function
       (with-access::J2SRef callee (decl)
@@ -1139,6 +1139,8 @@
 	    ((isa? decl J2SDeclInit)
 	     (with-access::J2SDeclInit decl (val)
 		(cond
+		   ((is-builtin-ref? callee 'Array)
+		    (return 'array env bk))
 		   ((and (decl-ronly? decl) (isa? val J2SFun))
 		    (type-known-call callee val args env bk))
 		   ((and (decl-ronly? decl) (isa? val J2SMethod))
@@ -1254,6 +1256,8 @@
 		((Array) 'array)
 		((Date) 'date)
 		((RegExp) 'regexp)
+		((Int8Array) 'int8array)
+		((Uint8Array) 'uint8array)
 		(else 'object))))
 	 ((isa? clazz J2SRef)
 	  (with-access::J2SRef clazz (decl)
@@ -1262,6 +1266,8 @@
 		   (when (decl-ronly? decl)
 		      (case id
 			 ((Array) 'array)
+			 ((Int8Array) 'int8array)
+			 ((Uint8Array) 'uint8array)
 			 ((Date) 'date)
 			 ((RegExp) 'regexp)
 			 (else 'object)))))))
@@ -2243,24 +2249,30 @@
 ;*    cleanup-hint! ::J2SDecl ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cleanup-hint! this::J2SDecl)
-   (with-access::J2SDecl this (hint)
-      (when (and (pair? hint) (pair? (assq 'no-string hint)))
-	 (let ((c (assq 'string hint)))
-	    (set! hint (delete! c hint))))
-      (when (and (pair? hint) (pair? (assq 'no-array hint)))
-	 (let ((c (assq 'array hint)))
-	    (set! hint (delete! c hint)))))
+   (with-access::J2SDecl this (hint vtype)
+      (if (memq vtype '(number any))
+	  (begin
+	     (when (and (pair? hint) (pair? (assq 'no-string hint)))
+		(let ((c (assq 'string hint)))
+		   (set! hint (delete! c hint))))
+	     (when (and (pair? hint) (pair? (assq 'no-array hint)))
+		(let ((c (assq 'array hint)))
+		   (set! hint (delete! c hint)))))
+	  (set! hint '())))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    cleanup-hint! ::J2SExpr ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cleanup-hint! this::J2SExpr)
-   (with-access::J2SExpr this (hint)
-      (when (and (pair? hint) (pair? (assq 'no-string hint)))
-	 (let ((c (assq 'string hint)))
-	    (set! hint (delete! c hint))))
-      (when (and (pair? hint) (pair? (assq 'no-array hint)))
-	 (let ((c (assq 'array hint)))
-	    (set! hint (delete! c hint)))))
+   (with-access::J2SExpr this (hint type)
+      (if (memq type '(number any))
+	  (begin
+	     (when (and (pair? hint) (pair? (assq 'no-string hint)))
+		(let ((c (assq 'string hint)))
+		   (set! hint (delete! c hint))))
+	     (when (and (pair? hint) (pair? (assq 'no-array hint)))
+		(let ((c (assq 'array hint)))
+		   (set! hint (delete! c hint)))))
+	  (set! hint '())))
    (call-default-walker))

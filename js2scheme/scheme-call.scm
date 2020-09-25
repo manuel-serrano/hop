@@ -1032,12 +1032,14 @@
 	       ((function)
 		(cond
 		   ((> (context-get ctx :debug 0) 0)
-		    `(,(symbol-append call '/debug)
-		      ,j2s-unresolved-call-workspace
-		      ',loc
-		      ,(j2s-scheme fun mode return ctx)
-		      ,@self
-		      ,@(packargs (j2s-scheme args mode return ctx))))
+		    (with-tmp-args args mode return ctx
+		       (lambda (args)
+			  `(,(symbol-append call '/debug)
+			    ,j2s-unresolved-call-workspace
+			    ',loc
+			    ,(j2s-scheme fun mode return ctx)
+			    ,@self
+			    ,@(packargs args)))))
 		   ((and (context-get ctx :profile-call #f) (>=fx profid 0))
 		    (let* ((f (gensym '%fun-profile))
 			   (call `(,call ,j2s-unresolved-call-workspace
@@ -1059,12 +1061,14 @@
 	       (else
 		(cond
 		   ((> (context-get ctx :debug 0) 0)
-		    `(,(symbol-append call '/debug)
-		      ,j2s-unresolved-call-workspace
-		      ',loc
-		      ,(j2s-scheme fun mode return ctx)
-		      ,@self
-		      ,@(packargs (j2s-scheme args mode return ctx))))
+		    (with-tmp-args args mode return ctx
+		       (lambda (args)
+			  `(,(symbol-append call '/debug)
+			    ,j2s-unresolved-call-workspace
+			    ',loc
+			    ,(j2s-scheme fun mode return ctx)
+			    ,@self
+			    ,@(packargs args)))))
 		   ((and (context-get ctx :profile-call #f) (>=fx profid 0))
 		    (let* ((f (gensym '%fun-profile))
 			   (call `(,call ,j2s-unresolved-call-workspace

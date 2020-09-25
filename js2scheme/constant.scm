@@ -203,7 +203,7 @@
 	     ;; cmaps themselves (see js-constant-init@hopscript/lib.scm
 	     ;; and j2sscheme/scheme-program.scm)
 	     this)
-	    ((and #t (null? keys))
+	    ((null? keys)
 	     (let ((n (add-cmap! loc '#() env)))
 		(set! cmap
 		   (instantiate::J2SLiteralCnst
@@ -245,6 +245,38 @@
 		 this))
 	    (else
 	     this)))))
+
+;*---------------------------------------------------------------------*/
+;*    constant! ::J2SDeclInit ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (constant! this::J2SDeclInit env nesting conf)
+   (with-access::J2SDeclInit this (val vtype vtype utype itype loc scope)
+      (if (and (not (decl-usage-has? this '(set ref method)))
+	       (constant-array? val)
+	       (not (eq? scope 'global)))
+	  (begin
+	     (tprint "CNST..." loc " " scope)
+	     (set! utype 'array)
+	     (set! vtype 'array)
+	     (set! itype 'array)
+	     (set! val (add-expr! val env #t)))
+	  (call-default-walker))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    constant-array? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (constant-array? this::J2SExpr)
+   (when (isa? this J2SArray)
+      (with-access::J2SArray this (exprs)
+	 (every (lambda (e)
+		   (or (isa? e J2SLiteralCnst)
+		       (isa? e J2SString)
+		       (isa? e J2SNumber)
+		       (isa? e J2SBool)
+		       (isa? e J2SUndefined)
+		       (constant-array? e)))
+	    exprs))))
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SAccess ...                                        */
@@ -452,8 +484,10 @@
    (with-access::J2SFun this (body params)
       ;; in order to activate this optimization, it must be proved
       ;; that no field is added to the function
-      (if (and #f (closed? body params))
-	  (add-expr! this env #f)
+      (if (closed? body params)
+	  (begin
+	     (tprint "WARNING, not tested (constant ::J2SFun)")
+	     (add-expr! this env #f))
 	  this)))
 
 ;*---------------------------------------------------------------------*/

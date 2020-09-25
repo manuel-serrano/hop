@@ -27,6 +27,7 @@
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_array
+	   __js2scheme_scheme-tarray
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-cast
 	   __js2scheme_scheme-program
@@ -1744,9 +1745,14 @@
 		      cache
 		      :cachefun (or (is-function? rhs) (is-prototype? obj))))
 	     (let* ((tmp (gensym 'tmp))
-		    (access (duplicate::J2SAccess lhs (obj (J2SHopRef tmp)))))
-		(if (eq? (j2s-vtype obj) 'array)
-		    (j2s-array-set! this mode return ctx)
+		    (access (duplicate::J2SAccess lhs (obj (J2SHopRef tmp))))
+		    (tyo (j2s-vtype obj)))
+		(cond
+		   ((eq? tyo 'array)
+		    (j2s-array-set! this mode return ctx))
+		   ((memq tyo '(int8array uint8array))
+		    (j2s-tarray-set! this mode return ctx))
+		   (else
 		    `(let ((,tmp ,(j2s-scheme obj mode return ctx)))
 			(if (js-array? ,tmp)
 			    ,(j2s-array-set!
@@ -1766,7 +1772,7 @@
 				#f
 				cache
 				:cachefun (or (is-function? rhs)
-					      (is-prototype? obj))))))))))
+					      (is-prototype? obj)))))))))))
 
    (with-access::J2SAssig this (loc lhs rhs)
       (let loop ((lhs lhs)
@@ -1780,6 +1786,9 @@
 		       (j2s-vector-set! this mode return ctx))
 		      ((and (eq? (j2s-vtype obj) 'array) (maybe-number? field))
 		       (j2s-array-set! this mode return ctx))
+		      ((and (memq (j2s-vtype obj) '(int8array uint8array))
+			    (maybe-number? field))
+		       (j2s-tarray-set! this mode return ctx))
 		      ((and (mightbe-number? field) (eq? (j2s-vtype obj) 'any))
 		       (maybe-array-set lhs rhs))
 		      ((eq? (j2s-vtype obj) 'arguments)
@@ -2726,6 +2735,12 @@
    (define (new-regexp? clazz)
       (new-builtin? clazz 'RegExp))
 
+   (define (new-int8array? clazz)
+      (new-builtin? clazz 'Int8Array))
+
+   (define (new-uint8array? clazz)
+      (new-builtin? clazz 'Uint8Array))
+
    (define (constructor-no-call? decl)
       ;; does this constructor call another function?
       (let ((fun (j2sdeclinit-val-fun decl)))
@@ -2809,6 +2824,11 @@
 	       (or (=fx (bigloo-debug) 0) (eq? type 'vector)))
 	  (epairify loc
 	     (j2s-new-array this mode return ctx)))
+	 ((and (=fx (length args) 1)
+	       (or (new-int8array? clazz)
+		   (new-uint8array? clazz)))
+	  (epairify loc
+	     (j2s-new-tarray this mode return ctx)))
 	 ((and (new-proxy? clazz) (=fx (length args) 2))
 	  (epairify loc
 	     (j2s-new-proxy this mode return ctx)))

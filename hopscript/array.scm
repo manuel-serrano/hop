@@ -1175,30 +1175,47 @@
 			    (else
 			     (loop (cdr l) (+ 1 len))))))
 	     (arr (js-array-species-create %this o new-len)))
-	 (with-access::JsArray arr (vec ilen)
-	    ;; fill the vector
-	    (let loop ((l l)
-		       (i #u32:0))
-	       (cond
-		  ((null? l)
-		   arr)
-		  ((js-array? (car l))
-		   (loop (cdr l)
-		      (fixnum->uint32
-			 (copy-array (car l) arr (uint32->fixnum i)))))
-		  ((js-proxy? (car l))
-		   (loop (cdr l)
-		      (fixnum->uint32
-			 (copy-proxy (car l) arr (uint32->fixnum i)))))
-		  ((<u32 i ilen)
-		   (vector-set! vec (uint32->fixnum i) (car l))
-		   (loop (cdr l) (+u32 i #u32:1)))
-		  ((js-object-mode-inline? arr)
-		   (js-array-index-set! arr i (car l) #f %this)
-		   (loop (cdr l) (+u32 i #u32:1)))
-		  (else
-		   (js-array-fixnum-set! arr (uint32->fixnum i) (car l) #f %this)
-		   (loop (cdr l) (+u32 i #u32:1))))))))
+	 (if (and (js-object-mode-inline? arr)
+		  (every (lambda (o)
+			    (and (js-array? o) (js-object-mode-inline? o)))
+		     l))
+	     ;; super fast copy
+	     (with-access::JsArray arr (vec ilen length)
+		(let ((vdst vec))
+		   (let loop ((l l)
+			      (i 0))
+		      (if (null? l)
+			  (begin
+			     (set! ilen (fixnum->uint32 new-len))
+			     (set! length (fixnum->uint32 new-len))
+			     arr)
+			  (with-access::JsArray (car l) (vec ilen)
+			     (vector-copy! vdst i vec 0 ilen)
+			     (loop (cdr l) (+fx i (uint32->fixnum ilen))))))))
+	     (with-access::JsArray arr (vec ilen)
+		;; fill the vector
+		(let loop ((l l)
+			   (i #u32:0))
+		   (cond
+		      ((null? l)
+		       arr)
+		      ((js-array? (car l))
+		       (loop (cdr l)
+			  (fixnum->uint32
+			     (copy-array (car l) arr (uint32->fixnum i)))))
+		      ((js-proxy? (car l))
+		       (loop (cdr l)
+			  (fixnum->uint32
+			     (copy-proxy (car l) arr (uint32->fixnum i)))))
+		      ((<u32 i ilen)
+		       (vector-set! vec (uint32->fixnum i) (car l))
+		       (loop (cdr l) (+u32 i #u32:1)))
+		      ((js-object-mode-inline? arr)
+		       (js-array-index-set! arr i (car l) #f %this)
+		       (loop (cdr l) (+u32 i #u32:1)))
+		      (else
+		       (js-array-fixnum-set! arr (uint32->fixnum i) (car l) #f %this)
+		       (loop (cdr l) (+u32 i #u32:1)))))))))
    
    (js-bind! %this js-array-prototype (& "concat")
       :value (js-make-function %this array-prototype-concat
@@ -3732,7 +3749,7 @@
 		  avec 0 (uint32->fixnum ailen))
 	       (set! ilen (uint32->fixnum (+u32 tilen ailen))))
 	    arr))))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    js-array-concat1 ...                                             */
 ;*---------------------------------------------------------------------*/

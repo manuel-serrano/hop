@@ -1250,104 +1250,111 @@
 ;*    with-tmp-args ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (with-tmp-args args mode return ctx proc)
-   (let ((ses (map can-side-effect? args)))
-      (if (any (lambda (x) x) ses)
-	  (let ((tmps (map (lambda (e a)
-			      (when e (gensym '%a)))
-			 ses args)))
-	     `(let* ,(filter-map (lambda (t a)
-				    (when t 
-				       (list t (j2s-scheme a mode return ctx))))
-			tmps args)
-		 ,(proc (map (lambda (t a)
-				(or t (j2s-scheme a mode return ctx)))
-			   tmps args))))
-	  (proc (map (lambda (a) (j2s-scheme a mode return ctx)) args)))))
+   (if (any side-effect? args)
+       (let ((tmps (map (lambda (a)
+			   (when (can-side-effect? a) (gensym '%a)))
+		      args)))
+	  `(let* ,(filter-map (lambda (t a)
+				 (when t 
+				    (list t (j2s-scheme a mode return ctx))))
+		     tmps args)
+	      ,(proc (map (lambda (t a)
+			     (or t (j2s-scheme a mode return ctx)))
+			tmps args))))
+       (proc (map (lambda (a) (j2s-scheme a mode return ctx)) args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    can-side-effect? ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (can-side-effect? node)
    (let ((cell (make-cell #f)))
-      (side-effect node cell)
+      (side-effect node #t cell)
+      (cell-ref cell)))
+
+;*---------------------------------------------------------------------*/
+;*    side-effect? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (side-effect? node)
+   (let ((cell (make-cell #f)))
+      (side-effect node #f cell)
       (cell-ref cell)))
 
 ;*---------------------------------------------------------------------*/
 ;*    side-effect ::J2SNode ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (side-effect this::J2SNode cell)
+(define-walk-method (side-effect this::J2SNode mustp::bool cell)
    (call-default-walker)
    (cell-ref cell))
 
 ;*---------------------------------------------------------------------*/
 ;*    side-effect ::J2SRef ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (side-effect this::J2SRef cell)
+(define-walk-method (side-effect this::J2SRef mustp::bool cell)
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (usage)
-	 (when (decl-usage-has? decl '(assig))
+	 (when (and mustp (decl-usage-has? decl '(assig)))
 	    (cell-set! cell #t)
 	    #t))))
 
 ;*---------------------------------------------------------------------*/
 ;*    side-effect ::J2SUnresolvedRef ...                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (side-effect this::J2SUnresolvedRef cell)
+(define-walk-method (side-effect this::J2SUnresolvedRef mustp::bool cell)
    (cell-set! cell #t)
    #t)
    
 ;*---------------------------------------------------------------------*/
 ;*    side-effect ::J2SLiteral ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (side-effect this::J2SLiteral cell)
+(define-walk-method (side-effect this::J2SLiteral mustp::bool cell)
    #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    side-effect ::J2SAssig ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (side-effect this::J2SAssig cell)
+(define-walk-method (side-effect this::J2SAssig mustp::bool cell)
    (cell-set! cell #t)
    #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    side-effect ::J2SCall ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (side-effect this::J2SCall cell)
+(define-walk-method (side-effect this::J2SCall mustp::bool cell)
    (cell-set! cell #t)
    #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    side-effect ::J2SNew ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (side-effect this::J2SNew cell)
+(define-walk-method (side-effect this::J2SNew mustp::bool cell)
    (cell-set! cell #t)
    #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    side-effect ::J2SBindExit ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (side-effect this::J2SBindExit cell)
+(define-walk-method (side-effect this::J2SBindExit mustp::bool cell)
    (cell-set! cell #t)
    #t)
    
 ;*---------------------------------------------------------------------*/
 ;*    side-effect ::J2SYield ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (side-effect this::J2SYield cell)
+(define-walk-method (side-effect this::J2SYield mustp::bool cell)
    (cell-set! cell #t)
    #t)
    
 ;*---------------------------------------------------------------------*/
 ;*    side-effect ::J2SPragma ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (side-effect this::J2SPragma cell)
+(define-walk-method (side-effect this::J2SPragma mustp::bool cell)
    (cell-set! cell #t)
    #t)
    
 ;*---------------------------------------------------------------------*/
 ;*    side-effect ::J2SObjInit ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (side-effect this::J2SObjInit cell)
+(define-walk-method (side-effect this::J2SObjInit mustp::bool cell)
    (cell-set! cell #t)
    #t)
 

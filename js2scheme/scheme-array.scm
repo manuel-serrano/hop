@@ -135,6 +135,14 @@
 	  `(js-array-construct-alloc/length %this
 	      ,(box (j2s-scheme arg mode return ctx)
 		  (j2s-vtype arg) ctx)))))
+
+   (define (uncast a)
+      (if (isa? a J2SCast)
+	  (with-access::J2SCast a (expr type)
+	     (if (eq? type 'any)
+		 expr
+		 a))
+	  a))
    
    (with-access::J2SNew this (loc cache clazz args type)
       (cond
@@ -149,7 +157,7 @@
 	      ,(j2s-scheme (car args) mode return ctx)
 	      (js-undefined)))
 	 (else
-	  (let loop ((arg (car args)))
+	  (let loop ((arg (uncast (car args))))
 	     (let ((t (j2s-type arg)))
 		(cond
 		   ((eq? t 'int32)

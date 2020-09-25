@@ -261,7 +261,7 @@
       js-arraybuffer))
 
 ;*---------------------------------------------------------------------*/
-;*    js-properties-names ::JsArray ...                                */
+;*    js-properties-names ::JsArrayBuffer ...                          */
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-names obj::JsArrayBuffer enump %this)
    (let ((len (js-arraybuffer-length obj)))
