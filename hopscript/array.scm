@@ -1119,103 +1119,7 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.4
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-array.prototype.concat
    (define (array-prototype-concat this::obj . l)
-      
-      (define (copy-array-slow target tstart src sstart send)
-	 (js-object-mode-inline-set! target #f)
-	 ;; slow copy, elements by elements
-	 (let loop ((i sstart)
-		    (j tstart))
-	    (if (= i send)
-		j
-		(let ((d (js-get-property src i %this)))
-		   (if (eq? d (js-undefined))
-		       (js-object-mode-holey-set! target #t)
-		       (js-define-own-property target (js-toname j %this)
-			  d #f %this))
-		   (loop (+ i 1) (+ j 1))))))
-      
-      (define (copy-array src dst i)
-	 (if (and (js-object-mode-inline? src)
-		  (js-object-mode-inline? dst))
-	     (with-access::JsArray src ((vsrc vec))
-		(with-access::JsArray dst ((vdst vec) ilen)
-		   ;; try to use a vector copy
-		   (if (and (>fx (vector-length vdst) 0)
-			    (>fx (vector-length vsrc) 0))
-		       (let* ((lsrc (vector-length vsrc))
-			      (slen (js-get-length src %this))
-			      (alen (minfx slen lsrc)))
-			  ;; fast vector-copy
-			  (when (>fx (+fx i alen) (vector-length vdst))
-			     (set! vdst
-				(copy-vector vdst (*fx (+fx i alen) 2))))
-			  (vector-copy! vdst i vsrc 0 alen)
-			  (set! ilen (fixnum->uint32 (+fx i alen)))
-			  (if (> slen lsrc)
-			      (copy-array-slow dst (+fx i lsrc) src lsrc slen)
-			      (+fx i alen)))
-		       ;; slow copy
-		       (copy-array-slow dst i src 0 (js-get-length src %this)))))
-	     (copy-array-slow dst i src 0 (js-get-length src %this))))
-
-      (define (copy-proxy src dst i)
-	 (copy-array-slow dst i src 0 (js-get-length src %this)))
-      
-      (let* ((o (js-toobject %this this))
-	     (l (cons o l))
-	     (new-len (let loop ((l l)
-				 (len 0))
-			 (cond
-			    ((null? l)
-			     len)
-			    ((or (js-array? (car l)) (js-proxy? (car l)))
-			     (loop (cdr l)
-				(+fx/overflow len
-				   (js-get-length (car l) %this))))
-			    (else
-			     (loop (cdr l) (+ 1 len))))))
-	     (arr (js-array-species-create %this o new-len)))
-	 (if (and (js-object-mode-inline? arr)
-		  (every (lambda (o)
-			    (and (js-array? o) (js-object-mode-inline? o)))
-		     l))
-	     ;; super fast copy
-	     (with-access::JsArray arr (vec ilen length)
-		(let ((vdst vec))
-		   (let loop ((l l)
-			      (i 0))
-		      (if (null? l)
-			  (begin
-			     (set! ilen (fixnum->uint32 new-len))
-			     (set! length (fixnum->uint32 new-len))
-			     arr)
-			  (with-access::JsArray (car l) (vec ilen)
-			     (vector-copy! vdst i vec 0 ilen)
-			     (loop (cdr l) (+fx i (uint32->fixnum ilen))))))))
-	     (with-access::JsArray arr (vec ilen)
-		;; fill the vector
-		(let loop ((l l)
-			   (i #u32:0))
-		   (cond
-		      ((null? l)
-		       arr)
-		      ((js-array? (car l))
-		       (loop (cdr l)
-			  (fixnum->uint32
-			     (copy-array (car l) arr (uint32->fixnum i)))))
-		      ((js-proxy? (car l))
-		       (loop (cdr l)
-			  (fixnum->uint32
-			     (copy-proxy (car l) arr (uint32->fixnum i)))))
-		      ((<u32 i ilen)
-		       (vector-set! vec (uint32->fixnum i) (car l))
-		       (loop (cdr l) (+u32 i #u32:1)))
-		      ((js-object-mode-inline? arr)
-		       (js-array-index-set! arr i (car l) #f %this)
-		       (loop (cdr l) (+u32 i #u32:1)))
-		      (else
-		       (js-array-fixnum-set! arr (uint32->fixnum i) (car l) #f %this)
-		       (loop (cdr l) (+u32 i #u32:1)))))))))
+      (js-array-prototype-concat this l %this))
    
    (js-bind! %this js-array-prototype (& "concat")
       :value (js-make-function %this array-prototype-concat
@@ -3732,6 +3636,108 @@
 			   (set! pmap cmap)
 			   (vector-forof o length proc #u32:0))
 			(array-forof o length proc #u32:0))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-concat ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-concat this l %this)
+   
+   (define (copy-array-slow target tstart src sstart send)
+      (js-object-mode-inline-set! target #f)
+      ;; slow copy, elements by elements
+      (let loop ((i sstart)
+		 (j tstart))
+	 (if (= i send)
+	     j
+	     (let ((d (js-get-property src i %this)))
+		(if (eq? d (js-undefined))
+		    (js-object-mode-holey-set! target #t)
+		    (js-define-own-property target (js-toname j %this)
+		       d #f %this))
+		(loop (+ i 1) (+ j 1))))))
+   
+   (define (copy-array src dst i)
+      (if (and (js-object-mode-inline? src)
+	       (js-object-mode-inline? dst))
+	  (with-access::JsArray src ((vsrc vec))
+	     (with-access::JsArray dst ((vdst vec) ilen)
+		;; try to use a vector copy
+		(if (and (>fx (vector-length vdst) 0)
+			 (>fx (vector-length vsrc) 0))
+		    (let* ((lsrc (vector-length vsrc))
+			   (slen (js-get-length src %this))
+			   (alen (minfx slen lsrc)))
+		       ;; fast vector-copy
+		       (when (>fx (+fx i alen) (vector-length vdst))
+			  (set! vdst
+			     (copy-vector vdst (*fx (+fx i alen) 2))))
+		       (vector-copy! vdst i vsrc 0 alen)
+		       (set! ilen (fixnum->uint32 (+fx i alen)))
+		       (if (> slen lsrc)
+			   (copy-array-slow dst (+fx i lsrc) src lsrc slen)
+			   (+fx i alen)))
+		    ;; slow copy
+		    (copy-array-slow dst i src 0 (js-get-length src %this)))))
+	  (copy-array-slow dst i src 0 (js-get-length src %this))))
+   
+   (define (copy-proxy src dst i)
+      (copy-array-slow dst i src 0 (js-get-length src %this)))
+   
+   (let* ((o (js-toobject %this this))
+	  (l (cons o l))
+	  (new-len (let loop ((l l)
+			      (len 0))
+		      (cond
+			 ((null? l)
+			  len)
+			 ((or (js-array? (car l)) (js-proxy? (car l)))
+			  (loop (cdr l)
+			     (+fx/overflow len
+				(js-get-length (car l) %this))))
+			 (else
+			  (loop (cdr l) (+ 1 len))))))
+	  (arr (js-array-species-create %this o new-len)))
+      (if (and (js-object-mode-inline? arr)
+	       (every (lambda (o)
+			 (and (js-array? o) (js-object-mode-inline? o)))
+		  l))
+	  ;; super fast copy
+	  (with-access::JsArray arr (vec ilen length)
+	     (let ((vdst vec))
+		(let loop ((l l)
+			   (i 0))
+		   (if (null? l)
+		       (begin
+			  (set! ilen (fixnum->uint32 new-len))
+			  (set! length (fixnum->uint32 new-len))
+			  arr)
+		       (with-access::JsArray (car l) (vec ilen)
+			  (vector-copy! vdst i vec 0 (uint32->fixnum ilen))
+			  (loop (cdr l) (+fx i (uint32->fixnum ilen))))))))
+	  (with-access::JsArray arr (vec ilen)
+	     ;; fill the vector
+	     (let loop ((l l)
+			(i #u32:0))
+		(cond
+		   ((null? l)
+		    arr)
+		   ((js-array? (car l))
+		    (loop (cdr l)
+		       (fixnum->uint32
+			  (copy-array (car l) arr (uint32->fixnum i)))))
+		   ((js-proxy? (car l))
+		    (loop (cdr l)
+		       (fixnum->uint32
+			  (copy-proxy (car l) arr (uint32->fixnum i)))))
+		   ((<u32 i ilen)
+		    (vector-set! vec (uint32->fixnum i) (car l))
+		    (loop (cdr l) (+u32 i #u32:1)))
+		   ((js-object-mode-inline? arr)
+		    (js-array-index-set! arr i (car l) #f %this)
+		    (loop (cdr l) (+u32 i #u32:1)))
+		   (else
+		    (js-array-fixnum-set! arr (uint32->fixnum i) (car l) #f %this)
+		    (loop (cdr l) (+u32 i #u32:1)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-concat1 ...                                   */

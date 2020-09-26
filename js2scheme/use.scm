@@ -372,6 +372,7 @@
       (let ((ctx (cond
 		    ((isa? fun J2SFun) 'call)
 		    ((isa? fun J2SAccess) 'method)
+		    ((isa? fun J2SRef) 'call)
 		    (else 'ref))))
 	 (j2s-use fun ctx deval infun))
       (when (eq? protocol 'spread)

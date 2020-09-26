@@ -1182,8 +1182,8 @@
 	  (with-access::J2SParen expr (expr)
 	     (simple? expr)))
 	 ((isa? expr J2SCast)
-	  (with-access::J2SCast expr (expr)
-	     (simple? expr)))
+	  (with-access::J2SCast expr (expr type)
+	     (and (simple? expr) (eq? type (j2s-type expr)))))
 	 (else
 	  #f)))
    

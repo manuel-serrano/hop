@@ -255,7 +255,6 @@
 	       (constant-array? val)
 	       (not (eq? scope 'global)))
 	  (begin
-	     (tprint "CNST..." loc " " scope)
 	     (set! utype 'array)
 	     (set! vtype 'array)
 	     (set! itype 'array)
@@ -484,7 +483,7 @@
    (with-access::J2SFun this (body params)
       ;; in order to activate this optimization, it must be proved
       ;; that no field is added to the function
-      (if (closed? body params)
+      (if (and #f (closed? body params))
 	  (begin
 	     (tprint "WARNING, not tested (constant ::J2SFun)")
 	     (add-expr! this env #f))

@@ -917,14 +917,15 @@
 	  *max-uint32*
 	  (min (max u l) *max-uint32*)))
    
-   (when (and (interval? left) (interval? right))
-      (let ((u (max (interval-max left)
-		  (op (interval-max left) (interval-max right)
-		     *max-uint32*)))
-	    (l (min (interval-min left)
-		  (op (interval-min left) (interval-min right)
-		     #l0))))
-	 (interval (minov u l) (maxov u l)))))
+   (if (and (interval? left) (interval? right))
+       (let ((u (max (interval-max left)
+		   (op (interval-max left) (interval-max right)
+		      *max-uint32*)))
+	     (l (min (interval-min left)
+		   (op (interval-min left) (interval-min right)
+		      #l0))))
+	  (interval (minov u l) (maxov u l)))
+       (interval 0 *max-uint32*)))
 
 ;*---------------------------------------------------------------------*/
 ;*    interval-shiftl ...                                              */
@@ -1130,7 +1131,7 @@
 ;*    node-range ::J2SParen ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SParen env::pair-nil conf mode::symbol fix::cell)
-   (with-access::J2SParen this (expr range)
+   (with-access::J2SParen this (expr range loc)
       (multiple-value-bind (intv env)
 	 (node-range expr env conf mode fix)
 	 (expr-range-add! this env fix intv))))

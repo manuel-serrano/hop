@@ -577,7 +577,7 @@
 		   (with-access::J2SDeclExtern decl (id)
 		      (when (eq? id ty)
 			 (not (decl-usage-has? decl '(assig))))))))))
-
+      
       (when (and (isa? field J2SString) (= (context-get ctx debug: 0) 0))
 	 (with-access::J2SString field (val)
 	    (let ((tyobj (j2s-type obj)))
