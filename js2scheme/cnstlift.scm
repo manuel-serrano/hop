@@ -8,21 +8,27 @@
 ;*    -------------------------------------------------------------    */
 ;*    Constant lifting optimization.                                   */
 ;*                                                                     */
-;*    This optimization moves constant expressions that reference      */
-;*    captured constant variables before the procedure creation.       */
-;*    For instance:                                                    */
-;*      function f( x ) {                                              */
-;*         return f() {                                                */
-;*            return "[" + x + "]";                                    */
-;*         }                                                           */
-;*      }                                                              */
-;*    is transformed into:                                             */
-;*      function f( x ) {                                              */
-;*         let tmp = "[" + x + "]";                                    */
-;*         return f() {                                                */
-;*            return tmp;                                              */
-;*         }                                                           */
-;*      }                                                              */
+;*    This optimization does two differents lifting:                   */
+;*                                                                     */
+;*    1. function lifting:                                             */
+;*      This optimization moves constant expressions that reference    */
+;*      captured constant variables before the procedure creation.     */
+;*      For instance:                                                  */
+;*        function f( x ) {                                            */
+;*           return f() {                                              */
+;*              return "[" + x + "]";                                  */
+;*           }                                                         */
+;*        }                                                            */
+;*      is transformed into:                                           */
+;*        function f( x ) {                                            */
+;*           let tmp = "[" + x + "]";                                  */
+;*           return f() {                                              */
+;*              return tmp;                                            */
+;*           }                                                         */
+;*        }                                                            */
+;*    2. loop lifting:                                                 */
+;*      This second optimization moves constant expressions out of     */
+;*      loop.s                                                         */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -57,20 +63,31 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-cnstlift! this conf)
    (when (isa? this J2SProgram)
-      (j2s-free-var this #f '())
-      (j2s-cnstlift-expression! this #f))
+      (let ((verb (make-cell '())))
+	 (j2s-free-var this #f '())
+	 (j2s-cnstlift-expression! this #f 'fun verb)
+	 (when (and (>= (config-get conf :verbose 0) 2) (pair? (cell-ref verb)))
+	    (fprintf (current-error-port)
+	       (format " [~a: ~(,)]"
+		  (let ((fst (car (cell-ref verb))))
+		     (cadr (if (pair? fst) fst (cell-ref fst))))
+		  (map (lambda (c)
+			  (if (cell? c)
+			      (format "~a*" (caddr (cell-ref c)))
+			      (caddr c)))
+		     (cell-ref verb)))))))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cnstlift-expression! ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-cnstlift-expression! this::J2SNode vars)
+(define-walk-method (j2s-cnstlift-expression! this::J2SNode vars mode verb)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cnstlift-expression! ::J2SLetBlock ...                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-cnstlift-expression! this::J2SLetBlock vars)
+(define-walk-method (j2s-cnstlift-expression! this::J2SLetBlock vars mode verb)
 
    (define (decompose-bindexit stmt::J2SBindExit)
       (with-access::J2SBindExit stmt (stmt)
@@ -96,7 +113,7 @@
 		   (cond
 		      ((isa? decl J2SDeclFun)
 		       (with-access::J2SDeclFun decl (val)
-			  (let ((nval (j2s-cnstlift-expression! val vars)))
+			  (let ((nval (j2s-cnstlift-expression! val vars mode verb)))
 			     (cond
 				((isa? nval J2SBindExit)
 				 (multiple-value-bind (ndecls fun)
@@ -109,41 +126,94 @@
 				    (j2s->list nval)))))))
 		      ((isa? decl J2SDeclInit)
 		       (with-access::J2SDeclInit decl (val)
-			  (set! val (j2s-cnstlift-expression! val vars))))))
+			  (set! val (j2s-cnstlift-expression! val vars mode verb))))))
 	 decls)
-      (set! nodes (map (lambda (n) (j2s-cnstlift-expression! n vars)) nodes))
+      (set! nodes
+	 (map (lambda (n) (j2s-cnstlift-expression! n vars mode verb))
+	    nodes))
       this))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-cnstlift-expression! ::J2SFor ...                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-cnstlift-expression! this::J2SFor vars mode verb)
+   (with-access::J2SFor this (init test incr body loc)
+      (set! init (j2s-cnstlift-expression! init vars mode verb))
+      (let* ((vtest (make-cell '()))
+	     (vincr (make-cell '()))
+	     (vbody (make-cell '()))
+	     (ntest (j2s-cnstlift-expression! test vtest 'loop verb))
+	     (nincr (j2s-cnstlift-expression! incr vincr 'loop verb))
+	     (nbody (j2s-cnstlift-expression! body vbody 'loop verb))
+	     (tmps (append (cell-ref vtest) (cell-ref vincr) (cell-ref vbody))))
+	 (set! test ntest)
+	 (set! incr nincr)
+	 (set! body nbody)
+	 (if (pair? tmps)
+	     (J2SLetBlock tmps this)
+	     this))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-cnstlift-expression! ::J2SWhile ...                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-cnstlift-expression! this::J2SWhile vars mode verb)
+   (with-access::J2SWhile this (test body loc)
+      (let* ((vtest (make-cell '()))
+	     (vbody (make-cell '()))
+	     (ntest (j2s-cnstlift-expression! test vtest 'loop verb))
+	     (nbody (j2s-cnstlift-expression! body vbody 'loop verb))
+	     (tmps (append (cell-ref vtest) (cell-ref vbody))))
+	 (set! test ntest)
+	 (set! body nbody)
+	 (if (pair? tmps)
+	     (J2SLetBlock tmps this)
+	     this))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-cnstlift-expression! ::J2SForIn ...                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-cnstlift-expression! this::J2SForIn vars mode verb)
+   (with-access::J2SForIn this (lhs obj body loc)
+      (let* ((vbody (make-cell '()))
+	     (nbody (j2s-cnstlift-expression! body vbody 'loop verb))
+	     (tmps (cell-ref vbody)))
+	 (set! lhs (j2s-cnstlift-expression! lhs vars mode verb))
+	 (set! obj (j2s-cnstlift-expression! obj vars mode verb))
+	 (set! body nbody)
+	 (if (pair? tmps)
+	     (J2SLetBlock tmps this)
+	     this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cnstlift-expression! ::J2STry ...                            */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-cnstlift-expression! this::J2STry vars)
+(define-method (j2s-cnstlift-expression! this::J2STry vars mode verb)
    (with-access::J2STry this (body catch finally)
-      (set! body (j2s-cnstlift-expression! body vars))
-      (set! catch (j2s-cnstlift-expression! catch #f))
-      (set! finally (j2s-cnstlift-expression! finally #f))
+      (set! body (j2s-cnstlift-expression! body vars mode verb))
+      (set! catch (j2s-cnstlift-expression! catch #f mode verb))
+      (set! finally (j2s-cnstlift-expression! finally #f mode verb))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cnstlift-expression! ::J2SMethod ...                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-cnstlift-expression! this::J2SMethod vars)
+(define-walk-method (j2s-cnstlift-expression! this::J2SMethod vars mode verb)
    (with-access::J2SMethod this (function method)
       (with-access::J2SFun function (body loc)
-	 (set! body (j2s-cnstlift-expression! body #f)))
+	 (set! body (j2s-cnstlift-expression! body #f mode verb)))
       (with-access::J2SFun method (body loc)
-	 (set! body (j2s-cnstlift-expression! body #f)))
+	 (set! body (j2s-cnstlift-expression! body #f mode verb)))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cnstlift-expression! ::J2SFun ...                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-cnstlift-expression! this::J2SFun vars)
+(define-walk-method (j2s-cnstlift-expression! this::J2SFun vars mode verb)
    (with-access::J2SFun this (body loc generator)
       (if generator
 	  this
 	  (let ((vars (make-cell '())))
-	     (set! body (j2s-cnstlift-expression! body vars))
+	     (set! body (j2s-cnstlift-expression! body vars mode verb))
 	     (if (pair? (cell-ref vars))
 		 (let* ((lbl (gensym '%flift))
 			(be (J2SBindExit/type 'function lbl (J2SNop))))
@@ -157,10 +227,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cnstlift-expression! ::J2SExpr ...                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-cnstlift-expression! this::J2SExpr vars)
-   (if (and (cell? vars) (pair? (cnst-expression-freevars this)))
+(define-walk-method (j2s-cnstlift-expression! this::J2SExpr vars mode verb)
+   (if (and (cell? vars)
+	    (if (eq? mode 'fun)
+		(pair? (cnst-expression-freevars this))
+		(list? (cnst-expression-freevars this))))
        (with-access::J2SExpr this (loc type)
 	  (let ((decl (J2SLetOptVUtype type '(ref) (gensym '%clift) this)))
+	     (cell-set! verb (cons loc (cell-ref verb)))
 	     (cell-set! vars (cons decl (cell-ref vars)))
 	     (J2SRef decl :type type)))
        (call-default-walker)))
@@ -168,13 +242,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cnstlift-expression! ::J2SLiteral ...                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-cnstlift-expression! this::J2SLiteral vars)
+(define-walk-method (j2s-cnstlift-expression! this::J2SLiteral vars mode verb)
    this)
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cnstlift-expression! ::J2SRef ...                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-cnstlift-expression! this::J2SRef vars)
+(define-walk-method (j2s-cnstlift-expression! this::J2SRef vars mode verb)
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -246,6 +320,37 @@
 		(cell-set! freevars (cons decl (cell-ref freevars))))))))
    (cell-ref iscnst))
 
+;*---------------------------------------------------------------------*/
+;*    cnst-expression ::J2SAccess ...                                  */
+;*    -------------------------------------------------------------    */
+;*    An access is a constation expression, iff it is a string         */
+;*    access and that string is read-only.                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cnst-expression this::J2SAccess iscnst freevars)
+   (when (cell-ref iscnst)
+      (with-access::J2SAccess this (obj field)
+	 (unless (or (isa? obj J2SString)
+		     (and (isa? obj J2SRef)
+			  (with-access::J2SRef obj (decl type)
+			     (and (eq? type 'string)
+				  (not (decl-usage-has? decl '(assig)))))
+			  (or (and (isa? field J2SString)
+				   (with-access::J2SString field (val)
+				      (string=? val "length")))
+			      (memq (j2s-type field) '(integer number)))))
+	    (cell-set! iscnst #f)
+	    #f)))
+   (cell-ref iscnst))
+
+;*---------------------------------------------------------------------*/
+;*    cnst-expression ::J2SCall ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cnst-expression this::J2SCall iscnst freevars)
+   (with-access::J2SCall this (fun args)
+      ;; to be improved for string methods if needed
+      (cell-set! iscnst #f)
+      #f))
+   
 ;*---------------------------------------------------------------------*/
 ;*    cnst-expression ::J2SThis ...                                    */
 ;*---------------------------------------------------------------------*/
