@@ -119,6 +119,8 @@
 	;; array methods
 	("concat" js-array-concat1 array (array) %this #t ,j2s-array-plain?)
 	("concat" js-array-maybe-concat1 any (any) %this #t ,j2s-array-plain?)
+	("concat" js-array-concat array (array . any) %this #f ,j2s-array-plain?)
+	("concat" js-array-maybe-concat any (any . any) %this #t ,j2s-array-plain?)
 	("sort" js-array-sort array (any) %this #t ,j2s-array-plain?)
 	("sort" js-array-maybe-sort any (any) %this #t ,j2s-array-plain?)
 	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this #t ,j2s-array-plain?)
@@ -590,11 +592,14 @@
 				    (cond
 				       ((null? args)
 					(when (or (null? params)
-						  (every pair? params))
+						  (and (list? params)
+						       (every pair? params)))
 					   (let ((p (builtin-method-predicate m)))
 					      (or (not p) (p mode return ctx)))))
 				       ((null? params)
 					#f)
+				       ((symbol? params)
+					#t)
 				       (else
 					(let ((tya (j2s-type-sans-cast
 						      (car args)))
@@ -624,51 +629,126 @@
 			       (loop (cdr args) (cdr params)))))))))
 	 j2s-builtin-functions))
 
+   (define (arity args)
+      (let loop ((arity 0)
+		 (args args))
+	 (cond
+	    ((null? args) arity)
+	    ((pair? args) (loop (+fx arity 1) (cdr args)))
+	    (else (negfx (+fx arity 1))))))
+   
    (define (call-builtin-method obj::J2SExpr field::J2SExpr args cache cspecs)
       (let ((m (find-builtin-method obj field args)))
 	 (when m
 	    (let* ((met (builtin-method-met m))
 		   (opt (builtin-method-args m))
-		   (arity (length opt))
+		   (arity (arity opt))
 		   (len (length args)))
 	       (cond
 		  ((symbol? met)
 		   ;; builtin simple
 		   (with-tmp-args args mode return ctx
 		      (lambda (args)
-			 `(,met ,(j2s-scheme obj mode return ctx)
-			     ,@args
-			     ,@(if (=fx len arity)
-				   '()
-				   (let* ((lopt (length opt))
-					  (nopt (-fx arity len)))
-				      (map cadr (list-tail opt (-fx lopt nopt)))))
-			     ,@(if (builtin-method-%this m)
-				   '(%this)
-				   '())
-			     ,@(if (builtin-method-cache m)
-				   (if cache
-				       `((js-pcache-ref %pcache ,cache))
-				       '(#f))
-				   '())))))
+			 (cond
+			    ((>=fx arity 0)
+			     `(,met ,(j2s-scheme obj mode return ctx)
+				 ,@args
+				 ,@(if (=fx len arity)
+				       '()
+				       (let* ((lopt (length opt))
+					      (nopt (-fx arity len)))
+					  (map cadr (list-tail opt (-fx lopt nopt)))))
+				 ,@(if (builtin-method-%this m)
+				       '(%this)
+				       '())
+				 ,@(if (builtin-method-cache m)
+				       (if cache
+					   `((js-pcache-ref %pcache ,cache))
+					   '(#f))
+				       '())))
+			    ((=fx arity -2)
+			     (let ((o (gensym '%o)))
+				`(let ((,o ,(j2s-scheme obj mode return ctx)))
+				    (js-call-with-stack-list
+				       (list ,@args)
+				       (lambda (l)
+					  (,met ,o
+					     l
+					     ,@(if (builtin-method-%this m)
+						   '(%this)
+						   '())
+					     ,@(if (builtin-method-cache m)
+						   (if cache
+						       `((js-pcache-ref %pcache ,cache))
+						       '(#f))
+						   '())))))))
+			    (else
+			     ;; var args
+			     (let* ((o (gensym '%o))
+				    (fix (take args (negfx (+fx arity 1))))
+				    (tmps (map (lambda (_) (gensym '%a)) fix)))
+				`(let* ((,o ,(j2s-scheme obj mode return ctx))
+					,@(map list fix tmps))
+				    (js-call-with-stack-list
+				       (list ,@(list-tail args (negfx (+fx arity 1))))
+				       (lambda (l)
+					  (,met ,o
+					     ,@tmps
+					     l
+					     ,@(if (builtin-method-%this m)
+						   '(%this)
+						   '())
+					     ,@(if (builtin-method-cache m)
+						   (if cache
+						       `((js-pcache-ref %pcache ,cache))
+						       '(#f))
+						   '())))))))))))
 		  ((procedure? met)
 		   ;; builtin procedure
-		   (met obj
-		      (append args
-			 (if (=fx len arity)
-			     '()
-			     (let* ((lopt (length opt))
-				    (nopt (-fx arity len)))
-				(map cadr (list-tail opt (-fx lopt nopt)))))
-			 (if (builtin-method-%this m)
-			     '(%this)
-			     '())
-			 (if (builtin-method-cache m)
-			     (if cache
-				 `((js-pcache-ref %pcache ,cache))
-				 '(#f))
-			     '()))
-		      mode return ctx))
+		   (cond
+		      ((>=fx arity 0)
+		       (met obj
+			  (append args
+			     (if (=fx len arity)
+				 '()
+				 (let* ((lopt (length opt))
+					(nopt (-fx arity len)))
+				    (map cadr (list-tail opt (-fx lopt nopt)))))
+			     (if (builtin-method-%this m)
+				 '(%this)
+				 '())
+			     (if (builtin-method-cache m)
+				 (if cache
+				     `((js-pcache-ref %pcache ,cache))
+				     '(#f))
+				 '()))
+			  mode return ctx))
+		      ((=fx arity -2)
+		       ;; untested
+		       (met obj '() args
+			  (if (builtin-method-%this m)
+			      '(%this)
+			      '())
+			  (if (builtin-method-cache m)
+			      (if cache
+				  `((js-pcache-ref %pcache ,cache))
+				  '(#f))
+			      '())
+			  mode return ctx))
+		      (else
+		       ;; untested
+		       (met obj 
+			  (take args (negfx (+fx arity 1)))
+			  (list-tail args (negfx (+fx arity 1)))
+			  (if (builtin-method-%this m)
+			      '(%this)
+			      '())
+			  (if (builtin-method-cache m)
+			      (if cache
+				  `((js-pcache-ref %pcache ,cache))
+				  '(#f))
+			      '())
+			  mode return ctx))))
 		  (else
 		   (error "js2scheme" "illegal builtin method" m)))))))
 

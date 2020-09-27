@@ -116,6 +116,8 @@
 	   (js-array-construct/length::JsArray ::JsGlobalObject ::JsArray ::obj)
 	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
 	   (jsarray->vector::vector ::JsArray ::JsGlobalObject)
+	   (js-array-concat ::JsArray args::pair-nil ::JsGlobalObject)
+	   (js-array-maybe-concat ::obj args::pair-nil ::JsGlobalObject ::obj)
 	   (js-array-concat1 ::JsArray ::JsArray ::JsGlobalObject ::obj)
 	   (js-array-maybe-concat1 ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-fill ::JsArray ::obj ::obj ::obj ::JsGlobalObject ::obj)
@@ -150,7 +152,10 @@
 	   (inline DEFAULT-EMPTY-ARRAY-SIZE::long))
    
    ;; export for bmem profiling
-   (export (js-array-alloc-ctor::JsArray ::JsGlobalObject ::JsFunction)))
+   (export (js-array-alloc-ctor::JsArray ::JsGlobalObject ::JsFunction))
+
+   (pragma (js-array-concat (args-noescape args))
+	   (js-array-maybe-concat (args-noescape args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -435,7 +440,7 @@
       
       ;; array pcache
       (set! js-array-pcache
-	 ((@ js-make-pcache-table __hopscript_property) 21 "array"))
+	 ((@ js-make-pcache-table __hopscript_property) 22 "array"))
       (js-validate-pmap-pcache!
 	 (js-pcache-ref js-array-pcache 20))
       
@@ -1119,7 +1124,7 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.4
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-array.prototype.concat
    (define (array-prototype-concat this::obj . l)
-      (js-array-prototype-concat this l %this))
+      (js-array-concat this l %this))
    
    (js-bind! %this js-array-prototype (& "concat")
       :value (js-make-function %this array-prototype-concat
@@ -3638,9 +3643,9 @@
 			(array-forof o length proc #u32:0))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-array-prototype-concat ...                                    */
+;*    js-array-concat ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-array-prototype-concat this l %this)
+(define (js-array-concat this l %this)
    
    (define (copy-array-slow target tstart src sstart send)
       (js-object-mode-inline-set! target #f)
@@ -3684,9 +3689,8 @@
       (copy-array-slow dst i src 0 (js-get-length src %this)))
    
    (let* ((o (js-toobject %this this))
-	  (l (cons o l))
 	  (new-len (let loop ((l l)
-			      (len 0))
+			      (len (js-get-length o %this)))
 		      (cond
 			 ((null? l)
 			  len)
@@ -3704,19 +3708,21 @@
 	  ;; super fast copy
 	  (with-access::JsArray arr (vec ilen length)
 	     (let ((vdst vec))
-		(let loop ((l l)
-			   (i 0))
-		   (if (null? l)
-		       (begin
-			  (set! ilen (fixnum->uint32 new-len))
-			  (set! length (fixnum->uint32 new-len))
-			  arr)
-		       (with-access::JsArray (car l) (vec ilen)
-			  (vector-copy! vdst i vec 0 (uint32->fixnum ilen))
-			  (loop (cdr l) (+fx i (uint32->fixnum ilen))))))))
+		(with-access::JsArray o ((ovec vec) (oilen ilen))
+		   (vector-copy! vdst 0 ovec 0 (uint32->fixnum oilen))
+		   (let loop ((l l)
+			      (i (uint32->fixnum oilen)))
+		      (if (null? l)
+			  (begin
+			     (set! ilen (fixnum->uint32 new-len))
+			     (set! length (fixnum->uint32 new-len))
+			     arr)
+			  (with-access::JsArray (car l) (vec ilen)
+			     (vector-copy! vdst i vec 0 (uint32->fixnum ilen))
+			     (loop (cdr l) (+fx i (uint32->fixnum ilen)))))))))
 	  (with-access::JsArray arr (vec ilen)
 	     ;; fill the vector
-	     (let loop ((l l)
+	     (let loop ((l (cons o l))
 			(i #u32:0))
 		(cond
 		   ((null? l)
@@ -3738,6 +3744,18 @@
 		   (else
 		    (js-array-fixnum-set! arr (uint32->fixnum i) (car l) #f %this)
 		    (loop (cdr l) (+u32 i #u32:1)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-concat ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-concat this::obj args %this cache)
+   (if (js-array? this)
+       (js-array-concat this args %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-apply %this
+	     (js-get-name/cache this (& "concat") #f %this
+		(or cache (js-pcache-ref js-array-pcache 21)))
+	     this args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-concat1 ...                                   */
@@ -4905,7 +4923,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-call-with-stack-vector vec proc)
    (proc vec))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

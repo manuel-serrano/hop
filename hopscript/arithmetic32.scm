@@ -28,6 +28,8 @@
 	   __hopscript_lib
 	   __hopscript_public)
 
+   (extern (macro $real32-set!::real (::real ::double) "BGL_REAL_SET"))
+   
    (cond-expand
       ((or bint30 bint32)
        (export
@@ -59,17 +61,20 @@
 	  (inline +s32/overflow::obj ::int32 ::int32)
 	  (inline +u32/overflow::obj ::uint32 ::uint32)
 	  (+/overflow::obj ::obj ::obj)
+	  (+/overflow!::obj ::obj ::obj)
 	  
 	  (inline -fx/overflow::obj ::obj ::obj)
 	  (inline -fx32/overflow::obj ::long ::long)
 	  (inline -s32/overflow::obj ::int32 ::int32)
 	  (inline -u32/overflow::obj ::uint32 ::uint32)
 	  (-/overflow::obj ::obj ::obj)
+	  (-/overflow!::obj ::obj ::obj)
 	  
 	  (inline *fx/overflow::obj ::obj ::obj)
 	  (inline *s32/overflow::obj ::int32 ::int32)
 	  (inline *u32/overflow::obj ::uint32 ::uint32)
-	  (*/overflow::obj ::obj ::obj)))))
+	  (*/overflow::obj ::obj ::obj)
+	  (*/overflow!::obj ::obj ::obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    __js_strings ...                                                 */
@@ -471,12 +476,39 @@
 ;*---------------------------------------------------------------------*/
 (define (+/overflow x::obj y::obj)
    (let ((ll (tolong x)))
-      (if ll
+      (cond
+	 (ll
 	  (let ((rl (tolong y)))
 	     (if rl
 		 (+fx32/overflow ll rl)
+		 (+fl (todouble x) (todouble y)))))
+	 ((flonum? x)
+	  ($real32-set! x (+fl x (todouble y))))
+	 ((flonum? y)
+	  ($real32-set! y (+fl y (todouble x))))
+	 (else
+	  (+fl (todouble x) (todouble y))))))
+
+;*---------------------------------------------------------------------*/
+;*    +/overflow! ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    Specialized version used by the compiler when real mutation      */
+;*    is possible.                                                     */
+;*---------------------------------------------------------------------*/
+(define (+/overflow! x::obj y::obj)
+   (let ((ll (tolong x)))
+      (if ll
+	  (let ((rl (tolong y)))
+	     (if rl
+		 (+fx/overflow ll rl)
 		 (+fl (todouble x) (todouble y))))
-	  (+fl (todouble x) (todouble y)))))
+	  (cond
+	     ((flonum? x)
+	      ($real32-set! x (+fl x (todouble y))))
+	     ((flonum? y)
+	      ($real32-set! y (+fl y (todouble x))))
+	     (else
+	      (+fl (todouble x) (todouble y)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    -fx/overflow ...                                                 */
@@ -572,6 +604,24 @@
 		 (-fx32/overflow ll rl)
 		 (-fl (todouble x) (todouble y))))
 	  (-fl (todouble x) (todouble y)))))
+
+;*---------------------------------------------------------------------*/
+;*    -/overflow! ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (-/overflow! x y)
+   (let ((ll (tolong x)))
+      (cond
+	 (ll
+	  (let ((rl (tolong y)))
+	     (if rl
+		 (-fx32/overflow ll rl)
+		 (-fl (todouble x) (todouble y)))))
+	 ((flonum? x)
+	  ($real32-set! x (-fl x (todouble y))))
+	 ((flonum? y)
+	  ($real32-set! y (-fl (todouble x) y)))
+	 (else
+	  (-fl (todouble x) (todouble y))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *fx/overflow ...                                                 */
@@ -674,3 +724,21 @@
 		 (*fx/overflow ll rl)
 		 (*fl (todouble x) (todouble y))))
 	  (*fl (todouble x) (todouble y)))))
+
+;*---------------------------------------------------------------------*/
+;*    */overflow! ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (*/overflow! x y)
+   (let ((ll (tolong x)))
+      (cond
+	 (ll
+	  (let ((rl (tolong y)))
+	     (if rl
+		 (*fx/overflow ll rl)
+		 (*fl (todouble x) (todouble y)))))
+	 ((flonum? x)
+	  ($real32-set! x (*fl x (todouble y))))
+	 ((flonum? y)
+	  ($real32-set! y (*fl y (todouble x))))
+	 (else
+	  (*fl (todouble x) (todouble y))))))

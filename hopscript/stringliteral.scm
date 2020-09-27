@@ -2435,19 +2435,33 @@
       (if (<elong n1 n2) n1 n2))
    
    (define (split-match S::bstring q R)
-      (if (isa? R JsRegExp)
-	  (with-access::JsRegExp R (rx)
-	     (or (pregexp-match-positions rx S q) 'failure))
-	  (let ((r (string-length R))
-		(s (string-length S)))
-	     (cond
-		((>fx (+fx q r) s) 'failure)
-		((substring-at? S R q) (list (cons q (+fx q r))))
-		(else 'failure)))))
+      (with-access::JsGlobalObject %this (js-regexp-positions)
+	 (if (isa? R JsRegExp)
+	     (with-access::JsRegExp R (rx)
+		(let ((clen (regexp-capture-count rx)))
+		   (when (>=fx (*fx (+fx clen 1) 2)
+			    (vector-length js-regexp-positions))
+		      (set! js-regexp-positions
+			 (make-vector (* (+fx clen 1) 2)))))
+		(let ((l (pregexp-match-n-positions! rx
+			    S js-regexp-positions q (string-length S))))
+		   (if (<fx l 0) 'failure l))))
+	 (let ((r (string-length R))
+	       (s (string-length S)))
+	    (cond
+	       ((>fx (+fx q r) s)
+		'failure)
+	       ((substring-at? S R q)
+		(vector-set! js-regexp-positions 0 q)
+		(vector-set! js-regexp-positions 1 (+fx q r))
+		1)
+	       (else
+		'failure)))))
 
-   (with-access::JsGlobalObject %this (js-array)
+   (with-access::JsGlobalObject %this (js-array js-regexp-positions)
       (let* ((jsS this)
 	     (S (js-jsstring->string jsS))
+	     (enc (isa? this JsStringLiteralUTF8))
 	     (A (js-empty-vector->jsarray %this))
 	     (lim (if (eq? limit (js-undefined))
 		      (+fx (string-length S) 1)
@@ -2483,18 +2497,18 @@
 		       (if (eq? z 'failure)
 			   (loop (+fx q (utf8-char-size (string-ref S q))) p)
 			   ;; 13.c.i
-			   (let ((e (cdar z))
-				 (q (caar z))
-				 (cap (cdr z)))
+			   (let* ((r js-regexp-positions)
+				  (q (vector-ref r 0))
+				  (e (vector-ref r 1))
+				  (cap 1))
 			      (if (=fx e p)
 				  ;; 13.c.ii
-				  (loop (+fx q (utf8-char-size (string-ref S q))) p)
+				  (loop (+fx q (if enc (utf8-char-size (string-ref S q)) 1)) p)
 				  ;; 13.c.iii.1
-				  (let ((T (substring S p q))
+				  (let ((T (js-substring/enc S p q enc %this))
 					(l (js-get-lengthu32 A %this)))
 				     ;; 13.c.iii.2
-				     (js-array-index-set! A l
-					(js-string->jsstring T) #f %this)
+				     (js-array-index-set! A l T #f %this)
 				     (if (=fx (uint32->fixnum (+u32 l #u32:1)) lim)
 					 ;; 13.c.iii.4
 					 A
@@ -2502,22 +2516,24 @@
 					 (let ((p e))
 					    (let repeat ((cap cap)
 							 (l (+u32 l #u32:1)))
-					       (if (pair? cap)
-						   (begin
+					       (if (<fx cap z)
+						   (let ((T (js-substring/enc S
+							       (vector-ref r (*fx cap 2))
+							       (vector-ref r (+fx (*fx cap 2) 1))
+							       enc %this)))
 						      ;; 13.c.iii.7.b
-						      (js-array-index-set! A l
-							 (js-string->jsstring (car cap)) #f %this)
+						      (js-array-index-set! A l T #f %this)
 						      (if (=fx (uint32->fixnum (+u32 l #u32:1)) lim)
 							  ;; 13.c.iii.7.d
 							  A
 							  ;; 13.c.iii.8
-							  (repeat (cdr cap) (+u32 l #u32:1))))
+							  (repeat (+fx cap 1) (+u32 l #u32:1))))
 						   (loop p e))))))))))
 		    ;; 14
-		    (let ((T (substring S p s))
+		    (let ((T (js-substring/enc S p s enc %this))
 			  (l (js-get-lengthu32 A %this)))
 		       ;; 15
-		       (js-array-index-set! A l (js-string->jsstring T) #f %this)
+		       (js-array-index-set! A l T #f %this)
 		       ;;16
 		       A))))))))
 
@@ -2734,13 +2750,6 @@
 (define (js-jsstring-replace-regexp-funN this::obj rx::regexp
 	   lastindex::long global::bool replacevalue %this)
    
-   (define (matches->string-list::pair-nil matches::pair-nil s::bstring enc)
-      (map (lambda (m)
-	      (if (pair? m)
-		  (js-substring/enc s (car m) (cdr m) enc %this)
-		  (& "")))
-	 matches))
-
    (define (matches-n->string-list l::long r::vector s::bstring enc)
       (let ((res (list (vector-ref r 0) this)))
 	 (let loop ((i 0))
@@ -2968,13 +2977,6 @@
 (define (js-jsstring-replace-regexp-string this::obj rx::regexp
 	   lastindex::long global::bool replacevalue %this)
    
-   (define (matches->string-list::pair-nil matches::pair-nil s::bstring enc)
-      (map (lambda (m)
-	      (if (pair? m)
-		  (js-substring/enc s (car m) (cdr m) enc %this)
-		  (& "")))
-	 matches))
-
    (let* ((s (js-jsstring->string this))
 	  (len (string-length s))
 	  (enc (isa? this JsStringLiteralUTF8))
