@@ -1782,16 +1782,16 @@
 	     (with-access::J2SAccess lhs (obj field cache cspecs (loca loc))
 		(epairify loc
 		   (cond
-		      ((eq? (j2s-vtype obj) 'vector)
+		      ((eq? (j2s-type obj) 'vector)
 		       (j2s-vector-set! this mode return ctx))
-		      ((and (eq? (j2s-vtype obj) 'array) (maybe-number? field))
+		      ((and (eq? (j2s-type obj) 'array) (maybe-number? field))
 		       (j2s-array-set! this mode return ctx))
-		      ((and (memq (j2s-vtype obj) '(int8array uint8array))
+		      ((and (memq (j2s-type obj) '(int8array uint8array))
 			    (maybe-number? field))
 		       (j2s-tarray-set! this mode return ctx))
-		      ((and (mightbe-number? field) (eq? (j2s-vtype obj) 'any))
+		      ((and (mightbe-number? field) (eq? (j2s-type obj) 'any))
 		       (maybe-array-set lhs rhs))
-		      ((eq? (j2s-vtype obj) 'arguments)
+		      ((eq? (j2s-type obj) 'arguments)
 		       (j2s-arguments-set! this mode return ctx))
 		      (else
 		       (j2s-put! loca (j2s-scheme obj mode return ctx)
