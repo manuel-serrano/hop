@@ -46,6 +46,14 @@
 (define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
+;*    js-stacktracelimit ...                                           */
+;*    -------------------------------------------------------------    */
+;*    The stackTraceLimit value (how many frames to store when         */
+;*    capturing the stack) is shared by all JS workers.                */
+;*---------------------------------------------------------------------*/
+(define js-stacktracelimit 10)
+
+;*---------------------------------------------------------------------*/
 ;*    constructor                                                      */
 ;*---------------------------------------------------------------------*/
 (define-instantiate JsFrame)
@@ -200,6 +208,9 @@
 	    (__proto__ (js-object-proto %this))
 	    (name (& "Error"))
 	    (msg (& ""))))
+
+      (define js-frame-proto
+	 (js-init-frame-proto! %this))
       
       (define (js-error-alloc %this constructor::JsFunction)
 	 (with-access::JsGlobalObject %this (js-new-target)
@@ -285,14 +296,10 @@
       
       (define (capture-stack-trace err start-fun)
 	 
-	 (define frame-proto
-	    (with-access::JsGlobalObject %this (js-object)
-	       (js-new0 %this js-object)))
-	 
 	 (define (make-frame fun loc file line column)
 	    (with-access::JsGlobalObject %this (js-object)
 	       (let ((obj (instantiateJsFrame
-			     (__proto__ frame-proto)
+			     (__proto__ js-frame-proto)
 			     (file file)
 			     (line line)
 			     (column column)
@@ -330,66 +337,12 @@
 			(newline op))
 		     (display-trace-stack stack op 1)))))
 	 
-	 ;; initialize the frame proto object
-	 (js-bind! %this frame-proto (& "getFileName")
-	    :value (js-make-function %this
-		      (lambda (o)
-			 (with-access::JsFrame o (file)
-			    (js-string->jsstring file)))
-		      (js-function-arity 0 0)
-		      (js-function-info :name "getFileName" :len 0))
-	    :enumerable #t
-	    :hidden-class #t)
-	 (js-bind! %this frame-proto (& "getLineNumber")
-	    :value (js-make-function %this
-		      (lambda (o)
-			 (with-access::JsFrame o (line)
-			    line))
-		      (js-function-arity 0 0)
-		      (js-function-info :name "getLineNumber" :len 0))
-	    :enumerable #t
-	    :hidden-class #t)
-	 (js-bind! %this frame-proto (& "getColumnNumber")
-	    :value (js-make-function %this
-		      (lambda (o)
-			 (with-access::JsFrame o (column)
-			    column))
-		      (js-function-arity 0 0)
-		      (js-function-info :name "getColumnNumber" :len 0))
-	    :enumerable #t
-	    :hidden-class #t)
-	 (js-bind! %this frame-proto (& "getFunctionName")
-	    :value (js-make-function %this
-		      (lambda (o)
-			 (with-access::JsFrame o (fun)
-			    (js-string->jsstring fun)))
-		      (js-function-arity 0 0)
-		      (js-function-info :name "getFunctionName" :len 0))
-	    :enumerable #t
-	    :hidden-class #t)
-	 (js-bind! %this frame-proto (& "isEval")
-	    :value (js-make-function %this
-		      (lambda (o)
-			 (with-access::JsFrame o (iseval)
-			    iseval))
-		      (js-function-arity 0 0)
-		      (js-function-info :name "isEval" :len 0))
-	    :enumerable #t
-	    :hidden-class #t)
-	 
-	 
-	 (let ((limit (js-get js-error (& "stackTraceLimit") %this)))
-	    (cond
-	       ((eq? limit (js-undefined))
-		(set! limit 10))
-	       ((not (integer? limit))
-		(set! limit 10))
-	       ((or (< limit 0) (> limit 10000))
-		(set! limit 10)))
-	    (let ((stack (get-trace-stack limit)))
+	 (when (fixnum? js-stacktracelimit)
+	    (let ((stack (get-trace-stack js-stacktracelimit)))
 	       (js-bind! %this err (& "stack")
 		  :get (js-make-function %this
 			  (lambda (o)
+			     (tprint "ICI2")
 			     (let ((prepare (js-get js-error
 					       (& "prepareStackTrace") %this)))
 				(if (js-procedure? prepare)
@@ -565,8 +518,17 @@
 	 :hidden-class #t)
       ;; nodejs addon
       (js-bind! %this js-error (& "stackTraceLimit")
-	 :value 10
-	 :enumerable #f
+	 :get (js-make-function %this
+		 (lambda (o)
+		    js-stacktracelimit)
+		 (js-function-arity 0 0)
+		 (js-function-info :name "stackTraceLimit" :len 0))
+	 :set (js-make-function %this
+		 (lambda (o v)
+		    (set! js-stacktracelimit v))
+		 (js-function-arity 1 0)
+		 (js-function-info :name "stackTraceLimit" :len 1))
+	 :enumerable #t
 	 :hidden-class #t)
       (js-bind! %this js-error (& "captureStackTrace")
 	 :value (js-make-function %this
@@ -578,7 +540,60 @@
 	 :hidden-class #t)
       js-error))
 
-
+;*---------------------------------------------------------------------*/
+;*    js-init-frame-proto! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-init-frame-proto! %this::JsGlobalObject)
+   (let ((frame-proto (instantiateJsObject
+			 (__proto__ (js-object-proto %this))
+			 (elements ($create-vector 5)))))
+      ;; initialize the frame proto object
+      (js-bind! %this frame-proto (& "getFileName")
+	 :value (js-make-function %this
+		   (lambda (o)
+		      (with-access::JsFrame o (file)
+			 (js-string->jsstring file)))
+		   (js-function-arity 0 0)
+		   (js-function-info :name "getFileName" :len 0))
+	 :enumerable #t
+	 :hidden-class #t)
+      (js-bind! %this frame-proto (& "getLineNumber")
+	 :value (js-make-function %this
+		   (lambda (o)
+		      (with-access::JsFrame o (line)
+			 line))
+		   (js-function-arity 0 0)
+		   (js-function-info :name "getLineNumber" :len 0))
+	 :enumerable #t
+	 :hidden-class #t)
+      (js-bind! %this frame-proto (& "getColumnNumber")
+	 :value (js-make-function %this
+		   (lambda (o)
+		      (with-access::JsFrame o (column)
+			 column))
+		   (js-function-arity 0 0)
+		   (js-function-info :name "getColumnNumber" :len 0))
+	 :enumerable #t
+	 :hidden-class #t)
+      (js-bind! %this frame-proto (& "getFunctionName")
+	 :value (js-make-function %this
+		   (lambda (o)
+		      (with-access::JsFrame o (fun)
+			 (js-string->jsstring fun)))
+		   (js-function-arity 0 0)
+		   (js-function-info :name "getFunctionName" :len 0))
+	 :enumerable #t
+	 :hidden-class #t)
+      (js-bind! %this frame-proto (& "isEval")
+	 :value (js-make-function %this
+		   (lambda (o)
+		      (with-access::JsFrame o (iseval)
+			 iseval))
+		   (js-function-arity 0 0)
+		   (js-function-info :name "isEval" :len 0))
+	 :enumerable #t
+	 :hidden-class #t)
+      frame-proto))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-type-error ...                                               */
