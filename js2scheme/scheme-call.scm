@@ -221,7 +221,10 @@
 	(encodeURIComponent js-jsstring-encodeuricomponent (string) #f)
 	(encodeURIComponent js-jsstring-maybe-encodeuricomponent (any) #t)
 	(unescape js-jsstring-unescape (string) #t)
-	(unescape js-jsstring-maybe-unescape (any) #t))))
+	(unescape js-jsstring-maybe-unescape (any) #t)
+	(TypeError js-type-error1 (any) #t)
+	(TypeError js-type-error2 (any any) #t)
+	(TypeError js-type-error (any any any) #t))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-apply ...                                                    */

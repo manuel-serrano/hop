@@ -38,7 +38,10 @@
 	      (iseval::bool read-only (default #f))
 	      (fun::bstring read-only)))
    
-   (export (js-init-error! ::JsGlobalObject)))
+   (export (js-init-error! ::JsGlobalObject)
+	   (js-type-error msg fname loc ::JsGlobalObject)
+	   (js-type-error2 msg fname ::JsGlobalObject)
+	   (js-type-error1 msg ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -737,6 +740,27 @@
 		       (display msg op)))))))
       (else
        (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-type-error ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-type-error msg fname loc %this)
+   (with-access::JsGlobalObject %this (js-new-target js-error)
+      (js-new3 %this js-error msg fname loc)))
+
+;*---------------------------------------------------------------------*/
+;*    js-type-error2 ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-type-error2 msg fname %this)
+   (with-access::JsGlobalObject %this (js-new-target js-error)
+      (js-new2 %this js-error msg fname)))
+
+;*---------------------------------------------------------------------*/
+;*    js-type-error1 ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-type-error1 msg %this)
+   (with-access::JsGlobalObject %this (js-new-target js-error)
+      (js-new1 %this js-error msg)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
