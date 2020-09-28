@@ -41,12 +41,25 @@
       (with-access::J2SCall expr (args)
 	 (j2s-cast sexp expr (j2s-type (car args)) (j2s-type expr) conf)))
 
+   (define (integer-as-real? expr)
+      (cond
+	 ((memq (j2s-type expr) '(integer int53 int32 uint32))
+	  #t)
+	 ((isa? expr J2SNumber)
+	  (with-access::J2SNumber expr (val)
+	     (integer? val)))
+	 ((isa? expr J2SCast)
+	  (with-access::J2SCast expr (expr)
+	     (integer-as-real? expr)))
+	 (else
+	  #f)))
+   
    (define (integer-division? exp)
       (when (isa? exp J2SBinary)
 	 (with-access::J2SBinary exp (op lhs rhs)
-	    (when (eq? op '/)
-	       (and (type-integer? (j2s-type lhs))
-		    (type-integer? (j2s-type rhs)))))))
+	    (and (eq? op '/)
+		 (or (type-integer? (j2s-type rhs))
+		     (integer-as-real? rhs))))))
    
    (with-access::J2SAccess fun (loc obj field)
       (when (isa? field J2SString)

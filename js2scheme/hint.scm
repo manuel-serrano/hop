@@ -525,8 +525,11 @@
 ;*    j2s-hint ::J2SNew ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SNew hints)
-   (with-access::J2SNew this (clazz args)
+   (with-access::J2SNew this (clazz args type)
       (j2s-hint clazz '((function . 5)))
+      (when (and (eq? type 'array) (pair? args) (null? (cdr args)))
+	 (unless (eq? (j2s-type (car args)) 'integer)
+	    (j2s-hint (car args) '((integer . 2)))))
       (for-each (lambda (a) (j2s-hint a '())) args)))
 
 ;*---------------------------------------------------------------------*/
