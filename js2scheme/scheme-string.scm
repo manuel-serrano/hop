@@ -37,7 +37,11 @@
 	   (j2s-jsstring-match-string obj args mode return ::struct)
 	   (j2s-jsstring-match-regexp obj args mode return ::struct)
 	   (j2s-jsstring-substr obj args mode return ::struct)
-	   (j2s-jsstring-maybe-substr obj args mode return ::struct)))
+	   (j2s-jsstring-maybe-substr obj args mode return ::struct)
+	   (j2s-jsstring-padstart obj args mode return ::struct)
+	   (j2s-jsstring-maybe-padstart obj args mode return ::struct)
+	   (j2s-jsstring-padend obj args mode return ::struct)
+	   (j2s-jsstring-maybe-padend obj args mode return ::struct)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-ref ...                                               */
@@ -331,4 +335,48 @@
        ,(j2s-scheme (car args) mode return ctx)
        (js-undefined)
        ,@(cdr args)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-padstart ...                                        */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-padstart obj args mode return ctx)
+   `(js-jsstring-padstart
+       ,(j2s-scheme obj mode return ctx)
+       ,(j2s-scheme (car args) mode return ctx)
+       ,(j2s-scheme (cadr args) mode return ctx)
+       #t
+       %this))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-maybe-padstart ...                                  */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-maybe-padstart obj args mode return ctx)
+   `(js-jsstring-prototype-padstart
+       ,(j2s-scheme obj mode return ctx)
+       ,(j2s-scheme (car args) mode return ctx)
+       ,(j2s-scheme (cadr args) mode return ctx)
+       #t
+       %this))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-padend ...                                          */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-padend obj args mode return ctx)
+   `(js-jsstring-padend
+       ,(j2s-scheme obj mode return ctx)
+       ,(j2s-scheme (car args) mode return ctx)
+       ,(j2s-scheme (cadr args) mode return ctx)
+       #f
+       %this))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-maybe-padend ...                                    */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-maybe-padend obj args mode return ctx)
+   `(js-jsstring-prototype-padend
+       ,(j2s-scheme obj mode return ctx)
+       ,(j2s-scheme (car args) mode return ctx)
+       ,(j2s-scheme (cadr args) mode return ctx)
+       #f
+       %this))
 

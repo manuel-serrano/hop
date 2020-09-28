@@ -939,6 +939,8 @@
 	   (e `(js-tojsstring-safe ,obj ,%this) e))
 	  ((?- ?%this ?obj ?prop)
 	   (e `(js-call-method0 ,%this ,obj ,prop) e))
+	  ((?- ?%this ?obj (& "toString" . ?-) ?a0)
+	   (e `(js-tojsstring1-safe ,obj ,a0 ,%this) e))
 	  ((?- ?%this ?obj ?prop ?a0)
 	   (e `(js-call-method1 ,%this ,obj ,prop ,a0) e))
 	  ((?- ?%this ?obj ?prop ?a0 ?a1)

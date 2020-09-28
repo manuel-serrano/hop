@@ -41,6 +41,7 @@
 	   (js-symbol->jsstring::JsStringLiteral ::symbol)
 	   (js-keyword->jsstring::JsStringLiteral ::keyword)
 	   (js-integer->jsstring::JsStringLiteralASCII ::long)
+	   (js-radix->jsstring::JsStringLiteralASCII ::long ::long)
 	   (js-stringlist->jsstring ::pair-nil)
 	   (inline js-jsstring->string::bstring ::JsStringLiteral)
 	   (js-jsstring->number::obj ::JsStringLiteral) 
@@ -528,6 +529,12 @@
 	     o)))
       (else
        (js-ascii->jsstring (integer->string num)))))
+   
+;*---------------------------------------------------------------------*/
+;*    js-radix->jsstring ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-radix->jsstring::JsStringLiteralASCII num::long radix::long)
+   (js-ascii->jsstring (fixnum->string num radix)))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-stringlist->jsstring ...                                      */

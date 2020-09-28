@@ -109,6 +109,10 @@
 	("trim" js-jsstring-trim string () #f)
 	("trim" js-jsstring-maybe-trim any () %this #t)
 	("slice" js-jsstring-slice string (any any) %this)
+	("padStart" ,j2s-jsstring-maybe-padstart any (any any) #t)
+	("padStart" ,j2s-jsstring-padstart string (any any) #t)
+	("padEnd" ,j2s-jsstring-maybe-padend any (any any) #t)
+	("padEnd" ,j2s-jsstring-padend string (any any) #t)
 	;; array are prefered to string for slice1 and slice2
 ;* 	("slice" js-jsstring-maybe-slice1 any (any) %this #t)          */
 ;* 	("slice" js-jsstring-maybe-slice2 any (any any) %this #t)      */
