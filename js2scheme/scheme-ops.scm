@@ -1497,6 +1497,27 @@
 			 (box left tl ctx)
 			 (box right tr ctx)
 			 #f)))
+	       ((or (and (eq? tl 'number) (eq? tr 'any))
+		    (and (eq? tl 'any) (eq? tr 'number)))
+		(if-fixnums? left tl right tr
+		   (binop-fixnum-fixnum/ctx ctx '+ type
+		      (asfixnum left tl)
+		      (asfixnum right tr)
+		      #f)
+		   (binop-any-any '+ type
+		      (box left tl ctx)
+		      (box right tr ctx)
+		      #f)))
+	       ((or (is-hint? lhs 'integer) (is-hint? rhs 'integer))
+		(if-fixnums? left tl right tr
+		   (binop-fixnum-fixnum/ctx ctx '+ type
+		      (asfixnum left tl)
+		      (asfixnum right tr)
+		      #f)
+		   (binop-any-any '+ type
+		   (box left tl ctx)
+		   (box right tr ctx)
+		   #f)))
 	       (else
 		(binop-any-any '+ type
 		   (box left tl ctx)
