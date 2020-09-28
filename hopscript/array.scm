@@ -208,7 +208,15 @@
 	    ((@ js-toindex  __hopscript_public) ,p))))
       (else
        `((@ js-toindex  __hopscript_public) ,p))))
-       
+
+;*---------------------------------------------------------------------*/
+;*    minu32 ...                                                       */
+;*    -------------------------------------------------------------    */
+;*    replace the Bigloo non-optimized n-ary function                  */
+;*---------------------------------------------------------------------*/
+(define (minu32::uint32 x::uint32 y::uint32)
+   (if (<u32 x y) x y))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-make-vector ...                                               */
 ;*    -------------------------------------------------------------    */
@@ -3922,6 +3930,7 @@
 ;*    js-array-prototype-fill ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-fill this::JsArray value start end %this)
+   
    (let* ((len::uint32 (js-get-lengthu32 this %this))
 	  (k (if (eq? start (js-undefined))
 		 #u32:0

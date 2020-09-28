@@ -1206,6 +1206,12 @@
 	  (return 'number (unknown-call-env env) bk))
 	 ((is-global? callee 'isNaN)
 	  (return 'bool (unknown-call-env env) bk))
+	 ((is-global? callee 'unescape)
+	  (return 'string (unknown-call-env env) bk))
+	 ((is-global? callee 'encodeURI)
+	  (return 'string (unknown-call-env env) bk))
+	 ((is-global? callee 'encodeURIComponent)
+	  (return 'string (unknown-call-env env) bk))
 	 (else
 	  (type-unknown-call callee env bk))))
    

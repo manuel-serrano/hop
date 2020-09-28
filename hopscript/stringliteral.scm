@@ -103,10 +103,12 @@
 	   (js-jsstring-substr ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-substr ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-tolowercase ::JsStringLiteral)
+	   (js-jsstring-tolowercase! ::JsStringLiteral)
 	   (js-jsstring-maybe-tolowercase ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-tolocalelowercase ::JsStringLiteral)
 	   (js-jsstring-maybe-tolocalelowercase ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-touppercase ::JsStringLiteral)
+	   (js-jsstring-touppercase! ::JsStringLiteral)
 	   (js-jsstring-maybe-touppercase ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-tolocaleuppercase ::JsStringLiteral)
 	   (js-jsstring-maybe-tolocaleuppercase ::obj ::JsGlobalObject ::obj)
@@ -133,6 +135,11 @@
 	   (js-jsstring-fromcharcode ::obj ::JsGlobalObject)
 	   (js-jsstring-escape ::JsStringLiteral)
 	   (js-jsstring-unescape ::JsStringLiteral ::JsGlobalObject)
+	   (js-jsstring-maybe-unescape ::obj ::JsGlobalObject)
+	   (js-jsstring-encodeuri ::JsStringLiteral)
+	   (js-jsstring-maybe-encodeuri ::JsStringLiteral ::JsGlobalObject)
+	   (js-jsstring-encodeuricomponent ::JsStringLiteral)
+	   (js-jsstring-maybe-encodeuricomponent ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring-slice ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-slice1 ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-maybe-slice2 ::obj ::obj ::obj ::JsGlobalObject ::obj)
@@ -2315,6 +2322,26 @@
    (string-dispatch tolowercase this))
 
 ;*---------------------------------------------------------------------*/
+;*    js-jsstring-tolowercase! ...                                     */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.16    */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-tolowercase! this)
+
+   (define (ascii-tolowercase s)
+      (string-downcase! s)
+      this)
+
+   (define (utf8-tolowercase s)
+      (with-access::JsStringLiteralUTF8 this (%culen)
+	 (js-utf8->jsstring/ulen
+	    (ucs2-string->utf8-string
+	       (ucs2-string-downcase (utf8-string->ucs2-string s)))
+	    %culen)))
+
+   (string-dispatch tolowercase this))
+
+;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-tolowercase ...                                */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-maybe-tolowercase this %this cache)
@@ -2373,6 +2400,24 @@
    
    (define (ascii-touppercase s)
       (js-ascii->jsstring (string-upcase s)))
+
+   (define (utf8-touppercase s)
+      (js-string->jsstring
+	 (ucs2-string->utf8-string
+	    (ucs2-string-upcase (utf8-string->ucs2-string s)))))
+
+   (string-dispatch touppercase this))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-touppercase! ...                                     */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.18    */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-touppercase! this)
+   
+   (define (ascii-touppercase s)
+      (string-upcase! s)
+      this)
 
    (define (utf8-touppercase s)
       (js-string->jsstring
@@ -2452,18 +2497,18 @@
 			 (make-vector (* (+fx clen 1) 2)))))
 		(let ((l (pregexp-match-n-positions! rx
 			    S js-regexp-positions q (string-length S))))
-		   (if (<fx l 0) 'failure l))))
-	 (let ((r (string-length R))
-	       (s (string-length S)))
-	    (cond
-	       ((>fx (+fx q r) s)
-		'failure)
-	       ((substring-at? S R q)
-		(vector-set! js-regexp-positions 0 q)
-		(vector-set! js-regexp-positions 1 (+fx q r))
-		1)
-	       (else
-		'failure)))))
+		   (if (<fx l 0) 'failure l)))
+	     (let ((r (string-length R))
+		   (s (string-length S)))
+		(cond
+		   ((>fx (+fx q r) s)
+		    'failure)
+		   ((substring-at? S R q)
+		    (vector-set! js-regexp-positions 0 q)
+		    (vector-set! js-regexp-positions 1 (+fx q r))
+		    1)
+		   (else
+		    'failure))))))
 
    (with-access::JsGlobalObject %this (js-array js-regexp-positions)
       (let* ((jsS this)
@@ -3534,6 +3579,36 @@
       (js-raise-type-error %this "unescape, illegal value ~s" str))
 
    (string-dispatch unescape this))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-maybe-unescape ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-maybe-unescape this %this)
+   (js-jsstring-unescape (js-tojsstring this %this) %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-encodeuri ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-encodeuri this)
+   (js-ascii->jsstring (uri-encode (js-jsstring->string this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-maybe-encodeuri ...                                  */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-maybe-encodeuri this %this)
+   (js-jsstring-encodeuri (js-tojsstring this %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-encodeuricomponent ...                               */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-encodeuricomponent this)
+   (js-ascii->jsstring (uri-encode-component (js-jsstring->string this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-maybe-encodeuricomponent ...                                  */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-maybe-encodeuricomponent this %this)
+   (js-jsstring-encodeuricomponent (js-tojsstring this %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    url-decode-extended ...                                          */

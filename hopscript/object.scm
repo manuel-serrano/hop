@@ -447,10 +447,7 @@
 	    ;; encodeURI
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.3.3
 	    (define (encodeuri this string)
-	       (let ((str (js-tostring string %this)))
-		  (if (utf8-string? str #t)
-		      (js-string->jsstring (uri-encode str))
-		      (js-raise-uri-error %this "Badly formed url ~s" string))))
+	       (js-jsstring-maybe-encodeuri string %this))
 
 	    (js-bind! %this %this (& "encodeURI")
 	       :value (js-make-function %this encodeuri
@@ -462,10 +459,7 @@
 	    ;; encodeURIComponent
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.3.4
 	    (define (encodeuricomponent this string)
-	       (let ((str (js-tostring string %this)))
-		  (if (utf8-string? str #t)
-		      (js-string->jsstring (uri-encode-component str))
-		      (js-raise-uri-error %this "Badly formed url ~s" string))))
+	       (js-jsstring-maybe-encodeuricomponent string %this))
 
 	    (js-bind! %this %this (& "encodeURIComponent")
 	       :value (js-make-function %this encodeuricomponent

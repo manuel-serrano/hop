@@ -28,6 +28,8 @@
 	   __js2scheme_scheme-fun)
 
    (export (j2s-string-ref ::J2SAccess mode return ::struct)
+	   (j2s-jsstring-touppercase obj args mode return ::struct)
+	   (j2s-jsstring-tolowercase obj args mode return ::struct)
 	   (j2s-jsstring-replace-regexp obj args mode return ::struct)
 	   (j2s-jsstring-replace-string obj args mode return ::struct)
 	   (j2s-jsstring-replace obj args mode return ::struct)
@@ -91,6 +93,38 @@
 	 (else
 	  #f))))
 
+;*---------------------------------------------------------------------*/
+;*    fresh-string? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (fresh-string? this)
+   (cond
+      ((isa? this J2SBinary)
+       (with-access::J2SBinary this (op) (eq? op '+)))
+      ((isa? this J2SParen)
+       (with-access::J2SParen this (expr) (fresh-string? expr)))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-tolowercase ...                                     */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-tolowercase obj args mode return ctx)
+   `(,(if (fresh-string? obj)
+	  'js-jsstring-tolowercase!
+	  'js-jsstring-tolowercase)
+     ,(j2s-scheme obj mode return ctx)
+     ,@(map (lambda (arg) (j2s-scheme arg mode return ctx)) args)))
+       
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-touppercase ...                                     */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-touppercase obj args mode return ctx)
+   `(,(if (fresh-string? obj)
+	  'js-jsstring-touppercase!
+	  'js-jsstring-touppercase)
+     ,(j2s-scheme obj mode return ctx)
+     ,@(map (lambda (arg) (j2s-scheme arg mode return ctx)) args)))
+       
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-replace-regexp ...                                    */
 ;*---------------------------------------------------------------------*/

@@ -83,11 +83,11 @@
 	("substr" ,j2s-jsstring-substr string (any) %this)
 	("substr" js-jsstring-maybe-substr any (any any) %this #t)
 	("substr" ,j2s-jsstring-maybe-substr any (any) %this #t)
-	("toUpperCase" js-jsstring-touppercase string () #f)
+	("toUpperCase" ,j2s-jsstring-touppercase string () #f)
 	("toUpperCase" js-jsstring-maybe-touppercase any () %this #t)
 	("toLocaleUpperCase" js-jsstring-tolocaleuppercase string () #f)
 	("toLocaleUpperCase" js-jsstring-maybe-tolocaleuppercase any () %this #t)
-	("toLowerCase" js-jsstring-tolowercase string () #f)
+	("toLowerCase" ,j2s-jsstring-tolowercase string () #f)
 	("toLowerCase" js-jsstring-maybe-tolowercase any () %this #t)
 	("toLocaleLowerCase" js-jsstring-tolocalelowercase string () #f)
 	("toLocaleLowerCase" js-jsstring-maybe-tolocalelowercase any () %this #t)
@@ -215,7 +215,13 @@
 	(Number js-tonumber (any) %this)
 	(isNaN nanfl? (real) #f)
 	(isNaN js-number-isnan? (number) #f)
-	(isNaN js-isnan? (any) %this))))
+	(isNaN js-isnan? (any) %this)
+	(encodeURI js-jsstring-encodeuri (string) #f)
+	(encodeURI js-jsstring-maybe-encodeuri (any) #t)
+	(encodeURIComponent js-jsstring-encodeuricomponent (string) #f)
+	(encodeURIComponent js-jsstring-maybe-encodeuricomponent (any) #t)
+	(unescape js-jsstring-unescape (string) #t)
+	(unescape js-jsstring-maybe-unescape (any) #t))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-apply ...                                                    */

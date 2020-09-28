@@ -1842,41 +1842,26 @@
 ;*---------------------------------------------------------------------*/
 (define (js-tojsstring-safe::JsStringLiteral obj %this::JsGlobalObject)
    (cond
-      ((js-jsstring? obj)
-       obj)
-      ((eq? obj #t)
-       (& "true"))
-      ((eq? obj #f)
-       (& "false"))
-      ((fixnum? obj)
-       (js-integer->jsstring obj))
-      ((js-number? obj)
-       (js-ascii->jsstring (js-number->string obj)))
-      ((isa? obj JsSymbolLiteral)
-       (js-string->jsstring (js-tostring obj %this)))
-      (else
-       (js-tojsstring (js-toobject %this obj) %this))))
+      ((js-jsstring? obj) obj)
+      ((eq? obj #t) (& "true"))
+      ((eq? obj #f) (& "false"))
+      ((fixnum? obj) (js-integer->jsstring obj))
+      ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
+      ((isa? obj JsSymbolLiteral) (js-string->jsstring (js-tostring obj %this)))
+      (else (js-tojsstring (js-toobject %this obj) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tojsstring1-safe ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-tojsstring1-safe::JsStringLiteral obj radix %this::JsGlobalObject)
    (cond
-      ((fixnum? obj)
-       (js-radix->jsstring obj
-	  (if (fixnum? radix) radix (js-tointeger radix %this))))
-      ((js-jsstring? obj)
-       obj)
-      ((eq? obj #t)
-       (& "true"))
-      ((eq? obj #f)
-       (& "false"))
-      ((js-number? obj)
-       (js-ascii->jsstring (js-number->string obj)))
-      ((isa? obj JsSymbolLiteral)
-       (js-string->jsstring (js-tostring obj %this)))
-      (else
-       (js-tojsstring (js-toobject %this obj) %this))))
+      ((fixnum? obj) (js-radix->jsstring obj (js-tointeger radix %this)))
+      ((js-jsstring? obj) obj)
+      ((eq? obj #t) (& "true"))
+      ((eq? obj #f) (& "false"))
+      ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
+      ((isa? obj JsSymbolLiteral) (js-string->jsstring (js-tostring obj %this)))
+      (else (js-tojsstring (js-toobject %this obj) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ::JsWrapper ...                                      */
