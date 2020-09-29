@@ -2541,6 +2541,10 @@
 	       (if (or (eq? cmap (js-not-a-cmap)) throw)
 		   (js-get-notfound name throw %this)
 		   (begin
+		      (when (eq? name (& "clockseq"))
+			 (js-debug-object o)
+			 (js-debug-pcache cache)
+			 (newline (current-error-port)))
 		      (js-pcache-update-miss! cache o)
 		      (js-undefined)))))
 	 ;; loop

@@ -146,7 +146,7 @@
 		   (exception-notify e)))
 	     (let ((notify (lambda ()
 			      (let* ((name (js-jsstring->string name))
-				     (stk (js-get exc (& "stack") %this))
+ 				     (stk (js-get exc (& "stack") %this))
 				     (port (current-error-port)))
 				 (cond
 				    ((js-jsstring? fname)
@@ -409,7 +409,7 @@
       (js-bind! %this js-error-prototype (& "stack")
 	 :get (js-make-function %this
 		 (lambda (o)
-		    (if (isa? o JsError)
+		    (if (not (isa? o JsError))
 			(js-get o (& "stack") %this)
 			(with-access::JsError o (stack)
 			   (if (pair? stack)

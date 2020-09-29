@@ -155,6 +155,7 @@
 	("slice" js-array-maybe-slice1 any (any) %this #t)
 	("slice" js-array-maybe-slice2 any (any any) %this #t)
 	("shift" js-array-maybe-shift0 any () %this #t)
+	("reverse" js-array-prototype-reverse any () %this #f ,j2s-array-plain?)
 	;; functions
 	("apply",j2s-apply any (any any) %this #t)
 	("call" ,j2s-call0 any (any) %this #t)
@@ -915,7 +916,9 @@
 				 (f (duplicate::J2SAccess fun
 				       (cspecs '(pmap-dummy-profile vtable-dummy-profile))
 				       (cache cache)
-				       (obj (J2SHopRef s)))))
+				       (obj (J2SCast 'any
+					       (J2SHopRef/type s
+						  (j2s-type obj)))))))
 			     `(let ((,s ,self))
 				 ,(call-unknown-function 'direct
 				     f (list s) args))))))

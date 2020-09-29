@@ -137,6 +137,7 @@
 	   (js-array-maybe-push ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-pop ::JsArray ::JsGlobalObject ::obj)
 	   (js-array-maybe-pop ::obj ::JsGlobalObject ::obj)
+	   (js-array-prototype-reverse ::JsArray ::JsGlobalObject)
 	   (js-array-indexof ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-prototype-slice ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-array-maybe-slice0 ::obj ::JsGlobalObject ::obj)
@@ -1311,58 +1312,7 @@
    ;; reverse
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.8
    (define (array-prototype-reverse this::obj)
-      
-      (define (vector-reverse! val len)
-	 (let ((len/2 (/fx len 2)))
-	    (let loop ((i 0))
-	       (unless (=fx i len/2)
-		  (let ((t (vector-ref val i))
-			(ni (+fx i 1)))
-		     (vector-set! val i (vector-ref val (-fx len ni)))
-		     (vector-set! val (-fx len ni) t)
-		     (loop ni))))))
-
-      (define (array-reverse! o)
-	 (with-access::JsArray o (ilen length)
-	    (let* ((len::uint32 (js-get-lengthu32 o %this))
-		   (len/2::uint32 (/u32 len #u32:2)))
-	       (let loop ((i #u32:0))
-		  (cond
-		     ((=u32 i len/2)
-		      o)
-		     ((js-has-property o (js-toname i %this) %this)
-		      (let* ((t (js-get o (uint32->fixnum i) %this))
-			     (ni (+u32 i (fixnum->uint32 1)))
-			     (rni (js-uint32-tointeger (-u32 len ni))))
-			 (if (js-has-property o (js-toname rni %this) %this)
-			     (begin
-				(js-put! o (uint32->fixnum i)
-				   (js-get o rni %this) #f %this)
-				(js-put! o rni t #f %this))
-			     (begin
-				(js-delete! o (uint32->fixnum i) #t %this)
-				(js-put! o rni t #f %this)))
-			 (loop ni)))
-		     (else
-		      (let* ((ni (+u32 i (fixnum->uint32 1)))
-			     (rni (js-uint32-tointeger (-u32 len ni))))
-			 (if (js-has-property o (js-toname rni %this) %this)
-			     (js-put! o (uint32->fixnum i)
-				(js-get o rni %this) #f %this)
-			     (js-delete! o (uint32->fixnum i) #t %this))
-			 (js-delete! o rni #t %this)
-			 (loop ni))))))))
-
-      (if (js-array? this)
-	  (with-access::JsArray this (vec)
-	     (if (js-object-mode-inline? this)
-		 ;; fast path
-		 (with-access::JsArray this (ilen)
-		    (vector-reverse! vec (uint32->fixnum ilen))
-		    this)
-		 (array-reverse! this)))
-	  (let ((o (js-toobject %this this)))
-	     (array-reverse! o))))
+      (js-array-prototype-reverse this %this))
    
    (js-bind! %this js-array-prototype (& "reverse")
       :value (js-make-function %this array-prototype-reverse
@@ -4403,6 +4353,63 @@
 	     (js-get-name/cache this (& "pop") #f %this
 		(or cache (js-pcache-ref js-array-pcache 9)))
 	     this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-reverse ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-reverse this %this)
+   
+   (define (vector-reverse! val len)
+      (let ((len/2 (/fx len 2)))
+	 (let loop ((i 0))
+	    (unless (=fx i len/2)
+	       (let ((t (vector-ref val i))
+		     (ni (+fx i 1)))
+		  (vector-set! val i (vector-ref val (-fx len ni)))
+		  (vector-set! val (-fx len ni) t)
+		  (loop ni))))))
+   
+   (define (array-reverse! o)
+      (with-access::JsArray o (ilen length)
+	 (let* ((len::uint32 (js-get-lengthu32 o %this))
+		(len/2::uint32 (/u32 len #u32:2)))
+	    (let loop ((i #u32:0))
+	       (cond
+		  ((=u32 i len/2)
+		   o)
+		  ((js-has-property o (js-toname i %this) %this)
+		   (let* ((t (js-get o (uint32->fixnum i) %this))
+			  (ni (+u32 i (fixnum->uint32 1)))
+			  (rni (js-uint32-tointeger (-u32 len ni))))
+		      (if (js-has-property o (js-toname rni %this) %this)
+			  (begin
+			     (js-put! o (uint32->fixnum i)
+				(js-get o rni %this) #f %this)
+			     (js-put! o rni t #f %this))
+			  (begin
+			     (js-delete! o (uint32->fixnum i) #t %this)
+			     (js-put! o rni t #f %this)))
+		      (loop ni)))
+		  (else
+		   (let* ((ni (+u32 i (fixnum->uint32 1)))
+			  (rni (js-uint32-tointeger (-u32 len ni))))
+		      (if (js-has-property o (js-toname rni %this) %this)
+			  (js-put! o (uint32->fixnum i)
+			     (js-get o rni %this) #f %this)
+			  (js-delete! o (uint32->fixnum i) #t %this))
+		      (js-delete! o rni #t %this)
+		      (loop ni))))))))
+   
+   (if (js-array? this)
+       (with-access::JsArray this (vec)
+	  (if (js-object-mode-inline? this)
+	      ;; fast path
+	      (with-access::JsArray this (ilen)
+		 (vector-reverse! vec (uint32->fixnum ilen))
+		 this)
+	      (array-reverse! this)))
+       (let ((o (js-toobject %this this)))
+	  (array-reverse! o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-slice ...                                     */

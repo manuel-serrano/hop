@@ -347,11 +347,15 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-cast-number ...                                               */
+;*    -------------------------------------------------------------    */
+;*    int32 and uint32 might reach this function when profiling.       */
 ;*---------------------------------------------------------------------*/
 (define (js-cast-number this shape %this)
    (cond
       ((js-number? this) this)
       ((isa? this JsNumber) (with-access::JsNumber this (val) val))
+      ((uint32? this) (js-uint32-tointeger this))
+      ((int32? this) (js-int32-tointeger this))
       (else (js-raise-type-error %this "Not a number ~a"
 	       (if shape (shape this) this)))))
 
