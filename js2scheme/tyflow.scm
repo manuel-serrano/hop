@@ -1411,6 +1411,13 @@
       (when (isa? expr J2SUnresolvedRef)
 	 (with-access::J2SUnresolvedRef expr (id)
 	    (eq? id 'Number))))
+
+   (define (is-math-ref? expr::J2SNode)
+      (when (isa? expr J2SRef)
+	 (with-access::J2SRef expr (decl)
+	    (when (isa? decl J2SDeclExtern)
+	       (with-access::J2SDecl decl (id)
+		  (eq? id 'Math))))))
    
    (with-access::J2SAccess this (obj field loc)
       (multiple-value-bind (tyo envo bko)
@@ -1462,6 +1469,15 @@
 		   (if (member name
 			  '("POSITIVE_INFINITY" "NEGATIVE_INFINITY"))
 		       (expr-type-add! this envf fix 'number
+			  (append bko bkf))
+		       (expr-type-add! this envf fix 'any
+			  (append bko bkf)))))
+	       ((is-math-ref? obj)
+		(let ((name (j2s-field-name field)))
+		   (if (member name
+			  '("E" "LN10" "LN2" "LOG2E" "LOG10E" "PI"
+			    "SQRT1_2" "SQRT2"))
+		       (expr-type-add! this envf fix 'real
 			  (append bko bkf))
 		       (expr-type-add! this envf fix 'any
 			  (append bko bkf)))))

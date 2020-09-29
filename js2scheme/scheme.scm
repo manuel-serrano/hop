@@ -2374,6 +2374,11 @@
 	     `(let ((,tmp ,(j2s-scheme obj mode return ctx)))
 		 ,(index-obj-ref access ref field cache cspecs loc)))))
 
+   (define (math-object? obj ctx)
+      (when (isa? obj J2SRef)
+	 (with-access::J2SRef obj (decl)
+	    (eq? decl (context-math ctx)))))
+   
    (define (builtin-object? obj)
       (when (isa? obj J2SGlobalRef)
 	 (with-access::J2SGlobalRef obj (decl)
@@ -2431,6 +2436,10 @@
 	     (index-ref obj field cache cspecs loc))
 	    ((and (builtin-object? obj)
 		  (get-builtin-object obj field mode return ctx))
+	     =>
+	     (lambda (sexp) sexp))
+	    ((and (math-object? obj ctx)
+		  (j2s-math-object-get obj field mode return ctx))
 	     =>
 	     (lambda (sexp) sexp))
 	    (else

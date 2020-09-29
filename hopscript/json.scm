@@ -41,12 +41,6 @@
 (define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
-;*    js-donate ::JsJSON ...                                           */
-;*---------------------------------------------------------------------*/
-(define-method (js-donate obj::JsJSON worker::WorkerHopThread %_this)
-   (js-undefined))
-
-;*---------------------------------------------------------------------*/
 ;*    js-init-json! ...                                                */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.12        */
@@ -59,7 +53,7 @@
       ;; local constant strings
       (unless (vector? __js_strings) (set! __js_strings (&init!)))
       (set! js-json
-	 (instantiateJsJSON
+	 (instantiateJsObject
 	    (__proto__ (js-object-proto %this))))
       ;; parse
       (js-bind! %this js-json (& "parse")

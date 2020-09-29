@@ -30,7 +30,9 @@
 	   __js2scheme_scheme-ops)
 
    (export (j2s-math-builtin-method fun::J2SAccess args
-	      expr mode return::procedure conf)))
+	      expr mode return::procedure conf)
+	   (j2s-math-object-get obj::J2SRef field::J2SExpr
+	      mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-math-builtin-method ...                                      */
@@ -300,4 +302,22 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-math-inline-min-max loc op x::J2SExpr y::J2SExpr mode return conf)
    (js-binop2 loc op 'number x y mode return conf))
-   
+
+;*---------------------------------------------------------------------*/
+;*    j2s-math-object-get ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Read-only math properties.                                       */
+;*---------------------------------------------------------------------*/
+(define (j2s-math-object-get obj field mode return ctx)
+   (when (isa? field J2SString)
+      (with-access::J2SString field (val)
+	 (cond
+	    ((string=? val "E") 2.7182818284590452354)
+	    ((string=? val "LN10") (log 10))
+	    ((string=? val "LN2") (log 2))
+	    ((string=? val "LOG2E") 1.4426950408889634)
+	    ((string=? val "LOG10E") 0.4342944819032518)
+	    ((string=? val "PI") (* 2 (atan 1 0)))
+	    ((string=? val "SQRT1_2") (sqrt (/ 1 2)))
+	    ((string=? val "SQRT2") (sqrt 2))
+	    (else #f)))))
