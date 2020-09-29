@@ -2437,11 +2437,11 @@
 ;*    js-raise-type-error ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-raise-type-error %this::JsGlobalObject fmt::bstring obj)
-   (with-access::JsGlobalObject %this (js-type-error)
-      (js-raise
-	 (js-new %this js-type-error
-	    (js-string->jsstring
-	       (format fmt (error-obj->string %this obj)))))))
+   (js-raise
+      (js-type-error1 
+	 (js-string->jsstring
+	    (format fmt (error-obj->string %this obj)))
+	 %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-type-error/loc ...                                      */
@@ -2449,12 +2449,10 @@
 (define (js-raise-type-error/loc %this::JsGlobalObject loc fmt::bstring obj)
    (match-case loc
       ((at ?fname ?loc)
-       (with-access::JsGlobalObject %this (js-type-error)
-	  (js-raise
-	     (js-new %this js-type-error
-		(js-string->jsstring (format fmt (error-obj->string %this obj)))
-		fname
-		loc))))
+       (js-raise
+	  (js-type-error
+	     (js-string->jsstring (format fmt (error-obj->string %this obj)))
+	     fname loc %this)))
       (else
        (js-raise-type-error %this fmt obj))))
 

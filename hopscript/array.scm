@@ -137,7 +137,9 @@
 	   (js-array-maybe-push ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-pop ::JsArray ::JsGlobalObject ::obj)
 	   (js-array-maybe-pop ::obj ::JsGlobalObject ::obj)
-	   (js-array-prototype-reverse ::JsArray ::JsGlobalObject)
+	   (js-array-prototype-reverse ::obj ::JsGlobalObject)
+	   (js-array-reverse ::JsArray ::JsGlobalObject)
+	   (js-array-maybe-reverse ::obj ::JsGlobalObject ::obj)
 	   (js-array-indexof ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-prototype-slice ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-array-maybe-slice0 ::obj ::JsGlobalObject ::obj)
@@ -449,7 +451,7 @@
       
       ;; array pcache
       (set! js-array-pcache
-	 ((@ js-make-pcache-table __hopscript_property) 22 "array"))
+	 ((@ js-make-pcache-table __hopscript_property) 23 "array"))
       (js-validate-pmap-pcache!
 	 (js-pcache-ref js-array-pcache 20))
       
@@ -4358,6 +4360,49 @@
 ;*    js-array-prototype-reverse ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-reverse this %this)
+   (if (js-array? this)
+       (js-array-reverse this %this)
+       (let ((o (js-toobject %this this)))
+	  (array-reverse! o #f))))
+
+;*---------------------------------------------------------------------*/
+;*    array-reverse! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (array-reverse! o %this)
+   (with-access::JsArray o (ilen length)
+      (let* ((len::uint32 (js-get-lengthu32 o %this))
+	     (len/2::uint32 (/u32 len #u32:2)))
+	 (let loop ((i #u32:0))
+	    (cond
+	       ((=u32 i len/2)
+		o)
+	       ((js-has-property o (js-toname i %this) %this)
+		(let* ((t (js-get o (uint32->fixnum i) %this))
+		       (ni (+u32 i (fixnum->uint32 1)))
+		       (rni (js-uint32-tointeger (-u32 len ni))))
+		   (if (js-has-property o (js-toname rni %this) %this)
+		       (begin
+			  (js-put! o (uint32->fixnum i)
+			     (js-get o rni %this) #f %this)
+			  (js-put! o rni t #f %this))
+		       (begin
+			  (js-delete! o (uint32->fixnum i) #t %this)
+			  (js-put! o rni t #f %this)))
+		   (loop ni)))
+	       (else
+		(let* ((ni (+u32 i (fixnum->uint32 1)))
+		       (rni (js-uint32-tointeger (-u32 len ni))))
+		   (if (js-has-property o (js-toname rni %this) %this)
+		       (js-put! o (uint32->fixnum i)
+			  (js-get o rni %this) #f %this)
+		       (js-delete! o (uint32->fixnum i) #t %this))
+		   (js-delete! o rni #t %this)
+		   (loop ni))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-reverse ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-array-reverse this %this)
    
    (define (vector-reverse! val len)
       (let ((len/2 (/fx len 2)))
@@ -4368,48 +4413,26 @@
 		  (vector-set! val i (vector-ref val (-fx len ni)))
 		  (vector-set! val (-fx len ni) t)
 		  (loop ni))))))
-   
-   (define (array-reverse! o)
-      (with-access::JsArray o (ilen length)
-	 (let* ((len::uint32 (js-get-lengthu32 o %this))
-		(len/2::uint32 (/u32 len #u32:2)))
-	    (let loop ((i #u32:0))
-	       (cond
-		  ((=u32 i len/2)
-		   o)
-		  ((js-has-property o (js-toname i %this) %this)
-		   (let* ((t (js-get o (uint32->fixnum i) %this))
-			  (ni (+u32 i (fixnum->uint32 1)))
-			  (rni (js-uint32-tointeger (-u32 len ni))))
-		      (if (js-has-property o (js-toname rni %this) %this)
-			  (begin
-			     (js-put! o (uint32->fixnum i)
-				(js-get o rni %this) #f %this)
-			     (js-put! o rni t #f %this))
-			  (begin
-			     (js-delete! o (uint32->fixnum i) #t %this)
-			     (js-put! o rni t #f %this)))
-		      (loop ni)))
-		  (else
-		   (let* ((ni (+u32 i (fixnum->uint32 1)))
-			  (rni (js-uint32-tointeger (-u32 len ni))))
-		      (if (js-has-property o (js-toname rni %this) %this)
-			  (js-put! o (uint32->fixnum i)
-			     (js-get o rni %this) #f %this)
-			  (js-delete! o (uint32->fixnum i) #t %this))
-		      (js-delete! o rni #t %this)
-		      (loop ni))))))))
-   
+
+   (with-access::JsArray this (vec)
+      (if (js-object-mode-inline? this)
+	  ;; fast path
+	  (with-access::JsArray this (ilen)
+	     (vector-reverse! vec (uint32->fixnum ilen))
+	     this)
+	  (array-reverse! this %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-reverse ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-reverse this %this cache)
    (if (js-array? this)
-       (with-access::JsArray this (vec)
-	  (if (js-object-mode-inline? this)
-	      ;; fast path
-	      (with-access::JsArray this (ilen)
-		 (vector-reverse! vec (uint32->fixnum ilen))
-		 this)
-	      (array-reverse! this)))
-       (let ((o (js-toobject %this this)))
-	  (array-reverse! o))))
+       (js-array-reverse this %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call0 %this
+	     (js-get-name/cache this (& "reverse") #f %this
+		(or cache (js-pcache-ref js-array-pcache 22)))
+	     this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-slice ...                                     */

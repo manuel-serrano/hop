@@ -110,7 +110,7 @@
 	       ((member val '("cos" "sin" "acos" "asin"))
 		(when (=fx (length args) 1)
 		   (j2s-math-inline-trigonometry
-		      (symbol-append (string->symbol val) 'fl)
+		      (string->symbol val)
 		      (car args) mode return conf)))
 	       ((string=? val "atan2")
 		(when (=fx (length args) 2)
@@ -283,7 +283,7 @@
 		  (,fun ,tmp)
 		  (,fun (fixnum->flonum ,tmp))))))
       (else
-       `(,fun ,(j2s-scheme arg mode return conf) %this))))
+       `(,fun ,(j2s-scheme arg mode return conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-math-inline-atan2 ...                                        */
