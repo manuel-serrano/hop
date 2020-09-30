@@ -677,7 +677,7 @@
 (define-inline (proxy-check-revoked! o::JsProxy action %this::JsGlobalObject)
    (when (js-proxy-mode-revoked? o)
       (js-raise-type-error %this
-	 (format "Cannot perform \"~s\" on a revoked proxy" action)
+	 (format "Cannot perform ~s on a revoked proxy" action)
 	 (js-string->jsstring (typeof o)))))
 
 ;*---------------------------------------------------------------------*/

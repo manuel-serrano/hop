@@ -212,6 +212,14 @@
 	    (name (& "Error"))
 	    (msg (& ""))))
 
+      (define js-type-error-prototype
+	 (instantiateJsError
+	    (cmap (instantiate::JsConstructMap))
+	    (%this %this)
+	    (__proto__ js-error-prototype)
+	    (name (& "error"))
+	    (msg (& ""))))
+
       (define js-frame-proto
 	 (js-init-frame-proto! %this))
 
@@ -251,7 +259,7 @@
 	       (name (& "TypeError"))
 	       (msg (& ""))
 	       (__proto__ (if (eq? constructor js-type-error)
-			      js-error-prototype
+			      js-type-error-prototype
 			      (js-get constructor (& "prototype") %this)))
 	       (stack '()))))
 
@@ -473,12 +481,7 @@
 	    (js-function-arity 3 0)
 	    (js-function-info :name "TypeError" :len 1)
 	    :__proto__ js-function-prototype
-	    :prototype (instantiateJsError
-			  (cmap (instantiate::JsConstructMap))
-			  (%this %this)
-			  (__proto__ js-error-prototype)
-			  (name (& "error"))
-			  (msg (& "")))
+	    :prototype js-type-error-prototype
 	    :alloc js-type-error-alloc))
 
       (set! js-uri-error
@@ -750,22 +753,22 @@
 ;*    js-type-error ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-type-error msg fname loc %this)
-   (with-access::JsGlobalObject %this (js-new-target js-error)
-      (js-new3 %this js-error msg fname loc)))
+   (with-access::JsGlobalObject %this (js-new-target js-type-error)
+      (js-new3 %this js-type-error msg fname loc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-type-error2 ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-type-error2 msg fname %this)
-   (with-access::JsGlobalObject %this (js-new-target js-error)
-      (js-new2 %this js-error msg fname)))
+   (with-access::JsGlobalObject %this (js-new-target js-type-error)
+      (js-new2 %this js-type-error msg fname)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-type-error1 ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-type-error1 msg %this)
-   (with-access::JsGlobalObject %this (js-new-target js-error)
-      (js-new1 %this js-error msg)))
+   (with-access::JsGlobalObject %this (js-new-target js-type-error)
+      (js-new1 %this js-type-error msg)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
