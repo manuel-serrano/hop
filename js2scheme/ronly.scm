@@ -183,6 +183,16 @@
       (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
+;*    ronly! ::J2SForIn ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ronly! this::J2SForIn mode::symbol deval::bool)
+   (with-access::J2SForIn this (lhs)
+      (when (isa? lhs J2SRef)
+	 (with-access::J2SRef lhs (decl)
+	    (decl-usage-add! decl 'assig))))
+   (call-default-walker))
+   
+;*---------------------------------------------------------------------*/
 ;*    ronly! ::J2SFun ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (ronly! this::J2SFun mode::symbol deval::bool)

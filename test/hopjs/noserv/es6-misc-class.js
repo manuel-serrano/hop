@@ -51,7 +51,6 @@ function _kangaxd() {
 }
 
 function kangaxd() {
-   #:tprint( ">>>" );
    var e = _kangaxd();
    console.error( new.target );
    return e;

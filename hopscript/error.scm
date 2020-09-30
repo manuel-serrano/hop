@@ -237,7 +237,9 @@
 	       (%this %this)
 	       (name (& "Error"))
 	       (msg (& ""))
-	       (__proto__ js-error-prototype)
+	       (__proto__ (if (eq? constructor %js-error)
+			      js-error-prototype
+			      (js-get constructor (& "prototype") %this)))
 	       (stack '()))))
 
       (define (js-type-error-alloc %this constructor::JsFunction)
@@ -248,7 +250,9 @@
 	       (%this %this)
 	       (name (& "TypeError"))
 	       (msg (& ""))
-	       (__proto__ js-error-prototype)
+	       (__proto__ (if (eq? constructor js-type-error)
+			      js-error-prototype
+			      (js-get constructor (& "prototype") %this)))
 	       (stack '()))))
 
       (define (%js-error this message fname loc)
@@ -318,8 +322,9 @@
 
       (define (capture-stack-trace err start-fun)
 	 (when (fixnum? js-stacktracelimit)
-	    (with-access::JsError err (stack)
-	       (set! stack (get-trace-stack js-stacktracelimit)))))
+	    (when (isa? err JsError)
+	       (with-access::JsError err (stack)
+		  (set! stack (get-trace-stack js-stacktracelimit))))))
       
       (define (hop-frame->js-frame frame)
 	 
@@ -410,7 +415,7 @@
 	 :get (js-make-function %this
 		 (lambda (o)
 		    (if (not (isa? o JsError))
-			(js-get o (& "stack") %this)
+			#f
 			(with-access::JsError o (stack)
 			   (if (pair? stack)
 			       (let ((prepare (js-get js-error

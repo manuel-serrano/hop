@@ -212,6 +212,11 @@
 	    :alloc js-proxy-alloc
 	    :size 1))
 
+      ;; WARNING!!! as there is no prototype, js-make-function will
+      ;; have replaced alloc with  js-object-alloc-lazy
+      (with-access::JsFunction js-proxy (alloc)
+	 (set! alloc js-proxy-alloc))
+
       (set! js-proxy-pcache
 	 ((@ js-make-pcache-table __hopscript_property) 3 "proxy"))
       
