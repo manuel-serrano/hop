@@ -52,7 +52,8 @@
 	   __hopscript_lib
 	   __hopscript_arguments
 	   __hopscript_pair
-	   __hopscript_dom)
+	   __hopscript_dom
+	   __hopscript_profile)
 
    (export (js-new-global-object::JsGlobalObject #!key (size 64) name)
 	   

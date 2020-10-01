@@ -29,7 +29,8 @@
 	   __hopscript_lib
 	   __hopscript_function
 	   __hopscript_error
-	   __hopscript_array)
+	   __hopscript_array
+	   __hopscript_profile)
 
    (export (js-init-json! ::JsObject)
 	   (js-json-stringify ::obj ::obj ::obj ::obj ::JsGlobalObject)

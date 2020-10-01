@@ -30,7 +30,8 @@
 	   __hopscript_string
 	   __hopscript_stringliteral
 	   __hopscript_error
-	   __hopscript_proxy)
+	   __hopscript_proxy
+	   __hopscript_profile)
 
    (export (js-init-regexp! ::JsGlobalObject)
 	   (js-init-regexp-caches! ::JsGlobalObject ::long)

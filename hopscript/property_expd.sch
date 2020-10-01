@@ -40,6 +40,7 @@
 	   (e `(with-access::JsPropertyCache ,cache (cntimap cntemap
 						       cntcmap cntpmap 
 						       cntamap cntnmap
+						       cntxmap
 						       cntvtable cntmiss src)
 		  ,@(filter-map (lambda (c)
 				   (when (keyword? c)

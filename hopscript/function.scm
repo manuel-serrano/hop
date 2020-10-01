@@ -30,7 +30,8 @@
 	   __hopscript_lib
 	   __hopscript_worker
 	   __hopscript_array
-	   __hopscript_arguments)
+	   __hopscript_arguments
+	   __hopscript_profile)
    
    (export (js-init-function! ::JsGlobalObject)
 	   
