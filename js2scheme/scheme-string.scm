@@ -96,12 +96,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    fresh-string? ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (fresh-string? this)
+(define (fresh-string? this self)
+   ;; self is used to ensure that no optimization removes the creation
+   ;; of a new string
    (cond
       ((isa? this J2SBinary)
-       (with-access::J2SBinary this (op) (eq? op '+)))
+       (with-access::J2SBinary this (op) (and (eq? op '+) (pair? self))))
       ((isa? this J2SParen)
-       (with-access::J2SParen this (expr) (fresh-string? expr)))
+       (with-access::J2SParen this (expr) (fresh-string? expr self)))
       (else
        #f)))
 
@@ -109,21 +111,23 @@
 ;*    j2s-jsstring-tolowercase ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-jsstring-tolowercase obj args mode return ctx)
-   `(,(if (fresh-string? obj)
-	  'js-jsstring-tolowercase!
-	  'js-jsstring-tolowercase)
-     ,(j2s-scheme obj mode return ctx)
-     ,@(map (lambda (arg) (j2s-scheme arg mode return ctx)) args)))
+   (let ((self (j2s-scheme obj mode return ctx)))
+      `(,(if (fresh-string? obj self)
+	     'js-jsstring-tolowercase!
+	     'js-jsstring-tolowercase)
+	,self
+	,@(map (lambda (arg) (j2s-scheme arg mode return ctx)) args))))
        
 ;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring-touppercase ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-jsstring-touppercase obj args mode return ctx)
-   `(,(if (fresh-string? obj)
-	  'js-jsstring-touppercase!
-	  'js-jsstring-touppercase)
-     ,(j2s-scheme obj mode return ctx)
-     ,@(map (lambda (arg) (j2s-scheme arg mode return ctx)) args)))
+   (let ((self (j2s-scheme obj mode return ctx)))
+      `(,(if (fresh-string? obj self)
+	     'js-jsstring-touppercase!
+	     'js-jsstring-touppercase)
+	,self
+	,@(map (lambda (arg) (j2s-scheme arg mode return ctx)) args))))
        
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-replace-regexp ...                                    */
