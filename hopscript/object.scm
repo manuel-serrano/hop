@@ -1074,7 +1074,60 @@
 ;*    js-ownkeys ::JsObject ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-ownkeys obj::JsObject %this)
-   (js-vector->jsarray (js-properties-name obj #t %this) %this))
+
+   (define (cmap->names cmap)
+      (with-access::JsConstructMap cmap (props)
+	 (let* ((len (vector-length props))
+		(arr (js-array-construct-alloc/length %this len)))
+	    (with-access::JsArray arr (length ilen vec)
+	       (let loop ((i 0)
+			  (j 0))
+		  (cond
+		     ((=fx i len)
+		      (set! ilen (fixnum->uint32 j))
+		      (set! length (fixnum->uint32 j))
+		      arr)
+		     ((vector-ref props i)
+		      =>
+		      (lambda (prop)
+			 (if (flags-enumerable? (prop-flags prop))
+			     (begin
+				(vector-set! vec j (prop-name prop))
+				(loop (+fx i 1) (+fx j 1)))
+			     (loop (+fx i 1) j))))
+		     (else
+		      (loop (+fx i 1) j))))))))
+   
+   (define (hash->names elements)
+      (map! js-string->jsstring (hashtable-key-list elements)))
+   
+   (define (enum-desc->names elements)
+      (let* ((len (vector-length elements))
+	     (arr (js-array-construct-alloc/length %this len)))
+	 (with-access::JsArray arr (length ilen vec)
+	    (let loop ((i 0)
+		       (j 0))
+	       (if (=fx i len)
+		   (begin
+		      (set! ilen (fixnum->uint32 j))
+		      (set! length (fixnum->uint32 j))
+		      arr)
+		   (with-access::JsPropertyDescriptor (vector-ref elements i) (enumerable name)
+		      (if enumerable
+			  (begin
+			     (vector-set! vec j name)
+			     (loop (+fx i 1) (+fx j 1)))
+			  (loop (+fx i 1) j))))))))
+   
+   
+   (with-access::JsObject obj (cmap elements)
+      (cond
+	 ((js-object-mapped? obj)
+	  (cmap->names cmap))
+	 ((js-object-hashed? obj)
+	  (js-vector->jsarray (apply vector (hash->names elements)) %this))
+	 (else
+	  (enum-desc->names elements)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tonumber ::JsObject ...                                       */

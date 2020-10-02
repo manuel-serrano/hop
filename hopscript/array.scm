@@ -3735,6 +3735,33 @@
 	    arr))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-array-prototype-concat-add ...                                */
+;*    -------------------------------------------------------------    */
+;*    This functin is used when concat is used with a non array        */
+;*    argument.                                                        */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-concat-add this arg %this cache)
+   (if (and (js-object-mode-plain? this)
+	    (js-object-mode-inline? this))
+       (with-access::JsArray this ((tvec vec) (tilen ilen))
+	  (let* ((ailen #u32:1)
+		 (new-len (+fx/overflow (uint32->fixnum tilen)
+			     (uint32->fixnum ailen)))
+		 (arr (js-array-species-create %this this new-len)))
+	     (with-access::JsArray arr ((vdst vec) ilen)
+		(vector-copy! vdst 0
+		   tvec 0 (uint32->fixnum tilen))
+		(vector-set! vdst (uint32->fixnum tilen)
+		   arg)
+		(set! ilen (uint32->fixnum (+u32 tilen ailen))))
+	     arr))
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call1 %this
+	     (js-get-jsobject-name/cache this (& "concat") #f %this
+		(or cache (js-pcache-ref js-array-pcache 15)))
+	     this arg))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-array-concat1 ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-array-concat1 this::JsArray arg %this cache)
@@ -3753,8 +3780,10 @@
 ;*    js-array-maybe-concat1 ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-array-maybe-concat1 this::obj arg %this cache)
-   (if (and (js-array? this) (js-array? arg))
-       (js-array-concat1 this arg %this cache)
+   (if (js-array? this)
+       (if (js-array? arg)
+	   (js-array-concat1 this arg %this cache)
+	   (js-array-prototype-concat-add this arg %this cache))
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call1 %this
 	     (js-get-name/cache this (& "concat") #f %this

@@ -1793,10 +1793,9 @@
 	       ((vector-ref props i)
 		=>
 		(lambda (prop)
-		   (let ((p (vector-ref props i)))
-		      (if (or (not enump) (flags-enumerable? (prop-flags p)))
-			  (loop (-fx i 1) (cons (prop-name prop) acc))
-			  (loop (-fx i 1) acc)))))
+		   (if (or (not enump) (flags-enumerable? (prop-flags prop)))
+		       (loop (-fx i 1) (cons (prop-name prop) acc))
+		       (loop (-fx i 1) acc))))
 	       (else
 		(loop (-fx i 1) acc))))))
 
