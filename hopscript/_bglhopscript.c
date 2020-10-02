@@ -771,16 +771,6 @@ BGL_MAKE_JSPROXY_SANS( obj_t target, obj_t handler,
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)jsproxy_constrmap;
    o->BgL_elementsz00 = jsproxy_elements;
    
-#if( defined( HOP_PROFILE ) )
-   {
-      long i = ( constrsize >= VECTOR_LENGTH( bgl_js_profile_allocs ) - 2
-		 ? VECTOR_LENGTH( bgl_js_profile_allocs ) -1
-		 : constrsize );
-      long cnt = BLLONG_TO_LLONG( VECTOR_REF( bgl_js_profile_allocs, i ) );
-      VECTOR_SET( bgl_js_profile_allocs, i, LLONG_TO_BLLONG( cnt + 1 ) );
-   }
-#endif
-
    return BNANOBJECT( o );
 }
 
@@ -1176,16 +1166,6 @@ BGL_MAKE_JSPROCEDURE_SANS( obj_t procedure, long arity, obj_t __proto__ ) {
       o->BgL_arityz00 = arity;
       o->BgL_cmapz00 = jsprocedure_cmap;
    }
-
-#if( defined( HOP_PROFILE ) )
-   {
-      long i = ( constrsize >= VECTOR_LENGTH( bgl_js_profile_allocs ) - 2
-		 ? VECTOR_LENGTH( bgl_js_profile_allocs ) -1
-		 : constrsize );
-      long cnt = BLLONG_TO_LLONG( VECTOR_REF( bgl_js_profile_allocs, i ) );
-      VECTOR_SET( bgl_js_profile_allocs, i, LLONG_TO_BLLONG( cnt + 1 ) );
-   }
-#endif
 
    return BNANOBJECT( o );
 }
