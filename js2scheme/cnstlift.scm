@@ -171,7 +171,7 @@
 				((isa? nval J2SBindExit)
 				 (multiple-value-bind (ndecls fun)
 				    (decompose-bindexit nval)
-				    (set! decls (append ndecls decls))
+				    (set! decls (append decls ndecls))
 				    (set! val fun)))
 				((not (isa? nval J2SFun))
 				 (error "cnstlift"

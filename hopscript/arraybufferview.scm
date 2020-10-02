@@ -29,7 +29,8 @@
 	   __hopscript_lib
 	   __hopscript_number
 	   __hopscript_worker
-	   __hopscript_arraybuffer)
+	   __hopscript_arraybuffer
+	   __hopscript_array)
 
    (export (js-init-arraybufferview! ::JsGlobalObject)
 	   (js-typedarray-lengthu32 o::JsTypedArray %this #!optional cache)
@@ -848,6 +849,12 @@
       (let ((len (uint32->fixnum length)))
 	 (append! (map js-integer->jsstring (iota len))
 	    (call-next-method)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-ownkeys ::JsTypedArray ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (js-ownkeys obj::JsTypedArray %this)
+   (js-vector->jsarray (js-properties-name obj #t %this) %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsTypedArray ...                               */

@@ -2488,6 +2488,12 @@
 	     (loop (-fx i 1) (cons (js-integer->jsstring i) acc))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-ownkeys ::JsArray ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (js-ownkeys obj::JsArray %this)
+   (js-vector->jsarray (js-properties-name obj #t %this) %this))
+
+;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsArray ...                                    */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.5.2     */

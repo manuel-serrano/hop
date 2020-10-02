@@ -1091,9 +1091,12 @@
 		      =>
 		      (lambda (prop)
 			 (if (flags-enumerable? (prop-flags prop))
-			     (begin
-				(vector-set! vec j (prop-name prop))
-				(loop (+fx i 1) (+fx j 1)))
+			     (let ((name (prop-name prop)))
+				(if (js-jsstring? name)
+				    (begin
+				       (vector-set! vec j name)
+				       (loop (+fx i 1) (+fx j 1)))
+				    (loop (+fx i 1) j)))
 			     (loop (+fx i 1) j))))
 		     (else
 		      (loop (+fx i 1) j))))))))
@@ -1113,7 +1116,7 @@
 		      (set! length (fixnum->uint32 j))
 		      arr)
 		   (with-access::JsPropertyDescriptor (vector-ref elements i) (enumerable name)
-		      (if enumerable
+		      (if (and enumerable (js-jsstring? name))
 			  (begin
 			     (vector-set! vec j name)
 			     (loop (+fx i 1) (+fx j 1)))

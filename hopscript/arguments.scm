@@ -428,6 +428,12 @@
 	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-ownkeys ::JsArguments ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (js-ownkeys obj::JsArguments %this)
+   (js-vector->jsarray (js-properties-name obj #t %this) %this))
+
+;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsArguments ...                                */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.5.2     */

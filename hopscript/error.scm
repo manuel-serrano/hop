@@ -328,11 +328,42 @@
 	 (capture-stack-trace this (js-undefined))
 	 this)
 
+      (define (js-get-stack o stack)
+	 (if (pair? stack)
+	     (let ((prepare (js-get js-error
+			       (& "prepareStackTrace") %this)))
+		(if (js-procedure? prepare)
+		    (let ((frames (js-vector->jsarray
+				     (list->vector
+					(filter-map
+					   hop-frame->js-frame
+					   stack))
+				     %this)))
+		       (js-call2 %this prepare js-error
+			  o frames))
+		    (hop-stack->jsstring o stack)))
+	     stack))
+	 
       (define (capture-stack-trace err start-fun)
 	 (when (fixnum? js-stacktracelimit)
-	    (when (isa? err JsError)
-	       (with-access::JsError err (stack)
-		  (set! stack (get-trace-stack js-stacktracelimit))))))
+	    (let ((stk (get-trace-stack js-stacktracelimit)))
+	       (if (isa? err JsError)
+		   (with-access::JsError err (stack)
+		      (set! stack stk))
+		   (js-bind! %this err (& "stack")
+		      :get (js-make-function %this
+			      (lambda (o)
+				 (js-get-stack o stk))
+			      (js-function-arity 0 0)
+			      (js-function-info :name "stack" :len 0))
+		      :set (js-make-function %this
+			      (lambda (o v)
+				 (js-undefined))
+			      (js-function-arity 1 0)
+			      (js-function-info :name "stack" :len 1))
+		      :enumerable #f
+		      :configurable #t
+		      :hidden-class #t)))))
       
       (define (hop-frame->js-frame frame)
 	 
@@ -390,7 +421,7 @@
 		    (if (isa? o JsError)
 			(with-access::JsError o (msg)
 			   (set! msg v))
-			(js-undefined)))
+			(js-bind! %this o (& "message") :value v :enumerable #f)))
 		 (js-function-arity 1 0)
 		 (js-function-info :name "message" :len 1))
 	 :get (js-make-function %this
@@ -406,8 +437,9 @@
       (js-bind! %this js-error-prototype (& "name")
 	 :set (js-make-function %this
 		 (lambda (o v)
-		    (when (isa? o JsError)
-		       (with-access::JsError o (name) (set! name v))))
+		    (if (isa? o JsError)
+			(with-access::JsError o (name) (set! name v))
+			(js-bind! %this o (& "name") :value v :enumerable #f)))
 		 (js-function-arity 1 0)
 		 (js-function-info :name "name" :len 1))
 	 :get (js-make-function %this
@@ -425,20 +457,7 @@
 		    (if (not (isa? o JsError))
 			#f
 			(with-access::JsError o (stack)
-			   (if (pair? stack)
-			       (let ((prepare (js-get js-error
-						 (& "prepareStackTrace") %this)))
-				  (if (js-procedure? prepare)
-				      (let ((frames (js-vector->jsarray
-						       (list->vector
-							  (filter-map
-							     hop-frame->js-frame
-							     stack))
-						       %this)))
-					 (js-call2 %this prepare js-error
-					    o frames))
-				      (hop-stack->jsstring o stack)))
-			       stack))))
+			   (js-get-stack o stack))))
 		 (js-function-arity 0 0)
 		 (js-function-info :name "stack" :len 0))
 	 :set (js-make-function %this

@@ -826,6 +826,12 @@
 	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-ownkeys ::JsString ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (js-ownkeys obj::JsString %this)
+   (js-vector->jsarray (js-properties-name obj #t %this) %this))
+
+;*---------------------------------------------------------------------*/
 ;*    js-isname? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-isname?::bool p name::JsStringLiteral %this::JsGlobalObject)

@@ -28,7 +28,8 @@
 	   __hopscript_public
 	   __hopscript_lib
 	   __hopscript_number
-	   __hopscript_worker)
+	   __hopscript_worker
+	   __hopscript_array)
 
    (export (js-init-arraybuffer! ::JsGlobalObject)
 	   (js-u8vector->jsarraybuffer ::u8vector ::JsGlobalObject)))
@@ -267,6 +268,12 @@
    (let ((len (js-arraybuffer-length obj)))
       (append! (map js-integer->jsstring (iota len))
 	 (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-ownkeys ::JsArrayBuffer ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (js-ownkeys obj::JsArrayBuffer %this)
+   (js-vector->jsarray (js-properties-name obj #t %this) %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsArrayBuffer ...                              */
