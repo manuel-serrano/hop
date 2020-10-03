@@ -121,8 +121,8 @@
 	("exec" js-regexp-prototype-exec regexp (any) %this #f ,j2s-regexp-plain?)
 	("exec" js-regexp-prototype-maybe-exec any (any) %this #t ,j2s-regexp-plain?)
 	;; array methods
-	("concat" js-array-concat1 array (array) %this #t ,j2s-array-plain?)
-	("concat" js-array-maybe-concat1 any (any) %this #t ,j2s-array-plain?)
+	("concat" ,j2s-array-concat1 array (array) %this #t ,j2s-array-plain?)
+	("concat" ,j2s-array-maybe-concat1 any (any) %this #t ,j2s-array-plain?)
 	("concat" js-array-concat array (array . any) %this #f ,j2s-array-plain?)
 	("concat" js-array-maybe-concat any (any . any) %this #t ,j2s-array-plain?)
 	("sort" js-array-sort array (any) %this #t ,j2s-array-plain?)

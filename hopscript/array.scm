@@ -119,7 +119,11 @@
 	   (js-array-concat ::JsArray args::pair-nil ::JsGlobalObject)
 	   (js-array-maybe-concat ::obj args::pair-nil ::JsGlobalObject ::obj)
 	   (js-array-concat1 ::JsArray ::JsArray ::JsGlobalObject ::obj)
+	   (js-array-concat1-empty ::JsArray ::JsGlobalObject ::obj)
+	   (js-array-concat1-create ::obj ::JsArray ::JsGlobalObject ::obj)
 	   (js-array-maybe-concat1 ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-concat1-empty ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-concat1-create ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-fill ::JsArray ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-fill ::obj ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-foreach ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
@@ -3728,21 +3732,36 @@
 	     this args))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-array-prototype-concat1 ...                                   */
+;*    js-array-prototype-create-concat ...                             */
+;*    -------------------------------------------------------------    */
+;*    This functin is used when concat is used with a non array        */
+;*    argument and when the first argument is a literal array          */
 ;*---------------------------------------------------------------------*/
-(define (js-array-prototype-concat1 this arg %this)
-   (with-access::JsArray this ((tvec vec) (tilen ilen))
-      (with-access::JsArray arg ((avec vec) (ailen ilen))
-	 (let* ((new-len (+fx/overflow (uint32->fixnum tilen)
-			    (uint32->fixnum ailen)))
-		(arr (js-array-species-create %this this new-len)))
-	    (with-access::JsArray arr ((vdst vec) ilen)
-	       (vector-copy! vdst 0
-		  tvec 0 (uint32->fixnum tilen))
-	       (vector-copy! vdst (uint32->fixnum tilen)
-		  avec 0 (uint32->fixnum ailen))
-	       (set! ilen (uint32->fixnum (+u32 tilen ailen))))
-	    arr))))
+(define (js-array-prototype-create-concat this arg %this)
+   (with-access::JsArray arg ((avec vec) (ailen ilen))
+      (let* ((new-len (+fx/overflow 1
+			 (uint32->fixnum ailen)))
+	     (arr (js-array-construct-alloc/length %this new-len)))
+	 (with-access::JsArray arr ((vdst vec) ilen)
+	    (vector-set! vdst 0 this)
+	    (vector-copy! vdst 1 avec 0 (uint32->fixnum ailen))
+	    (set! ilen (fixnum->uint32 new-len)))
+	 arr)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-create-concat-add ...                         */
+;*    -------------------------------------------------------------    */
+;*    This function is used when concat is used with a non array       */
+;*    argument and when the first argument is a literal array          */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-create-concat-add this arg %this)
+   (let* ((ailen #u32:1)
+	  (arr (js-array-construct-alloc-small %this #u32:2)))
+      (with-access::JsArray arr ((vdst vec) ilen)
+	 (vector-set! vdst 0 this)
+	 (vector-set! vdst 1 arg)
+	 (set! ilen 2))
+      arr))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-concat-add ...                                */
@@ -3774,17 +3793,85 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-concat1 ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (js-array-concat1 this::JsArray arg %this cache)
+(define (js-array-concat1 this::JsArray arg::JsArray %this cache)
+   
+   (define (array-concat1 this arg %this)
+      (with-access::JsArray this ((tvec vec) (tilen ilen))
+	 (with-access::JsArray arg ((avec vec) (ailen ilen))
+	    (let* ((new-len (+fx/overflow (uint32->fixnum tilen)
+			       (uint32->fixnum ailen)))
+		   (arr (js-array-species-create %this this new-len)))
+	       (with-access::JsArray arr ((vdst vec) ilen)
+		  (vector-copy! vdst 0
+		     tvec 0 (uint32->fixnum tilen))
+		  (vector-copy! vdst (uint32->fixnum tilen)
+		     avec 0 (uint32->fixnum ailen))
+		  (set! ilen (uint32->fixnum (+u32 tilen ailen))))
+	       arr))))
+   
    (if (and (js-object-mode-plain? this)
 	    (js-object-mode-inline? this)
 	    (js-object-mode-plain? arg)
 	    (js-object-mode-inline? arg))
-       (js-array-prototype-concat1 this arg %this)
+       (array-concat1 this arg %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call1 %this
 	     (js-get-jsobject-name/cache this (& "concat") #f %this
 		(or cache (js-pcache-ref js-array-pcache 15)))
 	     this arg))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-concat1-empty ...                                       */
+;*    -------------------------------------------------------------    */
+;*    Concat from an empty array.                                      */
+;*---------------------------------------------------------------------*/
+(define (js-array-concat1-empty arg::JsArray %this cache)
+   
+   (define (array-concat1-empty arg %this)
+      (with-access::JsArray arg ((avec vec) (ailen ilen))
+	 (let* ((new-len (uint32->fixnum ailen))
+		(arr (js-array-construct-alloc/length %this new-len)))
+	    (with-access::JsArray arr ((vdst vec) ilen)
+	       (vector-copy! vdst 0 avec 0 (uint32->fixnum ailen))
+	       (set! ilen ailen))
+	    arr)))
+   
+   (if (and (js-object-mode-plain? arg)
+	    (js-object-mode-inline? arg))
+       (array-concat1-empty arg %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (let ((this (js-empty-vector->jsarray %this)))
+	     (js-call1 %this
+		(js-get-jsobject-name/cache this (& "concat") #f %this
+		   (or cache (js-pcache-ref js-array-pcache 15)))
+		this arg)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-concat1-create ...                                      */
+;*    -------------------------------------------------------------    */
+;*    Concat from a literal array of one element.                      */
+;*---------------------------------------------------------------------*/
+(define (js-array-concat1-create el::obj arg::JsArray %this cache)
+   
+   (define (array-concat1-create this arg %this)
+      (with-access::JsArray arg ((avec vec) (ailen ilen))
+	 (let* ((new-len (+fx/overflow 1 (uint32->fixnum ailen)))
+		(arr (js-array-construct-alloc/length %this new-len)))
+	    (with-access::JsArray arr ((vdst vec) ilen)
+	       (vector-set! vdst 0 el)
+	       (vector-copy! vdst 1 avec 0 (uint32->fixnum ailen))
+	       (set! ilen (+u32 #u32:1 ailen)))
+	    arr)))
+   
+   (if (and (js-object-mode-plain? arg)
+	    (js-object-mode-inline? arg))
+       (array-concat1-create el arg %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (let ((this (js-vector->jsarray (vector el) %this)))
+	     (js-call1 %this
+		(js-get-jsobject-name/cache this (& "concat") #f %this
+		   (or cache (js-pcache-ref js-array-pcache 15)))
+		this arg)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-concat1 ...                                       */
@@ -3799,6 +3886,24 @@
 	     (js-get-name/cache this (& "concat") #f %this
 		(or cache (js-pcache-ref js-array-pcache 16)))
 	     this arg))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-concat1-empty ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-concat1-empty arg %this cache)
+   (if (js-array? arg)
+       (js-array-concat1-empty arg %this cache)
+       (js-vector->jsarray (vector arg) %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-concat1-create ...                                */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-concat1-create el arg %this cache)
+   (if (js-array? arg)
+       (js-array-concat1-create el arg %this cache)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (let ((this (js-vector->jsarray (vector el) %this)))
+	     (js-array-maybe-concat1 this arg %this cache)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-join ...                                      */

@@ -41,7 +41,9 @@
 	   (j2s-array-maybe-foreach obj args mode return conf)
 	   (j2s-array-map obj args mode return conf)
 	   (j2s-array-maybe-map obj args mode return conf)
-	   (j2s-array-maybe-join obj args mode return conf)))
+	   (j2s-array-maybe-join obj args mode return conf)
+	   (j2s-array-concat1 obj args mode return conf)
+	   (j2s-array-maybe-concat1 obj args mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-builtin-method ...                                     */
@@ -595,3 +597,49 @@
 	      `(js-array-maybe-join ,obj ,sep ,%this ,cachej)))))
       (else
        #f)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-concat1 ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-concat1 obj args mode return ctx)
+   (let ((arg (j2s-scheme (car args) mode return ctx)))
+      (cond
+	 ((isa? obj J2SArray)
+	  (with-access::J2SArray obj (exprs)
+	     (cond
+		((null? exprs)
+		 `(js-array-concat1-empty
+		     ,arg ,@(cdr args)))
+		((null? (cdr exprs))
+		 `(js-array-concat1-create
+		     ,(j2s-scheme (car exprs) mode return ctx)
+		     ,arg ,@(cdr args)))
+		(else
+		 `(js-array-concat1 ,(j2s-scheme obj mode return ctx)
+		     ,arg ,@(cdr args))))))
+	 (else
+	  `(js-array-concat1 ,(j2s-scheme obj mode return ctx)
+	      ,arg ,@(cdr args))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-maybe-concat1 ...                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-maybe-concat1 obj args mode return ctx)
+   (let ((arg (j2s-scheme (car args) mode return ctx)))
+      (cond
+	 ((isa? obj J2SArray)
+	  (with-access::J2SArray obj (exprs)
+	     (cond
+		((null? exprs)
+		 `(js-array-maybe-concat1-empty
+		     ,arg ,@(cdr args)))
+		((null? (cdr exprs))
+		 `(js-array-maybe-concat1-create
+		     ,(j2s-scheme (car exprs) mode return ctx)
+		     ,arg ,@(cdr args)))
+		(else
+		 `(js-array-maybe-concat1 ,(j2s-scheme obj mode return ctx)
+		     ,arg ,@(cdr args))))))
+	 (else
+	  `(js-array-maybe-concat1 ,(j2s-scheme obj mode return ctx)
+	      ,arg ,@(cdr args))))))
