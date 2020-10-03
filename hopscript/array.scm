@@ -124,12 +124,12 @@
 	   (js-array-maybe-fill ::obj ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-foreach ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-foreach ::obj ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-array-foreach-procedure ::JsArray ::procedure ::obj ::JsGlobalObject ::obj)
-	   (js-array-maybe-foreach-procedure ::obj ::procedure ::obj ::JsGlobalObject ::obj)
+	   (js-array-foreach-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-foreach-procedure ::obj proc::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-map ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-map ::obj ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-array-map-procedure ::JsArray ::procedure ::obj ::JsGlobalObject ::obj)
-	   (js-array-maybe-map-procedure ::obj ::procedure ::obj ::JsGlobalObject ::obj)
+	   (js-array-map-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-map-procedure ::obj proc::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-join ::JsArray ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-join ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-map-join ::obj ::procedure ::obj ::obj ::JsGlobalObject ::obj ::obj)
@@ -158,7 +158,11 @@
    (export (js-array-alloc-ctor::JsArray ::JsGlobalObject ::JsFunction))
 
    (pragma (js-array-concat (args-noescape args))
-	   (js-array-maybe-concat (args-noescape args))))
+	   (js-array-maybe-concat (args-noescape args))
+	   (js-array-map-procedure (args-noescape proc))
+	   (js-array-maybe-map-procedure (args-noescape proc))
+	   (js-array-foreach-procedure (args-noescape proc))
+	   (js-array-maybe-foreach-procedure (args-noescape proc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -4076,12 +4080,14 @@
 (define (js-array-foreach-procedure this::JsArray proc thisarg %this cache)
    (if (js-object-mode-plain? this)
        (js-array-prototype-foreach-procedure this proc thisarg %this)
-       (let ((jsproc (js-make-function %this
-			(lambda (_this x y z) (proc _this x y z %this))
-			(js-function-arity 3 0)
-			(js-function-info :name "forEachProc" :len 3)
-			:constrsize 0
-			:alloc js-object-alloc)))
+       ;; proc is a stack allocated procedure
+       (let* ((proc ($dup-procedure proc))
+	      (jsproc (js-make-function %this
+			 (lambda (_this x y z) (proc _this x y z %this))
+			 (js-function-arity 3 0)
+			 (js-function-info :name "forEachProc" :len 3)
+			 :constrsize 0
+			 :alloc js-object-alloc)))
 	  (js-array-foreach this jsproc thisarg %this cache))))
 
 ;*---------------------------------------------------------------------*/
@@ -4090,12 +4096,14 @@
 (define (js-array-maybe-foreach-procedure this proc thisarg %this cache)
    (if (js-array? this)
        (js-array-foreach-procedure this proc thisarg %this cache)
-       (let ((jsproc (js-make-function %this
-			(lambda (_this x y z) (proc _this x y z %this))
-			(js-function-arity 3 0)
-			(js-function-info :name "forEachProc" :len 3)
-			:constrsize 0
-			:alloc js-object-alloc)))
+       ;; proc is a stack allocated procedure
+       (let* ((proc ($dup-procedure proc))
+	      (jsproc (js-make-function %this
+			 (lambda (_this x y z) (proc _this x y z %this))
+			 (js-function-arity 3 0)
+			 (js-function-info :name "forEachProc" :len 3)
+			 :constrsize 0
+			 :alloc js-object-alloc)))
 	  (with-access::JsGlobalObject %this (js-array-pcache)
 	     (js-call2 %this
 		(js-get-name/cache this (& "forEach") #f %this
@@ -4252,12 +4260,14 @@
 (define (js-array-map-procedure this::JsArray proc thisarg %this cache)
    (if (js-object-mode-plain? this)
        (js-array-prototype-map-procedure this proc thisarg %this)
-       (let ((jsproc (js-make-function %this
-			(lambda (_this x y z) (proc _this x y z %this))
-			(js-function-arity 3 0)
-			(js-function-info :name "mapProc" :len 3)
-			:constrsize 0
-			:alloc js-object-alloc)))
+       ;; proc is a stack allocated procedure
+       (let* ((proc ($dup-procedure proc))
+	      (jsproc (js-make-function %this
+			 (lambda (_this x y z) (proc _this x y z %this))
+			 (js-function-arity 3 0)
+			 (js-function-info :name "mapProc" :len 3)
+			 :constrsize 0
+			 :alloc js-object-alloc)))
 	  (js-array-map this jsproc thisarg %this cache))))
 
 ;*---------------------------------------------------------------------*/
@@ -4266,12 +4276,14 @@
 (define (js-array-maybe-map-procedure this proc thisarg %this cache)
    (if (js-array? this)
        (js-array-map-procedure this proc thisarg %this cache)
-       (let ((jsproc (js-make-function %this
-			(lambda (_this x y z) (proc _this x y z %this))
-			(js-function-arity 3 0)
-			(js-function-info :name "mapProc" :len 3)
-			:constrsize 0
-			:alloc js-object-alloc)))
+       ;; proc is a stack allocated procedure
+       (let* ((proc ($dup-procedure proc))
+	      (jsproc (js-make-function %this
+			 (lambda (_this x y z) (proc _this x y z %this))
+			 (js-function-arity 3 0)
+			 (js-function-info :name "mapProc" :len 3)
+			 :constrsize 0
+			 :alloc js-object-alloc)))
 	  (with-access::JsGlobalObject %this (js-array-pcache)
 	     (js-call2 %this
 		(js-get-name/cache this (& "map") #f %this
