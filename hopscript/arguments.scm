@@ -45,7 +45,8 @@
 	   (js-arguments-index-ref ::JsArguments ::uint32 ::JsGlobalObject)
 	   (js-arguments-set! ::JsArguments ::obj ::JsGlobalObject ::obj)
 	   (js-arguments-index-set! ::JsArguments ::uint32 ::obj ::JsGlobalObject)
-	   (js-arguments-length::obj ::JsArguments ::JsGlobalObject)))
+	   (js-arguments-length::obj ::JsArguments ::JsGlobalObject)
+	   (js-arguments-slice ::JsArguments start end ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -584,11 +585,6 @@
 	 (enumerable #t)))
    
    (let* ((len (vector-length vec)))
-      ;; initialize the vector of descriptors
-;*       (let loop ((i (-fx (vector-length vec) 1)))                   */
-;* 	 (when (>=fx i 0)                                              */
-;* 	    (vector-set! vec i (value->descriptor (vector-ref vec i) i)) */
-;* 	    (loop (-fx i 1))))                                         */
       ;; build the arguments object
       (let ((a (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
 		  (instantiateJsArguments
@@ -695,6 +691,90 @@
 				(proc v %this)))
 			 (loop (+fx i 1))))))))))
 
+;*---------------------------------------------------------------------*/
+;*    js-arguments-slice ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Arguments slicing is optimized because the pattern               */
+;*    Array.prototype.slice.call( arguments, ... ) is very             */
+;*    frequent to extract optional arguments.                          */
+;*---------------------------------------------------------------------*/
+(define (js-arguments-slice this::JsArguments start end %this)
+   
+   (define (vector-slice! o val::vector k::long final::long)
+      (let* ((len (fixnum->uint32 (-fx final k)))
+	     (arr (js-array-construct-alloc/lengthu32 %this len)))
+	 (with-access::JsArray arr (vec ilen length)
+	    (vector-copy! vec 0 val k final)
+	    (set! ilen len)
+	    (set! length len)
+	    arr)))
+   
+   (define (array-copy! o len::long arr k::obj final::obj)
+      (let loop ((i len))
+	 (cond
+	    ((= k final)
+	     (js-put-length! arr i #f #f %this)
+	     arr)
+	    ((eq? (js-get-property o (js-toname k %this) %this) (js-undefined))
+	     (set! k (+ 1 k))
+	     (loop (+fx i 1)))
+	    (else
+	     (js-put! arr i (js-get o k %this) #f %this)
+	     (set! k (+ 1 k))
+	     (loop (+fx i 1))))))
+   
+   (define (array-slice! o k::obj final::obj)
+      (let ((arr (js-array-construct-alloc/lengthu32 %this
+		    (fixnum->uint32 (- final k)))))
+	 (array-copy! o 0 arr k final)))
+   
+   (if (js-object-mode-inline? this)
+       (with-access::JsArguments this (vec)
+	  (let* ((len (vector-length vec))
+		 (end (if (eq? end (js-undefined)) len end)))
+	     (if (and (fixnum? start) (fixnum? end))
+		 ;; optimal case, arguments is inlined
+		 ;; and indexes are all small integers
+		 (let* ((relstart start)
+			(k (if (<fx relstart 0) (maxfx (+fx len relstart) 0) (minfx relstart len)))
+			(relend end)
+			(final (if (<fx relend 0) (maxfx (+fx len relend) 0) (minfx relend len))))
+		    (cond
+		       ((<=fx final k)
+			(js-empty-vector->jsarray %this))
+		       ((<=fx final len)
+			(vector-slice! this vec k final))
+		       ((>fx len 0)
+			(let* ((arr (vector-slice! this vec k len))
+			       (vlen (-fx len k)))
+			   (array-copy! this vlen arr (-fx len vlen) final)))
+		       (else
+			(array-slice! this k final))))
+		 ;; less optimized case, there is something
+		 ;; weird with the indexes that are not
+		 ;; small integers
+		 (let* ((relstart (if (fixnum? start) start (js-tointeger start %this)))
+			(k (if (< relstart 0) (max (+ len relstart) 0) (min relstart len)))
+			(relend (if (fixnum? end) end (js-tointeger end %this)))
+			(final (if (< relend 0) (max (+ len relend) 0) (min relend len))))
+		    (cond
+		       ((<= final k)
+			(js-empty-vector->jsarray %this))
+		       ((<= final len)
+			(vector-slice! this vec (->fixnum k) (->fixnum final)))
+		       ((>fx len 0)
+			(let* ((arr (vector-slice! this vec (->fixnum k) len))
+			       (vlen (->fixnum (js-get-length arr %this))))
+			   (array-copy! this vlen arr (- len vlen) final)))
+		       (else
+			(array-slice! this k final)))))))
+       ;; generic slow case
+       (let* ((len (js-uint32-tointeger (js-get-lengthu32 this %this)))
+	      (relstart (js-tointeger start %this))
+	      (k (if (< relstart 0) (max (+ len relstart) 0) (min relstart len)))
+	      (relend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
+	      (final (if (< relend 0) (max (+ len relend) 0) (min relend len))))
+	  (array-slice! this k final))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

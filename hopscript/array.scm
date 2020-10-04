@@ -51,7 +51,9 @@
 	   __hopscript_string
 	   __hopscript_generator
 	   __hopscript_profile
-	   __hopscript_names)
+	   __hopscript_names
+	   __hopscript_arguments
+	   __hopscript_arraybufferview)
    
    (cond-expand
       (profile (import __hopscript_profile)))
@@ -3829,8 +3831,7 @@
    
    (define (array-concat1-empty arg %this)
       (with-access::JsArray arg ((avec vec) (ailen ilen))
-	 (let* ((new-len (uint32->fixnum ailen))
-		(arr (js-array-construct-alloc/length %this new-len)))
+	 (let ((arr (js-array-construct-alloc/lengthu32 %this ailen)))
 	    (with-access::JsArray arr ((vdst vec) ilen)
 	       (vector-copy! vdst 0 avec 0 (uint32->fixnum ailen))
 	       (set! ilen ailen))
@@ -4606,6 +4607,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-slice ...                                               */
+;*    -------------------------------------------------------------    */
+;*    Only invoked when the argumet is not an inlined array.           */
 ;*---------------------------------------------------------------------*/
 (define (js-array-slice this::obj start end %this::JsGlobalObject)
 
@@ -4625,28 +4628,6 @@
    (define (vector-slice! o val::vector k::long final::long)
       (let ((vec (vector-copy val k final)))
 	 (vector-slice/vec! o val k final vec)))
-   
-   (define (u8vector-slice! o val::u8vector k::long final::long)
-      (let ((vec (js-create-vector (-fx final k))))
-	 (let loop ((i k)
-		    (j 0))
-	    (if (=fx i final)
-		(vector-slice/vec! o val k final vec)
-		(begin
-		   (vector-set! vec j
-		      (uint8->fixnum (u8vector-ref val i)))
-		   (loop (+fx i 1) (+fx j 1)))))))
-   
-   (define (string-slice! o val::bstring k::long final::long)
-      (let ((vec ($create-vector (-fx final k))))
-	 (let loop ((i k)
-		    (j 0))
-	    (if (=fx i final)
-		(vector-slice/vec! o val k final vec)
-		(begin
-		   (vector-set! vec j
-		      (char->integer (string-ref-ur val i)))
-		   (loop (+fx i 1) (+fx j 1)))))))
    
    (define (array-copy! o len::long arr k::obj final::obj)
       (let loop ((i len))
@@ -4676,54 +4657,7 @@
       (cond
 	 ((<= final k)
 	  (js-empty-vector->jsarray %this))
-	 ((isa? o JsTypedArray)
-	  (with-access::JsTypedArray o (%data byteoffset)
-	     (cond
-		((string? %data)
-		 (let* ((offset (uint32->fixnum byteoffset))
-			(start (+fx offset (->fixnum k)))
-			(end (+fx offset final))
-			(vlen (string-length %data)))
-		    (cond
-		       ((<= end vlen)
-			(string-slice! o %data start end))
-		       ((>fx vlen 0)
-			(let* ((arr (string-slice! o %data start vlen))
-			       (vlen (->fixnum (js-get-length arr %this))))
-			   (array-copy! o vlen arr (- len vlen) end)))
-		       (else
-			(array-slice! o start end)))))
-		((u8vector? %data)
-		 (let* ((offset (uint32->fixnum byteoffset))
-			(start (+fx offset (->fixnum k)))
-			(end (+fx offset final))
-			(vlen (u8vector-length %data)))
-		    (cond
-		       ((<= end vlen)
-			(u8vector-slice! o %data start end))
-		       ((>fx vlen 0)
-			(let* ((arr (u8vector-slice! o %data start vlen))
-			       (vlen (->fixnum (js-get-length arr %this))))
-			   (array-copy! o vlen arr (- len vlen) end)))
-		       (else
-			(array-slice! o start end)))))
-		(else
-		 (array-slice! o k final)))))
-	 ((not (js-array? o))
-	  (if (and (isa? o JsArguments) (js-object-mode-inline? o))
-	      (with-access::JsArguments o (vec)
-		 (let ((vlen (vector-length vec)))
-		    (cond
-		       ((<= final vlen)
-			(vector-slice! o vec (->fixnum k) (->fixnum final)))
-		       ((>fx vlen 0)
-			(let* ((arr (vector-slice! o vec (->fixnum k) vlen))
-			       (vlen (->fixnum (js-get-length arr %this))))
-			   (array-copy! o vlen arr (- len vlen) final)))
-		       (else
-			(array-slice! o k final)))))
-	      (array-slice! o k final)))
-	 (else
+	 ((js-array? o)
 	  (with-access::JsArray o (vec ilen)
 	     (let ((vlen (uint32->fixnum ilen)))
 		(cond
@@ -4734,7 +4668,15 @@
 			   (vlen (->fixnum (js-get-length arr %this))))
 		       (array-copy! o vlen arr (- len vlen) final)))
 		   (else
-		    (array-slice! o k final)))))))))
+		    (array-slice! o k final))))))
+	 ((js-jsstring? o)
+	  (js-jsstring-slice o start end %this))
+	 ((isa? o JsArguments)
+	  (js-arguments-slice o start end %this))
+	 ((isa? o JsTypedArray)
+	  (js-typedarray-slice o start end %this))
+	 (else
+	  (array-slice! o k final)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-slice0 ...                                        */
@@ -4768,6 +4710,8 @@
 	  (js-array-inlined-slice2 this start (uint32->fixnum ilen) %this)))
       ((js-jsstring? this)
        (js-jsstring-slice this start (js-jsstring-lengthfx this) %this))
+      ((isa? this JsArguments)
+       (js-arguments-slice this start (js-arguments-length this %this) %this))
       (else
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call1 %this
@@ -4789,6 +4733,8 @@
        (js-array-inlined-slice2 this start end %this))
       ((js-jsstring? this)
        (js-jsstring-slice this start end %this))
+      ((isa? this JsArguments)
+       (js-arguments-slice this start end %this))
       (else
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call2 %this

@@ -291,6 +291,17 @@
 		  (is-builtin-ref? obj 'Object)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    is-array-prototype? ...                                          */
+;*---------------------------------------------------------------------*/
+(define (is-array-prototype? obj)
+   (when (isa? obj J2SAccess)
+      (with-access::J2SAccess obj (obj field)
+	 (when (isa? field J2SString)
+	    (with-access::J2SString field (val)
+	       (when (string=? val "prototype")
+		  (is-builtin-ref? obj 'Array)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-call0 ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (j2s-call0 obj args mode return conf)
@@ -363,6 +374,17 @@
 		  (with-access::J2SString field (val)
 		     (when (string=? val "hasOwnProperty")
 			(is-object-prototype? obj))))))))
+
+   (define (is-array-prototype-slice? obj args)
+      (when (=fx (length args) 4)
+	 ;; a method called with exactly two arguments
+	 ;; (%this and cache have been added)
+	 (when (isa? obj J2SAccess)
+	    (with-access::J2SAccess obj (obj field)
+	       (when (isa? field J2SString)
+		  (with-access::J2SString field (val)
+		     (when (string=? val "slice")
+			(is-array-prototype? obj))))))))
    
    (cond
       ((is-object-prototype-has-own-property? obj args)
@@ -370,6 +392,27 @@
 	   ,(j2s-scheme (car args) mode return conf)
 	   ,(j2s-scheme (cadr args) mode return conf)
 	   ,(caddr args)))
+      ((is-array-prototype-slice? obj args)
+       (case (j2s-type (car args))
+	  ((string)
+	   (let ((o (gensym '%o)))
+	      `(let ((,o ,(j2s-scheme (car args) mode return conf)))
+		  (js-jsstring-slice ,o
+		     ,(j2s-scheme (cadr args) mode return conf)
+		     (js-jsstring-lengthfx ,o)
+		     ,(caddr args)))))
+	  ((arguments)
+	   (let ((a (gensym '%a)))
+	      `(let ((,a ,(j2s-scheme (car args) mode return conf)))
+		  (js-arguments-slice ,a
+		     ,(j2s-scheme (cadr args) mode return conf)
+		     (js-arguments-length ,a %this)
+		     ,(caddr args)))))
+	  (else
+	   `(js-array-maybe-slice1
+	       ,(j2s-scheme (car args) mode return conf)
+	       ,(j2s-scheme (cadr args) mode return conf)
+	       ,(caddr args)))))
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (loc decl)
 	  (cond
@@ -407,7 +450,38 @@
 	  ,(j2s-scheme (caddr args) mode return conf)
 	  ,(cadddr args)))
 
+   (define (is-array-prototype-slice? obj args)
+      (when (=fx (length args) 5)
+	 ;; a method called with exactly two arguments
+	 ;; (%this and cache have been added)
+	 (when (isa? obj J2SAccess)
+	    (with-access::J2SAccess obj (obj field)
+	       (when (isa? field J2SString)
+		  (with-access::J2SString field (val)
+		     (when (string=? val "slice")
+			(is-array-prototype? obj))))))))
+
    (cond
+      ((is-array-prototype-slice? obj args)
+       (case (j2s-type (car args))
+	  ((string)
+	   `(js-string-slice
+	       ,(j2s-scheme (car args) mode return conf)
+	       ,(j2s-scheme (cadr args) mode return conf)
+	       ,(j2s-scheme (caddr args) mode return conf)
+	       ,(cadddr args)))
+	  ((arguments)
+	   `(js-arguments-slice
+	       ,(j2s-scheme (car args) mode return conf)
+	       ,(j2s-scheme (cadr args) mode return conf)
+	       ,(j2s-scheme (caddr args) mode return conf)
+	       ,(cadddr args)))
+	  (else
+	   `(js-array-maybe-slice2
+	       ,(j2s-scheme (car args) mode return conf)
+	       ,(j2s-scheme (cadr args) mode return conf)
+	       ,(j2s-scheme (caddr args) mode return conf)
+	       ,(cadddr args)))))
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (loc decl)
 	  (cond
