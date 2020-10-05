@@ -412,7 +412,8 @@
 	   `(js-array-maybe-slice1
 	       ,(j2s-scheme (car args) mode return conf)
 	       ,(j2s-scheme (cadr args) mode return conf)
-	       ,(caddr args)))))
+	       ,(caddr args)
+	       ,(cadddr args)))))
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (loc decl)
 	  (cond
