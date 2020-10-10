@@ -740,7 +740,7 @@
    ;; trim
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.20
    (define (trim this::obj)
-      (js-jsstring-trim (js-cast-string-normalize! %this this)))
+      (js-jsstring-trim (js-cast-string-normalize! %this this) %this))
    
    (js-bind! %this obj (& "trim")
       :value (js-make-function %this trim

@@ -2750,6 +2750,9 @@
    (define (new-uint8array? clazz)
       (new-builtin? clazz 'Uint8Array))
 
+   (define (new-typeerror? clazz)
+      (new-builtin? clazz 'TypeError))
+
    (define (constructor-no-call? decl)
       ;; does this constructor call another function?
       (let ((fun (j2sdeclinit-val-fun decl)))
@@ -2838,6 +2841,26 @@
 		   (new-uint8array? clazz)))
 	  (epairify loc
 	     (j2s-new-tarray this mode return ctx)))
+	 ((and (new-typeerror? clazz)
+	       (pair? args)
+	       (<=fx (length args) 3))
+	  (epairify loc
+	     (case (length args)
+		((1)
+		 `(js-type-error1
+		     ,(j2s-scheme (car args) mode return ctx)
+		     %this))
+		((2)
+		 `(js-type-error2
+		     ,(j2s-scheme (car args) mode return ctx)
+		     ,(j2s-scheme (cadr args) mode return ctx)
+		     %this))
+		(else
+		 `(js-type-error
+		     ,(j2s-scheme (car args) mode return ctx)
+		     ,(j2s-scheme (cadr args) mode return ctx)
+		     ,(j2s-scheme (caddr args) mode return ctx)
+		     %this)))))
 	 ((and (new-proxy? clazz) (=fx (length args) 2))
 	  (epairify loc
 	     (j2s-new-proxy this mode return ctx)))
