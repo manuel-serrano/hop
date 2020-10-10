@@ -101,21 +101,19 @@
 	("match" ,j2s-jsstring-match-string any (string) %this ,j2s-regexp-plain?)
 	("match" ,j2s-jsstring-match-string string (string) %this ,j2s-regexp-plain?)
 	("match" ,j2s-jsstring-match-regexp any (regexp) %this ,j2s-regexp-plain?)
+	("match" #f object (any) %this #t)
 	("match" js-jsstring-maybe-match any (any) %this #t)
 	("naturalCompare" js-jsstring-naturalcompare string (string) %this)
 	("naturalCompare" js-jsstring-maybe-naturalcompare any (any) %this #t)
 	("localeCompare" js-jsstring-localecompare string (string) %this)
 	("localeCompare" js-jsstring-maybe-localecompare any (any) %this #t)
-	("trim" js-jsstring-trim string () #f)
+	("trim" js-jsstring-trim string () %this #f)
 	("trim" js-jsstring-maybe-trim any () %this #t)
 	("slice" js-jsstring-slice string (any any) %this)
 	("padStart" ,j2s-jsstring-maybe-padstart any (any any) #t)
 	("padStart" ,j2s-jsstring-padstart string (any any) #t)
 	("padEnd" ,j2s-jsstring-maybe-padend any (any any) #t)
 	("padEnd" ,j2s-jsstring-padend string (any any) #t)
-	;; array are prefered to string for slice1 and slice2
-;* 	("slice" js-jsstring-maybe-slice1 any (any) %this #t)          */
-;* 	("slice" js-jsstring-maybe-slice2 any (any any) %this #t)      */
 	;; regexp
 	("test" ,j2s-regexp-test regexp (any) %this)
 	("exec" js-regexp-prototype-exec regexp (any) %this #f ,j2s-regexp-plain?)
@@ -151,6 +149,8 @@
 	("push" js-array-maybe-push any (any) %this #t ,j2s-array-plain?)
 	("pop" js-array-pop array () %this #t ,j2s-array-plain?)
 	("pop" js-array-maybe-pop any () %this #t ,j2s-array-plain?)
+	("slice" js-jsstring-maybe-slice1 (:hint string) (any) %this #t)
+	("slice" js-jsstring-maybe-slice2 (:hint string) (any any) %this #t)
 	("slice" js-array-maybe-slice0 any () %this #t)
 	("slice" js-array-maybe-slice1 any (any) %this #t)
 	("slice" js-array-maybe-slice2 any (any any) %this #t)
@@ -660,6 +660,8 @@
 	     #t)
 	    ((eq? ty tyobj)
 	     #t)
+	    ((and (pair? ty) (eq? (car ty) :hint))
+	     (is-hint? obj (cadr ty)))
 	    ((isa? obj J2SUnresolvedRef)
 	     (with-access::J2SUnresolvedRef obj (id)
 		(eq? ty id)))
@@ -735,6 +737,8 @@
 		   (arity (arity opt))
 		   (len (length args)))
 	       (cond
+		  ((not met)
+		   #f)
 		  ((symbol? met)
 		   ;; builtin simple
 		   (with-tmp-args args mode return ctx

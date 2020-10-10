@@ -130,7 +130,7 @@
 	   (js-jsstring-maybe-naturalcompare ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-localecompare ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-localecompare ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-jsstring-trim ::JsStringLiteral)
+	   (js-jsstring-trim ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring-maybe-trim ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-fromcharcode ::obj ::JsGlobalObject)
 	   (js-jsstring-escape ::JsStringLiteral)
@@ -2268,7 +2268,6 @@
 	     (r6 (minfx (maxfx r3 0) (-fx r4 r5))))
 	 (if (<=fx r6 0)
 	     (& "")
-	     ;;(js-ascii->jsstring (substring r1 r5 (+fx r5 r6)))
 	     (js-substring->jsstring r1 r5 r6))))
    
    (define (utf8-substr r1::bstring)
@@ -3456,13 +3455,188 @@
 	  (loop (js-toobject %this this))))))
 
 ;*---------------------------------------------------------------------*/
+;*    trim-whitespaces ...                                             */
+;*---------------------------------------------------------------------*/
+(define (trim-whitespaces s::bstring left right plus)
+   
+   (define (byte-ref s i)
+      (char->integer (string-ref-ur s i)))
+   
+   (define (trim-left s len)
+      (let loop ((i 0))
+	 (if (=fx i len)
+	     len
+	     (let ((c (byte-ref s i)))
+		(case c
+		   ((#x09 #x0b #x0c #x20 #x0a #x0d)
+		    ;; uni-character space and line break
+		    (loop (+fx i 1)))
+		   ((#x2b)
+		    (if plus (loop (+fx i 1)) i))
+		   ((#xc2)
+		    ;; 2-characters line break
+		    (if (and (<fx i (-fx len 2))
+			     (=fx (byte-ref s (+fx i 1)) #xa0))
+			(loop (+fx i 2))
+			i))
+		   ((#xe1)
+		    ;; 3-character whitespace
+		    (cond
+		       ((>=fx (+fx i 2) len)
+			i)
+		       ((=fx (byte-ref s (+fx i 1)) #x9a)
+			(let ((c3 (byte-ref s (+fx i 2))))
+			   (if (=fx c3 #x80)
+			       (loop (+fx i 3))
+			       i)))
+		       ((=fx (byte-ref s (+fx i 1)) #xa0)
+			(let ((c3 (byte-ref s (+fx i 2))))
+			   (if (=fx c3 #x8e)
+			       (loop (+fx i 3))
+			       i)))
+		       (else
+			i)))
+		   ((#xe2)
+		    ;; 3-character line break
+		    (cond
+		       ((>=fx (+fx i 2) len)
+			i)
+		       ((=fx (byte-ref s (+fx i 1)) #x80)
+			(let ((c3 (byte-ref s (+fx i 2))))
+			   (cond
+			      ((or (=fx c3 #xa8) (=fx c3 #xa9) (=fx c3 #xaf))
+			       (loop (+fx i 3)))
+			      ((and (>=fx c3 #x80) (<=fx c3 #x8a))
+			       (loop (+fx i 3)))
+			      (else
+			       i))))
+		       ((=fx (byte-ref s (+fx i 1)) #x81)
+			(if (=fx (byte-ref s (+fx i 2)) #x9f)
+			    (loop (+fx i 3))
+			    i))
+		       (else
+			i)))
+		   ((#xe3)
+		    (cond
+		       ((>=fx (+fx i 2) len)
+			i)
+		       ((=fx (byte-ref s (+fx i 1)) #x80)
+			(if (=fx (byte-ref s (+fx i 2)) #x80)
+			    (loop (+fx i 3))
+			    i))
+		       (else
+			i)))
+		   ((#xef)
+		    ;; bom
+		    (if (and (<fx i (-fx len 3))
+			     (=fx (byte-ref s (+fx i 1)) #xbb)
+			     (=fx (byte-ref s (+fx i 2)) #xbf))
+			(loop (+fx i 3))
+			i))
+		   (else
+		    i))))))
+   
+   (define (trim-right s stop len)
+      (let loop ((i (-fx len 1)))
+	 (if (<=fx i stop)
+	     i
+	     (let ((c (byte-ref s i)))
+		(case c
+		   ((#x09 #x0b #x0c #x20 #x0a #x0d)
+		    ;; uni-character space and line break
+		    (loop (-fx i 1)))
+		   ((#x81 #x82 #x83 #x84 #x85 #x86 #x87
+		       #x88 #x89 #x8a #xa8 #xa9 #xaf)
+		    ;; 3-characters line break
+		    (if (<fx i 2)
+			i
+			(if (=fx (byte-ref s (-fx i 1)) #x80)
+			    (if (=fx (byte-ref s (-fx i 2)) #xe2)
+				(loop (-fx i 3))
+				i)
+			    i)))
+		   ((#x80)
+		    ;; 3-characters line break
+		    (if (<fx i 2)
+			i
+			(cond
+			   ((=fx (byte-ref s (-fx i 1)) #x80)
+			    (if (or (=fx (byte-ref s (-fx i 2)) #xe2)
+				    (=fx (byte-ref s (-fx i 2)) #xe3))
+				(loop (-fx i 3))
+				i))
+			   ((=fx (byte-ref s (-fx i 1)) #x9a)
+			    (if (=fx (byte-ref s (-fx i 2)) #xe1)
+				(loop (-fx i 3))
+				i))
+			   (else
+			    i))))
+		   ((#x8e)
+		    ;; 3-characters line break
+		    (if (<fx i 2)
+			i
+			(cond
+			   ((=fx (byte-ref s (-fx i 1)) #xa0)
+			    (if (=fx (byte-ref s (-fx i 2)) #xe1)
+				(loop (-fx i 3))
+				i))
+			   (else
+			    i))))
+		   ((#x9f)
+		    ;; 3-characters line break
+		    (if (<fx i 2)
+			i
+			(if (=fx (byte-ref s (-fx i 1)) #x81)
+			    (if (=fx (byte-ref s (-fx i 2)) #xe2)
+				(loop (-fx i 3))
+				i)
+			    i)))
+		   ((#xa0)
+		    ;; 2-characters line break
+		    (if (<fx i 1)
+			i
+			(if (=fx (byte-ref s (-fx i 1)) #xc2)
+			    (loop (-fx i 2))
+			    i)))
+		   ((#xbf)
+		    ;; bom
+		    (if (or (<fx i 3)
+			    (not (and (=fx (byte-ref s (-fx i 1)) #xbb)
+				      (=fx (byte-ref s (-fx i 2)) #xef))))
+			i
+			(loop (-fx i 3))))
+		   (else
+		    i))))))
+   
+   (let* ((len (string-length s))
+	  (i (if left (trim-left s len) 0))
+	  (j (if right (trim-right s i len) (-fx len 1))))
+      (if (and (=fx i 0) (=fx j (-fx len 1)))
+	  (values #f #f)
+	  (values i (+fx j 1)))))
+
+;*---------------------------------------------------------------------*/
+;*    trim-whitespaces+ ...                                            */
+;*---------------------------------------------------------------------*/
+(define (trim-whitespaces+ s::bstring #!key (left #t) (right #f) (plus #f))
+   (multiple-value-bind (start end)
+      (trim-whitespaces s left right plus)
+      (if start
+	  (substring s start end)
+	  s)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-jsstring-trim ...                                             */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.20    */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-trim this)
-   (js-string->jsstring
-      (trim-whitespaces+ (js-jsstring->string this) :left #t :right #t)))
+(define (js-jsstring-trim this %this)
+   (let ((s (js-jsstring->string this)))
+      (multiple-value-bind (start end)
+	 (trim-whitespaces s #t #t #f)
+	 (if start
+	     (js-substring s start end %this)
+	     this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-trim ...                                       */
@@ -3471,7 +3645,7 @@
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
-	  (js-jsstring-trim this))
+	  (js-jsstring-trim this %this))
 	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-string-pcache)
 	     (js-call0 %this

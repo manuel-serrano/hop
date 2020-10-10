@@ -1416,6 +1416,8 @@
 	 ((context-get ctx :profile-mem)
 	  `(js-jsstring-append-no-inline ,x ,y))
 	 ((and (ascii? lhs x) (ascii? rhs y))
+	  (tprint "ASCII x=" x " " (j2s->list lhs))
+	  (tprint "      y=" y " " (j2s->list rhs))
 	  `(js-jsstring-append-ascii ,x ,y))
 	 ((context-get ctx :optim-size)
 	  `(js-jsstring-append-no-inline ,x ,y))
@@ -1430,7 +1432,7 @@
 	     `(js-jsstring-append-ascii3 ,x ,u ,y)
 	     `(js-jsstring-append3 ,x ,u ,y))))
    
-   (define (str-append flip left right)
+   (define (str-append flip lhs rhs left right)
       (cond
 	 ((equal? left (& "" (context-program ctx))) right)
 	 ((equal? right (& "" (context-program ctx))) left)
@@ -1438,7 +1440,7 @@
 	 (else (j2s-jsstring-append lhs rhs left right))))
    
    (define (add-string loc type left tl lhs right tr rhs mode return ctx flip)
-      (str-append flip (tostring left tl ctx) (tostring right tr ctx)))
+      (str-append flip lhs rhs (tostring left tl ctx) (tostring right tr ctx)))
 
    (define (string-add? expr)
       (when (isa? expr J2SBinary)
@@ -1492,7 +1494,7 @@
 		(binop-real-xxx '+ type rhs tr right lhs tl left ctx #t))
 	       ((and (eq? type 'string) (eq? tl 'any) (eq? tr 'any))
 		`(if (and (js-jsstring? ,left) (js-jsstring? ,right))
-		     (j2s-jsstring-append ,left ,right)
+		     (js-jsstring-append ,left ,right)
 		     ,(binop-any-any '+ type
 			 (box left tl ctx)
 			 (box right tr ctx)
@@ -1701,7 +1703,7 @@
 			    #f))))
 		  ((and (eq? op '+) (eq? type 'string))
 		   `(if (and (js-jsstring? ,left) (js-jsstring? ,right))
-			(j2s-jsstring-append ,left ,right)
+			(js-jsstring-append ,left ,right)
 			,(binop-any-any op type
 			    (box left tl ctx)
 			    (box right tr ctx)
