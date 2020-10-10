@@ -12,8 +12,8 @@
 ;*    When a variable is declared with a plain J2SDecl/var             */
 ;*    statement and if it can be proved that the variable is never     */
 ;*    accessed before initialized and if the initialization type is    */
-;*    known (typically an number), then the declaration that should    */
-;*    normally bind the variable to undefined is replaced to a         */
+;*    known (typically a number), then the declaration that should     */
+;*    normally bind the variable to undefined is replaced with a       */
 ;*    more type friendly declaration.                                  */
 ;*=====================================================================*/
 

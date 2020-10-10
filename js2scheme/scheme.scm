@@ -1490,6 +1490,10 @@
 	 (j2s-cast (j2s-scheme expr mode return ctx)
 	    expr (j2s-type expr) type ctx))
       
+      (define (comp-char-literal expr type)
+	 (with-access::J2SString expr (val)
+	    (string-ref val 0)))
+      
       (define (test-switch tleft tright)
 	 (if (and (memq tleft '(number integer))
 		  (memq tright '(number integer)))
@@ -1516,6 +1520,13 @@
 		(epairify loc `(else ,body))
 		(epairify loc
 		   `((eq? ,tmp ,(comp-literal expr tleft)) ,body)))))
+
+      (define (comp-switch-case-char-clause case tmp body tleft)
+	 (with-access::J2SCase case (loc expr)
+	    (if (isa? case J2SDefault)
+		(epairify loc `(else ,body))
+		(epairify loc
+		   `((,(comp-char-literal expr tleft)) ,body)))))
 
       (define (comp-switch-case-clause case body tleft)
 	 (with-access::J2SCase case (loc expr)
@@ -1614,6 +1625,35 @@
 				 (comp-switch-case-clause c body tleft))
 			 cases bodies))))))
 
+      (define (comp-char-case key cases)
+	 (if (<=fx (length cases) 3)
+	     (comp-switch-cond key cases)
+	     (let ((val (gensym 'val))
+		   (tmp (gensym 'tmp))
+		   (funs (map (lambda (c) (gensym 'fun)) cases))
+		   (tleft (j2s-vtype key)))
+		(multiple-value-bind (bindings bodies)
+		   (comp-switch-clause-bodies cases funs)
+		   `(let* ((,val ,(j2s-scheme key mode return ctx))
+			   ,@bindings)
+		       ,(if (eq? (j2s-type key) 'string)
+			    `(let ((,tmp (js-jsstring->string ,val)))
+				(case (if (>fx (string-length ,tmp) 0)
+				       (string-ref ,tmp 0)
+				       #a128)
+				   ,@(mapc (lambda (c body)
+					      (comp-switch-case-char-clause
+						 c tmp body tleft))
+				      cases bodies) ))
+			    `(let ((,tmp (js-tostring ,val %this)))
+				(case (if (>fx (string-length ,tmp) 0)
+				       (string-ref ,tmp 0)
+				       #a128)
+				   ,@(mapc (lambda (c body)
+					      (comp-switch-case-char-clause
+						 c tmp body tleft))
+				      cases bodies) ))))))))
+
       (define (comp-string-case key cases)
 	 (if (<=fx (length cases) 3)
 	     (comp-switch-cond key cases)
@@ -1663,10 +1703,22 @@
 			  (isa? expr J2SString))))
 	    cases))
       
+      (define (char-case? key cases)
+	 (every (lambda (c)
+		   (or (isa? c J2SDefault)
+		       (with-access::J2SCase c (expr)
+			  (when (isa? expr J2SString)
+			     (with-access::J2SString expr (val)
+				(when (=fx (string-length val) 1)
+				   (<fx (char->integer (string-ref val 0)) 128)))))))
+	    cases))
+      
       (define (comp-switch)
 	 (cond
 	    ((scheme-case? key cases)
 	     (comp-switch-case key cases))
+	    ((char-case? key cases)
+	     (comp-char-case key cases))
 	    ((string-case? key cases)
 	     (comp-string-case key cases))
 	    (else

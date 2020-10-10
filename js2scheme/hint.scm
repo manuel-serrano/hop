@@ -1549,6 +1549,15 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    reset-type! ::J2SDecl ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reset-type! this::J2SDecl decls)
+   (with-access::J2SDecl this (decl vtype)
+      (when (eq? vtype 'any)
+	 (set! vtype 'unknown)))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
 ;*    reset-type! ::J2SExpr ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (reset-type! this::J2SExpr decls)
