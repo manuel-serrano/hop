@@ -275,9 +275,9 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    patchinit! ::J2SLetBlock ...                                     */
+;*    decl->declinit ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (patchinit! this::J2SLetBlock args)
+(define (decl->declinit o)
    
    (define (type->val loc ty)
       (case ty
@@ -288,6 +288,16 @@
 	 ((number) (J2SNumber 2))
 	 (else (error "type->val" "wrong type" ty))))
 
+   (with-access::J2SDeclInit o (%info loc)
+      (duplicate::J2SDeclInit o
+	 (key (ast-decl-key))
+	 (binder 'let-opt)
+	 (val (type->val loc (preinit-type %info))))))
+
+;*---------------------------------------------------------------------*/
+;*    patchinit! ::J2SLetBlock ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (patchinit! this::J2SLetBlock args)
    (with-access::J2SLetBlock this (decls nodes)
       (let ((olds '())
 	    (news '()))
@@ -306,11 +316,7 @@
 				  (match-case loc
 				     ((at ?file ?pos) pos)
 				     (else ""))))
-			    (let ((n (duplicate::J2SDeclInit o
-					(key (ast-decl-key))
-					(binder 'let-opt)
-					(val (type->val loc
-						(preinit-type %info))))))
+			    (let ((n (decl->declinit o)))
 			       (set! olds (cons o olds))
 			       (set! news (cons n news))
 			       n))
@@ -325,3 +331,28 @@
 		(map! (lambda (n) (patchinit! n args))
 		   nodes)))
 	 this)))
+
+;*---------------------------------------------------------------------*/
+;*    patchinit! ::J2SLetBlock ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (patchinit! this::J2SBlock args)
+   (with-access::J2SBlock this (loc endloc nodes)
+      (let ((preinits (filter-map (lambda (n)
+				     (when (isa? n J2SDecl)
+					(with-access::J2SDecl n (binder %info)
+					   (when (and (eq? binder 'var)
+						      (preinit? %info))
+					      n))))
+			 nodes)))
+	 (if (pair? preinits)
+	     (let ((news (map decl->declinit preinits)))
+		(set! nodes
+		   (filter (lambda (n)
+			      (or (not (isa? n J2SDecl))
+				  (with-access::J2SDecl n (binder %info)
+				     (or (not (eq? binder 'var))
+					 (not (preinit? %info))))))
+		      nodes))
+		(J2SLetRecBlock #f news
+		   (j2s-alpha (patchinit! this args) preinits news)))
+	     (call-default-walker)))))

@@ -150,6 +150,7 @@
 	   (js-array-prototype-slice ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-array-maybe-slice0 ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-slice1 ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-prototype-maybe-slice1 this start ::JsGlobalObject)
 	   (js-array-maybe-slice2 ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-shift0 ::obj ::JsGlobalObject ::obj)
 	   (js-array-sort ::JsArray ::obj ::JsGlobalObject ::obj)
@@ -4719,6 +4720,24 @@
 		(or cache (js-pcache-ref js-array-pcache 17)))
 	     this
 	     start)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-maybe-slice1 ...                              */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-maybe-slice1 this start %this::JsGlobalObject)
+   (cond
+      ((and (js-array? this)
+	    (js-object-mode-plain? this)
+	    (js-object-mode-inline? this)
+	    (fixnum? start))
+       (with-access::JsArray this (ilen)
+	  (js-array-inlined-slice2 this start (uint32->fixnum ilen) %this)))
+      ((js-jsstring? this)
+       (js-jsstring-slice this start (js-jsstring-lengthfx this) %this))
+      ((isa? this JsArguments)
+       (js-arguments-slice this start (js-arguments-length this %this) %this))
+      (else
+       (js-array-slice this start (js-undefined) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-slice2 ...                                        */

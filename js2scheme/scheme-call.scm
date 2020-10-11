@@ -409,11 +409,10 @@
 		     (js-arguments-length ,a %this)
 		     ,(caddr args)))))
 	  (else
-	   `(js-array-maybe-slice1
+	   `(js-array-prototype-maybe-slice1
 	       ,(j2s-scheme (car args) mode return conf)
 	       ,(j2s-scheme (cadr args) mode return conf)
-	       ,(caddr args)
-	       ,(cadddr args)))))
+	       ,(caddr args)))))
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (loc decl)
 	  (cond
