@@ -5,7 +5,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
 ;*    Last change :  Tue Oct 16 16:11:37 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
 ;*=====================================================================*/
@@ -16,11 +16,6 @@
 (provide 'hopjs)
 (require 'json)
 (require 'js)
-
-;*---------------------------------------------------------------------*/
-;*    constants ...                                                    */
-;*---------------------------------------------------------------------*/
-(defconst hopjs-version "@VERSION@")
 
 ;*---------------------------------------------------------------------*/
 ;*    configuration                                                    */
@@ -272,6 +267,7 @@
 (defun hopjs-dls-init ()
   (save-excursion
     (goto-char (point-min))
+    (message-gox "hopjs-dls-init...")
     (while (progn
 	     (hopjs-skip-comment)
 	     (looking-at "^[\"']use[ \t]+\\([^\"']+\\)[\"'][;]?$"))
@@ -309,6 +305,7 @@
 ;*    hopjs-load-node-modules-dls ...                                  */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-load-node-modules-dls (lang)
+  (message-box "lang=%s" lang)
   (let ((dir default-directory)
 	(count 5))
     (while (and (file-directory-p dir) (not (equal dir "//")) (> count 0))
@@ -318,7 +315,13 @@
 	(setq dir (expand-file-name (concat dir "../")))
 	(setq count (1- count))))
     (when (= count 0)
-      (hopjs-load-dls-dir lang (expand-file-name (concat "~/.node_modules"))))))
+      (unless (hopjs-load-dls-dir lang (expand-file-name (concat "~/.node_modules")))
+	(let ((l hopjs-site-lisp-extra-dir))
+	  (while (and (consp l) (file-directory-p (car l)))
+	    (message-box "dir=%s lang=%s" (car l) lang)
+	    (if (hopjs-load-dls-dir lang (car l))
+		(setq l '())
+	      (setq l (cdr l)))))))))
   
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-load-indexes ...                                           */

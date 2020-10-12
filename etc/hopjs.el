@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
 ;*    Last change :  Tue Sep 10 08:06:23 2019 (serrano)                */
-;*    Copyright   :  2014-19 Manuel Serrano                            */
+;*    Copyright   :  2014-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
 ;*=====================================================================*/
@@ -20,6 +20,9 @@
 (require 'hopjs-parse)
 (require 'hopjs-indent)
 
+;*---------------------------------------------------------------------*/
+;*    debugging, to be removed                                         */
+;*---------------------------------------------------------------------*/
 (define-key (current-local-map)
   "\C-x\C-z"
   '(lambda ()
@@ -1095,7 +1098,12 @@ usage: (js-return)  -- [RET]"
 	(setq dir (expand-file-name (concat dir "../")))
 	(setq count (1- count))))
     (when (= count 0)
-      (hopjs-dls-load-dir lang (expand-file-name (concat "~/.node_modules"))))))
+      (unless (hopjs-dls-load-dir lang (expand-file-name (concat "~/.node_modules")))
+	(let ((l hopjs-site-lisp-extra-dir))
+	  (while (and (consp l) (file-directory-p (car l)))
+	    (if (hopjs-dls-load-dir lang (car l))
+		(setq l '())
+	      (setq l (cdr l)))))))))
   
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-dls-load-dir ...                                           */
@@ -1104,7 +1112,10 @@ usage: (js-return)  -- [RET]"
   (let ((res nil))
     ;; check emacs file
     (let ((el (concat base "/" lang "/etc/hopjs-" lang ".el")))
-      (when (file-exists-p el) (load-library el) (setq res t)))
+      (when (file-exists-p el) (load-library el) (setq res t))
+      (unless res
+	(let ((el (concat base "/hopjs-" lang ".el")))
+	  (when (file-exists-p el) (load-library el) (setq res t)))))
     ;; check documentation file
     (let ((doc (concat base "/" lang "/doc/index.html")))
       (when (file-exists-p doc)
