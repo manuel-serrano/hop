@@ -183,6 +183,7 @@
 
 	   (generic js-tostring::bstring ::obj ::JsGlobalObject)
 	   (js-tojsstring-safe::JsStringLiteral ::obj ::JsGlobalObject)
+	   (js-tojsstring1-safe::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-tojsstring::JsStringLiteral ::obj ::JsGlobalObject)
 	   
 	   (inline js-toobject-fast::JsObject ::obj ::JsGlobalObject)
@@ -195,6 +196,7 @@
 	   (inline js-equal?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-equal-fixnum?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-equal-sans-flonum?::bool ::obj ::obj ::JsGlobalObject)
+	   (inline js-equal-string?::bool ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-equality?::bool ::obj ::obj ::JsGlobalObject)
 	   (js-same-value-zero?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-strict-equal?::bool ::obj ::obj)
@@ -235,9 +237,9 @@
 	   (js-html-script ::JsGlobalObject)
 
 	   (js-parseint ::obj ::obj ::JsGlobalObject)
-	   (js-parseint-string ::obj)
-	   (js-parseint-any ::obj ::JsGlobalObject)
-	   (js-parseint-string-uint32 ::obj ::uint32)
+	   (inline js-parseint-string ::obj)
+	   (inline js-parseint-any ::obj ::JsGlobalObject)
+	   (inline js-parseint-string-uint32 ::obj ::uint32)
 	   (js-parsefloat ::obj ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
@@ -595,7 +597,7 @@
 	     ;; scheme missing var args
 	     ,@(map call-scheme-vararg-missing (reverse (iota (-fx 10 n) (+fx n 1))))
 	     ;; scheme ok var args
-	     ,@(map call-scheme-vararg-ok (reverse (iota n 1)))
+ 	     ,@(map call-scheme-vararg-ok (reverse (iota n 1)))
 	     ;; arguments without optimization
 	     ((0) (,procedure ,this ,@args))
 	     ;; fix too many arguments
@@ -1849,6 +1851,19 @@
       (else (js-tojsstring (js-toobject %this obj) %this))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-tojsstring1-safe ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-tojsstring1-safe::JsStringLiteral obj radix %this::JsGlobalObject)
+   (cond
+      ((fixnum? obj) (js-radix->jsstring obj (js-tointeger radix %this)))
+      ((js-jsstring? obj) obj)
+      ((eq? obj #t) (& "true"))
+      ((eq? obj #f) (& "false"))
+      ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
+      ((isa? obj JsSymbolLiteral) (js-string->jsstring (js-tostring obj %this)))
+      (else (js-tojsstring (js-toobject %this obj) %this))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-tostring ::JsWrapper ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (js-tostring obj::JsWrapper %this::JsGlobalObject)
@@ -1989,6 +2004,17 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-equal-sans-flonum? o1 o2 %this::JsGlobalObject)
    (or (eq? o1 o2) (js-equality? o1 o2 %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-equal-string? ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Equality test used when the compiler knows that one of the       */
+;*    argument is a non empy string.                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-equal-string? s x %this::JsGlobalObject)
+   (if (js-jsstring? x)
+       (js-jsstring=? s x)
+       (js-equality? s x %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equality? ...                                                 */
@@ -2411,11 +2437,11 @@
 ;*    js-raise-type-error ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-raise-type-error %this::JsGlobalObject fmt::bstring obj)
-   (with-access::JsGlobalObject %this (js-type-error)
-      (js-raise
-	 (js-new %this js-type-error
-	    (js-string->jsstring
-	       (format fmt (error-obj->string %this obj)))))))
+   (js-raise
+      (js-type-error1 
+	 (js-string->jsstring
+	    (format fmt (error-obj->string %this obj)))
+	 %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-type-error/loc ...                                      */
@@ -2423,12 +2449,10 @@
 (define (js-raise-type-error/loc %this::JsGlobalObject loc fmt::bstring obj)
    (match-case loc
       ((at ?fname ?loc)
-       (with-access::JsGlobalObject %this (js-type-error)
-	  (js-raise
-	     (js-new %this js-type-error
-		(js-string->jsstring (format fmt (error-obj->string %this obj)))
-		fname
-		loc))))
+       (js-raise
+	  (js-type-error
+	     (js-string->jsstring (format fmt (error-obj->string %this obj)))
+	     fname loc %this)))
       (else
        (js-raise-type-error %this fmt obj))))
 
@@ -2611,26 +2635,27 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
 ;*---------------------------------------------------------------------*/
-(define (js-parseint-string string)
-   (js-string-parseint (trim-whitespaces+ (js-jsstring->string string) :plus #t)
-      #s32:0 #f))
+(define-inline (js-parseint-string string)
+   (js-string-parseint10
+      (trim-whitespaces+ (js-jsstring->string string) :plus #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-parseint-any ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
 ;*---------------------------------------------------------------------*/
-(define (js-parseint-any string %this)
-   (js-string-parseint (trim-whitespaces+ (js-tostring string %this) :plus #t)
-      #s32:0 #f))
+(define-inline (js-parseint-any string %this)
+   (js-string-parseint10
+      (trim-whitespaces+ (js-tostring string %this) :plus #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-parseint-string-uint32 ...                                    */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2     */
 ;*---------------------------------------------------------------------*/
-(define (js-parseint-string-uint32 string radix::uint32)
-   (js-string-parseint (trim-whitespaces+ (js-jsstring->string string) :plus #t)
+(define-inline (js-parseint-string-uint32 string radix::uint32)
+   (js-string-parseint
+      (trim-whitespaces+ (js-jsstring->string string) :plus #t)
       (uint32->int32 radix) #f))
 
 ;*---------------------------------------------------------------------*/
@@ -2639,7 +2664,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.3     */
 ;*---------------------------------------------------------------------*/
 (define (js-parsefloat string %this)
-   (js-string-parsefloat (trim-whitespaces+ (js-tostring string %this) :plus #t)
+   (js-string-parsefloat
+      (trim-whitespaces+ (js-tostring string %this) :plus #t)
       #f))
 
 ;*---------------------------------------------------------------------*/

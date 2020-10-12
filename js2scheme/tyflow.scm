@@ -1121,7 +1121,7 @@
 	    (with-access::J2SFun fun (rtype %info)
 	       (let ((nenv (if (env? %info) (env-override env %info) env)))
 		  (return rtype nenv bk))))))
-   
+
    (define (type-ref-call callee args env bk)
       ;; call a JS variable, check is it a known function
       (with-access::J2SRef callee (decl)
@@ -1139,6 +1139,8 @@
 	    ((isa? decl J2SDeclInit)
 	     (with-access::J2SDeclInit decl (val)
 		(cond
+		   ((is-builtin-ref? callee 'Array)
+		    (return 'array env bk))
 		   ((and (decl-ronly? decl) (isa? val J2SFun))
 		    (type-known-call callee val args env bk))
 		   ((and (decl-ronly? decl) (isa? val J2SMethod))
@@ -1171,12 +1173,21 @@
 	 (with-access::J2SAccess callee (obj field)
 	    (let* ((fn (j2s-field-name field))
 		   (ty (if (string? fn)
-			   (tyflow-type (car (find-builtin-method-type obj fn)))
+			   (car (find-builtin-method-type obj fn))
 			   'any)))
-	       (if (eq? ty 'any)
+	       (cond
+		  ((eq? ty 'any)
 		   ;; the method is unknown, filter out the node-type env
-		   (return ty (unknown-call-env env) bk)
-		   (return ty env bk))))))
+		   (return ty (unknown-call-env env) bk))
+		  ((eq? ty 'anumber)
+		   (if (pair? args)
+		       (let ((aty (j2s-type (car args))))
+			  (if (memq aty '(integer real))
+			      (return aty env bk)
+			      (return 'number env bk)))
+		       (return 'number env bk)))
+		  (else
+		   (return (tyflow-type ty) env bk)))))))
    
    (define (type-hop-call callee args env bk)
       ;; type a hop (foreign function) call: H( ... )
@@ -1195,6 +1206,12 @@
 	  (return 'number (unknown-call-env env) bk))
 	 ((is-global? callee 'isNaN)
 	  (return 'bool (unknown-call-env env) bk))
+	 ((is-global? callee 'unescape)
+	  (return 'string (unknown-call-env env) bk))
+	 ((is-global? callee 'encodeURI)
+	  (return 'string (unknown-call-env env) bk))
+	 ((is-global? callee 'encodeURIComponent)
+	  (return 'string (unknown-call-env env) bk))
 	 (else
 	  (type-unknown-call callee env bk))))
    
@@ -1245,6 +1262,8 @@
 		((Array) 'array)
 		((Date) 'date)
 		((RegExp) 'regexp)
+		((Int8Array) 'int8array)
+		((Uint8Array) 'uint8array)
 		(else 'object))))
 	 ((isa? clazz J2SRef)
 	  (with-access::J2SRef clazz (decl)
@@ -1253,6 +1272,8 @@
 		   (when (decl-ronly? decl)
 		      (case id
 			 ((Array) 'array)
+			 ((Int8Array) 'int8array)
+			 ((Uint8Array) 'uint8array)
 			 ((Date) 'date)
 			 ((RegExp) 'regexp)
 			 (else 'object)))))))
@@ -1327,7 +1348,7 @@
 			    'number)))
 		       ((/)
 			(cond
-			   ((eq? typr 'real)
+			   ((or (eq? typl 'real) (eq? typr 'real))
 			    'real)
 			   ((eq? typr 'integer)
 			    'number)
@@ -1390,6 +1411,13 @@
       (when (isa? expr J2SUnresolvedRef)
 	 (with-access::J2SUnresolvedRef expr (id)
 	    (eq? id 'Number))))
+
+   (define (is-math-ref? expr::J2SNode)
+      (when (isa? expr J2SRef)
+	 (with-access::J2SRef expr (decl)
+	    (when (isa? decl J2SDeclExtern)
+	       (with-access::J2SDecl decl (id)
+		  (eq? id 'Math))))))
    
    (with-access::J2SAccess this (obj field loc)
       (multiple-value-bind (tyo envo bko)
@@ -1441,6 +1469,15 @@
 		   (if (member name
 			  '("POSITIVE_INFINITY" "NEGATIVE_INFINITY"))
 		       (expr-type-add! this envf fix 'number
+			  (append bko bkf))
+		       (expr-type-add! this envf fix 'any
+			  (append bko bkf)))))
+	       ((is-math-ref? obj)
+		(let ((name (j2s-field-name field)))
+		   (if (member name
+			  '("E" "LN10" "LN2" "LOG2E" "LOG10E" "PI"
+			    "SQRT1_2" "SQRT2"))
+		       (expr-type-add! this envf fix 'real
 			  (append bko bkf))
 		       (expr-type-add! this envf fix 'any
 			  (append bko bkf)))))
@@ -2234,24 +2271,30 @@
 ;*    cleanup-hint! ::J2SDecl ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cleanup-hint! this::J2SDecl)
-   (with-access::J2SDecl this (hint)
-      (when (and (pair? hint) (pair? (assq 'no-string hint)))
-	 (let ((c (assq 'string hint)))
-	    (set! hint (delete! c hint))))
-      (when (and (pair? hint) (pair? (assq 'no-array hint)))
-	 (let ((c (assq 'array hint)))
-	    (set! hint (delete! c hint)))))
+   (with-access::J2SDecl this (hint vtype)
+      (if (memq vtype '(number any))
+	  (begin
+	     (when (and (pair? hint) (pair? (assq 'no-string hint)))
+		(let ((c (assq 'string hint)))
+		   (set! hint (delete! c hint))))
+	     (when (and (pair? hint) (pair? (assq 'no-array hint)))
+		(let ((c (assq 'array hint)))
+		   (set! hint (delete! c hint)))))
+	  (set! hint '())))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    cleanup-hint! ::J2SExpr ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cleanup-hint! this::J2SExpr)
-   (with-access::J2SExpr this (hint)
-      (when (and (pair? hint) (pair? (assq 'no-string hint)))
-	 (let ((c (assq 'string hint)))
-	    (set! hint (delete! c hint))))
-      (when (and (pair? hint) (pair? (assq 'no-array hint)))
-	 (let ((c (assq 'array hint)))
-	    (set! hint (delete! c hint)))))
+   (with-access::J2SExpr this (hint type)
+      (if (memq type '(number any))
+	  (begin
+	     (when (and (pair? hint) (pair? (assq 'no-string hint)))
+		(let ((c (assq 'string hint)))
+		   (set! hint (delete! c hint))))
+	     (when (and (pair? hint) (pair? (assq 'no-array hint)))
+		(let ((c (assq 'array hint)))
+		   (set! hint (delete! c hint)))))
+	  (set! hint '())))
    (call-default-walker))

@@ -617,6 +617,9 @@
 				  body))))
 		  (set! decls (list decl))
 		  (set! lhs (instantiate::J2SRef (loc loc) (decl decl)))
+		  (with-access::J2SVarDecls lift (decls)
+		     (with-access::J2SDecl (car decls) (binder)
+			(set! binder 'let-forin)))
 		  (instantiate::J2SBlock
 		     (endloc loc)
 		     (loc loc)

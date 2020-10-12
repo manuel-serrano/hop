@@ -94,6 +94,14 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    decl-usage-add*! ...                                             */
+;*---------------------------------------------------------------------*/
+(define (decl-usage-add*! decl keys)
+   (if (pair? keys)
+       (for-each (lambda (key) (decl-usage-add! decl key)) keys)
+       (decl-usage-add! decl keys)))
+
+;*---------------------------------------------------------------------*/
 ;*    filter-dead-declarations ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (filter-dead-declarations decls)
@@ -296,7 +304,7 @@
 		    (not (memq scope '(global scope))))
 	    (set! escape #t))
 	 (when ctx
-	    (decl-usage-add! decl ctx))))
+	    (decl-usage-add*! decl ctx))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -316,7 +324,7 @@
    (call-next-method)
    (with-access::J2SGlobalRef this (decl)
       (when ctx
-	 (decl-usage-add! decl ctx)))
+	 (decl-usage-add*! decl ctx)))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -361,7 +369,12 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-use this::J2SCall ctx deval infun)
    (with-access::J2SCall this (fun args protocol)
-      (j2s-use fun 'call deval infun)
+      (let ((ctx (cond
+		    ((isa? fun J2SFun) 'call)
+		    ((isa? fun J2SAccess) 'method)
+		    ((isa? fun J2SRef) 'call)
+		    (else 'ref))))
+	 (j2s-use fun ctx deval infun))
       (when (eq? protocol 'spread)
 	 (j2s-use fun 'get deval infun))
       (for-each (lambda (a) (j2s-use a 'ref deval infun)) args))
@@ -404,7 +417,11 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-use this::J2SAccess ctx deval infun)
    (with-access::J2SAccess this (obj field)
-      (j2s-use obj (if (eq? ctx 'assig) 'set 'get) deval infun)
+      (let ((axs (cond
+		    ((eq? ctx 'assig) 'set)
+		    ((eq? ctx 'method) '(get method))
+		    (else 'get))))
+	 (j2s-use obj axs deval infun))
       (j2s-use field 'ref deval infun))
    this)
 

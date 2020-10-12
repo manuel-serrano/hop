@@ -203,7 +203,7 @@
 	     ;; cmaps themselves (see js-constant-init@hopscript/lib.scm
 	     ;; and j2sscheme/scheme-program.scm)
 	     this)
-	    ((and #t (null? keys))
+	    ((null? keys)
 	     (let ((n (add-cmap! loc '#() env)))
 		(set! cmap
 		   (instantiate::J2SLiteralCnst
@@ -245,6 +245,37 @@
 		 this))
 	    (else
 	     this)))))
+
+;*---------------------------------------------------------------------*/
+;*    constant! ::J2SDeclInit ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (constant! this::J2SDeclInit env nesting conf)
+   (with-access::J2SDeclInit this (val vtype vtype utype itype loc scope)
+      (if (and (not (decl-usage-has? this '(set ref method)))
+	       (constant-array? val)
+	       (not (eq? scope 'global)))
+	  (begin
+	     (set! utype 'array)
+	     (set! vtype 'array)
+	     (set! itype 'array)
+	     (set! val (add-expr! val env #t)))
+	  (call-default-walker))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    constant-array? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (constant-array? this::J2SExpr)
+   (when (isa? this J2SArray)
+      (with-access::J2SArray this (exprs)
+	 (every (lambda (e)
+		   (or (isa? e J2SLiteralCnst)
+		       (isa? e J2SString)
+		       (isa? e J2SNumber)
+		       (isa? e J2SBool)
+		       (isa? e J2SUndefined)
+		       (constant-array? e)))
+	    exprs))))
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SAccess ...                                        */
@@ -443,55 +474,3 @@
    (with-access::J2SDeclFun this (val)
       (constant! val env nesting conf))
    this)
-
-;*---------------------------------------------------------------------*/
-;*    constant! ::J2SFun ...                                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SFun env nesting conf)
-   (call-default-walker)
-   (with-access::J2SFun this (body params)
-      ;; in order to activate this optimization, it must be proved
-      ;; that no field is added to the function
-      (if (and #f (closed? body params))
-	  (add-expr! this env #f)
-	  this)))
-
-;*---------------------------------------------------------------------*/
-;*    closed? ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (closed? this::J2SNode env)
-   (let ((cell (make-cell #t)))
-      (node-closed this env cell)
-      (cell-ref cell)))
-
-;*---------------------------------------------------------------------*/
-;*    node-closed ::J2SNode ...                                        */
-;*---------------------------------------------------------------------*/
-(define-walk-method (node-closed this::J2SNode env cell)
-   (when (cell-ref cell)
-      (call-default-walker)))
-
-;*---------------------------------------------------------------------*/
-;*    node-closed ::J2SRef ...                                         */
-;*---------------------------------------------------------------------*/
-(define-walk-method (node-closed this::J2SRef env cell)
-   (when (cell-ref cell)
-      (with-access::J2SRef this (decl)
-	 (if (memq decl env)
-	     (call-default-walker)
-	     (with-access::J2SDecl decl (scope)
-		(unless (eq? scope '%scope)
-		   (cell-set! cell #f)))))))
-
-;*---------------------------------------------------------------------*/
-;*    node-closed ::J2SThis ...                                        */
-;*---------------------------------------------------------------------*/
-(define-walk-method (node-closed this::J2SThis env cell)
-   (cell-ref cell))
-
-;*---------------------------------------------------------------------*/
-;*    node-closed ::J2SFun ...                                         */
-;*---------------------------------------------------------------------*/
-(define-walk-method (node-closed this::J2SFun env cell)
-   #t)
-

@@ -29,10 +29,20 @@
 	   __hopscript_lib
 	   __hopscript_number
 	   __hopscript_worker
-	   __hopscript_arraybuffer)
+	   __hopscript_arraybuffer
+	   __hopscript_array)
 
    (export (js-init-arraybufferview! ::JsGlobalObject)
-	   (js-typedarray-lengthu32 o::JsTypedArray %this #!optional cache)))
+	   (js-typedarray-lengthu32 o::JsTypedArray %this #!optional cache)
+
+	   (js-new-int8array::JsInt8Array ::uint32 ::JsGlobalObject)
+	   (js-new-uint8array::JsUint8Array ::uint32 ::JsGlobalObject)
+	   (js-int8array-index-set! ::JsInt8Array ::uint32 ::int8)
+	   (js-int8array-fixnum-set! ::JsInt8Array ::long ::int8)
+	   (js-uint8array-index-set! ::JsUint8Array ::uint32 ::uint8)
+	   (js-uint8array-fixnum-set! ::JsUint8Array ::long ::uint8)
+	   (js-typedarray-slice ::JsTypedArray start end ::JsGlobalObject)
+	   ))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -204,6 +214,36 @@
 (define-method (js-typedarray-ref o::JsInt8Array) js-i8array-ref)
 (define-method (js-typedarray-set! o::JsInt8Array) js-i8array-set!)
 
+(define (js-int8array-index-set! a::JsInt8Array i::uint32 v::int8)
+   (with-access::JsInt8Array a (buffer length byteoffset bpe)
+      (with-access::JsArrayBuffer buffer (data)
+	 (let ((j (uint32->fixnum (+u32 byteoffset i))))
+	    (when (<fx j (u8vector-length data))
+	       ($u8vector-set! data j v))))))
+
+(define (js-int8array-fixnum-set! a::JsInt8Array i::long v::int8)
+   (when (>=fx i 0)
+      (js-int8array-index-set! a (fixnum->uint32 i) v)))
+   
+(define (js-new-int8array::JsInt8Array l::uint32 %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-int8array js-arraybuffer)
+      (let* ((b (instantiate::JsArrayBuffer
+		   (cmap (js-not-a-cmap))
+		   (data (make-u8vector (uint32->fixnum l)))))
+	     (o (instantiate::JsInt8Array
+		   (length l)
+		   (bpe #u32:1)
+		   (buffer b)
+		   (cmap (js-not-a-cmap))
+		   (byteoffset #u32:0))))
+	 (with-access::JsFunction js-arraybuffer (prototype)
+	    (js-object-proto-set! b prototype))
+	 (with-access::JsFunction js-int8array (prototype)
+	    (js-object-proto-set! o prototype))
+	 (unless *optimize-length*
+	    (js-put! b (& "length") (uint32->fixnum l) #f %this))
+	 o)))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-typedarray-set! ::JsUint8Array ...                            */
 ;*---------------------------------------------------------------------*/
@@ -217,6 +257,36 @@
 
 (define-method (js-typedarray-ref o::JsUint8Array) js-u8array-ref)
 (define-method (js-typedarray-set! o::JsUint8Array) js-u8array-set!)
+
+(define (js-uint8array-index-set! a::JsUint8Array i::uint32 v::uint8)
+   (with-access::JsUint8Array a (buffer length byteoffset bpe)
+      (with-access::JsArrayBuffer buffer (data)
+	 (let ((j (uint32->fixnum (+u32 byteoffset i))))
+	    (when (<fx j (u8vector-length data))
+	       ($u8vector-set! data j v))))))
+
+(define (js-uint8array-fixnum-set! a::JsUint8Array i::long v::uint8)
+   (when (>=fx i 0)
+      (js-uint8array-index-set! a (fixnum->uint32 i) v)))
+
+(define (js-new-uint8array::JsUint8Array l::uint32 %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-uint8array js-arraybuffer)
+      (let* ((b (instantiate::JsArrayBuffer
+		  (cmap (js-not-a-cmap))
+		  (data (make-u8vector (uint32->fixnum l)))))
+	    (o (instantiate::JsUint8Array
+		  (length l)
+		  (bpe #u32:1)
+		  (buffer b)
+		  (cmap (js-not-a-cmap))
+		  (byteoffset #u32:0))))
+	 (with-access::JsFunction js-arraybuffer (prototype)
+	    (js-object-proto-set! b prototype))
+	 (with-access::JsFunction js-uint8array (prototype)
+	    (js-object-proto-set! o prototype))
+	 (unless *optimize-length*
+	    (js-put! o (& "length") (uint32->fixnum l) #f %this))
+	 o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-typedarray-set! ::JsUint8ClampedArray ...                     */
@@ -411,27 +481,6 @@
 				#f))))))))
 	  (js-raise-type-error %this "Object must be a TypedArray" this)))
 
-;*    (define (js-typedarray-tostring this::obj)                       */
-;*       (with-access::JsTypedArray this (vref buffer bpe byteoffset)  */
-;* 	 (with-access::JsArrayBuffer buffer (data)                     */
-;* 	    (let ((len (js-typedarray-lengthu32 this %this))           */
-;* 		  (vref (js-typedarray-ref this)))                     */
-;* 	       (if (=u32 len #u32:0)                                   */
-;* 		   ""                                                  */
-;* 		   (let ((data data))                                  */
-;* 		      (let loop ((i #u32:1)                            */
-;* 				 (s (js-string->jsstring               */
-;* 				       (number->string                 */
-;* 					  (vref data (uint32->fixnum (/u32 byteoffset bpe))))))) */
-;* 			 (if (=u32 i len)                              */
-;* 			     s                                         */
-;* 			     (let ((v (vref data (uint32->fixnum (+u32 (/u32 byteoffset bpe) i))))) */
-;* 				(loop (+u32 i #u32:1)                  */
-;* 				   (js-jsstring-append s               */
-;* 				      (js-jsstring-append (& ",")      */
-;* 					 (js-string->jsstring          */
-;* 					    (number->string v)))))))))))))) */
-   
    (define (js-typedarray-tostring this::obj)
       (with-access::JsTypedArray this (vref buffer bpe byteoffset)
 	 (with-access::JsArrayBuffer buffer (data)
@@ -461,22 +510,6 @@
       :writable #t
       :enumerable #f)
 
-;*    (js-bind! %this proto (& "toString")                             */
-;*       :value (js-make-function %this js-typedarray-tostring         */
-;* 		(js-function-arity js-typedarray-tostring)             */
-;* 		(js-function-info :name "toString" :len 0))            */
-;*       :configurable #t                                              */
-;*       :writable #t                                                  */
-;*       :enumerable #f)                                               */
-;*                                                                     */
-;*    (js-bind! %this proto (& "toLocaleString")                       */
-;*       :value (js-make-function %this js-typedarray-tostring         */
-;* 		(js-function-arity js-typedarray-tostring)             */
-;* 		(js-function-info :name "toLocaleString" :len 0))      */
-;*       :configurable #t                                              */
-;*       :writable #t                                                  */
-;*       :enumerable #f)                                               */
-   
    (for-each (lambda (id)
 		(js-bind! %this proto (js-ascii-name->jsstring id)
 		   :value (js-make-function %this (js-not-implemented id %this)
@@ -814,11 +847,16 @@
 ;*    js-properties-names ::JsTypedArray ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-names::vector obj::JsTypedArray enump %this)
-   (tprint "js-properties-names=" (typeof obj) " enump=" enump)
    (with-access::JsTypedArray obj (length)
       (let ((len (uint32->fixnum length)))
 	 (append! (map js-integer->jsstring (iota len))
 	    (call-next-method)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-ownkeys ::JsTypedArray ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (js-ownkeys obj::JsTypedArray %this)
+   (js-vector->jsarray (js-properties-name obj #t %this) %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsTypedArray ...                               */
@@ -1554,6 +1592,102 @@
 (define (js-not-implemented id %this)
    (lambda (js-not-implemented this::obj)
       (js-raise-type-error %this (format "Not implemented (~a)" id) this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-typedarray-slice ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-typedarray-slice this start end %this)
+   
+   (define (vector-slice/vec! o val k::long final::long vec::vector)
+      (js-vector->jsarray vec %this))
+
+   (define (vector-slice! o val::vector k::long final::long)
+      (let* ((len (fixnum->uint32 (-fx final k)))
+	     (arr (js-array-construct-alloc/lengthu32 %this len)))
+	 (with-access::JsArray arr (vec ilen length)
+	    (vector-copy! vec 0 val k final)
+	    (set! ilen len)
+	    (set! length len)
+	    arr)))
+   
+   (define (u8vector-slice! o val::u8vector k::long final::long)
+      (let ((vec (make-vector (-fx final k) (js-absent))))
+	 (let loop ((i k)
+		    (j 0))
+	    (if (=fx i final)
+		(vector-slice/vec! o val k final vec)
+		(begin
+		   (vector-set! vec j
+		      (uint8->fixnum (u8vector-ref val i)))
+		   (loop (+fx i 1) (+fx j 1)))))))
+   
+   (define (string-slice! o val::bstring k::long final::long)
+      (let ((vec ($create-vector (-fx final k))))
+	 (let loop ((i k)
+		    (j 0))
+	    (if (=fx i final)
+		(vector-slice/vec! o val k final vec)
+		(begin
+		   (vector-set! vec j
+		      (char->integer (string-ref-ur val i)))
+		   (loop (+fx i 1) (+fx j 1)))))))
+   
+   (define (array-slice! o k::obj final::obj)
+      (let ((arr (js-array-construct/length %this (js-array-alloc  %this)
+		    (- final k))))
+	 (array-copy! o 0 arr k final)))
+
+   (define (array-copy! o len::long arr k::obj final::obj)
+      (let loop ((i len))
+	 (cond
+	    ((= k final)
+	     (js-put-length! arr i #f #f %this)
+	     arr)
+	    ((eq? (js-get-property o (js-toname k %this) %this) (js-undefined))
+	     (set! k (+ 1 k))
+	     (loop (+fx i 1)))
+	    (else
+	     (js-put! arr i (js-get o k %this) #f %this)
+	     (set! k (+ 1 k))
+	     (loop (+fx i 1))))))
+   
+    (let* ((len (js-uint32-tointeger (js-get-lengthu32 this %this)))
+	   (relstart (js-tointeger start %this))
+	   (k (if (< relstart 0) (max (+ len relstart) 0) (min relstart len)))
+	   (relend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
+	   (final (if (< relend 0) (max (+ len relend) 0) (min relend len))))
+       (with-access::JsTypedArray this (%data byteoffset)
+	  (cond
+	     ((string? %data)
+	      (let* ((offset (uint32->fixnum byteoffset))
+		     (start (+fx offset (->fixnum k)))
+		     (end (+fx offset final))
+		     (vlen (string-length %data)))
+		 (cond
+		    ((<= end vlen)
+		     (string-slice! this %data start end))
+		    ((>fx vlen 0)
+		     (let* ((arr (string-slice! this %data start vlen))
+			    (vlen (->fixnum (js-get-length arr %this))))
+			(array-copy! this vlen arr (- len vlen) end)))
+		    (else
+		     (array-slice! this start end)))))
+	     ((u8vector? %data)
+	      (let* ((offset (uint32->fixnum byteoffset))
+		     (start (+fx offset (->fixnum k)))
+		     (end (+fx offset final))
+		     (vlen (u8vector-length %data)))
+		 (cond
+		    ((<= end vlen)
+		     (u8vector-slice! this %data start end))
+		    ((>fx vlen 0)
+		     (let* ((arr (u8vector-slice! this %data start vlen))
+			    (vlen (->fixnum (js-get-length arr %this))))
+			(array-copy! this vlen arr (- len vlen) end)))
+		    (else
+		     (array-slice! this start end)))))
+	     (else
+	      (array-slice! this k final))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

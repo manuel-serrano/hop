@@ -1158,7 +1158,6 @@
 			      (decl (instantiate::J2SDeclSvc
 				       (loc loc)
 				       (id (cdr id))
-;* 				       (scope 'global)                 */
 				       (writable #f)
 				       (usage (usage '()))
 				       (val val))))
@@ -1183,7 +1182,6 @@
 				       (writable #f)
 				       (usage (usage '()))
 				       (expression #t)
-;* 				       (scope  'global)                */
 				       (val svc))))
 		svc))
 	    (else

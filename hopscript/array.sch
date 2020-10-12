@@ -268,3 +268,4 @@
 	      `(js-call-with-stack-vector ,vec ,proc)))))
       (else
        `((@ js-call-with-stack-vector __hopscript_array) ,vec ,proc))))
+

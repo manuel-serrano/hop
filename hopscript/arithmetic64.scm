@@ -28,6 +28,8 @@
 	   __hopscript_lib
 	   __hopscript_public)
    
+   (extern (macro $real64-set!::real (::real ::double) "BGL_REAL_SET"))
+   
    (cond-expand
       ((or bint61 bint64)
        (export
@@ -61,16 +63,19 @@
 	  (inline +s32/overflow::obj ::int32 ::int32)
 	  (inline +u32/overflow::obj ::uint32 ::uint32)
 	  (+/overflow::obj ::obj ::obj)
+	  (+/overflow!::obj ::obj ::obj)
 	  
 	  (inline -fx/overflow::obj ::long ::long)
 	  (inline -s32/overflow::long ::int32 ::int32)
 	  (inline -u32/overflow::long ::uint32 ::uint32)
 	  (-/overflow::obj ::obj ::obj)
+	  (-/overflow!::obj ::obj ::obj)
 	  
 	  (inline *fx/overflow::obj ::long ::long)
 	  (inline *s32/overflow::obj ::int32 ::int32)
 	  (inline *u32/overflow::obj ::uint32 ::uint32)
-	  (*/overflow ::obj ::obj)))))
+	  (*/overflow ::obj ::obj)
+	  (*/overflow!::obj ::obj ::obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    __js_strings ...                                                 */
@@ -248,12 +253,12 @@
 	  ((or (= obj +inf.0) (= obj -inf.0) (nanfl? obj))
 	   (fixnum->int32 0))
 	  ((<fl obj 0.)
-	   (let ((i (*fl -1. (floor (abs obj)))))
+	   (let ((i (*fl -1. (floorfl (absfl obj)))))
 	      (if (>=fl i (negfl (exptfl 2. 31.)))
 		  (fixnum->int32 (flonum->fixnum i))
 		  (int64->int32 (flonum->int64 i)))))
 	  (else
-	   (let ((i (floor obj)))
+	   (let ((i (floorfl obj)))
 	      (if (<=fl i (-fl (exptfl 2. 31.) 1.))
 		  (fixnum->int32 (flonum->fixnum i))
 		  (int64->int32 (flonum->int64 i)))))))
@@ -429,8 +434,6 @@
 (define (tolong x)
    (cond
       ((fixnum? x) x)
-      ((int32? x) (int32->fixnum x))
-      ((uint32? x) (uint32->fixnum x))
       ((=fl x 0.0) 0)
       (else #f)))
 
@@ -441,8 +444,6 @@
    (cond
       ((flonum? x) x)
       ((fixnum? x) (fixnum->flonum x))
-      ((int32? x) (int32->flonum x))
-      ((uint32? x) (uint32->flonum x))
       (else +nan.0)))
 
 ;*---------------------------------------------------------------------*/
@@ -494,6 +495,27 @@
 	  (+fl (todouble x) (todouble y)))))
 
 ;*---------------------------------------------------------------------*/
+;*    +/overflow! ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    Specialized version used by the compiler when real mutation      */
+;*    is possible.                                                     */
+;*---------------------------------------------------------------------*/
+(define (+/overflow! x::obj y::obj)
+   (let ((ll (tolong x)))
+      (cond
+	 (ll
+	  (let ((rl (tolong y)))
+	     (if rl
+		 (+fx/overflow ll rl)
+		 (+fl (todouble x) (todouble y)))))
+	 ((flonum? x)
+	  ($real64-set! x (+fl x (todouble y))))
+	 ((flonum? y)
+	  ($real64-set! y (+fl y (todouble x))))
+	 (else
+	  (+fl (todouble x) (todouble y))))))
+
+;*---------------------------------------------------------------------*/
 ;*    -fx/overflow ...                                                 */
 ;*    -------------------------------------------------------------    */
 ;*    see +fx/overflow                                                 */
@@ -526,6 +548,24 @@
 		 (-fx/overflow ll rl)
 		 (-fl (todouble x) (todouble y))))
 	  (-fl (todouble x) (todouble y)))))
+
+;*---------------------------------------------------------------------*/
+;*    -/overflow! ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (-/overflow! x y)
+   (let ((ll (tolong x)))
+      (cond
+	 (ll
+	  (let ((rl (tolong y)))
+	     (if rl
+		 (-fx/overflow ll rl)
+		 (-fl (todouble x) (todouble y)))))
+	 ((flonum? x)
+	  ($real64-set! x (-fl x (todouble y))))
+	 ((flonum? y)
+	  ($real64-set! y (-fl (todouble x) y)))
+	 (else
+	  (-fl (todouble x) (todouble y))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *fx/overflow ...                                                 */
@@ -609,3 +649,20 @@
 		 (*fl (todouble x) (todouble y))))
 	  (*fl (todouble x) (todouble y)))))
 
+;*---------------------------------------------------------------------*/
+;*    */overflow! ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (*/overflow! x y)
+   (let ((ll (tolong x)))
+      (cond
+	 (ll
+	  (let ((rl (tolong y)))
+	     (if rl
+		 (*fx/overflow ll rl)
+		 (*fl (todouble x) (todouble y)))))
+	 ((flonum? x)
+	  ($real64-set! x (*fl x (todouble y))))
+	 ((flonum? y)
+	  ($real64-set! y (*fl y (todouble x))))
+	 (else
+	  (*fl (todouble x) (todouble y))))))

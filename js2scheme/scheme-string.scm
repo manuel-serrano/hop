@@ -28,6 +28,8 @@
 	   __js2scheme_scheme-fun)
 
    (export (j2s-string-ref ::J2SAccess mode return ::struct)
+	   (j2s-jsstring-touppercase obj args mode return ::struct)
+	   (j2s-jsstring-tolowercase obj args mode return ::struct)
 	   (j2s-jsstring-replace-regexp obj args mode return ::struct)
 	   (j2s-jsstring-replace-string obj args mode return ::struct)
 	   (j2s-jsstring-replace obj args mode return ::struct)
@@ -37,7 +39,11 @@
 	   (j2s-jsstring-match-string obj args mode return ::struct)
 	   (j2s-jsstring-match-regexp obj args mode return ::struct)
 	   (j2s-jsstring-substr obj args mode return ::struct)
-	   (j2s-jsstring-maybe-substr obj args mode return ::struct)))
+	   (j2s-jsstring-maybe-substr obj args mode return ::struct)
+	   (j2s-jsstring-padstart obj args mode return ::struct)
+	   (j2s-jsstring-maybe-padstart obj args mode return ::struct)
+	   (j2s-jsstring-padend obj args mode return ::struct)
+	   (j2s-jsstring-maybe-padend obj args mode return ::struct)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-ref ...                                               */
@@ -87,6 +93,42 @@
 	 (else
 	  #f))))
 
+;*---------------------------------------------------------------------*/
+;*    fresh-string? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (fresh-string? this self)
+   ;; self is used to ensure that no optimization removes the creation
+   ;; of a new string
+   (cond
+      ((isa? this J2SBinary)
+       (with-access::J2SBinary this (op) (and (eq? op '+) (pair? self))))
+      ((isa? this J2SParen)
+       (with-access::J2SParen this (expr) (fresh-string? expr self)))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-tolowercase ...                                     */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-tolowercase obj args mode return ctx)
+   (let ((self (j2s-scheme obj mode return ctx)))
+      `(,(if (fresh-string? obj self)
+	     'js-jsstring-tolowercase!
+	     'js-jsstring-tolowercase)
+	,self
+	,@(map (lambda (arg) (j2s-scheme arg mode return ctx)) args))))
+       
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-touppercase ...                                     */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-touppercase obj args mode return ctx)
+   (let ((self (j2s-scheme obj mode return ctx)))
+      `(,(if (fresh-string? obj self)
+	     'js-jsstring-touppercase!
+	     'js-jsstring-touppercase)
+	,self
+	,@(map (lambda (arg) (j2s-scheme arg mode return ctx)) args))))
+       
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-replace-regexp ...                                    */
 ;*---------------------------------------------------------------------*/
@@ -265,7 +307,7 @@
 	      ,(j2s-scheme (car args) mode return ctx)
 	      %this
 	      #f)
-	  (with-access::J2SProgram (context-get ctx :program) (cnsts)
+	  (with-access::J2SProgram (context-program ctx) (cnsts)
 	     (with-access::J2SString str (loc val)
 		(let* ((len (length cnsts))
 		       (rx (instantiate::J2SRegExp
@@ -331,4 +373,48 @@
        ,(j2s-scheme (car args) mode return ctx)
        (js-undefined)
        ,@(cdr args)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-padstart ...                                        */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-padstart obj args mode return ctx)
+   `(js-jsstring-padstart
+       ,(j2s-scheme obj mode return ctx)
+       ,(j2s-scheme (car args) mode return ctx)
+       ,(j2s-scheme (cadr args) mode return ctx)
+       #t
+       %this))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-maybe-padstart ...                                  */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-maybe-padstart obj args mode return ctx)
+   `(js-jsstring-prototype-padstart
+       ,(j2s-scheme obj mode return ctx)
+       ,(j2s-scheme (car args) mode return ctx)
+       ,(j2s-scheme (cadr args) mode return ctx)
+       #t
+       %this))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-padend ...                                          */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-padend obj args mode return ctx)
+   `(js-jsstring-padend
+       ,(j2s-scheme obj mode return ctx)
+       ,(j2s-scheme (car args) mode return ctx)
+       ,(j2s-scheme (cadr args) mode return ctx)
+       #f
+       %this))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-maybe-padend ...                                    */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-maybe-padend obj args mode return ctx)
+   `(js-jsstring-prototype-padend
+       ,(j2s-scheme obj mode return ctx)
+       ,(j2s-scheme (car args) mode return ctx)
+       ,(j2s-scheme (cadr args) mode return ctx)
+       #f
+       %this))
 

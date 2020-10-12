@@ -147,7 +147,7 @@
 	 ;; be scanned before being pushed down by the
 	 ;; TAIL-LET! stage
 	 (unless (isa? %info DeclInfo)
-	    (let ((optdecl (if (eq? binder 'let-opt)
+	    (let ((optdecl (if (memq binder '(let-opt let-forin))
 			       ;; already optimized
 			       d
 			       ;; don't know yet
@@ -246,7 +246,7 @@
 	    decls)
 	 (if (every (lambda (d)
 		       (with-access::J2SDecl d (binder)
-			  (not (eq? binder 'let-opt))) )
+			  (not (memq binder '(let-opt let-forin)))))
 		decls)
 	     ;; try to move before the letblock statements not using any
 	     ;; of the introduced variable
@@ -473,7 +473,7 @@
 		   (let ((decl (car inodes)))
 		      (with-access::J2SDecl decl (binder)
 			 (cond
-			    ((eq? binder 'let-opt)
+			    ((memq binder '(let-opt let-forin))
 			    ;; already optimized by previous stages
 			     decl)
 			    ((used-before-init? decl inits rests)
@@ -652,7 +652,7 @@
 	 ((isa? expr J2SRef)
 	  (with-access::J2SRef expr (decl)
 	     (with-access::J2SDecl decl (binder writable)
-		(when (eq? binder 'let-opt)
+		(when (memq binder '(let-opt let-forin))
 		   (or (not writable) (not (decl-usage-has? decl '(assig))))))))
 	 ((isa? expr J2SGlobalRef)
 	  (with-access::J2SGlobalRef expr (decl)
@@ -878,7 +878,7 @@
 ;*---------------------------------------------------------------------*/
 (define (mark-decl-noopt! decl::J2SDecl)
    (with-access::J2SDecl decl (%info binder)
-      (when (eq? binder 'let-opt) (set! binder 'let))
+      (when (memq binder '(let-opt let-for-in)) (set! binder 'let))
       (with-access::DeclInfo %info (optdecl)
 	 (when optdecl
 	    (with-trace 'j2s-letopt "mark-decl-noopt!"
