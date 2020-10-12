@@ -1521,7 +1521,6 @@
 		   (box right tr ctx)
 		   #f)))
 	       (else
-		      (binop-flonum-flonum (real-op '+ type lhs rhs #f) type
 		(binop-any-any '+ type
 		   (box left tl ctx)
 		   (box right tr ctx)
