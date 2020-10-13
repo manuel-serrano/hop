@@ -1416,8 +1416,6 @@
 	 ((context-get ctx :profile-mem)
 	  `(js-jsstring-append-no-inline ,x ,y))
 	 ((and (ascii? lhs x) (ascii? rhs y))
-	  (tprint "ASCII x=" x " " (j2s->list lhs))
-	  (tprint "      y=" y " " (j2s->list rhs))
 	  `(js-jsstring-append-ascii ,x ,y))
 	 ((context-get ctx :optim-size)
 	  `(js-jsstring-append-no-inline ,x ,y))
