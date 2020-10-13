@@ -362,18 +362,6 @@
 	  (cons* this "(() => { "
 	     (append (j2s-js stmt tildec dollarc mode evalp ctx)
 		'("})())")))))))
-	  
-;*       (if (not lbl)                                                 */
-;* 	  (let ((rstmt (return-stmt stmt)))                            */
-;* 	     (cons* this "(() => {"                                    */
-;* 		(append (j2s-js rstmt tildec dollarc mode evalp ctx)  */
-;* 		   '("})()")))                                         */
-;* 	     (let* ((res (gensym 'res))                                */
-;* 		    (ret (gensym 'return))                             */
-;* 		    (jstmt (jump-stmt stmt res ret)))                  */
-;* 		(cons* this (format "(() => { let %s; %s: { " res ret) */
-;* 		   (append (j2s-js jstmt tildec dollarc mode evalp ctx) */
-;* 		      `(format ("} return %s;})()" res)))))))))        */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SReturnYield ...                                      */
