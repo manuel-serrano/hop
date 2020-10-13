@@ -232,6 +232,7 @@ exports.syslog = hop.modulesDir + "/syslog";
 exports.systime = hop.modulesDir + "/systime";
 exports.hopc = hop.modulesDir + "/hopc";
 exports.feed = hop.modulesDir + "/feed";
+exports.xml = hop.modulesDir + "/xml";
 exports.hopdroid = hop.modulesDir + "/hopdroid";
 
 Object.seal( exports );
