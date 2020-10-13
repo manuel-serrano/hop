@@ -24,14 +24,7 @@ install: install-library
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = hopwidget
-HOPAPPLIBS = hop
-
-HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
-  -lhopscheme_s-$(HOPRELEASE) -lhop_s-$(HOPRELEASE) 
-HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
-  -lhopscheme_u-$(HOPRELEASE) -lhop_u-$(HOPRELEASE) 
-HOPCLOSELIBS_ES = -lhopwidget_s-$(HOPRELEASE)
-HOPCLOSELIBS_EU = -lhopwidget_u-$(HOPRELEASE)
+HOPAPPLIBS = hop hopscheme
 
 BLIBFLAGS = $(BCFLAGSRTS)
 

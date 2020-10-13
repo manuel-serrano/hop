@@ -27,11 +27,6 @@ install: install-library
 TARGETNAME = hopscheme
 HOPAPPLIBS = scheme2js
 
-HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) -lscheme2js_s-$(HOPRELEASE)
-HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) -lscheme2js_u-$(HOPRELEASE)
-HOPCLOSELIBS_ES = $(BGLCLOSELIBS_ES) -lhopscheme_s-$(HOPRELEASE)
-HOPCLOSELIBS_EU = $(BGLCLOSELIBS_EU) -lhopscheme_u-$(HOPRELEASE)
-
 BLIBFLAGS = $(BSCM2JSFLAGS)
 
 #*---------------------------------------------------------------------*/
