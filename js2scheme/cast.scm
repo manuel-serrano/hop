@@ -81,7 +81,7 @@
 		(and (eq? totype 'any) (memq type *any-types*))))))
 
 (define *any-types*
-   '(undefined null bool integer number object function arrow string real array regexp arguments))
+   '(undefined null bool integer number object function arrow string real array regexp arguments class))
 
 ;*---------------------------------------------------------------------*/
 ;*    cast-expr ...                                                    */
