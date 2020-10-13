@@ -14,7 +14,9 @@ install: install-library
 #*---------------------------------------------------------------------*/
 #*    Standard Bigloo configuration                                    */
 #*---------------------------------------------------------------------*/
-include Makefile.configs
+-include ../etc/Makefile.hopconfig
+-include ../etc/Makefile.version
+-include $(BIGLOOLIBDIR)/Makefile.config
 
 #*---------------------------------------------------------------------*/
 #*    Compilers, Tools and Destinations                                */
@@ -25,6 +27,7 @@ TARGETNAME = scheme2js
 MCO = bglmco -s
 
 BLIBFLAGS = $(BSCM2JSFLAGS)
+SCHEME2JSSHAREDIR = $(HOPSHAREDIR)
 
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */

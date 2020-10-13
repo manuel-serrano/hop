@@ -24,10 +24,6 @@ install: install-library
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = hop
-HOPCLOSELIBS_S = $(BGLCLOSELIBS_S)
-HOPCLOSELIBS_U = $(BGLCLOSELIBS_U)
-HOPCLOSELIBS_ES = -lhop_s-$(HOPRELEASE)
-HOPCLOSELIBS_EU = -lhop_u-$(HOPRELEASE)
 
 BLIBFLAGS = $(BCFLAGSRTS)
 
