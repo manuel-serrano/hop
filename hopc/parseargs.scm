@@ -230,6 +230,8 @@
 	     (hopc-js-header-set! #f))
 	    (("--js-header" (help "Generate hopscript header"))
 	     (hopc-js-header-set! #t))
+	    (("--js-require-hop" (help "Force an explicit hop require"))
+	     (hopc-j2s-flags-set! (cons* :hop-require #t (hopc-j2s-flags))))
 	    (("--js-return-as-exit" (help "Consider top level returns as exit"))
 	     (hopc-js-return-as-exit-set! #t))
 	    (("--js-no-return-as-exit" (help "Consider top level returns as error"))
