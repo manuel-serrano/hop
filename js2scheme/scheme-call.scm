@@ -478,6 +478,7 @@
 	       ,(cadddr args)))
 	  (else
 	   `(js-array-maybe-slice2
+	       ,(j2s-scheme obj mode return conf)
 	       ,(j2s-scheme (car args) mode return conf)
 	       ,(j2s-scheme (cadr args) mode return conf)
 	       ,(j2s-scheme (caddr args) mode return conf)

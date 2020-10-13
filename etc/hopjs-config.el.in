@@ -1,4 +1,3 @@
-;* Automatically generated file (don't edit) */
 ;; -*- mode: lisp -*-
 ;*=====================================================================*/
 ;*    serrano/prgm/project/hop/3.2.x/etc/hopjs-config.el               */
@@ -6,7 +5,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
 ;*    Last change :  Thu Jan  3 19:47:48 2019 (serrano)                */
-;*    Copyright   :  2018-19 Manuel Serrano                            */
+;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs config                                                     */
 ;*=====================================================================*/
@@ -35,6 +34,12 @@
 
 (defcustom hopjs-doc-extra-dir
   (list "~/.config/hop/weblets")
+  "Directories containing the extra documentation indexes"
+  :type '(repeat (string))
+  :group 'hopjs)
+
+(defcustom hopjs-site-lisp-extra-dir
+  '()
   "Directories containing the extra documentation indexes"
   :type '(repeat (string))
   :group 'hopjs)
