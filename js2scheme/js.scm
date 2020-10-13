@@ -36,6 +36,7 @@
       (comment "JavaScript code generation")
       (proc (lambda (ast conf)
 	       (add-header! ast conf)
+	       (add-hop! ast conf)
 	       (call-with-eval-module (eval! `(module ,(gensym)))
 		  (lambda ()
 		     (eval! `(define %this ,(config-get conf :%this)))
@@ -88,6 +89,19 @@
 				   (loc loc)
 				   (lang 'javascript)
 				   (expr header))
+			     headers))))))
+
+;*---------------------------------------------------------------------*/
+;*    add-hop! ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (add-hop! ast conf)
+   (let ((header (config-get conf :hop-require #f)))
+      (when (and header (isa? ast J2SProgram))
+	 (with-access::J2SProgram ast (headers loc)
+	    (set! headers (cons (instantiate::J2SPragma
+				   (loc loc)
+				   (lang 'javascript)
+				   (expr "const hop = require(\"./hop.js\");"))
 			     headers))))))
 
 ;*---------------------------------------------------------------------*/
