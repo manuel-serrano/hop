@@ -262,8 +262,6 @@
 	   (class JsNumber::JsObject
 	      (val::obj (default 0)))
 	   
-	   (class JsMath::JsObject)
-	   
 	   (class JsRegExp::JsObject
 	      rx::obj
 	      (source read-only)
@@ -282,8 +280,6 @@
 	   
 	   (class JsDate::JsObject
 	      (val (default #f)))
-	   
-	   (class JsJSON::JsObject)
 	   
 	   (class JsModule::JsObject
 	      (%module (default #f))
@@ -349,12 +345,12 @@
 	      (js-function::JsFunction (default (class-nil JsFunction)))
 	      (js-function-prototype::JsFunction (default (class-nil JsFunction)))
 	      (js-function-strict-prototype::JsObject (default (class-nil JsObject)))
-	      (js-math::JsMath (default (class-nil JsMath)))
+	      (js-math::JsObject (default (class-nil JsObject)))
 	      (js-regexp::JsFunction (default (class-nil JsFunction)))
 	      (js-regexp-prototype::JsRegExp (default (class-nil JsRegExp)))
 	      (js-date::JsFunction (default (class-nil JsFunction)))
 	      (js-date-prototype::JsDate (default (class-nil JsDate)))
-	      (js-json::JsJSON (default (class-nil JsJSON)))
+	      (js-json::JsObject (default (class-nil JsObject)))
 	      (js-service-prototype::JsService (default (class-nil JsService)))
 	      (js-hopframe-prototype (default (class-nil JsFunction)))
 	      (js-server-prototype (default (class-nil JsFunction)))
@@ -396,8 +392,8 @@
 	      (js-xml-markups (default #f))
 	      ;; char table
 	      (char-table::vector (default '#()))
-	      ;; regexp tmp position buffer
-	      (js-regexp-positions::vector (default '#()))
+	      ;; regexp tmp positions buffer
+	      (js-regexp-positions::vector (default (make-vector 2)))
 	      ;; pcaches
 	      (js-nodejs-pcache::vector (default '#()))
 	      (js-object-pcache::vector (default '#()))

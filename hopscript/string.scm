@@ -581,13 +581,40 @@
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
+
+   ;; padEnd
+   ;; http://www.ecma-international.org/ecma-262/#21.1.3.14
+   (define (padend this::obj maxlength fillstring)
+      (js-jsstring-prototype-padstart (js-cast-string %this this)
+	 maxlength fillstring #f %this))
+
+   (js-bind! %this obj (& "padEnd")
+      :value (js-make-function %this padend
+		(js-function-arity padend)
+		(js-function-info :name "padEnd" :len 2)
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
+   ;; padStart
+   ;; http://www.ecma-international.org/ecma-262/#sec-string.prototype.padstart
+   (define (padstart this::obj maxlength fillstring)
+      (js-jsstring-prototype-padstart (js-cast-string %this this)
+	 maxlength fillstring #t %this))
+
+   (js-bind! %this obj (& "padStart")
+      :value (js-make-function %this padstart
+		(js-function-arity padstart)
+		(js-function-info :name "padStart" :len 2)
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
    
    ;; replace
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11
    (define (replace this::obj searchvalue replacevalue)
       (js-jsstring-prototype-replace (js-cast-string %this this)
 	 searchvalue replacevalue %this))
-
       
    (js-bind! %this obj (& "replace")
       :value (js-make-function %this replace
@@ -713,7 +740,7 @@
    ;; trim
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.20
    (define (trim this::obj)
-      (js-jsstring-trim (js-cast-string-normalize! %this this)))
+      (js-jsstring-trim (js-cast-string-normalize! %this this) %this))
    
    (js-bind! %this obj (& "trim")
       :value (js-make-function %this trim
@@ -797,6 +824,12 @@
 	 (map! js-integer->jsstring
 	    (iota (uint32->fixnum (js-jsstring-character-length val))))
 	 (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-ownkeys ::JsString ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (js-ownkeys obj::JsString %this)
+   (js-vector->jsarray (js-properties-name obj #t %this) %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-isname? ...                                                   */

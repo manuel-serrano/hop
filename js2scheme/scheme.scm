@@ -27,6 +27,7 @@
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_array
+	   __js2scheme_scheme-tarray
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-cast
 	   __js2scheme_scheme-program
@@ -923,6 +924,15 @@
 	 ((null? decls)
 	  (epairify loc
 	     `(begin ,@(j2s-nodes* loc nodes mode return ctx))))
+	 ((and (pair? decls)
+	       (null? (cdr decls))
+	       (pair? nodes)
+	       (null? (cdr nodes))
+	       (isa? (car nodes) J2SForIn)
+	       (with-access::J2SDecl (car decls) (binder)
+		  (eq? binder 'let-forin)))
+	  ;; a for( let v in ... ) {} statement
+	  (j2s-scheme (car nodes) mode return ctx))
 	 ((any (lambda (decl::J2SDecl)
 		  (with-access::J2SDecl decl (scope)
 		     (memq scope '(global export))))
@@ -1338,7 +1348,7 @@
       (with-access::J2SForIn this (need-bind-exit-break need-bind-exit-continue id)
 	 (let ((for `(,(js-for-in op) ,(j2s-scheme obj mode return ctx)
 			(lambda (,name %this)
-			   ,set
+			   ;;,set
 			   ,(if need-bind-exit-continue
 				`(bind-exit (,(escape-name '%continue id))
 				    ,(j2s-scheme body mode return ctx))
@@ -1417,14 +1427,28 @@
    
    (with-access::J2SForIn this (loc lhs obj body op
 				  need-bind-exit-break need-bind-exit-continue)
-      (let* ((tmp (gensym))
-	     (name (gensym))
-	     (props (gensym))
-	     (set (set lhs name loc)))
-	 (epairify-deep loc
-	    (if (or need-bind-exit-continue need-bind-exit-break)
-		(for-in/break tmp name props obj body set op)
-		(for-in/w-break tmp name props obj body set op))))))
+      (if (and (isa? lhs J2SRef)
+	       (with-access::J2SRef lhs (decl)
+		  (with-access::J2SDecl decl (binder)
+		     (eq? binder 'let-forin))))
+	  (with-access::J2SRef lhs (decl)
+	     (with-access::J2SDecl decl (binder)
+		(let* ((tmp (gensym))
+		       (name (j2s-decl-scm-id decl ctx))
+		       (props (gensym))
+		       (set #unspecified))
+		(epairify-deep loc
+		   (if (or need-bind-exit-continue need-bind-exit-break)
+		       (for-in/break tmp name props obj body set op)
+		       (for-in/w-break tmp name props obj body set op))))))
+	  (let* ((tmp (gensym))
+		 (name (gensym))
+		 (props (gensym))
+		 (set (set lhs name loc)))
+	     (epairify-deep loc
+		(if (or need-bind-exit-continue need-bind-exit-break)
+		    (for-in/break tmp name props obj body set op)
+		    (for-in/w-break tmp name props obj body set op)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SLabel ...                                        */
@@ -1466,6 +1490,10 @@
 	 (j2s-cast (j2s-scheme expr mode return ctx)
 	    expr (j2s-type expr) type ctx))
       
+      (define (comp-char-literal expr type)
+	 (with-access::J2SString expr (val)
+	    (string-ref val 0)))
+      
       (define (test-switch tleft tright)
 	 (if (and (memq tleft '(number integer))
 		  (memq tright '(number integer)))
@@ -1492,6 +1520,13 @@
 		(epairify loc `(else ,body))
 		(epairify loc
 		   `((eq? ,tmp ,(comp-literal expr tleft)) ,body)))))
+
+      (define (comp-switch-case-char-clause case tmp body tleft)
+	 (with-access::J2SCase case (loc expr)
+	    (if (isa? case J2SDefault)
+		(epairify loc `(else ,body))
+		(epairify loc
+		   `((,(comp-char-literal expr tleft)) ,body)))))
 
       (define (comp-switch-case-clause case body tleft)
 	 (with-access::J2SCase case (loc expr)
@@ -1590,6 +1625,35 @@
 				 (comp-switch-case-clause c body tleft))
 			 cases bodies))))))
 
+      (define (comp-char-case key cases)
+	 (if (<=fx (length cases) 3)
+	     (comp-switch-cond key cases)
+	     (let ((val (gensym 'val))
+		   (tmp (gensym 'tmp))
+		   (funs (map (lambda (c) (gensym 'fun)) cases))
+		   (tleft (j2s-vtype key)))
+		(multiple-value-bind (bindings bodies)
+		   (comp-switch-clause-bodies cases funs)
+		   `(let* ((,val ,(j2s-scheme key mode return ctx))
+			   ,@bindings)
+		       ,(if (eq? (j2s-type key) 'string)
+			    `(let ((,tmp (js-jsstring->string ,val)))
+				(case (if (>fx (string-length ,tmp) 0)
+				       (string-ref ,tmp 0)
+				       #a128)
+				   ,@(mapc (lambda (c body)
+					      (comp-switch-case-char-clause
+						 c tmp body tleft))
+				      cases bodies) ))
+			    `(let ((,tmp (js-tostring ,val %this)))
+				(case (if (>fx (string-length ,tmp) 0)
+				       (string-ref ,tmp 0)
+				       #a128)
+				   ,@(mapc (lambda (c body)
+					      (comp-switch-case-char-clause
+						 c tmp body tleft))
+				      cases bodies) ))))))))
+
       (define (comp-string-case key cases)
 	 (if (<=fx (length cases) 3)
 	     (comp-switch-cond key cases)
@@ -1639,10 +1703,22 @@
 			  (isa? expr J2SString))))
 	    cases))
       
+      (define (char-case? key cases)
+	 (every (lambda (c)
+		   (or (isa? c J2SDefault)
+		       (with-access::J2SCase c (expr)
+			  (when (isa? expr J2SString)
+			     (with-access::J2SString expr (val)
+				(when (=fx (string-length val) 1)
+				   (<fx (char->integer (string-ref val 0)) 128)))))))
+	    cases))
+      
       (define (comp-switch)
 	 (cond
 	    ((scheme-case? key cases)
 	     (comp-switch-case key cases))
+	    ((char-case? key cases)
+	     (comp-char-case key cases))
 	    ((string-case? key cases)
 	     (comp-string-case key cases))
 	    (else
@@ -1721,9 +1797,14 @@
 		      cache
 		      :cachefun (or (is-function? rhs) (is-prototype? obj))))
 	     (let* ((tmp (gensym 'tmp))
-		    (access (duplicate::J2SAccess lhs (obj (J2SHopRef tmp)))))
-		(if (eq? (j2s-vtype obj) 'array)
-		    (j2s-array-set! this mode return ctx)
+		    (access (duplicate::J2SAccess lhs (obj (J2SHopRef tmp))))
+		    (tyo (j2s-vtype obj)))
+		(cond
+		   ((eq? tyo 'array)
+		    (j2s-array-set! this mode return ctx))
+		   ((memq tyo '(int8array uint8array))
+		    (j2s-tarray-set! this mode return ctx))
+		   (else
 		    `(let ((,tmp ,(j2s-scheme obj mode return ctx)))
 			(if (js-array? ,tmp)
 			    ,(j2s-array-set!
@@ -1743,22 +1824,26 @@
 				#f
 				cache
 				:cachefun (or (is-function? rhs)
-					      (is-prototype? obj))))))))))
+					      (is-prototype? obj)))))))))))
 
    (with-access::J2SAssig this (loc lhs rhs)
-      (let loop ((lhs lhs))
+      (let loop ((lhs lhs)
+		 (rhs rhs))
 	 (cond
 	    ((isa? lhs J2SAccess)
 	     (with-access::J2SAccess lhs (obj field cache cspecs (loca loc))
 		(epairify loc
 		   (cond
-		      ((eq? (j2s-vtype obj) 'vector)
+		      ((eq? (j2s-type obj) 'vector)
 		       (j2s-vector-set! this mode return ctx))
-		      ((and (eq? (j2s-vtype obj) 'array) (maybe-number? field))
+		      ((and (eq? (j2s-type obj) 'array) (maybe-number? field))
 		       (j2s-array-set! this mode return ctx))
-		      ((and (mightbe-number? field) (eq? (j2s-vtype obj) 'any))
+		      ((and (memq (j2s-type obj) '(int8array uint8array))
+			    (maybe-number? field))
+		       (j2s-tarray-set! this mode return ctx))
+		      ((and (mightbe-number? field) (eq? (j2s-type obj) 'any))
 		       (maybe-array-set lhs rhs))
-		      ((eq? (j2s-vtype obj) 'arguments)
+		      ((eq? (j2s-type obj) 'arguments)
 		       (j2s-arguments-set! this mode return ctx))
 		      (else
 		       (j2s-put! loca (j2s-scheme obj mode return ctx)
@@ -1802,7 +1887,7 @@
 		(epairify loc
 		   (let liip ((withs withs))
 		      (if (null? withs)
-			  (loop expr)
+			  (loop expr rhs)
 			  `(if ,(j2s-in? loc
 				   (& id (context-program ctx)) (car withs) ctx)
 			       ,(j2s-put! loc (car withs) #f 'object
@@ -1815,7 +1900,10 @@
 	     (j2s-scheme rhs mode return ctx))
 	    ((isa? lhs J2SParen)
 	     (with-access::J2SParen lhs (expr)
-		(loop expr)))
+		(loop expr rhs)))
+	    ((isa? lhs J2SCast)
+	     (with-access::J2SCast lhs (expr type loc)
+		(loop expr (J2SCast type rhs))))
 	    (else
 	     (j2s-error "assignment" "Illegal assignment" this))))))
 
@@ -2338,6 +2426,11 @@
 	     `(let ((,tmp ,(j2s-scheme obj mode return ctx)))
 		 ,(index-obj-ref access ref field cache cspecs loc)))))
 
+   (define (math-object? obj ctx)
+      (when (isa? obj J2SRef)
+	 (with-access::J2SRef obj (decl)
+	    (eq? decl (context-math ctx)))))
+   
    (define (builtin-object? obj)
       (when (isa? obj J2SGlobalRef)
 	 (with-access::J2SGlobalRef obj (decl)
@@ -2395,6 +2488,10 @@
 	     (index-ref obj field cache cspecs loc))
 	    ((and (builtin-object? obj)
 		  (get-builtin-object obj field mode return ctx))
+	     =>
+	     (lambda (sexp) sexp))
+	    ((and (math-object? obj ctx)
+		  (j2s-math-object-get obj field mode return ctx))
 	     =>
 	     (lambda (sexp) sexp))
 	    (else
@@ -2699,6 +2796,15 @@
    (define (new-regexp? clazz)
       (new-builtin? clazz 'RegExp))
 
+   (define (new-int8array? clazz)
+      (new-builtin? clazz 'Int8Array))
+
+   (define (new-uint8array? clazz)
+      (new-builtin? clazz 'Uint8Array))
+
+   (define (new-typeerror? clazz)
+      (new-builtin? clazz 'TypeError))
+
    (define (constructor-no-call? decl)
       ;; does this constructor call another function?
       (let ((fun (j2sdeclinit-val-fun decl)))
@@ -2782,6 +2888,31 @@
 	       (or (=fx (bigloo-debug) 0) (eq? type 'vector)))
 	  (epairify loc
 	     (j2s-new-array this mode return ctx)))
+	 ((and (=fx (length args) 1)
+	       (or (new-int8array? clazz)
+		   (new-uint8array? clazz)))
+	  (epairify loc
+	     (j2s-new-tarray this mode return ctx)))
+	 ((and (new-typeerror? clazz)
+	       (pair? args)
+	       (<=fx (length args) 3))
+	  (epairify loc
+	     (case (length args)
+		((1)
+		 `(js-type-error1
+		     ,(j2s-scheme (car args) mode return ctx)
+		     %this))
+		((2)
+		 `(js-type-error2
+		     ,(j2s-scheme (car args) mode return ctx)
+		     ,(j2s-scheme (cadr args) mode return ctx)
+		     %this))
+		(else
+		 `(js-type-error
+		     ,(j2s-scheme (car args) mode return ctx)
+		     ,(j2s-scheme (cadr args) mode return ctx)
+		     ,(j2s-scheme (caddr args) mode return ctx)
+		     %this)))))
 	 ((and (new-proxy? clazz) (=fx (length args) 2))
 	  (epairify loc
 	     (j2s-new-proxy this mode return ctx)))

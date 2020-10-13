@@ -73,20 +73,26 @@ lib-c-static-sans-afile: \
 # order when invoking make with --jobs N
 lib-c-shared: lib-c-static
 	@ if [ "$(SHAREDLIBRARYSUPPORT)" = "yes" ]; then \
-           $(MAKE) lib-c.$(SHAREDSUFFIX); \
+	   if [ "$(THREADS)" = "yes" ]; then \
+             $(MAKE) lib-c_mt.$(SHAREDSUFFIX); \
+           else \
+             $(MAKE) lib-c_st.$(SHAREDSUFFIX); \
+           fi \
         fi
 
 # we have 8 versions of each library:
 # safe and unsafe, runtime and evaluation time
 # evaltime libs have to link to runtime libs, but with matching safeness
-lib-c.$(SHAREDSUFFIX):
+lib-c_st.$(SHAREDSUFFIX):
 	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_s LIBSUFFIXTHREAD=
-	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_s LIBSUFFIXTHREAD=_mt
 	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_es LIBSUFFIXTHREAD=
-	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_es LIBSUFFIXTHREAD=_mt
 	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_u LIBSUFFIXTHREAD=
-	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_u LIBSUFFIXTHREAD=_mt
 	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_eu LIBSUFFIXTHREAD=
+
+lib-c_mt.$(SHAREDSUFFIX):
+	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_s LIBSUFFIXTHREAD=_mt
+	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_es LIBSUFFIXTHREAD=_mt
+	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_u LIBSUFFIXTHREAD=_mt
 	@ $(MAKE) one-lib-c.$(SHAREDSUFFIX) LIBSUFFIX=_eu LIBSUFFIXTHREAD=_mt
 
 one-lib-c.$(SHAREDSUFFIX): \
@@ -230,54 +236,38 @@ install-native-heap:
 	chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
 
 install-native-libs:
+	if [ "$(THREADS)" = "yes" ]; then \
+          $(MAKE) LIBSUFFIXTHREAD=_mt install-native-libs-version; \
+        else \
+          $(MAKE) LIBSUFFIXTHREAD= install-native-libs-version; \
+        fi
+
+install-native-libs-version:
 	$(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR)\
                 LIBDIR=$(HOPLIBDIR)\
-                LIB=lib$(TARGETNAME)_s-$(HOPRELEASE)
-	$(MAKE) install-lib \
-                INSTALL="$(INSTALL)" \
-                BOOTLIBDIR=$(BUILDLIBDIR) \
-                FILDIR=$(HOPFILDIR)\
-                LIBDIR=$(HOPLIBDIR)\
-                LIB=lib$(TARGETNAME)_s_mt-$(HOPRELEASE)
+                LIB=lib$(TARGETNAME)_s$(LIBSUFFIXTHREAD)-$(HOPRELEASE)
 	$(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
                 LIBDIR=$(HOPLIBDIR) \
-                LIB=lib$(TARGETNAME)_es-$(HOPRELEASE)
+                LIB=lib$(TARGETNAME)_es$(LIBSUFFIXTHREAD)-$(HOPRELEASE)
 	$(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
                 LIBDIR=$(HOPLIBDIR) \
-                LIB=lib$(TARGETNAME)_es_mt-$(HOPRELEASE)
+                LIB=lib$(TARGETNAME)_u$(LIBSUFFIXTHREAD)-$(HOPRELEASE)
 	$(MAKE) install-lib \
                 INSTALL="$(INSTALL)" \
                 BOOTLIBDIR=$(BUILDLIBDIR) \
                 FILDIR=$(HOPFILDIR) \
                 LIBDIR=$(HOPLIBDIR) \
-                LIB=lib$(TARGETNAME)_u-$(HOPRELEASE)
-	$(MAKE) install-lib \
-                INSTALL="$(INSTALL)" \
-                BOOTLIBDIR=$(BUILDLIBDIR) \
-                FILDIR=$(HOPFILDIR) \
-                LIBDIR=$(HOPLIBDIR) \
-                LIB=lib$(TARGETNAME)_u_mt-$(HOPRELEASE)
-	$(MAKE) install-lib \
-                INSTALL="$(INSTALL)" \
-                BOOTLIBDIR=$(BUILDLIBDIR) \
-                FILDIR=$(HOPFILDIR) \
-                LIBDIR=$(HOPLIBDIR) \
-                LIB=lib$(TARGETNAME)_eu-$(HOPRELEASE)
-	$(MAKE) install-lib \
-                INSTALL="$(INSTALL)" \
-                BOOTLIBDIR=$(BUILDLIBDIR) \
-                FILDIR=$(HOPFILDIR) \
-                LIBDIR=$(HOPLIBDIR) \
-                LIB=lib$(TARGETNAME)_eu_mt-$(HOPRELEASE)
+                LIB=lib$(TARGETNAME)_eu$(LIBSUFFIXTHREAD)-$(HOPRELEASE)
+
 
 uninstall: uninstall-native-heap uninstall-native-libs
 
@@ -285,14 +275,17 @@ uninstall-native-heap:
 	-$(RM) -f $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/$(TARGETNAME).heap
 
 uninstall-native-libs:
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_s-$(HOPRELEASE)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_u-$(HOPRELEASE)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_es-$(HOPRELEASE)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_eu-$(HOPRELEASE)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_s_mt-$(HOPRELEASE)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_u_mt-$(HOPRELEASE)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_es_mt-$(HOPRELEASE)
-	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_eu_mt-$(HOPRELEASE)
+	if [ "$(THREADS)" = "yes" ]; then \
+          $(MAKE) LIBSUFFIXTHREAD=_mt uninstall-native-libs-version; \
+        else \
+          $(MAKE) VERSOIN= uninstall-native-libs-version; \
+        fi
+
+uninstall-native-libs-version:
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_s$(LIBSUFFIXTHREAD)-$(HOPRELEASE)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_u$(LIBSUFFIXTHREAD)-$(HOPRELEASE)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_es$(LIBSUFFIXTHREAD)-$(HOPRELEASE)
+	-$(MAKE) uninstall-lib LIB=lib$(TARGETNAME)_eu$(LIBSUFFIXTHREAD)-$(HOPRELEASE)
 
 #*---------------------------------------------------------------------*/
 #*    dep                                                              */

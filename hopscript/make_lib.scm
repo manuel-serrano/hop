@@ -31,6 +31,7 @@
 	   __hopscript_service
 	   __hopscript_array
 	   __hopscript_arraybuffer	   
+	   __hopscript_arraybufferview
 	   __hopscript_string
 	   __hopscript_stringliteral
 	   __hopscript_names

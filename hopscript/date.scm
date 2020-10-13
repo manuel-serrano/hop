@@ -155,6 +155,7 @@
    (cond
       ((fixnum? val) val)
       ((flonum? val) (if (nanfl? val) val (flonum->fixnum val)))
+      ((eq? val (js-undefined)) 0)
       (else (tofixnum (js-tonumber val %this) %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -257,7 +258,17 @@
       
       ;; UTC
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.3
-      (define (js-date-utc this . args)
+      (define (js-date-utc this year month date hours minutes seconds ms)
+	 (let ((dt (js-date-value7 %this year month date hours minutes seconds ms)))
+	    (if (date? dt)
+		(let ((ctz (date-timezone dt)))
+		   (js-flonum->integer
+		      (llong->flonum
+			 (+llong (date->milliseconds dt)
+			    (*llong (fixnum->llong ctz) #l1000)))))
+		0)))
+
+      (define (js-date-utc-tbr22sep2020 this . args)
 	 (match-case args
 	    (()
 	     0)
@@ -275,9 +286,7 @@
 			  (llong->flonum
 			     (+llong (date->milliseconds dt)
 				(*llong (fixnum->llong ctz) #l1000)))))
-		    (begin
-		       (tprint "PAS DATE args=" args)
-		       0))))))
+		    0)))))
       
       (js-bind! %this js-date (& "UTC")
 	 :value (js-make-function %this js-date-utc

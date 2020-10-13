@@ -67,11 +67,15 @@
 			  '(pmap))
 		       ;; fast code
 		       (cspecs
-;* 			  '(imap emap cmap pmap amap vtable)           */
+			  ;; access
 			  '(imap emap cmap vtable)
+			  ;; assig
 			  '(imap emap cmap nmap amap vtable)
+			  ;; assiggop
 			  '(imap cmap)
+			  ;; assignew
 			  '(emap)
+			  ;; call
 			  '(pmap cmap vtable poly)))))
 	 (cspecs-default! this csdef)
 	 (when (or (config-get conf :optim-cspecs) (config-get conf :cspecs))

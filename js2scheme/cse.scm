@@ -156,6 +156,16 @@
       this))
       
 ;*---------------------------------------------------------------------*/
+;*    cse! ::J2SLetBlock ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cse! this::J2SLetBlock bag block conf)
+   (with-access::J2SLetBlock this (nodes %info decls)
+      (set! %info '())
+      (set! decls (cse* decls bag this conf))
+      (set! nodes (cse* nodes bag this conf))
+      this))
+      
+;*---------------------------------------------------------------------*/
 ;*    cse! ::J2SIf ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cse! this::J2SIf bag block conf)
@@ -239,7 +249,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (temp! this::J2SBlock)
    (with-access::J2SBlock this (nodes %info loc endloc)
-      (set! nodes (list (J2SLetBlock* %info (map temp! nodes))))
+      (if (pair? %info)
+	  (set! nodes (list (J2SLetBlock* %info (map temp! nodes))))
+	  (set! nodes (map temp! nodes)))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -247,7 +259,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (temp! this::J2SLetBlock)
    (with-access::J2SLetBlock this (nodes %info decls)
-      (set! decls (append %info decls))
+      (set! decls (append %info (map temp! decls)))
       (set! nodes (map temp! nodes))
       this))
 

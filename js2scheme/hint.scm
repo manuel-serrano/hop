@@ -88,10 +88,11 @@
       ((memq ty
 	  '(any unknown
 	    integer real number bool string
-	    regexp array date arguments function arrow procedure
+	    regexp array no-array date arguments function arrow procedure
 	    class object promise
 	    null undefined void
-	    cmap scmstring tilde pair no-string no-integer))
+	    cmap scmstring tilde pair no-string no-integer
+	    int8array uint8array))
        ty)
       ((memq ty '(index indexof length)) 'integer)
       ((memq ty '(ureal1 real1 real4)) 'real)
@@ -135,6 +136,10 @@
 	 (when (pair? hs)
 	    (when (pair? (assq 'no-string hint))
 	       (set! hint (remq! hint hs)))))
+      (let ((hs (assq 'array hint)))
+	 (when (pair? hs)
+	    (when (pair? (assq 'no-array hint))
+	       (set! hint (remq! hint hs)))))
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
@@ -173,6 +178,13 @@
 				(let ((c (assq 'integer hint)))
 				   (set! hint (delete! c hint))
 				   (add-hint! expr ty inc)))
+			       ((array)
+				(unless (assq 'no-array hint)
+				   (add-hint! expr ty inc)))
+			       ((no-array)
+				(let ((c (assq 'array hint)))
+				   (set! hint (delete! c hint))
+				   (add-hint! expr ty inc)))
 			       (else
 				(add-hint! expr ty inc))))))
 	    hints))))
@@ -203,6 +215,13 @@
 				   (add-hint! decl ty inc)))
 			       ((no-string)
 				(let ((c (assq 'string hint)))
+				   (set! hint (delete! c hint))
+				   (add-hint! decl ty inc)))
+			       ((array)
+				(unless (assq 'no-array hint)
+				   (add-hint! decl ty inc)))
+			       ((no-array)
+				(let ((c (assq 'array hint)))
 				   (set! hint (delete! c hint))
 				   (add-hint! decl ty inc)))
 			       ((no-integer)
@@ -247,127 +266,146 @@
 	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-hint-binary ...                                              */
+;*---------------------------------------------------------------------*/
+(define (j2s-hint-binary op lhs rhs hints)
+   (case op
+      ((<< >> >>> ^ & BIT_OR)
+       (j2s-hint rhs  '((integer . 5)))
+       (j2s-hint lhs '((integer . 5))))
+      ((&& OR)
+       (j2s-hint rhs  (cons '(bool . 10) hints))
+       (j2s-hint lhs  (cons '(bool . 10) hints)))
+      ((- * /)
+       (case (j2s-type lhs)
+	  ((real)
+	   (j2s-hint lhs '())
+	   (j2s-hint rhs '((real . 5) (no-string . 1))))
+	  ((integer)
+	   (j2s-hint lhs '())
+	   (j2s-hint rhs '((integer . 3) (no-string . 1))))
+	  (else
+	   (j2s-hint lhs '((no-string . 1)))
+	   (j2s-hint rhs '((integer . 2) (real . 2) (no-string . 1)))))
+       (case (j2s-type rhs)
+	  ((real)
+	   (j2s-hint lhs '((real . 5) (no-string . 1)))
+	   (j2s-hint rhs '()))
+	  ((integer)
+	   (j2s-hint lhs '((integer . 3) (no-string . 1)))
+	   (j2s-hint rhs '()))
+	  (else
+	   (j2s-hint lhs '((integer . 2) (real . 2) (no-string . 1)))
+	   (j2s-hint rhs '((no-string . 1))))))
+      ((< <= >= >)
+       (case (j2s-type lhs)
+	  ((real)
+	   (j2s-hint lhs '())
+	   (j2s-hint rhs '((real . 5) (no-string . 1))))
+	  ((integer)
+	   (j2s-hint lhs '())
+	   (j2s-hint rhs '((integer . 3) (no-string . 1))))
+	  (else
+	   (j2s-hint rhs '((integer . 2) (real . 2)))))
+       (case (j2s-type rhs)
+	  ((real)
+	   (j2s-hint lhs '((real . 5) (no-string . 1)))
+	   (j2s-hint rhs '()))
+	  ((integer)
+	   (j2s-hint lhs '((integer . 3) (no-string . 1)))
+	   (j2s-hint rhs '()))
+	  (else
+	   (j2s-hint lhs '((integer . 2) (real . 2))))))
+      ((%)
+       (case (j2s-type lhs)
+	  ((real)
+	   (j2s-hint lhs '())
+	   (j2s-hint rhs '((real . 5) (no-string . 1))))
+	  ((integer)
+	   (j2s-hint lhs '())
+	   (j2s-hint rhs '((integer . 5) (no-string . 1))))
+	  (else
+	   (j2s-hint lhs '((no-string . 1)))
+	   (j2s-hint rhs '((integer . 4) (no-string . 1)))))
+       (case (j2s-type rhs)
+	  ((real)
+	   (j2s-hint lhs '((real . 5) (no-string . 1)))
+	   (j2s-hint rhs '()))
+	  ((integer)
+	   (j2s-hint lhs '((integer . 5) (no-string . 1)))
+	   (j2s-hint rhs '()))
+	  (else
+	   (j2s-hint lhs '((integer . 4) (no-string . 1)))
+	   (j2s-hint rhs '((no-string . 1))))))
+      ((+)
+       (cond
+	  ((eq? (j2s-type lhs) 'real)
+	   (j2s-hint rhs '((real . 5))))
+	  ((eq? (j2s-type rhs) 'real)
+	   (j2s-hint rhs '((real . 5))))
+	  ((eq? (j2s-type lhs) 'integer)
+	   (j2s-hint rhs '((integer . 5) (real . 4))))
+	  ((eq? (j2s-type rhs) 'integer)
+	   (j2s-hint rhs '((integer . 5) (real . 4))))
+	  ((eq? (j2s-type lhs) 'number)
+	   (j2s-hint rhs '((integer . 3) (real . 3))))
+	  ((eq? (j2s-type rhs) 'number)
+	   (j2s-hint rhs '((integer . 3) (real . 3))))
+	  ((eq? (j2s-type lhs) 'string)
+	   (j2s-hint rhs '((string . 5))))
+	  ((eq? (j2s-type rhs) 'string)
+	   (j2s-hint lhs '((string . 5))))
+	  (else
+	   (j2s-hint lhs '((string . 2) (integer . 2) (real . 1)))
+	   (j2s-hint rhs '((string . 2) (integer . 2) (real . 1))))))
+      ((== === != !== eq?)
+       (cond
+	  ((isa? lhs J2SNull)
+	   (j2s-hint lhs '())
+	   (j2s-hint rhs '((null . 1))))
+	  ((isa? rhs J2SNull)
+	   (j2s-hint rhs '())
+	   (j2s-hint lhs '((null . 1))))
+	  ((isa? lhs J2SUndefined)
+	   (j2s-hint lhs '())
+	   (j2s-hint rhs '((undefined . 1))))
+	  ((isa? rhs J2SUndefined)
+	   (j2s-hint lhs '((undefined . 1)))
+	   (j2s-hint rhs '()))
+	  ((eq? (j2s-type lhs) 'integer)
+	   (j2s-hint lhs '())
+	   (j2s-hint rhs '((integer . 3)  (no-string . 1))))
+	  ((eq? (j2s-type rhs) 'integer)
+	   (j2s-hint lhs '((integer . 3)  (no-string . 1)))
+	   (j2s-hint rhs '()))
+	  ((eq? (j2s-type lhs) 'real)
+	   (j2s-hint lhs '())
+	   (j2s-hint rhs '((real . 5)  (no-string . 1))))
+	  ((eq? (j2s-type lhs) 'real)
+	   (j2s-hint lhs '())
+	   (j2s-hint rhs '((real . 5)  (no-string . 1))))
+	  ((not (memq (j2s-type lhs) '(any unknown)))
+	   (j2s-hint lhs '())
+	   (j2s-hint rhs `((,(j2s-type lhs) . 5))))
+	  ((not (memq (j2s-type rhs) '(any unknown)))
+	   (j2s-hint lhs `((,(j2s-type lhs) . 5)))
+	   (j2s-hint rhs '()))
+	  (else
+	   (j2s-hint lhs hints)
+	   (j2s-hint rhs hints))))
+      ((instanceof)
+       (j2s-hint rhs '((function . 5)))
+       (j2s-hint lhs '((object . 2) (function . 1) (array . 1))))
+      (else
+       (j2s-hint lhs hints)
+       (j2s-hint rhs hints))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SBinary ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SBinary hints)
    (with-access::J2SBinary this (op lhs rhs)
-      (case op
-	 ((<< >> >>> ^ & BIT_OR)
-	  (j2s-hint rhs  '((integer . 5)))
-	  (j2s-hint lhs '((integer . 5))))
-	 ((&& OR)
-	  (j2s-hint rhs  (cons '(bool . 10) hints))
-	  (j2s-hint lhs  (cons '(bool . 10) hints)))
-	 ((< <= >= > - * /)
-	  (case (j2s-type lhs)
-	     ((real)
-	      (j2s-hint lhs '())
-	      (j2s-hint rhs '((real . 5) (no-string . 1))))
-	     ((integer)
-	      (j2s-hint lhs '())
-	      (j2s-hint rhs '((integer . 3) (no-string . 1))))
-	     (else
-	      (j2s-hint lhs '((no-string . 1)))
-	      (j2s-hint rhs '((integer . 2) (real . 2) (no-string . 1)))))
-	  (case (j2s-type rhs)
-	     ((real)
-	      (j2s-hint lhs '((real . 5) (no-string . 1)))
-	      (j2s-hint rhs '()))
-	     ((integer)
-	      (j2s-hint lhs '((integer . 3) (no-string . 1)))
-	      (j2s-hint rhs '()))
-	     (else
-	      (j2s-hint lhs '((integer . 2) (real . 2) (no-string . 1)))
-	      (j2s-hint rhs '((no-string . 1))))))
-	 ((%)
-	  (case (j2s-type lhs)
-	     ((real)
-	      (j2s-hint lhs '())
-	      (j2s-hint rhs '((real . 5) (no-string . 1))))
-	     ((integer)
-	      (j2s-hint lhs '())
-	      (j2s-hint rhs '((integer . 5) (no-string . 1))))
-	     (else
-	      (j2s-hint lhs '((no-string . 1)))
-	      (j2s-hint rhs '((integer . 4) (no-string . 1)))))
-	  (case (j2s-type rhs)
-	     ((real)
-	      (j2s-hint lhs '((real . 5) (no-string . 1)))
-	      (j2s-hint rhs '()))
-	     ((integer)
-	      (j2s-hint lhs '((integer . 5) (no-string . 1)))
-	      (j2s-hint rhs '()))
-	     (else
-	      (j2s-hint lhs '((integer . 4) (no-string . 1)))
-	      (j2s-hint rhs '((no-string . 1))))))
-	 ((+)
-	  (cond
-	     ((eq? (j2s-type lhs) 'real)
-	      (j2s-hint lhs '())
-	      (j2s-hint rhs '((real . 5))))
-	     ((eq? (j2s-type rhs) 'real)
-	      (j2s-hint lhs '())
-	      (j2s-hint rhs '((real . 5))))
-	     ((eq? (j2s-type lhs) 'integer)
-	      (j2s-hint lhs '())
-	      (j2s-hint rhs '((integer . 5) (real . 4))))
-	     ((eq? (j2s-type rhs) 'integer)
-	      (j2s-hint lhs '())
-	      (j2s-hint rhs '((integer . 5) (real . 4))))
-	     ((eq? (j2s-type lhs) 'number)
-	      (j2s-hint lhs '())
-	      (j2s-hint rhs '((integer . 3) (real . 3))))
-	     ((eq? (j2s-type rhs) 'number)
-	      (j2s-hint lhs '())
-	      (j2s-hint rhs '((integer . 3) (real . 3))))
-	     ((eq? (j2s-type lhs) 'string)
-	      (j2s-hint lhs '())
-	      (j2s-hint rhs '((string . 5))))
-	     ((eq? (j2s-type rhs) 'string)
-	      (j2s-hint lhs '((string . 5)))
-	      (j2s-hint rhs '()))
-	     (else
-	      (j2s-hint lhs '((string . 2) (integer . 2) (real . 1)))
-	      (j2s-hint rhs '((string . 2) (integer . 2) (real . 1))))))
-	 ((== === != !== eq?)
-	  (cond
-	     ((isa? lhs J2SNull)
-	      (j2s-hint lhs '())
-	      (j2s-hint rhs '((null . 1))))
-	     ((isa? rhs J2SNull)
-	      (j2s-hint rhs '())
-	      (j2s-hint lhs '((null . 1))))
-	     ((isa? lhs J2SUndefined)
-	      (j2s-hint lhs '())
-	      (j2s-hint rhs '((undefined . 1))))
-	     ((isa? rhs J2SUndefined)
-	      (j2s-hint lhs '((undefined . 1)))
-	      (j2s-hint rhs '()))
-	     ((eq? (j2s-type lhs) 'integer)
-	      (j2s-hint lhs '())
-	      (j2s-hint rhs '((integer . 3)  (no-string . 1))))
-	     ((eq? (j2s-type rhs) 'integer)
-	      (j2s-hint lhs '((integer . 3)  (no-string . 1)))
-	      (j2s-hint rhs '()))
-	     ((eq? (j2s-type lhs) 'real)
-	      (j2s-hint lhs '())
-	      (j2s-hint rhs '((real . 5)  (no-string . 1))))
-	     ((eq? (j2s-type lhs) 'real)
-	      (j2s-hint lhs '())
-	      (j2s-hint rhs '((real . 5)  (no-string . 1))))
-	     ((not (memq (j2s-type lhs) '(any unknown)))
-	      (j2s-hint lhs '())
-	      (j2s-hint rhs `((,(j2s-type lhs) . 5))))
-	     ((not (memq (j2s-type rhs) '(any unknown)))
-	      (j2s-hint lhs `((,(j2s-type lhs) . 5)))
-	      (j2s-hint rhs '()))
-	     (else
-	      (call-default-walker))))
-	 ((instanceof)
-	  (j2s-hint rhs '((function . 5)))
-	  (j2s-hint lhs '((object . 2) (function . 1) (array . 1))))
-	 (else
-	  (call-default-walker)))))
+      (j2s-hint-binary op lhs rhs hints)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SSwitch ...                                         */
@@ -427,7 +465,7 @@
 ;*    j2s-hint-access ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-hint-access this maybe-string)
-   (with-access::J2SAccess this (obj field)
+   (with-access::J2SAccess this (obj field loc)
       (let loop ((field field))
 	 (cond
 	    ((isa? field J2SString)
@@ -455,15 +493,23 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SAccess hints)
    (add-hints! this hints)
-   (j2s-hint-access this (not (assq 'no-string hints))))
+   (j2s-hint-access this #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SAssig ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SAssig hints)
-   (with-access::J2SAssig this (lhs rhs)
+   (with-access::J2SAssig this (lhs rhs loc)
       (when (isa? lhs J2SAccess) (j2s-hint-access lhs #f))
       (j2s-hint rhs '())))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hint ::J2SAssigOp ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint this::J2SAssigOp hints)
+   (with-access::J2SAssigOp this (op lhs rhs)
+      (j2s-hint-binary op lhs rhs hints)
+      (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SPostfix ...                                        */
@@ -487,8 +533,11 @@
 ;*    j2s-hint ::J2SNew ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SNew hints)
-   (with-access::J2SNew this (clazz args)
+   (with-access::J2SNew this (clazz args type)
       (j2s-hint clazz '((function . 5)))
+      (when (and (eq? type 'array) (pair? args) (null? (cdr args)))
+	 (unless (eq? (j2s-type (car args)) 'integer)
+	    (j2s-hint (car args) '((integer . 2)))))
       (for-each (lambda (a) (j2s-hint a '())) args)))
 
 ;*---------------------------------------------------------------------*/
@@ -520,6 +569,11 @@
 			 (j2s-hint (car args) hints)
 			 (loop (cdr args) (cdr params))))
 		   (for-each (lambda (a) (j2s-hint a '())) args))))))
+
+   (define (hint-fun-call callee args)
+      (with-access::J2SFun callee (body)
+	 (j2s-hint body '())
+	 (hint-known-call callee args)))
    
    (define (hint-ref-call callee args)
       (with-access::J2SRef callee (decl)
@@ -536,7 +590,23 @@
 		    (hint-unknown-call callee args))))
 	    (else
 	     (hint-unknown-call callee args)))))
-   
+
+   (define (receiver-hint-object? rtys)
+      ;; a receiver is hintted object if and only if it has several
+      ;; possible possible hints
+      (when (pair? rtys)
+	 (let loop ((rtys rtys)
+		    (armed #f))
+	    (cond
+	       ((null? rtys)
+		#f)
+	       ((memq (car rtys) '(no-array no-string no-integer))
+		(loop (cdr rtys) armed))
+	       (armed
+		#t)
+	       (else
+		(loop (cdr rtys) #t))))))
+		    
    (define (hint-access-call callee args)
       (with-access::J2SAccess callee (obj field loc)
 	 (let* ((fn (j2s-field-name field))
@@ -547,16 +617,21 @@
 	    (let ((hints (cond
 			    ((eq? (cadr tys) 'any)
 			     '((object . 5)))
-			    ((pair? (cadr tys))
+			    ((receiver-hint-object? (cadr tys))
 			     (cons '(object . 5)
 				(map (lambda (t)
 					`(,(j2s-hint-type t) . 2))
 				   (cadr tys))))
 			    ((eq? (cadr tys) 'any)
 			     '((object . 5)))
+			    ((not (pair? (cadr tys)))
+			     `((object . 2) (,(j2s-hint-type (cadr tys)) . 5)))
 			    (else
-			     `((object . 5) (,(j2s-hint-type (cadr tys)) . 4))))))
-	       (j2s-hint obj (cons '(object . 5) hints)))
+			     `((object . 3)
+			       ,@(map (lambda (t)
+					 `(,(j2s-hint-type t) . 5))
+				    (cadr tys)))))))
+	       (j2s-hint obj hints))
 	    ;; hint the arguments
 	    (let loop ((args args)
 		       (tys (cddr tys)))
@@ -573,7 +648,7 @@
    
    (with-access::J2SCall this (fun args)
       (cond
-	 ((isa? fun J2SFun) (hint-known-call fun args))
+	 ((isa? fun J2SFun) (hint-fun-call fun args))
 	 ((isa? fun J2SRef) (hint-ref-call fun args))
 	 ((isa? fun J2SAccess) (hint-access-call fun args))
 	 ((isa? fun J2SGlobalRef) (hint-unknown-call fun args))
@@ -741,7 +816,7 @@
 				    params) " " 
 				 (not (type-checker? val))
 				 "]"))))
-		     dup))))))
+		     (and dup (config-get conf :optim-hintfun #f))))))))
    
    (define (typed? decl::J2SDeclFun)
       ;; return #t iff the function's arguments are all typed
@@ -1472,6 +1547,15 @@
       (when (or (eq? type 'any) (memq decl decls))
 	 (set! type 'unknown)))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    reset-type! ::J2SDecl ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reset-type! this::J2SDecl decls)
+   (with-access::J2SDecl this (decl vtype)
+      (when (eq? vtype 'any)
+	 (set! vtype 'unknown)))
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    reset-type! ::J2SExpr ...                                        */

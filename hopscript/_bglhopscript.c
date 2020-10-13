@@ -157,7 +157,9 @@ static obj_t bgl_make_jsprocedure_sans( obj_t procedure, long arity, obj_t __pro
 #define JSMETHOD_POOLSZ POOLSZ( 4 )
 #define JSPROCEDURE_POOLSZ POOLSZ( 4 )
 #define WORK_NUMBER 1
+
 #define ALLOC_STATS 0
+#define ALLOC_STAT_FREQ 100000
 
 /*---------------------------------------------------------------------*/
 /*    stat                                                             */
@@ -545,7 +547,7 @@ bgl_init_jsalloc_function( BgL_jsconstructmapz00_bglt constrmap,
 
 /*---------------------------------------------------------------------*/
 /*    int                                                              */
-/*    bgl_init_jsalloc_method ...                                    */
+/*    bgl_init_jsalloc_method ...                                      */
 /*---------------------------------------------------------------------*/
 int
 bgl_init_jsalloc_method( BgL_jsconstructmapz00_bglt constrmap,
@@ -695,7 +697,7 @@ BGL_MAKE_JSOBJECT_SANS( int constrsize, obj_t constrmap, obj_t __proto__, uint32
       /* default slow alloc */ \
       ALLOC_STAT( slow##sz++ ); \
       ALLOC_STAT( pool_queue_idx > qsz##sz ? qsz##sz = pool_queue_idx : 0 ); \
-      ALLOC_STAT( (slow##sz % 1000000 == 0) ? fprintf( stderr, "sz=%d inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", sz, inl##sz, snd##sz, slow##sz, (long)(100*(double)slow##sz/(double)(inl##sz+snd##sz)), inl##sz + snd##sz + slow##sz, qsz##sz) : 0 ); \
+      ALLOC_STAT( (slow##sz % ALLOC_STAT_FREQ == 0) ? fprintf( stderr, "sz=%d inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", sz, inl##sz, snd##sz, slow##sz, (long)(100*(double)slow##sz/(double)(inl##sz+snd##sz)), inl##sz + snd##sz + slow##sz, qsz##sz) : 0 ); \
       alloc_spin_unlock( &lock##sz ); \
       return bgl_make_jsobject_sans( sz, constrmap, __proto__, md ); \
    } \
@@ -769,16 +771,6 @@ BGL_MAKE_JSPROXY_SANS( obj_t target, obj_t handler,
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)jsproxy_constrmap;
    o->BgL_elementsz00 = jsproxy_elements;
    
-#if( defined( HOP_PROFILE ) )
-   {
-      long i = ( constrsize >= VECTOR_LENGTH( bgl_js_profile_allocs ) - 2
-		 ? VECTOR_LENGTH( bgl_js_profile_allocs ) -1
-		 : constrsize );
-      long cnt = BLLONG_TO_LLONG( VECTOR_REF( bgl_js_profile_allocs, i ) );
-      VECTOR_SET( bgl_js_profile_allocs, i, LLONG_TO_BLLONG( cnt + 1 ) );
-   }
-#endif
-
    return BNANOBJECT( o );
 }
 
@@ -798,7 +790,7 @@ obj_t
 bgl_make_jsproxy( obj_t target, obj_t handler,
 		  obj_t getcache, obj_t setcache, obj_t applycache,
 		  uint32_t md ) {
-      alloc_spin_lock( &lockproxy ); 
+   alloc_spin_lock( &lockproxy ); 
    if( poolproxy.idx < JSPROXY_POOLSZ ) { 
       obj_t o = poolproxy.buffer[ poolproxy.idx ]; 
       poolproxy.buffer[ poolproxy.idx++ ] = 0; 
@@ -852,7 +844,7 @@ bgl_make_jsproxy( obj_t target, obj_t handler,
       /* default slow alloc */ 
       ALLOC_STAT( slowproxy++ ); 
       ALLOC_STAT( pool_queue_idx > qszproxy ? qszproxy = pool_queue_idx : 0 ); 
-      ALLOC_STAT( (slowproxy % 1000000 == 0) ? fprintf( stderr, "inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", inlproxy, sndproxy, slowproxy, (long)(100*(double)slowproxy/(double)(inlproxy+sndproxy)), inlproxy + sndproxy + slowproxy, qszproxy) : 0 ); 
+      ALLOC_STAT( (slowproxy % ALLOC_STAT_FREQ == 0) ? fprintf( stderr, "inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", inlproxy, sndproxy, slowproxy, (long)(100*(double)slowproxy/(double)(inlproxy+sndproxy)), inlproxy + sndproxy + slowproxy, qszproxy) : 0 ); 
       alloc_spin_unlock( &lockproxy ); 
       return bgl_make_jsproxy_sans( target, handler,
 				    getcache, setcache, applycache, md ); 
@@ -991,7 +983,7 @@ bgl_make_jsfunction( obj_t procedure,
       /* default slow alloc */ 
       ALLOC_STAT( slowfunction++ ); 
       ALLOC_STAT( pool_queue_idx > qszfunction ? qszfunction = pool_queue_idx : 0 ); 
-      ALLOC_STAT( (slowfunction % 1000000 == 0) ? fprintf( stderr, "inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", inlfunction, sndfunction, slowfunction, (long)(100*(double)slowfunction/(double)(inlfunction+sndfunction)), inlfunction + sndfunction + slowfunction, qszfunction) : 0 ); 
+      ALLOC_STAT( (slowfunction % ALLOC_STAT_FREQ == 0) ? fprintf( stderr, "inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", inlfunction, sndfunction, slowfunction, (long)(100*(double)slowfunction/(double)(inlfunction+sndfunction)), inlfunction + sndfunction + slowfunction, qszfunction) : 0 ); 
       alloc_spin_unlock( &lockfunction ); 
       return bgl_make_jsfunction_sans( procedure,
 				       arity, constrsize,
@@ -1061,14 +1053,14 @@ BGL_MAKE_JSMETHOD_SANS( obj_t procedure, obj_t method,
 
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
-/*    bgl_make_jsmethod ...                                          */
+/*    bgl_make_jsmethod ...                                            */
 /*    -------------------------------------------------------------    */
 /*    Fast C allocation, equivalent to                                 */
 /*                                                                     */
-/*      (instantiate::JsMethod                                       */
+/*      (instantiate::JsMethod                                         */
 /*         (__proto__ __proto__)                                       */
 /*         (cmap constrmap)                                            */
-/*         (elements method-elements))                               */
+/*         (elements method-elements))                                 */
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_JSMETHOD_POLICY != HOP_ALLOC_CLASSIC
 obj_t
@@ -1134,7 +1126,7 @@ bgl_make_jsmethod( obj_t procedure, obj_t method,
       /* default slow alloc */ 
       ALLOC_STAT( slowmethod++ ); 
       ALLOC_STAT( pool_queue_idx > qszmethod ? qszmethod = pool_queue_idx : 0 ); 
-      ALLOC_STAT( (slowmethod % 1000000 == 0) ? fprintf( stderr, "inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", inlmethod, sndmethod, slowmethod, (long)(100*(double)slowmethod/(double)(inlmethod+sndmethod)), inlmethod + sndmethod + slowmethod, qszmethod) : 0 ); 
+      ALLOC_STAT( (slowmethod % ALLOC_STAT_FREQ == 0) ? fprintf( stderr, "inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", inlmethod, sndmethod, slowmethod, (long)(100*(double)slowmethod/(double)(inlmethod+sndmethod)), inlmethod + sndmethod + slowmethod, qszmethod) : 0 ); 
       alloc_spin_unlock( &lockmethod ); 
       return bgl_make_jsmethod_sans( procedure, method, 
 				       arity, constrsize,
@@ -1174,16 +1166,6 @@ BGL_MAKE_JSPROCEDURE_SANS( obj_t procedure, long arity, obj_t __proto__ ) {
       o->BgL_arityz00 = arity;
       o->BgL_cmapz00 = jsprocedure_cmap;
    }
-
-#if( defined( HOP_PROFILE ) )
-   {
-      long i = ( constrsize >= VECTOR_LENGTH( bgl_js_profile_allocs ) - 2
-		 ? VECTOR_LENGTH( bgl_js_profile_allocs ) -1
-		 : constrsize );
-      long cnt = BLLONG_TO_LLONG( VECTOR_REF( bgl_js_profile_allocs, i ) );
-      VECTOR_SET( bgl_js_profile_allocs, i, LLONG_TO_BLLONG( cnt + 1 ) );
-   }
-#endif
 
    return BNANOBJECT( o );
 }
@@ -1248,7 +1230,7 @@ bgl_make_jsprocedure( obj_t procedure, long arity, obj_t __proto__ ) {
       /* default slow alloc */ 
       ALLOC_STAT( slowprocedure++ ); 
       ALLOC_STAT( pool_queue_idx > qszprocedure ? qszprocedure = pool_queue_idx : 0 ); 
-      ALLOC_STAT( (slowprocedure % 1000000 == 0) ? fprintf( stderr, "inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", inlprocedure, sndprocedure, slowprocedure, (long)(100*(double)slowprocedure/(double)(inlprocedure+sndprocedure)), inlprocedure + sndprocedure + slowprocedure, qszprocedure) : 0 ); 
+      ALLOC_STAT( (slowprocedure % ALLOC_STAT_FREQ == 0) ? fprintf( stderr, "inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", inlprocedure, sndprocedure, slowprocedure, (long)(100*(double)slowprocedure/(double)(inlprocedure+sndprocedure)), inlprocedure + sndprocedure + slowprocedure, qszprocedure) : 0 ); 
       alloc_spin_unlock( &lockprocedure ); 
       return bgl_make_jsprocedure_sans( procedure, arity, __proto__ );
    } 

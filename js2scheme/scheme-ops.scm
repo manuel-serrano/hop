@@ -1160,6 +1160,10 @@
 	  (equality-string op lhs tl rhs tr mode return ctx #f))
 	 ((and (memq op '(=== !==)) (eq? tr 'string))
 	  (equality-string op rhs tr lhs tl mode return ctx #t))
+	 ((and (memq op '(== !==)) (eq? tl 'string) (charat? rhs))
+	  (equality-string op lhs tl rhs tr mode return ctx #f))
+	 ((and (memq op '(== !==)) (eq? tr 'string) (charat? lhs))
+	  (equality-string op rhs tr lhs tl mode return ctx #t))
 	 ((and (eq? tl 'real) (eq? tr 'real))
 	  (with-tmp lhs rhs mode return ctx 
 	     (lambda (left right)
@@ -1209,14 +1213,24 @@
 		   (memq tr '(bool string object array))))
 	  (with-tmp lhs rhs mode return ctx
 	     (lambda (left right)
-		(if (and (memq tl '(null undefined bool integer int53))
+		(cond
+		   ((and (memq tl '(null undefined bool integer int53))
 			 (memq tr '(null undefined bool integer int53)))
 		    (if (eq? op '!=)
 			`(not (eq? ,left ,right))
-			`(eq? ,left ,right))
+			`(eq? ,left ,right)))
+		   ((eq? tl 'string)
+		    (if (eq? op '!=)
+			`(not (js-equal-string? ,left ,right %this))
+			`(js-equal-string? ,left ,right %this)))
+		   ((eq? tr 'string)
+		    (if (eq? op '!=)
+			`(not (js-equal-string? ,right ,left %this))
+			`(js-equal-string? ,right ,left %this)))
+		   (else
 		    (if (eq? op '!=)
 			`(not (js-equal-sans-flonum? ,left ,right %this))
-			`(js-equal-sans-flonum? ,left ,right %this))))))
+			`(js-equal-sans-flonum? ,left ,right %this)))))))
 	 ((or (memq tl '(undefined null)) (memq tr '(undefined null)))
 	  (with-tmp lhs rhs mode return ctx
 	     (lambda (left right)
@@ -1416,7 +1430,7 @@
 	     `(js-jsstring-append-ascii3 ,x ,u ,y)
 	     `(js-jsstring-append3 ,x ,u ,y))))
    
-   (define (str-append flip left right)
+   (define (str-append flip lhs rhs left right)
       (cond
 	 ((equal? left (& "" (context-program ctx))) right)
 	 ((equal? right (& "" (context-program ctx))) left)
@@ -1424,7 +1438,7 @@
 	 (else (j2s-jsstring-append lhs rhs left right))))
    
    (define (add-string loc type left tl lhs right tr rhs mode return ctx flip)
-      (str-append flip (tostring left tl ctx) (tostring right tr ctx)))
+      (str-append flip lhs rhs (tostring left tl ctx) (tostring right tr ctx)))
 
    (define (string-add? expr)
       (when (isa? expr J2SBinary)
@@ -1478,11 +1492,32 @@
 		(binop-real-xxx '+ type rhs tr right lhs tl left ctx #t))
 	       ((and (eq? type 'string) (eq? tl 'any) (eq? tr 'any))
 		`(if (and (js-jsstring? ,left) (js-jsstring? ,right))
-		     (j2s-jsstring-append ,left ,right)
+		     (js-jsstring-append ,left ,right)
 		     ,(binop-any-any '+ type
 			 (box left tl ctx)
 			 (box right tr ctx)
 			 #f)))
+	       ((or (and (eq? tl 'number) (eq? tr 'any))
+		    (and (eq? tl 'any) (eq? tr 'number)))
+		(if-fixnums? left tl right tr
+		   (binop-fixnum-fixnum/ctx ctx '+ type
+		      (asfixnum left tl)
+		      (asfixnum right tr)
+		      #f)
+		   (binop-any-any '+ type
+		      (box left tl ctx)
+		      (box right tr ctx)
+		      #f)))
+	       ((or (is-hint? lhs 'integer) (is-hint? rhs 'integer))
+		(if-fixnums? left tl right tr
+		   (binop-fixnum-fixnum/ctx ctx '+ type
+		      (asfixnum left tl)
+		      (asfixnum right tr)
+		      #f)
+		   (binop-any-any '+ type
+		   (box left tl ctx)
+		   (box right tr ctx)
+		   #f)))
 	       (else
 		      (binop-flonum-flonum (real-op '+ type lhs rhs #f) type
 		(binop-any-any '+ type
@@ -1597,10 +1632,15 @@
 			 (asreal right tr)
 			 #f)
 		      (if (and (eq? tl 'number) (eq? tr 'number))
-			  (binop-number-number op type
-			     (box left tl ctx)
-			     (box right tr ctx)
-			     #f)
+			  (if (and (fresh-real? lhs) (fresh-real? rhs))
+			      (binop-number-number! op type
+				   (box left tl ctx)
+				   (box right tr ctx)
+				   #f)
+			      (binop-number-number op type
+				 (box left tl ctx)
+				 (box right tr ctx)
+				 #f))
 			  (binop-any-any op type
 			     (box left tl ctx)
 			     (box right tr ctx)
@@ -1612,10 +1652,15 @@
 			 (asreal right tr)
 			 #f)
 		      (if (and (eq? tl 'number) (eq? tr 'number))
-			  (binop-number-number op type
-			     (box left tl ctx)
-			     (box right tr ctx)
-			     #f)
+			 (if (and (fresh-real? lhs) (fresh-real? rhs))
+			     (binop-number-number! op type
+				(box left tl ctx)
+				(box right tr ctx)
+				#f)
+			     (binop-number-number op type
+				(box left tl ctx)
+				(box right tr ctx)
+				#f))
 			  (binop-any-any op type
 			     (box left tl ctx)
 			     (box right tr ctx)
@@ -1631,13 +1676,33 @@
 			    (asreal left tl)
 			    (asreal right tr)
 			    #f)
-			 (binop-number-number op type
+			 (if (and (fresh-real? lhs) (fresh-real? rhs))
+			     (binop-number-number! op type
+				(box left tl ctx)
+				(box right tr ctx)
+				#f)
+			     (binop-number-number op type
+				(box left tl ctx)
+				(box right tr ctx)
+				#f)))))
+		  ((or (eq? tl 'number) (eq? tr 'number))
+		   (if-fixnums? left tl right tr
+		      (binop-fixnum-fixnum/ctx ctx op type
+			 (asfixnum left tl)
+			 (asfixnum right tr)
+			 #f)
+		      (if-flonums? left tl right tr
+			 (binop-flonum-flonum (real-op op type lhs rhs #f) type
+			    (asreal left tl)
+			    (asreal right tr)
+			    #f)
+			 (binop-any-any op type
 			    (box left tl ctx)
 			    (box right tr ctx)
 			    #f))))
 		  ((and (eq? op '+) (eq? type 'string))
 		   `(if (and (js-jsstring? ,left) (js-jsstring? ,right))
-			(j2s-jsstring-append ,left ,right)
+			(js-jsstring-append ,left ,right)
 			,(binop-any-any op type
 			    (box left tl ctx)
 			    (box right tr ctx)
@@ -1669,8 +1734,7 @@
 	       (tr (j2s-vtype rhs)))
 	    (cond
 	       ((and (eq? (j2s-type lhs) 'real) (eq? (j2s-type rhs) 'real))
-		(binop-flonum-flonum (real-op '* type lhs rhs #f)
-		   type left right #f))
+		(binop-flonum-flonum '* type left right #f))
 	       ((and (eq? tl 'int32) (not (eq? type 'real)))
 		(binop-int32-xxx '* type lhs tl left rhs tr right ctx #f))
 	       ((and (eq? tr 'int32) (not (eq? type 'real)))
@@ -2914,6 +2978,26 @@
        #f)))
 
 ;*---------------------------------------------------------------------*/
+;*    real-op-lhs ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (real-op-lhs op type lhs rhs flip)
+   (cond
+      ((eq? type 'real) op)
+      ((not (memq op '(+ * - /))) op)
+      ((fresh-real? lhs) (symbol-append op (if flip 'r! 'l!)))
+      (else op)))
+
+;*---------------------------------------------------------------------*/
+;*    real-op-rhs ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (real-op-rhs op type lhs rhs flip)
+   (cond
+      ((eq? type 'real) op)
+      ((not (memq op '(+ * - /))) op)
+      ((fresh-real? rhs) (symbol-append op (if flip 'l! 'r!)))
+      (else op)))
+
+;*---------------------------------------------------------------------*/
 ;*    real-op ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (real-op op type lhs rhs flip)
@@ -2940,7 +3024,7 @@
 	  left (asreal right tr) flip))
       (else
        (if-flonum? right tr 
-	  (binop-flonum-flonum (real-op op type lhs rhs flip) type
+	  (binop-flonum-flonum (real-op-rhs op type lhs rhs flip) type
 	     left right flip)
 	  (if (memq type '(int32 uint32 integer bint real number))
 	      (binop-number-number op type
@@ -3079,6 +3163,24 @@
 	      ,(binop-flip (symbol-append op '/overflow) left right flip)))
 	 (else
 	  (binop-flip (symbol-append op '/overflow) left right flip)))))
+
+(define (binop-number-number! op type left right flip)
+   (let ((op (if (memq op '(== ===)) '= op))
+	 (/ov (if (memq op '(+ - *)) '/overflow! '/overflow)))
+      (case type
+	 ((bool)
+	  (binop-flip op left right flip))
+	 ((int32)
+	  `(js-number-toint32
+	      ,(binop-flip (symbol-append op /ov) left right flip)))
+	 ((uint32)
+	  `(js-number-touint32
+	      ,(binop-flip (symbol-append op /ov) left right flip)))
+	 ((real)
+	  `(js-toflonum
+	      ,(binop-flip (symbol-append op /ov) left right flip)))
+	 (else
+	  (binop-flip (symbol-append op /ov) left right flip)))))
    
 (define (binop-any-any op type left right flip)
    (case op

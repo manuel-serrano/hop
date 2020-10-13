@@ -218,6 +218,16 @@
 	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    with-tmp ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (with-tmp v proc)
+   (if (symbol? v)
+       (proc v)
+       (let ((t (gensym '%v)))
+	  `(let ((,t ,v))
+	      ,(proc t)))))
+
+;*---------------------------------------------------------------------*/
 ;*    cast ancially functions                                          */
 ;*---------------------------------------------------------------------*/
 ;; int32
@@ -314,10 +324,14 @@
 
 ;; integer
 (define (js-integer->int32 v expr ctx)
-   `(if (fixnum? ,v) (fixnum->int32 ,v) (flonum->int32 ,v)))
+   (with-tmp v
+      (lambda (v)
+	 `(if (fixnum? ,v) (fixnum->int32 ,v) (flonum->int32 ,v)))))
 
 (define (js-integer->uint32 v expr ctx)
-   `(if (fixnum? ,v) (fixnum->uint32 ,v) (flonum->uint32 ,v)))
+   (with-tmp v
+      (lambda (v)
+	 `(if (fixnum? ,v) (fixnum->uint32 ,v) (flonum->uint32 ,v)))))
 
 (define (js-integer->string v expr ctx)
    (if (integer? v)
@@ -377,10 +391,13 @@
 
 ;; bool
 (define (js-bool->int32 v expr ctx)
-   (if (boolean? v) (if v #s32:1 #s32:0) `(if ,v #s32:1 #s32:0)))
+   (if (boolean? v)
+       (if v #s32:1 #s32:0)
+       (with-tmp v (lambda (v) `(if ,v #s32:1 #s32:0)))))
 
 (define (js-bool->uint32 v expr ctx)
-   (if (boolean? v) (if v #u32:1 #u32:0) `(if ,v #u32:1 #u32:0)))
+   (if (boolean? v) (if v #u32:1 #u32:0)
+       (with-tmp v (lambda (v) `(if ,v #u32:1 #u32:0)))))
 
 (define (js-bool->jsobject v expr ctx)
    `(with-access::JsGlobalObject %this (js-boolean)
@@ -454,21 +471,28 @@
 	  (match-case v
 	     ((if (fixnum? ?test) (-fx/overflow ?x ?y) (and ?d (-/overflow ?x ?y)))
 	      (if (m64? conf)
-		  `(if (fixnum? ,test)
-		       (fixnum->int32 (-fx ,x ,y) )
-		       (js-number-toint32 ,d))
-		  
+		  (with-tmp test
+		     (lambda (test)
+			`(if (fixnum? ,test)
+			     (fixnum->int32 (-fx ,x ,y) )
+			     (js-number-toint32 ,d))))
 		  `(js-number-toint32 ,v)))
 	     ((if (fixnum? ?test) (+fx/overflow ?x ?y) (and ?d (+/overflow ?x ?y)))
 	      (if (m64? conf)
-		  `(if (fixnum? ,test)
-		       (fixnum->int32 (+fx ,x ,y) )
-		       (js-number-toint32 ,d))
+		  (with-tmp test
+		     (lambda (test)
+			`(if (fixnum? ,test)
+			     (fixnum->int32 (+fx ,x ,y) )
+			     (js-number-toint32 ,d))))
 		  `(js-number-toint32 ,v)))
 	     ((?- . ?-)
 	      `(js-number-toint32 ,v))
-	     (else
-	      `(if (fixnum? ,v) (fixnum->int32 ,v) (js-number-toint32 ,v))))))))
+	      (else
+	       (with-tmp v
+		  (lambda (v)
+		     `(if (fixnum? ,v)
+			  (fixnum->int32 ,v)
+			  (js-number-toint32 ,v))))))))))
 
 (define (js-number->uint32 v expr ctx)
    (let ((conf (context-conf ctx)))
@@ -536,7 +560,9 @@
 	      (return #f))
       (match-case v
 	 ((? symbol?)
-	  `(js-toflonum ,v))
+	  (if numberp
+	      `(js-toflonum ,v)
+	      `(js-toflonum (js-tonumber ,v %this))))
 	 ((? fixnum?)
 	  (fixnum->flonum v))
 	 ((? flonum?)

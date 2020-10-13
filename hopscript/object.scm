@@ -52,7 +52,8 @@
 	   __hopscript_lib
 	   __hopscript_arguments
 	   __hopscript_pair
-	   __hopscript_dom)
+	   __hopscript_dom
+	   __hopscript_profile)
 
    (export (js-new-global-object::JsGlobalObject #!key (size 64) name)
 	   
@@ -447,10 +448,7 @@
 	    ;; encodeURI
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.3.3
 	    (define (encodeuri this string)
-	       (let ((str (js-tostring string %this)))
-		  (if (utf8-string? str #t)
-		      (js-string->jsstring (uri-encode str))
-		      (js-raise-uri-error %this "Badly formed url ~s" string))))
+	       (js-jsstring-maybe-encodeuri string %this))
 
 	    (js-bind! %this %this (& "encodeURI")
 	       :value (js-make-function %this encodeuri
@@ -462,10 +460,7 @@
 	    ;; encodeURIComponent
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.3.4
 	    (define (encodeuricomponent this string)
-	       (let ((str (js-tostring string %this)))
-		  (if (utf8-string? str #t)
-		      (js-string->jsstring (uri-encode-component str))
-		      (js-raise-uri-error %this "Badly formed url ~s" string))))
+	       (js-jsstring-maybe-encodeuricomponent string %this))
 
 	    (js-bind! %this %this (& "encodeURIComponent")
 	       :value (js-make-function %this encodeuricomponent
@@ -1079,7 +1074,63 @@
 ;*    js-ownkeys ::JsObject ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-ownkeys obj::JsObject %this)
-   (js-vector->jsarray (js-properties-name obj #t %this) %this))
+
+   (define (cmap->names cmap)
+      (with-access::JsConstructMap cmap (props)
+	 (let* ((len (vector-length props))
+		(arr (js-array-construct-alloc/length %this len)))
+	    (with-access::JsArray arr (length ilen vec)
+	       (let loop ((i 0)
+			  (j 0))
+		  (cond
+		     ((=fx i len)
+		      (set! ilen (fixnum->uint32 j))
+		      (set! length (fixnum->uint32 j))
+		      arr)
+		     ((vector-ref props i)
+		      =>
+		      (lambda (prop)
+			 (if (flags-enumerable? (prop-flags prop))
+			     (let ((name (prop-name prop)))
+				(if (js-jsstring? name)
+				    (begin
+				       (vector-set! vec j name)
+				       (loop (+fx i 1) (+fx j 1)))
+				    (loop (+fx i 1) j)))
+			     (loop (+fx i 1) j))))
+		     (else
+		      (loop (+fx i 1) j))))))))
+   
+   (define (hash->names elements)
+      (map! js-string->jsstring (hashtable-key-list elements)))
+   
+   (define (enum-desc->names elements)
+      (let* ((len (vector-length elements))
+	     (arr (js-array-construct-alloc/length %this len)))
+	 (with-access::JsArray arr (length ilen vec)
+	    (let loop ((i 0)
+		       (j 0))
+	       (if (=fx i len)
+		   (begin
+		      (set! ilen (fixnum->uint32 j))
+		      (set! length (fixnum->uint32 j))
+		      arr)
+		   (with-access::JsPropertyDescriptor (vector-ref elements i) (enumerable name)
+		      (if (and enumerable (js-jsstring? name))
+			  (begin
+			     (vector-set! vec j name)
+			     (loop (+fx i 1) (+fx j 1)))
+			  (loop (+fx i 1) j))))))))
+   
+   
+   (with-access::JsObject obj (cmap elements)
+      (cond
+	 ((js-object-mapped? obj)
+	  (cmap->names cmap))
+	 ((js-object-hashed? obj)
+	  (js-vector->jsarray (apply vector (hash->names elements)) %this))
+	 (else
+	  (enum-desc->names elements)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tonumber ::JsObject ...                                       */

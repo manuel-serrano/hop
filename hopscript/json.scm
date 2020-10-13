@@ -29,7 +29,8 @@
 	   __hopscript_lib
 	   __hopscript_function
 	   __hopscript_error
-	   __hopscript_array)
+	   __hopscript_array
+	   __hopscript_profile)
 
    (export (js-init-json! ::JsObject)
 	   (js-json-stringify ::obj ::obj ::obj ::obj ::JsGlobalObject)
@@ -39,12 +40,6 @@
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
-
-;*---------------------------------------------------------------------*/
-;*    js-donate ::JsJSON ...                                           */
-;*---------------------------------------------------------------------*/
-(define-method (js-donate obj::JsJSON worker::WorkerHopThread %_this)
-   (js-undefined))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-json! ...                                                */
@@ -59,7 +54,7 @@
       ;; local constant strings
       (unless (vector? __js_strings) (set! __js_strings (&init!)))
       (set! js-json
-	 (instantiateJsJSON
+	 (instantiateJsObject
 	    (__proto__ (js-object-proto %this))))
       ;; parse
       (js-bind! %this js-json (& "parse")

@@ -111,10 +111,9 @@
 		   (when (pair? c)
 		      (set! hint (remq! c hint))
 		      (cell-set! fix #f))))
-	     (when (assq 'string newhint)
-		(let ((c (assq 'no-string hint)))
-		   (when (pair? c)
-		      (set! newhint (remq! c hint)))))
+	     (let ((c (assq 'string newhint)))
+		(when (and (pair? c) (assq 'no-string hint))
+		   (set! newhint (remq! c newhint))))
 	     (for-each (lambda (h)
 			  (let ((o (assq (car h) hint)))
 			     (if (pair? o)
@@ -126,15 +125,17 @@
 				    (set! hint (cons h hint))))))
 		newhint)
 	     hint)))
-
    (when (pair? newhint)
       (with-access::J2SExpr this (hint)
 	 (set! hint (add-hint! hint newhint)))
       (when (and propagate (isa? this J2SRef))
 	 (with-access::J2SRef this (decl)
-	    (with-access::J2SDecl decl (hint id loc)
-	       '(unless (isa? decl J2SThis)
-		  (set! hint (add-hint! hint newhint))))))))
+	    (let loop ((decl decl))
+	       (with-access::J2SDecl decl (hint id loc %info)
+		  (unless (isa? decl J2SThis)
+		     (set! hint (add-hint! hint newhint))
+		     (when (and (pair? %info) (eq? (car %info) 'hintnum-alias))
+			(loop (cdr %info))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    union-hint! ...                                                  */
@@ -274,7 +275,10 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (hintnum this::J2SDeclInit assig fix::cell)
    (call-default-walker)
-   (with-access::J2SDeclInit this (hint val vtype loc)
+   (with-access::J2SDeclInit this (hint val vtype loc %info)
+      (when (isa? val J2SRef)
+	 (with-access::J2SRef val (decl)
+	    (set! %info (cons 'hintnum-alias decl))))
       (unless (isa? this J2SDeclFun)
 	 (add-expr-hint! val hint #f fix)
 	 (when (is-hint? val 'real)
@@ -295,7 +299,13 @@
 	    ((is-hint? lhs 'real)
 	     (add-expr-hint! rhs (expr-hint lhs) #f fix))
 	    ((is-hint? rhs 'real)
-	     (add-expr-hint! this (expr-hint rhs) #f fix))))))
+	     (add-expr-hint! this (expr-hint rhs) #f fix)
+	     (when (isa? lhs J2SRef)
+		(add-expr-hint! lhs (expr-hint rhs) #t fix)))
+	    ((eq? (j2s-type rhs) 'real)
+	     (add-expr-hint! this (list (cons 'real 20)) #f fix)
+	     (when (isa? lhs J2SRef)
+		(add-expr-hint! lhs (list (cons 'real 20)) #t fix)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hinthum ::J2SCall ...                                            */
@@ -414,6 +424,17 @@
 	  (as-real! this)
 	  this)))
 
+;*---------------------------------------------------------------------*/
+;*    propagate-real! ::J2SParen ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-real! this::J2SParen)
+   (call-default-walker)
+   (with-access::J2SParen this (expr type loc)
+      (when (eq? (j2s-type expr) 'real)
+	 (when (memq type '(number integer))
+	    (set! type 'real))))
+   this)
+   
 ;*---------------------------------------------------------------------*/
 ;*    propagate-real! ::J2SCast ...                                    */
 ;*---------------------------------------------------------------------*/

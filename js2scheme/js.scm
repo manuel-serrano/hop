@@ -277,7 +277,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-binder binder writable)
    (case binder
-      ((let let-opt) (if writable "let " "const "))
+      ((let let-opt let-forin) (if writable "let " "const "))
       ((const const-opt) "const ")
       ((var) "var ")
       ((param) "")

@@ -582,7 +582,7 @@
 	     ,@(dump-type this)
 	     ,@(dump-vtype decl)
 	     ,@(dump-info this)
-	     ,@(dump-hint this)
+	     ,@(dump-hint decl)
 	     ,@(dump-range this)))))
  
 ;*---------------------------------------------------------------------*/

@@ -260,6 +260,7 @@
 ;*---------------------------------------------------------------------*/
 (define (inline-threshold) #u32:100)
 (define (vtable-threshold) #u32:200)
+(define (vtable-max-threshold) #u32:300)
 (define (method-invalidation-threshold) 8)
 
 (define (hash-object-threshold) 192)
@@ -1792,10 +1793,9 @@
 	       ((vector-ref props i)
 		=>
 		(lambda (prop)
-		   (let ((p (vector-ref props i)))
-		      (if (or (not enump) (flags-enumerable? (prop-flags p)))
-			  (loop (-fx i 1) (cons (prop-name prop) acc))
-			  (loop (-fx i 1) acc)))))
+		   (if (or (not enump) (flags-enumerable? (prop-flags prop)))
+		       (loop (-fx i 1) (cons (prop-name prop) acc))
+		       (loop (-fx i 1) acc))))
 	       (else
 		(loop (-fx i 1) acc))))))
 
@@ -3311,7 +3311,7 @@
 	     =>
 	     (lambda (cache)
 		(js-put-jsobject-name/cache! o pname v throw
-		   %this cache point '(imap emap cmap nmap pmap amap) #f)))
+		   %this cache point '(imap emap cmap nmap pmap amap vtable) #f)))
 	    ((eq? pname (& "length"))
 	     (js-put-length! o v throw #f %this))
 	    ((isa? pname JsStringLiteralIndex)
@@ -3371,7 +3371,8 @@
 	 (unless (or (eq? %omap (js-not-a-cmap))
 		     (eq? prop (& "__proto__")))
 	    (with-access::JsPropertyCache cache (index vindex cntmiss)
-	       (when (>=u32 cntmiss (vtable-threshold))
+	       (when (and (>=u32 cntmiss (vtable-threshold))
+			  (<=u32 cntmiss (vtable-max-threshold)))
 		  (when (>=fx index 0)
 		     (when (=fx vindex (js-not-a-index))
 			(set! vindex (js-get-vindex %this)))
