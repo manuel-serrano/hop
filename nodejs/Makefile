@@ -24,16 +24,7 @@ install: install-library
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = nodejs
-HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
-  -ljs2scheme_s-$(HOPRELEASE) -lhopscript_s-$(HOPRELEASE) \
-  -lhop_s-$(HOPRELEASE)
-HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
-  -ljs2scheme_u-$(HOPRELEASE) -lhopscript_u-$(HOPRELEASE) \
-  -lhop_u-$(HOPRELEASE)
-HOPCLOSELIBS_ES = $(BGLCLOSELIBS_ES) \
-  -lnodejs_s-$(HOPRELEASE)
-HOPCLOSELIBS_EU = $(BGLCLOSELIBS_EU) \
-  -lnodejs_u-$(HOPRELEASE)
+HOPAPPLIBS = js2scheme hop hopscript
 
 BLIBFLAGS = $(BCFLAGSRTS)
 

@@ -26,17 +26,6 @@ install: install-library
 TARGETNAME = hopscript
 HOPAPPLIBS = js2scheme hop hopwidget
 
-HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
-  -ljs2scheme_s-$(HOPRELEASE) \
-  -lhop_s-$(HOPRELEASE) \
-  -lhopwidget_s-$(HOPRELEASE)
-HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
-  -ljs2scheme_u-$(HOPRELEASE) \
-  -lhop_u-$(HOPRELEASE) \
-  -lhopwidget_u-$(HOPRELEASE)
-HOPCLOSELIBS_ES = -lhopscript_s-$(HOPRELEASE)
-HOPCLOSELIBS_EU = -lhopscript_u-$(HOPRELEASE)
-
 BLIBFLAGS = $(BCFLAGSRTS)
 
 #*---------------------------------------------------------------------*/
