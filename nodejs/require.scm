@@ -2150,7 +2150,10 @@
 					 (js-raise-syntax-error/loc %this
 					    `(at ,path ,loc)
 					    msg path))))
-		   (m (assoc (if (eq? mode 'head) "client" "main") o)))
+		   (m (cond
+			 ((eq? mode 'head) (assoc "client" o))
+			 ((assoc "server" o) => (lambda (m) m))
+			 (else (assoc "main" o)))))
 	       (if (pair? m)
 		   (cdr m)
 		   (let ((idx (make-file-name dir "index.js")))

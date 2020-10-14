@@ -33,18 +33,24 @@ Hop.js supports the following Node.js modules:
 * [Utilities](https://nodejs.org/api/util.html)
 * [VM](https://nodejs.org/api/vm.html)
 
-Notable differences
-==============
 
+Notable differences
+===================
+
+Running hop
+-----------
 The default behaviour of Hop.js is to launch an HTTP server. To mimic
 Node.js, use the `--no-server` option to disable the launch of the
 Hop.js built-in server, and automatically terminate the process when
 all events are processed.
 
+Eval
+----
 Hop.js `eval` function does not access the lexical scope surrounding
 the `eval`call.  For Example:
 
-```hopscript var x = true;
+```hopscript 
+var x = true;
 function foo() {
   var x = false;
   return( eval( 'x' ));
@@ -54,3 +60,15 @@ console.log( foo() );
 ```
 
 `foo()` would return `false`with Node.js, and `true`with Hop.js.
+
+
+Package.json
+------------
+When requiring a directory, Hop checks if it exists a `package.json`
+file. If it does, Hop, checks if there is a `server` property that
+tells which file to actually require. If there is no `server` entry,
+Hop behaves as Node, that is, it checks the `main` property and
+if it does not exist, it checks the `index.js` file.
+See [HopScript Modules](01-module.html) for more details.
+
+
