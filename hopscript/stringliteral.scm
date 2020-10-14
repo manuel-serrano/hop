@@ -2488,30 +2488,36 @@
    
    (define (minelong2::elong n1::elong n2::elong)
       (if (<elong n1 n2) n1 n2))
+
+   (define (split-match-regexp S::bstring q R)
+      (with-access::JsGlobalObject %this (js-regexp-positions)
+	 (with-access::JsRegExp R (rx)
+	    (let ((clen (regexp-capture-count rx)))
+	       (when (>=fx (*fx (+fx clen 1) 2)
+			(vector-length js-regexp-positions))
+		  (set! js-regexp-positions
+		     (make-vector (* (+fx clen 1) 2)))))
+	    (pregexp-match-n-positions! rx
+	       S js-regexp-positions q (string-length S)))))
+
+   (define (split-match-string S::bstring q R)
+      (with-access::JsGlobalObject %this (js-regexp-positions)
+	 (let ((r (string-length R))
+	       (s (string-length S)))
+	    (cond
+	       ((>fx (+fx q r) s)
+		-1)
+	       ((substring-at? S R q)
+		(vector-set! js-regexp-positions 0 q)
+		(vector-set! js-regexp-positions 1 (+fx q r))
+		1)
+	       (else
+		-1)))))
    
    (define (split-match S::bstring q R)
-      (with-access::JsGlobalObject %this (js-regexp-positions)
-	 (if (isa? R JsRegExp)
-	     (with-access::JsRegExp R (rx)
-		(let ((clen (regexp-capture-count rx)))
-		   (when (>=fx (*fx (+fx clen 1) 2)
-			    (vector-length js-regexp-positions))
-		      (set! js-regexp-positions
-			 (make-vector (* (+fx clen 1) 2)))))
-		(let ((l (pregexp-match-n-positions! rx
-			    S js-regexp-positions q (string-length S))))
-		   (if (<fx l 0) 'failure l)))
-	     (let ((r (string-length R))
-		   (s (string-length S)))
-		(cond
-		   ((>fx (+fx q r) s)
-		    'failure)
-		   ((substring-at? S R q)
-		    (vector-set! js-regexp-positions 0 q)
-		    (vector-set! js-regexp-positions 1 (+fx q r))
-		    1)
-		   (else
-		    'failure))))))
+      (if (isa? R JsRegExp)
+	  (split-match-regexp S q R)
+	  (split-match-string S q R)))
    
    (with-access::JsGlobalObject %this (js-array js-regexp-positions)
       (let* ((jsS this)
@@ -2540,7 +2546,7 @@
 	    ((=fx s 0)
 	     ;; 11
 	     (let ((z (split-match S 0 R)))
-		(when (eq? z 'failure)
+		(when (<fx z 0)
 		   (js-array-index-set! A #u32:0 jsS #f %this))
 		A))
 	    ((and (string? R)
@@ -2575,14 +2581,61 @@
 			  (js-array-index-set! A l T #f %this)
 			  ;;16
 			  A)))))
+	    ((isa? R JsRegExp)
+	     ;; regular expression split
+	     (let loop ((q p)
+			(p p)
+			(l #u32:0))
+		(if (not (=fx q s))
+		    (let ((z (split-match-regexp S q R)))
+		       (if (<fx z 0)
+			   (loop s p l)
+			   ;; 13.c.i
+			   (let* ((r js-regexp-positions)
+				  (q (vector-ref r 0))
+				  (e (vector-ref r 1)))
+			      (if (=fx e p)
+				  ;; 13.c.ii
+				  (loop (+fx q (if enc (utf8-char-size (string-ref S q)) 1)) p l)
+				  ;; 13.c.iii.1
+				  (let ((T (js-substring/enc S p q enc %this))
+					(l (js-get-lengthu32 A %this)))
+				     ;; 13.c.iii.2
+				     (js-array-index-set! A l T #f %this)
+				     (if (=fx (uint32->fixnum (+u32 l #u32:1)) lim)
+					 ;; 13.c.iii.4
+					 A
+					 ;; 13.c.iii.5
+					 (let ((p e))
+					    (let repeat ((cap 1)
+							 (l (+u32 l #u32:1)))
+					       (if (<fx cap z)
+						   (let ((T (js-substring/enc S
+							       (vector-ref r (*fx cap 2))
+							       (vector-ref r (+fx (*fx cap 2) 1))
+							       enc %this)))
+						      ;; 13.c.iii.7.b
+						      (js-array-index-set! A l T #f %this)
+						      (if (=fx (uint32->fixnum (+u32 l #u32:1)) lim)
+							  ;; 13.c.iii.7.d
+							  A
+							  ;; 13.c.iii.8
+							  (repeat (+fx cap 1) (+u32 l #u32:1))))
+						   (loop p e l))))))))))
+		    ;; 14
+		    (let ((T (js-substring/enc S p s enc %this)))
+		       ;; 15
+		       (js-array-index-set! A l T #f %this)
+		       ;;16
+		       A))))
 	    (else
 	     (let loop ((q p)
 			(p p)
 			(l #u32:0))
 		(if (not (=fx q s))
-		    (let ((z (split-match S q R)))
-		       (if (eq? z 'failure)
-			   (loop (+fx q (utf8-char-size (string-ref S q))) p l)
+		    (let ((z (split-match-string S q R)))
+		       (if (<fx z 0)
+			   (loop (+fx q (if enc (utf8-char-size (string-ref S q)) 1)) p l)
 			   ;; 13.c.i
 			   (let* ((r js-regexp-positions)
 				  (q (vector-ref r 0))
