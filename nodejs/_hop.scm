@@ -297,6 +297,7 @@
 	       `(hostname . ,(js-string->jsstring (hostname)))
 	       `(modulesDir . ,(js-string->jsstring (nodejs-modules-directory)))
 	       `(standalone . ,hopjs-standalone)
+	       `(engine . ,(& "hop"))
 	       `(isServer . #t)
 	       `(isWorker . ,(not (js-main-worker? %worker)))
 	       `(loginCookieCryptKey . ,(hop-login-cookie-crypt-key))
