@@ -34,7 +34,8 @@
 	   __hopscript_worker
 	   __hopscript_array
 	   __hopscript_json
-	   __hopscript_proxy)
+	   __hopscript_proxy
+	   __hopscript_stringliteral)
 
    (with   __hopscript_stringliteral
            __hopscript_expanders)

@@ -144,7 +144,8 @@
 	   (js-jsstring-maybe-slice1 ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-maybe-slice2 ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring->jsarray ::JsStringLiteral ::JsGlobalObject)
-	   (js-jsstring->list ::obj ::JsGlobalObject))
+	   (js-jsstring->list ::obj ::JsGlobalObject)
+	   (trim-whitespaces+ s::bstring #!key (left #t) (right #f) (plus #f)))
 
    (cond-expand
       ((not |bigloo4.3a|)
