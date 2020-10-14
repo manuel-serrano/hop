@@ -288,7 +288,7 @@
 	 ((number) (J2SNumber 2))
 	 (else (error "type->val" "wrong type" ty))))
 
-   (with-access::J2SDeclInit o (%info loc)
+   (with-access::J2SDecl o (%info loc)
       (duplicate::J2SDeclInit o
 	 (key (ast-decl-key))
 	 (binder 'let-opt)

@@ -435,7 +435,10 @@
 	,@args))
        (else
 	(,(symbol-append 'utf8- fun)
-	 (js-jsstring-normalize-UTF8! ,this) ,@args))))
+	 (if (js-jsstring-normalized? ,this)
+	     (with-access::JsStringLiteral ,this (left) left)
+	     (js-jsstring-normalize-UTF8! ,this))
+	 ,@args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-ascii->jsstring ...                                           */
@@ -3902,15 +3905,35 @@
    
    (define (jssubstring this::JsStringLiteral from::long to::long)
       
-      (define (ascii-substr s)
+      (define (ascii-substr s this from to)
 	 (if (or (>fx from 0) (<fx to (string-length s)))
 	     (js-substring->jsstring s from (-fx to from))
 	     this))
       
-      (define (utf8-substr s)
+      (define (utf8-substr s this from to)
 	 (js-string->jsstring (utf8-substring s from to)))
-      
-      (string-dispatch substr this))
+
+      (let loop ((obj this)
+		 (from from)
+		 (to to))
+	 (cond
+	    ((js-jsstring-normalized? obj)
+	     (string-dispatch substr obj obj from to))
+	    ((js-jsstring-substring? obj)
+	     (with-access::JsStringLiteralSubstring obj (left right)
+		(js-substring->jsstring left (+fx right from) (-fx to from))))
+	    (else
+	     (with-access::JsStringLiteral obj (left right)
+		(with-access::JsStringLiteral left ((llength length))
+		   (cond
+		      ((<=fx to (uint32->fixnum llength))
+		       (loop left from to))
+		      ((>=fx from (uint32->fixnum llength))
+		       (loop right
+			  (-fx from (uint32->fixnum llength))
+			  (-fx to (uint32->fixnum llength))))
+		      (else
+		       (string-dispatch substr obj obj from to)))))))))
 
    (let* ((len (uint32->fixnum (js-jsstring-length jss)))
 	  (intstart (js-tointeger start %this))
@@ -3928,6 +3951,8 @@
       (if (or (>fx from 0) (<fx end len))
 	  (jssubstring jss from end)
 	  jss)))
+
+(define w 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-slice1 ...                                     */

@@ -458,9 +458,10 @@
 ;*    j2s->list ::J2SProgram ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SProgram)
-   (with-access::J2SProgram this (nodes headers decls mode)
+   (with-access::J2SProgram this (nodes headers decls mode direct-eval)
       `(,(string->symbol (typeof this))
 	mode: ,mode
+	direct-eval: ,direct-eval
 	headers: ,(map j2s->list headers)
 	decls: ,(map j2s->list decls)
 	nodes: ,(map j2s->list nodes))))
