@@ -166,3 +166,31 @@ ${ <span class="label label-info">requirec/mod.html</span> }
 ```hopscript
 ${ doc.include( doc.EXAMPLES_DIR + "/requirec/mod.html", 0 ) }
 ```
+
+Package.json
+------------
+
+Hop extends regular `package.json` files with two entries.
+
+### server ###
+
+This entry, when present, overrides the regular `main` entry. This enables
+writing npm packages compatible for both Hop and Node, when the two
+implementations are different. Example
+
+```json
+{ 
+  "server: "lib/myapp.js",
+  "main": "lib/nodejs/myapp.js"
+}
+```
+
+### client ###
+
+This entry gives the list of files that must be included when then module
+is loaded from a browser. Example
+
+```json
+{ "client": [ "lib/utils.js", "lib/message.js", "lib/client.js" ]}
+```
+
