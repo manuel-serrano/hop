@@ -17,6 +17,12 @@ directly without require.
 General configuration
 ---------------------
 
+### hop.engine ###
+[:@glyphicon glyphicon-tag parameter]
+The `engine` property is used to distinguish Hop from other JavaScript
+engines when an application is compatible with different systems. With
+Hop, its value is always the string `hop`.
+
 ### hop.isServer ###
 [:@glyphicon glyphicon-tag parameter]
 The `isServer` property is true for code executing on a server and false
