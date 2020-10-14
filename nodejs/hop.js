@@ -15,6 +15,7 @@ var hop = process.binding( "hop" );
 /*---------------------------------------------------------------------*/
 /*    info                                                             */
 /*---------------------------------------------------------------------*/
+exports.engine = hop.engine;
 exports.isServer = hop.isServer;
 exports.isWorker = hop.isWorker;
 exports.hostname = hop.hostname;
