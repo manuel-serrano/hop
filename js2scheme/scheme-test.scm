@@ -24,7 +24,8 @@
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_scheme
-	   __js2scheme_scheme-utils)
+	   __js2scheme_scheme-utils
+	   __js2scheme_scheme-cast)
 
    (export (j2s-test ::J2SExpr mode return conf)
 	   (j2s-test-not ::J2SExpr mode return conf)
@@ -105,7 +106,8 @@
    (with-access::J2SExpr this (type)
       (if (eq? type 'bool)
 	  (j2s-scheme this mode return conf)
-	  (j2s-toboolean (j2s-scheme this mode return conf)))))
+	  (let ((sexp (j2s-scheme this mode return conf)))
+	     (j2s-cast sexp this type 'bool conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-bool-test ::J2SParen ...                                     */
