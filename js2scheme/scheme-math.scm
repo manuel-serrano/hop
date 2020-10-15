@@ -70,7 +70,7 @@
 	       ((string=? val "abs")
 		(when (=fx (length args) 1)
 		   (cast-math
-		      (if (eq? (j2s-vtype (car args)) 'real)
+		      (if (eq? (j2s-type (car args)) 'real)
 			  `(js-math-absfl
 			      ,(j2s-scheme (car args) mode return conf))
 			  `(js-math-abs
@@ -90,7 +90,7 @@
 			  ,(j2s-scheme (car args) mode return conf)))))
 	       ((string=? val "round")
 		(when (=fx (length args) 1)
-		   (if (eq? (j2s-vtype (car args)) 'real)
+		   (if (eq? (j2s-type (car args)) 'real)
 		       `(js-math-roundfl
 			   ,(j2s-scheme (car args) mode return conf))
 		       `(js-math-round
@@ -160,7 +160,7 @@
 		     (cons lhs val)))))))
    
    (define (positive? n)
-      (memq (j2s-vtype n) '(index uint32)))
+      (memq (j2s-type n) '(index uint32)))
    
    (let ((p2 (divide-power2 arg)))
       (cond
@@ -177,7 +177,7 @@
 			    `(js-math-floorfl ,sexp))
 			   (else
 			    `(js-math-floor ,sexp %this)))))
-		 (case (j2s-vtype (car p3))
+		 (case (j2s-type (car p3))
 		    ((int32)
 		     `(js-int32->tointeger
 			 (/s32 ,(j2s-scheme (car p3) mode return conf)
@@ -196,7 +196,7 @@
 				(/fx ,tmp ,(cdr p3))
 				(js-math-floor (/js ,tmp ,(cdr p3) %this) %this)))))))))
 	 ((positive? (car p2))
-	  (case (j2s-vtype (car p2))
+	  (case (j2s-type (car p2))
 	     ((int32)
 	      `(js-int32-tointeger
 		  (bit-rshs32 ,(j2s-scheme (car p2) mode return conf)
@@ -215,7 +215,7 @@
 			 (bit-rsh ,tmp ,(cdr p2))
 			 (js-math-floor (/js ,tmp ,(cdr p2) %this) %this)))))))
 	 (else
-	  (case (j2s-vtype (car p2))
+	  (case (j2s-type (car p2))
 	     ((int32)
 	      `(js-int32->tointeger
 		  (/pow2s32 ,(j2s-scheme (car p2) mode return conf)
@@ -238,7 +238,7 @@
 ;*    j2s-math-inline-sqrt ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (j2s-math-inline-sqrt arg mode return conf)
-   (case (j2s-vtype arg)
+   (case (j2s-type arg)
       ((int32)
        (let ((tmp (gensym 'int)))
 	  `(let ((,tmp ,(j2s-scheme arg mode return conf)))
@@ -264,7 +264,7 @@
 ;*    j2s-math-inline-trigonometry ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (j2s-math-inline-trigonometry fun::symbol arg mode return conf)
-   (case (j2s-vtype arg)
+   (case (j2s-type arg)
       ((int32)
        (let ((tmp (gensym 'int)))
 	  `(let ((,tmp ,(j2s-scheme arg mode return conf)))
@@ -291,7 +291,7 @@
 ;*    j2s-math-inline-atan2 ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (j2s-math-inline-atan2 x y mode return conf)
-   (if (and (eq? (j2s-vtype x) 'real) (eq? (j2s-vtype y) 'real))
+   (if (and (eq? (j2s-type x) 'real) (eq? (j2s-type y) 'real))
        `(js-math-atan2fl ,(j2s-scheme x mode return conf)
 	   ,(j2s-scheme y mode return conf))
        `(js-math-atan2 ,(j2s-scheme x mode return conf)

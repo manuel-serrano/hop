@@ -35,7 +35,7 @@
 ;*    j2s-test ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-test test::J2SExpr mode return conf)
-   (let ((ty (j2s-vtype test)))
+   (let ((ty (j2s-type test)))
       (cond
 	 ((eq? ty 'bool)
 	  (j2s-bool-test test mode return conf))

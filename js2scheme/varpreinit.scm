@@ -49,16 +49,17 @@
 (define (j2s-varpreinit this args)
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes headers decls loc pcache-size cnsts)
-	 (for-each (lambda (n) (preinit* n '())) decls)
-	 (for-each (lambda (n) (preinit* n '())) nodes)
-	 (for-each (lambda (n) (patchinit! n args)) decls)
-	 (for-each (lambda (n) (patchinit! n args)) nodes)))
+	 (preinit* decls '())
+	 (preinit* nodes '())
+	 (set! decls (map! (lambda (n) (patchinit! n args)) decls))
+	 (set! nodes (map! (lambda (n) (patchinit! n args)) nodes))))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    preinit ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-struct preinit type)
+(define-struct alphainit decl)
 
 ;*---------------------------------------------------------------------*/
 ;*    invalidate-decl! ...                                             */
@@ -267,7 +268,15 @@
 (define-method (preinit* this::J2SDo env::pair-nil)
    (with-access::J2SDo this (test body)
       (preinit* test (preinit* body env))))
-	 
+
+;*---------------------------------------------------------------------*/
+;*    preinit* ::J2STry ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (preinit* this::J2STry env::pair-nil)
+   (with-access::J2STry this (body catch finally loc)
+      (preinit* catch env)
+      (preinit* body (preinit* finally env))))
+
 ;*---------------------------------------------------------------------*/
 ;*    patchinit! ::J2SNode ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -293,6 +302,33 @@
 	 (key (ast-decl-key))
 	 (binder 'let-opt)
 	 (val (type->val loc (preinit-type %info))))))
+
+;*---------------------------------------------------------------------*/
+;*    patchinit! ::J2SDecl ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (patchinit! this::J2SDecl args)
+   (with-access::J2SDecl this (scope %info)
+      (if (and (memq scope '(%scope global)) (preinit? %info))
+	  (let ((ndecl (decl->declinit this)))
+	     (set! %info (alphainit ndecl))
+	     ndecl)
+	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    patchinit! ::J2SRef ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (patchinit! this::J2SRef args)
+   (with-access::J2SRef this (decl)
+      (with-access::J2SDecl decl (%info)
+	 (when (alphainit? %info)
+	    (set! decl (alphainit-decl %info)))))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    patchinit! ::J2SDeclInit ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (patchinit! this::J2SDeclInit args)
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    patchinit! ::J2SLetBlock ...                                     */
@@ -333,7 +369,7 @@
 	 this)))
 
 ;*---------------------------------------------------------------------*/
-;*    patchinit! ::J2SLetBlock ...                                     */
+;*    patchinit! ::J2SBlock ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (patchinit! this::J2SBlock args)
    (with-access::J2SBlock this (loc endloc nodes)

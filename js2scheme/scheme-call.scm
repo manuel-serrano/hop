@@ -650,7 +650,7 @@
       (if (isa? expr J2SCast)
 	  (with-access::J2SCast expr (expr)
 	     (j2s-type-sans-cast expr))
-	  (j2s-vtype expr)))
+	  (j2s-type expr)))
 
    (define (find-builtin-method obj field args)
       
@@ -907,7 +907,7 @@
 		 (with-access::J2SString field (val)
 		    (or (and (string=? val "toString")
 			     (j2s-tostring this mode return ctx))
-			(let ((call (if (eq? (j2s-vtype obj) 'object)
+			(let ((call (if (eq? (j2s-type obj) 'object)
 					'js-method-jsobject-call-name/cache
 					'js-method-call-name/cache)))
 			   `(,call
@@ -1010,7 +1010,7 @@
 		  (else
 		   (let ((tmp (gensym 'obj)))
 		      `(let ((,tmp ,(box (j2s-scheme obj mode return ctx)
-				       (j2s-vtype obj) ctx)))
+				       (j2s-type obj) ctx)))
 			  ,(call-ref-method obj
 			      ccache acache ccspecs
 			      (duplicate::J2SAccess fun
@@ -1331,7 +1331,7 @@
 	    (cond
 	       ((eq? protocol 'spread)
 		(j2s-scheme-call-spread this mode return ctx))
-	       ((eq? (j2s-vtype fun) 'procedure)
+	       ((eq? (j2s-type fun) 'procedure)
 		(case protocol
 		   ((procedure-this)
 		    (call-scheme-this this fun thisarg args))

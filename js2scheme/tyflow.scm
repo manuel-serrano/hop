@@ -1779,6 +1779,9 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SForIn ...                                         */
+;*    -------------------------------------------------------------    */
+;*    !!! WARNING: After the for..in loop the key variable is          */
+;*    undefined if the object contains no property.                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SForIn env::pair-nil fix::cell)
    (with-trace 'j2s-tyflow "node-type ::J2SForIn"
@@ -1795,9 +1798,16 @@
 		  (trace-item "for seq loc=" loc)
 		  (multiple-value-bind (typ envb bk)
 		     (node-type-seq (list obj body) env fix 'void)
-		     (if (=fx ofix (cell-ref fix))
-			 (return typ envb (filter-breaks bk this))
-			 (loop (env-merge env envb))))))))))
+		     (cond
+			((not (=fx ofix (cell-ref fix)))
+			 (loop (env-merge env envb)))
+			((eq? op 'in)
+			 (decl-vtype-add! decl 'undefined fix)
+			 (return typ (extend-env envb decl 'any)
+			    (filter-breaks bk this)))
+			(else
+			 (return typ envb
+			    (filter-breaks bk this)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2STry ...                                           */

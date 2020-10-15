@@ -472,53 +472,53 @@
 ;*    is-integer? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (is-integer? expr::J2SExpr)
-   (type-integer? (j2s-vtype expr)))
+   (type-integer? (j2s-type expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-int30? ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (is-int30? expr::J2SExpr)
-   (type-int30? (j2s-vtype expr)))
+   (type-int30? (j2s-type expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-int53? ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (is-int53? expr::J2SExpr)
-   (let ((ty (j2s-vtype expr)))
+   (let ((ty (j2s-type expr)))
       (or (type-int53? ty) (eq? ty 'ufixnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-fx? ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (is-fx? expr::J2SExpr)
-   (type-fixnum? (j2s-vtype expr)))
+   (type-fixnum? (j2s-type expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-fixnum? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-fixnum? expr::J2SExpr ctx)
    (if (m64? (context-conf ctx))
-       (or (type-integer? (j2s-vtype expr)) (type-int53? (j2s-vtype expr)))
-       (or (type-int30? (j2s-vtype expr)) (eq? (j2s-vtype expr) 'ufixnum))))
+       (or (type-integer? (j2s-type expr)) (type-int53? (j2s-type expr)))
+       (or (type-int30? (j2s-type expr)) (eq? (j2s-type expr) 'ufixnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-uint32? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-uint32? expr::J2SExpr)
-   (type-uint32? (j2s-vtype expr)))
+   (type-uint32? (j2s-type expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-uint53? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-uint53? expr::J2SExpr)
-   (let ((ty (j2s-vtype expr)))
+   (let ((ty (j2s-type expr)))
       (or (type-int53? ty) (eq? ty 'ufixnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-string? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-string? expr::J2SExpr)
-   (eq? (j2s-vtype expr) 'string))
+   (eq? (j2s-type expr) 'string))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring ...                                                 */
@@ -1047,8 +1047,6 @@
 ;*---------------------------------------------------------------------*/
 (define (expr-asuint32 expr::J2SExpr)
    (cond
-      ((eq? (j2s-vtype expr) 'uint32)
-       expr)
       ((eq? (j2s-type expr) 'uint32)
        expr)
       ((isa? expr J2SCast)
@@ -1214,29 +1212,29 @@
 	  (gen scmlhs scmrhs))
 	 ((ultrasimple? lhs)
 	  (let ((right (gensym 'rhs)))
-	     `(let ((,(type-ident right (j2s-vtype rhs) conf) ,scmrhs))
+	     `(let ((,(type-ident right (j2s-type rhs) conf) ,scmrhs))
 		 ,(gen scmlhs right))))
 	 ((ultrasimple? rhs)
 	  (let ((left (gensym 'lhs)))
-	     `(let ((,(type-ident left (j2s-vtype lhs) conf) ,scmlhs))
+	     `(let ((,(type-ident left (j2s-type lhs) conf) ,scmlhs))
 		 ,(gen left scmrhs))))
 	 (testl
 	  (let ((right (gensym 'rhs)))
-	     `(let ((,(type-ident right (j2s-vtype rhs) conf) ,scmrhs))
+	     `(let ((,(type-ident right (j2s-type rhs) conf) ,scmrhs))
 		 ,(gen scmlhs right))))
 	 (testr
 	  (let ((left (gensym 'lhs)))
-	     `(let ((,(type-ident left (j2s-vtype lhs) conf) ,scmlhs))
+	     `(let ((,(type-ident left (j2s-type lhs) conf) ,scmlhs))
 		 ,(gen left scmrhs))))
 	 (else
 	  (let ((left (gensym 'lhs))
 		(right (gensym 'rhs)))
 	     (if flip 
-		 `(let* ((,(type-ident right (j2s-vtype rhs) conf) ,scmrhs)
-			 (,(type-ident left (j2s-vtype lhs) conf) ,scmlhs))
+		 `(let* ((,(type-ident right (j2s-type rhs) conf) ,scmrhs)
+			 (,(type-ident left (j2s-type lhs) conf) ,scmlhs))
 		     ,(gen left right))
-		 `(let* ((,(type-ident left (j2s-vtype lhs) conf) ,scmlhs)
-			 (,(type-ident right (j2s-vtype rhs) conf) ,scmrhs))
+		 `(let* ((,(type-ident left (j2s-type lhs) conf) ,scmlhs)
+			 (,(type-ident right (j2s-type rhs) conf) ,scmrhs))
 		     ,(gen left right))))))))
 
 ;*---------------------------------------------------------------------*/

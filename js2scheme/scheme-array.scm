@@ -136,7 +136,7 @@
 	 (else
 	  `(js-array-construct-alloc/length %this
 	      ,(box (j2s-scheme arg mode return ctx)
-		  (j2s-vtype arg) ctx)))))
+		  (j2s-type arg) ctx)))))
 
    (define (uncast a)
       (if (isa? a J2SCast)
@@ -193,7 +193,7 @@
 		  (scmalen (j2s-decl-scheme-id alen))
 		  (scmfield (j2s-scheme field mode return ctx))
 		  (scmobj (j2s-scheme obj mode return ctx))
-		  (tyfield (j2s-vtype field)))
+		  (tyfield (j2s-type field)))
 	       (case tyfield
 		  ((uint32)
 		   (let ((idx (j2s-scheme field mode return ctx)))
@@ -243,7 +243,7 @@
 
    (define (aref/w-cache this::J2SAccess)
       (with-access::J2SAccess this (obj field)
-	 (case (j2s-vtype field)
+	 (case (j2s-type field)
 	    ((uint32)
 	     `(js-array-index-ref ,(j2s-scheme obj mode return ctx)
 		 ,(j2s-scheme field mode return ctx)
@@ -317,7 +317,7 @@
 		     (scmfield (j2s-scheme field mode return ctx))
 		     (scmobj (j2s-scheme obj mode return ctx))
 		     (scmrhs (j2s-scheme rhs mode return ctx))
-		     (tyfield (j2s-vtype field)))
+		     (tyfield (j2s-type field)))
 		  (case tyfield
 		     ((uint32)
 		      (let ((idx (j2s-scheme field mode return ctx)))
@@ -378,7 +378,7 @@
 	 ;; an optimized array set in a loop (see array.scm)
 	 (with-access::J2SAccess lhs (obj field)
 	    (with-access::J2SAref obj (array alen)
-	       (case (j2s-vtype field)
+	       (case (j2s-type field)
 		  ((uint32)
 		   `(js-array-index-set! ,(j2s-scheme obj mode return ctx)
 		       ,(j2s-scheme field mode return ctx)
@@ -440,7 +440,7 @@
 	    (with-access::J2SExpr field (range)
 	       (let ((h (car h)))
 		  (cond
-		     ((eq? (j2s-vtype field) 'uint32)
+		     ((eq? (j2s-type field) 'uint32)
 		      (let ((i (gensym 'idx)))
 			 `(let ((,i ,(j2s-scheme field mode return ctx)))
 			     (if (<u32 ,i ,(fixnum->uint32 h))
@@ -491,7 +491,7 @@
    (j2s-cast
       (j2s-scheme field mode return ctx)
       field
-      (j2s-vtype field) 'uint32 ctx))
+      (j2s-type field) 'uint32 ctx))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-as-integer ...                                        */
@@ -500,7 +500,7 @@
    (j2s-cast
       (j2s-scheme field mode return ctx)
       field
-      (j2s-vtype field) 'integer ctx))
+      (j2s-type field) 'integer ctx))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-foreach-map ...                                        */

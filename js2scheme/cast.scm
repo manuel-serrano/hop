@@ -74,11 +74,12 @@
 ;*    need-cast? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (need-cast? type totype)
-   (or (and (eq? totype 'any) (memq type '(int32 uint32)))
-       (not (or (and (eq? type 'function) (eq? totype 'arrow))
-		(eq? type totype)
-		(eq? totype '*)
-		(and (eq? totype 'any) (memq type *any-types*))))))
+   (unless (eq? type totype)
+      (or (and (eq? totype 'any) (memq type '(int32 uint32)))
+	  (not (or (and (eq? type 'function) (eq? totype 'arrow))
+		   (eq? type totype)
+		   (eq? totype '*)
+		   (and (eq? totype 'any) (memq type *any-types*)))))))
 
 (define *any-types*
    '(undefined null bool integer number object function arrow string real array regexp arguments class))
@@ -96,7 +97,7 @@
 ;*    cast ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (cast expr::J2SExpr totype::symbol)
-   (cast-expr expr (j2s-vtype expr) totype))
+   (cast-expr expr (j2s-type expr) totype))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SNode ...                                         */
@@ -166,6 +167,11 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SRef ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Variable references might contain an implicit cast that          */
+;*    is resolve at the code generation time. For instance,            */
+;*    a variable of type "any" referenced as a "uint32" will not       */
+;*    yield to introduce an explicit cast. I will remain as is.        */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SRef totype)
    (cast this totype))
@@ -236,7 +242,7 @@
 	  this)
 	 ((eq? type totype)
 	  this)
-	 ((need-cast? (j2s-vtype expr) totype)
+	 ((need-cast? (j2s-type expr) totype)
 	  (J2SCast totype expr))
 	 ((need-cast? (j2s-vtype expr) type)
 	  this)
@@ -482,10 +488,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SUnary totype)
    (with-access::J2SUnary this (op expr type)
-      (if (and (eq? op '~) (eq? type 'int32))
-	  (set! expr (type-cast! expr 'int32))
-	  (set! expr (type-cast! expr '*)))
-      ;; dont cast unary - op as this is handled by the code generator
+      (cond
+	 ((and (eq? op '~) (eq? type 'int32))
+	  (set! expr (type-cast! expr 'int32)))
+	 ((and (memq op '(+ -)) (type-number? type))
+	  (set! expr (type-cast! expr 'number)))
+	 (else
+	  (set! expr (type-cast! expr '*))))
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/

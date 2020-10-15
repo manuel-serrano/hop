@@ -68,15 +68,15 @@
    
    (with-access::J2SAccess this (obj field type)
       (cond
-	 ((eq? (j2s-vtype field) 'uint32)
+	 ((eq? (j2s-type field) 'uint32)
 	  (jsstring-ref type obj
 	     (j2s-scheme field mode return ctx)
 	     mode return ctx))
-	 ((eq? (j2s-vtype field) 'int32)
+	 ((eq? (j2s-type field) 'int32)
 	  (jsstring-ref type obj
 	     `(int32->uint32 ,(j2s-scheme field mode return ctx))
 	     mode return ctx))
-	 ((memq (j2s-vtype field) '(integer bint))
+	 ((memq (j2s-type field) '(integer bint))
 	  (jsstring-ref type obj
 	     `(fixnum->uint32 ,(j2s-scheme field mode return ctx))
 	     mode return ctx))
@@ -264,7 +264,7 @@
 	      (sexp (j2s-scheme expr mode return ctx)))
 	  `(js-jsstring-charcodeatu32
 	      ,(j2s-scheme obj mode return ctx)
-	      ,(if (eq? (j2s-vtype expr) 'uint32)
+	      ,(if (eq? (j2s-type expr) 'uint32)
 		   sexp
 		   `(fixnum->uint32 ,sexp)))))
       (else
@@ -284,7 +284,7 @@
 	      (sexp (j2s-scheme expr mode return ctx)))
 	  `(js-jsstring-codepointatu32
 	      ,(j2s-scheme obj mode return ctx)
-	      ,(if (eq? (j2s-vtype expr) 'uint32)
+	      ,(if (eq? (j2s-type expr) 'uint32)
 		   sexp
 		   `(fixnum->uint32 ,sexp)))))
       (else
