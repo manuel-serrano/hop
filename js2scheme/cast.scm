@@ -175,9 +175,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SRef totype)
    (with-access::J2SRef this (type)
-      (unless (eq? totype '*)
-	 (set! type totype))
-      this))
+      (cast-expr this type totype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SWithRef ...                                      */
@@ -472,9 +470,7 @@
 	  (cast this totype))
 	 (else
 	  (set! lhs (type-cast! lhs '*))
-	  (if (eq? (j2s-type lhs) 'string)
-	      (set! rhs (type-cast! rhs 'string))
-	      (set! rhs (type-cast! rhs '*)))
+	  (set! rhs (type-cast! rhs '*))
 	  (cast this totype)))))
 
 ;*---------------------------------------------------------------------*/

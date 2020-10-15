@@ -307,7 +307,7 @@
 (define (j2s-scheme-set! lhs::J2SRef rhs::J2SExpr val result mode return ctx init? loc)
    
    (define (set decl hint loc)
-      (let ((tval (j2s-cast val rhs (j2s-type rhs) (j2s-vtype lhs) ctx)))
+      (let ((tval (j2s-as val rhs (j2s-type rhs) (j2s-vtype lhs) ctx)))
 	 (cond
 	    ((not (and (j2s-let? decl) (not (j2s-let-opt? decl))))
 	     `(set! ,(j2s-ref-sans-cast lhs mode return ctx) ,tval))
@@ -436,7 +436,7 @@
    (with-access::J2SRef this (decl loc type)
       (with-access::J2SDecl decl (scope id vtype exports)
 	 (let ((sexp (j2s-ref-sans-cast this mode return ctx)))
-	    (j2s-cast sexp this vtype type ctx)))))
+	    (j2s-as sexp this vtype type ctx)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SSuper ...                                        */
@@ -1487,8 +1487,12 @@
    (with-access::J2SSwitch this (loc key cases id need-bind-exit-break)
 
       (define (comp-literal expr type)
-	 (j2s-cast (j2s-scheme expr mode return ctx)
-	    expr (j2s-type expr) type ctx))
+	 (unless (equal? (j2s-scheme expr mode return ctx)
+		    (j2s-cast (j2s-scheme expr mode return ctx)
+		       expr (j2s-type expr) type ctx))
+	    (error "j2s-scheme::J2SSwitch" "bad literal compilation"
+	       (j2s->list expr)))
+	 (j2s-scheme expr mode return ctx))
       
       (define (comp-char-literal expr type)
 	 (with-access::J2SString expr (val)
@@ -1926,50 +1930,19 @@
 		 ,(comp aux aux)))
 	  (comp val tmp)))
 
-   (define (var++ op var tyv typ num prev loc)
-      (if (type-number? typ)
-	  (if (type-number? tyv)
-	      (J2SBinary/type op tyv (J2SHopRef/type var typ) num)
-	      `(if (fixnum? ,var)
-		   ,(J2SBinary/type op 'integer (J2SHopRef/type var 'bint) num)
-		   ,(J2SBinary/type op 'integer (J2SCast 'number (J2SHopRef/type var 'any)) num)))
-	  `(if (fixnum? ,var)
-	       ,(J2SBinary/type op 'integer (J2SHopRef/type var 'bint) num)
-	       ,(if prev
-		    `(begin
-			(set! ,prev
-			   ,(J2SCast 'number (J2SHopRef/type var 'any)))
-			,(J2SBinary/type op 'any
-			    (J2SHopRef/type prev 'number) num))
-		    (J2SBinary/type op 'any
-		       (J2SCast 'number (J2SHopRef/type var 'any))
-		       num)))))
-      
-   (define (ref++ op lhs::J2SRef num prev loc mode return ctx)
-      (let ((var (j2s-scheme lhs mode return ctx))
-	    (vty (j2s-vtype lhs))
-	    (ty (j2s-type lhs)))
-	 (if (symbol? var)
-	     (var++ op var vty ty num prev loc)
-	     (let ((tmp (gensym 'tmp)))
-		`(let ((,tmp ,var))
-		    ,(var++ op tmp vty ty num prev loc))))))
-   
    (define (ref-inc op lhs::J2SRef rhs::J2SExpr inc::int type loc)
-      (let* ((vty (j2s-vtype lhs))
-	     (num (J2SNumber/type 'uint32 1))
+      (let* ((num (J2SNumber/type 'uint32 1))
 	     (op (if (=fx inc 1) '+ '-))
 	     (prev (when (eq? retval 'old) (gensym 'prev)))
-	     (valr (if (type-number? vty)
-		       (J2SBinary/type op vty lhs num)
-		       (ref++ op lhs num prev loc mode return ctx)))
-	     (rhse (j2s-scheme valr mode return ctx))
+	     (rhse (j2s-scheme rhs mode return ctx))
 	     (lhse (j2s-scheme lhs mode return ctx)))
 	 (if (eq? retval 'old)
 	     (let ((res prev))
-		`(let ((,res ,lhse))
-		    ,(j2s-scheme-set! lhs rhs rhse res mode return ctx #f loc)))
-	     (j2s-scheme-set! lhs rhs rhse lhse mode return ctx #f loc))))
+		`(let ((,res ,(j2s-as lhse lhs (j2s-type lhs) type ctx)))
+		    ,(j2s-scheme-set! lhs rhs rhse
+			res mode return ctx #f loc)))
+	     (j2s-scheme-set! lhs rhs rhse
+		(j2s-as lhse lhs (j2s-type rhs) type ctx) mode return ctx #f loc))))
    
    (define (unresolved-inc op lhs inc)
       (with-access::J2SUnresolvedRef lhs (id cache loc)
