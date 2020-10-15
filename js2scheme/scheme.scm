@@ -1955,7 +1955,7 @@
 		`(let ((,tmp ,var))
 		    ,(var++ op tmp vty ty num prev loc))))))
    
-   (define (ref-inc op lhs::J2SRef rhs::J2SRef inc::int type loc)
+   (define (ref-inc op lhs::J2SRef rhs::J2SExpr inc::int type loc)
       (let* ((vty (j2s-vtype lhs))
 	     (num (J2SNumber/type 'uint32 1))
 	     (op (if (=fx inc 1) '+ '-))
