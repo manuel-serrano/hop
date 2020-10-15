@@ -174,7 +174,10 @@
 ;*    yield to introduce an explicit cast. I will remain as is.        */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SRef totype)
-   (cast this totype))
+   (with-access::J2SRef this (type)
+      (unless (eq? totype '*)
+	 (set! type totype))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SWithRef ...                                      */

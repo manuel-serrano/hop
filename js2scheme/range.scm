@@ -530,15 +530,10 @@
 ;*---------------------------------------------------------------------*/
 (define (interval-lts left::struct right::struct shift::int)
    (let ((ra (- (interval-max right) shift)))
-      (cond
-	 ((< ra (interval-min left))
-	  (interval (interval-min left) (interval-min left)
-	     (interval-merge-types left right)))
-	 ((>= ra (interval-max left))
-	  left)
-	 (else
-	  (interval (interval-min left) ra
-	     (interval-merge-types left right))))))
+      (if (< ra (interval-max left))
+	  (interval (min ra (interval-min left)) ra
+	     (interval-merge-types left right))
+	  left)))
 
 (define (interval-lt left right)
    (interval-lts left right 1))
@@ -551,15 +546,10 @@
 ;*---------------------------------------------------------------------*/
 (define (interval-gts left::struct right::struct shift::int)
    (let ((ri (+ (interval-min right) shift)))
-      (cond
-	 ((> ri (interval-max right))
-	  (interval (interval-max left) (interval-max left)
-	     (interval-merge-types left right)))
-	 ((<= ri (interval-min left))
-	  left)
-	 (else
-	  (interval ri (interval-max left)
-	     (interval-merge-types left right))))))
+      (if (> ri (interval-min left))
+	  (interval ri (max ri (interval-max left))
+	     (interval-merge-types left right))
+	  left)))
 
 (define (interval-gt left right)
    (interval-gts left right 1))
@@ -1404,9 +1394,6 @@
       (when (and (not met) thisp)
 	 (decl-vrange-add! thisp *infinity-intv* fix))
       (set! rrange *infinity-intv*)
-      (unless (or (null? params) (pair? params))
-	 (with-access::J2SFun val (loc)
-	    (tprint "PAS BON " loc)))
       (for-each (lambda (p::J2SDecl)
 		   (decl-irange-add! p *infinity-intv* fix))
 	 params)))

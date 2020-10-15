@@ -1208,6 +1208,10 @@
       (cond
 	 ((and ultrasimplelhs ultrasimplerhs)
 	  (gen scmlhs scmrhs))
+	 ((and ultrasimplelhs simplerhs)
+	  (gen scmlhs scmrhs))
+	 ((and simplelhs ultrasimplerhs)
+	  (gen scmlhs scmrhs))
 	 ((and testl testr)
 	  (gen scmlhs scmrhs))
 	 ((ultrasimple? lhs)
@@ -1242,7 +1246,6 @@
 ;*---------------------------------------------------------------------*/
 (define (with-tmp lhs rhs mode return ctx gen::procedure)
    (with-tmp-flip #f lhs rhs mode return ctx gen))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    with-tmp-args ...                                                */

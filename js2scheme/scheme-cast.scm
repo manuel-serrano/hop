@@ -49,7 +49,7 @@
      (int32
 	((int30 nop)
 	 (uint32 ,js-int32->uint32)
-	 (int53 int32->fixnum)
+	 (int53 ,js-int32->fixnum)
 	 (integer ,js-int32->integer)
 	 (number ,js-int32->integer)
 	 (real ,js-int32->real)
@@ -78,8 +78,8 @@
 	 (any ,js-uint32->integer)))
      (int53
 	((int30 nop)
-	 (int32 js-int53-toint32)
-	 (uint32 js-int53-touint32)
+	 (int32 ,js-fixnum->int32)
+	 (uint32 ,js-fixnum->uint32)
 	 (integer nop)
 	 (number nop)
 	 (real fixnum->flonum)
@@ -207,7 +207,7 @@
 	 (null nop)
 	 (int53 nop)
 	 (bool ,js-any->bool)
-	 (string ,js->string)
+	 (string nop)
 	 (scmstring ,js->scmstring)
 	 (int32 ,js->int32)
 	 (real ,js-any->real)
@@ -233,6 +233,9 @@
 ;; int32
 (define (js-int32->uint32 v expr ctx)
    (if (int32? v) (int32->uint32 v) `(int32->uint32 ,v)))
+
+(define (js-int32->fixnum v expr ctx)
+   (if (int32? v) (int32->fixnum v) `(int32->fixnum ,v)))
 
 (define (js-int32->integer v expr ctx)
    (let ((conf (context-conf ctx)))

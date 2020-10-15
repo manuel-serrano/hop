@@ -1472,7 +1472,8 @@
 	 ((string-add? rhs)
 	  (with-access::J2SBinary rhs ((lrhs lhs) (rrhs rhs))
 	     (j2s-jsstring-append3 lhs lrhs rrhs mode return ctx)))
-	 (else (fast-add  tl tr loc type lhs rhs mode return ctx))))
+	 (else
+	  (fast-add  tl tr loc type lhs rhs mode return ctx))))
    
    (define (fast-add tl tr loc type lhs rhs mode return ctx)
       (with-tmp lhs rhs mode return ctx
@@ -1480,7 +1481,7 @@
 	    (cond
 	       ((eq? tl 'string)
 		(add-string loc type left tl lhs right tr rhs
-		   mode return ctx #f))
+		    mode return ctx #f))
 	       ((eq? tr 'string)
 		(add-string loc type right tr rhs left tl lhs
 		   mode return ctx #t))
@@ -1595,8 +1596,8 @@
 	     (fast-add tl tr loc type lhs rhs mode return ctx)))))
 
    (if (type-number? type)
-      (js-arithmetic-addsub loc '+ type lhs rhs mode return ctx)
-      (add loc type lhs rhs mode return ctx)))
+       (js-arithmetic-addsub loc '+ type lhs rhs mode return ctx)
+       (add loc type lhs rhs mode return ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arithmetic-addsub ...                                         */
@@ -2265,33 +2266,80 @@
 ;*---------------------------------------------------------------------*/
 (define (asint32 val type::symbol)
    (case type
-      ((int32) val)
-      ((uint32) (if (uint32? val) (uint32->int32 val) `(uint32->int32 ,val)))
-      ((int53) (if (fixnum? val) (fixnum->int32 val) `(fixnum->int32 ,val)))
-      ((integer) (if (fixnum? val) (fixnum->int32 val) `(fixnum->int32 ,val)))
-      ((real) (if (real? val) (flonum->int32 val) `(flonum->int32 ,val)))
-      (else `(fixnum->int32 ,val))))
+      ((int32)
+       val)
+      ((uint32)
+       (if (uint32? val)
+	   (uint32->int32 val)
+	   (match-case val
+	      ((int32->uint32 ?expr) expr)
+	      (else `(uint32->int32 ,val)))))
+      ((int53 integer)
+       (if (fixnum? val)
+	   (fixnum->int32 val)
+	   (match-case val
+	      ((int32->fixnum ?expr) expr)
+	      (else `(fixnum->int32 ,val)))))
+      ((real)
+       (if (real? val)
+	   (flonum->int32 val)
+	   (match-case val
+	      ((int32->flonum ?expr) expr)
+	      (else `(flonum->int32 ,val)))))
+      (else
+       `(fixnum->int32 ,val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    asuint32 ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (asuint32 val type::symbol)
    (case type
-      ((int32) (if (int32? val) (int32->uint32 val) `(int32->uint32 ,val)))
-      ((uint32) val)
-      ((int53) (if (fixnum? val) (fixnum->uint32 val) `(fixnum->uint32 ,val)))
-      ((integer) (if (fixnum? val) (fixnum->uint32 val) `(fixnum->uint32 ,val)))
-      ((real) (if (real? val) (flonum->uint32 val) `(flonum->uint32 ,val)))
-      (else `(fixnum->uint32 ,val))))
+      ((int32)
+       (if (int32? val)
+	   (int32->uint32 val)
+	   (match-case val
+	      ((uint32->int32 ?expr) expr)
+	      (else `(int32->uint32 ,val)))))
+      ((uint32)
+       val)
+      ((int53 integer)
+       (if (fixnum? val)
+	   (fixnum->uint32 val)
+	   (match-case val
+	      ((uint32->fixnum ?expr) expr)
+	      (else `(fixnum->uint32 ,val)))))
+      ((real)
+       (if (real? val)
+	   (flonum->uint32 val)
+	   (match-case val
+	      ((uint32->flonum ?expr) expr)
+	      (else `(flonum->uint32 ,val)))))
+      (else
+       `(fixnum->uint32 ,val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    asfixnum ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (asfixnum val type::symbol)
    (case type
-      ((int32) (if (int32? val) (int32->fixnum val) `(int32->fixnum ,val)))
-      ((uint32) (if (uint32? val) (uint32->fixnum val) `(uint32->fixnum ,val)))
-      ((real) (if (real? val) (flonum->fixnum val) `(flonum->fixnum ,val)))
+      ((int32)
+       (if (int32? val)
+	   (int32->fixnum val)
+	   (match-case val
+	      ((fixnum->int32 ?expr) expr)
+	      (else `(int32->fixnum ,val)))))
+      ((uint32)
+       (if (uint32? val)
+	   (uint32->fixnum val)
+	   (match-case val
+	      ((fixnum->uint32 ?expr) expr)
+	      (else `(uint32->fixnum ,val)))))
+      ((real)
+       (if (real? val)
+	   (flonum->fixnum val)
+	   (match-case val
+	      ((fixnum->flonum ?expr) expr)
+	      (else `(flonum->fixnum ,val)))))
       (else val)))
 
 ;*---------------------------------------------------------------------*/
@@ -2300,13 +2348,29 @@
 (define (asreal val type::symbol)
    (case type
       ((int32)
-       (if (int32? val) (int32->flonum val) `(int32->flonum ,val)))
+       (if (int32? val)
+	   (int32->flonum val)
+	   (match-case val
+	      ((flonum->int32 ?expr) expr)
+	      (else `(int32->flonum ,val)))))
       ((uint32)
-       (if (uint32? val) (uint32->flonum val) `(uint32->flonum ,val)))
+       (if (uint32? val)
+	   (uint32->flonum val)
+	   (match-case val
+	      ((flonum->uint32 ?expr) expr)
+	      (else `(uint32->flonum ,val)))))
       ((int53 bint)
-       (if (fixnum? val) (fixnum->flonum val) `(fixnum->flonum ,val)))
+       (if (fixnum? val)
+	   (fixnum->flonum val)
+	   (match-case val
+	      ((flonum->fixnum ?expr) expr)
+	      (else `(fixnum->flonum ,val)))))
       ((integer)
-       (if (fixnum? val) (fixnum->flonum val) `(fixnum->flonum ,val)))
+       (if (fixnum? val)
+	   (fixnum->flonum val)
+	   (match-case val
+	      ((flonum->fixnum ?expr) expr)
+	      (else `(fixnum->flonum ,val)))))
       (else
        val)))
 

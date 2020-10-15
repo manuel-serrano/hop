@@ -152,6 +152,20 @@
        (pragma (js-string->jsstring default-inline)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-tostring ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-macro (js-tostring obj %this)
+   (if (symbol? obj)
+       `(if (js-jsstring? ,obj)
+	    (js-jsstring->string ,obj)
+	    ((@ js-tostring __hopscript_public) ,obj ,%this))
+       (let ((tmp (gensym 'obj)))
+	  `(let ((,tmp ,obj))
+	      (if (js-jsstring? ,tmp)
+		  (js-jsstring->string ,tmp)
+		  ((@ js-tostring __hopscript_public) ,tmpp ,%this)))))  )
+
+;*---------------------------------------------------------------------*/
 ;*    gcroots                                                          */
 ;*---------------------------------------------------------------------*/
 (define gcroots '())

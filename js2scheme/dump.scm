@@ -236,6 +236,8 @@
 ;*---------------------------------------------------------------------*/
 (define *max-length* (-llong (exptllong #l2 32) #l1))
 (define *max-index* (-llong *max-length* #l1))
+(define *max-index-1* (-llong *max-index* #l1))
+(define *max-index+1* (+llong *max-index* #l1))
 (define *max-uint29* (-llong (exptllong #l2 29) #l1))
 (define *max-int30* (-llong (exptllong #l2 29) #l1))
 (define *min-int30* (negllong (exptllong #l2 29)))
@@ -258,6 +260,8 @@
       (cond
 	 ((=llong int *max-length*) 'length)
 	 ((=llong int *max-index*) 'index)
+	 ((=llong int *max-index-1*) 'index-1)
+	 ((=llong int *max-index+1*) 'index+1)
 	 ((=llong int *max-uint29*) 'uint29)
 	 ((=llong int *max-int30*) 'max-int30)
 	 ((=llong int *min-int30*) 'min-int30)

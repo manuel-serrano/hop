@@ -29,7 +29,8 @@
 	   __js2scheme_utils
 	   __js2scheme_compile
 	   __js2scheme_stage
-	   __js2scheme_alpha)
+	   __js2scheme_alpha
+	   __js2scheme_usage)
 
    (export j2s-varpreinit-stage))
 
@@ -65,7 +66,7 @@
 ;*    invalidate-decl! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (invalidate-decl! decl::J2SDecl)
-   (with-access::J2SDecl decl (%info)
+   (with-access::J2SDecl decl (%info id)
       (set! %info 'no-preinit)))
 
 ;*---------------------------------------------------------------------*/
@@ -151,18 +152,42 @@
 ;*---------------------------------------------------------------------*/
 (define-method (preinit* this::J2SRef env::pair-nil)
    (with-access::J2SRef this (decl loc)
-      (if (isa? decl J2SDeclInit)
-	  env
+      (cond
+	 ((isa? decl J2SDeclFun)
+	  (with-access::J2SDeclFun decl (%info val)
+	     (unless (eq? %info 'preinit*)
+		(set! %info 'preinit*)
+		(preinit* val env))
+	     env))
+	 ((isa? decl J2SDeclInit)
+	  env)
+	 (else
 	  (if (memq decl env)
-	      (with-access::J2SDecl decl (%info escape)
-		 (if (and (preinit? %info) (not escape))
+	      (with-access::J2SDecl decl (%info escape id)
+		 ;; MS care 15oct2020: since procedure are followed
+		 ;; when they escape, I don't think it is needed to
+		 ;; check escape here
+		 ;; (if (and (preinit? %info) (not escape))
+		 (if (preinit? %info)
 		     env
 		     (begin
 			(invalidate-decl! decl)
 			(remq! decl env))))
 	      (begin
 		 (invalidate-decl! decl)
-		 (remq! decl env))))))
+		 (remq! decl env)))))))
+
+;*---------------------------------------------------------------------*/
+;*    preinit* ::J2SDeclFun ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (preinit* this::J2SDeclFun env::pair-nil)
+   ;; only tranverse J2SDeclFun when they are referenced for the first time
+   (with-access::J2SDeclFun this (%info val)
+      (when (decl-usage-has? this '(ref))
+	 (unless (eq? %info 'preinit*)
+	    (set! %info 'preinit*)
+	    (preinit* val env))))
+   env)
 
 ;*---------------------------------------------------------------------*/
 ;*    preinit* ::J2SInit ...                                           */
@@ -178,13 +203,13 @@
 	 ((isa? init J2SNumber) 'number)
 	 (else #f)))
    
-   (with-access::J2SInit this (lhs rhs)
+   (with-access::J2SInit this (lhs rhs loc)
       (let ((env (preinit* rhs env)))
 	 (if (isa? lhs J2SRef)
 	     (with-access::J2SRef lhs (decl)
 		(if (invalidated-decl? decl)
 		    env
-		    (with-access::J2SDecl decl (binder %info id)
+		    (with-access::J2SDecl decl (binder %info id escape)
 		       (if (eq? binder 'var)
 			   (let ((typ (init->type rhs)))
 			      (cond
