@@ -258,9 +258,8 @@
                   (epairify loc `(js-tonumber ,sexpr %this)))))))
       ((-)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7
-       (unless (eq? (j2s-type expr) type)
-	  (error "j2s-unop" "incorrect types" (j2s->list expr)))
-       (let ((sexp (j2s-scheme expr mode return ctx)))
+       (let ((sexp (j2s-scheme expr mode return ctx))
+	     (ty (j2s-type expr)))
 	  (cond
 	     ((eq? type 'uint32)
 	      (error "j2s-unop" "uint32 cannot be negated" (j2s->list expr)))
@@ -268,11 +267,11 @@
 	      (if (and (eq? type 'real) (fixnum? sexp))
 		  (fixnum->flonum (negfx sexp))
 		  (- 0 sexp)))
-	     ((eq? type 'int32)
+	     ((eq? ty 'int32)
 	      (epairify loc `(negs32 ,sexp)))
-	     ((eq? type 'int53)
+	     ((eq? ty 'int53)
 	      (epairify loc `(negfx ,sexp)))
-	     ((type-number? type)
+	     ((type-number? ty)
 	      (epairify loc `(negjs ,sexp)))
 	     (else
 	      (epairify loc `(negjs (js-tonumber ,sexp %this)))))))
