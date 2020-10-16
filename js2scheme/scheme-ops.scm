@@ -2107,13 +2107,11 @@
    
    (with-tmp lhs rhs mode return ctx
       (lambda (left right)
-	 (let ((tlv (j2s-type lhs))
-	       (trv (j2s-type rhs))
-	       (tl (j2s-etype lhs (context-conf ctx)))
-	       (tr (j2s-etype rhs (context-conf ctx))))
+	 (let ((tl (j2s-type lhs))
+	       (tr (j2s-type rhs)))
 	    (epairify loc
 	       (cond
-		  ((and (eq? tlv 'int32) (eq? trv 'int32))
+		  ((and (eq? tl 'int32) (eq? tr 'int32))
 		   (cond
 		      ((inrange-positive? rhs)
 		       (j2s-cast `(remainders32 ,left ,right)
@@ -2123,7 +2121,7 @@
 		      (else
 		       (remainders32-minus-zero left right
 			  type lhs rhs mode return ctx))))
-		  ((and (eq? tlv 'uint32) (eq? trv 'uint32))
+		  ((and (eq? tl 'uint32) (eq? tr 'uint32))
 		   (cond
 		      ((inrange-positive? rhs)
 		       (j2s-cast `(remainderu32 ,left ,right)
@@ -2133,7 +2131,7 @@
 			    +nan.0
 			    ,(j2s-cast `(remainderu32 ,left ,right)
 				lhs 'uint32 type ctx)))))
-		  ((and (eq? tlv 'integer) (eq? trv 'integer))
+		  ((and (eq? tl 'integer) (eq? tr 'integer))
 		   (with-tmp lhs rhs mode return ctx
 		      (lambda (left right)
 			 (cond
@@ -2151,18 +2149,18 @@
 		  ((and (eq? tl 'uint32) (eq? tr 'uint32))
 		   (cond
 		      ((not (uint32? right))
-		       `(if (=u32 ,(asuint32 right trv) #u32:0)
+		       `(if (=u32 ,(asuint32 right tr) #u32:0)
 			    +nan.0
 			    ,(j2s-cast `(remainderu32
-					   ,(asuint32 left tlv)
-					   ,(asuint32 right trv))
+					   ,(asuint32 left tl)
+					   ,(asuint32 right tr))
 				lhs 'uint32 type ctx)))
 		      ((=u32 right #u32:0)
 		       +nan.0)
 		      (else
 		       (j2s-cast `(remainderu32
-				     ,(asuint32 left tlv)
-				     ,(asuint32 right trv))
+				     ,(asuint32 left tl)
+				     ,(asuint32 right tr))
 			  lhs 'uint32 type ctx))))
 		  ((and (eq? tr 'uint32) (inrange-positive? lhs))
 		   (cond
@@ -2171,52 +2169,52 @@
 			  ((memq tl '(int32 uint32 bint))
 			   (if (or (inrange-int30? rhs) (inrange-int30? lhs))
 			       (j2s-cast
-				  `(remainderfx ,(asfixnum left tlv)
-				      ,(asfixnum right trv))
+				  `(remainderfx ,(asfixnum left tl)
+				      ,(asfixnum right tr))
 				  lhs 'int30 type ctx)
 			       (j2s-cast
-				  `(remainderfx ,(asfixnum left tlv)
-				      ,(asfixnum right trv))
+				  `(remainderfx ,(asfixnum left tl)
+				      ,(asfixnum right tr))
 				  lhs 'bint type ctx)))
 			  ((eq? (number type) 'integer)
 			   `(if (fixnum? ,left)
 				,(j2s-cast
-				    `(remainderfx ,left ,(asfixnum right trv))
+				    `(remainderfx ,left ,(asfixnum right tr))
 				    lhs 'bint type ctx)
-				,(j2s-cast `(%$$NZ ,(tonumber left tlv ctx)
-					       ,(tonumber right trv ctx))
+				,(j2s-cast `(%$$NZ ,(tonumber left tl ctx)
+					       ,(tonumber right tr ctx))
 				    lhs (number type) type ctx)))
 			  (else
 			   `(if (fixnum? ,left)
 				,(j2s-cast `(remainderfx ,left
-					       ,(asfixnum right trv))
+					       ,(asfixnum right tr))
 				    lhs 'bint type ctx)
-				,(j2s-cast `(%$$NZ ,(tonumber left tlv ctx)
-					       ,(tonumber right trv ctx))
+				,(j2s-cast `(%$$NZ ,(tonumber left tl ctx)
+					       ,(tonumber right tr ctx))
 				    lhs (number type) type ctx)))))
 		      ((m64? (context-conf ctx))
 		       `(if (fixnum? ,left)
 			    ,(j2s-cast `(remainderfx ,left
-					   ,(asfixnum right trv))
+					   ,(asfixnum right tr))
 				lhs (number type) type ctx)
-			    ,(j2s-cast `(%$$NZ ,(tonumber64 left tlv ctx)
-					   ,(tonumber64 right trv ctx))
+			    ,(j2s-cast `(%$$NZ ,(tonumber64 left tl ctx)
+					   ,(tonumber64 right tr ctx))
 				lhs (number type) type ctx)))
 		      (else
-		       (j2s-cast `(%$$NZ ,(tonumber32 left tlv ctx)
-				     ,(tonumber32 right trv ctx))
+		       (j2s-cast `(%$$NZ ,(tonumber32 left tl ctx)
+				     ,(tonumber32 right tr ctx))
 			  lhs (number type) type ctx))))
 		  ((eq? type 'real)
 		   (cond
-		      ((and (eq? tlv 'real) (eq? trv 'real))
+		      ((and (eq? tl 'real) (eq? tr 'real))
 		       `(%$$FF ,left ,right))
-		      ((eq? tlv 'real)
+		      ((eq? tl 'real)
 		       (cond
 			  ((and (m64? (context-conf ctx)) (eq? tr 'int53))
 			   `(%$$FF ,left (fixnum->flonum ,right)))
 			  (else
 			   `(%$$FN ,left ,(tonumber right tr ctx)))))
-		      ((eq? trv 'real)
+		      ((eq? tr 'real)
 		       (cond
 			  ((and (m64? (context-conf ctx)) (eq? tl 'int53))
 			   `(%$$FF (fixnum->flonum ,left) ,right))
