@@ -292,6 +292,7 @@
 	 (object ,js-string->jsobject)
 	 (scmstring js-jsstring->string)
 	 (iterable ,(lambda (v expr ctx) `(js-jsstring->jsarray ,v %this)))
+	 (number js-jsstring->number)
 	 (any nop)))
      (function
 	((scmstring js-jsstring->string)

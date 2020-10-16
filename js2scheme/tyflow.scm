@@ -849,15 +849,17 @@
 
    (define (numty ty)
       ;; postfix expressions only evaluate as numbers
-      (if (eq? ty 'any)
-	  'unknown
-	  ty))
+      (cond
+	 ((eq? ty 'unknown) 'unknown)
+	 ((type-number? ty) ty)
+	 (else 'number)))
    
    (with-access::J2SPostfix this (lhs rhs op type)
       (multiple-value-bind (tyr envr bkr)
 	 (node-type rhs env fix)
 	 (multiple-value-bind (tyv __ lbk)
 	    (node-type lhs env fix)
+	    (expr-type-add! rhs envr fix (numty tyr) bkr)
 	    (cond
 	       ((isa? lhs J2SRef)
 		;; a variable assignment
@@ -873,7 +875,7 @@
 			 ((not (eq? utype 'unknown))
 			  (return utype env bkr))
 			 (else
-			  (decl-vtype-add! decl tyr fix)
+			  (decl-vtype-add! decl (numty tyr) fix)
 			  (let ((nenv (extend-env envr decl tyr)))
 			     (expr-type-add! this nenv fix (numty tyr)
 				(append lbk bkr))))))))
