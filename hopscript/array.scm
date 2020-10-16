@@ -1010,7 +1010,7 @@
 	      (<u32 (fixnum->uint32 idx) (bit-lshu32 #u32:1 29)))
 	     (else
 	      (pragma::bool "(unsigned long)($1) < (unsigned long)(1<<29)" idx)))
-	  (js-array-set-ur! arr (fixnum->uint32 idx) val throw %this))
+	  (js-array-index-set! arr (fixnum->uint32 idx) val throw %this))
 	 (else
 	  (js-array-put! arr idx val throw %this)))))
    
@@ -1073,6 +1073,16 @@
 	      val)
 	     (else
 	      (js-array-put! arr (js-uint32-tointeger idx) val throw %this))))
+	 ((and (js-object-mode-inline? arr)
+	       (<u32 idx (fixnum->uint32 (vector-length vec))))
+	  (vector-set! vec (uint32->fixnum idx) val)
+	  (when (>u32 idx ilen)
+	     (js-object-mode-inline-set! arr #f))
+	  (let ((nilen (+u32 ilen #u32:1)))
+	     (set! ilen nilen)
+	     (when (>=u32 idx length)
+		(set! length nilen)))
+	  val)
 	 (else
 	  (js-array-put! arr (js-uint32-tointeger idx) val throw %this)))))
    

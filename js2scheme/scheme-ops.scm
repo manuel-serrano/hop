@@ -223,17 +223,14 @@
 	  (delete->scheme expr)))
       ((+)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.6
-       (unless (eq? (j2s-type expr) type)
-	  (error "j2s-unop:+"
-	     (format "incorrect types (~a/~a)" (j2s-type expr) type)
-	     (j2s->list expr)))
+       ;; this is the explicit JS type cast
        (let ((sexp (j2s-scheme expr mode return ctx)))
 	  (cond
 	     ((number? sexp)
 	      (if (and (eq? type 'real) (fixnum? sexp))
 		  (fixnum->flonum sexp)
 		  sexp))
-	     ((type-number? type)
+	     ((type-number? (j2s-type expr))
 	      (epairify loc sexp))
 	     (else
 	      (epairify loc `(js-tonumber ,sexp %this))))))
