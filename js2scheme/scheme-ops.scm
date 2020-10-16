@@ -388,7 +388,7 @@
 	   (with-tmp lhs rhs mode return ctx
 	      (lambda (left right)
 		 (j2s-cast
-		    (js-binop loc op left lhs right rhs ctx)
+		    (js-binop loc '+ left lhs right rhs ctx)
 		    #f 'any type ctx)))
 	   (js-binop-add loc type lhs rhs mode return ctx)))
       ((- --)
@@ -396,9 +396,9 @@
 	   (with-tmp lhs rhs mode return ctx
 	      (lambda (left right)
 		 (j2s-cast
-		    (js-binop-arithmetic loc op left lhs right rhs ctx)
+		    (js-binop-arithmetic loc '- left lhs right rhs ctx)
 		    #f 'any type ctx)))
-	   (js-arithmetic-addsub loc op type lhs rhs mode return ctx)))
+	   (js-arithmetic-addsub loc '- type lhs rhs mode return ctx)))
       ((*)
        (if (=fx (context-get ctx :optim 0) 0)
 	   (with-tmp lhs rhs mode return ctx
@@ -650,7 +650,7 @@
    (let ((tl (j2s-type l))
 	 (tr (j2s-type r)))
       (case op
-	 ((-)
+	 ((- --)
 	  `(-js ,(box left tl ctx) ,(box right tr ctx) %this))
 	 ((*)
 	  `(*js ,(box left tl ctx) ,(box right tr ctx) %this))
