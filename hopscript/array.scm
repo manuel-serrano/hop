@@ -1283,7 +1283,8 @@
    ;; pop
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.6
    (define (array-prototype-pop this::obj)
-      (if (not (js-array? this))
+      (cond
+	 ((not (js-array? this))
 	  (let* ((o (js-toobject %this this))
 		 (len::uint32 (js-get-lengthu32 o %this)))
 	     (cond
@@ -1295,8 +1296,12 @@
 			(el (js-get o (js-uint32-tointeger indx) %this)))
 		    (js-delete! o indx #t %this)
 		    (js-put-length! o (js-uint32-tointeger indx) #f #f %this)
-		    el))))
-	  (js-array-prototype-pop this %this)))
+		    el)))))
+	 ((not (array-shrinkable? this))
+	  (js-raise-type-error %this
+	     "Can't remove property ~a: length is read-only" length))
+	 (else
+	  (js-array-prototype-pop this %this))))
 
    (js-bind! %this js-array-prototype (& "pop")
       :value (js-make-function %this array-prototype-pop
@@ -3091,10 +3096,11 @@
 ;*    array-shrinkable? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (array-shrinkable? o::JsArray)
-   (let ((p (js-array-find-length-property o)))
-      (or (not p)
-	  (with-access::JsValueDescriptor p (writable)
-	     writable))))
+   (or (js-object-mode-plain? o)
+       (let ((p (js-array-find-length-property o)))
+	  (or (not p)
+	      (with-access::JsValueDescriptor p (writable)
+		 writable)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-length! ...                                               */
@@ -4487,14 +4493,14 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-pop ...                                       */
+;*    -------------------------------------------------------------    */
+;*    !!! WARNING: the test for array extensiveness is to be executed  */
+;*    before calling this function.                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-pop o %this)
    (with-access::JsArray o (length ilen vec)
       (let ((len::uint32 (js-get-lengthu32 o %this)))
 	 (cond
-	    ((not (array-shrinkable? o))
-	     (js-raise-type-error %this
-		"Can't remove property ~a: length is read-only" length))
 	    ((=u32 len #u32:0)
 	     (js-put-length! o 0 #f #f %this)
 	     (js-undefined))
@@ -4517,7 +4523,17 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-pop o::JsArray %this cache)
    (if (js-object-mode-plain? o)
-       (js-array-prototype-pop o %this)
+       (with-access::JsArray o (length ilen vec)
+	  (let ((len::uint32 length))
+	     ;; fast path
+	     (if (and (>u32 len 0) (=u32 len ilen))
+		 (let* ((idx (-u32 len #u32:1))
+			(el (vector-ref vec (uint32->fixnum (-u32 ilen 1)))))
+		    (vector-set! vec (uint32->fixnum (-u32 ilen 1)) (js-absent))
+		    (set! length idx)
+		    (set! ilen idx)
+		    el)
+		 (js-array-prototype-pop o %this))))
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call0 %this
 	     (js-get-jsobject-name/cache o (& "pop") #f %this
