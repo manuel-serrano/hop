@@ -846,7 +846,14 @@
 ;*    node-type ::J2SPostfix ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SPostfix env::pair-nil fix::cell)
-   (with-access::J2SPostfix this (lhs rhs op)
+
+   (define (numty ty)
+      ;; postfix expressions only evaluate as numbers
+      (if (eq? ty 'any)
+	  'unknown
+	  ty))
+   
+   (with-access::J2SPostfix this (lhs rhs op type)
       (multiple-value-bind (tyr envr bkr)
 	 (node-type rhs env fix)
 	 (multiple-value-bind (tyv __ lbk)
@@ -861,18 +868,18 @@
 			  (multiple-value-bind (tyv envl lbk)
 			     (node-type lhs env fix)
 			     (let ((nenv (extend-env env decl tyv)))
-				(expr-type-add! this nenv fix tyv
+				(expr-type-add! this nenv fix (numty tyv)
 				   (append lbk bkr)))))
 			 ((not (eq? utype 'unknown))
 			  (return utype env bkr))
 			 (else
 			  (decl-vtype-add! decl tyr fix)
 			  (let ((nenv (extend-env envr decl tyr)))
-			     (expr-type-add! this nenv fix tyr
+			     (expr-type-add! this nenv fix (numty tyr)
 				(append lbk bkr))))))))
 	       (else
 		;; a non variable assinment
-		(expr-type-add! this envr fix tyr bkr)))))))
+		(expr-type-add! this envr fix (numty tyr) bkr)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SPrefix ...                                        */
@@ -2196,6 +2203,16 @@
       (when decl
 	 (force-type! decl from to cell)))
    (call-next-method))
+
+;*---------------------------------------------------------------------*/
+;*    force-type! ::J2SPostfix ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-type! this::J2SPostfix from to cell)
+   (with-access::J2SPostfix this (type)
+      (when (eq? type 'unknown)
+	 (set! type 'number)
+	 (cell-set! cell #t)))
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    reset-type! ::J2SNode ...                                        */

@@ -1934,15 +1934,17 @@
       (let* ((num (J2SNumber/type 'uint32 1))
 	     (op (if (=fx inc 1) '+ '-))
 	     (prev (when (eq? retval 'old) (gensym 'prev)))
-	     (rhse (j2s-scheme rhs mode return ctx))
 	     (lhse (j2s-scheme lhs mode return ctx)))
 	 (if (eq? retval 'old)
-	     (let ((res prev))
-		`(let ((,res ,(j2s-as lhse lhs (j2s-type lhs) type ctx)))
-		    ,(j2s-scheme-set! lhs rhs rhse
-			res mode return ctx #f loc)))
-	     (j2s-scheme-set! lhs rhs rhse
-		(j2s-as lhse lhs (j2s-type rhs) type ctx) mode return ctx #f loc))))
+	     (with-access::J2SBinary rhs ((rlhs lhs))
+		(set! rlhs (J2SHopRef/type prev type))
+		`(let ((,prev ,(j2s-cast lhse lhs (j2s-type lhs) type ctx)))
+		    ,(j2s-scheme-set! lhs rhs
+			(j2s-scheme rhs mode return ctx)
+			prev mode return ctx #f loc)))
+	     (j2s-scheme-set! lhs rhs
+		(j2s-scheme rhs mode return ctx)
+		(j2s-cast lhse lhs (j2s-type rhs) type ctx) mode return ctx #f loc))))
    
    (define (unresolved-inc op lhs inc)
       (with-access::J2SUnresolvedRef lhs (id cache loc)
@@ -2357,7 +2359,8 @@
    (define (index-obj-literal-ref this obj field cache cspecs loc)
       (let ((tmp (j2s-scheme obj mode return ctx)))
 	 `(cond
-	     ,@(if (canbe-array? obj)
+	     ,@(if (and (canbe-array? obj)
+			(not (eq? (j2s-type field) 'string)))
 		`(((js-array? ,tmp)
 		   ,(or (j2s-array-ref this mode return ctx)
 			(get obj tmp field cache cspecs #f loc))))

@@ -3245,41 +3245,43 @@
 			     (js-substring/enc s (vector-ref vrx 1)
 				(string-length s) enc %this)))))))))
 	 ((string-index newstring #\$)
-	  (let loop ((i 0)
-		     (res (& "")))
-	     (let ((r (pregexp-match-positions rx s i)))
-		(if (not r)
-		    (cond
-		       ((=fx i 0)
-			this)
-		       ((>=fx i len)
-			res)
-		       (else
-			(js-jsstring-append res
-			   (js-substring/enc s i len enc %this))))
-		    (let ((v (table22 newstring r s %this)))
-		       (cond
-			  ((>fx (cdar r) i)
-			   (loop (cdar r)
-			      (js-jsstring-append
-				 (js-jsstring-append res
-				    (js-substring/enc s i (caar r) enc %this))
-				 v)))
-			  ((<fx i len)
-			   (loop (+fx i 1)
-			      (js-jsstring-append
-				 (js-jsstring-append res
-				    (js-substring/enc s i (caar r)
-				       enc %this))
-				 (js-jsstring-append
-				    v
-				    (js-substring/enc s i (+fx i 1)
-				       enc %this)))))
-			  (else
-			   (js-jsstring-append
+	  (js-call-with-stack-vector (vector -1 -1)
+	     (lambda (vrx)
+		(let loop ((i 0)
+			   (res (& "")))
+		   (let ((r (pregexp-match-n-positions! rx s vrx i len)))
+		      (if (<fx r 0)
+			  (cond
+			     ((=fx i 0)
+			      this)
+			     ((>=fx i len)
+			      res)
+			     (else
 			      (js-jsstring-append res
-				 (js-substring/enc s i (caar r) enc %this))
-			      v))))))))
+				 (js-substring/enc s i len enc %this))))
+			  (let ((v (table22-vec newstring r vrx s %this)))
+			     (cond
+				((>fx (vector-ref vrx 1) i)
+				 (loop (vector-ref vrx 1)
+				    (js-jsstring-append
+				       (js-jsstring-append res
+					  (js-substring/enc s i (vector-ref vrx 0) enc %this))
+				       v)))
+				((<fx i len)
+				 (loop (+fx i 1)
+				    (js-jsstring-append
+				       (js-jsstring-append res
+					  (js-substring/enc s i (vector-ref vrx 0)
+					     enc %this))
+				       (js-jsstring-append
+					  v
+					  (js-substring/enc s i (+fx i 1)
+					     enc %this)))))
+				(else
+				 (js-jsstring-append
+				    (js-jsstring-append res
+				       (js-substring/enc s i (vector-ref vrx 0) enc %this))
+				    v))))))))))
 	 (else
 	  (js-call-with-stack-vector (vector -1 -1)
 	     (lambda (pos)

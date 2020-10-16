@@ -994,11 +994,11 @@ bgl_make_jsfunction( obj_t procedure,
 
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
-/*    bgl_make_jsmethod_sans ...                                     */
+/*    bgl_make_jsmethod_sans ...                                       */
 /*    -------------------------------------------------------------    */
 /*    Fast C allocation, equivalent to                                 */
 /*                                                                     */
-/*      (instantiate::JsMethod                                       */
+/*      (instantiate::JsMethod                                         */
 /*         (__proto__ __proto__)                                       */
 /*         (cmap constrmap)                                            */
 /*         (elements proxy-elements))                                  */
