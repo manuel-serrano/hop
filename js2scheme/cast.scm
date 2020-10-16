@@ -437,8 +437,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SPrefix totype)
    (with-access::J2SAssig this (lhs rhs type loc)
-      (set! lhs (type-cast! lhs '*))
-      (set! rhs (type-cast! rhs '*))
+      (let ((lty (j2s-type lhs)))
+	 (set! lhs (type-cast! lhs (if (type-number? lty) lty 'number))))
+      (with-access::J2SBinary rhs ((rlhs lhs) rhs)
+	 (let ((lty (j2s-type rlhs)))
+	    (set! rlhs (type-cast! rlhs (if (type-number? lty) lty 'number))))
+	 (set! rhs (type-cast! rhs '*)))
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/
@@ -446,8 +450,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SPostfix totype)
    (with-access::J2SAssig this (lhs rhs type loc)
-      (set! lhs (type-cast! lhs '*))
-      (set! rhs (type-cast! rhs '*))
+      (let ((lty (j2s-type lhs)))
+	 (set! lhs (type-cast! lhs (if (type-number? lty) lty 'number))))
+      (with-access::J2SBinary rhs ((rlhs lhs) rhs)
+	 (let ((lty (j2s-type rlhs)))
+	    (set! rlhs (type-cast! rlhs (if (type-number? lty) lty 'number))))
+	 (set! rhs (type-cast! rhs '*)))
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/

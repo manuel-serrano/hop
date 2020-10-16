@@ -268,9 +268,24 @@
 		  (fixnum->flonum (negfx sexp))
 		  (- 0 sexp)))
 	     ((eq? ty 'int32)
-	      (epairify loc `(negs32 ,sexp)))
+	      (epairify loc (j2s-as `(negs32 ,sexp) expr 'int32 type ctx)))
+	     ((eq? ty 'uint32)
+	      (cond
+		 ((eq? type 'int32)
+		  (epairify loc `(negs32 (uint32->int32 ,sexp))))
+		 ((eq? type 'int53)
+		  (epairify loc `(negfx (uint32->fixnum ,sexp))))
+		 (else
+		  (if (m64? (context-conf ctx))
+		      (epairify loc `(negfx (uint32->fixnum ,sexp)))
+		      (let ((val (gensym)))
+			 (epairify loc
+			    `(let ((,val ,sexp))
+				(if (<u32 ,val (bit-lshu32 #u32:1 30))
+				    (negfx (uint32->fixnum ,val))
+				    (negfl (uint32->flonum ,sexp))))))))))
 	     ((eq? ty 'int53)
-	      (epairify loc `(negfx ,sexp)))
+	      (epairify loc (j2s-as `(negfx ,sexp) expr 'int53 type ctx)))
 	     ((type-number? ty)
 	      (epairify loc `(negjs ,sexp)))
 	     (else

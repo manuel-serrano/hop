@@ -869,14 +869,14 @@
 			 ((not writable)
 			  (multiple-value-bind (tyv envl lbk)
 			     (node-type lhs env fix)
-			     (let ((nenv (extend-env env decl tyv)))
+			     (let ((nenv (extend-env env decl (numty tyv))))
 				(expr-type-add! this nenv fix (numty tyv)
 				   (append lbk bkr)))))
 			 ((not (eq? utype 'unknown))
 			  (return utype env bkr))
 			 (else
 			  (decl-vtype-add! decl (numty tyr) fix)
-			  (let ((nenv (extend-env envr decl tyr)))
+			  (let ((nenv (extend-env envr decl (numty tyr))))
 			     (expr-type-add! this nenv fix (numty tyr)
 				(append lbk bkr))))))))
 	       (else
@@ -887,9 +887,18 @@
 ;*    node-type ::J2SPrefix ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SPrefix env::pair-nil fix::cell)
+
+   (define (numty ty)
+      ;; prefix expressions only evaluate as numbers
+      (cond
+	 ((eq? ty 'unknown) 'unknown)
+	 ((type-number? ty) ty)
+	 (else 'number)))
+   
    (with-access::J2SPrefix this (lhs rhs op)
       (multiple-value-bind (tyr envr bkr)
 	 (node-type rhs env fix)
+	 (expr-type-add! rhs envr fix (numty tyr) bkr)
 	 (multiple-value-bind (tyv __ lbk)
 	    (node-type lhs env fix)
 	    (cond
@@ -901,19 +910,19 @@
 			 ((not writable)
 			  (multiple-value-bind (tyv envl lbk)
 			     (node-type lhs env fix)
-			     (let ((nenv (extend-env env decl tyv)))
-				(expr-type-add! this nenv fix tyv
+			     (let ((nenv (extend-env env decl (numty tyv))))
+				(expr-type-add! this nenv fix (numty tyv)
 				   (append lbk bkr)))))
 			 ((not (eq? utype 'unknown))
 			  (return utype env bkr))
 			 (else
-			  (decl-vtype-add! decl tyr fix)
-			  (let ((nenv (extend-env envr decl tyr)))
-			     (expr-type-add! this nenv fix tyr
+			  (decl-vtype-add! decl (numty tyr) fix)
+			  (let ((nenv (extend-env envr decl (numty tyr))))
+			     (expr-type-add! this nenv fix (numty tyr)
 				(append lbk bkr))))))))
 	       (else
 		;; a non variable assignment
-		(expr-type-add! this envr fix tyr bkr)))))))
+		(expr-type-add! this envr fix (numty tyr) bkr)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SDProducer ...                                     */
@@ -2211,6 +2220,16 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-type! this::J2SPostfix from to cell)
    (with-access::J2SPostfix this (type)
+      (when (eq? type 'unknown)
+	 (set! type 'number)
+	 (cell-set! cell #t)))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    force-type! ::J2SPrefix ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-type! this::J2SPrefix from to cell)
+   (with-access::J2SPrefix this (type)
       (when (eq? type 'unknown)
 	 (set! type 'number)
 	 (cell-set! cell #t)))
