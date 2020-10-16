@@ -73,8 +73,8 @@
       (cond
 	 ((and (memq op '(+ ++)) (memq type '(int32 uint32 int53 integer number)))
 	  (epairify-deep loc
-	     (js-binop2 loc op type lhs rhs mode return ctx)))
-	 ((and (memq op '(+ ++)) (eq? type 'string) (eq? etype 'string))
+	     (js-binop2 loc '+ type lhs rhs mode return ctx)))
+	 ((and (eq? op '+) (eq? type 'string) (eq? etype 'string))
 	  (epairify-deep loc
 	     (js-binop2 loc op type lhs rhs mode return ctx)))
 	 ((and (memq op '(* - -- / >> << >>> & BIT_OR ^))
@@ -593,7 +593,7 @@
 	   (j2s-instanceof? lhs l rhs r)))
       ((in)
        (j2s-in? loc lhs rhs ctx))
-      ((+)
+      ((+ ++)
        `(js+ ,(box lhs (j2s-type l) ctx) ,(box rhs (j2s-type r) ctx) %this))
       ((<)
        `(<js ,(box lhs (j2s-type l) ctx) ,(box rhs (j2s-type r) ctx) %this))
@@ -603,7 +603,7 @@
        `(>js ,(box lhs (j2s-type l) ctx) ,(box rhs (j2s-type r) ctx) %this))
       ((>=)
        `(>=js ,(box lhs (j2s-type l) ctx) ,(box rhs (j2s-type r) ctx) %this))
-      ((- * / % & ^ >> >>> << OR &&)
+      ((- -- * / % & ^ >> >>> << OR &&)
        (error "js-binop" "should not be here" op))
       (else
        `(,op ,(box lhs (j2s-type l) ctx) ,(box rhs (j2s-type r) ctx) %this))))

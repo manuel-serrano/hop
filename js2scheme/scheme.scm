@@ -1932,7 +1932,6 @@
 
    (define (ref-inc op lhs::J2SRef rhs::J2SExpr inc::int type loc)
       (let* ((num (J2SNumber/type 'uint32 1))
-	     (op (if (=fx inc 1) '+ '-))
 	     (prev (when (eq? retval 'old) (gensym 'prev)))
 	     (lhse (j2s-scheme lhs mode return ctx)))
 	 (if (eq? retval 'old)
@@ -1946,7 +1945,7 @@
 		(j2s-scheme rhs mode return ctx)
 		(j2s-cast lhse lhs (j2s-type rhs) type ctx) mode return ctx #f loc))))
    
-   (define (unresolved-inc op lhs inc)
+   (define (unresolved-inc lhs inc)
       (with-access::J2SUnresolvedRef lhs (id cache loc)
 	 (let ((tmp (gensym 'tmp)))
 	    `(let ((,tmp ,(j2s-unresolved id (or loc #t) cache loc ctx)))
@@ -2151,7 +2150,7 @@
 	       ((isa? lhs J2SAccess)
 		(access-inc op lhs rhs (if (eq? op '++) 1 -1)))
 	       ((isa? lhs J2SUnresolvedRef)
-		(unresolved-inc op lhs (if (eq? op '++) 1 -1)))
+		(unresolved-inc lhs (if (eq? op '++) 1 -1)))
 	       ((isa? lhs J2SParen)
 		(with-access::J2SParen lhs (expr)
 		   (loop expr)))

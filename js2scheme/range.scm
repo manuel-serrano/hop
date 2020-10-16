@@ -2512,7 +2512,6 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SBinary tmap)
    (with-access::J2SBinary this (op type range)
-      (tprint "BIN op=" op)
       (case op
 	 ((>> << BIT_OT ^ &)
 	  (set! type 'int32))
