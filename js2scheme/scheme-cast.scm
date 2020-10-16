@@ -292,11 +292,12 @@
 	 (object ,js-string->jsobject)
 	 (scmstring js-jsstring->string)
 	 (iterable ,(lambda (v expr ctx) `(js-jsstring->jsarray ,v %this)))
-	 (number js-jsstring->number)
+	 (number ,(lambda (v expr ctx) `(or (js-jsstring->number ,v) +nan.0)))
 	 (any nop)))
      (function
 	((scmstring js-jsstring->string)
 	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))
+	 (number ,(lambda (v expr ctx) `(js-tonumber ,v %this)))
 	 (any nop)))
      (object
 	((bool ,(lambda (v expr ctx) #t))
