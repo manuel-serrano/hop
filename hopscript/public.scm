@@ -932,8 +932,9 @@
    `(cond
        ((js-procedure? ,fun)
 	(with-access::JsProcedure ,fun (procedure)
-	   (,(string->symbol (format "js-call~a%" (length args)))
-	    ,%this ,fun procedure ,this ,@args)))
+	   (gen-calln fun procedure this ,@args)))
+;* 	   (,(string->symbol (format "js-call~a%" (length args)))      */
+;* 	    ,%this ,fun procedure ,this ,@args)))                      */
        ((js-procedure-proxy? ,fun)
 	(,(string->symbol (format "js-call-proxy/cache-miss~a" (length args)))
 	 ,%this ,fun ,this ,@args))

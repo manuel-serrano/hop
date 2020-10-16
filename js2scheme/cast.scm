@@ -490,8 +490,6 @@
       (cond
 	 ((and (eq? op '~) (eq? type 'int32))
 	  (set! expr (type-cast! expr 'int32)))
-	 ((and (memq op '(+ -)) (type-number? type))
-	  (set! expr (type-cast! expr 'number)))
 	 (else
 	  (set! expr (type-cast! expr '*))))
       (cast this totype)))
