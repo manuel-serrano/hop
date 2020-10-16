@@ -1877,10 +1877,18 @@
 			  assig)))))
 	    ((isa? lhs J2SUnresolvedRef)
 	     (with-access::J2SUnresolvedRef lhs (id loc)
-		(epairify loc
-		   (j2s-unresolved-put! (& id (context-program ctx))
-		      (box (j2s-scheme rhs mode return ctx) (j2s-type rhs) ctx)
-		      #f mode return loc))))
+		(let ((rhse (j2s-scheme rhs mode return ctx)))
+		   (epairify loc
+		      (if (boxed-type? (j2s-type rhs))
+			  (let ((tmp (gensym)))
+			     `(let ((,tmp ,rhse))
+				 ,(j2s-unresolved-put!
+				     (& id (context-program ctx))
+				     (box tmp (j2s-type rhs) ctx)
+				     #f mode return loc)
+				 ,tmp))
+			  (j2s-unresolved-put! (& id (context-program ctx))
+			     rhse #f mode return loc))))))
 	    ((isa? lhs J2SHopRef)
 	     (with-access::J2SHopRef lhs (id)
 		(epairify loc

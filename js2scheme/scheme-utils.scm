@@ -98,6 +98,7 @@
 	   (inrange-uint32-number?::bool ::J2SExpr)
 	   (inrange-int53?::bool ::J2SExpr)
 
+	   (boxed-type?::bool ::symbol)
 	   (box ::obj ::symbol ::struct #!optional proc::obj)
 	   (box32 ::obj ::symbol ::struct  #!optional proc::obj)
 	   (box64 ::obj ::symbol ::struct #!optional proc::obj)
@@ -717,90 +718,96 @@
 	   (not (type-number? typrop))
 	   (not (eq? typrop 'array))))
 
-   (let ((propstr (match-case prop
-		     ((& ?str . ?-) str)
-		     (else #f))))
-      (cond
-	 ((> (config-get conf :debug 0) 0)
-	  (if (string? propstr)
-	      `(js-put/debug! ,obj ,prop
-		  ,(box val tyval ctx) ,mode %this ',loc)
-	      `(js-put/debug! ,obj ,(box prop typrop ctx)
-		  ,(box val tyval ctx) ,mode %this ',loc)))
-	 ((equal? propstr "__proto__")
-	  `(js-setprototypeof ,obj ,(box val tyval ctx) %this "js2scheme"))
-	 ((eq? tyobj 'array)
-	  (case typrop
-	     ((uint32)
-	      `(js-array-index-set! ,obj ,prop
-		  ,(box val tyval ctx) ,(strict-mode? mode) %this))
-	     ((int32)
-	      `(js-array-fixnum-set! ,obj (int32->fixnum ,prop)
-		  ,(box val tyval ctx) ,(strict-mode? mode) %this))
-	     ((string)
-	      `(js-array-string-set! ,obj ,prop
-		  ,(box val tyval ctx) ,(strict-mode? mode) %this))
-	     (else
-	      (if (or (not field) (mightbe-number? field))
-		  `(js-array-set! ,obj ,prop ,(box val tyval ctx)
-		      ,(strict-mode? mode) %this)
-		  `(js-array-noindex-set! ,obj ,prop ,(box val tyval ctx)
-		      ,(strict-mode? mode) %this)))))
-	 ((eq? tyobj 'arguments)
-	  `(js-put! ,obj ,prop ,(box val tyval ctx) ,mode %this))
-	 ((and cache cspecs)
+   (if (boxed-type? tyval)
+       (let ((tmp (gensym)))
+	  `(let ((,tmp ,val))
+	      ,(j2s-put! loc obj field tyobj prop typrop
+		  (box tmp tyval ctx) 'any mode ctx
+		  cache optim-arrayp :cspecs cspecs :cachefun cachefun)
+	      ,tmp))
+       (let ((propstr (match-case prop
+			 ((& ?str . ?-) str)
+			 (else #f))))
 	  (cond
-	     ((string? propstr)
-	      (if (string=? propstr "length")
-		  `(js-put-length! ,obj ,val
-		      ,mode ,(js-pcache cache) %this)
-		  (begin
-		     (case tyobj
-			((object global this)
-			 `(js-put-jsobject-name/cache! ,obj ,prop
-			     ,(box val tyval ctx)
-			     ,mode %this
-			     ,(js-pcache cache)
-			     ,(loc->point loc) ',cspecs
-			     ,cachefun))
-			(else
-			 `(js-put-name/cache! ,obj ,prop
-			     ,(box val tyval ctx)
-			     ,mode %this
-			     ,(js-pcache cache) ,(loc->point loc)
-			     ',cspecs
-			     ,cachefun))))))
-	     ((memq typrop '(int32 uint32))
-	      `(maybe-array-set! ,obj ,(box prop typrop ctx)
-		  ,(box val tyval ctx) ,mode %this))
-	     ((or (number? prop) (null? cspecs))
-	      (maybe-array-set! prop (box val tyval ctx)))
-	     ((and (memq tyobj '(object global this)) (eq? typrop 'string))
-	      `(js-put-jsobject/name-cache! ,obj ,prop
-		  ,(box val tyval ctx)
-		  ,mode %this
-		  ,(loc->point loc) ',cspecs))
-	     ((maybe-string? prop typrop)
-	      (if (memq tyobj '(object global this))
-		  `(js-put-jsobject/cache! ,obj ,prop
-		      ,(box val tyval ctx) ,mode %this
-		      ,(loc->point loc) ,(loc->src loc))
-		  `(js-put/cache! ,obj ,prop
-		      ,(box val tyval ctx) ,mode %this
-		      ,(loc->point loc) ,(loc->src loc))))
+	     ((> (config-get conf :debug 0) 0)
+	      (if (string? propstr)
+		  `(js-put/debug! ,obj ,prop
+		      ,val ,mode %this ',loc)
+		  `(js-put/debug! ,obj ,(box prop typrop ctx)
+		      ,val ,mode %this ',loc)))
+	     ((equal? propstr "__proto__")
+	      `(js-setprototypeof ,obj ,val %this "js2scheme"))
+	     ((eq? tyobj 'array)
+	      (case typrop
+		 ((uint32)
+		  `(js-array-index-set! ,obj ,prop
+		      ,val ,(strict-mode? mode) %this))
+		 ((int32)
+		  `(js-array-fixnum-set! ,obj (int32->fixnum ,prop)
+		      ,val ,(strict-mode? mode) %this))
+		 ((string)
+		  `(js-array-string-set! ,obj ,prop
+		      ,val ,(strict-mode? mode) %this))
+		 (else
+		  (if (or (not field) (mightbe-number? field))
+		      `(js-array-set! ,obj ,prop ,val
+			  ,(strict-mode? mode) %this)
+		      `(js-array-noindex-set! ,obj ,prop ,val
+			  ,(strict-mode? mode) %this)))))
+	     ((eq? tyobj 'arguments)
+	      `(js-put! ,obj ,prop ,val ,mode %this))
+	     ((and cache cspecs)
+	      (cond
+		 ((string? propstr)
+		  (if (string=? propstr "length")
+		      `(js-put-length! ,obj ,val
+			  ,mode ,(js-pcache cache) %this)
+		      (begin
+			 (case tyobj
+			    ((object global this)
+			     `(js-put-jsobject-name/cache! ,obj ,prop
+				 ,val
+				 ,mode %this
+				 ,(js-pcache cache)
+				 ,(loc->point loc) ',cspecs
+				 ,cachefun))
+			    (else
+			     `(js-put-name/cache! ,obj ,prop
+				 ,val
+				 ,mode %this
+				 ,(js-pcache cache) ,(loc->point loc)
+				 ',cspecs
+				 ,cachefun))))))
+		 ((memq typrop '(int32 uint32))
+		  `(maybe-array-set! ,obj ,(box prop typrop ctx)
+		      ,val ,mode %this))
+		 ((or (number? prop) (null? cspecs))
+		  (maybe-array-set! prop val))
+		 ((and (memq tyobj '(object global this)) (eq? typrop 'string))
+		  `(js-put-jsobject/name-cache! ,obj ,prop
+		      ,val
+		      ,mode %this
+		      ,(loc->point loc) ',cspecs))
+		 ((maybe-string? prop typrop)
+		  (if (memq tyobj '(object global this))
+		      `(js-put-jsobject/cache! ,obj ,prop
+			  ,val ,mode %this
+			  ,(loc->point loc) ,(loc->src loc))
+		      `(js-put/cache! ,obj ,prop
+			  ,val ,mode %this
+			  ,(loc->point loc) ,(loc->src loc))))
+		 (else
+		  `(js-put! ,obj ,prop ,val ,mode %this))))
+	     ((and field optim-arrayp (mightbe-number? field))
+	      (maybe-array-set! (box prop typrop ctx) val))
 	     (else
-	      `(js-put! ,obj ,prop ,(box val tyval ctx) ,mode %this))))
-	 ((and field optim-arrayp (mightbe-number? field))
-	  (maybe-array-set! (box prop typrop ctx) (box val tyval ctx)))
-	 (else
-	  (cond
-	     ((string? propstr)
-	      (js-put! obj prop (box val tyval ctx) mode '%this))
-	     ((and optim-arrayp (memq typrop '(int32 uint32)))
-	      (maybe-array-set! (box prop typrop ctx) (box val tyval ctx)))
-	     (else
-	      (js-put! obj (box prop typrop ctx)
-		  (box val tyval ctx) mode '%this)))))))
+	      (cond
+		 ((string? propstr)
+		  (js-put! obj prop val mode '%this))
+		 ((and optim-arrayp (memq typrop '(int32 uint32)))
+		  (maybe-array-set! (box prop typrop ctx) val))
+		 (else
+		  (js-put! obj (box prop typrop ctx) val mode '%this))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ranges                                                           */
@@ -978,6 +985,12 @@
 		   (<llong (interval-max range) (bit-lshllong #l1 53))
 		   (eq? (interval-type range) 'integer))
 	      (memq type '(int32 uint32 integer bint))))))
+
+;*---------------------------------------------------------------------*/
+;*    boxed-type? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (boxed-type? type)
+   (memq type '(uint32 int32)))
 
 ;*---------------------------------------------------------------------*/
 ;*    box ...                                                          */

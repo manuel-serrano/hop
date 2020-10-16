@@ -410,22 +410,13 @@
 	  (cast this totype))
 	 ((eq? totype '*)
 	  (set! lhs (type-cast! lhs '*))
-	  (set! rhs
-	     (type-cast! rhs
-		(if (or (isa? lhs J2SRef) (isa? lhs J2SUnresolvedRef))
-		    (j2s-vtype lhs)
-		    'any)))
+	  (set! rhs (type-cast! rhs '*))
 	  this)
 	 (else
 	  (let* ((id (gensym 'assig))
 		 (tr (j2s-type rhs))
 		 (d (J2SLetOpt/vtype tr '(get) id (type-cast! rhs tr))))
-	     (set! rhs
-		(type-cast! (J2SRef d :type tr)
-		   (if (or (isa? lhs J2SRef)
-			   (isa? lhs J2SUnresolvedRef))
-		       (j2s-vtype lhs)
-		       'any)))
+	     (set! rhs (type-cast! (J2SRef d :type tr) '*))
 	     (let ((tyb (if (eq? totype '*) type totype)))
 		(J2SBindExit/type tyb #f 
 		   (J2SLetRecBlock #f  (list d)
