@@ -454,6 +454,7 @@
 	   (inline js-jsstring-normalized-substring-mode::uint32)
 	   
 	   (inline js-object-mode-extensible?::bool ::JsObject)
+	   (inline js-object-mode-plain-extensible?::bool ::JsObject)
 	   (inline js-object-mode-extensible-set! ::JsObject ::bool)
 	   
 	   (inline js-object-mode-frozen?::bool ::JsObject)
@@ -804,6 +805,11 @@
 (define-inline (js-object-mode-extensible? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
       (JS-OBJECT-MODE-EXTENSIBLE)))
+
+(define-inline (js-object-mode-plain-extensible? o)
+   (=u32 (bit-andu32 (bit-andu32 (JS-OBJECT-MODE-PLAIN) (JS-OBJECT-MODE-EXTENSIBLE))
+	    (js-object-mode o))
+      (bit-andu32 (JS-OBJECT-MODE-PLAIN) (JS-OBJECT-MODE-EXTENSIBLE))))
 
 (define-inline (js-object-mode-extensible-set! o flag)
    (js-object-mode-set! o

@@ -1319,6 +1319,10 @@
 		(js-put-length! o n #f #f %this)
 		n))
 	  (begin
+	     (unless (array-extensible? this)
+		(with-access::JsArray this (length)
+		   (js-raise-type-error %this
+		      "Can't add property ~a: object is not extensible" length)))
 	     (for-each (lambda (item)
 			  (js-array-prototype-push this item %this))
 		items)
@@ -2706,7 +2710,6 @@
 ;*    be used instead of extending the array.                          */
 ;*---------------------------------------------------------------------*/
 (define (js-has-fixnum-property arr::JsArray idx::long %this)
-   (tprint "js-has-fixnum idx=" idx)
    (with-access::JsObject arr (__proto__)
       (let loop ((o (js-object-proto arr)))
 	 (cond
@@ -3078,10 +3081,11 @@
 ;*---------------------------------------------------------------------*/
 (define (array-extensible? o::JsArray)
    (when (js-object-mode-extensible? o)
-      (let ((p (js-array-find-length-property o)))
-	 (or (not p)
-	     (with-access::JsValueDescriptor p (writable)
-		writable)))))
+      (or (js-object-mode-plain? o)
+	  (let ((p (js-array-find-length-property o)))
+	     (or (not p)
+		 (with-access::JsValueDescriptor p (writable)
+		    writable))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    array-shrinkable? ...                                            */
@@ -4412,14 +4416,14 @@
 ;*    js-array-prototype-push ...                                      */
 ;*    -------------------------------------------------------------    */
 ;*    This is the method initial bound in Array.prototype.             */
+;*    -------------------------------------------------------------    */
+;*    !!! WARNING: the test for array extensiveness is to be executed  */
+;*    before calling this function.                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-push o::JsArray item %this::JsGlobalObject)
    (with-access::JsArray o (length ilen vec)
       (let ((n length))
 	 (cond
-	    ((not (array-extensible? o))
-	     (js-raise-type-error %this
-		"Can't add property ~a: object is not extensible" length))
 	    ((and (=u32 n ilen)
 		  (<u32 ilen (fixnum->uint32 (vector-length vec)))
 		  (or (js-object-mode-inline? o)
@@ -4451,8 +4455,18 @@
 ;*    js-array-push ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-array-push o::JsArray item %this::JsGlobalObject cache)
-   (if (js-object-mode-plain? o)
-       (js-array-prototype-push o item %this)
+   (if (js-object-mode-plain-extensible? o)
+       (with-access::JsArray o (length ilen vec)
+	  ;; fast path when the element is added at the end of an
+	  ;; inlined array
+	  (let ((n length))
+	     (if (and (=u32 length ilen) (<u32 ilen (fixnum->uint32 (vector-length vec))))
+		 (let ((idx (+u32 n 1)))
+		    (vector-set! vec (uint32->fixnum n) item)
+		    (set! ilen idx)
+		    (set! length idx)
+		    (js-uint32-tointeger idx))
+		 (js-array-prototype-push o item %this))))
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call1 %this
 	     (js-get-jsobject-name/cache o (& "push") #f %this

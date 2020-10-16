@@ -2414,9 +2414,19 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SAssig tmap)
    (call-default-walker)
-   (with-access::J2SAssig this (lhs type)
-      (with-access::J2SExpr lhs ((lty type))
-	 (set! type lty))))
+   (with-access::J2SAssig this (rhs type)
+      (with-access::J2SExpr rhs ((rty type))
+	 (set! type rty))))
+
+;*---------------------------------------------------------------------*/
+;*    map-types ::J2SAssigOp ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SAssigOp tmap)
+   (call-default-walker)
+   (with-access::J2SAssigOp this (range type)
+      (when (range-type? type)
+	 (let ((ty (interval->type range tmap type)))
+	    (set! type ty)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    map-types ::J2SExpr ...                                          */
@@ -2637,4 +2647,3 @@
       (let ((nenv (append decls env)))
 	 (for-each (lambda (d) (mark-capture d nenv)) decls)
 	 (for-each (lambda (n) (mark-capture n nenv)) nodes))))
-   

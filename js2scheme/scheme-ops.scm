@@ -1961,17 +1961,18 @@
 	 ((and (eq? tr 'uint32) (inrange-int32? rhs))
 	  (if-fixnum? left tl
 	     `(fixnum->int32 (/fx ,(asfixnum left tl) ,(asfixnum right tr)))
-	     `(js-toint32 (/js ,left ,right %this) %this)))
+	     `(flonum->int32 (/fl ,(asreal left tl) ,(asreal right tr)))))
 	 ((eq? tr 'int32)
 	  (if-fixnum? left tl
 	     `(fixnum->int32 (/fx ,(asfixnum left tl) ,(asfixnum right tr)))
-	     `(js-toint32 (/js ,left ,right %this) %this)))
+	     `(flonum->int32 (/fl ,(asreal left tl) ,(asreal right tr)))))
 	 (else
 	  (if-fixnums? left tl right tr
 	     `(fixnum->int32 (/fx ,(asfixnum left tl) ,(asfixnum right tr)))
-	     `(js-toint32 (/js ,left ,right %this) %this)))))
+	     `(flonum->int32 (/fl ,(asreal left tl) ,(asreal right tr)))))))
 
    (define (divu32 left right tl tr)
+      (tprint "divu32 left=" left " right=" right " tl=" tl " tr=" tr)
       (cond
 	 ((and (eq? tl 'uint32) (eq? tr 'uint32))
 	  `(/u32 ,left ,right))
@@ -1981,8 +1982,8 @@
 	  `(/u32 ,left ,(asuint32 right tr)))
 	 (else
 	  (if-fixnums? left tl right tr
-	     `(fixnum->uint32 (/fx ,left ,right))
-	     `(js-touint32 (/js ,left ,right %this) %this)))))
+	     `(fixnum->uint32 (/fx ,(asfixnum left tl) ,(asfixnum right tr)))
+	     `(flonum->uint32 (/fl ,(asreal left tl) ,(asreal right tr)))))))
 
    (define (divfl left right tl tr)
       (cond
@@ -2371,6 +2372,7 @@
 	   (uint32->flonum val)
 	   (match-case val
 	      ((flonum->uint32 ?expr) expr)
+	      ((fixnum->uint32 ?expr) `(fixnum->flonum ,expr))
 	      (else `(uint32->flonum ,val)))))
       ((int53 bint)
        (if (fixnum? val)

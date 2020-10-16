@@ -1938,6 +1938,8 @@
 	 (if (eq? retval 'old)
 	     (with-access::J2SBinary rhs ((rlhs lhs))
 		(set! rlhs (J2SHopRef/type prev type))
+		(tprint "rlhs=" (j2s->list rlhs) " " type)
+
 		`(let ((,prev ,(j2s-cast lhse lhs (j2s-type lhs) type ctx)))
 		    ,(j2s-scheme-set! lhs rhs
 			(j2s-scheme rhs mode return ctx)
@@ -2290,11 +2292,11 @@
 	       ((isa? lhs J2SAccess)
 		(access-assigop op lhs rhs))
 	       ((and (isa? lhs J2SRef) (not (isa? lhs J2SThis)))
-		(with-access::J2SRef lhs (decl)
-		   (j2s-scheme-set! lhs this
-		      (js-binop2 loc op type lhs rhs mode return ctx)
-		      (j2s-scheme lhs mode return ctx)
-		      mode return ctx #f loc)))
+		(j2s-scheme-set! lhs this
+		   (js-binop2 loc op type lhs rhs mode return ctx)
+		   (j2s-as (j2s-scheme lhs mode return ctx) lhs
+		      (j2s-type lhs) type ctx)
+		   mode return ctx #f loc))
 	       ((isa? lhs J2SUnresolvedRef)
 		(with-access::J2SUnresolvedRef lhs (id loc)
 		   (j2s-unresolved-put! (& id (context-program ctx))
