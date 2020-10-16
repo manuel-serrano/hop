@@ -261,7 +261,7 @@
        (let ((sexp (j2s-scheme expr mode return ctx))
 	     (ty (j2s-type expr)))
 	  (cond
-	     ((eq? type 'uint32)
+	     ((and (eq? ty 'uint32) (eq? type 'uint32))
 	      (error "j2s-unop" "uint32 cannot be negated" (j2s->list expr)))
 	     ((number? sexp)
 	      (if (and (eq? type 'real) (fixnum? sexp))

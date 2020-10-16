@@ -16,7 +16,7 @@
 
    (library hop)
 
-   (include "types.sch" "names.sch" "stringthread.sch")
+   (include "types.sch" "names.sch" "stringthread.sch" "array.sch")
    
    (import __hopscript_types
 	   __hopscript_names
@@ -2793,6 +2793,92 @@
 		 (loop (+fx i 1) j res))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    table22-vec ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (table22-vec fmt::bstring len::long vrx::vector string::bstring %this)
+   
+   (define (digit->number c)
+      (-fx (char->integer c) (char->integer #\0)))
+   
+   (define (digit10->number c1 c2)
+      (+fx (*fx (digit->number c1) 10) (digit->number c2)))
+   
+   (let ((stop (-fx (string-length fmt) 1)))
+      (let loop ((i 0)
+		 (j 0)
+		 (res (& "")))
+	 (cond
+	    ((>=fx i stop)
+	     (js-jsstring-append res (js-substring fmt j (+fx stop 1) %this)))
+	    ((not (char=? (string-ref fmt i) #\$))
+	     (loop (+fx i 1) j res))
+	    (else
+	     (case (string-ref fmt (+fx i 1))
+		((#\$)
+		 (let ((res (js-jsstring-append res (js-substring fmt j i %this))))
+		    (loop (+fx i 2) (+fx i 2)
+		       (js-jsstring-append res (& "$")))))
+		((#\&)
+		 (let ((res (js-jsstring-append res (js-substring fmt j i %this)))
+		       (portion (js-substring string (vector-ref vrx 0) (vector-ref vrx 1) %this)))
+		    (loop (+fx i 2) (+fx i 2)
+		       (js-jsstring-append res portion))))
+		((#\`)
+		 (let ((res (js-jsstring-append res (js-substring fmt j i %this)))
+		       (portion (js-substring string 0 (vector-ref vrx 0) %this)))
+		    (loop (+fx i 2) (+fx i 2)
+		       (js-jsstring-append res portion))))
+		((#\')
+		 (let ((res (js-jsstring-append res
+			       (js-substring fmt j i %this)))
+		       (portion (js-substring string (vector-ref vrx 1)
+				   (string-length string) %this)))
+		    (loop (+fx i 2) (+fx i 2)
+		       (js-jsstring-append res portion))))
+		((#\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)
+		 (let ((res (cond
+			       ((=fx i 0)
+				res)
+			       ((=fx j 0)
+				(js-substring fmt j i %this))
+			       (else
+				(js-jsstring-append res
+				   (js-substring fmt j i %this))))))
+		    (if (or (=fx i (-fx stop 1))
+			    (not (char-numeric? (string-ref fmt (+fx i 2)))))
+			(let ((n (digit->number (string-ref fmt (+fx i 1)))))
+			   (if (>fx n len)
+			       (loop (+fx i 2) j res)
+			       (let* ((portion (js-substring string
+						  (vector-ref vrx (*fx n 2))
+						  (vector-ref vrx (+fx (*fx n 2) 1)) %this)))
+				  (loop (+fx i 2) (+fx i 2)
+				     (js-jsstring-append res portion)))))
+			(let ((n (digit10->number
+				    (string-ref fmt (+fx i 1))
+				    (string-ref fmt (+fx i 2)))))
+			   (if (>fx n len)
+			       (let ((n (digit->number (string-ref fmt (+fx i 1)))))
+				  (if (>=fx n len)
+				      (loop (+fx i 3) j res)
+				      (let* ((portion (js-substring string
+							 (vector-ref vrx (*fx n 2))
+							 (vector-ref vrx (+fx (*fx n 2) 1))
+							 %this)))
+					 (loop (+fx i 2) (+fx i 2)
+					    (js-jsstring-append res portion)))))
+			       (let ((portion (js-substring string
+						 (vector-ref vrx (*fx n 2))
+						 (vector-ref vrx (+fx (*fx n 2) 1))
+						 %this)))
+				  (loop (+fx i 3) (+fx i 3)
+				     (js-jsstring-append res portion))))))))
+		(else
+		 ;; MS, 2019-01-09: used to be:
+		 ;; (loop (+fx i 2) j res)
+		 (loop (+fx i 1) j res))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-jsstring-padstart ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-padstart this::JsStringLiteral maxlength fillstring place %this)
@@ -3128,108 +3214,113 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-replace-regexp-string this::obj rx::regexp
 	   lastindex::long global::bool replacevalue %this)
-   
    (let* ((s (js-jsstring->string this))
 	  (len (string-length s))
 	  (enc (isa? this JsStringLiteralUTF8))
 	  (newstring (js-jsstring->string replacevalue)))
       (cond
 	 ((not global)
-	  (let ((r (pregexp-match-positions rx s lastindex)))
-	     (cond
-		((not r)
-		 this)
-		((string-index newstring #\$)
-		 (js-jsstring-append
-		    (js-substring/enc s 0 (caar r) enc %this)
-		    (js-jsstring-append
-		       (table22 newstring r s %this)
-		       (js-substring/enc s (cdar r)
-			  (string-length s) enc %this))))
-		(else
-		 (js-jsstring-append
-		    (js-substring/enc s 0 (caar r) enc %this)
-		    (js-jsstring-append
-		       replacevalue
-		       (js-substring/enc s (cdar r)
-			  (string-length s) enc %this)))))))
+	  (js-call-with-stack-vector (vector -1 -1)
+	     (lambda (vrx)
+		(let* ((r (pregexp-match-n-positions! rx s vrx lastindex len)))
+		   (cond
+		      ((<fx r 0)
+		       this)
+		      ((string-index newstring #\$)
+		       (js-jsstring-append
+			  (js-substring/enc s 0 (vector-ref vrx 0) enc %this)
+			  (js-jsstring-append
+			     (table22-vec newstring r vrx s %this)
+			     (js-substring/enc s (vector-ref vrx 1)
+				(string-length s) enc %this))))
+		      ((and (=fx r 1)
+			    (=fx (vector-ref vrx 0) 0)
+			    (=fx (vector-ref vrx 1) len))
+		       replacevalue)
+		      (else
+		       (js-jsstring-append
+			  (js-substring/enc s 0 (vector-ref vrx 0) enc %this)
+			  (js-jsstring-append
+			     replacevalue
+			     (js-substring/enc s (vector-ref vrx 1)
+				(string-length s) enc %this)))))))))
+	 ((string-index newstring #\$)
+	  (let loop ((i 0)
+		     (res (& "")))
+	     (let ((r (pregexp-match-positions rx s i)))
+		(if (not r)
+		    (cond
+		       ((=fx i 0)
+			this)
+		       ((>=fx i len)
+			res)
+		       (else
+			(js-jsstring-append res
+			   (js-substring/enc s i len enc %this))))
+		    (let ((v (table22 newstring r s %this)))
+		       (cond
+			  ((>fx (cdar r) i)
+			   (loop (cdar r)
+			      (js-jsstring-append
+				 (js-jsstring-append res
+				    (js-substring/enc s i (caar r) enc %this))
+				 v)))
+			  ((<fx i len)
+			   (loop (+fx i 1)
+			      (js-jsstring-append
+				 (js-jsstring-append res
+				    (js-substring/enc s i (caar r)
+				       enc %this))
+				 (js-jsstring-append
+				    v
+				    (js-substring/enc s i (+fx i 1)
+				       enc %this)))))
+			  (else
+			   (js-jsstring-append
+			      (js-jsstring-append res
+				 (js-substring/enc s i (caar r) enc %this))
+			      v))))))))
 	 (else
-;* 	  (tprint "replace-regexp-string.2 rx=" rx " newstr=" newstring " s=" s) */
-	  (if (string-index newstring #\$)
-	      (let loop ((i 0)
-			 (res (& "")))
-		 (let ((r (pregexp-match-positions rx s i)))
-		    (if (not r)
-			(cond
-			   ((=fx i 0)
-			    this)
-			   ((>=fx i len)
-			    res)
-			   (else
-			    (js-jsstring-append res
-			       (js-substring/enc s i len enc %this))))
-			(let ((v (table22 newstring r s %this)))
-			   (cond
-			      ((>fx (cdar r) i)
-			       (loop (cdar r)
-				  (js-jsstring-append
-				     (js-jsstring-append res
-					(js-substring/enc s i (caar r) enc %this))
-				     v)))
-			      ((<fx i len)
-			       (loop (+fx i 1)
-				  (js-jsstring-append
-				     (js-jsstring-append res
-					(js-substring/enc s i (caar r)
-					   enc %this))
-				     (js-jsstring-append
-					v
-					(js-substring/enc s i (+fx i 1)
-					   enc %this)))))
-			      (else
-			       (js-jsstring-append
-				  (js-jsstring-append res
-				     (js-substring/enc s i (caar r) enc %this))
-				  v)))))))
-	      (let ((pos (vector -1 -1)))
-		 (let loop ((i 0)
-			    (res (& "")))
-		    (let ((r (pregexp-match-n-positions! rx s pos i len)))
-		       (if (<=fx r 0)
-			   (begin
-			      (cond
-				 ((=fx i 0)
-				  this)
-				 ((>=fx i len)
-				  res)
-				 (else
-				  (js-jsstring-append res
-				     (js-substring/enc s i len enc %this)))))
-			   (let ((v replacevalue))
-			      (cond
-				 ((>fx (vector-ref pos 1) i)
-				  (loop (vector-ref pos 1)
-				     (js-jsstring-append
-					(js-jsstring-append res
-					   (js-substring/enc s i
-					      (vector-ref pos 0) enc %this))
-					v)))
-				 ((<fx i len)
-				  (loop (+fx i 1)
-				     (js-jsstring-append
-					(js-jsstring-append res
-					   (js-substring/enc s i
-					      (vector-ref pos 0) enc %this))
-					(js-jsstring-append
-					   v
-					   (js-substring/enc s i
-					      (+fx i 1) enc %this)))))
-				 (else
-				  (js-jsstring-append
-				     (js-jsstring-append res
-					(js-substring/enc s i
-					   (vector-ref pos 0) enc %this))
-				     v)))))))))))))
+	  (js-call-with-stack-vector (vector -1 -1)
+	     (lambda (pos)
+		(let loop ((i 0)
+			   (res (& "")))
+		   (let ((r (pregexp-match-n-positions! rx s pos i len)))
+		      (if (<=fx r 0)
+			  (begin
+			     (cond
+				((=fx i 0)
+				 this)
+				((>=fx i len)
+				 res)
+				(else
+				 (js-jsstring-append res
+				    (js-substring/enc s i len enc %this)))))
+			  (let ((v replacevalue))
+			     (cond
+				((>fx (vector-ref pos 1) i)
+				 (loop (vector-ref pos 1)
+				    (js-jsstring-append
+				       (js-jsstring-append res
+					  (js-substring/enc s i
+					     (vector-ref pos 0) enc %this))
+				       v)))
+				((<fx i len)
+				 (loop (+fx i 1)
+				    (js-jsstring-append
+				       (js-jsstring-append res
+					  (js-substring/enc s i
+					     (vector-ref pos 0) enc %this))
+				       (js-jsstring-append
+					  v
+					  (js-substring/enc s i
+					     (+fx i 1) enc %this)))))
+				(else
+				 (js-jsstring-append
+				    (js-jsstring-append res
+				       (js-substring/enc s i
+					  (vector-ref pos 0) enc %this))
+				    v)))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-replace-string ...                                   */
