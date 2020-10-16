@@ -450,7 +450,7 @@
 (define (js-uint32->integer v expr ctx)
    (let ((conf (context-conf ctx)))
       (cond
-	 ((or (<u32 v (bit-lshu32 #u32:1 29)) (m64? conf))
+	 ((and (uint32? v) (or (<u32 v (bit-lshu32 #u32:1 29)) (m64? conf)))
 	  (js-uint32->fixnum v expr ctx))
 	 ((or (and (isa? expr J2SExpr) (inrange-int30? expr)) (m64? conf))
 	  (match-case v
