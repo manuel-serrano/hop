@@ -1354,7 +1354,23 @@
 			    'unknown)
 			   (else
 			    'unknown)))
-		       ((- * **)
+		       ((++)
+			(cond
+			   ((and (eq? typl 'real) (eq? typr 'real))
+			    'real)
+			   ((and (type-integer? typl) (type-integer? typr))
+			    'integer)
+			   ((and (typnum? typl) (typnum? typr))
+			    'number)
+			   ((or (eq? typl 'string) (eq? typr 'string))
+			    'number)
+			   ((or (eq? typl 'any) (eq? typr 'any))
+			    'number)
+			   ((or (eq? typl 'unknown) (eq? typr 'unknown))
+			    'unknown)
+			   (else
+			    'unknown)))
+		       ((- -- * **)
 			(cond
 			   ((or (eq? typl 'real) (eq? typr 'real))
 			    'real)

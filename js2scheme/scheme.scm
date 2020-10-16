@@ -1938,8 +1938,6 @@
 	 (if (eq? retval 'old)
 	     (with-access::J2SBinary rhs ((rlhs lhs))
 		(set! rlhs (J2SHopRef/type prev type))
-		(tprint "rlhs=" (j2s->list rlhs) " " type)
-
 		`(let ((,prev ,(j2s-cast lhse lhs (j2s-type lhs) type ctx)))
 		    ,(j2s-scheme-set! lhs rhs
 			(j2s-scheme rhs mode return ctx)

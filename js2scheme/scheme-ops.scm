@@ -71,13 +71,13 @@
 (define (j2s-scheme-binary-as this::J2SBinary mode return ctx type)
    (with-access::J2SBinary this (loc op lhs rhs (etype type))
       (cond
-	 ((and (eq? op '+) (memq type '(int32 uint32 int53 integer number)))
+	 ((and (memq op '(+ ++)) (memq type '(int32 uint32 int53 integer number)))
 	  (epairify-deep loc
 	     (js-binop2 loc op type lhs rhs mode return ctx)))
-	 ((and (eq? op '+) (eq? type 'string) (eq? etype 'string))
+	 ((and (memq op '(+ ++)) (eq? type 'string) (eq? etype 'string))
 	  (epairify-deep loc
 	     (js-binop2 loc op type lhs rhs mode return ctx)))
-	 ((and (memq op '(* - / >> << >>> & BIT_OR ^))
+	 ((and (memq op '(* - -- / >> << >>> & BIT_OR ^))
 	       (memq type '(int32 uint32)))
 	  (if (memq etype '(int32 uint32))
 	      (epairify-deep loc
@@ -383,7 +383,7 @@
 (define (js-binop2 loc op::symbol type lhs::J2SNode rhs::J2SNode
 	   mode return ctx)
    (case op
-      ((+)
+      ((+ ++)
        (if (=fx (context-get ctx :optim 0) 0)
 	   (with-tmp lhs rhs mode return ctx
 	      (lambda (left right)
@@ -391,7 +391,7 @@
 		    (js-binop loc op left lhs right rhs ctx)
 		    #f 'any type ctx)))
 	   (js-binop-add loc type lhs rhs mode return ctx)))
-      ((-)
+      ((- --)
        (if (=fx (context-get ctx :optim 0) 0)
 	   (with-tmp lhs rhs mode return ctx
 	      (lambda (left right)
@@ -2866,12 +2866,12 @@
 	  (asreal left tl) right flip))
       ((int53)
        (cond
-	  ((and (eq? op '+)
+	  ((and (memq op '(+ ++))
 		(and (uint32? left) (=u32 left #u32:1))
 		(not (inrange-int32? rhs))
 		(not (inrange-uint32? rhs)))
 	   (j2s-int53-op 'inc right type))
-	  ((and (eq? op '-)
+	  ((and (memq op '(- --))
 		(and (uint32? left) (=u32 left #u32:1))
 		(not (inrange-int32? rhs))
 		(not (inrange-uint32? rhs))

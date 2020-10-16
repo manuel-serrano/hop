@@ -1684,9 +1684,9 @@
 		,(when (interval? intl) (j2s-dump-range intl))
 		,(when (interval? intr) (j2s-dump-range intr))))
 	 (case op
-	    ((+)
+	    ((+ ++)
 	     (expr-range-add! this env fix (interval-add intl intr conf)))
-	    ((-)
+	    ((- --)
 	     (expr-range-add! this env fix (interval-sub intl intr conf)))
 	    ((*)
 	     (expr-range-add! this env fix (interval-mul intl intr)))
@@ -2512,11 +2512,16 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SBinary tmap)
    (with-access::J2SBinary this (op type range)
+      (tprint "BIN op=" op)
       (case op
 	 ((>> << BIT_OT ^ &)
 	  (set! type 'int32))
 	 ((>>>)
 	  (set! type 'uint32))
+	 ((++ --)
+	  (if (range-type? type)
+	      (set! type (interval->type range tmap 'number))
+	      (set! type 'number)))
 	 (else
 	  (when (range-type? type)
 	     (set! type (interval->type range tmap 'number))))))

@@ -1982,10 +1982,9 @@
 	     (if (or (isa? expr J2SUnresolvedRef)
 		     (isa? expr J2SAccess)
 		     (isa? expr J2SParen))
-		 (let* ((op (if (eq? (token-tag token) '++) '+ '-))
-			(rhs (instantiate::J2SBinary
+		 (let* ((rhs (instantiate::J2SBinary
 				(loc loc)
-				(op op)
+				(op (token-tag token))
 				(lhs expr)
 				(rhs (instantiate::J2SNumber
 					(loc loc)
@@ -2045,7 +2044,7 @@
 		    (if (or (isa? expr J2SUnresolvedRef)
 			    (isa? expr J2SAccess)
 			    (isa? expr J2SParen))
-			(let* ((op (if (eq? (token-tag token) '++) '+ '-))
+			(let* ((op (token-tag token))
 			       (rhs (instantiate::J2SBinary
 				       (loc loc)
 				       (op op)
