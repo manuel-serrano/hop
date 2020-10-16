@@ -2401,6 +2401,24 @@
 	       (set! type (if escape (type->boxed-type ty) ty)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    map-types ::J2SUnresolvedRef ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SUnresolvedRef tmap)
+   (with-access::J2SUnresolvedRef this (range type decl)
+      (when (range-type? type)
+	 (let ((ty (interval->type range tmap type)))
+	    (set! type (type->boxed-type ty))))))
+
+;*---------------------------------------------------------------------*/
+;*    map-types ::J2SAssig ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SAssig tmap)
+   (call-default-walker)
+   (with-access::J2SAssig this (lhs type)
+      (with-access::J2SExpr lhs ((lty type))
+	 (set! type lty))))
+
+;*---------------------------------------------------------------------*/
 ;*    map-types ::J2SExpr ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SExpr tmap)

@@ -2706,6 +2706,7 @@
 ;*    be used instead of extending the array.                          */
 ;*---------------------------------------------------------------------*/
 (define (js-has-fixnum-property arr::JsArray idx::long %this)
+   (tprint "js-has-fixnum idx=" idx)
    (with-access::JsObject arr (__proto__)
       (let loop ((o (js-object-proto arr)))
 	 (cond
