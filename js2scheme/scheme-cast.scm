@@ -201,21 +201,8 @@
 	    (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))
 	    (any nop)))
      (any
-	((propname nop)
-	 (undefined nop)
-	 (function nop)
-	 (array nop)
-	 (null nop)
-	 (int53 nop)
-	 (bool nop)
-	 (string nop)
-	 (scmstring nop)
-	 (int32 ,js->int32)
-	 (real nop)
+	((int32 ,js->int32)
 	 (uint32 ,js->uint32)
-	 (integer nop)
-	 (number nop)
-	 (object nop)
 	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -818,22 +805,16 @@
 ;*    j2s-as ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (j2s-as sexp expr from to ctx)
-   (j2s-cast/table as-table sexp expr from to ctx))
+   
+   (define (default sexp expr from to ctx) sexp)
+   
+   (j2s-cast/table as-table sexp expr from to ctx default))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cast ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-cast sexp expr from to ctx)
-   (j2s-cast/table cast-table sexp expr from to ctx))
-   
-;*---------------------------------------------------------------------*/
-;*    j2s-cast/table ...                                               */
-;*---------------------------------------------------------------------*/
-(define (j2s-cast/table table sexp expr from to ctx)
-   
-   (define (err)
-      (error "cast" (format "illegal cast ~a -> ~a" from to) sexp))
-   
+
    (define (tostring sexp)
       (match-case sexp
 	 ((js-jsstring-ref ?str ?idx ?this)
@@ -846,7 +827,7 @@
 	 (else
 	  `(js-tojsstring ,sexp %this))))
 
-   (define (default)
+   (define (default sexp expr from to ctx)
       (if (or (eq? from to) (eq? to '*))
 	  sexp
 	  (cond
@@ -863,7 +844,7 @@
 		     (else sexp)))
 		 ((int53)
 		  (case to
-		     ((index uint32 length) (err))
+		     ((index uint32 length) (cast-error sexp from to))
 		     ((bool) `(not (= ,sexp 0)))
 		     (else sexp)))
 		 ((integer number)
@@ -877,6 +858,20 @@
 		     ((index uint32 length) (js-fixnum->uint32 sexp expr ctx))
 		     ((bool) (j2s-totest sexp))
 		     (else sexp))))))))
+   
+   (j2s-cast/table cast-table sexp expr from to ctx default))
+
+
+;*---------------------------------------------------------------------*/
+;*    cast-error ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (cast-error sexp from to)
+   (error "cast" (format "illegal cast ~a -> ~a" from to) sexp))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-cast/table ...                                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-cast/table table sexp expr from to ctx default)
    (if (eq? from to)
        sexp
        (let ((fen (assq from table)))
@@ -886,8 +881,8 @@
 		     (if (symbol? (cadr ten))
 			 (case (cadr ten)
 			    ((nop) sexp)
-			    ((error) (err))
+			    ((error) (cast-error sexp from to))
 			    (else `(,(cadr ten) ,sexp)))
 			 ((cadr ten) sexp expr ctx))
-		     (default)))
-	      (default)))))
+		     (default sexp expr from to ctx)))
+	      (default sexp expr from to ctx)))))
