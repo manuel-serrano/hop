@@ -262,37 +262,58 @@
 		    env
 		    (let ((cenv (preinit* (car cases) env0)))
 		       (loop (cdr cases) (merge-env env cenv)))))))))
-	    
+
+;*---------------------------------------------------------------------*/
+;*    break-or-continue? ...                                           */
+;*---------------------------------------------------------------------*/
+(define (break-or-continue? this::J2SLoop)
+   (with-access::J2SLoop this (need-bind-exit-continue need-bind-exit-break)
+      (or need-bind-exit-continue need-bind-exit-break)))
+
 ;*---------------------------------------------------------------------*/
 ;*    preinit* ::J2SFor ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (preinit* this::J2SFor env::pair-nil)
-   (with-access::J2SFor this (init test incr body loc)
+   (with-access::J2SFor this (init test incr body)
       (let* ((ienv (preinit* init env))
 	     (tenv (preinit* test ienv))
-	     (benv (preinit* body tenv)))
-	 (preinit* incr benv))))
+	     (benv (preinit* body tenv))
+	     (renv (preinit* incr benv)))
+	 (if (break-or-continue? this)
+	     tenv
+	     (merge-env renv tenv)))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    preinit* ::J2SForIn ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (preinit* this::J2SForIn env::pair-nil)
    (with-access::J2SForIn this (lhs obj body)
-      (preinit* body (preinit* obj env))))
+      (let* ((oenv (preinit* obj env))
+	     (benv (preinit* body oenv)))
+	 (if (break-or-continue? this)
+	     oenv
+	     benv))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    preinit* ::J2SWhile ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (preinit* this::J2SWhile env::pair-nil)
    (with-access::J2SWhile this (test body)
-      (preinit* body (preinit* test env))))
+      (let* ((tenv (preinit* test env))
+	     (benv (preinit* body tenv)))
+	 (if (break-or-continue? this)
+	     (merge-env benv tenv)
+	     tenv))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    preinit* ::J2SDo ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (preinit* this::J2SDo env::pair-nil)
-   (with-access::J2SDo this (test body)
-      (preinit* test (preinit* body env))))
+   (with-access::J2SDo this (test body loc)
+      (let ((benv (preinit* body env)))
+	 (if (break-or-continue? this)
+	     env
+	     (preinit* test benv)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    preinit* ::J2STry ...                                            */
