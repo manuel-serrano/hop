@@ -1329,32 +1329,34 @@
    
    (define (for-in/break-comp tmp name props obj body set op)
       (with-access::J2SForIn this (need-bind-exit-break need-bind-exit-continue id)
-	 (let ((for `(let ((%acc (js-undefined)))
-			(,(js-for-in op) ,(j2s-scheme obj mode return ctx)
-			   (lambda (,name %this)
-			      ,set
-			      ,(if need-bind-exit-continue
-				   `(bind-exit (,(escape-name '%continue id))
-				       ,(j2s-scheme body mode acc-return ctx))
-				   (j2s-scheme body mode acc-return ctx)))
-			   ,@(close op #t)
-			   %this)
-			%acc)))
+	 (let ((for `(,(js-for-in op)
+		      ,(j2s-scheme obj mode return ctx)
+		      (lambda (,name %this)
+			 ,set
+			 ,(if need-bind-exit-continue
+			      `(bind-exit (,(escape-name '%continue id))
+				  ,(j2s-scheme body mode return ctx))
+			      (j2s-scheme body mode return ctx)))
+		      ,@(close op #t)
+		      %this)))
 	    (if need-bind-exit-break
 		`(bind-exit (,(escape-name '%break id)) ,for)
 		for))))
-
+   
    (define (for-in/break-eval tmp name props obj body set op)
       (with-access::J2SForIn this (need-bind-exit-break need-bind-exit-continue id)
-	 (let ((for `(,(js-for-in op) ,(j2s-scheme obj mode return ctx)
-			(lambda (,name %this)
-			   ;;,set
-			   ,(if need-bind-exit-continue
-				`(bind-exit (,(escape-name '%continue id))
-				    ,(j2s-scheme body mode return ctx))
-				(j2s-scheme body mode return ctx)))
-			,@(close op #t)
-			%this)))
+	 (let ((for `(let ((%acc (js-undefined)))
+			(,(js-for-in op)
+			 ,(j2s-scheme obj mode return ctx)
+			 (lambda (,name %this)
+			    ,set
+			    ,(if need-bind-exit-continue
+				 `(bind-exit (,(escape-name '%continue id))
+				     ,(j2s-scheme body mode acc-return ctx))
+				 (j2s-scheme body mode acc-return ctx)))
+			 ,@(close op #t)
+			 %this)
+			%acc)))
 	    (if need-bind-exit-break
 		`(bind-exit (,(escape-name '%break id)) ,for)
 		for))))
