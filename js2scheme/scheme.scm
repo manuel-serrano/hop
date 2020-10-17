@@ -1953,7 +1953,7 @@
 			prev mode return ctx #f loc)))
 	     (j2s-scheme-set! lhs rhs
 		(j2s-scheme rhs mode return ctx)
-		(j2s-cast lhse lhs (j2s-type rhs) type ctx) mode return ctx #f loc))))
+		(j2s-cast lhse lhs (j2s-type lhs) type ctx) mode return ctx #f loc))))
    
    (define (unresolved-inc lhs inc)
       (with-access::J2SUnresolvedRef lhs (id cache loc)
