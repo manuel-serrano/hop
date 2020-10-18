@@ -1077,11 +1077,10 @@
 	       (<u32 idx (fixnum->uint32 (vector-length vec))))
 	  (vector-set! vec (uint32->fixnum idx) val)
 	  (when (>u32 idx ilen)
-	     (js-object-mode-inline-set! arr #f))
-	  (let ((nilen (+u32 ilen #u32:1)))
-	     (set! ilen nilen)
+	     (js-object-mode-inline-set! arr #f)
+	     (set! ilen #u32:0))
 	     (when (>=u32 idx length)
-		(set! length nilen)))
+		(set! length (+u32 idx 1)))
 	  val)
 	 (else
 	  (js-array-put! arr (js-uint32-tointeger idx) val throw %this)))))
@@ -1249,28 +1248,7 @@
    ;; join
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.5
    (define (array-prototype-join this::obj separator)
-      
-      (define (el->string el)
-	 (if (or (eq? el (js-undefined)) (eq? el (js-null)))
-	     ""
-	     (js-tostring el %this)))
-
-      (if (js-array? this)
-	  (js-array-prototype-join this separator %this)
-	  (let* ((o (js-toobject %this this))
-		 (lenval::uint32 (js-get-lengthu32 o %this))
-		 (sep (if (eq? separator (js-undefined))
-			  ","
-			  (js-tostring separator %this))))
-	     (if (=u32 lenval #u32:0)
-		 (& "")
-		 (let ((el0 (el->string (js-get o 0 %this))))
-		    (let loop ((r (list el0))
-			       (i #u32:1))
-		       (if (=u32 i lenval)
-			   (js-stringlist->jsstring (reverse! r))
-			   (loop (cons* (el->string (js-get o i %this)) sep r)
-			      (+u32 i #u32:1)))))))))
+      (js-array-prototype-join this separator %this))
    
    (js-bind! %this js-array-prototype (& "join")
       :value (js-make-function %this array-prototype-join
@@ -3930,7 +3908,7 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-join ...                                      */
-;*---------------------------------------------------------------------*/
+ ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-join o::JsArray separator %this)
    
    (define (el->jsstring el)
