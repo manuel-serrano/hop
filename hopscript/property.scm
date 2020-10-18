@@ -1940,7 +1940,7 @@
 ;*    object.scm)                                                      */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-has-own-property::bool o p::obj %this)
-   (not (eq? (js-get-own-property o p %this) (js-undefined))))
+   (not (eq? (js-get-own-property (js-toobject-fast o %this) p %this) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-own-property ::JsObject ...                               */
