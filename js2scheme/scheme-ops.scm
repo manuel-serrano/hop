@@ -1448,6 +1448,10 @@
 	  `(js-jsstring-append-no-inline ,x ,y))
 	 ((and (ascii? lhs x) (ascii? rhs y))
 	  `(js-jsstring-append-ascii ,x ,y))
+	 ((ascii? lhs x)
+	  `(js-jsstring-append-ascii-xxx ,x ,y))
+	 ((ascii? rhs x)
+	  `(js-jsstring-append-xxx-ascii ,x ,y))
 	 ((context-get ctx :optim-size)
 	  `(js-jsstring-append-no-inline ,x ,y))
 	 (else

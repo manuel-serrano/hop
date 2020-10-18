@@ -77,6 +77,8 @@
 	   (js-jsstring-append-ASCII::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (js-jsstring-append-UTF8::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (inline js-jsstring-append-ascii::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
+	   (inline js-jsstring-append-ascii-xxx::JsStringLiteral ::JsStringLiteralASCII ::JsStringLiteral)
+	   (inline js-jsstring-append-xxx-ascii::JsStringLiteral ::JsStringLiteral ::JsStringLiteralASCII)
 	   (js-jsstring-append-ascii3::JsStringLiteral ::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (utf8-codeunit-length::long ::bstring)
 	   (js-utf8-ref ::JsStringLiteralUTF8 ::bstring ::long ::JsGlobalObject)
@@ -136,9 +138,9 @@
 	   (js-jsstring-escape ::JsStringLiteral)
 	   (js-jsstring-unescape ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring-maybe-unescape ::obj ::JsGlobalObject)
-	   (js-jsstring-encodeuri ::JsStringLiteral)
+	   (js-jsstring-encodeuri ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring-maybe-encodeuri ::JsStringLiteral ::JsGlobalObject)
-	   (js-jsstring-encodeuricomponent ::JsStringLiteral)
+	   (js-jsstring-encodeuricomponent ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring-maybe-encodeuricomponent ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring-slice ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-slice1 ::obj ::obj ::JsGlobalObject ::obj)
@@ -1361,22 +1363,6 @@
 	     (js-jsstring-append-ASCII left right))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring-append-ascii-xxx ...                                 */
-;*---------------------------------------------------------------------*/
-(define-inline (js-jsstring-append-ascii-xxx::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
-   (with-access::JsStringLiteral left ((llen length))
-      (with-access::JsStringLiteral right ((rlen length))
-	 (cond
-	    ((=u32 llen 0)
-	     right)
-	    ((=u32 rlen 0)
-	     left)
-	    ((or (js-jsstring-utf8? left) (js-jsstring-utf8? right))
-	     (js-jsstring-append-UTF8 left right))
-	    (else
-	     (js-jsstring-append-ASCII left right))))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append3 ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-append3::JsStringLiteral left::JsStringLiteral middle::JsStringLiteral right::JsStringLiteral)
@@ -1394,15 +1380,40 @@
    (js-jsstring-append left right))
 
 ;*---------------------------------------------------------------------*/
+;*    js-jsstring-append-ascii-xxx ...                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-append-ascii-xxx::JsStringLiteral left::JsStringLiteralASCII right::JsStringLiteral)
+   (with-access::JsStringLiteral left ((llen length))
+      (with-access::JsStringLiteral right ((rlen length))
+	 (cond
+	    ((=u32 rlen 0)
+	     left)
+	    ((js-jsstring-utf8? right)
+	     (js-jsstring-append-UTF8 left right))
+	    (else
+	     (js-jsstring-append-ASCII left right))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-append-xxx-ascii ...                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-append-xxx-ascii::JsStringLiteral left::JsStringLiteral right::JsStringLiteralASCII)
+   (with-access::JsStringLiteral left ((llen length))
+      (with-access::JsStringLiteral right ((rlen length))
+	 (cond
+	    ((=u32 llen 0)
+	     right)
+	    ((js-jsstring-utf8? left)
+	     (js-jsstring-append-UTF8 left right))
+	    (else
+	     (js-jsstring-append-ASCII left right))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append-ascii ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring-append-ascii::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
    (with-access::JsStringLiteral left ((llen length))
       (with-access::JsStringLiteral right ((rlen length))
-	 (cond
-	    ((=u32 llen 0) right)
-	    ((=u32 rlen 0) left)
-	    (else (js-jsstring-append-ASCII left right))))))
+	 (js-jsstring-append-ASCII left right))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append-ascii3 ...                                    */
@@ -3999,26 +4010,32 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-encodeuri ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-encodeuri this)
-   (js-ascii->jsstring (uri-encode (js-jsstring->string this))))
+(define (js-jsstring-encodeuri this %this)
+   (let ((str (js-jsstring->string this)))
+      (if (utf8-string? str #t)
+	  (js-ascii->jsstring (uri-encode str))
+	  (js-raise-uri-error %this "Badly formed url ~s" this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-encodeuri ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-maybe-encodeuri this %this)
-   (js-jsstring-encodeuri (js-tojsstring this %this)))
+   (js-jsstring-encodeuri (js-tojsstring this %this) %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-encodeuricomponent ...                               */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-encodeuricomponent this)
-   (js-ascii->jsstring (uri-encode-component (js-jsstring->string this))))
+(define (js-jsstring-encodeuricomponent this %this)
+   (let ((str (js-jsstring->string this)))
+      (if (utf8-string? str)
+	  (js-ascii->jsstring (uri-encode-component str))
+	  (js-raise-uri-error %this "Badly formed url ~s" string))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring-maybe-encodeuricomponent ...                                  */
+;*    js-jsstring-maybe-encodeuricomponent ...                         */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-maybe-encodeuricomponent this %this)
-   (js-jsstring-encodeuricomponent (js-tojsstring this %this)))
+   (js-jsstring-encodeuricomponent (js-tojsstring this %this) %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    url-decode-extended ...                                          */
