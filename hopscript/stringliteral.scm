@@ -1300,11 +1300,10 @@
       (with-access::JsStringLiteral right ((rlen length)
 					   (rstr left))
 	 (let ((len (+u32 llen rlen)))
-	    (if (and (<u32 len (string-append-auto-normalize-threshold))
-		     (js-jsstring-normalized? left)
-		     (js-jsstring-normalized? right))
+	    (if (<u32 len (string-append-auto-normalize-threshold))
 		;; if the sum len if smaller than 18, both string 
-		;; lengthes are smaller than 18 too!
+		;; lengthes are smaller than 18 too, and there cannot
+		;; be a non normalized small string
 		(let ((s (instantiate::JsStringLiteralASCII
 			    (length len)
 			    (left (string-append lstr rstr))
@@ -1349,6 +1348,22 @@
 ;*    js-jsstring-append ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring-append::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
+   (with-access::JsStringLiteral left ((llen length))
+      (with-access::JsStringLiteral right ((rlen length))
+	 (cond
+	    ((=u32 llen 0)
+	     right)
+	    ((=u32 rlen 0)
+	     left)
+	    ((or (js-jsstring-utf8? left) (js-jsstring-utf8? right))
+	     (js-jsstring-append-UTF8 left right))
+	    (else
+	     (js-jsstring-append-ASCII left right))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-append-ascii-xxx ...                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-append-ascii-xxx::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
    (with-access::JsStringLiteral left ((llen length))
       (with-access::JsStringLiteral right ((rlen length))
 	 (cond
