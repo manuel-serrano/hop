@@ -28,6 +28,8 @@
 	   __hopscript_array
 	   __hopscript_regexp)
 
+   (extern ($js-jsstring-append-ascii::JsStringLiteralASCII (::JsStringLiteralASCII ::JsStringLiteralASCII) "bgl_jsstring_append_ascii"))
+   
    (export (js-init-stringliteral! ::JsGlobalObject)
 	   (&jsstring-init ::bstring)
 	   (js-debug-jsstring ::JsStringLiteral #!optional (msg ""))
@@ -208,7 +210,11 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-stringliteral! %this)
    (unless (vector? __js_strings) (set! __js_strings (&init!)))
-   ($js-init-jsalloc-stringliteralascii (js-jsstring-default-ascii-mode))
+   ($js-init-jsalloc-stringliteralascii
+      (js-jsstring-default-ascii-mode)
+      (js-jsstring-normalized-ascii-mode)
+      (js-not-a-string-cache)
+      (string-append-auto-normalize-threshold))
    (with-access::JsGlobalObject %this (char-table)
       (let ((vec (make-vector 256)))
 	 (let loop ((i 0))
@@ -1304,7 +1310,7 @@
 					   (rstr left))
 	 (let ((len (+u32 llen rlen)))
 	    (if (<u32 len (string-append-auto-normalize-threshold))
-		;; if the sum len if smaller than 18, both string 
+		;; if the sum len if smaller than 18, both string
 		;; lengthes are smaller than 18 too, and there cannot
 		;; be a non normalized small string
 		(let ((s (instantiate::JsStringLiteralASCII
@@ -1315,6 +1321,9 @@
 		   (object-widening-set! s #f)
 		   s)
 		($js-make-stringliteralascii len left right))))))
+
+(define (js-jsstring-append-ASCII-not-used left right)
+   ($js-jsstring-append-ascii left right))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append-UTF8 ...                                      */

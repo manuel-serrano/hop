@@ -47,7 +47,7 @@
 	   ($js-init-jsalloc-procedure::int (::JsConstructMap
 					       ::uint32)
 	      "bgl_init_jsalloc_procedure")
-	   ($js-init-jsalloc-stringliteralascii::int (::uint32)
+	   ($js-init-jsalloc-stringliteralascii::int (::uint32 ::uint32 ::obj ::uint32)
 	      "bgl_init_jsalloc_stringliteralascii")
 	   ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsobject")

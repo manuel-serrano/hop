@@ -36,6 +36,8 @@ extern obj_t BGl_JsMethodz00zz__hopscript_typesz00;
 extern obj_t BGl_JsProcedurez00zz__hopscript_typesz00;
 extern obj_t BGl_JsStringLiteralASCIIz00zz__hopscript_typesz00;
 
+extern obj_t string_append( obj_t, obj_t );
+
 #define JSOBJECT_SIZE \
    sizeof( struct BgL_jsobjectz00_bgl )
 #define JSOBJECT_CLASS_INDEX \
@@ -88,7 +90,9 @@ static uint32_t jsmethod_mode;
 static uint32_t jsprocedure_mode;
 static BgL_jsconstructmapz00_bglt jsprocedure_cmap;
 
-static uint32_t jsstringliteralascii_mode;
+static uint32_t jsstringliteralascii_mode, jsstringliteralascii_normmode;
+static obj_t jsstringliteralascii_not_a_string_cache;
+static uint32_t jsstringliteralascii_normalize_threshold;
 
 static obj_t empty_vector;
 
@@ -636,7 +640,7 @@ bgl_init_jsalloc_procedure( BgL_jsconstructmapz00_bglt cmap,
 /*    bgl_init_jsalloc_stringliteralascii ...                          */
 /*---------------------------------------------------------------------*/
 int
-bgl_init_jsalloc_stringliteralascii( uint32_t mode ) {
+bgl_init_jsalloc_stringliteralascii( uint32_t mode, uint32_t normmode, obj_t not_a_string_cache, uint32_t threshold ) {
    static int jsinit = 0;
    int i;
 
@@ -645,6 +649,9 @@ bgl_init_jsalloc_stringliteralascii( uint32_t mode ) {
    jsinit = 1;
 
    jsstringliteralascii_mode = mode;
+   jsstringliteralascii_normmode = normmode;
+   jsstringliteralascii_not_a_string_cache = not_a_string_cache;
+   jsstringliteralascii_normalize_threshold = threshold;
 }
 
 /*---------------------------------------------------------------------*/
@@ -1392,6 +1399,69 @@ bgl_make_jsstringliteralascii( uint32_t len, obj_t left, obj_t right ) {
    }
 }
 #endif
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_jsstring_append_ascii ...                                    */
+/*    -------------------------------------------------------------    */
+/*    This version is not used currently                               */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_jsstring_append_ascii( obj_t left, obj_t right ) {
+   uint32_t len = ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( left )))->BgL_lengthz00
+      + ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( right )))->BgL_lengthz00;
+
+   alloc_spin_lock( &lockstringliteralascii );
+   
+   if( len < jsstringliteralascii_normalize_threshold ) {
+      obj_t nleft = string_append(
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( left )))->BgL_leftz00,
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( right )))->BgL_leftz00 );
+      obj_t nright = jsstringliteralascii_not_a_string_cache;
+
+      if( poolstringliteralascii.idx < JSSTRINGLITERALASCII_POOLSZ ) {
+	 obj_t o = poolstringliteralascii.buffer[ poolstringliteralascii.idx ];
+	 poolstringliteralascii.buffer[ poolstringliteralascii.idx++ ] = 0;
+	 alloc_spin_unlock( &lockstringliteralascii );
+
+	 BGL_OBJECT_HEADER_SIZE_SET( o, (long)jsstringliteralascii_normmode );
+	 
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_lengthz00 = len; 
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_leftz00 = nleft; 
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_rightz00 = nright;
+
+	 ALLOC_STAT( inlstringliteralascii++ );
+	 return o;
+      } else {
+	 alloc_spin_unlock( &lockstringliteralascii );
+
+	 {
+	    obj_t o = bgl_make_jsstringliteralascii( len, nleft, nright );
+	    BGL_OBJECT_HEADER_SIZE_SET( o, (long)jsstringliteralascii_normmode );
+	    return o;
+	 }
+      }
+   } else {
+      if( poolstringliteralascii.idx < JSSTRINGLITERALASCII_POOLSZ ) {
+	 obj_t o = poolstringliteralascii.buffer[ poolstringliteralascii.idx ];
+	 poolstringliteralascii.buffer[ poolstringliteralascii.idx++ ] = 0;
+	 alloc_spin_unlock( &lockstringliteralascii );
+
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_lengthz00 = len; 
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_leftz00 = left; 
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_rightz00 = right;
+
+	 ALLOC_STAT( inlstringliteralascii++ );
+	 return o;
+      } else {
+	 alloc_spin_unlock( &lockstringliteralascii );
+
+	 {
+	    return bgl_make_jsstringliteralascii( len, left, right );
+	 }
+      }
+   }
+}
 
 /*---------------------------------------------------------------------*/
 /*    static obj_t                                                     */

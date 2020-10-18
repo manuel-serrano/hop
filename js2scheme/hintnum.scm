@@ -281,7 +281,7 @@
 	    (set! %info (cons 'hintnum-alias decl))))
       (unless (isa? this J2SDeclFun)
 	 (add-expr-hint! val hint #f fix)
-	 (when (is-hint? val 'real)
+	 (when (and (is-hint? val 'real) (memq vtype '(integer number)))
 	    (set! vtype 'real)
 	    (when (isa? val J2SUndefined)
 	       (with-access::J2SUndefined val (loc)
@@ -403,7 +403,7 @@
 (define-walk-method (propagate-types this::J2SDeclInit fix::cell)
    (call-default-walker)
    (with-access::J2SDeclInit this (val vtype)
-      (when (and (eq? vtype 'number) (eq? (j2s-vtype val) 'real))
+      (when (and (memq vtype '(integer number)) (eq? (j2s-vtype val) 'real))
 	 (set! vtype 'real)
 	 (cell-set! fix #f))))
 
