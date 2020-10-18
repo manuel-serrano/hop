@@ -40,6 +40,7 @@
 	   __js2scheme_scheme-ops
 	   __js2scheme_scheme-arguments
 	   __js2scheme_scheme-spread
+	   __js2scheme_scheme-cast
 	   __js2scheme_scheme-constant))
 
 ;*---------------------------------------------------------------------*/
@@ -1369,12 +1370,17 @@
 			  =>
 			  (lambda (f)
 			     `(,(builtin-function-scmid f)
-				 ,@(map (lambda (arg)
-					   (j2s-scheme arg mode return ctx))
-				      args)
-				 ,@(if (builtin-function-%this f)
-				       '(%this)
-				       '()))))
+			       ,@(map (lambda (arg param)
+					 (j2s-as 
+					    (j2s-scheme arg mode return ctx)
+					    arg
+					    (j2s-type arg)
+					    param ctx))
+				    args
+				    (builtin-function-args f))
+			       ,@(if (builtin-function-%this f)
+				     '(%this)
+				     '()))))
 			 ((eq? scope '%hop)
 			  'TODO)
 			 (else

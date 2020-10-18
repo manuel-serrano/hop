@@ -1168,7 +1168,7 @@
 	       (or (char=? (string-ref s 1) #\x)
 		   (char=? (string-ref s 1) #\X)))
 	  (let ((s (substring s 2)))
-	     (if (<=fx l 9)
+	     (if (<=fx l (max-hex-string))
 		 (js-string-integer (str->integer s 16) s)
 		 (js-string-integer (string->bignum-safe s 16 strict-syntax) s))))
 	 ((zeros32? r)
@@ -1188,12 +1188,39 @@
 ;*    js-string-parseint10 ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-string-parseint10 s::bstring)
+   
+   (define (check-zero v s)
+      (cond
+	 ((not (eq? v 0)) v)
+	 ((string-prefix? "0" s) v)
+	 ((string-prefix? "+0" s) v)
+	 ((string-prefix? "-0" s) -0.0)
+	 ((string=? s "+inf.0") +nan.0)
+	 ((string=? s "-inf.0") +nan.0)
+	 ((string=? s "+nan.0") +nan.0)
+	 (else +nan.0)))
+   
+   (define (max-int-string)
+      (cond-expand
+	 ((or bint61 bint64) 19)
+	 (else 8)))
+   
+   (define (max-hex-string)
+      (cond-expand
+	 ((or bint61 bint64) 12)
+	 (else 7)))
+   
    (let ((l (string-length s)))
-      (if (cond-expand
-	     ((or bint61 bint64) (<=fx l 16))
-	     (else (<fx l 8)))
-	  (js-string-integer (string->integer s 10) s)
-	  (js-string-integer (string->bignum-safe s 10 #f) s))))
+      (if (and (>=fx (string-length s) 2)
+	       (char=? (string-ref s 0) #\0)
+	       (or (char=? (string-ref s 1) #\x)
+		   (char=? (string-ref s 1) #\X)))
+	  (if (<=fx l (max-hex-string))
+	      (check-zero (string->integer s 16 2) s)
+	      (check-zero (string->bignum-safe (substring s 2) 16 #f) s))
+	  (if (<=fx l (max-int-string))
+	      (check-zero (string->integer s) s)
+	      (check-zero (string->bignum-safe s 10 #f) s)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-parsefloat ...                                                */
