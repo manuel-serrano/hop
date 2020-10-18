@@ -4027,9 +4027,9 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-encodeuricomponent this %this)
    (let ((str (js-jsstring->string this)))
-      (if (utf8-string? str)
+      (if (utf8-string? str #t)
 	  (js-ascii->jsstring (uri-encode-component str))
-	  (js-raise-uri-error %this "Badly formed url ~s" string))))
+	  (js-raise-uri-error %this "Badly formed url ~s" this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-encodeuricomponent ...                         */
