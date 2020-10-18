@@ -1951,9 +1951,13 @@
 		    ,(j2s-scheme-set! lhs rhs
 			(j2s-scheme rhs mode return ctx)
 			prev mode return ctx #f loc)))
+	     ;; the value has been cast during the assignment into something
+	     ;; compatible with the variable type, the value of the prefix
+	     ;; expression, is then simply the variable value whose vtype
+	     ;; is cast into the expression type.
 	     (j2s-scheme-set! lhs rhs
 		(j2s-scheme rhs mode return ctx)
-		(j2s-cast lhse lhs (j2s-type lhs) type ctx) mode return ctx #f loc))))
+		(j2s-cast lhse lhs (j2s-vtype lhs) type ctx) mode return ctx #f loc))))
    
    (define (unresolved-inc lhs inc)
       (with-access::J2SUnresolvedRef lhs (id cache loc)

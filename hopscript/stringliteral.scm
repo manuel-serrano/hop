@@ -1211,7 +1211,7 @@
       (cond-expand
 	 ((or bint61 bint64) 12)
 	 (else 7)))
-   
+
    (let ((l (string-length s)))
       (if (and (>=fx (string-length s) 2)
 	       (char=? (string-ref s 0) #\0)
