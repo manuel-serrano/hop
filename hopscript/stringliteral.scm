@@ -139,9 +139,9 @@
 	   (js-jsstring-unescape ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring-maybe-unescape ::obj ::JsGlobalObject)
 	   (js-jsstring-encodeuri ::JsStringLiteral ::JsGlobalObject)
-	   (js-jsstring-maybe-encodeuri ::JsStringLiteral ::JsGlobalObject)
+	   (js-jsstring-maybe-encodeuri ::obj ::JsGlobalObject)
 	   (js-jsstring-encodeuricomponent ::JsStringLiteral ::JsGlobalObject)
-	   (js-jsstring-maybe-encodeuricomponent ::JsStringLiteral ::JsGlobalObject)
+	   (js-jsstring-maybe-encodeuricomponent ::obj ::JsGlobalObject)
 	   (js-jsstring-slice ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-slice1 ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-maybe-slice2 ::obj ::obj ::obj ::JsGlobalObject ::obj)
@@ -208,6 +208,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-stringliteral! %this)
    (unless (vector? __js_strings) (set! __js_strings (&init!)))
+   ($js-init-jsalloc-stringliteralascii (js-jsstring-default-ascii-mode))
    (with-access::JsGlobalObject %this (char-table)
       (let ((vec (make-vector 256)))
 	 (let loop ((i 0))
@@ -1312,14 +1313,8 @@
 			    (right (js-not-a-string-cache)))))
 		   (js-object-mode-set! s (js-jsstring-normalized-ascii-mode))
 		   (object-widening-set! s #f)
-		   s)      
-		(let ((s (instantiate::JsStringLiteralASCII
-			    (length len)
-			    (left left)
-			    (right right))))
-		   (js-object-mode-set! s (js-jsstring-default-ascii-mode))
-		   (object-widening-set! s #f)
-		   s))))))
+		   s)
+		($js-make-stringliteralascii len left right))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append-UTF8 ...                                      */

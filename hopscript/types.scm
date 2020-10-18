@@ -47,6 +47,8 @@
 	   ($js-init-jsalloc-procedure::int (::JsConstructMap
 					       ::uint32)
 	      "bgl_init_jsalloc_procedure")
+	   ($js-init-jsalloc-stringliteralascii::int (::uint32)
+	      "bgl_init_jsalloc_stringliteralascii")
 	   ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsobject")
 	   ($js-make-jsproxy::JsProxy (::obj ::obj ::obj ::obj ::obj ::uint32)
@@ -61,6 +63,8 @@
 	      "bgl_make_jsmethod")
 	   ($js-make-jsprocedure::JsProcedure (::procedure ::long ::obj)
 	      "bgl_make_jsprocedure")
+	   ($js-make-stringliteralascii::JsStringLiteralASCII (::uint32 ::obj ::obj)
+	      "bgl_make_jsstringliteralascii")
 	   (macro $jsobject-elements-inline?::bool (::JsObject)
 		  "HOP_JSOBJECT_ELEMENTS_INLINEP")
 	   (macro $jsobject-vector-inline?::bool (::JsArray)

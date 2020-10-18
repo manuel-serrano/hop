@@ -3694,7 +3694,6 @@
 		       (delete-configurable o
 			  (configurable-mapped-property? o i)
 			  (lambda (o)
-			     (tprint "delete..." n " " (js-object-mapped? o) " i=" i)
 			     (when (js-object-mode-isprotoof? o)
 				(js-invalidate-pmap-pcaches! %this "js-delete" p))
 			     (cond

@@ -1832,7 +1832,7 @@
 				:cachefun (or (is-function? rhs)
 					      (is-prototype? obj)))))))))))
 
-   (with-access::J2SAssig this (loc lhs rhs)
+   (with-access::J2SAssig this (loc lhs rhs type)
       (let loop ((lhs lhs)
 		 (rhs rhs))
 	 (cond
@@ -1868,11 +1868,11 @@
 					(is-prototype? obj))))))))
 	    ((and (isa? lhs J2SRef)
 		  (or (not (isa? lhs J2SThis)) (isa? rhs J2SPragma)))
-	     (with-access::J2SRef lhs (decl loc type)
+	     (with-access::J2SRef lhs (decl loc)
 		(with-access::J2SDecl decl (hint vtype)
 		   (let ((assig (j2s-scheme-set! lhs rhs
 				   (j2s-scheme rhs mode return ctx)
-				   (j2s-scheme lhs mode return ctx)
+				   (j2s-scheme (J2SRef decl :type type) mode return ctx)
 				   mode return ctx #f loc)))
 		      (if (pair? assig)
 			  (epairify loc assig)
