@@ -3667,15 +3667,16 @@
 	  #f)))
 
    (define (check-cmap-parent cmap n)
-      (with-access::JsConstructMap cmap (parent)
-	 (with-access::JsConstructMap parent (transitions)
-	    (let loop ((transitions transitions))
-	       (when (pair? transitions)
-		  (let ((tr (car transitions)))
-		     (if (and (eq? (transition-name tr) n)
-			      (eq? (transition-nextmap tr) cmap))
-			 parent
-			 (loop (cdr transitions)))))))))
+      (with-access::JsConstructMap cmap (parent transitions)
+	 (with-access::JsConstructMap parent ((ptransitions transitions))
+	    (when (=fx (+fx 1 (length ptransitions)) (length transitions))
+	       (let loop ((ptransitions ptransitions))
+		  (when (pair? ptransitions)
+		     (let ((tr (car ptransitions)))
+			(if (and (eq? (transition-name tr) n)
+				 (eq? (transition-nextmap tr) cmap))
+			    parent
+			    (loop (cdr ptransitions))))))))))
    
    (define (vector-delete! v i)
       (vector-copy! v i v (+fx i 1))
@@ -3693,6 +3694,7 @@
 		       (delete-configurable o
 			  (configurable-mapped-property? o i)
 			  (lambda (o)
+			     (tprint "delete..." n " " (js-object-mapped? o) " i=" i)
 			     (when (js-object-mode-isprotoof? o)
 				(js-invalidate-pmap-pcaches! %this "js-delete" p))
 			     (cond
