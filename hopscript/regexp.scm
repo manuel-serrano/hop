@@ -826,8 +826,7 @@
 				(set! lastindex e)
 				(js-put-jsobject-name/cache! this (& "lastIndex") lastindex
 				   #f %this (js-pcache-ref js-regexp-pcache 0)))
-			     (let* ((n (+fx clen 1))
-				    (vec ($create-vector n))
+			     (let* ((vec ($create-vector l))
 				    (a (js-vector->jsarray vec %this))
 				    (matchindex (vector-ref r 0))
 				    (els ($create-vector 2)))
@@ -858,11 +857,10 @@
 						   %this)
 						(js-undefined)))
 					 (loop (+fx i 1)))))
-				(let loop ((i (+fx l 1)))
-				   (when (<fx i n)
-				      (let ((j (*fx i 2)))
-					 (vector-set! vec i (js-undefined))
-					 (loop (+fx i 1)))))
+				(let loop ((i l))
+				   (when (<fx i clen)
+				      (vector-set! vec i (js-undefined))
+				      (loop (+fx i 1))))
 				a)))))
 		  ((pregexp-match-positions rx s i)
 		   =>
@@ -946,14 +944,13 @@
 		(when (>=fx (*fx (+fx clen 1) 2)
 			 (vector-length js-regexp-positions))
 		   (set! js-regexp-positions
-		      (make-vector (* clen 2))))
+		      (make-vector (*fx (+fx clen 1) 2))))
 		(let* ((r js-regexp-positions)
 		       (l (pregexp-match-n-positions! rx s r 0 len)))
 		   (if (<fx l 0)
 		       (js-null)
 		       ;; 10 & 11
-		       (let* ((n (+fx clen 1))
-			      (vec ($create-vector n))
+		       (let* ((vec ($create-vector l))
 			      (a (js-vector->jsarray vec %this))
 			      (matchindex (vector-ref r 0))
 			      (els ($create-vector 2)))
@@ -972,19 +969,19 @@
 			  ;; no need as already automatically set
 			  ;; 19 & 20
 			  (let loop ((i 0))
-				   (when (<fx i l)
-				      (let ((j (*fx i 2)))
-					 (vector-set! vec i
-					    (if (>=fx (vector-ref r j) 0)
-						(js-substring s
-						   (vector-ref r j)
-						   (vector-ref r (+fx j 1))
-						   enc
-						   %this)
-						(js-undefined)))
-					 (loop (+fx i 1)))))
+			     (when (<fx i l)
+				(let ((j (*fx i 2)))
+				   (vector-set! vec i
+				      (if (>=fx (vector-ref r j) 0)
+					  (js-substring s
+					     (vector-ref r j)
+					     (vector-ref r (+fx j 1))
+					     enc
+					     %this)
+					  (js-undefined)))
+				   (loop (+fx i 1)))))
 			  (let loop ((i (+fx l 1)))
-			     (when (<fx i n)
+			     (when (<fx i clen)
 				(let ((j (*fx i 2)))
 				   (vector-set! vec i (js-undefined))
 				   (loop (+fx i 1)))))

@@ -288,6 +288,8 @@
 	   (class JsDate::JsObject
 	      (val (default #f)))
 	   
+	   (class JsJSON::JsObject)
+	   
 	   (class JsModule::JsObject
 	      (%module (default #f))
 	      (evars::vector (default '#()))
