@@ -55,6 +55,12 @@
 (define js-math #f)
 
 ;*---------------------------------------------------------------------*/
+;*    js-donate ::JsMath ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (js-donate obj::JsMath worker::WorkerHopThread %this)
+   (js-undefined))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-init-math! ...                                                */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.1       */
@@ -65,7 +71,7 @@
       (unless (vector? __js_strings) (set! __js_strings (&init!)))
       ;; create the math object
       (set! js-math
-	 (instantiateJsObject
+	 (instantiateJsMath
 	    (cmap (instantiate::JsConstructMap))
 	    (__proto__ (js-object-proto %this))
 	    (elements ($create-vector 26))))

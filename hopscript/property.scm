@@ -1953,8 +1953,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-has-own-property-jsobject o::JsObject p::obj %this)
    
-   (define (js-has-own-property/w-cache o pname)
-      (jsobject-find o o pname
+   (define (js-has-own-property/w-cache o p)
+      (jsobject-find o o (js-toname p %this)
 	 ;; cmap search
 	 (lambda (owner i) #t)
 	 ;; hash search 

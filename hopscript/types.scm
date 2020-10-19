@@ -266,6 +266,8 @@
 	   
 	   (class JsNumber::JsObject
 	      (val::obj (default 0)))
+
+	   (class JsMath::JsObject)
 	   
 	   (class JsRegExp::JsObject
 	      rx::obj
