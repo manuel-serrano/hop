@@ -2649,10 +2649,7 @@
 		       ;; 14
 		       (let ((T (js-substring/enc S p s enc %this)))
 			  ;; 15
-			  (with-access::JsArray A (ilen length)
-			     (set! ilen (+u32 l #u32:1))
-			     (set! length (+u32 l #u32:1))
-			     (js-array-index-set! A l T #f %this))
+			  (js-array-index-set! A l T #f %this)
 			  ;;16
 			  A)))))
 	    ((isa? R JsRegExp)
@@ -2699,10 +2696,7 @@
 		    ;; 14
 		    (let ((T (js-substring/enc S p s enc %this)))
 		       ;; 15
-		       (with-access::JsArray A (ilen length)
-			  (set! ilen (+u32 l #u32:1))
-			  (set! length (+u32 l #u32:1))
-			  (js-array-index-set! A l T #f %this))
+		       (js-array-index-set! A l T #f %this)
 		       ;;16
 		       A))))
 	    (else
@@ -2748,10 +2742,7 @@
 		    ;; 14
 		    (let ((T (js-substring/enc S p s enc %this)))
 		       ;; 15
-		       (with-access::JsArray A (ilen length)
-			  (set! ilen (+u32 l #u32:1))
-			  (set! length (+u32 l #u32:1))
-			  (js-array-index-set! A l T #f %this))
+		       (js-array-index-set! A l T #f %this)
 		       ;;16
 		       A))))))))
 

@@ -826,7 +826,7 @@
 				(set! lastindex e)
 				(js-put-jsobject-name/cache! this (& "lastIndex") lastindex
 				   #f %this (js-pcache-ref js-regexp-pcache 0)))
-			     (let* ((vec ($create-vector l))
+			     (let* ((vec ($create-vector (maxfx l clen)))
 				    (a (js-vector->jsarray vec %this))
 				    (matchindex (vector-ref r 0))
 				    (els ($create-vector 2)))
@@ -950,7 +950,7 @@
 		   (if (<fx l 0)
 		       (js-null)
 		       ;; 10 & 11
-		       (let* ((vec ($create-vector l))
+		       (let* ((vec ($create-vector (maxfx l clen)))
 			      (a (js-vector->jsarray vec %this))
 			      (matchindex (vector-ref r 0))
 			      (els ($create-vector 2)))
@@ -980,11 +980,10 @@
 					     %this)
 					  (js-undefined)))
 				   (loop (+fx i 1)))))
-			  (let loop ((i (+fx l 1)))
+			  (let loop ((i l))
 			     (when (<fx i clen)
-				(let ((j (*fx i 2)))
-				   (vector-set! vec i (js-undefined))
-				   (loop (+fx i 1)))))
+				(vector-set! vec i (js-undefined))
+				(loop (+fx i 1))))
 			  a))))
 	       ((pregexp-match-positions rx s 0)
 		=>
