@@ -181,11 +181,10 @@
       
       ;; atan2
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.5
-      (define (js-math-atan2 this y x)
-	 (js-math-atan2 this y x))
-      
       (js-bind! %this js-math (& "atan2")
-	 :value (js-make-function %this js-math-atan2
+	 :value (js-make-function %this
+		   (lambda (this y x)
+		      (js-math-atan2 y x))
 		   (js-function-arity js-math-atan2)
 		   (js-function-info :name "atan2" :len 2))
 	 :writable #t
@@ -588,7 +587,7 @@
 	       0.0)))
 	  (else
 	   0.0))
-       (atan-2fl-ur y x)))
+       (atan y x)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
