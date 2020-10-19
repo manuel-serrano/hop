@@ -1248,7 +1248,9 @@
    ;; join
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.5
    (define (array-prototype-join this::obj separator)
-      (js-array-prototype-join this separator %this))
+      (if (js-array? this)
+	  (js-array-prototype-array-join this separator %this)
+	  (js-array-prototype-noarray-join this separator %this)))
    
    (js-bind! %this js-array-prototype (& "join")
       :value (js-make-function %this array-prototype-join
@@ -3910,9 +3912,44 @@
 	     (js-array-maybe-concat1 this arg %this cache)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-array-prototype-join ...                                      */
- ;*---------------------------------------------------------------------*/
-(define (js-array-prototype-join o::JsArray separator %this)
+;*    js-noarray-join ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-noarray-join o::obj separator %this)
+   
+   (define (el->jsstring el)
+      (if (or (eq? el (js-undefined)) (eq? el (js-null)))
+	  (& "")
+	  (js-tojsstring el %this)))
+
+   (let* ((o (js-toobject-fast o %this))
+	  (lenval::uint32 (js-get-lengthu32 o %this))
+	  (sep (if (eq? separator (js-undefined))
+		   (& ",")
+		   (js-tojsstring separator %this))))
+      (cond
+	 ((=u32 lenval #u32:0)
+	  (& ""))
+	 ((=u32 lenval #u32:1)
+	  (el->jsstring (js-get o 0 %this)))
+	 (else
+	  (let loop ((r (js-jsstring-append sep
+			   (el->jsstring
+			      (js-get o (uint32->fixnum (-u32 lenval #u32:1))
+				 %this))))
+		     (i (-u32 lenval #u32:2)))
+	     (if (=u32 i 0)
+		 (let* ((v0 (js-get o 0 %this))
+			(el0 (el->jsstring v0)))
+		    (js-jsstring-append el0 r))
+		 (let ((v (js-get o (uint32->fixnum i) %this)))
+		    (loop (js-jsstring-append sep
+			     (js-jsstring-append (el->jsstring v) r))
+		       (-u32 i #u32:1)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-array-join ...                                */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-array-join o::JsArray separator %this)
    
    (define (el->jsstring el)
       (if (or (eq? el (js-undefined)) (eq? el (js-null)))
@@ -3948,7 +3985,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-join this::JsArray separator %this cache)
    (if (js-object-mode-plain? this)
-       (js-array-prototype-join this separator %this)
+       (js-array-prototype-array-join this separator %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call1 %this
 	     (js-get-jsobject-name/cache this (& "join") #f %this
