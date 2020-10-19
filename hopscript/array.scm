@@ -118,7 +118,7 @@
 	   (js-array-construct/length::JsArray ::JsGlobalObject ::JsArray ::obj)
 	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
 	   (jsarray->vector::vector ::JsArray ::JsGlobalObject)
-	   (js-array-concat ::JsArray args::pair-nil ::JsGlobalObject)
+	   (js-array-concat ::obj args::pair-nil ::JsGlobalObject)
 	   (js-array-maybe-concat ::obj args::pair-nil ::JsGlobalObject ::obj)
 	   (js-array-concat1 ::JsArray ::JsArray ::JsGlobalObject ::obj)
 	   (js-array-concat1-empty ::JsArray ::JsGlobalObject ::obj)
@@ -3663,10 +3663,13 @@
    
    (define (copy-proxy src dst i)
       (copy-array-slow dst i src 0 (js-get-length src %this)))
-   
-   (let* ((o (js-toobject %this this))
+
+   (let* ((o (js-toobject-fast this %this))
 	  (new-len (let loop ((l l)
-			      (len (js-get-length o %this)))
+			      (len (if (or (js-array? o) (js-proxy? o))
+				       (let ((l (js-get-length o %this)))
+					  (if (fixnum? l) l 1))
+				       1)))
 		      (cond
 			 ((null? l)
 			  len)
@@ -3675,11 +3678,11 @@
 			     (+fx/overflow len
 				(js-get-length (car l) %this))))
 			 (else
-			  (loop (cdr l) (+ 1 len))))))
+			  (loop (cdr l) (+fx 1 len))))))
 	  (arr (js-array-species-create %this o new-len)))
-      (if (and (js-object-mode-inline? arr)
-	       (every (lambda (o)
-			 (and (js-array? o) (js-object-mode-inline? o)))
+      (if (and (and (js-array? o) (js-array-inlined? arr))
+	       (every (lambda (e)
+			 (and (js-array? e) (js-object-mode-inline? e)))
 		  l))
 	  ;; super fast copy
 	  (with-access::JsArray arr (vec ilen length)
