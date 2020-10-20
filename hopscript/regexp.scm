@@ -303,7 +303,6 @@
 		     (w 0)
 		     (ascii #t))
 	     (let ((j (string-index str "\\[]" i)))
-		(tprint "j=" j " len=" len)
 		(if (not j)
 		    (begin
 		       (blit-string! str i res w (-fx len i))
@@ -774,11 +773,11 @@
 ;*---------------------------------------------------------------------*/
 (define (js-substring s start end utf8 %this)
    (cond
-      ((=fx end (+fx start 1))
+      ((and (=fx end (+fx start 1)) (not utf8))
        (js-jsstring-fromcharcode
 	  (char->integer (string-ref s start)) %this))
       (utf8
-       (js-utf8->jsstring (substring s start end)))
+       (js-utf8->jsstring (utf8-substring s start end)))
       (else
        (js-substring->jsstring s start (-fx end start)))))
 
@@ -797,7 +796,7 @@
 		   (s (js-jsstring->string jss))
 		   (len (string-length s))
 		   (i (js-tointeger lastindex %this))
-		   (enc (isa? s JsStringLiteralUTF8))
+		   (enc (isa? jss JsStringLiteralUTF8))
 		   (clen (regexp-capture-count rx)))
 	       (unless global (set! i 0))
 	       (cond
@@ -937,7 +936,7 @@
 	 (let* ((jss (js-tojsstring string %this))
 		(s (js-jsstring->string jss))
 		(len (string-length s))
-		(enc (isa? s JsStringLiteralUTF8))
+		(enc (isa? jss JsStringLiteralUTF8))
 		(clen (regexp-capture-count rx)))
 	    (cond
 	       ((>=fx clen 0)

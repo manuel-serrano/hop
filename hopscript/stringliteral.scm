@@ -74,9 +74,11 @@
 	   (js-jsstring-normalize-SUBSTRING!::bstring ::JsStringLiteralSubstring)
 	   (js-jsstring-normalize-UTF8!::bstring ::JsStringLiteralUTF8)
 	   (inline js-jsstring-append::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
+	   (inline js-jsstring-append!::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (js-jsstring-append3::JsStringLiteral ::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (js-jsstring-append-no-inline::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (js-jsstring-append-ASCII::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
+	   (js-jsstring-append-ASCII!::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (js-jsstring-append-UTF8::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (inline js-jsstring-append-ascii::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (inline js-jsstring-append-ascii-xxx::JsStringLiteral ::JsStringLiteralASCII ::JsStringLiteral)
@@ -1317,7 +1319,6 @@
 			    (length len)
 			    (left (string-append lstr rstr))
 			    (right (js-not-a-string-cache)))))
-		   (tprint "string-append " llen " " rlen " " lstr " " rstr)
 		   (js-object-mode-set! s (js-jsstring-normalized-ascii-mode))
 		   (object-widening-set! s #f)
 		   s)
@@ -1325,6 +1326,25 @@
 
 (define (js-jsstring-append-ASCII-not-used left right)
    ($js-jsstring-append-ascii left right))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-append-ASCII! ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-append-ASCII! left right)
+   (with-access::JsStringLiteral left ((llen length)
+				       (lstr left))
+      (with-access::JsStringLiteral right ((rlen length)
+					   (rstr left))
+	 (let ((len (+u32 llen rlen)))
+	    (if (<u32 len (string-append-auto-normalize-threshold))
+		;; if the sum len if smaller than 18, both string
+		;; lengthes are smaller than 18 too, and there cannot
+		;; be a non normalized small string
+		(begin
+		   (set! lstr (string-append lstr rstr))
+		   (set! llen len)
+		   left)
+		($js-make-stringliteralascii len left right))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append-UTF8 ...                                      */
@@ -1366,6 +1386,22 @@
 	     (js-jsstring-append-UTF8 left right))
 	    (else
 	     (js-jsstring-append-ASCII left right))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-append! ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-append!::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
+   (with-access::JsStringLiteral left ((llen length))
+      (with-access::JsStringLiteral right ((rlen length))
+	 (cond
+	    ((=u32 llen 0)
+	     right)
+	    ((=u32 rlen 0)
+	     left)
+	    ((or (js-jsstring-utf8? left) (js-jsstring-utf8? right))
+	     (js-jsstring-append-UTF8 left right))
+	    (else
+	     (js-jsstring-append-ASCII! left right))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append3 ...                                          */
@@ -1441,7 +1477,7 @@
 		   (js-jsstring-append-ASCII left
 		      (js-jsstring-append-ASCII middle right)))
 		  (else
-		   (js-jsstring-append-ASCII 
+		   (js-jsstring-append-ASCII
 		      (js-jsstring-append-ASCII left middle)
 		      right))))))))
 
