@@ -1044,6 +1044,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-set-ur! arr::JsArray idx::uint32 val throw::bool %this)
    (with-access::JsArray arr (vec ilen length)
+
       (cond
 	 ((and (<u32 idx (fixnum->uint32 (vector-length vec)))
 	       (<u32 idx length))
@@ -1077,11 +1078,14 @@
 	 ((and (js-object-mode-inline? arr)
 	       (<u32 idx (fixnum->uint32 (vector-length vec))))
 	  (vector-set! vec (uint32->fixnum idx) val)
-	  (when (>u32 idx ilen)
-	     (js-object-mode-inline-set! arr #f)
-	     (set! ilen #u32:0))
-	     (when (>=u32 idx length)
-		(set! length (+u32 idx 1)))
+	  (cond
+	     ((>u32 idx ilen)
+	      (js-object-mode-inline-set! arr #f)
+	      (set! ilen #u32:0))
+	     ((=u32 idx ilen)
+	      (set! ilen (+u32 idx 1))))
+	  (when (>=u32 idx length)
+	     (set! length (+u32 idx 1)))
 	  val)
 	 (else
 	  (js-array-put! arr (js-uint32-tointeger idx) val throw %this)))))

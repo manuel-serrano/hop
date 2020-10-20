@@ -180,7 +180,7 @@
 ;*    The threshold under which APPEND normalizes strings.             */
 ;*---------------------------------------------------------------------*/
 (define (string-append-auto-normalize-threshold)
-   #u32:13)
+   #u32:8)
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */

@@ -76,9 +76,9 @@ function test( date ) {
    var x = new Date( date );
    var val = x.valueOf();
 
-   assert.strictEqual( val, Date.parse(x.toString()), "toString" );
-   assert.strictEqual( val, Date.parse(x.toUTCString()), "toUTCString" );
-   assert.strictEqual( val, Date.parse(x.toISOString()), "toISOString" );
+   assert.strictEqual( val, Date.parse(x.toString()), "more toString" );
+   assert.strictEqual( val, Date.parse(x.toUTCString()), "more toUTCString" );
+   assert.strictEqual( val, Date.parse(x.toISOString()), "more toISOString" );
 }
 
 test( "1997-07-16T12:00:00+04:00" );
@@ -392,12 +392,21 @@ function checkDate( d, year, month, date, hours, mins, secs, mils ) {
 
 assert.ok( isNaN( new Date( 'not a date' ).getDate() ), "invalid date" );
 
-checkDate( new Date('2014-11-03'), 2014, 10, 3, 0, 0, 0, 0 );
-checkDate( new Date('2014-11-03 19'), 2014, 10, 3, 19, 0, 0, 0 );
-checkDate( new Date('2014-11-03 19:23'), 2014, 10, 03, 19, 23, 0, 0 );
-checkDate( new Date('2014-11-03 19:23:22'), 2014, 10, 03, 19, 23, 22, 0 );
-checkDate( new Date('2014-11-03 19:23:22.478'), 2014, 10, 03, 19, 23, 22, 478 );
+checkDate( new Date('2014-11-03'), 2014, 10, 3, 1, 0, 0, 0 );
+checkDate( new Date('2014-11-03 19:00'), 2014, 10, 3, 19, 0, 0, 0 );
+checkDate( new Date('2014-11-03 19:23'), 2014, 10, 3, 19, 23, 0, 0 );
+checkDate( new Date('2014-11-03 19:23:22'), 2014, 10, 3, 19, 23, 22, 0 );
+checkDate( new Date('2014-11-03 19:23:22.478'), 2014, 10, 3, 19, 23, 22, 478 );
 checkDate( new Date('2014-11-03 19:23:22.478+01:00'), 2014, 10, 03, 19, 23, 22, 478 );
+
+function zdate() {
+   var expectedDateTimeStr = "1970-01-01T00:00:00.000Z";
+   var dateObj = new Date("1970");
+   var dateStr = dateObj.toISOString();
+   return dateStr === expectedDateTimeStr;
+}
+
+assert.ok( zdate(), "zdate" );
 
 /*---------------------------------------------------------------------*/
 /*    UTC                                                              */

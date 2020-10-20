@@ -1205,18 +1205,10 @@
 		    (begin
 		       (set! val month)
 		       month)
-		    (let* ((tz (date-timezone val))
-			   (nval (date-update! val
-				    :month (->fixnum-safe (+ 1 month))
-				    :day (->fixnum-safe day)))
-			   (ntz (date-timezone nval)))
-		       (if (=fx ntz tz)
-			   (set! val nval)
-			   (set! val
-			      (milliseconds->date
-				 (-llong (date->milliseconds nval)
-				    (*llong #l1000
-				       (fixnum->llong (- ntz tz)))))))
+		    (let ((nval (date-update! val
+				   :month (->fixnum-safe (+ 1 month))
+				   :day (->fixnum-safe day))))
+		       (set! val nval)
 		       (js-date->milliseconds val))))
 	     val)))
    
@@ -1239,7 +1231,7 @@
 		    (begin
 		       (set! val month)
 		       month)
-		    (begin
+		    (let ((val (date->gmtdate! val)))
 		       (set! val (date-update! val
 				    :month (->fixnum-safe (+ 1 month))
 				    :day (->fixnum-safe date)))
