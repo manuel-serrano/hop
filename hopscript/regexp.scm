@@ -249,7 +249,7 @@
 (define (js-new-regexp1/cache %this::JsGlobalObject pattern cache)
    (if (js-regexp? pattern)
        pattern
-       (let* ((pat (js-jsstring->string pattern))
+       (let* ((pat (js-tostring pattern %this))
 	      (oldrx (js-regexp-cache-get cache pat)))
 	  (if oldrx
 	      (js-regexp-construct/rx %this oldrx pattern #u32:0)
