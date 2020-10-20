@@ -155,7 +155,7 @@
    (cond
       ((fixnum? val) val)
       ((flonum? val) (if (nanfl? val) val (flonum->fixnum val)))
-      ((eq? val (js-undefined)) 0)
+      ((eq? val (js-undefined)) #f)
       (else (tofixnum (js-tonumber val %this) %this))))
 
 ;*---------------------------------------------------------------------*/
