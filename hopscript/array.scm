@@ -4572,7 +4572,7 @@
    (if (js-array? this)
        (js-array-reverse this %this)
        (let ((o (js-toobject %this this)))
-	  (array-reverse! o #f))))
+	  (array-reverse! o %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    array-reverse! ...                                               */
