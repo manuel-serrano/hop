@@ -1317,6 +1317,7 @@
 			    (length len)
 			    (left (string-append lstr rstr))
 			    (right (js-not-a-string-cache)))))
+		   (tprint "string-append " llen " " rlen " " lstr " " rstr)
 		   (js-object-mode-set! s (js-jsstring-normalized-ascii-mode))
 		   (object-widening-set! s #f)
 		   s)

@@ -638,13 +638,16 @@
       (multiple-value-bind (pat enc)
 	 (make-js-regexp-pattern %this pattern)
 	 (let ((rx (pregexp pat
+		      'NORAISE
 		      (when (js-regexp-flags-ignorecase? flags) 'CASELESS)
 		      'JAVASCRIPT_COMPAT
 		      (if (and (eq? enc 'ascii)
 			       (not (js-regexp-flags-unicode? flags)))
 			  'JAVASCRIPT_COMPAT 'UTF8)
 		      (when (js-regexp-flags-multiline? flags) 'MULTILINE))))
-	    (js-regexp-construct/rx %this rx pattern flags)))))
+	    (if (string? rx)
+		(js-raise-syntax-error/loc %this loc rx "")
+		(js-regexp-construct/rx %this rx pattern flags))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-regexp-prototype! ...                               */
