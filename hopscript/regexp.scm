@@ -270,32 +270,30 @@
 
    (define (need-new-string? str)
       (let ((len (string-length str)))
-	 (if (<=fx len 1)
-	     #f
-	     (let loop ((i 0))
-		(let ((j (string-index str "\\[]" i)))
-		   (if (not j)
-		       #f
-		       (let ((tag (string-ref str j)))
-			  (cond
-			     ((char=? tag #\[)
-			      #t)
-			     ((char=? tag #\])
-			      #t)
-			     ((=fx j (-fx len 1))
-			      (err "wrong pattern \"~a\"" str))
-			     (else
-			      (let ((c (string-ref str (+fx j 1))))
-				 (case c
-				    ((#\x) #t)
-				    ((#\u) #t)
-				    ((#\t) #t)
-				    ((#\n) #t)
-				    ((#\v) #t)
-				    ((#\f) #t)
-				    ((#\r) #t)
-				    ((#\") #t)
-				    (else (loop (+fx j 2))))))))))))))
+	 (let loop ((i 0))
+	    (let ((j (string-index str "\\[]" i)))
+	       (if (not j)
+		   #f
+		   (let ((tag (string-ref str j)))
+		      (cond
+			 ((char=? tag #\[)
+			  #t)
+			 ((char=? tag #\])
+			  #t)
+			 ((=fx j (-fx len 1))
+			  (err "wrong pattern \"~a\"" str))
+			 (else
+			  (let ((c (string-ref str (+fx j 1))))
+			     (case c
+				((#\x) #t)
+				((#\u) #t)
+				((#\t) #t)
+				((#\n) #t)
+				((#\v) #t)
+				((#\f) #t)
+				((#\r) #t)
+				((#\") #t)
+				(else (loop (+fx j 2)))))))))))))
 
    (if (not (need-new-string? str))
        str
@@ -305,6 +303,7 @@
 		     (w 0)
 		     (ascii #t))
 	     (let ((j (string-index str "\\[]" i)))
+		(tprint "j=" j " len=" len)
 		(if (not j)
 		    (begin
 		       (blit-string! str i res w (-fx len i))
@@ -325,8 +324,6 @@
 			   (string-set! res w #\\)
 			   (string-set! res (+fx w 1) tag)
 			   (loop (+fx j 1) (+fx w 2) ascii))
-			  ((=fx j (-fx len 1))
-			   (err "wrong pattern \"~a\"" str))
 			  (else
 			   (let ((c (string-ref str (+fx j 1))))
 			      (case c
