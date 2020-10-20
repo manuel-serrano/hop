@@ -441,7 +441,7 @@
 		  #l0))))
       (when (and (fixnum? y) (>fx y 0)
 		 (fixnum? m) (fixnum? d) (fixnum? h)
-		 (fixnum? mi) (fixnum? se) (llong? ns))
+		 (fixnum? mi) (fixnum? se) (fixnum? us) (llong? ns))
 	 (make-date
 	    :year y :month (+ m 1) :day d
 	    :hour h :min mi :sec se :nsec ns))))
