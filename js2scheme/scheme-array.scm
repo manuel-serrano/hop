@@ -41,6 +41,8 @@
 	   (j2s-array-maybe-foreach obj args mode return conf)
 	   (j2s-array-map obj args mode return conf)
 	   (j2s-array-maybe-map obj args mode return conf)
+	   (j2s-array-filter obj args mode return conf)
+	   (j2s-array-maybe-filter obj args mode return conf)
 	   (j2s-array-maybe-join obj args mode return conf)
 	   (j2s-array-concat1 obj args mode return conf)
 	   (j2s-array-maybe-concat1 obj args mode return conf)))
@@ -508,12 +510,12 @@
       (j2s-type field) 'integer ctx))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-array-foreach-map ...                                        */
+;*    j2s-array-foreach-map-filter ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (j2s-array-foreach-map js-foreach-or-map obj args mode return ctx)
+(define (j2s-array-foreach-map-filter js-iterator obj args mode return ctx)
    
    (define (foreach obj proc thisarg %this cache)
-      `(,js-foreach-or-map
+      `(,js-iterator
 	  ,(j2s-scheme obj mode return ctx)
 	  ,proc
 	  ,thisarg
@@ -567,25 +569,37 @@
 ;*    j2s-array-foreach ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-foreach obj args mode return ctx)
-   (j2s-array-foreach-map 'js-array-foreach-procedure obj args mode return ctx))
+   (j2s-array-foreach-map-filter 'js-array-foreach-procedure obj args mode return ctx))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-maybe-foreach ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-maybe-foreach obj args mode return ctx)
-   (j2s-array-foreach-map 'js-array-maybe-foreach-procedure obj args mode return ctx))
+   (j2s-array-foreach-map-filter 'js-array-maybe-foreach-procedure obj args mode return ctx))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-map ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-map obj args mode return ctx)
-   (j2s-array-foreach-map 'js-array-map-procedure obj args mode return ctx))
+   (j2s-array-foreach-map-filter 'js-array-map-procedure obj args mode return ctx))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-maybe-map ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-maybe-map obj args mode return ctx)
-   (j2s-array-foreach-map 'js-array-maybe-map-procedure obj args mode return ctx))
+   (j2s-array-foreach-map-filter 'js-array-maybe-map-procedure obj args mode return ctx))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-filter ...                                             */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-filter obj args mode return ctx)
+   (j2s-array-foreach-map-filter 'js-array-filter-procedure obj args mode return ctx))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-maybe-filter ...                                       */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-maybe-filter obj args mode return ctx)
+   (j2s-array-foreach-map-filter 'js-array-maybe-filter-procedure obj args mode return ctx))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-maybe-join ...                                         */
