@@ -61,7 +61,7 @@
 ;*    debugging                                                        */
 ;*---------------------------------------------------------------------*/
 (define-macro (with-debug pred lbl . args)
-   (if (>=fx (bigloo-debug) 0)
+   (if (and #f (>=fx (bigloo-debug) 0))
        `(let* ((__thunk (lambda () ,(car (last-pair args))))
 	       (__l ,lbl)
 	       (__lbl (if (or (string? __l) (pair? __l))
@@ -76,7 +76,7 @@
 		     (range-debug -1 "")
 		     __r))
 	       (__thunk)))
-       `(begin ,@body)))
+       (car (last-pair args))))
 
 (define-macro (debug pred . args)
    (when (>=fx (bigloo-debug) 0)
@@ -357,7 +357,7 @@
 	  (let ((nr (interval-merge range rng)))
 	     (unless (equal? nr range)
 		(unfix! fix
-		   (format "J2SExpr.add(~a) range=~a/~a" loc range nr))
+		   (format "J2SExpr.add(~a) range=~a/~a -> ~a" loc range rng nr))
 		(set! range nr))
 	     (return nr env))
 	  (return rng env))))
@@ -728,7 +728,22 @@
 	    (else
 	     o))))
 
-   (let ((intv (widen)))
+   (define (infinity-widen o)
+      (let ((oi (inrange (interval-min o)))
+	    (oa (inrange (interval-max o))))
+	 (cond
+	    ((< oi *min-int53*)
+	     (set! oi *-inf.0*))
+	    ((< oi *min-int32*)
+	     (set! oi *min-int53*)))
+	 (cond
+	    ((> oa *max-int53*)
+	     (set! oa *+inf.0*))
+	    	    ((> oa *max-int32*)
+	     (set! oi *max-int53*)))
+	 (interval oi oa)))
+
+   (let ((intv (infinity-widen (widen))))
       (when (interval? intv)
 	 (interval-type-set! intv (interval-type o)))
       intv))
@@ -1139,7 +1154,7 @@
 ;*    node-range ::J2SBindExit ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SBindExit env::pair-nil conf mode::symbol fix::cell)
-   (with-access::J2SBindExit this (stmt range)
+   (with-access::J2SBindExit this (stmt range loc)
       (multiple-value-bind (intv env)
 	 (node-range stmt env conf mode fix)
 	 (return range env))))
@@ -1283,7 +1298,7 @@
 ;*    node-range ::J2SAssigOp ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SAssigOp env::pair-nil conf mode::symbol fix::cell)
-   (with-access::J2SAssigOp this (op lhs rhs type range)
+   (with-access::J2SAssigOp this (op lhs rhs type range loc)
       (multiple-value-bind (intv nenv)
 	 (node-range-binary this op lhs rhs env conf mode fix)
 	 (cond
@@ -2075,7 +2090,7 @@
 ;*    node-range ::J2SWhile ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SWhile env::pair-nil conf mode::symbol fix::cell)
-   (with-access::J2SWhile this (test body)
+   (with-access::J2SWhile this (test body loc)
       (let ((denv (dump-env env))
 	    (ffix (cell-ref fix)))
 	 (when *debug-range-while*
