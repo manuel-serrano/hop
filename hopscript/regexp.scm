@@ -40,6 +40,8 @@
 	   (inline js-regexp?::bool ::obj)
 	   (js-regexp->jsregexp ::regexp ::JsGlobalObject)
 	   (js-regexp-literal-test::bool ::JsRegExp ::obj ::JsGlobalObject)
+	   (js-regexp-prototype-exec-global this::JsRegExp string::obj %this::JsGlobalObject)
+	   (js-regexp-prototype-exec-no-global this::JsRegExp string::obj %this::JsGlobalObject)
 	   (js-regexp-prototype-exec ::JsRegExp ::obj ::JsGlobalObject)
 	   (js-regexp-prototype-maybe-exec ::obj ::obj ::JsGlobalObject cache)
 	   (js-regexp-prototype-exec-as-bool::bool ::JsRegExp ::obj ::JsGlobalObject)
@@ -782,23 +784,82 @@
        (js-substring->jsstring s start (-fx end start)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-regexp-prototype-exec ...                                     */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.6.2    */
+;*    js-regexp-prototype-exec-no-global ...                           */
 ;*---------------------------------------------------------------------*/
-(define (js-regexp-prototype-exec this::JsRegExp string::obj %this::JsGlobalObject)
+(define (js-regexp-prototype-exec-no-global this::JsRegExp string::obj %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-regexp-pcache js-regexp-positions)
+      (with-access::JsRegExp this (rx flags)
+	 (let* ((jss (js-tojsstring string %this))
+		(s (js-jsstring->string jss))
+		(len (string-length s))
+		(enc (isa? jss JsStringLiteralUTF8))
+		(clen (regexp-capture-count rx)))
+	    (cond
+	       ((>=fx clen 0)
+		(when (>=fx (*fx (+fx clen 1) 2)
+			 (vector-length js-regexp-positions))
+		   (set! js-regexp-positions
+		      (make-vector (* (+fx clen 1) 2))))
+		(let* ((r js-regexp-positions)
+		       (l (pregexp-match-n-positions! rx s r 0 len)))
+		   (if (<fx l 0)
+		       (js-null)
+		       ;; 10
+		       (let ((e (vector-ref r 1)))
+			  ;; 11
+			  (let* ((vec ($create-vector (maxfx l clen)))
+				 (a (js-vector->jsarray vec %this))
+				 (matchindex (vector-ref r 0))
+				 (els ($create-vector 2)))
+			     ;; bind the result cmap and add the elements
+			     (with-access::JsArray a (elements cmap)
+				(with-access::JsGlobalObject %this (js-regexp-exec-cmap)
+				   (set! cmap js-regexp-exec-cmap))
+				(set! elements els))
+			     ;; 15
+			     (vector-set! els 0 matchindex)
+			     ;; (js-bind! %this a 'index :value matchindex)
+			     ;; 16
+			     (vector-set! els 1 jss)
+			     ;; (js-bind! %this a 'input :value jss)
+			     ;; 17
+			     ;; no need as already automatically set
+			     ;; 19 & 20
+			     ;; 20
+			     (let loop ((i 0))
+				(when (<fx i l)
+				   (let ((j (*fx i 2)))
+				      (vector-set! vec i
+					 (if (>=fx (vector-ref r j) 0)
+					     (js-substring s
+						(vector-ref r j)
+						(vector-ref r (+fx j 1))
+						enc
+						%this)
+					     (js-undefined)))
+				      (loop (+fx i 1)))))
+			     (let loop ((i l))
+				(when (<fx i clen)
+				   (vector-set! vec i (js-undefined))
+				   (loop (+fx i 1))))
+			     a)))))
+	       (else
+		(js-null)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-regexp-prototype-exec-global ...                              */
+;*---------------------------------------------------------------------*/
+(define (js-regexp-prototype-exec-global this::JsRegExp string::obj %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-regexp-pcache js-regexp-positions)
       (with-access::JsRegExp this (rx flags)
 	 (let ((lastindex (js-get-jsobject-name/cache this (& "lastIndex")
-			     #f %this (js-pcache-ref js-regexp-pcache 0)))
-	       (global (js-regexp-flags-global? flags)))
+			     #f %this (js-pcache-ref js-regexp-pcache 0))))
 	    (let* ((jss (js-tojsstring string %this))
 		   (s (js-jsstring->string jss))
 		   (len (string-length s))
 		   (i (js-tointeger lastindex %this))
 		   (enc (isa? jss JsStringLiteralUTF8))
 		   (clen (regexp-capture-count rx)))
-	       (unless global (set! i 0))
 	       (cond
 		  ((or (<fx i 0) (>fx i len))
 		   (set! lastindex 0)
@@ -821,10 +882,9 @@
 			  ;; 10
 			  (let ((e (vector-ref r 1)))
 			     ;; 11
-			     (when global
-				(set! lastindex e)
-				(js-put-jsobject-name/cache! this (& "lastIndex") lastindex
-				   #f %this (js-pcache-ref js-regexp-pcache 0)))
+			     (set! lastindex e)
+			     (js-put-jsobject-name/cache! this (& "lastIndex") lastindex
+				#f %this (js-pcache-ref js-regexp-pcache 0))
 			     (let* ((vec ($create-vector (maxfx l clen)))
 				    (a (js-vector->jsarray vec %this))
 				    (matchindex (vector-ref r 0))
@@ -867,10 +927,9 @@
 		      ;; 10
 		      (let ((e (cdar r)))
 			 ;; 11
-			 (when global
-			    (set! lastindex e)
-			    (js-put-jsobject-name/cache! this (& "lastIndex") lastindex
-			       #f %this (js-pcache-ref js-regexp-pcache 0)))
+			 (set! lastindex e)
+			 (js-put-jsobject-name/cache! this (& "lastIndex") lastindex
+			    #f %this (js-pcache-ref js-regexp-pcache 0))
 			 (let* ((n (length r))
 				;;(_ (tprint "match-positions n=" n))
 				(vec ($create-vector n))
@@ -909,6 +968,17 @@
 		   (js-put-jsobject-name/cache! this (& "lastIndex") lastindex
 		      #f %this (js-pcache-ref js-regexp-pcache 0))
 		   (js-null))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-regexp-prototype-exec ...                                     */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.6.2    */
+;*---------------------------------------------------------------------*/
+(define (js-regexp-prototype-exec this::JsRegExp string::obj %this::JsGlobalObject)
+   (with-access::JsRegExp this (flags)
+      (if (js-regexp-flags-global? flags)
+	  (js-regexp-prototype-exec-global this string %this)
+	  (js-regexp-prototype-exec-no-global this string %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-prototype-maybe-exec ...                               */

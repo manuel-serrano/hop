@@ -3332,8 +3332,6 @@
 		      ((<fx r 0)
 		       this)
 		      ((string-index newstring #\$)
-		       (tprint "r=" r " " (table22-vec newstring r vrx s %this)
-			  " " (regexp-capture-count rx))
 		       (js-jsstring-append
 			  (js-substring/enc s 0 (vector-ref vrx 0) enc %this)
 			  (js-jsstring-append
@@ -3572,16 +3570,21 @@
 ;*    This function is used when the second argument is an existing    */
 ;*    regular expression.                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-match-regexp this string rx %this)
+(define (js-jsstring-match-regexp this rx %this)
    (with-access::JsGlobalObject %this (js-regexp js-array js-regexp-prototype js-string-pcache)
-      (let* ((proto (js-get-jsobject-name/cache js-regexp (& "prototype")
-		       #f %this (js-pcache-ref js-string-pcache 14)))
-	     (exec (js-get-jsobject-name/cache proto (& "exec")
-		      #f %this (js-pcache-ref js-string-pcache 15))))
+      (let* ()
+;* 	     (proto (js-get-jsobject-name/cache js-regexp (& "prototype") */
+;* 		       #f %this (js-pcache-ref js-string-pcache 14)))  */
+;* 	     (proto js-regexp-prototype)                               */
+;* 	     (exec (js-get-jsobject-name/cache proto (& "exec")        */
+;* 		      #f %this (js-pcache-ref js-string-pcache 15))))  */
 	 (with-access::JsRegExp rx (flags)
 	    ;; 7
 	    (if (not (js-regexp-flags-global? flags))
-		(js-call1 %this exec rx this)
+		;; match _always_ invoke the native exec, even if
+		;; RegExp.prototype.exec is modified
+		(js-regexp-prototype-exec-no-global rx this %this)
+;* 		(js-call1 %this exec rx this)                          */
 		;; 8
 		(let ((lastindex (js-get-jsobject-name/cache rx (& "lastIndex")
 				    #f %this (js-pcache-ref js-string-pcache 16)))
@@ -3591,7 +3594,7 @@
 		   (js-put-jsobject-name/cache! rx (& "lastIndex") lastindex
 		      #f %this (js-pcache-ref js-string-pcache 17))
 		   (let loop ((n 0))
-		      (let ((result (js-call1 %this exec rx this)))
+		      (let ((result (js-regexp-prototype-exec-global rx this %this)))
 			 (set! lastindex
 			    (js-get-jsobject-name/cache rx (& "lastIndex")
 			       #f %this (js-pcache-ref js-string-pcache 17)))
@@ -3647,7 +3650,7 @@
    (with-access::JsGlobalObject %this (js-regexp)
       (cond
 	 ((isa? regexp JsRegExp)
-	  (js-jsstring-match-regexp this string regexp %this))
+	  (js-jsstring-match-regexp this regexp %this))
 	 ((js-jsstring? regexp)
 	  (js-jsstring-match-regexp-from-string this regexp
 	     (js-new %this js-regexp regexp) %this))

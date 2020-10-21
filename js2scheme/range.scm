@@ -739,8 +739,8 @@
 	 (cond
 	    ((> oa *max-int53*)
 	     (set! oa *+inf.0*))
-	    	    ((> oa *max-int32*)
-	     (set! oi *max-int53*)))
+	    ((> oa *max-int32*)
+	     (set! oa *max-int53*)))
 	 (interval oi oa)))
 
    (let ((intv (infinity-widen (widen))))
