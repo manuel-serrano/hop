@@ -3093,8 +3093,9 @@
 		    (j2s-scheme 
 		       (init-expr init
 			  (lambda (e)
-			     (with-access::J2SExpr e (loc)
-				`(vector-set! ,elements (+fx ,i ,offset) ,e))))	
+			     `(vector-set! ,elements (+fx ,i ,offset)
+				 ,(j2s-as (j2s-scheme e mode return ctx)
+				     e (j2s-type e) 'any ctx))))
 		       mode return ctx))
 	       nodes (iota (length nodes)))
 	  (set! cmap ,cmap)))

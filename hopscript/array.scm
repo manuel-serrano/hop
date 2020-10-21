@@ -4548,7 +4548,7 @@
 			 :alloc js-object-alloc)))
 	  (with-access::JsGlobalObject %this (js-array-pcache)
 	     (js-call2 %this
-		(js-get-name/cache this (& "forEach") #f %this
+		(js-get-name/cache this (& "filter") #f %this
 		   (or cache (js-pcache-ref js-array-pcache 12)))
 		this jsproc thisarg)))))
 

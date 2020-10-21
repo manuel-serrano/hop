@@ -184,6 +184,12 @@
 (define (string-append-auto-normalize-threshold)
    #u32:8)
 
+(define (substring-auto-normalize-threshold)
+   (+u32 (string-append-auto-normalize-threshold)
+      (cond-expand
+	 ((or bint61 bint64) #u32:8)
+	 (else #u32:4))))
+
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
@@ -486,7 +492,7 @@
        (& ""))
       ((and (=fx start 0) (=fx len (string-length val)))
        (js-ascii->jsstring val))
-      ((<u32 (fixnum->uint32 len) (string-append-auto-normalize-threshold))
+      ((<u32 (fixnum->uint32 len) (substring-auto-normalize-threshold))
        (js-ascii->jsstring (substring val start (+fx start len))))
       (else
        (let ((o (instantiate::JsStringLiteralSubstring

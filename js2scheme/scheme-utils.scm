@@ -719,12 +719,18 @@
 	   (not (eq? typrop 'array))))
 
    (if (boxed-type? tyval)
-       (let ((tmp (gensym)))
-	  `(let ((,tmp ,val))
-	      ,(j2s-put! loc obj field tyobj prop typrop
-		  (box tmp tyval ctx) 'any mode ctx
-		  cache optim-arrayp :cspecs cspecs :cachefun cachefun)
-	      ,tmp))
+       (if (number? val)
+	   `(begin
+	       ,(j2s-put! loc obj field tyobj prop typrop
+		   (box val tyval ctx) 'any mode ctx
+		   cache optim-arrayp :cspecs cspecs :cachefun cachefun)
+	       ,val)
+	   (let ((tmp (gensym)))
+	      `(let ((,tmp ,val))
+		  ,(j2s-put! loc obj field tyobj prop typrop
+		      (box tmp tyval ctx) 'any mode ctx
+		      cache optim-arrayp :cspecs cspecs :cachefun cachefun)
+		  ,tmp)))
        (let ((propstr (match-case prop
 			 ((& ?str . ?-) str)
 			 (else #f))))

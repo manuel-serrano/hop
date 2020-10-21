@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 22 10:23:45 2018                          */
 ;*    Last change :  Wed Aug 22 13:42:42 2018 (serrano)                */
-;*    Copyright   :  2018 Manuel Serrano                               */
+;*    Copyright   :  2018-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Multiple variable declaration split optimization.                */
 ;*=====================================================================*/
@@ -80,13 +80,14 @@
 		      (let ((nvars '()))
 			 (for-each (lambda (decl)
 				      (with-access::J2SDecl decl (%info)
-					 (set! %info (cons* #f decl
-							(map (lambda (d)
-								(let ((nd (duplicate::J2SDecl d
-									     (key (ast-decl-key)))))
-								   (set! nvars (cons nd nvars))
-								   nd))
-							   (cdr %info))))))
+					 (set! %info
+					    (cons* 'toinit decl
+					       (map (lambda (d)
+						       (let ((nd (duplicate::J2SDecl d
+								    (key (ast-decl-key)))))
+							  (set! nvars (cons nd nvars))
+							  nd))
+						  (cdr %info))))))
 			    vars)
 			 (alpha! this)
 			 (set! nodes (append nvars nodes))))
@@ -185,8 +186,8 @@
 	 (with-access::J2SRef lhs (decl)
 	 (when (isa? decl J2SDecl)
 	    (with-access::J2SDecl decl (%info)
-	       (when (pair? %info)
-		  (set! %info (cdr %info)))))))
+	       (when (and (pair? %info) (eq? (car %info) 'toinit))
+		  (set-car! %info 'alpha-init))))))
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
@@ -196,9 +197,6 @@
    (with-access::J2SRef this (decl)
       (when (isa? decl J2SDecl)
 	  (with-access::J2SDecl decl (%info)
-	     (when (pair? %info)
-		(set! decl (car %info))))))
+	     (when (and (pair? %info) (eq? (car %info) 'alpha-init))
+		(set! decl (caddr %info))))))
    (call-default-walker))
-
-
-   
