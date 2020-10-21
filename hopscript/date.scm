@@ -47,6 +47,14 @@
 	   (js-new-date5 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
 	   (js-new-date6 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj)
 	   (js-new-date7 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj ::obj)
+	   (js-date-utc0 ::JsGlobalObject)
+	   (js-date-utc1 ::JsGlobalObject ::obj)
+	   (js-date-utc2 ::JsGlobalObject ::obj ::obj)
+	   (js-date-utc3 ::JsGlobalObject ::obj ::obj ::obj)
+	   (js-date-utc4 ::JsGlobalObject ::obj ::obj ::obj ::obj)
+	   (js-date-utc5 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
+	   (js-date-utc6 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj)
+	   (js-date-utc7 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj ::obj)
 	   (js-date-now)
 	   (js-date-gettime ::JsDate)
 	   (js-date-maybe-gettime ::obj ::JsGlobalObject ::obj)
@@ -258,27 +266,9 @@
       
       ;; UTC
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.3
-      (define (js-date-utc this year month date hours minutes seconds ms)
-	 (let ((dt (js-date-value7 %this year month date hours minutes seconds ms)))
-	    (if (date? dt)
-		(let ((ctz (date-timezone dt)))
-		   (js-flonum->integer
-		      (llong->flonum
-			 (+llong (date->milliseconds dt)
-			    (*llong (fixnum->llong ctz) #l1000)))))
-		0)))
-
-      (define (js-date-utc-tbr22sep2020 this . args)
-	 (match-case args
-	    (()
-	     0)
-	    ((?year)
-	     (let ((d (parse-date-arguments (list (js-tonumber year %this)))))
-		(js-flonum->integer
-		   (*fl 1000.
-		      (elong->flonum
-			 (- (date->seconds d) (date-timezone d)))))))
-	    (else
+      (define (js-date-utc this . args)
+	 (if (any (lambda (a) (eq? a (js-undefined))) args)
+	     +nan.0
 	     (let ((dt (parse-date-arguments args)))
 		(if (date? dt)
 		    (let ((ctz (date-timezone dt)))
@@ -286,7 +276,7 @@
 			  (llong->flonum
 			     (+llong (date->milliseconds dt)
 				(*llong (fixnum->llong ctz) #l1000)))))
-		    0)))))
+		    0))))
       
       (js-bind! %this js-date (& "UTC")
 	 :value (js-make-function %this js-date-utc
@@ -509,6 +499,110 @@
    (let ((this (js-date-alloc %this)))
       (set-date! this (js-date-value7 %this year month date hours minutes seconds ms))
       this))
+ 
+;*---------------------------------------------------------------------*/
+;*    js-date-utc0 ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-date-utc0 %this)
+   (let ((dt (js-date-value0 %this)))
+      (if (date? dt)
+	  (let ((ctz (date-timezone dt)))
+	     (js-flonum->integer
+		(llong->flonum
+		   (+llong (date->milliseconds dt)
+		      (*llong (fixnum->llong ctz) #l1000)))))
+	  0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-utc1 ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-date-utc1 %this year)
+   (let ((dt (js-date-value1 %this year)))
+      (if (date? dt)
+	  (let ((ctz (date-timezone dt)))
+	     (js-flonum->integer
+		(llong->flonum
+		   (+llong (date->milliseconds dt)
+		      (*llong (fixnum->llong ctz) #l1000)))))
+	  0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-utc2 ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-date-utc2 %this year month)
+   (let ((dt (js-date-value2 %this year month)))
+      (if (date? dt)
+	  (let ((ctz (date-timezone dt)))
+	     (js-flonum->integer
+		(llong->flonum
+		   (+llong (date->milliseconds dt)
+		      (*llong (fixnum->llong ctz) #l1000)))))
+	  0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-utc3 ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-date-utc3 %this year month date)
+   (let ((dt (js-date-value3 %this year month date)))
+      (if (date? dt)
+	  (let ((ctz (date-timezone dt)))
+	     (js-flonum->integer
+		(llong->flonum
+		   (+llong (date->milliseconds dt)
+		      (*llong (fixnum->llong ctz) #l1000)))))
+	  0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-utc4 ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-date-utc4 %this year month date hours)
+   (let ((dt (js-date-value4 %this year month date hours)))
+      (if (date? dt)
+	  (let ((ctz (date-timezone dt)))
+	     (js-flonum->integer
+		(llong->flonum
+		   (+llong (date->milliseconds dt)
+		      (*llong (fixnum->llong ctz) #l1000)))))
+	  0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-utc5 ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-date-utc5 %this year month date hours minutes)
+   (let ((dt (js-date-value5 %this year month date hours minutes)))
+      (if (date? dt)
+	  (let ((ctz (date-timezone dt)))
+	     (js-flonum->integer
+		(llong->flonum
+		   (+llong (date->milliseconds dt)
+		      (*llong (fixnum->llong ctz) #l1000)))))
+	  0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-utc6 ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-date-utc6 %this year month date hours minutes seconds)
+   (let ((dt (js-date-value6 %this year month date hours minutes seconds)))
+      (if (date? dt)
+	  (let ((ctz (date-timezone dt)))
+	     (js-flonum->integer
+		(llong->flonum
+		   (+llong (date->milliseconds dt)
+		      (*llong (fixnum->llong ctz) #l1000)))))
+	  0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-date-utc7 ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-date-utc7 %this year month date hours minutes seconds ms)
+   (let ((dt (js-date-value7 %this year month date hours minutes seconds ms)))
+      (if (date? dt)
+	  (let ((ctz (date-timezone dt)))
+	     (js-flonum->integer
+		(llong->flonum
+		   (+llong (date->milliseconds dt)
+		      (*llong (fixnum->llong ctz) #l1000)))))
+	  0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    parse-date ...                                                   */

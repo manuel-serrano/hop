@@ -1048,7 +1048,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-set-ur! arr::JsArray idx::uint32 val throw::bool %this)
    (with-access::JsArray arr (vec ilen length)
-
       (cond
 	 ((and (<u32 idx (fixnum->uint32 (vector-length vec)))
 	       (<u32 idx length))
