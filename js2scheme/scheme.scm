@@ -1929,7 +1929,7 @@
 ;*    to number.                                                       */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-postpref this::J2SAssig mode return ctx op retval)
-
+   
    (define (min-cspecs cs mincs)
       (filter (lambda (c) (memq c mincs)) cs))
    
@@ -1939,15 +1939,20 @@
 	     `(let ((,aux ,val))
 		 ,(comp aux aux)))
 	  (comp val tmp)))
-
-   (define (ref-inc op lhs::J2SRef rhs::J2SExpr inc::int type loc)
+   
+   (define (coerce cast::bool lhse lhs tylhs type ctx)
+      (if cast
+	  (j2s-cast lhse lhs tylhs type ctx)
+	  (j2s-as lhse lhs tylhs type ctx)))
+   
+   (define (ref-inc op lhs::J2SRef rhs::J2SExpr inc::int type cast loc)
       (let* ((num (J2SNumber/type 'uint32 1))
 	     (prev (when (eq? retval 'old) (gensym 'prev)))
 	     (lhse (j2s-scheme lhs mode return ctx)))
 	 (if (eq? retval 'old)
 	     (with-access::J2SBinary rhs ((rlhs lhs))
 		(set! rlhs (J2SHopRef/type prev type))
-		`(let ((,prev ,(j2s-cast lhse lhs (j2s-type lhs) type ctx)))
+		`(let ((,prev ,(coerce cast lhse lhs (j2s-type lhs) type ctx)))
 		    ,(j2s-scheme-set! lhs rhs
 			(j2s-scheme rhs mode return ctx)
 			prev mode return ctx #f loc)))
@@ -1965,21 +1970,21 @@
 	    `(let ((,tmp ,(j2s-unresolved id (or loc #t) cache loc ctx)))
 		(if (fixnum? ,tmp)
 		    ,(new-or-old tmp `(+fx/overflow ,tmp ,inc)
-		       (lambda (val tmp)
-			  `(begin
-			      ,(j2s-unresolved-put!
-				  (& id (context-program ctx))
-				  (box val (j2s-type lhs) ctx)
-				  #t mode return loc)
-			      ,tmp)))
+			(lambda (val tmp)
+			   `(begin
+			       ,(j2s-unresolved-put!
+				   (& id (context-program ctx))
+				   (box val (j2s-type lhs) ctx)
+				   #t mode return loc)
+			       ,tmp)))
 		    ,(new-or-old tmp `(js+ ,tmp ,inc %this)
-		       (lambda (val tmp)
-			  `(let ((,tmp (js-tonumber ,tmp %this)))
-			      ,(j2s-unresolved-put!
-				  (& id (context-program ctx))
-				  (box val (j2s-type lhs) ctx)
-				  #t mode return loc)
-			      ,tmp))))))))
+			(lambda (val tmp)
+			   `(let ((,tmp (js-tonumber ,tmp %this)))
+			       ,(j2s-unresolved-put!
+				   (& id (context-program ctx))
+				   (box val (j2s-type lhs) ctx)
+				   #t mode return loc)
+			       ,tmp))))))))
    
    (define (aput-inc-sans-cache fexpr scmlhs rhs tyobj otmp prop op lhs field::J2SExpr cache inc cs cache-missp::bool loc)
       (let ((tmp (gensym 'aput)))
@@ -2084,7 +2089,7 @@
 					      (js+ ,tmp ,inc %this)))
 				       ,tmp)))
 			   ,(aput-inc-sans-cache fexpr scmlhs rhs tyobj otmp prop op lhs field cache inc cs cache-missp loc)))))))))
-
+   
    (define (rhs-cache rhs)
       (if (isa? rhs J2SCast)
 	  (with-access::J2SCast rhs (expr)
@@ -2120,7 +2125,7 @@
 			      (loc loc)
 			      (id %field)
 			      (type (j2s-type field))))))))))
-
+   
    (define (access-inc op lhs::J2SAccess rhs::J2SExpr inc::int)
       (with-access::J2SAccess lhs (obj field cspecs cache loc)
 	 (let ((otmp (gensym 'obj))
@@ -2154,23 +2159,24 @@
 					  (strict-mode? mode)
 					  ctx cache #t
 					  :cspecs '() :cachefun #f))))))))))
-
+   
    (with-access::J2SAssig this (loc lhs rhs type)
       (epairify-deep loc
-	 (let loop ((lhs lhs))
+	 (let loop ((lhs lhs)
+		    (cast #f))
 	    (cond
 	       ((and (isa? lhs J2SRef) (not (isa? lhs J2SThis)))
-		(ref-inc op lhs rhs (if (eq? op '++) 1 -1) type loc))
+		(ref-inc op lhs rhs (if (eq? op '++) 1 -1) type cast loc))
 	       ((isa? lhs J2SAccess)
 		(access-inc op lhs rhs (if (eq? op '++) 1 -1)))
 	       ((isa? lhs J2SUnresolvedRef)
 		(unresolved-inc lhs (if (eq? op '++) 1 -1)))
 	       ((isa? lhs J2SParen)
 		(with-access::J2SParen lhs (expr)
-		   (loop expr)))
+		   (loop expr cast)))
 	       ((isa? lhs J2SCast)
 		(with-access::J2SCast lhs (expr)
-		   (loop expr)))
+		   (loop expr #t)))
 	       (else
 		(j2s-error "j2sscheme"
 		   (format "Illegal expression \"~a\"" op)

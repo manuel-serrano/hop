@@ -458,6 +458,15 @@ y += 1;
 
 assert.equal( y, "foo1" );
 
+function postfixTypes() {
+   var x = "3";
+   var y = x++;
+   return x === 4 && y === 3 
+      && (typeof x === "number") 
+      && (typeof y === "number");
+}
+   
+assert.equal( postfixTypes(), "postfix types" );
 
 /*---------------------------------------------------------------------*/
 /*    literal with prototype                                           */

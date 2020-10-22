@@ -2014,9 +2014,10 @@
 ;*    argument is a non empy string.                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-equal-string? s x %this::JsGlobalObject)
-   (if (js-jsstring? x)
-       (js-jsstring=? s x)
-       (js-equality? s x %this)))
+   (or (eq? s x)
+       (if (js-jsstring? x)
+	   (js-jsstring=? s x)
+	   (js-equality? s x %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equality? ...                                                 */
@@ -2049,7 +2050,7 @@
 	 ((js-jsstring? x)
 	  (cond
 	     ((js-jsstring? y)
-	      (js-jsstring=? x y))
+	      (or (eq? x y) (js-jsstring=? x y)))
 	     ((js-number? y)
 	      (if (= y 0)
 		  (or (js-jsstring-null? x) (equality? (js-jsstring->number x) y))
@@ -2145,7 +2146,7 @@
 (define-inline (js-eqstring?::bool s x)
    (or (eq? s x)
        (and (js-jsstring? x)
-	    (string=? (js-jsstring->string s) (js-jsstring->string x)))))
+	    (js-jsstring=? s x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-eqil? ...                                                     */

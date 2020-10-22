@@ -854,12 +854,16 @@
 	 ((type-number? ty) ty)
 	 (else 'number)))
    
-   (with-access::J2SPostfix this (lhs rhs op type)
+   (with-access::J2SPostfix this (lhs rhs op type loc)
+      (when (eq? (caddr loc) '8489)
+	 (tprint "------------- postfix env=" (dump-env env)))
       (multiple-value-bind (tyr envr bkr)
 	 (node-type rhs env fix)
 	 (multiple-value-bind (tyv __ lbk)
 	    (node-type lhs env fix)
 	    (expr-type-add! rhs envr fix (numty tyr) bkr)
+	    (when (eq? (caddr loc) '8489)
+	       (tprint "------------- postfix lhs=" tyv))
 	    (cond
 	       ((isa? lhs J2SRef)
 		;; a variable assignment
@@ -1081,7 +1085,7 @@
 ;*    node-type-call ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (node-type-call callee protocol tty args env fix)
-   
+
    (define (unknown-call-env env)
       ;; compute a new node-type environment where all mutated globals
       ;; and all mutated captured locals are removed
@@ -1089,9 +1093,23 @@
 		 (with-access::J2SDecl (car e) (writable scope escape id)
 		    (or (decl-ronly? (car e))
 			(not writable)
-			(and (memq scope '(local letblock inner)) (not escape)))))
+			(and (memq scope '(local letblock inner))
+			     (not escape)))))
 	 env))
    
+   (define (global-call-env env)
+      ;; compute a new node-type environment where all mutated globals
+      ;; and all mutated captured locals are removed
+      (filter (lambda (e)
+		 (with-access::J2SDecl (car e) (writable scope escape id)
+		    (or (decl-ronly? (car e))
+			(not writable)
+			(or (memq scope '(local letblock inner))))))
+	 env))
+
+   (define (local-call-env env)
+      (unknown-call-env env))
+      
    (define (type-known-call-args fun::J2SFun args env bk)
       (with-access::J2SFun fun (rtype params vararg mode thisp mode)
 	 (when thisp
@@ -1125,7 +1143,8 @@
       (multiple-value-bind (_ envf _)
 	 (node-type-fun callee env fix)
 	 (with-access::J2SFun fun (rtype mode %info)
-	    (let ((nenv (if (env? %info) (env-override envf %info) env)))
+	    (let* ((oenv (if (env? %info) (env-override env %info) env))
+		   (nenv (local-call-env oenv)))
 	       (return rtype nenv bk)))))
    
    (define (type-known-call ref::J2SRef fun::J2SFun args env bk)
@@ -1135,9 +1154,12 @@
       (with-access::J2SRef ref (decl)
 	 (expr-type-add! ref env fix 'function)
 	 (type-known-call-args fun args env bk)
-	 (with-access::J2SDecl decl (scope)
+	 (with-access::J2SDecl decl (scope id)
 	    (with-access::J2SFun fun (rtype %info)
-	       (let ((nenv (if (env? %info) (env-override env %info) env)))
+	       (let* ((oenv (if (env? %info) (env-override env %info) env))
+		      (nenv (if (memq scope '(global %scope))
+				(global-call-env oenv)
+				(local-call-env oenv))))
 		  (return rtype nenv bk))))))
 
    (define (type-ref-call callee args env bk)

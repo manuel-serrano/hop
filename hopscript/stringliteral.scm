@@ -151,7 +151,8 @@
 	   (js-jsstring-maybe-slice2 ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring->jsarray ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring->list ::obj ::JsGlobalObject)
-	   (trim-whitespaces+ s::bstring #!key (left #t) (right #f) (plus #f)))
+	   (trim-whitespaces+ s::bstring #!key (left #t) (right #f) (plus #f))
+	   )
 
    (cond-expand
       ((not |bigloo4.3a|)
@@ -194,24 +195,6 @@
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
-
-;*---------------------------------------------------------------------*/
-;*    js-debug-object ::JsStringLiteral ...                            */
-;*---------------------------------------------------------------------*/
-(define-method (js-debug-object obj::JsStringLiteral #!optional (msg ""))
-   (with-access::JsStringLiteral obj (length left right)
-      (fprint (current-error-port) "=== " msg (typeof obj)
-	 " length=" length
-	 " left=" (typeof left)
-	 " right=" (typeof right)
-	 " pcacher=" (typeof (js-name-pcacher obj))
-	 " pachew=" (typeof (js-name-pcachew obj)))
-      (when (isa? (js-name-pcacher obj) JsPropertyCache)
-	 (fprint (current-error-port) "string pcacher:")
-	 (js-debug-pcache (js-name-pcacher obj)))
-      (when (isa? (js-name-pcachew obj) JsPropertyCache)
-	 (fprint (current-error-port) "string pcachew:")
-	 (js-debug-pcache (js-name-pcachew obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-stringliteral! ...                                       */
@@ -304,9 +287,10 @@
 	  (format "~s..." (substring str 0 17))))
 
    (define (literal-or-string obj)
-      (if (string? obj)
-	  (excerpt obj)
-	  (typeof obj)))
+      (cond
+	 ((string? obj) (excerpt obj))
+	 ((integer? obj) obj)
+	 (else (format "[~a]" (typeof obj)))))
    
    (with-access::JsStringLiteral obj (left right length)
       (tprint msg "[" (typeof obj)
@@ -471,6 +455,33 @@
 	     (with-access::JsStringLiteral ,this (left) left)
 	     (js-jsstring-normalize-UTF8! ,this))
 	 ,@args))))
+
+;*---------------------------------------------------------------------*/
+;*    substring-dispatch ...                                           */
+;*---------------------------------------------------------------------*/
+(define-macro (substring-dispatch fun this . args)
+   `(cond
+       ((js-jsstring-ascii? ,this)
+	(with-access::JsStringLiteral ,this (left length right)
+	   (cond
+	      ((js-jsstring-normalized? ,this)
+	       (,(symbol-append 'ascii- fun)
+		left 0 (uint32->fixnum length) ,@args))
+	      ((js-jsstring-substring? ,this)
+	       (,(symbol-append 'ascii- fun)
+		left right (uint32->fixnum length) ,@args))
+	      (else
+	       (,(symbol-append 'ascii- fun)
+		(js-jsstring-normalize-ASCII! ,this)
+		0 (uint32->fixnum length) ,@args)))))
+       (else
+	(with-access::JsStringLiteral ,this (left length)
+	   (if (js-jsstring-normalized? ,this)
+	       (,(symbol-append 'utf8- fun)
+		left 0 (uint32->fixnum length) ,@args)
+	       (,(symbol-append 'utf8- fun) 
+		(js-jsstring-normalize-UTF8! ,this)
+		0 (uint32->fixnum length) ,@args))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-ascii->jsstring ...                                           */
@@ -1023,8 +1034,12 @@
 ;*    js-jsstring=? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring=?::bool x y)
-   (or (eq? x y)
-       (string=? (js-jsstring->string x) (js-jsstring->string y))))
+   (with-access::JsStringLiteral x ((xlen length))
+      (with-access::JsStringLiteral y ((ylen length) left right)
+	 (if (js-jsstring-substring? y)
+	     (when (=u32 xlen ylen)
+		(substring-at? y (js-jsstring->string x) right))
+	     (string=? (js-jsstring->string x) (js-jsstring->string y))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring>? ...                                                */
@@ -2276,21 +2291,21 @@
 		(i (char->integer c)))
 	    (vector-ref char-table i))))
    
-   (define (ascii-charat val::bstring)
+   (define (ascii-charat val::bstring start len)
       (if (fixnum? position)
 	  (cond
 	     ((<fx position 0)
 	      (& ""))
-	     ((>=fx position (string-length val))
+	     ((>=fx position len)
 	      (& ""))
 	     (else
-	      (ascii-charat/table val position)))
+	      (ascii-charat/table val (+fx start position))))
 	  (let ((pos (js-tointeger position %this)))
-	     (if (or (< pos 0) (>= pos (string-length val)))
+	     (if (or (< pos 0) (>= pos len))
 		 (& "")
-		 (ascii-charat/table val (->fixnum pos))))))
+		 (ascii-charat/table val (+fx start (->fixnum pos)))))))
 
-   (define (utf8-charat val::bstring)
+   (define (utf8-charat val::bstring start len)
       (if (fixnum? position)
 	  (cond
 	     ((<fx position 0)
@@ -2304,7 +2319,7 @@
 		 (& "")
 		 (js-utf8-ref this val (->fixnum pos) %this)))))
 
-   (string-dispatch charat this))
+   (substring-dispatch charat this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-charat ...                                     */
