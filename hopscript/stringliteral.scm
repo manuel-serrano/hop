@@ -89,7 +89,9 @@
 	   (js-get-string ::JsStringLiteral ::obj ::obj)
 	   (js-put-string! ::JsStringLiteral ::obj ::obj ::bool ::obj)
 	   (js-jsstring-indexof ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-indexof0 ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-indexof ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-jsstring-maybe-indexof0 ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-lastindexof ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-lastindexof ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-charcodeat ::JsStringLiteral ::obj ::JsGlobalObject)
@@ -1945,6 +1947,70 @@
 	     (string-dispatch indexof this pat patlen))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-jsstring-indexof ...                                          */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.7     */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-indexof0 this search %this)
+   
+   (define (ascii-indexof str::bstring pat patlen)
+      (let* ((ulen (string-length str))
+	     (n (-fx ulen patlen))
+	     (c0 (string-ref pat 0))
+	     (idx 0))
+	 (let loop ((i idx)
+		    (badness (-fx -10 (*fx patlen 4))))
+	    (if (>fx i n)
+		-1
+		(let ((j (string-char-index-ur str c0 i (+fx 1 (-fx n i)))))
+		   (if (not j)
+		       -1
+		       (let liip ((k 1))
+			  (cond
+			     ((=fx k patlen)
+			      j)
+			     ((char=? (string-ref pat k)
+				 (string-ref str (+fx k j)))
+			      (liip (+fx k 1)))
+			     ((<fx badness 0)
+			      (loop (+fx j 1) (+fx badness k)))
+			     (else
+			      (let ((t (bm-table pat)))
+				 (bm-string t str j)))))))))))
+   
+   (define (utf8-indexof str::bstring pat patlen)
+      (let* ((ulen (string-length str))
+	     (n (-fx ulen patlen))
+	     (c0 (string-ref pat 0))
+	     (idx 0))
+	 (let loop ((i (utf8-string-index->string-index str idx))
+		    (badness (-fx -10 (*fx patlen 4))))
+	    (if (>fx i n)
+		-1
+		(let ((j (string-char-index-ur str c0 i (+fx 1 (-fx n i)))))
+		   (if (not j)
+		       -1
+		       (let liip ((k 1))
+			  (cond
+			     ((=fx k patlen)
+			      (string-index->utf8-string-index str j))
+			     ((char=? (string-ref pat k)
+				 (string-ref str (+fx k j)))
+			      (liip (+fx k 1)))
+			     ((<fx badness 0)
+			      (loop (+fx j 1) (+fx badness k)))
+			     (else
+			      (let ((t (bm-table pat)))
+				 (string-index->utf8-string-index str
+				    (bm-string t str j))))))))))))
+
+      (let* ((pat (js-tostring search %this))
+	     (patlen (string-length pat)))
+	 (if (=fx patlen 0)
+	     0
+	     (string-dispatch indexof this pat patlen))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-indexof ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-maybe-indexof this search position %this cache)
@@ -1954,13 +2020,31 @@
 	    ((js-jsstring? this)
 	     (js-jsstring-indexof this search position %this))
 	    ((js-array? this)
-	     (js-array-indexof this search position %this
-		(or cache (js-pcache-ref js-string-pcache 23))))
+	     (js-array-indexof this search position %this cache))
 	    ((js-object? this)
 	     (js-call2 %this
 		(js-get-jsobject-name/cache this (& "indexOf") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 23)))
 		this search position))
+	    (else
+	     (loop (js-toobject %this this)))))))
+   
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-maybe-indexof0 ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-maybe-indexof0 this search %this cache)
+   (with-access::JsGlobalObject %this (js-string-pcache)
+      (let loop ((this this))
+	 (cond
+	    ((js-jsstring? this)
+	     (js-jsstring-indexof0 this search %this))
+	    ((js-array? this)
+	     (js-array-indexof0 this search %this cache))
+	    ((js-object? this)
+	     (js-call1 %this
+		(js-get-jsobject-name/cache this (& "indexOf") #f %this
+		   (or cache (js-pcache-ref js-string-pcache 23)))
+		this search))
 	    (else
 	     (loop (js-toobject %this this)))))))
    

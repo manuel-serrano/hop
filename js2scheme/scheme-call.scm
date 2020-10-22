@@ -65,6 +65,8 @@
 	      (else
 	       (error "hopc" "bad builtin method specification" e))))
       `(;; string and array methods
+	("indexOf" js-array-indexof0 array (any) %this #t)
+	("indexOf" js-jsstring-indexof0 string (string) %this #f)
 	("indexOf" js-array-indexof array (any (any 0)) %this #t)
 	("indexOf" js-jsstring-indexof string (string (any 0)) %this #f)
 	;; string methods
@@ -76,6 +78,7 @@
 	("codePointAt" ,j2s-jsstring-codepointat string (any) %this)
 	("codePointAt" js-jsstring-maybe-codepointat any (any) %this #t)
 	("indexOf" js-jsstring-maybe-indexof any (any (any 0)) %this #t)
+	("indexOf" js-jsstring-maybe-indexof0 any (any) %this #t)
 	("lastIndexOf" js-jsstring-lastindexof string (string (any +nan.0)) %this)
 	("lastIndexOf" js-jsstring-maybe-lastindexof string (any (any +nan.0)) %this #t)
 	("substring" js-jsstring-substring string (any any) %this)
