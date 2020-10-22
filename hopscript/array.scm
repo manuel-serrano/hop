@@ -149,6 +149,7 @@
 	   (js-array-reverse ::JsArray ::JsGlobalObject)
 	   (js-array-maybe-reverse ::obj ::JsGlobalObject ::obj)
 	   (js-array-indexof ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-indexof0 ::JsArray ::obj ::JsGlobalObject ::obj)
 	   (js-array-prototype-slice ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-array-maybe-slice0 ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-slice1 ::obj ::obj ::JsGlobalObject ::obj)
@@ -5118,36 +5119,44 @@
 	     this comparefn))))
 
 ;*---------------------------------------------------------------------*/
+;*    vector-indexof ...                                               */
+;*---------------------------------------------------------------------*/
+(define (vector-indexof::long arr vec el k::long len::long)
+   (let loop ((k k))
+      (cond
+	 ((>=fx k len)
+	  -1)
+	 ((js-strict-equal? (vector-ref vec k) el)
+	  k)
+	 (else
+	  (loop (+fx k 1))))))
+
+;*---------------------------------------------------------------------*/
+;*    vector-holey-indexof ...                                         */
+;*---------------------------------------------------------------------*/
+(define (vector-holey-indexof::long arr vec el k::long len::long %this)
+   (let loop ((k k))
+      (cond
+	 ((>=fx k len)
+	  -1)
+	 ((js-strict-equal? (vector-ref vec k) el)
+	  k)
+	 ((and (js-absent? (vector-ref vec k))
+	       (let ((name (js-toname k %this)))
+		  (and (js-has-property arr name %this)
+		       (js-strict-equal? (js-get arr name %this) el))))
+	  k)
+	 (else
+	  (loop (+fx k 1))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-indexof ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    The THIS argument is intentionally not required to be a JsArray  */
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-indexof this::JsObject el indx %this)
    
-   (define (vector-indexof::int arr vec k::int len::int)
-      (let loop ((k k))
-	 (cond
-	    ((>=fx k len)
-	     -1)
-	    ((js-strict-equal? (vector-ref vec k) el)
-	     k)
-	    (else
-	     (loop (+fx k 1))))))
    
-   (define (vector-holey-indexof::int arr vec k::int len::int)
-      (let loop ((k k))
-	 (cond
-	    ((>=fx k len)
-	     -1)
-	    ((js-strict-equal? (vector-ref vec k) el)
-	     k)
-	    ((and (js-absent? (vector-ref vec k))
-		  (let ((name (js-toname k %this)))
-		     (and (js-has-property arr name %this)
-			  (js-strict-equal? (js-get arr name %this) el))))
-	     k)
-	    (else
-	     (loop (+fx k 1))))))
    
    (define (array-indexof::int arr k::uint32 len::uint32)
       (let ((k (js-uint32-tointeger k))
@@ -5178,14 +5187,32 @@
 		 (array-indexof this k len))
 		((js-object-mode-inline? this)
 		 (with-access::JsArray this (vec ilen)
-		    (vector-indexof this vec (uint32->fixnum k)
+		    (vector-indexof this vec el (uint32->fixnum k)
 		       (uint32->fixnum ilen))))
 		((js-object-mode-holey? this)
 		 (with-access::JsArray this (vec ilen)
-		    (vector-holey-indexof this vec (uint32->fixnum k)
-		       (vector-length vec))))
+		    (vector-holey-indexof this vec el (uint32->fixnum k)
+		       (vector-length vec) %this)))
 		(else
 		 (array-indexof this k len)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-indexof0 ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-array-indexof0 o::JsArray el %this cache)
+   (cond
+      ((js-array-inlined? o)
+       (with-access::JsArray o (vec ilen)
+	  (vector-indexof o vec el 0 (uint32->fixnum ilen))))
+      ((js-object-mode-holey? o)
+       (with-access::JsArray o (vec ilen)
+	  (vector-holey-indexof o vec el 0 (vector-length vec) %this)))
+      (else
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call1 %this
+	     (js-get-jsobject-name/cache o (& "indexOf") #f %this
+		(or cache (js-pcache-ref js-array-pcache 10)))
+	     o el)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-indexof ...                                             */
