@@ -1038,7 +1038,7 @@
       (with-access::JsStringLiteral y ((ylen length) left right)
 	 (if (js-jsstring-substring? y)
 	     (when (=u32 xlen ylen)
-		(substring-at? y (js-jsstring->string x) right))
+		(substring-at? left (js-jsstring->string x) right))
 	     (string=? (js-jsstring->string x) (js-jsstring->string y))))))
 
 ;*---------------------------------------------------------------------*/
