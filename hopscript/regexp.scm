@@ -44,7 +44,7 @@
 	   (js-regexp-prototype-exec-no-global this::JsRegExp string::obj %this::JsGlobalObject)
 	   (js-regexp-prototype-exec ::JsRegExp ::obj ::JsGlobalObject)
 	   (js-regexp-prototype-maybe-exec ::obj ::obj ::JsGlobalObject cache)
-	   (js-regexp-prototype-exec-as-bool::bool ::JsRegExp ::obj ::JsGlobalObject)
+	   (inline js-regexp-prototype-exec-as-bool::bool ::JsRegExp ::obj ::JsGlobalObject)
 	   (js-regexp-prototype-maybe-exec-as-bool::bool ::JsRegExp ::obj ::JsGlobalObject cache)
 	   (js-regexp-prototype-exec-for-match-string %this::JsGlobalObject this::JsRegExp string::obj))
 
@@ -1100,7 +1100,7 @@
 ;*    RX is not global and when the expression is used for its         */
 ;*    boolean result.                                                  */
 ;*---------------------------------------------------------------------*/
-(define (js-regexp-prototype-exec-as-bool this::JsRegExp string::obj %this::JsGlobalObject)
+(define-inline (js-regexp-prototype-exec-as-bool this::JsRegExp string::obj %this::JsGlobalObject)
    (with-access::JsRegExp this (rx flags)
       (let* ((s (js-tostring string %this))
 	     (len (string-length s)))
