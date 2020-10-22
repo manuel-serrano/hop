@@ -1104,7 +1104,7 @@
    (with-access::JsRegExp this (rx flags)
       (let* ((s (js-tostring string %this))
 	     (len (string-length s)))
-	 (=fx (pregexp-match-n-positions! rx s literal-test-pos 0 len) 1))))
+	 (>=fx (pregexp-match-n-positions! rx s literal-test-pos 0 len) 0))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-prototype-maybe-exec-as-bool ...                       */
@@ -1161,9 +1161,9 @@
 		       0)
 		      (else
 		       lastindex))))
-	    (=fx (pregexp-match-n-positions! rx
+	    (>=fx (pregexp-match-n-positions! rx
 		    s literal-test-pos i (string-length s))
-	       1)))))
+	       0)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-literal-test ...                                       */
