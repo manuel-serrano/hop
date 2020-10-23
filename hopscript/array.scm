@@ -137,6 +137,7 @@
 	   (js-array-map-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-map-procedure ::obj proc::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-filter ::JsArray proc thisarg %this cache)
+	   (js-array-maybe-filter this proc thisarg %this cache)
 	   (js-array-filter-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-filter-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-join ::JsArray ::obj ::JsGlobalObject ::obj)
@@ -4454,6 +4455,18 @@
 	  (js-call2 %this
 	     (js-get-jsobject-name/cache this (& "filter") #f %this
 		(or cache (js-pcache-ref js-array-pcache 20)))
+	     this proc thisarg))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-filter ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-filter this proc thisarg %this cache)
+   (if (and (js-array? this) (js-object-mode-plain? this))
+       (js-array-prototype-filter this proc thisarg %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call2 %this
+	     (js-get-name/cache this (& "filter") #f %this
+		(or cache (js-pcache-ref js-array-pcache 12)))
 	     this proc thisarg))))
 
 ;*---------------------------------------------------------------------*/
