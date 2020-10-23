@@ -928,8 +928,8 @@
 					'js-method-call-name/cache)))
 			   `(,call
 			       ,j2s-unresolved-call-workspace
-			       ,(box (j2s-scheme obj mode return ctx)
-				   (j2s-type obj) ctx)
+			       ,(j2s-as (j2s-scheme obj mode return ctx)
+				   obj (j2s-type obj) 'any ctx)
 			       ,(& val (context-program ctx))
 			       ,(js-pcache ccache)
 			       ,(js-pcache ocache)
@@ -1229,7 +1229,8 @@
 			  `(,(symbol-append call '/debug)
 			    ,j2s-unresolved-call-workspace
 			    ',loc
-			    ,(j2s-scheme fun mode return ctx)
+			    ,(j2s-as (j2s-scheme fun mode return ctx)
+				fun (j2s-type fun) 'any ctx)
 			    ,@self
 			    ,@(packargs args)))))
 		   ((and (context-get ctx :profile-call #f) (>=fx profid 0))
@@ -1239,7 +1240,8 @@
 				     ,@self
 				     ,@(packargs
 					  (j2s-scheme args mode return ctx)))))
-		       `(let ((,f ,(j2s-scheme fun mode return ctx)))
+		       `(let ((,f ,(j2s-as (j2s-scheme fun mode return ctx)
+				      fun (j2s-type fun) 'any ctx)))
 			   ,(when (and (isa? fun J2SAccess)
 				       (context-get ctx :profile-cmap #f))
 			       (with-access::J2SAccess fun (obj)
@@ -1258,7 +1260,8 @@
 			  `(,(symbol-append call '/debug)
 			    ,j2s-unresolved-call-workspace
 			    ',loc
-			    ,(j2s-scheme fun mode return ctx)
+			    ,(j2s-as (j2s-scheme fun mode return ctx)
+				fun (j2s-type fun) 'any ctx)
 			    ,@self
 			    ,@(packargs args)))))
 		   ((and (context-get ctx :profile-call #f) (>=fx profid 0))
@@ -1268,7 +1271,8 @@
 				     ,@self
 				     ,@(packargs
 					  (j2s-scheme args mode return ctx)))))
-		       `(let ((,f ,(j2s-scheme fun mode return ctx)))
+		       `(let ((,f ,(j2s-as (j2s-scheme fun mode return ctx)
+				      fun (j2s-type fun) 'any ctx)))
 			   ,(when (and (isa? fun J2SAccess)
 				       (context-get ctx :profile-cmap #f))
 			       (with-access::J2SAccess fun (obj)
@@ -1279,19 +1283,22 @@
 		    `(js-call/cache
 			,j2s-unresolved-call-workspace
 			,(js-pcache cache)
-			,(j2s-scheme fun mode return ctx)
+			,(j2s-as (j2s-scheme fun mode return ctx)
+			    fun (j2s-type fun) 'any ctx)
 			,@self
 			,@(packargs (j2s-scheme args mode return ctx))))
 		   ((and (memq (j2s-type fun) '(arrow function))
 			 (not (context-get ctx :optim-size)))
 		    `(,(symbol-append call '-jsprocedure)
 		      ,j2s-unresolved-call-workspace
-		      ,(j2s-scheme fun mode return ctx)
+		      ,(j2s-as (j2s-scheme fun mode return ctx)
+			    fun (j2s-type fun) 'any ctx)
 		      ,@self
 		      ,@(packargs (j2s-scheme args mode return ctx))))
 		   (else
 		    `(,call ,j2s-unresolved-call-workspace
-			,(j2s-scheme fun mode return ctx)
+			,(j2s-as (j2s-scheme fun mode return ctx)
+			    fun (j2s-type fun) 'any ctx)
 			,@self
 			,@(packargs (j2s-scheme args mode return ctx))))))))))
 

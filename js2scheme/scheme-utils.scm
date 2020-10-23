@@ -577,8 +577,8 @@
    (define (js-get obj prop %this)
       (if (or (config-get conf :profile-cache #f)
 	      (> (config-get conf :debug 0) 0))
-	  `(js-get/debug ,(box obj tyobj ctx) ,prop %this ',loc)
-	  `(js-get ,(box obj tyobj ctx) ,prop %this)))
+	  `(js-get/debug ,obj ,prop %this ',loc)
+	  `(js-get ,obj ,prop %this)))
    
    (define (maybe-string? prop typrop)
       (and (not (number? prop))
@@ -606,7 +606,8 @@
    
    (let ((propstr (match-case prop
 		     ((& ?str . ?-) str)
-		     (else #f))))
+		     (else #f)))
+	 (obj (box obj tyobj ctx)))
       (cond
 	 ((> (config-get conf :debug 0) 0)
 	  (if (string? propstr)
@@ -673,7 +674,7 @@
 	      (if (eq? tyval 'uint32)
 		  `(js-get-lengthu32 ,obj %this #f)
 		  `(js-get-length ,obj %this #f))
-	      `(js-get ,(box obj tyobj ctx) ,prop %this)))
+	      `(js-get ,obj ,prop %this)))
 	 ((and field optim-arrayp (mightbe-number? field))
 	  (let ((o (gensym '%obj))
 		(p (gensym '%prop)))

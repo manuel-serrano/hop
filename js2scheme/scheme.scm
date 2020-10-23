@@ -48,6 +48,7 @@
    
    (export j2s-scheme-stage
 	   j2s-scheme-eval-stage
+	   (j2s-scheme-box ::obj ::symbol ::procedure ::struct)
 	   (generic j2s-scheme ::obj ::symbol ::procedure ::struct)))
 
 ;*---------------------------------------------------------------------*/
@@ -168,6 +169,13 @@
 		(else
 		 (epairify loc
 		    (cons sexp (loop (cdr nodes)))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme-box ...                                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-box this mode return::procedure ctx)
+   (j2s-as (j2s-scheme this mode return ctx)
+      this (j2s-type this) 'any ctx))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::obj ...                                             */
@@ -1494,7 +1502,8 @@
 		       expr (j2s-type expr) type ctx))
 	    (error "j2s-scheme::J2SSwitch" "bad literal compilation"
 	       (j2s->list expr)))
-	 (j2s-scheme expr mode return ctx))
+	 (j2s-cast (j2s-scheme expr mode return ctx)
+	    expr (j2s-type expr) type ctx))
       
       (define (comp-char-literal expr type)
 	 (with-access::J2SString expr (val)
@@ -2897,18 +2906,18 @@
 	     (case (length args)
 		((1)
 		 `(js-type-error1
-		     ,(j2s-scheme (car args) mode return ctx)
+		     ,(j2s-scheme-box (car args) mode return ctx)
 		     %this))
 		((2)
 		 `(js-type-error2
-		     ,(j2s-scheme (car args) mode return ctx)
-		     ,(j2s-scheme (cadr args) mode return ctx)
+		     ,(j2s-scheme-box (car args) mode return ctx)
+		     ,(j2s-scheme-box (cadr args) mode return ctx)
 		     %this))
 		(else
 		 `(js-type-error
-		     ,(j2s-scheme (car args) mode return ctx)
-		     ,(j2s-scheme (cadr args) mode return ctx)
-		     ,(j2s-scheme (caddr args) mode return ctx)
+		     ,(j2s-scheme-box (car args) mode return ctx)
+		     ,(j2s-scheme-box (cadr args) mode return ctx)
+		     ,(j2s-scheme-box (caddr args) mode return ctx)
 		     %this)))))
 	 ((and (new-proxy? clazz) (=fx (length args) 2))
 	  (epairify loc
@@ -2926,20 +2935,21 @@
 	  (lambda (decl)
 	     (epairify loc
 		(j2s-new-opt decl clazz
-		   (map (lambda (a) (j2s-scheme a mode return ctx)) args)))))
+		   (map (lambda (a) (j2s-scheme-box a mode return ctx))
+		      args)))))
 	 ((and (=fx (bigloo-debug) 0) (pair? caches)
 	       (with-access::J2SRef clazz (decl loc)
 		  (not (isa? decl J2SDeclExtern))))
 	  (epairify loc
 	     (j2s-new-fast clazz
 		(map (lambda (a)
-			(box (j2s-scheme a mode return ctx) (j2s-type a) ctx))
+			(j2s-scheme-box a mode return ctx))
 		   args))))
 	 (else
 	  (epairify loc
-	     (j2s-new loc (j2s-scheme clazz mode return ctx)
+	     (j2s-new loc (j2s-scheme-box clazz mode return ctx)
 		(map (lambda (a)
-			(box (j2s-scheme a mode return ctx) (j2s-type a) ctx))
+			(j2s-scheme-box a mode return ctx))
 		   args)))))))
 
 ;*---------------------------------------------------------------------*/
