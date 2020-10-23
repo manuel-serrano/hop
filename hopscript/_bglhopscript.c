@@ -192,7 +192,7 @@ static obj_t bgl_make_jsstringliteralascii_sans( uint32_t len, obj_t left, obj_t
 /*    spin locks                                                       */
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_POLICY == HOP_ALLOC_SPINLOCK
-static pthread_spinlock_t lock1, lock2, lock3, lock4, lock5, lock6;
+static pthread_spinlock_t lock1, lock2, lock3, lock4, lock5, lock6, lock6, lock8;
 static pthread_spinlock_t lockproxy;
 static pthread_spinlock_t lockfunction;
 static pthread_spinlock_t lockmethod;
@@ -313,6 +313,12 @@ static HOP_ALLOC_THREAD_DECL apool_t npool5 = APOOL_JSOBJECT_INIT( 5 );
 static HOP_ALLOC_THREAD_DECL apool_t pool6 = APOOL_JSOBJECT_INIT( 6 );
 static HOP_ALLOC_THREAD_DECL apool_t npool6 = APOOL_JSOBJECT_INIT( 6 );
 
+static HOP_ALLOC_THREAD_DECL apool_t pool7 = APOOL_JSOBJECT_INIT( 7 );
+static HOP_ALLOC_THREAD_DECL apool_t npool7 = APOOL_JSOBJECT_INIT( 7 );
+
+static HOP_ALLOC_THREAD_DECL apool_t pool8 = APOOL_JSOBJECT_INIT( 8 );
+static HOP_ALLOC_THREAD_DECL apool_t npool8 = APOOL_JSOBJECT_INIT( 8 );
+
 static HOP_ALLOC_THREAD_DECL apool_t poolproxy = APOOL_JSPROXY_INIT();
 static HOP_ALLOC_THREAD_DECL apool_t npoolproxy = APOOL_JSPROXY_INIT();
 
@@ -334,6 +340,8 @@ int inl3 = 0, snd3 = 0, slow3 = 0, qsz3 = 0;
 int inl4 = 0, snd4 = 0, slow4 = 0, qsz4 = 0;
 int inl5 = 0, snd5 = 0, slow5 = 0, qsz5 = 0;
 int inl6 = 0, snd6 = 0, slow6 = 0, qsz6 = 0;
+int inl7 = 0, snd7 = 0, slow7 = 0, qsz7 = 0;
+int inl8 = 0, snd8 = 0, slow8 = 0, qsz8 = 0;
 
 int inlproxy = 0, sndproxy = 0, slowproxy = 0, qszproxy = 0;
 int inlfunction = 0, sndfunction = 0, slowfunction = 0, qszfunction = 0;
@@ -514,6 +522,8 @@ bgl_init_jsalloc_locks() {
    alloc_spin_init( &lock4, 0L );
    alloc_spin_init( &lock5, 0L );
    alloc_spin_init( &lock6, 0L );
+   alloc_spin_init( &lock7, 0L );
+   alloc_spin_init( &lock8, 0L );
    alloc_spin_init( &lockproxy, 0L );
    alloc_spin_init( &lockfunction, 0L );
    alloc_spin_init( &lockmethod, 0L );
@@ -778,6 +788,8 @@ BGL_MAKE_JSOBJECT( 3 )
 BGL_MAKE_JSOBJECT( 4 )
 BGL_MAKE_JSOBJECT( 5 )
 BGL_MAKE_JSOBJECT( 6 )
+BGL_MAKE_JSOBJECT( 7 )
+BGL_MAKE_JSOBJECT( 8 )
 #endif
 
 /*---------------------------------------------------------------------*/
@@ -796,6 +808,8 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mo
       case 4: return bgl_make_jsobject4( constrmap, __proto__, mode );
       case 5: return bgl_make_jsobject5( constrmap, __proto__, mode );
       case 6: return bgl_make_jsobject6( constrmap, __proto__, mode );
+      case 7: return bgl_make_jsobject7( constrmap, __proto__, mode );
+      case 8: return bgl_make_jsobject8( constrmap, __proto__, mode );
       default: return bgl_make_jsobject_sans( (int)constrsize, constrmap, __proto__, mode );
    }
 }
