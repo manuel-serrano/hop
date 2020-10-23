@@ -136,6 +136,7 @@
 	   (js-array-maybe-map ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-map-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-map-procedure ::obj proc::procedure ::obj ::JsGlobalObject ::obj)
+	   (js-array-filter ::JsArray proc thisarg %this cache)
 	   (js-array-filter-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-filter-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-join ::JsArray ::obj ::JsGlobalObject ::obj)
