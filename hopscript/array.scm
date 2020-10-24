@@ -4237,12 +4237,11 @@
 	     a)))
    
    (define (vector-map this o len::uint32 proc thisarg i::uint32 %this)
-      (with-access::JsArray o (vec ilen)
-	 (let* ((v (js-create-vector (uint32->fixnum len)))
-		(end (minu32 ilen len)))
+      (with-access::JsArray o (vec ilen length)
+	 (let ((v (js-create-vector (uint32->fixnum len))))
 	    (let loop ((i i))
 	       (cond
-		  ((>=u32 i end)
+		  ((>=u32 i ilen)
 		   (let ((a (js-species->jsarray this v %this)))
 		      (if (=u32 i len)
 			  a
@@ -4251,8 +4250,9 @@
 		  (else
 		   (let ((val (vector-ref vec (uint32->fixnum i))))
 		      (vector-set! v (uint32->fixnum i)
-			 ((@ js-call3 __hopscript_public) %this proc thisarg val
-			    (js-uint32-tointeger i) o))
+			 ((@ js-call3 __hopscript_public)
+			  %this proc thisarg val
+			  (js-uint32-tointeger i) o))
 		      (loop (+u32 i 1)))))))))
    
    (define (array-map this o len proc thisarg i::uint32 %this)
