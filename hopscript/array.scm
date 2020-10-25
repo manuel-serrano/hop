@@ -4238,10 +4238,12 @@
    
    (define (vector-map this o len::uint32 proc thisarg i::uint32 %this)
       (with-access::JsArray o (vec ilen length)
-	 (let ((v (js-create-vector (uint32->fixnum len))))
+	 (let ((v (js-create-vector (uint32->fixnum len)))
+	       (l length))
 	    (let loop ((i i))
 	       (cond
-		  ((>=u32 i ilen)
+		  ((or (>=u32 i ilen) (>=u32 i l))
+		   ;; this.length may grow or shrink during the map
 		   (let ((a (js-species->jsarray this v %this)))
 		      (if (=u32 i len)
 			  a
