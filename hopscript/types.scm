@@ -176,6 +176,8 @@
 	   
 	   (class JsStringLiteralSubstring::JsStringLiteralASCII)
 	   
+	   (class JsStringBuffer::JsStringLiteralSubstring)
+	   
 	   (final-class JsStringLiteralUTF8::JsStringLiteral
 	      (%idxutf8::long (default 0))
 	      (%idxstr::long (default 0))
@@ -528,6 +530,7 @@
 	   (inline JS-OBJECT-MODE-JSSTRINGINDEX::uint32)
 	   (inline JS-OBJECT-MODE-JSSTRINGUTF8::uint32)
 	   (inline JS-OBJECT-MODE-JSSTRINGSUBSTRING::uint32)
+	   (inline JS-OBJECT-MODE-JSSTRINGBUFFER::uint32)
 
 	   (inline JS-REGEXP-FLAG-IGNORECASE::uint32)
 	   (inline JS-REGEXP-FLAG-MULTILINE::uint32)
@@ -582,6 +585,7 @@
 	   (inline js-jsstring-ascii?::bool ::JsStringLiteral)
 	   (inline js-jsstring-index?::bool ::JsStringLiteral)
 	   (inline js-jsstring-substring?::bool  ::JsStringLiteral)
+	   (inline js-jsstring-buffer?::bool  ::JsStringLiteral)
 	   (inline js-jsstring-utf8?::bool ::JsStringLiteral)
 	   (inline js-jsstring-normalized?::bool ::JsStringLiteral)
 	   (inline js-jsstring-normalized! ::JsStringLiteral)
@@ -698,6 +702,11 @@
    (bit-oru32 (JS-OBJECT-MODE-JSSTRINGTAG)
       (JS-OBJECT-MODE-JSSTRINGSUBSTRING)))
 
+(define-inline (js-jsstring-default-buffer-mode)
+   (bit-oru32 (JS-OBJECT-MODE-JSSTRINGTAG)
+      (bit-oru32 (JS-OBJECT-MODE-JSSTRINGSUBSTRING)
+	 (JS-OBJECT-MODE-JSSTRINGBUFFER))))
+
 (define-inline (js-jsstring-normalized-utf8-mode)
    (bit-oru32 (js-jsstring-default-utf8-mode)
       (js-jsstring-normalized-mode)))
@@ -802,6 +811,7 @@
 (define-inline (JS-OBJECT-MODE-JSSTRINGINDEX) #u32:64)
 (define-inline (JS-OBJECT-MODE-JSSTRINGCACHE) #u32:128)
 (define-inline (JS-OBJECT-MODE-JSSTRINGSUBSTRING) #u32:256)
+(define-inline (JS-OBJECT-MODE-JSSTRINGBUFFER) #u32:512)
 
 (define-macro (JS-OBJECT-MODE-JSSTRINGASCII) #u32:8)
 (define-macro (JS-OBJECT-MODE-JSSTRINGUTF8) #u32:16)
@@ -809,6 +819,7 @@
 (define-macro (JS-OBJECT-MODE-JSSTRINGINDEX) #u32:64)
 (define-macro (JS-OBJECT-MODE-JSSTRINGCACHE) #u32:128)
 (define-macro (JS-OBJECT-MODE-JSSTRINGSUBSTRING) #u32:256)
+(define-macro (JS-OBJECT-MODE-JSSTRINGBUFFER) #u32:512)
 
 (define-inline (js-object-mode-extensible? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
@@ -1409,6 +1420,17 @@
 (define-inline (js-jsstring-substring? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-JSSTRINGSUBSTRING) (js-object-mode o))
       (JS-OBJECT-MODE-JSSTRINGSUBSTRING)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-buffer? ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-buffer? o)
+   (=u32 (bit-andu32
+	    (bit-oru32 (JS-OBJECT-MODE-JSSTRINGSUBSTRING)
+	       (JS-OBJECT-MODE-JSSTRINGBUFFER))
+	    (js-object-mode o))
+      (bit-oru32 (JS-OBJECT-MODE-JSSTRINGSUBSTRING)
+	 (JS-OBJECT-MODE-JSSTRINGBUFFER))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-utf8? ...                                            */
