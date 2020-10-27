@@ -314,7 +314,7 @@
       ((function) 'JsFunction)
       ((arrow) 'JsProcedure)
       ((date) 'JsDate)
-      ((string) 'JsStringLiteral)
+      ((string buffer) 'JsStringLiteral)
       ((null) 'nil)
       ((String) 'JsString)
       ((Promise) 'JsPromise)

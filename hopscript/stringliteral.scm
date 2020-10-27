@@ -40,6 +40,7 @@
 	   (inline js-utf8->jsstring::JsStringLiteralUTF8 ::bstring)
 	   (inline js-utf8->jsstring/ulen::JsStringLiteralUTF8 ::bstring ::uint32)
 	   (js-string->jsstring::JsStringLiteral ::bstring)
+	   (js-string->jsbuffer::JsStringLiteralBuffer ::bstring)
 	   (js-symbol->jsstring::JsStringLiteral ::symbol)
 	   (js-keyword->jsstring::JsStringLiteral ::keyword)
 	   (js-integer->jsstring::JsStringLiteralASCII ::long)
@@ -74,11 +75,9 @@
 	   (js-jsstring-normalize-SUBSTRING!::bstring ::JsStringLiteralSubstring)
 	   (js-jsstring-normalize-UTF8!::bstring ::JsStringLiteralUTF8)
 	   (inline js-jsstring-append::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
-	   (inline js-jsstring-append!::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (js-jsstring-append3::JsStringLiteral ::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (js-jsstring-append-no-inline::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (js-jsstring-append-ASCII::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
-	   (js-jsstring-append-ASCII!::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (js-jsstring-append-UTF8::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (inline js-jsstring-append-ascii::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (inline js-jsstring-append-ascii-xxx::JsStringLiteral ::JsStringLiteralASCII ::JsStringLiteral)
@@ -299,6 +298,7 @@
    (with-access::JsStringLiteral obj (left right length)
       (tprint msg "[" (typeof obj)
 	 " length=" length " depth=" (js-jsstring-depth obj 1024)
+	 " norm=" (js-jsstring-normalized? obj)
 	 " left=" (literal-or-string left) " right="
 	 (literal-or-string right) "]")))
 
@@ -495,6 +495,17 @@
 	       (length (fixnum->uint32 (string-length val)))
 	       (left val))))
       (js-object-mode-set! o (js-jsstring-normalized-ascii-mode))
+      (object-widening-set! o #f)
+      o))
+
+;*---------------------------------------------------------------------*/
+;*    js-string->jsbuffer ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-string->jsbuffer val::bstring)
+   (let ((o (instantiate::JsStringLiteralBuffer
+	       (length (fixnum->uint32 (string-length val)))
+	       (left val))))
+      (js-object-mode-set! o (js-jsstring-normalized-buffer-mode))
       (object-widening-set! o #f)
       o))
 
@@ -791,6 +802,8 @@
       (cond
 	 ((js-jsstring-normalized? js)
 	  left)
+	 ((js-jsstring-substring? js)
+	  (js-jsstring-normalize-SUBSTRING! js))
 	 ((<u32 length #u32:16384)
 	  (normalize-small! js))
 	 ((< (js-jsstring-depth js 1024) 1024)
@@ -1331,10 +1344,18 @@
 ;*    js-jsstring-append-ASCII ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-append-ASCII left right)
+   
+   (define (substring-append len left llen right rstart rlen)
+      (let ((buf ($make-string/wo-fill len)))
+	 (blit-string! left 0 buf 0 llen)
+	 (blit-string! right rstart buf llen rlen)
+	 buf))
+   
    (with-access::JsStringLiteral left ((llen length)
 				       (lstr left))
       (with-access::JsStringLiteral right ((rlen length)
-					   (rstr left))
+					   (rstr left)
+					   (rstart right))
 	 (let ((len (+u32 llen rlen)))
 	    (if (<u32 len (string-append-auto-normalize-threshold))
 		;; if the sum len if smaller than 18, both string
@@ -1342,33 +1363,15 @@
 		;; be a non normalized small string
 		(let ((s (instantiate::JsStringLiteralASCII
 			    (length len)
-			    (left (string-append lstr rstr))
+			    (left (if (js-jsstring-substring? right)
+				      (substring-append (uint32->fixnum len)
+					 lstr (uint32->fixnum llen)
+					 rstr rstart (uint32->fixnum rlen))
+				      (string-append lstr rstr)))
 			    (right (js-not-a-string-cache)))))
 		   (js-object-mode-set! s (js-jsstring-normalized-ascii-mode))
 		   (object-widening-set! s #f)
 		   s)
-		($js-make-stringliteralascii len left right))))))
-
-(define (js-jsstring-append-ASCII-not-used left right)
-   ($js-jsstring-append-ascii left right))
-
-;*---------------------------------------------------------------------*/
-;*    js-jsstring-append-ASCII! ...                                    */
-;*---------------------------------------------------------------------*/
-(define (js-jsstring-append-ASCII! left right)
-   (with-access::JsStringLiteral left ((llen length)
-				       (lstr left))
-      (with-access::JsStringLiteral right ((rlen length)
-					   (rstr left))
-	 (let ((len (+u32 llen rlen)))
-	    (if (<u32 len (string-append-auto-normalize-threshold))
-		;; if the sum len if smaller than 18, both string
-		;; lengthes are smaller than 18 too, and there cannot
-		;; be a non normalized small string
-		(begin
-		   (set! lstr (string-append lstr rstr))
-		   (set! llen len)
-		   left)
 		($js-make-stringliteralascii len left right))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1411,22 +1414,6 @@
 	     (js-jsstring-append-UTF8 left right))
 	    (else
 	     (js-jsstring-append-ASCII left right))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-jsstring-append! ...                                          */
-;*---------------------------------------------------------------------*/
-(define-inline (js-jsstring-append!::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
-   (with-access::JsStringLiteral left ((llen length))
-      (with-access::JsStringLiteral right ((rlen length))
-	 (cond
-	    ((=u32 llen 0)
-	     right)
-	    ((=u32 rlen 0)
-	     left)
-	    ((or (js-jsstring-utf8? left) (js-jsstring-utf8? right))
-	     (js-jsstring-append-UTF8 left right))
-	    (else
-	     (js-jsstring-append-ASCII! left right))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append3 ...                                          */
@@ -1475,36 +1462,41 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append-buffer ...                                    */
+;*    -------------------------------------------------------------    */
+;*    Only used when hopc option "-fstrbuffer" is explictly passed.    */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-append-buffer::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
-   (if (not (and (js-jsstring-buffer? left) (js-jsstring-ascii? right)))
+   (if (not (and (js-jsstring-buffer? left)
+		 (js-jsstring-ascii? right)
+		 (js-jsstring-normalized? right)))
        (js-jsstring-append left right)
-       (with-access::JsStringBuffer left ((llen length) (buffer left) (index right))
+       (with-access::JsStringLiteralBuffer left ((llen length) (buffer left))
 	  (with-access::JsStringLiteral right ((rlen length) (rright left))
 	     (let ((nlen (+u32 llen rlen)))
-		(if (<u32 nlen (fixnum->uint32 left))
-		    (with-access::JsStringBuffer right ((rindex right))
-		       (if (js-jsstring-substring? right)
-			   (blit-string! rright rindex
-			      buffer index (uint32->fixnum rlen))
-			   (blit-string! rright 0
-			      buffer index (uint32->fixnum rlen))))
-		    (js-jsstring-append-ASCII! left right)))))))
+		(if (<u32 nlen #u32:40)
+		    (begin
+		       (set! llen nlen)
+		       (set! buffer (string-append buffer rright))
+		       left)
+		    (js-jsstring-append-ASCII left right)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append-buffer-ascii ...                              */
+;*    -------------------------------------------------------------    */
+;*    Only used when hopc option "-fstrbuffer" is explictly passed.    */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-append-buffer-ascii::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
    (if (not (js-jsstring-buffer? left))
        (js-jsstring-append left right)
-       (with-access::JsStringBuffer left ((llen length) (buffer left) (index right))
+       (with-access::JsStringLiteralBuffer left ((llen length) (buffer left))
 	  (with-access::JsStringLiteral right ((rlen length) (rright left))
 	     (let ((nlen (+u32 llen rlen)))
-		(if (<u32 nlen (fixnum->uint32 left))
-		    (with-access::JsStringBuffer right ((rindex right))
-		       (blit-string! rright 0
-			  buffer index (uint32->fixnum rlen)))
-		    (js-jsstring-append-ASCII! left right)))))))
+		(if (<u32 nlen #u32:40)
+		    (begin
+		       (set! llen nlen)
+		       (set! buffer (string-append buffer rright))
+		       left)
+		    (js-jsstring-append-ASCII left right)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append-ascii ...                                     */

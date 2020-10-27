@@ -74,7 +74,7 @@
 	 ((and (memq op '(+ ++)) (memq type '(int32 uint32 int53 integer number)))
 	  (epairify-deep loc
 	     (js-binop2 loc '+ type lhs rhs mode return ctx)))
-	 ((and (eq? op '+) (eq? type 'string) (eq? etype 'string))
+	 ((and (eq? op '+) (memq type '(string buffer)) (memq etype '(string buffer)))
 	  (epairify-deep loc
 	     (js-binop2 loc op type lhs rhs mode return ctx)))
 	 ((and (memq op '(* - -- / >> << >>> & BIT_OR ^))
@@ -182,7 +182,7 @@
 	 (cond
 	    ((memq ty '(int30 int32 uint32 fixnum integer real number))
 	     `(js-ascii->jsstring "number"))
-	    ((eq? ty 'string)
+	    ((memq ty '(string buffer))
 	     `(js-ascii->jsstring "string"))
 	    ((isa? expr J2SUnresolvedRef)
 	     ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.3
@@ -552,7 +552,7 @@
 	     (strict-equal-uint32 rhs lhs tl))
 	    ((eq? tr 'int32)
 	     (strict-equal-int32 rhs lhs tl))
-	    ((or (type-cannot? tr '(string)) (type-cannot? tl '(string)))
+	    ((or (type-cannot? tr '(string buffer)) (type-cannot? tl '(string buffer)))
 	     (if (and (type-cannot? tr '(real)) (type-cannot? tl '(real)))
 		 `(eq? ,lhs ,rhs)
 		 `(js-strict-equal-no-string? ,lhs ,rhs)))
@@ -780,8 +780,8 @@
 			       (asreal right tr)
 			       #f)
 			    (let ((op (if (and (eq? op '===)
-					       (or (type-cannot? tl '(string))
-						   (type-cannot? tr '(string))))
+					       (or (type-cannot? tl '(string buffer))
+						   (type-cannot? tr '(string buffer))))
 					  'js-strict-equal-no-string?
 					  op)))
 			       (binop-any-any op 'bool
@@ -875,7 +875,7 @@
 	      (symbol 'false))
       (case (j2s-type expr)
 	 ((int30 int32 uint32 fixnum integer real number) number)
-	 ((string) string)
+	 ((string buffer) string)
 	 ((boolean) boolean)
 	 ((regexp) regexp)
 	 ((function) function)
@@ -1074,8 +1074,8 @@
    
    (define (equality-string op lhs tl rhs tr mode return ctx flip)
       (cond
-	 ((and (eq? tl 'string)
-	       (eq? tr 'string)
+	 ((and (memq tl '(string buffer))
+	       (memq tr '(string buffer))
 	       (or (char-string? lhs) (char-string? rhs))
 	       (or (charat? lhs) (charat? rhs))
 	       (let ((str (context-string ctx)))
@@ -1089,9 +1089,10 @@
 	 (else
 	  (with-tmp-flip flip lhs rhs mode return ctx
 	     (lambda (left right)
-		(if (or (type-cannot? tl '(string)) (type-cannot? tr '(string)))
+		(if (or (type-cannot? tl '(string buffer)) (type-cannot? tr '(string buffer)))
 		    (eq? op '!==)
-		    (let ((cmp (if (and (eq? tl 'string) (eq? tr 'string))
+		    (let ((cmp (if (and (memq tl '(string buffer))
+					(memq tr '(string buffer)))
 				   'js-jsstring=?
 				   'js-eqstring?)))
 		       (if (eq? op '!==)
@@ -1187,13 +1188,13 @@
 	  (equality-uint32 op lhs tl rhs tr mode return ctx #f))
 	 ((eq? tr 'uint32)
 	  (equality-uint32 op rhs tr lhs tl mode return ctx #t))
-	 ((and (memq op '(=== !==)) (eq? tl 'string))
+	 ((and (memq op '(=== !==)) (memq tl '(string buffer)))
 	  (equality-string op lhs tl rhs tr mode return ctx #f))
-	 ((and (memq op '(=== !==)) (eq? tr 'string))
+	 ((and (memq op '(=== !==)) (memq tr '(string buffer)))
 	  (equality-string op rhs tr lhs tl mode return ctx #t))
-	 ((and (memq op '(== !==)) (eq? tl 'string) (charat? rhs))
+	 ((and (memq op '(== !==)) (memq tl '(string buffer)) (charat? rhs))
 	  (equality-string op lhs tl rhs tr mode return ctx #f))
-	 ((and (memq op '(== !==)) (eq? tr 'string) (charat? lhs))
+	 ((and (memq op '(== !==)) (memq tr '(string buffer)) (charat? lhs))
 	  (equality-string op rhs tr lhs tl mode return ctx #t))
 	 ((and (eq? tl 'real) (eq? tr 'real))
 	  (with-tmp lhs rhs mode return ctx 
@@ -1201,7 +1202,7 @@
 		(if (memq op '(== ===))
 		    `(=fl ,left ,right)
 		    `(not (=fl ,left ,right))))))
-	 ((and (eq? tl 'string) (eq? tr 'string))
+	 ((and (memq tl '(string buffer)) (memq tr '(string buffer)))
 	  (with-tmp lhs rhs mode return ctx
 	     (lambda (left right)
 		(if (memq op '(== ===))
@@ -1250,11 +1251,11 @@
 		    (if (eq? op '!=)
 			`(not (eq? ,left ,right))
 			`(eq? ,left ,right)))
-		   ((eq? tl 'string)
+		   ((memq tl '(string buffer))
 		    (if (eq? op '!=)
 			`(not (js-equal-string? ,left ,right %this))
 			`(js-equal-string? ,left ,right %this)))
-		   ((eq? tr 'string)
+		   ((memq tr '(string buffer))
 		    (if (eq? op '!=)
 			`(not (js-equal-string? ,right ,left %this))
 			`(js-equal-string? ,right ,left %this)))
@@ -1444,6 +1445,10 @@
 
    (define (j2s-jsstring-append lhs rhs x y)
       (cond
+	 ((eq? (j2s-type lhs) 'buffer)
+	  (if (ascii? rhs y)
+	      `(js-jsstring-append-buffer-ascii ,x ,y)
+	      `(js-jsstring-append-buffer ,x ,y)))
 	 ((context-get ctx :profile-mem)
 	  `(js-jsstring-append-no-inline ,x ,y))
 	 ((and (ascii? lhs x) (ascii? rhs y))
@@ -1478,11 +1483,14 @@
    (define (string-add? expr)
       (when (isa? expr J2SBinary)
 	 (with-access::J2SBinary expr (op type lhs rhs)
-	    (when (and (eq? op '+) (eq? type 'string))
-	       (or (eq? (j2s-type lhs) 'string) (eq? (j2s-type rhs) 'string))))))
+	    (when (and (eq? op '+) (memq type '(string buffer)))
+	       (or (memq (j2s-type lhs) '(string buffer))
+		   (memq (j2s-type rhs) '(string buffer)))))))
    
    (define (string-add tl tr loc type lhs rhs mode return ctx)
       (cond
+	 ((eq? type 'buffer)
+	  (fast-add  tl tr loc type lhs rhs mode return ctx))
 	 ((string-add? lhs)
 	  (with-access::J2SBinary lhs ((llhs lhs) (lrhs rhs))
 	     (j2s-jsstring-append3 llhs lrhs rhs mode return ctx)))
@@ -1496,10 +1504,10 @@
       (with-tmp lhs rhs mode return ctx
 	 (lambda (left right)
 	    (cond
-	       ((eq? tl 'string)
+	       ((memq tl '(string buffer))
 		(add-string loc type left tl lhs right tr rhs
 		    mode return ctx #f))
-	       ((eq? tr 'string)
+	       ((memq tr '(string buffer))
 		(add-string loc type right tr rhs left tl lhs
 		   mode return ctx #t))
 	       ((eq? tl 'int32)
@@ -1526,7 +1534,7 @@
 		(binop-real-xxx '+ type lhs tl left rhs tr right ctx #f))
 	       ((eq? tr 'real)
 		(binop-real-xxx '+ type rhs tr right lhs tl left ctx #t))
-	       ((and (eq? type 'string) (eq? tl 'any) (eq? tr 'any))
+	       ((and (memq type '(string buffer)) (eq? tl 'any) (eq? tr 'any))
 		`(if (and (js-jsstring? ,left) (js-jsstring? ,right))
 		     (js-jsstring-append ,left ,right)
 		     ,(binop-any-any '+ type
@@ -1563,11 +1571,11 @@
    (define (is-binary-string-add? x)
       (when (isa? x J2SBinary)
 	 (with-access::J2SBinary x (op type)
-	    (and (eq? op '+) (eq? type 'string)))))
+	    (and (eq? op '+) (memq type '(string buffer))))))
 
    (define (j2s-scheme-as-string expr::J2SExpr mode return ctx)
       (let ((x (j2s-scheme expr mode return ctx)))
-	 (if (eq? (j2s-type expr) 'string)
+	 (if (memq (j2s-type expr) '(string buffer))
 	     x
 	     `(js-toprimitive-for-string ,x %this))))
    
@@ -1604,10 +1612,10 @@
       (let ((tl (j2s-type lhs))
 	    (tr (j2s-type rhs)))
 	 (cond
-	    ((and (or (eq? tl 'string) (eq? tr 'string))
+	    ((and (or (memq tl '(string buffer)) (memq tr '(string buffer)))
 		  (context-get ctx :optim-size))
 	     (small-add tl tr loc type lhs rhs mode return ctx))
-	    ((and (eq? tl 'string) (eq? tr 'string))
+	    ((and (memq tl '(string buffer)) (memq tr '(string buffef)))
 	     (string-add tl tr loc type lhs rhs mode return ctx))
 	    (else
 	     (fast-add tl tr loc type lhs rhs mode return ctx)))))
@@ -1735,7 +1743,7 @@
 			    (box left tl ctx)
 			    (box right tr ctx)
 			    #f))))
-		  ((and (eq? op '+) (eq? type 'string))
+		  ((and (eq? op '+) (memq type '(string buffer)))
 		   `(if (and (js-jsstring? ,left) (js-jsstring? ,right))
 			(js-jsstring-append ,left ,right)
 			,(binop-any-any op type
@@ -2599,7 +2607,7 @@
 ;*---------------------------------------------------------------------*/
 (define (tostring val type::symbol ctx)
    (case type
-      ((string)
+      ((string buffer)
        val)
       ((integer int53)
        `(js-integer->jsstring ,val))

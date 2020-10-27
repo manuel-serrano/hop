@@ -114,6 +114,9 @@
 	 (object ,js-number->jsobject)
 	 (iterable error)
 	 (any nop)))
+     (buffer
+	((string nop)
+	 (any nop)))
      (string
 	((propname nop)
 	 (bool ,js-string->bool)
@@ -285,6 +288,9 @@
 	 (propname nop)
 	 (object ,js-number->jsobject)
 	 (iterable error)
+	 (any nop)))
+     (buffer
+	((string nop)
 	 (any nop)))
      (string
 	((propname nop)

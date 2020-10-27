@@ -680,8 +680,10 @@
 ;*    j2s-scheme ::J2SString ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SString mode return ctx)
-   (with-access::J2SString this (loc val)
-      (j2s-jsstring val loc ctx)))
+   (with-access::J2SString this (loc val type)
+      (if (eq? type 'buffer)
+	  (epairify loc `(js-string->jsbuffer ,val))
+	  (j2s-jsstring val loc ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SRegExp ...                                       */

@@ -176,7 +176,7 @@
 	   
 	   (class JsStringLiteralSubstring::JsStringLiteralASCII)
 	   
-	   (class JsStringBuffer::JsStringLiteralSubstring)
+	   (class JsStringLiteralBuffer::JsStringLiteralASCII)
 	   
 	   (final-class JsStringLiteralUTF8::JsStringLiteral
 	      (%idxutf8::long (default 0))
@@ -456,6 +456,7 @@
 	   (inline js-jsstring-normalized-ascii-mode::uint32)
 	   (inline js-jsstring-default-index-mode::uint32)
 	   (inline js-jsstring-default-substring-mode::uint32)
+	   (inline js-jsstring-normalized-buffer-mode::uint32)
 	   (inline js-jsstring-default-utf8-mode::uint32)
 	   (inline js-jsstring-normalized-utf8-mode)
 	   
@@ -700,12 +701,12 @@
 
 (define-inline (js-jsstring-default-substring-mode)
    (bit-oru32 (JS-OBJECT-MODE-JSSTRINGTAG)
-      (JS-OBJECT-MODE-JSSTRINGSUBSTRING)))
+      (bit-oru32 (JS-OBJECT-MODE-JSSTRINGASCII)
+	 (JS-OBJECT-MODE-JSSTRINGSUBSTRING))))
 
-(define-inline (js-jsstring-default-buffer-mode)
-   (bit-oru32 (JS-OBJECT-MODE-JSSTRINGTAG)
-      (bit-oru32 (JS-OBJECT-MODE-JSSTRINGSUBSTRING)
-	 (JS-OBJECT-MODE-JSSTRINGBUFFER))))
+(define-inline (js-jsstring-normalized-buffer-mode)
+   (bit-oru32 (js-jsstring-normalized-ascii-mode)
+      (JS-OBJECT-MODE-JSSTRINGBUFFER)))
 
 (define-inline (js-jsstring-normalized-utf8-mode)
    (bit-oru32 (js-jsstring-default-utf8-mode)
@@ -1425,12 +1426,8 @@
 ;*    js-jsstring-buffer? ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring-buffer? o)
-   (=u32 (bit-andu32
-	    (bit-oru32 (JS-OBJECT-MODE-JSSTRINGSUBSTRING)
-	       (JS-OBJECT-MODE-JSSTRINGBUFFER))
-	    (js-object-mode o))
-      (bit-oru32 (JS-OBJECT-MODE-JSSTRINGSUBSTRING)
-	 (JS-OBJECT-MODE-JSSTRINGBUFFER))))
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-JSSTRINGBUFFER) (js-object-mode o))
+      (JS-OBJECT-MODE-JSSTRINGBUFFER)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-utf8? ...                                            */
