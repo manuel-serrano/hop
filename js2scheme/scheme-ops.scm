@@ -1105,9 +1105,11 @@
 		(equality-string op lhs tl
 		   rhs (j2s-type rhs) mode return ctx flip)))
 	 ((and (memq tl '(string buffer)) (empty-string? rhs))
-	  `(=u32 (js-jsstring-length ,(j2s-scheme lhs mode return ctx)) #u32:0))
+	  `(,(if (eq? op '!==) '>u32 '=u32)
+	    (js-jsstring-length ,(j2s-scheme lhs mode return ctx)) #u32:0))
 	 ((and (memq tr '(string buffer)) (empty-string? lhs))
-	  `(=u32 (js-jsstring-length ,(j2s-scheme lhs mode return ctx)) #u32:0))
+	  `(,(if (eq? op '!==) '>u32 '=u32)
+	    (js-jsstring-length ,(j2s-scheme lhs mode return ctx)) #u32:0))
 	 (else
 	  (with-tmp-flip flip lhs rhs mode return ctx
 	     (lambda (left right)
