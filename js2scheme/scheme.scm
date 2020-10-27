@@ -593,10 +593,6 @@
 	      val)
 	     (else
 	      (fixnum->flonum val))))
-	 ((not (flonum? val))
-	  (error "j2s-scheme ::J2SNumber"
-	     (format "bad number type ~a/~a" type (typeof val))
-	     (j2s->list this)))
 	 ((and (flonum? val) (nanfl? val))
 	  +nan.0)
 	 (else
@@ -604,6 +600,7 @@
 	     ((flonum? val) val)
 	     ((uint32? val) (int32->flonum val))
 	     ((uint32? val) (uint32->flonum val))
+	     ((bignum? val) (bignum->flonum val))
 	     (else (fixnum->flonum val)))))))
 
 ;*---------------------------------------------------------------------*/

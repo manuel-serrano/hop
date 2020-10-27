@@ -1946,8 +1946,8 @@
 			      ,n ,(fixnum->int32 (-fx (bit-lsh 1 k) 1)))
 			#s32:0)
 		     ,(if (positive? lhs)
-			  `(int32->integer (bit-rshs32 ,n ,k))
-			  `(int32->integer (/pow2s32 ,n ,k)))
+			  `(js-int32-tointeger (bit-rshs32 ,n ,k))
+			  `(js-int32-tointeger (/pow2s32 ,n ,k)))
 		     (/fl (int32->flonum ,n) (fixnum->flonum ,(bit-lsh 1 k))))))
 	    (else
 	     `(let ((,n ,(j2s-scheme lhs mode return ctx)))
