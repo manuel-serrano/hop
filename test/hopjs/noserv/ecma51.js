@@ -466,7 +466,7 @@ function postfixTypes() {
       && (typeof y === "number");
 }
    
-assert.equal( postfixTypes(), "postfix types" );
+assert.ok( postfixTypes(), "postfix types" );
 
 /*---------------------------------------------------------------------*/
 /*    literal with prototype                                           */
