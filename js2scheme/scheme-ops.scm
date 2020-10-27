@@ -1050,6 +1050,11 @@
 	 (with-access::J2SString exp (val)
 	    (=fx (string-length val) 1))))
 
+   (define (empty-string? exp)
+      (when (isa? exp J2SString)
+	 (with-access::J2SString exp (val)
+	    (=fx (string-length val) 0))))
+   
    (define (charat? exp)
       (when (isa? exp J2SCall)
 	 (with-access::J2SCall exp (fun args)
@@ -1086,15 +1091,38 @@
 	  (if (char-string? lhs) 
 	      (equality-char op lhs rhs)
 	      (equality-char op rhs lhs)))
+	 ((and (is-buffer-cast? lhs) (is-buffer-cast? rhs))
+	  (with-access::J2SCast lhs ((lhs expr))
+	     (with-access::J2SCast rhs ((rhs expr))
+		(equality-string op lhs (j2s-type lhs)
+		   rhs (j2s-type rhs) mode return ctx flip))))
+	 ((is-buffer-cast? lhs)
+	  (with-access::J2SCast lhs ((lhs expr))
+	     (equality-string op lhs (j2s-type lhs)
+		rhs tr mode return ctx flip)))
+	 ((is-buffer-cast? rhs)
+	     (with-access::J2SCast rhs ((rhs expr))
+		(equality-string op lhs tl
+		   rhs (j2s-type rhs) mode return ctx flip)))
+	 ((and (memq tl '(string buffer)) (empty-string? rhs))
+	  `(=u32 (js-jsstring-length ,(j2s-scheme lhs mode return ctx)) #u32:0))
+	 ((and (memq tr '(string buffer)) (empty-string? lhs))
+	  `(=u32 (js-jsstring-length ,(j2s-scheme lhs mode return ctx)) #u32:0))
 	 (else
 	  (with-tmp-flip flip lhs rhs mode return ctx
 	     (lambda (left right)
 		(if (or (type-cannot? tl '(string buffer)) (type-cannot? tr '(string buffer)))
 		    (eq? op '!==)
-		    (let ((cmp (if (and (memq tl '(string buffer))
+		    (let ((cmp (cond
+				  ((and (memq tl '(string buffer))
+					(memq tr '(string buffer))
+					(or (eq? tl 'buffer) (eq? tr 'buffer)))
+				   'js-jsbuffer=?)
+				  ((and (memq tl '(string buffer))
 					(memq tr '(string buffer)))
-				   'js-jsstring=?
-				   'js-eqstring?)))
+				   'js-jsstring=?)
+				  (else
+				   'js-eqstring?))))
 		       (if (eq? op '!==)
 			   `(not (,cmp ,left ,right))
 			   `(,cmp ,left ,right)))))))))

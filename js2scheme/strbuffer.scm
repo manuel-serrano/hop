@@ -55,10 +55,6 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-strbuffer this conf)
    (when (isa? this J2SProgram)
-      (display "!!! WARNING !!!\n" (current-error-port))
-      (display "Currently wrong because escaping" (current-error-port))
-      (display "variables are not correctly handled." (current-error-port))
-      (newline (current-error-port))
       (strbuffer-mark this #f)
       (let ((verb (>= (config-get conf :verbose 0) 2)))
 	 (when verb

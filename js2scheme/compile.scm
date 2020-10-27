@@ -505,8 +505,8 @@
 	    (set! o (cons* :optim-procedure #t o)))
 	 (unless (memq :optim-cnstlift o)
 	    (set! o (cons* :optim-cnstlift #t o)))
-;* 	 (unless (memq :optim-strbuffer o)                             */
-;* 	    (set! o (cons* :optim-strbuffer #t o)))                    */
+	 (unless (memq :optim-strbuffer o)
+	    (set! o (cons* :optim-strbuffer #t o)))
 	 )
       (when (>=fx l 3)
 	 (unless (memq :optim-method o)

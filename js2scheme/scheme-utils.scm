@@ -72,6 +72,7 @@
 	   (is-uint32? expr::J2SExpr)
 	   (is-uint53? expr::J2SExpr)
 	   (is-string? expr::J2SExpr)
+	   (is-buffer-cast? ::J2SExpr)
 
 	   (j2s-jsstring val loc ::struct)
 	   (j2s-string->jsstring ::bstring ::struct)
@@ -520,6 +521,14 @@
 ;*---------------------------------------------------------------------*/
 (define (is-string? expr::J2SExpr)
    (eq? (j2s-type expr) 'string))
+
+;*---------------------------------------------------------------------*/
+;*    is-buffer-cast? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (is-buffer-cast? this)
+   (and (isa? this J2SCast)
+	(with-access::J2SCast this (expr)
+	   (eq? (j2s-type expr) 'buffer))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring ...                                                 */

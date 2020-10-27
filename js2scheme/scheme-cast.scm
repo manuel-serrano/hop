@@ -290,8 +290,8 @@
 	 (iterable error)
 	 (any nop)))
      (buffer
-	((string nop)
-	 (any nop)))
+	((string js-buffer->jsstring)
+	 (any js-buffer->jsstring)))
      (string
 	((propname nop)
 	 (bool ,js-string->bool)

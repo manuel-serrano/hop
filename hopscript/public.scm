@@ -2282,9 +2282,9 @@
 	       (else
 		(close-input-port ip)
 		(%eval s))))))
-   
-   (if (not (js-jsstring? s))
-       s
+
+   (cond
+      ((js-jsstring? s)
        (let ((s (js-jsstring->string s)))
 	  (if (=fx (string-length s) 0)
 	      (js-undefined)
@@ -2298,7 +2298,11 @@
 		 ((#\()
 		  (%json-expr s))
 		 (else
-		  (%eval s)))))))
+		  (%eval s))))))
+      ((isa? s J2SNode)
+       (%js-eval-ast s %this this scope))
+      (else
+       s)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-eval ...                                                     */
@@ -2361,6 +2365,64 @@
 				       m)))))
 		  (trace-item "r=" r)
 		  r))))))
+
+;*---------------------------------------------------------------------*/
+;*    %js-eval-ast ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (%js-eval-ast ast %this::JsGlobalObject this scope)
+   (library-load 'hopscript lib-hopscript-path)
+   ;; bind the global object
+   (with-trace 'hopscript-eval '%js-eval
+      (with-handler
+	 (lambda (e)
+	    (cond
+	       ((isa? e &error)
+		(with-access::&error e (proc msg obj fname location)
+		   (cond
+		      ((and (string? proc) (string=? proc "assignment"))
+		       (js-raise-reference-error %this
+			  (format "~a -- ~a" msg obj)
+			  obj
+			  fname location))
+		      (else
+		       (js-raise-error %this
+			  (format "~a: ~a -- ~a" proc msg obj)
+			  obj
+			  fname location)))))
+	       (else
+		(raise e))))
+	 (let ((e (j2s-compile ast
+		     :verbose 0
+		     :eval #t
+		     :driver (j2s-eval-driver)
+		     :driver-name "j2s-eval-driver"
+		     :es6-arrow-function #t
+		     :es6-let #t
+		     :es6-defaut-value #t
+		     :es6-rest-argument #t
+		     :commonjs-export #f))
+	       (m (js-get scope (& "module") scope))
+	       (evmod (eval-module)))
+	    (with-trace 'hopscript-eval "%js-eval-inner"
+	       (trace-item "e=" e)
+	       (trace-item "scope=" (typeof scope))
+	       (unwind-protect
+		  ;; evaluatate the module clause first
+		  (begin
+		     (eval! (car e))
+		     (let ((nexpr (map (lambda (x)
+					  (eval `(expand ',x)))
+				     (cdr e))))
+			;; the forms to be evaluated have to be expanded
+			;; first in order to resolve the &begin! ... &end!
+			;; construct
+			(for-each eval nexpr)
+			(let ((hopscript (eval! 'hopscript)))
+			   (hopscript %this this scope
+				       (if (eq? m (js-undefined))
+					   (eval-dummy-module %this)
+					   m)))))
+		  (eval-module-set! evmod)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    eval-dummy-module ...                                            */

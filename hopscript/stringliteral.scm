@@ -41,6 +41,7 @@
 	   (inline js-utf8->jsstring/ulen::JsStringLiteralUTF8 ::bstring ::uint32)
 	   (js-string->jsstring::JsStringLiteral ::bstring)
 	   (js-string->jsbuffer::JsStringLiteralBuffer ::bstring)
+	   (inline js-buffer->jsstring::JsStringLiteral ::JsStringLiteral)
 	   (js-symbol->jsstring::JsStringLiteral ::symbol)
 	   (js-keyword->jsstring::JsStringLiteral ::keyword)
 	   (js-integer->jsstring::JsStringLiteralASCII ::long)
@@ -57,8 +58,10 @@
 	   (inline js-jsstring-lengthfx::long ::obj)
 	   (js-jsstring-character-length::uint32 ::obj)
 	   (js-jsstring-codeunit-length::uint32 ::obj)
+	   (inline js-jsbuffer-codeunit-length::uint32 ::obj)
 	   (inline js-jsstring-null? ::obj)
 	   (inline js-jsstring=?::bool ::obj ::obj)
+	   (js-jsbuffer=?::bool ::obj ::obj)
 	   (inline js-jsstring<?::bool ::obj ::obj)
 	   (inline js-jsstring<=?::bool ::obj ::obj)
 	   (inline js-jsstring>?::bool ::obj ::obj)
@@ -106,10 +109,13 @@
 	   (js-jsstring-codepointatu32-as-int32::int32 ::JsStringLiteral ::uint32)
 	   (js-jsstring-maybe-codepointat ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-charat ::JsStringLiteral ::obj ::JsGlobalObject)
+	   (js-jsbuffer-charat ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-charat ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-substring::JsStringLiteral ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
+	   (js-jsbuffer-substring::JsStringLiteral ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-substring ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-substr ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
+	   (js-jsbuffer-substr ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-substr ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-tolowercase ::JsStringLiteral)
 	   (js-jsstring-tolowercase! ::JsStringLiteral)
@@ -150,6 +156,7 @@
 	   (js-jsstring-encodeuricomponent ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring-maybe-encodeuricomponent ::obj ::JsGlobalObject)
 	   (js-jsstring-slice ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
+	   (js-jsbuffer-slice ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-slice1 ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-maybe-slice2 ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring->jsarray ::JsStringLiteral ::JsGlobalObject)
@@ -502,12 +509,32 @@
 ;*    js-string->jsbuffer ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-string->jsbuffer val::bstring)
+   (let* ((buf (make-string 40))
+	  (len (string-length val))
+	  (o (instantiate::JsStringLiteralBuffer
+		(length (fixnum->uint32 len))
+		(left buf))))
+      (blit-string! val 0 buf 0 len)
+      (js-object-mode-set! o (js-jsstring-default-buffer-mode))
+      (object-widening-set! o #f)
+      o))
+
+(define (js-string->jsbuffer-old val::bstring)
    (let ((o (instantiate::JsStringLiteralBuffer
 	       (length (fixnum->uint32 (string-length val)))
 	       (left val))))
       (js-object-mode-set! o (js-jsstring-normalized-buffer-mode))
       (object-widening-set! o #f)
       o))
+
+;*---------------------------------------------------------------------*/
+;*    js-buffer->jsstring ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (js-buffer->jsstring buffer::JsStringLiteral)
+   (if (js-jsstring-buffer? buffer)
+       (with-access::JsStringLiteralBuffer buffer (left length)
+	  (js-substring->jsstring left 0 (uint32->fixnum length)))
+       buffer))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-substring->jsstring ...                                       */
@@ -1016,6 +1043,18 @@
 	  %culen))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-jsbuffer-codeunit-length ...                                  */
+;*    -------------------------------------------------------------    */
+;*    This function implements the JavaScript string length, which     */
+;*    counts the number of UCS2 characters of the string.              */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsbuffer-codeunit-length js)
+   (if (js-jsstring-buffer? js)
+       (with-access::JsStringLiteralBuffer js (length)
+	  length)
+       (js-jsstring-codeunit-length js)))
+
+;*---------------------------------------------------------------------*/
 ;*    display-js-string ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (display-js-string jstr::JsStringLiteral op)
@@ -1057,6 +1096,25 @@
 	     (when (=u32 xlen ylen)
 		(substring-at? left (js-jsstring->string x) right))
 	     (string=? (js-jsstring->string x) (js-jsstring->string y))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsbuffer=? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-jsbuffer=?::bool x y)
+   (if (js-jsstring-buffer? x)
+       (with-access::JsStringLiteral x ((xlen length) (xstr left))
+	  (if (js-jsstring-buffer? y)
+	      (with-access::JsStringLiteral y ((ylen length) (ystr left))
+		 (when (=u32 xlen ylen)
+		    (substring-at? xstr ystr 0 (uint32->fixnum xlen))))
+	      (begin
+		 (with-access::JsStringLiteral y ((ylen length) (ystr left))
+		    (tprint "ICI..." xstr " " y " " xlen "/" ylen))
+		 (substring-at? xstr (js-jsstring->string y) 0))))
+       (if (js-jsstring-buffer? y)
+	   (with-access::JsStringLiteral y ((ylen length) (ystr left))
+	      (substring-at? ystr (js-jsstring->string y) 0))
+	   (js-jsstring=? x y))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring>? ...                                                */
@@ -1466,19 +1524,9 @@
 ;*    Only used when hopc option "-fstrbuffer" is explictly passed.    */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-append-buffer::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
-   (if (not (and (js-jsstring-buffer? left)
-		 (js-jsstring-ascii? right)
-		 (js-jsstring-normalized? right)))
-       (js-jsstring-append left right)
-       (with-access::JsStringLiteralBuffer left ((llen length) (buffer left))
-	  (with-access::JsStringLiteral right ((rlen length) (rright left))
-	     (let ((nlen (+u32 llen rlen)))
-		(if (<u32 nlen #u32:40)
-		    (begin
-		       (set! llen nlen)
-		       (set! buffer (string-append buffer rright))
-		       left)
-		    (js-jsstring-append-ASCII left right)))))))
+   (if (and (js-jsstring-ascii? right) (js-jsstring-normalized? right))
+       (js-jsstring-append-buffer-ascii left right)
+       (js-jsstring-append left right)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append-buffer-ascii ...                              */
@@ -1486,17 +1534,18 @@
 ;*    Only used when hopc option "-fstrbuffer" is explictly passed.    */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-append-buffer-ascii::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
-   (if (not (js-jsstring-buffer? left))
-       (js-jsstring-append left right)
+   (if (js-jsstring-buffer? left)
        (with-access::JsStringLiteralBuffer left ((llen length) (buffer left))
 	  (with-access::JsStringLiteral right ((rlen length) (rright left))
 	     (let ((nlen (+u32 llen rlen)))
-		(if (<u32 nlen #u32:40)
+		(if (<u32 nlen (fixnum->uint32 (string-length buffer)))
 		    (begin
+		       (blit-string! rright 0 buffer (uint32->fixnum llen)
+			  (uint32->fixnum rlen))
 		       (set! llen nlen)
-		       (set! buffer (string-append buffer rright))
 		       left)
-		    (js-jsstring-append-ASCII left right)))))))
+		    (js-jsstring-append-ASCII left right)))))
+       (js-jsstring-append left right)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append-ascii ...                                     */
@@ -2388,6 +2437,15 @@
 	     (loop (js-toobject %this this)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    ascii-charat/table ...                                           */
+;*---------------------------------------------------------------------*/
+(define (ascii-charat/table val position %this)
+   (with-access::JsGlobalObject %this (char-table)
+      (let* ((c (string-ref-ur val position))
+	     (i (char->integer c)))
+	 (vector-ref char-table i))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-jsstring-charat ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.4     */
@@ -2396,12 +2454,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-charat this position %this)
 
-   (define (ascii-charat/table val position)
-      (with-access::JsGlobalObject %this (char-table)
-	 (let* ((c (string-ref-ur val position))
-		(i (char->integer c)))
-	    (vector-ref char-table i))))
-   
    (define (ascii-charat val::bstring start len)
       (if (fixnum? position)
 	  (cond
@@ -2410,11 +2462,11 @@
 	     ((>=fx position len)
 	      (& ""))
 	     (else
-	      (ascii-charat/table val (+fx start position))))
+	      (ascii-charat/table val (+fx start position) %this)))
 	  (let ((pos (js-tointeger position %this)))
 	     (if (or (< pos 0) (>= pos len))
 		 (& "")
-		 (ascii-charat/table val (+fx start (->fixnum pos)))))))
+		 (ascii-charat/table val (+fx start (->fixnum pos)) %this)))))
 
    (define (utf8-charat val::bstring start len)
       (if (fixnum? position)
@@ -2431,6 +2483,26 @@
 		 (js-utf8-ref this val (->fixnum pos) %this)))))
 
    (substring-dispatch charat this))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsbuffer-charat ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-jsbuffer-charat this position %this)
+   (if (js-jsstring-buffer? this)
+       (with-access::JsStringLiteral this (left length)
+	  (if (fixnum? position)
+	      (cond
+		 ((<fx position 0)
+		  (& ""))
+		 ((>=u32 (fixnum->uint32 position) length)
+		  (& ""))
+		 (else
+		  (ascii-charat/table left position %this)))
+	      (let ((pos (js-tointeger position %this)))
+		 (if (or (< pos 0) (>= pos (uint32->fixnum length)))
+		     (& "")
+		     (ascii-charat/table left (->fixnum pos) %this)))))
+       (js-jsstring-charat this position %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-charat ...                                     */
@@ -2477,6 +2549,24 @@
 	 (js-string->jsstring (utf8-substring s frm to))))
 
    (string-dispatch substr this))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsbuffer-substring ...                                        */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.15    */
+;*---------------------------------------------------------------------*/
+(define (js-jsbuffer-substring this start end %this)
+   (if (js-jsstring-buffer? this)
+       (with-access::JsStringLiteral this (left length)
+	  (let* ((len (uint32->fixnum length))
+		 (intstart (js-tointeger start %this))
+		 (intend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
+		 (finalstart (->fixnum (min (max intstart 0) len)))
+		 (finalend (->fixnum (min (max intend 0) len)))
+		 (frm (minfx finalstart finalend))
+		 (to (maxfx finalstart finalend)))
+	     (js-substring->jsstring left frm (-fx to frm))))
+       (js-jsstring-substring this start end %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-substring ...                                  */
@@ -2527,6 +2617,24 @@
 	     (js-string->jsstring (utf8-substring r1 r5 (+fx r5 r6))))))
 
    (string-dispatch substr this))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsbuffer-substr ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-jsbuffer-substr this start length %this)
+   (if (js-jsstring-buffer? this)
+       (with-access::JsStringLiteral this (left (r4 length))
+	  (let* ((r2 (js-tointeger start %this))
+		 (r3 (if (eq? length (js-undefined))
+			 (maxvalfx)
+			 (js-tointeger length %this)))
+		 (r4 (uint32->fixnum r4))
+		 (r5 (if (>=fx r2 0) r2 (maxfx (+fx r4 r2) 0)))
+		 (r6 (minfx (maxfx r3 0) (-fx r4 r5))))
+	     (if (<=fx r6 0)
+		 (& "")
+		 (js-substring->jsstring left r5 r6))))
+       (js-jsstring-substr this start length %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-substr ...                                     */
@@ -4353,7 +4461,29 @@
 	  (jssubstring jss from end)
 	  jss)))
 
-(define w 0)
+;*---------------------------------------------------------------------*/
+;*    js-jsbuffer-slice ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-jsbuffer-slice jss::JsStringLiteral start end %this)
+   (if (js-jsstring-buffer? jss)
+       (let* ((len (uint32->fixnum (js-jsstring-length jss)))
+	      (intstart (js-tointeger start %this))
+	      (intend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
+	      (from (->fixnum
+		       (if (< intstart 0)
+			   (max (+ len intstart) 0)
+			   (min intstart len))))
+	      (to (->fixnum
+		     (if (< intend 0)
+			 (max (+ len intend) 0)
+			 (min intend len))))
+	      (span (maxfx (-fx to from) 0))
+	      (end (+ from span)))
+	  (with-access::JsStringLiteral jss (left)
+	     (if (or (>fx from 0) (<fx end len))
+		 (js-substring->jsstring left from (- end from))
+		 (js-substring->jsstring left 0 len))))
+       (js-jsstring-slice jss start end %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-slice1 ...                                     */
