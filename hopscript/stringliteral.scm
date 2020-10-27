@@ -513,19 +513,20 @@
 	  (len (string-length val))
 	  (o (instantiate::JsStringLiteralBuffer
 		(length (fixnum->uint32 len))
-		(left buf))))
+		(left buf)
+		(right 0))))
       (blit-string! val 0 buf 0 len)
       (js-object-mode-set! o (js-jsstring-default-buffer-mode))
       (object-widening-set! o #f)
       o))
 
-(define (js-string->jsbuffer-old val::bstring)
-   (let ((o (instantiate::JsStringLiteralBuffer
-	       (length (fixnum->uint32 (string-length val)))
-	       (left val))))
-      (js-object-mode-set! o (js-jsstring-normalized-buffer-mode))
-      (object-widening-set! o #f)
-      o))
+;* (define (js-string->jsbuffer-old val::bstring)                      */
+;*    (let ((o (instantiate::JsStringLiteralBuffer                     */
+;* 	       (length (fixnum->uint32 (string-length val)))           */
+;* 	       (left val))))                                           */
+;*       (js-object-mode-set! o (js-jsstring-normalized-buffer-mode))  */
+;*       (object-widening-set! o #f)                                   */
+;*       o))                                                           */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-buffer->jsstring ...                                          */
@@ -966,12 +967,11 @@
 (define (js-jsstring-normalize-SUBSTRING! js::JsStringLiteralSubstring)
    (with-access::JsStringLiteralSubstring js (left right length)
       (js-object-mode-set! js (js-jsstring-normalized-ascii-mode))
-      (let ((buffer (if (and (=fx right 0) (=fx (uint32->fixnum length) (string-length left)))
-			left
-			(substring left right (+fx right (uint32->fixnum length))))))
-	 (set! left buffer)
-	 (set! right (js-not-a-string-cache))
-	 buffer)))
+      (unless (and (=fx right 0)
+		   (=fx (uint32->fixnum length) (string-length left)))
+	 (set! left (substring left right (+fx right (uint32->fixnum length)))))
+      (set! right (js-not-a-string-cache))
+      left))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize! ...                                       */

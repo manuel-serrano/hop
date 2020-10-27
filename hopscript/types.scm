@@ -176,7 +176,7 @@
 	   
 	   (class JsStringLiteralSubstring::JsStringLiteralASCII)
 	   
-	   (class JsStringLiteralBuffer::JsStringLiteralASCII)
+	   (class JsStringLiteralBuffer::JsStringLiteralSubstring)
 	   
 	   (final-class JsStringLiteralUTF8::JsStringLiteral
 	      (%idxutf8::long (default 0))
@@ -457,7 +457,6 @@
 	   (inline js-jsstring-default-index-mode::uint32)
 	   (inline js-jsstring-default-substring-mode::uint32)
 	   (inline js-jsstring-default-buffer-mode::uint32)
-	   (inline js-jsstring-normalized-buffer-mode::uint32)
 	   (inline js-jsstring-default-utf8-mode::uint32)
 	   (inline js-jsstring-normalized-utf8-mode)
 	   
@@ -706,11 +705,7 @@
 	 (JS-OBJECT-MODE-JSSTRINGSUBSTRING))))
 
 (define-inline (js-jsstring-default-buffer-mode)
-   (bit-oru32 (js-jsstring-default-ascii-mode)
-      (JS-OBJECT-MODE-JSSTRINGBUFFER)))
-
-(define-inline (js-jsstring-normalized-buffer-mode)
-   (bit-oru32 (js-jsstring-normalized-ascii-mode)
+   (bit-oru32 (js-jsstring-default-substring-mode)
       (JS-OBJECT-MODE-JSSTRINGBUFFER)))
 
 (define-inline (js-jsstring-normalized-utf8-mode)
