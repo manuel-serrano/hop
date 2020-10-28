@@ -1438,8 +1438,7 @@
 		;; be a non normalized small string
 		(let ((s (instantiate::JsStringLiteralASCII
 			    (length len)
-			    (left (if (or (js-jsstring-substring? left)
-					  (js-jsstring-substring? right))
+			    (left (if (js-jsstring-substring? right)
 				      (substring-append (uint32->fixnum len)
 					 lstr (uint32->fixnum llen)
 					 rstr rstart (uint32->fixnum rlen))
