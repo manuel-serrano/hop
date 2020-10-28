@@ -202,6 +202,20 @@
 	 (else #u32:4))))
 
 ;*---------------------------------------------------------------------*/
+;*    jsbufferin-initial-size ...                                      */
+;*    -------------------------------------------------------------    */
+;*    A buffer is created when at least 3 concatanation have           */
+;*    been detected by the compiler. As a rope node is in between      */
+;*    5 and 6 words (depending on the hardware plateform and           */
+;*    configuration), a buffer can be at least                         */
+;*      3 * 5 * sizeof(word bytes)                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (jsbuffer-initial-size)
+   (cond-expand
+      ((or bint61 bint64) (*fx 3 (*fx 5 8)))
+      (else (*fx 3 (*fx 6 4)))))
+
+;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
@@ -509,8 +523,8 @@
 ;*    js-string->jsbuffer ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-string->jsbuffer val::bstring)
-   (let* ((buf (make-string 40))
-	  (len (string-length val))
+   (let* ((len (string-length val))
+	  (buf ($make-string/wo-fill (maxfx (*fx 3 len) (jsbuffer-initial-size))))
 	  (o (instantiate::JsStringLiteralBuffer
 		(length (fixnum->uint32 len))
 		(left buf)
@@ -1544,7 +1558,15 @@
 			  (uint32->fixnum rlen))
 		       (set! llen nlen)
 		       left)
-		    (js-jsstring-append-ASCII left right)))))
+		    (let ((nbuf (make-string (*fx (uint32->fixnum nlen) 2))))
+		       ;; enlarge the buffer
+		       (blit-string! buffer 0 nbuf 0 (uint32->fixnum llen))
+		       (blit-string! rright 0 buffer (uint32->fixnum llen)
+			  (uint32->fixnum rlen))
+		       (set! llen nlen)
+		       (set! buffer nbuf)
+		       left)))))
+;* 		    (js-jsstring-append-ASCII left right)))))          */
        (js-jsstring-append left right)))
 
 ;*---------------------------------------------------------------------*/
