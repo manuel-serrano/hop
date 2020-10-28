@@ -73,6 +73,7 @@
 	   __js2scheme_module
 	   __js2scheme_newtarget
 	   __js2scheme_procedure
+	   __js2scheme_strbuffer
 	   __js2scheme_cnstlift)
 
    (export (j2s-compile-options::pair-nil)
@@ -231,6 +232,7 @@
 	  j2s-constrsize-stage
 	  j2s-unthis-stage
 	  j2s-procedure-stage
+	  j2s-strbuffer-stage
 	  j2s-scheme-stage))
       (else
        (j2s-plain-driver))))
@@ -503,6 +505,8 @@
 	    (set! o (cons* :optim-procedure #t o)))
 	 (unless (memq :optim-cnstlift o)
 	    (set! o (cons* :optim-cnstlift #t o)))
+	 (unless (memq :optim-strbuffer o)
+	    (set! o (cons* :optim-strbuffer #t o)))
 	 )
       (when (>=fx l 3)
 	 (unless (memq :optim-method o)
@@ -561,7 +565,7 @@
 	    (set! o (cons* :optim-letfun #t o)))
 	 (unless (memq :optim-propcache o)
 	    (set! o (cons* :optim-propcache #t o)))
-	 (unless (memq :optim-sweep o)
+ 	 (unless (memq :optim-sweep o)
 	    (set! o (cons* :optim-sweep #t o))))
       (when (>=fx l 1)
 	 (unless (memq :optim-tyflow o)

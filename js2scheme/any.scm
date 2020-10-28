@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 22 19:47:45 2017                          */
 ;*    Last change :  Wed Oct 17 08:39:37 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Copyright   :  2017-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An optional stage used in debug mode to replace UNKNOWN type     */
 ;*    occurrences with ANY.                                            */
@@ -165,3 +165,10 @@
       (any-types param)
       (call-default-walker)))
    
+;*---------------------------------------------------------------------*/
+;*    any-types ::J2SPostfix ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (any-types this::J2SPostfix)
+   (with-access::J2SPostfix this (type)
+      (set! type 'number)
+      (call-default-walker)))

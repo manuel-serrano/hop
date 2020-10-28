@@ -800,7 +800,7 @@
 						  (memq itype '(unknown number any)))))
 				     params)
 				  (not (type-checker? val)))))
-		     (when (>=fx (config-get conf :verbose 0) 5)
+		     (when (>=fx (config-get conf :verbose 0) 6)
 			(with-output-to-port (current-error-port)
 			   (lambda ()
 			      (display* " [" id 
@@ -869,8 +869,7 @@
       ;; some types are not intereting for duplicating functions
       ;; ignore this hints
       (not (memq (car hint)
-	      '(any unknown undefined null bool
-		no-string no-object))))
+	      '(any unknown undefined null bool no-string no-object no-array))))
    
    (define (param-best-hint-type p::J2SDecl)
       (with-access::J2SDecl p (hint usecnt useinloop vtype id)
@@ -881,9 +880,6 @@
 	       ((megamorphic-hint? hint)
 		;; a megamorphic parameter, don't specialize it
 		'(any 0 0))
-;* 	    ((decl-usage-has? p '(assig))                              */
-;* 	     ;; a writable parameter, don't specialize it              */
-;* 	     (list 'any 0 0))                                          */
 	       (else
 		(multiple-value-bind (bt bc)
 		   (best-hint-type p #t)
@@ -904,6 +900,13 @@
 	     (with-access::J2SFun (j2sdeclinit-val-fun this) (params body)
 		(let* ((besthints (map param-best-hint-type params))
 		       (score (apply max (map cadr besthints))))
+		   (when (>=fx (config-get conf :verbose 0) 5)
+		      (with-output-to-port (current-error-port)
+			 (lambda ()
+			    (display* " [[" id
+			       " besthints:" besthints
+			       " score:" score
+			       "]]"))))
 		   (if (not (score-duplicate? score besthints body))
 		       ;; no benefit in duplicating this function because:
 		       ;;   - the hintted parameters are not used frequently

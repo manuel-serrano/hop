@@ -72,6 +72,7 @@
 	   (is-uint32? expr::J2SExpr)
 	   (is-uint53? expr::J2SExpr)
 	   (is-string? expr::J2SExpr)
+	   (is-buffer-cast? ::J2SExpr)
 
 	   (j2s-jsstring val loc ::struct)
 	   (j2s-string->jsstring ::bstring ::struct)
@@ -98,6 +99,7 @@
 	   (inrange-uint32-number?::bool ::J2SExpr)
 	   (inrange-int53?::bool ::J2SExpr)
 
+	   (boxed-type?::bool ::symbol)
 	   (box ::obj ::symbol ::struct #!optional proc::obj)
 	   (box32 ::obj ::symbol ::struct  #!optional proc::obj)
 	   (box64 ::obj ::symbol ::struct #!optional proc::obj)
@@ -472,53 +474,61 @@
 ;*    is-integer? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (is-integer? expr::J2SExpr)
-   (type-integer? (j2s-vtype expr)))
+   (type-integer? (j2s-type expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-int30? ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (is-int30? expr::J2SExpr)
-   (type-int30? (j2s-vtype expr)))
+   (type-int30? (j2s-type expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-int53? ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (is-int53? expr::J2SExpr)
-   (let ((ty (j2s-vtype expr)))
+   (let ((ty (j2s-type expr)))
       (or (type-int53? ty) (eq? ty 'ufixnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-fx? ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (is-fx? expr::J2SExpr)
-   (type-fixnum? (j2s-vtype expr)))
+   (type-fixnum? (j2s-type expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-fixnum? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-fixnum? expr::J2SExpr ctx)
    (if (m64? (context-conf ctx))
-       (or (type-integer? (j2s-vtype expr)) (type-int53? (j2s-vtype expr)))
-       (or (type-int30? (j2s-vtype expr)) (eq? (j2s-vtype expr) 'ufixnum))))
+       (or (type-integer? (j2s-type expr)) (type-int53? (j2s-type expr)))
+       (or (type-int30? (j2s-type expr)) (eq? (j2s-type expr) 'ufixnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-uint32? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-uint32? expr::J2SExpr)
-   (type-uint32? (j2s-vtype expr)))
+   (type-uint32? (j2s-type expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-uint53? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-uint53? expr::J2SExpr)
-   (let ((ty (j2s-vtype expr)))
+   (let ((ty (j2s-type expr)))
       (or (type-int53? ty) (eq? ty 'ufixnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-string? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-string? expr::J2SExpr)
-   (eq? (j2s-vtype expr) 'string))
+   (eq? (j2s-type expr) 'string))
+
+;*---------------------------------------------------------------------*/
+;*    is-buffer-cast? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (is-buffer-cast? this)
+   (and (isa? this J2SCast)
+	(with-access::J2SCast this (expr)
+	   (eq? (j2s-type expr) 'buffer))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring ...                                                 */
@@ -576,8 +586,8 @@
    (define (js-get obj prop %this)
       (if (or (config-get conf :profile-cache #f)
 	      (> (config-get conf :debug 0) 0))
-	  `(js-get/debug ,(box obj tyobj ctx) ,prop %this ',loc)
-	  `(js-get ,(box obj tyobj ctx) ,prop %this)))
+	  `(js-get/debug ,obj ,prop %this ',loc)
+	  `(js-get ,obj ,prop %this)))
    
    (define (maybe-string? prop typrop)
       (and (not (number? prop))
@@ -605,7 +615,8 @@
    
    (let ((propstr (match-case prop
 		     ((& ?str . ?-) str)
-		     (else #f))))
+		     (else #f)))
+	 (obj (box obj tyobj ctx)))
       (cond
 	 ((> (config-get conf :debug 0) 0)
 	  (if (string? propstr)
@@ -672,7 +683,7 @@
 	      (if (eq? tyval 'uint32)
 		  `(js-get-lengthu32 ,obj %this #f)
 		  `(js-get-length ,obj %this #f))
-	      `(js-get ,(box obj tyobj ctx) ,prop %this)))
+	      `(js-get ,obj ,prop %this)))
 	 ((and field optim-arrayp (mightbe-number? field))
 	  (let ((o (gensym '%obj))
 		(p (gensym '%prop)))
@@ -717,90 +728,102 @@
 	   (not (type-number? typrop))
 	   (not (eq? typrop 'array))))
 
-   (let ((propstr (match-case prop
-		     ((& ?str . ?-) str)
-		     (else #f))))
-      (cond
-	 ((> (config-get conf :debug 0) 0)
-	  (if (string? propstr)
-	      `(js-put/debug! ,obj ,prop
-		  ,(box val tyval ctx) ,mode %this ',loc)
-	      `(js-put/debug! ,obj ,(box prop typrop ctx)
-		  ,(box val tyval ctx) ,mode %this ',loc)))
-	 ((equal? propstr "__proto__")
-	  `(js-setprototypeof ,obj ,(box val tyval ctx) %this "js2scheme"))
-	 ((eq? tyobj 'array)
-	  (case typrop
-	     ((uint32)
-	      `(js-array-index-set! ,obj ,prop
-		  ,(box val tyval ctx) ,(strict-mode? mode) %this))
-	     ((int32)
-	      `(js-array-fixnum-set! ,obj (int32->fixnum ,prop)
-		  ,(box val tyval ctx) ,(strict-mode? mode) %this))
-	     ((string)
-	      `(js-array-string-set! ,obj ,prop
-		  ,(box val tyval ctx) ,(strict-mode? mode) %this))
-	     (else
-	      (if (or (not field) (mightbe-number? field))
-		  `(js-array-set! ,obj ,prop ,(box val tyval ctx)
-		      ,(strict-mode? mode) %this)
-		  `(js-array-noindex-set! ,obj ,prop ,(box val tyval ctx)
-		      ,(strict-mode? mode) %this)))))
-	 ((eq? tyobj 'arguments)
-	  `(js-put! ,obj ,prop ,(box val tyval ctx) ,mode %this))
-	 ((and cache cspecs)
+   (if (boxed-type? tyval)
+       (if (number? val)
+	   `(begin
+	       ,(j2s-put! loc obj field tyobj prop typrop
+		   (box val tyval ctx) 'any mode ctx
+		   cache optim-arrayp :cspecs cspecs :cachefun cachefun)
+	       ,val)
+	   (let ((tmp (gensym)))
+	      `(let ((,tmp ,val))
+		  ,(j2s-put! loc obj field tyobj prop typrop
+		      (box tmp tyval ctx) 'any mode ctx
+		      cache optim-arrayp :cspecs cspecs :cachefun cachefun)
+		  ,tmp)))
+       (let ((propstr (match-case prop
+			 ((& ?str . ?-) str)
+			 (else #f))))
 	  (cond
-	     ((string? propstr)
-	      (if (string=? propstr "length")
-		  `(js-put-length! ,obj ,val
-		      ,mode ,(js-pcache cache) %this)
-		  (begin
-		     (case tyobj
-			((object global this)
-			 `(js-put-jsobject-name/cache! ,obj ,prop
-			     ,(box val tyval ctx)
-			     ,mode %this
-			     ,(js-pcache cache)
-			     ,(loc->point loc) ',cspecs
-			     ,cachefun))
-			(else
-			 `(js-put-name/cache! ,obj ,prop
-			     ,(box val tyval ctx)
-			     ,mode %this
-			     ,(js-pcache cache) ,(loc->point loc)
-			     ',cspecs
-			     ,cachefun))))))
-	     ((memq typrop '(int32 uint32))
-	      `(maybe-array-set! ,obj ,(box prop typrop ctx)
-		  ,(box val tyval ctx) ,mode %this))
-	     ((or (number? prop) (null? cspecs))
-	      (maybe-array-set! prop (box val tyval ctx)))
-	     ((and (memq tyobj '(object global this)) (eq? typrop 'string))
-	      `(js-put-jsobject/name-cache! ,obj ,prop
-		  ,(box val tyval ctx)
-		  ,mode %this
-		  ,(loc->point loc) ',cspecs))
-	     ((maybe-string? prop typrop)
-	      (if (memq tyobj '(object global this))
-		  `(js-put-jsobject/cache! ,obj ,prop
-		      ,(box val tyval ctx) ,mode %this
-		      ,(loc->point loc) ,(loc->src loc))
-		  `(js-put/cache! ,obj ,prop
-		      ,(box val tyval ctx) ,mode %this
-		      ,(loc->point loc) ,(loc->src loc))))
+	     ((> (config-get conf :debug 0) 0)
+	      (if (string? propstr)
+		  `(js-put/debug! ,obj ,prop
+		      ,val ,mode %this ',loc)
+		  `(js-put/debug! ,obj ,(box prop typrop ctx)
+		      ,val ,mode %this ',loc)))
+	     ((equal? propstr "__proto__")
+	      `(js-setprototypeof ,obj ,val %this "js2scheme"))
+	     ((eq? tyobj 'array)
+	      (case typrop
+		 ((uint32)
+		  `(js-array-index-set! ,obj ,prop
+		      ,val ,(strict-mode? mode) %this))
+		 ((int32)
+		  `(js-array-fixnum-set! ,obj (int32->fixnum ,prop)
+		      ,val ,(strict-mode? mode) %this))
+		 ((string)
+		  `(js-array-string-set! ,obj ,prop
+		      ,val ,(strict-mode? mode) %this))
+		 (else
+		  (if (or (not field) (mightbe-number? field))
+		      `(js-array-set! ,obj ,prop ,val
+			  ,(strict-mode? mode) %this)
+		      `(js-array-noindex-set! ,obj ,prop ,val
+			  ,(strict-mode? mode) %this)))))
+	     ((eq? tyobj 'arguments)
+	      `(js-put! ,obj ,prop ,val ,mode %this))
+	     ((and cache cspecs)
+	      (cond
+		 ((string? propstr)
+		  (if (string=? propstr "length")
+		      `(js-put-length! ,obj ,val
+			  ,mode ,(js-pcache cache) %this)
+		      (begin
+			 (case tyobj
+			    ((object global this)
+			     `(js-put-jsobject-name/cache! ,obj ,prop
+				 ,val
+				 ,mode %this
+				 ,(js-pcache cache)
+				 ,(loc->point loc) ',cspecs
+				 ,cachefun))
+			    (else
+			     `(js-put-name/cache! ,obj ,prop
+				 ,val
+				 ,mode %this
+				 ,(js-pcache cache) ,(loc->point loc)
+				 ',cspecs
+				 ,cachefun))))))
+		 ((memq typrop '(int32 uint32))
+		  `(maybe-array-set! ,obj ,(box prop typrop ctx)
+		      ,val ,mode %this))
+		 ((or (number? prop) (null? cspecs))
+		  (maybe-array-set! prop val))
+		 ((and (memq tyobj '(object global this)) (eq? typrop 'string))
+		  `(js-put-jsobject/name-cache! ,obj ,prop
+		      ,val
+		      ,mode %this
+		      ,(loc->point loc) ',cspecs))
+		 ((maybe-string? prop typrop)
+		  (if (memq tyobj '(object global this))
+		      `(js-put-jsobject/cache! ,obj ,prop
+			  ,val ,mode %this
+			  ,(loc->point loc) ,(loc->src loc))
+		      `(js-put/cache! ,obj ,prop
+			  ,val ,mode %this
+			  ,(loc->point loc) ,(loc->src loc))))
+		 (else
+		  `(js-put! ,obj ,prop ,val ,mode %this))))
+	     ((and field optim-arrayp (mightbe-number? field))
+	      (maybe-array-set! (box prop typrop ctx) val))
 	     (else
-	      `(js-put! ,obj ,prop ,(box val tyval ctx) ,mode %this))))
-	 ((and field optim-arrayp (mightbe-number? field))
-	  (maybe-array-set! (box prop typrop ctx) (box val tyval ctx)))
-	 (else
-	  (cond
-	     ((string? propstr)
-	      (js-put! obj prop (box val tyval ctx) mode '%this))
-	     ((and optim-arrayp (memq typrop '(int32 uint32)))
-	      (maybe-array-set! (box prop typrop ctx) (box val tyval ctx)))
-	     (else
-	      (js-put! obj (box prop typrop ctx)
-		  (box val tyval ctx) mode '%this)))))))
+	      (cond
+		 ((string? propstr)
+		  (js-put! obj prop val mode '%this))
+		 ((and optim-arrayp (memq typrop '(int32 uint32)))
+		  (maybe-array-set! (box prop typrop ctx) val))
+		 (else
+		  (js-put! obj (box prop typrop ctx) val mode '%this))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ranges                                                           */
@@ -980,6 +1003,12 @@
 	      (memq type '(int32 uint32 integer bint))))))
 
 ;*---------------------------------------------------------------------*/
+;*    boxed-type? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (boxed-type? type)
+   (memq type '(uint32 int32)))
+
+;*---------------------------------------------------------------------*/
 ;*    box ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define (box val type ctx #!optional proc::obj)
@@ -1047,8 +1076,6 @@
 ;*---------------------------------------------------------------------*/
 (define (expr-asuint32 expr::J2SExpr)
    (cond
-      ((eq? (j2s-vtype expr) 'uint32)
-       expr)
       ((eq? (j2s-type expr) 'uint32)
        expr)
       ((isa? expr J2SCast)
@@ -1210,33 +1237,37 @@
       (cond
 	 ((and ultrasimplelhs ultrasimplerhs)
 	  (gen scmlhs scmrhs))
+	 ((and ultrasimplelhs simplerhs)
+	  (gen scmlhs scmrhs))
+	 ((and simplelhs ultrasimplerhs)
+	  (gen scmlhs scmrhs))
 	 ((and testl testr)
 	  (gen scmlhs scmrhs))
 	 ((ultrasimple? lhs)
 	  (let ((right (gensym 'rhs)))
-	     `(let ((,(type-ident right (j2s-vtype rhs) conf) ,scmrhs))
+	     `(let ((,(type-ident right (j2s-type rhs) conf) ,scmrhs))
 		 ,(gen scmlhs right))))
 	 ((ultrasimple? rhs)
 	  (let ((left (gensym 'lhs)))
-	     `(let ((,(type-ident left (j2s-vtype lhs) conf) ,scmlhs))
+	     `(let ((,(type-ident left (j2s-type lhs) conf) ,scmlhs))
 		 ,(gen left scmrhs))))
 	 (testl
 	  (let ((right (gensym 'rhs)))
-	     `(let ((,(type-ident right (j2s-vtype rhs) conf) ,scmrhs))
+	     `(let ((,(type-ident right (j2s-type rhs) conf) ,scmrhs))
 		 ,(gen scmlhs right))))
 	 (testr
 	  (let ((left (gensym 'lhs)))
-	     `(let ((,(type-ident left (j2s-vtype lhs) conf) ,scmlhs))
+	     `(let ((,(type-ident left (j2s-type lhs) conf) ,scmlhs))
 		 ,(gen left scmrhs))))
 	 (else
 	  (let ((left (gensym 'lhs))
 		(right (gensym 'rhs)))
 	     (if flip 
-		 `(let* ((,(type-ident right (j2s-vtype rhs) conf) ,scmrhs)
-			 (,(type-ident left (j2s-vtype lhs) conf) ,scmlhs))
+		 `(let* ((,(type-ident right (j2s-type rhs) conf) ,scmrhs)
+			 (,(type-ident left (j2s-type lhs) conf) ,scmlhs))
 		     ,(gen left right))
-		 `(let* ((,(type-ident left (j2s-vtype lhs) conf) ,scmlhs)
-			 (,(type-ident right (j2s-vtype rhs) conf) ,scmrhs))
+		 `(let* ((,(type-ident left (j2s-type lhs) conf) ,scmlhs)
+			 (,(type-ident right (j2s-type rhs) conf) ,scmrhs))
 		     ,(gen left right))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1244,7 +1275,6 @@
 ;*---------------------------------------------------------------------*/
 (define (with-tmp lhs rhs mode return ctx gen::procedure)
    (with-tmp-flip #f lhs rhs mode return ctx gen))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    with-tmp-args ...                                                */

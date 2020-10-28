@@ -44,11 +44,11 @@
    
    (define (uncast a)
       (if (isa? a J2SCast)
-	  (with-access::J2SCast a (expr type)
-	     (if (eq? type 'any)
-		 expr
-		 a))
-	  a))
+          (with-access::J2SCast a (expr type)
+             (if (eq? type 'any)
+                 expr
+                 a))
+          a))
 
    (define (id-to-type id)
       (case id
@@ -71,21 +71,13 @@
    (with-access::J2SNew this (loc clazz args type)
       (let ((a (uncast (car args)))
 	    (t (new-array-type clazz)))
-	 `(js-new1 %this ,(j2s-scheme clazz mode return ctx)
-	     ,(j2s-scheme a mode return ctx)))))
-;* 	 (case (j2s-type a)                                            */
-;* 	    ((int32)                                                   */
-;* 	     `(,(j2s-array-new t)                                      */
-;* 	       (int32->uint32 ,(j2s-scheme a mode return ctx)) %this)) */
-;* 	    ((uint32)                                                  */
-;* 	     `(,(j2s-array-new t)                                      */
-;* 	       ,(j2s-scheme a mode return ctx) %this))                 */
-;* 	    ((memq t '(integer bint int53))                            */
-;* 	     `(,(j2s-array-new t)                                      */
-;* 	       (fixnum->uint32 ,(j2s-scheme a mode return ctx)) %this)) */
-;* 	    (else                                                      */
-;* 	     `(,(j2s-array-new t)                                      */
-;* 	       (js-touint32 ,(j2s-scheme a mode return ctx) %this) %this)))))) */
+	 (case (j2s-type a)
+	    ((int32 uint32)
+	     `(,(j2s-array-new t)
+	       ,(j2s-scheme-box a mode return ctx) %this))
+	    (else
+	     `(js-new1 %this ,(j2s-scheme-box clazz mode return ctx)
+		 ,(j2s-scheme-box a mode return ctx)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-tarray-set! ...                                              */

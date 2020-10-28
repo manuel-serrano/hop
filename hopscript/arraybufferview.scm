@@ -513,7 +513,7 @@
    (for-each (lambda (id)
 		(js-bind! %this proto (js-ascii-name->jsstring id)
 		   :value (js-make-function %this (js-not-implemented id %this)
-			     (js-function-arity 1 0)
+			     (js-function-arity 0 0)
 			     (js-function-info :name id :len 1))
 		   :configurable #t
 		   :writable #t
@@ -825,7 +825,7 @@
 				    ((>u32 l length) length)
 				    ((<u32 l beg) 0)
 				    (else (-u32 l beg)))))))
-		  (%js-typedarray (js-undefined) buffer
+		  (%js-typedarray this buffer
 		     (uint32->fixnum beg) (uint32->fixnum len))))))
       
       (js-bind! %this js-typedarray (& "from")

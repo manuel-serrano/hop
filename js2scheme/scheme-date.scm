@@ -58,6 +58,27 @@
 	  #f))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-date-utc ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-date-utc args::pair-nil mode return::procedure ctx)
+   
+   (define (j2s-scheme-box o mode return ctx)
+      (let ((t (j2s-type o)))
+	 (box (j2s-scheme o mode return ctx) t ctx)))
+   
+   (case (length args)
+      ((0 1 2 3 4 5 6 7)
+       (let ((ctor (symbol-append 'js-date-utc
+		      (string->symbol
+			 (integer->string (length args))))))
+	  `(,ctor %this
+	      ,@(map (lambda (a)
+			(j2s-scheme-box a mode return ctx))
+		   args))))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-date-builtin-method ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-date-builtin-method fun::J2SAccess args expr mode return conf)
@@ -67,10 +88,10 @@
 	    (cond
 	       ((string=? val "now")
 		(case (length args)
-		   ((0)
-		    '(js-date-now))
-		   (else
-		    #f)))
+		   ((0) '(js-date-now))
+		   (else #f)))
+	       ((string=? val "UTC")
+		(j2s-date-utc args mode return conf))
 	       (else
 		#f))))))
 

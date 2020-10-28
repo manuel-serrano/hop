@@ -34,6 +34,9 @@ extern obj_t BGl_JsArrayz00zz__hopscript_typesz00;
 extern obj_t BGl_JsFunctionz00zz__hopscript_typesz00;
 extern obj_t BGl_JsMethodz00zz__hopscript_typesz00;
 extern obj_t BGl_JsProcedurez00zz__hopscript_typesz00;
+extern obj_t BGl_JsStringLiteralASCIIz00zz__hopscript_typesz00;
+
+extern obj_t string_append( obj_t, obj_t );
 
 #define JSOBJECT_SIZE \
    sizeof( struct BgL_jsobjectz00_bgl )
@@ -65,6 +68,11 @@ extern obj_t BGl_JsProcedurez00zz__hopscript_typesz00;
 #define JSARRAY_CLASS_INDEX \
    BGL_CLASS_INDEX( BGl_JsArrayz00zz__hopscript_typesz00 )
 
+#define JSSTRINGLITERALASCII_SIZE \
+   sizeof( struct BgL_jsstringliteralasciiz00_bgl )
+#define JSSTRINGLITERALASCII_CLASS_INDEX \
+   BGL_CLASS_INDEX( BGl_JsStringLiteralASCIIz00zz__hopscript_typesz00 )
+
 extern obj_t bgl_js_profile_allocs;
 obj_t bgl_profile_pcache_tables = BNIL;
 extern int GC_pthread_create();
@@ -81,6 +89,10 @@ static uint32_t jsmethod_mode;
 
 static uint32_t jsprocedure_mode;
 static BgL_jsconstructmapz00_bglt jsprocedure_cmap;
+
+static uint32_t jsstringliteralascii_mode, jsstringliteralascii_normmode;
+static obj_t jsstringliteralascii_not_a_string_cache;
+static uint32_t jsstringliteralascii_normalize_threshold;
 
 static obj_t empty_vector;
 
@@ -114,6 +126,7 @@ typedef struct BgL_jspropertycachez00_bgl pcache_t;
 #define HOP_ALLOC_JSFUNCTION_POLICY HOP_ALLOC_POLICY
 #define HOP_ALLOC_JSMETHOD_POLICY HOP_ALLOC_POLICY
 #define HOP_ALLOC_JSPROCEDURE_POLICY HOP_ALLOC_POLICY
+#define HOP_ALLOC_JSSTRINGLITERALASCII_POLICY HOP_ALLOC_POLICY
 
 /* #undef HOP_ALLOC_JSFUNCTION_POLICY                                  */
 /* #define HOP_ALLOC_JSFUNCTION_POLICY HOP_ALLOC_CLASSIC               */
@@ -151,11 +164,16 @@ static obj_t bgl_make_jsmethod_sans( obj_t procedure, obj_t method,
 static obj_t bgl_make_jsprocedure_sans( obj_t procedure, long arity, obj_t __proto__ );
 #endif
 
+#if HOP_ALLOC_JSSTRINGLITERALASCII_POLICY != HOP_ALLOC_CLASSIC
+static obj_t bgl_make_jsstringliteralascii_sans( uint32_t len, obj_t left, obj_t right );
+#endif
+
 #define POOLSZ( sz ) (12800 >> sz)
 #define JSPROXY_POOLSZ POOLSZ( 3 )
 #define JSFUNCTION_POOLSZ POOLSZ( 4 )
 #define JSMETHOD_POOLSZ POOLSZ( 4 )
 #define JSPROCEDURE_POOLSZ POOLSZ( 4 )
+#define JSSTRINGLITERALASCII_POOLSZ POOLSZ( 4 )
 #define WORK_NUMBER 1
 
 #define ALLOC_STATS 0
@@ -174,11 +192,12 @@ static obj_t bgl_make_jsprocedure_sans( obj_t procedure, long arity, obj_t __pro
 /*    spin locks                                                       */
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_POLICY == HOP_ALLOC_SPINLOCK
-static pthread_spinlock_t lock1, lock2, lock3, lock4, lock5, lock6;
+static pthread_spinlock_t lock1, lock2, lock3, lock4, lock5, lock6, lock6, lock8;
 static pthread_spinlock_t lockproxy;
 static pthread_spinlock_t lockfunction;
 static pthread_spinlock_t lockmethod;
 static pthread_spinlock_t lockprocedure;
+static pthread_spinlock_t lockstringliteralascii;
 
 #  define alloc_spin_init( x, attr ) pthread_spin_init( x, attr )
 #  define alloc_spin_lock( x ) pthread_spin_lock( x )
@@ -222,6 +241,7 @@ static void jsproxy_fill_buffer( apool_t *pool, void *arg );
 static void jsfunction_fill_buffer( apool_t *pool, void *arg );
 static void jsmethod_fill_buffer( apool_t *pool, void *arg );
 static void jsprocedure_fill_buffer( apool_t *pool, void *arg );
+static void jsstringliteralascii_fill_buffer( apool_t *pool, void *arg );
 
 /*---------------------------------------------------------------------*/
 /*    alloc pools                                                      */
@@ -268,6 +288,13 @@ static pthread_cond_t alloc_pool_cond;
    .payload = { .dummy = 0 } \
 };
 
+#define APOOL_JSSTRINGLITERALASCII_INIT() { \
+   .fill_buffer = &jsstringliteralascii_fill_buffer, \
+   .idx = JSSTRINGLITERALASCII_POOLSZ, \
+   .size = JSSTRINGLITERALASCII_POOLSZ, \
+   .payload = { .dummy = 0 } \
+};
+
 static HOP_ALLOC_THREAD_DECL apool_t pool1 = APOOL_JSOBJECT_INIT( 1 );
 static HOP_ALLOC_THREAD_DECL apool_t npool1 = APOOL_JSOBJECT_INIT( 1 );
 
@@ -286,6 +313,12 @@ static HOP_ALLOC_THREAD_DECL apool_t npool5 = APOOL_JSOBJECT_INIT( 5 );
 static HOP_ALLOC_THREAD_DECL apool_t pool6 = APOOL_JSOBJECT_INIT( 6 );
 static HOP_ALLOC_THREAD_DECL apool_t npool6 = APOOL_JSOBJECT_INIT( 6 );
 
+static HOP_ALLOC_THREAD_DECL apool_t pool7 = APOOL_JSOBJECT_INIT( 7 );
+static HOP_ALLOC_THREAD_DECL apool_t npool7 = APOOL_JSOBJECT_INIT( 7 );
+
+static HOP_ALLOC_THREAD_DECL apool_t pool8 = APOOL_JSOBJECT_INIT( 8 );
+static HOP_ALLOC_THREAD_DECL apool_t npool8 = APOOL_JSOBJECT_INIT( 8 );
+
 static HOP_ALLOC_THREAD_DECL apool_t poolproxy = APOOL_JSPROXY_INIT();
 static HOP_ALLOC_THREAD_DECL apool_t npoolproxy = APOOL_JSPROXY_INIT();
 
@@ -298,12 +331,17 @@ static HOP_ALLOC_THREAD_DECL apool_t npoolmethod = APOOL_JSMETHOD_INIT();
 static HOP_ALLOC_THREAD_DECL apool_t poolprocedure = APOOL_JSPROCEDURE_INIT();
 static HOP_ALLOC_THREAD_DECL apool_t npoolprocedure = APOOL_JSPROCEDURE_INIT();
 
+static HOP_ALLOC_THREAD_DECL apool_t poolstringliteralascii = APOOL_JSSTRINGLITERALASCII_INIT();
+static HOP_ALLOC_THREAD_DECL apool_t npoolstringliteralascii = APOOL_JSSTRINGLITERALASCII_INIT();
+
 int inl1 = 0, snd1 = 0, slow1 = 0, qsz1 = 0;
 int inl2 = 0, snd2 = 0, slow2 = 0, qsz2 = 0;
 int inl3 = 0, snd3 = 0, slow3 = 0, qsz3 = 0;
 int inl4 = 0, snd4 = 0, slow4 = 0, qsz4 = 0;
 int inl5 = 0, snd5 = 0, slow5 = 0, qsz5 = 0;
 int inl6 = 0, snd6 = 0, slow6 = 0, qsz6 = 0;
+int inl7 = 0, snd7 = 0, slow7 = 0, qsz7 = 0;
+int inl8 = 0, snd8 = 0, slow8 = 0, qsz8 = 0;
 
 int inlproxy = 0, sndproxy = 0, slowproxy = 0, qszproxy = 0;
 int inlfunction = 0, sndfunction = 0, slowfunction = 0, qszfunction = 0;
@@ -424,6 +462,24 @@ jsprocedure_fill_buffer( apool_t *pool, void *arg ) {
 }
      
 /*---------------------------------------------------------------------*/
+/*    static void                                                      */
+/*    jsstringliteralascii_buffer_fill ...                             */
+/*---------------------------------------------------------------------*/
+static void
+jsstringliteralascii_fill_buffer( apool_t *pool, void *arg ) {
+#if HOP_ALLOC_JSSTRINGLITERALASCII_POLICY != HOP_ALLOC_CLASSIC
+   int i;
+   obj_t *buffer = pool->buffer;
+   const uint32_t size = pool->size;
+
+   for( i = 0; i < size; i++ ) {
+      buffer[ i ] =
+	 bgl_make_jsstringliteralascii_sans( 0, 0L, 0L );
+   }
+#endif   
+}
+     
+/*---------------------------------------------------------------------*/
 /*    static void *                                                    */
 /*    thread_alloc_worker ...                                          */
 /*---------------------------------------------------------------------*/
@@ -466,10 +522,13 @@ bgl_init_jsalloc_locks() {
    alloc_spin_init( &lock4, 0L );
    alloc_spin_init( &lock5, 0L );
    alloc_spin_init( &lock6, 0L );
+   alloc_spin_init( &lock7, 0L );
+   alloc_spin_init( &lock8, 0L );
    alloc_spin_init( &lockproxy, 0L );
    alloc_spin_init( &lockfunction, 0L );
    alloc_spin_init( &lockmethod, 0L );
    alloc_spin_init( &lockprocedure, 0L );
+   alloc_spin_init( &lockstringliteralascii, 0L );
 
    empty_vector = create_vector_uncollectable( 0 );
 }
@@ -584,6 +643,25 @@ bgl_init_jsalloc_procedure( BgL_jsconstructmapz00_bglt cmap,
 
    jsprocedure_cmap = cmap;
    jsprocedure_mode = mode;
+}
+
+/*---------------------------------------------------------------------*/
+/*    int                                                              */
+/*    bgl_init_jsalloc_stringliteralascii ...                          */
+/*---------------------------------------------------------------------*/
+int
+bgl_init_jsalloc_stringliteralascii( uint32_t mode, uint32_t normmode, obj_t not_a_string_cache, uint32_t threshold ) {
+   static int jsinit = 0;
+   int i;
+
+   if( jsinit ) return 1;
+
+   jsinit = 1;
+
+   jsstringliteralascii_mode = mode;
+   jsstringliteralascii_normmode = normmode;
+   jsstringliteralascii_not_a_string_cache = not_a_string_cache;
+   jsstringliteralascii_normalize_threshold = threshold;
 }
 
 /*---------------------------------------------------------------------*/
@@ -710,6 +788,8 @@ BGL_MAKE_JSOBJECT( 3 )
 BGL_MAKE_JSOBJECT( 4 )
 BGL_MAKE_JSOBJECT( 5 )
 BGL_MAKE_JSOBJECT( 6 )
+BGL_MAKE_JSOBJECT( 7 )
+BGL_MAKE_JSOBJECT( 8 )
 #endif
 
 /*---------------------------------------------------------------------*/
@@ -728,6 +808,8 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mo
       case 4: return bgl_make_jsobject4( constrmap, __proto__, mode );
       case 5: return bgl_make_jsobject5( constrmap, __proto__, mode );
       case 6: return bgl_make_jsobject6( constrmap, __proto__, mode );
+      case 7: return bgl_make_jsobject7( constrmap, __proto__, mode );
+      case 8: return bgl_make_jsobject8( constrmap, __proto__, mode );
       default: return bgl_make_jsobject_sans( (int)constrsize, constrmap, __proto__, mode );
    }
 }
@@ -801,7 +883,7 @@ bgl_make_jsproxy( obj_t target, obj_t handler,
       ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_getcachez00 = getcache; 
       ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_setcachez00 = setcache; 
       ((BgL_jsproxyz00_bglt)(COBJECT( o )))->BgL_applycachez00 = applycache; 
-      ALLOC_STAT( inlproxy++ ); 
+      ALLOC_STAT( inlproxy++ );
       return o; 
    } else if( npoolproxy.idx == 0 ) { 
       /* swap the two pools */ 
@@ -994,11 +1076,11 @@ bgl_make_jsfunction( obj_t procedure,
 
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
-/*    bgl_make_jsmethod_sans ...                                     */
+/*    bgl_make_jsmethod_sans ...                                       */
 /*    -------------------------------------------------------------    */
 /*    Fast C allocation, equivalent to                                 */
 /*                                                                     */
-/*      (instantiate::JsMethod                                       */
+/*      (instantiate::JsMethod                                         */
 /*         (__proto__ __proto__)                                       */
 /*         (cmap constrmap)                                            */
 /*         (elements proxy-elements))                                  */
@@ -1236,6 +1318,164 @@ bgl_make_jsprocedure( obj_t procedure, long arity, obj_t __proto__ ) {
    } 
 }
 #endif
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_make_jsstringliteralascii_sans ...                           */
+/*---------------------------------------------------------------------*/
+#if HOP_ALLOC_JSSTRINGLITERALASCII_POLICY != HOP_ALLOC_CLASSIC
+#   define BGL_MAKE_JSSTRINGLITERALASCII_SANS static obj_t bgl_make_jsstringliteralascii_sans
+#else
+#   define BGL_MAKE_JSSTRINGLITERALASCII_SANS obj_t bgl_make_jsstringliteralascii
+#endif
+
+BGL_MAKE_JSSTRINGLITERALASCII_SANS( uint32_t len, obj_t left, obj_t right ) {
+   BgL_jsstringliteralasciiz00_bglt o = (BgL_jsstringliteralasciiz00_bglt)HOP_MALLOC( JSSTRINGLITERALASCII_SIZE );
+
+   // class initialization
+   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSSTRINGLITERALASCII_CLASS_INDEX );
+
+   // field init
+   o->BgL_lengthz00 = len;
+   o->BgL_leftz00 = left;
+   o->BgL_rightz00 = right;
+   
+   // immutable fields init
+   BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), BFALSE );
+   BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)jsstringliteralascii_mode );
+
+   return BNANOBJECT( o );
+}
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_make_jsstringliteralascii ...                                */
+/*---------------------------------------------------------------------*/
+#if HOP_ALLOC_JSSTRINGLITERALASCII_POLICY != HOP_ALLOC_CLASSIC
+obj_t
+bgl_make_jsstringliteralascii( uint32_t len, obj_t left, obj_t right ) {
+   alloc_spin_lock( &lockstringliteralascii );
+
+   if( poolstringliteralascii.idx < JSSTRINGLITERALASCII_POOLSZ ) {
+      obj_t o = poolstringliteralascii.buffer[ poolstringliteralascii.idx ];
+      poolstringliteralascii.buffer[ poolstringliteralascii.idx++ ] = 0;
+      alloc_spin_unlock( &lockstringliteralascii );
+
+      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_lengthz00 = len; 
+      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_leftz00 = left; 
+      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_rightz00 = right;
+
+      ALLOC_STAT( inlstringliteralascii++ );
+      return o;
+   } else if( npoolstringliteralascii.idx == 0 ) {
+      /* swap the two pools */
+      obj_t *buffer = poolstringliteralascii.buffer;
+      obj_t o = npoolstringliteralascii.buffer[ 0 ];
+
+      poolstringliteralascii.buffer = npoolstringliteralascii.buffer;
+      poolstringliteralascii.buffer[ 0 ] = 0;
+      poolstringliteralascii.idx = 1;
+
+      npoolstringliteralascii.buffer = buffer;
+      npoolstringliteralascii.idx = npoolstringliteralascii.size;
+
+      /* add the pool to the pool queue */
+      pool_queue_add( &npoolstringliteralascii );
+
+      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_lengthz00 = len; 
+      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_leftz00 = left; 
+      ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_rightz00 = right;
+      
+      ALLOC_STAT( sndstringliteralascii++ );
+      alloc_spin_unlock( &lockstringliteralascii );
+
+      return o;
+   } else {
+      /* initialize the two alloc pools */
+      if( !poolstringliteralascii.buffer ) {
+	 poolstringliteralascii.buffer =
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSSTRINGLITERALASCII_POOLSZ );
+	 poolstringliteralascii.idx = JSSTRINGLITERALASCII_POOLSZ;
+      }
+      if( !npoolstringliteralascii.buffer ) {
+	 npoolstringliteralascii.buffer =
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSSTRINGLITERALASCII_POOLSZ );
+	 npoolstringliteralascii.idx = JSSTRINGLITERALASCII_POOLSZ;
+	 pool_queue_add( &npoolstringliteralascii );
+      }
+
+      /* default slow alloc */
+      ALLOC_STAT( slowstringliteralascii++ );
+      ALLOC_STAT( pool_queue_idx > qszstringliteralascii ? qszstringliteralascii = pool_queue_idx : 0 );
+      ALLOC_STAT( (slowstringliteralascii % ALLOC_STAT_FREQ == 0) ? fprintf( stderr, "inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%d\n", inlstringliteralascii, sndstringliteralascii, slowstringliteralascii, (long)(100*(double)slowstringliteralascii/(double)(inlstringliteralascii+sndstringliteralascii)), inlstringliteralascii + sndstringliteralascii + slowstringliteralascii, qszstringliteralascii) : 0 );
+      alloc_spin_unlock( &lockstringliteralascii );
+      return bgl_make_jsstringliteralascii_sans( len, left, right );
+   }
+}
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_jsstring_append_ascii ...                                    */
+/*    -------------------------------------------------------------    */
+/*    This version is not used currently                               */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_jsstring_append_ascii( obj_t left, obj_t right ) {
+   uint32_t len = ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( left )))->BgL_lengthz00
+      + ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( right )))->BgL_lengthz00;
+
+   alloc_spin_lock( &lockstringliteralascii );
+   
+   if( len < jsstringliteralascii_normalize_threshold ) {
+      obj_t nleft = string_append(
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( left )))->BgL_leftz00,
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( right )))->BgL_leftz00 );
+      obj_t nright = jsstringliteralascii_not_a_string_cache;
+
+      if( poolstringliteralascii.idx < JSSTRINGLITERALASCII_POOLSZ ) {
+	 obj_t o = poolstringliteralascii.buffer[ poolstringliteralascii.idx ];
+	 poolstringliteralascii.buffer[ poolstringliteralascii.idx++ ] = 0;
+	 alloc_spin_unlock( &lockstringliteralascii );
+
+	 BGL_OBJECT_HEADER_SIZE_SET( o, (long)jsstringliteralascii_normmode );
+	 
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_lengthz00 = len; 
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_leftz00 = nleft; 
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_rightz00 = nright;
+
+	 ALLOC_STAT( inlstringliteralascii++ );
+	 return o;
+      } else {
+	 alloc_spin_unlock( &lockstringliteralascii );
+
+	 {
+	    obj_t o = bgl_make_jsstringliteralascii( len, nleft, nright );
+	    BGL_OBJECT_HEADER_SIZE_SET( o, (long)jsstringliteralascii_normmode );
+	    return o;
+	 }
+      }
+   } else {
+      if( poolstringliteralascii.idx < JSSTRINGLITERALASCII_POOLSZ ) {
+	 obj_t o = poolstringliteralascii.buffer[ poolstringliteralascii.idx ];
+	 poolstringliteralascii.buffer[ poolstringliteralascii.idx++ ] = 0;
+	 alloc_spin_unlock( &lockstringliteralascii );
+
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_lengthz00 = len; 
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_leftz00 = left; 
+	 ((BgL_jsstringliteralasciiz00_bglt)(COBJECT( o )))->BgL_rightz00 = right;
+
+	 ALLOC_STAT( inlstringliteralascii++ );
+	 return o;
+      } else {
+	 alloc_spin_unlock( &lockstringliteralascii );
+
+	 {
+	    return bgl_make_jsstringliteralascii( len, left, right );
+	 }
+      }
+   }
+}
 
 /*---------------------------------------------------------------------*/
 /*    static obj_t                                                     */

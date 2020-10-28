@@ -74,11 +74,12 @@
 ;*    need-cast? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (need-cast? type totype)
-   (or (and (eq? totype 'any) (memq type '(int32 uint32)))
-       (not (or (and (eq? type 'function) (eq? totype 'arrow))
-		(eq? type totype)
-		(eq? totype '*)
-		(and (eq? totype 'any) (memq type *any-types*))))))
+   (unless (eq? type totype)
+      (or (and (eq? totype 'any) (memq type '(int32 uint32)))
+	  (not (or (and (eq? type 'function) (eq? totype 'arrow))
+		   (eq? type totype)
+		   (eq? totype '*)
+		   (and (eq? totype 'any) (memq type *any-types*)))))))
 
 (define *any-types*
    '(undefined null bool integer number object function arrow string real array regexp arguments class))
@@ -96,7 +97,7 @@
 ;*    cast ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (cast expr::J2SExpr totype::symbol)
-   (cast-expr expr (j2s-vtype expr) totype))
+   (cast-expr expr (j2s-type expr) totype))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SNode ...                                         */
@@ -166,9 +167,15 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SRef ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Variable references might contain an implicit cast that          */
+;*    is resolve at the code generation time. For instance,            */
+;*    a variable of type "any" referenced as a "uint32" will not       */
+;*    yield to introduce an explicit cast. I will remain as is.        */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SRef totype)
-   (cast this totype))
+   (with-access::J2SRef this (type)
+      (cast-expr this type totype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SWithRef ...                                      */
@@ -236,7 +243,7 @@
 	  this)
 	 ((eq? type totype)
 	  this)
-	 ((need-cast? (j2s-vtype expr) totype)
+	 ((need-cast? (j2s-type expr) totype)
 	  (J2SCast totype expr))
 	 ((need-cast? (j2s-vtype expr) type)
 	  this)
@@ -403,22 +410,13 @@
 	  (cast this totype))
 	 ((eq? totype '*)
 	  (set! lhs (type-cast! lhs '*))
-	  (set! rhs
-	     (type-cast! rhs
-		(if (or (isa? lhs J2SRef) (isa? lhs J2SUnresolvedRef))
-		    (j2s-vtype lhs)
-		    'any)))
+	  (set! rhs (type-cast! rhs '*))
 	  this)
 	 (else
 	  (let* ((id (gensym 'assig))
 		 (tr (j2s-type rhs))
 		 (d (J2SLetOpt/vtype tr '(get) id (type-cast! rhs tr))))
-	     (set! rhs
-		(type-cast! (J2SRef d :type tr)
-		   (if (or (isa? lhs J2SRef)
-			   (isa? lhs J2SUnresolvedRef))
-		       (j2s-vtype lhs)
-		       'any)))
+	     (set! rhs (type-cast! (J2SRef d :type tr) '*))
 	     (let ((tyb (if (eq? totype '*) type totype)))
 		(J2SBindExit/type tyb #f 
 		   (J2SLetRecBlock #f  (list d)
@@ -430,8 +428,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SPrefix totype)
    (with-access::J2SAssig this (lhs rhs type loc)
-      (set! lhs (type-cast! lhs '*))
-      (set! rhs (type-cast! rhs '*))
+      (let ((lty (j2s-type lhs)))
+	 (set! lhs (type-cast! lhs (if (type-number? lty) lty 'number))))
+      (with-access::J2SBinary rhs ((rlhs lhs) rhs)
+	 (let ((lty (j2s-type rlhs)))
+	    (set! rlhs (type-cast! rlhs (if (type-number? lty) lty 'number))))
+	 (set! rhs (type-cast! rhs '*)))
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/
@@ -439,8 +441,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SPostfix totype)
    (with-access::J2SAssig this (lhs rhs type loc)
-      (set! lhs (type-cast! lhs '*))
-      (set! rhs (type-cast! rhs '*))
+      (let ((lty (j2s-type lhs)))
+	 (set! lhs (type-cast! lhs (if (type-number? lty) lty 'number))))
+      (with-access::J2SBinary rhs ((rlhs lhs) rhs)
+	 (let ((lty (j2s-type rlhs)))
+	    (set! rlhs (type-cast! rlhs (if (type-number? lty) lty 'number))))
+	 (set! rhs (type-cast! rhs '*)))
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/
@@ -463,9 +469,7 @@
 	  (cast this totype))
 	 (else
 	  (set! lhs (type-cast! lhs '*))
-	  (if (eq? (j2s-type lhs) 'string)
-	      (set! rhs (type-cast! rhs 'string))
-	      (set! rhs (type-cast! rhs '*)))
+	  (set! rhs (type-cast! rhs '*))
 	  (cast this totype)))))
 
 ;*---------------------------------------------------------------------*/
@@ -482,10 +486,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SUnary totype)
    (with-access::J2SUnary this (op expr type)
-      (if (and (eq? op '~) (eq? type 'int32))
-	  (set! expr (type-cast! expr 'int32))
-	  (set! expr (type-cast! expr '*)))
-      ;; dont cast unary - op as this is handled by the code generator
+      (cond
+	 ((and (eq? op '~) (eq? type 'int32))
+	  (set! expr (type-cast! expr 'int32)))
+	 (else
+	  (set! expr (type-cast! expr '*))))
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/
@@ -645,6 +650,13 @@
 				(eq? (j2s-type expr) 'uint32))))
 		  cases))
 	  (type-cast-switch this 'uint32))
+	 ((and (eq? (j2s-type key) 'int53)
+	       (every (lambda (c)
+			 (or (isa? c J2SDefault)
+			     (with-access::J2SCase c (expr)
+				(memq (j2s-type expr) '(uint32 int32 int53)))))
+		  cases))
+	  (type-cast-switch this 'int53))
 	 ((and (expr-int? key)
 	       (every (lambda (c)
 			 (or (isa? c J2SDefault)
@@ -652,7 +664,6 @@
 				(expr-int? expr))))
 		  cases))
 	  (type-cast-switch this 'integer))
-	 
 	 ((and (eq? (j2s-type key) 'string)
 	       (every (lambda (c)
 			 (or (isa? c J2SDefault)

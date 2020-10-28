@@ -157,3 +157,35 @@ function fooCast() {
 }
 
 assert.equal( fooCast(), 1, "integer cast" );
+
+/*---------------------------------------------------------------------*/
+/*    unary                                                            */
+/*---------------------------------------------------------------------*/
+function plus( x ) {
+   return +x;
+}
+
+assert.equal( plus( 0 ), 0, "plus 0" );
+assert.equal( plus( 0.0 ), 0.0, "plus 0.0" );
+assert.equal( plus( 1 ), 1, "plus 1" );
+assert.equal( plus( 1.2 ), 1.2, "plus 1.2" );
+assert.equal( plus( "2" ), 2, "plus \"2\"" );
+assert.equal( plus( "-1.2" ), -1.2, "plus \"-1.2\"" );
+assert.ok( isNaN( plus( "a" ) ), "plus \"a\"" );
+assert.equal( plus( -1 ), -1, "plus -1" );
+assert.equal( plus( -1.2 ), -1.2, "plus -1.2" );
+
+function minus( x ) {
+   return -x;
+}
+
+assert.equal( minus( 0 ), -0.0, "minus 0" );
+assert.equal( minus( 0.0 ), -0.0, "minus 0.0" );
+assert.equal( minus( 1 ), -1, "minus -1" );
+assert.equal( minus( 1.2 ), -1.2, "minus -1.2" );
+assert.equal( minus( "1" ), -1, "minus \"1\"" );
+assert.equal( minus( "1.4" ), -1.4, "minus \"1.4\"" );
+assert.ok( isNaN( minus( "a" ) ), "minus \"a\"" );
+assert.equal( minus( -1 ), 1, "minus 1" );
+assert.equal( minus( -1.2 ), 1.2, "minus -1.2" );
+

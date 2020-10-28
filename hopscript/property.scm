@@ -1940,7 +1940,7 @@
 ;*    object.scm)                                                      */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-has-own-property::bool o p::obj %this)
-   (not (eq? (js-get-own-property o p %this) (js-undefined))))
+   (not (eq? (js-get-own-property (js-toobject-fast o %this) p %this) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-own-property ::JsObject ...                               */
@@ -1953,8 +1953,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-has-own-property-jsobject o::JsObject p::obj %this)
    
-   (define (js-has-own-property/w-cache o pname)
-      (jsobject-find o o pname
+   (define (js-has-own-property/w-cache o p)
+      (jsobject-find o o (js-toname p %this)
 	 ;; cmap search
 	 (lambda (owner i) #t)
 	 ;; hash search 
@@ -3667,15 +3667,16 @@
 	  #f)))
 
    (define (check-cmap-parent cmap n)
-      (with-access::JsConstructMap cmap (parent)
-	 (with-access::JsConstructMap parent (transitions)
-	    (let loop ((transitions transitions))
-	       (when (pair? transitions)
-		  (let ((tr (car transitions)))
-		     (if (and (eq? (transition-name tr) n)
-			      (eq? (transition-nextmap tr) cmap))
-			 parent
-			 (loop (cdr transitions)))))))))
+      (with-access::JsConstructMap cmap (parent transitions)
+	 (with-access::JsConstructMap parent ((ptransitions transitions))
+	    (when (=fx (+fx 1 (length ptransitions)) (length transitions))
+	       (let loop ((ptransitions ptransitions))
+		  (when (pair? ptransitions)
+		     (let ((tr (car ptransitions)))
+			(if (and (eq? (transition-name tr) n)
+				 (eq? (transition-nextmap tr) cmap))
+			    parent
+			    (loop (cdr ptransitions))))))))))
    
    (define (vector-delete! v i)
       (vector-copy! v i v (+fx i 1))
