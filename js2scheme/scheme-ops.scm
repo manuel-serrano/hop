@@ -2034,16 +2034,14 @@
 	      `(if (and (not (=u32 ,right #u32:0))
 			(=u32 (remainderu32 ,left ,right) #u32:0))
 		   (uint32->flonum (/u32 ,left ,right))
-		   (/fl ,(asreal left tl)
-		      ,(asreal right tr)))
+		   (/fl ,(asreal left tl) ,(asreal right tr)))
 	      `(/fl ,(asreal left tl) ,(todouble right tr ctx))))
 	 ((eq? tl 'int32)
 	  (if (eq? tr 'int32)
 	      `(if (and (not (=s32 ,right #s32:0))
 			(=s32 (remainders32 ,left ,right) #s32:0))
 		   (int32->flonum (/s32 ,left ,right))
-		   (/fl ,(asreal left tl)
-		      ,(asreal right tr)))
+		   (/fl ,(asreal left tl) ,(asreal right tr)))
 	      `(/fl ,(asreal left tl) ,(todouble right tr ctx))))
 	 ((eq? tr 'uint32)
 	  `(/fl ,(todouble left tl ctx) ,(asreal right tr)))
@@ -2076,8 +2074,7 @@
 	     `(if (and (not (=fx ,right 0))
 		       (=fx (remainderfx ,left ,right) 0))
 		  (/fx ,left ,right)
-		  (/fl ,(asreal left 'bint)
-		     ,(asreal right 'bint)))
+		  (/fl ,(asreal left 'bint) ,(asreal right 'bint)))
 	     (if-flonums? left tl right tr
 		`(/fl ,left ,right)
 		`(/js ,left ,right %this))))))
@@ -2426,6 +2423,14 @@
 	   (match-case val
 	      ((flonum->fixnum ?expr) expr)
 	      (else `(fixnum->flonum ,val)))))
+      ((number)
+       (cond
+	  ((fixnum? val) val)
+	  ((flonum? val) val)
+	  (else
+	   (match-case val
+	      ((flonum->fixnum ?expr) expr)
+	      (else `(if (fixnum? ,val) (fixnum->flonum ,val) ,val))))))
       (else
        val)))
 
