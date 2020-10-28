@@ -191,8 +191,8 @@
 	 (iterable ,(lambda (v expr ctx) `(js-jsstring->jsarray ,v %this)))
 	 (any js-string->jsstring)))
      (real
-	((uint32 js-number-touint32)
-	 (int32 js-number-toint32)
+	((uint32 ,js-number-touint32)
+	 (int32 ,js-number-toint32)
 	 (object ,js-number->jsobject)
 	 (number nop)
 	 (string ,js-number->string)
@@ -724,6 +724,24 @@
 
 (define (js-toobject v expr ctx)
    `(js-toobject %this ,v))
+
+(define (js-number-touint32 v)
+   (cond
+      ((fixnum? v)
+       (fixnum->uint32 v))
+      ((flonum? v)
+       (flonum->uint32 v))
+      (else
+       `(js-number-touint32 ,v))))
+
+(define (js-number-toint32 v)
+   (cond
+      ((fixnum? v)
+       (fixnum->int32 v))
+      ((flonum? v)
+       (flonum->int32 v))
+      (else
+       `(js-number-toint32 ,v))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-any->real ...                                                 */
