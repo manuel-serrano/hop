@@ -1416,15 +1416,20 @@
       (js-uint32-tointeger (js-toindex this))))
 
 ;*---------------------------------------------------------------------*/
+;*    substring-append ...                                             */
+;*---------------------------------------------------------------------*/
+(define (substring-append len left llen right rstart rlen)
+   (let ((buf ($make-string/wo-fill len)))
+      (blit-string! left 0 buf 0 llen)
+      (blit-string! right rstart buf llen rlen)
+      buf))
+
+;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append-ASCII ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-append-ASCII left right)
    
-   (define (substring-append len left llen right rstart rlen)
-      (let ((buf ($make-string/wo-fill len)))
-	 (blit-string! left 0 buf 0 llen)
-	 (blit-string! right rstart buf llen rlen)
-	 buf))
+   
    
    (with-access::JsStringLiteral left ((llen length)
 				       (lstr left))
@@ -1456,20 +1461,17 @@
    (with-access::JsStringLiteral left ((llen length)
 				       (lstr left))
       (with-access::JsStringLiteral right ((rlen length)
-					   (rstr left))
+					   (rstr left)
+					   (rstart right))
 	 (let ((len (+u32 llen rlen)))
 	    (if (<u32 len (string-append-auto-normalize-threshold))
-		(let* ((l (if (js-jsstring-substring? left)
-			      (with-access::JsStringLiteralSubstring left (right)
-				 (substring lstr right (+fx right (uint32->fixnum llen))))
-			      lstr))
-		       (r (if (js-jsstring-substring? right)
-			      (with-access::JsStringLiteralSubstring right (right)
-				 (substring rstr right (+fx right (uint32->fixnum rlen))))
-			      rstr))
-		       (nleft (utf8-string-append l r))
+		(let* ((nleft (if (js-jsstring-substring? right)
+				  (substring-append (uint32->fixnum len)
+				     lstr (uint32->fixnum llen)
+				     rstr rstart (uint32->fixnum rlen))
+				  (utf8-string-append lstr rstr)))
 		       (s (instantiate::JsStringLiteralUTF8
-			     (length (string-length nleft))
+			     (length (fixnum->uint32 (string-length nleft)))
 			     (left nleft)
 			     (right (js-not-a-string-cache)))))
 		   (js-object-mode-set! s (js-jsstring-normalized-utf8-mode))
@@ -3597,7 +3599,7 @@
 	     (let ((vrx js-regexp-positions))
 		(let* ((r (pregexp-match-n-positions! rx s vrx lastindex len)))
 		   (cond
-		      ((<fx r 0)
+		      ((<=fx r 0)
 		       this)
 		      ((string-index newstring #\$)
 		       (js-jsstring-append
@@ -3622,7 +3624,7 @@
 		(let loop ((i 0)
 			   (res (& "")))
 		   (let ((r (pregexp-match-n-positions! rx s vrx i len)))
-		      (if (<fx r 0)
+		      (if (<=fx r 0)
 			  (cond
 			     ((=fx i 0)
 			      this)

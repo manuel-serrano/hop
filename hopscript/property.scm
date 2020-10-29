@@ -36,6 +36,7 @@
 	   __hopscript_lib
 	   __hopscript_profile
 	   __hopscript_arithmetic
+	   __hopscript_number
 	   __hopscript_proxy)
 
    (use    __hopscript_array
@@ -2245,10 +2246,13 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-get o prop %this::JsGlobalObject)
    (cond
-      ((pair? o)
-       (js-get-pair o (js-toname prop %this) %this))
       ((null? o)
        (js-get-null o (js-toname prop %this) %this))
+      ((number? o)
+       (let ((obj (js-number->jsNumber o %this)))
+	  (js-get-jsobject obj o prop %this)))
+      ((pair? o)
+       (js-get-pair o (js-toname prop %this) %this))
       (else
        (let ((obj (js-toobject %this o)))
 	  (if obj
