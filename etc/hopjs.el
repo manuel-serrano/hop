@@ -1037,7 +1037,6 @@ usage: (js-return)  -- [RET]"
 	(let* ((win (get-buffer-window))
 	       (x (- (window-pixel-width win) 200))
 	       (y (- (window-pixel-height win) 250)))
-	  (message "WIN=%s" win)
 	  (popup-menu (cons
 		       "documentation"
 		       (cons

@@ -3067,7 +3067,7 @@
 	     (js-jsstring-split this separator limit %this))
 	    ((js-object? this)
 	     (js-call2 %this
-		(js-get-name/cache (js-tojsstring this %this)
+		(js-get-name/cache this
 		   (& "split") #f %this
 		   (or cache (js-pcache-ref js-string-pcache 11)))
 		this separator limit))
