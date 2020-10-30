@@ -752,7 +752,7 @@
       (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT)))
 
 ;*---------------------------------------------------------------------*/
-;*    Object header tag (max size 1<<15)                               */
+;*    Object header tag (max size 1<<15==32768)                        */
 ;*---------------------------------------------------------------------*/
 ;; JSSTRINGTAG, JSFUNCTIONTAG, and JSOBJECTTAG _must_ be
 ;; the first 3 (see stringliteral.scm and name.scm)

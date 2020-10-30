@@ -254,7 +254,7 @@
        (let* ((pat (js-tostring pattern %this))
 	      (oldrx (js-regexp-cache-get cache pat)))
 	  (if oldrx
-	      (js-regexp-construct/rx %this oldrx pattern #u32:0)
+	      (js-regexp-construct/rx %this oldrx pat #u32:0)
 	      (let ((new (js-regexp-construct %this pattern (js-undefined) (js-undefined))))
 		 (with-access::JsRegExp new (rx)
 		    (js-regexp-cache-put! cache pat rx)
@@ -573,7 +573,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-construct/rx ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (js-regexp-construct/rx %this::JsGlobalObject rx pattern flags::uint32)
+(define (js-regexp-construct/rx %this::JsGlobalObject rx pattern::bstring flags::uint32)
    (with-access::JsGlobalObject %this (js-regexp js-regexp-cmap js-regexp-prototype)
       (instantiateJsRegExp
 	 (cmap js-regexp-cmap)

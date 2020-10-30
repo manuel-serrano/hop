@@ -35,7 +35,7 @@
               "bgl_init_vector_sans_fill")
 	   ($alloca::void* (::long)
               "alloca"))
-   
+
    (import __hopscript_types
 	   __hopscript_arithmetic
 	   __hopscript_object
@@ -268,6 +268,14 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-create-vector len)
    (make-vector len (js-absent)))
+
+
+;*---------------------------------------------------------------------*/
+;*    gc-cleanup-inline-vector! ...                                    */
+;*---------------------------------------------------------------------*/
+(define (gc-cleanup-inline-vector! arr::JsArray vec::vector)
+   (when ($jsobject-vector-inline? arr)
+      (vector-fill! vec #unspecified)))
 
 ;*---------------------------------------------------------------------*/
 ;*    global parameters                                                */
@@ -936,8 +944,7 @@
 	     (let ((nlen (uint32->fixnum len)))
 		(cond-expand (profile (profile-vector-extension nlen len)))
 		(let ((nvec (copy-vector-fill! vec nlen (js-undefined))))
-		   (when ($jsobject-vector-inline? arr)
-		      (vector-fill! vec #unspecified))
+		   (gc-cleanup-inline-vector! arr vec)
 		   (set! vec nvec)))
 	     (cond-expand
 		((or bint30 bint32)
@@ -1353,12 +1360,11 @@
 	 [%assert-array! o "vector-shift!"]
 	 (with-access::JsArray o (vec length ilen)
 	    (let ((first (vector-ref vec 0))
-		  (nlen (-u32 len #u32:1))
-		  (vlen (vector-length vec)))
+		  (nlen (-u32 len #u32:1)))
 	       (vector-copy! vec 0 vec 1)
-	       (vector-set! vec (-fx vlen 1) (js-absent))
+	       (vector-set! vec (uint32->fixnum nlen) (js-absent))
 	       (set! length nlen)
-	       (set! ilen (-u32 ilen 1))
+	       (set! ilen nlen)
 	       first)))
       
       (define (array-shift! o len::uint32)
@@ -2978,8 +2984,7 @@
 		       (nlen (max (*fx len 2) (+fx (uint32->fixnum idx) 1)))
 		       (nvec (copy-vector-fill! vec nlen (js-absent))))
 		   (cond-expand (profile (profile-vector-extension nlen len)))
-		   (when ($jsobject-vector-inline? o)
-		      (vector-fill! vec #unspecified))
+		   (gc-cleanup-inline-vector! o vec)
 		   (set! vec nvec))
 		(vector-set! vec (uint32->fixnum idx) v)
 		(if (=u32 ilen idx)
@@ -3408,8 +3413,7 @@
 					   (cond-expand
 					      (profile (profile-vector-extension
 							  nlen olen)))
-					   (when ($jsobject-vector-inline? a)
-					      (vector-fill! vec #unspecified))
+					   (gc-cleanup-inline-vector! a vec)
 					   (set! vec nvec))
 					(js-define-own-property-array
 					   a index desc #f)))
@@ -4340,7 +4344,7 @@
 		      (vector-set! v (uint32->fixnum i)
 			 (proc thisarg val (js-uint32-tointeger i) o %this))
 		      (loop (+u32 i 1)))))))))
-   
+
    (with-access::JsArray this (length)
       (vector-map this length proc thisarg #u32:0)))
 
@@ -5003,12 +5007,11 @@
 	     (else
 	      (with-access::JsArray this (vec length ilen)
 		 (let ((first (vector-ref vec 0))
-		       (nlen (-u32 ilen #u32:1))
-		       (vlen (vector-length vec)))
+		       (nlen (-u32 ilen #u32:1)))
 		    (vector-copy! vec 0 vec 1)
-		    (vector-set! vec (-fx vlen 1) (js-absent))
+		    (vector-set! vec (uint32->fixnum nlen) (js-absent))
 		    (set! length nlen)
-		    (set! ilen (-u32 ilen 1))
+		    (set! ilen nlen)
 		    first)))))
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call0 %this

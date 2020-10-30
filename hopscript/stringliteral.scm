@@ -1428,9 +1428,6 @@
 ;*    js-jsstring-append-ASCII ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-append-ASCII left right)
-   
-   
-   
    (with-access::JsStringLiteral left ((llen length)
 				       (lstr left))
       (with-access::JsStringLiteral right ((rlen length)

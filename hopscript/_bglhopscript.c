@@ -1574,8 +1574,10 @@ bgl_jsarray_shift_builtin( obj_t array ) {
 #endif		
    nvec->vector.length = size - 1;
    nvec = BVECTOR( nvec );
-
+   
+   *(&(o->BgL_vecz00) + 1) = nvec;
    o->BgL_vecz00 = nvec;
+
    return res;
 }
    
