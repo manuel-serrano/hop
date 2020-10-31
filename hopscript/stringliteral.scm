@@ -319,6 +319,8 @@
    (with-access::JsStringLiteral obj (left right length)
       (tprint msg "[" (typeof obj)
 	 " length=" length " depth=" (js-jsstring-depth obj 1024)
+	 " charlen=" (js-jsstring-character-length obj)
+	 " culen=" (js-jsstring-codeunit-length obj)
 	 " norm=" (js-jsstring-normalized? obj)
 	 " left=" (literal-or-string left) " right="
 	 (literal-or-string right) "]")))
@@ -890,8 +892,8 @@
 			 (with-access::JsStringLiteral s (left right (llen length))
 	 		    (if (string? left)
 				(if (js-jsstring-substring? s)
-					      (blit-subbuffer! left buffer i right (uint32->fixnum llen))
-					      (blit-utf8-buffer! left buffer i))
+				    (blit-subbuffer! left buffer i right (uint32->fixnum llen))
+				    (blit-utf8-buffer! left buffer i))
 				(let ((ni (loop i left)))
 				   (unless (js-jsstring-normalized? s)
 				      (loop ni right))))))))
@@ -1418,7 +1420,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    substring-append ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (substring-append len left llen right rstart rlen)
+(define (substring-append len left lstart llen right rstart rlen)
    (let ((buf ($make-string/wo-fill len)))
       (blit-string! left 0 buf 0 llen)
       (blit-string! right rstart buf llen rlen)
@@ -1442,7 +1444,7 @@
 			    (length len)
 			    (left (if (js-jsstring-substring? right)
 				      (substring-append (uint32->fixnum len)
-					 lstr (uint32->fixnum llen)
+					 lstr 0 (uint32->fixnum llen)
 					 rstr rstart (uint32->fixnum rlen))
 				      (string-append lstr rstr)))
 			    (right (js-not-a-string-cache)))))
@@ -1456,17 +1458,28 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-append-UTF8 left right)
    (with-access::JsStringLiteral left ((llen length)
-				       (lstr left))
+				       (lstr left)
+				       (lstart right))
       (with-access::JsStringLiteral right ((rlen length)
 					   (rstr left)
 					   (rstart right))
 	 (let ((len (+u32 llen rlen)))
 	    (if (<u32 len (string-append-auto-normalize-threshold))
-		(let* ((nleft (if (js-jsstring-substring? right)
+		(let* ((nleft (cond
+				 ((js-jsstring-substring? right)
+				  (if (js-jsstring-substring? left)
+				      (substring-append (uint32->fixnum len)
+					 lstr lstart (uint32->fixnum llen)
+					 rstr rstart (uint32->fixnum rlen))
+				      (substring-append (uint32->fixnum len)
+					 lstr 0 (uint32->fixnum llen)
+					 rstr rstart (uint32->fixnum rlen))))
+				 ((js-jsstring-substring? left)
 				  (substring-append (uint32->fixnum len)
-				     lstr (uint32->fixnum llen)
-				     rstr rstart (uint32->fixnum rlen))
-				  (utf8-string-append lstr rstr)))
+				     lstr lstart (uint32->fixnum llen)
+				     rstr 0 (uint32->fixnum rlen)))
+				 (else
+				  (utf8-string-append lstr rstr))))
 		       (s (instantiate::JsStringLiteralUTF8
 			     (length (fixnum->uint32 (string-length nleft)))
 			     (left nleft)
@@ -4542,7 +4555,7 @@
       ((js-jsstring? this)
        (js-jsstring-slice this start end %this))
       ((js-array? this)
-       (js-array-maybe-slice2 this %this cache start end))
+       (js-array-maybe-slice2 this start end %this cache))
       (else
        (with-access::JsGlobalObject %this (js-string-pcache)
 	  (let ((slice (js-get-name/cache this (& "slice") #f %this
