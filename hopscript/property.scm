@@ -424,7 +424,7 @@
 		  ,(format "[~a:~a]" (cadr (cer x)) (caddr (cer x)))))
 	     ((?- ?o ?msg)
 	      `(js-check-object ,o
-		  ,(format "[~a:~a] ~a" (cadr (cer x)) (caddr (cer x)) ,msg)))
+		  ,(format "[~a:~a] ~a" (cadr (cer x)) (caddr (cer x)) msg)))
 	     (else
 	      (error "js-assert-object" "bad syntax" x))))
 	 (else
