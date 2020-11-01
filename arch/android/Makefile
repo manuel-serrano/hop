@@ -525,7 +525,9 @@ $(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR)
                > $$p.__tmp; \
            mv $$p.__tmp $$p; \
         done
-	mv $(ANDROIDBUILDDIR)/src/fr/inria/hop $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP)
+        if [ "$(HOPAPP)" != "hop" ]; then \
+	  mv $(ANDROIDBUILDDIR)/src/fr/inria/hop $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP); \
+        fi
 
 apk.bigloo: $(ANDROIDBUILDDIR)/bigloo-$(RELEASE) /tmp/droidcc.sh
 	$(MAKE) apk.bigloo.configure
