@@ -525,7 +525,7 @@ $(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR)
                > $$p.__tmp; \
            mv $$p.__tmp $$p; \
         done
-        if [ "$(HOPAPP)" != "hop" ]; then \
+	if [ "$(HOPAPP)" != "hop" ]; then \
 	  mv $(ANDROIDBUILDDIR)/src/fr/inria/hop $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP); \
         fi
 
