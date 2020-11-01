@@ -846,11 +846,24 @@
 ;*    node-type ::J2SPostfix ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SPostfix env::pair-nil fix::cell)
-   (with-access::J2SPostfix this (lhs rhs op)
+
+   (define (numty ty)
+      ;; postfix expressions only evaluate as numbers
+      (cond
+	 ((eq? ty 'unknown) 'unknown)
+	 ((type-number? ty) ty)
+	 (else 'number)))
+   
+   (with-access::J2SPostfix this (lhs rhs op type loc)
+      (when (eq? (caddr loc) '8489)
+	 (tprint "------------- postfix env=" (dump-env env)))
       (multiple-value-bind (tyr envr bkr)
 	 (node-type rhs env fix)
 	 (multiple-value-bind (tyv __ lbk)
 	    (node-type lhs env fix)
+	    (expr-type-add! rhs envr fix (numty tyr) bkr)
+	    (when (eq? (caddr loc) '8489)
+	       (tprint "------------- postfix lhs=" tyv))
 	    (cond
 	       ((isa? lhs J2SRef)
 		;; a variable assignment
@@ -860,27 +873,36 @@
 			 ((not writable)
 			  (multiple-value-bind (tyv envl lbk)
 			     (node-type lhs env fix)
-			     (let ((nenv (extend-env env decl tyv)))
-				(expr-type-add! this nenv fix tyv
+			     (let ((nenv (extend-env env decl (numty tyv))))
+				(expr-type-add! this nenv fix (numty tyv)
 				   (append lbk bkr)))))
 			 ((not (eq? utype 'unknown))
 			  (return utype env bkr))
 			 (else
-			  (decl-vtype-add! decl tyr fix)
-			  (let ((nenv (extend-env envr decl tyr)))
-			     (expr-type-add! this nenv fix tyr
+			  (decl-vtype-add! decl (numty tyr) fix)
+			  (let ((nenv (extend-env envr decl (numty tyr))))
+			     (expr-type-add! this nenv fix (numty tyr)
 				(append lbk bkr))))))))
 	       (else
 		;; a non variable assinment
-		(expr-type-add! this envr fix tyr bkr)))))))
+		(expr-type-add! this envr fix (numty tyr) bkr)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SPrefix ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SPrefix env::pair-nil fix::cell)
+
+   (define (numty ty)
+      ;; prefix expressions only evaluate as numbers
+      (cond
+	 ((eq? ty 'unknown) 'unknown)
+	 ((type-number? ty) ty)
+	 (else 'number)))
+   
    (with-access::J2SPrefix this (lhs rhs op)
       (multiple-value-bind (tyr envr bkr)
 	 (node-type rhs env fix)
+	 (expr-type-add! rhs envr fix (numty tyr) bkr)
 	 (multiple-value-bind (tyv __ lbk)
 	    (node-type lhs env fix)
 	    (cond
@@ -892,19 +914,19 @@
 			 ((not writable)
 			  (multiple-value-bind (tyv envl lbk)
 			     (node-type lhs env fix)
-			     (let ((nenv (extend-env env decl tyv)))
-				(expr-type-add! this nenv fix tyv
+			     (let ((nenv (extend-env env decl (numty tyv))))
+				(expr-type-add! this nenv fix (numty tyv)
 				   (append lbk bkr)))))
 			 ((not (eq? utype 'unknown))
 			  (return utype env bkr))
 			 (else
-			  (decl-vtype-add! decl tyr fix)
-			  (let ((nenv (extend-env envr decl tyr)))
-			     (expr-type-add! this nenv fix tyr
+			  (decl-vtype-add! decl (numty tyr) fix)
+			  (let ((nenv (extend-env envr decl (numty tyr))))
+			     (expr-type-add! this nenv fix (numty tyr)
 				(append lbk bkr))))))))
 	       (else
 		;; a non variable assignment
-		(expr-type-add! this envr fix tyr bkr)))))))
+		(expr-type-add! this envr fix (numty tyr) bkr)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SDProducer ...                                     */
@@ -1063,7 +1085,7 @@
 ;*    node-type-call ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (node-type-call callee protocol tty args env fix)
-   
+
    (define (unknown-call-env env)
       ;; compute a new node-type environment where all mutated globals
       ;; and all mutated captured locals are removed
@@ -1071,9 +1093,23 @@
 		 (with-access::J2SDecl (car e) (writable scope escape id)
 		    (or (decl-ronly? (car e))
 			(not writable)
-			(and (memq scope '(local letblock inner)) (not escape)))))
+			(and (memq scope '(local letblock inner))
+			     (not escape)))))
 	 env))
    
+   (define (global-call-env env)
+      ;; compute a new node-type environment where all mutated globals
+      ;; and all mutated captured locals are removed
+      (filter (lambda (e)
+		 (with-access::J2SDecl (car e) (writable scope escape id)
+		    (or (decl-ronly? (car e))
+			(not writable)
+			(or (memq scope '(local letblock inner))))))
+	 env))
+
+   (define (local-call-env env)
+      (unknown-call-env env))
+      
    (define (type-known-call-args fun::J2SFun args env bk)
       (with-access::J2SFun fun (rtype params vararg mode thisp mode)
 	 (when thisp
@@ -1107,7 +1143,8 @@
       (multiple-value-bind (_ envf _)
 	 (node-type-fun callee env fix)
 	 (with-access::J2SFun fun (rtype mode %info)
-	    (let ((nenv (if (env? %info) (env-override envf %info) env)))
+	    (let* ((oenv (if (env? %info) (env-override env %info) env))
+		   (nenv (local-call-env oenv)))
 	       (return rtype nenv bk)))))
    
    (define (type-known-call ref::J2SRef fun::J2SFun args env bk)
@@ -1117,9 +1154,12 @@
       (with-access::J2SRef ref (decl)
 	 (expr-type-add! ref env fix 'function)
 	 (type-known-call-args fun args env bk)
-	 (with-access::J2SDecl decl (scope)
+	 (with-access::J2SDecl decl (scope id)
 	    (with-access::J2SFun fun (rtype %info)
-	       (let ((nenv (if (env? %info) (env-override env %info) env)))
+	       (let* ((oenv (if (env? %info) (env-override env %info) env))
+		      (nenv (if (memq scope '(global %scope))
+				(global-call-env oenv)
+				(local-call-env oenv))))
 		  (return rtype nenv bk))))))
 
    (define (type-ref-call callee args env bk)
@@ -1336,7 +1376,23 @@
 			    'unknown)
 			   (else
 			    'unknown)))
-		       ((- * **)
+		       ((++)
+			(cond
+			   ((and (eq? typl 'real) (eq? typr 'real))
+			    'real)
+			   ((and (type-integer? typl) (type-integer? typr))
+			    'integer)
+			   ((and (typnum? typl) (typnum? typr))
+			    'number)
+			   ((or (eq? typl 'string) (eq? typr 'string))
+			    'number)
+			   ((or (eq? typl 'any) (eq? typr 'any))
+			    'number)
+			   ((or (eq? typl 'unknown) (eq? typr 'unknown))
+			    'unknown)
+			   (else
+			    'unknown)))
+		       ((- -- * **)
 			(cond
 			   ((or (eq? typl 'real) (eq? typr 'real))
 			    'real)
@@ -1779,6 +1835,9 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SForIn ...                                         */
+;*    -------------------------------------------------------------    */
+;*    !!! WARNING: After the for..in loop the key variable is          */
+;*    undefined if the object contains no property.                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SForIn env::pair-nil fix::cell)
    (with-trace 'j2s-tyflow "node-type ::J2SForIn"
@@ -1795,9 +1854,16 @@
 		  (trace-item "for seq loc=" loc)
 		  (multiple-value-bind (typ envb bk)
 		     (node-type-seq (list obj body) env fix 'void)
-		     (if (=fx ofix (cell-ref fix))
-			 (return typ envb (filter-breaks bk this))
-			 (loop (env-merge env envb))))))))))
+		     (cond
+			((not (=fx ofix (cell-ref fix)))
+			 (loop (env-merge env envb)))
+			((eq? op 'in)
+			 (decl-vtype-add! decl 'undefined fix)
+			 (return typ (extend-env envb decl 'any)
+			    (filter-breaks bk this)))
+			(else
+			 (return typ envb
+			    (filter-breaks bk this)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2STry ...                                           */
@@ -2186,6 +2252,26 @@
       (when decl
 	 (force-type! decl from to cell)))
    (call-next-method))
+
+;*---------------------------------------------------------------------*/
+;*    force-type! ::J2SPostfix ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-type! this::J2SPostfix from to cell)
+   (with-access::J2SPostfix this (type)
+      (when (eq? type 'unknown)
+	 (set! type 'number)
+	 (cell-set! cell #t)))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    force-type! ::J2SPrefix ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-type! this::J2SPrefix from to cell)
+   (with-access::J2SPrefix this (type)
+      (when (eq? type 'unknown)
+	 (set! type 'number)
+	 (cell-set! cell #t)))
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    reset-type! ::J2SNode ...                                        */

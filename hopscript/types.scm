@@ -47,6 +47,8 @@
 	   ($js-init-jsalloc-procedure::int (::JsConstructMap
 					       ::uint32)
 	      "bgl_init_jsalloc_procedure")
+	   ($js-init-jsalloc-stringliteralascii::int (::uint32 ::uint32 ::obj ::uint32)
+	      "bgl_init_jsalloc_stringliteralascii")
 	   ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsobject")
 	   ($js-make-jsproxy::JsProxy (::obj ::obj ::obj ::obj ::obj ::uint32)
@@ -61,6 +63,8 @@
 	      "bgl_make_jsmethod")
 	   ($js-make-jsprocedure::JsProcedure (::procedure ::long ::obj)
 	      "bgl_make_jsprocedure")
+	   ($js-make-stringliteralascii::JsStringLiteralASCII (::uint32 ::obj ::obj)
+	      "bgl_make_jsstringliteralascii")
 	   (macro $jsobject-elements-inline?::bool (::JsObject)
 		  "HOP_JSOBJECT_ELEMENTS_INLINEP")
 	   (macro $jsobject-vector-inline?::bool (::JsArray)
@@ -172,6 +176,8 @@
 	   
 	   (class JsStringLiteralSubstring::JsStringLiteralASCII)
 	   
+	   (class JsStringLiteralBuffer::JsStringLiteralSubstring)
+	   
 	   (final-class JsStringLiteralUTF8::JsStringLiteral
 	      (%idxutf8::long (default 0))
 	      (%idxstr::long (default 0))
@@ -262,6 +268,8 @@
 	   
 	   (class JsNumber::JsObject
 	      (val::obj (default 0)))
+
+	   (class JsMath::JsObject)
 	   
 	   (class JsRegExp::JsObject
 	      rx::obj
@@ -281,6 +289,8 @@
 	   
 	   (class JsDate::JsObject
 	      (val (default #f)))
+	   
+	   (class JsJSON::JsObject)
 	   
 	   (class JsModule::JsObject
 	      (%module (default #f))
@@ -446,6 +456,7 @@
 	   (inline js-jsstring-normalized-ascii-mode::uint32)
 	   (inline js-jsstring-default-index-mode::uint32)
 	   (inline js-jsstring-default-substring-mode::uint32)
+	   (inline js-jsstring-default-buffer-mode::uint32)
 	   (inline js-jsstring-default-utf8-mode::uint32)
 	   (inline js-jsstring-normalized-utf8-mode)
 	   
@@ -454,6 +465,7 @@
 	   (inline js-jsstring-normalized-substring-mode::uint32)
 	   
 	   (inline js-object-mode-extensible?::bool ::JsObject)
+	   (inline js-object-mode-plain-extensible?::bool ::JsObject)
 	   (inline js-object-mode-extensible-set! ::JsObject ::bool)
 	   
 	   (inline js-object-mode-frozen?::bool ::JsObject)
@@ -519,6 +531,7 @@
 	   (inline JS-OBJECT-MODE-JSSTRINGINDEX::uint32)
 	   (inline JS-OBJECT-MODE-JSSTRINGUTF8::uint32)
 	   (inline JS-OBJECT-MODE-JSSTRINGSUBSTRING::uint32)
+	   (inline JS-OBJECT-MODE-JSSTRINGBUFFER::uint32)
 
 	   (inline JS-REGEXP-FLAG-IGNORECASE::uint32)
 	   (inline JS-REGEXP-FLAG-MULTILINE::uint32)
@@ -573,6 +586,7 @@
 	   (inline js-jsstring-ascii?::bool ::JsStringLiteral)
 	   (inline js-jsstring-index?::bool ::JsStringLiteral)
 	   (inline js-jsstring-substring?::bool  ::JsStringLiteral)
+	   (inline js-jsstring-buffer?::bool  ::JsStringLiteral)
 	   (inline js-jsstring-utf8?::bool ::JsStringLiteral)
 	   (inline js-jsstring-normalized?::bool ::JsStringLiteral)
 	   (inline js-jsstring-normalized! ::JsStringLiteral)
@@ -687,7 +701,12 @@
 
 (define-inline (js-jsstring-default-substring-mode)
    (bit-oru32 (JS-OBJECT-MODE-JSSTRINGTAG)
-      (JS-OBJECT-MODE-JSSTRINGSUBSTRING)))
+      (bit-oru32 (JS-OBJECT-MODE-JSSTRINGASCII)
+	 (JS-OBJECT-MODE-JSSTRINGSUBSTRING))))
+
+(define-inline (js-jsstring-default-buffer-mode)
+   (bit-oru32 (js-jsstring-default-substring-mode)
+      (JS-OBJECT-MODE-JSSTRINGBUFFER)))
 
 (define-inline (js-jsstring-normalized-utf8-mode)
    (bit-oru32 (js-jsstring-default-utf8-mode)
@@ -733,7 +752,7 @@
       (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT)))
 
 ;*---------------------------------------------------------------------*/
-;*    Object header tag (max size 1<<15)                               */
+;*    Object header tag (max size 1<<15==32768)                        */
 ;*---------------------------------------------------------------------*/
 ;; JSSTRINGTAG, JSFUNCTIONTAG, and JSOBJECTTAG _must_ be
 ;; the first 3 (see stringliteral.scm and name.scm)
@@ -793,6 +812,7 @@
 (define-inline (JS-OBJECT-MODE-JSSTRINGINDEX) #u32:64)
 (define-inline (JS-OBJECT-MODE-JSSTRINGCACHE) #u32:128)
 (define-inline (JS-OBJECT-MODE-JSSTRINGSUBSTRING) #u32:256)
+(define-inline (JS-OBJECT-MODE-JSSTRINGBUFFER) #u32:512)
 
 (define-macro (JS-OBJECT-MODE-JSSTRINGASCII) #u32:8)
 (define-macro (JS-OBJECT-MODE-JSSTRINGUTF8) #u32:16)
@@ -800,10 +820,16 @@
 (define-macro (JS-OBJECT-MODE-JSSTRINGINDEX) #u32:64)
 (define-macro (JS-OBJECT-MODE-JSSTRINGCACHE) #u32:128)
 (define-macro (JS-OBJECT-MODE-JSSTRINGSUBSTRING) #u32:256)
+(define-macro (JS-OBJECT-MODE-JSSTRINGBUFFER) #u32:512)
 
 (define-inline (js-object-mode-extensible? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
       (JS-OBJECT-MODE-EXTENSIBLE)))
+
+(define-inline (js-object-mode-plain-extensible? o)
+   (=u32 (bit-andu32 (bit-andu32 (JS-OBJECT-MODE-PLAIN) (JS-OBJECT-MODE-EXTENSIBLE))
+	    (js-object-mode o))
+      (bit-andu32 (JS-OBJECT-MODE-PLAIN) (JS-OBJECT-MODE-EXTENSIBLE))))
 
 (define-inline (js-object-mode-extensible-set! o flag)
    (js-object-mode-set! o
@@ -1395,6 +1421,13 @@
 (define-inline (js-jsstring-substring? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-JSSTRINGSUBSTRING) (js-object-mode o))
       (JS-OBJECT-MODE-JSSTRINGSUBSTRING)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-buffer? ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsstring-buffer? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-JSSTRINGBUFFER) (js-object-mode o))
+      (JS-OBJECT-MODE-JSSTRINGBUFFER)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-utf8? ...                                            */

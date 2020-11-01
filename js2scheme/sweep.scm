@@ -182,8 +182,18 @@
 	    (or (not (isa? this J2SArray))
 		(with-access::J2SArray this (exprs)
 		   (every dead-expr? exprs))))
+       (and (isa? this J2SObjInit)
+	    (with-access::J2SObjInit this (inits)
+	       (every dead-dataproperty-init? inits)))
        (isa? this J2SFun)
        (isa? this J2SRef)))
+
+;*---------------------------------------------------------------------*/
+;*    dead-dataproperty-init? ...                                      */
+;*---------------------------------------------------------------------*/
+(define (dead-dataproperty-init? this)
+   (with-access::J2SDataPropertyInit this (val)
+      (dead-expr? val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    dead-init? ...                                                   */

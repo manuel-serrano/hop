@@ -525,7 +525,9 @@ $(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR)
                > $$p.__tmp; \
            mv $$p.__tmp $$p; \
         done
-	mv $(ANDROIDBUILDDIR)/src/fr/inria/hop $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP)
+	if [ "$(HOPAPP)" != "hop" ]; then \
+	  mv $(ANDROIDBUILDDIR)/src/fr/inria/hop $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP); \
+        fi
 
 apk.bigloo: $(ANDROIDBUILDDIR)/bigloo-$(RELEASE) /tmp/droidcc.sh
 	$(MAKE) apk.bigloo.configure
@@ -540,11 +542,12 @@ apk.bigloo.configure:
             --cpicflags=-fPIC \
             --cflags="-fPIC -DBGL_GC_ROOTS" \
             --lflags=-fPIC \
+            --customlibuv=yes \
+            --customlibuvversion=v1.20.3 \
             --libuvconfigureopt="--host=arm-linux-androideabi" \
             --stack-check=no \
             --prefix=$(ANDROIDHOPPREFIX) \
             --build-bindir=$(HOPBINDIR) \
-            --customlibuv=yes \
             --disable-doc --disable-pcre --disable-unistring --disable-gmp \
             $(BIGLOOCONFIGUREOPT))
 

@@ -36,6 +36,7 @@
 	   __hopscript_lib
 	   __hopscript_profile
 	   __hopscript_arithmetic
+	   __hopscript_number
 	   __hopscript_proxy)
 
    (use    __hopscript_array
@@ -49,6 +50,7 @@
 
    (export (js-init-property! ::JsGlobalObject)
 	   (js-debug-object-cmap-id ::JsObject)
+	   (js-check-object ::JsObject msg)
 	   (generic js-debug-object ::obj #!optional (msg ""))
 	   (js-debug-pcache ::obj #!optional (msg ""))
 	   (js-debug-cmap ::obj #!optional (msg ""))
@@ -84,7 +86,7 @@
 	   (js-property-value ::obj ::JsObject ::obj ::JsPropertyDescriptor ::JsGlobalObject)
 	   (js-property-value-set! ::obj ::JsObject ::obj ::JsPropertyDescriptor ::obj ::JsGlobalObject)
 	   
-	   (js-object-ctor-push! obj::JsObject index::long value)
+	   (js-object-ctor-push-update-cmap! obj::JsObject index::long value ::JsConstructMap)
 	   
 	   (generic js-properties-names::pair-nil ::obj ::bool ::JsGlobalObject)
 	   (generic js-properties-name::vector ::obj ::bool ::JsGlobalObject)
@@ -394,6 +396,41 @@
 	 %id)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-check-object ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-check-object o msg)
+   (with-access::JsObject o (cmap)
+      (when (js-object-mapped? o)
+	 (with-access::JsConstructMap cmap (inline)
+	    (unless (eq? inline (js-object-inline-elements? o))
+	       (fprintf (current-error-port)
+		  "*** ASSERT FAILURE:js-check-object: " msg)
+	       (flush-output-port (current-error-port))
+	       (js-debug-object o)
+	       (js-debug-cmap cmap)
+	       (flush-output-port (current-error-port))
+	       (error "js-check-object" "inconsistent object" (typeof o)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-assert-object ...                                             */
+;*---------------------------------------------------------------------*/
+(define-expander js-assert-object
+   (lambda (x e)
+      (cond-expand
+	 ((or devel debug)
+	  (match-case x
+	     ((?- ?o)
+	      `(js-check-object ,o
+		  ,(format "[~a:~a]" (cadr (cer x)) (caddr (cer x)))))
+	     ((?- ?o ?msg)
+	      `(js-check-object ,o
+		  ,(format "[~a:~a] ~a" (cadr (cer x)) (caddr (cer x)) msg)))
+	     (else
+	      (error "js-assert-object" "bad syntax" x))))
+	 (else
+	  #unspecified))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-debug-object ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-debug-object obj #!optional (msg ""))
@@ -517,64 +554,65 @@
 	    transitions))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-add! ...                                               */
+;*    js-object-extend! ...                                            */
+;*    -------------------------------------------------------------    */
+;*    This function extends an existing object.                        */
+;*    WARNING: Its cmap must be updated by the caller.                 */
 ;*---------------------------------------------------------------------*/
-(define (js-object-add! obj::JsObject idx::long value nlen::long)
-   (with-access::JsObject obj (elements cmap)
+(define (js-object-extend! obj::JsObject idx::long value nlen::long)
+   (cond-expand (profile (profile-cache-extension nlen)))
+   (with-access::JsObject obj (elements)
       (let ((nels (copy-vector elements nlen)))
-	 (cond-expand (profile (profile-cache-extension nlen)))
 	 (vector-set! nels idx value)
 	 (when ($jsobject-elements-inline? obj)
 	    ;; cleanup for the GC
-	    (vector-fill! elements #unspecified)
-	    ;; when switching from inlined properties to non-inlined
-	    ;; properties, the object cmap must change
-	    (set! cmap (sibling-cmap! cmap #f)))
+	    (vector-fill! elements #unspecified))
 	 (set! elements nels)
 	 obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-ctor-add! ...                                          */
+;*    js-object-ctor-extend! ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (js-object-ctor-add! obj::JsObject idx::long value ctormap::JsConstructMap)
+(define (js-object-ctor-extend! obj::JsObject idx::long value ctormap::JsConstructMap)
    (with-access::JsConstructMap ctormap (ctor)
-      (with-access::JsObject obj (cmap)
-	 (with-access::JsConstructMap cmap (props)
-	    (cond
-	       ((js-function? ctor)
-		(with-access::JsFunction ctor (constrsize info)
-		   (cond
-		      ((>fx constrsize idx)
-		       #unspecified)
-		      ((>=fx constrsize (js-function-info-maxconstrsize info))
-		       #unspecified)
-		      ((<fx idx (js-function-info-maxconstrsize info))
-		       (set! constrsize (+fx idx 1)))
-		      (else
-		       (set! constrsize (+fx constrsize 1))))
-		   (js-object-add! obj idx value (+fx idx 1))))
-	       ((cell? ctor)
-		(cond
-		   ((>fx (cell-ref ctor) idx)
-		    #unspecified)
-		   ((>=fx (cell-ref ctor) 4096)
-		    #unspecified)
-		   ((<fx (cell-ref ctor) 4096)
-		    (cell-set! ctor (+fx idx 1)))
-		   (else
-		    (cell-set! ctor (+fx (cell-ref ctor) 1))))
-		(js-object-add! obj idx value (+fx idx 1)))
-	       (else
-		(js-object-add! obj idx value (+fx idx 1)))))))
+      (cond
+	 ((js-function? ctor)
+	  (with-access::JsFunction ctor (constrsize info)
+	     (cond
+		((>fx constrsize idx)
+		 #unspecified)
+		((>=fx constrsize (js-function-info-maxconstrsize info))
+		 #unspecified)
+		((<fx idx (js-function-info-maxconstrsize info))
+		 (set! constrsize (+fx idx 1)))
+		(else
+		 (set! constrsize (+fx constrsize 1))))
+	     (js-object-extend! obj idx value (+fx idx 1))))
+	 ((cell? ctor)
+	  (cond
+	     ((>fx (cell-ref ctor) idx)
+	      #unspecified)
+	     ((>=fx (cell-ref ctor) 4096)
+	      #unspecified)
+	     ((<fx (cell-ref ctor) 4096)
+	      (cell-set! ctor (+fx idx 1)))
+	     (else
+	      (cell-set! ctor (+fx (cell-ref ctor) 1))))
+	  (js-object-extend! obj idx value (+fx idx 1)))
+	 (else
+	  (js-object-extend! obj idx value (+fx idx 1)))))
    obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-push! ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Only used by js-bind!. Normal extensions go through              */
+;*    JS-OBJECT-CTOR-PUSH!                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-object-push! obj::JsObject idx::long value)
    (with-access::JsObject obj (elements)
       (if (>=fx idx (vector-length elements))
-	  (js-object-add! obj idx value (+fx idx 1))
+	  (js-object-extend! obj idx value (+fx idx 1))
 	  (vector-set! elements idx value))))
 
 ;*---------------------------------------------------------------------*/
@@ -583,28 +621,37 @@
 (define (js-object-ctor-push! obj::JsObject idx::long value)
    (with-access::JsObject obj (elements cmap)
       (if (>=fx idx (vector-length elements))
-	  (js-object-ctor-add! obj idx value cmap)
+	  (js-object-ctor-extend! obj idx value cmap)
 	  (vector-set! elements idx value))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-push/ctor! ...                                         */
+;*    js-object-ctor-push-cmap! ...                                    */
+;*    -------------------------------------------------------------    */
+;*    Only used by inline caches when extending an object.             */
 ;*---------------------------------------------------------------------*/
-(define (js-object-push/ctor! obj::JsObject idx::long value _)
+(define (js-object-ctor-push-update-cmap! obj::JsObject idx::long value ncmap)
    (with-access::JsObject obj (elements cmap)
-      (with-access::JsConstructMap cmap (props)
-	 (if (>=fx idx (vector-length elements))
-	     (js-object-ctor-add! obj idx value cmap)
-	     (vector-set! elements idx value)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-push/cmap! ...                                         */
-;*---------------------------------------------------------------------*/
-(define (js-object-push/cmap obj::JsObject idx::long value nmap)
-   (with-access::JsObject obj (elements cmap)
-      (with-access::JsConstructMap cmap (props)
-	 (if (>=fx idx (vector-length elements))
-	     (js-object-ctor-add! obj idx value nmap)
-	     (vector-set! elements idx value)))))
+      (cond
+	 ((>=fx idx (vector-length elements))
+	  (with-access::JsConstructMap ncmap (inline)
+	     (js-object-ctor-extend! obj idx value cmap)
+	     (if inline
+		 (set! cmap (cmap-find-sibling ncmap #f))
+		 (set! cmap ncmap))))
+	 ((js-object-inline-elements? obj)
+	  (js-object-inline-set! obj idx value)
+	  (with-access::JsConstructMap ncmap (inline)
+	     (if inline
+		 (set! cmap ncmap)
+		 (set! cmap (cmap-find-sibling ncmap #t)))))
+	 (else
+	  (vector-set! elements idx value)
+	  (with-access::JsConstructMap ncmap (inline)
+	     (if inline
+		 (set! cmap (cmap-find-sibling ncmap #f))
+		 (set! cmap ncmap)))))
+      (js-assert-object obj "js-object-ctor-pus-update-cmap!")
+      obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    function0->proc ...                                              */
@@ -910,9 +957,9 @@
    (with-access::JsConstructMap cmap (props) (vector-length props)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-inline-next-element? ...                               */
+;*    js-object-inline-next-elements? ...                              */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-object-inline-next-element? o::JsObject idx::long)
+(define-inline (js-object-inline-next-elements? o::JsObject idx::long)
    (with-access::JsObject o (elements)
       (and (js-object-inline-elements? o) (<fx idx (vector-length elements)))))
 
@@ -1940,7 +1987,7 @@
 ;*    object.scm)                                                      */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-has-own-property::bool o p::obj %this)
-   (not (eq? (js-get-own-property o p %this) (js-undefined))))
+   (not (eq? (js-get-own-property (js-toobject-fast o %this) p %this) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-own-property ::JsObject ...                               */
@@ -1953,8 +2000,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-has-own-property-jsobject o::JsObject p::obj %this)
    
-   (define (js-has-own-property/w-cache o pname)
-      (jsobject-find o o pname
+   (define (js-has-own-property/w-cache o p)
+      (jsobject-find o o (js-toname p %this)
 	 ;; cmap search
 	 (lambda (owner i) #t)
 	 ;; hash search 
@@ -2245,10 +2292,13 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-get o prop %this::JsGlobalObject)
    (cond
-      ((pair? o)
-       (js-get-pair o (js-toname prop %this) %this))
       ((null? o)
        (js-get-null o (js-toname prop %this) %this))
+      ((number? o)
+       (let ((obj (js-number->jsNumber o %this)))
+	  (js-get-jsobject obj o prop %this)))
+      ((pair? o)
+       (js-get-pair o (js-toname prop %this) %this))
       (else
        (let ((obj (js-toobject %this o)))
 	  (if obj
@@ -2961,8 +3011,7 @@
       (with-access::JsObject o (cmap elements)
 	 ;; follow the next map
 	 (let ((nextmap (cmap-find-sibling nmap
-			   (and (js-object-inline-elements? o)
-				(<fx index (vector-length elements))))))
+			   (js-object-inline-next-elements? o index))))
 	    (with-access::JsConstructMap nextmap (ctor methods props detachcnt detachlocs)
 	       (cond
 		  ((or (not cachefun) (not (js-function? v)))
@@ -2995,7 +3044,6 @@
 		      "extend-mapped polymorphic threshold" name)
 		   (reset-cmap-vtable! nextmap)
 		   (when cache
-		      ;; MS 9may2019 CARE INVALIDATE
 		      (js-pcache-next-direct! cache o nextmap index)))
 		  (else
 		   (let ((detachedmap (extend-cmap cmap name flags
@@ -3013,14 +3061,15 @@
 			 (vector-set! methods index v))
 		      (set! nextmap detachedmap)
 		      v)))
-	       (js-object-push/cmap o index v nextmap)
+	       (js-object-ctor-push! o index v)
 	       (set! cmap nextmap)
+	       (js-assert-object o "js-put-jsobject.extend/mapped")
 	       v))))
    
    (define (extend-mapped-object!)
       ;; 8.12.5, step 6
       (with-access::JsObject o (cmap elements)
-	 (with-access::JsConstructMap cmap (props single lock %id)
+	 (with-access::JsConstructMap cmap (props single lock %id inline)
 	    (let ((index (vector-length props)))
 	       (if (and (=fx index (hash-object-threshold))
 			(js-object-hashable? o))
@@ -3039,7 +3088,7 @@
 			     =>
 			     (lambda (nmap)
 				(extend-mapped-object/nmap nmap index flags)))
-			    (single
+			    ((and single (eq? inline (js-object-inline-elements? o)))
 			     (extend-cmap! cmap name flags)
 			     (with-access::JsConstructMap cmap (ctor methods)
 				(if (and cachefun (js-function? v))
@@ -3050,7 +3099,7 @@
 					  "extend-mapped single non-function" name)
 				       (when cache
 					  (js-pcache-next-direct! cache o cmap index))))
-				(js-object-push/ctor! o index v ctor))
+				(js-object-ctor-push! o index v))
 			     v)
 			    (else
 			     ;; create a new map
@@ -3068,9 +3117,10 @@
 					  (when cache
 					     (js-pcache-next-direct! cache o nextmap index))))
 				   (link-cmap! cmap nextmap name v flags)
-				   (js-object-push/ctor! o index v ctor))
-				(set! cmap nextmap)
-				v))))))))))
+				   (js-object-ctor-push! o index v)
+				   (set! cmap nextmap)
+				   (js-assert-object o "js-put-jsobject.extend")
+				   v)))))))))))
 
    (define (update-hashed-object! obj prop)
       (with-trace 'prop "update-hashed-object"
@@ -3497,11 +3547,11 @@
 	     (vector-set! elements i value)
 	     value))))
    
-   (define (next-cmap o::JsObject name value flags inline::bool)
+   (define (next-cmap o::JsObject name value flags inl::bool)
       (with-access::JsObject o (cmap elements)
-	 (with-access::JsConstructMap cmap (single)
-	    (if (and hidden-class (not single))
-		(let ((nextmap (extend-cmap cmap name flags inline)))
+	 (with-access::JsConstructMap cmap (single inline)
+	    (if (and hidden-class (or (not single) (not (eq? inline inl))))
+		(let ((nextmap (extend-cmap cmap name flags inl)))
 		   (link-cmap! cmap nextmap name value flags)
 		   (set! cmap nextmap)
 		   nextmap)
@@ -3526,7 +3576,7 @@
 		      =>
 		      (lambda (nmap)
 			 (let ((nextmap (cmap-find-sibling nmap
-					   (js-object-inline-elements? o)))
+					   (js-object-inline-next-elements? o index)))
 			       (val-or-desc (if (accessor-property? get set)
 						(instantiate::JsAccessorDescriptor
 						   (name name)
@@ -3539,8 +3589,9 @@
 						value)))
 			    ;; follow the next map 
 			    (with-access::JsConstructMap nextmap (props)
-			       (set! cmap nextmap)
 			       (js-object-push! o index val-or-desc)
+			       (set! cmap nextmap)
+			       (js-assert-object o "js-put-jsobject.4")
 			       value))))
 		     (axs
 		      ;; create a new map with a JsAccessorDescriptor
@@ -3553,19 +3604,23 @@
 					 (enumerable enumerable)
 					 (configurable configurable)))
 			     (nextmap (next-cmap o name #f flags
-					 (js-object-inline-elements? o))))
+					 (js-object-inline-next-elements? o index)))
+			     (oi (js-object-inline-next-elements? o index))
+			     (os (with-access::JsConstructMap cmap (single) single)))
 			 (check-accessor-property! get set)
 			 ;; extending the elements vector is mandatory
-			 (set! cmap nextmap)
 			 (js-object-push! o index newdesc)
+			 (set! cmap nextmap)
+			 (js-assert-object o "js-put-jsobject.5")
 			 (js-undefined)))
 		     (else
 		      (let ((nextmap (next-cmap o name value flags
-					(js-object-inline-elements? o))))
+					(js-object-inline-next-elements? o index))))
 			 (with-access::JsConstructMap nextmap (methods)
 			    (validate-cache-method! value methods index))
-			 (set! cmap nextmap)
 			 (js-object-push! o index value)
+			 (set! cmap nextmap)
+			 (js-assert-object o "js-put-jsobject.6")
 			 value))))))))
    
    (define (update-properties-object! obj owndesc i)
@@ -3667,15 +3722,16 @@
 	  #f)))
 
    (define (check-cmap-parent cmap n)
-      (with-access::JsConstructMap cmap (parent)
-	 (with-access::JsConstructMap parent (transitions)
-	    (let loop ((transitions transitions))
-	       (when (pair? transitions)
-		  (let ((tr (car transitions)))
-		     (if (and (eq? (transition-name tr) n)
-			      (eq? (transition-nextmap tr) cmap))
-			 parent
-			 (loop (cdr transitions)))))))))
+      (with-access::JsConstructMap cmap (parent transitions)
+	 (with-access::JsConstructMap parent ((ptransitions transitions))
+	    (when (=fx (+fx 1 (length ptransitions)) (length transitions))
+	       (let loop ((ptransitions ptransitions))
+		  (when (pair? ptransitions)
+		     (let ((tr (car ptransitions)))
+			(if (and (eq? (transition-name tr) n)
+				 (eq? (transition-nextmap tr) cmap))
+			    parent
+			    (loop (cdr ptransitions))))))))))
    
    (define (vector-delete! v i)
       (vector-copy! v i v (+fx i 1))
@@ -3703,6 +3759,7 @@
 				    (set! cmap
 				       (cmap-find-sibling prevmap
 					  (js-object-inline-elements? o)))
+				    (js-assert-object o "js-delete!.1")
 				    #t))
 				((check-cmap-parent cmap n)
 				 =>
@@ -3711,6 +3768,7 @@
 				    (set! cmap
 				       (cmap-find-sibling parentmap
 					  (js-object-inline-elements? o)))
+				    (js-assert-object o "js-delete!.2")
 				    #t))
 				(else
 				 ;; create a new cmap for the object
@@ -3720,6 +3778,7 @@
 				    (set! cmap
 				       (cmap-find-sibling nextmap
 					  (js-object-inline-elements? o)))
+				    (js-assert-object o "js-delete!.3")
 				    (with-access::JsConstructMap nextmap (props)
 				       ;; remove the prop from the cmap
 				       (if (=fx i (-fx (vector-length props) 1))
@@ -4065,6 +4124,7 @@
 			     (value (js-undefined))))))))
 	 (with-access::JsObject o (elements)
 	    (set! elements (vector-extend elements ndesc)))
+	 (js-assert-object o "js-define-own-property%")
 	 #t))
 
    (when (and (js-jsstring? name) (js-jsstring->number name))
@@ -4223,6 +4283,7 @@
 				(cmap-next-proto-cmap %this cmap
 				   (js-object-proto o) v)
 				(js-object-inline-elements? o))))))
+		(js-assert-object o "js-setprototypeof")
 		(js-object-proto-set! o v))
 	     o))))
 

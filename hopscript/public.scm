@@ -34,7 +34,8 @@
 	   __hopscript_worker
 	   __hopscript_array
 	   __hopscript_json
-	   __hopscript_proxy)
+	   __hopscript_proxy
+	   __hopscript_stringliteral)
 
    (with   __hopscript_stringliteral
            __hopscript_expanders)
@@ -931,8 +932,9 @@
    `(cond
        ((js-procedure? ,fun)
 	(with-access::JsProcedure ,fun (procedure)
-	   (,(string->symbol (format "js-call~a%" (length args)))
-	    ,%this ,fun procedure ,this ,@args)))
+	   (gen-calln fun procedure this ,@args)))
+;* 	   (,(string->symbol (format "js-call~a%" (length args)))      */
+;* 	    ,%this ,fun procedure ,this ,@args)))                      */
        ((js-procedure-proxy? ,fun)
 	(,(string->symbol (format "js-call-proxy/cache-miss~a" (length args)))
 	 ,%this ,fun ,this ,@args))
@@ -2012,9 +2014,10 @@
 ;*    argument is a non empy string.                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-equal-string? s x %this::JsGlobalObject)
-   (if (js-jsstring? x)
-       (js-jsstring=? s x)
-       (js-equality? s x %this)))
+   (or (eq? s x)
+       (if (js-jsstring? x)
+	   (js-jsstring=? s x)
+	   (js-equality? s x %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equality? ...                                                 */
@@ -2047,16 +2050,18 @@
 	 ((js-jsstring? x)
 	  (cond
 	     ((js-jsstring? y)
-	      (js-jsstring=? x y))
+	      (or (eq? x y) (js-jsstring=? x y)))
 	     ((js-number? y)
 	      (if (= y 0)
-		  (or (js-jsstring-null? x) (equality? (js-tonumber x %this) y))
+		  (or (js-jsstring-null? x) (equality? (js-jsstring->number x) y))
 		  (equality? (js-tonumber x %this) y)))
 	     ((js-object? y)
 	      (equality? x ((@ js-toprimitive __hopscript_public) y 'any %this)))
 	     ((eq? y #f)
-	      (js-jsstring-null? x))
-	     ((boolean? y)
+	      (or (js-jsstring-null? x)
+		  (let ((n (js-jsstring->number x)))
+		     (and (number? n) (= n 0)))))
+	     ((eq? y #t)
 	      (equality? x (js-tonumber y %this)))
 	     (else #f)))
 	 ((boolean? x)
@@ -2141,7 +2146,7 @@
 (define-inline (js-eqstring?::bool s x)
    (or (eq? s x)
        (and (js-jsstring? x)
-	    (string=? (js-jsstring->string s) (js-jsstring->string x)))))
+	    (js-jsstring=? s x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-eqil? ...                                                     */
@@ -2277,9 +2282,9 @@
 	       (else
 		(close-input-port ip)
 		(%eval s))))))
-   
-   (if (not (js-jsstring? s))
-       s
+
+   (cond
+      ((js-jsstring? s)
        (let ((s (js-jsstring->string s)))
 	  (if (=fx (string-length s) 0)
 	      (js-undefined)
@@ -2293,7 +2298,11 @@
 		 ((#\()
 		  (%json-expr s))
 		 (else
-		  (%eval s)))))))
+		  (%eval s))))))
+      ((isa? s J2SNode)
+       (%js-eval-ast s %this this scope))
+      (else
+       s)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-eval ...                                                     */
@@ -2356,6 +2365,64 @@
 				       m)))))
 		  (trace-item "r=" r)
 		  r))))))
+
+;*---------------------------------------------------------------------*/
+;*    %js-eval-ast ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (%js-eval-ast ast %this::JsGlobalObject this scope)
+   (library-load 'hopscript lib-hopscript-path)
+   ;; bind the global object
+   (with-trace 'hopscript-eval '%js-eval
+      (with-handler
+	 (lambda (e)
+	    (cond
+	       ((isa? e &error)
+		(with-access::&error e (proc msg obj fname location)
+		   (cond
+		      ((and (string? proc) (string=? proc "assignment"))
+		       (js-raise-reference-error %this
+			  (format "~a -- ~a" msg obj)
+			  obj
+			  fname location))
+		      (else
+		       (js-raise-error %this
+			  (format "~a: ~a -- ~a" proc msg obj)
+			  obj
+			  fname location)))))
+	       (else
+		(raise e))))
+	 (let ((e (j2s-compile ast
+		     :verbose 0
+		     :eval #t
+		     :driver (j2s-eval-driver)
+		     :driver-name "j2s-eval-driver"
+		     :es6-arrow-function #t
+		     :es6-let #t
+		     :es6-defaut-value #t
+		     :es6-rest-argument #t
+		     :commonjs-export #f))
+	       (m (js-get scope (& "module") scope))
+	       (evmod (eval-module)))
+	    (with-trace 'hopscript-eval "%js-eval-inner"
+	       (trace-item "e=" e)
+	       (trace-item "scope=" (typeof scope))
+	       (unwind-protect
+		  ;; evaluatate the module clause first
+		  (begin
+		     (eval! (car e))
+		     (let ((nexpr (map (lambda (x)
+					  (eval `(expand ',x)))
+				     (cdr e))))
+			;; the forms to be evaluated have to be expanded
+			;; first in order to resolve the &begin! ... &end!
+			;; construct
+			(for-each eval nexpr)
+			(let ((hopscript (eval! 'hopscript)))
+			   (hopscript %this this scope
+				       (if (eq? m (js-undefined))
+					   (eval-dummy-module %this)
+					   m)))))
+		  (eval-module-set! evmod)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    eval-dummy-module ...                                            */

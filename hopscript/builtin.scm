@@ -140,7 +140,7 @@
 	 :value (js-make-function %this
 		   (lambda (this data)
 		      (instantiate::xml-comment
-			 (data data)))
+			 (data (js-tostring data %this))))
 		   (js-function-arity 1 0)
 		   (js-function-info :name "<!--" :len 1)
 		   :__proto__ js-function-prototype)

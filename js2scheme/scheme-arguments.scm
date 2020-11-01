@@ -49,11 +49,11 @@
 		     ((not (eq? alloc-policy 'lazy)) #f)
 		     ((maybe-number? field)
 		      (cond
-			 ((eq? (j2s-vtype field) 'uint32)
+			 ((eq? (j2s-type field) 'uint32)
 			  `(js-rest-vector-index-ref 
 			      ,(j2s-scheme obj mode return ctx)
 			      ,(j2s-scheme field mode return ctx)))
-			 ((eq? (j2s-vtype field) 'int32)
+			 ((eq? (j2s-type field) 'int32)
 			  `(js-rest-vector-ref 
 			      ,(j2s-scheme obj mode return ctx)
 			      (int32->fixnum ,(j2s-scheme field mode return ctx))))
@@ -74,7 +74,7 @@
       (cond
 	 ((maybe-number? field)
 	  (cond
-	     ((eq? (j2s-vtype field) 'uint32)
+	     ((eq? (j2s-type field) 'uint32)
 	      (if (and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
 		  (let ((argid (j2s-ref-arguments-argid obj)))
 		     `(js-arguments-vector-index-ref ,argid
@@ -84,7 +84,7 @@
 		  `(js-arguments-index-ref ,(j2s-scheme obj mode return ctx)
 		      ,(j2s-scheme field mode return ctx)
 		      %this)))
-	     ((eq? (j2s-vtype field) 'int32)
+	     ((eq? (j2s-type field) 'int32)
 	      (let ((argid (j2s-ref-arguments-argid obj)))
 		 `(js-arguments-vector-ref ,argid
 		   ,(j2s-scheme obj mode return ctx)
@@ -118,7 +118,7 @@
    (with-access::J2SAssig this (lhs rhs)
       (with-access::J2SAccess lhs (obj field cache cspecs loc)
 	 (if (context-get ctx :optim-arguments)
-	     (if (eq? (j2s-vtype field) 'uint32)
+	     (if (eq? (j2s-type field) 'uint32)
 		 (if (and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
 		     (let ((argid (j2s-ref-arguments-argid obj)))
 			`(js-arguments-vector-index-set! ,argid
@@ -133,9 +133,9 @@
 		 (j2s-put! loc (j2s-scheme obj mode return ctx) field
 		    (typeof-this obj ctx)
 		    (j2s-scheme field mode return ctx)
-		    (j2s-vtype field)
+		    (j2s-type field)
 		    (j2s-scheme rhs mode return ctx)
-		    (j2s-vtype rhs)
+		    (j2s-type rhs)
 		    (strict-mode? mode)
 		    ctx
 		    cache
@@ -145,9 +145,9 @@
 	     (j2s-put! loc (j2s-scheme obj mode return ctx) field
 		(typeof-this obj ctx)
 		(j2s-scheme field mode return ctx)
-		(j2s-vtype field)
+		(j2s-type field)
 		(j2s-scheme rhs mode return ctx)
-		(j2s-vtype rhs)
+		(j2s-type rhs)
 		(strict-mode? mode)
 		ctx
 		cache

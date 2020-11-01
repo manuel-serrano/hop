@@ -483,9 +483,9 @@
 		 (+fx32/overflow ll rl)
 		 (+fl (todouble x) (todouble y)))))
 	 ((flonum? x)
-	  ($real32-set! x (+fl x (todouble y))))
+	  (+fl x (todouble y)))
 	 ((flonum? y)
-	  ($real32-set! y (+fl y (todouble x))))
+	  (+fl y (todouble x)))
 	 (else
 	  (+fl (todouble x) (todouble y))))))
 

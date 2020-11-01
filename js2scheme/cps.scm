@@ -765,7 +765,7 @@
 	  (let* ((v (gensym '%kkeys))
 		 (l (gensym '%klen))
 		 (i (gensym '%ki))
-		 (keys (J2SLetOpt '(ref) v
+		 (keys (J2SLetOptVUtype 'array '(ref) v
 			  (J2SCall
 			     (J2SAccess
 				(J2SUnresolvedRef 'Object)
@@ -776,7 +776,8 @@
 		 (idx (J2SLetOpt '(assig ref) i (J2SNumber 0)))
 		 (for (J2SFor (J2SUndefined)
 			 (J2SBinary '< (J2SRef idx) (J2SRef len))
-			 (J2SPostfix '++ (J2SRef idx) (J2SUndefined))
+			 (J2SPostfix '++ (J2SRef idx)
+			    (J2SBinary '+ (J2SRef idx) (J2SNumber 1)))
 			 (J2SBlock/w-endloc
 			    (J2SStmtExpr
 			       (J2SAssig lhs

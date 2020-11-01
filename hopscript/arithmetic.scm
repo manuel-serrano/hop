@@ -40,7 +40,7 @@
 	   (*js::obj ::obj ::obj ::JsGlobalObject)
 	   (**js::obj ::obj ::obj ::JsGlobalObject)
 	   (/js::obj ::obj ::obj ::JsGlobalObject)
-	   (negjs ::obj ::JsGlobalObject)
+	   (negjs ::obj)
 
 	   (inline +l!fl::real ::real ::double)
 	   (inline +r!fl::real ::double ::real)
@@ -205,21 +205,14 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7       */
 ;*---------------------------------------------------------------------*/
-(define (negjs expr %this)
-   (let loop ((expr expr))
-      (cond
-	 ((fixnum? expr)
-	  (if (=fx expr 0)
-	      -0.0
-	      (negfx expr)))
-	 ((flonum? expr)
-	  (if (=fl expr 0.0)
-	      (if (=fx (signbitfl expr) 0) -0.0 +0.0)
-	      (negfl expr)))
-	 ((js-number? expr)
-	  (- expr))
-	 (else
-	  (loop (js-tonumber expr %this))))))
+(define (negjs expr)
+   (if (fixnum? expr)
+       (if (=fx expr 0)
+	   -0.0
+	   (negfx expr))
+       (if (=fl expr 0.0)
+	   (if (=fx (signbitfl expr) 0) -0.0 +0.0)
+	   (negfl expr))))
 
 ;*---------------------------------------------------------------------*/
 ;*    oplr!fl ...                                                      */

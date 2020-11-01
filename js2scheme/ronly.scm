@@ -118,7 +118,9 @@
 	     (assig decl loc)))
 	 ((isa? lhs J2SGlobalRef)
 	  (with-access::J2SGlobalRef lhs (decl)
-	     (assig decl loc))))
+	     (assig decl loc)))
+	 (else
+	  (ronly! lhs mode deval)))
       (ronly! rhs mode deval))
    this)
 

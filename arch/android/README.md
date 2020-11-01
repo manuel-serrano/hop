@@ -22,8 +22,8 @@ and how to customize the application
 [layout](https://developer.android.com/guide/topics/resources/layout-resource).
 
 Only a tiny subset of Android features are currently available in Hop.
-These documented in this page. The Hop Scheme layer is generally more
-advanced because bindings are first created in Scheme and then ported
+These are documented in this page. The Hop Scheme layer is generally more
+advanced because bindings are first created for Scheme and then ported
 to JavaScript.
 
 Requirements
@@ -75,17 +75,18 @@ Default Build
 To build a full hop+bigloo stack and to produce an `apk` file:
 
     $ cd arch/android
-	$ export REPOSITORY=repodir
+    $ export REPOSITORY=repodir
     $ make apk 
 
-This will use the android sdk and ndk pointed by the environment variables
+This will use the android sdk and ndk pointed to by the environment variables
 `$ANDROIDSDK` and `$ANDROIDNDK`. The default configuration can be 
 changed with `make` arguments. For intsance:
 
     $ make apk ANDROIDNDK=/opt/android/android-ndk-r21b
 
 The default configuration assumes a physiscal device connected to
-the USB bus. If an emulator is used, add the following to all `make` invocation:
+the USB bus. If an emulator is used, add the following to all
+`make` invocation:
 
     $ make apk ANDROIDHOST=-e
 

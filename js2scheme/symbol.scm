@@ -629,7 +629,10 @@
       (with-access::J2SForIn for (lhs loc)
 	 (with-access::J2SVarDecls lhs (loc decls)
 	    (let ((lift lhs))
-	       (set! lhs (instantiate::J2SRef (loc loc) (decl (car decls))))
+	       (with-access::J2SDecl (car decls) (id)
+		  (set! lhs (instantiate::J2SRef
+			       (loc loc)
+			       (decl (find-decl id env)))))
 	       (instantiate::J2SBlock
 		  (endloc loc)
 		  (loc loc)

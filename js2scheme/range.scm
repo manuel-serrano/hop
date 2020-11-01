@@ -61,7 +61,7 @@
 ;*    debugging                                                        */
 ;*---------------------------------------------------------------------*/
 (define-macro (with-debug pred lbl . args)
-   (if (>=fx (bigloo-debug) 0)
+   (if (and #f (>=fx (bigloo-debug) 0))
        `(let* ((__thunk (lambda () ,(car (last-pair args))))
 	       (__l ,lbl)
 	       (__lbl (if (or (string? __l) (pair? __l))
@@ -76,7 +76,7 @@
 		     (range-debug -1 "")
 		     __r))
 	       (__thunk)))
-       `(begin ,@body)))
+       (car (last-pair args))))
 
 (define-macro (debug pred . args)
    (when (>=fx (bigloo-debug) 0)
@@ -357,7 +357,7 @@
 	  (let ((nr (interval-merge range rng)))
 	     (unless (equal? nr range)
 		(unfix! fix
-		   (format "J2SExpr.add(~a) range=~a/~a" loc range nr))
+		   (format "J2SExpr.add(~a) range=~a/~a -> ~a" loc range rng nr))
 		(set! range nr))
 	     (return nr env))
 	  (return rng env))))
@@ -530,15 +530,10 @@
 ;*---------------------------------------------------------------------*/
 (define (interval-lts left::struct right::struct shift::int)
    (let ((ra (- (interval-max right) shift)))
-      (cond
-	 ((< ra (interval-min left))
-	  (interval (interval-min left) (interval-min left)
-	     (interval-merge-types left right)))
-	 ((>= ra (interval-max left))
-	  left)
-	 (else
-	  (interval (interval-min left) ra
-	     (interval-merge-types left right))))))
+      (if (< ra (interval-max left))
+	  (interval (min ra (interval-min left)) ra
+	     (interval-merge-types left right))
+	  left)))
 
 (define (interval-lt left right)
    (interval-lts left right 1))
@@ -551,15 +546,10 @@
 ;*---------------------------------------------------------------------*/
 (define (interval-gts left::struct right::struct shift::int)
    (let ((ri (+ (interval-min right) shift)))
-      (cond
-	 ((> ri (interval-max right))
-	  (interval (interval-max left) (interval-max left)
-	     (interval-merge-types left right)))
-	 ((<= ri (interval-min left))
-	  left)
-	 (else
-	  (interval ri (interval-max left)
-	     (interval-merge-types left right))))))
+      (if (> ri (interval-min left))
+	  (interval ri (max ri (interval-max left))
+	     (interval-merge-types left right))
+	  left)))
 
 (define (interval-gt left right)
    (interval-gts left right 1))
@@ -738,7 +728,22 @@
 	    (else
 	     o))))
 
-   (let ((intv (widen)))
+   (define (infinity-widen o)
+      (let ((oi (inrange (interval-min o)))
+	    (oa (inrange (interval-max o))))
+	 (cond
+	    ((< oi *min-int53*)
+	     (set! oi *-inf.0*))
+	    ((< oi *min-int32*)
+	     (set! oi *min-int53*)))
+	 (cond
+	    ((> oa *max-int53*)
+	     (set! oa *+inf.0*))
+	    ((> oa *max-int32*)
+	     (set! oa *max-int53*)))
+	 (interval oi oa)))
+
+   (let ((intv (infinity-widen (widen))))
       (when (interval? intv)
 	 (interval-type-set! intv (interval-type o)))
       intv))
@@ -1149,7 +1154,7 @@
 ;*    node-range ::J2SBindExit ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SBindExit env::pair-nil conf mode::symbol fix::cell)
-   (with-access::J2SBindExit this (stmt range)
+   (with-access::J2SBindExit this (stmt range loc)
       (multiple-value-bind (intv env)
 	 (node-range stmt env conf mode fix)
 	 (return range env))))
@@ -1293,7 +1298,7 @@
 ;*    node-range ::J2SAssigOp ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SAssigOp env::pair-nil conf mode::symbol fix::cell)
-   (with-access::J2SAssigOp this (op lhs rhs type range)
+   (with-access::J2SAssigOp this (op lhs rhs type range loc)
       (multiple-value-bind (intv nenv)
 	 (node-range-binary this op lhs rhs env conf mode fix)
 	 (cond
@@ -1404,9 +1409,6 @@
       (when (and (not met) thisp)
 	 (decl-vrange-add! thisp *infinity-intv* fix))
       (set! rrange *infinity-intv*)
-      (unless (or (null? params) (pair? params))
-	 (with-access::J2SFun val (loc)
-	    (tprint "PAS BON " loc)))
       (for-each (lambda (p::J2SDecl)
 		   (decl-irange-add! p *infinity-intv* fix))
 	 params)))
@@ -1697,9 +1699,9 @@
 		,(when (interval? intl) (j2s-dump-range intl))
 		,(when (interval? intr) (j2s-dump-range intr))))
 	 (case op
-	    ((+)
+	    ((+ ++)
 	     (expr-range-add! this env fix (interval-add intl intr conf)))
-	    ((-)
+	    ((- --)
 	     (expr-range-add! this env fix (interval-sub intl intr conf)))
 	    ((*)
 	     (expr-range-add! this env fix (interval-mul intl intr)))
@@ -2088,7 +2090,7 @@
 ;*    node-range ::J2SWhile ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SWhile env::pair-nil conf mode::symbol fix::cell)
-   (with-access::J2SWhile this (test body)
+   (with-access::J2SWhile this (test body loc)
       (let ((denv (dump-env env))
 	    (ffix (cell-ref fix)))
 	 (when *debug-range-while*
@@ -2414,6 +2416,34 @@
 	       (set! type (if escape (type->boxed-type ty) ty)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    map-types ::J2SUnresolvedRef ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SUnresolvedRef tmap)
+   (with-access::J2SUnresolvedRef this (range type decl)
+      (when (range-type? type)
+	 (let ((ty (interval->type range tmap type)))
+	    (set! type (type->boxed-type ty))))))
+
+;*---------------------------------------------------------------------*/
+;*    map-types ::J2SAssig ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SAssig tmap)
+   (call-default-walker)
+   (with-access::J2SAssig this (rhs type)
+      (with-access::J2SExpr rhs ((rty type))
+	 (set! type rty))))
+
+;*---------------------------------------------------------------------*/
+;*    map-types ::J2SAssigOp ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SAssigOp tmap)
+   (call-default-walker)
+   (with-access::J2SAssigOp this (range type)
+      (when (range-type? type)
+	 (let ((ty (interval->type range tmap type)))
+	    (set! type ty)))))
+
+;*---------------------------------------------------------------------*/
 ;*    map-types ::J2SExpr ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SExpr tmap)
@@ -2502,6 +2532,10 @@
 	  (set! type 'int32))
 	 ((>>>)
 	  (set! type 'uint32))
+	 ((++ --)
+	  (if (range-type? type)
+	      (set! type (interval->type range tmap 'number))
+	      (set! type 'number)))
 	 (else
 	  (when (range-type? type)
 	     (set! type (interval->type range tmap 'number))))))
@@ -2632,4 +2666,3 @@
       (let ((nenv (append decls env)))
 	 (for-each (lambda (d) (mark-capture d nenv)) decls)
 	 (for-each (lambda (n) (mark-capture n nenv)) nodes))))
-   

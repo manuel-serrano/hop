@@ -39,7 +39,7 @@ _OBJECTS = lexer header parser html ast usage dump utils \
   cps ecmascript5 narrow constant tyflow hint range loopspec cast vector \
   array alpha letfusion constrsize ctor propcce cspecs sweep inline unthis \
   instanceof hintnum pce callapply multivar module checksum \
-  newtarget objinit arguments procedure cnstlift hop-module cse \
+  newtarget objinit arguments procedure cnstlift hop-module cse strbuffer \
   scheme scheme-utils scheme-program \
   scheme-fun scheme-ops scheme-test scheme-class scheme-string scheme-math \
   scheme-date scheme-array scheme-regexp scheme-cast scheme-arguments \

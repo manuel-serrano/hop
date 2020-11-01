@@ -66,7 +66,7 @@
 	    (for-each (lambda (n) (constant! n env 0 conf)) decls)
 	    (for-each (lambda (n) (constant! n env 0 conf)) nodes)
 	    (set! cnsts (reverse! (env-list env)))
-	    (set! decls (append decls (env-vars env))))))
+	    (set! decls (append (env-vars env) decls)))))
    this)
 
 ;*---------------------------------------------------------------------*/
