@@ -282,6 +282,9 @@ while : ; do
     --bldflags=*)
       bldflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
+    --ldhopopts=*)
+      ldhopopts="`echo $1 | sed 's/^[-a-z]*=//'`";;
+
     --extra-bcflags=*)
       bcflags="$bcflags $(echo $1 | sed 's/^[-a-z]*=//')";;
 
@@ -493,6 +496,7 @@ while : ; do
       echo "   --hostcc=cc................. default host C compiler" >&2;
       echo "   --bcflags=args.............. the Bigloo C compilation options" >&2;
       echo "   --bldflags=args............. the Bigloo C link options" >&2;
+      echo "   --ldhopopts=args............ the Hop specific Bigloo C link options" >&2;
       echo "   --extra-bcflags=args........ additional Bigloo compilation options" >&2;
       echo "   --bcflagsdev=args........... the devel Bigloo options" >&2;
       echo "   --blflags=args.............. the link options" >&2;
@@ -645,6 +649,7 @@ if [ "$bigloolibdir " = " " ]; then
   bigloolibdir=`$bigloo -q -eval "(begin (print (bigloo-config 'library-directory)) (exit 0))"`
 else
   bcflags="$bcflags -lib-dir $bigloolibdir"
+  ldhopopts="-L$bigloolibdir"
 fi
 
 if [ "$cc " = " " ]; then
@@ -1184,6 +1189,7 @@ cat $mkmf.in \
         -e "s|@JAVAC@|$javac|" \
         -e "s|@BCFLAGS@|$bcflags $bcflagsprofile|" \
         -e "s|@BLDFLAGS@|$bldflags|" \
+        -e "s|@LDHOPTOPTS@|$ldhopopts|" \
         -e "s|@BHFLAGS@|$bhflags|" \
         -e "s|@HFLAGS@|$hflags|" \
         -e "s|@HSFLAGS@|$hsflags|" \

@@ -159,6 +159,8 @@
 	    (section "Configuration and devkit")
 	    (("--safe" (help "Compile and link in safe mode"))
 	     (hopc-bigloo-safe-option-set! '("-unsafe" "-safel")))
+	    (("--safe-debug" (help "Compile and link in safe mode"))
+	     (hopc-bigloo-safe-option-set! '("-safe")))
 	    (("--unsafe" (help "Compile and link in safe mode"))
 	     (hopc-bigloo-safe-option-set! '("-unsafe")))
 	    (("--bigloo=?bigloo" (help "Set the Bigloo binary file path"))

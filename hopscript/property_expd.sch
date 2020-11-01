@@ -631,14 +631,12 @@
 		     `(let ((idx (js-pcache-index ,cache)))
 			 (js-profile-log-cache ,cache :nmap #t)
 			 (js-profile-log-index idx)
-			 (js-object-ctor-push! ,obj idx ,tmp)
-			 (set! cmap (js-pcache-cmap ,cache))
+			 (js-object-ctor-push-update-cmap! ,obj idx ,tmp
+			    (js-pcache-cmap ,cache))
 			 ,tmp))
 		    ((eq? cs 'amap)
 		     `(let* ((idx (js-pcache-index ,cache))
-;* 			     (propowner (js-pcache-owner ,cache))      */
-			     (propowner ,obj)
-			     )
+			     (propowner ,obj))
 			 (with-access::JsObject propowner (elements)
 			    (let ((desc (vector-ref elements idx)))
 			       (js-profile-log-cache ,cache :amap #t)
@@ -712,8 +710,7 @@
 					      (ncmap (cdr (vector-ref vtable vidx))))
 					   (js-profile-log-cache ,cache :vtable #t)
 					   (js-profile-log-index idx)
-					   (js-object-ctor-push! ,obj idx ,tmp)
-					   (set! cmap ncmap)
+					   (js-object-ctor-push-update-cmap! ,obj idx ,tmp ncmap)
 					   ,tmp)
 					,(loop (cdr cs))))))))
 			(else
