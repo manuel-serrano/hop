@@ -1189,7 +1189,7 @@ cat $mkmf.in \
         -e "s|@JAVAC@|$javac|" \
         -e "s|@BCFLAGS@|$bcflags $bcflagsprofile|" \
         -e "s|@BLDFLAGS@|$bldflags|" \
-        -e "s|@LDHOPTOPTS@|$ldhopopts|" \
+        -e "s|@LDHOPOPTS@|$ldhopopts|" \
         -e "s|@BHFLAGS@|$bhflags|" \
         -e "s|@HFLAGS@|$hflags|" \
         -e "s|@HSFLAGS@|$hsflags|" \
