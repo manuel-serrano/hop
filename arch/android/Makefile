@@ -541,7 +541,7 @@ apk.bigloo.configure:
             --cflags="-fPIC -DBGL_GC_ROOTS" \
             --lflags=-fPIC \
             --customlibuv=yes \
-            --customlibuvversion=1.20.3 \
+            --customlibuvversion=v1.20.3 \
             --libuvconfigureopt="--host=arm-linux-androideabi" \
             --stack-check=no \
             --prefix=$(ANDROIDHOPPREFIX) \
