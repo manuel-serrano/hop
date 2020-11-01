@@ -540,11 +540,12 @@ apk.bigloo.configure:
             --cpicflags=-fPIC \
             --cflags="-fPIC -DBGL_GC_ROOTS" \
             --lflags=-fPIC \
+            --customlibuv=yes \
+            --customlibuvversion=1.20.3 \
             --libuvconfigureopt="--host=arm-linux-androideabi" \
             --stack-check=no \
             --prefix=$(ANDROIDHOPPREFIX) \
             --build-bindir=$(HOPBINDIR) \
-            --customlibuv=yes \
             --disable-doc --disable-pcre --disable-unistring --disable-gmp \
             $(BIGLOOCONFIGUREOPT))
 
