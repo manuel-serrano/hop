@@ -86,7 +86,6 @@
 ;*    compile-mutex ...                                                */
 ;*---------------------------------------------------------------------*/
 (define compile-mutex (make-mutex))
-(define compile-table (make-hashtable))
 
 (define compile-pending 0)
 
@@ -615,8 +614,6 @@
 		 (lambda (this v)
 		    ;; when setting require.cache, erase the compilation
 		    ;; table for avoid out of sync errors
-		    (synchronize compile-mutex
-		       (set! compile-table (make-hashtable)))
 		    (set! module-cache v))
 		 (js-function-arity 1 0)
 		 (js-function-info :name "cache" :len 1))
@@ -1171,8 +1168,7 @@
 			(string-append filename "_w")
 			filename))
 	       (tgt #f))
-	    (or (hashtable-get compile-table key)
-		(let* ((mod (gensym (string->symbol (basename filename))))
+	    (or (let* ((mod (gensym (string->symbol (basename filename))))
 		       (expr (compile src mod))
 		       (evmod (eval-module)))
 		   (when (eq? nodejs-debug-compile 'yes)
@@ -1200,9 +1196,7 @@
 			    ;; first in order to resolve the &begin! ... &end!
 			    ;; construct
 			    (for-each eval nexpr)
-			    (let ((hopscript (eval! 'hopscript)))
-			       (hashtable-put! compile-table key hopscript)
-			       hopscript)))
+			    (eval! 'hopscript)))
 		      (eval-module-set! evmod))))))))
 
 ;*---------------------------------------------------------------------*/
