@@ -1,8 +1,6 @@
 {
    "title": "Lang",
-   "files": [ "lang", [], 
-	      "../node_modules/markdown/doc/markdown.md", 
-	      "../node_modules/cpp/doc/cpp.md" ],
+   "files": [ "lang" ],
    "description": "_lang.md",
    "key": "lang"
 }

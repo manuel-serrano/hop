@@ -428,7 +428,7 @@
 	  (when (js-object? v)
 	     (with-access::xml-markup o (attributes)
 		(set! attributes (js-jsobject->keyword-plist v %this)))))
-	 ((eq? pname (& "children"))
+	 ((eq? pname (& "childNodes"))
 	  (with-access::xml-markup o (body)
 	     (if (js-array? v)
 		 (set! body (jsarray->list v %this))
@@ -454,8 +454,6 @@
 	  1)
 	 ((eq? name (& "parentNode"))
 	  (with-access::xml-element o (parent) parent))
-	 ((eq? name (& "nextSibling"))
-	  (dom-next-sibling o))
 	 ((eq? name (& "outerHTML"))
 	  (js-string->jsstring (js-tostring o %this)))
 	 ((eq? name (& "innerHTML"))
@@ -465,7 +463,12 @@
 			(if (string? b) b (js-tostring b %this)))
 		   body))))
 	 (else
-	  (call-next-method)))))
+	  (with-access::xml-element o (attributes)
+	     (let* ((k (string->keyword (js-tostring name %this)))
+		    (c (memq k attributes)))
+		(if (pair? c)
+		    (js-obj->jsobject (cadr c) %this)
+		    (call-next-method))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::xml-element ...                                        */
