@@ -428,7 +428,7 @@
 	  (when (js-object? v)
 	     (with-access::xml-markup o (attributes)
 		(set! attributes (js-jsobject->keyword-plist v %this)))))
-	 ((eq? pname (& "children"))
+	 ((eq? pname (& "childNodes"))
 	  (with-access::xml-markup o (body)
 	     (if (js-array? v)
 		 (set! body (jsarray->list v %this))
@@ -443,6 +443,12 @@
 ;*    js-get ::xml-element ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::xml-element prop %this::JsGlobalObject)
+   
+   (define (->obj v)
+      (cond
+	 ((js-jsstring? v) (js-jsstring->string v))
+	 (else v)))
+   
    (let ((name (js-toname prop %this)))
       (cond
 	 ((eq? name (& "id"))
@@ -454,8 +460,6 @@
 	  1)
 	 ((eq? name (& "parentNode"))
 	  (with-access::xml-element o (parent) parent))
-	 ((eq? name (& "nextSibling"))
-	  (dom-next-sibling o))
 	 ((eq? name (& "outerHTML"))
 	  (js-string->jsstring (js-tostring o %this)))
 	 ((eq? name (& "innerHTML"))
@@ -465,7 +469,12 @@
 			(if (string? b) b (js-tostring b %this)))
 		   body))))
 	 (else
-	  (call-next-method)))))
+	  (with-access::xml-element o (attributes)
+	     (let* ((k (string->keyword (js-tostring name %this)))
+		    (c (memq k attributes)))
+		(if (pair? c)
+		    (->obj (cadr c))
+		    (call-next-method))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::xml-element ...                                        */

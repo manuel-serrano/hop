@@ -6,9 +6,12 @@
 	      "../node_modules/user/doc/user.md",
 	      "../node_modules/hss/doc/hss.md",
 	      "../node_modules/hopdroid/doc/hopdroid.md",
-	      "../node_modules/markdown/doc/markdown.md",
+	      "../node_modules/syslog/doc/syslog.md",
+ 	      [], 
+	      "../node_modules/markdown/doc/markdown.md", 
+	      "../node_modules/cpp/doc/cpp.md",
 	      "../node_modules/texinfo/doc/texinfo.md",
-	      "../node_modules/syslog/doc/syslog.md"
-
+	      "../node_modules/csv/doc/csv.md",
+              "../node_modules/xml/doc/xml.md"
 	    ]
 }
