@@ -1102,14 +1102,6 @@ fi
 
 mkmf=etc/Makefile.hopconfig
 
-bglcloselibs_u="-lbigloo_u-$""(RELEASE) "
-bglcloselibs_s="-lbigloo_s-$""(RELEASE) "
-
-for p in $bglcloselibs; do
-  bglcloselibs_u="$bglcloselibs_u -lbigloo$p""_u-$""(RELEASE)";
-  bglcloselibs_s="$bglcloselibs_s -lbigloo$p""_s-$""(RELEASE)";
-done
-
 rm -f $mkmf 2> /dev/null
 echo "#* Automatically generated file (don't edit) */" > $mkmf
 
