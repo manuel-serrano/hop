@@ -443,12 +443,6 @@
 ;*    js-get ::xml-element ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::xml-element prop %this::JsGlobalObject)
-   
-   (define (->obj v)
-      (cond
-	 ((js-jsstring? v) (js-jsstring->string v))
-	 (else v)))
-   
    (let ((name (js-toname prop %this)))
       (cond
 	 ((eq? name (& "id"))
@@ -473,7 +467,7 @@
 	     (let* ((k (string->keyword (js-tostring name %this)))
 		    (c (memq k attributes)))
 		(if (pair? c)
-		    (->obj (cadr c))
+		    (js-obj->jsobject (cadr c) %this)
 		    (call-next-method))))))))
    
 ;*---------------------------------------------------------------------*/
