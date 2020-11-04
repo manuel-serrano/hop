@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
 ;*    Last change :  Fri Jun 14 14:57:28 2019 (serrano)                */
-;*    Copyright   :  2005-19 Manuel Serrano                            */
+;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
 ;*=====================================================================*/
@@ -71,6 +71,8 @@
 	       (listeners::pair-nil (default '()))
 	       (ready-listeners::pair-nil (default '()))
 	       (down-listeners::pair-nil (default '()))
+	       (trigger::procedure read-only (default (lambda (f) (f))))
+	       (ctx (default #f))
 	       (%websocket (default #f))
 	       (%key (default #f)))
 	    
@@ -173,13 +175,15 @@
 		(value val)
 		(data val))))
 	 ((#\j)
-	  (let ((val (string->obj
-			(url-decode (cadr (pregexp-match cdata-re text))))))
-	     (instantiate::server-event
-		(target srv)
-		(name id)
-		(value val)
-		(data val))))
+	  (with-access::server srv (ctx)
+	     (let ((val (string->obj
+			   (url-decode (cadr (pregexp-match cdata-re text)))
+			   #f ctx)))
+		(instantiate::server-event
+		   (target srv)
+		   (name id)
+		   (value val)
+		   (data val)))))
 	 ((#\r)
 	  (let ((val (url-decode text)))
 	     (instantiate::server-event
@@ -187,7 +191,7 @@
 		(name "ready")
 		(value val)
 		(data val))))))
-   
+
    (define (parse-message v)
       (with-access::websocket-event v (data)
 	 (let ((m (pregexp-match envelope-re data)))
@@ -196,23 +200,29 @@
 		      (id (caddr m))
 		      (text (cadddr m)))
 		  (if (char=? (string-ref k 0) #\r)
-		      (with-access::server srv (ready-listeners)
-			 (apply-listeners ready-listeners
-			    (message->event k id text)))
-		      (with-access::server srv (listeners)
+		      (with-access::server srv (ready-listeners trigger)
+			 (trigger
+			    (lambda ()
+			       (apply-listeners ready-listeners
+				  (message->event k id text)))))
+		      (with-access::server srv (listeners trigger)
 			 (let ((ltns (filter-map (lambda (l)
 						    (when (string=? (car l) id)
 						       (cdr l)))
 					listeners)))
 			    (when (pair? ltns)
-			       (let ((event (message->event k id text)))
-				  (apply-listeners ltns event)))))))))))
+			       (trigger
+				  (lambda ()
+				     (let ((event (message->event k id text)))
+					(apply-listeners ltns event)))))))))))))
 
    (define (down e)
       (with-trace 'event "down@server-init!"
 	 (trace-item "e=" e)
-	 (with-access::server srv (down-listeners)
-	    (apply-listeners down-listeners e))))
+	 (with-access::server srv (down-listeners trigger)
+	    (trigger
+	       (lambda ()
+		  (apply-listeners down-listeners e))))))
 
    (with-access::server srv (host port ssl authorization %websocket %key mutex)
       (synchronize mutex

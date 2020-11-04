@@ -122,6 +122,7 @@
 				   (host (vector-ref o 0))
 				   (port (vector-ref o 1))
 				   (ssl (vector-ref o 2))
+				   (ctx ctx)
 				   (authorization (vector-ref o 3))
 				   (version (vector-ref o 4)))))))
 		(let loop ((rest (vector-ref o 5)))

@@ -84,7 +84,7 @@
    (lambda (o ctx)
       (if (isa? ctx JsGlobalObject)
 	  (js-plist->jsobject o ctx)
-	  (error "obj->string"
+	  (error "string->obj"
 	     (format "Not a JavaScript context (~a)" (typeof o)) ctx))))
 
 ;*---------------------------------------------------------------------*/
