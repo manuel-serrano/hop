@@ -351,16 +351,20 @@
 	   (instantiate::nothread-scheduler))
 	  ((queue)
 	   (instantiate::queue-scheduler
-	      (size (hop-max-threads))))
+	      (size (hop-max-threads))
+	      (onready hop-acknowledge)))
 	  ((one-to-one)
 	   (instantiate::one-to-one-scheduler
-	      (size (hop-max-threads))))
+	      (size (hop-max-threads))
+	      (onready hop-acknowledge)))
 	  ((pool)
 	   (instantiate::pool-scheduler
-	      (size (hop-max-threads))))
+	      (size (hop-max-threads))
+	      (onready hop-acknowledge)))
 	  ((accept-many)
 	   (instantiate::accept-many-scheduler
-	      (size (hop-max-threads))))
+	      (size (hop-max-threads))
+	      (onready hop-acknowledge)))
 	  (else
 	   (error "hop" "Unknown scheduling policy" (hop-scheduling)))))
       (else
@@ -476,3 +480,35 @@
       (debug-thread-info-set! thread "stage-repl")
       (hop-verb 1 "Entering repl...\n")
       (begin (repl) (exit 0))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-acknowledge ...                                              */
+;*---------------------------------------------------------------------*/
+(define (hop-acknowledge)
+
+   (define (parse-host host)
+      (cond
+	 ((pregexp-match "([^:])+:([0-9]+)" host)
+	  =>
+	  (lambda (m)
+	     (values (cadr m) (string->integer (caddr m)))))
+	 ((pregexp-match "[0-9]+" host)
+	  =>
+	  (lambda (m)
+	     (values "localhost" (string->integer host))))
+	 (else
+	  (values host 8080))))
+
+   (when (hop-acknowledge-host)
+      (multiple-value-bind (host port)
+	 (parse-host (hop-acknowledge-host))
+	 (with-handler
+	    (lambda (e)
+	       #f)
+	    (let* ((sock (make-client-socket host port :timeout 2000))
+		   (port (socket-output sock)))
+	       (hop-verb 1 (hop-color 4 0 " ACK ") (hop-acknowledge-host) "\n")
+	       (display "hop" port)
+	       (flush-output-port port)
+	       (socket-close sock))))))
+		     

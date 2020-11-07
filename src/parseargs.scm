@@ -314,8 +314,10 @@
 	     (if (string=? name "*")
 		 (hop-exepath-set! (executable-name))
 		 (hop-exepath-set! name)))
+	    (("--acknowledge" ?host (help "Acknowledge readiness"))
+	     (hop-acknowledge-host-set! host))
 	    
-	    ;; PATHS
+	    ;; Paths
 	    (section "Paths")
 	    ((("-I" "--path") ?path (help "Add <PATH> to hop load path"))
 	     (hop-path-set! (cons path (hop-path)))
@@ -365,12 +367,13 @@
 	     (nodejs-compiler-options-add! :commonjs-export #f))
 	    (("--profile" (help "Profiling mode (see HOPTRACE)"))
 	     (hop-profile-set! #t))
+	    
 	    ;; Internals
 	    (section "Internals")
 	    (("--configure" ?config (help "Report HOP configuration"))
 	     (hop-configure config)
 	     (exit 0))
-	    (("--cond-expand" ?feature (help "Declare cond-expand feature"))
+	    (("--srfi" ?feature (help "Declare SRFI feature"))
 	     (register-srfi! (string->symbol feature)))
 	    (("--no-thread" (help "Disable multithreading (equiv. to \"--scheduler nothread\")"))
 	     (hop-max-threads-set! 1)

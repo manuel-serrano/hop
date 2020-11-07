@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 22 11:19:21 2008                          */
 ;*    Last change :  Sun Nov 23 20:55:46 2014 (serrano)                */
-;*    Copyright   :  2008-14 Manuel Serrano                            */
+;*    Copyright   :  2008-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Specification of the various Hop schedulers                      */
 ;*=====================================================================*/
@@ -38,6 +38,7 @@
 	   
 	   (abstract-class scheduler
 	      (scheduler-init!)
+	      (onready read-only (default #f))
 	      (size::int read-only (default 0)))
 
 	   (abstract-class row-scheduler::scheduler)

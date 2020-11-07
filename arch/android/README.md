@@ -75,7 +75,7 @@ Default Build
 To build a full hop+bigloo stack and to produce an `apk` file:
 
     $ cd arch/android
-    $ export REPOSITORY=repodir
+    $ export REPODIR=repodir
     $ make apk 
 
 This will use the android sdk and ndk pointed to by the environment variables
@@ -122,16 +122,22 @@ To uninstall it:
     $ adb uninstall fr.inria.hop
 
 
-Building a Custom Application
+Building a Client Application
 -----------------------------
 
-The default build process constructs an `apk` containing a bare `hop`
-installation. This is useful only as a demonstration. The makefile
-located in the `arch/android` is designed so that it can be used to
-build custom application. To add a weblet to your `apk` build, you
-just have to specify an `ANDROIDWEBLET` argument to the `make` command line
-that must point to the directory containing your weblet. Let us show how
-to build such a complete application. The 4 steps will be:
+
+Building an Bundled Custom Application
+---------------------------------------
+
+In some situations, it is desirable to build a Hop application bundled
+with a specific Hop instance. The section explains who to construct
+such an `apk` containing a bare `hop` installation plus a client 
+application. The makefile located in the `arch/android` is
+designed so that it can be used to build custom application. To add a
+weblet to your `apk` build, you just have to specify an
+`ANDROIDWEBLET` argument to the `make` command line that must point to
+the directory containing your weblet. Let us show how to build such a
+complete application. The 4 steps will be:
 
   1. create the `arch/android` directory;
   2. create the `Makefile` needed to build the `apk`;
@@ -317,7 +323,6 @@ after Hop but before the Androd application. This is the purpose of
 that will be executed by the Android make invocation. Example:
 
     $ echo "APKCUSTOM=custom-proj-compile-and-install` >> Makefile.config
-
 
 
 Using the hopdroid package

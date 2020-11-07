@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 15 14:30:41 2007                          */
 ;*    Last change :  Tue Nov 18 09:48:12 2014 (serrano)                */
-;*    Copyright   :  2007-14 Manuel Serrano                            */
+;*    Copyright   :  2007-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    WebDAV (server side) implementation                              */
 ;*    This module implements a WebDAV server as specified              */
@@ -229,7 +229,6 @@
 	    (else
 	     (with-access::xml-backend *webdav-backend* (mime-type)
 		(instantiate::http-response-xml
-		   #;(request req)
 		   (start-line "HTTP/1.1 207 Multi-Status")
 		   (backend *webdav-backend*)
 		   (content-type mime-type)
@@ -243,7 +242,6 @@
 ;*---------------------------------------------------------------------*/
 (define (webdav-proppatch req::http-request)
    (instantiate::http-response-string
-      #;(request req)
       (charset (hop-locale))
       (start-line "HTTP/1.1 403 Forbidden")))
 
@@ -360,27 +358,22 @@
 	     (cond
 		((not (directory? parent))
 		 (instantiate::http-response-string
-		    #;(request req)
 		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 409 Conflict")))
 		((directory? dir)
 		 (instantiate::http-response-string
-		    #;(request req)
 		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 405 Not allowed")))
 		((not (make-directory dir))
 		 (instantiate::http-response-string
-		    #;(request req)
 		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 507 Insufficient Storage")))
 		((>=elong content-length #e0)
 		 (instantiate::http-response-string
-		    #;(request req)
 		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 415 Unsupported Media Type")))
 		(else
 		 (instantiate::http-response-string
-		    #;(request req)
 		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 201 Created")))))))))
 
@@ -393,7 +386,6 @@
 	 (cond
 	    ((not (file-exists? abspath))
 	     (instantiate::http-response-string
-		#;(request req)
 		(charset (hop-locale))
 		(start-line "HTTP/1.1 404 File Not Found")))
 	    ((directory? abspath)
@@ -401,22 +393,18 @@
 		 (http-bad-request (format "Illegal depth: ~a" (cadr depth)))
 		 (if (delete-path abspath)
 		     (instantiate::http-response-string
-			#;(request req)
 			(charset (hop-locale))
 			(start-line "HTTP/1.1 200 Ok"))
 		     (instantiate::http-response-string
-			#;(request req)
 			(charset (hop-locale))
 			(start-line "HTTP/1.1 424 Failed Dependency")))))
 	    
 	    (else
 	     (if (delete-file abspath)
 		 (instantiate::http-response-string
-		    #;(request req)
 		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 200 Ok"))
 		 (instantiate::http-response-string
-		    #;(request req)
 		    (charset (hop-locale))
 		    (start-line "HTTP/1.1 424 Failed Dependency"))))))))
    
@@ -427,7 +415,6 @@
    
    (define (resp status)
       (instantiate::http-response-string
-	 #;(request req)
 	 (charset (hop-locale))
 	 (start-line status)))
    
@@ -455,7 +442,6 @@
 	  (resp "HTTP/1.1 201 Created")
 	  (with-access::xml-backend *webdav-backend* (mime-type)
 	     (instantiate::http-response-xml
-		#;(request req)
 		(start-line "HTTP/1.1 207 Multi-Status")
 		(backend *webdav-backend*)
 		(content-type mime-type)
@@ -549,7 +535,6 @@
    
    (define (resp status)
       (instantiate::http-response-string
-	 #;(request req)
 	 (charset (hop-locale))
 	 (start-line status)))
    
@@ -637,21 +622,18 @@
 	 (cond
 	    ((not (output-port? p))
 	     (instantiate::http-response-string
-		#;(request req)
 		(charset (hop-locale))
 		(start-line (if (directory? (dirname abspath))
 				"HTTP/1.1 507 Insufficient Storage"
 				"HTTP/1.1 409 Conflict"))))
 	    ((<=fx len (send-chars (socket-input socket) p len))
 	     (instantiate::http-response-string
-		#;(request req)
 		(charset (hop-locale))
 		(start-line status)))
 	    (else
 	     (close-output-port p)
 	     (delete-file abspath)
 	     (instantiate::http-response-string
-		#;(request req)
 		(charset (hop-locale))
 		(start-line "HTTP/1.1 507 Insufficient Storage")))))))
    
