@@ -581,7 +581,6 @@ apk.hop.configure:
             --library=calendar \
             --library=text \
             --library=phone \
-            --library=hopdroid \
             --disable-doc \
             --bigloo-pcre=no --bigloo-unistring=no \
             $(HOPCONFIGUREOPT))

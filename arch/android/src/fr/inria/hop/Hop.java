@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sat Nov  7 17:59:01 2020 (serrano)                */
+/*    Last change :  Sat Nov  7 18:02:07 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -173,9 +173,9 @@ public class Hop extends Thread {
 	    Log.d( "Hop", "received acknowledge port=" + aport[ 0 ] );
 	    
 	    String cmd = "export HOME=" + HOME().getAbsolutePath() + "; "
-	       + "export LD_LIBRARY_PATH="
-	       + root + "/lib/bigloo/" + HopConfig.BIGLOORELEASE + ":"
-	       + root + "/lib/hop/" + HopConfig.HOPRELEASE + ":$LD_LIBRARY_PATH;"
+/* 	       + "export LD_LIBRARY_PATH="                             */
+/* 	       + root + "/lib/bigloo/" + HopConfig.BIGLOORELEASE + ":" */
+/* 	       + root + "/lib/hop/" + HopConfig.HOPRELEASE + ":$LD_LIBRARY_PATH;" */
 	       + "exec " + root + HOP + " " + HOPARGS
 	       + " -p " + port
 	       + " " + debug
