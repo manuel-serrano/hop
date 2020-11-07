@@ -484,6 +484,10 @@ apk-sans-hop: apk.common apk.res apk.jni apk.src
 	$(MAKE) ndk-build
 	$(MAKE) apk-build
 
+apk-hop-app: apk.common apk.res apk.jni apk.src
+	$(MAKE) ndk-build
+	$(MAKE) apk-build
+
 install.apk:
 	adb $(ANDROIDHOST) install $(ANDROIDBUILDDIR)/bin/$(HOPAPKNAME).apk
 
