@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sun May 17 10:47:19 2020 (serrano)                */
+/*    Last change :  Sat Nov  7 17:59:01 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -119,25 +119,88 @@ public class Hop extends Thread {
    public void run() {
       final int[] pid = new int[ 1 ];
       String sh = SHELL;
+      final int[] aport = new int[ 1 ];
+      final boolean[] ready = new boolean[ 1 ];
 
-      String cmd = "export HOME=" + HOME().getAbsolutePath() + "; "
-	 + "export LD_LIBRARY_PATH="
-	 + root + "/lib/bigloo/" + HopConfig.BIGLOORELEASE + ":"
-	 + root + "/lib/hop/" + HopConfig.HOPRELEASE + ":$LD_LIBRARY_PATH;"
-	 + "exec " + root + HOP + " " + HOPARGS
-	 + " -p " + port
-	 + " " + debug
-	 + " --max-threads " + maxthreads
-	 + (zeroconf ? " -z" : " --no-zeroconf")
-	 + (webdav ? " -d" : "")
-	 + (jobs ? " --jobs" : " --no-jobs")
-	 + " --rc-dir " + rcdir
-	 + " " + args;
+      // acknowledge server
+      Thread th = new Thread( new Runnable() {
+	    public void run() {
+	       int tmt = timeout;
+	       synchronized( aport ) {
+		  try {
+		     ServerSocket asrv = new ServerSocket( 0 );
+		     aport[ 0 ] = asrv.getLocalPort();
+		     // notify the acknowledge port number
+		     aport.notify();
+		     synchronized( ready ) {
+			try {
+			   Socket sock = s.accept();
+			   final InputStream ip = pluginclient.getInputStream();
+			   ready[ 0 ] = ip.read() == 0x68
+			      && ip.read() == 0x6f
+			      && ip.read() == 0x70;
+			   // notify the acknowledge
+			   ready.notify();
+			} catch( IOException exc ) {
+			   Log.e( "Hop", "Acknowledge server error!" + exc );
+			   ready[ 0 ] = false;
+			   ready.notify();
+			   asrv.close();
+			}
+		     }
+		  } catch( IOException _ ) {
+		     Log.e( "Hop", "Cannot spawn client acknowledge server!" );
+		     aport[ 0 ] = 0;
+		     aport.notify();
+		     return;
+		  }
+	       }
+	    }
+	 } );
 
-      Log.d( "Hop", "========================================================================" );
-      Log.i( "Hop", HopConfig.APP + " exec [" + sh + " -c \"" + cmd + "\"]");
-      HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
-      Log.v( "Hop", "Hop process started, pid=" + pid[ 0 ] + ", HopFd=" +  HopFd );
+      // 1. the acknowledge server is started, it will be used only
+      //    to wait for the Hop acknowledge.
+      // 2. the Hop server is started with the --acknowledge option
+      //    and the port number of the acknowledge server.
+      // 3. the acknowledge server waits for the acknowledge
+      synchronized( ready ) {
+	 synchronized( aport ) {
+	    Log.d( "Hop", "starting acknowledge server" );
+	    th.start();
+
+	    // wait for the acknowledge port number
+	    aport.wait();
+	    Log.d( "Hop", "received acknowledge port=" + aport[ 0 ] );
+	    
+	    String cmd = "export HOME=" + HOME().getAbsolutePath() + "; "
+	       + "export LD_LIBRARY_PATH="
+	       + root + "/lib/bigloo/" + HopConfig.BIGLOORELEASE + ":"
+	       + root + "/lib/hop/" + HopConfig.HOPRELEASE + ":$LD_LIBRARY_PATH;"
+	       + "exec " + root + HOP + " " + HOPARGS
+	       + " -p " + port
+	       + " " + debug
+	       + " --max-threads " + maxthreads
+	       + (zeroconf ? " -z" : " --no-zeroconf")
+	       + (webdav ? " -d" : "")
+	       + (jobs ? " --jobs" : " --no-jobs")
+	       + " --rc-dir " + rcdir
+	       + " --acknowledge " + aport[ 0 ]
+	       + " " + args;
+
+	    Log.d( "Hop", "=================================================" );
+	    Log.i( "Hop", HopConfig.APP + " exec [" + sh + " -c \"" + cmd + "\"]");
+	    HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
+	    Log.v( "Hop", "Hop process started, pid=" + pid[ 0 ] + ", HopFd=" +  HopFd );
+
+	    // wait for the Hop acknowledge
+	    Log.d( "Hop", ">>> waiting for Hop acknowledge" );
+	    ready.wait();
+	    Log.d( "Hop", "<<< Hop acknowledge received" );
+	 }
+      } catch( Exception e ) {
+	 return false;
+      }
+
       synchronized( currentpid ) {
 	 currentpid[ 0 ] = pid[ 0 ];
 	 currentpid.notifyAll();

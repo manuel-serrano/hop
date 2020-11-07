@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed May 20 13:10:36 2020 (serrano)                */
+/*    Last change :  Sat Nov  7 16:53:02 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -198,7 +198,7 @@ public class HopDroid extends Thread {
       
       for( ;timeout >= 0; timeout-- ) {
 	 if( isBackground() && (cmdserv != null) ) {
-	    Log.d( "HopDroid", "waitCmd, bacground="
+	    Log.d( "HopDroid", "waitCmd, background="
 		   + isBackground()
 		   + " ping=" + serverPing( cmdserv.getLocalSocketAddress() )
 		   + " cmd.isClosed=" + cmdserv.isClosed()
