@@ -24,7 +24,8 @@
 	    (init-http!)
 	    (init-webdav!)
 	    (init-flash!)
-	    (init-zeroconf!)))
+	    (init-zeroconf!)
+	    (init-acknowledge)))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-server-socket! ...                                          */
@@ -624,3 +625,30 @@
 			    (cddr wi)))
 	       (get-weblets-zeroconf)))))
    (zeroconf-start))
+
+;*---------------------------------------------------------------------*/
+;*    init-acknowledge ...                                             */
+;*---------------------------------------------------------------------*/
+(define (init-acknowledge)
+   
+(define (parse-host host)
+      (cond
+	 ((pregexp-match "([^:])+:([0-9]+)" host)
+	  =>
+	  (lambda (m)
+	     (values (cadr m) (string->integer (caddr m)))))
+	 ((pregexp-match "[0-9]+" host)
+	  =>
+	  (lambda (m)
+	     (values "localhost" (string->integer (caddr m)))))
+	 (else
+	  (values host 8080))))
+
+   (multiple-value-bind (host port)
+      (parse-host (hop-acknowledge-host))
+      (tprint "ACK " host " " port)
+      (let* ((sock (make-client-socket host port :timeout 2000))
+	     (port (socket-output sock)))
+	 (display "hop" port)
+	 (flush-output-port port)
+	 (socket-close sock))))

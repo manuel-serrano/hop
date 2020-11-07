@@ -75,7 +75,7 @@ Default Build
 To build a full hop+bigloo stack and to produce an `apk` file:
 
     $ cd arch/android
-    $ export REPOSITORY=repodir
+    $ export REPODIR=repodir
     $ make apk 
 
 This will use the android sdk and ndk pointed to by the environment variables
