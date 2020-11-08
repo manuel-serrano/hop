@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sat Nov  7 18:02:07 2020 (serrano)                */
+/*    Last change :  Sun Nov  8 06:54:57 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -125,35 +125,35 @@ public class Hop extends Thread {
       // acknowledge server
       Thread th = new Thread( new Runnable() {
 	    public void run() {
-	       int tmt = timeout;
-	       synchronized( aport ) {
-		  try {
-		     ServerSocket asrv = new ServerSocket( 0 );
+	       ServerSocket asrv;
+	       try {
+		  synchronized( aport ) {
+		     asrv = new ServerSocket( 0 );
 		     aport[ 0 ] = asrv.getLocalPort();
 		     // notify the acknowledge port number
 		     aport.notify();
-		     synchronized( ready ) {
-			try {
-			   Socket sock = s.accept();
-			   final InputStream ip = pluginclient.getInputStream();
-			   ready[ 0 ] = ip.read() == 0x68
-			      && ip.read() == 0x6f
-			      && ip.read() == 0x70;
-			   // notify the acknowledge
-			   ready.notify();
-			} catch( IOException exc ) {
-			   Log.e( "Hop", "Acknowledge server error!" + exc );
-			   ready[ 0 ] = false;
-			   ready.notify();
-			   asrv.close();
-			}
-		     }
-		  } catch( IOException _ ) {
-		     Log.e( "Hop", "Cannot spawn client acknowledge server!" );
-		     aport[ 0 ] = 0;
-		     aport.notify();
-		     return;
 		  }
+		  synchronized( ready ) {
+		     try {
+			Socket sock = asrv.accept();
+			final InputStream ip = sock.getInputStream();
+			ready[ 0 ] = ip.read() == 0x68
+			   && ip.read() == 0x6f
+			   && ip.read() == 0x70;
+			// notify the acknowledge
+			ready.notify();
+		     } catch( IOException exc ) {
+			Log.e( "Hop", "Acknowledge server error!" + exc );
+			ready[ 0 ] = false;
+			ready.notify();
+			asrv.close();
+		     }
+		  }
+	       } catch( IOException exc ) {
+		  Log.e( "Hop", "Cannot spawn client acknowledge server!" );
+		  aport[ 0 ] = 0;
+		  aport.notify();
+		  return;
 	       }
 	    }
 	 } );
@@ -163,42 +163,44 @@ public class Hop extends Thread {
       // 2. the Hop server is started with the --acknowledge option
       //    and the port number of the acknowledge server.
       // 3. the acknowledge server waits for the acknowledge
-      synchronized( ready ) {
-	 synchronized( aport ) {
-	    Log.d( "Hop", "starting acknowledge server" );
-	    th.start();
+      try {
+	 synchronized( ready ) {
+	    synchronized( aport ) {
+	       Log.d( "Hop", "starting acknowledge server" );
+	       th.start();
 
-	    // wait for the acknowledge port number
-	    aport.wait();
-	    Log.d( "Hop", "received acknowledge port=" + aport[ 0 ] );
+	       // wait for the acknowledge port number
+	       aport.wait();
+	       Log.d( "Hop", "acknowledge server ready on port=" + aport[ 0 ] );
 	    
-	    String cmd = "export HOME=" + HOME().getAbsolutePath() + "; "
+	       String cmd = "export HOME=" + HOME().getAbsolutePath() + "; "
 /* 	       + "export LD_LIBRARY_PATH="                             */
 /* 	       + root + "/lib/bigloo/" + HopConfig.BIGLOORELEASE + ":" */
 /* 	       + root + "/lib/hop/" + HopConfig.HOPRELEASE + ":$LD_LIBRARY_PATH;" */
-	       + "exec " + root + HOP + " " + HOPARGS
-	       + " -p " + port
-	       + " " + debug
-	       + " --max-threads " + maxthreads
-	       + (zeroconf ? " -z" : " --no-zeroconf")
-	       + (webdav ? " -d" : "")
-	       + (jobs ? " --jobs" : " --no-jobs")
-	       + " --rc-dir " + rcdir
-	       + " --acknowledge " + aport[ 0 ]
-	       + " " + args;
+		  + "exec " + root + HOP + " " + HOPARGS
+		  + " -p " + port
+		  + " " + debug
+		  + " --max-threads " + maxthreads
+		  + (zeroconf ? " -z" : " --no-zeroconf")
+		  + (webdav ? " -d" : "")
+		  + (jobs ? " --jobs" : " --no-jobs")
+		  + " --rc-dir " + rcdir
+		  + " --acknowledge " + aport[ 0 ]
+		  + " " + args;
 
-	    Log.d( "Hop", "=================================================" );
-	    Log.i( "Hop", HopConfig.APP + " exec [" + sh + " -c \"" + cmd + "\"]");
-	    HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
-	    Log.v( "Hop", "Hop process started, pid=" + pid[ 0 ] + ", HopFd=" +  HopFd );
+	       Log.d( "Hop", "=================================================" );
+	       Log.i( "Hop", HopConfig.APP + " exec [" + sh + " -c \"" + cmd + "\"]");
+	       HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
+	       Log.v( "Hop", "Hop process started, pid=" + pid[ 0 ] + ", HopFd=" +  HopFd );
 
-	    // wait for the Hop acknowledge
-	    Log.d( "Hop", ">>> waiting for Hop acknowledge" );
-	    ready.wait();
-	    Log.d( "Hop", "<<< Hop acknowledge received" );
+	       // wait for the Hop acknowledge
+	       Log.d( "Hop", ">>> waiting for Hop acknowledge" );
+	       ready.wait();
+	       Log.d( "Hop", "<<< Hop acknowledge received" );
+	    }
 	 }
-      } catch( Exception e ) {
-	 return false;
+      } catch( Throwable exc ) {
+	 Log.e( "Hop", "Did not receive Hop server acknowledge" );
       }
 
       synchronized( currentpid ) {
@@ -313,6 +315,8 @@ public class Hop extends Thread {
 
    // isRunning()
    public boolean isRunning( int timeout ) {
+      int errcount = 10;
+      
       while( true ) {
 	 synchronized( currentpid ) {
 	    Log.d( "Hop", "isRunning currentpid=" + currentpid[ 0 ] );
@@ -323,20 +327,34 @@ public class Hop extends Thread {
 
 		  conn.setRequestMethod( "HEAD" );
 
-		  Log.d( "Hop", "HEAD " + pingURL.toString() );
+		  Log.d( "Hop", "  >>> HEAD " + pingURL.toString() );
 
 		  conn.setConnectTimeout( 100 * timeout );
 	 
 		  int status = conn.getResponseCode();
 		  conn.disconnect();
 
-		  Log.d( "Hop", "isRunning status=" + status );
+		  Log.d( "Hop", "  <<< status=" + status );
 		  return (status == HttpURLConnection.HTTP_OK)
 		     || (status == HttpURLConnection.HTTP_NOT_FOUND)
 		     || (status == HttpURLConnection.HTTP_UNAUTHORIZED);
 	       } catch( Exception e ) {
-		  Log.d( "Hop", "isRunning exn=" + e.toString() + " tmt=" + timeout );
-		  return false;
+		  Log.d( "Hop", "  !!! exn=" + e.toString()
+			 + " tmt=" + timeout );
+
+		  if( errcount-- > 0 ) {
+		     try {
+			currentpid.wait( timeout );
+
+			if( currentpid[ 0 ] <= 0 ) {
+			   return false;
+			}
+		     } catch( Exception ee ) {
+			return false;
+		     }
+		  } else {
+		     return false;
+		  }
 	       }
 	    } else if( currentpid[ 0 ] == -1 ) {
 	       return false;

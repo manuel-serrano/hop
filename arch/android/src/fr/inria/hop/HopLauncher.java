@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun May 17 12:26:05 2020 (serrano)                */
+/*    Last change :  Sun Nov  8 06:37:11 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -310,14 +310,17 @@ public class HopLauncher extends Activity {
    @Override public void onCreate( Bundle bundle ) {
       super.onCreate( bundle );
 
-      Log.d( "HopLauncher", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
-      Log.d( "HopLauncher", "Hopdac (" + System.currentTimeMillis()/1000 + ")" );
-      Log.d( "HopLauncher", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
-      Log.d( "HopLauncher", "" );
-      Log.d( "HopLauncher", "onCreate" );
       String hopapk = activity.getApplicationInfo().sourceDir;
       String hopdir = activity.getApplicationInfo().dataDir + "/assets";
 
+      Log.d( "HopLauncher", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
+      Log.d( "HopLauncher", hopapk + " ("
+	     + java.time.LocalDate.now() + " "
+	     + java.time.LocalTime.now()
+	     + ")" );
+      Log.d( "HopLauncher", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
+      Log.d( "HopLauncher", "" );
+      
       HopConfig.init( getApplicationContext() );
 
       Log.d( "HopLauncher", "onCreate apk=" + hopapk + " dir=" + hopdir );

@@ -369,7 +369,8 @@ $(ANDROIDBUILDDIR)/assets: \
   $(ANDROIDBUILDDIR)/assets/etc \
   $(ANDROIDBUILDDIR)/assets/bin \
   $(ANDROIDBUILDDIR)/assets/lib \
-  $(ANDROIDBUILDDIR)/assets/share
+  $(ANDROIDBUILDDIR)/assets/share \
+  $(ANDROIDBUILDDIR)/cache
 	$(MAKE) rename-afiles
 	$(MAKE) assets.weblet
 	$(MAKE) assets.module
@@ -420,6 +421,9 @@ $(ANDROIDBUILDDIR)/assets/share:
 	rm -rf $@
 	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/share $(ANDROIDBUILDDIR)/assets
 	$(MAKE) rename-jsgz
+
+$(ANDROIDBUILDDIR)/cache:
+	mkdir -p $(ANDROIDBUILDDIR)/cache
 
 rename-jsgz:
 	for jsgz in `find $(ANDROIDBUILDDIR)/assets/share/hop -name '*.js.gz' -print`; do \
@@ -519,7 +523,8 @@ $(ANDROIDBUILDDIR)/jni: jni $(ANDROIDBUILDDIR)
         done
 
 apk.src: $(ANDROIDBUILDDIR)/src
-$(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR)
+$(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR) \
+  $(ANDROID_JAVA:%=$(ANDROIDDIR)/src/fr/inria/hop/%)
 	$(RM) -rf $@
 	cp -r $(ANDROIDDIR)/src $@
 	for p in `find $(ANDROIDBUILDDIR)/src -name '*.java' -print`; do \
