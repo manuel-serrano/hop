@@ -488,7 +488,7 @@
 
    (define (parse-host host)
       (cond
-	 ((pregexp-match "([^:])+:([0-9]+)" host)
+	 ((pregexp-match "([^:]+):([0-9]+)" host)
 	  =>
 	  (lambda (m)
 	     (values (cadr m) (string->integer (caddr m)))))

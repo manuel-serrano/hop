@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sun Nov  8 09:23:42 2020 (serrano)                */
+/*    Last change :  Sun Nov  8 10:05:58 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -119,7 +119,7 @@ public class Hop extends Thread {
    public void run() {
       final int[] pid = new int[ 1 ];
       String sh = SHELL;
-      final int[] aport = new int[ 1 ];
+      final String[] ahost = new String[ 1 ];
       final boolean[] ready = new boolean[ 1 ];
 
       // acknowledge server
@@ -127,11 +127,13 @@ public class Hop extends Thread {
 	    public void run() {
 	       ServerSocket asrv;
 	       try {
-		  synchronized( aport ) {
+		  synchronized( ahost ) {
 		     asrv = new ServerSocket( 0 );
-		     aport[ 0 ] = asrv.getLocalPort();
-		     // notify the acknowledge port number
-		     aport.notify();
+		     ahost[ 0 ] =
+			"127.0.0.1"
+			+ ":" + asrv.getLocalPort();
+		     // notify the acknowledge host server address and port
+		     ahost.notify();
 		  }
 		  synchronized( ready ) {
 		     try {
@@ -154,8 +156,8 @@ public class Hop extends Thread {
 		  }
 	       } catch( IOException exc ) {
 		  Log.e( "Hop", "Cannot spawn client acknowledge server!" );
-		  aport[ 0 ] = 0;
-		  aport.notify();
+		  ahost[ 0 ] = null;
+		  ahost.notify();
 		  return;
 	       }
 	    }
@@ -168,13 +170,13 @@ public class Hop extends Thread {
       // 3. the acknowledge server waits for the acknowledge
       try {
 	 synchronized( ready ) {
-	    synchronized( aport ) {
+	    synchronized( ahost ) {
 	       Log.d( "Hop", "starting acknowledge server" );
 	       th.start();
 
 	       // wait for the acknowledge port number
-	       aport.wait();
-	       Log.d( "Hop", "acknowledge server ready on port=" + aport[ 0 ] );
+	       ahost.wait();
+	       Log.d( "Hop", "acknowledge server ready on port=" + ahost[ 0 ] );
 	    
 	       String cmd = "export HOME=" + HOME().getAbsolutePath() + "; "
 /* 	       + "export LD_LIBRARY_PATH="                             */
@@ -188,7 +190,7 @@ public class Hop extends Thread {
 		  + (webdav ? " -d" : "")
 		  + (jobs ? " --jobs" : " --no-jobs")
 		  + " --rc-dir " + rcdir
-		  + " --acknowledge " + aport[ 0 ]
+		  + " --acknowledge " + ahost[ 0 ]
 		  + " " + args;
 
 	       Log.d( "Hop", "=================================================" );
