@@ -13,7 +13,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module hophop
-   
+
    (import hophop_config)
    
    (export hop
@@ -175,7 +175,7 @@
 		     logo
 		     (let liip ((dirs (filter (lambda (d)
 						 (and (pregexp-match
-							 weblet-version-rx d)
+							 (weblet-version-rx) d)
 						      (directory?
 							 (make-file-name base d))))
 					 (directory->list base))))
