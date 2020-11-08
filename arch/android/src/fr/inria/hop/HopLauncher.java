@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun Nov  8 06:37:11 2020 (serrano)                */
+/*    Last change :  Sun Nov  8 09:04:50 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -270,7 +270,6 @@ public class HopLauncher extends Activity {
       //this.requestWindowFeature( Window.FEATURE_ACTION_BAR );
       //ActionBar bar = getActionBar();
       //bar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#3e3e3e")));
-      
 
       setContentView( R.layout.main );
 

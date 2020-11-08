@@ -502,8 +502,11 @@
    (when (hop-acknowledge-host)
       (multiple-value-bind (host port)
 	 (parse-host (hop-acknowledge-host))
+	 (tprint "CONNECTING host=" host " " port)
 	 (with-handler
 	    (lambda (e)
+	       (tprint "CANNOT ACKNOWLEDGE...")
+	       (exception-notify e)
 	       #f)
 	    (let* ((sock (make-client-socket host port :timeout 2000))
 		   (port (socket-output sock)))
