@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Fri May 15 18:07:25 2020 (serrano)                */
+/*    Last change :  Sun Nov  8 06:35:51 2020 (serrano)                */
 /*    Copyright   :  2010-20 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
@@ -167,6 +167,12 @@ public class HopInstaller implements HopStage {
    public void unpack() throws IOException {
       File zipFile = new File( apk );
 
+      Log.d( "HopInstaller", "###############################################" );
+      Log.d( "HopInstaller", HopConfig.APP + " ("
+	     + java.time.LocalDate.now() + " "
+	     + java.time.LocalTime.now() + ")" );
+      Log.d( "HopInstaller", "###############################################" );
+      
       Log.d( "HopInstaller", "unpacking: apk=" + apk + " root=" + root );
       
       if( !zipFile.exists() ) {
@@ -266,7 +272,6 @@ public class HopInstaller implements HopStage {
    }
       
    public void exec( Context context ) {
-      Log.d( "HopInstaller", "exec installed=" + installed( root ) );
       if( !installed( root ) ) {
 	 try {
 	    Thread installer = new Thread( new Runnable () {
@@ -296,6 +301,7 @@ public class HopInstaller implements HopStage {
 	    raise( e );
 	 }
       } else {
+	 Log.d( "HopInstaller", "exec already installed=" + installed( root ) );
 	 handler.sendEmptyMessage( HopLauncher.MSG_UNPACKED );
 	 handler.sendEmptyMessage( HopLauncher.MSG_STATE_NEXT );
       }
