@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sun Nov  8 06:54:57 2020 (serrano)                */
+/*    Last change :  Sun Nov  8 09:23:42 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -137,9 +137,12 @@ public class Hop extends Thread {
 		     try {
 			Socket sock = asrv.accept();
 			final InputStream ip = sock.getInputStream();
+			Log.d( "Hop", "Acknowledge server connected" );
+			
 			ready[ 0 ] = ip.read() == 0x68
 			   && ip.read() == 0x6f
 			   && ip.read() == 0x70;
+			
 			// notify the acknowledge
 			ready.notify();
 		     } catch( IOException exc ) {
@@ -196,7 +199,7 @@ public class Hop extends Thread {
 	       // wait for the Hop acknowledge
 	       Log.d( "Hop", ">>> waiting for Hop acknowledge" );
 	       ready.wait();
-	       Log.d( "Hop", "<<< Hop acknowledge received" );
+	       Log.d( "Hop", "<<< Hop acknowledge received: " + ready[ 0 ] );
 	    }
 	 }
       } catch( Throwable exc ) {
