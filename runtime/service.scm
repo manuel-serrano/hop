@@ -51,6 +51,7 @@
 	    (generic post-multipart->obj ::obj ::obj ::bstring)
 	    (generic service-base-url::bstring ::obj ::http-request)
 	    (get-service::hop-service ::bstring)
+	    (get-service-from-name::hop-service ::bstring)
 	    (service-exists? ::bstring)
 	    (get-all-services ::http-request)
 	    (gen-service-url::bstring #!key (prefix "") (public #f))
@@ -779,6 +780,19 @@
 		     (method 'GET))))
 	  (let ((svc (autoload-filter req)))
 	     (or svc (error "get-service" "service not found" abspath))))))
+   
+;*---------------------------------------------------------------------*/
+;*    get-service-from-name ...                                        */
+;*---------------------------------------------------------------------*/
+(define (get-service-from-name svc)
+   (let ((abspath (string-append (hop-service-base) "/" svc)))
+      (or (synchronize *service-mutex*
+	     (hashtable-get *service-table* abspath))
+	  (let ((req (instantiate::http-server-request
+			(abspath abspath)
+			(method 'GET))))
+	     (let ((svc (autoload-filter req)))
+		(or svc (error "get-service" "service not found" abspath)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    service-exists? ...                                              */

@@ -372,7 +372,7 @@
 	 (js-bind! %this js-hopframe-prototype (& "post")
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame success fail-or-opt)
-			 (with-access::JsHopFrame this (url args)
+			 (with-access::JsHopFrame this (args)
 			    (post this success fail-or-opt %this #t)))
 		      (js-function-arity 2 0)
 		      (js-function-info :name "post" :len 2))
@@ -380,10 +380,20 @@
 	 (js-bind! %this js-hopframe-prototype (& "postSync")
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame opt)
-			 (with-access::JsHopFrame this (url args)
+			 (with-access::JsHopFrame this (args)
 			    (post this #f opt %this #f)))
 		      (js-function-arity 1 0)
 		      (js-function-info :name "postSync" :len 2))
+	    :hidden-class #t)
+	 (js-bind! %this js-hopframe-prototype (& "call")
+	    :value (js-make-function %this
+		      (lambda (this::JsHopFrame req opt)
+			 (with-access::JsHopFrame this (path args)
+			    (let ((svc (get-service path)))
+			       (with-access::hop-service svc (proc)
+				  (apply proc req args)))))
+		      (js-function-arity 2 0)
+		      (js-function-info :name "call" :len 2))
 	    :hidden-class #t)
 	 (js-bind! %this js-hopframe-prototype (& "toString")
 	    :value (js-make-function %this
@@ -471,6 +481,34 @@
 			    (service-exists? (js-tostring svc %this)))
 			 (js-function-arity 1 0)
 			 (js-function-info :name "exists" :len 1))
+	       :hidden-class #t)
+	    (js-bind! %this js-service (& "getService")
+	       :configurable #f :enumerable #f
+	       :value (js-make-function %this
+			 (lambda (this svc)
+			    (let* ((name (js-tostring svc %this))
+				   (svc (get-service-from-name name)))
+			       (js-make-service %this
+				  (lambda (this . args)
+				     (with-access::hop-service svc (path)
+					(js-make-hopframe %this this path args)))
+				  name #f #f -1 (js-current-worker) svc)))
+			 (js-function-arity 1 0)
+			 (js-function-info :name "getService" :len 1))
+	       :hidden-class #t)
+	    (js-bind! %this js-service (& "getServiceFromPath")
+	       :configurable #f :enumerable #f
+	       :value (js-make-function %this
+			 (lambda (this svc)
+			    (let* ((name (js-tostring svc %this))
+				   (svc (get-service name)))
+			       (js-make-service %this
+				  (lambda (this . args)
+				     (with-access::hop-service svc (path)
+					(js-make-hopframe %this this path args)))
+				  name #f #f -1 (js-current-worker) svc)))
+			 (js-function-arity 1 0)
+			 (js-function-info :name "getService" :len 1))
 	       :hidden-class #t)
 	    
 	    (js-bind! %this js-service (& "allowURL")
