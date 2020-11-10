@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep  1 08:35:47 2008                          */
 ;*    Last change :  Fri Sep  6 11:49:45 2019 (serrano)                */
-;*    Copyright   :  2008-19 Manuel Serrano                            */
+;*    Copyright   :  2008-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop accept loop                                                  */
 ;*=====================================================================*/
@@ -56,6 +56,9 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (scheduler-accept-loop scd::scheduler serv::socket wait::bool)
    (tune-socket! serv)
+   (with-access::scheduler scd (onready)
+      (when (procedure? onready)
+	 (onready)))
    (let loop ((id 1))
       (let ((sock (socket-accept serv)))
 	 (if (socket-reject sock)
@@ -91,8 +94,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheduler-accept-loop scd::queue-scheduler serv::socket w::bool)
    (tune-socket! serv)
+   (with-access::scheduler scd (onready)
+      (when (procedure? onready)
+	 (onready)))
    (let* ((acclen (min 50 (/fx (hop-max-threads) 2)))
-	  (socks (make-vector acclen)))
+	 (socks (make-vector acclen)))
       (let loop ((id 1))
 	 (with-access::queue-scheduler scd (mutex condv qlength max-qlength)
 	    (synchronize mutex
@@ -192,6 +198,9 @@
    (when (<fx nbthreads 6)
       (error "hop" "scheduler-accept requires at least 6 threads" nbthreads))
    (tune-socket! serv)
+   (with-access::scheduler scd (onready)
+      (when (procedure? onready)
+	 (onready)))
    (let loop ((i (if (>fx nbthreads 8) (- nbthreads 4) (/fx nbthreads 2))))
       (if (<=fx i 1)
 	  (let ((th (spawn scd connect-stage)))
@@ -229,6 +238,9 @@
       (stage scd thread stage-request id sock timeout 'connect))
 
    (tune-socket! serv)
+   (with-access::scheduler scd (onready)
+      (when (procedure? onready)
+	 (onready)))
    (let loop ((id 1))
       (let ((n (socket-accept-many serv socks
 		  :inbufs dummybufs
@@ -274,9 +286,12 @@
 						(loop (+fx id 1))))))))
 			     (loop))))))
       (tune-socket! serv)
+      (with-access::scheduler scd (onready)
+	 (when (procedure? onready)
+	    (onready)))
       (if w
-	  (thread-join! (thread-start-joinable! thread))
-	  (thread-start! thread))))
+	 (thread-join! (thread-start-joinable! thread))
+	 (thread-start! thread))))
 ;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    socket-reject ...                                                */

@@ -91,10 +91,6 @@ HOPEXTRALIBS	= @EXTRALIBS@
 HOPBIGLOOEXTRALIBS = @BIGLOOEXTRALIBS@
 HOPAPPLIBS	=
 
-BGLCLOSELIBS_S	= $(BIGLOOPTHLIBS) $(BIGLOOSSLLIBS) @BGLCLOSELIBS_S@
-BGLCLOSELIBS_U	= $(BIGLOOPTHLIBU) $(BIGLOOSSLLIBU) @BGLCLOSELIBS_U@
-
-
 #*---------------------------------------------------------------------*/
 #*    Build                                                            */
 #*---------------------------------------------------------------------*/

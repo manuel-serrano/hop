@@ -108,6 +108,10 @@
 		  (__proto__ server-prototype)
 		  (data '())
 		  (obj (instantiate::server
+			  (ctx %this)
+			  (trigger (lambda (thunk)
+				      (js-worker-push-thunk! (js-current-worker)
+					 "server" thunk)))
 			  (ssl (js-toboolean ssl))
 			  (host (if (eq? host (js-undefined))
 				    "localhost"

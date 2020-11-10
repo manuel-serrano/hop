@@ -142,7 +142,8 @@
 				    (when v
 				       (fprintf op "\"~a\": ~a" (car args) v))
 				    (when (pair? (cddr args))
-				       (display ", " op)
+				       (when v
+                                          (display ", " op))
 				       (loop (cddr args))))))
 			   (display "}}" op))))))))
 	 

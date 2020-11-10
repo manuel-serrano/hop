@@ -111,7 +111,10 @@
 	    (hop-server-listen-addr-set! ::obj)
 
 	    (hop-javascript::bool)
-	    (hop-javascript-set! ::bool))
+	    (hop-javascript-set! ::bool)
+
+	    (hop-acknowledge-host::obj)
+	    (hop-acknowledge-host-set! ::obj))
 
    (eval    (export-exports)))
 
@@ -361,3 +364,9 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-javascript
    #t)
+
+;*---------------------------------------------------------------------*/
+;*    hop-acknowledge-host ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-acknowledge-host
+   #f)

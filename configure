@@ -115,7 +115,7 @@ buildbindir=$PWD/bin
 buildspecific=
 installspecific=
 
-bigloorequired=4.3g
+bigloorequired=4.4a
 bigloourl=http://www-sop.inria.fr/indes/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop
@@ -1102,14 +1102,6 @@ fi
 
 mkmf=etc/Makefile.hopconfig
 
-bglcloselibs_u="-lbigloo_u-$""(RELEASE) "
-bglcloselibs_s="-lbigloo_s-$""(RELEASE) "
-
-for p in $bglcloselibs; do
-  bglcloselibs_u="$bglcloselibs_u -lbigloo$p""_u-$""(RELEASE)";
-  bglcloselibs_s="$bglcloselibs_s -lbigloo$p""_s-$""(RELEASE)";
-done
-
 rm -f $mkmf 2> /dev/null
 echo "#* Automatically generated file (don't edit) */" > $mkmf
 
@@ -1233,9 +1225,6 @@ cat $mkmf.in \
         -e "s|@HOPGCCLOSELIB@|$bigloogc|" \
         -e "s|@BIGLOOEXTRALIBS@|$bglextralibs|" \
         -e "s|@EXTRALIBS@|$extralibs|" \
-        -e "s|@BGLCLOSELIBS_U@|$bglcloselibs_u $bglextracloselibs|" \
-        -e "s|@BGLCLOSELIBS_S@|$bglcloselibs_s $bglextracloselibs|" \
-        -e "s|@BGLCLOSELIBS@|$bglcloselibs_version|" \
 	-e "s|@BGLMACH@|$mach|" \
 	-e "s|@BGLARCH@|$arch|" \
         -e "s|@BUILDID@|$buildid|" \
@@ -1587,8 +1576,7 @@ if [ "$arch " = "android " ]; then
   chmod a-w $init
   
   cat node_modules/hopdroid/lib/Makefile.in \
-      | sed -e "s|@HOPDROIDCLOSELIBS_S@|-lhopdroid_s-$version|" \
-            -e "s|@HOPDROIDCLOSELIBS_U@|-lhopdroid_u-$version|" \
+      | sed -e "s|@HOPDROIDEXTRALIBS@|hopdroid|" \
       > node_modules/hopdroid/lib/Makefile
   chmod a-w $init
   cat arch/android/hopdroid/phone.scm.in \
@@ -1597,8 +1585,7 @@ if [ "$arch " = "android " ]; then
   chmod a-w $init
 else
   cat node_modules/hopdroid/lib/Makefile.in \
-      | sed -e "s|@HOPDROIDCLOSELIBS_S@||" \
-            -e "s|@HOPDROIDCLOSELIBS_U@||" \
+      | sed -e "s|@HOPDROIDEXTRALIBS@||" \
       > node_modules/hopdroid/lib/Makefile
   chmod a-w $init
 fi

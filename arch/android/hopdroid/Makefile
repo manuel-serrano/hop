@@ -24,14 +24,8 @@ do: build
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = hopdroid
-HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
-  -lbigloophone_s-$(RELEASE) -lbigloomultimedia_s-$(RELEASE) \
-  -lbigloomail_s-$(RELEASE) -lhop_s-$(HOPRELEASE) 
-HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
-  -lbigloophone_u-$(RELEASE) -lbigloomultimedia_u-$(RELEASE) \
-  -lbigloomail_u-$(RELEASE) -lhop_u-$(HOPRELEASE)
-HOPCLOSELIBS_ES = -lhopdroid_s-$(HOPRELEASE)
-HOPCLOSELIBS_EU = -lhopdroid_u-$(HOPRELEASE)
+HOPBIGLOOEXTRALIBS = bigloophone bigloomultimedia bigloomail 
+HOPAPPLIBS = hop
 
 #*---------------------------------------------------------------------*/
 #*    Scheme extended objects                                          */

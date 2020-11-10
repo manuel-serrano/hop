@@ -423,7 +423,7 @@ setting can be overriden when starting Hop.]))))))
 	  (rcfile (if (equal? lang "js")
 		      (string-append (prefix (hop-rc-file)) ".js")
 		      (hop-rc-file)))
-	  (rc (make-file-name (hoprc-dir) rcfile))
+	  (rc (make-file-name (hoprc-dir) (basename rcfile)))
 	  (wd (make-file-name (hoprc-dir) pfile)))
       (cond
 	 (force
@@ -629,7 +629,7 @@ setting can be overriden when starting Hop.]))))))
 	 (with-output-to-file passwdfile
 	    (lambda ()
 	       (print "// generated file, Hop Wizard " (current-date))
-	       (print "var user = require( hop.user )")
+	       (print "var user = require( hop.user );")
 	       (newline)
 	       (print "// anonymous user")
 	       (print "user.add( { name: 'anonymous', ")
@@ -666,7 +666,7 @@ setting can be overriden when starting Hop.]))))))
 			   (make-file-name (hop-rc-directory) "guest")
 			   "/tmp"
 			   (hop-path-version)))
-		     "] )")
+		     "] } );")
 		  (newline))))
 	 
 	 (list 'save
