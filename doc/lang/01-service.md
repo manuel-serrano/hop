@@ -175,6 +175,30 @@ Service.exists( "private" );
 // false
 ```
 
+### Service.getService( name ) ###
+[:@glyphicon glyphicon-tag function]
+
+Returns the service named `name`. Raises an error if the service
+does not exist.
+
+Example:
+
+```hopscript
+Service.getService( "myService" )
+```
+
+### Service.getServiceFromPath( name ) ###
+[:@glyphicon glyphicon-tag function]
+
+Returns the service whose base url is `name`. Raises an error if the service
+does not exist.
+
+Example:
+
+```hopscript
+Service.getService( "/hop/myService" )
+```
+
 ### Service.allowURL( url ) ###
 [:@glyphicon glyphicon-tag function]
 
@@ -305,6 +329,13 @@ service. Since `postSync`blocks the execution of the client process
 until the service returns a value, it is strongly advised to use the
 asynchronous version of `post`instead.
 
+
+### frame.call( req ) ###
+[:@glyphicon glyphicon-tag function]
+
+Invokes the function associated with service, with `req` as the `this`.
+This method can only be invoked from the server-side code that defines
+the service.
 
 ### frame.setHeaders( obj ) ###
 [:@glyphicon glyphicon-tag function]
