@@ -24,6 +24,7 @@ do: build
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = hopdroid
+HOPBIGLOOEXTRALIBS = bigloophone bigloomultimedia bigloomail 
 HOPAPPLIBS = hop
 
 #*---------------------------------------------------------------------*/

@@ -54,13 +54,17 @@
 	    (autoload-filter ::http-request)
 	    (autoload-force-load! ::bstring)
 	    (get-weblet-info::pair-nil ::bstring)
-	    (get-weblets-zeroconf::pair-nil)))
+	    (get-weblets-zeroconf::pair-nil)
+	    (weblet-version-rx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    weblet-version-rx ...                                            */
 ;*---------------------------------------------------------------------*/
-(define weblet-version-rx
+(define version-rx
    (pregexp "[0-9]+.[0-9]+.[0-9]+(?:[-][0-9]+)?"))
+   
+(define (weblet-version-rx)
+   version-rx)
    
 ;*---------------------------------------------------------------------*/
 ;*    find-weblets-in-directory ...                                    */
@@ -71,7 +75,7 @@
       ;; scans dir to find version sub-directories to find ordered
       ;; version numbers
       (sort (lambda (x y) (>fx (string-natural-compare3 x y) 0))
-	 (filter! (lambda (f) (pregexp-match weblet-version-rx f))
+	 (filter! (lambda (f) (pregexp-match (weblet-version-rx) f))
 	    (directory->list dir))))
    
    (define (search pred lst)
