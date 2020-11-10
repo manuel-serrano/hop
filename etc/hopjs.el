@@ -297,7 +297,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-electric-paren ...                                         */
 ;*---------------------------------------------------------------------*/
-(defun hopjs-electric-paren ()
+(defun hopjs-electric-paren (&optional N)
   "Insert and indent line."
   (interactive)
   (insert ")")
