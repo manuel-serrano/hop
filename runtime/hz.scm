@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
 ;*    Last change :  Mon May 30 18:18:44 2016 (serrano)                */
-;*    Copyright   :  2007-16 Manuel Serrano                            */
+;*    Copyright   :  2007-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
 ;*=====================================================================*/
@@ -285,5 +285,3 @@
    (when (pair? lst)
       (let ((v (proc (car lst))))
 	 (or v (findv proc (cdr lst))))))
-      
-       

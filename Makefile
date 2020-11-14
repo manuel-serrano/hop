@@ -219,7 +219,7 @@ install-android:
            HOPLIBDIR=$(HOPTMPDIR)/android/assets/hoplib \
            HOPSHAREDIR=$(HOPTMPDIR)/android/assets/share/hop \
            HOPMANDIR=$(HOPTMPDIR)/android/assets/man \
-           HOPWEBLETSDIR=$(HOPTMPDIR)/android/assets/hoplib/hop/$branch/weblets \
+           HOPWEBLETSDIR=$(HOPTMPDIR)/android/assets/hoplib/hop/$(HOPBRANCH)/weblets \
            HOPCONTTRIBSDIR=$(HOPTMPDIR)/android/assets/contribs \
 	   INSTALLSPECIFIC=
 	$(INSTALL) $(BUILDLIBDIR)/hopdroid.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopdroid.init && \
