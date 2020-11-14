@@ -77,6 +77,10 @@ To build a full hop+bigloo stack and to produce an `apk` file:
     $ cd arch/android
     $ export REPODIR=repodir
     $ make apk 
+	
+To build for debugging:
+
+    $ make apk HOPCONFIGUREOPT=--debug
 
 This will use the android sdk and ndk pointed to by the environment variables
 `$ANDROIDSDK` and `$ANDROIDNDK`. The default configuration can be 
