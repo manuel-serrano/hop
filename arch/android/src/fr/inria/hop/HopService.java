@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Fri May 15 10:27:21 2020 (serrano)                */
+/*    Last change :  Sun Nov  8 13:27:22 2020 (serrano)                */
 /*    Copyright   :  2012-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -165,49 +165,6 @@ public class HopService extends Service {
    public static boolean isBackground() {
       return lasthop != null && lasthop.isRunning( 0 );
       //return HopDroid.isBackground();
-   }
-
-   public boolean waitHop( final int timeout ) {
-      // wait (timeout ms) for the Hop server to be up and running
-      final boolean[] res = new boolean[ 1 ];
-
-      Thread th = new Thread( new Runnable() {
-	    public void run() {
-	       int tmt = timeout;
-	       synchronized( res ) {
-		  while( tmt >= 1000 ) {
-		     if( hop.isRunning( 1000 ) ) {
-
-			res[ 0 ] = true;
-			res.notify();
-			return;
-		     } else {
-			try {
-			   Thread.sleep( 1000 );
-			} catch( Exception e ) {
-			   ;
-			}
-			tmt -= 1000;
-		     }
-		  }
-	       
-		  res[ 0 ] = false;
-		  res.notify();
-		  return;
-	       }
-	    }
-	 } );
-	 
-      synchronized( res ) {
-	 th.start();
-
-	 try {
-	    res.wait();
-	    return res[ 0 ];
-	 } catch( Exception e ) {
-	    return false;
-	 }
-      }
    }
 
    private Notification statusNotification( boolean notify ) {

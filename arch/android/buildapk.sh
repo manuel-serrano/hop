@@ -27,6 +27,8 @@ jarsigner=jarsigner
 
 androidkeystore=$HOME/.android/debug.keystore
 
+libdir=lib
+
 #*---------------------------------------------------------------------*/
 #*    argument parsing                                                 */
 #*---------------------------------------------------------------------*/
@@ -58,6 +60,9 @@ while : ; do
 
     --jarsigner=*)
       jarsigner="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --nolibdir)
+      libdir=;;
     
     *)
       apkname=$1;;
@@ -104,11 +109,16 @@ echo "$AAPT add $apkname.apk.unaligned classes.dex"
 $AAPT add $apkname.apk.unaligned classes.dex || exit 1
 
 rm -rf lib
-cp -r libs lib
 
-for p in `find lib -type f -print`; do
-  $AAPT add $apkname.apk.unaligned $p
-done
+if [ "$libdir " = " " ]; then
+  rm -rf libs
+else  
+  mv libs $libdir
+  
+  for p in `find $libdir -type f -print`; do
+    $AAPT add $apkname.apk.unaligned $p
+  done
+fi  
 
 for p in `find assets -type f -print`; do
   $AAPT add $apkname.apk.unaligned $p

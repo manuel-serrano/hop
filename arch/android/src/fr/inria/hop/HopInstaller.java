@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Sun Nov  8 06:35:51 2020 (serrano)                */
+/*    Last change :  Fri Nov 13 09:16:27 2020 (serrano)                */
 /*    Copyright   :  2010-20 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
@@ -14,6 +14,10 @@
 /*---------------------------------------------------------------------*/
 package fr.inria.hop;
 
+import java.util.*;
+import java.util.zip.*;
+import java.io.*;
+
 import android.app.Activity;
 import android.util.Log;
 import android.app.ProgressDialog;
@@ -21,12 +25,8 @@ import android.content.DialogInterface;
 import android.content.Context;
 import android.os.*;
 
-import java.util.*;
-import java.util.zip.*;
-import java.io.*;
-
 /*---------------------------------------------------------------------*/
-/*    The class                                                        */
+/*    HopInstall ...                                                   */
 /*---------------------------------------------------------------------*/
 public class HopInstaller implements HopStage {
    // global constants
@@ -38,6 +38,7 @@ public class HopInstaller implements HopStage {
    
    // instance variables
    Handler handler;
+   Boolean isClientInstaller = false;
    String apk;
    String root;
    ProgressDialog progress;
@@ -58,6 +59,18 @@ public class HopInstaller implements HopStage {
       progress = makeProgressBar( activity );
    }
    
+   public HopInstaller( Activity activity, Handler h, String hopapk, String hopdir, Boolean isclient ) {
+      super();
+
+      handler = h;
+      apk = hopapk;
+      root = hopdir;
+      isClientInstaller = isclient;
+
+      progress = makeProgressBar( activity );
+   }
+
+   // makeProgressBar
    private ProgressDialog makeProgressBar( Activity activity ) {
       ProgressDialog p = new ProgressDialog( activity );
       p.setTitle( "Hop Installer" );
@@ -271,7 +284,12 @@ public class HopInstaller implements HopStage {
       handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_INSTALL_FAIL, e ) );
    }
       
+   // exec
    public void exec( Context context ) {
+      Log.i( "HopInstaller",
+	     "isClientInstaller=" + isClientInstaller.toString()
+	     + " root=" + root );
+
       if( !installed( root ) ) {
 	 try {
 	    Thread installer = new Thread( new Runnable () {
@@ -279,13 +297,14 @@ public class HopInstaller implements HopStage {
 		     try {
 			unpack();
 			androidhome();
-			
-			Log.d( "HopInstaller", "setting exec mode: " + root + "/bin/hop" );
-			chmod( root + "/bin/hop" );
+
+			if( !isClientInstaller ) {
+			   Log.d( "HopInstaller", "setting exec mode: " + root + "/bin/hop" );
+			   chmod( root + "/bin/hop" );
+			}
 			chmodflush();
 			
-			handler.sendEmptyMessage( HopLauncher.MSG_UNPACKED );
-			handler.sendEmptyMessage( HopLauncher.MSG_STATE_NEXT );
+			handler.sendEmptyMessage( HopLauncher.MSG_INSTALL_UNPACKED );
 		     } catch( Exception e ) {
 			raise( e );
 		     } finally {
@@ -301,9 +320,8 @@ public class HopInstaller implements HopStage {
 	    raise( e );
 	 }
       } else {
-	 Log.d( "HopInstaller", "exec already installed=" + installed( root ) );
-	 handler.sendEmptyMessage( HopLauncher.MSG_UNPACKED );
-	 handler.sendEmptyMessage( HopLauncher.MSG_STATE_NEXT );
+	 Log.d( "HopInstaller", "hop already installed=" + installed( root ) );
+	 handler.sendEmptyMessage( HopLauncher.MSG_INSTALL_UNPACKED );
       }
    }
 

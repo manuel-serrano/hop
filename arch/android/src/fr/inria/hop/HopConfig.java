@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul 10 08:08:45 2016                          */
-/*    Last change :  Sun May 17 10:23:15 2020 (serrano)                */
+/*    Last change :  Fri Nov 13 10:31:04 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop configuration                                                */
@@ -32,7 +32,10 @@ public class HopConfig {
    static String URL;
    static String BIGLOORELEASE;
    static String HOPRELEASE;
+   static String HOPAPK;
+   static String HOPHZ;
    static String APP;
+   static String SERVICE;
    static String ARGS;
    static String DEBUG;
 
@@ -61,9 +64,12 @@ public class HopConfig {
       URL = res.getString( R.string.hopapp );
       BIGLOORELEASE = res.getString( R.string.bigloorelease );
       HOPRELEASE = res.getString( R.string.hoprelease );
+      HOPAPK = res.getString( R.string.hopapk );
+      HOPHZ = res.getString( R.string.hophz );
       DEBUG = res.getString( R.string.hopdebug );
       APP = res.getString( R.string.hopapp );
       ARGS = res.getString( R.string.hopargs );
+      SERVICE = APP.equals( "hop" ) ? "/hop" : "/hop/" + APP;
 
       PLUGINBUILD = res.getBoolean( R.bool.pluginbuild );
       PLUGINLOCALE = res.getBoolean( R.bool.pluginlocale );
