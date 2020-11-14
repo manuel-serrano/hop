@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Sat Nov  7 16:53:02 2020 (serrano)                */
+/*    Last change :  Sun Nov  8 11:54:28 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -321,10 +321,10 @@ public class HopDroid extends Thread {
       return serverPing( addr );
    }
 
-   // isRunning()
-   public synchronized boolean isRunning() {
-      return state == HOPDROID_STATE_RUN;
-   }
+/*    // isRunning()                                                   */
+/*    public synchronized boolean isRunning() {                        */
+/*       return state == HOPDROID_STATE_RUN;                           */
+/*    }                                                                */
 
    // run hop
    public void run() {

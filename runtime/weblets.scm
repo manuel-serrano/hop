@@ -216,7 +216,12 @@
 ;*    reset-autoload! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (reset-autoload!)
-   (install-autoload-weblets! *weblet-autoload-dirs*))
+   (let ((warn (bigloo-warning)))
+      (unwind-protect
+	 (begin
+	    (bigloo-warning-set! 0)
+	    (install-autoload-weblets! *weblet-autoload-dirs*))
+	 (bigloo-warning-set! warn))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-autoload-directories ...                                     */

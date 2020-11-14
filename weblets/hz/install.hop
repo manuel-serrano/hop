@@ -164,9 +164,11 @@
 	 (unless (make-directories (hz-weblets-directory))
 	    (error "hz-install-file" "Cannot create weblet directory"
 	       (hz-weblets-directory))))
-      (unwind-protect
-	 (untar p :directory (hz-weblets-directory))
-	 (close-input-port p)))
+      (let ((dir (make-file-name (hz-weblets-directory) name)))
+	 (make-directories dir)
+	 (unwind-protect
+	    (untar p :directory dir)
+	    (close-input-port p))))
    ;; add the weblet to the database
    (let ((e (or e (hz->weblet name version url))))
       ;; add the publisher for other possible weblets
