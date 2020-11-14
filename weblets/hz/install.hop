@@ -112,6 +112,10 @@
       (package-url-parse url)
       (let* ((hzfile (format "~a-~a.hz" name version))
 	     (hzpath (make-file-name (hz-download-directory) hzfile)))
+	 (unless (directory? (hz-download-directory))
+	    (unless (make-directories (hz-download-directory))
+	       (error "hz-download-url" "Cannot create download directory"
+		  (hz-download-directory))))
 	 (cond
 	    ((not (file-exists? hzpath))
 	     (download url name version hzpath))
@@ -156,6 +160,10 @@
 (define (hz-install-file e path name version url)
    ;; untar the .hz into the weblets directory
    (let* ((p (open-input-gzip-file path)))
+      (unless (directory? (hz-weblets-directory))
+	 (unless (make-directories (hz-weblets-directory))
+	    (error "hz-install-file" "Cannot create weblet directory"
+	       (hz-weblets-directory))))
       (let ((dir (make-file-name (hz-weblets-directory) name)))
 	 (make-directories dir)
 	 (unwind-protect
