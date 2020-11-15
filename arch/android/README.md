@@ -122,7 +122,7 @@ Installing
 
 The standard `adb` Android tool tool is used to installed:
 
-    $ adb install hop-3.3.0.apk
+    $ adb install -r hop-3.3.0.apk
     $ adb shell monkey -p fr.inria.hop 1
 
 To uninstall it:
