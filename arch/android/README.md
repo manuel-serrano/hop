@@ -95,9 +95,13 @@ the USB bus. If an emulator is used, add the following to all
     $ make apk ANDROIDHOST=-e
 
 
-If only hop needs to be recompiled:
+If only hop needs to be reinstalled and recompiled:
 
     $ make apk-sans-bigloo
+
+If only hop needs to be recompiled (after a modification in the Hop build dir):
+
+    $ make apk-re-hop
 
 If only the `apk` file has be to regenerated:
 
