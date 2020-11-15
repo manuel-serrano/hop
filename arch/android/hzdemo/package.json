@@ -1,0 +1,9 @@
+{
+   "name": "hzdemo",
+   "description": "A simple Android Hz application",
+   "version": "0.0.0",
+   "license": "gpl",
+   "author": { "name": "Manuel Serrano" },
+   "main": "hzdemo.js",
+   "engines": { "hop": ">=3.4.0" }
+}
