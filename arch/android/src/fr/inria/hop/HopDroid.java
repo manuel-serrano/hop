@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Sun Nov 15 06:49:59 2020 (serrano)                */
+/*    Last change :  Sun Nov 15 08:37:41 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -160,7 +160,8 @@ public class HopDroid extends Thread {
 		     service.handler, HopLauncher.MSG_HOPDROID_FAIL, e ) );
 	    }
 	 } catch( Throwable t ) {
-	    ;
+	    Log.e( "HopDroid", "error while initializing plugins: " + e );
+	    e.printStackTrace();
 	 }
 	 
       }
@@ -212,7 +213,8 @@ public class HopDroid extends Thread {
 	       }
 	       Thread.sleep( 1000 );
 	    } catch( Throwable t ) {
-	       ;
+	       Log.e( "HopDroid", "waitCmd error: " + t );
+	       t.printStackTrace();
 	    }
 	 } else {
 	    return;
@@ -288,6 +290,8 @@ public class HopDroid extends Thread {
       try {
 	 return execCmd( addr, SERVER_PING_CMD );
       } catch( Exception e ) {
+	 Log.e( "HopDroid", "serverPing error: " + e );
+	 e.printStackTrace();
          return false;
       }
    }
@@ -339,7 +343,8 @@ public class HopDroid extends Thread {
 		  try {
 		     serverEvent();
 		  } catch( Throwable e ) {
-		     ;
+		     Log.e( "HopDroid", "eventserv error: " + e );
+		     e.printStackTrace();
 		  } finally {
 		     killCmdServer();
 		  }
@@ -359,7 +364,8 @@ public class HopDroid extends Thread {
 		  try {
 		     serverPlugin();
 		  } catch( Throwable e ) {
-		     ;
+		     Log.e( "HopDroid", "pluginserv error: " + e );
+		     e.printStackTrace();
 		  } finally {
 		     killCmdServer();
 		  }
@@ -428,7 +434,8 @@ public class HopDroid extends Thread {
 	       pluginclient.close();
 	       pluginclient = null;
 	    } catch( Throwable ne ) {
-	       ;
+	       Log.e( "HopDroid", "error while closing plugin client: " + e );
+	       e.printStackTrace();
 	    }
 	 }
       } finally {
@@ -553,13 +560,13 @@ public class HopDroid extends Thread {
 		     Log.d( "HopDroid", "close cmd client" );
 		  }
 	       } catch( Throwable t ) {
-		  Log.d( "HopDroid", "Cannot close cmd client: " + t );
+		  Log.e( "HopDroid", "Cannot close cmd client: " + t );
 		  t.printStackTrace();
 	       }
 	    }
 	 }
       } catch( Throwable e ) {
-	 Log.e( "HopDroid", "cmdserv error" );
+	 Log.e( "HopDroid", "cmdserv error: " + e );
 	 e.printStackTrace();
       } finally {
 	 cmdserv.close();
@@ -598,15 +605,17 @@ public class HopDroid extends Thread {
 	    ls.connect( serv.getLocalSocketAddress() );
 	    ls.close();
 	 } catch( Throwable e ) {
-	    Log.d( "HopDroid", "safeClose error, cannot connect, serv="
+	    Log.e( "HopDroid", "safeClose error, cannot connect, serv="
 		   + serv + " exc=" + e );
+	    e.printStackTrace();
 	 }
       } else {
 	 try {
 	    client.close();
 	 } catch( Throwable e ) {
-	    Log.d( "HopDroid", "safeClose error, serv="
+	    Log.e( "HopDroid", "safeClose error, serv="
 		   + serv + " client=" + client + " exc=" + e );
+	    e.printStackTrace();
 	 }
       }
 
@@ -691,7 +700,7 @@ public class HopDroid extends Thread {
 		  op.flush();
 	       }
 	    } catch( Exception e ) {
-	       Log.e( "HopDroid", "pushEvent error: " + e.getMessage() );
+	       Log.e( "HopDroid", "pushEvent error: " + e );
 	       e.printStackTrace();
 	    }
 	 }
@@ -795,9 +804,10 @@ class HopLocalServerSocket extends LocalServerSocket {
 		   + this + ") closed" );
 	 }
       } catch( Throwable e ) {
-	 Log.d( "HopDroid", "cannot close server "
+	 Log.e( "HopDroid", "cannot close server "
 		+ this.getLocalSocketAddress().getName() + " ("
 		+ this + "): " + e );
+	 e.printStackTrace();
       }
    }
 
