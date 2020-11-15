@@ -296,11 +296,14 @@
 		  (if (=fx i len)
 		      obj
 		      (let* ((name (js-key-name->jsstring (caar alist)))
-			     (val (js-obj->jsobject (cdar alist) %this)))
+			     (val (if (pair? (cdar alist))
+				      (car (cdar alist))
+				      (cdar alist)))
+			     (jsval (js-obj->jsobject val %this)))
 			 (vector-set! props i
 			    (prop name (property-flags-default)))
-			 (vector-set! vec i val)
-			 (when (js-procedure? val)
+			 (vector-set! vec i jsval)
+			 (when (js-procedure? jsval)
 			    (vector-set! methods i #t))
 			 (loop (+fx i 1) (cdr alist))))))))))
 

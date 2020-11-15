@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.6.x/arch/android/src/fr/inria/hop/HopPluginInit.java       */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopPluginInit.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:44:16 2010                          */
-/*    Last change :  Fri Feb 21 13:29:32 2014 (serrano)                */
-/*    Copyright   :  2010-14 Manuel Serrano                            */
+/*    Last change :  Sun Nov 15 06:48:49 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The initial plugin that allows plugin installation               */
 /*=====================================================================*/
@@ -48,12 +48,13 @@ public class HopPluginInit extends HopPlugin {
       String name = HopDroid.read_string( ip );
       int id = HopDroid.getPlugin( name );
 
+      Log.d( "HopPluginInit", "name=" + name + " id=" + id );
       if( id < 0 ) {
 	 // we don't have loaded that plugin yet
 	 int i = name.lastIndexOf( '/' );
 	 int j = name.lastIndexOf( '.' );
 	 String cname = "fr.inria.hop."
-	    + name.substring( (i < 0 ? 0 : i + 1), (j < i ? name.length() : j) );
+	    + name.substring( (i < 0 ? 0 : i + 1), (j <= i ? name.length() : j) );
 	 String tmp =
 	    Environment.getExternalStorageDirectory().getAbsolutePath();
 	    

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Sun Nov  8 11:54:28 2020 (serrano)                */
+/*    Last change :  Sun Nov 15 06:49:59 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -68,7 +68,7 @@ public class HopDroid extends Thread {
       plugins = new Vector( 16 );
       
       try {
-	 Log.d( "HopDroid", "create app=" + HopConfig.APP );
+	 Log.d( "HopDroid", "init plugins app=" + HopConfig.APP );
 	 String app = HopConfig.APP;
 	 
 	 state = HOPDROID_STATE_INIT;
