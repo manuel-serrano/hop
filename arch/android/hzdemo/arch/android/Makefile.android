@@ -1,0 +1,40 @@
+#*=====================================================================*/
+#*    .../hop/arch/android/hzdemo/arch/android/Makefile.android        */
+#*    -------------------------------------------------------------    */
+#*    Author      :  Manuel Serrano                                    */
+#*    Creation    :  Tue Oct 12 11:53:03 2010                          */
+#*    Last change :  Fri Nov 13 15:43:00 2020 (serrano)                */
+#*    Copyright   :  2010-20 Manuel Serrano                            */
+#*    -------------------------------------------------------------    */
+#*    Android Hz demo                                                  */
+#*=====================================================================*/
+
+#*---------------------------------------------------------------------*/
+#*    hopclient configuration passed to hop/arch/android/Makefile      */
+#*---------------------------------------------------------------------*/
+include Makefile.config
+
+#*---------------------------------------------------------------------*/
+#*    hzdemo targets                                                   */
+#*---------------------------------------------------------------------*/
+apk:
+	$(MAKE) -C $(HOPDIR)/arch/android apk-sans-hop.client \
+            ANDROIDWEBLET=$(ANDROIDWEBLET) \
+            ANDROIDRES=$(ANDROIDRES) \
+            ANDROIDMANIFEST=$(ANDROIDMANIFEST) \
+            CONFIG=$(ANDROIDWEBLET)/arch/android/Makefile.config \
+            HOPHZ=$(HOPHZ) \
+	    DESTDIR=$(DESTDIR)
+
+config:
+	$(MAKE) -C $(HOPDIR)/arch/android config \
+            ANDROIDWEBLET=$(ANDROIDWEBLET) \
+            ANDROIDRES=$(ANDROIDRES) \
+            ANDROIDMANIFEST=$(ANDROIDMANIFEST) \
+            CONFIG=$(ANDROIDWEBLET)/arch/android/Makefile.config
+
+prepare-android-weblet:
+	cp plugins/prefs_android.hop ../../plugins
+	find . -name '*.o' -exec /bin/rm {} \;
+	find . -name '*.so' -exec /bin/rm {} \;
+	rm -rf ../../arch/android
