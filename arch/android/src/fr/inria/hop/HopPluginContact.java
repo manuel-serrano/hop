@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../arch/android/src/fr/inria/hop/HopPluginContact.java          */
+/*    .../hop/arch/android/src/fr/inria/hop/HopPluginContact.java      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Fri Feb 21 13:29:06 2014 (serrano)                */
-/*    Copyright   :  2010-14 Manuel Serrano                            */
+/*    Last change :  Sun Nov 15 16:29:56 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
 /*=====================================================================*/
@@ -287,40 +287,36 @@ public class HopPluginContact extends HopPlugin {
       
    // writeContactNotes
    void writeContactNotes( final OutputStream op, int id ) throws IOException {
-      Cursor cur = getCursor( 
+      Cursor cur = getCursor(
 	 id,
-	 new String[] {
-	    Website.URL,
-	 },
+	 new String[] { Website.URL },
 	 Website.CONTENT_ITEM_TYPE );
 
       op.write( "(".getBytes() );
       
       // id
-      op.write( "(android-id".getBytes() );
-      op.write( " . \"".getBytes() );
+      op.write( "(android-id . \"".getBytes() );
       op.write( Integer.toString( id ).getBytes() );
       op.write( "\")".getBytes() );
       
       // website
       if( cur.moveToFirst() ) {
-	 op.write( " (url".getBytes() );
-	 op.write( " . \"".getBytes() );
+	 op.write( " (url . \"".getBytes() );
 	 op.write( cur.getString( 0 ).getBytes() );
 	 op.write( "\")".getBytes() );
       }
 
       // note
-      cur = getCursor( 
+      cur = getCursor(
 	 id,
-	 new String[] {
-	    Note.NOTE,
-	 },
+	 new String[] { Note.NOTE },
 	 Note.CONTENT_ITEM_TYPE );
 
-      if( cur.moveToFirst() ) {
+      if( cur.moveToFirst() && cur.getString( 0 ) != null ) {
 	 op.write( " ".getBytes() );
+	 op.write( " (note . \"".getBytes() );
 	 op.write( cur.getString( 0 ).getBytes() );
+	 op.write( "\")".getBytes() );
       }
       
       op.write( ")".getBytes() );
