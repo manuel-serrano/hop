@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jul  5 09:42:40 2016                          */
-/*    Last change :  Fri Nov 13 08:54:09 2020 (serrano)                */
+/*    Last change :  Sun Nov 15 08:10:58 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Spawn Hop service (not the Hop process).                         */
@@ -56,13 +56,13 @@ public class HopIntenter implements HopStage {
 	       Log.e( "HopIntenter", "error while connecting to service: " +
 		      e.toString() );
 	       e.printStackTrace();
-	       Log.e( "HopIntenter", "killing background hop because of error..." );
 	       activity.unbindService( hopconnection );
 	       HopService.emergencyExit();
 	    }
 	 }
 
 	 public void onServiceDisconnected( ComponentName className ) {
+	    Log.d( "HopIntenter", "onServiceDisconnected" );
 	    hopservice = null;
 	 }
       };
@@ -85,8 +85,8 @@ public class HopIntenter implements HopStage {
    }
 
    public void exec( Context context ) {
-      Log.d( "HopIntenter", "exec" );
       hopintent = new Intent( context, HopService.class );
+      Log.d( "HopIntenter", "Hop.Service.isBackground=" + HopService.isBackground() );
       if( !HopService.isBackground() ) {
 	 activity.startService( hopintent );
       }
