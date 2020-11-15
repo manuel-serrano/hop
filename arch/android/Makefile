@@ -61,21 +61,21 @@ ANDROIDSPLASH = $(ANDROIDDIR)/splash
 
 # Plugins
 PLUGINBUILD = true
-PLUGINLOCALE = false
-PLUGINVIBRATE = false
+PLUGINLOCALE = true
+PLUGINVIBRATE = true
 PLUGINMUSICPLAYER = true
 PLUGINMEDIAAUDIO = true
-PLUGINSENSOR = false
-PLUGINBATTERY = false
-PLUGINSMS = false
-PLUGINWIFI = false
-PLUGINCONNECTIVITY = false
-PLUGINCONTACT = false
+PLUGINSENSOR = true
+PLUGINBATTERY = true
+PLUGINSMS = true
+PLUGINWIFI = true
+PLUGINCONNECTIVITY = true
+PLUGINCONTACT = true
 PLUGINZEROCONF = true
-PLUGINSYSTEM = false
+PLUGINSYSTEM = true
 PLUGINTTS = false
-PLUGINCALL = false
-PLUGINPREFS = false
+PLUGINCALL = true
+PLUGINPREFS = true
 
 APKCUSTOM =
 APKCUSTOMDIR =
@@ -522,9 +522,9 @@ apk-sans-hop: apk.common apk.res apk.jni apk.src
 	$(MAKE) ndk-build
 	$(MAKE) apk-build
 
-#* apk-hop-app: apk.common apk.res apk.jni apk.src                     */
-#* 	$(MAKE) ndk-build                                              */
-#* 	$(MAKE) apk-build                                              */
+apk-re-hop: apk.common apk.res apk.jni apk.src apk.rehop apk.recustom
+	$(MAKE) ndk-build
+	$(MAKE) apk-build
 
 apk-sans-bigloo.client: apk.common apk.res apk.jni apk.src apk.hop.client
 	$(MAKE) ndk-build.client
@@ -533,7 +533,6 @@ apk-sans-bigloo.client: apk.common apk.res apk.jni apk.src apk.hop.client
 apk-sans-hop.client: apk.common apk.res apk.jni apk.src apk.hop.client
 	$(MAKE) ndk-build.client
 	$(MAKE) apk-build.client
-
 
 install.apk:
 	adb $(ANDROIDHOST) install $(ANDROIDBUILDDIR)/bin/$(HOPAPKNAME).apk
@@ -613,6 +612,10 @@ apk.hop: $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
 	$(MAKE) -C $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
 	$(MAKE) -C $(ANDROIDBUILDDIR)/$(HOPFULLNAME) install DESTDIR=$(ANDROIDBUILDDIR)
 
+apk.rehop:
+	$(MAKE) -C $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
+	$(MAKE) -C $(ANDROIDBUILDDIR)/$(HOPFULLNAME) install DESTDIR=$(ANDROIDBUILDDIR)
+
 apk.hop.client: $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
 	mkdir -p $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/etc
 	cp -r $(ANDROIDBUILDDIR)/$(HOPFULLNAME)/etc/hoprc.hop $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/etc
@@ -654,6 +657,10 @@ apk.custom: apk.hop $(ANDROIDBUILDDIR)/assets
                ANDROIDBUILDDIR=$(ANDROIDBUILDDIR) \
                ANDROIDHOPPREFIX=$(ANDROIDHOPPREFIX); \
 	fi
+
+apk.recustom:
+	rm -rf $(ANDROIDBUILDDIR)/assets
+	$(MAKE) apk.custom
 
 #*---------------------------------------------------------------------*/
 #*    droidcc ...                                                      */
