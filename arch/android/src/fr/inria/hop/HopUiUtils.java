@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  1 09:13:38 2010                          */
-/*    Last change :  Thu Nov 12 17:15:30 2020 (serrano)                */
+/*    Last change :  Sun Nov 15 08:20:04 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    UI Utility functions                                             */
@@ -34,9 +34,7 @@ public class HopUiUtils {
 			     final String ok,
 			     final boolean exit ) {
       try {
-	 Log.e( "HopUiUtils", "alert.1" );
 	 AlertDialog.Builder builder = new AlertDialog.Builder( activity );
-	 Log.e( "HopUiUtils", "alert.2" );
 	 builder.setMessage( msg )
 	    .setCancelable( false )
 	    .setPositiveButton( ok, new DialogInterface.OnClickListener() {
@@ -48,13 +46,10 @@ public class HopUiUtils {
 		     }
 		  }
 	       } );
-	 Log.e( "HopUiUtils", "alert.3" );
 	 AlertDialog alert = builder.create();
-	 Log.e( "HopUiUtils", "alert.4" );
 	 alert.show();
-	 Log.e( "HopUiUtils", "alert.5" );
       } catch( Exception e ) {
-	 Log.e( "HopUiUtils", "e=" + e.toString() );
+	 Log.e( "HopUiUtils", "failure in alert e=" + e.toString() );
 	 e.printStackTrace();
       }
    }
@@ -81,7 +76,8 @@ public class HopUiUtils {
 	 Log.d( "HopUiUtils", "msg=" + msg );
 	 Log.d( "HopUiUtils", "o=" + o.toString() );
 	 Log.d( "HopUiUtils", "task=" + task );
-	 alert( activity, "Hop Fail Exit: " + o.toString(), "ok", true );
+	 alert( activity, "Hop error \"" + msg + "\" (" + o.toString() + ")",
+		"ok", true );
       }
    }
 
