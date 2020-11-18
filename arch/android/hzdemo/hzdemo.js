@@ -32,3 +32,12 @@ service hzdemo() {
      </ul>
    </html>
 }
+
+/*---------------------------------------------------------------------*/
+/*    Contact list                                                     */
+/*---------------------------------------------------------------------*/
+service contact() {
+   return JSON.stringify( phone.contact() );
+}
+
+contact.path = "/hop/hzdemo/contact";
