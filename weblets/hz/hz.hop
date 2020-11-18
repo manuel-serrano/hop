@@ -74,13 +74,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz/install ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-service (hz/install #!key url)
+(define-service (hz/install #!key url checksum)
    (let ((req (current-request)))
       (if (not (authorized-service? req 'admin))
 	  (access-denied req)
 	  (begin
 	     (when (file-exists? (hz-prefs)) (hz-preferences-load (hz-prefs)))
-	     (let ((w (hz-install-url url)))
+	     (let ((w (hz-install-url url :checksum checksum)))
 		(cond
 		   ((isa? w weblet)
 		    (<HZ> req :weblet w))

@@ -20,9 +20,9 @@
 	   hz_db)
    
    (export (hz-load ::bstring)
-	   (hz-install-weblet ::weblet #!key override)
-	   (hz-download-url ::bstring #!key auth weblet override)
-	   (hz-install-url ::bstring #!key auth weblet override publisher)
+	   (hz-install-weblet ::weblet #!key override checksum)
+	   (hz-download-url ::bstring #!key auth weblet override checksum)
+	   (hz-install-url ::bstring #!key auth weblet override publisher checksum)
 	   (hz-uninstall-weblet ::weblet)))
 
 ;*---------------------------------------------------------------------*/
@@ -68,9 +68,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-install-weblet ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (hz-install-weblet e #!key override)
+(define (hz-install-weblet e #!key override checksum)
    (with-access::weblet e (name url authorization)
-      (hz-install-url url :auth authorization :weblet e :override override)))
+      (hz-install-url url :auth authorization :weblet e :override override
+	 :checksum checksum)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-download-url ...                                              */
@@ -116,28 +117,28 @@
       (or (not checksum)
 	  (with-handler
 	     (lambda (e) #f)
-	     (equal? checksum (call-with-input-file hzsum read)))))
+	     (equal? checksum (call-with-input-file hzsum read-string)))))
 
    (multiple-value-bind (name version)
       (package-url-parse url)
       (let* ((hzfile (format "~a-~a.hz" name version))
 	     (sumfile (format "~a-~a.md5sum" name version))
 	     (hzpath (make-file-name (hz-download-directory) hzfile))
-	     (hzsum (make-file-name (hz-download-directory) sumfile)))
+	     (sumpath (make-file-name (hz-download-directory) sumfile)))
 	 (unless (directory? (hz-download-directory))
 	    (unless (make-directories (hz-download-directory))
 	       (error "hz-download-url" "Cannot create download directory"
 		  (hz-download-directory))))
 	 (cond
 	    ((or (not (file-exists? hzpath))
-		 (not (file-exists? sumfile))
-		 (not (checksum? checksum sumfile)))
-	     (download url name version hzpath hzsum))
+		 (not (file-exists? sumpath))
+		 (not (checksum? checksum sumpath)))
+	     (download url name version hzpath sumpath))
 	    ((not override)
 	     hzpath)
 	    (else
 	     (delete-file hzpath)
-	     (download url name version hzpath hzsum))))))
+	     (download url name version hzpath sumpath))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hz-install-url ...                                               */
