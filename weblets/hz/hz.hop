@@ -88,11 +88,12 @@
 		    (match-case w
 		       ((?status ?url ?msg)
 			(http-error
-			 (format "Cannot install weblet from ~s\n~a" url msg)))
+			   (format "Cannot install weblet from ~s\n~a" url msg)
+			   req))
 		       (else
-			(http-error w))))
+			(http-error w req))))
 		   (else
-		    (http-error w))))))))
+		    (http-error w req))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/exists ...                                                    */
@@ -119,8 +120,7 @@
    (multiple-value-bind (name version)
       (package-url-parse url)
       (with-handler
-	 (lambda (e)
-	    (http-error e))
+	 (lambda (e) (http-error e (current-request)))
 	 (begin
 	    (if install
 		(let ((w (or (let ((w (hz-db-find-by-url url)))
@@ -133,20 +133,22 @@
 		      ((isa? w weblet)
 		       (run name version))
 		      ((not (pair? w))
-		       (http-error w))
+		       (http-error w (current-request)))
 		      (else
 		       (case (car w)
 			  ((404)
 			   (http-error (instantiate::&io-file-not-found-error
 					  (proc "hz/run")
 					  (msg "File not found")
-					  (obj url))))
+					  (obj url))
+			      (current-request)))
 			  (else
 			   (http-error (instantiate::&io-error
 					  (proc "hz/run")
 					  (msg (format "File not found (~a)"
 						       (car w)))
-					  (obj url))))))))
+					  (obj url))
+			      (current-request)))))))
 		(begin
 		   (hz-load url)
 		   (run name version)))))))
