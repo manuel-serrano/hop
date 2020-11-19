@@ -336,10 +336,16 @@
 	  (js-string->jsstring o))))
 
 ;*---------------------------------------------------------------------*/
+;*    display-jsstring ...                                             */
+;*---------------------------------------------------------------------*/
+(define (display-jsstring jstr::JsStringLiteral op)
+   (display (js-jsstring->string jstr) op))
+
+;*---------------------------------------------------------------------*/
 ;*    object-print ::JsStringLiteral ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (object-print obj::JsStringLiteral op proc)
-   (display-js-string obj op))
+   (display-jsstring obj op))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring::bstring ::JsStringLiteral ...                       */
@@ -406,7 +412,7 @@
 ;*    xml-write ::JsStringLiteral ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::JsStringLiteral op backend)
-   (display-js-string obj op))
+   (display-jsstring obj op))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-inspect ::JsStringLiteral ...                                 */
@@ -1072,12 +1078,6 @@
        (with-access::JsStringLiteralBuffer js (length)
 	  length)
        (js-jsstring-codeunit-length js)))
-
-;*---------------------------------------------------------------------*/
-;*    display-js-string ...                                            */
-;*---------------------------------------------------------------------*/
-(define (display-js-string jstr::JsStringLiteral op)
-   (display (js-jsstring->string jstr) op))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-register-value ::JsStringLiteral ...                         */

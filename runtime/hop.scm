@@ -463,7 +463,12 @@
 			   (close-input-port p)
 			   (suc s))
 			(if (procedure? fail)
-			    (fail url)
+			    (fail
+			       (instantiate::xml-http-request
+				  (status 404)
+				  (header header)
+				  (input-port (open-input-string "File not found"))
+				  (req #f)))
 			    (raise (instantiate::&io-error
 				      (proc "with-url")
 				      (msg "Cannot open url")

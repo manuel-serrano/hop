@@ -795,7 +795,8 @@
 		     (<SCRIPT>
 			(format "hop[ '%root' ] = ~s"
 			   (dirname
-			      (js-jsstring->string (js-get %module (& "filename") %scope))))))
+			      (js-jsstring->string
+				 (js-get %module (& "filename") %scope))))))
 		  (when (js-object? attrs)
 		     (js-object->keyword-arguments* attrs %this))
 		  (filter (lambda (n)

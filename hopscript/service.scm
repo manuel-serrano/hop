@@ -953,10 +953,13 @@
 	  (src (source proc)))
       (multiple-value-bind (id wid)
 	 (service-path->ids path)
-	 (letrec* ((svcp (lambda (this . args)
+	 (letrec* ((svcp (lambda (this . vals)
 			    (with-access::JsService svcjs (svc)
-			       (with-access::hop-service svc (path)
-				  (js-make-hopframe %this this path args)))))
+			       (with-access::hop-service svc (path args)
+				  (js-make-hopframe %this this path
+				     (if (pair? args)
+					 (take vals (length args))
+					 vals))))))
 		   (svcjs (js-make-service %this svcp (symbol->string! id)
 			     register import
 			     -1 worker
