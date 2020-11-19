@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
 ;*    Last change :  Tue Oct  8 13:17:02 2019 (serrano)                */
-;*    Copyright   :  2005-19 Manuel Serrano                            */
+;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
 ;*=====================================================================*/
@@ -111,7 +111,8 @@
 		   (if (string? v)
 		       (loop (cdr body)
 			  (or err (not (string? v)) (string-skip v "\r\t\n "))))))))))
-	     
+
+   (tprint "HTML ctx=" (typeof %context))
    (let* ((nbody (filter (lambda (n)
 			    (let ((v (xml-primitive-value n %context)))
 			       (or (not (string? v)) (string-skip v "\n\t "))))

@@ -25,14 +25,22 @@ const phone = new hopdroid.phone();
 /*---------------------------------------------------------------------*/
 service hzdemo() {
    let el = <input/>;
+
    return <html>
      <script>
        function removeContact( id ) {
 	  ${service(cid) { phone.removeContact( cid ) }}( id ).post();
        }
+       function setStatusBarColor( col ) {
+	  ${service(c) { phone.statusBarColor = c; } }( col ).post();
+       }
      </script>
      <h1>Phone: ${phone.model}</h1>
-     <h2>Contact:</h2>
+     <h1>Ui:</h1>
+     Set status bar color 
+       ${["red", "green", "blue" ].map( e =>
+	       <button onclick=~{setStatusBarColor( ${e} )}>${f}e</button> )}
+     <h1>Contact:</h1>
      <ul id="contacts">
        ${phone.contacts().map( e => 
 	       <li id=${e.id}>
@@ -66,3 +74,4 @@ service contact() {
 }
 
 contact.path = "/hop/hzdemo/contact";
+
