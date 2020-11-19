@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sat Nov 14 15:42:45 2020 (serrano)                */
+/*    Last change :  Thu Nov 19 09:29:40 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
