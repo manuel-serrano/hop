@@ -34,8 +34,8 @@
 
 	   (class androidevent::event)
 
-	   (phone-status-bar-color ::phone)
-	   (phone-status-bar-color-set! ::phone ::bstring)
+	   (phone-status-bar-color::bstring ::androidphone)
+	   (phone-status-bar-color-set! ::androidphone ::bstring)
 
 	   (android-load-plugin::int ::androidphone ::bstring)
 	   (android-send-command ::androidphone ::int . args)
