@@ -59,6 +59,10 @@ ANDROIDRES = $(ANDROIDDIR)/res
 ANDROIDMANIFEST = $(ANDROIDDIR)/AndroidManifest.xml
 ANDROIDSPLASH = $(ANDROIDDIR)/splash
 
+# Config
+NOTITLE = true
+CUSTOMTITLE = false
+
 # Plugins
 PLUGINBUILD = true
 PLUGINLOCALE = true
@@ -193,7 +197,7 @@ ANDROID_RES = res/drawable/logo.png \
   res/layout-sw480dp/about.xml \
   res/xml/preferences.xml.in \
   res/values/hopstyle.xml res/values/arrays.xml res/values/strings.xml.in \
-  res/values/plugins.xml.in res/menu/hop_menu.xml
+  res/values/plugins.xml.in res/values/config.xml.in res/menu/hop_menu.xml
 
 ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java \
   HopUiUtils.java HopExec.java HopLauncher.java HopService.java \
@@ -321,7 +325,11 @@ $(ANDROIDBUILDDIR)/res: $(ANDROIDRES) $(ANDROIDBUILDDIR)
 	$(RM) -rf $@
 	cp -r $(ANDROIDRES) $@
 
-$(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/values/plugins.xml $(ANDROIDBUILDDIR)/res/xml/preferences.xml $(ANDROIDBUILDDIR)/src/fr/inria/hop/Hop.java:
+$(ANDROIDBUILDDIR)/res/values/strings.xml \
+  $(ANDROIDBUILDDIR)/res/values/plugins.xml \
+  $(ANDROIDBUILDDIR)/res/values/config.xml \
+  $(ANDROIDBUILDDIR)/res/xml/preferences.xml \
+  $(ANDROIDBUILDDIR)/src/fr/inria/hop/Hop.java:
 	rm -f $@.in
 	hz=`basename $(HOPHZ)` && cat $< \
           | sed -e "s|@HOPVERSION@|$(HOPRELEASE)|" \
@@ -339,6 +347,8 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/values/plugins.
                 -e "s|@HOPARGS@|$(HOPARGS)|" \
                 -e "s|@HOPAPPVERSION@|$(HOPAPPVERSION)|" \
                 -e "s|@HOPURL@|$(ANDROIDHOPURL)|" \
+                -e "s|@NOTITLE@|$(NOTITLE)|" \
+                -e "s|@CUSTOMTITLE@|$(CUSTOMTITLE)|" \
                 -e "s|@PLUGINBUILD@|$(PLUGINBUILD)|" \
                 -e "s|@PLUGINLOCALE@|$(PLUGINLOCALE)|" \
                 -e "s|@PLUGINVIBRATE@|$(PLUGINVIBRATE)|" \
@@ -361,6 +371,9 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml: \
    $(ANDROIDBUILDDIR)/res
 $(ANDROIDBUILDDIR)/res/values/plugins.xml: \
    $(ANDROIDDIR)/res/values/plugins.xml.in \
+   $(ANDROIDBUILDDIR)/res
+$(ANDROIDBUILDDIR)/res/values/config.xml: \
+   $(ANDROIDDIR)/res/values/config.xml.in \
    $(ANDROIDBUILDDIR)/res
 $(ANDROIDBUILDDIR)/res/xml/preferences.xml: \
    $(ANDROIDDIR)/res/xml/preferences.xml.in \
@@ -550,6 +563,7 @@ apk.common: $(ANDROIDBUILDDIR)/Android.mk \
 apk.res: $(ANDROIDBUILDDIR)/res \
   $(ANDROIDBUILDDIR)/res/values/strings.xml \
   $(ANDROIDBUILDDIR)/res/values/plugins.xml \
+  $(ANDROIDBUILDDIR)/res/values/config.xml \
   $(ANDROIDBUILDDIR)/res/xml/preferences.xml
 
 apk.jni: $(ANDROIDBUILDDIR)/jni
