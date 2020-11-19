@@ -502,7 +502,8 @@
 			    (append
 			       (js-jsobject->keyword-plist attrs %this)
 			       nodes))
-			 (apply <HTML> :idiom "javascript" nodes)))
+			 (apply <HTML> :idiom "javascript" :%context %this
+			    nodes)))
 		  (js-function-arity 1 -1 'scheme)
 		  (js-function-info :name "HTML" :len 1)))
 	    

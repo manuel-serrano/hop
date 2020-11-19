@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Thu Nov 19 14:57:30 2020 (serrano)                */
+/*    Last change :  Thu Nov 19 16:14:46 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with phone Calls                                         */
@@ -19,6 +19,8 @@ import android.content.*;
 import android.os.*;
 import android.util.Log;
 import android.net.Uri;
+import android.graphics.*;
+import android.view.*;
 
 import java.net.*;
 import java.io.*;
@@ -32,7 +34,7 @@ public class HopPluginUi extends HopPlugin {
    int ca = 0;
 
    // constructor
-   HopPluginCall( HopDroid h, String n ) {
+   HopPluginUi( HopDroid h, String n ) {
       super( h, n );
    }
 
@@ -44,12 +46,12 @@ public class HopPluginUi extends HopPlugin {
 	 case (byte)'s':
 	    // setStatusBarColor
 	    String color = HopDroid.read_string( ip );
-	    setStatusBarColor( HopDroid.activity, color );
+	    setStatusBarColor( hopdroid.activity, color );
 	    break;
 	    
 	 case (byte)'g':
 	    // getStatusBarColor
-	    getStatusBarColor( op, HopDroid.activity );
+	    getStatusBarColor( op, hopdroid.activity );
 	    break;
       }
    }
@@ -70,11 +72,12 @@ public class HopPluginUi extends HopPlugin {
    }
 
    // getStatusBarColor
-   protected static void getStatusBarColor( final OutputStream op, Activity a ) {
+   protected static void getStatusBarColor( final OutputStream op, Activity a )
+      throws IOException {
       Window window = a.getWindow();
       
-      int c = windowgetStatusBarColor();
-      String hex = String.format("#%02x%02x%02x", c.red, c.green, c.blue);
+      int c = window.getStatusBarColor();
+      String hex = String.format( "#%02x%02x%02x", (c >> 16) & 0xff, (c >> 8) & 0xff, c & 0xff );
 
       op.write( "\"".getBytes() );
       op.write( hex.getBytes() );

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul 10 08:08:45 2016                          */
-/*    Last change :  Thu Nov 19 14:18:55 2020 (serrano)                */
+/*    Last change :  Thu Nov 19 16:07:00 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop configuration                                                */
@@ -38,7 +38,6 @@ public class HopConfig {
    static String SERVICE;
    static String ARGS;
    static String DEBUG;
-   static String STATUSBARCOLOR;
 
    static boolean NOTITLE;
    static boolean CUSTOMTITLE;
@@ -74,7 +73,6 @@ public class HopConfig {
       APP = res.getString( R.string.hopapp );
       ARGS = res.getString( R.string.hopargs );
       SERVICE = APP.equals( "hop" ) ? "/hop" : "/hop/" + APP;
-      STATUSBARCOLOR = res.getString( R.string.status_bar_color );
 
       NOTITLE = res.getBoolean( R.bool.notitle );
       CUSTOMTITLE = res.getBoolean( R.bool.customtitle );
