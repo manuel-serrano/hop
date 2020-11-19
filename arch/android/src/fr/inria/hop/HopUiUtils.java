@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  1 09:13:38 2010                          */
-/*    Last change :  Sun Nov 15 08:20:04 2020 (serrano)                */
+/*    Last change :  Thu Nov 19 14:50:47 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    UI Utility functions                                             */
@@ -22,6 +22,7 @@ import android.util.Log;
 import android.view.*;
 import android.view.View.*;
 import android.webkit.*;
+import android.graphics.*;
 
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
@@ -87,8 +88,10 @@ public class HopUiUtils {
       final String BOOT_PAGE = "<!DOCTYPE html><html><head><meta http-equiv='Content-Type' content='text/html; charset=UTF-8'><meta name='viewport' content='width=device-width, height=device-height, initial-scale=1, maximum-scale=1, user-scalable=no'></head><body style='background-color: #222; color: #eee'>" + a.getApplicationContext().getString( R.string.hopapp ) + " booting...</body></html>";
       
       // remove title bar
-      a.requestWindowFeature( Window.FEATURE_NO_TITLE );
-
+      if( HopConfig.NOTITLE ) {
+	 a.requestWindowFeature( Window.FEATURE_NO_TITLE );
+      }
+      
       // action bar color
       //this.requestWindowFeature( Window.FEATURE_ACTION_BAR );
       //ActionBar bar = getActionBar();
