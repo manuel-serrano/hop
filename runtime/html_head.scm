@@ -112,7 +112,6 @@
 		       (loop (cdr body)
 			  (or err (not (string? v)) (string-skip v "\r\t\n "))))))))))
 
-   (tprint "HTML ctx=" (typeof %context))
    (let* ((nbody (filter (lambda (n)
 			    (let ((v (xml-primitive-value n %context)))
 			       (or (not (string? v)) (string-skip v "\n\t "))))
