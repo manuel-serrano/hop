@@ -39,7 +39,7 @@ service hzdemo() {
      <h1>Ui:</h1>
      Set status bar color 
        ${["red", "green", "blue" ].map( e =>
-	       <button onclick=~{setStatusBarColor( ${e} )}>${f}e</button> )}
+	       <button onclick=~{setStatusBarColor( ${e} )}>${e}</button> )}
      <h1>Contact:</h1>
      <ul id="contacts">
        ${phone.contacts().map( e => 
