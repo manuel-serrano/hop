@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  1 09:13:38 2010                          */
-/*    Last change :  Thu Nov 19 14:50:47 2020 (serrano)                */
+/*    Last change :  Sat Nov 21 08:47:16 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    UI Utility functions                                             */
@@ -82,6 +82,31 @@ public class HopUiUtils {
       }
    }
 
+   // setStatusBarColor
+   protected static void setStatusBarColor( Activity a, String color ) {
+      Window window = a.getWindow();
+
+      // clear FLAG_TRANSLUCENT_STATUS flag:
+      window.clearFlags( WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS );
+
+      // add FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS flag to the window
+      window.addFlags( WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS );
+
+      // finally change the color
+      Log.d( "HopUiUtils", "setStatusBarColor: " + color );
+      window.setStatusBarColor( Color.parseColor( color ) );
+   }
+
+   // getStatusBarColor
+   protected static String getStatusBarColor( final OutputStream op, Activity a )
+      throws IOException {
+      Window window = a.getWindow();
+      
+      int c = window.getStatusBarColor();
+      String hex = String.format( "#%02x%02x%02x", (c >> 16) & 0xff, (c >> 8) & 0xff, c & 0xff );
+
+      return hex;
+   }
    protected static WebView initUI( Activity a ) {
       WebView webview;
 

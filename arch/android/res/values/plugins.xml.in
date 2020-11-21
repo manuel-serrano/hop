@@ -16,5 +16,4 @@
   <bool name="plugintts">@PLUGINTTS@</bool>
   <bool name="plugincall">@PLUGINCALL@</bool>
   <bool name="pluginprefs">@PLUGINPREFS@</bool>
-  <bool name="pluginui">@PLUGINUI@</bool>
 </resources>
