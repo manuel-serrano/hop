@@ -80,7 +80,6 @@ PLUGINSYSTEM = true
 PLUGINTTS = false
 PLUGINCALL = true
 PLUGINPREFS = true
-PLUGINPUI = true
 
 APKCUSTOM =
 APKCUSTOMDIR =
@@ -136,7 +135,6 @@ config:
 	@echo "plugintts=$(PLUGINTTS)"
 	@echo "plugincall=$(PLUGINCALL)"
 	@echo "pluginprefs=$(PLUGINPREFS)"
-	@echo "pluginui=$(PLUGINUI)"
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -206,7 +204,7 @@ ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java \
   HopBootReceiver.java HopDroid.java HopPlugin.java HopPluginInit.java \
   HopPluginLocale.java HopPluginMusicPlayer.java HopPluginVibrate.java \
   HopPluginSensor.java HopPluginSms.java HopPluginContact.java \
-  HopPluginWifi.java HopPluginBattery.java HopPluginTts.java HopPluginUi.java \
+  HopPluginWifi.java HopPluginBattery.java HopPluginTts.java \
   HopPluginMediaAudio.java HopPluginCall.java HopSms.java HopPluginPrefs.java \
   HopAndroidAudioRecorder.java HopPluginBuild.java HopPluginConnectivity.java \
   HopSettings.java HopPluginZeroconf.java HopZeroconf.java HopJmDns.java \
@@ -366,7 +364,6 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml \
                 -e "s|@PLUGINSYSTEM@|$(PLUGINSYSTEM)|" \
                 -e "s|@PLUGINTTS@|$(PLUGINTTS)|" \
                 -e "s|@PLUGINPREFS@|$(PLUGINPREFS)|" \
-                -e "s|@PLUGINUI@|$(PLUGINUI)|" \
                 -e "s|@PLUGINCALL@|$(PLUGINCALL)|" > $@
 
 $(ANDROIDBUILDDIR)/res/values/strings.xml: \

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul 10 08:08:45 2016                          */
-/*    Last change :  Fri Nov 20 07:07:39 2020 (serrano)                */
+/*    Last change :  Sat Nov 21 08:47:22 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop configuration                                                */
@@ -26,42 +26,44 @@ import android.content.*;
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
 public class HopConfig {
-   static String PORT;
-   static String ROOT;
-   static String MAXTHREADS;
-   static String URL;
-   static String BIGLOORELEASE;
-   static String HOPRELEASE;
-   static String HOPAPK;
-   static String HOPHZ;
-   static String APP;
-   static String SERVICE;
-   static String ARGS;
-   static String DEBUG;
+   static final String PORT;
+   static final String ROOT;
+   static final String MAXTHREADS;
+   static final String URL;
+   static final String BIGLOORELEASE;
+   static final String HOPRELEASE;
+   static final String HOPAPK;
+   static final String HOPHZ;
+   static final String APP;
+   static final String SERVICE;
+   static final String ARGS;
+   static final String DEBUG;
 
-   static boolean NOTITLE;
-   static boolean CUSTOMTITLE;
+   static final boolean NOTITLE;
+   static final boolean CUSTOMTITLE;
 
-   static boolean PLUGINBUILD;
-   static boolean PLUGINLOCALE;
-   static boolean PLUGINVIBRATE;
-   static boolean PLUGINMUSICPLAYER;
-   static boolean PLUGINMEDIAAUDIO;
-   static boolean PLUGINSENSOR;
-   static boolean PLUGINBATTERY;
-   static boolean PLUGINSMS;
-   static boolean PLUGINWIFI;
-   static boolean PLUGINCONNECTIVITY;
-   static boolean PLUGINCONTACT;
-   static boolean PLUGINZEROCONF;
-   static boolean PLUGINSYSTEM;
-   static boolean PLUGINTTS;
-   static boolean PLUGINCALL;
-   static boolean PLUGINPREFS;
-   static boolean PLUGINUI;
+   static final String STATUSBARCOLOR;
+
+   static final boolean PLUGINBUILD;
+   static final boolean PLUGINLOCALE;
+   static final boolean PLUGINVIBRATE;
+   static final boolean PLUGINMUSICPLAYER;
+   static final boolean PLUGINMEDIAAUDIO;
+   static final boolean PLUGINSENSOR;
+   static final boolean PLUGINBATTERY;
+   static final boolean PLUGINSMS;
+   static final boolean PLUGINWIFI;
+   static final boolean PLUGINCONNECTIVITY;
+   static final boolean PLUGINCONTACT;
+   static final boolean PLUGINZEROCONF;
+   static final boolean PLUGINSYSTEM;
+   static final boolean PLUGINTTS;
+   static final boolean PLUGINCALL;
+   static final boolean PLUGINPREFS;
 
    static void init( Context context ) {
       final Resources res = context.getResources();
+      
       PORT = res.getString( R.string.hopport );
       ROOT = res.getString( R.string.hoproot );
       MAXTHREADS = res.getString( R.string.hopthreads );
@@ -94,7 +96,6 @@ public class HopConfig {
       PLUGINTTS = res.getBoolean( R.bool.plugintts );
       PLUGINCALL = res.getBoolean( R.bool.plugincall );
       PLUGINPREFS = res.getBoolean( R.bool.pluginprefs );
-      PLUGINUI = res.getBoolean( R.bool.pluginui );
    }
 
    HopConfig() {
