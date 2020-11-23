@@ -162,29 +162,11 @@
    (string->symbol (node-computed-style-get spage.spstyle :cursor)))
 
 ;*---------------------------------------------------------------------*/
-;*    frameHeight ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (frameHeight el)
-   (+ (string->integer (node-computed-style-get el "marginTop"))
-      (string->integer (node-computed-style-get el "marginBottom"))
-      (string->integer (node-computed-style-get el "borderBottomWidth"))
-      (string->integer (node-computed-style-get el "borderTopWidth"))))
-
-;*---------------------------------------------------------------------*/
 ;*    frameBorderHeight ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (frameBorderHeight el)
    (+ (string->integer (node-computed-style-get el "borderBottomWidth"))
       (string->integer (node-computed-style-get el "borderTopWidth"))))
-
-;*---------------------------------------------------------------------*/
-;*    frameWidth ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (frameWidth el)
-   (+ (string->integer (node-computed-style-get el "marginLeft"))
-      (string->integer (node-computed-style-get el "marginRight"))
-      (string->integer (node-computed-style-get el "borderRightWidth"))
-      (string->integer (node-computed-style-get el "borderLeftWidth"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    frameBorderWidth ...                                             */
