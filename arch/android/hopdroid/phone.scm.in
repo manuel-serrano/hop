@@ -34,6 +34,9 @@
 
 	   (class androidevent::event)
 
+	   (phone-status-bar-color::bstring ::androidphone)
+	   (phone-status-bar-color-set! ::androidphone ::bstring)
+
 	   (android-load-plugin::int ::androidphone ::bstring)
 	   (android-send-command ::androidphone ::int . args)
 	   (android-send-command/result ::androidphone ::int . args)))
@@ -50,6 +53,7 @@
 (define battery-plugin #f)
 (define locale-plugin #f)
 (define build-plugin #f)
+(define ui-plugin #f)
 
 (define event-thread #f)
 (define event-mutex (make-mutex))
@@ -502,6 +506,22 @@
 (define-method (phone-call-stop p::androidphone)
    (when call-plugin
       (android-send-command p call-plugin #\k)))
+
+;*---------------------------------------------------------------------*/
+;*    phone-status-bar-color ...                                       */
+;*---------------------------------------------------------------------*/
+(define (phone-status-bar-color p::androidphone)
+   (unless ui-plugin
+      (set! ui-plugin (android-load-plugin p "ui")))
+   (android-send-command/result p ui-plugin #\g))
+
+;*---------------------------------------------------------------------*/
+;*    phone-status-bar-color-set! ...                                  */
+;*---------------------------------------------------------------------*/
+(define (phone-status-bar-color-set! p::androidphone color)
+   (unless ui-plugin
+      (set! ui-plugin (android-load-plugin p "ui")))
+   (android-send-command p ui-plugin #\s color))
 
 ;*---------------------------------------------------------------------*/
 ;*    send-string ...                                                  */

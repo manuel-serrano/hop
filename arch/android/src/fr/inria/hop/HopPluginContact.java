@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Sun Nov 15 16:29:56 2020 (serrano)                */
+/*    Last change :  Thu Nov 19 07:40:23 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -380,7 +380,7 @@ public class HopPluginContact extends HopPlugin {
       // this is useful. The Android documentation contains the following
       // warning: "Be careful with deleting Contacts! Deleting an aggregate
       // contact deletes all constituent raw contacts" but I'm not sure
-      // what it exactly means.
+      // what it exactly means).
       removeCursor( cr, Nickname.CONTENT_ITEM_TYPE, id );
       removeCursor( cr, Organization.CONTENT_ITEM_TYPE, id );
       removeCursor( cr, Phone.CONTENT_ITEM_TYPE, id );

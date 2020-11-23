@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul 10 08:08:45 2016                          */
-/*    Last change :  Fri Nov 13 10:31:04 2020 (serrano)                */
+/*    Last change :  Sat Nov 21 08:52:35 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop configuration                                                */
@@ -39,6 +39,11 @@ public class HopConfig {
    static String ARGS;
    static String DEBUG;
 
+   static boolean NOTITLE;
+   static boolean CUSTOMTITLE;
+
+   static String STATUSBARCOLOR;
+
    static boolean PLUGINBUILD;
    static boolean PLUGINLOCALE;
    static boolean PLUGINVIBRATE;
@@ -58,6 +63,7 @@ public class HopConfig {
 
    static void init( Context context ) {
       final Resources res = context.getResources();
+      
       PORT = res.getString( R.string.hopport );
       ROOT = res.getString( R.string.hoproot );
       MAXTHREADS = res.getString( R.string.hopthreads );
@@ -71,6 +77,9 @@ public class HopConfig {
       ARGS = res.getString( R.string.hopargs );
       SERVICE = APP.equals( "hop" ) ? "/hop" : "/hop/" + APP;
 
+      NOTITLE = res.getBoolean( R.bool.notitle );
+      CUSTOMTITLE = res.getBoolean( R.bool.customtitle );
+	 
       PLUGINBUILD = res.getBoolean( R.bool.pluginbuild );
       PLUGINLOCALE = res.getBoolean( R.bool.pluginlocale );
       PLUGINVIBRATE = res.getBoolean( R.bool.pluginvibrate );

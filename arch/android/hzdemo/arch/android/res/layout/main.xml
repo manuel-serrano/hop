@@ -2,11 +2,12 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/hopstyle"
     android:padding="4px"
-    android:background="#dd000000"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:background="#ddcccccc"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     android:id="@+id/layout">
   <WebView android:id="@+id/webview"
-	   android:layout_width="fill_parent"
-	   android:layout_height="fill_parent"/>
+	   android:layout_width="match_parent"
+	   android:layout_height="match_parent"/>
 </LinearLayout>
