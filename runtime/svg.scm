@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
 ;*    Last change :  Thu Apr 18 07:50:19 2019 (serrano)                */
-;*    Copyright   :  2007-19 Manuel Serrano                            */
+;*    Copyright   :  2007-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
 ;*=====================================================================*/
@@ -236,7 +236,9 @@
 		(cond
 		   ((eq? (car a) :id)
 		    (display prefix)
-		    (display (xml-attribute-encode (kwote (cadr a)))))
+		    (when (cadr a)
+		       (display #\-)
+		       (display (xml-attribute-encode (kwote (cadr a))))))
 		   ((and (eq? (car a) :xlink:href)
 			 (string? (cadr a))
 			 (char=? (string-ref (cadr a) 0) #\#))
@@ -308,7 +310,7 @@
 ;*    to avoid identifiers collisions when including several svg       */
 ;*    images inside a single xhtml document.                           */
 ;*---------------------------------------------------------------------*/
-(define (read-svg-img-prefix id uattributes p name)
+(define (read-svg-img-prefix id uattributes p name inl width height)
    
    (define (dimension-value str)
       (let ((len (string-length str)))
@@ -318,27 +320,37 @@
 
    (define (tune-svg! el)
       (with-access::svg-img-markup el (attributes)
-	 (let ((height (plist-assq :height attributes))
-	       (width (plist-assq :width attributes))
+	 (let ((svgheight (plist-assq :height attributes))
+	       (svgwidth (plist-assq :width attributes))
 	       (viewbox (plist-assq :viewBox attributes))
 	       (uid (plist-assq :id attributes)))
 	    ;; fix the id
-	    (if uid
-		(plist-set-first! uid id)
-		(set! attributes `(:id ,id ,@attributes)))
+	    (when id
+	       (if uid
+		   (plist-set-first! uid id)
+		   (set! attributes (cons* :id id attributes))))
 	    ;; the dimensions
 	    (cond
-	       (viewbox
-		(when height
-		   (plist-set-first! height "100%"))
+	       (inl
 		(when width
-		   (plist-set-first! width "100%")))
-	       ((and width height)
+		   (if svgwidth
+		       (plist-set-first! svgwidth width)
+		       (set! attributes (cons* :width width attributes))))
+		(when height
+		   (if svgheight
+		       (plist-set-first! svgheight height)
+		       (set! attributes (cons* :height height attributes)))))
+	       (viewbox
+		(when svgheight
+		   (plist-set-first! svgheight "100%"))
+		(when svgwidth
+		   (plist-set-first! svgwidth "100%")))
+	       ((and svgwidth svgheight)
 		(let ((vb (format "0 0 ~a ~a"
-				  (dimension-value (cadr width))
-				  (dimension-value (cadr height)))))
-		   (plist-set-first! width "100%")
-		   (plist-set-first! height "100%")
+				  (dimension-value (cadr svgwidth))
+				  (dimension-value (cadr svgheight)))))
+		   (plist-set-first! svgwidth "100%")
+		   (plist-set-first! svgheight "100%")
 		   (set! attributes `(:viewBox ,vb ,@attributes)))))
 	    (when (pair? uattributes)
 	       (set! attributes (append! attributes uattributes))))))
@@ -370,9 +382,7 @@
 		  (else
 		   #f)))
 	    
-	    (let ((pref (if (string? id)
-			    (string-append id "-")
-			    (string-append (symbol->string (gensym)) "-"))))
+	    (let ((pref (if (string? id) id (symbol->string (gensym)))))
 	       (show-svg-img tree pref))))))
 
 ;*---------------------------------------------------------------------*/
@@ -381,7 +391,7 @@
 ;*    This function does not parse the image. It simply scans the      */
 ;*    first SVG markup then it reads the entire file.                  */
 ;*---------------------------------------------------------------------*/
-(define (read-svg-img-brute id attributes p)
+(define (read-svg-img-brute id attributes p inl width height)
    
    (define (dimension-value str)
       (let ((len (string-length str)))
@@ -408,8 +418,8 @@
    (multiple-value-bind (encoding prelude)
       (read-upto-svg-markup p)
       (let loop ((attrs '())
-		 (height #f)
-		 (width #f)
+		 (svgheight #f)
+		 (svgwidth #f)
 		 (viewbox #f))
 	 (multiple-value-bind (key val)
 	    (read-attribute p)
@@ -418,6 +428,12 @@
 		(let* ((str (read-string p))
 		       (body (charset-convert str encoding (hop-charset))))
 		   (cond
+		      (inl
+		       (list prelude
+			  (if svgheight svgheight (if height (format " height=~a" height) ""))
+			  (if svgwidth svgwidth (if width (format " width=~a" width) ""))
+			  viewbox
+			  (reverse! attrs) ">" body))
 		      (viewbox
 		       ;; the image has already a viewbox
 		       ;; don't change anything
@@ -436,42 +452,42 @@
 				vb
 				(reverse! attrs)
 				">" body)))
-		      ((and height width)
+		      ((and svgheight svgwidth)
 		       ;; we have both a width and height, we force
 		       ;; the inclusion of a viewBox
 		       (list prelude
 			     " height=\"100%\" width=\"100%\""
 			     (format " viewBox=\"~a ~a ~a ~a\""
 				     0 0
-				     (dimension-value (cadr width))
-				     (dimension-value (cadr height)))
+				     (dimension-value (cadr svgwidth))
+				     (dimension-value (cadr svgheight)))
 			     (reverse! attrs)
 			     ">" body))
 		      (else
 		       ;; we don't have enough information, we leave
 		       ;; the sizing as it is
 		       (list prelude
-			     height
-			     width
+			     svgheight
+			     svgwidth
 			     (reverse! attrs) ">" body)))))
 	       ((height)
-		(loop attrs (list " height=" val) width viewbox))
+		(loop attrs (list " height=" (if (and inl height) height val)) svgwidth viewbox))
 	       ((width)
-		(loop attrs height (list " width=" val) viewbox))
+		(loop attrs svgheight (list " width=" (if (and inl width) width val)) viewbox))
 	       ((viewBox)
-		(loop attrs height width (list " viewBox=" val)))
+		(loop attrs svgheight svgwidth (list " viewBox=" val)))
 	       ((id)
 		(loop (if (string? id)
 			  (cons (list " id=\"" id "\"") attrs)
 			  (cons (list " id=" val) attrs))
-		      height
-		      width
+		      svgheight
+		      svgwidth
 		      viewbox))
 	       (else
 		(loop (cons (list " " (symbol->string key) "=" val)
 			    attrs)
-		      height
-		      width
+		      svgheight
+		      svgwidth
 		      viewbox)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -500,10 +516,10 @@
 ;*      5- it translates the iso-latin encoding into HOP-CHARSET       */
 ;*      6- it rebinds svg identifiers                                  */   
 ;*---------------------------------------------------------------------*/
-(define (read-svg-img id prefix attributes p name)
+(define (read-svg-img id prefix attributes p name inl width height)
    (if prefix
-       (read-svg-img-prefix id attributes p name)
-       (read-svg-img-brute id attributes p)))
+       (read-svg-img-prefix id attributes p name inl width height)
+       (read-svg-img-brute id attributes p inl width height)))
 
 ;*---------------------------------------------------------------------*/
 ;*    height->width ...                                                */
@@ -533,6 +549,7 @@
 		       (src #unspecified)
 		       (prefix #t boolean)
 		       (display "-moz-inline-box; -moz-box-orient:vertical; display: inline-block")
+		       (container "div")
 		       (attrs))
    (set! src (xml-primitive-value src %context))
    (set! style (xml-primitive-value style %context))
@@ -542,11 +559,12 @@
       ((not (file-exists? src))
        (error "<SVG:IMG>" "Cannot find image" src))
       (else
-       (let* ((img (call-with-input-file
+       (let* ((inl (string=? display "inline"))
+	      (img (call-with-input-file
 			 (if (string=? (suffix src) "svgz")
 			     (string-append "gzip:" src)
 			     src)
-		      (lambda (port) (read-svg-img id prefix attrs port src))))
+		      (lambda (port) (read-svg-img id prefix attrs port src inl width height))))
 	      (style0 (format "display: ~a; position: relative; ~a" display style))
 	      (style1 (cond
 			 (width
@@ -562,9 +580,15 @@
 			  (format "height: ~a; ~a" (width->height width) style1))
 			 (else
 			  style1))))
-	  (<DIV> :style style2 :class class :id id
-	     (instantiate::xml-svg
-		(tag 'svg:img)
-		(id (xml-make-id 'svg:img))
-		(attributes `(:src ,src))
-		(body (list img))))))))
+	  (if inl
+	      (instantiate::xml-svg
+		 (tag 'svg:img)
+		 (id (xml-make-id 'svg:img))
+		 (attributes `(:src ,src))
+		 (body (list img)))
+	      (<DIV> :style style2 :class class :id id
+		 (instantiate::xml-svg
+		    (tag 'svg:img)
+		    (id (xml-make-id 'svg:img))
+		    (attributes `(:src ,src))
+		    (body (list img)))))))))

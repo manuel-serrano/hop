@@ -309,6 +309,18 @@
 	  (error "string->obj ::JsArray" "Not a JavaScript context" ctx))))
 
 ;*---------------------------------------------------------------------*/
+;*    object-print ::JsArray ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (object-print obj::JsArray op proc)
+   (with-access::JsArray obj (length)
+      (display "#<JsArray " op)
+      (display length op)
+      (cond
+	 ((js-array-inlined? obj) (display " inline>" op))
+	 ((js-object-mode-holey? obj) (display " holey>" op))
+	 (else (display ">" op)))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsArray ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (js-donate obj::JsArray worker %_this)

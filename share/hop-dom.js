@@ -57,10 +57,7 @@ function hop_add( id, e, insert ) {
 	 /* same tree and if it is, it removes it first               */
 	 insert( node, e );
       } else {
-	 if( (e instanceof String) ||
-	     (typeof e === "string") ||
-	     (typeof e === "number") ) {
-
+	 if( (typeof e === "string") || (typeof e === "number") ) {
 	    if( typeof e === "string" && e.indexOf( "&" ) >= 0 ) {
 	       /* use an dummy HTML element to force decoding the HTML entity */
 	       var sp = document.createElement( "span" );
@@ -93,8 +90,10 @@ function hop_add( id, e, insert ) {
 	 } else {
 	    if( sc_isPair( e ) ) {
 	       sc_forEach( add, e );
-	    } else if( sc_isVector( e ) ) {
+	    } else if( sc_isVector( e ) || Array.isArray( e ) ) {
 	       e.forEach( add );
+	    } else if( e instanceof NodeList ) {
+	       e.forEach( n => node.appendChild( n ) );
 	    } else if( typeof e === "boolean" || e == null || e == undefined ) {
 	       return;
 	    } else {
@@ -1691,7 +1690,6 @@ function node_style_get( obj, prop ) {
 /*---------------------------------------------------------------------*/
 /*    node_computed_style_get ...                                      */
 /*---------------------------------------------------------------------*/
-#if HOP_SCHEME
 /*** META ((export node-computed-style-get node-computed-style)
            (arity #t))
 */
@@ -1711,7 +1709,6 @@ function node_computed_style_get( obj, prop ) {
    else
       return false;
 }
-#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_start_tag ...                                                */
@@ -1803,7 +1800,6 @@ function hop_create_encoded_element( html ) {
 /*---------------------------------------------------------------------*/
 /*    hop_innerHTML_set ...                                            */
 /*---------------------------------------------------------------------*/
-#if HOP_SCHEME
 /*** META ((export innerHTML-set!) (arity #t)) */
 function hop_innerHTML_set( nid, html ) {
    var el;
@@ -1825,13 +1821,12 @@ function hop_innerHTML_set( nid, html ) {
    if( (html instanceof String) || (typeof html == "string") ) {
       el.innerHTML = html;
       if( !hop_config.eval_innerHTML ) hop_node_eval( el, html );
-   } else if( hop_is_html_element( html ) || sc_isPair( html ) ) {
+   } else if( hop_is_html_element( html ) || sc_isPair( html ) || Array.isArray( html ) || (html instanceof NodeList) ) {
       dom_set_child_node( el, html );
    } else {
       el.innerHTML = html;
    }
 }
-#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_style_attribute_set ...                                      */

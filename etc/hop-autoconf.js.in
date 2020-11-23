@@ -1,10 +1,11 @@
+// -*- Mode: js -*-
 /*=====================================================================*/
 /*    serrano/prgm/project/hop/hop/etc/hop-autoconf.js.in              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
 /*    Last change :  Tue Sep  3 08:06:22 2019 (serrano)                */
-/*    Copyright   :  2006-19 Manuel Serrano                            */
+/*    Copyright   :  2006-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
@@ -713,35 +714,15 @@ if( typeof hop_header_autoconf.getResponseHeader == "function" ) {
 /*    node_style_set ...                                               */
 /*---------------------------------------------------------------------*/
 function node_style_set_native( el, prop, value ) {
-   var obj = el;
+   var obj = (typeof el === "string") ? document.getElementById( el ) : el;
 
-   if( (el instanceof String) || (typeof el === "string") ) {
-      obj = document.getElementById( el );
-      
-      if( obj === undefined ) {
-	 sc_error( "node-style-set!", "Cannot find object", el );
-      }
+   if( obj === undefined ) {
+      sc_error( "node-style-set!", "Cannot find object", el );
    }
 
-   for( var i = 1; i < arguments.length; i += 2 ) {
-      var p = arguments[ i ];
-      var v = arguments[ i + 1 ];
-
-      if( sc_isKeyword( p ) )
-	 p = sc_keyword2jsstring( p );
-
-      if( v == undefined ) {
-	 sc_error( "node-style-set!",
-		   "undefined value for property \"" + p + "\"",
-		   el );
-      } else {
-	 if( !v ) {
-	    v = "0";
-	 } else {
-	    if( !(v instanceof String) && (typeof v !== "string") ) {
-	       v = v.toString();
-	    }
-	 }
+   if( arguments.length === 2 ) {
+      for( let p in prop ) {
+	 const v = prop[ p ].toString() || "0";
 	 
 	 if( p in obj.style ) {
 	    obj.style[ p ] =  v;
@@ -749,41 +730,71 @@ function node_style_set_native( el, prop, value ) {
 	    obj.style.setProperty( p, v, "" );
 	 }
       }
+   } else {
+      for( var i = 1; i < arguments.length; i += 2 ) {
+      	 var p = arguments[ i ];
+      	 var v = arguments[ i + 1 ];
+
+      	 if( sc_isKeyword( p ) )
+	    p = sc_keyword2jsstring( p );
+
+      	 if( v == undefined ) {
+	    sc_error( "node-style-set!",
+	       "undefined value for property \"" + p + "\"",
+	       el );
+      	 } else {
+	    if( !v ) {
+	       v = "0";
+	    } else {
+	       if( !(v instanceof String) && (typeof v !== "string") ) {
+	       	  v = v.toString();
+	       }
+	    }
+	    
+	    if( p in obj.style ) {
+	       obj.style[ p ] =  v;
+	    } else {
+	       obj.style.setProperty( p, v, "" );
+	    }
+      	 }
+      }
    }
 }
 
 function node_style_set_array( el, prop, value ) {
-   var obj = el;
-   
-   if( (el instanceof String) || (typeof el === "string") ) {
-      obj = document.getElementById( el );
-      
-      if( obj === undefined ) {
-	 sc_error( "node-style-set!", "Cannot find object", el );
-      }
+   var obj = (typeof el === "string") ? document.getElementById( el ) : el;
+
+   if( obj === undefined ) {
+      sc_error( "node-style-set!", "Cannot find object", el );
    }
 
-   for( var i = 1; i < arguments.length; i += 2 ) {
-      var p = arguments[ i ];
-      var v = arguments[ i + 1 ];
+   if( arguments.length === 1 ) {
+      for( let p in prop ) {
+	 obj.style[ p ] = prop[ p ].toString() || "0";
+      }
+   } else {
+      for( var i = 1; i < arguments.length; i += 2 ) {
+      	 var p = arguments[ i ];
+      	 var v = arguments[ i + 1 ];
 
-      if( sc_isKeyword( p ) )
-	 p = sc_keyword2jsstring( p );
-      
-      if( v == undefined ) {
-	 sc_error( "node-style-set!",
-		   "undefined value for property \"" + p + "\"",
-		   el );
-      } else {
-	 if( !v ) {
-	    v = "0";
-	 } else {
-	    if( !(v instanceof String) && (typeof v !== "string") ) {
-	       v = v.toString();
+      	 if( sc_isKeyword( p ) )
+	    p = sc_keyword2jsstring( p );
+      	 
+      	 if( v == undefined ) {
+	    sc_error( "node-style-set!",
+	       "undefined value for property \"" + p + "\"",
+	       el );
+      	 } else {
+	    if( !v ) {
+	       v = "0";
+	    } else {
+	       if( !(v instanceof String) && (typeof v !== "string") ) {
+	       	  v = v.toString();
+	       }
 	    }
-	 }
-	 
-	 obj.style[ p ] = v;
+	    
+	    obj.style[ p ] = v;
+      	 }
       }
    }
 }

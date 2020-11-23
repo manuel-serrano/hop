@@ -50,7 +50,8 @@ EXTRA		= hop.hss \
                   hop-lframe.hss \
                   hop-canvas.scm hop-exception.scm hop-debug.scm \
                   hop-orientation.scm \
-                  hop-spage.scm hop-spage.hss hop-spage-iphone.hss\
+                  hop-spage.scm hop-spage.hss hop-spage-iphone.hss \
+                  hopjs-spage.js \
                   hop-gauge.scm hop-gauge.hss \
                   hop-font.scm \
                   hop-password.scm \
