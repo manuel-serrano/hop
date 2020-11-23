@@ -57,10 +57,7 @@ function hop_add( id, e, insert ) {
 	 /* same tree and if it is, it removes it first               */
 	 insert( node, e );
       } else {
-	 if( (e instanceof String) ||
-	     (typeof e === "string") ||
-	     (typeof e === "number") ) {
-
+	 if( (typeof e === "string") || (typeof e === "number") ) {
 	    if( typeof e === "string" && e.indexOf( "&" ) >= 0 ) {
 	       /* use an dummy HTML element to force decoding the HTML entity */
 	       var sp = document.createElement( "span" );
@@ -93,8 +90,10 @@ function hop_add( id, e, insert ) {
 	 } else {
 	    if( sc_isPair( e ) ) {
 	       sc_forEach( add, e );
-	    } else if( sc_isVector( e ) || Array.isArray( e ) || (e instanceof NodeList) ) {
+	    } else if( sc_isVector( e ) || Array.isArray( e ) ) {
 	       e.forEach( add );
+	    } else if( e instanceof NodeList ) {
+	       e.forEach( n => node.appendChild( n ) );
 	    } else if( typeof e === "boolean" || e == null || e == undefined ) {
 	       return;
 	    } else {

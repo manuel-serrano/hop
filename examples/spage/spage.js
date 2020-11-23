@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 17 08:51:31 2014                          */
 /*    Last change :  Tue Sep 15 08:01:03 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Copyright   :  2014-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    SPAGE widget example                                             */
 /*    -------------------------------------------------------------    */
@@ -13,27 +13,28 @@
 /*=====================================================================*/
 var fs = require( 'fs' );
 var path = require( 'path' );
-var SP = require( hop.spage );
+var sp = require( hop.spage );
 
 function base( dir ) {
    return dir.replace( /.*\//g, "" );
 }
 
+service spageDir( dir ) {
+   return fs.readdirSync( dir ).map(
+      function( p ) {
+	 var fp = path.join( dir, p );
+	 if( fs.lstatSync( fp ).isDirectory() ) {
+	    return dirToSpage( fp );
+	 } else {
+	    return <div value=${fp}>${p}</div>;
+	 }
+      } );
+}
+   
 function dirToSpage( dir ) {
-   return <SP.sptab>
-     <SP.sptabhead>${ base( dir ) }</SP.sptabhead>
-     ${service () {
-	return fs.readdirSync( dir ).map(
-	   function( p ) {
-	      var fp = path.join( dir, p );
-	      if( fs.lstatSync( fp ).isDirectory() ) {
-		 return dirToSpage( fp );
-	      } else {
-		 return <div value=${fp}>${p}</div>;
-	      }
-	   } );
-     } }
-   </SP.sptab>
+   return <sp.sptab svc=${spageDir} arg=${dir}>
+     <sp.sptabhead>${ base( dir ) }</sp.sptabhead>
+   </sp.sptab>
 }
 
 service spage( o ) {
@@ -42,14 +43,27 @@ service spage( o ) {
    var d = <span>0</span>;
    
    return <html>
-     <head css=${SP.css} jscript=${SP.jscript}/>
+     
+     <head>
+       <link href=${sp.css} rel="stylesheet" type="text/css"/>
+       <script src=${sp.script} type="application/x-javascript"/>
+     </head>
+     
      <body>
+       <div>
+	 transition style
+	 <button onclick=~{node_style_set( document.getElementById( "sp" ).spstyle, "cursor", "help" )}>Fade</button>
+	 <button onclick=~{node_style_set( document.getElementById( "sp" ).spstyle, "cursor", "move" )}>Slide</button>
+       </div>
+       
        <div>depth: ${d}</div>
        <br/>
-       <SP.spage id="sp" onchange=~{${d}.innerHTML = HopSpage.depth( "sp" )}>
-	 <SP.sphead>${ dir }</SP.sphead>
-	 ${dirToSpage( dir )}
-       </SP.spage>
+       <div style="width: 400px; border: 1px solid #ccc">
+       	 <sp.spage id="sp" onchange=~{${d}.innerHTML = document.getElementById( "sp" ).depth}>
+           <sp.sphead>${ dir }</sp.sphead>
+           ${dirToSpage( dir )}
+       	 </sp.spage>
+       </div>
      </body>
    </html>;
 }
