@@ -78,7 +78,7 @@ sphead {
   font-size: 11pt;
   text-align: left;
   padding-left: 2em;
-  white-space: nospace;
+  white-space: nowrap;
   background: #f7f7f7;
   background-image: -moz-linear-gradient( -90deg, #f7f7f7, #e7e7e7 );
   background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#f7f7f7), to(#e7e7e7) );

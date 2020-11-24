@@ -181,7 +181,7 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 	    "left": -spage.spoffset + "px"
 	 } );
 	 node_style_set( tbody, {
-	    "transform": "scale( 0.99 )"
+	    "transform": "scale( 0.90 )"
 	 } );
 	 setTimeout( () => {
 	       node_style_set( tbody, {
@@ -198,7 +198,7 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 		  "-moz-transition-property": "all",
 		  "-o-transition-property": "all",
 		  "transition-property": "all",
-	    	  "transform": "scale( 0.99 )",
+	    	  "transform": "scale( 0.95 )",
 		  "opacity": "0"
 	       } );
 	    }, 1 );
@@ -371,9 +371,9 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
    }
       
    // spagePopUpdate
-   function spagePopUpdate( button ) {
+   function spagePopUpdate( el ) {
       
-      function popBodyNode( spage, body, kont ) {
+      function popBodyNode( spage, kont ) {
 	 const head = spage.heads.pop();
 	 const sphead = spage.sphead;
 	 const spheadcontent = sphead.firstChild;
@@ -383,8 +383,8 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 	 const tab = tbody.tab;
 	 
 	 hop_innerHTML_set( spheadbutton.firstChild, head[ 2 ] );
-	 hop_innerHTML_set( tab.firstChild.firstChild, body );
 	 hop_innerHTML_set( spheadcontent, head[ 1 ] );
+	 hop_innerHTML_set( tab.firstChild.firstChild, head[ 0 ] );
 	 
 	 spagePop( spage, kont );
 	 
@@ -415,11 +415,11 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 	 }
       }
       
-      const spage = spageFindFromTag( button, "hop-spage" );
+      const spage = (el.getAttribute( "data-hss-tag" ) === "hop-spage") 
+	 ? el : spageFindFromTag( el, "hop-spage" );
       
       if( !spage.inpop ) {
 	 spage.inpop = true;
-	 const head = spage.heads[ spage.heads.length - 1 ];
 	 const tabs = spage.tabs;
 	 const tbody = tabs[ tabs.length - 1 ];
 	 const tparent = tabs.length > 1 ? tabs[ 1 ] : false;
@@ -430,9 +430,9 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 	    if( tab 
 		&& (typeof( tab.svc ) === "function" || typeof( tab.svc ) === "string")
 		&& tab.getAttribute( "data-hop-svc-direction" ) === "both" ) {
-	       popBodyNode( spage, head[ 0 ], spageTabUpdate );
+	       popBodyNode( spage, spageTabUpdate );
 	    } else {
-	       popBodyNode( spage, head[ 0 ], false );
+	       popBodyNode( spage, false );
 	    }
 	 }
       }
@@ -452,7 +452,6 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       const headtab = Array.prototype.slice.call( tabhead.childNodes, 0 );
       
       spage.heads.push( [ headtab, content, button ] );
-/*       hop_innerHTML_set( spheadbutton.firstChild, content );        */
       hop_innerHTML_set( spheadcontent, headtab );
       
       spheadbutton.className = "visible";
@@ -479,6 +478,7 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
    function spagePushUrl( tab, svcurl, build ) {
       if( !tab.pushed ) {
 	 tab.pushed = true;
+
 	 with_hop( svcurl,
 	    body => {
 	       tab.svc = svcurl;
@@ -509,7 +509,6 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       const el = getElement( tab );
       const svc = el.getAttribute( "data-hop-svc" );
       
-      console.log( "stp=", typeof( svc ), svc );
       if( typeof( svc ) === "string" ) {
 	 spagePushService( el, () => svc );
       } else {
@@ -560,7 +559,7 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       
    // invokeOnchangeListener
    function spageInvokeOnchangeListener( spage, tbody, action ) {
-      if( typeof( spage.onchg === "function" ) ) {
+      if( typeof( spage.onchg ) === "function" ) {
 	 const evt = new HopEvent( "change", spage );
 	 evt.target = tbody;
 	 evt.action = action;
@@ -596,8 +595,8 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       spage.hop_add_event_listener = spageAddEventListener;
       spage.hop_update = spageUpdate;
       
-      spage.pop = function( kont = undefined ) {
-	 spagePop( this, kont );
+      spage.pop = function() {
+	 spagePopUpdate( this );
       }
       
       // adjust the body size
