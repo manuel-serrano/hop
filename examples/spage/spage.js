@@ -54,6 +54,7 @@ service spage( o ) {
 	 transition style
 	 <button onclick=~{node_style_set( document.getElementById( "sp" ).spstyle, "cursor", "help" )}>Fade</button>
 	 <button onclick=~{node_style_set( document.getElementById( "sp" ).spstyle, "cursor", "move" )}>Slide</button>
+	 <button onclick=~{node_style_set( document.getElementById( "sp" ).spstyle, "cursor", "wait" )}>Zoom</button>
        </div>
        
        <div>depth: ${d}</div>

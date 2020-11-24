@@ -1368,9 +1368,11 @@
 ;*---------------------------------------------------------------------*/
 (define (read-function-source info path start end)
    (if (and (string? path) (file-exists? path))
-       (let ((mmap (open-mmap path :write #f)))
-	  (mmap-substring mmap
-	     (fixnum->elong start) (fixnum->elong end)))
+       (let* ((mmap (open-mmap path :write #f))
+	      (s (mmap-substring mmap
+		    (fixnum->elong start) (fixnum->elong end))))
+	  (close-mmap mmap)
+	  s)
        (format "[~a:~a..~a]" path start end)))
 
 ;*---------------------------------------------------------------------*/

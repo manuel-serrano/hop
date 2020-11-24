@@ -310,7 +310,7 @@
 ;*    to avoid identifiers collisions when including several svg       */
 ;*    images inside a single xhtml document.                           */
 ;*---------------------------------------------------------------------*/
-(define (read-svg-img-prefix id uattributes p name inl width height)
+(define (read-svg-img-prefix id uattributes p name inl width height class)
    
    (define (dimension-value str)
       (let ((len (string-length str)))
@@ -322,6 +322,7 @@
       (with-access::svg-img-markup el (attributes)
 	 (let ((svgheight (plist-assq :height attributes))
 	       (svgwidth (plist-assq :width attributes))
+	       (svgclass (plist-assq :class attributes))
 	       (viewbox (plist-assq :viewBox attributes))
 	       (uid (plist-assq :id attributes)))
 	    ;; fix the id
@@ -332,14 +333,31 @@
 	    ;; the dimensions
 	    (cond
 	       (inl
-		(when width
-		   (if svgwidth
-		       (plist-set-first! svgwidth width)
-		       (set! attributes (cons* :width width attributes))))
-		(when height
-		   (if svgheight
+		(cond
+		   (width
+		    (if svgwidth
+			(plist-set-first! svgwidth width)
+			(set! attributes (cons* :width width attributes))))
+		   (height
+		    (when svgwidth
+		       ;; remove the width element
+		       (set-cdr! svgwidth (cddr svgwidth))
+		       (set! attributes (remq! :width attributes)))))
+		(cond
+		   (height
+		    (tprint "H=..." height " " svgheight)
+		    (if svgheight
 		       (plist-set-first! svgheight height)
-		       (set! attributes (cons* :height height attributes)))))
+		       (set! attributes (cons* :height height attributes))))
+		   (width
+		    (when svgheight
+		       ;; remove the height element
+		       (set-cdr! svgheight (cddr svgheight))
+		       (set! attributes (remq! :height attributes)))))
+		(when class
+		   (if svgclass
+		       (plist-set-first! svgclass class)
+		       (set! attributes (cons* :class class attributes)))))
 	       (viewbox
 		(when svgheight
 		   (plist-set-first! svgheight "100%"))
@@ -391,7 +409,7 @@
 ;*    This function does not parse the image. It simply scans the      */
 ;*    first SVG markup then it reads the entire file.                  */
 ;*---------------------------------------------------------------------*/
-(define (read-svg-img-brute id attributes p inl width height)
+(define (read-svg-img-brute id attributes p inl width height class)
    
    (define (dimension-value str)
       (let ((len (string-length str)))
@@ -415,12 +433,14 @@
 		      (error "<SVG:IMG>" "Illegal file format" ip)))
 		  ip)))
 
+   (tprint "read-brute..")
    (multiple-value-bind (encoding prelude)
       (read-upto-svg-markup p)
       (let loop ((attrs '())
 		 (svgheight #f)
 		 (svgwidth #f)
-		 (viewbox #f))
+		 (viewbox #f)
+		 (svgclass #f))
 	 (multiple-value-bind (key val)
 	    (read-attribute p)
 	    (case key
@@ -429,9 +449,11 @@
 		       (body (charset-convert str encoding (hop-charset))))
 		   (cond
 		      (inl
+		       (tprint "SVGclass=" svgclass " " class)
 		       (list prelude
 			  (if svgheight svgheight (if height (format " height=~a" height) ""))
 			  (if svgwidth svgwidth (if width (format " width=~a" width) ""))
+			  (if svgclass svgclass (if class (format " class=~a" class) ""))
 			  viewbox
 			  (reverse! attrs) ">" body))
 		      (viewbox
@@ -471,24 +493,28 @@
 			     svgwidth
 			     (reverse! attrs) ">" body)))))
 	       ((height)
-		(loop attrs (list " height=" (if (and inl height) height val)) svgwidth viewbox))
+		(loop attrs (list " height=" (if (and inl height) height val)) svgwidth viewbox svgclass))
 	       ((width)
-		(loop attrs svgheight (list " width=" (if (and inl width) width val)) viewbox))
+		(loop attrs svgheight (list " width=" (if (and inl width) width val)) viewbox svgclass))
+	       ((class)
+		(loop attrs svgheight (list " class=" (if (and inl class) class val)) viewbox svgclass))
 	       ((viewBox)
-		(loop attrs svgheight svgwidth (list " viewBox=" val)))
+		(loop attrs svgheight svgwidth (list " viewBox=" val) svgclass))
 	       ((id)
 		(loop (if (string? id)
 			  (cons (list " id=\"" id "\"") attrs)
 			  (cons (list " id=" val) attrs))
 		      svgheight
 		      svgwidth
-		      viewbox))
+		      viewbox
+		      svgclass))
 	       (else
 		(loop (cons (list " " (symbol->string key) "=" val)
 			    attrs)
 		      svgheight
 		      svgwidth
-		      viewbox)))))))
+		      viewbox
+		      svgclass)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-svg-img-encoding ...                                        */
@@ -516,10 +542,10 @@
 ;*      5- it translates the iso-latin encoding into HOP-CHARSET       */
 ;*      6- it rebinds svg identifiers                                  */   
 ;*---------------------------------------------------------------------*/
-(define (read-svg-img id prefix attributes p name inl width height)
+(define (read-svg-img id prefix attributes p name inl width height class)
    (if prefix
-       (read-svg-img-prefix id attributes p name inl width height)
-       (read-svg-img-brute id attributes p inl width height)))
+       (read-svg-img-prefix id attributes p name inl width height class)
+       (read-svg-img-brute id attributes p inl width height class)))
 
 ;*---------------------------------------------------------------------*/
 ;*    height->width ...                                                */
@@ -564,7 +590,9 @@
 			 (if (string=? (suffix src) "svgz")
 			     (string-append "gzip:" src)
 			     src)
-		      (lambda (port) (read-svg-img id prefix attrs port src inl width height))))
+		      (lambda (port)
+			 (read-svg-img id prefix attrs port src inl
+			    width height class))))
 	      (style0 (format "display: ~a; position: relative; ~a" display style))
 	      (style1 (cond
 			 (width
