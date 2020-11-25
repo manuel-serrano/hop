@@ -1128,6 +1128,7 @@
 			    (parent fun)
 			    (key (ast-decl-key))
 			    (id (symbol-append id '%%))
+			    (scope 'global)
 			    (usage (usage '()))
 			    (writable #f)
 			    (binder 'let)
@@ -1203,6 +1204,7 @@
 		   (newdecl (duplicate::J2SDeclFun fun
 			       (parent fun)
 			       (key (ast-decl-key))
+			       (scope 'global)
 			       (id (symbol-append id '%% typeid))
 			       (usage (usage '()))
 			       (writable #f)
@@ -1238,6 +1240,7 @@
 	  (itype type))
        (duplicate::J2SDecl p
 	  (key (ast-decl-key))
+	  (exports '())
 	  (hint '())
 	  (vtype 'unknown)
 	  (itype type))))

@@ -81,7 +81,8 @@
 
 	    (class xml-cdata::xml-element)
 	    
-	    (class xml-react::xml-element)
+	    (class xml-react::xml-element
+	       (%context read-only (default #f)))
 	    
 	    (class xml-style::xml-cdata)
 	    

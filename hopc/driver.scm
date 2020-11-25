@@ -54,8 +54,8 @@
       :eval (lambda (e) (let ((op (open-output-string)))
 			   (obj->javascript-expr (eval e) op)
 			   (close-output-port op)))
-      :hop-compile (lambda (obj op compile)
-		      (hop->javascript obj op compile #f #f))
+      :hop-compile (lambda (obj op compile ctx)
+		      (hop->javascript obj op compile #f ctx))
       :hop-register hop-register-value
       :javascript-version (hop-javascript-version)
       :hop-library-path (hop-library-path)

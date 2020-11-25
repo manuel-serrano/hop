@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
 ;*    Last change :  Wed Apr 17 06:55:43 2019 (serrano)                */
-;*    Copyright   :  2005-19 Manuel Serrano                            */
+;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
 ;*=====================================================================*/
@@ -80,22 +80,22 @@
 ;*---------------------------------------------------------------------*/
 (define (obj->javascript-attr obj op::output-port #!optional ctx)
    
-   (define (host-compiler obj op compile)
+   (define (host-compiler obj op compile ctx)
       (hop->javascript obj op compile #f ctx))
 
    (with-access::clientc (hop-clientc) (valuec)
-      (valuec obj op host-compiler hop-register-value #f)))
+      (valuec obj op host-compiler ctx hop-register-value #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    obj->javascript-expr ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (obj->javascript-expr obj op #!optional ctx)
    
-   (define (host-compiler obj op compile)
+   (define (host-compiler obj op compile ctx)
       (hop->javascript obj op compile #t ctx))
 
    (with-access::clientc (hop-clientc) (valuec)
-      (valuec obj op host-compiler hop-register-value #f)))
+      (valuec obj op host-compiler ctx hop-register-value #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ...                                              */

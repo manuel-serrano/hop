@@ -155,7 +155,8 @@
 	     (let ((nval (sexp->xml-tilde
 			    `(begin
 				,oval
-				,(secure-javascript-attr val)))))
+				,(secure-javascript-attr val))
+			    :%context %context)))
 		(set-car! (cdr onerror) nval)
 		attributes))
 	    (else

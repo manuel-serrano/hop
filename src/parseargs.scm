@@ -506,8 +506,8 @@
 			 (op (open-output-string)))
 		     (obj->javascript-attr ev op)
 		     (close-output-port op)))
-	 :hop-compile (lambda (obj op compile)
-			 (hop->javascript obj op compile #f #f))
+	 :hop-compile (lambda (obj op compile ctx)
+			 (hop->javascript obj op compile #f ctx))
 	 :hop-register hop-register-value
 	 :hop-library-path (hop-library-path)
 	 :features `(hop

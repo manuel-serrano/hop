@@ -232,6 +232,9 @@ function dom_create( tag, _ ) {
 	       } else {
 		  el.setAttribute( prop, at );
 	       }
+	    } else if( prop === "%location" ) {
+	       // hop debug
+	       i += 2;
 	    } else {
 	       if( (at instanceof String) || (typeof at == "string") ) {
 		  if( sc_isSymbol( at ) ) {
