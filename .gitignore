@@ -43,12 +43,17 @@ test/nodejs/HOP.exe
 test/nodejs/log.*
 test/nodejs/LOG
 
+# hopscript
 hopscript/hopscript.sch
 hopscript/bglhopscript.h
 
+# node_modules
 node_modules/hopc/lib/ast.js
 node_modules/hopc/lib/walk.js
 node_modules/hopdroid/lib/Makefile
+
+# js2scheme
+js2scheme/hopc_config.sch
 
 # scheme2js tools and generated files
 scheme2js/runtime/runtime-interface.js
