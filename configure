@@ -1460,6 +1460,7 @@ echo "" >> $init
 
 # lib/hopc_config.sch
 config=lib/hop/$version/hopc_config.sch
+config_js2scm=js2scheme/hopc_config.sch
 
 rm -f $config 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $config
@@ -1488,6 +1489,8 @@ cat etc/hopc_config.sch.in \
           -e "s|@CSS-MIME-TYPE@|$cssmimetype|" \
     >> $config
 echo "" >> $config
+
+cp $config $config_js2scm
 
 cat etc/hop.init.in \
     | sed -e "s|@VERSION@|$version|" \
