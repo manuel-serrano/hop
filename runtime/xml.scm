@@ -77,7 +77,7 @@
 	    (xml-tilde->attribute::bstring ::xml-tilde)
 
 	    (xml-tilde->sexp ::xml-tilde)
-	    (sexp->xml-tilde::xml-tilde expr #!optional env menv)
+	    (sexp->xml-tilde::xml-tilde expr #!key env menv %context)
 	    (xml-tilde*::xml-tilde ::xml-tilde . rest)
 
 	    (<TILDE> ::obj #!key src loc)
@@ -1104,11 +1104,11 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 ;*---------------------------------------------------------------------*/
 ;*    sexp->xml-tilde ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (sexp->xml-tilde obj #!optional env menv)
+(define (sexp->xml-tilde obj #!key env menv %context)
    (with-access::clientc (hop-clientc) (macroe sexp->precompiled)
       (let* ((env (or env (current-module-clientc-import)))
 	     (menv (or menv (macroe)))
-	     (c (sexp->precompiled obj env menv)))
+	     (c (sexp->precompiled obj env menv %context)))
 	 (<TILDE> c :src obj))))
 
 ;*---------------------------------------------------------------------*/

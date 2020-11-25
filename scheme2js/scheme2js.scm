@@ -67,6 +67,7 @@
 	   (scheme2js-compile-value expr::obj
 	      out-p::output-port
 	      extension-compiler::procedure
+	      extension-context
 	      value-register::procedure
 	      loc)
 	   (scheme2js-compile-file in-file::bstring
@@ -190,8 +191,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    scheme2js-compile-value ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (scheme2js-compile-value val outp extension-compiler value-register loc)
-   (compile-value val outp extension-compiler value-register loc))
+(define (scheme2js-compile-value val outp extension-compiler extension-context value-register loc)
+   (compile-value val outp extension-compiler extension-context value-register loc))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme2js-compile-file ...                                       */

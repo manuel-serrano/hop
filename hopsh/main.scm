@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
 ;*    Last change :  Wed Apr 17 08:02:57 2019 (serrano)                */
-;*    Copyright   :  2004-19 Manuel Serrano                            */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPSH entry point                                            */
 ;*=====================================================================*/
@@ -62,8 +62,8 @@
 	       (let ((op (open-output-string)))
 		  (obj->javascript-expr (eval e) op)
 		  (close-output-port op)))
-      :hop-compile (lambda (obj op compile)
-		      (hop->javascript obj op compile #f #f))
+      :hop-compile (lambda (obj op compile ctx)
+		      (hop->javascript obj op compile #f ctx))
       :hop-register hop-register-value
       :hop-library-path (hop-library-path)
       :javascript-version (hop-javascript-version)

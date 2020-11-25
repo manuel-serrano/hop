@@ -26,14 +26,14 @@
 	   (hopscheme-compile-file file::bstring ::bstring ::obj)
 	   (hopscheme-create-empty-macro-environment)
 	   (hopscheme-compile-expression e ::obj ::obj ::procedure)
-	   (hopscheme-compile-value ::obj ::output-port ::procedure ::procedure ::obj)
+	   (hopscheme-compile-value ::obj ::output-port ::procedure ::obj ::procedure ::obj)
 	   (hopscheme-compile-hop-client e #!optional (env '()) (menv #f))
 	   (hopscheme->JS-expression::bstring ::vector) 
 	   (hopscheme->JS-statement::bstring ::vector)
 	   (hopscheme->JS-return::bstring ::vector)
 	   (hopscheme-declared::pair-nil ::vector)
 	   (hopscheme-free::pair-nil ::vector)
-	   (sexp->hopscheme::vector ::obj ::obj ::obj)
+	   (sexp->hopscheme::vector ::obj ::obj ::obj ::obj)
 	   (hopscheme->sexp::obj ::vector ::procedure)))
 
 ;*---------------------------------------------------------------------*/
@@ -100,8 +100,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-compile-value ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (hopscheme-compile-value v p host-compiler host-register loc)
-   (scheme2js-compile-value v p host-compiler host-register loc))
+(define (hopscheme-compile-value v p host-compiler host-context host-register loc)
+   (scheme2js-compile-value v p host-compiler host-context host-register loc))
    
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-compile-hop-client ...                                 */
@@ -264,7 +264,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    sexp->hopscheme ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (sexp->hopscheme e env menv)
+(define (sexp->hopscheme e env menv %context)
    (let ((s-port (open-output-string))
 	 (menv (instantiate::Compilation-Unit
 		  (name (gensym 'macro))
@@ -284,7 +284,11 @@
 		   (unresolved-declare! (lambda (scm-id js-id location)
 					   (set! unresolved
 					      (cons (list scm-id js-id location)
-						 unresolved)))))
+						 unresolved))))
+		   (cfg (extend-config* (hopscheme-config #f)	
+			   `((module-result-var . ,assig-var)
+			     (unresolved-declare . ,unresolved-declare!)
+			     (exported-declare . ,exported-declare!)))))
 	       (scheme2js-compile-expr
 		  ;; top-level
 		  expr
@@ -295,17 +299,11 @@
 		    (merge-last (import ,menv))
 		    ,@env)
 		  ;; config
-		  (extend-config* (hopscheme-config #f)	
-		     `((module-result-var . ,assig-var)
-		       (unresolved-declare . ,unresolved-declare!)
-		       (exported-declare . ,exported-declare!))))
+		  (if %context
+		      (extend-config cfg 'host-context %context)
+		      cfg))
 	       (let ((js-code (close-output-port s-port)))
-		  (vector expr
-		     assig-var
-		     exported
-		     unresolved
-		     js-code
-		     '())))
+		  (vector expr assig-var exported unresolved js-code '())))
 	    (close-output-port s-port)))))
 
 ;*---------------------------------------------------------------------*/
