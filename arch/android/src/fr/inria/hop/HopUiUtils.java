@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  1 09:13:38 2010                          */
-/*    Last change :  Sat Nov 21 08:47:16 2020 (serrano)                */
+/*    Last change :  Sat Nov 21 18:33:22 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    UI Utility functions                                             */
@@ -86,6 +86,8 @@ public class HopUiUtils {
    protected static void setStatusBarColor( Activity a, String color ) {
       Window window = a.getWindow();
 
+      Log.d( "HopUiUtils", "setStatusBarColor: " + color );
+      
       // clear FLAG_TRANSLUCENT_STATUS flag:
       window.clearFlags( WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS );
 
@@ -93,20 +95,43 @@ public class HopUiUtils {
       window.addFlags( WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS );
 
       // finally change the color
-      Log.d( "HopUiUtils", "setStatusBarColor: " + color );
       window.setStatusBarColor( Color.parseColor( color ) );
    }
 
-   // getStatusBarColor
-   protected static String getStatusBarColor( final OutputStream op, Activity a )
-      throws IOException {
-      Window window = a.getWindow();
-      
-      int c = window.getStatusBarColor();
-      String hex = String.format( "#%02x%02x%02x", (c >> 16) & 0xff, (c >> 8) & 0xff, c & 0xff );
-
-      return hex;
+   // setWindowFlag
+   public static void setWindowFlag( Activity a, final int bits, boolean on ) {
+	Window win = a.getWindow();
+	WindowManager.LayoutParams winParams = win.getAttributes();
+	if( on ) {
+	   winParams.flags |= bits;
+	} else {
+	   winParams.flags &= ~bits;
+	}
+	win.setAttributes( winParams );
    }
+   
+   // setStatusBarTransparent
+   protected static void setStatusBarTransparent( Activity a ) {
+      Log.d( "HopUiUtils", "setStatusBarTransparent" );
+
+/*       if( android.os.Build.VERSION.SDK_INT >= 29 ) {                */
+/* 	 Window w = a.getWindow();                                     */
+/* 	 w.setFlags( WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS ); */
+/*       } else if( android.os.Build.VERSION.SDK_INT >= 19 && android.os.Build.VERSION.SDK_INT < 21 ) { */
+/* 	 setWindowFlag( a, WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, true ); */
+/*       } else                                                        */
+/* 	   if( android.os.Build.VERSION.SDK_INT >= 21 ) {              */
+/* 	 setWindowFlag( a, WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, false ); */
+/* 	 a.getWindow().setStatusBarColor( Color.TRANSPARENT );         */
+/*       } else if( android.os.Build.VERSION.SDK_INT >= 19 ) {         */
+/* 	 a.getWindow().getDecorView().setSystemUiVisibility( View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN ); */
+/*       }                                                             */
+
+      setStatusBarColor( a, "#33006666" );
+      Log.d( "HopUiUtils", "SDK=" + android.os.Build.VERSION.SDK_INT );
+   }
+
+   // unitUI
    protected static WebView initUI( Activity a ) {
       WebView webview;
 
@@ -123,6 +148,14 @@ public class HopUiUtils {
       //bar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#3e3e3e")));
 
       a.setContentView( R.layout.main );
+
+      // statusbar
+      Log.d( "HopUiUtils", "statusbarcolor=" + HopConfig.UISTATUSBARCOLOR );
+      if( HopConfig.UISTATUSBARCOLOR.equals( "transparent" ) ) {
+	 setStatusBarTransparent( a );
+      } else if( !HopConfig.UISTATUSBARCOLOR.equals( "default" ) ) {
+	 setStatusBarColor( a, HopConfig.UISTATUSBARCOLOR );
+      }
 
       // grab the view
       webview = (WebView)a.findViewById( R.id.webview );

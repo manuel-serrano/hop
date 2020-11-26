@@ -19,7 +19,8 @@
    (include "../nodejs/nodejs_debug.sch"
 	    "types.sch"
 	    "stringliteral.sch"
-	    "property.sch")
+	    "property.sch"
+	    "array.sch")
    
    (extern ($js-make-jsarray::JsArray (::long ::uint32 ::JsConstructMap ::obj ::obj ::uint32)
 	      "bgl_make_jsarray")
@@ -140,6 +141,10 @@
 	   (js-array-maybe-filter this proc thisarg %this cache)
 	   (js-array-filter-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-filter-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
+	   (js-array-flatmap ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-flatmap ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-flatmap-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-flatmap-procedure ::obj proc::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-join ::JsArray ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-join ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-map-join ::obj ::procedure ::obj ::obj ::JsGlobalObject ::obj ::obj)
@@ -231,11 +236,11 @@
        `((@ js-toindex  __hopscript_public) ,p))))
 
 ;*---------------------------------------------------------------------*/
-;*    minu32 ...                                                       */
+;*    u32min ...                                                       */
 ;*    -------------------------------------------------------------    */
 ;*    replace the Bigloo non-optimized n-ary function                  */
 ;*---------------------------------------------------------------------*/
-(define (minu32::uint32 x::uint32 y::uint32)
+(define (u32min::uint32 x::uint32 y::uint32)
    (if (<u32 x y) x y))
 
 ;*---------------------------------------------------------------------*/
@@ -1968,6 +1973,19 @@
       :enumerable #f
       :hidden-class #t)
 
+   ;; flatMap
+   ;; https://tc39.es/ecma262/#sec-array.prototype.flatmap
+   (define (array-prototype-flatmap this::obj proc t)
+      (js-array-prototype-flatmap this proc t %this))
+
+   (js-bind! %this js-array-prototype (& "flatMap")
+      :value (js-make-function %this array-prototype-flatmap
+		(js-function-arity array-prototype-flatmap)
+		(js-function-info :name "flatmap" :len 1)
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+
    ;; includes
    ;; https://www.ecma-international.org/ecma-262/7.0/#sec-array.prototype.includes
    (define (array-prototype-includes this::obj val idx)
@@ -2790,7 +2808,7 @@
       (if (=u32 ilen length)
 	  (js-object-mode-inline-set! o #t)
 	  (js-object-mode-holey-set! o #t))
-      (let ((len (minu32 (fixnum->uint32 (vector-length vec)) length)))
+      (let ((len (u32min (fixnum->uint32 (vector-length vec)) length)))
 	 (let loop ((i nilen))
 	    (if (<u32 i len)
 		(let ((d (js-get-own-property o (js-toname i %this) %this)))
@@ -4038,7 +4056,7 @@
 			   (if (< left 0)
 			       #u32:0
 			       (js-touint32 left %this)))
-			(minu32 (js-touint32 relstart %this) len)))))
+			(u32min (js-touint32 relstart %this) len)))))
 	  (final (if (eq? end (js-undefined))
 		     len
 		     (let ((relend (js-tointeger end %this)))
@@ -4047,7 +4065,7 @@
 			       (if (< left 0)
 				   #u32:0
 				   (js-touint32 left %this)))
-			    (minu32 (js-touint32 relend %this) len))))))
+			    (u32min (js-touint32 relend %this) len))))))
       (with-access::JsArray this (vec ilen length)
 	 (cond
 	    ((js-object-mode-inline? this)
@@ -4393,6 +4411,233 @@
 	  (with-access::JsGlobalObject %this (js-array-pcache)
 	     (js-call2 %this
 		(js-get-name/cache this (& "map") #f %this
+		   (or cache (js-pcache-ref js-array-pcache 11)))
+		this jsproc thisarg)))))
+
+;*---------------------------------------------------------------------*/
+;*    flatten-vector->array ...                                        */
+;*---------------------------------------------------------------------*/
+(define (flatten-vector->array this vec vlen flen %this)
+
+   (define (array-copy! v::vector start::uint32 a::JsArray len::uint32)
+      (let loop ((i #u32:0)
+		 (j start))
+	 (if (=u32 i len)
+	     j
+	     (let ((val (js-get-property-value a a i %this)))
+		(if (js-absent? val)
+		    (loop (+u32 i #u32:1) j)
+		    (begin
+		       (vector-set! v (uint32->fixnum j) val)
+		       (loop (+u32 i #u32:1) (+u32 j #u32:1))))))))
+   
+   (let ((len (vector-length vec))
+	 (fvec (js-create-vector (uint32->fixnum flen))))
+      (let loop ((i #u32:0)
+		 (j #u32:0))
+	 (if (=u32 i vlen)
+	     (let ((a (js-species->jsarray this fvec %this)))
+		(when (<u32 j flen)
+		   ;; this test is needed to shrink the final
+		   ;; result if some intermediate arrays were
+		   ;; sparse
+		   (js-put-length! a (uint32->fixnum j) #f #f %this))
+		a)
+	     (let ((val (vector-ref vec (uint32->fixnum i))))
+		(if (not (js-array? val))
+		    (begin
+		       (vector-set! fvec (uint32->fixnum j) val)
+		       (loop (+u32 i #u32:1) (+u32 j #u32:1)))
+		    (let ((l (js-array-length val)))
+		       (cond
+			  ((=u32 l #u32:0)
+			   (loop (+u32 i #u32:1) j))
+			  ((js-object-mode-inline? val)
+			   (with-access::JsArray val (vec)
+			      (vector-copy! fvec (uint32->fixnum j)
+				 vec 0 (uint32->fixnum l)))
+			   (loop (+u32 i #u32:1) (+u32 j l)))
+			  (else
+			   (let ((nj (array-copy!  fvec j val l)))
+			      (loop (+u32 i #u32:1) nj)))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-flatmap ...                                   */
+;*    ------------------------------------------------------------     */
+;*    https://tc39.es/ecma262/#sec-array.prototype.flatmap             */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-flatmap this proc thisarg %this)
+
+   (define (array-flatmap/array this o len proc thisarg i::uint32 vec::vector flen::uint32 %this)
+      (let loop ((i i)
+		 (j i)
+		 (flen flen))
+	 (if (=u32 i len)
+	     (flatten-vector->array this vec j flen %this)
+	     (let ((val (js-get-property-value o o i %this)))
+		(if (js-absent? val)
+		    (loop (+u32 1 #u32:1) j flen)
+		    (let ((nval (js-call3 %this proc thisarg val
+				   (uint32->fixnum i) o)))
+		       (vector-set! vec (uint32->fixnum j) nval)
+		       (loop (+u32 i 1)
+			  (+u32 j 1)
+			  (if (js-array? nval)
+			      (+u32 flen (js-array-length nval))
+			      (+u32 flen #u32:1)))))))))
+   
+   (define (vector-flatmap this o len::uint32 proc thisarg i::uint32 %this)
+      (with-access::JsArray o (vec ilen length)
+	 (js-call-with-stack-vector
+	    (make-vector (uint32->fixnum len))
+	    (lambda (v)
+	       ;; v is a temporary stack allocated vector
+	       ;; it accumulates all the sub vectors to
+	       ;; be flattened
+	       (let ((l length))
+		  (let loop ((i i)
+			     (flen i))
+		     (cond
+			((or (>=u32 i ilen) (>=u32 i l))
+			 ;; this.length may grow or shrink during the flatmap
+			 (if (=u32 i len)
+			     (flatten-vector->array this v len flen %this)
+			     ;; the array has been uninlined by the callback
+			     (array-flatmap/array this o len proc thisarg i v flen %this)))
+			(else
+			 (let* ((val (vector-ref vec (uint32->fixnum i)))
+				(nval ((@ js-call3 __hopscript_public)
+				       %this proc thisarg val
+				       (uint32->fixnum i) o)))
+			    (vector-set! v (uint32->fixnum i) nval)
+			    (loop (+u32 i 1)
+			       (if (js-array? nval)
+				   (+u32 flen (js-array-length nval))
+				   (+u32 flen #u32:1))))))))))))
+   
+   (define (array-flatmap this o len proc thisarg i::uint32 %this)
+      (js-call-with-stack-vector
+	 (make-vector (js-uint32-tointeger len))
+	 (lambda (v)
+	    (array-flatmap/array this o len proc thisarg i v #u32:0 %this))))
+   
+   (array-prototype-iterator this proc thisarg array-flatmap vector-flatmap %this))
+   
+;*---------------------------------------------------------------------*/
+;*    js-array-flatmap ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-array-flatmap this::JsArray proc thisarg %this cache)
+   (if (js-object-mode-plain? this)
+       (js-array-prototype-flatmap this proc thisarg %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call2 %this
+	     (js-get-jsobject-name/cache this (& "flatMap") #f %this
+		(or cache (js-pcache-ref js-array-pcache 11)))
+	     this proc thisarg))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-flatmap ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-flatmap this proc thisarg %this cache)
+   (if (and (js-array? this) (js-object-mode-plain? this))
+       (js-array-prototype-flatmap this proc thisarg %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call2 %this
+	     (js-get-name/cache this (& "flatMap") #f %this
+		(or cache (js-pcache-ref js-array-pcache 12)))
+	     this proc thisarg))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-flatmap-procedure ...                         */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-flatmap-procedure this proc thisarg %this)
+   
+   (define (array-flatmap/array this o len proc thisarg i::uint32 vec::vector flen::uint32 %this)
+      (let loop ((i i)
+		 (j i)
+		 (flen flen))
+	 (if (=u32 i len)
+	     (flatten-vector->array this vec j flen %this)
+	     (let ((val (js-get-property-value o o i %this)))
+		(if (js-absent? val)
+		    (loop (+u32 1 #u32:1) j flen)
+		    (let ((nval (proc thisarg val (uint32->fixnum i) o %this)))
+		       (vector-set! vec (uint32->fixnum i) nval)
+		       (loop (+u32 i 1)
+			  (+u32 j 1)
+			  (if (js-array? nval)
+			      (+u32 flen (js-array-length nval))
+			      (+u32 flen #u32:1)))))))))
+   
+   (define (vector-flatmap this o len::uint32 proc thisarg i::uint32 %this)
+      (with-access::JsArray o (vec ilen length)
+	 (js-call-with-stack-vector
+	    (make-vector (uint32->fixnum len))
+	    (lambda (v)
+	       ;; v is a temporary stack allocated vector
+	       ;; it accumulates all the sub vectors to
+	       ;; be flattened
+	       (let ((l length))
+		  (let loop ((i i)
+			     (flen i))
+		     (cond
+			((or (>=u32 i ilen) (>=u32 i l))
+			 ;; this.length may grow or shrink during the flatmap
+			 (if (=u32 i len)
+			     (flatten-vector->array this vec len flen %this)
+			     ;; the array has been uninlined by the callback
+			     (array-flatmap/array this o len proc thisarg i v flen %this)))
+			(else
+			 (let* ((val (vector-ref vec (uint32->fixnum i)))
+				(nval (proc thisarg
+					 val (uint32->fixnum i) o %this)))
+			    (vector-set! v (uint32->fixnum i) nval)
+			    (loop (+u32 i 1)
+			       (if (js-array? nval)
+				   (+u32 flen (js-array-length nval))
+				   (+u32 flen #u32:1))))))))))))
+   
+   (define (array-flatmap this o len proc thisarg i::uint32 %this)
+      (js-call-with-stack-vector
+	 (make-vector (js-uint32-tointeger len))
+	 (lambda (v)
+	    (array-flatmap/array this o len proc thisarg i v #u32:0 %this))))
+   
+   (array-prototype-iterator this proc thisarg array-flatmap vector-flatmap %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-flatmap-procedure ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-array-flatmap-procedure this::JsArray proc thisarg %this cache)
+   (if (js-object-mode-plain? this)
+       (js-array-prototype-flatmap-procedure this proc thisarg %this)
+       ;; proc is a stack allocated procedure
+       (let* ((proc ($dup-procedure proc))
+	      (jsproc (js-make-function %this
+			 (lambda (_this x y z) (proc _this x y z %this))
+			 (js-function-arity 3 0)
+			 (js-function-info :name "flatMapproc" :len 3)
+			 :constrsize 0
+			 :alloc js-object-alloc)))
+	  (js-array-flatmap this jsproc thisarg %this cache))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-flatmap-procedure ...                             */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-flatmap-procedure this proc thisarg %this cache)
+   (if (js-array? this)
+       (js-array-prototype-flatmap-procedure this proc thisarg %this)
+       ;; proc is a stack allocated procedure
+       (let* ((proc ($dup-procedure proc))
+	      (jsproc (js-make-function %this
+			 (lambda (_this x y z) (proc _this x y z %this))
+			 (js-function-arity 3 0)
+			 (js-function-info :name "flatMapProc" :len 3)
+			 :constrsize 0
+			 :alloc js-object-alloc)))
+	  (with-access::JsGlobalObject %this (js-array-pcache)
+	     (js-call2 %this
+		(js-get-name/cache this (& "flatMap") #f %this
 		   (or cache (js-pcache-ref js-array-pcache 11)))
 		this jsproc thisarg)))))
 
