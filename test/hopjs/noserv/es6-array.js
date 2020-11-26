@@ -247,3 +247,87 @@ function unscopableskangaxa() {
 console.log( "unscopables" );
 console.log( "   unscopableskangaxa" ); 
 assert.ok( unscopableskangaxa(), "unscopableskangaxa" );
+
+/*---------------------------------------------------------------------*/
+/*    flatmap                                                          */
+/*---------------------------------------------------------------------*/
+function arrayEqual( x, y ) {
+   if( x === y ) return true;
+   if( x.length != y.length ) return false;
+   
+   for( let i = x.length; i >= 0; i-- ) {
+      if( !arrayEqual( x[ i ], y[ i ] ) ) return false;
+   }
+   
+   return true;
+}
+
+function flatmapmdna() {
+   var arr = [1, 2, 3, 4];
+
+   return arrayEqual( 
+      arr.flatMap(x => [x, x * 2]),
+      arr.reduce((acc, x) => acc.concat([x, x * 2]), []) );
+}
+
+function flatmapmdnb() {
+   let arr1 = [1, 2, 3, 4];
+
+   return arrayEqual( arr1.flatMap(x => [x * 2]), [2, 4, 6, 8] );
+}
+
+function flatmapmdnc() {
+   let arr1 = [1, 2, 3, 4];
+
+   return arrayEqual( arr1.flatMap(x => [[x * 2]]), [[2], [4], [6], [8]] );
+}
+
+function flatmapmdnd() {
+   let arr1 = ["it's Sunny in", "", "California"];
+   return arrayEqual( arr1.flatMap(x => x.split(" ")),
+      ["it's","Sunny","in", "", "California"] );
+}
+
+function flatmapmdne() {
+   let a = [5, 4, -3, 20, 17, -33, -4, 18];
+   const fa = a.flatMap( (n) => (n < 0) ? [] : (n % 2 == 0) ? [n] : [n-1, 1] );
+   
+   return arrayEqual( fa, [4, 1, 4, 20, 16, 1, 18] );
+}
+
+function flatmapholeya() {
+   const v = [10,,30];
+   
+   return arrayEqual( [1,2,3].flatMap( e => v ), [ 10, 30, 10, 30, 10, 30 ] );
+}
+
+function flatmapholeyb() {
+   const v = [10,,30];
+   
+   return arrayEqual( v.flatMap( e => [e] ), [ 10, 30 ] );
+}
+
+function flatmapholeyc() {
+   const v = [10,,30];
+   
+   return arrayEqual( v.flatMap( e => v ), [ 10, 30, 10, 30 ] );
+}
+
+function flatmapval() {
+   const v = [10,20];
+   
+   return arrayEqual( v.flatMap( e => v > 20 ? [v] : v ), [ 10, 20, 10, 20 ] );
+}
+
+console.log( "flatMap" );
+console.log( "   flatmapmdna" ); assert.ok( flatmapmdna(), "flatmapmdna" );
+console.log( "   flatmapmdnb" ); assert.ok( flatmapmdnb(), "flatmapmdnb" );
+console.log( "   flatmapmdnc" ); assert.ok( flatmapmdnc(), "flatmapmdnc" );
+console.log( "   flatmapmdnd" ); assert.ok( flatmapmdnd(), "flatmapmdnd" );
+console.log( "   flatmapmdne" ); assert.ok( flatmapmdne(), "flatmapmdne" );
+console.log( "   flatmapholeya" ); assert.ok( flatmapholeya(), "flatmapholeya" );
+console.log( "   flatmapholeyb" ); assert.ok( flatmapholeyb(), "flatmapholeyb" );
+console.log( "   flatmapholeyc" ); assert.ok( flatmapholeyc(), "flatmapholeyc" );
+console.log( "   flatmapval" ); assert.ok( flatmapval(), "flatmapval" );
+
+
