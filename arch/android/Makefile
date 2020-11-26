@@ -62,6 +62,7 @@ ANDROIDSPLASH = $(ANDROIDDIR)/splash
 # Config
 NOTITLE = true
 CUSTOMTITLE = false
+STATUSBARCOLOR = default
 
 # Plugins
 PLUGINBUILD = true
@@ -349,6 +350,7 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml \
                 -e "s|@HOPURL@|$(ANDROIDHOPURL)|" \
                 -e "s|@NOTITLE@|$(NOTITLE)|" \
                 -e "s|@CUSTOMTITLE@|$(CUSTOMTITLE)|" \
+                -e "s|@STATUSBARCOLOR@|$(STATUSBARCOLOR)|" \
                 -e "s|@PLUGINBUILD@|$(PLUGINBUILD)|" \
                 -e "s|@PLUGINLOCALE@|$(PLUGINLOCALE)|" \
                 -e "s|@PLUGINVIBRATE@|$(PLUGINVIBRATE)|" \
