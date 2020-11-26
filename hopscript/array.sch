@@ -245,33 +245,12 @@
 	  ((lambda (?v) . ?body)
 	   (cond-expand
 	      ((and bigloo-c (config have-c99-stack-alloc #t) (not devel) (not debug))
-	       (let ((p (gensym 'p)))
-		  `(let ()
-		      (pragma
-			 ,(format "extern obj_t bgl_init_vector_sans_fill(); extern long bgl_vector_bytesize(); char ~a[ bgl_vector_bytesize( ~a ) ]"
-			     p len))
-		      (let ((,v (pragma::vector ,(format "bgl_init_vector_sans_fill( &(~a), ~a )" p len))))
-			 ,@body))))
-	      (else
-	       `((@ js-call-with-stack-vector __hopscript_array) ,vec ,proc))))
-	  (else
-	   (error "js-call-with-stack-vector" "bad form"
-	      `(js-call-with-stack-vector ,vec ,proc)))))
-      (($make-vector ?len ?def)
-       (match-case proc
-	  ((lambda (?v) . ?body)
-	   (cond-expand
-	      ((and bigloo-c (config have-c99-stack-alloc #t) (not devel) (not debug))
 	       (let ((p (gensym 'p))
-		     (len (length args)))
-		  `(let ()
+		     (l (gensym 'l)))
+		  `(let ((,l ,len))
 		      (pragma
-			 ,(format "extern obj_t bgl_init_vector_sans_fill(); extern long bgl_vector_bytesize(); char ~a[ bgl_vector_bytesize( ~a ) ]"
-			     p len))
-		      (let ((,v (pragma::vector ,(format "bgl_init_vector_sans_fill( &(~a), ~a )" p len))))
-			 ,@(map (lambda (i)
-				   `(vector-set-ur! ,v ,i #unspecified))
-			      (iota len))
+			 ,(format "extern obj_t bgl_init_vector_sans_fill(); extern long bgl_vector_bytesize(); char ~a[ bgl_vector_bytesize( $1 ) ]" p) ,l)
+		      (let ((,v (pragma::vector ,(format "bgl_init_vector_sans_fill( &(~a), $1 )" p) ,l)))
 			 ,@body))))
 	      (else
 	       `((@ js-call-with-stack-vector __hopscript_array) ,vec ,proc))))

@@ -425,7 +425,6 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 	 const tparent = tabs.length > 1 ? tabs[ 1 ] : false;
 	 const tab = tparent ? tparent.tab : false;
 	 
-      	 console.log( "spagepopupate ", tbody.tab.pushed );
 	 if( tbody.tab.pushed ) {
 	    if( tab 
 		&& (typeof( tab.svc ) === "function" || typeof( tab.svc ) === "string")
@@ -481,6 +480,9 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 
 	 with_hop( svcurl,
 	    body => {
+	       console.log( "pagePushUrl", body );
+	       console.log( "pagePushUrl buid=", build( body ) );
+	       console.log( "build=", build );
 	       tab.svc = svcurl;
 	       tab.staticNode = undefined;
 	       tab.build = build;
