@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sat Nov 21 09:28:22 2020 (serrano)                */
+/*    Last change :  Thu Nov 26 20:07:17 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -340,7 +340,7 @@ public class HopLauncher extends Activity {
             return true;
 
 	 case R.id.menu_reload:
-	    webview.loadUrl( "http://localhost:" + Hop.port + "/hop/" + HopConfig.APP );
+	    webview.loadUrl( "http://localhost:" + Hop.port + "/hop/" + HopConfig.SERVICE );
             return true;
 
 	 case R.id.menu_detach:
