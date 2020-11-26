@@ -31,18 +31,9 @@ service hzdemo() {
        function removeContact( id ) {
 	  ${service(cid) { phone.removeContact( cid ) }}( id ).post();
        }
-       function setStatusBarColor( col ) {
-	  ${service(c) { phone.statusBarColor = c; } }( col ).post();
-       }
      </script>
      <h1>Phone: ${phone.model}</h1>
      
-     <h1>Ui:</h1>
-     Set status bar color 
-     <button onclick=~{setStatusBarColor( "#a00" )}>red</button>
-     <button onclick=~{setStatusBarColor( "#0a0" )}>green</button>
-     <button onclick=~{setStatusBarColor( "#00a" )}>blue</button>
-	       
      <h1>Contact:</h1>
      <ul id="contacts">
        ${phone.contacts().map( e => 

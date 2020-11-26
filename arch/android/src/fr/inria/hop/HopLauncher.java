@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Nov 13 14:46:22 2020 (serrano)                */
+/*    Last change :  Sat Nov 21 09:28:22 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -313,11 +313,6 @@ public class HopLauncher extends Activity {
    
    @Override public void onDestroy() {
       super.onDestroy();
-      
-/*       Log.d( "HopLauncher", "onDestroy currentState=" + currentStage ); */
-/*       if( currentStage != null ) {                                  */
-/* 	 currentStage.abort();                                         */
-/*       }                                                             */
       
       if( hopconnected ) {
 	 hopconnected = false;
