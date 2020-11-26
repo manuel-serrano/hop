@@ -2,7 +2,7 @@
    "name": "hopdroid",
    "author": "Serrano",
    "license": "gpl",
-   "version": "@VESION@",
+   "version": "@VERSION@",
    "category": "@CATEGORY@",
    "home": "@URLBASE@",
    "title": "Hopdroid entry point",

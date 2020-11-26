@@ -42,10 +42,10 @@ distclean:
 #*---------------------------------------------------------------------*/
 #*    Dependencies                                                     */
 #*---------------------------------------------------------------------*/
-
 package.json: package.json.in Makefile
 	cat $< | sed -e "s|@VERSION@|$(VERSION)|" \
                      -e "s|@HOPRELEASE@|$(HOPRELEASE)|" \
+                     -e "s|@URLBASE@|$(HOPHOME)|" \
                      -e "s|@TITLE@|$(TITLE)|" \
                      -e "s|@MINHOP@|$(MINHOP)|" \
                      -e "s|@DATE@|$(DATE)|" \
