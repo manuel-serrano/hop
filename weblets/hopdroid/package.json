@@ -2,12 +2,10 @@
    "name": "hopdroid",
    "author": "Serrano",
    "license": "gpl",
-   "version": "1.0.6",
-   "category": "multimedia/music",
-   "home": "http://hop.inria.fr",
-   "title": "Hopdac jukebox",
+   "version": "3.4.0",
+   "category": "hop",
+   "home": "",
+   "title": "Hopdroid entry point",
    "directory": "weblet",
-   "zeroconf": [{ "id": "_mpd._tcp", "port": 6666, "msg": "version=1.0.6" }
-                {"id":, "_hopdac._tcp", "port": false, "msg":, "version=1.0.6"}],
-   "comment": "Hop distributed HI-FI system.")
+   "comment": "Main Hopdroid application"
 }
