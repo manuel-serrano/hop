@@ -54,6 +54,7 @@
 (define locale-plugin #f)
 (define build-plugin #f)
 (define ui-plugin #f)
+(define system-plugin #f)
 
 (define event-thread #f)
 (define event-mutex (make-mutex))

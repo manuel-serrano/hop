@@ -1,0 +1,40 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/work/hopdroid/about.hss                 */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Nov 25 14:13:08 2020                          */
+/*    Last change :  Thu Nov 26 16:52:20 2020 (serrano)                */
+/*    Copyright   :  2020 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    ABOUT hss                                                        */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    about                                                            */
+/*---------------------------------------------------------------------*/
+div.about {
+    background-color: var( --bgcolor );
+    padding: 16px;
+    font-size: 20px;
+}
+
+div.about-logo {
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    background-color: white;
+    padding: 16px;
+}
+
+div.icon div.about-icon svg * {
+    fill: #33d;
+}
+
+div.about-phone-model, div.about-phone-product {
+    font-size: 70%;
+    color: #666;
+}
+

@@ -1,0 +1,92 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/work/hopdroid/system.hss                */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Nov 25 14:13:08 2020                          */
+/*    Last change :  Thu Nov 26 16:26:14 2020 (serrano)                */
+/*    Copyright   :  2020 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    SYSTEM hss                                                       */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    system                                                           */
+/*---------------------------------------------------------------------*/
+div.system {
+    background-color: var( --bgcolor );
+    padding: 16px;
+    font-size: 20px;
+}
+
+div.icon div.system-icon svg * {
+    fill: #777;
+}
+
+div.system-reset {
+    width: 192px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    background-color: white;
+    padding: 16px 16px 0 16px;
+    font-weight: normal;
+    font-size: 16px;
+    line-height: 16px;
+}
+
+div.system-restart svg * {
+    color: #e33;
+}
+
+div[ data-hss-reboot=on ] div.system-restart svg * {
+    color: #ccc;
+}
+
+div.system-reset div.system-button-text {
+    vertical-align: top;
+    margin-top: 4px;
+    display: inline-block;
+    color: #333;
+}
+
+div.system-reset-spinner {
+    margin-top: 4px;
+    line-height: 6px;
+    position: relative;
+    width: 100%;
+    margin-bottom: 8px;
+    height: 3px;
+    border: 1px solid #ccc;
+    background-color: #ddd;
+    visibility: hidden;
+}
+
+div[ data-hss-reboot=on ] div.system-reset-spinner {
+    visibility: visible;
+}
+
+div.system-reset-spinner-cursor {
+    display: inline-block;
+    width: 32px;
+    background-color: #1c87c9;
+    position: absolute;
+    left: 5px;
+    height: 3px;
+    animation: 2s ease-in infinite spinner;
+    animation-play-state: inherit;
+    will-change: transform;
+}
+
+@keyframes spinner {
+    0% {
+        left: 0;
+    }
+    50% {
+        left: calc( 100% - 32px);
+    }
+    100% {
+        left: 0;
+    }
+}
