@@ -89,7 +89,7 @@ APKCUSTOMDIR =
 REPOSITORY = $(shell if [ "$$REPODIR " = " " ]; then echo $(DISTRIBDIR); else echo $$REPODIR; fi)
 
 HOPAPKNAME = hop
-HOPAPP = hop
+HOPAPP = hopdroid
 HOPARGS = 
 HOPMINOR = -$(HOPDEVEL)1
 HOPFULLNAME = hop-$(HOPRELEASE)$(HOPMINOR)
