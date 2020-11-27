@@ -2247,6 +2247,11 @@
 	    ((null) (J2SNull))
 	    ((object) (J2SHopRef/type '%this 'object))
 	    (else #f))))
+
+   (define (type-eq? t1 t2)
+      (or (eq? t1 t2)
+	  (and (eq? t1 'number) (eq? t2 'integer))
+	  (and (eq? t1 'integer) (eq? t2 'number))))
 	      
    (with-access::J2SDeclInit this (vtype loc val)
       (when (and (eq? vtype from) (not (eq? vtype to)))
@@ -2255,7 +2260,7 @@
 	       " " (j2s->list this)))
 	 (cell-set! cell #t)
 	 (set! vtype to))
-      (when (and (not (eq? vtype 'any)) (not (eq? vtype (j2s-type val))))
+      (when (and (not (eq? vtype 'any)) (not (type-eq? vtype (j2s-type val))))
 	 (cond
 	    ((decl-usage-has? this '(uninit))
 	     (error "force-type!" "Declaration inconsistent with init"
