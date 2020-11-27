@@ -41,6 +41,7 @@ body {
   overflow: hidden;
   width: 100%;
   font-size: 24px;
+  border-top: 1px solid #000;
 }
 
 .hopdroid div[data-hss-tag=hop-sppopbutton].visible {
@@ -106,6 +107,7 @@ nav.sphead {
     color: #eee;
     height: 64px;
     font-size: 24px;
+    border-top: 1px solid #666;
 }
 
 nav.sphead ul {
