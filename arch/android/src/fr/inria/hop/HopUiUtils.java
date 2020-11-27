@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  1 09:13:38 2010                          */
-/*    Last change :  Sat Nov 21 18:33:22 2020 (serrano)                */
+/*    Last change :  Fri Nov 27 14:09:38 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    UI Utility functions                                             */
@@ -88,11 +88,11 @@ public class HopUiUtils {
 
       Log.d( "HopUiUtils", "setStatusBarColor: " + color );
       
-      // clear FLAG_TRANSLUCENT_STATUS flag:
-      window.clearFlags( WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS );
-
-      // add FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS flag to the window
-      window.addFlags( WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS );
+/*       // clear FLAG_TRANSLUCENT_STATUS flag:                        */
+/*       window.clearFlags( WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS ); */
+/*                                                                     */
+/*       // add FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS flag to the window   */
+/*       window.addFlags( WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS ); */
 
       // finally change the color
       window.setStatusBarColor( Color.parseColor( color ) );
@@ -128,7 +128,6 @@ public class HopUiUtils {
 /*       }                                                             */
 
       setStatusBarColor( a, "#33006666" );
-      Log.d( "HopUiUtils", "SDK=" + android.os.Build.VERSION.SDK_INT );
    }
 
    // unitUI
