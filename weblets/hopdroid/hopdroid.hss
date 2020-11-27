@@ -21,6 +21,7 @@
 /*---------------------------------------------------------------------*/
 body {
     font-family: Arial, sans-serif;
+    margin: 0;
 }
 
 /*---------------------------------------------------------------------*/
@@ -103,7 +104,8 @@ body {
 /*---------------------------------------------------------------------*/
 nav.sphead {
     color: #eee;
-    height: 48px;
+    height: 64px;
+    font-size: 24px;
 }
 
 nav.sphead ul {
@@ -111,7 +113,7 @@ nav.sphead ul {
     justify-content: space-between;
     list-style-type: none;
     margin: 0;
-    padding: 10px;
+    padding: 16px;
 }
 
 nav.sphead ul li {
@@ -152,7 +154,6 @@ nav.sphead ul li.nav-logo {
 li.nav-title {
     text-shadow: #000 0px 1px 1px;
     font-weight: bold;
-    font-size: 20px;
     color: white;
 }
 
@@ -167,6 +168,10 @@ div.spage-block {
 /*---------------------------------------------------------------------*/
 /*    sptabhead                                                        */
 /*---------------------------------------------------------------------*/
+nav.sptabhead {
+    font-size: 16px;
+}
+
 nav.sptabhead ul {
     display: flex;
     list-style-type: none;

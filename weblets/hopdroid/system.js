@@ -11,7 +11,9 @@
 var fs = require( 'fs' );
 var path = require( 'path' );
 
+#:tprint( "system.js.1" );
 import { phone } from './phone.js';
+#:tprint( "system.js.2" );
 import * as sp from hop.spage;
 import { NAVTITLE } from './xml.js';
 
