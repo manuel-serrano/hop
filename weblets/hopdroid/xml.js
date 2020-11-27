@@ -13,7 +13,7 @@ import { NAVTITLE } from './xml.js';
 /*---------------------------------------------------------------------*/
 /*    NAVTITLE ...                                                     */
 /*---------------------------------------------------------------------*/
-export function NAVTITLE( attrs, title ) {
+export function NAVTITLE( attrs, ... nodes ) {
    return <nav class=${attrs.class || "sphead"}>
      <ul>
        <li class="nav-back">
@@ -29,7 +29,7 @@ export function NAVTITLE( attrs, title ) {
 	      </div>}
        </li>
        <li class="nav-title">
-	 ${title}
+	 ${nodes}
        </li>
        <li class="nav-logo">
 	 <svg:img id="main" class="hop-logo-sans" 

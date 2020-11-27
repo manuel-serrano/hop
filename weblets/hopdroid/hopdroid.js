@@ -133,6 +133,13 @@ service webdav() {
      
 service manifest() {
    return hop.HTTPResponseString( 
+      `{"short_name": "hopc@${hop.hostname}", 
+		  "name": "hop v${hop.version}", 
+                  "start_url": "/hop/hopdroid", 
+		  "display": "standalone", 
+                  "orientation": "portrait",
+                  "description": "Hop on Android",
+                  "icons": [ { "src": "${require.resolve( './hop.svg' )}", "type": "image/svg" } ]}`,
       { "charset": hop.charset,
 	"header": {
 	   "Cache-Control": "no-cache",
@@ -140,14 +147,7 @@ service manifest() {
 	},
 	"content-type": "application/manifest+json",
 	"bodyp": false,
-	"content-length": -1,
-	"body": `{"short_name": "hopc@${hop.hostname}", 
-		  "name": "hop v${hop.version}, 
-                  "start_url": "/hop/hopdroid", 
-		  "display": "standalone", 
-                  "orientation": "portrait",
-                  "description": "Hop on Android",
-                  "icons": [ { "src": "${require.resolve( './hop.svg' )}", "type": "image/svg" } ]}`
+	"content-length": -1
       } );
 }
 

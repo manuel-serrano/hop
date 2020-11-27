@@ -10,11 +10,143 @@
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
-/*    apps                                                             */
+/*    apps ...                                                         */
 /*---------------------------------------------------------------------*/
 div.apps {
     background-color: var( --bgcolor );
-    padding: 16px;
+    padding: 16px 0 16px 0;
     font-size: 20px;
 }
 
+div.apps sptabhead {
+    background-color: white;
+    font-weight: normal;
+    height: 64px;
+    width: 100%;
+}
+
+/*---------------------------------------------------------------------*/
+/*    apps-app ...                                                     */
+/*---------------------------------------------------------------------*/
+div.apps-app {
+    padding: 16px;
+    margin: 0;
+    font-size: 20px;
+}
+
+div.apps-app ul {
+    justify-content: space-between;
+    list-style-type: none;
+    margin: 0;
+    padding: 16px;
+}
+
+div.apps-app ul li {
+    margin: 0 10px;
+}
+
+div.tabapp sptabhead {
+    height: 64px;
+    width: 100%;
+    border-bottom: 1px solid #eee;
+}
+
+div.apps-app .app-icon {
+    width: 64px;
+    display: inline-block;
+}
+
+div.apps-app .app-title {
+    display: inline-block;
+    color: #222;
+}
+
+div.apps-app .app-description {
+    color: #666;
+    font-size: 60%;
+}
+
+div.app-icon img {
+    max-width: 32px;
+    max-height: 32px;
+}
+
+.app-smallicon img {
+    max-width: 24px;
+    max-height: 24px;
+    margin-right: 16px;
+    margin-left: 85px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    app-page                                                         */
+/*---------------------------------------------------------------------*/
+div.app-page {
+    background-color: var( --bgcolor );
+    padding-top: 16px;
+}
+
+div.app-page .app-header {
+    border-bottom: 1px solid #eee;
+    padding: 16px;
+    font-size: 20px;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    width: 80%;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-bottom: 32px;
+    background: white;
+}
+
+.app-page div.app-title {
+    font-weight: bold;
+    margin-bottom: 32px;
+}
+
+div.app-remove-button {
+    width: 80%;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    padding: 16px 16px 0 16px;
+    font-weight: normal;
+    font-size: 16px;
+    line-height: 16px;
+    font-weight: bold;
+    color: #1f9bc3;
+    background: white;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+}
+
+div[ data-hss-reboot=on ] div.app-remove svg * {
+    color: #ccc;
+}
+
+div.app-remove div.system-button-text {
+    vertical-align: top;
+    margin-top: 4px;
+    display: inline-block;
+}
+
+div.app-info {
+    background: white;
+    border-top: 1px solid #ccc;
+    padding: 16px;
+    font-size: 18px;
+}
+
+div.app-info th {
+    color: #999;
+    font-weight: normal;
+    text-align: right;
+}
+
+div.app-info table th,
+div.app-info table td {
+    line-height: 32px;
+}
