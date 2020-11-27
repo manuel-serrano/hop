@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:44:16 2010                          */
-/*    Last change :  Thu Nov 26 17:16:18 2020 (serrano)                */
+/*    Last change :  Fri Nov 27 14:28:27 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The initial plugin that allows plugin installation               */
@@ -48,9 +48,7 @@ public class HopPluginInit extends HopPlugin {
       String name = HopDroid.read_string( ip );
 
       if( name.equals( "reboot" ) ) {
-	 // fake plugin
-	 op.write( "0".getBytes() );
-	 op.write( " ".getBytes() );
+	 Log.i( "HopPluginInit", " === REBOOT =======================" );
       } else {
 	 int id = HopDroid.getPlugin( name );
 

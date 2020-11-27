@@ -34,8 +34,7 @@
 
 	   (class androidevent::event)
 
-	   (phone-status-bar-color::bstring ::androidphone)
-	   (phone-status-bar-color-set! ::androidphone ::bstring)
+	   (phone-reboot ::androidphone)
 
 	   (android-load-plugin::int ::androidphone ::bstring)
 	   (android-send-command ::androidphone ::int . args)
@@ -509,20 +508,11 @@
       (android-send-command p call-plugin #\k)))
 
 ;*---------------------------------------------------------------------*/
-;*    phone-status-bar-color ...                                       */
+;*    phone-reboot ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (phone-status-bar-color p::androidphone)
-   (unless ui-plugin
-      (set! ui-plugin (android-load-plugin p "ui")))
-   (android-send-command/result p ui-plugin #\g))
-
-;*---------------------------------------------------------------------*/
-;*    phone-status-bar-color-set! ...                                  */
-;*---------------------------------------------------------------------*/
-(define (phone-status-bar-color-set! p::androidphone color)
-   (unless ui-plugin
-      (set! ui-plugin (android-load-plugin p "ui")))
-   (android-send-command p ui-plugin #\s color))
+(define (phone-reboot p::androidphone)
+   (with-access::androidphone p (initid)
+      (android-send-command p initid "reboot")))
 
 ;*---------------------------------------------------------------------*/
 ;*    send-string ...                                                  */
