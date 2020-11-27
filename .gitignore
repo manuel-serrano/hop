@@ -103,6 +103,7 @@ weblets/**/weblet.info
 weblets/**/etc/*.wiki
 weblets/home/release.info
 weblets/home/install.wiki
+weblets/hopdroid/package.json
 
 # man pages
 etc/hop.man
