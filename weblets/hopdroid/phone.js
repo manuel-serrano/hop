@@ -14,5 +14,3 @@ import { hopdroid } from hop.hopdroid;
 /*    phone binding                                                    */
 /*---------------------------------------------------------------------*/
 export const phone = new hopdroid.phone();
-			  
-

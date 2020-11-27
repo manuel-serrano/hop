@@ -59,7 +59,7 @@
 	      (direct-eval::bool (default #t))
 	      (source-map (default #f))
 	      (imports::pair-nil (default '()))
-	      (exports::pair-nil (default '())))
+	      (exports::pair-nil (default '()) (info '("notraverse"))))
 
 	   (class J2SDecl::J2SStmt
 	      id::symbol
@@ -500,8 +500,8 @@
 
 	   (final-class J2SExportVars::J2SStmt
 	      (refs::pair-nil read-only)
-	      (aliases::pair-nil read-only)
-	      (program (default #f)))
+	      (aliases::pair-nil read-only (info '("notraverse")))
+	      (program (default #f) (info '("notraverse"))))
 	   
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
