@@ -34,7 +34,8 @@ body {
 .hopdroid [data-hss-tag=hop-sphead].main,
 .hopdroid spage.main {
   background: transparent;
-  -hop-background-gradient: #3A3A3A #3A3A3A #3F3F3F;
+  /* -hop-background-gradient: #3A3A3A #3A3A3A #3F3F3F; */
+  background-color: #3A3A3A;
   padding: 0;
   margin: 0;
   overflow: hidden;
