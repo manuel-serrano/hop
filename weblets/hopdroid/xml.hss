@@ -9,3 +9,99 @@
 /*    xml css                                                          */
 /*=====================================================================*/
 
+/*---------------------------------------------------------------------*/
+/*    sphead                                                           */
+/*---------------------------------------------------------------------*/
+nav.navtitle {
+    color: #eee;
+    font-size: 24px;
+    border-top: 1px solid #666;
+}
+
+nav.navtitle ul {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    list-style-type: none;
+    margin: 0;
+    padding-left: 16px;
+    padding-right: 16px;
+    height: 96px;
+}
+
+nav.navtitle ul li {
+    margin: 0 10px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    sphead & spheadbody                                              */
+/*---------------------------------------------------------------------*/
+spheadbody .unselected,
+div[data-hss-tag=hop-spheadbody] .unselected {
+    display: none;
+    height: 64px;
+}
+
+spheadbody .selected,
+div[data-hss-tag=hop-spheadbody] .selected {
+    display: block;
+}
+
+nav.selected {
+    display: none;
+    height: 96px;
+}
+
+sptabhead,
+div[ data-hss-tag=hop-sptabhead ] {
+    height: 64px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    back button                                                      */
+/*---------------------------------------------------------------------*/
+nav.navtitle ul li.nav-back {
+    width: 2em;
+}
+
+nav.navtitle ul li.nav-back button {
+    color: white;
+    font-size: 20px;
+}
+
+nav.navtitle ul button.nav-back {
+    background-color: transparent;
+}
+
+nav.navtitle ul li.nav-logo {
+    margin-left: auto;
+}
+
+/* nav title */
+li.nav-title {
+    text-shadow: #000 0px 1px 1px;
+    font-weight: bold;
+    color: white;
+}
+
+/*---------------------------------------------------------------------*/
+/*    relief                                                           */
+/*---------------------------------------------------------------------*/
+.outer-relief {
+    border: 1px solid #000;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    position: relative;
+    width: 48px;
+    height: 24px;
+}
+
+.inner-relief {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 50px;
+    bottom: -2px;
+    right: -2px;
+    border: 1px solid #666;
+}

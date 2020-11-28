@@ -14,7 +14,7 @@ import { NAVTITLE } from './xml.js';
 /*    NAVTITLE ...                                                     */
 /*---------------------------------------------------------------------*/
 export function NAVTITLE( attrs, ... nodes ) {
-   return <nav class=${attrs.class || "sphead"}>
+   return <nav class=${(attrs.class || "") + " navtitle"}>
      <ul>
        <li class="nav-back">
 	 ${attrs.arrow ?

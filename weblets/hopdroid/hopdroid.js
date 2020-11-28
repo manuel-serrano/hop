@@ -40,7 +40,7 @@ service hopdroid( o ) {
      <body class="hopdroid">
        <sp.spage id="spage">
 	 <sp.sphead class="main">
-	   <navtitle spageid="spage">Hop</navtitle>
+	   <navtitle spageid="spage" class="selected">Hop</navtitle>
 	 </sp.sphead>
 
 	 <div class="spage-block">
