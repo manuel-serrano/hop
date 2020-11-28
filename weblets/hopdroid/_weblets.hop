@@ -41,7 +41,7 @@
       (define-export (findWeblets dir)
 	 (js-vector->jsarray
 	    (list->vector
-	       (map (lambda (a) (js-alist->jsobject a %this))
+	       (filter-map (lambda (a) (js-alist->jsobject a %this))
 		  (find-weblets-in-directory (js-tostring dir %this))))
 	    %this))))
 

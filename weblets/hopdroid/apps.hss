@@ -105,14 +105,18 @@ div.app-page .app-header {
     margin-bottom: 32px;
 }
 
+div.app-remove-buttons {
+    display: flex;
+}
+
 div.app-remove-button {
-    width: 80%;
+    flex-grow: 1;
     border: 1px solid #ddd;
     border-radius: 6px;
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: 32px;
+    margin-right: 32px;
     text-align: center;
-    padding: 16px 16px 0 16px;
+    padding: 16px;
     font-weight: normal;
     font-size: 16px;
     line-height: 16px;
@@ -149,7 +153,7 @@ div.app-info table td {
 /*---------------------------------------------------------------------*/
 div.app-info {
     background: white;
-    border-top: 1px solid #ccc;
+    border-top: 1px solid #ddd;
     font-size: 20px;
 }
 
@@ -178,7 +182,7 @@ div.app-info-entry .icon svg *{
 }
 
 div.app-info-entry .title {
-    color: #777;
+    color: #555;
 }
 
 div.app-info-entry .value {
