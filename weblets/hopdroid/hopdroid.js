@@ -30,6 +30,7 @@ service hopdroid( o ) {
        <link rel="manifest" href=${manifest()}/>
        <link href=${sp.css} rel="stylesheet" type="text/css"/>
        <link href=${require.resolve( "./hopdroid.hss" )} rel="stylesheet" type="text/css"/>
+       <link href=${require.resolve( "./xml.hss" )} rel="stylesheet" type="text/css"/>
        <link href=${require.resolve( "./apps.hss" )} rel="stylesheet" type="text/css"/>
        <link href=${require.resolve( "./system.hss" )} rel="stylesheet" type="text/css"/>
        <link href=${require.resolve( "./about.hss" )} rel="stylesheet" type="text/css"/>

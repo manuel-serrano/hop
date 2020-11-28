@@ -94,7 +94,7 @@ div.app-page .app-header {
     margin-left: auto;
     margin-right: auto;
     width: 80%;
-    border: 1px solid #ccc;
+    border: 1px solid #ddd;
     border-radius: 6px;
     margin-bottom: 32px;
     background: white;
@@ -107,7 +107,7 @@ div.app-page .app-header {
 
 div.app-remove-button {
     width: 80%;
-    border: 1px solid #ccc;
+    border: 1px solid #ddd;
     border-radius: 6px;
     margin-left: auto;
     margin-right: auto;
@@ -133,13 +133,6 @@ div.app-remove div.system-button-text {
     display: inline-block;
 }
 
-div.app-info {
-    background: white;
-    border-top: 1px solid #ccc;
-    padding: 16px;
-    font-size: 18px;
-}
-
 div.app-info th {
     color: #999;
     font-weight: normal;
@@ -149,4 +142,50 @@ div.app-info th {
 div.app-info table th,
 div.app-info table td {
     line-height: 32px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    app-info                                                         */
+/*---------------------------------------------------------------------*/
+div.app-info {
+    background: white;
+    border-top: 1px solid #ccc;
+    font-size: 20px;
+}
+
+div.app-info-description {
+    padding: 32px;
+    font-size: 80%;
+    border-bottom: 1px solid #eee;
+    color: #666;
+}
+
+div.app-info-entry {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 64px;
+    border-bottom: 1px solid #eee;
+    padding-left: 16px;
+}
+
+div.app-info-entry .icon {
+    margin-right: 16px;
+}
+
+div.app-info-entry .icon svg *{
+    fill: #999;
+}
+
+div.app-info-entry .title {
+    color: #777;
+}
+
+div.app-info-entry .value {
+    font-size: 70%;
+    color: #333;
+}
+
+.valuedate {
+    color: #1f9bc3;
 }

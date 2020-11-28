@@ -189,10 +189,13 @@
    
    (let ((file (make-file-path wdir "etc" "weblet.info")))
       (if (file-exists? file)
-	  `((info "weblet.info") ,@(call-with-input-file file read))
+	  `((info "weblet.info")
+	    ,(directory ,wdir)
+	    ,@(call-with-input-file file read))
 	  (let ((pkg (make-file-path wdir "package.json")))
 	     (if (file-exists? pkg)
 		 `((info "package.json")
+		   ,(directory ,wdir)
 		   ,@(normalize-json
 			(call-with-input-file pkg javascript->obj)))
 		 '())))))
