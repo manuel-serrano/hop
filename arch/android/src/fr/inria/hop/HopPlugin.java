@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hop/2.4.x/arch/android/src/fr/inria/hop/HopPlugin.java       */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopPlugin.java         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:38:21 2010                          */
-/*    Last change :  Fri Nov 23 08:50:13 2012 (serrano)                */
-/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    Last change :  Sat Nov 28 18:31:46 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Root class for HopPlugins                                        */
 /*=====================================================================*/
@@ -49,6 +49,7 @@ public abstract class HopPlugin {
    // cleanup
    public void kill() {
       Log.v( "HopPlugin", "killing plugin: " + name );
+      hopdroid.service.hop.restart();
    }
    
    // the server

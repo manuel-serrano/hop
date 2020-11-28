@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Thu Nov 19 09:29:40 2020 (serrano)                */
+/*    Last change :  Sat Nov 28 18:50:20 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -264,6 +264,7 @@ public class Hop extends Thread {
 		  }
 	       } catch( Throwable e ) {
 		  Log.e( "Hop", "Error in the thread logger: " + e );
+		  e.printStackTrace();
 		  if( !inkill ) {
 		     synchronized( currentpid ) {
 			if( currentpid[ 0 ] > 0 ) {
@@ -298,26 +299,21 @@ public class Hop extends Thread {
    
    // restart
    public void restart() {
+      Log.i( "Hop", "restart requested..." );
       kill();
       run();
    }
    
-   // kill
+   // kill (kill the running Hop process)
    public void kill() {
-      Log.d( "Hop", ">>> kill..." + currentpid );
+      Log.i( "Hop", "force kill " + currentpid );
       
       synchronized( currentpid ) {
 	 if( currentpid[ 0 ] != 0 ) {
-	    Log.i( "Hop", ">>> kill hop (pid=" + currentpid[ 0 ] + ")..." );
-
 	    inkill = true;
 	    android.os.Process.killProcess( currentpid[ 0 ] );
-	    
-	    Log.i( "Hop", "<<< kill hop" );
 	 }
       }
-      
-      Log.d( "Hop", "<<< kill" );
    }
 
    // ping
