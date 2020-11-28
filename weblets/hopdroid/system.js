@@ -53,9 +53,11 @@ service system() {
 	     el.setAttribute( "data-hss-reboot", "on" );
 	     ${systemResetServer}()
 		.post()
-		.then( msg => {
-		   alert( msg );
-		   document.location = "/hop/hopdroid";
+		.then( e => {
+		   if( e ) {
+		      alert( e );
+		      document.location = "/hop/hopdroid";
+		   }
 		} );
 	     setTimeout( () => document.location = "/hop/hopdroid", 3000 );
 	  }
@@ -79,7 +81,9 @@ service system() {
 /*---------------------------------------------------------------------*/
 service systemResetServer() {
    try {
+      console.log( "PHONE.reboot=", phone.reboot );
       phone.reboot();
+      return false;
    } catch( e ) {
       return `Cannot reboot phone ${e.toString()}`;
    }

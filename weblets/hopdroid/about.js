@@ -37,7 +37,7 @@ export function ABOUT() {
 	   </li>
 	 </ul>
        </nav>
-       <navtitle spageid="spage" class="sphead selected" arrow="&#8672;">About</navtitle>
+       <navtitle spageid="spage" class="selected" arrow="&#8592;">About</navtitle>
      </sp.sptabhead>
    </sp.sptab>
 }

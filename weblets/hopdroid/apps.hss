@@ -15,7 +15,7 @@
 div.apps {
     background-color: var( --bgcolor );
     padding: 16px 0 16px 0;
-    font-size: 20px;
+    font-size: 18px;
 }
 
 div.apps sptabhead {
@@ -31,7 +31,7 @@ div.apps sptabhead {
 div.apps-app {
     padding: 16px;
     margin: 0;
-    font-size: 20px;
+    font-size: 18px;
 }
 
 div.apps-app ul {
@@ -46,7 +46,7 @@ div.apps-app ul li {
 }
 
 div.tabapp sptabhead {
-    height: 64px;
+    height: 96px;
     width: 100%;
     border-bottom: 1px solid #eee;
 }
@@ -89,7 +89,7 @@ div.app-page {
 div.app-page .app-header {
     border-bottom: 1px solid #eee;
     padding: 16px;
-    font-size: 20px;
+    font-size: 18px;
     text-align: center;
     margin-left: auto;
     margin-right: auto;
@@ -154,7 +154,8 @@ div.app-info table td {
 div.app-info {
     background: white;
     border-top: 1px solid #ddd;
-    font-size: 20px;
+    font-size: 18px;
+    height: 64px;
 }
 
 div.app-info-description {
