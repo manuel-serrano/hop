@@ -189,8 +189,6 @@
 	       :configurable #f)
 	    driver))
 
-      
-      
       (js-bind! %this js-urlframe-prototype (& "post")
 	 :value (js-make-function %this
 		   (lambda (this::JsUrlFrame success opt)

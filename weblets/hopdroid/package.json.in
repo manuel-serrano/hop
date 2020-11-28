@@ -7,5 +7,6 @@
    "home": "@URLBASE@",
    "title": "Hopdroid entry point",
    "directory": "weblet",
-   "comment": "Main Hopdroid application"
+   "description": "Main Hopdroid application",
+   "icon": "hop.svg"
 }

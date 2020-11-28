@@ -1,0 +1,52 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/hop/weblets/hopdroid/_weblets.hop       */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Sat Nov 28 08:36:22 2020                          */
+;*    Last change :  Sat Nov 28 08:45:49 2020 (serrano)                */
+;*    Copyright   :  2020 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Weblets binding                                                  */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module __weblets
+   (library hopscript hop hopwidget nodejs)
+   (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))
+
+;*---------------------------------------------------------------------*/
+;*    define-export ...                                                */
+;*---------------------------------------------------------------------*/
+(define-macro (define-export proto body)
+   (let ((fun (gensym 'f))
+	 (name (symbol->string (car proto))))
+      `(let ((,fun (lambda (this ,@(cdr proto)) ,body)))
+	  (js-bind! %this export (& ,name)
+	     :value (js-make-function %this ,fun
+		       (js-function-arity ,fun)
+		       (js-function-info :name ,name
+			  :len ,(if (list? (cdr proto)) (length (cdr proto)) -1)))
+	     :writable #f
+	     :enumerable #f))))
+		    
+;*---------------------------------------------------------------------*/
+;*    hopscript ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (hopscript %this this scope module)
+   (&with!
+      (define export (js-get module (& "exports") %this))
+
+      (define-export (findWeblets dir)
+	 (js-vector->jsarray
+	    (list->vector
+	       (filter-map (lambda (a) (js-alist->jsobject a %this))
+		  (find-weblets-in-directory (js-tostring dir %this))))
+	    %this))))
+
+;*---------------------------------------------------------------------*/
+;*    hopscript                                                        */
+;*---------------------------------------------------------------------*/
+hopscript
+

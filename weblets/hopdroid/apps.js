@@ -10,6 +10,7 @@
 /*=====================================================================*/
 var fs = require( 'fs' );
 var path = require( 'path' );
+var weblets = require( "./_weblets.hop" );
 
 import * as sp from hop.spage;
 import { NAVTITLE } from './xml.js';
@@ -42,36 +43,27 @@ export function APPS() {
 }
 
 /*---------------------------------------------------------------------*/
-/*    readApps ...                                                     */
+/*    readDirApps ...                                                  */
 /*---------------------------------------------------------------------*/
-function readApps( dir ) {
+function readDirApps( dir ) {
+   function extra( pkg ) {
+      const p = pkg.prefix;
+      
+      pkg.ctime = fs.lstatSync( p ).ctime;
+      if( !("icon" in pkg) ) {
+	 const icon = path.join( p, "etc", "logo.png" );
+	 
+	 if( fs.existsSync( icon ) ) {
+	    pkg.icon = icon;
+	 }
+      } else {
+	 pkg.icon = path.join( p, pkg.icon );
+      }
+      return pkg;
+   }
+   
    if( fs.lstatSync( dir ).isDirectory() ) {
-      return fs.readdirSync( dir )
-	 .flatMap( d => { 
-	    const p = path.join( dir, d );
-	    if( fs.lstatSync( p ).isDirectory() ) {
-	       const pkg = path.join( p, "package.json" );
-	       
-	       if( fs.existsSync( pkg ) && fs.lstatSync( pkg ).isFile ) {
-		  const app = require( pkg );
-		  app.directory = dir;
-		  
-		  if( !("icon" in app) ) {
-		     const icon = path.join( p, "etc", "logo.png" );
-		     
-		     if( fs.existsSync( icon ) ) {
-			app.icon = icon;
-		     }
-		  }
-
-		  return [ app ];
-	       } else {
-		  return [];
-	       }
-	    } else {
-	       return [];
-	    }
-	 } )
+      return weblets.findWeblets( dir ).map( extra );
    } else {
       return [];
    }
@@ -82,7 +74,9 @@ function readApps( dir ) {
 /*---------------------------------------------------------------------*/
 service apps() {
    const wldir = require( hop.config ).autoloadPath;
-   const apps = wldir.flatMap( readApps );
+   const apps = wldir
+	    .flatMap( readDirApps )
+            .sort( (x, y) => x.name >= y.name );
    
    return <div class="apps">
      ${apps.map( APP )}
@@ -101,7 +95,7 @@ function APP( a ) {
 	 </div>
 	 <div class="app-title">
 	   <div>${a.name}</div>
-	   <div class="app-description">${a.description}</div>
+	   <div class="app-description">${a.description || a.title || a.comment || "&nbsp;"}</div>
 	 </div>
        </div>
        <navtitle spageid="spage" class="sphead selected" arrow="&#8672;">
@@ -142,12 +136,20 @@ service app( app ) {
        	 ${a.name}
        </div>
      </div>
-     
-     <div class="app-remove-button" onclick=~{restart( this )}>
-       <svg:img class="app-remove" width="24px" height="24px" 
-		src=${require.resolve( "./icons/trash.svg" )}/>
-       <div class="app-button-text"> Remove App </div>
+
+     <div class="app-remove-buttons">
+       <div class="app-remove-button" onclick=~{restart( this )}>
+       	 <svg:img class="app-remove" width="24px" height="24px" 
+		  src=${require.resolve( "./icons/trash.svg" )}/>
+       	 <div class="app-button-text"> REMOVE </div>
+       </div>
+       <div class="app-remove-button" onclick=~{restart( this )}>
+       	 <svg:img class="app-remove" width="24px" height="24px" 
+		  src=${require.resolve( "./icons/x-octagon.svg" )}/>
+       	 <div class="app-button-text"> UNINSTALL </div>
+       </div>
      </div>
+     
      
      ${serviceInfo( a )}
    </div>
@@ -157,23 +159,50 @@ service app( app ) {
 /*    serviceInfo ...                                                  */
 /*---------------------------------------------------------------------*/
 function serviceInfo( a ) {
-   const { files, size } = statDir( a.directory );
+   const { files, size } = statDir( a.prefix );
    
    return <div class="app-info">
-     <table>
-       <tr>
-	 <th> version </th> <td> ${a.version} </td>
-       </tr>
-       <tr>
-	 <th> package size </th> <td> ${(size/1024/1024).toFixed( 2 )}MB </td>
-       </tr>
-       <tr>
-	 <th> number of files </th> <td> ${files} </td>
-       </tr>
-     </table>
+     
+     <div class="app-info-description">
+       ${a.comment || a.description || a.title }
+     </div>
+     
+     <appentry title="Version"
+	       value=${a.version}
+	       icon=${require.resolve( "./icons/tag.svg" )}/>
+     
+     <appentry title="Installation date"
+	       value=${a.ctime}
+	       valueclass="valuedate"
+	       icon=${require.resolve( "./icons/calendar2-check.svg" )}/>
+
+     <appentry title="Install directory"
+	       value=${a.directory}
+	       icon=${require.resolve( "./icons/house-door.svg" )}/>
+
+     <appentry title="Install size"
+	       value=${`${(size/1024/1024).toFixed( 2 )}MB`}
+	       icon=${require.resolve( "./icons/calculator.svg" )}/>
+
+     <appentry title="Number of installed files"
+	       value=${files}
+	       icon=${require.resolve( "./icons/box-seam.svg" )}/>
    </div>
 }
 
+/*---------------------------------------------------------------------*/
+/*    APPENTRY ...                                                     */
+/*---------------------------------------------------------------------*/
+function APPENTRY( attr, ... nodes ) {
+   return <div class="app-info-entry">
+     <svg:img class="icon" width="16px" height="16px" src=${attr.icon}/>
+     <div>
+       <div class="title">${attr.title}</div> 
+       <div class=${`value ${attr.valueclass || ""}`}>${attr.value} </div>
+     </div>
+   </div>
+}
+   
 /*---------------------------------------------------------------------*/
 /*    statDir ...                                                      */
 /*    -------------------------------------------------------------    */

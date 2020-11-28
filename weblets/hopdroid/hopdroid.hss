@@ -116,6 +116,7 @@ nav.sphead ul {
     list-style-type: none;
     margin: 0;
     padding: 16px;
+    align-items: flex-start;
 }
 
 nav.sphead ul li {
@@ -213,7 +214,7 @@ div.icon-sans {
     display: inline-block;
 }
 
-div.icon {
+nav div.icon {
     border-radius: 50%;
     background-color: #f7f7f7;
     border: 1px solid #ddd;
