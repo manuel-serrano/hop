@@ -135,23 +135,27 @@ service app( app ) {
        <div class="app-title">
        	 ${a.name}
        </div>
-     </div>
-
-     <div class="app-remove-buttons">
-       <div class="app-remove-button" onclick=~{restart( this )}>
-       	 <svg:img class="app-remove" width="24px" height="24px" 
-		  src=${require.resolve( "./icons/trash.svg" )}/>
-       	 <div class="app-button-text"> REMOVE </div>
+       <div class="app-action-buttons">
+       	 <div class="app-action-button" onclick=~{restart( this )}>
+       	   <svg:img class="app-action" width="24px" height="24px" 
+		    src=${require.resolve( "./icons/box-arrow-up-right.svg" )}/>
+       	   <div class="app-button-text"> OPEN </div>
+       	 </div>
+       	 <div class="app-action-button" onclick=~{restart( this )}>
+       	   <svg:img class="app-action" width="24px" height="24px" 
+		    src=${require.resolve( "./icons/trash.svg" )}/>
+       	   <div class="app-button-text"> REMOVE </div>
+       	 </div>
+       	 <div class="app-action-button" onclick=~{restart( this )}>
+       	   <svg:img class="app-action" width="24px" height="24px" 
+		    src=${require.resolve( "./icons/x-octagon.svg" )}/>
+       	   <div class="app-button-text"> UNINSTALL </div>
+       	 </div>
        </div>
-       <div class="app-remove-button" onclick=~{restart( this )}>
-       	 <svg:img class="app-remove" width="24px" height="24px" 
-		  src=${require.resolve( "./icons/x-octagon.svg" )}/>
-       	 <div class="app-button-text"> UNINSTALL </div>
-       </div>
      </div>
-     
      
      ${serviceInfo( a )}
+     
    </div>
 }
 
@@ -166,7 +170,7 @@ function serviceInfo( a ) {
      <div class="app-info-description">
        ${a.comment || a.description || a.title }
      </div>
-     
+
      <appentry title="Version"
 	       value=${a.version}
 	       icon=${require.resolve( "./icons/tag.svg" )}/>

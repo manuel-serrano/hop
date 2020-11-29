@@ -205,7 +205,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-uninstall-weblet w)
    (hz-db-init!)
-      (when (isa? w weblet)
+   (when (isa? w weblet)
       (with-access::weblet w (name install)
 	 (delete-path (make-file-path (hz-weblets-directory) name))
 	 (set! install "")
