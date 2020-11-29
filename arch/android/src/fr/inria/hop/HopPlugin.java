@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:38:21 2010                          */
-/*    Last change :  Sat Nov 28 18:31:46 2020 (serrano)                */
+/*    Last change :  Sun Nov 29 09:04:51 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Root class for HopPlugins                                        */
@@ -48,8 +48,7 @@ public abstract class HopPlugin {
    
    // cleanup
    public void kill() {
-      Log.v( "HopPlugin", "killing plugin: " + name );
-      hopdroid.service.hop.restart();
+      Log.d( "HopPlugin", "kill " + name + "..." );
    }
    
    // the server
