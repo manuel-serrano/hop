@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jul  5 09:42:40 2016                          */
-/*    Last change :  Sun Nov 15 08:10:58 2020 (serrano)                */
+/*    Last change :  Sun Nov 29 09:01:00 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Spawn Hop service (not the Hop process).                         */
@@ -95,7 +95,7 @@ public class HopIntenter implements HopStage {
    }
 
    public void abort() {
-      Log.d( "HopIntenter", "abort" );
+      Log.d( "HopIntenter", "abort..." );
 
       activity.unbindService( hopconnection );
    }

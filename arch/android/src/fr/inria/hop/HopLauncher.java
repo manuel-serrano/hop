@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Nov 26 20:07:17 2020 (serrano)                */
+/*    Last change :  Sun Nov 29 08:59:31 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -93,10 +93,9 @@ public class HopLauncher extends Activity {
    
    final Activity activity = this;
    HopInstaller hopinstaller;
-   Intent hopintent = null;
+   HopIntenter hopintenter = null;
    HopService hopservice = null;
    Hop hopconf = null;
-   boolean hopconnected = false;
    int onresume_wifi_policy;
    Context hopctx;
 
@@ -313,10 +312,10 @@ public class HopLauncher extends Activity {
    
    @Override public void onDestroy() {
       super.onDestroy();
-      
-      if( hopconnected ) {
-	 hopconnected = false;
-      }
+
+      Log.d( "HopLauncher", "onDestroy" );
+
+      abort();
    }
 
    @Override public boolean onCreateOptionsMenu( Menu menu ) {
@@ -539,15 +538,7 @@ public class HopLauncher extends Activity {
 	    }
 	 }
 
-	 if( hopconnected ) {
-	    Log.d( "HopLauncher", "unbinding service..." );
-	    hopconnected = false;
-	    // unbindService( hopconnection );
-	 }
-      
-	 if( hopintent != null ) {
-	    stopService( hopintent );
-	 }
+	 abort();
 	 
 	 Log.d( "HopLauncher", "finishing activity..." );
 	 //finish();
@@ -576,30 +567,21 @@ public class HopLauncher extends Activity {
 /*       }                                                             */
 /* 			                                               */
 /*       Log.d( "HopLauncher", "binding the service..." );             */
-/*       bindService( hopintent, hopconnection, Context.BIND_AUTO_CREATE ); */
    }
 
 
+   private void abort() {
+      Log.i( "HopLauncher", "abort..." );
+      
+      if( hopintenter != null ) {
+	 hopintenter.abort();
+	 stopService( hopintenter.hopintent );
+	 hopintenter = null;
+      }
+   }
+
+      
    private void stop() {
-/*       Log.i( "HopLauncher", ">>> stop..." );                        */
-/*                                                                     */
-/*       textbuffer.delete( 0, textbuffer.length() );                  */
-/*       write_console( "Stopping Hop...\n" );                         */
-/*                                                                     */
-/*       if( hopconnected ) {                                          */
-/* 	 Log.i( "HopLauncher", ">>> stop, unbindService..." );         */
-/* 	 hopconnected = false;                                         */
-/* 	 unbindService( hopconnection );                               */
-/* 	 Log.i( "HopLauncher", "<<< stop, unbindService..." );         */
-/*       }                                                             */
-/*                                                                     */
-/*       if( hopintent != null ) {                                     */
-/* 	 Log.i( "HopLauncher", ">>> stop, stopService..." );           */
-/* 	 stopService( hopintent );                                     */
-/* 	 hopintent = null;                                             */
-/* 	 Log.i( "HopLauncher", "<<< stop, stopService..." );           */
-/*       }                                                             */
-/*       Log.i( "HopLauncher", "<<< stop" );                           */
    }
 
    // install handlers
@@ -636,7 +618,8 @@ public class HopLauncher extends Activity {
    
    protected void onConfigured() {
       Log.d( "HopLauncher", "===== onConfigured" );
-      
-      new HopIntenter( activity, handler, queue ).exec( hopctx );
+      hopintenter = new HopIntenter( activity, handler, queue );
+
+      hopintenter.exec( hopctx );
    }
 }

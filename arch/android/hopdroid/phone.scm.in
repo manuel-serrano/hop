@@ -512,6 +512,7 @@
 ;*---------------------------------------------------------------------*/
 (define (phone-reboot p::androidphone)
    (with-access::androidphone p (initid)
+      (tprint "SENDING reboot")
       (android-send-command p initid "reboot")))
 
 ;*---------------------------------------------------------------------*/
