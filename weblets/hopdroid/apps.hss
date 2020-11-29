@@ -46,9 +46,8 @@ div.apps-app ul li {
 }
 
 div.tabapp sptabhead {
-    height: 96px;
+    height: 64px;
     width: 100%;
-    border-bottom: 1px solid #eee;
 }
 
 div.apps-app .app-icon {
@@ -83,20 +82,15 @@ div.app-icon img {
 /*---------------------------------------------------------------------*/
 div.app-page {
     background-color: var( --bgcolor );
-    padding-top: 16px;
 }
 
 div.app-page .app-header {
     border-bottom: 1px solid #eee;
-    padding: 16px;
     font-size: 18px;
     text-align: center;
     margin-left: auto;
     margin-right: auto;
-    width: 80%;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    margin-bottom: 32px;
+    margin-top: 32px;
     background: white;
 }
 
@@ -105,47 +99,39 @@ div.app-page .app-header {
     margin-bottom: 32px;
 }
 
-div.app-remove-buttons {
+div.app-action-buttons {
     display: flex;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    justify-content: space-between;
+    font-size: 14px;
 }
 
-div.app-remove-button {
+div.app-action-button {
     flex-grow: 1;
-    border: 1px solid #ddd;
-    border-radius: 6px;
     margin-left: 32px;
     margin-right: 32px;
     text-align: center;
     padding: 16px;
     font-weight: normal;
-    font-size: 16px;
     line-height: 16px;
     font-weight: bold;
     color: #1f9bc3;
     background: white;
     margin-bottom: 32px;
     padding-bottom: 16px;
+    width: 96px;
 }
 
-div[ data-hss-reboot=on ] div.app-remove svg * {
+div[ data-hss-reboot=on ] div.app-action svg * {
     color: #ccc;
 }
 
-div.app-remove div.system-button-text {
+div.app-action div.system-button-text {
     vertical-align: top;
     margin-top: 4px;
     display: inline-block;
-}
-
-div.app-info th {
-    color: #999;
-    font-weight: normal;
-    text-align: right;
-}
-
-div.app-info table th,
-div.app-info table td {
-    line-height: 32px;
 }
 
 /*---------------------------------------------------------------------*/
@@ -153,15 +139,12 @@ div.app-info table td {
 /*---------------------------------------------------------------------*/
 div.app-info {
     background: white;
-    border-top: 1px solid #ddd;
     font-size: 18px;
-    height: 64px;
 }
 
 div.app-info-description {
     padding: 32px;
     font-size: 80%;
-    border-bottom: 1px solid #eee;
     color: #666;
 }
 
@@ -170,7 +153,6 @@ div.app-info-entry {
     justify-content: flex-start;
     align-items: center;
     min-height: 64px;
-    border-bottom: 1px solid #eee;
     padding-left: 16px;
 }
 
@@ -183,14 +165,14 @@ div.app-info-entry .icon svg *{
 }
 
 div.app-info-entry .title {
-    color: #555;
+    color: #222;
 }
 
 div.app-info-entry .value {
     font-size: 70%;
-    color: #333;
+    color: #555;
 }
 
-.valuedate {
+div.app-info-entry .valuedate {
     color: #1f9bc3;
 }
