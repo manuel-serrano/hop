@@ -236,6 +236,7 @@ exports.feed = hop.modulesDir + "/feed";
 exports.xml = hop.modulesDir + "/xml";
 exports.hopdroid = hop.modulesDir + "/hopdroid";
 exports.csv = hop.modulesDir + "/csv";
+exports.vcf = hop.modulesDir + "/vcf";
 
 Object.seal( exports );
 Object.freeze( exports );
