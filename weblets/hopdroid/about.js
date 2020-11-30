@@ -12,6 +12,7 @@ var fs = require( 'fs' );
 var path = require( 'path' );
 
 import { phone } from './phone.js';
+import { hopdroid } from hop.hopdroid;
 import * as sp from hop.spage;
 import { NAVTITLE } from './xml.js';
 
@@ -46,6 +47,8 @@ export function ABOUT() {
 /*    about ...                                                        */
 /*---------------------------------------------------------------------*/
 service about() {
+   const wifi = new hopdroid.wifi( phone ).info;
+
    return <div class="about">
      <div class="about-logo">
        <svg:img class="logo" width="128px" height="128px" 
@@ -54,6 +57,30 @@ service about() {
        <div class="about-phone-model"> ${phone.model} </div>
        <div class="about-phone-product"> ${phone.product} </div>
      </div>
-   </div>;
+     
+     <div class="about-info">
+     
+       <aboutentry title="ssid"
+	       	   value=${wifi.ssid}
+	       	   icon=${require.resolve( "./icons/wifi.svg" )}/>
+     
+       <aboutentry title="IP address"
+	       	   value=${wifi.ip}
+                   icon=${require.resolve( "./icons/diagram-2.svg" )}/>
+     </div>
+   </div>
 }
 
+/*---------------------------------------------------------------------*/
+/*    ABOUTENTRY ...                                                   */
+/*---------------------------------------------------------------------*/
+function ABOUTENTRY( attr, ... nodes ) {
+   return <div class="about-info-entry">
+     <svg:img class="icon" width="16px" height="16px" src=${attr.icon}/>
+     <div>
+       <div class="title">${attr.title}</div> 
+       <div class=${`value ${attr.valueclass || ""}`}>${attr.value} </div>
+     </div>
+   </div>
+}
+   
