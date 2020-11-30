@@ -34,8 +34,6 @@
 
 	   (class androidevent::event)
 
-	   (phone-reboot ::androidphone)
-
 	   (android-load-plugin::int ::androidphone ::bstring)
 	   (android-send-command ::androidphone ::int . args)
 	   (android-send-command/result ::androidphone ::int . args)))
