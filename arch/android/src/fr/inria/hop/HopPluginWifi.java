@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.6.x/arch/android/src/fr/inria/hop/HopPluginWifi.java       */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopPluginWifi.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 17 06:55:59 2011                          */
-/*    Last change :  Fri Feb 21 13:31:13 2014 (serrano)                */
-/*    Copyright   :  2011-14 Manuel Serrano                            */
+/*    Last change :  Mon Nov 30 07:17:41 2020 (serrano)                */
+/*    Copyright   :  2011-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with Wifi configuration                                  */
 /*=====================================================================*/
@@ -123,9 +123,12 @@ public class HopPluginWifi extends HopPlugin {
 
 	 case (byte)'i':
 	    initWifi( hopdroid );
-	    op.write( "(wifi ssid: ".getBytes() );
-	    op.write( wifi.getConnectionInfo().getSSID().getBytes() );
-	    op.write( ")".getBytes() );
+	    WifiInfo winfo = wifi.getConnectionInfo(); 
+	    op.write( "(wifi ssid: \"".getBytes() );
+	    op.write( winfo.getSSID().getBytes() );
+	    op.write( "\" ip: \"" );
+	    op.write( winfo().getIpAddress().getBytes() );
+	    op.write( "\")".getBytes() );
 	    return;
       }
    }
