@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
 ;*    Last change :  Sun Jul 17 14:32:58 2016 (serrano)                */
-;*    Copyright   :  2006-16 Manuel Serrano                            */
+;*    Copyright   :  2006-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOPDROID heap file.                 */
 ;*=====================================================================*/
@@ -23,11 +23,13 @@
 	   __hopdroid-mpd
 	   __hopdroid-zeroconf
 	   __hopdroid-system
-	   __hopdroid-prefs)
+	   __hopdroid-prefs
+	   __hopdroid-wifi)
 
    (eval   (export-all)
 	   (class androidphone)
 	   (class androidmusic)
 	   (class androidtts)
 	   (class androidmpd-database)
-	   (class androidzeroconf)))
+	   (class androidzeroconf)
+	   (class androidwifi)))
