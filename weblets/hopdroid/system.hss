@@ -10,6 +10,14 @@
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
+/*    global variables                                                 */
+/*---------------------------------------------------------------------*/
+:root {
+    --spinnerHeight: 5px;
+}
+
+/*---------------------------------------------------------------------*/
+/*---------------------------------------------------------------------*/
 /*    system                                                           */
 /*---------------------------------------------------------------------*/
 div.system {
@@ -57,7 +65,7 @@ div.system-reset-spinner {
     position: relative;
     width: 100%;
     margin-bottom: 8px;
-    height: 3px;
+    height: var( --spinnerHeight );
     border: 1px solid #ccc;
     background-color: #ddd;
     visibility: hidden;
@@ -73,7 +81,7 @@ div.system-reset-spinner-cursor {
     background-color: #1c87c9;
     position: absolute;
     left: 5px;
-    height: 3px;
+    height: var( --spinnerHeight );
     animation: 2s ease-in infinite spinner;
     animation-play-state: inherit;
     will-change: transform;

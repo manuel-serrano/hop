@@ -32,8 +32,8 @@ export function ABOUT() {
 	   </li>
 	   <li>
 	     <div class="title">
-	       <div>About Hop and device</div>
-	       <div class="subtitle">version</div>
+	       <div>About</div>
+	       <div class="subtitle">hop and Device</div>
 	     </div>
 	   </li>
 	 </ul>
@@ -67,6 +67,13 @@ service about() {
        <aboutentry title="IP address"
 	       	   value=${wifi.ip}
                    icon=${require.resolve( "./icons/diagram-2.svg" )}/>
+       <aboutentry title="Wi-Fi MAC address"
+	       	   value=${wifi.mac}
+                   icon=${require.resolve( "./icons/diagram-2-fill.svg" )}/>
+       <aboutentry title="Speed"
+		   class="section-end"
+	       	   value=${wifi.speed}
+                   icon=${require.resolve( "./icons/broadcast-pin.svg" )}/>
      </div>
    </div>
 }
@@ -75,7 +82,7 @@ service about() {
 /*    ABOUTENTRY ...                                                   */
 /*---------------------------------------------------------------------*/
 function ABOUTENTRY( attr, ... nodes ) {
-   return <div class="about-info-entry">
+   return <div class=${`about-info-entry ${attr.class ||""}`}>
      <svg:img class="icon" width="16px" height="16px" src=${attr.icon}/>
      <div>
        <div class="title">${attr.title}</div> 
