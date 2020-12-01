@@ -62,6 +62,10 @@ div.about-info-entry {
     padding-left: 16px;
 }
 
+div.section-end {
+    border-bottom: 1px solid #eee;
+}
+
 div.about-info-entry .icon {
     margin-right: 16px;
 }

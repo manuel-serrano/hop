@@ -32,7 +32,7 @@ export function SYSTEM() {
 	   <li>
 	     <div class="title">
 	       <div>System</div>
-	       <div class="subtitle">Reset</div>
+	       <div class="subtitle">system configuration and reset</div>
 	     </div>
 	   </li>
 	 </ul>
