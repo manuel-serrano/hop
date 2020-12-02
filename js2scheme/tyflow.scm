@@ -706,6 +706,13 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SDeclFun env::pair-nil fix::cell)
 
+   (define (node-type-optional-args val env fix)
+      (with-access::J2SFun val (params)
+	 (for-each (lambda (p)
+		      (when (isa? p J2SDeclInit)
+			 (node-type p env fix)))
+	    params)))
+      
    (define (node-type-ctor-only val)
       (with-access::J2SFun val (generator rtype thisp)
 	 (when generator
@@ -714,6 +721,11 @@
 	    (decl-itype-add! thisp 'object fix))))
    
    (with-access::J2SDeclFun this (val scope id loc)
+      (if (isa? val J2SFun)
+	  (node-type-optional-args val env fix)
+	  (with-access::J2SMethod val (function method)
+	     (node-type-optional-args function env fix)
+	     (node-type-optional-args method env fix)))
       (if (decl-ronly? this)
 	  (decl-vtype-set! this 'function fix)
 	  (decl-vtype-add! this 'function fix))
@@ -2241,7 +2253,7 @@
    (define (type->init type val)
       (with-access::J2SExpr val (loc)
 	 (case type
-	    ((number integer) (J2SNumber 0))
+	    ((number integer) (J2SNumber/type 'number 0))
 	    ((string) (J2SString ""))
 	    ((bool) (J2SBool #f))
 	    ((null) (J2SNull))

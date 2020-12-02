@@ -608,7 +608,6 @@
 					 (close-input-port ip)
 					 (if (pair? files)
 					     (begin
-						(tprint "OP " (car files))
 						(set! ip (open-input-file (car files)))
 						(set! files (cdr files))
 						(loop))
