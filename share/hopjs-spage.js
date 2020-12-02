@@ -198,7 +198,7 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 		  "-moz-transition-property": "all",
 		  "-o-transition-property": "all",
 		  "transition-property": "all",
-	    	  "transform": "scale( 0.95 )",
+	    	  "transform": "scale( 0.90 )",
 		  "opacity": "0"
 	       } );
 	    }, 1 );
@@ -382,6 +382,7 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 	 const tbody = tabs[ tabs.length - 1 ];
 	 const tab = tbody.tab;
 	 
+	 window.scrollTo( 0, head[ 3 ] );
 	 hop_innerHTML_set( spheadbutton.firstChild, head[ 2 ] );
 	 hop_innerHTML_set( spheadcontent, head[ 1 ] );
 	 hop_innerHTML_set( tab.firstChild.firstChild, head[ 0 ] );
@@ -450,9 +451,10 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       const content = Array.prototype.slice.call( spheadcontent.childNodes, 0 );
       const headtab = Array.prototype.slice.call( tabhead.childNodes, 0 );
       
-      spage.heads.push( [ headtab, content, button ] );
+      spage.heads.push( [ headtab, content, button, window.pageYOffset ] );
       hop_innerHTML_set( spheadcontent, headtab );
-      
+      window.scrollTo( 0, 0 );
+
       spheadbutton.className = "visible";
       spagePush( spage, tab, body );
    }
@@ -480,9 +482,6 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 
 	 with_hop( svcurl,
 	    body => {
-	       console.log( "pagePushUrl", body );
-	       console.log( "pagePushUrl buid=", build( body ) );
-	       console.log( "build=", build );
 	       tab.svc = svcurl;
 	       tab.staticNode = undefined;
 	       tab.build = build;

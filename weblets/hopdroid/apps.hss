@@ -46,7 +46,7 @@ div.apps-app ul li {
 }
 
 div.tabapp sptabhead {
-    height: 64px;
+    height: 80px;
     width: 100%;
 }
 

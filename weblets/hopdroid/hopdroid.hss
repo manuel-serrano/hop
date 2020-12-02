@@ -14,6 +14,7 @@
 /*---------------------------------------------------------------------*/
 :root {
     --bgcolor: #f7f7f7;
+    --spheadheight: 96px;
 }
 
 /*---------------------------------------------------------------------*/
@@ -42,6 +43,10 @@ body {
   width: 100%;
   font-size: 24px;
   border-top: 1px solid #000;
+  position: fixed;
+  top: 0;
+  height: var( --spheadheight );
+  z-index: 1000;
 }
 
 .hopdroid div[data-hss-tag=hop-sppopbutton].visible {
@@ -53,6 +58,11 @@ body {
     height: 20px;
     border-radius: 50%;
     border: 1px #ccc solid;
+}
+
+.hopdroid [data-hss-tag=hop-spviewport],
+.hopdroid spage.spviewport {
+    margin-top: var( --spheadheight );
 }
 
 /*---------------------------------------------------------------------*/
