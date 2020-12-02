@@ -129,6 +129,8 @@
 	("concat" js-array-maybe-concat any (any . any) %this #t ,j2s-array-plain?)
 	("sort" js-array-sort array (any) %this #t ,j2s-array-plain?)
 	("sort" js-array-maybe-sort any (any) %this #t ,j2s-array-plain?)
+	("fill" js-array-fill1 array (any) %this #t ,j2s-array-plain?)
+	("fill" js-array-maybe-fill1 any (any) %this #t ,j2s-array-plain?)
 	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this #t ,j2s-array-plain?)
 	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this #t ,j2s-array-plain?)
 	("forEach" ,j2s-array-foreach array (function) %this #t ,j2s-array-plain?)

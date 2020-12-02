@@ -129,6 +129,8 @@
 	   (js-array-maybe-concat1-create ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-fill ::JsArray ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-fill ::obj ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-fill1 ::JsArray ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-fill1 ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-foreach ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-foreach ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-foreach-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
@@ -494,7 +496,7 @@
       
       ;; array pcache
       (set! js-array-pcache
-	 ((@ js-make-pcache-table __hopscript_property) 23 "array"))
+	 ((@ js-make-pcache-table __hopscript_property) 25 "array"))
       (js-validate-pmap-pcache!
 	 (js-pcache-ref js-array-pcache 21))
       
@@ -1075,50 +1077,50 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-set-ur! arr::JsArray idx::uint32 val throw::bool %this)
    (with-access::JsArray arr (vec ilen length)
-      (cond
-	 ((and (<u32 idx (fixnum->uint32 (vector-length vec)))
-	       (<u32 idx length))
-	  ;; MS 2019-01-28, assert: ilen >= idx < (vector-length vec)
+      (if (<u32 idx (fixnum->uint32 (vector-length vec)))
 	  (cond
-	     ((js-has-fixnum-property arr (js-uint32-tointeger idx) %this)
-	      (js-array-put! arr (js-uint32-tointeger idx) val throw %this))
-	     ((and (=u32 idx ilen) (js-object-mode-inline? arr))
-	      (vector-set! vec (uint32->fixnum idx) val)
-	      (let ((nilen (+u32 ilen #u32:1)))
-		 (set! ilen nilen)
-		 (when (>=u32 idx length)
-		    (set! length nilen)))
-	      val)
-	     ((js-object-mode-holey? arr)
+	     ((<u32 idx length)
+	      ;; MS 2019-01-28, assert: ilen >= idx < (vector-length vec)
+	      (cond
+		 ((js-has-fixnum-property arr (js-uint32-tointeger idx) %this)
+		  (js-array-put! arr (js-uint32-tointeger idx) val throw %this))
+		 ((and (=u32 idx ilen) (js-object-mode-inline? arr))
+		  (vector-set! vec (uint32->fixnum idx) val)
+		  (let ((nilen (+u32 ilen #u32:1)))
+		     (set! ilen nilen)
+		     (when (>=u32 idx length)
+			(set! length nilen)))
+		  val)
+		 ((js-object-mode-holey? arr)
+		  (vector-set! vec (uint32->fixnum idx) val)
+		  (cond
+		     ((>=u32 idx length)
+		      (js-object-mode-inline-set! arr #f)
+		      (set! length (+u32 idx #u32:1)))
+		     ((=u32 idx ilen)
+		      ;; update ilen and check inliness again
+		      (let ((len (-fx (vector-length vec) 1)))
+			 (js-array-update-ilen! arr ilen (fixnum->uint32 len)))
+		      (js-object-mode-inline-set! arr (=u32 ilen length)))
+		     (else
+		      (js-object-mode-inline-set! arr #f)))
+		  val)
+		 (else
+		  (js-array-put! arr (js-uint32-tointeger idx) val throw %this))))
+	     ((<u32 idx (fixnum->uint32 (vector-length vec)))
 	      (vector-set! vec (uint32->fixnum idx) val)
 	      (cond
-		 ((>=u32 idx length)
+		 ((>u32 idx ilen)
 		  (js-object-mode-inline-set! arr #f)
-		  (set! length (+u32 idx #u32:1)))
+		  (set! ilen #u32:0))
 		 ((=u32 idx ilen)
-		  ;; update ilen and check inliness again
-		  (let ((len (-fx (vector-length vec) 1)))
-		     (js-array-update-ilen! arr ilen (fixnum->uint32 len)))
-		  (js-object-mode-inline-set! arr (=u32 ilen length)))
-		 (else
-		  (js-object-mode-inline-set! arr #f)))
+		  (set! ilen (+u32 idx 1))))
+	      (when (>=u32 idx length)
+		 (set! length (+u32 idx 1)))
 	      val)
 	     (else
-	      (js-array-put! arr (js-uint32-tointeger idx) val throw %this))))
-	 ((and (js-object-mode-inline? arr)
-	       (<u32 idx (fixnum->uint32 (vector-length vec))))
-	  (vector-set! vec (uint32->fixnum idx) val)
-	  (cond
-	     ((>u32 idx ilen)
-	      (js-object-mode-inline-set! arr #f)
-	      (set! ilen #u32:0))
-	     ((=u32 idx ilen)
-	      (set! ilen (+u32 idx 1))))
-	  (when (>=u32 idx length)
-	     (set! length (+u32 idx 1)))
-	  val)
-	 (else
-	  (js-array-put! arr (js-uint32-tointeger idx) val throw %this)))))
+	      (js-array-put! arr (js-uint32-tointeger idx) val throw %this)))
+	  (js-array-put! arr (js-uint32-tointeger idx) val throw %this))))
    
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-array-prototype! ...                                */
@@ -4089,6 +4091,27 @@
 	 this)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-array-prototype-fill ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-fill1 this::JsArray value %this)
+   (with-access::JsArray this (vec ilen length)
+      (let ((final length))
+	 (cond
+	    ((js-object-mode-inline? this)
+	     ($vector-fill! vec 0 (uint32->fixnum ilen) value))
+	    (else
+	     (let loop ((i #u32:0))
+		(if (<u32 i final)
+		    (begin
+		       (if (<u32 i ilen)
+			   (vector-set! vec (uint32->fixnum i) value)    
+			   (js-put! this i value #f %this))
+		       (loop (+u32 i #u32:1)))
+		    (when (>u32 i length)
+		       (js-put-length! this (js-uint32-tointeger i) #f #f %this))))))
+	 this)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-array-fill ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-array-fill this::JsArray value start end %this cache)
@@ -4111,6 +4134,30 @@
 	     (js-get-name/cache this (& "fill") #f %this
 		(or cache (js-pcache-ref js-array-pcache 5)))
 	     this value start end))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-fill1 ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-array-fill1 this::JsArray value %this cache)
+   (if (js-object-mode-plain? this)
+       (js-array-prototype-fill1 this value %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call1 %this
+	     (js-get-name/cache this (& "fill") #f %this
+		(or cache (js-pcache-ref js-array-pcache 23)))
+	     this value))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-fill1 ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-fill1 this value %this cache)
+   (if (and (js-array? this) (js-object-mode-plain? this))
+       (js-array-prototype-fill1 this value %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call1 %this
+	     (js-get-name/cache this (& "fill") #f %this
+		(or cache (js-pcache-ref js-array-pcache 24)))
+	     this value))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-foreach ...                                   */
