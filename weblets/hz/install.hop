@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 24 09:21:45 2006                          */
 ;*    Last change :  Tue Jun 24 11:01:11 2014 (serrano)                */
-;*    Copyright   :  2006-14 Manuel Serrano                            */
+;*    Copyright   :  2006-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Actual installation/uninstallation.                              */
 ;*=====================================================================*/
@@ -20,9 +20,9 @@
 	   hz_db)
    
    (export (hz-load ::bstring)
-	   (hz-install-weblet ::weblet #!key override)
-	   (hz-download-url ::bstring #!key auth weblet override)
-	   (hz-install-url ::bstring #!key auth weblet override publisher)
+	   (hz-install-weblet ::weblet #!key override checksum)
+	   (hz-download-url ::bstring #!key auth weblet override checksum)
+	   (hz-install-url ::bstring #!key auth weblet override publisher checksum)
 	   (hz-uninstall-weblet ::weblet)))
 
 ;*---------------------------------------------------------------------*/
@@ -68,16 +68,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-install-weblet ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (hz-install-weblet e #!key override)
+(define (hz-install-weblet e #!key override checksum)
    (with-access::weblet e (name url authorization)
-      (hz-install-url url :auth authorization :weblet e :override override)))
+      (hz-install-url url :auth authorization :weblet e :override override
+	 :checksum checksum)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-download-url ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (hz-download-url url #!key auth weblet override)
+(define (hz-download-url url #!key auth weblet override checksum)
 
-   (define (download url name version path)
+   (define (download url name version path sum)
       (let ((header (cond
 		       ((string? auth)
 			(list (list authorization: auth)))
@@ -93,6 +94,10 @@
 	       (with-output-to-file path
 		  (lambda ()
 		     (display str)))
+	       ;; generate the md5sum file
+	       (with-output-to-file sum
+		  (lambda ()
+		     (display (md5sum str))))
 	       ;; return the path name
 	       path)
 	    :fail (lambda (xhr)
@@ -107,34 +112,50 @@
 			       (list status url msg)))))
 	    :timeout (hz-connection-timeout)
 	    :header header)))
-      
+
+   (define (checksum? checksum hzsum)
+      (or (not checksum)
+	  (with-handler
+	     (lambda (e) #f)
+	     (equal? checksum (call-with-input-file hzsum read-string)))))
+
    (multiple-value-bind (name version)
       (package-url-parse url)
       (let* ((hzfile (format "~a-~a.hz" name version))
-	     (hzpath (make-file-name (hz-download-directory) hzfile)))
+	     (sumfile (format "~a-~a.md5sum" name version))
+	     (hzpath (make-file-name (hz-download-directory) hzfile))
+	     (sumpath (make-file-name (hz-download-directory) sumfile)))
+	 (unless (directory? (hz-download-directory))
+	    (unless (make-directories (hz-download-directory))
+	       (error "hz-download-url" "Cannot create download directory"
+		  (hz-download-directory))))
 	 (cond
-	    ((not (file-exists? hzpath))
-	     (download url name version hzpath))
+	    ((or (not (file-exists? hzpath))
+		 (not (file-exists? sumpath))
+		 (not (checksum? checksum sumpath)))
+	     (download url name version hzpath sumpath))
 	    ((not override)
 	     hzpath)
 	    (else
 	     (delete-file hzpath)
-	     (download url name version hzpath))))))
+	     (download url name version hzpath sumpath))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hz-install-url ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (hz-install-url url #!key auth weblet override publisher)
+(define (hz-install-url url #!key auth weblet override publisher checksum)
    (hz-db-init!)
    (when (string? url)
       (multiple-value-bind (name version)
 	 (package-url-parse url)
-	 (let ((r (hz-download-url url :auth auth :weblet weblet :override override)))
+	 (let ((r (hz-download-url url :auth auth
+		     :weblet weblet :override override :checksum checksum)))
 	    (if (and (string? r) (file-exists? r))
 		;; now downloaded, install
 		(let ((w (hz-install-file weblet r name version url)))
 		   ;; add the publisher to the publisher list
-		   (when (and (string? publisher) (not (string-null? publisher)))
+		   (when (and (string? publisher)
+			      (not (string-null? publisher)))
 		      (hz-publisher-add! publisher))
 		   (reset-autoload!)
 		   w)
@@ -156,9 +177,15 @@
 (define (hz-install-file e path name version url)
    ;; untar the .hz into the weblets directory
    (let* ((p (open-input-gzip-file path)))
-      (unwind-protect
-	 (untar p :directory (hz-weblets-directory))
-	 (close-input-port p)))
+      (unless (directory? (hz-weblets-directory))
+	 (unless (make-directories (hz-weblets-directory))
+	    (error "hz-install-file" "Cannot create weblet directory"
+	       (hz-weblets-directory))))
+      (let ((dir (make-file-name (hz-weblets-directory) name)))
+	 (make-directories dir)
+	 (unwind-protect
+	    (untar p :directory dir)
+	    (close-input-port p))))
    ;; add the weblet to the database
    (let ((e (or e (hz->weblet name version url))))
       ;; add the publisher for other possible weblets
@@ -178,7 +205,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-uninstall-weblet w)
    (hz-db-init!)
-      (when (isa? w weblet)
+   (when (isa? w weblet)
       (with-access::weblet w (name install)
 	 (delete-path (make-file-path (hz-weblets-directory) name))
 	 (set! install "")

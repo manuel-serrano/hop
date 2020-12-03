@@ -1,0 +1,12 @@
+{  
+   "name": "hopdroid",
+   "author": "Serrano",
+   "license": "gpl",
+   "version": "@VERSION@",
+   "category": "@CATEGORY@",
+   "home": "@URLBASE@",
+   "title": "Hopdroid entry point",
+   "directory": "weblet",
+   "description": "Main Hopdroid application",
+   "icon": "hop.svg"
+}

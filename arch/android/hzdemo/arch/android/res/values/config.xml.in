@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <bool name="notitle">@NOTITLE@</bool>
+  <bool name="customtitle">@CUSTOMTITLE@</bool>
+  <string name="statusbarcolor">transparent</string>
+</resources>

@@ -57,6 +57,7 @@
 	      meta?::bool
 	      arity-check?::bool
 	      host-compiler::procedure
+	      host-context::obj
 	      host-register::procedure
 	      use-strict?::bool
 	      pragmas       
@@ -69,7 +70,7 @@
 	      (id read-only)
 	      (js-id read-only)))
    
-   (export (compile-value ::obj ::output-port ::procedure ::procedure ::obj)
+   (export (compile-value ::obj ::output-port ::procedure ::obj ::procedure ::obj)
 	   (out tree::Module source-file p)))
 
 ;*---------------------------------------------------------------------*/
@@ -101,6 +102,7 @@
 		 (use-strict? (and (config 'use-strict/function)
 				   (not (config 'use-strict/module))))
 		 (host-compiler (config 'host-compiler))
+		 (host-context (config 'host-context))
 		 (host-register (config 'host-register))
 		 (pragmas pragmas)
 		 (last-line 0)
@@ -251,7 +253,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    compile-value ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (compile-value obj p host-compiler host-register loc)
+(define (compile-value obj p host-compiler host-context host-register loc)
    (let ((cache (register-value obj host-register)))
       (when (pair? cache)
 	 (let ((len (length cache)))
@@ -262,7 +264,7 @@
 			    "\n\"use strict\";\n" "\n"))
 	       p)))
       (multiple-value-bind (res cyclic)
-	 (compile-value-circle obj p host-compiler loc cache)
+	 (compile-value-circle obj p host-compiler host-context loc cache)
 	 (when (pair? cache)
 	    (display ";}," p)
 	    (display (if cyclic "false)" "true)") p)))))
@@ -307,7 +309,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    compile-value-circle ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (compile-value-circle val p host-compiler loc cache)
+(define (compile-value-circle val p host-compiler host-context loc cache)
    
    (define (display-ucs2-char p c)
       ;; without the quotes
@@ -379,7 +381,7 @@
 	 ((f64vector? val)
 	  (fprintf p "new Float64Array([ ~(,) ])" (f64vector->list val)))
 	 (else
-	  (host-compiler val p compile))))
+	  (host-compiler val p compile host-context))))
    
    (define (compile val p)
       (cond
@@ -458,12 +460,12 @@
 ;*---------------------------------------------------------------------*/
 (define-nmethod (Const.compile p stmt? toplevel?)
    (with-access::Const this (value dstposition location)
-      (with-access::Out-Env env (host-compiler host-register source-map?)
+      (with-access::Out-Env env (host-compiler host-context host-register source-map?)
 	 (when source-map?
 	    (set! dstposition (output-port-position p)))
 	 (template-display p
 	    (?@ stmt? "~@;\n")
-	    "~e" (compile-value value p host-compiler host-register this)))))
+	    "~e" (compile-value value p host-compiler host-context host-register this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile ::Ref ...                                                */
@@ -1116,7 +1118,7 @@
    
    (define (body-out)
       (with-access::While this (body dstposition)
-	 (with-access::Out-Env env (host-compiler host-register source-map?)
+	 (with-access::Out-Env env (host-register source-map?)
 	    (when source-map?
 	       (set! dstposition (output-port-position p))))
 	 (cond-expand
@@ -1167,7 +1169,7 @@
 ;*---------------------------------------------------------------------*/
 (define-nmethod (Return.compile p stmt? toplevel?)
    (with-access::Return this (val dstposition)
-      (with-access::Out-Env env (host-compiler host-register source-map?)
+      (with-access::Out-Env env (source-map?)
 	 (when source-map?
 	    (set! dstposition (+fx 8 (output-port-position p)))))
       (template-display p

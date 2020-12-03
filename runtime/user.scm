@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
 ;*    Last change :  Tue Oct  8 13:18:29 2019 (serrano)                */
-;*    Copyright   :  2005-19 Manuel Serrano                            */
+;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -635,26 +635,28 @@
 ;*    access-denied ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (access-denied req #!optional message)
-   (with-access::http-request req (path socket)
+   (with-access::http-request req (path socket connection)
       (hop-verb 1 (hop-color req req " ACCESS DENIED")
 	 ": "
 	 path " "
 	 (socket-hostname socket) " (" (socket-host-address socket) ") "
 	 (if (string? message) message "")
-	 "\n"))
-   (instantiate::http-response-authentication
-      (header (authenticate-header req))
-      (start-line "HTTP/1.0 401 Unauthorized")
-      (body (cond
-	       (message
-		(with-output-to-string
-		   (lambda ()
-		      (display message (current-output-port)))))
-	       ((isa? req http-request)
-		(with-access::http-request req (host port path)
-		   (format (hop-access-denied-format) host port path)))
-	       (else
-		"Protected Area! Authentication required.")))))
+	 "\n")
+      ;; force closing that connection
+      (set! connection 'close)
+      (instantiate::http-response-authentication
+	 (header (authenticate-header req))
+	 (start-line "HTTP/1.0 401 Unauthorized")
+	 (body (cond
+		  (message
+		   (with-output-to-string
+		      (lambda ()
+			 (display message (current-output-port)))))
+		  ((isa? req http-request)
+		   (with-access::http-request req (host port path)
+		      (format (hop-access-denied-format) host port path)))
+		  (else
+		   "Protected Area! Authentication required."))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    user-service-denied ...                                          */

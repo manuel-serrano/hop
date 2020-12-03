@@ -162,29 +162,11 @@
    (string->symbol (node-computed-style-get spage.spstyle :cursor)))
 
 ;*---------------------------------------------------------------------*/
-;*    frameHeight ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (frameHeight el)
-   (+ (string->integer (node-computed-style-get el "marginTop"))
-      (string->integer (node-computed-style-get el "marginBottom"))
-      (string->integer (node-computed-style-get el "borderBottomWidth"))
-      (string->integer (node-computed-style-get el "borderTopWidth"))))
-
-;*---------------------------------------------------------------------*/
 ;*    frameBorderHeight ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (frameBorderHeight el)
    (+ (string->integer (node-computed-style-get el "borderBottomWidth"))
       (string->integer (node-computed-style-get el "borderTopWidth"))))
-
-;*---------------------------------------------------------------------*/
-;*    frameWidth ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (frameWidth el)
-   (+ (string->integer (node-computed-style-get el "marginLeft"))
-      (string->integer (node-computed-style-get el "marginRight"))
-      (string->integer (node-computed-style-get el "borderRightWidth"))
-      (string->integer (node-computed-style-get el "borderLeftWidth"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    frameBorderWidth ...                                             */
@@ -410,7 +392,7 @@
 	  (let ((d (css-transition-duration tbody)))
 	     (node-style-set! spviewport
 		:left (px (- spage.spoffset)))
-	     (after d
+	     (after (* d 1500)
 		(lambda ()
 		   (dom-remove-child! spviewport tbody)
 		   (restore-static-body tbody.tab)
@@ -557,7 +539,7 @@
 	    (content (dom-child-nodes spheadcontent))
 	    (tab (dom-child-nodes tabhead)))
 	 (set! spage.heads (cons (list tab content button) spage.heads))
-	 (innerHTML-set! (dom-first-child spheadbutton) content)
+;* 	 (innerHTML-set! (dom-first-child spheadbutton) content)       */
 	 (innerHTML-set! spheadcontent tab))
       (set! spheadbutton.className "visible")
       (spage-push spage tab body)))
@@ -664,7 +646,7 @@
    spage.num)
 
 ;*---------------------------------------------------------------------*/
-;*    JavaScritp interface                                             */
+;*    JavaScript interface                                             */
 ;*---------------------------------------------------------------------*/
 (define HopSpage
    (let ((obj (js-new (@ Object js))))

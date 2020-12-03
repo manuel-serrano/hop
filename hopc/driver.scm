@@ -54,8 +54,8 @@
       :eval (lambda (e) (let ((op (open-output-string)))
 			   (obj->javascript-expr (eval e) op)
 			   (close-output-port op)))
-      :hop-compile (lambda (obj op compile)
-		      (hop->javascript obj op compile #f #f))
+      :hop-compile (lambda (obj op compile ctx)
+		      (hop->javascript obj op compile #f ctx))
       :hop-register hop-register-value
       :javascript-version (hop-javascript-version)
       :hop-library-path (hop-library-path)
@@ -585,16 +585,40 @@
 		(string->obj (read-string in))))
 	  (language (car (hopc-sources)))))
       (else
-       (let loop ((srcs (hopc-sources)))
-	  (if (null? srcs)
-	      0
-	      (let ((r (call-with-input-file (car srcs)
-			  (lambda (in)
-			     (compile (car srcs)
-				in (language (car srcs)))))))
-		 (if (=fx r 0)
-		     (loop (cdr srcs))
-		     r)))))))
+       (let ((srcs (hopc-sources)))
+	  (cond
+	     ((null? srcs)
+	      0)
+	     ((null? (cdr srcs))
+	      (call-with-input-file (car srcs)
+		 (lambda (in)
+		    (compile (car srcs)
+		       in (language (car srcs))))))
+	     (else
+	      (let* ((files (cdr srcs))
+		     (ip (open-input-file (car srcs)))
+		     (in (open-input-procedure
+			    (lambda ()
+			       (let loop ()
+				  (let ((buf (read-chars 8192 ip)))
+				     (cond
+					((string? buf)
+					 buf)
+					((eof-object? buf)
+					 (close-input-port ip)
+					 (if (pair? files)
+					     (begin
+						(set! ip (open-input-file (car files)))
+						(set! files (cdr files))
+						(loop))
+					     #f))
+					(else
+					 (error "hopc" "Cannot read from port"
+					    ip)))))))))
+		 (unwind-protect
+		    (compile (car srcs)
+		       in (language (cadr srcs)))
+		    (close-input-port in)))))))))
 				 
 ;*---------------------------------------------------------------------*/
 ;*    jsheap ...                                                       */

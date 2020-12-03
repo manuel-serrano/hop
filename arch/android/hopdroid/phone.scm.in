@@ -50,6 +50,8 @@
 (define battery-plugin #f)
 (define locale-plugin #f)
 (define build-plugin #f)
+(define ui-plugin #f)
+(define system-plugin #f)
 
 (define event-thread #f)
 (define event-mutex (make-mutex))
@@ -400,39 +402,40 @@
    (unless contact-plugin
       (set! contact-plugin (android-load-plugin p "contact")))
    (if contact-plugin
-       (map! (lambda (e)
-		(match-case e
-		   ((?first ?family ?akas ?comp ?phones ?addrs ?emails ?notes ?-)
-		    (let* ((face (let ((c (assq 'face notes)))
-				    (when (pair? c)
-				       (set! notes (remq! c notes))
-				       (cdr c))))
-			   (url (let ((c (assq 'url notes)))
-				   (when (pair? c)
-				      (set! notes (remq! c notes))
-				      (cdr c))))
-			   (notes (if (pair? akas)
-				      (cons (cons 'akas akas) notes)
-				      notes))
-			   (fn (if (string? first)
-				   (if (string? family)
-				       (string-append first " " family)
-				       first)
-				   (if (string? family)
-				       family
-				       ""))))
-		       (instantiate::vcard
-			  (fn fn)
-			  (familyname family)
-			  (firstname first)
-			  (org comp)
-			  (face face)
-			  (url url)
-			  (phones phones)
-			  (addresses addrs)
-			  (emails emails)
-			  (notes notes))))))
-	  (android-send-command/result p contact-plugin #\l))
+       (filter! (lambda (x) x)
+	  (map! (lambda (e)
+		   (match-case e
+		      ((?first ?family ?akas ?comp ?phones ?addrs ?emails ?notes ?-)
+		       (let* ((face (let ((c (assq 'face notes)))
+				       (when (pair? c)
+					  (set! notes (remq! c notes))
+					  (cdr c))))
+			      (url (let ((c (assq 'url notes)))
+				      (when (pair? c)
+					 (set! notes (remq! c notes))
+					 (cdr c))))
+			      (notes (if (pair? akas)
+					 (cons (cons 'akas akas) notes)
+					 notes))
+			      (fn (if (string? first)
+				      (if (string? family)
+					  (string-append first " " family)
+					  first)
+				      (if (string? family)
+					  family
+					  ""))))
+			  (instantiate::vcard
+			     (fn fn)
+			     (familyname family)
+			     (firstname first)
+			     (org comp)
+			     (face face)
+			     (url url)
+			     (phones phones)
+			     (addresses addrs)
+			     (emails emails)
+			     (notes notes))))))
+	     (android-send-command/result p contact-plugin #\l)))
        '()))
 
 ;*---------------------------------------------------------------------*/
@@ -501,6 +504,13 @@
 (define-method (phone-call-stop p::androidphone)
    (when call-plugin
       (android-send-command p call-plugin #\k)))
+
+;*---------------------------------------------------------------------*/
+;*    phone-reboot ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-method (phone-reboot p::androidphone)
+   (with-access::androidphone p (initid)
+      (android-send-command p initid "reboot")))
 
 ;*---------------------------------------------------------------------*/
 ;*    send-string ...                                                  */

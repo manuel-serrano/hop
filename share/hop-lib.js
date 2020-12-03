@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
 /*    Last change :  Sat Jan 27 09:01:50 2018 (serrano)                */
-/*    Copyright   :  2007-18 Manuel Serrano                            */
+/*    Copyright   :  2007-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
 /*=====================================================================*/

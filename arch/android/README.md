@@ -77,6 +77,10 @@ To build a full hop+bigloo stack and to produce an `apk` file:
     $ cd arch/android
     $ export REPODIR=repodir
     $ make apk 
+	
+To build for debugging:
+
+    $ make apk HOPCONFIGUREOPT=--debug
 
 This will use the android sdk and ndk pointed to by the environment variables
 `$ANDROIDSDK` and `$ANDROIDNDK`. The default configuration can be 
@@ -91,9 +95,13 @@ the USB bus. If an emulator is used, add the following to all
     $ make apk ANDROIDHOST=-e
 
 
-If only hop needs to be recompiled:
+If only hop needs to be reinstalled and recompiled:
 
     $ make apk-sans-bigloo
+
+If only hop needs to be recompiled (after a modification in the Hop build dir):
+
+    $ make apk-re-hop
 
 If only the `apk` file has be to regenerated:
 
@@ -114,7 +122,7 @@ Installing
 
 The standard `adb` Android tool tool is used to installed:
 
-    $ adb install hop-3.3.0.apk
+    $ adb install -r hop-3.3.0.apk
     $ adb shell monkey -p fr.inria.hop 1
 
 To uninstall it:
@@ -390,7 +398,7 @@ application. For that use the `adb exec-out run-as fr.inria.hop` command.
 Examples:
 
     $ adb exec-out run-as fr.inria.hop ls /data/data/fr.inria.hop/assets/bin/hop
-    $ adb exec-out run-as fr.inria.hop /system/bin/sh -c "export HOME=/mnt/sdcard/home; export LD_LIBRARY_PATH=/data/data/fr.inria.hop/assets/lib/bigloo/4.3h:/data/data/fr.inria.hop/assets/lib/hop/3.3.0:$LD_LIBRARY_PATH;exec /data/data/fr.inria.hop/assets/bin/hop --no-color -p 8080 -g0 --max-threads 6 -z --no-jobs --rc-dir /mnt/sdcard/home/.config/hopdemo -v2"
+    $ adb exec-out run-as fr.inria.hop /system/bin/sh -c "export HOME=/mnt/sdcard/home; export LD_LIBRARY_PATH=/data/data/fr.inria.hop/assets/lib/bigloo/4.4b:/data/data/fr.inria.hop/assets/lib/hop/3.4.0:$LD_LIBRARY_PATH;exec /data/data/fr.inria.hop/assets/bin/hop --no-color -p 8080 -g0 --max-threads 6 -z --no-jobs --rc-dir /mnt/sdcard/home/.config/hop -v2"
 
 If more debugging is needed, `gdb` can be used remotely. For that, proceed
 as follows:

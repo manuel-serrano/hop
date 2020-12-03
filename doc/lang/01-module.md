@@ -194,3 +194,27 @@ is loaded from a browser. Example
 { "client": [ "lib/utils.js", "lib/message.js", "lib/client.js" ]}
 ```
 
+
+ES6 Modules
+-----------
+
+Hop supports ES6 modules [ECMAScript 6][es6-export], [ECMAScript 2018][es2018-import]. With an extension to the `import` form. The path of the file
+to be imported can be:
+
+```ebnf
+<ModulePath> --> "a static string"
+  | <HopBuiltinModule>
+
+<HopBuiltinModule> --> hop.<ident>
+```
+
+Example
+
+```hopscript
+import * as sp from hop.spage;
+```
+
+[es6-export]:
+  https://www.ecma-international.org/ecma-262/6.0/#sec-exports 
+[es2018-import]:
+  https://www.ecma-international.org/ecma-262/9.0/#sec-imports

@@ -495,14 +495,13 @@
 	 ((pregexp-match "[0-9]+" host)
 	  =>
 	  (lambda (m)
-	     (values "localhost" (string->integer host))))
+	     (values "127.0.01" (string->integer host))))
 	 (else
-	  (values host 8080))))
+	  (values host (+fx (hop-port) 1)))))
 
    (when (hop-acknowledge-host)
       (multiple-value-bind (host port)
 	 (parse-host (hop-acknowledge-host))
-	 (tprint "CONNECTING host=" host " " port)
 	 (with-handler
 	    (lambda (e)
 	       (tprint "CANNOT ACKNOWLEDGE...")

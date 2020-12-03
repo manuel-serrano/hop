@@ -308,7 +308,8 @@ function hop_bigloo_serialize_service() {
 
    var ctxdef = hop_serialize_context_key_set( item );
 
-   str += hop_bigloo_serialize_context( sc_cons( hash, [ this.base, dir.dir ] ) );
+   console.log( "serialize_svc=", this );
+   str += hop_bigloo_serialize_context( sc_cons( hash, [ this.base ] ) );
    str += hop_bigloo_serialize_context( 0 );
 
    str = "=" + hop_serialize_word( ctxdef ) + str;

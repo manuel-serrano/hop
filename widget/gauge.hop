@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Apr 13 05:44:41 2010                          */
 ;*    Last change :  Tue Apr 23 18:08:23 2013 (serrano)                */
-;*    Copyright   :  2010-13 Manuel Serrano                            */
+;*    Copyright   :  2010-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Gauge server-side implementation                                 */
 ;*=====================================================================*/
@@ -22,6 +22,7 @@
 ;*    <GAUGE> ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-tag <GAUGE> ((id (xml-make-id 'GAUGE) string)
+		     (%context #f)
 		     (format #unspecified)
 		     (value 0 integer)
 		     (min 0 integer)
@@ -32,7 +33,8 @@
    (let ((listener (when (isa? onchange xml-tilde)
 		      (sexp->xml-tilde
 			 `(lambda (event)
-			     ,(xml-tilde->sexp onchange)))))
+			     ,(xml-tilde->sexp onchange))
+			 :%context %context)))
 	 (fid (xml-make-id 'GAUGE-FILL))
 	 (tid (xml-make-id 'GAUGE-TEXT))
 	 (fmt (if (string? format)

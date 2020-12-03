@@ -1097,7 +1097,7 @@
 	 (typeof set))))
 
 ;*---------------------------------------------------------------------*/
-;*    object-print ::JsWrapperDescriptor ...                          */
+;*    object-print ::JsWrapperDescriptor ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (object-print p::JsWrapperDescriptor port pslot::procedure)
    (with-access::JsWrapperDescriptor p (name configurable enumerable writable)

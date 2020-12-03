@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jul  5 09:42:40 2016                          */
-/*    Last change :  Fri May 15 18:06:36 2020 (serrano)                */
+/*    Last change :  Sun Nov 29 09:01:00 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Spawn Hop service (not the Hop process).                         */
@@ -31,7 +31,6 @@ public class HopIntenter implements HopStage {
    Handler handler;
    Intent hopintent = null;
    HopService hopservice = null;
-   boolean hopconnected = false;
    ArrayBlockingQueue<String> queue;
    
    Activity activity;
@@ -53,30 +52,17 @@ public class HopIntenter implements HopStage {
 	       hopservice.queue = queue;
 	       hopservice.hopdroid.activity = activity;
 	       hopservice.onConnect();
-
-	       if( hopservice.waitHop( 8000 ) ) {
-		  Log.d( "HopIntenter", "Hop ready..." );
-		  hopconnected = true;
-		  handler.sendEmptyMessage( HopLauncher.MSG_HOP_START  );
-	       } else {
-		  Log.d( "HopIntenter", "Hop cannot start..." );
-		  hopconnected = false;
-		  handler.sendEmptyMessage( HopLauncher.MSG_HOP_CANNOT );
-	       }
 	    } catch( Exception e ) {
 	       Log.e( "HopIntenter", "error while connecting to service: " +
 		      e.toString() );
 	       e.printStackTrace();
-	       Log.e( "HopIntenter", "killing background hop because of error..." );
-	       hopconnected = false;
 	       activity.unbindService( hopconnection );
 	       HopService.emergencyExit();
-	       //kill( 4000 );
 	    }
 	 }
 
 	 public void onServiceDisconnected( ComponentName className ) {
-	    hopconnected = false;
+	    Log.d( "HopIntenter", "onServiceDisconnected" );
 	    hopservice = null;
 	 }
       };
@@ -99,8 +85,8 @@ public class HopIntenter implements HopStage {
    }
 
    public void exec( Context context ) {
-      Log.d( "HopIntenter", "exec" );
       hopintent = new Intent( context, HopService.class );
+      Log.d( "HopIntenter", "Hop.Service.isBackground=" + HopService.isBackground() );
       if( !HopService.isBackground() ) {
 	 activity.startService( hopintent );
       }
@@ -109,7 +95,7 @@ public class HopIntenter implements HopStage {
    }
 
    public void abort() {
-      Log.d( "HopIntenter", "abort" );
+      Log.d( "HopIntenter", "abort..." );
 
       activity.unbindService( hopconnection );
    }

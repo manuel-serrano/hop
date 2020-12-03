@@ -30,7 +30,7 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
-   ;; not debug by default
+   ;; no debug by default
    (bigloo-warning-set! 0)
    (bigloo-debug-set! 0)
    ;; set the Hop cond-expand identification
@@ -53,15 +53,6 @@
       ;; setup the client-side compiler
       (setup-client-compiler!)
       ;; setup the hop module resolvers
-;*       (bigloo-module-extension-handler-set!                         */
-;* 	 (lambda (exp)                                                 */
-;* 	    (let ((m (eval-module)))                                   */
-;* 	       (tprint "bigloo-module-extension-handler exp=" exp " m==" (typeof m)) */
-;* 	       (when (evmodule? m)                                     */
-;* 		  (let ((e (hop-module-extension-handler exp)))        */
-;* 		     (tprint "bmeh-set! e=" e)                         */
-;* 		     (evmodule-extension-set! m e)))                   */
-;* 	       exp)))                                                  */
       (bigloo-module-resolver-set!
 	 (make-hop-module-resolver (bigloo-module-resolver)))
       ;; evaluate the command line expressions

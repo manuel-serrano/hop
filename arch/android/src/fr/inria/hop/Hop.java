@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sun Nov  8 10:05:58 2020 (serrano)                */
+/*    Last change :  Sun Nov 29 09:03:42 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -122,6 +122,9 @@ public class Hop extends Thread {
       final String[] ahost = new String[ 1 ];
       final boolean[] ready = new boolean[ 1 ];
 
+      Log.d( "Hop", "=================================================" );
+      Log.d( "Hop", "run..." );
+
       // acknowledge server
       Thread th = new Thread( new Runnable() {
 	    public void run() {
@@ -155,7 +158,7 @@ public class Hop extends Thread {
 		     }
 		  }
 	       } catch( IOException exc ) {
-		  Log.e( "Hop", "Cannot spawn client acknowledge server!" );
+		  Log.e( "Hop", "Cannot spawn client acknowledge server! " + exc );
 		  ahost[ 0 ] = null;
 		  ahost.notify();
 		  return;
@@ -171,17 +174,15 @@ public class Hop extends Thread {
       try {
 	 synchronized( ready ) {
 	    synchronized( ahost ) {
-	       Log.d( "Hop", "starting acknowledge server" );
 	       th.start();
 
 	       // wait for the acknowledge port number
 	       ahost.wait();
-	       Log.d( "Hop", "acknowledge server ready on port=" + ahost[ 0 ] );
-	    
+
 	       String cmd = "export HOME=" + HOME().getAbsolutePath() + "; "
-/* 	       + "export LD_LIBRARY_PATH="                             */
-/* 	       + root + "/lib/bigloo/" + HopConfig.BIGLOORELEASE + ":" */
-/* 	       + root + "/lib/hop/" + HopConfig.HOPRELEASE + ":$LD_LIBRARY_PATH;" */
+		  + "export LD_LIBRARY_PATH="
+		  + root + "/lib/bigloo/" + HopConfig.BIGLOORELEASE + ":"
+		  + root + "/lib/hop/" + HopConfig.HOPRELEASE + ":$LD_LIBRARY_PATH;"
 		  + "exec " + root + HOP + " " + HOPARGS
 		  + " -p " + port
 		  + " " + debug
@@ -191,21 +192,19 @@ public class Hop extends Thread {
 		  + (jobs ? " --jobs" : " --no-jobs")
 		  + " --rc-dir " + rcdir
 		  + " --acknowledge " + ahost[ 0 ]
-		  + " " + args;
+		  + " -v2 " + args;
 
-	       Log.d( "Hop", "=================================================" );
 	       Log.i( "Hop", HopConfig.APP + " exec [" + sh + " -c \"" + cmd + "\"]");
 	       HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
 	       Log.v( "Hop", "Hop process started, pid=" + pid[ 0 ] + ", HopFd=" +  HopFd );
 
 	       // wait for the Hop acknowledge
-	       Log.d( "Hop", ">>> waiting for Hop acknowledge" );
 	       ready.wait();
-	       Log.d( "Hop", "<<< Hop acknowledge received: " + ready[ 0 ] );
 	    }
 	 }
       } catch( Throwable exc ) {
-	 Log.e( "Hop", "Did not receive Hop server acknowledge" );
+	 Log.e( "Hop", "Error while waiting for Hop server acknowledge " + exc );
+	 exc.printStackTrace();
       }
 
       synchronized( currentpid ) {
@@ -264,8 +263,9 @@ public class Hop extends Thread {
 		     }
 		  }
 	       } catch( Throwable e ) {
-		  Log.e( "Hop", "Error in the thread logger: " + e );
 		  if( !inkill ) {
+		     Log.e( "Hop", "Error in the thread logger: " + e );
+		     e.printStackTrace();
 		     synchronized( currentpid ) {
 			if( currentpid[ 0 ] > 0 ) {
 			   Log.e( "Hop", "process exception (pid=" + pid[ 0 ]
@@ -284,6 +284,9 @@ public class Hop extends Thread {
       // thread being stuck.
       watcher.start();
       logger.start();
+
+      // spawn the initial Hop service
+      service.handler.sendEmptyMessage( HopLauncher.MSG_HOP_START );
    }
 
    // rerun
@@ -296,26 +299,61 @@ public class Hop extends Thread {
    
    // restart
    public void restart() {
+      Log.i( "Hop", "restart requested..." );
       kill();
       run();
    }
    
-   // kill
+   // kill (kill the running Hop process)
    public void kill() {
-      Log.d( "Hop", ">>> kill..." + currentpid );
+      Log.i( "Hop", "kill..." + ((currentpid != null) ? currentpid[ 0 ] : "null") );
       
       synchronized( currentpid ) {
 	 if( currentpid[ 0 ] != 0 ) {
-	    Log.i( "Hop", ">>> kill hop (pid=" + currentpid[ 0 ] + ")..." );
-
 	    inkill = true;
 	    android.os.Process.killProcess( currentpid[ 0 ] );
-	    
-	    Log.i( "Hop", "<<< kill hop" );
 	 }
       }
-      
-      Log.d( "Hop", "<<< kill" );
+   }
+
+   // ping
+   public static boolean ping( String port, int errcnt, String svc ) {
+      Log.d( "Hop", "ping ping port=" + port + " svc=" + svc );
+      while( true ) {
+	 try {
+	    URL pingURL = new URL( "http://localhost:" + port + svc );
+	    HttpURLConnection conn = (HttpURLConnection)pingURL.openConnection();
+
+	    conn.setRequestMethod( "HEAD" );
+
+	    Log.d( "Hop", "  >>> ping, HEAD " + pingURL.toString() );
+
+	    conn.setConnectTimeout( 500 );
+	 
+	    int status = conn.getResponseCode();
+	    conn.disconnect();
+
+	    Log.d( "Hop", "  <<< ping, status=" + status );
+	    return (status == HttpURLConnection.HTTP_OK)
+	       || (status == HttpURLConnection.HTTP_NOT_FOUND)
+	       || (status == HttpURLConnection.HTTP_UNAUTHORIZED);
+	 } catch( Exception e ) {
+	    Log.d( "Hop", "  !!! ping, exn=" + e.toString() );
+	    if( errcnt-- > 0 ) {
+	       try {
+		  Thread.sleep( 500 );
+	       } catch( Exception ee ) {
+		  return false;
+	       }
+	    } else {
+	       return false;
+	    }
+	 }
+      }
+   }
+
+   public static boolean ping( String port, int errcnt ) {
+      return ping( port, errcnt, "/hop" );
    }
 
    // isRunning()
@@ -326,41 +364,7 @@ public class Hop extends Thread {
 	 synchronized( currentpid ) {
 	    Log.d( "Hop", "isRunning currentpid=" + currentpid[ 0 ] );
 	    if( currentpid[ 0 ] > 0 ) {
-	       try {
-		  URL pingURL = new URL( "http://localhost:" + port + "/hop" );
-		  HttpURLConnection conn = (HttpURLConnection)pingURL.openConnection();
-
-		  conn.setRequestMethod( "HEAD" );
-
-		  Log.d( "Hop", "  >>> HEAD " + pingURL.toString() );
-
-		  conn.setConnectTimeout( 100 * timeout );
-	 
-		  int status = conn.getResponseCode();
-		  conn.disconnect();
-
-		  Log.d( "Hop", "  <<< status=" + status );
-		  return (status == HttpURLConnection.HTTP_OK)
-		     || (status == HttpURLConnection.HTTP_NOT_FOUND)
-		     || (status == HttpURLConnection.HTTP_UNAUTHORIZED);
-	       } catch( Exception e ) {
-		  Log.d( "Hop", "  !!! exn=" + e.toString()
-			 + " tmt=" + timeout );
-
-		  if( errcount-- > 0 ) {
-		     try {
-			currentpid.wait( timeout );
-
-			if( currentpid[ 0 ] <= 0 ) {
-			   return false;
-			}
-		     } catch( Exception ee ) {
-			return false;
-		     }
-		  } else {
-		     return false;
-		  }
-	       }
+	       return ping( port, 10 );
 	    } else if( currentpid[ 0 ] == -1 ) {
 	       return false;
 	    } else {

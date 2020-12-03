@@ -706,6 +706,13 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SDeclFun env::pair-nil fix::cell)
 
+   (define (node-type-optional-args val env fix)
+      (with-access::J2SFun val (params)
+	 (for-each (lambda (p)
+		      (when (isa? p J2SDeclInit)
+			 (node-type p env fix)))
+	    params)))
+      
    (define (node-type-ctor-only val)
       (with-access::J2SFun val (generator rtype thisp)
 	 (when generator
@@ -714,6 +721,11 @@
 	    (decl-itype-add! thisp 'object fix))))
    
    (with-access::J2SDeclFun this (val scope id loc)
+      (if (isa? val J2SFun)
+	  (node-type-optional-args val env fix)
+	  (with-access::J2SMethod val (function method)
+	     (node-type-optional-args function env fix)
+	     (node-type-optional-args method env fix)))
       (if (decl-ronly? this)
 	  (decl-vtype-set! this 'function fix)
 	  (decl-vtype-add! this 'function fix))
@@ -2225,8 +2237,34 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ::J2SDeclInit ...                                    */
+;*    -------------------------------------------------------------    */
+;*    It might be situation where the declaration is not uninit        */
+;*    but the declaration and the initialization are still split.      */
+;*    For instance, it might be that a constant is initialized         */
+;*    with an object but declared with the undefined value. This       */
+;*    function handles these situation to preserve a well typed        */
+;*    ast. It uses two situations:                                     */
+;*      1- either it changes the value of the declaration to use       */
+;*         a well-type constant                                        */
+;*      2- it changes the variable type                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-type! this::J2SDeclInit from to cell)
+
+   (define (type->init type val)
+      (with-access::J2SExpr val (loc)
+	 (case type
+	    ((number integer) (J2SNumber/type 'number 0))
+	    ((string) (J2SString ""))
+	    ((bool) (J2SBool #f))
+	    ((null) (J2SNull))
+	    ((object) (J2SHopRef/type '%this 'object))
+	    (else #f))))
+
+   (define (type-eq? t1 t2)
+      (or (eq? t1 t2)
+	  (and (eq? t1 'number) (eq? t2 'integer))
+	  (and (eq? t1 'integer) (eq? t2 'number))))
+	      
    (with-access::J2SDeclInit this (vtype loc val)
       (when (and (eq? vtype from) (not (eq? vtype to)))
 	 (when (and (eq? from 'unknown) debug-tyflow)
@@ -2234,6 +2272,21 @@
 	       " " (j2s->list this)))
 	 (cell-set! cell #t)
 	 (set! vtype to))
+      (when (and (not (eq? vtype 'any)) (not (type-eq? vtype (j2s-type val))))
+	 (cond
+	    ((decl-usage-has? this '(uninit))
+	     (error "force-type!" "Declaration inconsistent with init"
+		(j2s->list this)))
+	    ((not (isa? val J2SUndefined))
+	     (error "force-type!"
+		(format "Pre-value type mismatch (~a/~a)" vtype (j2s-type val))
+		(j2s->list this)))
+	    ((type->init vtype val)
+	     =>
+	     (lambda (v)
+		(set! val v)))
+	    (else
+	     (set! vtype 'any))))
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/

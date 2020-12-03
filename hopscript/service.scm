@@ -186,7 +186,7 @@
 ;*    xml-unpack ::JsService ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-unpack o::JsService ctx)
-   #f)
+   o)
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-attribute-encode ::JsHopFrame ...                            */
@@ -953,13 +953,13 @@
 	  (src (source proc)))
       (multiple-value-bind (id wid)
 	 (service-path->ids path)
-	 (letrec* ((svcp (lambda (this . args)
+	 (letrec* ((svcp (lambda (this . vals)
 			    (with-access::JsService svcjs (svc)
 			       (with-access::hop-service svc (path)
-				  (js-make-hopframe %this this path args)))))
+				  (js-make-hopframe %this this path vals)))))
 		   (svcjs (js-make-service %this svcp (symbol->string! id)
 			     register import
-			     -1 worker
+			     (js-function-arity svcp) worker
 			     (instantiate::hop-service
 				(ctx %this)
 				(proc (if (js-procedure? proc)
@@ -1102,7 +1102,7 @@
       (instantiateJsService
 	 (procedure proc)
 	 (info (js-function-info :name name :len arity))
-	 (arity arity)
+	 (arity (js-function-arity proc))
 	 (worker worker)
 	 (prototype (js-object-proto %this))
 	 (__proto__ js-service-prototype)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  8 15:35:26 2010                          */
-/*    Last change :  Fri May 15 18:31:07 2020 (serrano)                */
+/*    Last change :  Fri Nov 13 10:49:06 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Configuring Hop                                                  */
@@ -31,9 +31,6 @@ import java.net.*;
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
 public class HopConfigurer implements HopStage {
-   // global constants
-  final static String CHMOD = "/system/bin/chmod 777"; 
-
    // instance variables
    Handler handler;
    File home;
@@ -116,13 +113,13 @@ public class HopConfigurer implements HopStage {
       if( !configured( context, home ) ) {
 	 try {
 	    this.hopapprc( context );
-	    handler.sendEmptyMessage( HopLauncher.MSG_STATE_NEXT );
+	    handler.sendEmptyMessage( HopLauncher.MSG_INSTALL_CONFIGURED );
 	 } catch( Exception e ) {
 	    Log.e( "HopConfigurer", "Cannot configure " + e.toString() );
 	    raise( e );
 	 }
       } else {
-	 handler.sendEmptyMessage( HopLauncher.MSG_STATE_NEXT );
+	 handler.sendEmptyMessage( HopLauncher.MSG_INSTALL_CONFIGURED );
       }
    }
 

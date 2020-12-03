@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
 ;*    Last change :  Tue Oct  8 13:17:09 2019 (serrano)                */
-;*    Copyright   :  2004-19 Manuel Serrano                            */
+;*    Copyright   :  2004-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
 ;*=====================================================================*/
@@ -134,6 +134,9 @@
 		   (else
 		    (with-output-to-string
 		       (lambda () (display e)))))))
+	 ;; force socket close on error
+	 (with-access::http-request req (connection)
+	    (set! connection 'close))
 	 (instantiate::http-response-xml
 	    (start-line "HTTP/1.1 500 Internal Server Error")
 	    (header (http-error-header e))
@@ -173,6 +176,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-error e::&io-unknown-host-error req)
    (with-access::xml-backend (hop-xml-backend) (mime-type)
+      ;; force socket close on error
+      (with-access::http-request req (connection)
+	 (set! connection 'close))
       (instantiate::http-response-xml
 	 (start-line "HTTP/1.1 404 Not Found")
 	 (header (http-error-header e))
@@ -214,6 +220,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (http-error e::&hop-security-error req)
    (let ((s (with-error-to-string (lambda () (exception-notify e)))))
+      ;; force socket close on error
+      (with-access::http-request req (connection)
+	 (set! connection 'close))
       (with-access::xml-backend (hop-xml-backend) (mime-type)
 	 (instantiate::http-response-xml
 	    (start-line "HTTP/1.1 200 ok")
@@ -309,6 +318,9 @@ On restart the server invalidates all anonymous services that hence
 can no longer be executed.
 Reloading the page is the only way to fix this problem." msg))
    
+   ;; force socket close on error
+   (with-access::http-request req (connection)
+      (set! connection 'close))
    (let ((svc (make-file-name (hop-service-base) (hop-service-weblet-name))))
       (cond
 	 ((expired-service-path? file)
@@ -366,6 +378,9 @@ a timeout which has now expired. The service is then no longer available."))
 ;*    http-internal-error ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (http-internal-error e msg req)
+   ;; force socket close on error
+   (with-access::http-request req (connection)
+      (set! connection 'close))
    (let ((s (with-error-to-string (lambda () (exception-notify e)))))
       (with-access::xml-backend (hop-xml-backend) (mime-type)
 	 (instantiate::http-response-xml
@@ -387,6 +402,9 @@ a timeout which has now expired. The service is then no longer available."))
 ;*    http-service-error ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (http-service-error req service m)
+   ;; force socket close on error
+   (with-access::http-request req (connection)
+      (set! connection 'close))
    (with-access::xml-backend (hop-xml-backend) (mime-type)
       (instantiate::http-response-xml
 	 (start-line "HTTP/1.1 400 Bad Request")
@@ -408,6 +426,9 @@ a timeout which has now expired. The service is then no longer available."))
 ;*    http-invalidated-service-error ...                               */
 ;*---------------------------------------------------------------------*/
 (define (http-invalidated-service-error req)
+   ;; force socket close on error
+   (with-access::http-request req (connection)
+      (set! connection 'close))
    (with-access::xml-backend (hop-xml-backend) (mime-type)
       (instantiate::http-response-xml
 	 (start-line "HTTP/1.0 404 Not Found")
@@ -429,6 +450,9 @@ Reloading the page is the only way to fix this problem."))))))
 ;*    http-corrupted-service-error ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (http-corrupted-service-error req)
+   ;; force socket close on error
+   (with-access::http-request req (connection)
+      (set! connection 'close))
    (with-access::xml-backend (hop-xml-backend) (mime-type)
       (instantiate::http-response-xml
 	 (start-line "HTTP/1.0 404 Not Found")
@@ -490,6 +514,9 @@ Reloading the page is the only way to fix this problem."))))))
 ;*    http-remote-error ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-remote-error host e req)
+   ;; force socket close on error
+   (with-access::http-request req (connection)
+      (set! connection 'close))
    (let ((s (with-error-to-string (lambda () (exception-notify e)))))
       (with-access::xml-backend (hop-xml-backend) (mime-type)
 	 (instantiate::http-response-xml
@@ -511,6 +538,9 @@ Reloading the page is the only way to fix this problem."))))))
 ;*    http-io-error ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (http-io-error e req)
+   ;; force socket close on error
+   (with-access::http-request req (connection)
+      (set! connection 'close))
    (let ((s (with-error-to-string (lambda () (exception-notify e)))))
       (with-access::xml-backend (hop-xml-backend) (mime-type)
 	 (instantiate::http-response-xml
