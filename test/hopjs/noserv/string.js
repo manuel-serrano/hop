@@ -221,6 +221,4 @@ assert.equal( "foo".indexOf( "" ), 0, "indexOf with empty string" );
 /*---------------------------------------------------------------------*/
 /*    keys                                                             */
 /*---------------------------------------------------------------------*/
-#:tprint( "..............." );
-console.log( Object.keys( "foobar" ) );
 assert.ok( Object.keys( "foobar" ).length === 6, "Object.keys" );

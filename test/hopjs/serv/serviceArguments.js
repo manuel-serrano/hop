@@ -4,7 +4,7 @@
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  25 11:43:00 2015                         */
 /*    Last change :  Sat Mar 17 11:18:23 2018 (serrano)                */
-/*    Copyright   :  2015-18 Inria                                     */
+/*    Copyright   :  2015-20 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Test service constructor and arguments                           */
 /*=====================================================================*/
@@ -13,6 +13,7 @@ var hop = require( 'hop' );
 var assert = require( 'assert' );
 
 var svc = service() {
+console.log( "AVC=", arguments );
    return arguments.length;
 };
 
