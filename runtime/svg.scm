@@ -579,7 +579,6 @@
 		       (attrs))
    (set! src (xml-primitive-value src %context))
    (set! style (xml-primitive-value style %context))
-
    (cond
       ((not (string? src))
        (error "<SVG:IMG>" "Illegal image src" src))
@@ -613,11 +612,13 @@
 	      (instantiate::xml-svg
 		 (tag 'svg:img)
 		 (id (xml-make-id 'svg:img))
-		 (attributes `(:src ,src))
+		 (attributes `(:src ,src ,@attrs))
 		 (body (list img)))
-	      (<DIV> :%context %context :style style2 :class class :id id
+	      (apply
+		 <DIV> :%context %context :style style2 :class class :id id
 		 (instantiate::xml-svg
 		    (tag 'svg:img)
 		    (id (xml-make-id 'svg:img))
 		    (attributes `(:src ,src))
-		    (body (list img)))))))))
+		    (body (list img)))
+		 attrs))))))

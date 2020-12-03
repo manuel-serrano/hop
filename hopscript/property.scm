@@ -1313,7 +1313,7 @@
 	 (prop (gensym 'prop))
 	 (name (gensym 'name)))
       `(with-access::JsObject ,o ((,hash elements))
-	  (let ((,prop (hashtable-get ,hash ,p)))
+	  (let ((,prop (string-hashtable-get ,hash ,p)))
 	     (cond
 		(,prop
 		 (,succeed ,o ,prop))

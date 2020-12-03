@@ -16,6 +16,7 @@ import * as sp from hop.spage;
 import { NAVTITLE } from './xml.js';
 import { APPS } from './apps.js';
 import { SYSTEM } from './system.js';
+import { WEBDAV } from './webdav.js';
 import { ABOUT } from './about.js';
 
 /*---------------------------------------------------------------------*/
@@ -32,6 +33,7 @@ service hopdroid( o ) {
        <link href=${require.resolve( "./hopdroid.hss" )} rel="stylesheet" type="text/css"/>
        <link href=${require.resolve( "./xml.hss" )} rel="stylesheet" type="text/css"/>
        <link href=${require.resolve( "./apps.hss" )} rel="stylesheet" type="text/css"/>
+       <link href=${require.resolve( "./webdav.hss" )} rel="stylesheet" type="text/css"/>
        <link href=${require.resolve( "./system.hss" )} rel="stylesheet" type="text/css"/>
        <link href=${require.resolve( "./about.hss" )} rel="stylesheet" type="text/css"/>
        <script src=${sp.script} type="application/x-javascript"/>
@@ -66,7 +68,7 @@ service hopdroid( o ) {
 }
 
 function PRIVACY() {
-   return <sp.sptab svc=${webdav}>
+   return <sp.sptab svc=${service () { return "not-implemented" } }>
      <sp.sptabhead>
        <nav class="sptabhead unselected">
 	 <ul>
@@ -89,49 +91,9 @@ function PRIVACY() {
    </sp.sptab>
 }
 
-function WEBDAV() {
-   return <sp.sptab svc=${webdav}>
-     <sp.sptabhead>
-       <nav class="sptabhead unselected">
-	 <ul>
-	   <li>
-	     <div class="icon">
-	       <svg:img class="hdd-icon" width="16px" height="16px" 
-			src=${require.resolve( "./icons/hdd-network.svg" )}/>
-	     </div>
-	   </li>
-	   <li>
-	     <div class="title">
-	       <div>Webdav configuration</div>
-	       <div class="subtitle">hdd sharing</div>
-	     </div>
-	   </li>
-	 </ul>
-       </nav>
-       <navtitle spageid="spage" class="sphead selected" arrow="&#8672;">Hdd Sharing</navtitle>
-     </sp.sptabhead>
-   </sp.sptab>
-}
-   
-service webdav() {
-   return <div>
-     <div class="setting">
-       <div class="icon-sans">
-	 <svg:img class="about-icon" width="16px" height="16px" 
-		  src=${require.resolve( "./icons/hdd.svg" )}/>
-       </div>
-       <div class="text">
-	 Enable webdav
-       </div>
-       <div class="button"
-	    onclick=~{document.getElementById( "webdav-toggle" ).setAttribute( "data-on", "on" )}>
-	 <svg:img id="webdav-toggle" class="icon-toggle" width="24px" height="24px" 
-		  src=${require.resolve( "./icons/toggle2-off.svg" )}/>
-       </div>
-     </div>
-   </div>;
-}
-     
+/*---------------------------------------------------------------------*/
+/*    manifest ...                                                     */
+/*---------------------------------------------------------------------*/
 service manifest() {
    return hop.HTTPResponseString( 
       `{"short_name": "hopc@${hop.hostname}", 

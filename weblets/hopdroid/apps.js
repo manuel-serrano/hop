@@ -239,6 +239,8 @@ service appRemove( app ) {
    console.log( "removing...", app );
 }
 
+/*---------------------------------------------------------------------*/
+/*    services                                                         */
+/*---------------------------------------------------------------------*/
 apps.path = "/hop/hopdroid/apps";
-apps.path = "/hop/hopdroid/apps/app";
 appRemove.path = "/hop/hopdroid/apps/app/remove";
