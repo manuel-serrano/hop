@@ -1701,6 +1701,11 @@
 ;*    string.                                                          */
 ;*---------------------------------------------------------------------*/
 (define (utf8-codeunit-ref this::JsStringLiteralUTF8 str::bstring i::long)
+
+   (define (oldutf8 str r s j)
+      (let* ((utf8 (substring str r (+fx r s)))
+	     (ucs2 (utf8-string->ucs2-string utf8)))
+	 (ucs2->integer (ucs2-string-ref ucs2 j))))
    
    (define (return-utf8 this str i j c s r u)
       (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
@@ -1714,9 +1719,23 @@
 	    ((char=? c (integer->char #xfc))
 	     (utf8-right-replacement-codeunit str r))
 	    (else
-	     (let* ((utf8 (substring str r (+fx r s)))
-		    (ucs2 (utf8-string->ucs2-string utf8)))
-		(ucs2->integer (ucs2-string-ref ucs2 j)))))))
+	     (let ((byte0 (char->integer c)))
+		(let loop ((ucs2 byte0)
+			   (byte byte0)
+			   (bits 6)
+			   (i (+fx r 1)))
+		   (if (=fx (bit-and byte #x40) 0)
+		       (let ((ucs2 (bit-and ucs2 (-fx (bit-lsh 1 bits) 1))))
+			  (if (>=fx ucs2 #x10000)
+			      (let ((ucs2 (-fx ucs2 #x10000)))
+				 (+fx #xdc (bit-and ucs2 #x3ff)))
+			      ucs2))
+		       (let ((next (char->integer (string-ref str i))))
+			  (loop (+fx (bit-lsh ucs2 6)
+				   (bit-and next #x3f))
+			     (bit-lsh byte 1)
+			     (+fx bits 5)
+			     (+fx i 1))))))))))
    
    (define (rollback-utf8 this str i)
       (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
