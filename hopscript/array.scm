@@ -4098,7 +4098,7 @@
       (let ((final length))
 	 (cond
 	    ((js-object-mode-inline? this)
-	     ($vector-fill! vec 0 (uint32->fixnum ilen) value)
+	     ($vector-fill! vec 0 (uint32->fixnum length) value)
 	     (set! ilen length))
 	    (else
 	     (let loop ((i #u32:0))
