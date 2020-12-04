@@ -95,7 +95,7 @@ scheme2js:
 node_modules: libdir hopc-bin hopscript-lib nodejs
 	$(MAKE) -C node_modules build
 
-doc: lib hopc-bin src-bin js2scheme scheme2js hopscript nodejs node_modules
+doc: lib hopc-bin src-bin js2scheme scheme2js hopscript nodejs
 	if [ "$(NODOC) " != "yes " -a "$(THREADS) " = "yes " ]; then \
 	  $(MAKE) -C doc build; \
         fi
