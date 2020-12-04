@@ -1107,7 +1107,7 @@
 		  val)
 		 (else
 		  (js-array-put! arr (js-uint32-tointeger idx) val throw %this))))
-	     ((<u32 idx (fixnum->uint32 (vector-length vec)))
+	     ((js-object-mode-inline? arr)
 	      (vector-set! vec (uint32->fixnum idx) val)
 	      (cond
 		 ((>u32 idx ilen)
@@ -4098,7 +4098,8 @@
       (let ((final length))
 	 (cond
 	    ((js-object-mode-inline? this)
-	     ($vector-fill! vec 0 (uint32->fixnum ilen) value))
+	     ($vector-fill! vec 0 (uint32->fixnum length) value)
+	     (set! ilen length))
 	    (else
 	     (let loop ((i #u32:0))
 		(if (<u32 i final)
