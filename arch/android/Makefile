@@ -391,7 +391,8 @@ $(ANDROIDBUILDDIR)/assets: \
   $(ANDROIDBUILDDIR)/assets/bin \
   $(ANDROIDBUILDDIR)/assets/lib \
   $(ANDROIDBUILDDIR)/assets/share \
-  $(ANDROIDBUILDDIR)/assets/cache
+  $(ANDROIDBUILDDIR)/assets/cache \
+  $(ANDROIDBUILDDIR)/assets/rcdir
 	$(MAKE) rename-afiles
 	$(MAKE) assets.weblet
 	$(MAKE) assets.module
@@ -400,6 +401,7 @@ $(ANDROIDBUILDDIR)/assets: \
 $(ANDROIDBUILDDIR)/assets.client: \
   $(ANDROIDBUILDDIR)/assets/etc \
   $(ANDROIDBUILDDIR)/assets/cache \
+  $(ANDROIDBUILDDIR)/assets/rcdir \
   $(ANDROIDBUILDDIR)/assets/hz
 	$(MAKE) rename-afiles
 	$(MAKE) assets.post-install.client
@@ -454,6 +456,11 @@ $(ANDROIDBUILDDIR)/assets/share:
 
 $(ANDROIDBUILDDIR)/assets/cache:
 	mkdir -p $(ANDROIDBUILDDIR)/assets/cache
+
+$(ANDROIDBUILDDIR)/assets/rcdir: rcdir
+	mkdir -p $(ANDROIDBUILDDIR)/assets
+	rm -rf $@
+	cp -r $(ANDROIDDIR)/rcdir $(ANDROIDBUILDDIR)/assets
 
 $(ANDROIDBUILDDIR)/assets/hz: $(HOPHZ)
 	if [ "$(HOPHZ) " != " " ]; then \
