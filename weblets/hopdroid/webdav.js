@@ -49,8 +49,6 @@ export function WEBDAV() {
 /*    webdav ...                                                       */
 /*---------------------------------------------------------------------*/
 service webdav() {
-   console.log( "wd=", config.enableWebdav );
-   
    return <div class="webdav-page">
      <script>
        function webdavToggle() {
