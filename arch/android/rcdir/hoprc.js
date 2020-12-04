@@ -15,28 +15,18 @@ import { add as userAdd } from hop.user;
 import { config } from hop.config;
 
 /*---------------------------------------------------------------------*/
-/*    Default configuration                                            */
-/*---------------------------------------------------------------------*/
-let config = {};
-
-/*---------------------------------------------------------------------*/
 /*    Load the managed file (manipulated by Hop).                      */
 /*---------------------------------------------------------------------*/
 try {
-   console.log( "avant load..." );
-   config.init( require( "./config.json" ) );
-   console.log( "apres load..." );
+   Object.assign( hop.config, require( "./config.json" ) );
 } catch( e ) {
-   console.log( "raise load..." );
    ;
 }
 
 /*---------------------------------------------------------------------*/
 /*    Anonymous user ...                                               */
 /*---------------------------------------------------------------------*/
-console.log( ">>> userAdd..." );
 userAdd( { name: "anonymous", services: '*', directories: '*' } );
-console.log( "<<< userAdd..." );
 
 /*---------------------------------------------------------------------*/
 /*    Load the user file.                                              */

@@ -14,7 +14,7 @@ var path = require( 'path' );
 import { hopdroid } from hop.hopdroid;
 import * as sp from hop.spage;
 import { NAVTITLE } from './xml.js';
-import * as config from './config.js';
+import { config, update as updateConfig } from './config.js';
 
 /*---------------------------------------------------------------------*/
 /*    WEBDAV ...                                                       */
@@ -85,9 +85,8 @@ service webdav() {
 /*    webdavToggle ...                                                 */
 /*---------------------------------------------------------------------*/
 service webdavToggle() {
-   console.log( "toggle..." );
    config.enableWebdav = !config.enableWebdav;
-   config.update();
+   updateConfig();
    return config.enableWebdav;
 }
 

@@ -18,7 +18,13 @@ import { APPS } from './apps.js';
 import { SYSTEM } from './system.js';
 import { WEBDAV } from './webdav.js';
 import { ABOUT } from './about.js';
+import { init as configInit } from './config.js';
 
+/*---------------------------------------------------------------------*/
+/*    Initialize the hopdroid config system.                           */
+/*---------------------------------------------------------------------*/
+configInit();
+   
 /*---------------------------------------------------------------------*/
 /*    hopdroid                                                         */
 /*---------------------------------------------------------------------*/

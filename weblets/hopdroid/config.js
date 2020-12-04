@@ -17,22 +17,20 @@ import { config } from hop.config;
 /*    localConfig ...                                                  */
 /*---------------------------------------------------------------------*/
 const localConfig = {
-   get enableWebdav() { return config.enableWebdav },
-   set enableWebdav( v ) { return config.enableWebdav = v }
+   get enableWebdav() { return config.enableWebdav; },
+   set enableWebdav( v ) { return config.enableWebdav = v; }
 }
 /*---------------------------------------------------------------------*/
 /*    init ...                                                         */
 /*---------------------------------------------------------------------*/
 export function init( cfg ) {
-   Object.assig( localConfig, localConfig );
-   console.log( "lc=", localConfig );
+   Object.assig( localConfig, config );
 }
 
 /*---------------------------------------------------------------------*/
 /*    update ...                                                       */
 /*---------------------------------------------------------------------*/
 export function update() {
-   console.log( "updat=", config );
    const fd = fs.openSync( path.join( config.rcDirectory, "config.json" ), "w+" );
    fs.writeSync( fd, JSON.stringify( localConfig ) );
    fs.close( fd );
@@ -41,4 +39,4 @@ export function update() {
 /*---------------------------------------------------------------------*/
 /*    export                                                           */
 /*---------------------------------------------------------------------*/
-export default localConfig;
+export { localConfig as config };
