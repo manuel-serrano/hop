@@ -11,7 +11,7 @@
 const path = require( "path" );
 const fs = require( "fs" );
 
-import { user } from hop.user;
+import { add as userAdd } from hop.user;
 import { config } from hop.config;
 
 /*---------------------------------------------------------------------*/
@@ -23,15 +23,20 @@ let config = {};
 /*    Load the managed file (manipulated by Hop).                      */
 /*---------------------------------------------------------------------*/
 try {
+   console.log( "avant load..." );
    config.init( require( "./config.json" ) );
+   console.log( "apres load..." );
 } catch( e ) {
+   console.log( "raise load..." );
    ;
 }
 
 /*---------------------------------------------------------------------*/
 /*    Anonymous user ...                                               */
 /*---------------------------------------------------------------------*/
-user.add( { name: "anonymous", services: '*', directories: '*' } );
+console.log( ">>> userAdd..." );
+userAdd( { name: "anonymous", services: '*', directories: '*' } );
+console.log( "<<< userAdd..." );
 
 /*---------------------------------------------------------------------*/
 /*    Load the user file.                                              */
