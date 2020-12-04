@@ -1068,7 +1068,6 @@ if [ "$arch " = "android " ]; then
   bcflags="$bcflags -srfi enable-hopdroid";
   bglcloselibs="$bglcloselibs phone";
   bglextralibs="$bglextralibs bigloophone";
-  hopapplibs="$hopapplibs hopdroid";
 fi
 
 #*---------------------------------------------------------------------*/
