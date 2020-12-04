@@ -37,8 +37,11 @@ POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \
   share-afile scheme2js hopscript js2scheme nodejs \
   android node_modules doc test .buildtag
 
-build: bindir libdir lib weblets widget nodejs doc \
-  $(BUILDSPECIFIC) bin share node_modules
+build: build-sans-modules
+	$(MAKE) -C node_modules
+
+build-sans-modules: bindir libdir lib weblets widget nodejs doc \
+  $(BUILDSPECIFIC) bin share
 
 bindir:
 	mkdir -p bin
@@ -481,7 +484,7 @@ distrib-tmp:
 .PHONY: predistrib
 
 predistrib:
-	$(MAKE)
+	$(MAKE) build-sans-modules
 	$(MAKE) -C widget predistrib
 	$(MAKE) -C share predistrib
 	$(MAKE) -C hophz predistrib
