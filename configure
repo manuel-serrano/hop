@@ -70,6 +70,7 @@ bglextracloselibs=
 
 extralibs=
 bglextralibs="biglooweb bigloomultimedia"
+hopapplibs=
 
 closure=
 
@@ -1067,6 +1068,7 @@ if [ "$arch " = "android " ]; then
   bcflags="$bcflags -srfi enable-hopdroid";
   bglcloselibs="$bglcloselibs phone";
   bglextralibs="$bglextralibs bigloophone";
+  hopapplibs="$hopapplibs hopdroid";
 fi
 
 #*---------------------------------------------------------------------*/
@@ -1224,6 +1226,7 @@ cat $mkmf.in \
         -e "s|@RTSCONFIG@|$rts|" \
         -e "s|@HOPGCCLOSELIB@|$bigloogc|" \
         -e "s|@BIGLOOEXTRALIBS@|$bglextralibs|" \
+        -e "s|@HOPAPPLIBS@|$hopapplibs|" \
         -e "s|@EXTRALIBS@|$extralibs|" \
 	-e "s|@BGLMACH@|$mach|" \
 	-e "s|@BGLARCH@|$arch|" \

@@ -23,8 +23,8 @@ const localConfig = {
 /*---------------------------------------------------------------------*/
 /*    init ...                                                         */
 /*---------------------------------------------------------------------*/
-export function init( cfg ) {
-   Object.assig( localConfig, config );
+export function init() {
+   Object.assign( localConfig, config );
 }
 
 /*---------------------------------------------------------------------*/
