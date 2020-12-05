@@ -238,64 +238,75 @@
       (when (hop-profile)
 	 (js-profile-init `(:server #t) #f #f))
       ;; rc.js file
-      (when (string? (hop-rc-loaded))
-	 (javascript-rc %global %module %worker))
+      (if (string? (hop-rc-loaded))
+	  (let ((rcmutex (make-mutex))
+		(rccondv (make-condition-variable)))
+	     (synchronize rcmutex
+		(javascript-rc %global %module %worker rcmutex rccondv)
+		(javascript-init-main-loop files exprs %global %module %worker)
+		(condition-variable-wait! rccondv rcmutex)
+		%worker))
+	  (javascript-init-main-loop files exprs %global %module %worker))))
+
+;*---------------------------------------------------------------------*/
+;*    javascript-init-main-loop ...                                    */
+;*---------------------------------------------------------------------*/
+(define (javascript-init-main-loop files exprs %global %module %worker)
    (tprint "jsinit.3")
-      ;; hss extension
-      (when (hop-javascript)
-	 (javascript-init-hss %worker %global))
-      ;; push user expressions
-      (when (pair? exprs)
-	 (js-worker-push-thunk! %worker "cmdline"
-	    (lambda ()
-	       (for-each (lambda (expr)
-			    (call-with-input-string (string-append expr "\n")
-			       (lambda (ip)
-				  (%js-eval ip 'eval %global
-				     (js-undefined) %global))))
-		  exprs))))
-      ;; close user registration
+   ;; hss extension
+   (javascript-init-hss %worker %global)
+   ;; push user expressions
+   (when (pair? exprs)
       (js-worker-push-thunk! %worker "cmdline"
 	 (lambda ()
-	    (synchronize jsmutex
-	       (set! jsinit #t)
-	       (condition-variable-signal! jscondv))))
-      ;; preload the command-line files
-      (when (pair? files)
-	 (let ((req (instantiate::http-server-request
-		       (host "localhost")
-		       (port (hop-default-port)))))
-	    ;; set a dummy request
-	    (thread-request-set! #unspecified req)
-	    ;; preload the user files
-	    (for-each (lambda (f)
-			 (load-command-line-weblet f %global %module %worker))
-	       files)
-	    ;; unset the dummy request
-	    (thread-request-set! #unspecified #unspecified)))
-      ;; start the JS repl loop
-      (when (eq? (hop-enable-repl) 'js)
-	 (js-worker-push-thunk! %worker "repl"
-	    (lambda ()
-	       (hopscript-repl (hop-scheduler) %global %worker))))
-      ;; start the javascript loop
-      (with-access::WorkerHopThread %worker (mutex condv module-cache)
-   (tprint "jsinit.4")
-	 (synchronize mutex
-	    ;; module-cache is #f until the worker is initialized and running
-	    ;; (see hopscript/worker.scm)
-	    (unless module-cache
-	       (condition-variable-wait! condv mutex))))
+	    (for-each (lambda (expr)
+			 (call-with-input-string (string-append expr "\n")
+			    (lambda (ip)
+			       (%js-eval ip 'eval %global
+				  (js-undefined) %global))))
+	       exprs))))
+   ;; close user registration
+   (js-worker-push-thunk! %worker "cmdline"
+      (lambda ()
+	 (synchronize jsmutex
+	    (set! jsinit #t)
+	    (condition-variable-signal! jscondv))))
+   ;; preload the command-line files
+   (when (pair? files)
+      (let ((req (instantiate::http-server-request
+		    (host "localhost")
+		    (port (hop-default-port)))))
+	 ;; set a dummy request
+	 (thread-request-set! #unspecified req)
+	 ;; preload the user files
+	 (for-each (lambda (f)
+		      (load-command-line-weblet f %global %module %worker))
+	    files)
+	 ;; unset the dummy request
+	 (thread-request-set! #unspecified #unspecified)))
+   ;; start the JS repl loop
+   (when (eq? (hop-enable-repl) 'js)
+      (js-worker-push-thunk! %worker "repl"
+	 (lambda ()
+	    (hopscript-repl (hop-scheduler) %global %worker))))
+   ;; start the javascript loop
+   (with-access::WorkerHopThread %worker (mutex condv module-cache)
+      (tprint "jsinit.4")
+      (synchronize mutex
+	 ;; module-cache is #f until the worker is initialized and
+	 ;; running (see hopscript/worker.scm)
+	 (unless module-cache
+	    (condition-variable-wait! condv mutex))))
    (tprint "jsinit.5")
-      ;; return the worker for the main loop to join
-      %worker))
+   ;; return the worker for the main loop to join
+   %worker)
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript-rc ...                                                */
 ;*    -------------------------------------------------------------    */
 ;*    Load the hoprc.js in a sandboxed environment.                    */
 ;*---------------------------------------------------------------------*/
-(define (javascript-rc %global %module %worker)
+(define (javascript-rc %global %module %worker rcmutex rccondv)
    
    (define (load-rc path)
       (hop-rc-file-set! path)
@@ -318,14 +329,19 @@
 			(tprint "jsrc.1")
 			(nodejs-load path path %global %module %worker)
 			(tprint "jsrc.2"))
-		     (hop-rc-loaded! oldload)))))))
-
+		     (begin
+			(hop-rc-loaded! oldload)
+			(synchronize rcmutex
+			   (condition-variable-broadcast! rccondv)))))))))
+   
    (let ((path (string-append (prefix (hop-rc-loaded)) ".js")))
       (if (file-exists? path)
 	  (load-rc path)
 	  (let ((path (string-append (prefix (hop-rc-file)) ".js")))
-	     (when (file-exists? path)
-		(load-rc path))))))
+	     (if (file-exists? path)
+		 (load-rc path)
+		 (synchronize rcmutex
+		    (condition-variable-broadcast! rccondv)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript-init-hss ...                                          */
