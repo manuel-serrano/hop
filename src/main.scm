@@ -244,7 +244,9 @@
 	     (synchronize rcmutex
 		(javascript-rc %global %module %worker rcmutex rccondv)
 		(javascript-init-main-loop files exprs %global %module %worker)
+		(tprint "jsinit.3")
 		(condition-variable-wait! rccondv rcmutex)
+		(tprint "jsinit.4")
 		%worker))
 	  (javascript-init-main-loop files exprs %global %module %worker))))
 
@@ -252,7 +254,7 @@
 ;*    javascript-init-main-loop ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (javascript-init-main-loop files exprs %global %module %worker)
-   (tprint "jsinit.3")
+   (tprint "jsinit.mainloop.3")
    ;; hss extension
    (javascript-init-hss %worker %global)
    ;; push user expressions
@@ -291,13 +293,13 @@
 	    (hopscript-repl (hop-scheduler) %global %worker))))
    ;; start the javascript loop
    (with-access::WorkerHopThread %worker (mutex condv module-cache)
-      (tprint "jsinit.4")
+      (tprint "jsinit.mainloop.4")
       (synchronize mutex
 	 ;; module-cache is #f until the worker is initialized and
 	 ;; running (see hopscript/worker.scm)
 	 (unless module-cache
 	    (condition-variable-wait! condv mutex))))
-   (tprint "jsinit.5")
+   (tprint "jsinit.mainloop.5")
    ;; return the worker for the main loop to join
    %worker)
 
