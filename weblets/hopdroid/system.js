@@ -84,6 +84,7 @@ service systemResetServer() {
       phone.reboot();
       return false;
    } catch( e ) {
+      console.error( "systemResetServer: cannot reboot", e.toString() );
       return `Cannot reboot phone ${e.toString()}`;
    }
 }
