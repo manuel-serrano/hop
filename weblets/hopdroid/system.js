@@ -59,7 +59,7 @@ service system() {
 		      document.location = "/hop/hopdroid";
 		   }
 		} );
-	     setTimeout( () => document.location = "/hop/hopdroid", 3000 );
+	     setTimeout( () => document.location = "/hop/hopdroid", 5000 );
 	  }
        }
      </script>
