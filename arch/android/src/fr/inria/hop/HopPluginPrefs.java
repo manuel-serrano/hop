@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul 17 13:19:20 2016                          */
-/*    Last change :  Sun May 17 10:27:00 2020 (serrano)                */
+/*    Last change :  Sat Dec  5 16:26:02 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android preferences plugins                                      */

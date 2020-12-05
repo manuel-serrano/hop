@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Sun Nov 29 09:09:16 2020 (serrano)                */
+/*    Last change :  Sat Dec  5 16:25:39 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -169,6 +169,7 @@ public class HopDroid extends Thread {
 
    // onConnect
    public void onConnect() {
+      Log.i( "HopDroid", "TBR(5dec2020) conConnect.1" );
       // bind the plugins that need the activity
       synchronized( plugins ) {
 	 if( HopConfig.PLUGINPREFS ) {
@@ -176,6 +177,7 @@ public class HopDroid extends Thread {
 	 }
       }
       
+      Log.i( "HopDroid", "TBR(5dec2020) onConnect.2" );
       // called by HopService.onConnect()
       synchronized( plugins ) {
 	 int s = plugins.size();
@@ -183,10 +185,12 @@ public class HopDroid extends Thread {
 	 // plugin 0 is null
 	 for( int i = 1; i < s; i++ ) {
 	    HopPlugin p = (HopPlugin)plugins.get( i );
+      Log.i( "HopDroid", "TBR(5dec2020) onConnect.3 " + p.name );
 	    if( p != null ) {
 	       p.onConnect();
 	    }
 	 }
+	 Log.i( "HopDroid", "TBR(5dec2020) onConnect.4 " );
       }
    }
 	 

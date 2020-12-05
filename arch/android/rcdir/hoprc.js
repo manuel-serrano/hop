@@ -19,7 +19,6 @@ import { config } from hop.config;
 /*---------------------------------------------------------------------*/
 try {
    Object.assign( config, require( "./config.json" ) );
-   console.log( "HCONFIG=", config.enableWebdav );
 } catch( e ) {
    console.log( "hoprc.js", "cannot load \"./config.json\"" );
    console.log( e.toString() );

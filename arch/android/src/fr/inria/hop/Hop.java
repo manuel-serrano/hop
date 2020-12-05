@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Fri Dec  4 09:56:16 2020 (serrano)                */
+/*    Last change :  Sat Dec  5 17:17:44 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -121,7 +121,7 @@ public class Hop extends Thread {
       final int[] pid = new int[ 1 ];
       String sh = SHELL;
       final String[] ahost = new String[ 1 ];
-      final boolean[] ready = new boolean[ 1 ];
+      final Boolean[] ready = new Boolean[ 1 ];
 
       Log.d( "Hop", "=================================================" );
       Log.d( "Hop", "run..." );
@@ -133,30 +133,33 @@ public class Hop extends Thread {
 	       try {
 		  synchronized( ahost ) {
 		     asrv = new ServerSocket( 0 );
-		     ahost[ 0 ] =
-			"127.0.0.1"
-			+ ":" + asrv.getLocalPort();
+		     ahost[ 0 ] = "127.0.0.1" + ":" + asrv.getLocalPort();
 		     // notify the acknowledge host server address and port
 		     ahost.notify();
+		     Log.d( "Hop", "TBR(5dec2020) spawning ack server.4.." );
 		  }
-		  synchronized( ready ) {
-		     try {
-			Socket sock = asrv.accept();
-			final InputStream ip = sock.getInputStream();
-			Log.d( "Hop", "Acknowledge server connected" );
+		  
+		  Socket sock = asrv.accept();
+		     
+		  try {
+		     final InputStream ip = sock.getInputStream();
+		     Log.d( "Hop", "Acknowledge server connected" );
 			
-			ready[ 0 ] = ip.read() == 0x68
-			   && ip.read() == 0x6f
-			   && ip.read() == 0x70;
+		     ready[ 0 ] = new Boolean(
+			ip.read() == 0x68
+			&& ip.read() == 0x6f
+			&& ip.read() == 0x70 );
 			
-			// notify the acknowledge
+		     // notify the acknowledge
+		     synchronized( ready ) {
 			ready.notify();
-		     } catch( IOException exc ) {
-			Log.e( "Hop", "Acknowledge server error!" + exc );
-			ready[ 0 ] = false;
-			ready.notify();
-			asrv.close();
 		     }
+		  } catch( IOException exc ) {
+		     Log.e( "Hop", "Acknowledge server error!" + exc );
+		     ready[ 0 ] = new Boolean( false );
+		     ready.notify();
+		  } finally {
+		     asrv.close();
 		  }
 	       } catch( IOException exc ) {
 		  Log.e( "Hop", "Cannot spawn client acknowledge server! " + exc );
@@ -173,36 +176,34 @@ public class Hop extends Thread {
       //    and the port number of the acknowledge server.
       // 3. the acknowledge server waits for the acknowledge
       try {
-	 synchronized( ready ) {
-	    synchronized( ahost ) {
-	       th.start();
+	 ready[ 0 ] = null;
+	 
+	 synchronized( ahost ) {
+	    th.start();
 
-	       // wait for the acknowledge port number
-	       ahost.wait();
-
-	       String cmd = "export HOME=" + HOME().getAbsolutePath() + "; "
-		  + "export LD_LIBRARY_PATH="
-		  + root + "/lib/bigloo/" + HopConfig.BIGLOORELEASE + ":"
-		  + root + "/lib/hop/" + HopConfig.HOPRELEASE + ":$LD_LIBRARY_PATH;"
-		  + "exec " + root + HOP + " " + HOPARGS
-		  + " -p " + port
-		  + " " + debug
-		  + " --max-threads " + maxthreads
-		  + (zeroconf ? " -z" : " --no-zeroconf")
-		  + (webdav ? " -d" : "")
-		  + (jobs ? " --jobs" : " --no-jobs")
-		  + " --rc-dir " + rcdir
-		  + " --acknowledge " + ahost[ 0 ]
-		  + " -v2 " + args;
-
-	       Log.i( "Hop", HopConfig.APP + " exec [" + sh + " -c \"" + cmd + "\"]");
-	       HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
-	       Log.v( "Hop", "Hop process started, pid=" + pid[ 0 ] + ", HopFd=" +  HopFd );
-
-	       // wait for the Hop acknowledge
-	       ready.wait();
-	    }
+	    // wait for the acknowledge port number
+	    ahost.wait();
 	 }
+
+	 String cmd = "export HOME=" + HOME().getAbsolutePath() + "; "
+	    + "export LD_LIBRARY_PATH="
+	    + root + "/lib/bigloo/" + HopConfig.BIGLOORELEASE + ":"
+	    + root + "/lib/hop/" + HopConfig.HOPRELEASE + ":$LD_LIBRARY_PATH;"
+	    + "exec " + root + HOP + " " + HOPARGS
+	    + " -p " + port
+	    + " " + debug
+	    + " --max-threads " + maxthreads
+	    + (zeroconf ? " -z" : " --no-zeroconf")
+	    + (webdav ? " -d" : "")
+	    + (jobs ? " --jobs" : " --no-jobs")
+	    + " --rc-dir " + rcdir
+	    + " --acknowledge " + ahost[ 0 ]
+	    + " --so-policy none"
+	    + " -v2 " + args;
+
+	 Log.i( "Hop", HopConfig.APP + " exec [" + sh + " -c \"" + cmd + "\"]");
+	 HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
+	 Log.v( "Hop", "Hop process started, pid=" + pid[ 0 ] + ", HopFd=" +  HopFd );
       } catch( Throwable exc ) {
 	 Log.e( "Hop", "Error while waiting for Hop server acknowledge " + exc );
 	 exc.printStackTrace();
@@ -286,6 +287,19 @@ public class Hop extends Thread {
       watcher.start();
       logger.start();
 
+      // wait for Hop to acknowledge
+      try {
+	 synchronized( ready ) {
+	    if( ready[ 0 ] == null ) {
+	       ready.wait();
+	    }
+	 }
+      } catch( Exception e ) {
+	 Log.e( "Hop", "Acknowledge error " + e );
+	 e.printStackTrace();
+	 ;
+      }
+      
       // spawn the initial Hop service
       service.handler.sendEmptyMessage( HopLauncher.MSG_HOP_START );
    }
@@ -302,6 +316,11 @@ public class Hop extends Thread {
    public void restart() {
       Log.i( "Hop", "restart requested..." );
       kill();
+      // wait the socket server to be cleanup by the system
+      try {
+	 Thread.sleep( 2000 );
+      } catch( Exception e ) {
+      }
       run();
    }
    
