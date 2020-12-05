@@ -34,6 +34,7 @@ service hopdroid( o ) {
      <head>
        <meta name="viewport" 
 	     content="width=device-width, height=device-height, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+       <script src=${sp.script} type="application/x-javascript"/>
        <link rel="manifest" href=${manifest()}/>
        <link href=${sp.css} rel="stylesheet" type="text/css"/>
        <link href=${require.resolve( "./hopdroid.hss" )} rel="stylesheet" type="text/css"/>
@@ -42,7 +43,6 @@ service hopdroid( o ) {
        <link href=${require.resolve( "./webdav.hss" )} rel="stylesheet" type="text/css"/>
        <link href=${require.resolve( "./system.hss" )} rel="stylesheet" type="text/css"/>
        <link href=${require.resolve( "./about.hss" )} rel="stylesheet" type="text/css"/>
-       <script src=${sp.script} type="application/x-javascript"/>
      </head>
      
      <body class="hopdroid">

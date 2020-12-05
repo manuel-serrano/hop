@@ -81,7 +81,6 @@ service system() {
 /*---------------------------------------------------------------------*/
 service systemResetServer() {
    try {
-      console.log( "PHONE.reboot=", phone.reboot );
       phone.reboot();
       return false;
    } catch( e ) {
