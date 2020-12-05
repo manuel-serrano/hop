@@ -18,9 +18,11 @@ import { config } from hop.config;
 /*    Load the managed file (manipulated by Hop).                      */
 /*---------------------------------------------------------------------*/
 try {
-   Object.assign( hop.config, require( "./config.json" ) );
+   Object.assign( config, require( "./config.json" ) );
+   console.log( "HCONFIG=", config.enableWebdav );
 } catch( e ) {
-   ;
+   console.log( "hoprc.js", "cannot load \"./config.json\"" );
+   console.log( e.toString() );
 }
 
 /*---------------------------------------------------------------------*/
