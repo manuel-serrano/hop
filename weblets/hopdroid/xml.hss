@@ -67,6 +67,7 @@ nav.navtitle ul li.nav-back {
 nav.navtitle ul li.nav-back button {
     color: white;
     font-size: 20px;
+    line-height: 10px;
 }
 
 nav.navtitle ul button.nav-back {

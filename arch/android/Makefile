@@ -660,6 +660,7 @@ apk.hop.configure:
             --library=text \
             --library=phone \
             --disable-doc \
+--debug \
             --bigloo-pcre=no --bigloo-unistring=no \
             $(HOPCONFIGUREOPT))
 
