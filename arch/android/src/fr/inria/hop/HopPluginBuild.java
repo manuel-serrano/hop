@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Sun Dec  6 18:13:11 2020 (serrano)                */
+/*    Last change :  Sun Dec  6 19:31:56 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the BUILD info                                               */
@@ -18,6 +18,9 @@ import android.app.*;
 import android.os.*;
 import android.util.*;
 import android.util.Log;
+import android.content.pm.*;
+import android.os.Environment;
+import android.content.Context;
 
 import java.io.*;
 
@@ -25,7 +28,6 @@ import java.io.*;
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
 public class HopPluginBuild extends HopPlugin {
-
    // constructor
    public HopPluginBuild( HopDroid h, String n ) {
       super( h, n );
@@ -59,20 +61,20 @@ public class HopPluginBuild extends HopPlugin {
          // home
 	 case (byte)'h':
 	    op.write( "\"".getBytes() );
-	    op.write( h.hop.HOME().getBytes() );
+	    op.write( Hop.HOME().getAbsolutePath().getBytes() );
 	    op.write( "\"".getBytes() );
 	    return;
 		      
          // storage
 	 case (byte)'s':
 	    op.write( "\"".getBytes() );
-	    op.write( Environment.getExternalStorageDirectory().getBytes() );
+	    op.write( hopdroid.activity.getApplicationContext().getExternalFilesDir( null ).getAbsolutePath().getBytes() );
 	    op.write( "\"".getBytes() );
 	    return;
 	    
          // application info
 	 case (byte)'i':
-	    ApplicationInfo info = h.activity.getApplicationInfo();
+	    ApplicationInfo info = hopdroid.activity.getApplicationInfo();
 	    op.write( "(".getBytes() );
 	    op.write( "class-name: \"".getBytes() );
 	    op.write( info.className.getBytes() );
@@ -81,7 +83,7 @@ public class HopPluginBuild extends HopPlugin {
 	    op.write( "\" process-name: \"".getBytes() );
 	    op.write( info.processName.getBytes() );
 	    op.write( "\" data-dir: \"".getBytes() );
-	    op.write( info.dataDir().getBytes() );
+	    op.write( info.dataDir.getBytes() );
 	    op.write( "\")".getBytes() );
 	    return;
       }
