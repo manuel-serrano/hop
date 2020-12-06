@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Fri Nov 13 09:16:27 2020 (serrano)                */
+/*    Last change :  Sun Dec  6 18:24:56 2020 (serrano)                */
 /*    Copyright   :  2010-20 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
@@ -108,6 +108,8 @@ public class HopInstaller implements HopStage {
       } else if( path.endsWith( JSGZ ) ) {
 	 return path.replace( JSGZ, "js.gz" );
       } else if( path.endsWith( "hoprc.hop" ) ) {
+	 return path.replace( "config", ".config" );
+      } else if( path.endsWith( "hoprc.js" ) ) {
 	 return path.replace( "config", ".config" );
       } else {
 	 return path;
@@ -273,6 +275,26 @@ public class HopInstaller implements HopStage {
       }
    }
 
+   // create the default hoprc.js file
+   void hoprc() throws IOException {
+      synchronized( abort ) {
+	 if( !abort ) {
+	    File file = new File( Hop.HOME(), ".config/hop/hoprc.js" );
+
+	    if( !file.exists() ) {
+	       OutputStream op = new FileOutputStream( file );
+	       Log.i( "HopInstaller", "generating \"" + file + "\"" );
+      
+	       op.write( "// generated file (HopInstaller), edit at your own risk\n".getBytes() );
+	       op.write( "require( \"".getBytes() );
+	       op.write( activity.getApplicationInfo().dataDir.getBytes() );
+	       op.write( "/assets/rcdir/hoprc.js".getBytes() );
+	       op.write( " \" );\n".getBytes() );
+	    }
+	 }
+      }
+   }
+
    private void raise( Exception e ) {
       String msg = e.getMessage();
       
@@ -297,6 +319,7 @@ public class HopInstaller implements HopStage {
 		     try {
 			unpack();
 			androidhome();
+			hoprc();
 
 			if( !isClientInstaller ) {
 			   Log.d( "HopInstaller", "setting exec mode: " + root + "/bin/hop" );

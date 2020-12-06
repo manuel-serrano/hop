@@ -25,6 +25,9 @@
 	      (model::bstring read-only (get get-android-model))
 	      (product::bstring read-only (get get-android-product))
 	      (protocol::byte read-only (default 2))
+	      (home::bstring read-only (get get-android-home))
+	      (external-storage::bstring read-only (get get-android-external-storage))
+	      (application-info::pair read-only (get get-android-application-info))
 	      (initid::int read-only (default 1))
 	      (%sock-plugin (default #f))
 	      (%sock-event (default #f))
@@ -122,6 +125,24 @@
 ;*---------------------------------------------------------------------*/
 (define (get-android-product p::androidphone)
    (get-android-build p #\p))
+
+;*---------------------------------------------------------------------*/
+;*    get-android-home ...                                             */
+;*---------------------------------------------------------------------*/
+(define (get-android-home p::androidphone)
+   (get-android-build p #\h))
+
+;*---------------------------------------------------------------------*/
+;*    get-android-external-storage ...                                 */
+;*---------------------------------------------------------------------*/
+(define (get-android-external-storage p::androidphone)
+   (get-android-build p #\e))
+
+;*---------------------------------------------------------------------*/
+;*    get-android-application-info ...                                 */
+;*---------------------------------------------------------------------*/
+(define (get-android-application-info p::androidphone)
+   (get-android-build p #\i))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-locales ::androidphone ...                                 */

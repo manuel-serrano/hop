@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Sun May 17 10:26:36 2020 (serrano)                */
+/*    Last change :  Sun Dec  6 18:13:11 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the BUILD info                                               */
@@ -54,6 +54,35 @@ public class HopPluginBuild extends HopPlugin {
 	    op.write( "\"".getBytes() );
 	    op.write( android.os.Build.PRODUCT.getBytes() );
 	    op.write( "\"".getBytes() );
+	    return;
+
+         // home
+	 case (byte)'h':
+	    op.write( "\"".getBytes() );
+	    op.write( h.hop.HOME().getBytes() );
+	    op.write( "\"".getBytes() );
+	    return;
+		      
+         // storage
+	 case (byte)'s':
+	    op.write( "\"".getBytes() );
+	    op.write( Environment.getExternalStorageDirectory().getBytes() );
+	    op.write( "\"".getBytes() );
+	    return;
+	    
+         // application info
+	 case (byte)'i':
+	    ApplicationInfo info = h.activity.getApplicationInfo();
+	    op.write( "(".getBytes() );
+	    op.write( "class-name: \"".getBytes() );
+	    op.write( info.className.getBytes() );
+	    op.write( "\" permission: \"".getBytes() );
+	    op.write( info.permission.getBytes() );
+	    op.write( "\" process-name: \"".getBytes() );
+	    op.write( info.processName.getBytes() );
+	    op.write( "\" data-dir: \"".getBytes() );
+	    op.write( info.dataDir().getBytes() );
+	    op.write( "\")".getBytes() );
 	    return;
       }
    }
