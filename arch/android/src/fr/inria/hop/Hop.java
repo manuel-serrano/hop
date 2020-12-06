@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sun Dec  6 06:56:01 2020 (serrano)                */
+/*    Last change :  Sun Dec  6 10:54:51 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -138,7 +138,6 @@ public class Hop extends Thread {
 		     ahost[ 0 ] = "127.0.0.1" + ":" + asrv.getLocalPort();
 		     // notify the acknowledge host server address and port
 		     ahost.notify();
-		     Log.d( "Hop", "TBR(5dec2020) spawning ack server.4.." );
 		  }
 		  
 		  Socket sock = asrv.accept();
@@ -407,28 +406,6 @@ public class Hop extends Thread {
 	    }
 	 }
       }
-   }
-
-   // emergencyExit
-   protected static void emergencyExit() {
-      // Try to kill a running background Hop process. This function is called
-      // after the HopDroid interface has been shutdown to all local sockets
-      // are already closed. We then, just emit a request to the server
-      // that will make it fails... and exit.
-      Log.i( "Hop", ">>> emergencyExit..." );
-      try {
-	 Socket sock = new Socket( "localhost", Integer.parseInt( Hop.port ) );
-	 OutputStream op = sock.getOutputStream();
-
-	 op.write( "GET /hop/androidemo HTTP/1.1\r\n".getBytes() );
-	 op.write( "Host: localhost\r\n".getBytes() );
-	 op.write( "\r\n\r\n".getBytes() );
-
-	 sock.close();
-      } catch( Throwable e ) {
-	 Log.e( "Hop", "emergencyExit error=" + e );
-      }
-      Log.i( "Hop", "<<< emergencyExit" );
    }
 }
    
