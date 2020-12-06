@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Sat Dec  5 16:25:39 2020 (serrano)                */
+/*    Last change :  Sun Dec  6 06:56:04 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -169,7 +169,6 @@ public class HopDroid extends Thread {
 
    // onConnect
    public void onConnect() {
-      Log.i( "HopDroid", "TBR(5dec2020) conConnect.1" );
       // bind the plugins that need the activity
       synchronized( plugins ) {
 	 if( HopConfig.PLUGINPREFS ) {
@@ -177,7 +176,6 @@ public class HopDroid extends Thread {
 	 }
       }
       
-      Log.i( "HopDroid", "TBR(5dec2020) onConnect.2" );
       // called by HopService.onConnect()
       synchronized( plugins ) {
 	 int s = plugins.size();
@@ -185,12 +183,11 @@ public class HopDroid extends Thread {
 	 // plugin 0 is null
 	 for( int i = 1; i < s; i++ ) {
 	    HopPlugin p = (HopPlugin)plugins.get( i );
-      Log.i( "HopDroid", "TBR(5dec2020) onConnect.3 " + p.name );
+
 	    if( p != null ) {
 	       p.onConnect();
 	    }
 	 }
-	 Log.i( "HopDroid", "TBR(5dec2020) onConnect.4 " );
       }
    }
 	 
@@ -211,7 +208,12 @@ public class HopDroid extends Thread {
 	 }
       }
    }
-      
+
+   // reboot
+   public void reboot() {
+      Log.i( "HopDroid", "reboot..." );
+   }
+   
    // execCmd
    private static boolean execCmd( LocalSocketAddress addr, byte cmd )
       throws Exception {
@@ -293,11 +295,6 @@ public class HopDroid extends Thread {
 
       return serverPing( addr );
    }
-
-/*    // isRunning()                                                   */
-/*    public synchronized boolean isRunning() {                        */
-/*       return state == HOPDROID_STATE_RUN;                           */
-/*    }                                                                */
 
    // run hop
    public void run() {
@@ -560,34 +557,44 @@ public class HopDroid extends Thread {
 
    // safeclose
    private void safeClose( HopLocalServerSocket serv, LocalSocket client ) {
-      // Android is buggous, closing a server that has not accepted 
-      // any connection yet, raises no exceptions and then does not
-      // unblock the pending accept call. Our function safeclose establishes
-      // a fake connection and closes it at once to work around this
-      // Android error.
-      Log.d( "HopDroid", "safeClose" );
-      if( client == null ) {
-	 try {
-	    LocalSocket ls = new LocalSocket();
+/*       // Android is buggous, closing a server that has not accepted  */
+/*       // any connection yet, raises no exception and then does not  */
+/*       // unblock the pending accept call. Our function safeclose establishes */
+/*       // a fake connection and closes it at once to work around this */
+/*       // Android error.                                             */
+/*       Log.d( "HopDroid", "safeClose" );                             */
+/*       if( client == null ) {                                        */
+/* 	 try {                                                         */
+/* 	    LocalSocket ls = new LocalSocket();                        */
+/*                                                                     */
+/* 	    ls.connect( serv.getLocalSocketAddress() );                */
+/* 	    ls.close();                                                */
+/* 	 } catch( Throwable e ) {                                      */
+/* 	    Log.e( "HopDroid", "safeClose error, cannot connect, serv=" */
+/* 		   + serv + " exc=" + e );                             */
+/* 	    e.printStackTrace();                                       */
+/* 	 }                                                             */
+/*       } else {                                                      */
+/* 	 try {                                                         */
+/* 	    client.close();                                            */
+/* 	 } catch( Throwable e ) {                                      */
+/* 	    Log.e( "HopDroid", "safeClose error, serv="                */
+/* 		   + serv + " client=" + client + " exc=" + e );       */
+/* 	    e.printStackTrace();                                       */
+/* 	 }                                                             */
+/*       }                                                             */
 
-	    ls.connect( serv.getLocalSocketAddress() );
-	    ls.close();
-	 } catch( Throwable e ) {
-	    Log.e( "HopDroid", "safeClose error, cannot connect, serv="
-		   + serv + " exc=" + e );
-	    e.printStackTrace();
-	 }
-      } else {
-	 try {
-	    client.close();
-	 } catch( Throwable e ) {
-	    Log.e( "HopDroid", "safeClose error, serv="
-		   + serv + " client=" + client + " exc=" + e );
-	    e.printStackTrace();
-	 }
+      Log.d( "HopDroid", "closing serv="
+	     + (serv == null ? "null" : serv.toString())
+	     + " client=" + (client == null ? "null" : client.toString()) );
+
+      try {
+	 if( client != null ) client.close();
+      } catch( Throwable e ) {
+	 Log.e( "HopDroid", "cannot close " + e );
+	 e.printStackTrace();
       }
-
-      serv.close();
+      if( serv != null ) serv.close();
    }
 
    // killCmdServer
@@ -765,12 +772,12 @@ class HopLocalServerSocket extends LocalServerSocket {
 	    super.close();
 	    
 	    closed = true;
-	    Log.d( "HopDroid", "server "
+	    Log.d( "HopDroid:HopLocalServerSocket", "server "
 		   + this.getLocalSocketAddress().getName() + " ("
 		   + this + ") closed" );
 	 }
       } catch( Throwable e ) {
-	 Log.e( "HopDroid", "cannot close server "
+	 Log.e( "HopDroid:HopLocalServerSocket", "cannot close server "
 		+ this.getLocalSocketAddress().getName() + " ("
 		+ this + "): " + e );
 	 e.printStackTrace();

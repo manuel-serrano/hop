@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:44:16 2010                          */
-/*    Last change :  Sat Dec  5 17:07:44 2020 (serrano)                */
+/*    Last change :  Sun Dec  6 06:55:14 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The initial plugin that allows plugin installation               */
@@ -47,10 +47,10 @@ public class HopPluginInit extends HopPlugin {
    void server( InputStream ip, OutputStream op ) throws IOException {
       String name = HopDroid.read_string( ip );
 
-      Log.d( "HopPluginInit", "BTR(5dec2020) rcv name=" + name );
       if( name.equals( "reboot" ) ) {
 	 Log.v( "HopPluginInit", "reboot..." );
-	 hopdroid.service.hop.restart();
+	 hopdroid.service.hop.reboot();
+	 hopdroid.reboot();
       } else {
 	 int id = HopDroid.getPlugin( name );
 

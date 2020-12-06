@@ -22,6 +22,7 @@
             </intent-filter>
         </activity>
 
+	<!--
         <activity android:name="fr.inria.@HOPAPP@.HopSettings"
                   android:label="@string/activity_settings"
                   android:noHistory="true"> 
@@ -29,7 +30,9 @@
                 <category android:name="android.intent.category.PREFERENCE" />
             </intent-filter>
         </activity>
-   
+        -->
+
+	<!--
         <receiver android:name="fr.inria.@HOPAPP@.HopBootReceiver"
                   android:enabled="true"
                   android:exported="true"
@@ -40,8 +43,11 @@
                 <action android:name="android.intent.action.PACKAGE_RESTARTED" />
             </intent-filter>
         </receiver>
+        -->
 
+	<!--
         <service android:name="fr.inria.@HOPAPP@.HopService"/>
+        -->
     </application>
     <supports-screens android:largeScreens="true" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>

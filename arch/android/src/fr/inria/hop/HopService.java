@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Sun Nov 29 08:59:53 2020 (serrano)                */
+/*    Last change :  Sun Dec  6 06:48:56 2020 (serrano)                */
 /*    Copyright   :  2012-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -51,6 +51,7 @@ public class HopService extends Service {
    
    @Override
    public void onCreate() {
+      Log.i( "HopService", "onCreate..." );
       // status bar notification
       mNM = (NotificationManager)getSystemService( NOTIFICATION_SERVICE );
 
