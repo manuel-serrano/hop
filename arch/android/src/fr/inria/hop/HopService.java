@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Sun Dec  6 06:59:39 2020 (serrano)                */
+/*    Last change :  Sun Dec  6 09:41:11 2020 (serrano)                */
 /*    Copyright   :  2012-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -110,15 +110,6 @@ public class HopService extends Service {
       // invoked by HopLauncher when the connection is established.
       // this is used to complete the plugin initialization
       hopdroid.onConnect();
-   }
-   
-   static public void emergencyExit() {
-      Log.i( "HopService", ">>> emergencyExit..." );
-      // called by HopLauncher when the communication between the
-      // launcher and the service cannot be established
-      HopDroid.emergencyExit();
-      Hop.emergencyExit();
-      Log.i( "HopService", "<<< emergencyExit" );
    }
    
    public synchronized void kill() {
