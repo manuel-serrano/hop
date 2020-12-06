@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sat Dec  5 18:45:46 2020 (serrano)                */
+/*    Last change :  Sun Dec  6 06:43:12 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -263,7 +263,7 @@ public class HopLauncher extends Activity {
       }
    }
 
-   // onCreateStages
+   // onLaunch (overriden by HopHzLauncher)
    protected void onLaunch() {
       String hopapk = activity.getApplicationInfo().sourceDir;
       String hopdir = activity.getApplicationInfo().dataDir + "/assets";
@@ -315,6 +315,7 @@ public class HopLauncher extends Activity {
 
       abort();
       super.onDestroy();
+      finishAndRemoveTask();
    }
 
    @Override public boolean onCreateOptionsMenu( Menu menu ) {
@@ -525,7 +526,7 @@ public class HopLauncher extends Activity {
 
    private synchronized void kill( int waitms ) {
       if( !killed ) {
-	 Log.i( "HopLauncher", ">>> kill launcher " + waitms );
+	 Log.i( "HopLauncher", "kill " + waitms + "ms" );
 	 killed = true;
 	 
 	 // give time to read the console messages
@@ -542,9 +543,9 @@ public class HopLauncher extends Activity {
 	 Log.d( "HopLauncher", "finishing activity..." );
 	 //finish();
 	 this.finishAffinity();
-	 Log.i( "HopLauncher", "<<< kill launcher" );
+	 Log.i( "HopLauncher", "kill done" );
 
-	 System.exit( 0 );
+	 //System.exit( 0 );
       }
    }
 

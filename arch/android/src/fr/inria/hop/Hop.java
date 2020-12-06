@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sat Dec  5 17:17:44 2020 (serrano)                */
+/*    Last change :  Sun Dec  6 06:56:01 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -63,6 +63,8 @@ public class Hop extends Thread {
    FileDescriptor HopFd;
    final int[] currentpid = new int[ 1 ];
    boolean log = false;
+   Thread logger = null;
+   Thread watcher = null;
    
    HopService service;
    
@@ -215,7 +217,7 @@ public class Hop extends Thread {
       }
 
       // background threads
-      Thread watcher = new Thread( new Runnable() {
+      watcher = new Thread( new Runnable() {
 	    public void run() {
 	       // wait for the termination of the Hop process
 	       int result = HopExec.waitFor( pid[ 0 ] );
@@ -249,7 +251,7 @@ public class Hop extends Thread {
 	    }
 	 } );
 
-      Thread logger = new Thread( new Runnable() {
+      logger = new Thread( new Runnable() {
 	    FileInputStream fin = new FileInputStream( HopFd );
 	    
 	    public void run() {
@@ -284,7 +286,9 @@ public class Hop extends Thread {
       // boot. If the logger queue is fulled, the main thread might be blocked
       // waiting Hop to start, which could never be completed because of the logger
       // thread being stuck.
+      Log.d( "Hop", "watcher started..." );
       watcher.start();
+      Log.d( "Hop", "logger started..." );
       logger.start();
 
       // wait for Hop to acknowledge
@@ -300,21 +304,14 @@ public class Hop extends Thread {
 	 ;
       }
       
+      Log.d( "Hop", "acknowledge received... server is ready" );
       // spawn the initial Hop service
       service.handler.sendEmptyMessage( HopLauncher.MSG_HOP_START );
    }
 
-   // rerun
-   private void rerun() {
-      synchronized( currentpid ) {
-	 currentpid[ 0 ] = 0;
-      }
-      run();
-   }
-   
-   // restart
-   public void restart() {
-      Log.i( "Hop", "restart requested..." );
+   // reboot
+   public void reboot() {
+      Log.i( "Hop", "reboot..." );
       kill();
       // wait the socket server to be cleanup by the system
       try {
@@ -327,8 +324,18 @@ public class Hop extends Thread {
    // kill (kill the running Hop process)
    public void kill() {
       Log.i( "Hop", "kill..." + ((currentpid != null) ? currentpid[ 0 ] : "null") );
-      
+
       synchronized( currentpid ) {
+	 
+	 if( logger != null ) {
+	    logger.interrupt();
+	    logger = null;
+	 }
+	 if( watcher != null ) {
+	    watcher.interrupt();
+	    watcher = null;
+	 }
+	 
 	 if( currentpid[ 0 ] != 0 ) {
 	    inkill = true;
 	    android.os.Process.killProcess( currentpid[ 0 ] );
