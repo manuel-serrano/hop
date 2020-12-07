@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  8 15:35:26 2010                          */
-/*    Last change :  Fri Nov 13 10:49:06 2020 (serrano)                */
+/*    Last change :  Mon Dec  7 05:36:08 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Configuring Hop                                                  */
@@ -34,23 +34,29 @@ public class HopConfigurer implements HopStage {
    // instance variables
    Handler handler;
    File home;
+   Activity activity;
    
    Boolean abort = false;
 
    // constructor
-   public HopConfigurer( Handler hdl, File hme ) {
+   public HopConfigurer( Activity a, Handler hdl, File hme ) {
       super();
 
       handler = hdl;
       home = hme;
+      activity = a;
    }
 
    // is hop already configured
    public static boolean configured( Context context, File home ) {
       final Resources res = context.getResources();
       String app = res.getString( R.string.hopapp );
+      
       File path = new File( home, ".config/" + app + "/wizard.hop" );
-      return path.exists();
+      if( path.exists() ) return true;
+      
+      path = new File( home, ".config/" + app + "/hoprc.js" );
+      return( path.exists() );
    }
 
    // hopapprc
@@ -68,29 +74,48 @@ public class HopConfigurer implements HopStage {
 	    }
 
 	    // wizard.hop
-	    FileOutputStream out = new FileOutputStream( new File( rcdir, "wizard.hop" ) );
+	    if( HopConfig.DEFLANG.equals( "scheme" ) ) {
+	       FileOutputStream out = new FileOutputStream( new File( rcdir, "wizard.hop" ) );
+	       try {
+		  Log.i( "HopConfigurer", "generating " +  out );
+		  out.write( (";; generated file, HopConfigurer " + new Date() + "\n").getBytes() );
+		  out.write( ";; anonymous user\n".getBytes() );
+		  out.write( ("(add-user! \"anonymous\" :services '(public " + app + ") :directories '*)\n").getBytes() );
+	       } finally {
+		  out.close();
+	       }
 
-	    try {
-	       Log.i( "HopConfigurer", "generating " +  out );
-	       out.write( (";; generated file, HopConfigurer " + new Date() + "\n").getBytes() );
-	       out.write( ";; anonymous user\n".getBytes() );
-	       out.write( ("(add-user! \"anonymous\" :services '(public " + app + ") :directories '*)\n").getBytes() );
-	    } finally {
-	       out.close();
-	    }
+	       // hoprc.hop
+	       out = new FileOutputStream( new File( rcdir, "hoprc.hop" ) );
 
-	    // hoprc.hop
-	    out = new FileOutputStream( new File( rcdir, "hoprc.hop" ) );
+	       try {
+		  Log.i( "HopConfigurer", "generating " +  out );
+		  out.write( (";; generated file, HopConfigurer " + new Date() + "\n").getBytes() );
+		  out.write( ";; default rc file\n".getBytes() );
+		  out.write( "(let ((path (make-file-name (hop-etc-directory) \"hoprc.hop\"))) (when (file-exists? path) (hop-load path)))\n".getBytes() );
+		  out.write( ";; wizard file\n".getBytes() );
+		  out.write( "(hop-load-rc \"wizard.hop\")\n".getBytes() );
+	       } finally {
+		  out.close();
+	       }
+	    } else if( HopConfig.DEFLANG.equals( "javascript" ) ) {
+	       // hoprc.js
+	       FileOutputStream out = new FileOutputStream( new File( rcdir, "hoprc.js" ) );
 
-	    try {
-	       Log.i( "HopConfigurer", "generating " +  out );
-	       out.write( (";; generated file, HopConfigurer " + new Date() + "\n").getBytes() );
-	       out.write( ";; default rc file\n".getBytes() );
-	       out.write( "(let ((path (make-file-name (hop-etc-directory) \"hoprc.hop\"))) (when (file-exists? path) (hop-load path)))\n".getBytes() );
-	       out.write( ";; wizard file\n".getBytes() );
-	       out.write( "(hop-load-rc \"wizard.hop\")\n".getBytes() );
-	    } finally {
-	       out.close();
+	       try {
+		  Log.i( "HopConfigurer", "generating " + out );
+      
+		  out.write( "// generated file (HopInstaller), edit at your own risk\n".getBytes() );
+		  out.write( "require( \"".getBytes() );
+		  out.write( activity.getApplicationInfo().dataDir.getBytes() );
+		  out.write( "/assets/rcdir/hoprc.js".getBytes() );
+		  out.write( " \" );\n".getBytes() );
+	       } finally {
+		  out.close();
+	       }
+	    } else {
+	       throw new Exception( "Unknown default language: " +
+		  HopConfig.DEFLANG );
 	    }
 	 }
       }

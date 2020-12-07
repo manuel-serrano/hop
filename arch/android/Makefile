@@ -60,6 +60,7 @@ ANDROIDMANIFEST = $(ANDROIDDIR)/AndroidManifest.xml
 ANDROIDSPLASH = $(ANDROIDDIR)/splash
 
 # Config
+DEFLANG = javascript
 NOTITLE = true
 CUSTOMTITLE = false
 STATUSBARCOLOR = default
@@ -349,6 +350,7 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml \
                 -e "s|@HOPAPPVERSION@|$(HOPAPPVERSION)|" \
                 -e "s|@HOPURL@|$(ANDROIDHOPURL)|" \
                 -e "s|@NOTITLE@|$(NOTITLE)|" \
+                -e "s|@DEFLANG@|$(DEFLANG)|" \
                 -e "s|@CUSTOMTITLE@|$(CUSTOMTITLE)|" \
                 -e "s|@STATUSBARCOLOR@|$(STATUSBARCOLOR)|" \
                 -e "s|@PLUGINBUILD@|$(PLUGINBUILD)|" \
