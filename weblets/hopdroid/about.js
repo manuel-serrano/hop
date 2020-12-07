@@ -48,6 +48,9 @@ export function ABOUT() {
 /*---------------------------------------------------------------------*/
 service about() {
    const wifi = new hopdroid.wifi( phone ).info;
+   const info = phone.applicationInfo();
+   
+   console.log( "info=", info );
 
    return <div class="about">
      <div class="about-logo">
@@ -63,7 +66,6 @@ service about() {
        <aboutentry title="ssid"
 	       	   value=${wifi.ssid}
 	       	   icon=${require.resolve( "./icons/wifi.svg" )}/>
-     
        <aboutentry title="IP address"
 	       	   value=${wifi.ip}
                    icon=${require.resolve( "./icons/diagram-2.svg" )}/>
@@ -74,6 +76,13 @@ service about() {
 		   class="section-end"
 	       	   value=${wifi.speed}
                    icon=${require.resolve( "./icons/broadcast-pin.svg" )}/>
+       <aboutentry title="home directory"
+	       	   value=${phone.home}
+	       	   icon=${require.resolve( "./icons/phone.svg" )}/>
+       <aboutentry title="data directory"
+	       	   value=${info["data-dir"]}
+		   class="section-end"
+	       	   icon=${require.resolve( "./icons/phone-fill.svg" )}/>
      </div>
    </div>
 }
