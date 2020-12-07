@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul 10 08:08:45 2016                          */
-/*    Last change :  Thu Nov 26 20:08:02 2020 (serrano)                */
+/*    Last change :  Mon Dec  7 05:29:37 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop configuration                                                */
@@ -39,6 +39,7 @@ public class HopConfig {
    static String ARGS;
    static String DEBUG;
 
+   static String DEFLANG;
    static boolean NOTITLE;
    static boolean CUSTOMTITLE;
 
@@ -79,6 +80,7 @@ public class HopConfig {
 
       UISTATUSBARCOLOR = res.getString( R.string.statusbarcolor );
       NOTITLE = res.getBoolean( R.bool.notitle );
+      DEFLANG = res.getString( R.String.deflang );
       CUSTOMTITLE = res.getBoolean( R.bool.customtitle );
 	 
       PLUGINBUILD = res.getBoolean( R.bool.pluginbuild );

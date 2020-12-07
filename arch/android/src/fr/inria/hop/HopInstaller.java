@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Sun Dec  6 18:24:56 2020 (serrano)                */
+/*    Last change :  Mon Dec  7 05:23:13 2020 (serrano)                */
 /*    Copyright   :  2010-20 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
@@ -42,6 +42,7 @@ public class HopInstaller implements HopStage {
    String apk;
    String root;
    ProgressDialog progress;
+   Activity activity;
 
    String chmodbuf = "";
    int chmodbuflen = 0;
@@ -49,22 +50,24 @@ public class HopInstaller implements HopStage {
    Boolean abort = false;
 
    // constructor
-   public HopInstaller( Activity activity, Handler h, String hopapk, String hopdir ) {
+   public HopInstaller( Activity a, Handler h, String hopapk, String hopdir ) {
       super();
 
       handler = h;
       apk = hopapk;
       root = hopdir;
+      activity = a;
 
-      progress = makeProgressBar( activity );
+      progress = makeProgressBar( a );
    }
    
-   public HopInstaller( Activity activity, Handler h, String hopapk, String hopdir, Boolean isclient ) {
+   public HopInstaller( Activity a, Handler h, String hopapk, String hopdir, Boolean isclient ) {
       super();
 
       handler = h;
       apk = hopapk;
       root = hopdir;
+      activity = a;
       isClientInstaller = isclient;
 
       progress = makeProgressBar( activity );
@@ -275,26 +278,6 @@ public class HopInstaller implements HopStage {
       }
    }
 
-   // create the default hoprc.js file
-   void hoprc() throws IOException {
-      synchronized( abort ) {
-	 if( !abort ) {
-	    File file = new File( Hop.HOME(), ".config/hop/hoprc.js" );
-
-	    if( !file.exists() ) {
-	       OutputStream op = new FileOutputStream( file );
-	       Log.i( "HopInstaller", "generating \"" + file + "\"" );
-      
-	       op.write( "// generated file (HopInstaller), edit at your own risk\n".getBytes() );
-	       op.write( "require( \"".getBytes() );
-	       op.write( activity.getApplicationInfo().dataDir.getBytes() );
-	       op.write( "/assets/rcdir/hoprc.js".getBytes() );
-	       op.write( " \" );\n".getBytes() );
-	    }
-	 }
-      }
-   }
-
    private void raise( Exception e ) {
       String msg = e.getMessage();
       
@@ -319,7 +302,6 @@ public class HopInstaller implements HopStage {
 		     try {
 			unpack();
 			androidhome();
-			hoprc();
 
 			if( !isClientInstaller ) {
 			   Log.d( "HopInstaller", "setting exec mode: " + root + "/bin/hop" );
