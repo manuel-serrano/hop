@@ -1588,6 +1588,11 @@ if [ "$arch " = "android " ]; then
       | sed -e "s|@HOPAPP@|$androidapp|" \
       > arch/android/hopdroid/phone.scm
   chmod a-w $init
+  cat arch/android/splash/hopnotfound.js.in \
+      | sed -e "s|@HOPAPP@|$androidapp|" \
+      | sed -e "s|@VERSION@|$version|" \
+      > arch/android/splash/hopnotfound.js
+  chmod a-w $init
 else
   cat node_modules/hopdroid/lib/Makefile.in \
       | sed -e "s|@HOPDROIDEXTRALIBS@||" \

@@ -61,30 +61,24 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
-   (tprint "main.1")
    ;; catch critical signals
    (signal-init!)
-   (tprint "main.2")
    ;; set the Hop cond-expand identification
    (for-each register-srfi! (cons 'hop-server (hop-srfis)))
    ;; set the library load path
-   (tprint "main.3")
    (bigloo-library-path-set! (hop-library-path))
    ;; define the Hop macros
    (hop-install-expanders!)
    ;; setup the hop readers
-   (tprint "main.4")
    (bigloo-load-reader-set! hop-read)
    (bigloo-load-module-set!
       (lambda (f mod)
 	 (hop-load-modified f :abase #t :afile #f :module mod)))
    ;; setup the hop module resolvers
-   (tprint "main.5")
    (bigloo-module-extension-handler-set!
       hop-module-extension-handler)
    (bigloo-module-resolver-set!
       (make-hop-module-resolver (bigloo-module-resolver)))
-   (tprint "main.6")
    (let ((jsworker #f))
       ;; parse the command line
       (multiple-value-bind (files exprs exprsjs)
@@ -94,18 +88,15 @@
 	 ;; install the builtin filters
 	 (hop-filter-add! service-filter)
 	 (hop-init args files exprs)
-   (tprint "main.7")
 	 ;; adjust the actual hop-port before executing client code
 	 ;; js rc load
 	 (if (hop-javascript)
 	     (set! jsworker (javascript-init args files exprsjs))
 	     (users-close!))
-   (tprint "main.8")
 	 ;; when debugging, init the debugger runtime
 	 (hop-debug-init! (hop-client-output-port))
 	 ;; prepare the regular http handling
 	 (init-http!)
-   (tprint "main.9 " (hop-enable-webdav))
 	 (when (hop-enable-webdav) (init-webdav!))
 	 ;; close filter installation
 	 (unless (hop-javascript)
@@ -219,10 +210,8 @@
 ;*    javascript-init ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (javascript-init args files exprs)
-   (tprint "jsinit.1")
    ;; install the hopscript expanders
    (hopscript-install-expanders!)
-   (tprint "jsinit.2")
    (multiple-value-bind (%worker %global %module)
       (js-main-worker! "main"
 	 (make-file-name (pwd) (if (pair? files) (car files) "."))
@@ -244,9 +233,7 @@
 	     (synchronize rcmutex
 		(javascript-rc %global %module %worker rcmutex rccondv)
 		(javascript-init-main-loop files exprs %global %module %worker)
-		(tprint "jsinit.3")
 		(condition-variable-wait! rccondv rcmutex)
-		(tprint "jsinit.4")
 		%worker))
 	  (javascript-init-main-loop files exprs %global %module %worker))))
 
@@ -254,7 +241,6 @@
 ;*    javascript-init-main-loop ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (javascript-init-main-loop files exprs %global %module %worker)
-   (tprint "jsinit.mainloop.3")
    ;; hss extension
    (javascript-init-hss %worker %global)
    ;; push user expressions
@@ -293,13 +279,11 @@
 	    (hopscript-repl (hop-scheduler) %global %worker))))
    ;; start the javascript loop
    (with-access::WorkerHopThread %worker (mutex condv module-cache)
-      (tprint "jsinit.mainloop.4")
       (synchronize mutex
 	 ;; module-cache is #f until the worker is initialized and
 	 ;; running (see hopscript/worker.scm)
 	 (unless module-cache
 	    (condition-variable-wait! condv mutex))))
-   (tprint "jsinit.mainloop.5")
    ;; return the worker for the main loop to join
    %worker)
 
@@ -327,10 +311,7 @@
 	       (let ((oldload (hop-rc-loaded)))
 		  (hop-rc-loaded! #f)
 		  (unwind-protect
-		     (begin
-			(tprint "jsrc.1")
-			(nodejs-load path path %global %module %worker)
-			(tprint "jsrc.2"))
+		     (nodejs-load path path %global %module %worker)
 		     (begin
 			(hop-rc-loaded! oldload)
 			(synchronize rcmutex
