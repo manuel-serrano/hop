@@ -25,7 +25,6 @@ const localConfig = {
 /*---------------------------------------------------------------------*/
 export function init() {
    localConfig.enableWebdav = config.enableWebdav;
-   console.log( "config init enable=", localConfig.enableWebdav, config.enableWebdav );
 }
 
 /*---------------------------------------------------------------------*/
