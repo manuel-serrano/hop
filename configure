@@ -39,7 +39,7 @@ javac=javac
 devmode=product
 debug=no
 
-bcflags="-O2 -fsharing -L \$(BUILDLIBDIR) -srfi bigloo-compile"
+bcflags="-O3 -fsharing -L \$(BUILDLIBDIR) -srfi bigloo-compile"
 bhflags=
 btflags="-gtrace"
 hflags="-Os"

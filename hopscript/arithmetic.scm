@@ -147,9 +147,16 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.2       */
 ;*---------------------------------------------------------------------*/
 (define (/js x::obj y::obj %this)
-   (let* ((nx (js-toflonum (js-tonumber x %this)))
-	  (ny (js-toflonum (js-tonumber y %this))))
-      (/fl nx ny)))
+   (/fl (toflonum x %this) (toflonum y %this)))
+
+;*---------------------------------------------------------------------*/
+;*    toflonum ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (toflonum::double x %this)
+   (cond
+      ((flonum? x) x)
+      ((fixnum? x) (fixnum->flonum x))
+      (else (js-toflonum (js-tonumber x %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    /pow2s32 ...                                                     */

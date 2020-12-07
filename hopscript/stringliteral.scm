@@ -2609,7 +2609,7 @@
 	 (js-substring->jsstring s frm (-fx to frm))))
    
    (define (utf8-substr s)
-      (let* ((len (utf8-string-length s))
+      (let* ((len (js-jsstring-codeunit-length this))
 	     (intstart (js-tointeger start %this))
 	     (intend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
 	     (finalstart (->fixnum (min (max intstart 0) len)))
