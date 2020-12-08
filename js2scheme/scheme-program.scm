@@ -657,11 +657,18 @@
 
    (define (data-property-cnst init)
       (with-access::J2SDataPropertyInit init (val)
-	 (if (isa? val J2SLiteralValue)
+	 (cond
+	    ((isa? val J2SString)
 	     (with-access::J2SLiteralValue val (val)
-		val)
+		(if (eq? (string-minimal-charset val) 'ascii)
+		    (vector 2 val)
+		    (vector 3 val (utf8-codeunit-length val)))))
+	    ((isa? val J2SLiteralValue)
+	     (with-access::J2SLiteralValue val (val)
+		(vector 1 val)))
+	    (else
 	     (with-access::J2SLiteralCnst val (index)
-		(cons index index)))))
+		(vector 0 index))))))
    
    (define (%cnst-table-intext cnsts)
       
@@ -669,8 +676,9 @@
 	 (cond
 	    ((isa? this J2SString)
 	     (with-access::J2SString this (val)
-		(let ((n (if (eq? (string-minimal-charset val) 'ascii) 6 7)))
-		   (vector n val))))
+		(if (eq? (string-minimal-charset val) 'ascii)
+		    (vector 6 val)
+		    (vector 9 val (utf8-codeunit-length val)))))
 	    ((isa? this J2SRegExp)
 	     (with-access::J2SRegExp this (loc val flags inline)
 		(vector (if inline 5 4) val flags loc)))

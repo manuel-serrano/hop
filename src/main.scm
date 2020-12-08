@@ -58,6 +58,11 @@
 (define lock (make-spinlock))
 
 ;*---------------------------------------------------------------------*/
+;*    jsctx ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-struct jsctx global module worker)
+
+;*---------------------------------------------------------------------*/
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main args)
@@ -79,7 +84,7 @@
       hop-module-extension-handler)
    (bigloo-module-resolver-set!
       (make-hop-module-resolver (bigloo-module-resolver)))
-   (let ((jsworker #f))
+   (let ((jsctx #f))
       ;; parse the command line
       (multiple-value-bind (files exprs exprsjs)
 	 (parse-args args)
@@ -88,10 +93,12 @@
 	 ;; install the builtin filters
 	 (hop-filter-add! service-filter)
 	 (hop-init args files exprs)
-	 ;; adjust the actual hop-port before executing client code
-	 ;; js rc load
+	 ;; adjust the actual hop-port before executing RC file
 	 (if (hop-javascript)
-	     (set! jsworker (javascript-init args files exprsjs))
+	     (set! jsctx
+		(javascript-init
+		   (if (pair? files) (car files) ".")
+		   args exprsjs))
 	     (users-close!))
 	 ;; when debugging, init the debugger runtime
 	 (hop-debug-init! (hop-client-output-port))
@@ -126,55 +133,65 @@
 		  (hop-repl (hop-scheduler)))
 	       ;; when needed, start a loop for server events
 	       (hop-event-init!)
-	       (when (hop-run-server)
-		  ;; preload all the forced services
-		  (for-each (lambda (svc)
-			       (let* ((path (string-append (hop-service-base)
-					       "/" svc))
-				      (req (instantiate::http-server-request
-					      (path path)
-					      (abspath path)
-					      (port (hop-default-port))
-					      (connection 'close))))
-				  (with-handler
-				     (lambda (err)
-					(exception-notify err)
-					(fprintf (current-error-port)
-					   "*** WARNING: Service \"~a\" cannot be pre-loaded.\n" svc))
-				     (service-filter req))))
-		     (hop-preload-services))
-		  ;; close the filters, users, and security
-		  (security-close!)
-		  ;; wait for js init
-		  (when jsworker
-		     (synchronize jsmutex
-			(unless jsinit
-			   (condition-variable-wait! jscondv jsmutex)
-			   (users-close!)
-			   (hop-filters-close!))))
-		  ;; start the main loop
-		  (cond
-		     ((and serv servs)
-		      (cond-expand
-			 (enable-threads 
-			  (thread-start!
-			     (instantiate::hopthread
-				(body (lambda ()
-					 (scheduler-accept-loop
-					    (make-hop-scheduler)
-					    servs #t)))))
-			  (scheduler-accept-loop (hop-scheduler) serv #t))
-			 (else
-			  (error "hop"
-			     "Thread support missing for running both http and https servers"
-			     servs))))
-		     (serv
-		      (scheduler-accept-loop (hop-scheduler) serv #t))
-		     (servs
-		      (scheduler-accept-loop (hop-scheduler) servs #t))))
-	       (if jsworker
-		   (if (thread-join! jsworker) 0 1)
-		   0))))))
+	       (cond
+		  ((hop-run-server)
+		   ;; preload all the forced services
+		   (for-each (lambda (svc)
+				(let* ((path (string-append (hop-service-base)
+						"/" svc))
+				       (req (instantiate::http-server-request
+					       (path path)
+					       (abspath path)
+					       (port (hop-default-port))
+					       (connection 'close))))
+				   (with-handler
+				      (lambda (err)
+					 (exception-notify err)
+					 (fprintf (current-error-port)
+					    "*** WARNING: Service \"~a\" cannot be pre-loaded.\n" svc))
+				      (service-filter req))))
+		      (hop-preload-services))
+		   ;; close the filters, users, and security
+		   (security-close!)
+		   ;; wait for js init
+		   (when jsctx
+		      (users-close!)
+		      (hop-filters-close!)
+		      (javascript-load-files files exprsjs jsctx)
+		      (synchronize jsmutex
+			 (set! jsinit #t)
+			 (condition-variable-broadcast! jscondv)))
+		   ;; start the main loop
+		   (cond
+		      ((and serv servs)
+		       (cond-expand
+			  (enable-threads 
+			   (thread-start!
+			      (instantiate::hopthread
+				 (body (lambda ()
+					  (scheduler-accept-loop
+					     (make-hop-scheduler)
+					     servs #t)))))
+			   (scheduler-accept-loop (hop-scheduler) serv #t))
+			  (else
+			   (error "hop"
+			      "Thread support missing for running both http and https servers"
+			      servs))))
+		      (serv
+		       (scheduler-accept-loop (hop-scheduler) serv #t))
+		      (servs
+		       (scheduler-accept-loop (hop-scheduler) servs #t))))
+		  (jsctx
+		   (users-close!)
+		   (hop-filters-close!)
+		   (javascript-load-files files exprsjs jsctx)
+		   (synchronize jsmutex
+		      (set! jsinit #t)
+		      (condition-variable-broadcast! jscondv))
+		   (if (thread-join! (jsctx-worker jsctx)) 0 1))
+		  (else
+		   (sleep 2000)
+		   0)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-init ...                                                     */
@@ -209,12 +226,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    javascript-init ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (javascript-init args files exprs)
+(define (javascript-init name args exprs)
    ;; install the hopscript expanders
    (hopscript-install-expanders!)
    (multiple-value-bind (%worker %global %module)
       (js-main-worker! "main"
-	 (make-file-name (pwd) (if (pair? files) (car files) "."))
+	 (make-file-name (pwd) name)
 	 (or (hop-run-server) (eq? (hop-enable-repl) 'js))
 	 nodejs-new-global-object nodejs-new-module)
       ;; js loader
@@ -232,15 +249,17 @@
 		(rccondv (make-condition-variable)))
 	     (synchronize rcmutex
 		(javascript-rc %global %module %worker rcmutex rccondv)
-		(javascript-init-main-loop files exprs %global %module %worker)
+		(javascript-init-main-loop exprs %global %module %worker)
 		(condition-variable-wait! rccondv rcmutex)
-		%worker))
-	  (javascript-init-main-loop files exprs %global %module %worker))))
+		(jsctx %global %module %worker)))
+	  (begin
+	     (javascript-init-main-loop exprs %global %module %worker)
+	     (jsctx %global %module %worker)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript-init-main-loop ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (javascript-init-main-loop files exprs %global %module %worker)
+(define (javascript-init-main-loop exprs %global %module %worker)
    ;; hss extension
    (javascript-init-hss %worker %global)
    ;; push user expressions
@@ -254,24 +273,11 @@
 				  (js-undefined) %global))))
 	       exprs))))
    ;; close user registration
-   (js-worker-push-thunk! %worker "cmdline"
+   (js-worker-push-thunk! %worker "jsinit"
       (lambda ()
 	 (synchronize jsmutex
-	    (set! jsinit #t)
-	    (condition-variable-signal! jscondv))))
-   ;; preload the command-line files
-   (when (pair? files)
-      (let ((req (instantiate::http-server-request
-		    (host "localhost")
-		    (port (hop-default-port)))))
-	 ;; set a dummy request
-	 (thread-request-set! #unspecified req)
-	 ;; preload the user files
-	 (for-each (lambda (f)
-		      (load-command-line-weblet f %global %module %worker))
-	    files)
-	 ;; unset the dummy request
-	 (thread-request-set! #unspecified #unspecified)))
+	    (unless jsinit
+	       (condition-variable-wait! jscondv jsmutex)))))
    ;; start the JS repl loop
    (when (eq? (hop-enable-repl) 'js)
       (js-worker-push-thunk! %worker "repl"
@@ -323,8 +329,31 @@
 	  (let ((path (string-append (prefix (hop-rc-file)) ".js")))
 	     (if (file-exists? path)
 		 (load-rc path)
-		 (synchronize rcmutex
-		    (condition-variable-broadcast! rccondv)))))))
+		 (js-worker-push-thunk! %worker "init"
+		    (lambda ()
+		       (synchronize rcmutex
+			  (condition-variable-broadcast! rccondv)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    javascript-load-files ...                                        */
+;*---------------------------------------------------------------------*/
+(define (javascript-load-files files exprs jsctx)
+   ;; preload the command-line files
+   (when (pair? files)
+      (let ((%global (jsctx-global jsctx))
+	    (%module (jsctx-module jsctx))
+	    (%worker (jsctx-worker jsctx)))
+	 (let ((req (instantiate::http-server-request
+		       (host "localhost")
+		       (port (hop-default-port)))))
+	    ;; set a dummy request
+	    (thread-request-set! #unspecified req)
+	    ;; preload the user files
+	    (for-each (lambda (f)
+			 (load-command-line-weblet f %global %module %worker))
+	       files)
+	    ;; unset the dummy request
+	    (thread-request-set! #unspecified #unspecified)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    javascript-init-hss ...                                          */
@@ -520,7 +549,6 @@
 	 (parse-host (hop-acknowledge-host))
 	 (with-handler
 	    (lambda (e)
-	       (tprint "CANNOT ACKNOWLEDGE...")
 	       (exception-notify e)
 	       #f)
 	    (let* ((sock (make-client-socket host port :timeout 2000))

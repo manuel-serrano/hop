@@ -107,12 +107,20 @@
 	    (let loop ((i (-fx (vector-length vals) 1)))
 	       (if (<fx i 0)
 		   obj
-		   (let ((val (vector-ref vals i)))
+		   (let ((prop (vector-ref vals i)))
 		      (vector-set! elements i
-			 (cond
-			    ((pair? val) (vector-ref cnsts (car val)))
-			    ((string? val) (js-string->jsstring val))
-			    (else val)))
+			 (case (vector-ref prop 0)
+			    ((0)
+			     (vector-ref cnsts (vector-ref prop 1)))
+			    ((1)
+			     (vector-ref prop 1))
+			    ((2)
+			     (js-ascii->jsstring (vector-ref prop 1)))
+			    ((3)
+			     (js-utf8->jsstring/ulen (vector-ref prop 1)
+				(fixnum->uint32 (vector-ref prop 2))))
+			    (else
+			     (error "constant-objinit" "Illegal prop" prop))))
 		      (loop (-fx i 1))))))))
 
    (let ((cnsts (if (string? str-or-vec) (string->obj str-or-vec) str-or-vec)))
@@ -137,10 +145,11 @@
 			  ;; an ascii name
 			  (let ((str (vector-ref el 1)))
 			     (js-ascii-name->jsstring str)))
-			 ((7)
-			  ;; an utf8 name
-			  (let ((str (vector-ref el 1)))
-			     (js-utf8-name->jsstring str)))
+			 ((9)
+			  ;; an utf8 name/culen
+			  (let ((str (vector-ref el 1))
+				(culen (vector-ref el 2)))
+			     (js-utf8-name->jsstring/culen str culen)))
 			 ((1 4)
 			  ;; a plain regexp
 			  (constant-plain-regexp el))
@@ -154,7 +163,12 @@
 			 ((8)
 			  ;; a literal object (it contains the constant indexes
 			  ;; of its cmap and its elements value)
-			  (constant-objinit el cnsts))))))
+			  (constant-objinit el cnsts))
+			 ((7)
+			  ;; an utf8 name (deprecated, should use name/culen)
+			  (let ((str (vector-ref el 1)))
+			     (js-utf8-name->jsstring/culen str
+				(utf8-codeunit-length str))))))))
 	       (loop (+fx i 1)))))
       ;; start fill at index 1 because of the C declaration
       ;; of the constant vector (see constants_expd.sch)
