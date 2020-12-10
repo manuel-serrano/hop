@@ -62,7 +62,7 @@ function readDirApps( dir ) {
       return pkg;
    }
    
-   if( fs.lstatSync( dir ).isDirectory() ) {
+   if( fs.existsSync( dir ) && fs.lstatSync( dir ).isDirectory() ) {
       return weblets.findWeblets( dir ).map( extra );
    } else {
       return [];
