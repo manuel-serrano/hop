@@ -2705,46 +2705,168 @@
 		(js-utf8->jsstring/ulen (utf8-substring s frm to) ulen)
 		(utf8-substring-fast s frm to (uint32->fixnum %culen) ulen)))))
    
-   #;(define (utf8-substr this)
-      (with-access::JsStringLiteralUTF8 this (%culen left right)
-	 (cond
-	    ((or (=u32 %culen #u32:0) (js-jsstring-normalized? this))
-	     (utf8-substr-normalize this))
-	    ((and (eq? start 0) (fixnum? end))
-	     (cond
-		((js-jsstring-ascii? left)
-		 (with-access::JsStringLiteral left (length)
-		    (if (>fx (uint32->fixnum length) end)
-			(js-jsstring-substring left start end %this)
-			(utf8-substr-normalize this))))
-		(else
-		 (with-access::JsStringLiteralUTF8 left (%culen)
-		    (cond
-		       ((=fx (uint32->fixnum %culen) (-fx end start))
-			left)
-		       ((>fx (uint32->fixnum %culen) (-fx end start))
-			(utf8-substr left))
-		       (else
-			(utf8-substr-normalize this)))))))
-	    ((and (fixnum? start) (eq? end (-fx (uint32->fixnum %culen) 1)))
-	     (cond
-		((js-jsstring-ascii? right)
-		 (with-access::JsStringLiteral left (length)
-		    (if (>u32 length (-fx end start))
-			(js-jsstring-substring right start end %this)
-			(utf8-substr-normalize this))))
-		(else
-		 (with-access::JsStringLiteralUTF8 right (%culen)
-		    (cond
-		       ((=fx (uint32->fixnum %culen) (-fx end start))
-			right)
-		       ((>fx (uint32->fixnum %culen) (-fx end start))
-			(utf8-substr right))
-		       (else
-			(utf8-substr-normalize this)))))))
-	    (else
-	     (utf8-substr-normalize this)))))
+   '''(define (utf8-substr this)
+       (with-access::JsStringLiteralUTF8 this (%culen left right)
+	  (cond
+	     ((or (=u32 %culen #u32:0) (js-jsstring-normalized? this))
+	      (utf8-substr-normalize this))
+	     ((and (eq? start 0) (fixnum? end))
+	      (cond
+		 ((js-jsstring-ascii? left)
+		  (with-access::JsStringLiteral left (length)
+		     (if (>fx (uint32->fixnum length) end)
+			 (js-jsstring-substring left start end %this)
+			 (utf8-substr-normalize this))))
+		 (else
+		  (with-access::JsStringLiteralUTF8 left (%culen)
+		     (cond
+			((=fx (uint32->fixnum %culen) (-fx end start))
+			 left)
+			((>fx (uint32->fixnum %culen) (-fx end start))
+			 (utf8-substr left))
+			(else
+			 (utf8-substr-normalize this)))))))
+	     ((and (fixnum? start) (eq? end (-fx (uint32->fixnum %culen) 1)))
+	      (cond
+		 ((js-jsstring-ascii? right)
+		  (with-access::JsStringLiteral left (length)
+		     (if (>u32 length (-fx end start))
+			 (js-jsstring-substring right start end %this)
+			 (utf8-substr-normalize this))))
+		 (else
+		  (with-access::JsStringLiteralUTF8 right (%culen)
+		     (cond
+			((=fx (uint32->fixnum %culen) (-fx end start))
+			 right)
+			((>fx (uint32->fixnum %culen) (-fx end start))
+			 (utf8-substr right))
+			(else
+			 (utf8-substr-normalize this)))))))
+	     (else
+	      (utf8-substr-normalize this)))))
 
+   (cond
+      ((js-jsstring-ascii? this)
+       (cond
+	  ((js-jsstring-normalized? this)
+	   (with-access::JsStringLiteral this (left)
+	      (ascii-substr left)))
+	  ((js-jsstring-substring? this)
+	   (substring-substr this))
+	  (else
+	   (ascii-substr (js-jsstring-normalize-ASCII! this)))))
+      (else
+       (utf8-substr this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-substring! ...                                       */
+;*    -------------------------------------------------------------    */
+;*    Semantically similar to JS-JSSTRING-SUBSTRING but only used for  */
+;*    buffer, i.e., strings that never escape and for which instead    */
+;*    of allocating a new Scheme string for the substring, the         */
+;*    for string can be reused. It saves the allocation of the         */
+;*    intermediate scheme string allocation.                           */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-substring! this start end %this)
+   
+   (define (ascii-substr s)
+      (let* ((len (string-length s))
+	     (intstart (js-tointeger start %this))
+	     (intend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
+	     (finalstart (->fixnum (min (max intstart 0) len)))
+	     (finalend (->fixnum (min (max intend 0) len)))
+	     (frm (minfx finalstart finalend))
+	     (to (maxfx finalstart finalend)))
+	 (if (and (=fx frm 0) (=fx len to))
+	     this
+	     (js-substring->jsstring s frm (-fx to frm)))))
+   
+   (define (substring-substr this)
+      (let* ((len (uint32->fixnum (js-jsstring-length this)))
+	     (intstart (js-tointeger start %this))
+	     (intend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
+	     (finalstart (->fixnum (min (max intstart 0) len)))
+	     (finalend (->fixnum (min (max intend 0) len)))
+	     (frm (minfx finalstart finalend))
+	     (to (maxfx finalstart finalend)))
+	 (if (and (=fx frm 0) (=fx len to))
+	     this
+	     (with-access::JsStringLiteralSubstring this (left right)
+		(let ((o (instantiate::JsStringLiteralSubstring
+			    (length (fixnum->uint32 (-fx to frm)))
+			    (left left)
+			    (right (+fx right frm)))))
+		   (js-object-mode-set! o (js-jsstring-default-substring-mode))
+		   (object-widening-set! o #f)
+		   o)))))
+
+   (define (substring! str i len)
+      (if (=fx i 0)
+	  (string-shrink! str len)
+	  (begin
+	     (blit-string! str 0 str i len)
+	     str)))
+
+   (define (js-utf8->jsstring/ulen! this::JsStringLiteralUTF8 str ulen)
+      (with-access::JsStringLiteralUTF8 this (length %culen left)
+	 (set! length (string-length str))
+	 (set! %culen ulen)
+	 (js-object-mode-set! this (js-jsstring-normalized-utf8-mode))
+	 (object-widening-set! this #f)
+	 this))
+   
+   (define (utf8-substring-fast! str start end culen::long ulen::uint32)
+      (let ((len (string-length str)))
+	 (if (=fx start end)
+	     (& "")
+	     (let loop ((r 0)
+			(n 0)
+			(i 0))
+		;; left to right read
+		(if (=fx r len)
+		    (js-utf8->jsstring/ulen! this (substring! str i r) ulen)
+		    (let* ((c (string-ref str r))
+			   (s (utf8-char-size c)))
+		       (cond
+			  ((=fx n start)
+			   (if (>fx (-fx end n) (-fx culen end))
+			       ;; right to left read
+			       (let liip ((j (-fx len 1))
+					  (e (-fx culen 1)))
+				  (let ((c (char->integer (string-ref str j))))
+				     (cond
+					((=fx (bit-rsh c 6) #x10)
+					 (liip (-fx j 1) e))
+					((=fx e end)
+					 (js-utf8->jsstring/ulen! this
+					    (substring! str i j)
+					    ulen))
+					(else
+					 (liip (-fx j 1) (-fx e 1))))))
+			       (loop (+fx r s) (+fx n 1) r)))
+			  ((=fx n end)
+			   (js-utf8->jsstring/ulen! this
+			      (substring! str i r) ulen))
+			  (else
+			   (loop (+fx r s) (+fx n 1) i)))))))))
+   
+   (define (utf8-substr this)
+      (let* ((s (if (js-jsstring-normalized? this)
+		    (with-access::JsStringLiteral this (left) left)
+		    (js-jsstring-normalize-UTF8! this)))
+	     (len (utf8-string-length s))
+	     (intstart (js-tointeger start %this))
+	     (intend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
+	     (finalstart (->fixnum (min (max intstart 0) len)))
+	     (finalend (->fixnum (min (max intend 0) len)))
+	     (frm (minfx finalstart finalend))
+	     (to (maxfx finalstart finalend))
+	     (ulen (fixnum->uint32 (-fx to frm))))
+	 (with-access::JsStringLiteralUTF8 this (%culen left)
+	    (if (=u32 %culen #u32:0)
+		(js-utf8->jsstring/ulen (utf8-substring s frm to) ulen)
+		(utf8-substring-fast! s frm to (uint32->fixnum %culen) ulen)))))
+   
    (cond
       ((js-jsstring-ascii? this)
        (cond
@@ -2774,7 +2896,7 @@
 		 (frm (minfx finalstart finalend))
 		 (to (maxfx finalstart finalend)))
 	     (js-substring->jsstring left frm (-fx to frm))))
-       (js-jsstring-substring this start end %this)))
+       (js-jsstring-substring! this start end %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-substring ...                                  */
