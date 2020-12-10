@@ -148,7 +148,7 @@
 	  (special (or kspecial #\:))
 	  (tagid (: (* digit)
 		    (or letter digit #\_)
-		    (* (or letter digit #\_ #\.))))
+		    (* (or letter digit #\_ #\. #\:))))
 	  (unicode (: #\\ #\u
 		      (or (: (in ("0139afAF")) (= 3 (in ("09afAF"))))
 			  (: "2" (in ("19afAF")) (= 2 (in ("09afAF"))))
