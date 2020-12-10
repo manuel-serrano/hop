@@ -134,8 +134,14 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.14    */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-ownkeys obj %this)
-   (let ((o (js-cast-object obj %this "Object.keys")))
-      (js-ownkeys o %this)))
+   (cond
+      ((epair? obj)
+       (js-vector->jsarray (vector (& "car") (& "cdr") (& "cer")) %this))
+      ((pair? obj)
+       (js-vector->jsarray (vector (& "car") (& "cdr")) %this))
+      (else
+       (let ((o (js-cast-object obj %this "Object.keys")))
+	  (js-ownkeys o %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ::JsObject ...                                       */
