@@ -8,9 +8,11 @@
 /*    -------------------------------------------------------------    */
 /*    hopdroid apps                                                    */
 /*=====================================================================*/
-var fs = require( 'fs' );
-var path = require( 'path' );
-var weblets = require( "./_weblets.hop" );
+"use hopscript"
+
+const fs = require( 'fs' );
+const path = require( 'path' );
+const weblets = require( "./_weblets.hop" );
 
 import * as sp from hop.spage;
 import { NAVTITLE } from './xml.js';

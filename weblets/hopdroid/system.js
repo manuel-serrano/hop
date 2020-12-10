@@ -8,8 +8,10 @@
 /*    -------------------------------------------------------------    */
 /*    Hopdroid system                                                  */
 /*=====================================================================*/
-var fs = require( 'fs' );
-var path = require( 'path' );
+"use hopscript"
+
+const fs = require( 'fs' );
+const path = require( 'path' );
 
 import { phone } from './phone.js';
 import * as sp from hop.spage;
