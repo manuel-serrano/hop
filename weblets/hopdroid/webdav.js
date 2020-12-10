@@ -60,7 +60,7 @@ service webdav() {
        }
      </script>
      
-     <div class="webdav-config">
+     <div class="webdav-config webdav-head">
        <div class="title">
 	 <svg:img class="icon" width="16px" height="16px" 
 		  src=${require.resolve( "./icons/hdd.svg" )}/>

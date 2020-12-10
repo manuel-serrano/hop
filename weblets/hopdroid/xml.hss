@@ -26,7 +26,8 @@ nav.navtitle ul {
     margin: 0;
     padding-left: 16px;
     padding-right: 16px;
-    height: 96px;
+    margin-top: 16px;
+    height: var( --spheadheight );
 }
 
 nav.navtitle ul li {
