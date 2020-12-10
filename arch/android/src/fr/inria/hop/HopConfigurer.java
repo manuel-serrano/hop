@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  8 15:35:26 2010                          */
-/*    Last change :  Mon Dec  7 05:36:08 2020 (serrano)                */
+/*    Last change :  Thu Dec 10 09:40:54 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Configuring Hop                                                  */
@@ -109,7 +109,7 @@ public class HopConfigurer implements HopStage {
 		  out.write( "require( \"".getBytes() );
 		  out.write( activity.getApplicationInfo().dataDir.getBytes() );
 		  out.write( "/assets/rcdir/hoprc.js".getBytes() );
-		  out.write( " \" );\n".getBytes() );
+		  out.write( "\" );\n".getBytes() );
 	       } finally {
 		  out.close();
 	       }

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sun Dec  6 10:54:51 2020 (serrano)                */
+/*    Last change :  Thu Dec 10 08:58:41 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -92,6 +92,7 @@ public class Hop extends Thread {
 	 + getPrefString( sp, HopConfig.APP + "-rcdir", ".config/" + HopConfig.APP );
       args = getPrefString( sp, HopConfig.ARGS, "" );
       rcdir = activity.getApplicationInfo().dataDir + "/assets/rcdir";
+      rcdir = HOME().getAbsolutePath() + "/.config/" + HopConfig.APP;
    }
    
    // HOME
