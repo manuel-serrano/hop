@@ -180,7 +180,9 @@
 		      (serv
 		       (scheduler-accept-loop (hop-scheduler) serv #t))
 		      (servs
-		       (scheduler-accept-loop (hop-scheduler) servs #t))))
+		       (scheduler-accept-loop (hop-scheduler) servs #t)))
+		   (when jsctx
+		      (thread-join! (jsctx-worker jsctx))))
 		  (jsctx
 		   (users-close!)
 		   (hop-filters-close!)

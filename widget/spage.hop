@@ -40,6 +40,7 @@
 ;*    SPAGE ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define-tag <SPAGE> ((id (xml-make-id 'SPAGE))
+		     (%context #f)
 		     (onchange #f)
 		     (class #f)
 		     (attr)
@@ -57,6 +58,7 @@
 		  (<DIV> :data-hss-tag "hop-spwindow"
 		     (<DIV> :data-hss-tag "hop-spviewport"
 			(<DIV> :data-hss-tag "hop-spbody"
+			   :%context %context
 			   :class class
 			   body)))
 		  ~(add-event-listener! $id "ready"
@@ -72,6 +74,7 @@
 ;*    SPHEAD ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define-tag <SPHEAD> ((id (xml-make-id 'SPHEAD))
+		      (%context #f)
 		      (attr)
 		      body)
    (instantiate::xml-sphead-element
@@ -79,7 +82,9 @@
       (attributes `(:data-hss-tag "hop-sphead" ,@attr))
       (id id)
       (body (list
-	       (<DIV> :data-hss-tag "hop-spheadbody" body)
+	       (<DIV> :data-hss-tag "hop-spheadbody"
+		  :%context %context
+		  body)
 	       (<DIV> :data-hss-tag "hop-sppopbutton"
 		  :onclick ~(spage-pop-update this)
 		  (<SPAN> ""))))))
