@@ -84,6 +84,17 @@ service apps() {
 }
 
 /*---------------------------------------------------------------------*/
+/*    ICIMG ...                                                        */
+/*---------------------------------------------------------------------*/
+function ICIMG( attrs ) {
+   if( attrs.src.match( /[.]svg$/ ) ) {
+      return <svg:img src=${attrs.src} width="32px" height="32px"/>;
+   } else {
+      return <img src=${attrs.src}/>;
+   }
+}
+   
+/*---------------------------------------------------------------------*/
 /*    app ...                                                          */
 /*---------------------------------------------------------------------*/
 function APP( a ) {
@@ -91,7 +102,7 @@ function APP( a ) {
      <sp.sptabhead>
        <div class="apps-app sptabhead unselected">
 	 <div class="app-icon">
-	   ${ a.icon ? <img src=${a.icon}/> : "" }
+	   ${ a.icon ? <icimg src=${a.icon}/> : "" }
 	 </div>
 	 <div class="app-title">
 	   <div>${a.name}</div>
