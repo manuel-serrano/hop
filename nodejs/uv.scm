@@ -414,6 +414,7 @@
 						(active-subworkers? th))
 				       (uv-unref async)
 				       (when (js-totest (js-get %process (& "_exiting") %this))
+					  (tprint "STOP...")
 					  (uv-stop loop)))))))))
 	 (synchronize mutex
 	    (nodejs-process th %this)

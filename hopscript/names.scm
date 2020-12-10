@@ -41,6 +41,7 @@
 	   (inline js-name->string::bstring ::JsStringLiteral)
 	   (js-ascii-name->jsstring::JsStringLiteralASCII ::bstring)
 	   (js-utf8-name->jsstring::JsStringLiteralUTF8 ::bstring)
+	   (js-utf8-name->jsstring/culen ::bstring ::long)
 	   (js-integer-name->jsstring::JsStringLiteralASCII ::long)
 	   (js-integer-name::obj ::long)
 	   (js-index-name::obj ::long)
@@ -387,6 +388,22 @@
       (let ((n (hashtable-get js-names str)))
 	 (or n
 	     (let ((o (instantiate::JsStringLiteralUTF8
+			 (length (fixnum->uint32 (string-length str)))
+			 (left str))))
+		(js-object-mode-set! o (js-jsstring-normalized-utf8-mode))
+		(hashtable-put! js-names str o)
+		(js-jsstring-name-set! o o)
+		o)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-utf8-name->jsstring/culen ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-utf8-name->jsstring/culen str::bstring culen)
+   (synchronize-name
+      (let ((n (hashtable-get js-names str)))
+	 (or n
+	     (let ((o (instantiate::JsStringLiteralUTF8
+			 (%culen (fixnum->uint32 culen))
 			 (length (fixnum->uint32 (string-length str)))
 			 (left str))))
 		(js-object-mode-set! o (js-jsstring-normalized-utf8-mode))

@@ -1531,6 +1531,7 @@
 	  (fast-add  tl tr loc type lhs rhs mode return ctx))))
    
    (define (fast-add tl tr loc type lhs rhs mode return ctx)
+      
       (with-tmp lhs rhs mode return ctx
 	 (lambda (left right)
 	    (cond
@@ -1645,7 +1646,7 @@
 	    ((and (or (memq tl '(string buffer)) (memq tr '(string buffer)))
 		  (context-get ctx :optim-size))
 	     (small-add tl tr loc type lhs rhs mode return ctx))
-	    ((and (memq tl '(string buffer)) (memq tr '(string buffef)))
+	    ((and (memq tl '(string buffer)) (memq tr '(string buffer)))
 	     (string-add tl tr loc type lhs rhs mode return ctx))
 	    (else
 	     (fast-add tl tr loc type lhs rhs mode return ctx)))))

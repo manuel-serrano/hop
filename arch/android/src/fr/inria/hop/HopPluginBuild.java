@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Sun Dec  6 19:31:56 2020 (serrano)                */
+/*    Last change :  Wed Dec  9 18:48:37 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the BUILD info                                               */
@@ -75,16 +75,38 @@ public class HopPluginBuild extends HopPlugin {
          // application info
 	 case (byte)'i':
 	    ApplicationInfo info = hopdroid.activity.getApplicationInfo();
-	    op.write( "(".getBytes() );
-	    op.write( "class-name: \"".getBytes() );
-	    op.write( info.className.getBytes() );
-	    op.write( "\" permission: \"".getBytes() );
-	    op.write( info.permission.getBytes() );
-	    op.write( "\" process-name: \"".getBytes() );
-	    op.write( info.processName.getBytes() );
-	    op.write( "\" data-dir: \"".getBytes() );
-	    op.write( info.dataDir.getBytes() );
-	    op.write( "\")".getBytes() );
+
+	    if( info == null ) {
+	       op.write( "()".getBytes() );
+	    } else {
+	       op.write( "(".getBytes() );
+	       
+	       if( info.className != null ) {
+		  op.write( " class-name: \"".getBytes() );
+		  op.write( info.className.getBytes() );
+		  op.write( "\"".getBytes() );
+	       }
+
+	       if( info.permission != null ) {
+		  op.write( " permission: \"".getBytes() );
+		  op.write( info.permission.getBytes() );
+		  op.write( "\"".getBytes() );
+	       }
+
+	       if( info.processName != null ) {
+		  op.write( " process-name: \"".getBytes() );
+		  op.write( info.processName.getBytes() );
+		  op.write( "\"".getBytes() );
+	       }
+
+	       if( info.dataDir !=null ) {
+		  op.write( " data-dir: \"".getBytes() );
+		  op.write( info.dataDir.getBytes() );
+		  op.write( "\"".getBytes() );
+	       }
+
+	       op.write( ")".getBytes() );
+	    }
 	    return;
       }
    }
