@@ -28,6 +28,7 @@
 	      (home::bstring read-only (get get-android-home))
 	      (external-storage::bstring read-only (get get-android-external-storage))
 	      (application-info::pair read-only (get get-android-application-info))
+	      (configuration::pair read-only (get get-android-configuration))
 	      (initid::int read-only (default 1))
 	      (%sock-plugin (default #f))
 	      (%sock-event (default #f))
@@ -143,6 +144,12 @@
 ;*---------------------------------------------------------------------*/
 (define (get-android-application-info p::androidphone)
    (get-android-build p #\i))
+
+;*---------------------------------------------------------------------*/
+;*    get-android-configuration ...                                    */
+;*---------------------------------------------------------------------*/
+(define (get-android-configation p::androidphone)
+   (get-android-build p #\c))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-locales ::androidphone ...                                 */
