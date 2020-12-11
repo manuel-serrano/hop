@@ -21,7 +21,9 @@ import { config } from hop.config;
 /*---------------------------------------------------------------------*/
 const localConfig = {
    get enableWebdav() { return config.enableWebdav; },
-   set enableWebdav( v ) { return config.enableWebdav = v; }
+   set enableWebdav( v ) { return config.enableWebdav = v; },
+   get uiTheme() { return config.theme || phone.config.theme },
+   set uiTheme( v ) { return config.theme = v }
 }
 /*---------------------------------------------------------------------*/
 /*    init ...                                                         */
