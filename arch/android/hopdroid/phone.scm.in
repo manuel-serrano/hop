@@ -148,7 +148,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    get-android-configuration ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (get-android-configation p::androidphone)
+(define (get-android-configuration p::androidphone)
    (get-android-build p #\c))
 
 ;*---------------------------------------------------------------------*/
