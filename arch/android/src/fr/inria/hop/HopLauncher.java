@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Dec 11 07:02:32 2020 (serrano)                */
+/*    Last change :  Fri Dec 11 07:19:05 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -425,7 +425,7 @@ public class HopLauncher extends Activity {
       Log.d( "HopLauncher", "onConfigurationChange" );
 
       if( HopService.lasthopdroid != null ) {
-	 HopService.lasthopdroid.pushEvent( "configchanged", HopConfiguration.toString( newConfig );
+	 HopService.lasthopdroid.pushEvent( "configurationchange", HopConfiguration.toString( newConfig );
       }
    }
    
