@@ -542,7 +542,7 @@ apk-sans-bigloo: apk.common apk.res apk.jni apk.src apk.hop apk.custom
 	$(MAKE) ndk-build
 	$(MAKE) apk-build
 
-apk-sans-hop: apk.common apk.res apk.jni apk.src
+apk-sans-hop: apk.common apk.res apk.jni apk.src apk.weblets
 	$(MAKE) ndk-build
 	$(MAKE) apk-build
 
@@ -588,6 +588,13 @@ $(ANDROIDBUILDDIR)/jni: jni $(ANDROIDBUILDDIR)
            cat $$p | sed 's|fr/inria/hop/|fr/inria/$(HOPAPP)/|g' > $$p.__tmp; \
            mv $$p.__tmp $$p; \
         done
+
+# this goal is only used by the apk-sans-hop target
+apk.weblets:
+	$(RM) -rf $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets
+	$(RM) -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME)/weblets
+	cp -r $(BUILDDIR)/weblets $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
+	cp -r $(ANDROIDBUILDDIR)/$(HOPFULLNAME)/weblets $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)
 
 apk.src: $(ANDROIDBUILDDIR)/src
 $(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR) \

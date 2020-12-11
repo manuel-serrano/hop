@@ -13,6 +13,7 @@
 const fs = require( "fs" );
 const path = require( "path" );
 
+import { phone } from './phone.js';
 import { config } from hop.config;
 
 /*---------------------------------------------------------------------*/
@@ -27,6 +28,7 @@ const localConfig = {
 /*---------------------------------------------------------------------*/
 export function init() {
    localConfig.enableWebdav = config.enableWebdav;
+   console.log( "CONFIG=", phone.config );
 }
 
 /*---------------------------------------------------------------------*/

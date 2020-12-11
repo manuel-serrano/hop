@@ -46,7 +46,7 @@ service hopdroid( o ) {
        <link href=${require.resolve( "./system.hss" )} rel="stylesheet" type="text/css"/>
        <link href=${require.resolve( "./about.hss" )} rel="stylesheet" type="text/css"/>
        <script>
-	 hop.addEventListener( "configurationchange", e => console.log( "config: ", e ) );
+	 server.addEventListener( "configurationchange", e => console.log( "config: ", e ) );
        </script>
      </head>
      
