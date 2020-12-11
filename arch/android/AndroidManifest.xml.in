@@ -13,9 +13,8 @@
 
         <activity android:name="fr.inria.@HOPAPP@.HopLauncher"
                   android:launchMode="singleTop"
-                  android:configChanges="keyboard|keyboardHidden|orientation|screenLayout"
+                  android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode"
                   android:label="@string/activity_hop"
-		  android:configChanges="uiMode"
 		  >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
