@@ -20,4 +20,4 @@ export const phone = new hopdroid.phone();
 /*---------------------------------------------------------------------*/
 /*    event listener                                                   */
 /*---------------------------------------------------------------------*/
-phone.addEventListener( "configurationchange", e => console.log( "config: ", e ) );
+phone.addEventListener( "configurationchanged", e => console.log( "config: ", e ) );

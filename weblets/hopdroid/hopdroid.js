@@ -78,7 +78,7 @@ service hopdroid( o ) {
    </html>;
 }
 
-function PRIVACY() {
+function PRIVACY( attrs ) {
    return <sp.sptab svc=${service () { return "not-implemented" } }>
      <sp.sptabhead>
        <nav class="sptabhead unselected">
