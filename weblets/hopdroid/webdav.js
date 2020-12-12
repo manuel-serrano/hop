@@ -27,7 +27,7 @@ export function WEBDAV() {
        <nav class="sptabhead unselected">
 	 <ul>
 	   <li>
-	     <div class="icon">
+	     <div class="icon hdd-icon">
 	       <svg:img class="hdd-icon" width="16px" height="16px" 
 			src=${require.resolve( "./icons/hdd-network.svg" )}/>
 	     </div>

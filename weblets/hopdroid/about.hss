@@ -10,6 +10,11 @@
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
+/*    import                                                           */
+/*---------------------------------------------------------------------*/
+@import url("about-dark.hss");
+
+/*---------------------------------------------------------------------*/
 /*    about                                                            */
 /*---------------------------------------------------------------------*/
 div.about {
@@ -23,14 +28,10 @@ div.about-logo {
     margin-left: auto;
     margin-right: auto;
     text-align: center;
-    border: 1px solid #eee;
+    border: 1px solid #ddd;
     border-radius: 6px;
-    background-color: white;
+    background-color: #eee;
     padding: 16px;
-}
-
-div.icon div.about-icon svg * {
-    fill: #33d;
 }
 
 div.about-phone-model, div.about-phone-product {

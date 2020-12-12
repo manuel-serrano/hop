@@ -26,7 +26,7 @@ export function APPS() {
        <nav class="sptabhead unselected">
 	 <ul>
 	   <li>
-	     <div class="icon">
+	     <div class="icon apps-icon">
 	       <svg:img class="apps-icon" width="16px" height="16px" 
 			src=${require.resolve( "./icons/grid-3x3-gap.svg" )}/>
 	     </div>

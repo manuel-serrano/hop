@@ -81,6 +81,7 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 	 // use the viewport width for the containing block width
 	 node_style_set( spage.spwindow, "width", spage.spwidth + "px" );
 	 node_style_set( spage.spviewport, "width", spage.spscrollwdith + "px" );
+	 
 	 node_style_set( spage.spviewport.childNodes[ 0 ], "width", spage.spbodywidth + "px" );
       }
    }
@@ -217,7 +218,9 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       tbody.tab = tab;
       
       // expand the body div when necessary
-      spage.spoffset = spage.depth * spage.spwidth;
+      // MS 12dec2020: spoffset re-computation
+      // spage.spoffset = spage.depth * spage.spwidth;
+      spage.spoffset += spage.spwidth;
       spage.spscrollwidth = (spage.depth + 1) * spage.spwidth;
       
       // set the tab and viewport dimensions
