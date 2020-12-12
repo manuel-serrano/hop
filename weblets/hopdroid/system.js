@@ -26,7 +26,7 @@ export function SYSTEM() {
        <nav class="sptabhead unselected">
 	 <ul>
 	   <li>
-	     <div class="icon">
+	     <div class="icon system-icon">
 	       <svg:img class="system-icon" width="16px" height="16px" 
 			src=${require.resolve( "./icons/gear.svg" )}/>
 	     </div>

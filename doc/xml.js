@@ -271,7 +271,6 @@ function idxEntry( e, idx = undefined, arr = undefined ) {
       const i = lbl.lastIndexOf( "." );
       const { index: cindex, sep: csep } = minIndexOf( e.proto, "(", "{" );
 
-      console.error( "p=", e.proto, " csep=", csep );
       switch( csep ) {
 	 case "{": lbl += "{}"; break;
 	 case "(": lbl += "()"; break;

@@ -10,10 +10,16 @@
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
+/*    import                                                           */
+/*---------------------------------------------------------------------*/
+@import url("hopdroid-dark.hss");
+
+/*---------------------------------------------------------------------*/
 /*    global variables                                                 */
 /*---------------------------------------------------------------------*/
 :root {
-    --bgcolor: #f7f7f7;
+    --margincolor: #f7f7f7;
+    --bgcolor-status: #3a3a3a;
     --spheadheight: 96px;
 }
 
@@ -36,7 +42,7 @@ body {
 .hopdroid spage.main {
   background: transparent;
   /* -hop-background-gradient: #3A3A3A #3A3A3A #3F3F3F; */
-  background-color: #3A3A3A;
+  background-color: var( --bgcolor-status );
   padding: 0;
   margin: 0;
   overflow: hidden;
@@ -91,7 +97,7 @@ body {
 /*    spage-block                                                      */
 /*---------------------------------------------------------------------*/
 div.spage-block {
-    border-top: 8px solid var( --bgcolor );
+    border-top: 8px solid var( --margincolor );
     background-color: white;
 }
 
@@ -143,7 +149,7 @@ div.icon-sans {
 
 nav div.icon {
     border-radius: 50%;
-    background-color: #f7f7f7;
+    background-color: var( --margincolor );
     border: 1px solid #ddd;
 }
 
@@ -173,6 +179,14 @@ div.icon div.hdd-icon svg * {
 
 div.icon div.privacy-icon svg * {
     fill: #b00;
+}
+
+div.icon div.about-icon svg * {
+    fill: #33d;
+}
+
+div.icon div.system-icon svg * {
+    fill: #777;
 }
 
 div.icon-sans svg * {

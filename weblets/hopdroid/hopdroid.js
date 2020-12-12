@@ -20,12 +20,13 @@ import { APPS } from './apps.js';
 import { SYSTEM } from './system.js';
 import { WEBDAV } from './webdav.js';
 import { ABOUT } from './about.js';
-import { init as configInit } from './config.js';
+import * as localConfig from './config.js';
+import { phone } from './phone.js';
 
 /*---------------------------------------------------------------------*/
 /*    Initialize the hopdroid config system.                           */
 /*---------------------------------------------------------------------*/
-configInit();
+localConfig.init();
    
 /*---------------------------------------------------------------------*/
 /*    hopdroid                                                         */
@@ -50,7 +51,8 @@ service hopdroid( o ) {
        </script>
      </head>
      
-     <body class="hopdroid">
+     <body class="hopdroid"
+	   data-theme=${`${localConfig.theme || (hop.isLocalRequest( this ) && phone.config.theme) || "default"}`}>
        <sp.spage id="spage">
 	 <sp.sphead class="main">
 	   <navtitle spageid="spage" class="selected">Hop</navtitle>
@@ -84,7 +86,7 @@ function PRIVACY( attrs ) {
        <nav class="sptabhead unselected">
 	 <ul>
 	   <li>
-	     <div class="icon">
+	     <div class="icon privacy-icon">
 	       <svg:img class="privacy-icon" width="16px" height="16px" 
 			src=${require.resolve( "./icons/shield-lock.svg" )}/>
 	     </div>
@@ -108,12 +110,12 @@ function PRIVACY( attrs ) {
 service manifest() {
    return hop.HTTPResponseString( 
       `{"short_name": "hopc@${hop.hostname}", 
-		  "name": "hop v${hop.version}", 
-                  "start_url": "/hop/hopdroid", 
-		  "display": "standalone", 
-                  "orientation": "portrait",
-                  "description": "Hop on Android",
-                  "icons": [ { "src": "${require.resolve( './hop.svg' )}", "type": "image/svg" } ]}`,
+        "name": "hop v${hop.version}", 
+        "start_url": "/hop/hopdroid", 
+        "display": "standalone", 
+        "orientation": "portrait",
+        "description": "Hop on Android",
+        "icons": [ { "src": "${require.resolve( './hop.svg' )}", "type": "image/svg" } ]}`,
       { "charset": hop.charset,
 	"header": {
 	   "Cache-Control": "no-cache",

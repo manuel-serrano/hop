@@ -27,7 +27,7 @@ export function ABOUT() {
        <nav class="sptabhead unselected">
 	 <ul>
 	   <li>
-	     <div class="icon">
+	     <div class="icon about-icon">
 	       <svg:img class="about-icon" width="16px" height="16px" 
 			src=${require.resolve( "./icons/info-circle.svg" )}/>
 	     </div>
@@ -50,10 +50,8 @@ export function ABOUT() {
 /*---------------------------------------------------------------------*/
 service about() {
    const wifi = new hopdroid.wifi( phone ).info;
-   const info = phone.applicationInfo();
+   const info = phone.applicationInfo;
    
-   console.log( "info=", info );
-
    return <div class="about">
      <div class="about-logo">
        <svg:img class="logo" width="128px" height="128px" 

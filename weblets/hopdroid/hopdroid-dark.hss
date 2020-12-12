@@ -1,0 +1,69 @@
+/*=====================================================================*/
+/*    .../prgm/project/hop/hop/weblets/hopdroid/hopdroid-dark.hss      */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sat Dec 12 09:54:51 2020                          */
+/*    Last change :  Sat Dec 12 09:55:39 2020 (serrano)                */
+/*    Copyright   :  2020 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    Dark configuration coloring                                      */
+/*=====================================================================*/
+
+:root {
+    --dark-bgcolor: #3a3a3a;
+    --dark-margincolor: #5a5a5a;
+    --dark-bgcolor-status: #3a3a3a;
+    --dark-bbcolor: #434343;
+}
+
+body[data-theme=dark] {
+    background-color: var( --dark-bgcolor );
+}
+
+body[data-theme=dark] sphead,
+body[data-theme=dark] [data-hss-tag=hop-sphead] {
+    border-bottom: 1px solid var( --dark-margincolor );
+}
+
+body[data-theme=dark] div.spage-block {
+    border-top: 8px solid var( --dark-margincolor );
+    background-color: var( --dark-bgbgcolor );
+ );
+}
+
+body[data-theme=dark] nav.sptabhead {
+    color: white;
+}
+
+body[data-theme=dark] nav.sptabhead .subtitle {
+    color: #bbb;
+}
+
+body[data-theme=dark] div.icon div svg * {
+    fill: white;;
+}
+body[data-theme=dark] nav div.icon {
+    border: 0;
+}
+
+body[data-theme=dark] nav div.hdd-icon {
+    background-color: #f3ac27;
+}
+
+body[data-theme=dark] nav div.apps-icon {
+    background-color: #8342d2;
+}
+
+body[data-theme=dark] nav div.about-icon {
+    background-color: #33d;
+}
+
+body[data-theme=dark] nav div.system-icon {
+    background-color: #000;
+}
+
+body[data-theme=dark] nav div.privacy-icon {
+    background-color: #FF3625;
+}
+
+
