@@ -22,15 +22,13 @@ import { config } from hop.config;
 const localConfig = {
    get enableWebdav() { return config.enableWebdav; },
    set enableWebdav( v ) { return config.enableWebdav = v; },
-   get uiTheme() { return config.theme || phone.config.theme },
-   set uiTheme( v ) { return config.theme = v }
+   theme: undefined
 }
 /*---------------------------------------------------------------------*/
 /*    init ...                                                         */
 /*---------------------------------------------------------------------*/
 export function init() {
    localConfig.enableWebdav = config.enableWebdav;
-   console.log( "CONFIG=", phone.config );
 }
 
 /*---------------------------------------------------------------------*/
