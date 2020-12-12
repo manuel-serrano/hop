@@ -1,0 +1,61 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/hop/weblets/hopdroid/apps-dark.hss      */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sat Dec 12 11:17:38 2020                          */
+/*    Last change :  Sat Dec 12 11:17:39 2020 (serrano)                */
+/*    Copyright   :  2020 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    APPS dark hss                                                    */
+/*=====================================================================*/
+
+body[data-theme=dark] div.apps {
+    background-color: var( --dark-margincolor );
+}
+
+body[data-theme=dark] div.apps nav.sptabhead,
+body[data-theme=dark] div.apps sptabhead,
+body[data-theme=dark] div.apps div[data-hss-tag=hop-sptabhead] {
+    color: white;
+    background-color: var( --dark-bgcolor );
+}
+
+body[data-theme=dark] div.app-page .app-header {
+    color: white;
+    background-color: var( --dark-bgcolor );
+}
+
+body[data-theme=dark] div.app-info {
+    color: white;
+    background-color: var( --dark-bgcolor );
+}
+
+body[data-theme=dark] div.apps-app .app-title {
+    color: #fff;
+}
+
+body[data-theme=dark] div.apps-app .app-description {
+    color: #ddd;
+}
+
+body[data-theme=dark] div.app-action-button {
+    background-color: var( --dark-bgcolor );
+    color: #1EB4E5;
+}
+
+body[data-theme=dark] div.app-info-entry .title {
+    color: #fff;
+}
+
+body[data-theme=dark] div.app-info-entry .value {
+    color: #bbb;
+}
+
+body[data-theme=dark] div.app-info-entry .icon svg *{
+    fill: #bbb;
+}
+
+body[data-theme=dark] div.app-info-description {
+    color: #ccc;
+}
+
