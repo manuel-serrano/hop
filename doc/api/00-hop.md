@@ -346,6 +346,20 @@ ${ <span class="label label-info">image/image.js</span> }
 ${ doc.include( doc.BUILDDIR + "/examples/image/image.js", 14 ) }
 ```
 
+Requests
+--------
+[:requests]
+
+The `this` value of service invokations is an object that denotes the
+current request.
+
+### hop.isLocalRequest( req ) ###
+[:@glyphicon glyphicon-tag function]
+
+Returns `true` if and only if `req` denotes a locate request, i.e., an
+http request emitted from the same machine that runs the server. Returns
+`false` otherwise.
+
 
 Request Filtering
 -----------------
