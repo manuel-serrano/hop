@@ -886,8 +886,9 @@
 	  (set! left
 	     (substring left right (+fx right (uint32->fixnum length)))))
 	 ((<fx (uint32->fixnum length) (string-length left))
-	  (if (>fx (-fx (string-length left) (uint32->fixnum length))
-		 (substring-memory-waste-threshold))
+	  (if (or (not (js-jsstring-buffer? js))
+		  (>fx (-fx (string-length left) (uint32->fixnum length))
+		     (substring-memory-waste-threshold)))
 	      (set! left
 		 (substring left right (+fx right (uint32->fixnum length))))
 	      (string-shrink! left (uint32->fixnum length)))))

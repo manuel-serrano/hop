@@ -374,6 +374,12 @@
 		  (lambda (this proc req)
 		     (hopjs-response-async this proc req %this %worker)))
 
+	       ;; request
+	       (define-js isLocalRequest 1
+		  (lambda (this req)
+		     (when (isa? req http-request)
+			(http-request-local? req))))
+
 	       ;; filters
 	       (define-js addRequestFilter 1
 		  (lambda (this proc)
