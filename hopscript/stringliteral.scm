@@ -75,7 +75,6 @@
 	   (js-jsstring-normalize!::JsStringLiteral ::JsStringLiteral)
 	   
 	   (js-jsstring-normalize-ASCII!::bstring ::JsStringLiteralASCII)
-	   (js-jsstring-normalize-SUBSTRING!::bstring ::JsStringLiteralSubstring)
 	   (js-jsstring-normalize-UTF8!::bstring ::JsStringLiteralUTF8)
 	   (inline js-jsstring-append::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (js-jsstring-append3::JsStringLiteral ::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
@@ -200,6 +199,9 @@
       (cond-expand
 	 ((or bint61 bint64) #u32:8)
 	 (else #u32:4))))
+
+(define (substring-memory-waste-threshold)
+   1024)
 
 ;*---------------------------------------------------------------------*/
 ;*    jsbufferin-initial-size ...                                      */
@@ -739,7 +741,6 @@
 ;*    js-jsstring-normalize-ASCII! ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-normalize-ASCII!::bstring js::JsStringLiteralASCII)
-   ;; BGl_jszd2jsstringzd2normaliza7ezd2ASCIIz12z67zz__hopscript_stringliteralz00
    
    (define (blit-buffer!::long s::bstring buffer::bstring i::long len::long)
       (case len
@@ -860,6 +861,7 @@
 				    (nstack (cons (cons ni right) stack)))
 				(loop i left nstack))))))))))))
 
+   
    (with-access::JsStringLiteral js (length left)
       (cond
 	 ((js-jsstring-normalized? js)
@@ -874,10 +876,28 @@
 	  (normalize-big! js)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-jsstring-normalize-SUBSTRING! ...                             */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-normalize-SUBSTRING! js::JsStringLiteralSubstring)
+   (with-access::JsStringLiteralSubstring js (left right length)
+      (js-object-mode-set! js (js-jsstring-normalized-ascii-mode))
+      (cond
+	 ((>fx right 0)
+	  (set! left
+	     (substring left right (+fx right (uint32->fixnum length)))))
+	 ((<fx (uint32->fixnum length) (string-length left))
+	  (if (>fx (-fx (string-length left) (uint32->fixnum length))
+		 (substring-memory-waste-threshold))
+	      (set! left
+		 (substring left right (+fx right (uint32->fixnum length))))
+	      (string-shrink! left (uint32->fixnum length)))))
+      (set! right (js-not-a-string-cache))
+      left))
+
+;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-UTF8! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-normalize-UTF8! js::JsStringLiteralUTF8)
-   ;; BGl_jszd2jsstringzd2normaliza7ezd2UTF8z12z67zz__hopscript_stringliteralz00
    
    (define (blit-utf8-buffer!::long s::bstring buffer::bstring i::long)
       (let ((len (string-length s)))
@@ -994,18 +1014,6 @@
 	  (normalize-big! js)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring-normalize-SUBSTRING! ...                             */
-;*---------------------------------------------------------------------*/
-(define (js-jsstring-normalize-SUBSTRING! js::JsStringLiteralSubstring)
-   (with-access::JsStringLiteralSubstring js (left right length)
-      (js-object-mode-set! js (js-jsstring-normalized-ascii-mode))
-      (unless (and (=fx right 0)
-		   (=fx (uint32->fixnum length) (string-length left)))
-	 (set! left (substring left right (+fx right (uint32->fixnum length)))))
-      (set! right (js-not-a-string-cache))
-      left))
-
-;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize! ...                                       */
 ;*    -------------------------------------------------------------    */
 ;*    Tailrec normalization (with explicit stack management).          */
@@ -1017,11 +1025,8 @@
       ((js-jsstring-ascii? js)
        (js-jsstring-normalize-ASCII! js)
        js)
-      ((js-jsstring-utf8? js)
-       (js-jsstring-normalize-UTF8! js)
-       js)
       (else
-       (js-jsstring-normalize-SUBSTRING! js)
+       (js-jsstring-normalize-UTF8! js)
        js)))
 
 ;*---------------------------------------------------------------------*/
@@ -1133,10 +1138,7 @@
 	      (with-access::JsStringLiteral y ((ylen length) (ystr left))
 		 (when (=u32 xlen ylen)
 		    (substring-at? xstr ystr 0 (uint32->fixnum xlen))))
-	      (begin
-		 (with-access::JsStringLiteral y ((ylen length) (ystr left))
-		    (tprint "ICI..." xstr " " y " " xlen "/" ylen))
-		 (substring-at? xstr (js-jsstring->string y) 0))))
+	      (substring-at? xstr (js-jsstring->string y) 0)))
        (if (js-jsstring-buffer? y)
 	   (with-access::JsStringLiteral y ((ylen length) (ystr left))
 	      (substring-at? ystr (js-jsstring->string y) 0))
@@ -1592,18 +1594,21 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append-buffer ...                                    */
-;*    -------------------------------------------------------------    */
-;*    Only used when hopc option "-fstrbuffer" is explictly passed.    */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-append-buffer::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
-   (if (and (js-jsstring-ascii? right) (js-jsstring-normalized? right))
-       (js-jsstring-append-buffer-ascii left right)
+   (if (js-jsstring-ascii? right)
+       (cond
+	  ((js-jsstring-normalized? right)
+	   (js-jsstring-append-buffer-ascii left right))
+	  ((<u32 (js-jsstring-length right) (string-append-auto-normalize-threshold))
+	   (js-jsstring-normalize-ASCII! right)
+	   (js-jsstring-append-buffer-ascii left right))
+	  (else
+	   (js-jsstring-append left right)))
        (js-jsstring-append left right)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append-buffer-ascii ...                              */
-;*    -------------------------------------------------------------    */
-;*    Only used when hopc option "-fstrbuffer" is explictly passed.    */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-append-buffer-ascii::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
    (if (js-jsstring-buffer? left)
