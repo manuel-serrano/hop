@@ -10,6 +10,11 @@
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
+/*    import                                                           */
+/*---------------------------------------------------------------------*/
+@import url("webdav-dark.hss");
+
+/*---------------------------------------------------------------------*/
 /*    webdav ...                                                       */
 /*---------------------------------------------------------------------*/
 div.webdav {
@@ -38,45 +43,6 @@ div.webdav-page {
 /*---------------------------------------------------------------------*/
 div.webdav-head {
     padding-top: 16px;
-}
-
-/*---------------------------------------------------------------------*/
-/*    webdav-config                                                    */
-/*---------------------------------------------------------------------*/
-div.webdav-config {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    min-height: 64px;
-    padding-left: 16px;
-    background-color: white;
-}
-
-div.webdav-config .icon {
-    margin-right: 16px;
-}
-
-div.webdav-config .icon svg *{
-    fill: #999;
-}
-    
-div.webdav-config .title {
-    align-self: center;
-}
-
-div.webdav-config .text {
-    color: #222;
-}
-
-div.webdav-config .text .comment {
-    color: #666;
-    font-size: 60%;
-}
-
-div.webdav-config .button {
-    flex-grow: 4;
-    text-align: right;
-    padding-right: 32px;
 }
 
 /*---------------------------------------------------------------------*/
@@ -189,7 +155,7 @@ div.webdav-action div.system-button-text {
 }
 
 /*---------------------------------------------------------------------*/
-/*    webdav-info                                                         */
+/*    webdav-info                                                      */
 /*---------------------------------------------------------------------*/
 div.webdav-info {
     background: white;

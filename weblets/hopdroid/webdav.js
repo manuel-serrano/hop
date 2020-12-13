@@ -62,7 +62,7 @@ service webdav() {
        }
      </script>
      
-     <div class="webdav-config webdav-head">
+     <div class="webdav-config webdav-head config">
        <div class="title">
 	 <svg:img class="icon" width="16px" height="16px" 
 		  src=${require.resolve( "./icons/hdd.svg" )}/>
@@ -77,7 +77,7 @@ service webdav() {
 	 <svg:img id="webdav-toggle" 
 		  data-on=${config.enableWebdav ? "on" : "off" }
 		  class="icon-toggle" width="24px" height="24px" 
-		  src=${require.resolve( "./icons/toggle2-off.svg" )}/>
+		  src=${require.resolve( "./icons/toggle-on.svg" )}/>
        </div>
      </div>
    </div>;

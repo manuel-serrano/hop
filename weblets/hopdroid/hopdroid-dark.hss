@@ -10,14 +10,19 @@
 /*=====================================================================*/
 
 :root {
-    --dark-bgcolor: #3a3a3a;
-    --dark-margincolor: #5a5a5a;
-    --dark-bgcolor-status: #3a3a3a;
+    --dark-bgcolor: #2a2a2a;
+    --dark-margincolor: #3a3a3a;
+    --dark-bgcolor-status: #2a2a2a;
     --dark-bbcolor: #434343;
 }
 
 body[data-theme=dark] {
     background-color: var( --dark-bgcolor );
+}
+
+body[data-theme=dark].hopdroid [data-hss-tag=hop-sphead].main,
+body[data-theme=dark].hopdroid spage.main {
+    background-color: var( --dark-bgcolor-status );
 }
 
 body[data-theme=dark] sphead,
@@ -66,4 +71,31 @@ body[data-theme=dark] nav div.privacy-icon {
     background-color: #FF3625;
 }
 
+body[data-theme=dark] div.icon-toggle[ data-on=on ] svg * {
+    fill: #6770EB;
+}
+    
+/*---------------------------------------------------------------------*/
+/*    config                                                           */
+/*---------------------------------------------------------------------*/
+body[data-theme=dark] .config {
+    color: white;
+    background-color: var( --dark-bgcolor );
+}
 
+body[data-theme=dark] .config .text,
+body[data-theme=dark] .config .title {
+    color: #fff;
+}
+
+body[data-theme=dark] .config .value {
+    color: #ccc;
+}
+
+body[data-theme=dark] .config .text .comment {
+    color: #bbb;
+}
+
+body[data-theme=dark] .config .icon svg *{
+    fill: #bbb;
+}

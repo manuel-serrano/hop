@@ -67,7 +67,7 @@ div.apps-app .app-title {
 
 div.apps-app .app-description {
     color: #666;
-    font-size: 60%;
+    font-size: 70%;
 }
 
 div.app-icon img {
@@ -151,31 +151,6 @@ div.app-info-description {
     padding: 32px;
     font-size: 80%;
     color: #666;
-}
-
-div.app-info-entry {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    min-height: 64px;
-    padding-left: 16px;
-}
-
-div.app-info-entry .icon {
-    margin-right: 16px;
-}
-
-div.app-info-entry .icon svg *{
-    fill: #999;
-}
-
-div.app-info-entry .title {
-    color: #222;
-}
-
-div.app-info-entry .value {
-    font-size: 70%;
-    color: #555;
 }
 
 div.app-info-entry .valuedate {

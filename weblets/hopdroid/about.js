@@ -91,7 +91,7 @@ service about() {
 /*    ABOUTENTRY ...                                                   */
 /*---------------------------------------------------------------------*/
 function ABOUTENTRY( attr, ... nodes ) {
-   return <div class=${`about-info-entry ${attr.class ||""}`}>
+   return <div class=${`about-info-entry ${attr.class ||""} config`}>
      <svg:img class="icon" width="16px" height="16px" src=${attr.icon}/>
      <div>
        <div class="title">${attr.title}</div> 

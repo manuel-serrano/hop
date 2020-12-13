@@ -18,6 +18,7 @@ import * as sp from hop.spage;
 import { NAVTITLE } from './xml.js';
 import { APPS } from './apps.js';
 import { SYSTEM } from './system.js';
+import { PRIVACY } from './privacy.js';
 import { WEBDAV } from './webdav.js';
 import { ABOUT } from './about.js';
 import * as localConfig from './config.js';
@@ -43,6 +44,7 @@ service hopdroid( o ) {
        <link href=${require.resolve( "./hopdroid.hss" )} rel="stylesheet" type="text/css"/>
        <link href=${require.resolve( "./xml.hss" )} rel="stylesheet" type="text/css"/>
        <link href=${require.resolve( "./apps.hss" )} rel="stylesheet" type="text/css"/>
+       <link href=${require.resolve( "./privacy.hss" )} rel="stylesheet" type="text/css"/>
        <link href=${require.resolve( "./webdav.hss" )} rel="stylesheet" type="text/css"/>
        <link href=${require.resolve( "./system.hss" )} rel="stylesheet" type="text/css"/>
        <link href=${require.resolve( "./about.hss" )} rel="stylesheet" type="text/css"/>
@@ -52,7 +54,7 @@ service hopdroid( o ) {
      </head>
      
      <body class="hopdroid"
-	   data-theme=${`${localConfig.theme || (hop.isLocalRequest( this ) && phone.config.theme) || "default"}`}>
+	   data-theme=${`${localConfig.theme || "darkx" || (hop.isLocalRequest( this ) && phone.config.theme) || "default"}`}>
        <sp.spage id="spage">
 	 <sp.sphead class="main">
 	   <navtitle spageid="spage" class="selected">Hop</navtitle>
@@ -78,30 +80,6 @@ service hopdroid( o ) {
        </sp.spage>
      </body>
    </html>;
-}
-
-function PRIVACY( attrs ) {
-   return <sp.sptab svc=${service () { return "not-implemented" } }>
-     <sp.sptabhead>
-       <nav class="sptabhead unselected">
-	 <ul>
-	   <li>
-	     <div class="icon privacy-icon">
-	       <svg:img class="privacy-icon" width="16px" height="16px" 
-			src=${require.resolve( "./icons/shield-lock.svg" )}/>
-	     </div>
-	   </li>
-	   <li>
-	     <div class="title">
-	       <div>Security</div>
-	       <div class="subtitle">authentication, permissions</div>
-	     </div>
-	   </li>
-	 </ul>
-       </nav>
-       <navtitle spageid="spage" class="sphead selected" arrow="&#8672;">Privacy</navtitle>
-     </sp.sptabhead>
-   </sp.sptab>
 }
 
 /*---------------------------------------------------------------------*/
