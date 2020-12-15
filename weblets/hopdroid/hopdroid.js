@@ -23,6 +23,7 @@ import { WEBDAV } from './webdav.js';
 import { ABOUT } from './about.js';
 import * as localConfig from './config.js';
 import { phone } from './phone.js';
+import { authorizeRequest } from './auth.js';
 
 /*---------------------------------------------------------------------*/
 /*    Initialize the hopdroid config system.                           */
@@ -30,9 +31,16 @@ import { phone } from './phone.js';
 localConfig.init();
    
 /*---------------------------------------------------------------------*/
-/*    hopdroid                                                         */
+/*    hopdroidSVC ...                                                  */
 /*---------------------------------------------------------------------*/
-service hopdroid( o ) {
+service hopdroidSVC() {
+   return authorizeRequest( this, hopdroid );
+}
+
+/*---------------------------------------------------------------------*/
+/*    hopdroid ...                                                     */
+/*---------------------------------------------------------------------*/
+function hopdroid( req ) {
    return <html>
      
      <head>
@@ -54,7 +62,7 @@ service hopdroid( o ) {
      </head>
      
      <body class="hopdroid"
-	   data-theme=${`${localConfig.theme || "darkx" || (hop.isLocalRequest( this ) && phone.config.theme) || "default"}`}>
+	   data-theme=${`${localConfig.theme || (hop.isLocalRequest( req ) && phone.config.theme) || "default"}`}>
        <sp.spage id="spage">
 	 <sp.sphead class="main">
 	   <navtitle spageid="spage" class="selected">Hop</navtitle>
@@ -105,3 +113,7 @@ service manifest() {
       } );
 }
 
+/*---------------------------------------------------------------------*/
+/*    services                                                         */
+/*---------------------------------------------------------------------*/
+hopdroidSVC.path = "/hop/hopdroid";

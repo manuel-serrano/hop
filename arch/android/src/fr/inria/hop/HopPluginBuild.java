@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Fri Dec 11 10:54:11 2020 (serrano)                */
+/*    Last change :  Mon Dec 14 19:17:35 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the BUILD info                                               */
@@ -59,6 +59,14 @@ public class HopPluginBuild extends HopPlugin {
 	    op.write( "\"".getBytes() );
 	    return;
 
+	 // device name
+	 case (byte)'n':
+	    String deviceName = Settings.Global.getString(.getContentResolver(), Settings.Global.DEVICE_NAME);
+	    op.write( "\"".getBytes() );
+	    op.write( deviceName.getBytes() );
+	    op.write( "\"".getBytes() );
+	    return;
+	    
          // home
 	 case (byte)'h':
 	    op.write( "\"".getBytes() );

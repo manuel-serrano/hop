@@ -39,3 +39,11 @@ export function NAVTITLE( attrs, ... nodes ) {
      </ul>
    </nav>
 }
+
+/*---------------------------------------------------------------------*/
+/*    PASSWD                                                           */
+/*---------------------------------------------------------------------*/
+export function PASSWD( attrs, ... nodes ) {
+   return <div class=${(attrs.class || "") + " passwd"}>
+   </div>;     
+}

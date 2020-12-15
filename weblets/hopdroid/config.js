@@ -32,10 +32,18 @@ export function init() {
 }
 
 /*---------------------------------------------------------------------*/
+/*    purge ...                                                        */
+/*---------------------------------------------------------------------*/
+function purge( config ) {
+   if( ("password" in config) && !config.password ) delete config.password;
+}
+
+/*---------------------------------------------------------------------*/
 /*    update ...                                                       */
 /*---------------------------------------------------------------------*/
 export function update() {
    const fd = fs.openSync( path.join( config.rcDirectory, "config.json" ), "w+" );
+   purge( localConfig );
    fs.writeSync( fd, JSON.stringify( localConfig ) );
    fs.close( fd );
 }

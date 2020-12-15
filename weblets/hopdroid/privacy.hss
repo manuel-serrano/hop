@@ -1,0 +1,237 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/hop/weblets/hopdroid/privacy.hss        */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Nov 25 14:13:08 2020                          */
+/*    Last change :  Sun Dec 13 06:37:42 2020 (serrano)                */
+/*    Copyright   :  2020 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    PRIVACY hss                                                      */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    import                                                           */
+/*---------------------------------------------------------------------*/
+@import url("privacy-dark.hss");
+
+/*---------------------------------------------------------------------*/
+/*    privacy ...                                                      */
+/*---------------------------------------------------------------------*/
+div.privacy {
+    background-color: var( --bgcolor );
+    padding: 16px 0 16px 0;
+    font-size: 18px;
+}
+
+div.privacy sptabhead {
+    background-color: white;
+    font-weight: normal;
+    height: 64px;
+    width: 100%;
+}
+
+/*---------------------------------------------------------------------*/
+/*    privacy-page                                                     */
+/*---------------------------------------------------------------------*/
+div.privacy-page {
+    padding-top: 16px;
+    font-size: 18px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    privacy-head                                                     */
+/*---------------------------------------------------------------------*/
+div.privacy-head {
+    padding-top: 16px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    privacy-privacy ...                                              */
+/*---------------------------------------------------------------------*/
+div.privacy-header {
+    padding: 16px;
+    margin: 0;
+    font-size: 18px;
+}
+
+div.privacy-privacy ul {
+    justify-content: space-between;
+    list-style-type: none;
+    margin: 0;
+    padding: 16px;
+}
+
+div.privacy-privacy ul li {
+    margin: 0 10px;
+}
+
+div.tabprivacy sptabhead {
+    height: 80px;
+    width: 100%;
+}
+
+div.privacy-privacy .privacy-icon {
+    width: 64px;
+    display: inline-block;
+}
+
+div.privacy-privacy .privacy-title {
+    display: inline-block;
+    color: #222;
+}
+
+div.privacy-privacy .privacy-description {
+    color: #666;
+    font-size: 60%;
+}
+
+div.privacy-icon img {
+    max-width: 32px;
+    max-height: 32px;
+}
+
+.privacy-smallicon img {
+    max-width: 24px;
+    max-height: 24px;
+    margin-right: 16px;
+    margin-left: 85px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    privacy-page                                                     */
+/*---------------------------------------------------------------------*/
+div.privacy-page {
+    background-color: var( --bgcolor );
+}
+
+div.privacy-page .privacy-header {
+    border-bottom: 1px solid #eee;
+    font-size: 18px;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 32px;
+    background: white;
+}
+
+.privacy-page div.privacy-title {
+    font-weight: bold;
+    margin-bottom: 32px;
+}
+
+div.privacy-action-buttons {
+    display: flex;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+div.privacy-action-button {
+    flex-grow: 1;
+    margin-left: 32px;
+    margin-right: 32px;
+    text-align: center;
+    padding: 16px;
+    font-weight: normal;
+    line-height: 16px;
+    font-weight: bold;
+    color: #1f9bc3;
+    background: white;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    width: 96px;
+}
+
+div[ data-hss-reboot=on ] div.privacy-action svg * {
+    color: #ccc;
+}
+
+div.privacy-action div.system-button-text {
+    vertical-align: top;
+    margin-top: 4px;
+    display: inline-block;
+}
+
+/*---------------------------------------------------------------------*/
+/*    privacy-info                                                     */
+/*---------------------------------------------------------------------*/
+div.privacy-info {
+    background: white;
+    font-size: 18px;
+}
+
+div.privacy-info-description {
+    padding: 32px;
+    font-size: 80%;
+    color: #666;
+}
+
+div.privacy-info-entry {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 64px;
+    padding-left: 16px;
+}
+
+div[data-hss-tag=hop-sptabhead].privacy-config {
+    font-size: 18px;
+    font-weight: normal;
+    height: 96px;
+}
+
+div.privacy-info-entry .icon {
+    margin-right: 16px;
+}
+
+div.privacy-info-entry .icon svg *{
+    fill: #999;
+}
+
+div.privacy-info-entry .title {
+    color: #222;
+}
+
+div.privacy-info-entry .value {
+    font-size: 70%;
+    color: #555;
+}
+
+/*---------------------------------------------------------------------*/
+/*    passwd                                                           */
+/*---------------------------------------------------------------------*/
+div.passwd {
+    padding-top: 4ex;
+    margin-left: auto;
+    margin-right: auto;
+    text-align:center;
+    font-size: 150%;
+    color: black;
+}
+
+div.passwd .icon svg * {
+    fill: #777;
+}
+    
+div.passwd input:active,
+div.passwd input:focus {
+    border-top: 0;
+    border-right: 0;
+    border-left: 0;
+    border-bottom: 1px solid #333;
+}
+
+div.passwd input {
+    margin-top: 5ex;
+    font-size: 180%;
+    width: 8em;
+    border-top: 0;
+    border-right: 0;
+    border-left: 0;
+    border-bottom: 1px solid #333;
+    text-align: center;
+    background: #eee;
+    font-weight: bold;
+}
