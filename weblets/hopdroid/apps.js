@@ -102,11 +102,11 @@ function ICIMG( attrs ) {
 function APP( a ) {
    return <sp.sptab class="tabapp" svc=${app} arg=${JSON.stringify( a )}>
      <sp.sptabhead>
-       <div class="apps-app sptabhead unselected">
+       <div class="config apps-app sptabhead unselected">
 	 <div class="app-icon">
 	   ${ a.icon ? <icimg src=${a.icon}/> : "" }
 	 </div>
-	 <div class="app-title">
+	 <div class="app-title title">
 	   <div>${a.name}</div>
 	   <div class="app-description">${a.description || a.title || a.comment || "&nbsp;"}</div>
 	 </div>
@@ -211,7 +211,7 @@ function serviceInfo( a ) {
 /*    APPENTRY ...                                                     */
 /*---------------------------------------------------------------------*/
 function APPENTRY( attr, ... nodes ) {
-   return <div class="app-info-entry">
+   return <div class="config app-info-entry">
      <svg:img class="icon" width="16px" height="16px" src=${attr.icon}/>
      <div>
        <div class="title">${attr.title}</div> 

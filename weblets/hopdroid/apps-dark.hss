@@ -30,29 +30,13 @@ body[data-theme=dark] div.app-info {
     background-color: var( --dark-bgcolor );
 }
 
-body[data-theme=dark] div.apps-app .app-title {
-    color: #fff;
-}
-
 body[data-theme=dark] div.apps-app .app-description {
     color: #ddd;
 }
 
 body[data-theme=dark] div.app-action-button {
     background-color: var( --dark-bgcolor );
-    color: #1EB4E5;
-}
-
-body[data-theme=dark] div.app-info-entry .title {
-    color: #fff;
-}
-
-body[data-theme=dark] div.app-info-entry .value {
-    color: #bbb;
-}
-
-body[data-theme=dark] div.app-info-entry .icon svg *{
-    fill: #bbb;
+    color: #6770EB;
 }
 
 body[data-theme=dark] div.app-info-description {

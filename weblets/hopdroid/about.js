@@ -57,8 +57,8 @@ service about() {
        <svg:img class="logo" width="128px" height="128px" 
 		src=${require.resolve( "./hop-sans-style.svg" )}/>
        <div> Hop v${hop.version} </div>
-       <div class="about-phone-model"> ${phone.model} </div>
-       <div class="about-phone-product"> ${phone.product} </div>
+       <div class="about-phone-model"> ${phone.model} ${phone.product} </div>
+       <div class="about-phone-product"> ${phone.name} </div>
      </div>
      
      <div class="about-info">
@@ -91,7 +91,7 @@ service about() {
 /*    ABOUTENTRY ...                                                   */
 /*---------------------------------------------------------------------*/
 function ABOUTENTRY( attr, ... nodes ) {
-   return <div class=${`about-info-entry ${attr.class ||""}`}>
+   return <div class=${`about-info-entry ${attr.class ||""} config`}>
      <svg:img class="icon" width="16px" height="16px" src=${attr.icon}/>
      <div>
        <div class="title">${attr.title}</div> 

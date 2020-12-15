@@ -103,6 +103,8 @@ exports.decodeURIComponent = hop.decodeURIComponent;
 exports.decodeHTML = hop.decodeHTML;
 exports.md5sum = hop.md5sum;
 exports.sha1sum = hop.sha1sum;
+exports.base64encode = hop.base64encode;
+exports.base64decode = hop.base64decode;
 
 /*---------------------------------------------------------------------*/
 /*    Lists                                                            */

@@ -67,19 +67,6 @@ div.section-end {
     border-bottom: 1px solid #eee;
 }
 
-div.about-info-entry .icon {
-    margin-right: 16px;
-}
-
-div.about-info-entry .icon svg *{
-    fill: #999;
-}
-
-div.about-info-entry .title {
-    color: #222;
-}
-
 div.about-info-entry .value {
     font-size: 70%;
-    color: #555;
 }

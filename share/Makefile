@@ -298,9 +298,18 @@ hopjs_u.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
                | sed -e "/^[ \t]*$$/D" \
                | $(BGLCPP) -DHOP_JAVASCRIPT | $(CLOSURE) \
                >> $@
+	$(MAKE) hopjs_sha1 >> $@
+
 
 hopjs_s.js: hop_s.js
 	cp $^ $@
+	$(MAKE) hopjs_sha1 >> $@
+
+hopjs_sha1:
+	@echo "hop.sha1sum = (function() {"
+	@cat sha1.js
+	@echo "return sha1sum;"
+	@echo "})();"
 
 #*---------------------------------------------------------------------*/
 #*    hop-runtime.sch ...                                              */

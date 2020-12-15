@@ -1,0 +1,34 @@
+/*=====================================================================*/
+/*    .../prgm/project/hop/hop/weblets/hopdroid/privacy-dark.hss       */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sat Dec 12 15:46:56 2020                          */
+/*    Last change :  Sun Dec 13 06:37:58 2020 (serrano)                */
+/*    Copyright   :  2020 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    PRIVACY dark hss                                                  */
+/*=====================================================================*/
+
+body[data-theme=dark] div.privacy {
+    background-color: var( --dark-margincolor );
+}
+
+body[data-theme=dark] div.privacy nav.sptabhead,
+body[data-theme=dark] div.privacy sptabhead,
+body[data-theme=dark] div.privacy div[data-hss-tag=hop-sptabhead] {
+    color: white;
+    background-color: var( --dark-fgcolor );
+}
+
+body[data-theme=dark] div.passwd input {
+    color: var( --dark-fgcolor );
+    background-color: #373737;
+}
+
+body[data-theme=dark] div.passwd .icon svg * {
+    fill: var( --dark-fgcolor );
+}
+   
+body[data-theme=dark] div.passwd {
+    color: white;
+}

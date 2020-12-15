@@ -481,6 +481,16 @@
 		  (lambda (this path)
 		     (js-string->jsstring
 			(sha1sum-string (js-tostring path %this)))))
+
+	       (define-js base64encode 1
+		  (lambda (this str)
+		     (js-string->jsstring
+			(base64-encode (js-tostring str %this)))))
+
+	       (define-js base64decode 1
+		  (lambda (this str)
+		     (js-string->jsstring
+			(base64-decode (js-tostring str %this)))))
 	       
 	       ;; Lists
 	       (define-js List -1

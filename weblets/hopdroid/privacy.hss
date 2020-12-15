@@ -1,29 +1,29 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/weblets/hopdroid/webdav.hss         */
+/*    serrano/prgm/project/hop/hop/weblets/hopdroid/privacy.hss        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov 25 14:13:08 2020                          */
-/*    Last change :  Wed Dec  2 16:39:12 2020 (serrano)                */
+/*    Last change :  Sun Dec 13 06:37:42 2020 (serrano)                */
 /*    Copyright   :  2020 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
-/*    WEBDAV hss                                                       */
+/*    PRIVACY hss                                                      */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
 /*    import                                                           */
 /*---------------------------------------------------------------------*/
-@import url("webdav-dark.hss");
+@import url("privacy-dark.hss");
 
 /*---------------------------------------------------------------------*/
-/*    webdav ...                                                       */
+/*    privacy ...                                                      */
 /*---------------------------------------------------------------------*/
-div.webdav {
+div.privacy {
     background-color: var( --bgcolor );
     padding: 16px 0 16px 0;
     font-size: 18px;
 }
 
-div.webdav sptabhead {
+div.privacy sptabhead {
     background-color: white;
     font-weight: normal;
     height: 64px;
@@ -31,66 +31,66 @@ div.webdav sptabhead {
 }
 
 /*---------------------------------------------------------------------*/
-/*    webdav-page                                                      */
+/*    privacy-page                                                     */
 /*---------------------------------------------------------------------*/
-div.webdav-page {
+div.privacy-page {
     padding-top: 16px;
     font-size: 18px;
 }
 
 /*---------------------------------------------------------------------*/
-/*    webdav-head                                                      */
+/*    privacy-head                                                     */
 /*---------------------------------------------------------------------*/
-div.webdav-head {
+div.privacy-head {
     padding-top: 16px;
 }
 
 /*---------------------------------------------------------------------*/
-/*    webdav-webdav ...                                                */
+/*    privacy-privacy ...                                              */
 /*---------------------------------------------------------------------*/
-div.webdav-header {
+div.privacy-header {
     padding: 16px;
     margin: 0;
     font-size: 18px;
 }
 
-div.webdav-webdav ul {
+div.privacy-privacy ul {
     justify-content: space-between;
     list-style-type: none;
     margin: 0;
     padding: 16px;
 }
 
-div.webdav-webdav ul li {
+div.privacy-privacy ul li {
     margin: 0 10px;
 }
 
-div.tabwebdav sptabhead {
+div.tabprivacy sptabhead {
     height: 80px;
     width: 100%;
 }
 
-div.webdav-webdav .webdav-icon {
+div.privacy-privacy .privacy-icon {
     width: 64px;
     display: inline-block;
 }
 
-div.webdav-webdav .webdav-title {
+div.privacy-privacy .privacy-title {
     display: inline-block;
     color: #222;
 }
 
-div.webdav-webdav .webdav-description {
+div.privacy-privacy .privacy-description {
     color: #666;
     font-size: 60%;
 }
 
-div.webdav-icon img {
+div.privacy-icon img {
     max-width: 32px;
     max-height: 32px;
 }
 
-.webdav-smallicon img {
+.privacy-smallicon img {
     max-width: 24px;
     max-height: 24px;
     margin-right: 16px;
@@ -98,13 +98,13 @@ div.webdav-icon img {
 }
 
 /*---------------------------------------------------------------------*/
-/*    webdav-page                                                      */
+/*    privacy-page                                                     */
 /*---------------------------------------------------------------------*/
-div.webdav-page {
+div.privacy-page {
     background-color: var( --bgcolor );
 }
 
-div.webdav-page .webdav-header {
+div.privacy-page .privacy-header {
     border-bottom: 1px solid #eee;
     font-size: 18px;
     text-align: center;
@@ -114,12 +114,12 @@ div.webdav-page .webdav-header {
     background: white;
 }
 
-.webdav-page div.webdav-title {
+.privacy-page div.privacy-title {
     font-weight: bold;
     margin-bottom: 32px;
 }
 
-div.webdav-action-buttons {
+div.privacy-action-buttons {
     display: flex;
     width: 80%;
     margin-left: auto;
@@ -128,7 +128,7 @@ div.webdav-action-buttons {
     font-size: 14px;
 }
 
-div.webdav-action-button {
+div.privacy-action-button {
     flex-grow: 1;
     margin-left: 32px;
     margin-right: 32px;
@@ -144,31 +144,31 @@ div.webdav-action-button {
     width: 96px;
 }
 
-div[ data-hss-reboot=on ] div.webdav-action svg * {
+div[ data-hss-reboot=on ] div.privacy-action svg * {
     color: #ccc;
 }
 
-div.webdav-action div.system-button-text {
+div.privacy-action div.system-button-text {
     vertical-align: top;
     margin-top: 4px;
     display: inline-block;
 }
 
 /*---------------------------------------------------------------------*/
-/*    webdav-info                                                      */
+/*    privacy-info                                                     */
 /*---------------------------------------------------------------------*/
-div.webdav-info {
+div.privacy-info {
     background: white;
     font-size: 18px;
 }
 
-div.webdav-info-description {
+div.privacy-info-description {
     padding: 32px;
     font-size: 80%;
     color: #666;
 }
 
-div.webdav-info-entry {
+div.privacy-info-entry {
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -176,19 +176,67 @@ div.webdav-info-entry {
     padding-left: 16px;
 }
 
-div.webdav-info-entry .icon {
+div[data-hss-tag=hop-sptabhead].privacy-config {
+    font-size: 18px;
+    font-weight: normal;
+    height: 96px;
+}
+
+div.privacy-info-entry .icon {
     margin-right: 16px;
 }
 
-div.webdav-info-entry .icon svg *{
+div.privacy-info-entry .icon svg *{
     fill: #999;
 }
 
-div.webdav-info-entry .title {
+div.privacy-info-entry .title {
     color: #222;
 }
 
-div.webdav-info-entry .value {
+div.privacy-info-entry .value {
     font-size: 70%;
     color: #555;
+}
+
+/*---------------------------------------------------------------------*/
+/*    passwd                                                           */
+/*---------------------------------------------------------------------*/
+div[data-hss-tag=hop-sptabhead].privacy-config:hover {
+    background: inherit;
+}
+
+div.passwd {
+    padding-top: 4ex;
+    margin-left: auto;
+    margin-right: auto;
+    text-align:center;
+    font-size: 150%;
+    color: black;
+}
+
+div.passwd .icon svg * {
+    fill: #777;
+}
+    
+div.passwd input:active,
+div.passwd input:focus {
+    border-top: 0;
+    border-right: 0;
+    border-left: 0;
+    border-bottom: 1px solid #333;
+    outline: none;
+}
+
+div.passwd input {
+    margin-top: 5ex;
+    font-size: 180%;
+    width: 8em;
+    border-top: 0;
+    border-right: 0;
+    border-left: 0;
+    border-bottom: 1px solid #333;
+    text-align: center;
+    background: #eee;
+    font-weight: bold;
 }

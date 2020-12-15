@@ -113,6 +113,7 @@ nav.sptabhead ul {
     list-style-type: none;
     margin: 0;
     padding: 10px;
+    margin-top: 4px;
 }
 
 nav.sptabhead ul li {
@@ -151,10 +152,13 @@ nav div.icon {
     border-radius: 50%;
     background-color: var( --margincolor );
     border: 1px solid #ddd;
+    height: 32px;
+    width: 32px;
 }
 
 div.icon > div {
-    padding-top: 6px;
+/*     padding-top: 6px;                                               */
+    top: 2px;
 }    
 
 div.icon {
@@ -201,7 +205,7 @@ div.icon-toggle svg * {
     fill: #888;
 }
 
-div.icon-toggle[ data-on=on ] svg {
+div.icon-toggle[ data-on=off ] svg {
     transform: rotate( 180deg );
 }
 
@@ -233,4 +237,57 @@ div.setting div.button {
     width: 48px;
 }
 
+/*---------------------------------------------------------------------*/
+/*    config                                                           */
+/*---------------------------------------------------------------------*/
+div.config {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 64px;
+    padding-left: 16px;
+}
 
+div.config .title {
+    align-self: center;
+}
+
+div.config .comment {
+    font-size: 70%;
+}
+
+div.config .value {
+    font-size: 70%;
+}
+
+div.config .icon {
+    margin-right: 16px;
+}
+
+div.config .button {
+    flex-grow: 4;
+    text-align: right;
+    padding-right: 32px;
+}
+
+/* colors */
+div.config {
+    background-color: white;
+}
+
+div.config .text,
+div.config .title {
+    color: #222;
+}
+
+div.config .text .comment {
+    color: #666;
+}
+
+div.config value {
+    color: #555;
+}
+
+div.config .icon svg *{
+    fill: #999;
+}
