@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Tue Dec 15 08:49:40 2020 (serrano)                */
+/*    Last change :  Tue Dec 15 10:34:29 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the BUILD info                                               */
@@ -44,6 +44,11 @@ public class HopPluginBuild extends HopPlugin {
 	    op.write( "\"".getBytes() );
 	    op.write( android.os.Build.VERSION.RELEASE.getBytes() );
 	    op.write( "\"".getBytes() );
+	    return;
+	    
+	 // sdk version
+	 case (byte)'k':
+	    op.write( String.valueOf( android.os.Build.VERSION.SDK_INT ).getBytes() );
 	    return;
 	    
 	 // model
