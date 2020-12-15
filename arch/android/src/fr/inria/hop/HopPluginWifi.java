@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 17 06:55:59 2011                          */
-/*    Last change :  Fri Dec  4 10:12:39 2020 (serrano)                */
+/*    Last change :  Tue Dec 15 10:32:41 2020 (serrano)                */
 /*    Copyright   :  2011-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with Wifi configuration                                  */
@@ -126,11 +126,6 @@ public class HopPluginWifi extends HopPlugin {
 	    initWifi( hopdroid );
 	    WifiInfo winfo = wifi.getConnectionInfo();
 	    String ssid = winfo.getSSID();
-	    Log.d( "HopPluginWifi", "ssid=" + winfo.getSSID()
-		   + " ip=" + Formatter.formatIpAddress( winfo.getIpAddress() )
-		   + " mac=" + winfo.getMacAddress()
-		   + " speed=" + winfo.getLinkSpeed() + WifiInfo.LINK_SPEED_UNITS
-		   + " rxspeed=" + winfo.getRxLinkSpeedMbps() );
 
 	    if( ssid.charAt( 0 ) == '"' ) {
 	       op.write( "(wifi ssid: ".getBytes() );
@@ -148,8 +143,11 @@ public class HopPluginWifi extends HopPlugin {
 	    op.write( "\" speed: \"".getBytes() );
 	    op.write( String.valueOf( winfo.getLinkSpeed() ).getBytes() );
 	    op.write( WifiInfo.LINK_SPEED_UNITS.getBytes() );
-	    op.write( "\" rxspeed: ".getBytes() );
-	    op.write( String.valueOf( winfo.getRxLinkSpeedMbps() ).getBytes() );
+	    op.write( "\"".getBytes() );
+	    if( android.os.Build.VERSION.SDK_INT >= 29 ) {
+	       op.write( "rxspeed: ".getBytes() );
+	       op.write( String.valueOf( winfo.getRxLinkSpeedMbps() ).getBytes() );
+	    }
 	    op.write( ")".getBytes() );
 	    return;
       }
