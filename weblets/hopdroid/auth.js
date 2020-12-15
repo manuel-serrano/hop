@@ -26,12 +26,13 @@ import * as localConfig from './config.js';
 const cookie = { 
    seed: hop.loginCookieCryptKey,
    key: "hopdroid" + hop.port, 
+   _val: undefined, 
    get val() { 
-      if( cookieVal ) { 
-	 return cookieVal;
+      if( this._val ) { 
+	 return this._val;
       } else {
-	 cookieVal = hop.sha1sum( `${cookie.seed}:${phone.name}:${localConfig.password}` );
-	 return cookieVal;
+	 this._val = hop.sha1sum( `${cookie.seed}:${phone.name}:${localConfig.password}` );
+	 return this._val;
       }
    },
    HTTPValue: function() {
@@ -46,10 +47,10 @@ const cookie = {
 /*    authorizeRequest ...                                             */
 /*---------------------------------------------------------------------*/
 export function authorizeRequest( req, rep ) {
-   if( false && hop.isLocalRequest( req ) || checkRequestCookie( req ) ) {
+   if( hop.isLocalRequest( req ) || checkRequestCookie( req ) ) {
       return rep( req );
    } else if( checkRequestAuthorization( req ) ) {
-      return hop.HTTPResponseXML( rep( req ), {
+      return hop.HTTPResponseXml( rep( req ), {
 	 contentType: "text/html", 
 	 header: { "Set-Cookie": cookie.HTTPValue() }
       } );
@@ -76,7 +77,15 @@ function checkRequestCookie( req ) {
 /*    checkRequestAuthorization ...                                    */
 /*---------------------------------------------------------------------*/
 function checkRequestAuthorization( req ) {
-   console.log( "p.n=", phone.name );
-   return req.authorization && 
-      hop.sha1sum( `${cookie.seed}:${hop.base64decode( req.authorization )}` === cookie.val );
+   if( req.authorization ) {
+      const m = req.authorization.match( /^Basic (.*)$/ );
+      
+      if( m ) {
+   	 return hop.sha1sum( `${cookie.seed}:${hop.base64decode( m[ 1 ] )}`)  === cookie.val;
+      } else {
+	 return false;
+      }
+   } else {
+      return false;
+   }
 }

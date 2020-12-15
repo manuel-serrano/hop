@@ -755,6 +755,17 @@ hop.sha1sum( 'jean dupont' );
 // "7461340811509ec24dd1c1a32504a01e24423768"
 ```
 
+### hop.base64encode( string ) ###
+[:@glyphicon glyphicon-tag function]
+
+Encodes a string into base64.
+
+### hop.base64decode( string ) ###
+[:@glyphicon glyphicon-tag function]
+
+Decodes a base64 string.
+
+
 ### hop.compileXML( node [, ofile] [, backend] ) ###
 [:@glyphicon glyphicon-tag function]
 

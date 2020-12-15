@@ -22,7 +22,21 @@ DATE = $(HOPDATE)
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-SOURCES         = about.js apps.js hopdroid.js phone.js system.js xml.js
+SOURCES         = about.js apps.js auth.js config.js hopdroid.js \
+                  phone.js privacy.js system.js webdav.js xml.js \
+                  about-dark.hss privacy.hss about.hss system-dark.hss \
+		  apps-dark.hss system.hss apps.hss webdav-dark.hss \
+		  hopdroid-dark.hss webdav.hss hopdroid.hss xml-dark.hss \
+		  privacy-dark.hss xml.hss \
+                  box-arrow-up-right.svg grid-3x2-gap-fill.svg phone.svg \
+		  box-seam.svg grid-3x3-gap.svg shield-lock.svg \
+		  broadcast-pin.svg hdd-network.svg tag.svg \
+		  calculator.svg hdd.svg toggle2-off.svg \
+		  calendar2-check.svg house-door.svg toggle2-on.svg \
+		  diagram-2-fill.svg info-circle.svg toggle-on.svg \
+		  diagram-2.svg key.svg trash.svg \
+		  exclamation-triangle-fill.svg lock.svg wifi.svg \
+		  gear.svg phone-fill.svg x-octagon.svg
 POPULATION	= Makefile package.json.in \
                   $(SOURCES) 
 
