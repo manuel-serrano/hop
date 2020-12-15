@@ -23,7 +23,7 @@
 	      (app::bstring read-only (default "@HOPAPP@"))
 	      (name::bstring read-only (get get-android-device-name))
 	      (sdk::bstring read-only (get get-android-sdk))
-	      (sdkversion::long read-only (get get-android-sdk-version))
+	      (sdk-version::long read-only (get get-android-sdk-version))
 	      (model::bstring read-only (get get-android-model))
 	      (product::bstring read-only (get get-android-product))
 	      (protocol::byte read-only (default 2))
