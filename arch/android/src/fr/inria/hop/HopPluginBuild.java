@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Mon Dec 14 19:17:35 2020 (serrano)                */
+/*    Last change :  Tue Dec 15 08:49:40 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the BUILD info                                               */
@@ -22,6 +22,7 @@ import android.content.pm.*;
 import android.os.Environment;
 import android.content.Context;
 import android.content.res.*;
+import android.provider.Settings.*;
 
 import java.io.*;
 
@@ -61,7 +62,7 @@ public class HopPluginBuild extends HopPlugin {
 
 	 // device name
 	 case (byte)'n':
-	    String deviceName = Settings.Global.getString(.getContentResolver(), Settings.Global.DEVICE_NAME);
+	    String deviceName = Global.getString( hopdroid.service.getContentResolver(), Global.DEVICE_NAME );
 	    op.write( "\"".getBytes() );
 	    op.write( deviceName.getBytes() );
 	    op.write( "\"".getBytes() );

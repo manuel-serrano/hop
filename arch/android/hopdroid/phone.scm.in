@@ -21,7 +21,7 @@
    
    (export (class androidphone::phone
 	      (app::bstring read-only (default "@HOPAPP@"))
-	      (name::bstring read-only (default get-android-name))
+	      (name::bstring read-only (get get-android-name))
 	      (sdk::bstring read-only (get get-android-sdk))
 	      (model::bstring read-only (get get-android-model))
 	      (product::bstring read-only (get get-android-product))
