@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:38:21 2010                          */
-/*    Last change :  Sun Nov 29 09:04:51 2020 (serrano)                */
+/*    Last change :  Wed Dec 16 15:01:23 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Root class for HopPlugins                                        */
@@ -62,7 +62,7 @@ public abstract class HopPlugin {
 
 	 if( p != null ) {
 	    atable.remove( key );
-	    p.onHopActivityResult( result, intent );
+	    p.onHopActivityResult( key, result, intent );
 	 }
       }
    }
@@ -91,7 +91,7 @@ public abstract class HopPlugin {
    }
 
    // onHopActivityResult (super method of plugins)
-   public void onHopActivityResult( int result, Intent intent ) {
+   public void onHopActivityResult( int request, int result, Intent intent ) {
       ;
    }
 }

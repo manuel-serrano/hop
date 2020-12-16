@@ -526,6 +526,8 @@ apk-build.client:
            --androidndk=$(ANDROIDNDK) \
            --javac=$(JAVAC) \
            --androidkeystore=$(ANDROIDKEYSTORE) \
+           --pluginjava="$(PLUGIN_JAVA)" \
+           --hopapp=$(HOPAPP) \
            --nolibdir \
            $(HOPAPKNAME))
 
@@ -554,7 +556,7 @@ apk-sans-bigloo.client: apk.common apk.res apk.jni apk.src apk.hop.client
 	$(MAKE) ndk-build.client
 	$(MAKE) apk-build.client
 
-apk-sans-hop.client: apk.common apk.res apk.jni apk.src apk.hop.client
+apk-sans-hop.client: apk.common apk.res apk.jni apk.src.client apk.plugin.client apk.hop.client
 	$(MAKE) ndk-build.client
 	$(MAKE) apk-build.client
 
@@ -611,6 +613,28 @@ $(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR) \
 	if [ "$(HOPAPP)" != "hop" ]; then \
 	  mv $(ANDROIDBUILDDIR)/src/fr/inria/hop $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP); \
         fi
+
+apk.src.client:
+	$(MAKE) apk.src
+	$(MAKE) HopPluginZeroconf.java.client
+	$(RM) -rf $(ANDROIDBUILDDIR)/src/javax
+	$(RM) -rf $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP)/HopJmDns.java
+
+apk.plugin.client:
+	$(RM) -rf $(ANDROIDBUILDDIR)/tmpsrc
+	$(RM) -rf $(ANDROIDBUILDDIR)/plugin
+	$(MAKE) apk.src.client ANDROIDBUILDDIR=$(ANDROIDBUILDDIR)/tmpsrc HOPAPP=hop 
+	mv $(ANDROIDBUILDDIR)/tmpsrc/src $(ANDROIDBUILDDIR)/plugin
+	rm -rf $(ANDROIDBUILDDIR)/tmpsrc
+	cp $(ANDROIDWEBLET)/arch/android/$(PLUGIN_JAVA) \
+            $(ANDROIDBUILDDIR)/plugin/fr/inria/hop/`basename $(PLUGIN_JAVA)`
+
+HopPluginZeroconf.java.client:
+	cat $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP)/HopPluginZeroconf.java \
+            | sed -e 's|HopJmDns|HopNsdManager|' \
+            > $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP)/HopPluginZeroconf.java.tmp
+	mv $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP)/HopPluginZeroconf.java.tmp \
+            $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP)/HopPluginZeroconf.java
 
 apk.bigloo: $(ANDROIDBUILDDIR)/bigloo-$(RELEASE) /tmp/droidcc.sh
 	$(MAKE) apk.bigloo.configure

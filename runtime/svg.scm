@@ -244,16 +244,19 @@
 			 (char=? (string-ref (cadr a) 0) #\#))
 		    (display "#")
 		    (display prefix)
+		    (display #\-)
 		    (display
 		       (kwote (substring (cadr a) 1 (string-length (cadr a))))))
 		   ((and (eq? (car a) :style) (string? (cadr a)))
 		    (display
 		       (kwote
 			  (pregexp-replace*
-			     "url[(]#" (cadr a) (string-append "url(#" prefix)))))
+			     "url[(]#" (cadr a)
+			     (string-append "url(#" prefix "-")))))
 		   ((and (string? (cadr a)) (substring-at? (cadr a) "url(#" 0))
 		    (display "url(#")
 		    (display prefix)
+		    (display #\-)
 		    (display
 		       (kwote (substring (cadr a) 5 (string-length (cadr a))))))
 		   (else
