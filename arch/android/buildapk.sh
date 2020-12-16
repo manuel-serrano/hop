@@ -28,6 +28,7 @@ jarsigner=jarsigner
 androidkeystore=$HOME/.android/debug.keystore
 
 libdir=lib
+pluginjava=
 
 #*---------------------------------------------------------------------*/
 #*    argument parsing                                                 */
@@ -61,8 +62,14 @@ while : ; do
     --jarsigner=*)
       jarsigner="`echo $1 | sed 's/^[^=]*=//'`";;
 
+    --pluginjava=*)
+      pluginjava="`echo $1 | sed 's/^[^=]*=//'`";;
+
     --nolibdir)
       libdir=;;
+
+    --hopapp=*)
+      hopapp="`echo $1 | sed 's/^[^=]*=//'`";;
     
     *)
       apkname=$1;;
@@ -103,6 +110,31 @@ $javac -classpath $ANDROIDCP -sourcepath 'src' -d 'bin' `find src -name "*.java"
 echo "$DX --dex --output=classes.dex bin"
 $DX --dex --output=classes.dex bin || exit 1
 
+#*---------------------------------------------------------------------*/
+#*    Build the client Java plugin, if any                             */
+#*---------------------------------------------------------------------*/
+if [ "$pluginjava " != " " ]; then
+  file=`basename $pluginjava .java`
+
+  cat src/fr/inria/$hopapp/R.java | \
+    sed -e "s|fr.inria.$hopapp|fr.inria.hop|" \
+    > plugin/fr/inria/hop/R.java
+  echo "(cd plugin && $javac -classpath $ANDROIDCP -sourcepath '.' fr/inria/hop/$file.java)"
+  (cd plugin && $javac -classpath $ANDROIDCP -sourcepath '.' fr/inria/hop/$file.java)
+
+  rm -rf assets/plugin
+  mkdir assets/plugin
+  (cd plugin && $DX --dex --output=$file.jar fr/inria/hop/$file.class)
+
+  tar xvfz assets/hz/$apkname.hz
+  mkdir $apkname/plugin
+  mv plugin/$file.jar $apkname/plugin
+  tar cvfz assets/hz/$apkname.hz $apkname
+fi
+
+#*---------------------------------------------------------------------*/
+#*    Complete the APK build                                           */
+#*---------------------------------------------------------------------*/
 /bin/rm -f $apkname.apk.unaligned 
 echo "$AAPT package -f -M AndroidManifest.xml -S res -I $ANDROIDCP -F $apkname.apk.unaligned "
 $AAPT package -f -M AndroidManifest.xml -S res -I $ANDROIDCP -F $apkname.apk.unaligned || exit 1
