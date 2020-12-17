@@ -107,9 +107,13 @@
 ;*    get-android-build ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (get-android-build p::androidphone cmd)
+   (tprint "get-android-build cmd.1=" cmd)
    (unless build-plugin
       (set! build-plugin (android-load-plugin p "build")))
-   (android-send-command/result p build-plugin cmd))
+   (tprint "get-android-build cmd.2=" cmd)
+   (let ((r (android-send-command/result p build-plugin cmd)))
+      (tprint "get-android-build cmd.3=" (typeof r))
+      r))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-android-sdk ...                                              */
@@ -163,6 +167,7 @@
 ;*    get-android-configuration ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (get-android-configuration p::androidphone)
+   (tprint "GET-ANDROID-CONFIGURATION...")
    (get-android-build p #\c))
 
 ;*---------------------------------------------------------------------*/
