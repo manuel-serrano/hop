@@ -626,8 +626,10 @@ apk.plugin.client:
 	$(MAKE) apk.src.client ANDROIDBUILDDIR=$(ANDROIDBUILDDIR)/tmpsrc HOPAPP=hop 
 	mv $(ANDROIDBUILDDIR)/tmpsrc/src $(ANDROIDBUILDDIR)/plugin
 	rm -rf $(ANDROIDBUILDDIR)/tmpsrc
-	cp $(ANDROIDWEBLET)/arch/android/$(PLUGIN_JAVA) \
-            $(ANDROIDBUILDDIR)/plugin/fr/inria/hop/`basename $(PLUGIN_JAVA)`
+	for p in $(PLUGIN_JAVA); do \
+	   cp $(ANDROIDWEBLET)/arch/android/$$p \
+              $(ANDROIDBUILDDIR)/plugin/fr/inria/hop/`basename $$p`; \
+        done
 
 HopPluginZeroconf.java.client:
 	cat $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP)/HopPluginZeroconf.java \

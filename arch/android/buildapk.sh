@@ -114,21 +114,24 @@ $DX --dex --output=classes.dex bin || exit 1
 #*    Build the client Java plugin, if any                             */
 #*---------------------------------------------------------------------*/
 if [ "$pluginjava " != " " ]; then
-  file=`basename $pluginjava .java`
-
-  cat src/fr/inria/$hopapp/R.java | \
-    sed -e "s|fr.inria.$hopapp|fr.inria.hop|" \
-    > plugin/fr/inria/hop/R.java
-  echo "(cd plugin && $javac -classpath $ANDROIDCP -sourcepath '.' fr/inria/hop/$file.java)"
-  (cd plugin && $javac -classpath $ANDROIDCP -sourcepath '.' fr/inria/hop/$file.java)
-
-  rm -rf assets/plugin
-  mkdir assets/plugin
-  (cd plugin && $DX --dex --output=$file.jar fr/inria/hop/$file.class)
-
+  # untar the hz tarball into which plugins will be inserted
   tar xvfz assets/hz/$apkname.hz
-  mkdir $apkname/plugin
-  mv plugin/$file.jar $apkname/plugin
+  
+  hzplugindir=arch/android/src/fr/inria/hop
+
+  # copy the R.java file so that plugin javac compilation succeeds
+  cat src/fr/inria/$hopapp/R.java | \
+     sed -e "s|fr.inria.$hopapp|fr.inria.hop|" \
+         > plugin/fr/inria/hop/R.java
+  
+  for p in $pluginjava; do
+     file=`basename $p .java`
+
+     (cd plugin && $javac -classpath $ANDROIDCP -sourcepath '.' fr/inria/hop/$file.java)
+
+     (cd plugin && $DX --dex --output=../$apkname/$hzplugindir/$file.jar fr/inria/hop/$file.class)
+  done
+
   tar cvfz assets/hz/$apkname.hz $apkname
 fi
 
