@@ -107,7 +107,6 @@
 ;*    get-android-build ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (get-android-build p::androidphone cmd)
-   (tprint "get-android-build cmd.1=" cmd)
    (unless build-plugin
       (set! build-plugin (android-load-plugin p "build")))
    (tprint "get-android-build cmd.2=" cmd)
@@ -167,7 +166,6 @@
 ;*    get-android-configuration ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (get-android-configuration p::androidphone)
-   (tprint "GET-ANDROID-CONFIGURATION...")
    (get-android-build p #\c))
 
 ;*---------------------------------------------------------------------*/
@@ -693,7 +691,11 @@
 ;*---------------------------------------------------------------------*/
 (define (android-send-command/result p::androidphone plugin::int . args)
    (with-access::androidphone p (%mutex %sock-plugin)
+      (tprint "android-send-ommand/result.1 plugin=" plugin " args=" args)
       (synchronize *android-mutex*
+      (tprint "android-send-ommand/result.2 plugin=" plugin " args=" args)
 	 (android-send p plugin args)
+      (tprint "android-send-ommand/result.3 plugin=" plugin " args=" args)
 	 (let ((ip (socket-input %sock-plugin)))
+      (tprint "android-send-ommand/result.4 plugin=" plugin " args=" args)
 	    (read ip)))))
