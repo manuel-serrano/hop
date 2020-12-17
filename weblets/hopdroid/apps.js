@@ -97,7 +97,7 @@ function ICIMG( attrs ) {
 }
    
 /*---------------------------------------------------------------------*/
-/*    app ...                                                          */
+/*    APP ...                                                          */
 /*---------------------------------------------------------------------*/
 function APP( a ) {
    return <sp.sptab class="tabapp" svc=${app} arg=${JSON.stringify( a )}>
@@ -127,16 +127,31 @@ service app( app ) {
    return <div class="app-page">
      
      <script>
-       function restart( el ) {
+       function remove( el ) {
 	  if( confirm( `Remove Application ${${app.name}}?`) ) {
-	     el.setAttribute( "data-hss-reboot", "on" );
 	     ${appRemove}( ${app} )
 		.post()
-		.then( msg => {
-		   alert( msg );
-		   document.location = "/hop/hopdroid";
+		.then( err => {
+		   if( err ) {
+		      alert( err );
+		   } else {
+		      document.getElementById( "spage" ).pop();
+		   }
 		} );
-	     setTimeout( () => document.location = "/hop/hopdroid", 3000 );
+	  }
+       }
+       
+       function purge( el ) {
+	  if( confirm( `Purge Application ${${app.name}}?`) ) {
+	     ${appPurge}( ${app} )
+		.post()
+		.then( err => {
+		   if( err ) {
+		      alert( err );
+		   } else {
+		      document.getElementById( "spage" ).pop();
+		   }
+		} );
 	  }
        }
      </script>
@@ -149,17 +164,17 @@ service app( app ) {
        	 ${a.name}
        </div>
        <div class="app-action-buttons">
-       	 <div class="app-action-button" onclick=~{restart( this )}>
+       	 <div class="app-action-button" onclick=~{alert( "open not implemented yet" )}>
        	   <svg:img class="app-action" width="24px" height="24px" 
 		    src=${require.resolve( "./icons/box-arrow-up-right.svg" )}/>
        	   <div class="app-button-text"> OPEN </div>
        	 </div>
-       	 <div class="app-action-button" onclick=~{restart( this )}>
+       	 <div class="app-action-button" onclick=~{remove( this )}>
        	   <svg:img class="app-action" width="24px" height="24px" 
 		    src=${require.resolve( "./icons/trash.svg" )}/>
        	   <div class="app-button-text"> REMOVE </div>
        	 </div>
-       	 <div class="app-action-button" onclick=~{restart( this )}>
+       	 <div class="app-action-button" onclick=~{purge( this )}>
        	   <svg:img class="app-action" width="24px" height="24px" 
 		    src=${require.resolve( "./icons/x-octagon.svg" )}/>
        	   <div class="app-button-text"> UNINSTALL </div>
@@ -253,7 +268,15 @@ service appRemove( app ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    appPurge ...                                                     */
+/*---------------------------------------------------------------------*/
+service appPurge( app ) {
+   console.log( "purgin...", app );
+}
+
+/*---------------------------------------------------------------------*/
 /*    services                                                         */
 /*---------------------------------------------------------------------*/
 apps.path = "/hop/hopdroid/apps";
 appRemove.path = "/hop/hopdroid/apps/app/remove";
+appPurge.path = "/hop/hopdroid/apps/app/purge";

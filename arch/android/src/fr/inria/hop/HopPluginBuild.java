@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Tue Dec 15 10:34:29 2020 (serrano)                */
+/*    Last change :  Thu Dec 17 13:17:03 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the BUILD info                                               */
@@ -128,11 +128,15 @@ public class HopPluginBuild extends HopPlugin {
 	 case (byte)'c':
 	    Configuration config = hopdroid.activity.getResources().getConfiguration();
 	    
+	    Log.d( "HopPluginBuild", "config=" + config.toString() );
+	    
 	    if( config == null ) {
 	       op.write( "()".getBytes() );
 	    } else {
+	       Log.d( "HopPluginBuild", "CONFIG=" + HopConfiguration.toString( config ) );
 	       op.write( HopConfiguration.toString( config ).getBytes() );
 	    }
+	    return;
       }
    }
 }

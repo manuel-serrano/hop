@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Nov 19 09:29:14 2020 (serrano)                */
+/*    Last change :  Thu Dec 17 11:49:50 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -50,7 +50,7 @@ public class HopHzLauncher extends HopLauncher {
       String hopapk = activity.getApplicationInfo().sourceDir;
       String hopdir = activity.getApplicationInfo().dataDir + "/assets";
 
-      HopInstaller installer = new HopInstaller( activity, handler, hopapk, hopdir, false );
+      HopInstaller installer = new HopInstaller( activity, handler, hopapk, hopdir, true );
       installer.exec( hopctx );
    }
 
@@ -58,7 +58,10 @@ public class HopHzLauncher extends HopLauncher {
    private void startHopActivity() {
       new Thread( new Runnable() {
 	    public void run() {
+	       Log.i( "HopHzLauncher", "startHopActivity..." );
+	       
 	       if( Hop.ping( Hop.port, 5 ) ) {
+		  Log.i( "HopHzLauncher", "Hop ready..." );
 		  handler.sendEmptyMessage( MSG_INSTALL_ACTIVITY_READY );
 	       } else {
 		  Log.i( "HopHzLauncher", "Hop not running..." );
@@ -73,7 +76,7 @@ public class HopHzLauncher extends HopLauncher {
 			handler.sendEmptyMessage( MSG_INSTALL_ACTIVITY_ERROR );
 		     }
 		  } else {
-		     Log.e( "hopclientlauncher", "Cannot find Hop activity \"" + HopConfig.HOPAPK + "\"" );
+		     Log.e( "hopHzlauncher", "Cannot find Hop activity \"" + HopConfig.HOPAPK + "\"" );
 		     Toast.makeText( HopHzLauncher.this, "Hop package \"" + HopConfig.HOPAPK + "\"" + " not available", Toast.LENGTH_LONG ).show();
 		     handler.sendEmptyMessage( MSG_INSTALL_ACTIVITY_NOTFOUND );
 		  }
@@ -153,6 +156,8 @@ public class HopHzLauncher extends HopLauncher {
 
    // raiseHzActivity
    void raiseHzActivity() {
+      Log.i( "HopHzLauncher", "raiseHzActivity" );
+      
       Intent i = new Intent( activity.getApplicationContext(), HopHzLauncher.class );
       i.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );
       i.addFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
