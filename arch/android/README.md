@@ -129,6 +129,14 @@ To uninstall it:
 
     $ adb uninstall fr.inria.hop
 
+To stop it:
+
+    $ adb shell am force-stop fr.inria.hop
+	
+To stop and restart:
+
+    $ adb shell am force-stop fr.inria.hop && adb shell monkey -p fr.inria.hop 1
+
 
 Building a Client Application
 -----------------------------

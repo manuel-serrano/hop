@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Mon Dec  7 05:23:13 2020 (serrano)                */
+/*    Last change :  Thu Dec 17 10:34:18 2020 (serrano)                */
 /*    Copyright   :  2010-20 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
@@ -301,10 +301,9 @@ public class HopInstaller implements HopStage {
 		  public void run() {
 		     try {
 			unpack();
-			androidhome();
-
 			if( !isClientInstaller ) {
 			   Log.d( "HopInstaller", "setting exec mode: " + root + "/bin/hop" );
+			   androidhome();
 			   chmod( root + "/bin/hop" );
 			}
 			chmodflush();

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  1 09:13:38 2010                          */
-/*    Last change :  Fri Nov 27 14:09:38 2020 (serrano)                */
+/*    Last change :  Thu Dec 17 10:38:59 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    UI Utility functions                                             */
@@ -181,10 +181,10 @@ public class HopUiUtils {
       File f = new File( path );
 
       if( f.exists() ) {
-	 Log.d( "HopClientLauncher", "splash url=" + url );
+	 Log.d( "HopUiUtils", "splash url=" + url );
 	 webview.loadUrl( url );
       } else {
-	 Log.e( "HopClientLauncher", "splash does not exist: " + f.toString() );
+	 Log.e( "HopUiUtils", "splash does not exist: " + f.toString() );
       }
    }
 }
