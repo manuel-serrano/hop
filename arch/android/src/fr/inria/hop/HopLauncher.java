@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Dec 11 10:48:13 2020 (serrano)                */
+/*    Last change :  Fri Dec 18 06:17:55 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -250,8 +250,8 @@ public class HopLauncher extends Activity {
       };
 
    protected void splashScreen( String splash ) {
-      String hopdir = activity.getApplicationInfo().dataDir + "/assets";
-      String path = hopdir + "/etc/hop/" + HopConfig.HOPRELEASE + "/splash/" + splash;
+      String hopdir = activity.getApplicationInfo().dataDir;
+      String path = hopdir + "/assets/splash/" + splash;
       String url = "file://" + path;
       File f = new File( path );
       Log.d( "HopLauncher", "splash url=" + url );

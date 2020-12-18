@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Fri Dec 18 05:13:20 2020 (serrano)                */
+/*    Last change :  Fri Dec 18 05:55:26 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -419,7 +419,6 @@ public class HopDroid extends Thread {
 	 while( true ) {
 	    final int version = ip.read();
 
-	    Log.d( "serverPlugin@HopDroid", "version=" + version );
 	    if( version != protocol ) {
 	       if( version != -1 ) {
 		  Log.e( "HopDroid", "serverPlugin protocol error: incompatible version " +
@@ -432,16 +431,13 @@ public class HopDroid extends Thread {
 
 	    final int id = read_int32( ip );
 	       
-	    Log.d( "serverPlugin@HopDroid", "id=" + id );
 	    try {
 	       HopPlugin p = (HopPlugin)plugins.get( id );
 
-	       Log.d( "HopDroid", "plugin=" + p + " id=" + id );
 	       p.server( ip, op );
 
 	       final int m = ip.read();
 		  
-	       Log.d( "serverPlugin@HopDroid", "m=" + m );
 	       if( m != 127 ) {
 		  Log.e( "HopDroid", "protocol error: illegal " 
 			 + p.name + " mark: " + m );

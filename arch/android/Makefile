@@ -394,7 +394,8 @@ $(ANDROIDBUILDDIR)/assets: \
   $(ANDROIDBUILDDIR)/assets/lib \
   $(ANDROIDBUILDDIR)/assets/share \
   $(ANDROIDBUILDDIR)/assets/cache \
-  $(ANDROIDBUILDDIR)/assets/rcdir
+  $(ANDROIDBUILDDIR)/assets/rcdir \
+  $(ANDROIDBUILDDIR)/assets/splash
 	$(MAKE) rename-afiles
 	$(MAKE) assets.weblet
 	$(MAKE) assets.module
@@ -404,7 +405,8 @@ $(ANDROIDBUILDDIR)/assets.client: \
   $(ANDROIDBUILDDIR)/assets/etc \
   $(ANDROIDBUILDDIR)/assets/cache \
   $(ANDROIDBUILDDIR)/assets/rcdir \
-  $(ANDROIDBUILDDIR)/assets/hz
+  $(ANDROIDBUILDDIR)/assets/hz \
+  $(ANDROIDBUILDDIR)/assets/splash
 	$(MAKE) rename-afiles
 	$(MAKE) assets.post-install.client
 
@@ -447,8 +449,16 @@ $(ANDROIDBUILDDIR)/assets/etc: splash/splash.html splash/hopnotfound.html splash
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
 	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/etc $(ANDROIDBUILDDIR)/assets
-	mkdir -p $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
-	cp -r $(ANDROIDSPLASH) $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
+	# mkdir -p $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
+
+
+$(ANDROIDBUILDDIR)/assets/splash:
+	mkdir -p $(ANDROIDBUILDDIR)/assets
+	rm -rf $@
+	mkdir -p $@
+	$(MAKE) $(ANDROIDBUILDDIR)/assets/splash/splash.html
+	$(MAKE) $(ANDROIDBUILDDIR)/assets/splash/hopnotfound.html
+	$(MAKE) $(ANDROIDBUILDDIR)/assets/splash/hoperror.html
 
 $(ANDROIDBUILDDIR)/assets/share:
 	mkdir -p $(ANDROIDBUILDDIR)/assets
@@ -739,5 +749,11 @@ splash/hopnotfound.html: splash/hopnotfound.js splash/hop.svgz
 	hop --no-server $< > $@
 
 splash/hoperror.html: splash/hoperror.js splash/hop.svgz
+	hop --no-server $< > $@
+
+$(ANDROIDBUILDDIR)/assets/splash/%.html: $(ANDROIDSPLASH)/%.html
+	cp $< $@
+
+$(ANDROIDSPLASH)/%.html: $(ANDROIDSPLASH)/%.js
 	hop --no-server $< > $@
 
