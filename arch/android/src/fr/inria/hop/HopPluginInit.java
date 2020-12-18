@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:44:16 2010                          */
-/*    Last change :  Sun Dec  6 07:00:03 2020 (serrano)                */
+/*    Last change :  Fri Dec 18 13:22:59 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The initial plugin that allows plugin installation               */
@@ -28,7 +28,7 @@ import java.lang.reflect.*;
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
 public class HopPluginInit extends HopPlugin {
-   final Class[] classes = new Class[ 3 ];
+   final Class[] classes = new Class[ 2 ];
    
    HopPluginInit( HopDroid h, String n ) throws ClassNotFoundException {
       super( h, n );
@@ -72,37 +72,44 @@ public class HopPluginInit extends HopPlugin {
 	       Class<?> clazz = dexLoader.loadClass( cname );
 	    
 	       Constructor constr = clazz.getConstructor( classes );
-	       Object[] args = { handroid, name };
+	       Object[] args = { hopdroid, name };
 	       HopPlugin p = (HopPlugin)constr.newInstance( args );
-
+	       
 	       id = HopDroid.registerPlugin( p );
 	       Log.v( "HopPluginInit", "plugin " + p.name + " registered..." );
 	    } catch( ClassNotFoundException e ) {
 	       Log.e( "HopPlugInit", "Class Not Found: " + cname );
+	       e.printStackTrace();
 	       op.write( "-2 ".getBytes() );
 	       return;
 	    } catch( NoSuchMethodException e ) {
 	       Log.e( "HopPlugInit", "No such method: " + cname );
+	       e.printStackTrace();
 	       op.write( "-3 ".getBytes() );
 	       return;
 	    } catch( SecurityException e ) {
 	       Log.e( "HopPlugInit", "Security exception: " + cname );
+	       e.printStackTrace();
 	       op.write( "-4 ".getBytes() );
 	       return;
 	    } catch( InstantiationException e ) {
 	       Log.e( "HopPlugInit", "Instantiate exception: " + cname );
+	       e.printStackTrace();
 	       op.write( "-5 ".getBytes() );
 	       return;
 	    } catch( IllegalAccessException e ) {
 	       Log.e( "HopPlugInit", "Illegal access: " + cname );
+	       e.printStackTrace();
 	       op.write( "-6 ".getBytes() );
 	       return;
 	    } catch( IllegalArgumentException e ) {
 	       Log.e( "HopPlugInit", "Illegal argument: " + cname );
+	       e.printStackTrace();
 	       op.write( "-7 ".getBytes() );
 	       return;
 	    } catch( InvocationTargetException e ) {
 	       Log.e( "HopPlugInit", "Invocation target exception: " + cname );
+	       e.printStackTrace();
 	       op.write( "-8 ".getBytes() );
 	       return;
 	    }

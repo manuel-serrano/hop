@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:38:21 2010                          */
-/*    Last change :  Wed Dec 16 15:01:23 2020 (serrano)                */
+/*    Last change :  Fri Dec 18 13:10:19 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Root class for HopPlugins                                        */
@@ -31,7 +31,6 @@ public abstract class HopPlugin {
    static private Hashtable atable = new Hashtable();
    
    // instance variables
-   public HopDroid handroid;
    public HopDroid hopdroid;
    public String name;
 
