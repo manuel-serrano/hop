@@ -137,6 +137,10 @@ To stop and restart:
 
     $ adb shell am force-stop fr.inria.hop && adb shell monkey -p fr.inria.hop 1
 
+To switch the screen on:
+
+    $ adb shell input keyevent KEYCODE_POWER
+	
 
 Building a Client Application
 -----------------------------
