@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Fri Dec 18 05:21:46 2020 (serrano)                */
+/*    Last change :  Fri Dec 18 06:40:37 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the BUILD info                                               */
@@ -37,9 +37,6 @@ public class HopPluginBuild extends HopPlugin {
 
    // server
    void server( InputStream ip, OutputStream op ) throws IOException {
-
-      Log.d( "HopPluginBuild", "...." );
-      
       switch( HopDroid.read_int( ip ) ) {
 	 // sdk version
 	 case (byte)'v':
@@ -128,16 +125,11 @@ public class HopPluginBuild extends HopPlugin {
 
 	 // configuration
 	 case (byte)'c':
-	    Log.d( "HopPluginBuild", ">>> config" );
-
 	    Configuration config = hopdroid.activity.getResources().getConfiguration();
-	    
-	    Log.d( "HopPluginBuild", "config=" + config.toString() );
 	    
 	    if( config == null ) {
 	       op.write( "()".getBytes() );
 	    } else {
-	       Log.d( "HopPluginBuild", "CONFIG=" + HopConfiguration.toString( config ) );
 	       op.write( HopConfiguration.toString( config ).getBytes() );
 	    }
 	    return;
