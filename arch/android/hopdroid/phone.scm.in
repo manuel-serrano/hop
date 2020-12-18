@@ -151,7 +151,7 @@
 ;*    get-android-external-storage ...                                 */
 ;*---------------------------------------------------------------------*/
 (define (get-android-external-storage p::androidphone)
-   (get-android-build p #\e))
+   (get-android-build p #\s))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-android-application-info ...                                 */
@@ -640,7 +640,9 @@
       ((symbol? o)
        (send-string (symbol->string! o) op))
       (else
-       (error "send-obj" "cannot serialize value" o))))
+       (error "send-obj"
+	  (format "cannot serialize value \"~a\"" (typeof o))
+	  o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    send-obj ::vcard ...                                             */
