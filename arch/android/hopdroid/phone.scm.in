@@ -109,10 +109,7 @@
 (define (get-android-build p::androidphone cmd)
    (unless build-plugin
       (set! build-plugin (android-load-plugin p "build")))
-   (tprint "get-android-build cmd.2=" cmd)
-   (let ((r (android-send-command/result p build-plugin cmd)))
-      (tprint "get-android-build cmd.3=" (typeof r))
-      r))
+   (android-send-command/result p build-plugin cmd))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-android-sdk ...                                              */
@@ -555,7 +552,6 @@
 ;*---------------------------------------------------------------------*/
 (define-method (phone-reboot p::androidphone)
    (with-access::androidphone p (initid)
-      (tprint "SENDING REBOOT>..." initid)
       (android-send-command p initid "reboot")))
 
 ;*---------------------------------------------------------------------*/
@@ -691,11 +687,7 @@
 ;*---------------------------------------------------------------------*/
 (define (android-send-command/result p::androidphone plugin::int . args)
    (with-access::androidphone p (%mutex %sock-plugin)
-      (tprint "android-send-ommand/result.1 plugin=" plugin " args=" args)
       (synchronize *android-mutex*
-      (tprint "android-send-ommand/result.2 plugin=" plugin " args=" args)
 	 (android-send p plugin args)
-      (tprint "android-send-ommand/result.3 plugin=" plugin " args=" args)
 	 (let ((ip (socket-input %sock-plugin)))
-      (tprint "android-send-ommand/result.4 plugin=" plugin " args=" args)
 	    (read ip)))))
