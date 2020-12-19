@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.4.x/arch/android/src/fr/inria/hop/HopPluginCall.java       */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopPluginCall.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Fri Jul  6 18:24:37 2012 (serrano)                */
-/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    Last change :  Fri Dec 18 19:15:55 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with phone Calls                                         */
 /*=====================================================================*/
@@ -96,7 +96,7 @@ public class HopPluginCall extends HopPlugin {
    }
 
     // calllog manager
-   protected void server( final InputStream ip, final OutputStream op )
+   public void server( final InputStream ip, final OutputStream op )
       throws IOException {
       
       switch( HopDroid.read_int( ip ) ) {

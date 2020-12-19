@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Sun May 17 14:23:16 2020 (serrano)                */
+/*    Last change :  Fri Dec 18 19:17:39 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with SMS                                                 */
@@ -39,7 +39,7 @@ public class HopPluginSms extends HopPlugin {
    }
 
    // SMS manager
-   protected void server( final InputStream ip, final OutputStream op )
+   public void server( final InputStream ip, final OutputStream op )
       throws IOException {
       
       switch( HopDroid.read_int( ip ) ) {

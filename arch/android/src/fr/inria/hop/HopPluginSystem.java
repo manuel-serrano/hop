@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../3.1.x/arch/android/src/fr/inria/hop/HopPluginSystem.java     */
+/*    .../hop/arch/android/src/fr/inria/hop/HopPluginSystem.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov 21 08:34:30 2012                          */
-/*    Last change :  Sun Jun 19 08:35:58 2016 (serrano)                */
-/*    Copyright   :  2012-16 Manuel Serrano                            */
+/*    Last change :  Fri Dec 18 19:16:46 2020 (serrano)                */
+/*    Copyright   :  2012-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android system settings                                          */
 /*=====================================================================*/
@@ -39,7 +39,7 @@ public class HopPluginSystem extends HopPlugin {
    }
    
    // server
-   void server( InputStream ip, OutputStream op ) throws IOException {
+   public void server( InputStream ip, OutputStream op ) throws IOException {
       switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'w':
 	    // wifi policy

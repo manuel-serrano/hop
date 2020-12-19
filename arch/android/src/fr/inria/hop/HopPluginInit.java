@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:44:16 2010                          */
-/*    Last change :  Fri Dec 18 13:22:59 2020 (serrano)                */
+/*    Last change :  Fri Dec 18 19:17:25 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The initial plugin that allows plugin installation               */
@@ -44,7 +44,7 @@ public class HopPluginInit extends HopPlugin {
    }
    
    // static variables
-   void server( InputStream ip, OutputStream op ) throws IOException {
+   public void server( InputStream ip, OutputStream op ) throws IOException {
       String name = HopDroid.read_string( ip );
 
       if( name.equals( "reboot" ) ) {

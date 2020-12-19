@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 11 08:47:25 2011                          */
-/*    Last change :  Mon Aug 15 07:42:58 2016 (serrano)                */
-/*    Copyright   :  2011-16 Manuel Serrano                            */
+/*    Last change :  Fri Dec 18 19:15:19 2020 (serrano)                */
+/*    Copyright   :  2011-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Media Audio Plugin                                       */
 /*    -------------------------------------------------------------    */
@@ -63,7 +63,7 @@ public class HopPluginMediaAudio extends HopPlugin {
    }
    
    // plugin server
-   protected void server( InputStream ip, OutputStream op )
+   public void server( InputStream ip, OutputStream op )
       throws IOException {
       switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'G':

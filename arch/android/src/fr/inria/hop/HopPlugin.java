@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:38:21 2010                          */
-/*    Last change :  Fri Dec 18 13:10:19 2020 (serrano)                */
+/*    Last change :  Sat Dec 19 06:40:50 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Root class for HopPlugins                                        */
@@ -51,11 +51,11 @@ public abstract class HopPlugin {
    }
    
    // the server
-   abstract void server( InputStream ip, OutputStream op ) throws IOException;
+   abstract public void server( InputStream ip, OutputStream op ) throws IOException;
 
    // onActivityResult (called by HopLauncher)
    static public void onActivityResult( int key, int result, Intent intent ) {
-      Log.v( "HopPlugin", "onActivityResult key=" + key + " result=" + result + " intent=" + intent );
+      Log.d( "HopPlugin", "onActivityResult key=" + key + " result=" + result + " intent=" + intent );
       synchronized( atable ) {
 	 HopPlugin p = (HopPlugin)atable.get( key );
 
@@ -79,7 +79,7 @@ public abstract class HopPlugin {
 	 atable.put( key, this );
       }
       
-      Log.v( "HopPlugin", "Starting activity key=" + key + " intent=" + intent
+      Log.d( "HopPlugin", "Starting activity key=" + key + " intent=" + intent
 	 + " activity=" + hopdroid.activity );
 
       if( hopdroid.activity != null ) {

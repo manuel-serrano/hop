@@ -127,9 +127,9 @@ if [ "$pluginjava " != " " ]; then
   for p in $pluginjava; do
      file=`basename $p .java`
 
-     (cd plugin && $javac -classpath $ANDROIDCP -sourcepath '.' fr/inria/hop/$file.java)
+     (cd plugin && $javac -classpath $ANDROIDCP -sourcepath '.' fr/inria/hop/$file.java) || exit 1
 
-     (cd plugin && $DX --dex --output=../$apkname/$hzplugindir/$file.jar fr/inria/hop/$file.class)
+     (cd plugin && $DX --dex --output=../$apkname/$hzplugindir/$file.jar fr/inria/hop/$file.class) || exit 1
   done
 
   tar cvfz assets/hz/$apkname.hz $apkname
@@ -153,12 +153,12 @@ else
   mv libs $libdir
   
   for p in `find $libdir -type f -print`; do
-    $AAPT add $apkname.apk.unaligned $p
+    $AAPT add $apkname.apk.unaligned $p || exit 1
   done
 fi  
 
 for p in `find assets -type f -print`; do
-  $AAPT add $apkname.apk.unaligned $p
+  $AAPT add $apkname.apk.unaligned $p || exit 1
 done
 
 echo "jarsigner -keystore $androidkeystore -storepass 'android' $apkname.apk.unaligned androiddebugkey"
