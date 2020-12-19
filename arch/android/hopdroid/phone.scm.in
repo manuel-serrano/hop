@@ -182,7 +182,7 @@
    (android-send-command/result p locale-plugin #\c))
 
 ;*---------------------------------------------------------------------*/
-;*    phone-current-locale ::androidphone ...                          */
+;*    phone-current-locale-set! ::androidphone ...                     */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-current-locale-set! p::androidphone l)
    (unless locale-plugin
