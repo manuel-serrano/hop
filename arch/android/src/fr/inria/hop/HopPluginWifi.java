@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 17 06:55:59 2011                          */
-/*    Last change :  Tue Dec 15 10:32:41 2020 (serrano)                */
+/*    Last change :  Fri Dec 18 19:15:06 2020 (serrano)                */
 /*    Copyright   :  2011-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with Wifi configuration                                  */
@@ -82,7 +82,7 @@ public class HopPluginWifi extends HopPlugin {
    }
    
    // sensor manager
-   protected void server( final InputStream ip, final OutputStream op )
+   public void server( final InputStream ip, final OutputStream op )
       throws IOException {
       
       switch( HopDroid.read_int( ip ) ) {

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Wed Dec 16 15:01:34 2020 (serrano)                */
+/*    Last change :  Fri Dec 18 19:17:09 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -118,7 +118,7 @@ public class HopPluginTts extends HopPlugin
    }
 
    // server
-   synchronized void server( InputStream ip, OutputStream op )
+   public synchronized void server( InputStream ip, OutputStream op )
       throws IOException {
 
       switch( HopDroid.read_int( ip ) ) {

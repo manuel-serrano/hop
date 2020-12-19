@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../arch/android/src/fr/inria/hop/HopPluginZeroconf.java         */
+/*    .../hop/arch/android/src/fr/inria/hop/HopPluginZeroconf.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 22 10:05:43 2010                          */
-/*    Last change :  Fri Feb 21 13:31:50 2014 (serrano)                */
-/*    Copyright   :  2010-14 Manuel Serrano                            */
+/*    Last change :  Fri Dec 18 19:14:06 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    jmdns Bonjour implementation (http://jmdns.sourceforge.net)      */
 /*=====================================================================*/
@@ -66,7 +66,7 @@ public class HopPluginZeroconf extends HopPlugin {
    }
    
    // server
-   void server( InputStream ip, OutputStream op ) throws IOException {
+   public void server( InputStream ip, OutputStream op ) throws IOException {
       switch( HopDroid.read_int( ip ) ) {
 	 // version
 	 case (byte)'v':

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.6.x/arch/android/src/fr/inria/hop/HopPluginSensor.java     */
+/*    .../hop/arch/android/src/fr/inria/hop/HopPluginSensor.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 11:11:23 2010                          */
-/*    Last change :  Fri Feb 21 13:30:18 2014 (serrano)                */
-/*    Copyright   :  2010-14 Manuel Serrano                            */
+/*    Last change :  Fri Dec 18 19:14:25 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with the sensors available on the phone.                 */
 /*=====================================================================*/
@@ -213,7 +213,7 @@ public class HopPluginSensor extends HopPlugin {
    }
       
    // sensor manager
-   protected void server( final InputStream ip, final OutputStream op )
+   public void server( final InputStream ip, final OutputStream op )
       throws IOException {
       
       switch( HopDroid.read_int( ip ) ) {

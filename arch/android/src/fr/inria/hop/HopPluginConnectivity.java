@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul  5 17:42:47 2012                          */
-/*    Last change :  Tue Jul 10 15:17:51 2012 (serrano)                */
-/*    Copyright   :  2012 Manuel Serrano                               */
+/*    Last change :  Fri Dec 18 19:16:20 2020 (serrano)                */
+/*    Copyright   :  2012-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with network connections.                                */
 /*=====================================================================*/
@@ -45,7 +45,7 @@ public class HopPluginConnectivity extends HopPlugin {
    }
    
    // network manager
-   protected void server( final InputStream ip, final OutputStream op )
+   public void server( final InputStream ip, final OutputStream op )
       throws IOException {
       
       switch( HopDroid.read_int( ip ) ) {

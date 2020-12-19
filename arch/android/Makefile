@@ -49,7 +49,7 @@ ANDROIDHOPZEROCONF = true
 ANDROIDHOPDEBUG = true
 ANDROIDHOPURL = http://hop.inria.fr
 ANDROIDHOPCONSOLELOG = false
-ANDROIDHOPDEBUGLEVEL = -g0
+ANDROIDHOPDEBUGLEVEL = # -g0
 ANDROIDHOPVERBOSELEVEL = -v
 ANDROIDHOPPREFIX = /data/data/fr.inria.$(HOPAPP)/assets
 
@@ -705,7 +705,6 @@ apk.hop.configure:
             --library=text \
             --library=phone \
             --disable-doc \
---debug \
             --bigloo-pcre=no --bigloo-unistring=no \
             $(HOPCONFIGUREOPT))
 

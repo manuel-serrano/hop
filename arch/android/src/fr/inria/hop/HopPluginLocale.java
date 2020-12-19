@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.4.x/arch/android/src/fr/inria/hop/HopPluginLocale.java     */
+/*    .../hop/arch/android/src/fr/inria/hop/HopPluginLocale.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Thu Nov 22 16:43:29 2012 (serrano)                */
-/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    Last change :  Fri Dec 18 19:15:45 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the phone locales                                            */
 /*=====================================================================*/
@@ -39,7 +39,7 @@ public class HopPluginLocale extends HopPlugin {
    }
 
    // server
-   void server( InputStream ip, OutputStream op ) throws IOException {
+   public void server( InputStream ip, OutputStream op ) throws IOException {
        switch( HopDroid.read_int( ip ) ) {
 	 // list locales
 	 case (byte)'l':

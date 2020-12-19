@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Fri Dec 18 06:40:37 2020 (serrano)                */
+/*    Last change :  Fri Dec 18 19:13:50 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the BUILD info                                               */
@@ -36,7 +36,7 @@ public class HopPluginBuild extends HopPlugin {
    }
 
    // server
-   void server( InputStream ip, OutputStream op ) throws IOException {
+   public void server( InputStream ip, OutputStream op ) throws IOException {
       switch( HopDroid.read_int( ip ) ) {
 	 // sdk version
 	 case (byte)'v':

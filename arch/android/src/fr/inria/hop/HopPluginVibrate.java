@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct 14 08:47:19 2010                          */
-/*    Last change :  Thu May 21 13:41:21 2020 (serrano)                */
+/*    Last change :  Fri Dec 18 19:14:37 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android Vibrator                                                 */
@@ -41,7 +41,7 @@ public class HopPluginVibrate extends HopPlugin {
    }
    
    // vibrator player
-   protected void server( InputStream ip, OutputStream op )
+   public void server( InputStream ip, OutputStream op )
       throws IOException {
       switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'x':

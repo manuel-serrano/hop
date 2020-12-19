@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Dec 17 11:49:50 2020 (serrano)                */
+/*    Last change :  Sat Dec 19 08:11:39 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -161,6 +161,7 @@ public class HopHzLauncher extends HopLauncher {
       Intent i = new Intent( activity.getApplicationContext(), HopHzLauncher.class );
       i.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );
       i.addFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
+      
       startActivity( i );      
    }
    
