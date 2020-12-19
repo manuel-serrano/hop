@@ -221,6 +221,14 @@
 			    (file-name-canonicalize
 			       (make-file-name (pwd) src)))))))
 	    (set! respath (resolve-module-file path base loc))
+	    (when (string=? respath src)
+		(raise
+		   (instantiate::&io-parse-error
+		      (proc "import")
+		      (msg "Illegal self-import")
+		      (obj path)
+		      (fname respath)
+		      (location (caddr loc)))))
 	    (unless (member respath stack)
 	       (set! iprgm (import-module respath path loc))
 	       (set! decls (append (import-module-decls this iprgm) decls)))
