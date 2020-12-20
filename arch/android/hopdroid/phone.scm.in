@@ -532,6 +532,14 @@
    (android-send-command p call-plugin #\e))
 
 ;*---------------------------------------------------------------------*/
+;*    phone-call-dial ::androidphone ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (phone-call-dial p::androidphone n::bstring)
+   (unless call-plugin
+      (set! call-plugin (android-load-plugin p "dial")))
+   (android-send-command p call-plugin #\d n))
+
+;*---------------------------------------------------------------------*/
 ;*    phone-call-start ::androidphone ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-call-start p::androidphone n::bstring . optional)
