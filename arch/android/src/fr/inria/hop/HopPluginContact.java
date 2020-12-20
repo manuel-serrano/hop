@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Sun Dec 20 07:23:15 2020 (serrano)                */
+/*    Last change :  Sun Dec 20 10:26:45 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -79,7 +79,7 @@ public class HopPluginContact extends HopPlugin {
 	 ContactsContract.Contacts.HAS_PHONE_NUMBER
       };
       Uri uri = ContactsContract.Contacts.CONTENT_URI;
-      String orderOrder = ContactsContract.Contacts.DISPLAY_NAME + " ASC ";
+      String sort = ContactsContract.Contacts.DISPLAY_NAME + " ASC ";
       String selection = filter ?
 	 "("
 	 + ContactsContract.Contacts.IN_VISIBLE_GROUP
@@ -91,12 +91,12 @@ public class HopPluginContact extends HopPlugin {
 			     projection,
 			     selection,
 			     null,
-			     sortOrder );
+			     sort );
 
       if( cur.moveToFirst() ) {
 	 op.write( "(".getBytes() );
 	 do {
-	    writeContact( op, cur );
+	    writeContact( cr, op, cur );
 	 } while( cur.moveToNext() );
 	 op.write( ")".getBytes() );
       } else {
@@ -105,7 +105,9 @@ public class HopPluginContact extends HopPlugin {
    }
 
    // writeContact
-   void writeContact( final OutputStream op, final Cursor cur )
+   void writeContact( ContentResolver cr, 
+		      final OutputStream op,
+		      final Cursor cur )
       throws IOException {
       int id = cur.getInt( 0 );
       String name = cur.getString( 1 );
@@ -113,40 +115,43 @@ public class HopPluginContact extends HopPlugin {
       op.write( "[".getBytes() );
 
       // name
-      writeContactName( op, id, name );
+      writeContactName( cr, op, id, name );
       op.write( " ".getBytes() );
 
       // nicknames
-      writeContactNicknames( op, id );
+      writeContactNicknames( cr, op, id );
       op.write( " ".getBytes() );
       
       // organization
-      writeContactOrganization( op, id );
+      writeContactOrganization( cr, op, id );
       op.write( " ".getBytes() );
 
       // phones
-      writeContactPhones( op, id );
+      writeContactPhones( cr, op, id );
       op.write( " " .getBytes() );
 
       // addresses
-      writeContactAddresses( op, id );
+      writeContactAddresses( cr, op, id );
       op.write( " " .getBytes() );
 
       // emails
-      writeContactEmails( op, id );
+      writeContactEmails( cr, op, id );
       op.write( " ".getBytes() );
 
+/*       // thumbnail                                                  */
+/*       writeContactThumbnail( cr, op, id );                          */
+/*       op.write( " ".getBytes() );                                   */
+/*                                                                     */
       // notes
-      writeContactNotes( op, id );
+      writeContactNotes( cr, op, id );
 
       op.write( " ()".getBytes() );
       op.write( "]\n".getBytes() );
    }
 
    // writeContactName
-   void writeContactName( final OutputStream op, int id, String name ) throws IOException {
-      Cursor cur = getCursor(
-	 id, 
+   void writeContactName( ContentResolver cr, final OutputStream op, int id, String name ) throws IOException {
+      Cursor cur = getCursor( cr, id, 
 	 new String[] {
 	    StructuredName.GIVEN_NAME,
 	    StructuredName.FAMILY_NAME,
@@ -162,12 +167,12 @@ public class HopPluginContact extends HopPlugin {
 	 op.write( name.getBytes() );
 	 op.write( "\" \"\"".getBytes() );
       }
+      cur.close();
    }
 
    // writeContactPhones
-   void writeContactPhones( final OutputStream op, int id ) throws IOException {
-      Cursor cur = getCursor( 
-	 id, 
+   void writeContactPhones( ContentResolver cr, final OutputStream op, int id ) throws IOException {
+      Cursor cur = getCursor( cr, id, 
 	 new String[] {
 	    Phone.LABEL,
 	    Phone.NUMBER
@@ -187,13 +192,13 @@ public class HopPluginContact extends HopPlugin {
       } else {
 	 op.write( "()".getBytes() );
       }
+      cur.close();
    }
 
    // writeContactNicknames
-   void writeContactNicknames( final OutputStream op, int id )
+   void writeContactNicknames( ContentResolver cr, final OutputStream op, int id )
       throws IOException {
-      Cursor cur = getCursor( 
-	 id, 
+      Cursor cur = getCursor( cr, id, 
 	 new String[] {
 	    Nickname.NAME,
 	 },
@@ -218,13 +223,13 @@ public class HopPluginContact extends HopPlugin {
       } else {
 	 op.write( "()".getBytes() );
       }
+      cur.close();
    }
 
    // writeContactOrganization
-   void writeContactOrganization( final OutputStream op, int id )
+   void writeContactOrganization( ContentResolver cr, final OutputStream op, int id )
       throws IOException {
-      Cursor cur = getCursor( 
-	 id, 
+      Cursor cur = getCursor( cr, id, 
 	 new String[] {
 	    Organization.COMPANY,
 	 },
@@ -237,12 +242,12 @@ public class HopPluginContact extends HopPlugin {
       } else {
 	 op.write( "()".getBytes() );
       }
+      cur.close();
    }
 
    // writeContactAddresses
-   void writeContactAddresses( final OutputStream op, int id ) throws IOException {
-      Cursor cur = getCursor( 
-	 id,
+   void writeContactAddresses( ContentResolver cr, final OutputStream op, int id ) throws IOException {
+      Cursor cur = getCursor( cr, id,
 	 new String[] {
 	    StructuredPostal.LABEL,
 	    StructuredPostal.STREET,
@@ -275,12 +280,12 @@ public class HopPluginContact extends HopPlugin {
       } else {
 	 op.write( "()".getBytes() );
       }
+      cur.close();
    }
 
    // writeContactEmails
-   void writeContactEmails( final OutputStream op, int id ) throws IOException {
-      Cursor cur = getCursor( 
-	 id,
+   void writeContactEmails( ContentResolver cr, final OutputStream op, int id ) throws IOException {
+      Cursor cur = getCursor( cr, id,
 	 new String[] {
 	    Email.DATA,
 	 },
@@ -299,12 +304,82 @@ public class HopPluginContact extends HopPlugin {
       } else {
 	 op.write( "()".getBytes() );
       }
+      cur.close();
    }
       
+   // writeContactPhoto
+   void writeContactPhoto( ContentResolver cr, final OutputStream op, int id ) throws IOException {
+      Cursor cur = getCursor( cr, id,
+	 new String[] {
+	    ContactsContract.Contacts.PHOTO_URI
+	 },
+	 null );
+
+      Log.d( "HopPluginContact", ">>> photo.1 cur=" + id + (cur == null ? " null" : " pas null" ) );
+      
+      if( cur.moveToFirst() && cur.getString( 0 ) != null ) {
+	 op.write( "(photo \"".getBytes() );
+	 op.write( cur.getString( 0 ).getBytes() );
+	 op.write( "\")".getBytes() );
+      }
+      cur.close();
+      Log.d( "HopPluginContact", "<<< photo" );
+   }
+      
+/*    // writeContactThumbnail                                         */
+/*    void writeContactThumbnail( ContentResolver cr, final OutputStream op, int id ) throws IOException { */
+/*       Uri contactUri = ContentUris.withAppendedId( Contacts.CONTENT_URI, id ); */
+/*       Uri photoUri = Uri.withAppendedPath( contactUri, Contacts.Photo.CONTENT_DIRECTORY ); */
+/*       Cursor cursor = cr().query(                                   */
+/* 	 photoUri,                                                     */
+/* 	 new String[] { Contacts.Photo.PHOTO }, null, null, null );    */
+/*                                                                     */
+/*       if( cursor == null ) {                                        */
+/*          return null;                                               */
+/*       }                                                             */
+/*                                                                     */
+/*       try {                                                         */
+/*          if( cursor.moveToFirst() ) {                               */
+/* 	    byte[] data = cursor.getBlob(0);                           */
+/*              if( data != null ) {                                   */
+/* 		Bitmap bmp = null;                                     */
+/* 		ByteArrayOutputStream stream = new ByteArrayOutputStream(); */
+/* 		bmp.compress( Bitmap.CompressFormat.JPEG, 100, stream ); */
+/* byte[] byteArray = stream.toByteArray();                            */
+/* 		return new ByteArrayInputStream(data);                 */
+/*              }                                                      */
+/*          }                                                          */
+/*       } finally {                                                   */
+/*          cursor.close();                                            */
+/*       }                                                             */
+/*       return null;                                                  */
+/*    }                                                                */
+/*                                                                     */
+/*       Cursor cur = getCursor( cr, id,                               */
+/* 	 new String[] {                                                */
+/* 	    Email.DATA,                                                */
+/* 	 },                                                            */
+/* 	 Photo.2CONTENT_ITEM_TYPE );                                   */
+/*                                                                     */
+/*       if( cur.moveToFirst() ) {                                     */
+/* 	 op.write( "(\"".getBytes() );                                 */
+/* 	 op.write( cur.getString( 0 ).getBytes() );                    */
+/* 	 op.write( "\"".getBytes() );                                  */
+/* 	 while( cur.moveToNext() ) {                                   */
+/* 	    op.write( " \"".getBytes() );                              */
+/* 	    op.write( cur.getString( 0 ).getBytes() );                 */
+/* 	    op.write( "\"".getBytes() );                               */
+/* 	 }                                                             */
+/* 	 op.write( ")".getBytes() );                                   */
+/*       } else {                                                      */
+/* 	 op.write( "()".getBytes() );                                  */
+/*       }                                                             */
+/*       cur.close();                                                  */
+/*    }                                                                */
+      
    // writeContactNotes
-   void writeContactNotes( final OutputStream op, int id ) throws IOException {
-      Cursor cur = getCursor(
-	 id,
+   void writeContactNotes( ContentResolver cr, final OutputStream op, int id ) throws IOException {
+      Cursor cur = getCursor( cr, id,
 	 new String[] { Website.URL },
 	 Website.CONTENT_ITEM_TYPE );
 
@@ -323,8 +398,7 @@ public class HopPluginContact extends HopPlugin {
       }
 
       // note
-      cur = getCursor(
-	 id,
+      cur = getCursor( cr, id,
 	 new String[] { Note.NOTE },
 	 Note.CONTENT_ITEM_TYPE );
 
@@ -334,17 +408,20 @@ public class HopPluginContact extends HopPlugin {
 	 op.write( cur.getString( 0 ).getBytes() );
 	 op.write( "\")".getBytes() );
       }
+
+      // photo
+      writeContactPhoto( cr, op,id );
       
       op.write( ")".getBytes() );
+      cur.close();
    }
       
    // getCursor
-   Cursor getCursor( int id, String[] projection, String mimetype ) throws IOException {
-      ContentResolver cr = hopdroid.service.getContentResolver();
+   Cursor getCursor( ContentResolver cr, int id, String[] projection, String mimetype ) throws IOException {
       Cursor cur = cr.query(
 	 Data.CONTENT_URI, projection,
-	 Data.CONTACT_ID + "=?" + " AND "
-	 + Data.MIMETYPE + "='" + mimetype + "'",
+	 Data.CONTACT_ID + "=?" +
+	 (mimetype != null ? " AND " + Data.MIMETYPE + "='" + mimetype + "'" : ""),
 	 new String[] {
 	    String.valueOf( id )
 	 },
