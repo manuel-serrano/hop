@@ -388,14 +388,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    phone-sensor ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (phone-sensor p::androidphone type . delay)
+(define-method (phone-sensor p::androidphone type #!optional (delay 0))
    (unless sensor-plugin
       (set! sensor-plugin (android-load-plugin p "sensor")))
    (android-send-command/result p sensor-plugin #\b
       (sensor-type-number type)
       (with-access::androidphone p (sensor-ttl)
 	 sensor-ttl)
-      (if (pair? delay) (car delay) 0)))
+      delay))
 
 ;*---------------------------------------------------------------------*/
 ;*    register-orientation-listener! ...                               */
