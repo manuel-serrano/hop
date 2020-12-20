@@ -440,7 +440,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    phone-contact ::androidphone ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (phone-contact p::androidphone)
+(define-method (phone-contact p::androidphone #!optional filter)
    (unless contact-plugin
       (set! contact-plugin (android-load-plugin p "contact")))
    (if contact-plugin
@@ -477,7 +477,7 @@
 			     (addresses addrs)
 			     (emails emails)
 			     (notes notes))))))
-	     (android-send-command/result p contact-plugin #\l)))
+	     (android-send-command/result p contact-plugin (if filter #\l #\L))))
        '()))
 
 ;*---------------------------------------------------------------------*/
@@ -501,10 +501,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    phone-call-log ::androidphone ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (phone-call-log p::androidphone . optional)
+(define-method (phone-call-log p::androidphone #!optional num)
    (unless call-plugin
       (set! call-plugin (android-load-plugin p "call")))
-   (let ((n (if (pair? optional) (car optional) -1)))
+   (let ((n (if (integer? num) num -1)))
       (android-send-command/result p call-plugin #\l n)))
 
 ;*---------------------------------------------------------------------*/
@@ -542,11 +542,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    phone-call-start ::androidphone ...                              */
 ;*---------------------------------------------------------------------*/
-(define-method (phone-call-start p::androidphone n::bstring . optional)
+(define-method (phone-call-start p::androidphone n::bstring #!optional window)
    (unless call-plugin
       (set! call-plugin (android-load-plugin p "call")))
-   (let ((window (if (pair? optional) (car optional) #f)))
-      (android-send-command p call-plugin #\c n window)))
+   (android-send-command p call-plugin #\c n window))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-call-stop ::androidphone ...                               */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Fri Dec 18 19:13:36 2020 (serrano)                */
+/*    Last change :  Sun Dec 20 07:23:15 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -53,7 +53,11 @@ public class HopPluginContact extends HopPlugin {
       
       switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'l':
-	    writeContactList( op );
+	    writeContactList( op, true );
+	    break;
+	    
+	 case (byte)'L':
+	    writeContactList( op, false );
 	    break;
 	    
 	 case (byte)'r':
@@ -67,15 +71,27 @@ public class HopPluginContact extends HopPlugin {
    }
 
    // writeContactList
-   void writeContactList( final OutputStream op ) throws IOException {
+   void writeContactList( final OutputStream op, boolean filter ) throws IOException {
       // Run query
       final String[] projection = new String[] {
 	 ContactsContract.Contacts._ID,
-	 ContactsContract.Contacts.DISPLAY_NAME
+	 ContactsContract.Contacts.DISPLAY_NAME,
+	 ContactsContract.Contacts.HAS_PHONE_NUMBER
       };
       Uri uri = ContactsContract.Contacts.CONTENT_URI;
+      String orderOrder = ContactsContract.Contacts.DISPLAY_NAME + " ASC ";
+      String selection = filter ?
+	 "("
+	 + ContactsContract.Contacts.IN_VISIBLE_GROUP
+	 + " = '1' AND ("
+	 + ContactsContract.Contacts.HAS_PHONE_NUMBER + " != 0 ))"
+	 : null;
       ContentResolver cr = hopdroid.service.getContentResolver();
-      Cursor cur = cr.query( uri, projection, null, null, null );
+      Cursor cur = cr.query( uri,
+			     projection,
+			     selection,
+			     null,
+			     sortOrder );
 
       if( cur.moveToFirst() ) {
 	 op.write( "(".getBytes() );
