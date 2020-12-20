@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Fri Dec 18 19:15:55 2020 (serrano)                */
+/*    Last change :  Sun Dec 20 06:50:04 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with phone Calls                                         */
@@ -124,6 +124,11 @@ public class HopPluginCall extends HopPlugin {
 	 case (byte)'c':
 	    // start a new call
 	    startCall( ip, op );
+	    break;
+	    
+	 case (byte)'d':
+	    // dial a new call
+	    dial( ip, op );
 	    break;
 	    
 	 case (byte)'k':
@@ -267,16 +272,25 @@ public class HopPluginCall extends HopPlugin {
       }
    }
 
+   // dial
+   void dial( final InputStream ip, final OutputStream op ) throws IOException {
+      String number = HopDroid.read_string( ip );
+
+      Log.d( "HopPluginCall", "dial Creating indent \"" + number + "\"");
+      Intent dialIntent = new Intent( Intent.ACTION_DIAL );
+      dialIntent.setData( Uri.parse( "tel:" + number ) );
+
+      hopdroid.service.startActivity( dialIntent );
+   }
+
    // startCall
    void startCall( final InputStream ip, final OutputStream op ) throws IOException {
       String number = HopDroid.read_string( ip );
       boolean newactivity = HopDroid.read_int( ip ) != 0;
 
-      Log.d( "HopPluginCall", "Creating indent" );
+      Log.d( "HopPluginCall", "Creating indent \"" + number + "\"");
       Intent callIntent = new Intent( Intent.ACTION_CALL );
       callIntent.setData( Uri.parse( "tel:" + number ) );
-
-      Log.d( "HopPluginCall", "Intent created..." );
 
       if( newactivity ) {
 	 ci = null;
@@ -287,6 +301,7 @@ public class HopPluginCall extends HopPlugin {
 	 ci = callIntent;
 	 ca = 0;
 	 hopdroid.activity.startService( callIntent );
+	 Log.d( "HopPluginCall", "Service started..." );
       }
    }
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Thu Dec 17 10:59:48 2020 (serrano)                */
+/*    Last change :  Sat Dec 19 17:13:52 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -103,6 +103,11 @@ public class Hop extends Thread {
 	 if( sdcard.exists() ) {
 	    Log.d( "Hop", "HOME, /mnt/sdcard exists..." );
 	    _HOME = new File( sdcard, "home" );
+
+	    if( !_HOME.canWrite() ) {
+	       _HOME = null;
+	    }
+		   
 	 }
 
 	 if( _HOME == null ) {
