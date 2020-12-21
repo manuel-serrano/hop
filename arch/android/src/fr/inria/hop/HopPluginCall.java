@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Sun Dec 20 06:50:04 2020 (serrano)                */
+/*    Last change :  Sun Dec 20 18:10:48 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with phone Calls                                         */
@@ -276,11 +276,11 @@ public class HopPluginCall extends HopPlugin {
    void dial( final InputStream ip, final OutputStream op ) throws IOException {
       String number = HopDroid.read_string( ip );
 
-      Log.d( "HopPluginCall", "dial Creating indent \"" + number + "\"");
       Intent dialIntent = new Intent( Intent.ACTION_DIAL );
       dialIntent.setData( Uri.parse( "tel:" + number ) );
 
-      hopdroid.service.startActivity( dialIntent );
+      hopdroid.activity.startActivity( dialIntent );
+      Log.d( "HopPluginCall", "dial activity started..." );
    }
 
    // startCall
@@ -288,20 +288,26 @@ public class HopPluginCall extends HopPlugin {
       String number = HopDroid.read_string( ip );
       boolean newactivity = HopDroid.read_int( ip ) != 0;
 
-      Log.d( "HopPluginCall", "Creating indent \"" + number + "\"");
       Intent callIntent = new Intent( Intent.ACTION_CALL );
       callIntent.setData( Uri.parse( "tel:" + number ) );
+
+      Intent i = new Intent( hopdroid.activity.getApplicationContext(), hopdroid.activity.getClass() );
+      
+      i.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );
+      i.addFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
+      Log.d( "HopPluginCall", "raising/starting..." +  hopdroid.activity.getClass().getName() );
+      hopdroid.activity.startActivity( i );
 
       if( newactivity ) {
 	 ci = null;
 	 ca = startHopActivityForResult( callIntent );
-	 Log.d( "HopPluginCall", "Activity started..." );
+	 Log.d( "HopPluginCall", "startCall activity started..." );
       } else {
 	 
 	 ci = callIntent;
 	 ca = 0;
 	 hopdroid.activity.startService( callIntent );
-	 Log.d( "HopPluginCall", "Service started..." );
+	 Log.d( "HopPluginCall", "startCall Service started..." );
       }
    }
 
