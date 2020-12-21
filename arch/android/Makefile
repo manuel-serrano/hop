@@ -661,7 +661,7 @@ apk.bigloo.configure:
             --stack-check=no \
             --prefix=$(ANDROIDHOPPREFIX) \
             --build-bindir=$(HOPBINDIR) \
-            --disable-doc --disable-unistring --disable-gmp \
+            --disable-doc --disable-unistring --disable-gmp --customprce \
             $(BIGLOOCONFIGUREOPT))
 #            --disable-doc --disable-pcre --disable-unistring --disable-gmp \
 
