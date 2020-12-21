@@ -661,8 +661,9 @@ apk.bigloo.configure:
             --stack-check=no \
             --prefix=$(ANDROIDHOPPREFIX) \
             --build-bindir=$(HOPBINDIR) \
-            --disable-doc --disable-pcre --disable-unistring --disable-gmp \
+            --disable-doc --disable-unistring --disable-gmp \
             $(BIGLOOCONFIGUREOPT))
+#            --disable-doc --disable-pcre --disable-unistring --disable-gmp \
 
 $(ANDROIDBUILDDIR)/bigloo-$(RELEASE): $(REPOSITORY)/bigloo-$(RELEASE).tar.gz
 	mkdir -p $(ANDROIDBUILDDIR)
