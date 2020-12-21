@@ -654,7 +654,7 @@ apk.bigloo.configure:
             --cc=/tmp/droidcc.sh \
             --cpicflags=-fPIC \
             --cflags="-fPIC -DBGL_GC_ROOTS" \
-            --lflags=-fPIC \
+            --lflags="-fPIC -L$(ANDROIDBUILDDIR)/bigloo-$(RELEASE)/lib/bigloo/$(RELEASE) -L$(ANDROIDBUILDDIR)/bigloo-$(RELEASE)/pcre/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)" \
             --customlibuv=yes \
             --customlibuvversion=v1.20.3 \
             --libuvconfigureopt="--host=arm-linux-androideabi" \
