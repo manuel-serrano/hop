@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sat Dec 19 17:13:52 2020 (serrano)                */
+/*    Last change :  Mon Dec 21 08:51:25 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -291,9 +291,7 @@ public class Hop extends Thread {
       // boot. If the logger queue is fulled, the main thread might be blocked
       // waiting Hop to start, which could never be completed because of the logger
       // thread being stuck.
-      Log.d( "Hop", "watcher started..." );
       watcher.start();
-      Log.d( "Hop", "logger started..." );
       logger.start();
 
       // wait for Hop to acknowledge

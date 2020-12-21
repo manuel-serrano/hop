@@ -624,29 +624,23 @@ $(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR) \
 	  mv $(ANDROIDBUILDDIR)/src/fr/inria/hop $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP); \
         fi
 
-apk.src.client:
-	$(MAKE) apk.src
-	$(MAKE) HopPluginZeroconf.java.client
-	$(RM) -rf $(ANDROIDBUILDDIR)/src/javax
-	$(RM) -rf $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP)/HopJmDns.java
+apk.src.client: apk.src
+	if [ -d $(ANDROIDSRCCLIENT) ]; then \
+	   cp -r $(ANDROIDSRCCLIENT) $(ANDROIDBUILDDIR); \
+	fi
 
 apk.plugin.client:
-	$(RM) -rf $(ANDROIDBUILDDIR)/tmpsrc
-	$(RM) -rf $(ANDROIDBUILDDIR)/plugin
-	$(MAKE) apk.src.client ANDROIDBUILDDIR=$(ANDROIDBUILDDIR)/tmpsrc HOPAPP=hop 
-	mv $(ANDROIDBUILDDIR)/tmpsrc/src $(ANDROIDBUILDDIR)/plugin
-	rm -rf $(ANDROIDBUILDDIR)/tmpsrc
+	if [ "$(PLUGIN_JAVA) " != " " ]l; then \
+	   $(RM) -rf $(ANDROIDBUILDDIR)/tmpsrc && \
+	   $(RM) -rf $(ANDROIDBUILDDIR)/plugin && \
+	   $(MAKE) apk.src.client ANDROIDBUILDDIR=$(ANDROIDBUILDDIR)/tmpsrc HOPAPP=hop && \
+	   mv $(ANDROIDBUILDDIR)/tmpsrc/src $(ANDROIDBUILDDIR)/plugin && \
+	   rm -rf $(ANDROIDBUILDDIR)/tmpsrc || exit 1; \
+        fi
 	for p in $(PLUGIN_JAVA); do \
 	   cp $(ANDROIDWEBLET)/arch/android/$$p \
               $(ANDROIDBUILDDIR)/plugin/fr/inria/hop/`basename $$p`; \
         done
-
-HopPluginZeroconf.java.client:
-	cat $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP)/HopPluginZeroconf.java \
-            | sed -e 's|HopJmDns|HopNsdManager|' \
-            > $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP)/HopPluginZeroconf.java.tmp
-	mv $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP)/HopPluginZeroconf.java.tmp \
-            $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP)/HopPluginZeroconf.java
 
 apk.bigloo: $(ANDROIDBUILDDIR)/bigloo-$(RELEASE) /tmp/droidcc.sh
 	$(MAKE) apk.bigloo.configure

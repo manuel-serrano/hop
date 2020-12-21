@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sat Dec 19 08:11:39 2020 (serrano)                */
+/*    Last change :  Mon Dec 21 09:12:36 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -40,6 +40,9 @@ import java.security.*;
 /*---------------------------------------------------------------------*/
 public class HopHzLauncher extends HopLauncher {
 
+   // instance variables
+   HopDroid hzhopdroid = null;
+   
    // static initialization
    static {
       HopUtils.initWifiPolicy();
@@ -198,7 +201,10 @@ public class HopHzLauncher extends HopLauncher {
    @Override protected void onInstallHzReady() {
       Log.d( "HopHzLauncher", "===== onInstallHzReady" );
       
+      hzhopdroid = new HopDroid( null );
+      
       webview.loadUrl( "http://localhost:" + Hop.port + HopConfig.SERVICE );
+
       raiseHzActivity();
    }
    
