@@ -856,6 +856,21 @@
 		       (js-null)))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    match-positions->vector ...                                      */
+;*---------------------------------------------------------------------*/
+(define (match-positions->vector l)
+   (let* ((len (*fx (length l) 2))
+          (vec (make-vector len)))
+      (let loop ((i 0)
+                 (l l))
+         (if (null? l)
+             vec
+             (begin
+                (vector-set! vec i (caar l))
+                (vector-set! vec (+fx i 1) (cdar l))
+                (loop (+fx i 2) (cdr l)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-regexp-prototype-exec-global ...                              */
 ;*---------------------------------------------------------------------*/
 (define (js-regexp-prototype-exec-global this::JsRegExp string::obj %this::JsGlobalObject)
