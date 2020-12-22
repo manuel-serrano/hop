@@ -551,7 +551,7 @@ apk-build.client:
 #*    apk                                                              */
 #*---------------------------------------------------------------------*/
 .PHONY: apk install.apk click.apk uninstall.apk \
-  apk.bigloo apk.bigloo.post-install apk.hop apk.hop.android apk.lib
+  apk.bigloo apk.bigloo.post-install apk.hop apk.lib
 
 apk: apk.bigloo apk.bigloo.post-install
 	$(MAKE) apk-sans-bigloo
@@ -719,6 +719,7 @@ $(ANDROIDBUILDDIR)/$(HOPFULLNAME):
 	  (cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/hop $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) && \
           (cd $(ANDROIDBUILDDIR); git clone $(HOPSOURCE)) && \
           (cd $(ANDROIDBUILDDIR); cp $(HOPSOURCE)/share/hop-builtin-serializers.js $(ANDROIDBUILDDIR)/hop/share) && \
+          (cd $(ANDROIDBUILDDIR); cp $(HOPSOURCE)/etc/hoprc.hop $(ANDROIDBUILDDIR)/hop/etc) && \
           (mv $(ANDROIDBUILDDIR)/hop $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) || exit 1; \
         else \
 	  (cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) && \
