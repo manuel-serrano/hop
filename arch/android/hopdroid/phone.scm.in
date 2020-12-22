@@ -74,7 +74,7 @@
 ;*---------------------------------------------------------------------*/
 (define (android-init! p::androidphone)
    ;; android-mutex is already acquired
-   (with-access::androidphone p (%sock-plugin %sock-event %event-table %event-thread state)
+   (with-access::androidphone p (%sock-plugin %sock-event %event-table %event-thread app state)
       (unless %sock-plugin
 	 ;; hopdroid sockets
 	 (set! %sock-plugin
@@ -101,7 +101,7 @@
 				     (android-event-listener p)
 				     (begin
 					(socket-close %sock-plugin)
-					(socket-close %socket-event)
+					(socket-close %sock-event)
 					(set! state 'close))))))))))))))
 
 ;*---------------------------------------------------------------------*/
