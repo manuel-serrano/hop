@@ -323,8 +323,8 @@
 ;*    android-load-plugin ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (android-load-plugin p::androidphone name)
-   (hop-verb 2 "Loading android plugin \"" name "\"...\n")
-   (with-access::androidphone p (initid)
+   (with-access::androidphone p (initid app)
+      (hop-verb 2 "Loading android plugin \"" name "\" (" app ")...\n")
       (let ((n (android-send-command/result p initid name)))
 	 (if (and (fixnum? n) (>=fx n 0))
 	     n
