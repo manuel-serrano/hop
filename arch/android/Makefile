@@ -676,8 +676,6 @@ apk.bigloo.configure:
             --disable-doc --disable-unistring --disable-gmp \
             $(BIGLOOCONFIGUREOPT))
 
-#*             --lflags="-fPIC -L$(ANDROIDBUILDDIR)/bigloo-$(RELEASE)/lib/bigloo/$(RELEASE) -L$(ANDROIDBUILDDIR)/bigloo-$(RELEASE)/pcre/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)" \ */
-
 $(ANDROIDBUILDDIR)/bigloo-$(RELEASE): $(REPOSITORY)/bigloo-$(RELEASE).tar.gz
 	mkdir -p $(ANDROIDBUILDDIR)
 	(cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/bigloo-$(RELEASE))
