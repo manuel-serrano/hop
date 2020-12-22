@@ -673,16 +673,22 @@
 ;*    android-send ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (android-send p::androidphone plugin::int args)
+   (tprint "ANDROID-SEND.1 " plugin)
    (android-init! p)
+   (tprint "ANDROID-SEND.2 " plugin)
    (with-access::androidphone p (protocol %sock-plugin)
       (let ((op (socket-output %sock-plugin)))
+   (tprint "ANDROID-SEND.3 " plugin)
 	 ;; protocol version
 	 (write-byte protocol op)
+   (tprint "ANDROID-SEND.4 " plugin)
 	 ;; plugin name
 	 (send-int32 plugin op)
+   (tprint "ANDROID-SEND.5 " plugin)
 	 (for-each (lambda (o) (send-obj o op)) args)
 	 ;; end mark
 	 (send-char #a127 op)
+   (tprint "ANDROID-SEND.6 " plugin)
 	 (flush-output-port op))))
 
 ;*---------------------------------------------------------------------*/
@@ -690,7 +696,7 @@
 ;*---------------------------------------------------------------------*/
 (define (android-send-command p::androidphone plugin::int . args)
    (with-access::androidphone p (%mutex)
-      (synchronize *android-mutex*
+      (synchronize %mutex
 	 (android-send p plugin args))))
 
 ;*---------------------------------------------------------------------*/
@@ -698,7 +704,11 @@
 ;*---------------------------------------------------------------------*/
 (define (android-send-command/result p::androidphone plugin::int . args)
    (with-access::androidphone p (%mutex %sock-plugin)
-      (synchronize *android-mutex*
+   (tprint "ANDROID-SEND/RESULT.1 " plugin)
+      (synchronize %mutex
+   (tprint "ANDROID-SEND/RESULT.2 " plugin)
 	 (android-send p plugin args)
+   (tprint "ANDROID-SEND/RESULT.2 " plugin)
 	 (let ((ip (socket-input %sock-plugin)))
+   (tprint "ANDROID-SEND/RESULT.3 " plugin)
 	    (read ip)))))

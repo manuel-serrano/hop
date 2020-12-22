@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Dec 22 09:17:40 2020 (serrano)                */
+/*    Last change :  Tue Dec 22 14:26:23 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -199,7 +199,7 @@ public class HopDroid extends Thread {
 		     }
 		  }
 	       } finally {
-		  abortCmdServer();
+		  abortCmdServer( "eventsrv error" );
 	       }
 	    }
 	 } ).start();
@@ -220,7 +220,7 @@ public class HopDroid extends Thread {
 		     }
 		  }
 	       } finally {
-		  abortCmdServer();
+		  abortCmdServer( "pluginserv error" );
 	       }
 	    }
 	 } ).start();
@@ -430,7 +430,9 @@ public class HopDroid extends Thread {
 	    }
 
 	    final int id = read_int32( ip );
-	       
+
+	    Log.d( "HopDroid", "plugin id=" + id );
+	    
 	    try {
 	       HopPlugin p = (HopPlugin)plugins.get( id );
 
@@ -601,7 +603,8 @@ public class HopDroid extends Thread {
    }
 
    // abortCmdServer
-   private synchronized void abortCmdServer() {
+   private synchronized void abortCmdServer( String reason ) {
+      Log.d( "HopDroid", "abortCmdServer " + reason );
       if( cmdserv != null ) {
 	 synchronized( cmdserv ) {
 	    if( !cmdserv.isClosed() ) {
