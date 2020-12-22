@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Sun Dec 20 10:26:45 2020 (serrano)                */
+/*    Last change :  Tue Dec 22 15:29:16 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -86,7 +86,7 @@ public class HopPluginContact extends HopPlugin {
 	 + " = '1' AND ("
 	 + ContactsContract.Contacts.HAS_PHONE_NUMBER + " != 0 ))"
 	 : null;
-      ContentResolver cr = hopdroid.service.getContentResolver();
+      ContentResolver cr = hopdroid.activity.getContentResolver();
       Cursor cur = cr.query( uri,
 			     projection,
 			     selection,
@@ -467,7 +467,7 @@ public class HopPluginContact extends HopPlugin {
    void removeContact( final OutputStream op, final InputStream ip )
       throws IOException {
       String id = HopDroid.read_string( ip );
-      ContentResolver cr = hopdroid.service.getContentResolver();
+      ContentResolver cr = hopdroid.activity.getContentResolver();
       
       // remove from the sub-tables (MS 30oct2010: I'm not sure
       // this is useful. The Android documentation contains the following
@@ -502,7 +502,7 @@ public class HopPluginContact extends HopPlugin {
    // addContact
    void addContact( final OutputStream op, final InputStream ip )
       throws IOException {
-      ContentResolver cr = hopdroid.service.getContentResolver();
+      ContentResolver cr = hopdroid.activity.getContentResolver();
       ContentValues values = new ContentValues();
       String first = HopDroid.read_string( ip );
       String family = HopDroid.read_string( ip );

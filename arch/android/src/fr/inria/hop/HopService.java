@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Sun Dec  6 09:41:11 2020 (serrano)                */
+/*    Last change :  Tue Dec 22 15:26:16 2020 (serrano)                */
 /*    Copyright   :  2012-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -131,7 +131,7 @@ public class HopService extends Service {
       Log.d( "HopService", "onStartCommand " + this + "..." + " flags=" + flags + " startid=" + startid );
       
       // create hopdroid
-      lasthopdroid = hopdroid = new HopDroid( HopService.this );
+      lasthopdroid = hopdroid = new HopDroid( HopService.this, null );
 
       if( hopdroid.state == HopDroid.HOPDROID_STATE_INIT ) {
 	 // create hop 

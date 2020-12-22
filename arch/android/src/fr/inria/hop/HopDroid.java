@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Dec 22 14:26:23 2020 (serrano)                */
+/*    Last change :  Tue Dec 22 15:25:06 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -64,11 +64,12 @@ public class HopDroid extends Thread {
    final Hashtable eventtable = new Hashtable();
    
    // constructor
-   public HopDroid( HopService s ) {
+   public HopDroid( HopService s, Activity a ) {
       super();
 
       service = s;
       plugins = new Vector( 16 );
+      activity = a;
       
       try {
 	 state = HOPDROID_STATE_INIT;
@@ -87,7 +88,7 @@ public class HopDroid extends Thread {
 	 killPlugins();
 
 	 try {
-	    if( service.handler != null ) {
+	    if( service != null && service.handler != null ) {
 	       service.handler.sendMessage(
 		  android.os.Message.obtain(
 		     service.handler, HopLauncher.MSG_HOPDROID_FAIL, e ) );
@@ -171,9 +172,9 @@ public class HopDroid extends Thread {
       pluginserv = new HopLocalServerSocket( appPluginName );
       Log.d( "HopDroid", "pluginserv=" + pluginserv.toString() );
       eventserv = new HopLocalServerSocket( appEventName );
-      Log.d( "HopDroid", "pluginserv=" + eventserv.toString() );
+      Log.d( "HopDroid", "eventserv=" + eventserv.toString() );
       cmdserv = new HopLocalServerSocket( appCmdName  );
-      Log.d( "HopDroid", "pluginserv=" + cmdserv.toString() );
+      Log.d( "HopDroid", "cmdserv=" + cmdserv.toString() );
    }
 
    // run hopdroid
@@ -320,7 +321,7 @@ public class HopDroid extends Thread {
 	 killServers();
 	 killPlugins();
 	 
-	 if( service.handler != null ) {
+	 if( service != null && service.handler != null ) {
 	    service.handler.sendEmptyMessage( HopLauncher.MSG_HOPDROID_ENDED );
 	 }
       }
@@ -413,7 +414,7 @@ public class HopDroid extends Thread {
       final InputStream ip = pluginclient.getInputStream();
       final OutputStream op = pluginclient.getOutputStream();
 
-      Log.i( "HopDroid", "serverPlugin connected sock=" + pluginclient );
+      Log.i( "HopDroid", "serverPlugin (" + HopConfig.APP + ") connected sock=" + pluginclient );
 
       try {
 	 while( true ) {

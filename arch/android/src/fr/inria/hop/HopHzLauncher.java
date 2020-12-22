@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Mon Dec 21 14:45:00 2020 (serrano)                */
+/*    Last change :  Tue Dec 22 15:23:59 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -201,7 +201,8 @@ public class HopHzLauncher extends HopLauncher {
    @Override protected void onInstallHzReady() {
       Log.d( "HopHzLauncher", "===== onInstallHzReady" );
       
-      hzhopdroid = new HopDroid( null );
+      hzhopdroid = new HopDroid( null, activity );
+      hzhopdroid.start();
       
       webview.loadUrl( "http://localhost:" + Hop.port + HopConfig.SERVICE );
 
