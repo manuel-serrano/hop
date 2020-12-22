@@ -665,16 +665,18 @@ apk.bigloo.configure:
             --cc=/tmp/droidcc.sh \
             --cpicflags=-fPIC \
             --cflags="-fPIC -DBGL_GC_ROOTS" \
-            --lflags="-fPIC -L$(ANDROIDBUILDDIR)/bigloo-$(RELEASE)/lib/bigloo/$(RELEASE) -L$(ANDROIDBUILDDIR)/bigloo-$(RELEASE)/pcre/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)" \
+            --lflags="-fPIC" \
             --customlibuv=yes \
             --customlibuvversion=v1.20.3 \
             --libuvconfigureopt="--host=arm-linux-androideabi" \
+            --custompcre=yes \
             --stack-check=no \
             --prefix=$(ANDROIDHOPPREFIX) \
             --build-bindir=$(HOPBINDIR) \
-            --disable-doc --disable-unistring --disable-gmp --custompcre \
+            --disable-doc --disable-unistring --disable-gmp \
             $(BIGLOOCONFIGUREOPT))
-#            --disable-doc --disable-pcre --disable-unistring --disable-gmp \
+
+#*             --lflags="-fPIC -L$(ANDROIDBUILDDIR)/bigloo-$(RELEASE)/lib/bigloo/$(RELEASE) -L$(ANDROIDBUILDDIR)/bigloo-$(RELEASE)/pcre/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)" \ */
 
 $(ANDROIDBUILDDIR)/bigloo-$(RELEASE): $(REPOSITORY)/bigloo-$(RELEASE).tar.gz
 	mkdir -p $(ANDROIDBUILDDIR)
