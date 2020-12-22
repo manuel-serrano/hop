@@ -704,7 +704,7 @@
 ;*---------------------------------------------------------------------*/
 (define (android-send-command/result p::androidphone plugin::int . args)
    (with-access::androidphone p (%mutex %sock-plugin)
-   (tprint "ANDROID-SEND/RESULT.1 " plugin)
+   (tprint "ANDROID-SEND/RESULT.1 " plugin foo bar)
       (synchronize %mutex
    (tprint "ANDROID-SEND/RESULT.2 " plugin)
 	 (android-send p plugin args)
