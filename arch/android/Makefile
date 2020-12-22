@@ -41,6 +41,12 @@ ANDROIDNDK = $(shell echo "$$ANDROIDNDK")
 ANDROIDCC=$(ANDROIDNDK)/toolchains/llvm/prebuilt/linux-$(shell uname -m)/bin/clang
 
 #*---------------------------------------------------------------------*/
+#*    HOPSOURCE                                                        */
+#*---------------------------------------------------------------------*/
+HOPSOURCE = $(REPOSITORY)/$(HOPFULLNAME).tar.gz
+HOPSOURCE = $(BUILDDIR)
+
+#*---------------------------------------------------------------------*/
 #*    hopdroid configuration                                           */
 #*---------------------------------------------------------------------*/
 ANDROIDHOPPORT = 8080
@@ -703,9 +709,16 @@ apk.hop.configure:
             --bigloo-pcre=no --bigloo-unistring=no \
             $(HOPCONFIGUREOPT))
 
-$(ANDROIDBUILDDIR)/$(HOPFULLNAME): $(REPOSITORY)/$(HOPFULLNAME).tar.gz
-	(cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME))
-	(cd $(ANDROIDBUILDDIR); tar xf $<)
+$(ANDROIDBUILDDIR)/$(HOPFULLNAME):
+	if [ -d $(HOPSOURCE) ]; then \
+	  (cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/hop $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) && \
+          (cd $(ANDROIDBUILDDIR); git clone $(HOPSOURCE)) && \
+          (cd $(ANDROIDBUILDDIR); cp $(HOPSOURCE)/share/hop-builtin-serializers.js $(ANDROIDBUILDDIR)/hop/share) && \
+          (mv $(ANDROIDBUILDDIR)/hop $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) || exit 1; \
+        else \
+	  (cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) && \
+	  (cd $(ANDROIDBUILDDIR); tar xf $(HOPSOURCE)) || exit 1; \
+        fi
 
 apk-clean:
 	rm -rf $(ANDROIDBUILDDIR)
