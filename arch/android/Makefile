@@ -551,9 +551,9 @@ apk-build.client:
 #*    apk                                                              */
 #*---------------------------------------------------------------------*/
 .PHONY: apk install.apk click.apk uninstall.apk \
-  apk.bigloo apk.hop apk.hop.android apk.lib
+  apk.bigloo apk.bigloo.postinstall apk.hop apk.hop.android apk.lib
 
-apk: apk.bigloo
+apk: apk.bigloo apk.bigloo.postinstall
 	$(MAKE) apk-sans-bigloo
 
 apk-sans-bigloo: apk.common apk.res apk.jni apk.src apk.hop apk.custom
@@ -652,6 +652,10 @@ apk.bigloo: $(ANDROIDBUILDDIR)/bigloo-$(RELEASE) /tmp/droidcc.sh
 	$(MAKE) apk.bigloo.configure
 	$(MAKE) -C $(ANDROIDBUILDDIR)/bigloo-$(RELEASE)
 	$(MAKE) -C $(ANDROIDBUILDDIR)/bigloo-$(RELEASE) install DESTDIR=$(ANDROIDBUILDDIR)
+
+apk.bigloo.postinstall: apk.bigloo
+	cp $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre.so.1.2.11 \
+           $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre.so.1
 
 apk.bigloo.configure:
 	(cd $(ANDROIDBUILDDIR)/bigloo-$(RELEASE); \
