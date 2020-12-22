@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:44:16 2010                          */
-/*    Last change :  Tue Dec 22 09:26:50 2020 (serrano)                */
+/*    Last change :  Tue Dec 22 09:51:52 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The initial plugin that allows plugin installation               */
@@ -65,7 +65,6 @@ public class HopPluginInit extends HopPlugin {
       throws Exception {
       Class<?> clazz = null;
 
-      Log.d( "HopPlugin", "XXXXXXXX loadPlugin name=" + name );
       try {
 	 clazz = Class.forName( name );
       } catch( ClassNotFoundException e ) {
