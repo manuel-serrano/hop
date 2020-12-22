@@ -74,6 +74,7 @@
 (define (android-init! p::androidphone)
    ;; android-mutex is already acquired
    (with-access::androidphone p (%sock-plugin %sock-event %event-table %event-thread app)
+      (tprint "ANDROID-INIT app=" app)
       (unless %sock-plugin
 	 ;; hopdroid sockets
 	 (set! %sock-plugin
@@ -323,8 +324,9 @@
 ;*    android-load-plugin ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (android-load-plugin p::androidphone name)
-   (hop-verb 2 "Loading android plugin \"" name "\"...\n")
-   (with-access::androidphone p (initid)
+   (with-access::androidphone p (initid app)
+      (tprint "ANDROID-LOAD-PLUGIN name=" name " app=" app)
+      (hop-verb 2 "Loading android plugin \"" name "\" (" app ")...\n")
       (let ((n (android-send-command/result p initid name)))
 	 (if (and (fixnum? n) (>=fx n 0))
 	     n

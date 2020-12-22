@@ -41,6 +41,12 @@ ANDROIDNDK = $(shell echo "$$ANDROIDNDK")
 ANDROIDCC=$(ANDROIDNDK)/toolchains/llvm/prebuilt/linux-$(shell uname -m)/bin/clang
 
 #*---------------------------------------------------------------------*/
+#*    HOPSOURCE                                                        */
+#*---------------------------------------------------------------------*/
+HOPSOURCE = $(REPOSITORY)/$(HOPFULLNAME).tar.gz
+HOPSOURCE = $(BUILDDIR)
+
+#*---------------------------------------------------------------------*/
 #*    hopdroid configuration                                           */
 #*---------------------------------------------------------------------*/
 ANDROIDHOPPORT = 8080
@@ -545,9 +551,9 @@ apk-build.client:
 #*    apk                                                              */
 #*---------------------------------------------------------------------*/
 .PHONY: apk install.apk click.apk uninstall.apk \
-  apk.bigloo apk.hop apk.hop.android apk.lib
+  apk.bigloo apk.bigloo.post-install apk.hop apk.lib
 
-apk: apk.bigloo
+apk: apk.bigloo apk.bigloo.post-install
 	$(MAKE) apk-sans-bigloo
 
 apk-sans-bigloo: apk.common apk.res apk.jni apk.src apk.hop apk.custom
@@ -647,6 +653,11 @@ apk.bigloo: $(ANDROIDBUILDDIR)/bigloo-$(RELEASE) /tmp/droidcc.sh
 	$(MAKE) -C $(ANDROIDBUILDDIR)/bigloo-$(RELEASE)
 	$(MAKE) -C $(ANDROIDBUILDDIR)/bigloo-$(RELEASE) install DESTDIR=$(ANDROIDBUILDDIR)
 
+apk.bigloo.post-install: apk.bigloo
+	rm $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre.so.1
+	cp $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre.so.1.2.11 \
+           $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre.so.1
+
 apk.bigloo.configure:
 	(cd $(ANDROIDBUILDDIR)/bigloo-$(RELEASE); \
          ./configure --os-android \
@@ -654,16 +665,18 @@ apk.bigloo.configure:
             --cc=/tmp/droidcc.sh \
             --cpicflags=-fPIC \
             --cflags="-fPIC -DBGL_GC_ROOTS" \
-            --lflags="-fPIC -L$(ANDROIDBUILDDIR)/bigloo-$(RELEASE)/lib/bigloo/$(RELEASE) -L$(ANDROIDBUILDDIR)/bigloo-$(RELEASE)/pcre/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)" \
+            --lflags="-fPIC" \
             --customlibuv=yes \
             --customlibuvversion=v1.20.3 \
             --libuvconfigureopt="--host=arm-linux-androideabi" \
+            --custompcre=yes \
             --stack-check=no \
             --prefix=$(ANDROIDHOPPREFIX) \
             --build-bindir=$(HOPBINDIR) \
-            --disable-doc --disable-unistring --disable-gmp --custompcre \
+            --disable-doc --disable-unistring --disable-gmp \
             $(BIGLOOCONFIGUREOPT))
-#            --disable-doc --disable-pcre --disable-unistring --disable-gmp \
+
+#*             --lflags="-fPIC -L$(ANDROIDBUILDDIR)/bigloo-$(RELEASE)/lib/bigloo/$(RELEASE) -L$(ANDROIDBUILDDIR)/bigloo-$(RELEASE)/pcre/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)" \ */
 
 $(ANDROIDBUILDDIR)/bigloo-$(RELEASE): $(REPOSITORY)/bigloo-$(RELEASE).tar.gz
 	mkdir -p $(ANDROIDBUILDDIR)
@@ -703,9 +716,17 @@ apk.hop.configure:
             --bigloo-pcre=no --bigloo-unistring=no \
             $(HOPCONFIGUREOPT))
 
-$(ANDROIDBUILDDIR)/$(HOPFULLNAME): $(REPOSITORY)/$(HOPFULLNAME).tar.gz
-	(cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME))
-	(cd $(ANDROIDBUILDDIR); tar xf $<)
+$(ANDROIDBUILDDIR)/$(HOPFULLNAME):
+	if [ -d $(HOPSOURCE) ]; then \
+	  (cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/hop $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) && \
+          (cd $(ANDROIDBUILDDIR); git clone $(HOPSOURCE)) && \
+          (cd $(ANDROIDBUILDDIR); cp $(HOPSOURCE)/share/hop-builtin-serializers.js $(ANDROIDBUILDDIR)/hop/share) && \
+          (cd $(ANDROIDBUILDDIR); cp $(HOPSOURCE)/etc/hoprc.hop $(ANDROIDBUILDDIR)/hop/etc) && \
+          (mv $(ANDROIDBUILDDIR)/hop $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) || exit 1; \
+        else \
+	  (cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) && \
+	  (cd $(ANDROIDBUILDDIR); tar xf $(HOPSOURCE)) || exit 1; \
+        fi
 
 apk-clean:
 	rm -rf $(ANDROIDBUILDDIR)

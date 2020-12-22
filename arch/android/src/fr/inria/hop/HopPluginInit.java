@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct 19 09:44:16 2010                          */
-/*    Last change :  Mon Dec 21 08:28:59 2020 (serrano)                */
+/*    Last change :  Tue Dec 22 09:51:52 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The initial plugin that allows plugin installation               */
@@ -34,7 +34,7 @@ public class HopPluginInit extends HopPlugin {
       super( h, n );
 
       try {
-	 classes[ 0 ] = Class.forName( "fr.inria.hop.HopDroid" );
+	 classes[ 0 ] = Class.forName( "fr.inria." + HopConfig.APP + ".HopDroid" );
 	 classes[ 1 ] = Class.forName( "java.lang.String" );
       } catch( ClassNotFoundException e ) {
 	 Log.e( "HopPluginInit", "server error "
@@ -47,7 +47,7 @@ public class HopPluginInit extends HopPlugin {
    public Class<?> loadClassFromJar( String name ) throws Exception {
       int i = name.lastIndexOf( '/' );
       int j = name.lastIndexOf( '.' );
-      String cname = "fr.inria.hop."
+      String cname = "fr.inria." + HopConfig.APP + "."
 	 + name.substring( (i < 0 ? 0 : i + 1), (j <= i ? name.length() : j) );
       String tmp =
 	 Environment.getExternalStorageDirectory().getAbsolutePath();
@@ -64,10 +64,11 @@ public class HopPluginInit extends HopPlugin {
    public HopPlugin loadPlugin( String name )
       throws Exception {
       Class<?> clazz = null;
-      
+
       try {
 	 clazz = Class.forName( name );
       } catch( ClassNotFoundException e ) {
+	 e.printStackTrace();
 	 clazz = loadClassFromJar( name );
       }
       
