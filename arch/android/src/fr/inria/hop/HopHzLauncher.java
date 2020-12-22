@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Tue Dec 22 15:23:59 2020 (serrano)                */
+/*    Last change :  Tue Dec 22 16:44:28 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -215,4 +215,13 @@ public class HopHzLauncher extends HopLauncher {
       splashScreen( "hoperror.html" );
       raiseHzActivity();
    }
+
+   @Override public void onStop() {
+      super.onStop();
+
+      Log.d( "HopHzLauncher", "onStop" );
+      
+      hzhopdroid.pushEvent( "phone", "stop" );
+   }
 }
+

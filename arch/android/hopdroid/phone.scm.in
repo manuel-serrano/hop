@@ -21,6 +21,7 @@
    
    (export (class androidphone::phone
 	      (app::bstring read-only (default "@HOPAPP@"))
+	      (state::symbol (default 'init))
 	      (name::bstring read-only (get get-android-device-name))
 	      (sdk::bstring read-only (get get-android-sdk))
 	      (sdk-version::long read-only (get get-android-sdk-version))
@@ -73,7 +74,7 @@
 ;*---------------------------------------------------------------------*/
 (define (android-init! p::androidphone)
    ;; android-mutex is already acquired
-   (with-access::androidphone p (%sock-plugin %sock-event %event-table %event-thread app)
+   (with-access::androidphone p (%sock-plugin %sock-event %event-table %event-thread state)
       (unless %sock-plugin
 	 ;; hopdroid sockets
 	 (set! %sock-plugin
@@ -84,6 +85,8 @@
 	       0 :domain 'unix))
 	 ;; hopdroid event table
 	 (set! %event-table (make-hashtable 8))
+	 ;; switch to running state
+	 (set! state 'running)
 	 ;; start the event listener thread
 	 (cond-expand
 	    (enable-threads
@@ -93,9 +96,13 @@
 		      (body (lambda ()
 			       (with-handler
 				  (lambda (e)
-				     (tprint "EVENT-THREAD-TERMINATED......")
 				     (exception-notify e))
-				  (android-event-listener p))))))))))))
+				  (unwind-protect
+				     (android-event-listener p)
+				     (begin
+					(socket-close %sock-plugin)
+					(socket-close %socket-event)
+					(set! state 'close))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-init ::androidphone ...                                    */
@@ -295,6 +302,9 @@
 	     (cdr c)
 	     (add-phone-event! phone name args))))
 
+   (define (client-stop-message? name args)
+      (and (string=? name "phone") (equal? args "client-stop")))
+   
    (with-handler
       (lambda (e)
 	 (exception-notify e)
@@ -306,7 +316,8 @@
 		  (unless (eof-object? name)
 		     (let ((args (read ip)))
 			(set! phone-events '())
-			(unless (eof-object? args)
+			(unless (or (eof-object? args)
+				    (client-stop-message? name args))
 			   (let ((procs (synchronize event-mutex
 					   (hashtable-get %event-table name)))
 				 (phones '()))
@@ -317,8 +328,8 @@
 				       (proc evt)
 				       (with-access::androidevent evt (stopped)
 					  (unless stopped
-					     (liip (cdr procs))))))))))))
-	       (loop))))))
+					     (liip (cdr procs))))))))
+			   (loop))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    android-load-plugin ...                                          */

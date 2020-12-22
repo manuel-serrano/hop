@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Dec 22 15:25:06 2020 (serrano)                */
+/*    Last change :  Tue Dec 22 16:42:30 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -482,6 +482,11 @@ public class HopDroid extends Thread {
 
       Log.i( "HopDroid", "serverEvent connected eventserv=" +
 	     eventserv + " client=" + eventclient );
+
+      // initialize the eventable
+      synchronized( eventtable ) {
+	 eventtable.put( "phone", new Integer( 1 ) );
+      }
       
       try {
 	 while( true ) {
@@ -497,7 +502,7 @@ public class HopDroid extends Thread {
 	    
 	    String event = read_string( ip );
 	    int a = ip.read();
-	    
+
 	    synchronized( eventtable ) {
 	       Integer i = (Integer)eventtable.get( event );
 	    
@@ -514,7 +519,7 @@ public class HopDroid extends Thread {
 		  if( ni == 0 ) {
 		     eventtable.remove( event );
 		  } else {
-		     eventtable.put( eventtable, new Integer( ni ) );
+		     eventtable.put( event, new Integer( ni ) );
 		  }
 	       }
 	    }
