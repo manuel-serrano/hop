@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Wed Dec 23 08:44:48 2020 (serrano)                */
+/*    Last change :  Wed Dec 23 13:36:27 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -53,25 +53,26 @@ public class HopPluginContact extends HopPlugin {
       
       switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'l':
-	    writeContactList( op );
+	    writeContactList( ip, op );
 	    break;
 	    
 	 case (byte)'r':
-	    removeContact( op, ip );
+	    removeContact( ip, op );
 	    break;
 	    
 	 case (byte)'a':
-	    addContact( op, ip );
+	    addContact( ip, op );
 	    break;
 	    
 	 case (byte)'e':
-	    writeContact( op, ip, true );
+	    writeContactEntry( ip, op );
 	    break;
        }
    }
 
    // writeContactList
-   void writeContactList( final OutputStream op, boolean filter ) throws IOException {
+   void writeContactList( final InputStream ip,
+			  final OutputStream op ) throws IOException {
       String proj = HopDroid.read_string( ip );
       String sel = HopDroid.read_string( ip );
       boolean full = sel.equals( "full" );
@@ -114,11 +115,31 @@ public class HopPluginContact extends HopPlugin {
       }
    }
 
+   // writeContactEntry
+   void writeContactEntry( final InputStream ip,
+			   final OutputStream op ) throws IOException {
+      final String[] projection = new String[] {
+	 ContactsContract.Contacts.LOOKUP_KEY
+      };
+      Uri uri = ContactsContract.Contacts.CONTENT_URI;
+      ContentResolver cr = hopdroid.activity.getContentResolver();
+      String id = HopDroid.read_string( ip );
+      String selection = "("
+	 + ContactsContract.Contacts.LOOKUP_KEY
+	 + " = '" + id + "')";
+      
+      Cursor cur = cr.query( uri, projection, selection, null, null );
+      
+      if( cur.moveToFirst() ) {
+	 writeContact( cr, op, cur, true );
+      }
+   }
+   
    // writeContact
    void writeContact( ContentResolver cr, 
 		      final OutputStream op,
 		      final Cursor cur,
-		      fional boolean full )
+		      final boolean full )
       throws IOException {
       int id = cur.getInt( 0 );
       String key = cur.getString( 1 );
@@ -483,7 +504,7 @@ public class HopPluginContact extends HopPlugin {
    }
 
    // removeContact
-   void removeContact( final OutputStream op, final InputStream ip )
+   void removeContact( final InputStream ip, final OutputStream op )
       throws IOException {
       String id = HopDroid.read_string( ip );
       ContentResolver cr = hopdroid.activity.getContentResolver();
@@ -519,7 +540,7 @@ public class HopPluginContact extends HopPlugin {
    }
 
    // addContact
-   void addContact( final OutputStream op, final InputStream ip )
+   void addContact( final InputStream ip, final OutputStream op )
       throws IOException {
       ContentResolver cr = hopdroid.activity.getContentResolver();
       ContentValues values = new ContentValues();
