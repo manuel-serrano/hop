@@ -511,11 +511,15 @@
 	     (cond
 		((string? projection) projection)
 		((not projection) "")
-		(else (error "phone-contact-list" "wrong projection" projection)))
+		(else (error "phone-contact-list"
+			 (format "wrong projection (~a)" (typeof projection))
+			 projection)))
 	     (cond
 		((string? filter) filter)
 		((not filter) "")
-		(else (error "phone-contact-list" "wrong filter" filter)))))
+		(else (error "phone-contact-list"
+			 (format "wrong filter (~a)" (typeof filter))
+			 filter)))))
        '()))
 
 ;*---------------------------------------------------------------------*/
