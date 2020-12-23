@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Wed Dec 23 16:01:02 2020 (serrano)                */
+/*    Last change :  Wed Dec 23 18:14:39 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -190,10 +190,16 @@ public class HopPluginContact extends HopPlugin {
 	 op.write( " ".getBytes() );
 	 writeContactEmails( cr, op, id );
 
+	 // photo
+	 op.write( " ".getBytes() );
+	 writeContactPhoto( cr, op, id );
+	 
+	 // url
+	 op.write( " ".getBytes() );
+	 writeContactUrl( cr, op, id );
+	 
 	 // notes
 	 writeContactNotes( cr, op, id );
-
-	 op.write( " ()".getBytes() );
       }
       op.write( ")\n".getBytes() );
    }
@@ -289,7 +295,7 @@ public class HopPluginContact extends HopPlugin {
 	 op.write( cur.getString( 0 ).getBytes() );
 	 op.write( "\"".getBytes() );
       } else {
-	 op.write( "()".getBytes() );
+	 op.write( "#f".getBytes() );
       }
       cur.close();
    }
@@ -367,11 +373,28 @@ public class HopPluginContact extends HopPlugin {
       Log.d( "HopPluginContact", ">>> photo.1 cur=" + id + (cur == null ? " null" : " pas null" ) );
       
       if( cur.moveToFirst() && cur.getString( 0 ) != null ) {
-	 op.write( "(photo \"".getBytes() );
+	 op.write( "\"".getBytes() );
 	 op.write( cur.getString( 0 ).getBytes() );
-	 op.write( "\")".getBytes() );
+	 op.write( "\"".getBytes() );
+      } else {
+	 op.write( "#f".getBytes() );
       }
       cur.close();
+   }
+      
+   // writeContactUrl
+   void writeContactUrl( ContentResolver cr, final OutputStream op, int id ) throws IOException {
+      Cursor cur = getCursor( cr, id,
+	 new String[] { Website.URL },
+	 Website.CONTENT_ITEM_TYPE );
+
+      if( cur.moveToFirst() ) {
+	 op.write( "\"".getBytes() );
+	 op.write( cur.getString( 0 ).getBytes() );
+	 op.write( "\"".getBytes() );
+      } else {
+	 op.write( "#f".getBytes() );
+      }
    }
       
 /*    // writeContactThumbnail                                         */
@@ -438,13 +461,6 @@ public class HopPluginContact extends HopPlugin {
       op.write( Integer.toString( id ).getBytes() );
       op.write( "\")".getBytes() );
       
-      // website
-      if( cur.moveToFirst() ) {
-	 op.write( " (url . \"".getBytes() );
-	 op.write( cur.getString( 0 ).getBytes() );
-	 op.write( "\")".getBytes() );
-      }
-
       // note
       cur = getCursor( cr, id,
 	 new String[] { Note.NOTE },
@@ -457,9 +473,6 @@ public class HopPluginContact extends HopPlugin {
 	 op.write( "\")".getBytes() );
       }
 
-      // photo
-      writeContactPhoto( cr, op,id );
-      
       op.write( ")".getBytes() );
       cur.close();
    }
