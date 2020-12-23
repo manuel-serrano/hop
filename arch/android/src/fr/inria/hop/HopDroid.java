@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Dec 22 09:17:40 2020 (serrano)                */
+/*    Last change :  Tue Dec 22 16:42:30 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -64,11 +64,12 @@ public class HopDroid extends Thread {
    final Hashtable eventtable = new Hashtable();
    
    // constructor
-   public HopDroid( HopService s ) {
+   public HopDroid( HopService s, Activity a ) {
       super();
 
       service = s;
       plugins = new Vector( 16 );
+      activity = a;
       
       try {
 	 state = HOPDROID_STATE_INIT;
@@ -87,7 +88,7 @@ public class HopDroid extends Thread {
 	 killPlugins();
 
 	 try {
-	    if( service.handler != null ) {
+	    if( service != null && service.handler != null ) {
 	       service.handler.sendMessage(
 		  android.os.Message.obtain(
 		     service.handler, HopLauncher.MSG_HOPDROID_FAIL, e ) );
@@ -171,9 +172,9 @@ public class HopDroid extends Thread {
       pluginserv = new HopLocalServerSocket( appPluginName );
       Log.d( "HopDroid", "pluginserv=" + pluginserv.toString() );
       eventserv = new HopLocalServerSocket( appEventName );
-      Log.d( "HopDroid", "pluginserv=" + eventserv.toString() );
+      Log.d( "HopDroid", "eventserv=" + eventserv.toString() );
       cmdserv = new HopLocalServerSocket( appCmdName  );
-      Log.d( "HopDroid", "pluginserv=" + cmdserv.toString() );
+      Log.d( "HopDroid", "cmdserv=" + cmdserv.toString() );
    }
 
    // run hopdroid
@@ -199,7 +200,7 @@ public class HopDroid extends Thread {
 		     }
 		  }
 	       } finally {
-		  abortCmdServer();
+		  abortCmdServer( "eventsrv error" );
 	       }
 	    }
 	 } ).start();
@@ -220,7 +221,7 @@ public class HopDroid extends Thread {
 		     }
 		  }
 	       } finally {
-		  abortCmdServer();
+		  abortCmdServer( "pluginserv error" );
 	       }
 	    }
 	 } ).start();
@@ -320,7 +321,7 @@ public class HopDroid extends Thread {
 	 killServers();
 	 killPlugins();
 	 
-	 if( service.handler != null ) {
+	 if( service != null && service.handler != null ) {
 	    service.handler.sendEmptyMessage( HopLauncher.MSG_HOPDROID_ENDED );
 	 }
       }
@@ -413,7 +414,7 @@ public class HopDroid extends Thread {
       final InputStream ip = pluginclient.getInputStream();
       final OutputStream op = pluginclient.getOutputStream();
 
-      Log.i( "HopDroid", "serverPlugin connected sock=" + pluginclient );
+      Log.i( "HopDroid", "serverPlugin (" + HopConfig.APP + ") connected sock=" + pluginclient );
 
       try {
 	 while( true ) {
@@ -430,7 +431,9 @@ public class HopDroid extends Thread {
 	    }
 
 	    final int id = read_int32( ip );
-	       
+
+	    Log.d( "HopDroid", "plugin id=" + id );
+	    
 	    try {
 	       HopPlugin p = (HopPlugin)plugins.get( id );
 
@@ -479,6 +482,11 @@ public class HopDroid extends Thread {
 
       Log.i( "HopDroid", "serverEvent connected eventserv=" +
 	     eventserv + " client=" + eventclient );
+
+      // initialize the eventable
+      synchronized( eventtable ) {
+	 eventtable.put( "phone", new Integer( 1 ) );
+      }
       
       try {
 	 while( true ) {
@@ -494,7 +502,7 @@ public class HopDroid extends Thread {
 	    
 	    String event = read_string( ip );
 	    int a = ip.read();
-	    
+
 	    synchronized( eventtable ) {
 	       Integer i = (Integer)eventtable.get( event );
 	    
@@ -511,7 +519,7 @@ public class HopDroid extends Thread {
 		  if( ni == 0 ) {
 		     eventtable.remove( event );
 		  } else {
-		     eventtable.put( eventtable, new Integer( ni ) );
+		     eventtable.put( event, new Integer( ni ) );
 		  }
 	       }
 	    }
@@ -601,7 +609,8 @@ public class HopDroid extends Thread {
    }
 
    // abortCmdServer
-   private synchronized void abortCmdServer() {
+   private synchronized void abortCmdServer( String reason ) {
+      Log.d( "HopDroid", "abortCmdServer " + reason );
       if( cmdserv != null ) {
 	 synchronized( cmdserv ) {
 	    if( !cmdserv.isClosed() ) {

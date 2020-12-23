@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Sun Dec 20 10:26:45 2020 (serrano)                */
+/*    Last change :  Wed Dec 23 13:36:27 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -53,40 +53,51 @@ public class HopPluginContact extends HopPlugin {
       
       switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'l':
-	    writeContactList( op, true );
-	    break;
-	    
-	 case (byte)'L':
-	    writeContactList( op, false );
+	    writeContactList( ip, op );
 	    break;
 	    
 	 case (byte)'r':
-	    removeContact( op, ip );
+	    removeContact( ip, op );
 	    break;
 	    
 	 case (byte)'a':
-	    addContact( op, ip );
+	    addContact( ip, op );
+	    break;
+	    
+	 case (byte)'e':
+	    writeContactEntry( ip, op );
 	    break;
        }
    }
 
    // writeContactList
-   void writeContactList( final OutputStream op, boolean filter ) throws IOException {
+   void writeContactList( final InputStream ip,
+			  final OutputStream op ) throws IOException {
+      String proj = HopDroid.read_string( ip );
+      String sel = HopDroid.read_string( ip );
+      boolean full = sel.equals( "full" );
+      
       // Run query
       final String[] projection = new String[] {
 	 ContactsContract.Contacts._ID,
+	 ContactsContract.Contacts.LOOKUP_KEY,
 	 ContactsContract.Contacts.DISPLAY_NAME,
 	 ContactsContract.Contacts.HAS_PHONE_NUMBER
       };
       Uri uri = ContactsContract.Contacts.CONTENT_URI;
       String sort = ContactsContract.Contacts.DISPLAY_NAME + " ASC ";
-      String selection = filter ?
-	 "("
-	 + ContactsContract.Contacts.IN_VISIBLE_GROUP
-	 + " = '1' AND ("
-	 + ContactsContract.Contacts.HAS_PHONE_NUMBER + " != 0 ))"
-	 : null;
-      ContentResolver cr = hopdroid.service.getContentResolver();
+      String selection = null;
+      
+      if( selection.equals( "phone" ) ) {
+	 selection = "("
+	    + ContactsContract.Contacts.IN_VISIBLE_GROUP
+	    + " = '1' AND ("
+	    + ContactsContract.Contacts.HAS_PHONE_NUMBER + " != 0 ))";
+      } else {
+	 selection = null;
+      }
+      
+      ContentResolver cr = hopdroid.activity.getContentResolver();
       Cursor cur = cr.query( uri,
 			     projection,
 			     selection,
@@ -96,7 +107,7 @@ public class HopPluginContact extends HopPlugin {
       if( cur.moveToFirst() ) {
 	 op.write( "(".getBytes() );
 	 do {
-	    writeContact( cr, op, cur );
+	    writeContact( cr, op, cur, full );
 	 } while( cur.moveToNext() );
 	 op.write( ")".getBytes() );
       } else {
@@ -104,48 +115,78 @@ public class HopPluginContact extends HopPlugin {
       }
    }
 
+   // writeContactEntry
+   void writeContactEntry( final InputStream ip,
+			   final OutputStream op ) throws IOException {
+      final String[] projection = new String[] {
+	 ContactsContract.Contacts.LOOKUP_KEY
+      };
+      Uri uri = ContactsContract.Contacts.CONTENT_URI;
+      ContentResolver cr = hopdroid.activity.getContentResolver();
+      String id = HopDroid.read_string( ip );
+      String selection = "("
+	 + ContactsContract.Contacts.LOOKUP_KEY
+	 + " = '" + id + "')";
+      
+      Cursor cur = cr.query( uri, projection, selection, null, null );
+      
+      if( cur.moveToFirst() ) {
+	 writeContact( cr, op, cur, true );
+      }
+   }
+   
    // writeContact
    void writeContact( ContentResolver cr, 
 		      final OutputStream op,
-		      final Cursor cur )
+		      final Cursor cur,
+		      final boolean full )
       throws IOException {
       int id = cur.getInt( 0 );
-      String name = cur.getString( 1 );
+      String key = cur.getString( 1 );
+      String name = cur.getString( 2 );
 
       op.write( "[".getBytes() );
 
+      // id
+      op.write( key.getBytes() );
+
       // name
+      op.write( " ".getBytes() );
       writeContactName( cr, op, id, name );
-      op.write( " ".getBytes() );
 
-      // nicknames
-      writeContactNicknames( cr, op, id );
-      op.write( " ".getBytes() );
+      // thumbnail
+      op.write( " #unspecified".getBytes() );
       
-      // organization
-      writeContactOrganization( cr, op, id );
-      op.write( " ".getBytes() );
-
-      // phones
-      writeContactPhones( cr, op, id );
-      op.write( " " .getBytes() );
-
-      // addresses
-      writeContactAddresses( cr, op, id );
-      op.write( " " .getBytes() );
-
-      // emails
-      writeContactEmails( cr, op, id );
-      op.write( " ".getBytes() );
-
 /*       // thumbnail                                                  */
 /*       writeContactThumbnail( cr, op, id );                          */
 /*       op.write( " ".getBytes() );                                   */
 /*                                                                     */
-      // notes
-      writeContactNotes( cr, op, id );
+      if( full ) {
+	 // nicknames
+	 op.write( " ".getBytes() );
+	 writeContactNicknames( cr, op, id );
+	 
+	 // organization
+	 op.write( " ".getBytes() );
+	 writeContactOrganization( cr, op, id );
 
-      op.write( " ()".getBytes() );
+	 // phones
+	 op.write( " " .getBytes() );
+	 writeContactPhones( cr, op, id );
+
+	 // addresses
+	 op.write( " " .getBytes() );
+	 writeContactAddresses( cr, op, id );
+
+	 // emails
+	 op.write( " ".getBytes() );
+	 writeContactEmails( cr, op, id );
+
+	 // notes
+	 writeContactNotes( cr, op, id );
+
+	 op.write( " ()".getBytes() );
+      }
       op.write( "]\n".getBytes() );
    }
 
@@ -323,7 +364,6 @@ public class HopPluginContact extends HopPlugin {
 	 op.write( "\")".getBytes() );
       }
       cur.close();
-      Log.d( "HopPluginContact", "<<< photo" );
    }
       
 /*    // writeContactThumbnail                                         */
@@ -464,10 +504,10 @@ public class HopPluginContact extends HopPlugin {
    }
 
    // removeContact
-   void removeContact( final OutputStream op, final InputStream ip )
+   void removeContact( final InputStream ip, final OutputStream op )
       throws IOException {
       String id = HopDroid.read_string( ip );
-      ContentResolver cr = hopdroid.service.getContentResolver();
+      ContentResolver cr = hopdroid.activity.getContentResolver();
       
       // remove from the sub-tables (MS 30oct2010: I'm not sure
       // this is useful. The Android documentation contains the following
@@ -500,9 +540,9 @@ public class HopPluginContact extends HopPlugin {
    }
 
    // addContact
-   void addContact( final OutputStream op, final InputStream ip )
+   void addContact( final InputStream ip, final OutputStream op )
       throws IOException {
-      ContentResolver cr = hopdroid.service.getContentResolver();
+      ContentResolver cr = hopdroid.activity.getContentResolver();
       ContentValues values = new ContentValues();
       String first = HopDroid.read_string( ip );
       String family = HopDroid.read_string( ip );
