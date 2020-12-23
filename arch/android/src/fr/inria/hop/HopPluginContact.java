@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Wed Dec 23 13:36:27 2020 (serrano)                */
+/*    Last change :  Wed Dec 23 16:01:02 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -75,7 +75,7 @@ public class HopPluginContact extends HopPlugin {
 			  final OutputStream op ) throws IOException {
       String proj = HopDroid.read_string( ip );
       String sel = HopDroid.read_string( ip );
-      boolean full = sel.equals( "full" );
+      boolean full = proj.equals( "full" );
       
       // Run query
       final String[] projection = new String[] {
@@ -88,13 +88,13 @@ public class HopPluginContact extends HopPlugin {
       String sort = ContactsContract.Contacts.DISPLAY_NAME + " ASC ";
       String selection = null;
       
-      if( selection.equals( "phone" ) ) {
+      if( sel.equals( "phone" ) ) {
 	 selection = "("
 	    + ContactsContract.Contacts.IN_VISIBLE_GROUP
-	    + " = '1' AND ("
-	    + ContactsContract.Contacts.HAS_PHONE_NUMBER + " != 0 ))";
-      } else {
-	 selection = null;
+	    + " = '1'"
+	    + " AND (" + ContactsContract.Contacts.HAS_PHONE_NUMBER + " != 0 )"
+	    + " AND (" + ContactsContract.Contacts.DISPLAY_NAME + " != '' )"
+	    + ")";
       }
       
       ContentResolver cr = hopdroid.activity.getContentResolver();
@@ -119,19 +119,25 @@ public class HopPluginContact extends HopPlugin {
    void writeContactEntry( final InputStream ip,
 			   final OutputStream op ) throws IOException {
       final String[] projection = new String[] {
-	 ContactsContract.Contacts.LOOKUP_KEY
+	 ContactsContract.Contacts._ID,
+	 ContactsContract.Contacts.LOOKUP_KEY,
+	 ContactsContract.Contacts.DISPLAY_NAME,
+	 ContactsContract.Contacts.HAS_PHONE_NUMBER
       };
       Uri uri = ContactsContract.Contacts.CONTENT_URI;
       ContentResolver cr = hopdroid.activity.getContentResolver();
       String id = HopDroid.read_string( ip );
       String selection = "("
-	 + ContactsContract.Contacts.LOOKUP_KEY
-	 + " = '" + id + "')";
+	 + ContactsContract.Contacts.LOOKUP_KEY + " = '" + id + "')";
       
       Cursor cur = cr.query( uri, projection, selection, null, null );
+
+      Log.d( "HopPluginContact", "writeContactEntry id=" + id );
       
       if( cur.moveToFirst() ) {
 	 writeContact( cr, op, cur, true );
+      } else {
+	 op.write( "#f".getBytes() );
       }
    }
    
@@ -145,11 +151,13 @@ public class HopPluginContact extends HopPlugin {
       String key = cur.getString( 1 );
       String name = cur.getString( 2 );
 
-      op.write( "[".getBytes() );
+      op.write( "#(".getBytes() );
 
       // id
+      op.write( "\"".getBytes() );
       op.write( key.getBytes() );
-
+      op.write( "\"".getBytes() );
+      
       // name
       op.write( " ".getBytes() );
       writeContactName( cr, op, id, name );
@@ -187,7 +195,7 @@ public class HopPluginContact extends HopPlugin {
 
 	 op.write( " ()".getBytes() );
       }
-      op.write( "]\n".getBytes() );
+      op.write( ")\n".getBytes() );
    }
 
    // writeContactName
@@ -200,9 +208,9 @@ public class HopPluginContact extends HopPlugin {
 	 StructuredName.CONTENT_ITEM_TYPE );
 
       if( cur.moveToFirst() ) {
-	 writeOptionalString( op, cur, 0 );
+	 writeString( op, cur, 0 );
 	 op.write( " ".getBytes() );
-	 writeOptionalString( op, cur, 1 );
+	 writeString( op, cur, 1 );
       } else {
 	 op.write( "\"".getBytes() );
 	 op.write( name.getBytes() );
@@ -490,12 +498,25 @@ public class HopPluginContact extends HopPlugin {
       }
    }
    
+   // writeString
+   static void writeString( final OutputStream op, Cursor cur, int i )
+      throws IOException {
+      String s = cur.getString( i );
+      if( s == null ) {
+	 op.write( "\"\"".getBytes() );
+      } else {
+	 op.write( "\"".getBytes() );
+	 op.write( s.getBytes() );
+	 op.write( "\"".getBytes() );
+      }
+   }
+
    // writeOptionalString
    static void writeOptionalString( final OutputStream op, Cursor cur, int i )
       throws IOException {
       String s = cur.getString( i );
       if( s == null ) {
-	 return ;
+	 return;
       } else {
 	 op.write( "\"".getBytes() );
 	 op.write( s.getBytes() );

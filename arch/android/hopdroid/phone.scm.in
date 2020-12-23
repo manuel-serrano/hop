@@ -502,7 +502,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    phone-contact-list ::androidphone ...                            */
 ;*---------------------------------------------------------------------*/
-(define-method (phone-contact-list p::androidphone #!optional projection filter)
+(define-method (phone-contact-list p::androidphone #!optional projection selection)
    (unless contact-plugin
       (set! contact-plugin (android-load-plugin p "contact")))
    (if contact-plugin
@@ -515,11 +515,11 @@
 			 (format "wrong projection (~a)" (typeof projection))
 			 projection)))
 	     (cond
-		((string? filter) filter)
-		((not filter) "")
+		((string? selection) selection)
+		((not selection) "")
 		(else (error "phone-contact-list"
-			 (format "wrong filter (~a)" (typeof filter))
-			 filter)))))
+			 (format "wrong selection (~a)" (typeof selection))
+			 selection)))))
        '()))
 
 ;*---------------------------------------------------------------------*/
