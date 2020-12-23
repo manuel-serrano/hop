@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Tue Dec 22 15:29:16 2020 (serrano)                */
+/*    Last change :  Wed Dec 23 08:44:48 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -53,11 +53,7 @@ public class HopPluginContact extends HopPlugin {
       
       switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'l':
-	    writeContactList( op, true );
-	    break;
-	    
-	 case (byte)'L':
-	    writeContactList( op, false );
+	    writeContactList( op );
 	    break;
 	    
 	 case (byte)'r':
@@ -67,25 +63,39 @@ public class HopPluginContact extends HopPlugin {
 	 case (byte)'a':
 	    addContact( op, ip );
 	    break;
+	    
+	 case (byte)'e':
+	    writeContact( op, ip, true );
+	    break;
        }
    }
 
    // writeContactList
    void writeContactList( final OutputStream op, boolean filter ) throws IOException {
+      String proj = HopDroid.read_string( ip );
+      String sel = HopDroid.read_string( ip );
+      boolean full = sel.equals( "full" );
+      
       // Run query
       final String[] projection = new String[] {
 	 ContactsContract.Contacts._ID,
+	 ContactsContract.Contacts.LOOKUP_KEY,
 	 ContactsContract.Contacts.DISPLAY_NAME,
 	 ContactsContract.Contacts.HAS_PHONE_NUMBER
       };
       Uri uri = ContactsContract.Contacts.CONTENT_URI;
       String sort = ContactsContract.Contacts.DISPLAY_NAME + " ASC ";
-      String selection = filter ?
-	 "("
-	 + ContactsContract.Contacts.IN_VISIBLE_GROUP
-	 + " = '1' AND ("
-	 + ContactsContract.Contacts.HAS_PHONE_NUMBER + " != 0 ))"
-	 : null;
+      String selection = null;
+      
+      if( selection.equals( "phone" ) ) {
+	 selection = "("
+	    + ContactsContract.Contacts.IN_VISIBLE_GROUP
+	    + " = '1' AND ("
+	    + ContactsContract.Contacts.HAS_PHONE_NUMBER + " != 0 ))";
+      } else {
+	 selection = null;
+      }
+      
       ContentResolver cr = hopdroid.activity.getContentResolver();
       Cursor cur = cr.query( uri,
 			     projection,
@@ -96,7 +106,7 @@ public class HopPluginContact extends HopPlugin {
       if( cur.moveToFirst() ) {
 	 op.write( "(".getBytes() );
 	 do {
-	    writeContact( cr, op, cur );
+	    writeContact( cr, op, cur, full );
 	 } while( cur.moveToNext() );
 	 op.write( ")".getBytes() );
       } else {
@@ -107,45 +117,55 @@ public class HopPluginContact extends HopPlugin {
    // writeContact
    void writeContact( ContentResolver cr, 
 		      final OutputStream op,
-		      final Cursor cur )
+		      final Cursor cur,
+		      fional boolean full )
       throws IOException {
       int id = cur.getInt( 0 );
-      String name = cur.getString( 1 );
+      String key = cur.getString( 1 );
+      String name = cur.getString( 2 );
 
       op.write( "[".getBytes() );
 
+      // id
+      op.write( key.getBytes() );
+
       // name
+      op.write( " ".getBytes() );
       writeContactName( cr, op, id, name );
-      op.write( " ".getBytes() );
 
-      // nicknames
-      writeContactNicknames( cr, op, id );
-      op.write( " ".getBytes() );
+      // thumbnail
+      op.write( " #unspecified".getBytes() );
       
-      // organization
-      writeContactOrganization( cr, op, id );
-      op.write( " ".getBytes() );
-
-      // phones
-      writeContactPhones( cr, op, id );
-      op.write( " " .getBytes() );
-
-      // addresses
-      writeContactAddresses( cr, op, id );
-      op.write( " " .getBytes() );
-
-      // emails
-      writeContactEmails( cr, op, id );
-      op.write( " ".getBytes() );
-
 /*       // thumbnail                                                  */
 /*       writeContactThumbnail( cr, op, id );                          */
 /*       op.write( " ".getBytes() );                                   */
 /*                                                                     */
-      // notes
-      writeContactNotes( cr, op, id );
+      if( full ) {
+	 // nicknames
+	 op.write( " ".getBytes() );
+	 writeContactNicknames( cr, op, id );
+	 
+	 // organization
+	 op.write( " ".getBytes() );
+	 writeContactOrganization( cr, op, id );
 
-      op.write( " ()".getBytes() );
+	 // phones
+	 op.write( " " .getBytes() );
+	 writeContactPhones( cr, op, id );
+
+	 // addresses
+	 op.write( " " .getBytes() );
+	 writeContactAddresses( cr, op, id );
+
+	 // emails
+	 op.write( " ".getBytes() );
+	 writeContactEmails( cr, op, id );
+
+	 // notes
+	 writeContactNotes( cr, op, id );
+
+	 op.write( " ()".getBytes() );
+      }
       op.write( "]\n".getBytes() );
    }
 
@@ -323,7 +343,6 @@ public class HopPluginContact extends HopPlugin {
 	 op.write( "\")".getBytes() );
       }
       cur.close();
-      Log.d( "HopPluginContact", "<<< photo" );
    }
       
 /*    // writeContactThumbnail                                         */

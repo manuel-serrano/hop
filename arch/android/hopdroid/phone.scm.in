@@ -450,56 +450,82 @@
    (android-send-command p sms-plugin #\s no msg))
 
 ;*---------------------------------------------------------------------*/
-;*    phone-contact ::androidphone ...                                 */
+;*    contact->vcard ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-method (phone-contact p::androidphone #!optional filter)
+(define (contact->vcard contact)
+   
+   (define (fn firstname family)
+      (if (string? firstname)
+	  (if (string? family)
+	      (string-append firstname " " family)
+	      first)
+	  (if (string? family)
+	      family
+	      "")))
+   
+   (match-case contact
+      (#(?id ?firstname ?family ?thumb)
+       (instantiate::vcard
+	  (id id)
+	  (fn (fn firstname family))
+	  (familyname family)
+	  (firstname first)
+	  (org comp)
+	  (photo photo)
+	  (x-thumbnail thumb)
+	  (x-color color)
+	  (url url)
+	  (phones phones)
+	  (addresses addrs)
+	  (emails emails)
+	  (notes notes)))
+      (#(?id ?firstname ?family ?thumb ?photo ?color ?url ?akas ?comp ?phones ?addrs ?emails ?notes)
+       (let* ((notes (if (pair? akas)
+			 (cons (cons 'akas akas) notes)
+			 notes)))
+	  (instantiate::vcard
+	     (id id)
+	     (fn (fn firstname family))
+	     (familyname family)
+	     (firstname first)
+	     (org comp)
+	     (photo photo)
+	     (x-thumbnail thumb)
+	     (x-color color)
+	     (url url)
+	     (phones phones)
+	     (addresses addrs)
+	     (emails emails)
+	     (notes notes))))
+      (else (error "contact->vcard" "Illegal contact entry" contact))))
+
+;*---------------------------------------------------------------------*/
+;*    phone-contact-list ::androidphone ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (phone-contact-list p::androidphone #!optional projection filter)
    (unless contact-plugin
       (set! contact-plugin (android-load-plugin p "contact")))
    (if contact-plugin
-       (filter! (lambda (x) x)
-	  (map! (lambda (e)
-		   (match-case e
-		      ((?first ?family ?akas ?comp ?phones ?addrs ?emails ?notes ?-)
-		       (let* ((face (let ((c (assq 'face notes)))
-				       (when (pair? c)
-					  (set! notes (remq! c notes))
-					  (cdr c))))
-			      (url (let ((c (assq 'url notes)))
-				      (when (pair? c)
-					 (set! notes (remq! c notes))
-					 (cdr c))))
-			      (notes (if (pair? akas)
-					 (cons (cons 'akas akas) notes)
-					 notes))
-			      (fn (if (string? first)
-				      (if (string? family)
-					  (string-append first " " family)
-					  first)
-				      (if (string? family)
-					  family
-					  ""))))
-			  (instantiate::vcard
-			     (fn fn)
-			     (familyname family)
-			     (firstname first)
-			     (org comp)
-			     (face face)
-			     (url url)
-			     (phones phones)
-			     (addresses addrs)
-			     (emails emails)
-			     (notes notes))))))
-	     (android-send-command/result p contact-plugin (if filter #\l #\L))))
+       (map! contact->vcard
+	  (android-send-command/result p contact-plugin #\l
+	     (cond
+		((string? projection) projection)
+		((not projection) "")
+		(else (error "phone-contact-list" "wrong projection" projection)))
+	     (cond
+		((string? filter) filter)
+		((not filter) "")
+		(else (error "phone-contact-list" "wrong filter" filter)))))
        '()))
 
 ;*---------------------------------------------------------------------*/
-;*    phone-contact-add! ::androidphone ...                            */
+;*    phone-contact ::androidphone ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (phone-contact-add! p::androidphone vcard::obj)
+(define-method (phone-contact p::androidphone id)
    (unless contact-plugin
       (set! contact-plugin (android-load-plugin p "contact")))
-   (when contact-plugin
-      (android-send-command/result p contact-plugin #\a vcard)))
+   (when  contact-plugin
+      (contact->vcard (android-send-command/result p contact-plugin #\e id))))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-contact-remove! ::androidphone ...                         */
@@ -509,6 +535,16 @@
       (set! contact-plugin (android-load-plugin p "contact")))
    (when contact-plugin
       (android-send-command/result p contact-plugin #\r id)))
+
+;*---------------------------------------------------------------------*/
+;*    phone-contact-add! ::androidphone ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (phone-contact-add! p::androidphone vcard::obj)
+   (unless contact-plugin
+      (set! contact-plugin (android-load-plugin p "contact")))
+   (when contact-plugin
+      (with-access::vcard vcard (id)
+	 (android-send-command/result p contact-plugin #\e id))))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-call-log ::androidphone ...                                */
