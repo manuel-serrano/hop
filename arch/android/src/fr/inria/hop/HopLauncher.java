@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Tue Dec 22 16:21:30 2020 (serrano)                */
+/*    Last change :  Thu Dec 24 17:22:10 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -627,6 +627,6 @@ public class HopLauncher extends Activity {
       Log.d( "HopLauncher", "===== onConfigured" );
       hopintenter = new HopIntenter( activity, handler, queue );
 
-      hopintenter.exec( hopctx );
+      hopintenter.exec( hopctx, HopService.class );
    }
 }
