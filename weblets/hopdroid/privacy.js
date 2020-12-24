@@ -18,6 +18,7 @@ import * as sp from hop.spage;
 import { NAVTITLE } from './xml.js';
 import { config, update as updateConfig } from './config.js';
 import * as localConfig from './config.js';
+import { phone } from './phone.js';
 
 /*---------------------------------------------------------------------*/
 /*    authorizeRequest ...                                             */
