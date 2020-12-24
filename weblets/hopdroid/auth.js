@@ -47,7 +47,7 @@ const cookie = {
 /*    authorizeRequest ...                                             */
 /*---------------------------------------------------------------------*/
 export function authorizeRequest( req, rep ) {
-   if( hop.isLocalRequest( req ) || checkRequestCookie( req ) ) {
+   if( hop.isLocalRequest( req ) || !localConfig.password || checkRequestCookie( req ) ) {
       return rep( req );
    } else if( checkRequestAuthorization( req ) ) {
       return hop.HTTPResponseXml( rep( req ), {
