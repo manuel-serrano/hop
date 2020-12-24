@@ -22,6 +22,8 @@ import { config } from hop.config;
 const localConfig = {
    get enableWebdav() { return config.enableWebdav; },
    set enableWebdav( v ) { return config.enableWebdav = v; },
+   get enableRemote() { return config.enableRemote; },
+   set enableRemote( v ) { return config.enableRemote = v; },
    theme: undefined
 }
 /*---------------------------------------------------------------------*/
