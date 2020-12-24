@@ -148,7 +148,7 @@ service privacyPasswd() {
 		     src=${require.resolve( "./icons/lock.svg" )}/>
        	  </div>
 	  <div>
-       	    Remote Password
+       	    Remote Password for device "${phone.name}"
 	  </div>
        	  <div>
 	    <form>
