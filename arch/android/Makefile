@@ -451,6 +451,7 @@ assets.post-install.static:
 
 assets.post-install.client:
 
+.PHONY: $(ANDROIDBUILDDIR)/assets/etc
 $(ANDROIDBUILDDIR)/assets/etc: splash/splash.html splash/hopnotfound.html splash/hoperror.html
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
@@ -466,6 +467,7 @@ $(ANDROIDBUILDDIR)/assets/splash:
 	$(MAKE) $(ANDROIDBUILDDIR)/assets/splash/hopnotfound.html
 	$(MAKE) $(ANDROIDBUILDDIR)/assets/splash/hoperror.html
 
+.PHONY: $(ANDROIDBUILDDIR)/assets/share:
 $(ANDROIDBUILDDIR)/assets/share:
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
@@ -504,6 +506,7 @@ $(ANDROIDBUILDDIR)/assets/lib: \
   $(ANDROIDBUILDDIR)/assets/lib/bigloo \
   $(ANDROIDBUILDDIR)/assets/lib/hop
 
+.PHONY: $(ANDROIDBUILDDIR)/assets/lib/bigloo
 $(ANDROIDBUILDDIR)/assets/lib/bigloo:
 	mkdir -p $(ANDROIDBUILDDIR)/assets/lib
 	rm -rf $@
