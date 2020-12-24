@@ -467,7 +467,7 @@ $(ANDROIDBUILDDIR)/assets/splash:
 	$(MAKE) $(ANDROIDBUILDDIR)/assets/splash/hopnotfound.html
 	$(MAKE) $(ANDROIDBUILDDIR)/assets/splash/hoperror.html
 
-.PHONY: $(ANDROIDBUILDDIR)/assets/share:
+.PHONY: $(ANDROIDBUILDDIR)/assets/share
 $(ANDROIDBUILDDIR)/assets/share:
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
