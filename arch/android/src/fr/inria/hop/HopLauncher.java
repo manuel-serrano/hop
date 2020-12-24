@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Dec 24 17:22:10 2020 (serrano)                */
+/*    Last change :  Thu Dec 24 18:12:38 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -270,7 +270,7 @@ public class HopLauncher extends Activity {
 
       HopInstaller installer = new HopInstaller( activity, handler, hopapk, hopdir );
 
-      installer.exec( hopctx );
+      installer.exec( hopctx, null );
    }
    
    // onCreate
@@ -596,7 +596,7 @@ public class HopLauncher extends Activity {
       Log.d( "HopLauncher", "===== onInstallUnpacked" );
       
       splashScreen( "splash.html" );
-      new HopConfigurer( activity, handler, Hop.HOME() ).exec( hopctx );
+      new HopConfigurer( activity, handler, Hop.HOME() ).exec( hopctx, null );
    }
 
    protected void onInstallActivityReady() {

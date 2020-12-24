@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Thu Dec 24 17:56:00 2020 (serrano)                */
+/*    Last change :  Thu Dec 24 18:05:54 2020 (serrano)                */
 /*    Copyright   :  2012-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -23,7 +23,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
 /*---------------------------------------------------------------------*/
-public class HopService extends HopService {
+public class HopHzService extends HopService {
    @Override
     public int onStartCommand( Intent intent, int flags, int startid ) {
       Log.d( "HopService", "onStartCommand " + this + "..." + " flags=" + flags + " startid=" + startid );

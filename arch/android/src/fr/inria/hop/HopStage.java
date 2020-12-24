@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Nov 13 08:51:19 2020 (serrano)                */
+/*    Last change :  Thu Dec 24 18:11:36 2020 (serrano)                */
 /*    Copyright   :  2010-20 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher Stage                                               */
@@ -21,6 +21,6 @@ import android.os.*;
 /*    HopStage                                                         */
 /*---------------------------------------------------------------------*/
 public interface HopStage {
-   abstract void exec( Context context );
+   abstract void exec( Context context, Object arg );
    abstract void abort();
 }

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jul  5 09:42:40 2016                          */
-/*    Last change :  Thu Dec 24 17:50:42 2020 (serrano)                */
+/*    Last change :  Thu Dec 24 18:06:23 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopIntent, just to keep track of the activity that created it.   */
@@ -28,7 +28,7 @@ import java.net.*;
 /*---------------------------------------------------------------------*/
 /*    HopIntent                                                        */
 /*---------------------------------------------------------------------*/
-public class HopIntent extends HopIntent {
+public class HopIntent extends Intent {
    Activity activity;
    
    public HopIntent( Context ct, Class cz, Activity a ) {

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Dec 24 17:52:10 2020 (serrano)                */
+/*    Last change :  Thu Dec 24 18:12:52 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -54,7 +54,7 @@ public class HopHzLauncher extends HopLauncher {
       String hopdir = activity.getApplicationInfo().dataDir + "/assets";
 
       HopInstaller installer = new HopInstaller( activity, handler, hopapk, hopdir, true );
-      installer.exec( hopctx );
+      installer.exec( hopctx, null );
    }
 
    // start the Hop Android activity
@@ -204,6 +204,8 @@ public class HopHzLauncher extends HopLauncher {
       hopintenter = new HopIntenter( activity, handler, queue );
 
       hopintenter.exec( hopctx, HopHzService.class );
+      hzhopdroid = new HopDroid( null, activity );
+      hzhopdroid.start();
       
       webview.loadUrl( "http://localhost:" + Hop.port + HopConfig.SERVICE );
 

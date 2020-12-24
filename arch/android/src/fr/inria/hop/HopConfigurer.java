@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  8 15:35:26 2010                          */
-/*    Last change :  Thu Dec 10 09:40:54 2020 (serrano)                */
+/*    Last change :  Thu Dec 24 18:12:05 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Configuring Hop                                                  */
@@ -132,7 +132,7 @@ public class HopConfigurer implements HopStage {
       handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_CONFIGURE_FAIL, e ) );
    }
       
-   public void exec( Context context ) {
+   public void exec( Context context, Object arg ) {
       Log.d( "HopConfigurer", "exec configured(" + home + ")=" + configured( context, home ) );
 
       if( !configured( context, home ) ) {

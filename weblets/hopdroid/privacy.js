@@ -85,7 +85,7 @@ service privacy() {
        </div>
        <div class="button" onclick=~{ privacyRemoteToggle() }>
 	 <svg:img id="privacy-remote-toggle" 
-		  data-on=${config.enablePrivacy ? "on" : "off" }
+		  data-on=${config.enableRemote ? "on" : "off" }
 		  class="icon-toggle" width="24px" height="24px" 
 		  src=${require.resolve( "./icons/toggle-on.svg" )}/>
        </div>
