@@ -509,6 +509,7 @@ $(ANDROIDBUILDDIR)/assets/lib/bigloo:
 	rm -rf $@
 	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/lib/bigloo $(ANDROIDBUILDDIR)/assets/lib
 
+.PHONY: $(ANDROIDBUILDDIR)/assets/lib/hop
 $(ANDROIDBUILDDIR)/assets/lib/hop:
 	mkdir -p $(ANDROIDBUILDDIR)/assets/lib
 	rm -rf $@
