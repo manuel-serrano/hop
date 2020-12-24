@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Wed Dec 23 18:14:39 2020 (serrano)                */
+/*    Last change :  Thu Dec 24 09:04:03 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -16,6 +16,7 @@ package fr.inria.hop;
 
 import android.app.*;
 import android.content.*;
+import android.content.res.*;
 import android.os.*;
 import android.util.Log;
 import android.database.Cursor;
@@ -32,6 +33,7 @@ import android.provider.ContactsContract.CommonDataKinds.Website;
 import android.provider.ContactsContract.CommonDataKinds.Note;
 import android.provider.Contacts;
 import android.provider.Contacts.People;
+import android.graphics.*;
 
 import java.net.*;
 import java.io.*;
@@ -56,16 +58,16 @@ public class HopPluginContact extends HopPlugin {
 	    writeContactList( ip, op );
 	    break;
 	    
+	 case (byte)'e':
+	    writeContactEntry( ip, op );
+	    break;
+	    
 	 case (byte)'r':
 	    removeContact( ip, op );
 	    break;
 	    
 	 case (byte)'a':
 	    addContact( ip, op );
-	    break;
-	    
-	 case (byte)'e':
-	    writeContactEntry( ip, op );
 	    break;
        }
    }
@@ -163,12 +165,9 @@ public class HopPluginContact extends HopPlugin {
       writeContactName( cr, op, id, name );
 
       // thumbnail
-      op.write( " #unspecified".getBytes() );
-      
-/*       // thumbnail                                                  */
-/*       writeContactThumbnail( cr, op, id );                          */
-/*       op.write( " ".getBytes() );                                   */
-/*                                                                     */
+      op.write( " ".getBytes() );
+      writeContactThumbnail( cr, op, id, key );
+
       if( full ) {
 	 // nicknames
 	 op.write( " ".getBytes() );
@@ -199,6 +198,7 @@ public class HopPluginContact extends HopPlugin {
 	 writeContactUrl( cr, op, id );
 	 
 	 // notes
+	 op.write( " ".getBytes() );
 	 writeContactNotes( cr, op, id );
       }
       op.write( ")\n".getBytes() );
@@ -397,7 +397,80 @@ public class HopPluginContact extends HopPlugin {
       }
    }
       
-/*    // writeContactThumbnail                                         */
+   // writeContactThumbnail
+   void writeContactThumbnail( ContentResolver cr, final OutputStream op, int id, String key ) throws IOException {
+       Cursor cur = cr.query(
+	  ContactsContract.Contacts.CONTENT_URI,
+	  new String[] {
+	    ContactsContract.Contacts._ID,
+	    ContactsContract.Contacts.PHOTO_FILE_ID,
+	    ContactsContract.Contacts.PHOTO_ID,
+	    ContactsContract.Contacts.PHOTO_THUMBNAIL_URI,
+	    ContactsContract.Contacts.PHOTO_URI
+	  },
+	  "(" + ContactsContract.Contacts.LOOKUP_KEY + " = '" + key + "')",
+	  null, null );
+
+      if( cur.moveToFirst() ) {
+	 String thumb = cur.getString( 3 );
+	 
+	 if( thumb == null ) thumb = cur.getString( 4 );
+
+	 Log.d( "HopPluginContact", "thumb=" + thumb );
+	 
+	 if( thumb != null ) {
+	    try {
+	       Uri uri;
+	       AssetFileDescriptor afd = null;
+	       
+	       if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB ) {
+		  uri = Uri.parse( thumb );
+	       } else {
+		  final Uri curi = Uri.withAppendedPath(
+		     ContactsContract.Contacts.CONTENT_URI, thumb );
+		  uri = Uri.withAppendedPath(
+                                curi,
+				ContactsContract.Contacts.Photo.CONTENT_DIRECTORY );
+	       }
+
+	       afd = cr.openAssetFileDescriptor( uri, "r" );
+	       FileInputStream in = afd.createInputStream();
+	       ByteArrayOutputStream result = new ByteArrayOutputStream();
+	       byte[] buffer = new byte[ 1024 ];
+	       int length;
+	       
+	       while( (length = in.read( buffer )) != -1) {
+		  result.write( buffer, 0, length );
+	       }
+	       
+	       byte[] encoded = Base64.getEncoder().encode( result.toByteArray() );
+
+	       op.write( "\"".getBytes() );
+	       op.write( encoded );
+	       op.write( "\"".getBytes() );
+
+	       in.close();
+	       afd.close();
+	       
+	       return;
+	       
+/* 	       if( fileDescriptor != null ) {                          */
+/* 		  return BitmapFactory.decodeFileDescriptor( fd, null, null ); */
+/* 	       }                                                       */
+/*                                                                     */
+/*                                                                     */
+/*                                                                     */
+/* 	       InputStream in = new java.net.URL( uri ).openStream();  */
+/* 	       Bitmap bmp = bmp = BitmapFactory.decodeStream( in );    */
+	    } catch (Exception e) {
+	       Log.e("Error", e.getMessage());
+	       e.printStackTrace();
+	    }
+	 }
+      }
+       
+       op.write( "#unspecified".getBytes() );
+   }
 /*    void writeContactThumbnail( ContentResolver cr, final OutputStream op, int id ) throws IOException { */
 /*       Uri contactUri = ContentUris.withAppendedId( Contacts.CONTENT_URI, id ); */
 /*       Uri photoUri = Uri.withAppendedPath( contactUri, Contacts.Photo.CONTENT_DIRECTORY ); */
@@ -447,7 +520,7 @@ public class HopPluginContact extends HopPlugin {
 /*       }                                                             */
 /*       cur.close();                                                  */
 /*    }                                                                */
-      
+/*                                                                     */
    // writeContactNotes
    void writeContactNotes( ContentResolver cr, final OutputStream op, int id ) throws IOException {
       Cursor cur = getCursor( cr, id,

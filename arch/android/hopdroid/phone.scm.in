@@ -490,7 +490,7 @@
 	     (firstname firstname)
 	     (org org)
 	     (photo photo)
-	     (x-thumbnail thumb)
+	     (x-thumbnail `(:format "jpeg" :encoding "base64" :data ,thumb))
 	     (x-color #f)
 	     (url url)
 	     (phones phones)
