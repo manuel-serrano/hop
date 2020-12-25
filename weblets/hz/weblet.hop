@@ -122,7 +122,7 @@
 ;*                                                                     */
 ;*    Extra fields are simply ignored by HZ.                           */
 ;*---------------------------------------------------------------------*/
-(define (info->weblet info::pair #!key name key version url authorization (dir "") publisher (stamp -1))
+(define (info->weblet info::pair #!key name version url authorization (dir "") publisher (stamp -1))
 
    (define (find key default)
       (cond
