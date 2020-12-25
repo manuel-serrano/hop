@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Dec 25 08:58:52 2020 (serrano)                */
+/*    Last change :  Fri Dec 25 09:19:03 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -173,6 +173,31 @@ public class HopHzLauncher extends HopLauncher {
 	 }
       } catch( Exception e ) {
 	 Log.d( "HopHzLauncher", "cannot uninstall: " + e );
+	 e.printStackTrace();
+      }
+   }
+   
+   // request the running Hop server to remove the HZ package
+   private static void removeHopHz( String key ) {
+      Log.d( "HopHzLauncher", "remove hz" );
+      
+      try {
+	 URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/remove?key=" + key );
+	 Log.i( "HopHzLauncher", "Remove key=" + pkgname );
+	 HttpURLConnection conn = (HttpURLConnection)hzURL.openConnection();
+
+	 conn.setRequestMethod( "GET" );
+
+	 conn.setConnectTimeout( 500 );
+	 
+	 int status = conn.getResponseCode();
+	 conn.disconnect();
+
+	 if( status != HttpURLConnection.HTTP_OK ) {
+	    Log.d( "HopHzLauncher", "hz/remove status=" + status );
+	 }
+      } catch( Exception e ) {
+	 Log.d( "HopHzLauncher", "cannot remove: " + e );
 	 e.printStackTrace();
       }
    }

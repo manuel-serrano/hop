@@ -23,7 +23,8 @@
 	   (hz-install-weblet ::weblet #!key override checksum)
 	   (hz-download-url ::bstring #!key auth weblet override checksum)
 	   (hz-install-url ::bstring #!key auth weblet override publisher checksum)
-	   (hz-uninstall-weblet ::weblet)))
+	   (hz-uninstall-weblet ::weblet)
+	   (hz-remove-weblet ::weblet)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-check-weblet ...                                              */
@@ -210,3 +211,20 @@
 	 (delete-path (make-file-path (hz-weblets-directory) name))
 	 (set! install "")
 	 (hz-db-update! w))))
+
+;*---------------------------------------------------------------------*/
+;*    hz-remove-weblet ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hz-remove-weblet w)
+   (hz-db-init!)
+   (when (isa? w weblet)
+      (hz-uninstall-weblet w)
+      (with-access::weblet w (name install)
+	 (let* ((rcbase (make-file-name (hop-rc-directory)
+			   (string-append name "rc")))
+		(hop (string-append rcbase ".hop"))
+		(js (string-append rcbase "js")))
+	    (when (file-exists? hop)
+	       (delete-file hop))
+	    (when (file-exists? js)
+	       (delete-file js))))))
