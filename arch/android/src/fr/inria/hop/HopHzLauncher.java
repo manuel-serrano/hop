@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Dec 25 09:19:03 2020 (serrano)                */
+/*    Last change :  Fri Dec 25 16:31:12 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -153,37 +153,39 @@ public class HopHzLauncher extends HopLauncher {
    }
 
    // request the running Hop server to uninstall the HZ package
-   private static void unInstallHopHz( String key ) {
-      Log.d( "HopHzLauncher", "Uninstall hz" );
-      
-      try {
-	 URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/uninstall?key=" + key );
-	 Log.i( "HopHzLauncher", "Uninstall key=" + pkgname );
-	 HttpURLConnection conn = (HttpURLConnection)hzURL.openConnection();
+   public static void unInstallHopHz( String key ) {
+      new Thread( new Runnable() {
+	    public void run() {
+	       try {
+		  URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/uninstall?key=" + key );
+		  Log.i( "HopHzLauncher", "Uninstall key=" + key );
+		  HttpURLConnection conn = (HttpURLConnection)hzURL.openConnection();
 
-	 conn.setRequestMethod( "GET" );
+		  conn.setRequestMethod( "GET" );
 
-	 conn.setConnectTimeout( 500 );
+		  conn.setConnectTimeout( 500 );
 	 
-	 int status = conn.getResponseCode();
-	 conn.disconnect();
+		  int status = conn.getResponseCode();
+		  conn.disconnect();
 
-	 if( status != HttpURLConnection.HTTP_OK ) {
-	    Log.d( "HopHzLauncher", "hz/uninstall status=" + status );
-	 }
-      } catch( Exception e ) {
-	 Log.d( "HopHzLauncher", "cannot uninstall: " + e );
-	 e.printStackTrace();
-      }
+		  if( status != HttpURLConnection.HTTP_OK ) {
+		     Log.d( "HopHzLauncher", "hz/uninstall status=" + status );
+		  }
+	       } catch( Exception e ) {
+		  Log.d( "HopHzLauncher", "cannot uninstall: " + e );
+		  e.printStackTrace();
+	       }
+	    }
+	 } ).start();
    }
    
    // request the running Hop server to remove the HZ package
-   private static void removeHopHz( String key ) {
+   public static void removeHopHz( String key ) {
       Log.d( "HopHzLauncher", "remove hz" );
       
       try {
 	 URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/remove?key=" + key );
-	 Log.i( "HopHzLauncher", "Remove key=" + pkgname );
+	 Log.i( "HopHzLauncher", "Remove key=" + key );
 	 HttpURLConnection conn = (HttpURLConnection)hzURL.openConnection();
 
 	 conn.setRequestMethod( "GET" );
