@@ -29,7 +29,14 @@
                 <category android:name="android.intent.category.PREFERENCE" />
             </intent-filter>
         </activity>
-   
+
+	<receiver android:name ="fr.inria.@HOPAPP@.Uninstall">
+	  <intent-filter>
+            <action android:name="android.intent.action.PACKAGE_REMOVED"/> 
+	    <data android:scheme="package" />
+	  </intent-filter>
+	</receiver>
+
         <receiver android:name="fr.inria.@HOPAPP@.HopSms">
             <intent-filter>
 	        <action android:name="android.provider.Telephony.SMS_RECEIVED" />
