@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Fri Dec 25 07:24:46 2020 (serrano)                */
+/*    Last change :  Fri Dec 25 08:56:20 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    APP AppRemoved receiver                                          */
@@ -26,14 +26,8 @@ public class HopAppRemoved extends BroadcastReceiver {
    @Override public void onReceive( Context context, Intent intent ) {
       Log.d( "HopAppRemoved", "received notification" );
       
-      String packageName = intent.getData().getEncodedSchemeSpecificPart();
-      boolean extra = intent.getBooleanExtra( Intent.EXTRA_DATA_REMOVED, false );
-      Log.d( "HopAppRemoved", "appremoved..." + packageName + " " +  (extra ? "YES" : "NO") );
-      
-      if( HopService.lasthopdroid != null ) {
-	 Bundle bundle = intent.getExtras();
-	 
-	 HopService.lasthopdroid.pushEvent( "appremoved", "???" );
-      }
+      String pkgname = intent.getData().getEncodedSchemeSpecificPart();
+
+      HopHzLauncher.unInstallHopHz( pkgname );
    }
 }

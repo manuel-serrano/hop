@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Dec 24 18:12:52 2020 (serrano)                */
+/*    Last change :  Fri Dec 25 08:58:52 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -152,6 +152,31 @@ public class HopHzLauncher extends HopLauncher {
 	 } ).start();
    }
 
+   // request the running Hop server to uninstall the HZ package
+   private static void unInstallHopHz( String key ) {
+      Log.d( "HopHzLauncher", "Uninstall hz" );
+      
+      try {
+	 URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/uninstall?key=" + key );
+	 Log.i( "HopHzLauncher", "Uninstall key=" + pkgname );
+	 HttpURLConnection conn = (HttpURLConnection)hzURL.openConnection();
+
+	 conn.setRequestMethod( "GET" );
+
+	 conn.setConnectTimeout( 500 );
+	 
+	 int status = conn.getResponseCode();
+	 conn.disconnect();
+
+	 if( status != HttpURLConnection.HTTP_OK ) {
+	    Log.d( "HopHzLauncher", "hz/uninstall status=" + status );
+	 }
+      } catch( Exception e ) {
+	 Log.d( "HopHzLauncher", "cannot uninstall: " + e );
+	 e.printStackTrace();
+      }
+   }
+   
    // hzInstalledp
    static boolean hzInstalledp( String port, String service ) {
       return Hop.ping( port, 0, service );

@@ -31,6 +31,7 @@
 	   (hz-db-sync-date-update! ::date)
 	   (hz-db-find ::bstring ::bstring)
 	   (hz-db-find-by-name ::bstring)
+	   (hz-db-find-by-key ::bstring)
 	   (hz-db-find-by-url ::bstring)
 	   (hz-db-find-new::pair-nil)
 	   (hz-db-find-update::pair-nil)
@@ -216,6 +217,14 @@
    (sqlite-eval *db* hz-make-weblet
       "SELECT ~a FROM weblets WHERE (name=~q)"
       (hz-db-row) name))
+
+;*---------------------------------------------------------------------*/
+;*    hz-db-find-by-key ...                                            */
+;*---------------------------------------------------------------------*/
+(define (hz-db-find-by-key key)
+   (sqlite-eval *db* hz-make-weblet
+      "SELECT ~a FROM weblets WHERE (key=~q)"
+      (hz-db-row) key))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-find-by-url ...                                            */

@@ -26,6 +26,7 @@
 	   hz/documentation
 	   hz/preferences
 	   hz/install
+	   hz/uninstall
 	   hz/exists
 	   hz/run))
 
@@ -94,6 +95,27 @@
 			(http-error w req))))
 		   (else
 		    (http-error w req))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/uninstall ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-service (hz/uninstall #!key name url key)
+   (let ((req (current-request)))
+      (if (not (authorized-service? req 'admin))
+	  (access-denied req)
+	  (begin
+	     (when (file-exists? (hz-prefs)) (hz-preferences-load (hz-prefs)))
+	     (let ((w (cond
+			 (name (hz-db-find-by-name name))
+			 (url (hz-db-find-by-url url))
+			 (key (hz-db-find-by-key key)))))
+		(if (isa? w weblet)
+		    (begin
+		       (hz-uninstall-weblet w)
+		       #t)
+		    (http-error
+		       (format "Cannot find weblet ~s" key)
+		       req)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/exists ...                                                    */
