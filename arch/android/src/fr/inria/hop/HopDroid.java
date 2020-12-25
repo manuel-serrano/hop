@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Dec 22 16:42:30 2020 (serrano)                */
+/*    Last change :  Fri Dec 25 06:46:56 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -168,11 +168,12 @@ public class HopDroid extends Thread {
       String appCmdName = app + "-cmd:" + Hop.port;
 
       // create the three servers
-      Log.d( "HopDroid", "creating new sockets port=" + Hop.port );
       pluginserv = new HopLocalServerSocket( appPluginName );
       Log.d( "HopDroid", "pluginserv=" + pluginserv.toString() );
+      
       eventserv = new HopLocalServerSocket( appEventName );
       Log.d( "HopDroid", "eventserv=" + eventserv.toString() );
+      
       cmdserv = new HopLocalServerSocket( appCmdName  );
       Log.d( "HopDroid", "cmdserv=" + cmdserv.toString() );
    }
