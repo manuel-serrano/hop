@@ -177,13 +177,24 @@
 ;*    get-weblet-info ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (get-weblet-info wdir::bstring)
+
+   (define (normalize-prop a d)
+      (cond
+	 ((and (eq? a 'author) (pair? d))
+	  (if (pair? d)
+	      (let ((c (assq 'name d)))
+		 (if (pair? c)
+		     (list a (cdr c))
+		     #f))))
+	 (else
+	  (list a d))))
    
    (define (normalize-json l)
       (if (list? l)
-	  (map (lambda (a)
-		  (match-case a
-		     ((?a . ?d) (list a d))
-		     (else (list #f #f))))
+	  (filter-map (lambda (a)
+			 (match-case a
+			    ((?a . ?d) (normalize-prop a d))
+			    (else #f)))
 	     l)
 	  '()))
    

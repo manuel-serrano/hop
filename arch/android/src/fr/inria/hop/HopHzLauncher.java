@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Dec 25 16:31:12 2020 (serrano)                */
+/*    Last change :  Sat Dec 26 09:10:34 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -153,12 +153,12 @@ public class HopHzLauncher extends HopLauncher {
    }
 
    // request the running Hop server to uninstall the HZ package
-   public static void unInstallHopHz( String key ) {
+   public static void unInstallHopHz( String id ) {
       new Thread( new Runnable() {
 	    public void run() {
 	       try {
-		  URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/uninstall?key=" + key );
-		  Log.i( "HopHzLauncher", "Uninstall key=" + key );
+		  URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/uninstall?id=" + id );
+		  Log.i( "HopHzLauncher", "Uninstall id=" + id );
 		  HttpURLConnection conn = (HttpURLConnection)hzURL.openConnection();
 
 		  conn.setRequestMethod( "GET" );
@@ -180,12 +180,12 @@ public class HopHzLauncher extends HopLauncher {
    }
    
    // request the running Hop server to remove the HZ package
-   public static void removeHopHz( String key ) {
+   public static void removeHopHz( String id ) {
       Log.d( "HopHzLauncher", "remove hz" );
       
       try {
-	 URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/remove?key=" + key );
-	 Log.i( "HopHzLauncher", "Remove key=" + key );
+	 URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/remove?id=" + id );
+	 Log.i( "HopHzLauncher", "Remove id=" + id );
 	 HttpURLConnection conn = (HttpURLConnection)hzURL.openConnection();
 
 	 conn.setRequestMethod( "GET" );

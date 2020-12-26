@@ -167,9 +167,20 @@
 ;*    hz->weblet ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (hz->weblet name version url)
+   
+   (define (get-info dir def)
+      (let ((l (get-weblet-info dir)))
+	 (if (pair? l)
+	     l
+	     (def))))
+   
    (let* ((dir (make-file-name (hz-weblets-directory) name))
-	  (l (get-weblet-info dir))
-	  (i (if (pair? l) l `((name ,name) (version ,version)))))
+	  (i (get-info dir
+		(lambda ()
+		   (get-info
+		      (make-file-name dir (string-append name "-" version))
+		      (lambda ()
+			 `((name ,name) (version ,version))))))))
       (info->weblet i :name name :version version :url url :dir dir)))
 
 ;*---------------------------------------------------------------------*/

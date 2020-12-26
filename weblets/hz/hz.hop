@@ -100,43 +100,45 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz/uninstall ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-service (hz/uninstall #!key name url key)
+(define-service (hz/uninstall #!key name url id)
    (let ((req (current-request)))
       (if (not (authorized-service? req 'admin))
 	  (access-denied req)
 	  (begin
 	     (when (file-exists? (hz-prefs)) (hz-preferences-load (hz-prefs)))
+	     (hz-db-init!)
 	     (let ((w (cond
 			 (name (hz-db-find-by-name name))
 			 (url (hz-db-find-by-url url))
-			 (key (hz-db-find-by-key key)))))
+			 (id (hz-db-find-by-id id)))))
 		(if (isa? w weblet)
 		    (begin
 		       (hz-uninstall-weblet w)
 		       #t)
 		    (http-error
-		       (format "Cannot find weblet ~s" key)
+		       (format "Cannot find weblet ~s" id)
 		       req)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/remove ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-service (hz/remove #!key name url key)
+(define-service (hz/remove #!key name url id)
    (let ((req (current-request)))
       (if (not (authorized-service? req 'admin))
 	  (access-denied req)
 	  (begin
 	     (when (file-exists? (hz-prefs)) (hz-preferences-load (hz-prefs)))
+	     (hz-db-init!)
 	     (let ((w (cond
 			 (name (hz-db-find-by-name name))
 			 (url (hz-db-find-by-url url))
-			 (key (hz-db-find-by-key key)))))
+			 (id (hz-db-find-by-id id)))))
 		(if (isa? w weblet)
 		    (begin
 		       (hz-remove-weblet w)
 		       #t)
 		    (http-error
-		       (format "Cannot find weblet ~s" key)
+		       (format "Cannot find weblet ~s" id)
 		       req)))))))
 
 ;*---------------------------------------------------------------------*/

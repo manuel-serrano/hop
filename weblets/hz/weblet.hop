@@ -24,7 +24,7 @@
 	      (stamp::int (default -1) (info "INTEGER"))
 	      (driver::bstring (default "hz"))
 	      (name::bstring read-only)
-	      (key::bstring read-only)
+	      (id::bstring read-only)
 	      (version::bstring read-only (info "VERSION"))
 	      (install::bstring (default "") (info "VERSION"))
 	      (url read-only)
@@ -37,7 +37,7 @@
 	      (depends::pair-nil read-only)
 	      (installable::bool (default #t))
 	      (title::bstring read-only)
-	      (comment::bstring read-only (info "BLOB"))
+	      (description::bstring read-only (info "BLOB"))
 	      (signature::bstring read-only (default ""))
 	      (authorization read-only (default #f))
 	      (directory::bstring read-only (default "")))
@@ -107,7 +107,7 @@
 ;*                                                                     */
 ;*      - charset: the charset of the info file                        */
 ;*      - name: the name of the weblet                                 */
-;*      - key: a unique that designate the weblet (default to name)    */
+;*      - id: a unique that designate the weblet (default to name)     */
 ;*      - author:                                                      */
 ;*      - url: download url                                            */
 ;*      - home: home page                                              */
@@ -116,7 +116,7 @@
 ;*      - maxhop: the maximal Hop version that can run the weblet      */
 ;*      - depends: dependences list                                    */
 ;*      - title:                                                       */
-;*      - comment:                                                     */
+;*      - description:                                                 */
 ;*      - signature:                                                   */
 ;*      - directory: the local directory where the weblet is installed */
 ;*                                                                     */
@@ -149,7 +149,7 @@
 		       (error "info->weblet"
 			      (format "weblet ~a name mismatch" name)
 			      (format "~a expected, ~a provided" name v)))))
-	  (key (find 'key name))
+	  (id (find 'id name))
 	  (version (let ((v (find 'version (or version "0.0.0"))))
 		      (if (or (not (string? version)) (string=? v version))
 			  (convert v)
@@ -170,7 +170,7 @@
 	 (name name)
 	 (version version)
 	 (url url)
-	 (key key)
+	 (id id)
 	 (publisher publisher)
 	 (home (find 'home #unspecified))
 	 (author (convert (find 'author #unspecified)))
@@ -182,7 +182,7 @@
 	 (minhop (find 'minhop "0"))
 	 (maxhop (find 'maxhop "z"))
 	 (title (convert (find 'title "")))
-	 (comment (convert (find 'comment "")))
+	 (description (convert (find 'description (find 'comment ""))))
 	 (authorization authorization)
 	 (depends (map (lambda (x) (if (symbol? x) (list x) x))
 		     (find 'depends '())))
