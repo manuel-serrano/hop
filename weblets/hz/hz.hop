@@ -135,7 +135,7 @@
 			 (id (hz-db-find-by-id id)))))
 		(if (isa? w weblet)
 		    (begin
-		       (hz-remove-weblet w)
+		       (hz-remove-weblet w req)
 		       #t)
 		    (http-error
 		       (format "Cannot find weblet ~s" id)

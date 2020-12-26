@@ -24,7 +24,7 @@
 	   (hz-download-url ::bstring #!key auth weblet override checksum)
 	   (hz-install-url ::bstring #!key auth weblet override publisher checksum)
 	   (hz-uninstall-weblet ::weblet)
-	   (hz-remove-weblet ::weblet)))
+	   (hz-remove-weblet ::weblet ::http-request)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-check-weblet ...                                              */
@@ -226,12 +226,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-remove-weblet ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (hz-remove-weblet w)
+(define (hz-remove-weblet w req)
    (hz-db-init!)
    (when (isa? w weblet)
       (hz-uninstall-weblet w)
       ;; remove the RC file
-      (with-access::weblet w (name install)
+      (with-access::weblet w (name install version)
 	 (let* ((rcbase (make-file-name (hop-rc-directory)
 			   (string-append name "rc")))
 		(hop (string-append rcbase ".hop"))
@@ -239,6 +239,19 @@
 	    (when (file-exists? hop)
 	       (delete-file hop))
 	    (when (file-exists? js)
-	       (delete-file js))))
-      ;; remove the download hz file
-      (tprint "REMOVE HZ DOWNLOAD TODO...")))
+	       (delete-file js)))
+	 ;; remove the download hz file
+	 (let* ((hzfile (format "~a-~a.hz" name version))
+		(hzpath (make-file-name (hz-download-directory) hzfile)))
+	    (when (file-exists? hzfile)
+	       (delete-file hzfile)))
+	 ;; remove the service
+	 (for-each (lambda (svc)
+		      (let* ((base (make-file-name (hop-service-base) name))
+			     (len (string-length base)))
+			 (with-access::hop-service svc (path id wid)
+			    (when (and (string-prefix? base path)
+				       (or (=fx (string-length path) len)
+					   (char=? (string-ref path len) #\/)))
+			       (unregister-service! svc)))))
+	    (get-all-services req)))))
