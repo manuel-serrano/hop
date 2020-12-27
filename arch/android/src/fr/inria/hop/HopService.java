@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Sun Dec 27 16:34:51 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 17:40:27 2020 (serrano)                */
 /*    Copyright   :  2012-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -49,7 +49,10 @@ public class HopService extends Service {
    
    @Override
    public void onCreate() {
+      HOPSERVICE = HopUtils.shortClassName( this.getClass() );
+      
       Log.i( HOPSERVICE, "onCreate..." );
+      
       // status bar notification
       mNM = (NotificationManager)getSystemService( NOTIFICATION_SERVICE );
 
@@ -128,8 +131,6 @@ public class HopService extends Service {
     public int onStartCommand( Intent intent, int flags, int startid ) {
       Log.d( HOPSERVICE, "onStartCommand " + this + "..." + " flags=" + flags + " startid=" + startid );
 
-      HOPSERVICE = HopUtils.shortClassName( this.getClass() );
-      
       // create hopdroid
       hopdroid = new HopDroid( HopService.this, HopLauncher.class );
 

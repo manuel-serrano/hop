@@ -197,20 +197,22 @@
 	 (make-directories dir)
 	 (unwind-protect
 	    (untar p :directory dir)
-	    (close-input-port p))))
-   ;; add the weblet to the database
-   (let ((e (or e (hz->weblet name version url))))
-      ;; add the publisher for other possible weblets
-      (with-access::weblet e (stamp publisher install version)
-	 (set! stamp (hz-db-sync-stamp))
-	 ;; mark the weblet as installed
-	 (unless (or (not (string? publisher)) (string=? publisher ""))
-	    (hz-publisher-add! publisher))
-	 ;; update the database
-	 (set! install version))
-      (hz-db-add-or-update! e)
-      ;; try to configure the weblet
-      e))
+	    (close-input-port p))
+	 ;; add the weblet to the database
+	 (let ((e (or e (hz->weblet name version url))))
+	    ;; add the publisher for other possible weblets
+	    (with-access::weblet e (stamp publisher install version)
+	       (set! stamp (hz-db-sync-stamp))
+	       ;; mark the weblet as installed
+	       (unless (or (not (string? publisher)) (string=? publisher ""))
+		  (hz-publisher-add! publisher))
+	       ;; update the database
+	       (set! install version))
+	    (hz-db-add-or-update! e)
+	    (tprint "HOP-LOAD-HZ dir=" dir)
+	    (hop-load-hz dir)
+	    ;; try to configure the weblet
+	    e))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hz-uninstall-weblet ...                                          */
@@ -242,9 +244,13 @@
 	       (delete-file js)))
 	 ;; remove the download hz file
 	 (let* ((hzfile (format "~a-~a.hz" name version))
-		(hzpath (make-file-name (hz-download-directory) hzfile)))
-	    (when (file-exists? hzfile)
-	       (delete-file hzfile)))
+		(hzsum (format "~a-~a.md5sum" name version))
+		(hzpath (make-file-name (hz-download-directory) hzfile))
+		(sumpath (make-file-name (hz-download-directory) hzsum)))
+	    (when (file-exists? hzpath)
+	       (delete-file hzpath))
+	    (when (file-exists? sumpath)
+	       (delete-file sumpath)))
 	 ;; remove the service
 	 (for-each (lambda (svc)
 		      (let* ((base (make-file-name (hop-service-base) name))

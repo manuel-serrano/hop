@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Sun Dec 27 17:21:09 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 17:50:45 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -397,8 +397,6 @@ public class HopPluginContact extends HopPlugin {
 	 if( thumb == null ) thumb = cur.getString( photo ? 4 : 3 );
 
 	 if( thumb != null ) {
-	    Log.d( "HopPluginContact", "thumb=" + thumb );
-	 
 	    try {
 	       Uri uri;
 	       AssetFileDescriptor afd = null;

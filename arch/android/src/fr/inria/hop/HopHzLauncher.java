@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun Dec 27 15:14:02 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 17:42:49 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -232,7 +232,7 @@ public class HopHzLauncher extends HopLauncher {
 	    public void run() {
 	       int status = Hop.ping( Hop.port, 0, HopConfig.SERVICE );
 	       
-	       if( status >= 200 && status != 404 ) { 
+	       if( status >= 200 && status != 404 && status < 500 ) { 
 		  Log.i( "HopHzLauncher", "Hz service ready..." );
 		  handler.sendEmptyMessage( MSG_INSTALL_HZ_READY );
 	       } else {
@@ -262,7 +262,7 @@ public class HopHzLauncher extends HopLauncher {
    }
 
    @Override protected void onHopDroidStart() {
-      Log.d( "HopHzLauncher", "===== onHopDroidStar" );
+      Log.d( "HopHzLauncher", "===== onHopDroidStart" );
       
       webview.loadUrl( "http://localhost:" + Hop.port + HopConfig.SERVICE );
       raiseHzActivity();
