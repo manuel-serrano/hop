@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Mon Dec 21 08:51:25 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 08:02:27 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -304,10 +304,8 @@ public class Hop extends Thread {
       } catch( Exception e ) {
 	 Log.e( "Hop", "Acknowledge error " + e );
 	 e.printStackTrace();
-	 ;
       }
       
-      Log.d( "Hop", "acknowledge received... server is ready" );
       // spawn the initial Hop service
       service.handler.sendEmptyMessage( HopLauncher.MSG_HOP_START );
    }

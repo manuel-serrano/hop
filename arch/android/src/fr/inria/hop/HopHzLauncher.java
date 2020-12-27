@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sat Dec 26 09:10:34 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 06:59:52 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -256,8 +256,6 @@ public class HopHzLauncher extends HopLauncher {
       hopintenter = new HopIntenter( activity, handler, queue );
 
       hopintenter.exec( hopctx, HopHzService.class );
-      hzhopdroid = new HopDroid( null, activity );
-      hzhopdroid.start();
       
       webview.loadUrl( "http://localhost:" + Hop.port + HopConfig.SERVICE );
 

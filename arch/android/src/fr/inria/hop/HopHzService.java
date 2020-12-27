@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Thu Dec 24 18:05:54 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 06:53:52 2020 (serrano)                */
 /*    Copyright   :  2012-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -26,7 +26,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class HopHzService extends HopService {
    @Override
     public int onStartCommand( Intent intent, int flags, int startid ) {
-      Log.d( "HopService", "onStartCommand " + this + "..." + " flags=" + flags + " startid=" + startid );
+      Log.d( "HopHzService", "onStartCommand " + this + "..." + " flags=" + flags + " startid=" + startid );
       Activity activity = ((HopIntent)intent).activity;
 
       // create hopdroid

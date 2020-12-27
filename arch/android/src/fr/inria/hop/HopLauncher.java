@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Dec 24 18:12:38 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 07:02:08 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -586,7 +586,6 @@ public class HopLauncher extends Activity {
 	 hopintenter = null;
       }
    }
-
       
    private void stop() {
    }

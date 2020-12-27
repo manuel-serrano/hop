@@ -17,11 +17,15 @@ import { config } from hop.config;
 /*---------------------------------------------------------------------*/
 /*    Load the managed file (manipulated by Hop).                      */
 /*---------------------------------------------------------------------*/
+const cfgpath = path.join( config.rcDirectory, "config.json" );
+
 try {
-   Object.assign( config, require( "./config.json" ) );
+   if( fs.existsSync( cfgpath ) ) {
+      Object.assign( config, require( cfgpath ) );
+   }
 } catch( e ) {
-   console.log( "hoprc.js", "cannot load \"./config.json\"" );
-   console.log( e.toString() );
+   console.error( "hoprc.js", "cannot load \"" + cfgpath + "\"" );
+   console.error( e.toString() );
 }
 
 /*---------------------------------------------------------------------*/
@@ -29,8 +33,3 @@ try {
 /*---------------------------------------------------------------------*/
 userAdd( { name: "anonymous", services: '*', directories: '*' } );
 
-/*---------------------------------------------------------------------*/
-/*    Load the user file.                                              */
-/*---------------------------------------------------------------------*/
-/* if( fs.existsSync( ) ) {                                            */
-/* }                                                                   */

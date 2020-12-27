@@ -47,6 +47,7 @@ export function update() {
    const fd = fs.openSync( path.join( config.rcDirectory, "config.json" ), "w+" );
    purge( localConfig );
    fs.writeSync( fd, JSON.stringify( localConfig ) );
+   fs.writeSync( fd, "\n" );
    fs.close( fd );
 }
 
