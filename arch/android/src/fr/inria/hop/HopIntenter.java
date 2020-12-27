@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jul  5 09:42:40 2016                          */
-/*    Last change :  Sun Dec 27 09:54:51 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 16:59:18 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Spawn Hop service (not the Hop process).                         */
@@ -32,13 +32,12 @@ public class HopIntenter implements HopStage {
    Intent hopintent = null;
    HopService hopservice = null;
    ArrayBlockingQueue<String> queue;
-   
    Activity activity;
 
-   public HopIntenter( Activity act, Handler hdl, ArrayBlockingQueue<String> q ) {
+   public HopIntenter( Activity a, Handler h, ArrayBlockingQueue<String> q ) {
       super();
-      activity = act;
-      handler = hdl;
+      activity = a;
+      handler = h;
       queue = q;
    }
    
@@ -86,7 +85,7 @@ public class HopIntenter implements HopStage {
    public void exec( Context context, Object clazz ) {
       Log.d( "HopIntenter", "exec " + ((Class)clazz).getName() );
       
-      hopintent = new HopIntent( context, (Class)clazz, activity );
+      hopintent = new Intent( context, (Class)clazz );
       
       if( !HopHzService.isBackground() ) {
 	 Log.d( "HopIntenter", "starting service \"" + ((Class)clazz).getName() + "\"" );

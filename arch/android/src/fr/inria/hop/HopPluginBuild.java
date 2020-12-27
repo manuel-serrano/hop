@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Tue Dec 22 15:30:24 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 15:00:27 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the BUILD info                                               */
@@ -66,7 +66,7 @@ public class HopPluginBuild extends HopPlugin {
 
 	 // device name
 	 case (byte)'n':
-	    String deviceName = Global.getString( hopdroid.activity.getContentResolver(), Global.DEVICE_NAME );
+	    String deviceName = Global.getString( hopdroid.service.getContentResolver(), Global.DEVICE_NAME );
 	    op.write( "\"".getBytes() );
 	    op.write( deviceName.getBytes() );
 	    op.write( "\"".getBytes() );
@@ -82,13 +82,13 @@ public class HopPluginBuild extends HopPlugin {
          // storage
 	 case (byte)'s':
 	    op.write( "\"".getBytes() );
-	    op.write( hopdroid.activity.getApplicationContext().getExternalFilesDir( null ).getAbsolutePath().getBytes() );
+	    op.write( hopdroid.service.getApplicationContext().getExternalFilesDir( null ).getAbsolutePath().getBytes() );
 	    op.write( "\"".getBytes() );
 	    return;
 	    
          // application info
 	 case (byte)'i':
-	    ApplicationInfo info = hopdroid.activity.getApplicationInfo();
+	    ApplicationInfo info = hopdroid.service.getApplicationInfo();
 
 	    if( info == null ) {
 	       op.write( "()".getBytes() );
@@ -125,7 +125,7 @@ public class HopPluginBuild extends HopPlugin {
 
 	 // configuration
 	 case (byte)'c':
-	    Configuration config = hopdroid.activity.getResources().getConfiguration();
+	    Configuration config = hopdroid.service.getResources().getConfiguration();
 	    
 	    if( config == null ) {
 	       op.write( "()".getBytes() );

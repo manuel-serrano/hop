@@ -463,9 +463,9 @@
 	      family
 	      "")))
 
-   (define (thumbnail thumb)
-      (when (string? thumb)
-	 `(:format "jpeg" :encoding "base64" :data ,thumb)))
+   (define (img data)
+      (when (string? data)
+	 `(:format "jpeg" :encoding "base64" :data ,data)))
    
    (match-case contact
       (#(?id ?firstname ?family ?thumb)
@@ -476,7 +476,7 @@
 	  (firstname firstname)
 	  (org #unspecified)
 	  (photo #unspecified)
-	  (x-thumbnail (thumbnail thumb))
+	  (x-thumbnail (img thumb))
 	  (x-color #unspecified)
 	  (url #unspecified)
 	  (phones '())
@@ -493,8 +493,8 @@
 	     (familyname family)
 	     (firstname firstname)
 	     (org org)
-	     (photo photo)
-	     (x-thumbnail (thumbnail thumb))
+	     (photo (img photo))
+	     (x-thumbnail (img thumb))
 	     (x-color #f)
 	     (url url)
 	     (phones phones)

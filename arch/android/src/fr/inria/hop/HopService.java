@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Sun Dec 27 09:18:17 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 16:34:51 2020 (serrano)                */
 /*    Copyright   :  2012-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -28,13 +28,9 @@ public class HopService extends Service {
    private int NOTIFICATION = R.string.hopservicestarted;
    private final int HOP_ID = 17051966;
 
-   // class variables
-   static Hop lasthop = null;
-   static HopDroid lasthopdroid;
-   
    // instance variables
-   protected Hop hop = null;
-   protected HopDroid hopdroid = null;
+   public static Hop hop = null;
+   public static HopDroid hopdroid = null;
    protected Boolean inrestart = false;
    Handler handler;
    
@@ -119,12 +115,12 @@ public class HopService extends Service {
 
       if( hop != null ) {
 	 hop.kill();
-	 lasthop = hop = null;
+	 hop = null;
       }
       
       if( hopdroid != null ) {
 	 hopdroid.kill();
-	 lasthopdroid = hopdroid = null;
+	 hopdroid = null;
       }
    }
 
@@ -135,11 +131,11 @@ public class HopService extends Service {
       HOPSERVICE = HopUtils.shortClassName( this.getClass() );
       
       // create hopdroid
-      lasthopdroid = hopdroid = new HopDroid( HopService.this, null );
+      hopdroid = new HopDroid( HopService.this, HopLauncher.class );
 
       if( hopdroid.state == HopDroid.HOPDROID_STATE_INIT ) {
 	 // create hop 
-	 lasthop = hop = new Hop( HopService.this );
+	 hop = new Hop( HopService.this );
       
 	 // starting hopdroid
 	 hopdroid.start();
@@ -168,7 +164,7 @@ public class HopService extends Service {
    }
 
    public static boolean isBackground() {
-      return lasthop != null && lasthop.isRunning( 0 );
+      return hop != null && hop.isRunning( 0 );
       //return HopDroid.isBackground();
    }
 

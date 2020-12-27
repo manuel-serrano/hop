@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Thu Dec 24 09:23:38 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 17:21:09 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -99,7 +99,7 @@ public class HopPluginContact extends HopPlugin {
 	    + ")";
       }
       
-      ContentResolver cr = hopdroid.activity.getContentResolver();
+      ContentResolver cr = hopdroid.service.getContentResolver();
       Cursor cur = cr.query( uri,
 			     projection,
 			     selection,
@@ -127,7 +127,7 @@ public class HopPluginContact extends HopPlugin {
 	 ContactsContract.Contacts.HAS_PHONE_NUMBER
       };
       Uri uri = ContactsContract.Contacts.CONTENT_URI;
-      ContentResolver cr = hopdroid.activity.getContentResolver();
+      ContentResolver cr = hopdroid.service.getContentResolver();
       String id = HopDroid.read_string( ip );
       String selection = "("
 	 + ContactsContract.Contacts.LOOKUP_KEY + " = '" + id + "')";
@@ -191,7 +191,7 @@ public class HopPluginContact extends HopPlugin {
 
 	 // photo
 	 op.write( " ".getBytes() );
-	 writeContactPhoto( cr, op, id );
+	 writeContactPhoto( cr, op, id, key );
 	 
 	 // url
 	 op.write( " ".getBytes() );
@@ -362,26 +362,6 @@ public class HopPluginContact extends HopPlugin {
       cur.close();
    }
       
-   // writeContactPhoto
-   void writeContactPhoto( ContentResolver cr, final OutputStream op, int id ) throws IOException {
-      Cursor cur = getCursor( cr, id,
-	 new String[] {
-	    ContactsContract.Contacts.PHOTO_URI
-	 },
-	 null );
-
-      Log.d( "HopPluginContact", ">>> photo.1 cur=" + id + (cur == null ? " null" : " pas null" ) );
-      
-      if( cur.moveToFirst() && cur.getString( 0 ) != null ) {
-	 op.write( "\"".getBytes() );
-	 op.write( cur.getString( 0 ).getBytes() );
-	 op.write( "\"".getBytes() );
-      } else {
-	 op.write( "#f".getBytes() );
-      }
-      cur.close();
-   }
-      
    // writeContactUrl
    void writeContactUrl( ContentResolver cr, final OutputStream op, int id ) throws IOException {
       Cursor cur = getCursor( cr, id,
@@ -397,24 +377,24 @@ public class HopPluginContact extends HopPlugin {
       }
    }
       
-   // writeContactThumbnail
-   void writeContactThumbnail( ContentResolver cr, final OutputStream op, int id, String key ) throws IOException {
+   // writeContactPhootoOrThumbnail
+   void writeContactPhotoOrThumbnail( ContentResolver cr, final OutputStream op, int id, String key, boolean photo ) throws IOException {
        Cursor cur = cr.query(
 	  ContactsContract.Contacts.CONTENT_URI,
 	  new String[] {
 	    ContactsContract.Contacts._ID,
 	    ContactsContract.Contacts.PHOTO_FILE_ID,
 	    ContactsContract.Contacts.PHOTO_ID,
-	    ContactsContract.Contacts.PHOTO_THUMBNAIL_URI,
-	    ContactsContract.Contacts.PHOTO_URI
+	    ContactsContract.Contacts.PHOTO_URI,
+	    ContactsContract.Contacts.PHOTO_THUMBNAIL_URI
 	  },
 	  "(" + ContactsContract.Contacts.LOOKUP_KEY + " = '" + key + "')",
 	  null, null );
 
       if( cur.moveToFirst() ) {
-	 String thumb = cur.getString( 3 );
+	 String thumb = cur.getString( photo ? 3 : 4 );
 	 
-	 if( thumb == null ) thumb = cur.getString( 4 );
+	 if( thumb == null ) thumb = cur.getString( photo ? 4 : 3 );
 
 	 if( thumb != null ) {
 	    Log.d( "HopPluginContact", "thumb=" + thumb );
@@ -453,15 +433,6 @@ public class HopPluginContact extends HopPlugin {
 	       afd.close();
 	       
 	       return;
-	       
-/* 	       if( fileDescriptor != null ) {                          */
-/* 		  return BitmapFactory.decodeFileDescriptor( fd, null, null ); */
-/* 	       }                                                       */
-/*                                                                     */
-/*                                                                     */
-/*                                                                     */
-/* 	       InputStream in = new java.net.URL( uri ).openStream();  */
-/* 	       Bitmap bmp = bmp = BitmapFactory.decodeStream( in );    */
 	    } catch (Exception e) {
 	       Log.e("Error", e.getMessage());
 	       e.printStackTrace();
@@ -471,56 +442,17 @@ public class HopPluginContact extends HopPlugin {
        
        op.write( "#unspecified".getBytes() );
    }
-/*    void writeContactThumbnail( ContentResolver cr, final OutputStream op, int id ) throws IOException { */
-/*       Uri contactUri = ContentUris.withAppendedId( Contacts.CONTENT_URI, id ); */
-/*       Uri photoUri = Uri.withAppendedPath( contactUri, Contacts.Photo.CONTENT_DIRECTORY ); */
-/*       Cursor cursor = cr().query(                                   */
-/* 	 photoUri,                                                     */
-/* 	 new String[] { Contacts.Photo.PHOTO }, null, null, null );    */
-/*                                                                     */
-/*       if( cursor == null ) {                                        */
-/*          return null;                                               */
-/*       }                                                             */
-/*                                                                     */
-/*       try {                                                         */
-/*          if( cursor.moveToFirst() ) {                               */
-/* 	    byte[] data = cursor.getBlob(0);                           */
-/*              if( data != null ) {                                   */
-/* 		Bitmap bmp = null;                                     */
-/* 		ByteArrayOutputStream stream = new ByteArrayOutputStream(); */
-/* 		bmp.compress( Bitmap.CompressFormat.JPEG, 100, stream ); */
-/* byte[] byteArray = stream.toByteArray();                            */
-/* 		return new ByteArrayInputStream(data);                 */
-/*              }                                                      */
-/*          }                                                          */
-/*       } finally {                                                   */
-/*          cursor.close();                                            */
-/*       }                                                             */
-/*       return null;                                                  */
-/*    }                                                                */
-/*                                                                     */
-/*       Cursor cur = getCursor( cr, id,                               */
-/* 	 new String[] {                                                */
-/* 	    Email.DATA,                                                */
-/* 	 },                                                            */
-/* 	 Photo.2CONTENT_ITEM_TYPE );                                   */
-/*                                                                     */
-/*       if( cur.moveToFirst() ) {                                     */
-/* 	 op.write( "(\"".getBytes() );                                 */
-/* 	 op.write( cur.getString( 0 ).getBytes() );                    */
-/* 	 op.write( "\"".getBytes() );                                  */
-/* 	 while( cur.moveToNext() ) {                                   */
-/* 	    op.write( " \"".getBytes() );                              */
-/* 	    op.write( cur.getString( 0 ).getBytes() );                 */
-/* 	    op.write( "\"".getBytes() );                               */
-/* 	 }                                                             */
-/* 	 op.write( ")".getBytes() );                                   */
-/*       } else {                                                      */
-/* 	 op.write( "()".getBytes() );                                  */
-/*       }                                                             */
-/*       cur.close();                                                  */
-/*    }                                                                */
-/*                                                                     */
+   
+   // writeContactThumbnail
+   void writeContactThumbnail( ContentResolver cr, final OutputStream op, int id, String key ) throws IOException {
+      writeContactPhotoOrThumbnail( cr, op, id, key, false );
+   }
+   
+   // writeContacthoto
+   void writeContactPhoto( ContentResolver cr, final OutputStream op, int id, String key ) throws IOException {
+      writeContactPhotoOrThumbnail( cr, op, id, key, true );
+   }
+   
    // writeContactNotes
    void writeContactNotes( ContentResolver cr, final OutputStream op, int id ) throws IOException {
       Cursor cur = getCursor( cr, id,
@@ -614,7 +546,7 @@ public class HopPluginContact extends HopPlugin {
    void removeContact( final InputStream ip, final OutputStream op )
       throws IOException {
       String id = HopDroid.read_string( ip );
-      ContentResolver cr = hopdroid.activity.getContentResolver();
+      ContentResolver cr = hopdroid.service.getContentResolver();
       
       // remove from the sub-tables (MS 30oct2010: I'm not sure
       // this is useful. The Android documentation contains the following
@@ -649,7 +581,7 @@ public class HopPluginContact extends HopPlugin {
    // addContact
    void addContact( final InputStream ip, final OutputStream op )
       throws IOException {
-      ContentResolver cr = hopdroid.activity.getContentResolver();
+      ContentResolver cr = hopdroid.service.getContentResolver();
       ContentValues values = new ContentValues();
       String first = HopDroid.read_string( ip );
       String family = HopDroid.read_string( ip );

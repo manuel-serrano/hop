@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun Dec 27 09:17:17 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 16:57:54 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -58,6 +58,7 @@ public class HopLauncher extends Activity {
    public static final int MSG_STATE_CONFIGURE = 14;
    public static final int MSG_PING = 16;
    public static final int MSG_HOP_START = 17;
+   public static final int MSG_HOPDROID_START = 28;
    public static final int MSG_HOPDROID_FAIL = 18;
    public static final int MSG_HOP_CANNOT = 19;
    public static final int MSG_UNPACKED = 20;
@@ -203,6 +204,10 @@ public class HopLauncher extends Activity {
 		  webview.loadUrl( "http://localhost:" + Hop.port + HopConfig.SERVICE );
 		  break;
 
+	       case MSG_HOPDROID_START:
+		  onHopDroidStart();
+		  break;
+
 	       case MSG_HOPDROID_FAIL:
 	       case MSG_HOPDROID_FAILED:
 		  Log.i( HOPLAUNCHER, "===== MSG_HOPDROID_FAIL: " + msg.obj );
@@ -252,7 +257,7 @@ public class HopLauncher extends Activity {
       };
 
    protected void splashScreen( String splash ) {
-      String hopdir = activity.getApplicationInfo().dataDir;
+      String hopdir = getApplicationInfo().dataDir;
       String path = hopdir + "/assets/splash/" + splash;
       String url = "file://" + path;
       File f = new File( path );
@@ -267,8 +272,8 @@ public class HopLauncher extends Activity {
 
    // onLaunch (overriden by HopHzLauncher)
    protected void onLaunch() {
-      String hopapk = activity.getApplicationInfo().sourceDir;
-      String hopdir = activity.getApplicationInfo().dataDir + "/assets";
+      String hopapk = getApplicationInfo().sourceDir;
+      String hopdir = getApplicationInfo().dataDir + "/assets";
 
       HopInstaller installer = new HopInstaller( activity, handler, hopapk, hopdir );
 
@@ -281,8 +286,8 @@ public class HopLauncher extends Activity {
 
       HOPLAUNCHER = HopUtils.shortClassName( this.getClass() );
 
-      String hopapk = activity.getApplicationInfo().sourceDir;
-      String hopdir = activity.getApplicationInfo().dataDir + "/assets";
+      String hopapk = getApplicationInfo().sourceDir;
+      String hopdir = getApplicationInfo().dataDir + "/assets";
 
       Log.d( HOPLAUNCHER, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
       Log.d( HOPLAUNCHER, hopapk + " ("
@@ -309,6 +314,9 @@ public class HopLauncher extends Activity {
 
    @Override public void onStop() {
       super.onStop();
+      
+      // mark the activity paused
+      hopservice.hopdroid.activity = null;
       
       Log.d( HOPLAUNCHER, "onStop" );
    }
@@ -402,6 +410,11 @@ public class HopLauncher extends Activity {
 	 onresume_wifi_policy = 0;
       }
 
+      // mark the activity alive
+      if( hopservice != null && hopservice.hopdroid != null ) {
+	 hopservice.hopdroid.activity = this;
+      }
+      
       // notify the client
       if( hopservice != null && hopservice.hopdroid != null ) {
 	 hopservice.hopdroid.pushEvent( "resume" , "" );
@@ -427,8 +440,8 @@ public class HopLauncher extends Activity {
    @Override public void onConfigurationChanged( Configuration newConfig ) {
       Log.d( HOPLAUNCHER, "onConfigurationChanged" );
 
-      if( HopService.lasthopdroid != null ) {
-	 HopService.lasthopdroid.pushEvent( "configurationchanged", HopConfiguration.toString( newConfig ) );
+      if( HopService.hopdroid != null ) {
+	 HopService.hopdroid.pushEvent( "configurationchanged", HopConfiguration.toString( newConfig ) );
       }
    }
    
@@ -628,8 +641,12 @@ public class HopLauncher extends Activity {
    
    protected void onConfigured() {
       Log.d( HOPLAUNCHER, "===== onConfigured" );
+      
       hopintenter = new HopIntenter( activity, handler, queue );
-
       hopintenter.exec( hopctx, HopService.class );
+   }
+
+   protected void onHopDroidStart() {
+      Log.i( HOPLAUNCHER, "===== onHopDroidStart" );
    }
 }

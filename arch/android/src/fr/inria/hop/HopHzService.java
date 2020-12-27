@@ -3,10 +3,10 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Sun Dec 27 08:16:06 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 16:35:07 2020 (serrano)                */
 /*    Copyright   :  2012-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
-/*    Android service for the Hop process                              */
+/*    Android service for the Hz application                           */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
@@ -26,14 +26,11 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class HopHzService extends HopService {
    @Override
     public int onStartCommand( Intent intent, int flags, int startid ) {
-      Log.d( "HopHzService", "onStartCommand " + this + "..." + " flags=" + flags + " startid=" + startid );
-      Activity activity = ((HopIntent)intent).activity;
+      Log.d( "HopHzService", "onStartCommand " + this + "..." + " flags=" + flags + " startid=" + startid + " indent=" + intent.getClass().getName() );
 
       // create hopdroid
-      lasthopdroid = hopdroid = new HopDroid( HopHzService.this, activity );
+      hopdroid = new HopDroid( HopHzService.this, HopHzLauncher.class );
 
-      ((HopHzLauncher)activity).hzhopdroid = hopdroid;
-	 
       if( hopdroid.state == HopDroid.HOPDROID_STATE_INIT ) {
 	 // starting hopdroid
 	 hopdroid.start();

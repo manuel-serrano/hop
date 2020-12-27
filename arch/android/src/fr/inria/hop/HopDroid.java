@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Sun Dec 27 08:12:21 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 17:08:35 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -52,6 +52,7 @@ public class HopDroid extends Thread {
    Exception exn = null;
    Activity activity = null;
    HopService service;
+   Class activityclass = null;
    
    HopLocalServerSocket pluginserv = null;
    LocalSocket pluginclient = null;
@@ -64,12 +65,12 @@ public class HopDroid extends Thread {
    final Hashtable eventtable = new Hashtable();
    
    // constructor
-   public HopDroid( HopService s, Activity a ) {
+   public HopDroid( HopService s, Class c ) {
       super();
 
       service = s;
       plugins = new Vector( 16 );
-      activity = a;
+      activityclass = c;
       
       try {
 	 state = HOPDROID_STATE_INIT;
@@ -290,6 +291,13 @@ public class HopDroid extends Thread {
 
    // onConnect
    public void onConnect() {
+      // notify that HopDroid is ready
+      if( service != null ) {
+	 Log.d( "HopDroid", "serivce !=null " +
+		(service.handler == null ?  "handler null" : "handler ok" ) );
+	 service.handler.sendEmptyMessage( HopLauncher.MSG_HOPDROID_START );
+      }
+      
       // bind the plugins that need the activity
       synchronized( plugins ) {
 	 if( HopConfig.PLUGINPREFS ) {
