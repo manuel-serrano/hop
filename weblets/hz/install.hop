@@ -209,8 +209,7 @@
 	       ;; update the database
 	       (set! install version))
 	    (hz-db-add-or-update! e)
-	    (tprint "HOP-LOAD-HZ dir=" dir)
-	    (hop-load-weblet dir)
+	    (reset-autoload!)
 	    ;; try to configure the weblet
 	    e))))
    
