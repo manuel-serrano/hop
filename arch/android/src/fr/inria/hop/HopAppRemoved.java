@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Fri Dec 25 08:56:20 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 09:40:25 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    APP AppRemoved receiver                                          */
@@ -28,6 +28,6 @@ public class HopAppRemoved extends BroadcastReceiver {
       
       String pkgname = intent.getData().getEncodedSchemeSpecificPart();
 
-      HopHzLauncher.unInstallHopHz( pkgname );
+      HopHzLauncher.removeHopHz( pkgname );
    }
 }

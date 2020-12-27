@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Sun Dec 27 06:53:52 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 08:16:06 2020 (serrano)                */
 /*    Copyright   :  2012-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -41,6 +41,7 @@ public class HopHzService extends HopService {
 	 // sticky service
 	 return START_NOT_STICKY;
       } else {
+	 Log.d( "HopHzService", "stopSelf" );
 	 stopSelf();
 
 	 return 0;

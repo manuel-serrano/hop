@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun Dec 27 06:59:52 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 09:39:46 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -59,11 +59,12 @@ public class HopHzLauncher extends HopLauncher {
 
    // start the Hop Android activity
    private void startHopActivity() {
+      Log.i( "HopHzLauncher", "startHopActivity..." );
+      
       new Thread( new Runnable() {
 	    public void run() {
-	       Log.i( "HopHzLauncher", "startHopActivity..." );
 	       
-	       if( Hop.ping( Hop.port, 5 ) ) {
+	       if( Hop.ping( Hop.port, 5 ) > 0 ) {
 		  Log.i( "HopHzLauncher", "Hop ready..." );
 		  handler.sendEmptyMessage( MSG_INSTALL_ACTIVITY_READY );
 	       } else {
@@ -73,7 +74,7 @@ public class HopHzLauncher extends HopLauncher {
 		     Log.i( "HopHzLauncher", "Starting Hop activity..." );
 
 		     startActivity( launchIntent );
-		     if( Hop.ping( Hop.port, 20 ) ) {
+		     if( Hop.ping( Hop.port, 20 ) > 0 ) {
 			handler.sendEmptyMessage( MSG_INSTALL_ACTIVITY_READY );
 		     } else {
 			handler.sendEmptyMessage( MSG_INSTALL_ACTIVITY_ERROR );
@@ -204,11 +205,6 @@ public class HopHzLauncher extends HopLauncher {
       }
    }
    
-   // hzInstalledp
-   static boolean hzInstalledp( String port, String service ) {
-      return Hop.ping( port, 0, service );
-   }
-
    // raiseHzActivity
    void raiseHzActivity() {
       Log.i( "HopHzLauncher", "raiseHzActivity" );
@@ -230,12 +226,19 @@ public class HopHzLauncher extends HopLauncher {
 
    @Override protected void onInstallActivityReady() {
       Log.d( "HopHzLauncher", "===== onInstallActivityReady" );
-      
-      if( hzInstalledp( Hop.port, HopConfig.SERVICE ) ) {
-	 onInstallHzReady();
-      } else {
-	 installHopHz();
-      }
+
+      new Thread( new Runnable() {
+	    public void run() {
+	       int status = Hop.ping( Hop.port, 0, HopConfig.SERVICE );
+	       
+	       if( status >= 200 && status != 404 ) { 
+		  Log.i( "HopHzLauncher", "Hz service ready..." );
+		  handler.sendEmptyMessage( MSG_INSTALL_HZ_READY );
+	       } else {
+		  installHopHz();
+	       }
+	    }
+	 } ).start();
    }
 
    @Override protected void onInstallActivityError() {

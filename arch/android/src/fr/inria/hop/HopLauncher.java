@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun Dec 27 07:02:08 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 09:17:17 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -99,6 +99,8 @@ public class HopLauncher extends Activity {
    int onresume_wifi_policy;
    Context hopctx;
 
+   String HOPLAUNCHER = "HopLauncher";
+   
    // Preferences listeners are stored in a weakhash tables! To prevent
    // the Hop preference listener to be collected we store it into an
    // instance variable (thank you Android)
@@ -117,7 +119,7 @@ public class HopLauncher extends Activity {
    
    // write a line on Hop console
    protected void write_console( String line ) {
-      Log.v( "HopLauncher", line );
+      Log.v( HOPLAUNCHER, line );
    }
 
    final Handler handler = new Handler() {
@@ -127,7 +129,7 @@ public class HopLauncher extends Activity {
 	       
 	       // MSG_INSTALL_XXX
 	       case MSG_INSTALL_NEXT:
-		  Log.i( "HopLauncher", "===== MSG_INSTALL_NEXT" );
+		  Log.i( HOPLAUNCHER, "===== MSG_INSTALL_NEXT" );
 		  break;
 			   
 	       case MSG_INSTALL_UNPACKED:
@@ -163,7 +165,7 @@ public class HopLauncher extends Activity {
 		  break;
 
 	       case MSG_HOP_OUTPUT_AVAILABLE:
-		  // Log.i( "HopLauncher", "===== MSG_HOP_OUTOUT_AVAILABLE" );
+		  // Log.i( HOPLAUNCHER, "===== MSG_HOP_OUTOUT_AVAILABLE" );
 		  try {
 		     Log.v( "HopConsole", queue.take() );
 		  } catch( InterruptedException i ) {
@@ -176,7 +178,7 @@ public class HopLauncher extends Activity {
 		  break;
 
 	       case MSG_HOPDROID_ENDED:
-		  Log.i( "HopLauncher", "===== MSG_HOPDROID_ENDED" );
+		  Log.i( HOPLAUNCHER, "===== MSG_HOPDROID_ENDED" );
 		  write_console( "Hop ended...\n" );
 		  if( hop_resuscitate ) {
 		     hop_resuscitate = false;
@@ -187,33 +189,33 @@ public class HopLauncher extends Activity {
 		  break;
 
 	       case MSG_HOP_FAIL:
-		  Log.i( "HopLauncher", "===== MSG_HOP_FAIL: " + msg.obj );
+		  Log.i( HOPLAUNCHER, "===== MSG_HOP_FAIL: " + msg.obj );
 		  HopUiUtils.failExit( activity, "Hop", "failed", msg.obj );
 		  break;
 
 	       case MSG_HOP_CANNOT:
-		  Log.i( "HopLauncher", "===== MSG_HOP_CANNOT: " + msg.obj );
+		  Log.i( HOPLAUNCHER, "===== MSG_HOP_CANNOT: " + msg.obj );
 		  HopUiUtils.failExit( activity, "Hop", "cannot start", msg.obj );
 		  break;
 
 	       case MSG_HOP_START:
-		  Log.i( "HopLauncher", "===== MSG_HOP_START" );
+		  Log.i( HOPLAUNCHER, "===== MSG_HOP_START" );
 		  webview.loadUrl( "http://localhost:" + Hop.port + HopConfig.SERVICE );
 		  break;
 
 	       case MSG_HOPDROID_FAIL:
 	       case MSG_HOPDROID_FAILED:
-		  Log.i( "HopLauncher", "===== MSG_HOPDROID_FAIL: " + msg.obj );
+		  Log.i( HOPLAUNCHER, "===== MSG_HOPDROID_FAIL: " + msg.obj );
 		  HopUiUtils.failExit( activity, "HopDroid", "failed", msg.obj );
 		  break;
 
 	       case MSG_INSTALL_FAIL:
-		  Log.e( "HopLauncher", "installation failed..." );
+		  Log.e( HOPLAUNCHER, "installation failed..." );
 		  HopUiUtils.failExit( activity, "HopInstaller", "failed", msg.obj );
 		  break;
 
 	       case MSG_CONFIGURE_FAIL:
-		  Log.e( "HopLauncher", "configuration failed..." );
+		  Log.e( HOPLAUNCHER, "configuration failed..." );
 		  HopUiUtils.failExit( activity, "HopConfigurer", "failed", msg.obj );
 		  break;
 
@@ -221,12 +223,12 @@ public class HopLauncher extends Activity {
 		  break;
 
 	       case MSG_START_HOP_SERVICE:
-		  Log.i( "HopLauncher", "===== MSG_START_HOP_SERVICE" );
+		  Log.i( HOPLAUNCHER, "===== MSG_START_HOP_SERVICE" );
 		  webview.loadUrl( "http://localhost:" + Hop.port + "/hop" );
 		  break;
 
 	       case MSG_RESTART_HOP_SERVICE:
-		  Log.i( "HopLauncher", "===== MSG_RESTART_HOP_SERVICE" );
+		  Log.i( HOPLAUNCHER, "===== MSG_RESTART_HOP_SERVICE" );
 			
 		  if( hopservice != null ) hopservice.inrestart = true;
 		  stop();
@@ -234,17 +236,17 @@ public class HopLauncher extends Activity {
 		  break;
 
 	       case MSG_KILL_HOP_SERVICE:
-		  Log.i( "HopLauncher", "===== MSG_KILL_HOP_SERVICE" );
+		  Log.i( HOPLAUNCHER, "===== MSG_KILL_HOP_SERVICE" );
 		  hop_resuscitate = false;
 		  hopservice.hopdroid.kill();
 		  break;
 
 	       case MSG_PING:
-		  Log.i( "HopLauncher", "===== MSG_PING" );
+		  Log.i( HOPLAUNCHER, "===== MSG_PING" );
 		  break;
 
 	       default:
-		  Log.i( "HopLauncher", "===== MSG_UNKNOWN: " + msg.what );
+		  Log.i( HOPLAUNCHER, "===== MSG_UNKNOWN: " + msg.what );
 	    }
 	 }
       };
@@ -254,12 +256,12 @@ public class HopLauncher extends Activity {
       String path = hopdir + "/assets/splash/" + splash;
       String url = "file://" + path;
       File f = new File( path );
-      Log.d( "HopLauncher", "splash url=" + url );
+      Log.d( HOPLAUNCHER, "splash url=" + url );
 
       if( f.exists() ) {
 	 webview.loadUrl( url );
       } else {
-	 Log.e( "HopLauncher", "splash does not exist: " + f.toString() );
+	 Log.e( HOPLAUNCHER, "splash does not exist: " + f.toString() );
       }
    }
 
@@ -277,15 +279,17 @@ public class HopLauncher extends Activity {
    @Override public void onCreate( Bundle bundle ) {
       super.onCreate( bundle );
 
+      HOPLAUNCHER = HopUtils.shortClassName( this.getClass() );
+
       String hopapk = activity.getApplicationInfo().sourceDir;
       String hopdir = activity.getApplicationInfo().dataDir + "/assets";
 
-      Log.d( "HopLauncher", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
-      Log.d( "HopLauncher", hopapk + " ("
+      Log.d( HOPLAUNCHER, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
+      Log.d( HOPLAUNCHER, hopapk + " ("
 	     + java.time.LocalDate.now() + " "
 	     + java.time.LocalTime.now()
 	     + ")" );
-      Log.d( "HopLauncher", "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
+      Log.d( HOPLAUNCHER, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
 
       hopctx = getApplicationContext();
       HopConfig.init( hopctx );
@@ -300,17 +304,17 @@ public class HopLauncher extends Activity {
    @Override public void onStart() {
       super.onStart();
 
-      Log.d( "HopLauncher", "onStart" );
+      Log.d( HOPLAUNCHER, "onStart" );
    }
 
    @Override public void onStop() {
       super.onStop();
       
-      Log.d( "HopLauncher", "onStop" );
+      Log.d( HOPLAUNCHER, "onStop" );
    }
    
    @Override public void onDestroy() {
-      Log.d( "HopLauncher", "onDestroy isFinishing=" + isFinishing() );
+      Log.d( HOPLAUNCHER, "onDestroy isFinishing=" + isFinishing() );
 
       abort();
       super.onDestroy();
@@ -318,7 +322,7 @@ public class HopLauncher extends Activity {
    }
 
    @Override public boolean onCreateOptionsMenu( Menu menu ) {
-      Log.d( "HopLauncher", "onCreateOptionsMenu" );
+      Log.d( HOPLAUNCHER, "onCreateOptionsMenu" );
       MenuInflater inflater = getMenuInflater();
       inflater.inflate( R.menu.hop_menu, menu );
       return true;
@@ -328,7 +332,7 @@ public class HopLauncher extends Activity {
       // Handle item selection
       switch( item.getItemId() ) {
 	 case R.id.menu_settings:
-	    Log.d( "HopLauncher", "starting preference activity" );
+	    Log.d( HOPLAUNCHER, "starting preference activity" );
 	    Intent intent = new Intent( getBaseContext(), HopSettings.class );
 	    startActivity( intent );
 	    return true;
@@ -359,7 +363,7 @@ public class HopLauncher extends Activity {
    }
    
    private void setHopPort( String port ) {
-      Log.d( "HopLauncher", "set port=" + port );
+      Log.d( HOPLAUNCHER, "set port=" + port );
       Hop.port = port;
       hop_wizard_url = "http://localhost:" + port + "/hop/wizard";
    }
@@ -384,7 +388,7 @@ public class HopLauncher extends Activity {
    }
    
    @Override public void onResume() {
-      Log.d( "HopLauncher", "onResume" );
+      Log.d( HOPLAUNCHER, "onResume" );
       super.onResume();
 
       // get the current wifi policy
@@ -405,7 +409,7 @@ public class HopLauncher extends Activity {
    }
 
    @Override public void onPause() {
-      Log.d( "HopLauncher", "onPause isFinishing=" + isFinishing() );
+      Log.d( HOPLAUNCHER, "onPause isFinishing=" + isFinishing() );
       
       // restore the wifi policy
       if( onresume_wifi_policy != 0 ) {
@@ -421,7 +425,7 @@ public class HopLauncher extends Activity {
    }
 
    @Override public void onConfigurationChanged( Configuration newConfig ) {
-      Log.d( "HopLauncher", "onConfigurationChanged" );
+      Log.d( HOPLAUNCHER, "onConfigurationChanged" );
 
       if( HopService.lasthopdroid != null ) {
 	 HopService.lasthopdroid.pushEvent( "configurationchanged", HopConfiguration.toString( newConfig ) );
@@ -433,7 +437,7 @@ public class HopLauncher extends Activity {
    }
       
 /*    private void loadPreferences() {                                 */
-/*       Log.d( "HopLauncher", "loadPreferences" );                    */
+/*       Log.d( HOPLAUNCHER, "loadPreferences" );                    */
 /*       try {                                                         */
 /* 	 final Resources res = getResources();                         */
 /* 	 final SharedPreferences sp =                                  */
@@ -515,7 +519,7 @@ public class HopLauncher extends Activity {
 /* 	 }                                                             */
 /*       }                                                             */
 /*       catch( Throwable e ) {                                        */
-/* 	 Log.d( "HopLauncher", "loadPreferences exception: " + e );    */
+/* 	 Log.d( HOPLAUNCHER, "loadPreferences exception: " + e );    */
 /* 	 e.printStackTrace();                                          */
 /*       }                                                             */
 /*    }                                                                */
@@ -526,14 +530,14 @@ public class HopLauncher extends Activity {
    }
    
    protected void onActivityResult( int reqcode, int rescode, Intent intent ) {
-      Log.v( "HopLauncher", "onActivityResult reqcode=" + reqcode + " rescode=" + rescode + " intent=" + intent + " activity=" + this );
+      Log.v( HOPLAUNCHER, "onActivityResult reqcode=" + reqcode + " rescode=" + rescode + " intent=" + intent + " activity=" + this );
       HopPlugin.onActivityResult( reqcode, rescode, intent );
       super.onActivityResult( reqcode, rescode, intent );
    }
 
    private synchronized void kill( int waitms ) {
       if( !killed ) {
-	 Log.i( "HopLauncher", "kill " + waitms + "ms" );
+	 Log.i( HOPLAUNCHER, "kill " + waitms + "ms" );
 	 killed = true;
 	 
 	 // give time to read the console messages
@@ -547,17 +551,17 @@ public class HopLauncher extends Activity {
 
 	 abort();
 	 
-	 Log.d( "HopLauncher", "finishing activity..." );
+	 Log.d( HOPLAUNCHER, "finishing activity..." );
 	 //finish();
 	 this.finishAffinity();
-	 Log.i( "HopLauncher", "kill done" );
+	 Log.i( HOPLAUNCHER, "kill done" );
 
 	 //System.exit( 0 );
       }
    }
 
    private void start( String hopargs ) {
-/*       Log.i( "HopLauncher", "starting Hop Service" );               */
+/*       Log.i( HOPLAUNCHER, "starting Hop Service" );               */
 /*                                                                     */
 /*       if( hopintent == null ) {                                     */
 /* 	 HopService.hopargs = hopargs;                                 */
@@ -565,20 +569,20 @@ public class HopLauncher extends Activity {
 /*       }                                                             */
 /*                                                                     */
 /*       if( !HopService.isBackground() ) {                            */
-/* 	 Log.d( "HopLauncher", "starting new service..." );            */
+/* 	 Log.d( HOPLAUNCHER, "starting new service..." );            */
 /* 	 startService( hopintent );                                    */
 /* 	                                                               */
 /* 	 write_console( "Starting Hop...\n" );                         */
 /*       } else {                                                      */
-/* 	 Log.d( "HopLauncher", "background service already running..." ); */
+/* 	 Log.d( HOPLAUNCHER, "background service already running..." ); */
 /*       }                                                             */
 /* 			                                               */
-/*       Log.d( "HopLauncher", "binding the service..." );             */
+/*       Log.d( HOPLAUNCHER, "binding the service..." );             */
    }
 
 
    private void abort() {
-      Log.i( "HopLauncher", "abort..." );
+      Log.i( HOPLAUNCHER, "abort..." );
       
       if( hopintenter != null ) {
 	 hopintenter.abort();
@@ -592,38 +596,38 @@ public class HopLauncher extends Activity {
 
    // install handlers
    protected void onInstallUnpacked() {
-      Log.d( "HopLauncher", "===== onInstallUnpacked" );
+      Log.d( HOPLAUNCHER, "===== onInstallUnpacked" );
       
       splashScreen( "splash.html" );
       new HopConfigurer( activity, handler, Hop.HOME() ).exec( hopctx, null );
    }
 
    protected void onInstallActivityReady() {
-      Log.d( "HopLauncher", "===== onInstallActivityReady" );
+      Log.d( HOPLAUNCHER, "===== onInstallActivityReady" );
    }
 
    protected void onInstallActivityError() {
-      Log.d( "HopLauncher", "===== onInstallActivityError" );
+      Log.d( HOPLAUNCHER, "===== onInstallActivityError" );
    }
    
    protected void onInstallActivityNotFound() {
-      Log.d( "HopLauncher", "===== onInstallHopNotFound" );
+      Log.d( HOPLAUNCHER, "===== onInstallHopNotFound" );
    }
    
    protected void onInstallHzReady() {
-      Log.d( "HopLauncher", "===== onInstallHzReady" );
+      Log.d( HOPLAUNCHER, "===== onInstallHzReady" );
    }
 
    protected void onInstallHzError() {
-      Log.d( "HopLauncher", "===== onInstallHzError" );
+      Log.d( HOPLAUNCHER, "===== onInstallHzError" );
    }
    
    protected void onInstallHzNotFound() {
-      Log.d( "HopLauncher", "===== onInstallHopNotFound" );
+      Log.d( HOPLAUNCHER, "===== onInstallHopNotFound" );
    }
    
    protected void onConfigured() {
-      Log.d( "HopLauncher", "===== onConfigured" );
+      Log.d( HOPLAUNCHER, "===== onConfigured" );
       hopintenter = new HopIntenter( activity, handler, queue );
 
       hopintenter.exec( hopctx, HopService.class );

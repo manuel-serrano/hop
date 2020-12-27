@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Fri Dec 25 06:46:56 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 08:12:21 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -433,8 +433,6 @@ public class HopDroid extends Thread {
 
 	    final int id = read_int32( ip );
 
-	    Log.d( "HopDroid", "plugin id=" + id );
-	    
 	    try {
 	       HopPlugin p = (HopPlugin)plugins.get( id );
 

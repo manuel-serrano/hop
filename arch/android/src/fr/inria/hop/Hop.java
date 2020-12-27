@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sun Dec 27 08:02:27 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 09:37:00 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -345,7 +345,7 @@ public class Hop extends Thread {
    }
 
    // ping
-   public static boolean ping( String port, int errcnt, String svc ) {
+   public static int ping( String port, int errcnt, String svc ) {
       Log.d( "Hop", "ping ping port=" + port + " svc=" + svc );
       while( true ) {
 	 try {
@@ -362,25 +362,23 @@ public class Hop extends Thread {
 	    conn.disconnect();
 
 	    Log.d( "Hop", "  <<< ping, status=" + status );
-	    return (status == HttpURLConnection.HTTP_OK)
-	       || (status == HttpURLConnection.HTTP_NOT_FOUND)
-	       || (status == HttpURLConnection.HTTP_UNAUTHORIZED);
+	    return status;
 	 } catch( Exception e ) {
 	    Log.d( "Hop", "  !!! ping, exn=" + e.toString() );
 	    if( errcnt-- > 0 ) {
 	       try {
 		  Thread.sleep( 500 );
 	       } catch( Exception ee ) {
-		  return false;
+		  return -1;
 	       }
 	    } else {
-	       return false;
+	       return -1;
 	    }
 	 }
       }
    }
 
-   public static boolean ping( String port, int errcnt ) {
+   public static int ping( String port, int errcnt ) {
       return ping( port, errcnt, "/hop" );
    }
 
@@ -392,7 +390,7 @@ public class Hop extends Thread {
 	 synchronized( currentpid ) {
 	    Log.d( "Hop", "isRunning currentpid=" + currentpid[ 0 ] );
 	    if( currentpid[ 0 ] > 0 ) {
-	       return ping( port, 10 );
+	       return ping( port, 10 ) > 0;
 	    } else if( currentpid[ 0 ] == -1 ) {
 	       return false;
 	    } else {
