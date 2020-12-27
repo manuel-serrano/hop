@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jul  5 09:42:40 2016                          */
-/*    Last change :  Sun Dec 27 08:23:29 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 09:54:51 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Spawn Hop service (not the Hop process).                         */
@@ -88,8 +88,9 @@ public class HopIntenter implements HopStage {
       
       hopintent = new HopIntent( context, (Class)clazz, activity );
       
-      Log.d( "HopIntenter", "Hop.Service.isBackground=" + HopService.isBackground() );
-      if( !HopService.isBackground() ) {
+      if( !HopHzService.isBackground() ) {
+	 Log.d( "HopIntenter", "starting service \"" + ((Class)clazz).getName() + "\"" );
+	 
 	 activity.startService( hopintent );
       }
 

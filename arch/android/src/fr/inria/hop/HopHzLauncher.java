@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun Dec 27 09:39:46 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 09:56:01 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -183,26 +183,30 @@ public class HopHzLauncher extends HopLauncher {
    // request the running Hop server to remove the HZ package
    public static void removeHopHz( String id ) {
       Log.d( "HopHzLauncher", "remove hz" );
-      
-      try {
-	 URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/remove?id=" + id );
-	 Log.i( "HopHzLauncher", "Remove id=" + id );
-	 HttpURLConnection conn = (HttpURLConnection)hzURL.openConnection();
 
-	 conn.setRequestMethod( "GET" );
+      new Thread ( new Runnable() {
+	    public void run() {
+	       try {
+		  URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/remove?id=" + id );
+		  Log.i( "HopHzLauncher", "Remove id=" + id );
+		  HttpURLConnection conn = (HttpURLConnection)hzURL.openConnection();
 
-	 conn.setConnectTimeout( 500 );
+		  conn.setRequestMethod( "GET" );
+
+		  conn.setConnectTimeout( 500 );
 	 
-	 int status = conn.getResponseCode();
-	 conn.disconnect();
+		  int status = conn.getResponseCode();
+		  conn.disconnect();
 
-	 if( status != HttpURLConnection.HTTP_OK ) {
-	    Log.d( "HopHzLauncher", "hz/remove status=" + status );
-	 }
-      } catch( Exception e ) {
-	 Log.d( "HopHzLauncher", "cannot remove: " + e );
-	 e.printStackTrace();
-      }
+		  if( status != HttpURLConnection.HTTP_OK ) {
+		     Log.d( "HopHzLauncher", "hz/remove status=" + status );
+		  }
+	       } catch( Exception e ) {
+		  Log.d( "HopHzLauncher", "cannot remove: " + e );
+		  e.printStackTrace();
+	       }
+	    }
+	 } ).start();
    }
    
    // raiseHzActivity
