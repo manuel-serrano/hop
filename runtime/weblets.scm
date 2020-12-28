@@ -234,6 +234,7 @@
       (unwind-protect
 	 (begin
 	    (bigloo-warning-set! 0)
+	    (set! *weblet-table* (make-hashtable))
 	    (install-autoload-weblets! *weblet-autoload-dirs*))
 	 (bigloo-warning-set! warn))))
 
