@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Mon Dec 28 17:17:19 2020 (serrano)                */
+/*    Last change :  Mon Dec 28 19:24:08 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -319,7 +319,7 @@ public class HopPluginContact extends HopPlugin {
 	 do {
 	    op.write( "(label: \"".getBytes() );
 	    op.write( getBytes( cur, 0, "home" ) );
-	    op.write( "\" address: (\"".getBytes() );
+	    op.write( "\" address: #(\"".getBytes() );
 	    writeOptionalString( op, cur, 1 );
 	    op.write( "\") city: \"".getBytes() );
 	    writeOptionalString( op, cur, 2 );
@@ -329,7 +329,7 @@ public class HopPluginContact extends HopPlugin {
 	    writeOptionalString( op, cur, 4 );
 	    op.write( "\" zip: \"".getBytes() );
 	    writeOptionalString( op, cur, 5 );
-	    op.write( "\" country: \")]".getBytes() );
+	    op.write( "\" country: \"".getBytes() );
 	    writeOptionalString( op, cur, 6 );
 	    op.write( "\")".getBytes() );
 	 } while( cur.moveToNext() );
