@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
 ;*    Last change :  Mon Oct 28 14:56:06 2019 (serrano)                */
-;*    Copyright   :  2008-19 Manuel Serrano                            */
+;*    Copyright   :  2008-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
 ;*=====================================================================*/
@@ -248,7 +248,9 @@
    ;; notify the error
    (hop-verb 1 (hop-color req req " ERROR"))
    (hop-verb 2 (scheduler-stat scd))
+   (tprint "\n>>> RESPONSE-ERROR-HANDLER.1 " (typeof e))
    (hop-verb 1 ": " (trace-color 1 e) "\n")
+   (tprint "RESPONSE-ERROR-HANDLER.2")
    ;; when the error is a response, we transmit it to the next stage
    ;; when the error is an exception, we create a response that it
    ;; then transmitted to the next stage
@@ -261,10 +263,14 @@
       ;; try to send the error message
       (if (isa? e %http-response)
 	  (with-access::http-request req (socket)
+	     (tprint "RESPONSE-ERROR-HANDLER.3")
 	     (http-response e req socket))
 	  (begin
+	     (tprint "RESPONSE-ERROR-HANDLER.4")
 	     (exception-notify e)
+	     (tprint "RESPONSE-ERROR-HANDLER.5")
 	     (when (>=fx (bigloo-debug) 1)
+		(tprint "RESPONSE-ERROR-HANDLER.6")
 		(with-access::http-request req (header)
 		   (let ((stk (http-header-field header hop-debug-stack:)))
 		      (when (string? stk)
@@ -279,13 +285,17 @@
 					 (with-access::&exception e (stack)
 					    (+fx 1 (length stack)))
 					 1)))))))))
+	     (tprint "RESPONSE-ERROR-HANDLER.7")
 	     ;; generate a legal response for the next stage (although
 	     ;; this response denotes the error).
 	     (let ((resp ((or (hop-http-response-error) http-error) e req)))
+		(tprint "RESPONSE-ERROR-HANDLER.8")
 		(with-access::http-request req (socket)
 		   (http-response resp req socket)
+		   (tprint "RESPONSE-ERROR-HANDLER.9")
 		   ;; abort this request
 		   (socket-shutdown socket)
+		   (tprint "RESPONSE-ERROR-HANDLER.10")
 		   'close))))))
 
 ;*---------------------------------------------------------------------*/

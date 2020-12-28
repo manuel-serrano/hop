@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun Dec 27 16:57:54 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 20:00:21 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -59,6 +59,7 @@ public class HopLauncher extends Activity {
    public static final int MSG_PING = 16;
    public static final int MSG_HOP_START = 17;
    public static final int MSG_HOPDROID_START = 28;
+   public static final int MSG_HOPDROID_CONNECT = 29;
    public static final int MSG_HOPDROID_FAIL = 18;
    public static final int MSG_HOP_CANNOT = 19;
    public static final int MSG_UNPACKED = 20;
@@ -206,6 +207,10 @@ public class HopLauncher extends Activity {
 
 	       case MSG_HOPDROID_START:
 		  onHopDroidStart();
+		  break;
+
+	       case MSG_HOPDROID_CONNECT:
+		  onHopDroidConnect();
 		  break;
 
 	       case MSG_HOPDROID_FAIL:
@@ -645,8 +650,12 @@ public class HopLauncher extends Activity {
       hopintenter = new HopIntenter( activity, handler, queue );
       hopintenter.exec( hopctx, HopService.class );
    }
-
+   
    protected void onHopDroidStart() {
       Log.i( HOPLAUNCHER, "===== onHopDroidStart" );
+   }
+   
+   protected void onHopDroidConnect() {
+      Log.i( HOPLAUNCHER, "===== onHopDroidConnect" );
    }
 }

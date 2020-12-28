@@ -144,7 +144,7 @@
 	    (content-type mime-type)
 	    (charset (hop-charset))
 	    (xml (<HTML-ERROR> :class "error"
-		    :title "Server Error"
+		    :title "Server Interal Error"
 		    :msg msg
 		    :request req
 		    (<DIV> :hssclass "hop-error-trace"
@@ -391,7 +391,7 @@ a timeout which has now expired. The service is then no longer available."))
 	    (charset (hop-charset))
 	    (xml (<HTML-ERROR>
 		    :class (if (isa? e &io-timeout-error) "timeour" "error")
-		    :title "Server Error"
+		    :title "Server Internal Error"
 		    :msg msg
 		    (<DIV> :data-hss-class "hop-exception-trace"
 		       (<DIV> "Hop server stack:")

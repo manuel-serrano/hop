@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun Dec 27 17:42:49 2020 (serrano)                */
+/*    Last change :  Mon Dec 28 06:40:01 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -37,6 +37,32 @@ import java.security.*;
 
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
+/*    -------------------------------------------------------------    */
+/*    Spawning a Hop client (a Hop HZ) goes through the following      */
+/*    steps:                                                           */
+/*                                                                     */
+/*      _:                                                             */
+/*         HopInstaller                                                */
+/*            -> MSG_INSTALL_UNPACK                                    */
+/*      MSG_INSTALL_UNPACK:                                            */
+/*         splash                                                      */
+/*         startHopActivity                                            */
+/*            -> MSG_INSTALL_ACTIVITY_READY                            */
+/*             | MSG_INSTALL_ACTIVITY_ERROR                            */
+/*             | MSG_INSTALL_ACTIVITY_NOT_FOUND                        */
+/*      MSG_INSTALL_ACTIVITY_READY:			               */
+/*          HopIntenter                                                */
+/*          HopService                                                 */
+/*          HopDroid                                                   */
+/*            -> MSG_HOPDROID_CONNECT                                  */
+/*            -> MSG_HOPDROID_START                                    */
+/*      MSG_HOPDROID_START:                                            */
+/*          installHopHz, if not installed                             */
+/*            -> MSG_INSTALL_HZ_READY                                  */
+/*             | MSG_INSTALL_HZ_ERROR                                  */
+/*      MSG_INSTALL_HZ_READY:                                          */
+/*          loadUrl                                                    */
+/*          raiseHzActivity                                            */
 /*---------------------------------------------------------------------*/
 public class HopHzLauncher extends HopLauncher {
 
@@ -228,6 +254,13 @@ public class HopHzLauncher extends HopLauncher {
    @Override protected void onInstallActivityReady() {
       Log.d( "HopHzLauncher", "===== onInstallActivityReady" );
 
+      hopintenter = new HopIntenter( activity, handler, queue );
+      hopintenter.exec( hopctx, HopHzService.class );
+   }
+   
+   @Override protected void onHopDroidStart() {
+      Log.d( "HopHzLauncher", "===== onHopDroidStart" );
+
       new Thread( new Runnable() {
 	    public void run() {
 	       int status = Hop.ping( Hop.port, 0, HopConfig.SERVICE );
@@ -257,13 +290,6 @@ public class HopHzLauncher extends HopLauncher {
    @Override protected void onInstallHzReady() {
       Log.d( "HopHzLauncher", "===== onInstallHzReady" );
 
-      hopintenter = new HopIntenter( activity, handler, queue );
-      hopintenter.exec( hopctx, HopHzService.class );
-   }
-
-   @Override protected void onHopDroidStart() {
-      Log.d( "HopHzLauncher", "===== onHopDroidStart" );
-      
       webview.loadUrl( "http://localhost:" + Hop.port + HopConfig.SERVICE );
       raiseHzActivity();
    }

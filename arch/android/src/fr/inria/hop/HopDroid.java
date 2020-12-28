@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Sun Dec 27 17:08:35 2020 (serrano)                */
+/*    Last change :  Mon Dec 28 06:38:47 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -63,6 +63,8 @@ public class HopDroid extends Thread {
    HopLocalServerSocket cmdserv = null;
    
    final Hashtable eventtable = new Hashtable();
+
+   boolean delayed_start_notification = false;
    
    // constructor
    public HopDroid( HopService s, Class c ) {
@@ -228,6 +230,14 @@ public class HopDroid extends Thread {
 	    }
 	 } ).start();
 
+      synchronized( this ) {
+	 if( service.handler != null ) {
+	    service.handler.sendEmptyMessage( HopLauncher.MSG_HOPDROID_START );
+	 } else {
+	    delayed_start_notification = true;
+	 }
+      }
+      
       // the cmd server handles ping and stop commands
       try {
 	 LocalSocket sock = null;
@@ -292,10 +302,13 @@ public class HopDroid extends Thread {
    // onConnect
    public void onConnect() {
       // notify that HopDroid is ready
-      if( service != null ) {
-	 Log.d( "HopDroid", "serivce !=null " +
-		(service.handler == null ?  "handler null" : "handler ok" ) );
-	 service.handler.sendEmptyMessage( HopLauncher.MSG_HOPDROID_START );
+      // service.handler has been initialized before onConnect got called
+      service.handler.sendEmptyMessage( HopLauncher.MSG_HOPDROID_CONNECT );
+
+      synchronized( this ) {
+	 if( delayed_start_notification ) {
+	    service.handler.sendEmptyMessage( HopLauncher.MSG_HOPDROID_START );
+	 }
       }
       
       // bind the plugins that need the activity
