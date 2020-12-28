@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun Dec 27 20:00:21 2020 (serrano)                */
+/*    Last change :  Mon Dec 28 09:28:15 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -167,7 +167,6 @@ public class HopLauncher extends Activity {
 		  break;
 
 	       case MSG_HOP_OUTPUT_AVAILABLE:
-		  // Log.i( HOPLAUNCHER, "===== MSG_HOP_OUTOUT_AVAILABLE" );
 		  try {
 		     Log.v( "HopConsole", queue.take() );
 		  } catch( InterruptedException i ) {

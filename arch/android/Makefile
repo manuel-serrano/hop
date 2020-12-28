@@ -499,6 +499,7 @@ rename-jsgz:
 
 $(ANDROIDBUILDDIR)/assets/bin: $(ANDROIDBUILDDIR)/assets/bin/hop
 
+.PHONY: $(ANDROIDBUILDDIR)/assets/bin/hop
 $(ANDROIDBUILDDIR)/assets/bin/hop:
 	mkdir -p $(ANDROIDBUILDDIR)/assets/bin
 	cp $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/bin/hop $@
