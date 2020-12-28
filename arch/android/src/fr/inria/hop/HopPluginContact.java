@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Mon Dec 28 16:59:13 2020 (serrano)                */
+/*    Last change :  Mon Dec 28 17:17:19 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -327,7 +327,7 @@ public class HopPluginContact extends HopPlugin {
 	    writeOptionalString( op, cur, 3 );
 	    op.write( "\" region: \"".getBytes() );
 	    writeOptionalString( op, cur, 4 );
-	    op.write( "\" zip: \:".getBytes() );
+	    op.write( "\" zip: \"".getBytes() );
 	    writeOptionalString( op, cur, 5 );
 	    op.write( "\" country: \")]".getBytes() );
 	    writeOptionalString( op, cur, 6 );

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul 10 08:08:45 2016                          */
-/*    Last change :  Mon Dec  7 06:51:21 2020 (serrano)                */
+/*    Last change :  Mon Dec 28 17:10:36 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop configuration                                                */
@@ -61,6 +61,7 @@ public class HopConfig {
    static boolean PLUGINTTS;
    static boolean PLUGINCALL;
    static boolean PLUGINPREFS;
+   static boolean PLUGININTENT;
 
    static void init( Context context ) {
       final Resources res = context.getResources();
@@ -99,6 +100,7 @@ public class HopConfig {
       PLUGINTTS = res.getBoolean( R.bool.plugintts );
       PLUGINCALL = res.getBoolean( R.bool.plugincall );
       PLUGINPREFS = res.getBoolean( R.bool.pluginprefs );
+      PLUGININTENT = res.getBoolean( R.bool.pluginintent );
    }
 
    HopConfig() {

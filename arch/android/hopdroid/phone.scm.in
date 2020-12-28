@@ -41,6 +41,8 @@
 
 	   (class androidevent::event)
 
+	   (android-start-intent ::androidphone ::bstring ::bstring)
+	   
 	   (android-load-plugin::int ::androidphone ::bstring)
 	   (android-send-command ::androidphone ::int . args)
 	   (android-send-command/result ::androidphone ::int . args)))
@@ -59,6 +61,7 @@
 (define build-plugin #f)
 (define ui-plugin #f)
 (define system-plugin #f)
+(define intent-plugin #f)
 
 (define event-thread #f)
 (define event-mutex (make-mutex))
@@ -617,6 +620,15 @@
    (with-access::androidphone p (initid)
       (android-send-command p initid "reboot")))
 
+;*---------------------------------------------------------------------*/
+;*    android-start-intent ...                                         */
+;*---------------------------------------------------------------------*/
+(define (android-start-intent p::androidphone action::bstring uri::bstring)
+   (unless intent-plugin
+      (set! intent-plugin (android-load-plugin p "intent")))
+   (let ((status (android-send-command/result p intent-plugin action uri)))
+      (=fx status 0)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    send-string ...                                                  */
 ;*---------------------------------------------------------------------*/

@@ -88,6 +88,7 @@ PLUGINSYSTEM = true
 PLUGINTTS = false
 PLUGINCALL = true
 PLUGINPREFS = true
+PLUGININTENT = true
 
 APKCUSTOM =
 APKCUSTOMDIR =
@@ -218,7 +219,7 @@ ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java \
   HopSettings.java HopPluginZeroconf.java HopZeroconf.java HopJmDns.java \
   HopNsdManager.java HopPluginSystem.java HopStage.java HopIntenter.java \
   HopConfig.java HopHzLauncher.java HopUtils.java HopConfiguration.java \
-  HopHzService.java HopIntent.java HopAppRemoved.java
+  HopHzService.java HopIntent.java HopAppRemoved.java HopPluginIntent.java
 
 JMDNS_JAVA = JmDNS.java ServiceInfo.java JmmDNS.java ServiceListener.java \
   NetworkTopologyDiscovery.java ServiceTypeListener.java \
