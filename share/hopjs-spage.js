@@ -330,15 +330,15 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 	 // mark the tab no longer pushed
 	 tbody.tab.pushed = false;
 	 
-	 // decrement the number of pushed elements
-	 spage.depth--;
-	 spage.tabs.pop();
-	 spage.spoffset -= spage.spwidth;
-	 
 	 // invoke the listener before removing any node
 	 if( spage.tabs.length > 0 ) {
 	    invokePopListeners( spage, spage.tabs[ spage.tabs.length - 1 ] );
 	 }
+	 
+	 // decrement the number of pushed elements
+	 spage.depth--;
+	 spage.tabs.pop();
+	 spage.spoffset -= spage.spwidth;
 	 
 	 // pop the element from the gui
 	 switch( spageTransitionStyle( spage ) ) {
