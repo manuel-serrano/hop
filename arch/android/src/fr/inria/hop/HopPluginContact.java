@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Sun Dec 27 17:50:45 2020 (serrano)                */
+/*    Last change :  Mon Dec 28 16:59:13 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Accessing Contact database                                       */
@@ -237,11 +237,11 @@ public class HopPluginContact extends HopPlugin {
       if( cur.moveToFirst() ) {
 	 op.write( "(".getBytes() );
 	 do {
-	    op.write( "[\"".getBytes() );
+	    op.write( "(label: \"".getBytes() );
 	    op.write( getBytes( cur, 0 ) );
-	    op.write( "\" \"".getBytes() );
+	    op.write( "\" number: \"".getBytes() );
 	    op.write( cur.getString( 1 ).getBytes() );
-	    op.write( "\"]".getBytes() );
+	    op.write( "\")".getBytes() );
 	 } while( cur.moveToNext() );
 	 op.write( ")".getBytes() );
       } else {
@@ -306,8 +306,8 @@ public class HopPluginContact extends HopPlugin {
 	 new String[] {
 	    StructuredPostal.LABEL,
 	    StructuredPostal.STREET,
-	    StructuredPostal.POBOX,
 	    StructuredPostal.CITY,
+	    StructuredPostal.POBOX,
 	    StructuredPostal.REGION,
 	    StructuredPostal.POSTCODE,
 	    StructuredPostal.COUNTRY
@@ -317,19 +317,21 @@ public class HopPluginContact extends HopPlugin {
       if( cur.moveToFirst() ) {
 	 op.write( "(".getBytes() );
 	 do {
-	    op.write( "[\"".getBytes() );
+	    op.write( "(label: \"".getBytes() );
 	    op.write( getBytes( cur, 0, "home" ) );
-	    op.write( "\" (".getBytes() );
+	    op.write( "\" address: (\"".getBytes() );
 	    writeOptionalString( op, cur, 1 );
-	    op.write( " ".getBytes() );
+	    op.write( "\") city: \"".getBytes() );
 	    writeOptionalString( op, cur, 2 );
-	    op.write( " ".getBytes() );
+	    op.write( "\" pobox: \"".getBytes() );
 	    writeOptionalString( op, cur, 3 );
-	    op.write( " ".getBytes() );
+	    op.write( "\" region: \"".getBytes() );
 	    writeOptionalString( op, cur, 4 );
-	    op.write( " ".getBytes() );
+	    op.write( "\" zip: \:".getBytes() );
 	    writeOptionalString( op, cur, 5 );
-	    op.write( ")]".getBytes() );
+	    op.write( "\" country: \")]".getBytes() );
+	    writeOptionalString( op, cur, 6 );
+	    op.write( "\")".getBytes() );
 	 } while( cur.moveToNext() );
 	 op.write( ")".getBytes() );
       } else {
