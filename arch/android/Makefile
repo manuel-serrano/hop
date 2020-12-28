@@ -144,6 +144,7 @@ config:
 	@echo "plugintts=$(PLUGINTTS)"
 	@echo "plugincall=$(PLUGINCALL)"
 	@echo "pluginprefs=$(PLUGINPREFS)"
+	@echo "pluginintent=$(PLUGININTENT)"
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -376,6 +377,7 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml \
                 -e "s|@PLUGINSYSTEM@|$(PLUGINSYSTEM)|" \
                 -e "s|@PLUGINTTS@|$(PLUGINTTS)|" \
                 -e "s|@PLUGINPREFS@|$(PLUGINPREFS)|" \
+                -e "s|@PLUGININTENT@|$(PLUGININTENT)|" \
                 -e "s|@PLUGINCALL@|$(PLUGINCALL)|" > $@
 
 $(ANDROIDBUILDDIR)/res/values/strings.xml: \

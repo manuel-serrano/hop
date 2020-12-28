@@ -41,7 +41,7 @@
 
 	   (class androidevent::event)
 
-	   (android-start-intent ::androidphone ::bstring ::bstring)
+	   (android-start-intent ::androidphone ::bstring ::bstring . opts)
 	   
 	   (android-load-plugin::int ::androidphone ::bstring)
 	   (android-send-command ::androidphone ::int . args)
@@ -623,10 +623,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    android-start-intent ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (android-start-intent p::androidphone action::bstring uri::bstring)
+(define (android-start-intent p::androidphone action::bstring uri::bstring . opts)
    (unless intent-plugin
       (set! intent-plugin (android-load-plugin p "intent")))
-   (let ((status (android-send-command/result p intent-plugin action uri)))
+   (let ((status (apply android-send-command/result p intent-plugin
+		    action uri (length opts) opts)))
       (=fx status 0)))
    
 ;*---------------------------------------------------------------------*/
