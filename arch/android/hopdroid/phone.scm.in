@@ -87,7 +87,15 @@
 	    (make-client-socket (format "\000~a-event:~a" app (hop-port))
 	       0 :domain 'unix))
 	 ;; hopdroid event table
-	 (set! %event-table (make-hashtable 8))
+	 (let ((evtable %event-table))
+	    (set! %event-table (make-hashtable 8))
+	    (when (hashtable? evtable)
+	       ;; restore all the event listeners
+	       (hashtable-for-each evtable
+		  (lambda (event procs)
+		     (for-each (lambda (proc)
+				  (add-event-listener! p event proc))
+			procs)))))
 	 ;; switch to running state
 	 (set! state 'running)
 	 ;; start the event listener thread
@@ -105,6 +113,8 @@
 				     (begin
 					(socket-close %sock-plugin)
 					(socket-close %sock-event)
+					(set! %sock-plugin #f)
+					(set! %sock-event #f)
 					(set! state 'close))))))))))))))
 
 ;*---------------------------------------------------------------------*/

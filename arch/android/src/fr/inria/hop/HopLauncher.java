@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Tue Dec 29 08:44:44 2020 (serrano)                */
+/*    Last change :  Tue Dec 29 19:06:41 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -184,7 +184,7 @@ public class HopLauncher extends Activity {
 
 	       case MSG_HOPDROID_ENDED:
 		  Log.i( HOPLAUNCHER, "===== MSG_HOPDROID_ENDED" );
-		  write_console( "Hop ended...\n" );
+		  write_console( "HopDroid ended...\n" );
 		  if( hop_resuscitate ) {
 		     hop_resuscitate = false;
 		     start( "" );
@@ -293,6 +293,7 @@ public class HopLauncher extends Activity {
       super.onCreate( bundle );
 
       HOPLAUNCHER = HopUtils.shortClassName( this.getClass() );
+      Log.i( HOPLAUNCHER, "onCreate" );
 
       String hopapk = getApplicationInfo().sourceDir;
       String hopdir = getApplicationInfo().dataDir + "/assets";
@@ -411,7 +412,10 @@ public class HopLauncher extends Activity {
    }
 
    @Override public void onResume() {
-      Log.d( HOPLAUNCHER, "onResume" );
+      Log.d( HOPLAUNCHER, "onResume service="
+	     + (hopservice == null ? "null" : hopservice.toString())
+	     + " hopdroid="
+	     + ((hopservice == null || hopservice.hopdroid == null) ? "null" : hopservice.hopdroid.toString()) );
       super.onResume();
 
       // get the current wifi policy
@@ -565,7 +569,6 @@ public class HopLauncher extends Activity {
 
    private synchronized void kill( int waitms ) {
       if( !killed ) {
-	 Log.i( HOPLAUNCHER, "kill " + waitms + "ms" );
 	 killed = true;
 	 
 	 // give time to read the console messages
@@ -582,9 +585,7 @@ public class HopLauncher extends Activity {
 	 Log.d( HOPLAUNCHER, "finishing activity..." );
 	 //finish();
 	 this.finishAffinity();
-	 Log.i( HOPLAUNCHER, "kill done" );
-
-	 //System.exit( 0 );
+	 Log.i( HOPLAUNCHER, "kill done." );
       }
    }
 

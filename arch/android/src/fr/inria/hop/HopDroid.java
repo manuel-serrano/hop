@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Dec 29 09:05:04 2020 (serrano)                */
+/*    Last change :  Tue Dec 29 19:34:08 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -76,7 +76,7 @@ public class HopDroid extends Thread {
       plugins = new Vector( 16 );
       activityclass = c;
 
-      HOPDROID = "HopDroid(" + c.getName() +")";
+      HOPDROID = "HopDroid/" + c.getName();
       
       try {
 	 state = HOPDROID_STATE_INIT;
@@ -304,6 +304,8 @@ public class HopDroid extends Thread {
 	 // kill everything on error
 	 kill();
       }
+
+      Log.d( HOPDROID, "thread ended." );
    }
 
    // onConnect
@@ -372,6 +374,7 @@ public class HopDroid extends Thread {
 	 }
 	 if( eventclient != null ) {
 	    eventserv.reset = true;
+	    pushClientCloseEvent();
 	    try {
 	       eventclient.close();
 	    } catch( Throwable e ) {
@@ -464,6 +467,8 @@ public class HopDroid extends Thread {
 	    try {
 	       HopPlugin p = (HopPlugin)plugins.get( id );
 
+	       Log.d( HOPDROID, "executing plugin " + p.name + "...(activity="
+		      + (activity == null ? "null" : activity.toString() ) );
 	       p.server( ip, op );
 
 	       final int m = ip.read();
@@ -494,7 +499,7 @@ public class HopDroid extends Thread {
 	       }
 	    }
 
-	    if( pluginserv.reset ) {
+	    if( pluginserv != null && pluginserv.reset ) {
 	       pluginserv.reset = false;
 	       serverPlugin();
 	    }
@@ -564,12 +569,13 @@ public class HopDroid extends Thread {
 	 
 	 synchronized( this ) {
 	    if( eventserv != null && !eventserv.isClosed() ) {
+	       pushClientCloseEvent();
 	       eventclient.close();
 	       eventclient = null;
 	    }
 	 }
 
-	 if( eventserv.reset ) {
+	 if( eventserv != null && eventserv.reset ) {
 	    eventserv.reset = false;
 	    serverEvent();
 	 }
@@ -593,41 +599,33 @@ public class HopDroid extends Thread {
       plugins = null;
    }
 
+   // pushClientClose
+   private void pushClientCloseEvent() {
+      pushEvent( "phone", "client-stop" );
+   }
+      
    // safeclose
    private void safeClose( HopLocalServerSocket serv, LocalSocket client ) {
-/*       // Android is buggous, closing a server that has not accepted  */
-/*       // any connection yet, raises no exception and then does not  */
-/*       // unblock the pending accept call. Our function safeclose establishes */
-/*       // a fake connection and closes it at once to work around this */
-/*       // Android error.                                             */
-/*       Log.d( HOPDROID, "safeClose" );                             */
-/*       if( client == null ) {                                        */
-/* 	 try {                                                         */
-/* 	    LocalSocket ls = new LocalSocket();                        */
-/*                                                                     */
-/* 	    ls.connect( serv.getLocalSocketAddress() );                */
-/* 	    ls.close();                                                */
-/* 	 } catch( Throwable e ) {                                      */
-/* 	    Log.e( HOPDROID, "safeClose error, cannot connect, serv=" */
-/* 		   + serv + " exc=" + e );                             */
-/* 	    e.printStackTrace();                                       */
-/* 	 }                                                             */
-/*       } else {                                                      */
-/* 	 try {                                                         */
-/* 	    client.close();                                            */
-/* 	 } catch( Throwable e ) {                                      */
-/* 	    Log.e( HOPDROID, "safeClose error, serv="                */
-/* 		   + serv + " client=" + client + " exc=" + e );       */
-/* 	    e.printStackTrace();                                       */
-/* 	 }                                                             */
-/*       }                                                             */
-
-      Log.d( HOPDROID, "closing serv="
-	     + (serv == null ? "null" : serv.toString())
-	     + " client=" + (client == null ? "null" : client.toString()) );
-
+      // Android is buggous, closing a server that has not accepted 
+      // any connection yet, raises no exceptions and then does not
+      // unblock the pending accept call. Our function safeclose establishes
+      // a fake connection and closes it at once to work around this
+      // Android error.
+      Log.d( HOPDROID, "safeClose" );
       try {
-	 if( client != null ) client.close();
+	 if( client == null ) {
+	    try {
+	       LocalSocket ls = new LocalSocket();
+
+	       ls.connect( serv.getLocalSocketAddress() );
+	       ls.close();
+	    } catch( Throwable e ) {
+	       Log.d( HOPDROID, "safeClose error, cannot connect, serv="
+		      + serv + " exc=" + e );
+	    }
+	 } else {
+	    client.close();
+	 }
       } catch( Throwable e ) {
 	 Log.e( HOPDROID, "cannot close " + e );
 	 e.printStackTrace();
@@ -651,13 +649,16 @@ public class HopDroid extends Thread {
 	 }
       }
    }
-      
+
    // killServers
    private synchronized void killServers() {
       Log.d( HOPDROID, "killServers..." );
       
       // event server
       if( eventserv != null ) {
+	 if( eventclient != null ) {
+	    pushClientCloseEvent();
+	 }
 	 safeClose( eventserv, eventclient );
 	 eventclient = null;
 	 eventserv = null;
@@ -672,15 +673,10 @@ public class HopDroid extends Thread {
 
       // cmd server
       if( cmdserv != null ) {
-	 cmdserv.close();
+	 safeClose( cmdserv, null );
 	 cmdserv = null;
       }
       
-      // wait the socket servers to be cleanup by the system
-      try {
-	 Thread.sleep( 2000 );
-      } catch( Exception e ) {
-      }
       Log.d( HOPDROID, "killServers...all servers stopped" );
    }
 
