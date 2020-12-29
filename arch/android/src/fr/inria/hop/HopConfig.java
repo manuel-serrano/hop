@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul 10 08:08:45 2016                          */
-/*    Last change :  Mon Dec 28 17:10:36 2020 (serrano)                */
+/*    Last change :  Tue Dec 29 06:59:49 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop configuration                                                */
@@ -38,6 +38,7 @@ public class HopConfig {
    static String SERVICE;
    static String ARGS;
    static String DEBUG;
+   static String VERBOSE;
 
    static String DEFLANG;
    static boolean NOTITLE;
@@ -75,6 +76,7 @@ public class HopConfig {
       HOPAPK = res.getString( R.string.hopapk );
       HOPHZ = res.getString( R.string.hophz );
       DEBUG = res.getString( R.string.hopdebug );
+      VERBOSE = res.getString( R.string.hopverbose );
       APP = res.getString( R.string.hopapp );
       ARGS = res.getString( R.string.hopargs );
       SERVICE = APP.equals( "hop" ) ? "/hop/hopdroid" : "/hop/" + APP;

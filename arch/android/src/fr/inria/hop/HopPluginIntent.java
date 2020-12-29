@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Mon Dec 28 19:10:22 2020 (serrano)                */
+/*    Last change :  Tue Dec 29 07:20:31 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Common Android Intent                                            */
@@ -37,13 +37,14 @@ public class HopPluginIntent extends HopPlugin {
       super( h, n );
    }
 
-   // intenter server
+   // intent server
    public void server( final InputStream ip, final OutputStream op ) 
       throws IOException {
       String action = HopDroid.read_string( ip );
       String uri = HopDroid.read_string( ip );
       int len = HopDroid.read_int( ip );
 
+      Log.d( "HopPluginIntent", "Intent action=" + action + " uri=" + uri + " len=" + len );
       try {
 	 Intent intent = new Intent( stringToAction( action ) );
 

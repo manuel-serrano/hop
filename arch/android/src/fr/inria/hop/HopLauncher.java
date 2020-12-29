@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Mon Dec 28 09:28:15 2020 (serrano)                */
+/*    Last change :  Tue Dec 29 06:58:09 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -76,7 +76,11 @@ public class HopLauncher extends Activity {
 
    public static final int HOP_ACTIVITY_UNINIT = 0;
    public static final int HOP_ACTIVITY_WAITING = 1;
-      
+
+   // Command line (am) arguments
+   public static String debugCmdArg = null;
+   public static String verboseCmdArg = null;
+   
    // ui elements
    WebView webview;
    
@@ -293,13 +297,20 @@ public class HopLauncher extends Activity {
       String hopapk = getApplicationInfo().sourceDir;
       String hopdir = getApplicationInfo().dataDir + "/assets";
 
+      int debugcmd = getIntent().getIntExtra( "-g", -1 );
+      int verbosecmd = getIntent().getIntExtra( "-v", -1 );
+      
       Log.d( HOPLAUNCHER, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
       Log.d( HOPLAUNCHER, hopapk + " ("
 	     + java.time.LocalDate.now() + " "
 	     + java.time.LocalTime.now()
-	     + ")" );
+	     + ")" + " debug=" + debugcmd + " verbose=" + verbosecmd );
       Log.d( HOPLAUNCHER, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" );
 
+      // adjust Hop parameter
+      if( debugcmd >= 0 ) debugCmdArg = "-g" + debugcmd;
+      if( verbosecmd >= 0 ) verboseCmdArg = "-v" + verbosecmd;
+			     
       hopctx = getApplicationContext();
       HopConfig.init( hopctx );
 

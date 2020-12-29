@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Mon Dec 28 09:27:01 2020 (serrano)                */
+/*    Last change :  Tue Dec 29 07:01:31 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -45,6 +45,7 @@ public class Hop extends Thread {
    // global variables
    static String root = HopConfig.ROOT;
    static String debug = HopConfig.DEBUG;
+   static String verbose = HopConfig.VERBOSE;
    static String maxthreads = HopConfig.MAXTHREADS;
    static String url = HopConfig.APP;
    static boolean zeroconf = true;
@@ -197,8 +198,8 @@ public class Hop extends Thread {
 	    + root + "/lib/bigloo/" + HopConfig.BIGLOORELEASE + ":"
 	    + root + "/lib/hop/" + HopConfig.HOPRELEASE + ":$LD_LIBRARY_PATH;"
 	    + "exec " + root + HOP + " " + HOPARGS
-	    + " -p " + port
-	    + " " + debug
+	    + " -p " + port + " "
+	    + (HopLauncher.debugCmdArg != null ? HopLauncher.debugCmdArg : debug)
 	    + " --max-threads " + maxthreads
 	    + (zeroconf ? " -z" : " --no-zeroconf")
 	    + (webdav ? " -d" : "")
@@ -206,7 +207,9 @@ public class Hop extends Thread {
 	    + " --rc-dir " + rcdir
 	    + " --acknowledge " + ahost[ 0 ]
 	    + " --so-policy none"
-	    + " -v2 " + args;
+	    + " "
+	    + (HopLauncher.verboseCmdArg != null ? HopLauncher.verboseCmdArg : verbose)
+	    + " " + args;
 
 	 Log.i( "Hop", HopConfig.APP + " exec [" + sh + " -c \"" + cmd + "\"]");
 	 HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
