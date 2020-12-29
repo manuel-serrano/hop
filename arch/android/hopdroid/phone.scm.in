@@ -626,9 +626,8 @@
 (define (android-start-intent p::androidphone action::bstring uri::bstring . opts)
    (unless intent-plugin
       (set! intent-plugin (android-load-plugin p "intent")))
-   (let ((status (apply android-send-command/result p intent-plugin
-		    action uri (length opts) opts)))
-      (=fx status 0)))
+   (apply android-send-command/result p intent-plugin
+      action uri (length opts) opts))
    
 ;*---------------------------------------------------------------------*/
 ;*    send-string ...                                                  */

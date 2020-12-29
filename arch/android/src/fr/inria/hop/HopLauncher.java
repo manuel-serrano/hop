@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Tue Dec 29 06:58:09 2020 (serrano)                */
+/*    Last change :  Tue Dec 29 08:44:44 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -321,29 +321,6 @@ public class HopLauncher extends Activity {
       onLaunch();
    }
 
-   @Override public void onStart() {
-      super.onStart();
-
-      Log.d( HOPLAUNCHER, "onStart" );
-   }
-
-   @Override public void onStop() {
-      super.onStop();
-      
-      // mark the activity paused
-      hopservice.hopdroid.activity = null;
-      
-      Log.d( HOPLAUNCHER, "onStop" );
-   }
-   
-   @Override public void onDestroy() {
-      Log.d( HOPLAUNCHER, "onDestroy isFinishing=" + isFinishing() );
-
-      abort();
-      super.onDestroy();
-      finishAndRemoveTask();
-   }
-
    @Override public boolean onCreateOptionsMenu( Menu menu ) {
       Log.d( HOPLAUNCHER, "onCreateOptionsMenu" );
       MenuInflater inflater = getMenuInflater();
@@ -410,6 +387,29 @@ public class HopLauncher extends Activity {
       dialog.show();
    }
    
+   @Override public void onStart() {
+      super.onStart();
+
+      Log.d( HOPLAUNCHER, "onStart" );
+   }
+
+   @Override public void onStop() {
+      super.onStop();
+      
+      // mark the activity paused
+      hopservice.hopdroid.activity = null;
+      
+      Log.d( HOPLAUNCHER, "onStop" );
+   }
+   
+   @Override public void onDestroy() {
+      Log.d( HOPLAUNCHER, "onDestroy isFinishing=" + isFinishing() );
+
+      abort();
+      super.onDestroy();
+      finishAndRemoveTask();
+   }
+
    @Override public void onResume() {
       Log.d( HOPLAUNCHER, "onResume" );
       super.onResume();

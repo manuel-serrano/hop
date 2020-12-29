@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 25 09:26:00 2010                          */
-/*    Last change :  Tue Dec 29 07:20:31 2020 (serrano)                */
+/*    Last change :  Tue Dec 29 09:24:55 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Common Android Intent                                            */
@@ -42,7 +42,7 @@ public class HopPluginIntent extends HopPlugin {
       throws IOException {
       String action = HopDroid.read_string( ip );
       String uri = HopDroid.read_string( ip );
-      int len = HopDroid.read_int( ip );
+      int len = HopDroid.read_int32( ip );
 
       Log.d( "HopPluginIntent", "Intent action=" + action + " uri=" + uri + " len=" + len );
       try {
@@ -62,7 +62,7 @@ public class HopPluginIntent extends HopPlugin {
 	       } else if( type.equals( "Uri" ) ) {
 		  intent.putExtra( name, Uri.parse( HopDroid.read_string( ip ) ) );
 	       } else if( type.equals( "int" ) ) {
-		  intent.putExtra( name, HopDroid.read_int( ip ) );
+		  intent.putExtra( name, HopDroid.read_int32( ip ) );
 	       } else if( type.equals( "long" ) ) {
 		  intent.putExtra( name, HopDroid.read_int64( ip ) );
 	       } else if( type.equals( "float" ) ) {
@@ -70,7 +70,9 @@ public class HopPluginIntent extends HopPlugin {
 	       } else if( type.equals( "boolean" ) ) {
 		  intent.putExtra( name, HopDroid.read_int( ip ) != 0 );
 	       } else {
-		  op.write( "-2".getBytes() );
+		  op.write( "(status: -2 message: \"Illegal argument type: ".getBytes() );
+		  op.write( type.toString().getBytes() );
+		  op.write( "\")".getBytes() );
 		  return;
 	       }
 	    }
@@ -82,19 +84,24 @@ public class HopPluginIntent extends HopPlugin {
 	    i.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );
 	    i.addFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
 	    i.addFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
-	    Log.d( "HopPluginIntent", "starting: " + action );
 	    
 	    if( hopdroid.activity != null ) {
+	       Log.d( "HopPluginIntent", action + " starting..." );
 	       hopdroid.activity.startActivity( intent );
+	       op.write( "(status: 0)".getBytes() );
+	    } else {
+	       Log.d( "HopPluginIntent", action + " no activity to start action." );
+	       op.write( "(status: -3 message: \"No activity to start action\")".getBytes() );
 	    }
-	       
-	    op.write( "0".getBytes() );
 	 } else {
-	    op.write( "-1".getBytes() );
+	    Log.d( "HopPluginIntent", "cannot resolve activity: " + action );
+	    op.write( "(status: -1 message: \"Cannot resolve activity\")".getBytes() );
 	 }
       } catch( NoSuchFieldException e ) {
-	 Log.d( "HopPluginIntent", "No such field " + action );
-	 op.write( "-1".getBytes() );
+	 Log.d( "HopPluginIntent", "No such field for action " + action );
+	 op.write( "(status: -1 message: \"".getBytes() );
+	 op.write( e.toString().getBytes() );
+	 op.write( "\")".getBytes() );
       }
    }
 
