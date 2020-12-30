@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed Dec 30 06:57:36 2020 (serrano)                */
+/*    Last change :  Wed Dec 30 07:11:49 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -461,7 +461,7 @@ public class HopDroid extends Thread {
 		  Log.e( HOPDROID, "serverPlugin protocol error: incompatible version " +
 			 version );
 	       } else {
-		  Log.d( HOPDROID, "serverPlugin, connection reset by peer protocol=" + version );
+		  Log.e( HOPDROID, "serverPlugin, connection reset by peer" );
 	       }
 	       return;
 	    }

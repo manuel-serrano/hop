@@ -111,6 +111,7 @@
 				  (unwind-protect
 				     (android-event-listener p)
 				     (begin
+					(tprint "CLIENT CLOSING SOCKETS...")
 					(socket-close %sock-plugin)
 					(socket-close %sock-event)
 					(set! %sock-plugin #f)
