@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Tue Dec 29 09:07:34 2020 (serrano)                */
+/*    Last change :  Wed Dec 30 06:43:39 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -95,8 +95,10 @@ public class HopHzLauncher extends HopLauncher {
 		  Intent launchIntent = getPackageManager().getLaunchIntentForPackage( HopConfig.HOPAPK );
 		  if( launchIntent != null ) {
 		     Log.i( "HopHzLauncher", "Starting Hop activity..." );
-
+		     
+		     launchIntent.addFlags( Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP );
 		     startActivity( launchIntent );
+		     
 		     if( Hop.ping( Hop.port, 20 ) > 0 ) {
 			handler.sendEmptyMessage( MSG_INSTALL_ACTIVITY_READY );
 		     } else {

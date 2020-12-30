@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Dec 29 19:34:08 2020 (serrano)                */
+/*    Last change :  Wed Dec 30 06:57:36 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -198,11 +198,15 @@ public class HopDroid extends Thread {
       // spawn eventserv
       new Thread( new Runnable () {
 	    public void run() {
+	       String abortreason = "server teminated";
+	       
 	       try {
 		  serverEvent();
 	       } catch( Throwable e ) {
 		  Log.e( HOPDROID, "eventserv error: " + e );
 		  e.printStackTrace();
+		  
+		  abortreason = "server error: " + e.toString();
 		  
 		  synchronized( this ) {
 		     if( eventserv != null ) {
@@ -211,7 +215,7 @@ public class HopDroid extends Thread {
 		     }
 		  }
 	       } finally {
-		  abortCmdServer( "eventsrv error" );
+		  abortCmdServer( abortreason );
 	       }
 	    }
 	 } ).start();
@@ -468,7 +472,8 @@ public class HopDroid extends Thread {
 	       HopPlugin p = (HopPlugin)plugins.get( id );
 
 	       Log.d( HOPDROID, "executing plugin " + p.name + "...(activity="
-		      + (activity == null ? "null" : activity.toString() ) );
+		      + (activity == null ? "null" : activity.toString() )
+		      + ")" );
 	       p.server( ip, op );
 
 	       final int m = ip.read();
@@ -636,6 +641,7 @@ public class HopDroid extends Thread {
    // abortCmdServer
    private synchronized void abortCmdServer( String reason ) {
       Log.d( HOPDROID, "abortCmdServer " + reason );
+      
       if( cmdserv != null ) {
 	 synchronized( cmdserv ) {
 	    if( !cmdserv.isClosed() ) {

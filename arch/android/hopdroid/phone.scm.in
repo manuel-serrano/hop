@@ -327,6 +327,7 @@
 	    (let loop ()
 	       (let ((name (read ip)))
 		  (unless (eof-object? name)
+		     (tprint "ANDROID-EVENT-LISTENER name=" name)
 		     (let ((args (read ip)))
 			(set! phone-events '())
 			(unless (or (eof-object? args)
