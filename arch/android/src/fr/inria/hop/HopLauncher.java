@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Dec 31 10:33:12 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 15:56:55 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -35,6 +35,7 @@ import android.provider.*;
 import android.media.AudioManager;
 import android.graphics.drawable.*; 
 import android.graphics.*; 
+import android.content.pm.*;
 
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
@@ -71,13 +72,16 @@ public class HopLauncher extends Activity {
    public static final int MSG_INSTALL_ACTIVITY_NOTFOUND = 104;
    public static final int MSG_INSTALL_CONFIGURED = 105;
    public static final int MSG_INSTALL_PERMISSION = 106;
-   public static final int MSG_INSTALL_HZ_READY = 107;
-   public static final int MSG_INSTALL_HZ_ERROR = 108;
-   public static final int MSG_INSTALL_HZ_NOTFOUND = 109;
+   public static final int MSG_INSTALL_PERMISSION_DENIED = 107;
+   public static final int MSG_INSTALL_HZ_READY = 108;
+   public static final int MSG_INSTALL_HZ_ERROR = 109;
+   public static final int MSG_INSTALL_HZ_NOTFOUND = 110;
 
    public static final int HOP_ACTIVITY_UNINIT = 0;
    public static final int HOP_ACTIVITY_WAITING = 1;
 
+   public static final int PERM_REQUEST_ID = 1966;
+   
    // Command line (am) arguments
    public static String debugCmdArg = null;
    public static String verboseCmdArg = null;
@@ -101,7 +105,7 @@ public class HopLauncher extends Activity {
    final Activity activity = this;
    HopInstaller hopinstaller;
    HopIntenter hopintenter = null;
-   HopIntenter hoppermission = null;
+   HopPermission hoppermission = null;
    HopService hopservice = null;
    Hop hopconf = null;
    int onresume_wifi_policy;
@@ -174,6 +178,12 @@ public class HopLauncher extends Activity {
 
 	       case MSG_INSTALL_PERMISSION:
 		  onPermission();
+		  break;
+
+	       case MSG_INSTALL_PERMISSION_DENIED:
+		  Log.i( HOPLAUNCHER, "==== MSG_INSTALL_PERMISSION_DENIED" );
+		  HopUiUtils.failExit( activity, "Hop", "permission denied",
+				       "permission denied by user" );
 		  break;
 
 	       case MSG_HOP_OUTPUT_AVAILABLE:
@@ -595,6 +605,33 @@ public class HopLauncher extends Activity {
       }
    }
 
+
+   @Override
+   public void onRequestPermissionsResult( int requestCode,
+					   String[] permissions,
+					   int[] grantResults ) {
+      Log.d( HOPLAUNCHER, "onRequestPermissionsResult: " + requestCode );
+
+      switch( requestCode ) {
+	 case PERM_REQUEST_ID:
+            // If request is cancelled, the result arrays are empty.
+	    if( grantResults.length == permissions.length ) {
+	       int i;
+	      
+	       for( i = 0; i < grantResults.length; i++ ) {
+		  if( grantResults[ i ] != PackageManager.PERMISSION_GRANTED ) {
+		     handler.sendEmptyMessage( HopLauncher.MSG_INSTALL_PERMISSION_DENIED );
+		  }
+	       }
+		    
+	       handler.sendEmptyMessage( HopLauncher.MSG_INSTALL_PERMISSION );
+	    }  else {
+	       handler.sendEmptyMessage( HopLauncher.MSG_INSTALL_PERMISSION_DENIED );
+            }
+            return;
+      }
+   }
+   
    private void start( String hopargs ) {
 /*       Log.i( HOPLAUNCHER, "starting Hop Service" );               */
 /*                                                                     */
@@ -664,7 +701,7 @@ public class HopLauncher extends Activity {
    protected void onConfigured() {
       Log.d( HOPLAUNCHER, "===== onConfigured" );
       
-      hoppermission = new HopPermission( activity );
+      hoppermission = new HopPermission( activity, handler );
       hoppermission.exec( hopctx, null );
    }
    

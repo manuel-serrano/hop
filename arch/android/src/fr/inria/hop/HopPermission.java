@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Dec 31 10:12:32 2020                          */
-/*    Last change :  Thu Dec 31 10:40:44 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 15:57:05 2020 (serrano)                */
 /*    Copyright   :  2020 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Asking runtime (dangerous) permissions for Android >= 23         */
@@ -17,6 +17,15 @@ package fr.inria.hop;
 import java.util.*;
 import java.net.*;
 import java.io.*;
+
+import android.os.*;
+import android.util.Log;
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.res.*;
+import android.content.Context;
+import android.content.pm.*;
 
 /*---------------------------------------------------------------------*/
 /*    HopPermission ...                                                */
@@ -37,20 +46,39 @@ public class HopPermission implements HopStage {
    public void exec( Context context, Object arg ) {
       if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ) {
 	 // runtime permissions are only needed for Android SDK >= 23
+	 Log.d( "HopPermission", "checking permissions..." );
+
 	 try {
-	    PackageInfo info = activity.getPackageManager()
+	    PackageManager pm = activity.getPackageManager();
+	    PackageInfo info = pm
 	       .getPackageInfo( context.getPackageName(), PackageManager.GET_PERMISSIONS );
 	    String[] permissions = info.requestedPermissions;
-	    int i;
+	    String[] tmp = new String[ permissions.length ];
+	    int i, j = 0;
 
-	    for( i = 0; i < permissions.length(); i++ ) {
-	       Log.d( "HopPermission", "permission=" + permissions[ i ] );
+	    for( i = 0; i < permissions.length; i++ ) {
+	       Log.d( "HopPermission", "perm=" + permissions[ i ] + " level=" +
+		      pm.getPermissionInfo( permissions[ i ],  0 ).protectionLevel );
+
+	       if( context.checkSelfPermission( permissions[ i ] ) != PackageManager.PERMISSION_GRANTED ) {
+		  if( !activity.shouldShowRequestPermissionRationale( permissions[ i ] ) ) {
+		     tmp[ j++ ] = permissions[ i ];
+		  }
+	       }
 	    }
+	    String[] perms = new String[ j ];
+	    System.arraycopy( tmp, 0, perms, 0, j );
+	    
+	    activity.requestPermissions( perms, HopLauncher.PERM_REQUEST_ID );
 	 } catch (Exception e) {
 	    e.printStackTrace();
 	 }
-
+      } else {
+	 handler.sendEmptyMessage( HopLauncher.MSG_INSTALL_PERMISSION );
       }
-      handler.sendMessage( HopLauncher.MSG_INSTALL_PERMISSION);
+   }
+   
+   public void abort() {
+      Log.d( "HopPermission", "abort" );
    }
 }

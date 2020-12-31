@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Dec 31 10:28:42 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 15:23:53 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -297,6 +297,13 @@ public class HopHzLauncher extends HopLauncher {
    // install handlers
    @Override protected void onInstallUnpacked() {
       Log.d( "HopHzLauncher", "===== onInstallUnpacked" );
+      
+      hoppermission = new HopPermission( activity, handler );
+      hoppermission.exec( hopctx, null );
+   }
+
+   @Override protected void onPermission() {
+      Log.d( "HopHzLauncher", "===== onPermission" );
       
       splashScreen( "splash.html" );
       startHopActivity();

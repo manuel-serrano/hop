@@ -29,7 +29,7 @@ ANDROIDDIR= $(BUILDDIR)/arch/android
 ANDROIDKEYSTORE = $(ANDROIDDIR)/hop.keystore
 ANDROIDTARGET = armv7a-linux-androideabi26
 ANDROIDSDKVERSION = 26
-
+ANDROIDX = core-1.3.2-sources.jar
 ANDROIDLINK = dynamic
 
 #*---------------------------------------------------------------------*/
@@ -629,6 +629,7 @@ $(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR) \
   $(ANDROID_JAVA:%=$(ANDROIDDIR)/src/fr/inria/hop/%)
 	$(RM) -rf $@
 	cp -r $(ANDROIDDIR)/src $@
+	unzip $(ANDROIDDIR)/androidx/$(ANDROIDX) -d $@
 	for p in `find $(ANDROIDBUILDDIR)/src -name '*.java' -print`; do \
            cat $$p \
                | sed -e 's|fr.inria.hop;|fr.inria.$(HOPAPP);|g' \
