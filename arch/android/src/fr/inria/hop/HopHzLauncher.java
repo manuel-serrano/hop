@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Dec 31 08:12:13 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 09:09:38 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -136,30 +136,14 @@ public class HopHzLauncher extends HopLauncher {
       }
    }
 
-   static void copyFile( String source, String target ) {
+   static void writeFile( OutputStream op, String source ) throws IOException {
       final int BUFSIZE = 8192;
-      BufferedOutputStream os = null;
+      FileInputStream is = new FileInputStream( source );
+      byte data[] = new byte[ BUFSIZE ];
+      int count;
 	 
-      try {
-	 FileOutputStream fos = new FileOutputStream( target );
-	 FileInputStream is = new FileInputStream( source );
-         byte data[] = new byte[ BUFSIZE ];
-         int count;
-	 
-	 os = new BufferedOutputStream( fos, BUFSIZE );
-	 
-         while( (count = is.read( data, 0, BUFSIZE) ) != -1 ) {
-	    os.write(data, 0, count);
-         }
-         os.flush();
-      } catch( Throwable _t ) {
-	 ;
-      } finally {
-	 try {
-	    if( os != null ) os.close();
-	 } catch( Throwable _t2 ) {
-	    ;
-	 }
+      while( (count = is.read( data, 0, BUFSIZE) ) != -1 ) {
+	 op.write( data, 0, count );
       }
    }
    
@@ -174,18 +158,52 @@ public class HopHzLauncher extends HopLauncher {
 		  String hophzdir = activity.getApplicationInfo().dataDir + "/assets/hz/";
 		  String path = hophzdir + HopConfig.HOPHZ;
 		  
-		  URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/install?url=" + target + md5sum( target ) );
+		  URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/install" );
 		  Log.i( "HopHzLauncher", "Install URL=" + hzURL.toString() );
 
-		  HopUtils.chmod( hopdir, 555 );
-		  HopUtils.chmod( hophzdir, 555 );
-		  HopUtils.chmod( path, 644 );
 		  HttpURLConnection conn = (HttpURLConnection)hzURL.openConnection();
 
-		  conn.setRequestMethod( "GET" );
+		  final String boundary = "----HZDROID";
+		  
+		  conn.setRequestMethod( "POST" );
+		  conn.setDoOutput( true );
+		  conn.setUseCaches( false );
+		  
+		  conn.setRequestProperty( "Content-Type", "multipart/form-data; boundary=" + boundary );
+		  
+		  try {
+		     OutputStream op = conn.getOutputStream();
 
-		  conn.setConnectTimeout( 500 );
-	 
+		     op.write( "\r\n".getBytes() );
+
+		     op.write( "--".getBytes() );
+		     op.write( boundary.getBytes() );
+		     op.write( "\r\n".getBytes() );
+		     op.write( "Content-Disposition: form-data; name=\"url\"; filename=\"".getBytes() );
+		     op.write( HopConfig.HOPHZ.getBytes() );
+		     op.write( "\"".getBytes() );
+		     op.write( "Content-Type: text/plain\r\n".getBytes() );
+		     op.write( "\r\n".getBytes() );
+		     writeFile( op, path );
+		     op.write( "\r\n".getBytes() );
+		     
+		     op.write( "--".getBytes() );
+		     op.write( boundary.getBytes() );
+		     op.write( "\r\n".getBytes() );
+		     op.write( "Content-Disposition: form-data; name=\"checksum\"\r\n".getBytes() );
+		     op.write( "\r\n".getBytes() );
+		     op.write( md5sum( path ).toString().getBytes() );
+		     op.write( "\r\n".getBytes() );
+		     
+		     op.write( "--".getBytes() );
+		     op.write( boundary.getBytes() );
+		     op.write( "--\r\n".getBytes() );
+
+		     op.flush();
+		     op.close();
+		  }
+		     
+		     
 		  int status = conn.getResponseCode();
 		  conn.disconnect();
 
