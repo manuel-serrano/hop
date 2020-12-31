@@ -78,7 +78,6 @@
 ;*---------------------------------------------------------------------*/
 (define-service (hz/install #!key url checksum)
    (let ((req (current-request)))
-      (tprint "req=" req)
       (if (not (authorized-service? req 'admin))
 	  (access-denied req)
 	  (begin

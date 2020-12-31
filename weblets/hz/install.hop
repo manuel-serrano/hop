@@ -79,7 +79,10 @@
 ;*---------------------------------------------------------------------*/
 (define (hz-download-url url #!key auth weblet override checksum)
 
-   (define (download url name version path sum)
+   (define (local-url? url)
+      (not (pregexp-match "[a-z]+://" url)))
+   
+   (define (download-remote url name version path sum)
       (let ((header (cond
 		       ((string? auth)
 			(list (list authorization: auth)))
@@ -113,6 +116,20 @@
 			       (list status url msg)))))
 	    :timeout (hz-connection-timeout)
 	    :header header)))
+
+   (define (download-local url name version path sum)
+      ;; copy th efile
+      (if (copy-file url path)
+	  (with-output-to-file sum
+	     (lambda ()
+		(display (md5sum-file path))
+		path))
+	  (list -1 url "Cannot copy file")))
+
+   (define (download url name version path sum)
+      (if (local-url? url)
+	  (download-local url name version path sum)
+	  (download-remote url name version path sum)))
 
    (define (checksum? checksum hzsum)
       (or (not checksum)
