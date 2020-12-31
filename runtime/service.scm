@@ -551,17 +551,14 @@
    (with-access::http-request req (content-length header socket transfer-encoding)
       (let* ((pi (socket-input socket))
 	     (ctype (http-header-field header content-type:)))
-	 (tprint "CTYPE=" ctype)
 	 (cond
 	    ((multipart-boundary ctype)
 	     =>
 	     (lambda (boundary)
-		(tprint "BOUNDARY=" boundary)
 		(with-access::hop-service svc (ctx)
 		   (let ((args (multipart->list
 				  pi content-length boundary
 				  transfer-encoding)))
-		      (tprint "args=" args)
 		      (cond
 			 ((hop-multipart? args)
 			  ;; hop-multipart is used for fix arity services.
