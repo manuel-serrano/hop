@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul 10 08:08:45 2016                          */
-/*    Last change :  Tue Dec 29 06:59:49 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 08:09:38 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop configuration                                                */
@@ -64,6 +64,9 @@ public class HopConfig {
    static boolean PLUGINPREFS;
    static boolean PLUGININTENT;
 
+   static String HOME;
+   static String RCDIR;
+
    static void init( Context context ) {
       final Resources res = context.getResources();
       
@@ -103,6 +106,9 @@ public class HopConfig {
       PLUGINCALL = res.getBoolean( R.bool.plugincall );
       PLUGINPREFS = res.getBoolean( R.bool.pluginprefs );
       PLUGININTENT = res.getBoolean( R.bool.pluginintent );
+
+      HOME = context.getExternalFilesDir( null ).getAbsolutePath();
+      RCDIR = context.getExternalFilesDir( null ).getAbsolutePath() + "rcdir";
    }
 
    HopConfig() {

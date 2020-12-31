@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  8 15:35:26 2010                          */
-/*    Last change :  Thu Dec 24 18:12:05 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 08:11:06 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Configuring Hop                                                  */
@@ -33,29 +33,26 @@ import java.net.*;
 public class HopConfigurer implements HopStage {
    // instance variables
    Handler handler;
-   File home;
    Activity activity;
-   
    Boolean abort = false;
 
    // constructor
-   public HopConfigurer( Activity a, Handler hdl, File hme ) {
+   public HopConfigurer( Activity a, Handler hdl ) {
       super();
 
       handler = hdl;
-      home = hme;
       activity = a;
    }
 
    // is hop already configured
-   public static boolean configured( Context context, File home ) {
+   public static boolean configured( Context context ) {
       final Resources res = context.getResources();
       String app = res.getString( R.string.hopapp );
       
-      File path = new File( home, ".config/" + app + "/wizard.hop" );
+      File path = new File( HopConfig.RCDIR, "/wizard.hop" );
       if( path.exists() ) return true;
       
-      path = new File( home, ".config/" + app + "/hoprc.js" );
+      path = new File( HopConfig.RCDIR, "hoprc.js" );
       return( path.exists() );
    }
 
@@ -63,14 +60,15 @@ public class HopConfigurer implements HopStage {
    void hopapprc( Context context ) throws Exception {
       final Resources res = context.getResources();
       String app = res.getString( R.string.hopapp );
-      File rcdir = new File( home, ".config/" + app );
+      File rcdir = new File( HopConfig.RCDIR );
 
       Log.i( "HopConfigurer", "hopapprc rcdir=" + rcdir );
       synchronized( abort ) {
 	 if( !abort ) {
 	    if( !rcdir.isDirectory() ) {
-	       Log.i( "HopConfigurer", "mkdir " +  rcdir );
-	       rcdir.mkdirs();
+	       if( !rcdir.mkdirs() ) {
+		  Log.e( "HopConfigurer", "Cannot create \"rcdir\" directory \"" + rcdir + "\"" );
+	       }
 	    }
 
 	    // wizard.hop
@@ -133,9 +131,9 @@ public class HopConfigurer implements HopStage {
    }
       
    public void exec( Context context, Object arg ) {
-      Log.d( "HopConfigurer", "exec configured(" + home + ")=" + configured( context, home ) );
+      Log.d( "HopConfigurer", "exec configured(" + HopConfig.RCDIR + ")=" + configured( context ) );
 
-      if( !configured( context, home ) ) {
+      if( !configured( context ) ) {
 	 try {
 	    this.hopapprc( context );
 	    handler.sendEmptyMessage( HopLauncher.MSG_INSTALL_CONFIGURED );

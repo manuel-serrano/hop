@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Tue Dec 29 19:06:41 2020 (serrano)                */
+/*    Last change :  Wed Dec 30 08:55:52 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -314,7 +314,7 @@ public class HopLauncher extends Activity {
 			     
       hopctx = getApplicationContext();
       HopConfig.init( hopctx );
-
+      
       webview = HopUiUtils.initUI( this );
       
       Hop.setHopActivityParams( activity );
@@ -628,7 +628,7 @@ public class HopLauncher extends Activity {
       Log.d( HOPLAUNCHER, "===== onInstallUnpacked" );
       
       splashScreen( "splash.html" );
-      new HopConfigurer( activity, handler, Hop.HOME() ).exec( hopctx, null );
+      new HopConfigurer( activity, handler ).exec( hopctx, null );
    }
 
    protected void onInstallActivityReady() {

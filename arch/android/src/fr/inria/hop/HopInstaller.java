@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Thu Dec 24 18:12:15 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 08:12:55 2020 (serrano)                */
 /*    Copyright   :  2010-20 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
@@ -270,7 +270,7 @@ public class HopInstaller implements HopStage {
 	    op.write( ";; generated file (HopInstaller), don't edit\n".getBytes() );
 	    op.write( "\"".getBytes() );
 	    // MS CARE
-	    op.write( Hop.HOME().getAbsolutePath().getBytes() );
+	    op.write( HopConfig.HOME.getBytes() );
 	    op.write( "\"\n".getBytes() );
 	    op.flush();
 	    op.close();

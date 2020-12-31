@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Tue Dec 29 07:01:31 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 08:14:14 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -36,7 +36,6 @@ import java.lang.String;
 /*---------------------------------------------------------------------*/
 public class Hop extends Thread {
    // global constants
-   private static File _HOME = null;
    final static String HOP = "/bin/hop";
    final static String HOPARGS = "--no-color";
    final static String SHELL = "/system/bin/sh";
@@ -54,7 +53,6 @@ public class Hop extends Thread {
 
    // see setHopActivityParams
    static String port;
-   static String rcdir;
    static String args;
 
    // instance variables
@@ -89,42 +87,9 @@ public class Hop extends Thread {
       Resources res = activity.getResources();
       SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences( activity );
       port = getPrefString( sp, HopConfig.APP + "-port", HopConfig.PORT );
-      rcdir = HOME().getAbsolutePath() + "/"
-	 + getPrefString( sp, HopConfig.APP + "-rcdir", ".config/" + HopConfig.APP );
       args = getPrefString( sp, HopConfig.ARGS, "" );
-      rcdir = activity.getApplicationInfo().dataDir + "/assets/rcdir";
-      rcdir = HOME().getAbsolutePath() + "/.config/" + HopConfig.APP;
    }
    
-   // HOME
-   public static File HOME() {
-      if( _HOME == null ) {
-	 // try to find an actual directory
-	 File sdcard = new File( "/mnt/sdcard" );
-	 if( sdcard.exists() ) {
-	    Log.d( "Hop", "HOME, /mnt/sdcard exists..." );
-	    _HOME = new File( sdcard, "home" );
-
-	    if( !_HOME.canWrite() ) {
-	       _HOME = null;
-	    }
-		   
-	 }
-
-	 if( _HOME == null ) {
-	    // fallback
-	    _HOME = new File( Environment.getExternalStorageDirectory(), "home" );
-	 }
-      }
-      
-      return _HOME;
-   }
-      
-   // is hop already configured
-   public boolean configured() {
-      return HOME().exists();
-   }
-
    // run hop
    public void run() {
       final int[] pid = new int[ 1 ];
@@ -193,7 +158,7 @@ public class Hop extends Thread {
 	    ahost.wait();
 	 }
 
-	 String cmd = "export HOME=" + HOME().getAbsolutePath() + "; "
+	 String cmd = "export HOME=" + HopConfig.HOME + "; "
 	    + "export LD_LIBRARY_PATH="
 	    + root + "/lib/bigloo/" + HopConfig.BIGLOORELEASE + ":"
 	    + root + "/lib/hop/" + HopConfig.HOPRELEASE + ":$LD_LIBRARY_PATH;"
@@ -204,7 +169,7 @@ public class Hop extends Thread {
 	    + (zeroconf ? " -z" : " --no-zeroconf")
 	    + (webdav ? " -d" : "")
 	    + (jobs ? " --jobs" : " --no-jobs")
-	    + " --rc-dir " + rcdir
+	    + " --rc-dir " + HopConfig.RCDIR
 	    + " --acknowledge " + ahost[ 0 ]
 	    + " --so-policy none"
 	    + " "

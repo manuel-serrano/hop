@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Wed Dec 30 06:43:39 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 08:12:13 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -135,6 +135,33 @@ public class HopHzLauncher extends HopLauncher {
 	 return "";
       }
    }
+
+   static void copyFile( String source, String target ) {
+      final int BUFSIZE = 8192;
+      BufferedOutputStream os = null;
+	 
+      try {
+	 FileOutputStream fos = new FileOutputStream( target );
+	 FileInputStream is = new FileInputStream( source );
+         byte data[] = new byte[ BUFSIZE ];
+         int count;
+	 
+	 os = new BufferedOutputStream( fos, BUFSIZE );
+	 
+         while( (count = is.read( data, 0, BUFSIZE) ) != -1 ) {
+	    os.write(data, 0, count);
+         }
+         os.flush();
+      } catch( Throwable _t ) {
+	 ;
+      } finally {
+	 try {
+	    if( os != null ) os.close();
+	 } catch( Throwable _t2 ) {
+	    ;
+	 }
+      }
+   }
    
    // request the running Hop server to install the HZ package
    private void installHopHz() {
@@ -146,9 +173,8 @@ public class HopHzLauncher extends HopLauncher {
 		  String hopdir = activity.getApplicationInfo().dataDir + "/assets";
 		  String hophzdir = activity.getApplicationInfo().dataDir + "/assets/hz/";
 		  String path = hophzdir + HopConfig.HOPHZ;
-		  MessageDigest md = MessageDigest.getInstance( "MD5" );
 		  
-		  URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/install?url=" + path + md5sum( path ) );
+		  URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/install?url=" + target + md5sum( target ) );
 		  Log.i( "HopHzLauncher", "Install URL=" + hzURL.toString() );
 
 		  HopUtils.chmod( hopdir, 555 );

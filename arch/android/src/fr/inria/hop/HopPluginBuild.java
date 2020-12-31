@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Nov 30 17:35:50 2010                          */
-/*    Last change :  Sun Dec 27 15:00:27 2020 (serrano)                */
+/*    Last change :  Wed Dec 30 08:54:36 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Get the BUILD info                                               */
@@ -75,7 +75,7 @@ public class HopPluginBuild extends HopPlugin {
          // home
 	 case (byte)'h':
 	    op.write( "\"".getBytes() );
-	    op.write( Hop.HOME().getAbsolutePath().getBytes() );
+	    op.write( HopConfig.HOME.getBytes() );
 	    op.write( "\"".getBytes() );
 	    return;
 		      

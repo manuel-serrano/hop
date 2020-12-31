@@ -9,6 +9,7 @@
                  android:persistent="true"
                  android:theme="@style/hopstyle"
                  android:debuggable="@HOPDEBUG@"
+		 android:requestLegacyExternalStorage="true"
                  android:icon="@drawable/logo">
 
         <activity android:name="fr.inria.@HOPAPP@.HopLauncher"
