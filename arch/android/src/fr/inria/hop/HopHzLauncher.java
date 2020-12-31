@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Dec 31 09:11:54 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 10:28:42 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
@@ -51,6 +51,8 @@ import java.security.*;
 /*             | MSG_INSTALL_ACTIVITY_ERROR                            */
 /*             | MSG_INSTALL_ACTIVITY_NOT_FOUND                        */
 /*      MSG_INSTALL_ACTIVITY_READY:			               */
+/*          HopPermission                                              */
+/*      MSG_INSTALL_PERMISSION:                                        */
 /*          HopIntenter                                                */
 /*          HopService                                                 */
 /*          HopDroid                                                   */
@@ -159,7 +161,6 @@ public class HopHzLauncher extends HopLauncher {
 		  String path = hophzdir + HopConfig.HOPHZ;
 		  
 		  URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/install" );
-		  Log.i( "HopHzLauncher", "Install URL=" + hzURL.toString() );
 
 		  HttpURLConnection conn = (HttpURLConnection)hzURL.openConnection();
 
@@ -174,14 +175,14 @@ public class HopHzLauncher extends HopLauncher {
 		  try {
 		     OutputStream op = conn.getOutputStream();
 
-		     op.write( "\r\n".getBytes() );
+		     // op.write( "\r\n".getBytes() );
 
 		     op.write( "--".getBytes() );
 		     op.write( boundary.getBytes() );
 		     op.write( "\r\n".getBytes() );
 		     op.write( "Content-Disposition: form-data; name=\"url\"; filename=\"".getBytes() );
 		     op.write( HopConfig.HOPHZ.getBytes() );
-		     op.write( "\"".getBytes() );
+		     op.write( "\"\r\n".getBytes() );
 		     op.write( "Content-Type: text/plain\r\n".getBytes() );
 		     op.write( "\r\n".getBytes() );
 		     writeFile( op, path );
@@ -210,10 +211,11 @@ public class HopHzLauncher extends HopLauncher {
 		  int status = conn.getResponseCode();
 		  conn.disconnect();
 
+		  Log.d( "HopHzLauncher", "hz/install status=" + status );
+		  
 		  if( status == HttpURLConnection.HTTP_OK ) {
 		     handler.sendEmptyMessage( MSG_INSTALL_HZ_READY );
 		  } else {
-		     Log.d( "HopHzLauncher", "hz/install status=" + status );
 		     handler.sendEmptyMessage( MSG_INSTALL_HZ_ERROR );
 		  }
 	       } catch( Exception e ) {
@@ -285,11 +287,11 @@ public class HopHzLauncher extends HopLauncher {
    void raiseHzActivity() {
       Log.i( "HopHzLauncher", "raiseHzActivity" );
       
-      Intent i = new Intent( activity.getApplicationContext(), HopHzLauncher.class );
-      i.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );
-      i.addFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
-      
-      startActivity( i );      
+/*       Intent i = new Intent( activity.getApplicationContext(), HopHzLauncher.class ); */
+/*       i.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );                 */
+/*       i.addFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );          */
+/*                                                                     */
+/*       startActivity( i );                                           */
    }
    
    // install handlers

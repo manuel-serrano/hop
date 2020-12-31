@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Wed Dec 30 08:55:52 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 10:33:12 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -56,23 +56,24 @@ public class HopLauncher extends Activity {
    public static final int MSG_REBIND_HOP_SERVICE = 12;
    public static final int MSG_STATE_INSTALL = 13;
    public static final int MSG_STATE_CONFIGURE = 14;
-   public static final int MSG_PING = 16;
-   public static final int MSG_HOP_START = 17;
-   public static final int MSG_HOPDROID_START = 28;
-   public static final int MSG_HOPDROID_CONNECT = 29;
-   public static final int MSG_HOPDROID_FAIL = 18;
-   public static final int MSG_HOP_CANNOT = 19;
-   public static final int MSG_UNPACKED = 20;
+   public static final int MSG_PING = 15;
+   public static final int MSG_HOP_START = 16;
+   public static final int MSG_HOPDROID_START = 17;
+   public static final int MSG_HOPDROID_CONNECT = 18;
+   public static final int MSG_HOPDROID_FAIL = 19;
+   public static final int MSG_HOP_CANNOT = 20;
+   public static final int MSG_UNPACKED = 21;
 
-   public static final int MSG_INSTALL_NEXT = 15;
-   public static final int MSG_INSTALL_UNPACKED = 20;
-   public static final int MSG_INSTALL_ACTIVITY_READY = 21;
-   public static final int MSG_INSTALL_ACTIVITY_ERROR = 22;
-   public static final int MSG_INSTALL_ACTIVITY_NOTFOUND = 23;
-   public static final int MSG_INSTALL_CONFIGURED = 24;
-   public static final int MSG_INSTALL_HZ_READY = 25;
-   public static final int MSG_INSTALL_HZ_ERROR = 26;
-   public static final int MSG_INSTALL_HZ_NOTFOUND = 27;
+   public static final int MSG_INSTALL_NEXT = 100;
+   public static final int MSG_INSTALL_UNPACKED = 101;
+   public static final int MSG_INSTALL_ACTIVITY_READY = 102;
+   public static final int MSG_INSTALL_ACTIVITY_ERROR = 103;
+   public static final int MSG_INSTALL_ACTIVITY_NOTFOUND = 104;
+   public static final int MSG_INSTALL_CONFIGURED = 105;
+   public static final int MSG_INSTALL_PERMISSION = 106;
+   public static final int MSG_INSTALL_HZ_READY = 107;
+   public static final int MSG_INSTALL_HZ_ERROR = 108;
+   public static final int MSG_INSTALL_HZ_NOTFOUND = 109;
 
    public static final int HOP_ACTIVITY_UNINIT = 0;
    public static final int HOP_ACTIVITY_WAITING = 1;
@@ -100,6 +101,7 @@ public class HopLauncher extends Activity {
    final Activity activity = this;
    HopInstaller hopinstaller;
    HopIntenter hopintenter = null;
+   HopIntenter hoppermission = null;
    HopService hopservice = null;
    Hop hopconf = null;
    int onresume_wifi_policy;
@@ -168,6 +170,10 @@ public class HopLauncher extends Activity {
 		  
 	       case MSG_INSTALL_CONFIGURED:
 		  onConfigured();
+		  break;
+
+	       case MSG_INSTALL_PERMISSION:
+		  onPermission();
 		  break;
 
 	       case MSG_HOP_OUTPUT_AVAILABLE:
@@ -657,6 +663,13 @@ public class HopLauncher extends Activity {
    
    protected void onConfigured() {
       Log.d( HOPLAUNCHER, "===== onConfigured" );
+      
+      hoppermission = new HopPermission( activity );
+      hoppermission.exec( hopctx, null );
+   }
+   
+   protected void onPermission() {
+      Log.d( HOPLAUNCHER, "===== onPermission" );
       
       hopintenter = new HopIntenter( activity, handler, queue );
       hopintenter.exec( hopctx, HopService.class );

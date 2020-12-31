@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Wed Dec 30 07:11:49 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 09:45:03 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -517,7 +517,7 @@ public class HopDroid extends Thread {
       eventclient = eventserv.accept();
       final InputStream ip = eventclient.getInputStream();
 
-      Log.i( HOPDROID, "serverEvent connected eventserv=" +
+      Log.i( HOPDROID, "serverEvent (" + HopConfig.APP + ") connected eventserv=" +
 	     eventserv + " client=" + eventclient );
 
       // initialize the eventable

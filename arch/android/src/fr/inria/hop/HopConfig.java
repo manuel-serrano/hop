@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul 10 08:08:45 2016                          */
-/*    Last change :  Thu Dec 31 08:09:38 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 09:19:52 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop configuration                                                */
@@ -108,7 +108,7 @@ public class HopConfig {
       PLUGININTENT = res.getBoolean( R.bool.pluginintent );
 
       HOME = context.getExternalFilesDir( null ).getAbsolutePath();
-      RCDIR = context.getExternalFilesDir( null ).getAbsolutePath() + "rcdir";
+      RCDIR = context.getExternalFilesDir( null ).getAbsolutePath() + "/rcdir";
    }
 
    HopConfig() {
