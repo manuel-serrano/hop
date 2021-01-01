@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Dec 31 16:25:35 2020 (serrano)                */
-/*    Copyright   :  2010-20 Manuel Serrano                            */
+/*    Last change :  Fri Jan  1 06:33:04 2021 (serrano)                */
+/*    Copyright   :  2010-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
 /*=====================================================================*/
@@ -106,6 +106,7 @@ public class HopLauncher extends Activity {
    HopInstaller hopinstaller;
    HopIntenter hopintenter = null;
    HopPermission hoppermission = null;
+   HopReceiver hopreceiver = null;
    HopService hopservice = null;
    Hop hopconf = null;
    int onresume_wifi_policy;
@@ -720,6 +721,9 @@ public class HopLauncher extends Activity {
    
    protected void onHopDroidStart() {
       Log.i( HOPLAUNCHER, "===== onHopDroidStart" );
+      
+      hopreceiver = new HopReceiver( activity, handler );
+      hopreceiver.exec( hopctx, HopService.class );
    }
    
    protected void onHopDroidConnect() {
