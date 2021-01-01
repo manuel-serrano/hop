@@ -29,7 +29,7 @@ ANDROIDDIR= $(BUILDDIR)/arch/android
 ANDROIDKEYSTORE = $(ANDROIDDIR)/hop.keystore
 ANDROIDTARGET = armv7a-linux-androideabi26
 ANDROIDSDKVERSION = 26
-ANDROIDX = core-1.3.2-sources.jar
+ANDROIDX = 
 ANDROIDLINK = dynamic
 
 #*---------------------------------------------------------------------*/

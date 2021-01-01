@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Fri Jan  1 06:31:48 2021 (serrano)                */
+/*    Last change :  Fri Jan  1 06:38:57 2021 (serrano)                */
 /*    Copyright   :  2010-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    APP AppRemoved receiver                                          */
@@ -14,8 +14,11 @@
 /*---------------------------------------------------------------------*/
 package fr.inria.hop;
  
+import android.os.*;
 import android.content.*;
 import android.util.Log;
+import android.app.Activity;
+import android.content.Context;
 
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
@@ -39,13 +42,20 @@ public class HopAppRemoved extends BroadcastReceiver {
       }
 
       @Override
-      protected String doInBackground(String... strings) {
+      protected String doInBackground( String... strings ) {
 	 String pkgname = intent.getData().getEncodedSchemeSpecificPart();
 
 	 synchronized( pkgname ) {
 	    HopHzLauncher.removeHopHz( pkgname );
-	    pkgname.wait();
-	    Log.d( "HopAppRemoved", "receiver complete" );
+	    try {
+	       pkgname.wait();
+	       Log.d( "HopAppRemoved", "receiver complete" );
+	       return pkgname + " removed";
+	    } catch( Throwable e ) {
+	       Log.d( "HopAppRemoved", "receiver error:" + e );
+	       e.printStackTrace();
+	       return pkgname + " error";
+	    }
 	 }
       }
 
@@ -55,7 +65,5 @@ public class HopAppRemoved extends BroadcastReceiver {
 	 // Must call finish() so the BroadcastReceiver can be recycled.
 	 pendingResult.finish();
       }
-   }
-
    }
 }
