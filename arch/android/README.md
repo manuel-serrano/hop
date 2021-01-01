@@ -392,6 +392,7 @@ Note: the simulator only supports _one_ phone object at a time. That
 is, the simulator will only let you access the state of the last created
 simulated phone.
 
+
 Debugging
 ---------
 
@@ -427,3 +428,27 @@ as follows:
     $ adb forward tcp:$port tcp:$port
     $ gdb app_process
     (gdb) target remote :$port
+
+
+Androidx
+--------
+
+Androidx is a library of extra features that are not pre-installed on
+the phone. The `androidx` classes then have to be shipped with applications.
+The `jar` files can be found on the official Google Maven
+
+  [Repository](https://maven.google.com/web/index.html)
+  
+For instance, `androidx` core jar file is 
+
+  [core-1.3.2](https://dl.google.com/android/maven2/androidx/core/core/1.3.2/core-1.3.2-sources.jar)
+  
+To use this set of classes in an application, download the jar file 
+and add the following declaration to the `Makefile.config` of your
+application
+
+  ANDROIDX=<the-location-of-the-androidx-jar-file>
+  
+For instance  
+
+  ANDROIDX=/home/myproject/hopapp/androidx/core-1.3.2-sources.jar

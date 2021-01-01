@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Thu Dec 31 15:56:55 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 16:25:35 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -610,7 +610,10 @@ public class HopLauncher extends Activity {
    public void onRequestPermissionsResult( int requestCode,
 					   String[] permissions,
 					   int[] grantResults ) {
-      Log.d( HOPLAUNCHER, "onRequestPermissionsResult: " + requestCode );
+      Log.d( HOPLAUNCHER, "onRequestPermissionsResult: "
+	     + requestCode
+	     + " perms=" + permissions.length
+	     + " grants=" + grantResults.length );
 
       switch( requestCode ) {
 	 case PERM_REQUEST_ID:
@@ -619,8 +622,11 @@ public class HopLauncher extends Activity {
 	       int i;
 	      
 	       for( i = 0; i < grantResults.length; i++ ) {
-		  if( grantResults[ i ] != PackageManager.PERMISSION_GRANTED ) {
+		  if( grantResults[ i ] == PackageManager.PERMISSION_DENIED ) {
+		     Log.d( HOPLAUNCHER, "permission denied: " + permissions[ i ] );
+		     
 		     handler.sendEmptyMessage( HopLauncher.MSG_INSTALL_PERMISSION_DENIED );
+		     break;
 		  }
 	       }
 		    

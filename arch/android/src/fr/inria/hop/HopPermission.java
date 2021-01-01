@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Dec 31 10:12:32 2020                          */
-/*    Last change :  Thu Dec 31 15:57:05 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 16:42:56 2020 (serrano)                */
 /*    Copyright   :  2020 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Asking runtime (dangerous) permissions for Android >= 23         */
@@ -57,15 +57,21 @@ public class HopPermission implements HopStage {
 	    int i, j = 0;
 
 	    for( i = 0; i < permissions.length; i++ ) {
-	       Log.d( "HopPermission", "perm=" + permissions[ i ] + " level=" +
-		      pm.getPermissionInfo( permissions[ i ],  0 ).protectionLevel );
+	       Log.d( "HopPermission", "perm="
+		      + permissions[ i ] + " level="
+		      + pm.getPermissionInfo( permissions[ i ],  0 ).protectionLevel
+		      + " granted="
+		      + ((context.checkSelfPermission( permissions[ i ] ) == PackageManager.PERMISSION_GRANTED) ? "true" : "false") );
 
-	       if( context.checkSelfPermission( permissions[ i ] ) != PackageManager.PERMISSION_GRANTED ) {
-		  if( !activity.shouldShowRequestPermissionRationale( permissions[ i ] ) ) {
-		     tmp[ j++ ] = permissions[ i ];
+	       if( pm.getPermissionInfo( permissions[ i ],  0 ).protectionLevel == PermissionInfo.PROTECTION_DANGEROUS ) {
+		  if( context.checkSelfPermission( permissions[ i ] ) != PackageManager.PERMISSION_GRANTED ) {
+		     if( true || !activity.shouldShowRequestPermissionRationale( permissions[ i ] ) ) {
+			tmp[ j++ ] = permissions[ i ];
+		     }
 		  }
 	       }
 	    }
+	    
 	    String[] perms = new String[ j ];
 	    System.arraycopy( tmp, 0, perms, 0, j );
 	    

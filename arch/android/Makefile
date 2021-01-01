@@ -4,7 +4,7 @@
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
 #*    Last change :  Wed May 27 16:19:08 2020 (serrano)                */
-#*    Copyright   :  2010-20 Manuel Serrano                            */
+#*    Copyright   :  2010-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
 #*    -------------------------------------------------------------    */
@@ -629,7 +629,9 @@ $(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR) \
   $(ANDROID_JAVA:%=$(ANDROIDDIR)/src/fr/inria/hop/%)
 	$(RM) -rf $@
 	cp -r $(ANDROIDDIR)/src $@
-	unzip $(ANDROIDDIR)/androidx/$(ANDROIDX) -d $@
+	if [ "$(ANDROIDX) " != " " ]; then \
+	  unzip $(ANDROIDDIR)/androidx/$(ANDROIDX) -d $@; \
+        fi
 	for p in `find $(ANDROIDBUILDDIR)/src -name '*.java' -print`; do \
            cat $$p \
                | sed -e 's|fr.inria.hop;|fr.inria.$(HOPAPP);|g' \
