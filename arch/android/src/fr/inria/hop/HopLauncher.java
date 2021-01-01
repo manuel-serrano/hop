@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Fri Jan  1 06:33:04 2021 (serrano)                */
+/*    Last change :  Fri Jan  1 07:28:36 2021 (serrano)                */
 /*    Copyright   :  2010-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher                                                     */
@@ -106,8 +106,7 @@ public class HopLauncher extends Activity {
    HopInstaller hopinstaller;
    HopIntenter hopintenter = null;
    HopPermission hoppermission = null;
-   HopReceiver hopreceiver = null;
-   HopService hopservice = null;
+   HopService hopservice = null; // THIS IS WRONG hopservice is never set!
    Hop hopconf = null;
    int onresume_wifi_policy;
    Context hopctx;
@@ -268,7 +267,7 @@ public class HopLauncher extends Activity {
 	       case MSG_KILL_HOP_SERVICE:
 		  Log.i( HOPLAUNCHER, "===== MSG_KILL_HOP_SERVICE" );
 		  hop_resuscitate = false;
-		  hopservice.hopdroid.kill();
+		  if( hopservice != null ) hopservice.hopdroid.kill();
 		  break;
 
 	       case MSG_PING:
@@ -415,7 +414,7 @@ public class HopLauncher extends Activity {
       super.onStop();
       
       // mark the activity paused
-      hopservice.hopdroid.activity = null;
+      if( hopservice != null ) hopservice.hopdroid.activity = null;
       
       Log.d( HOPLAUNCHER, "onStop" );
    }
@@ -721,9 +720,6 @@ public class HopLauncher extends Activity {
    
    protected void onHopDroidStart() {
       Log.i( HOPLAUNCHER, "===== onHopDroidStart" );
-      
-      hopreceiver = new HopReceiver( activity, handler );
-      hopreceiver.exec( hopctx, HopService.class );
    }
    
    protected void onHopDroidConnect() {

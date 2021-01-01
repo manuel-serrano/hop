@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Dec 31 10:12:32 2020                          */
-/*    Last change :  Thu Dec 31 16:42:56 2020 (serrano)                */
-/*    Copyright   :  2020 Manuel Serrano                               */
+/*    Last change :  Fri Jan  1 07:01:31 2021 (serrano)                */
+/*    Copyright   :  2020-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Asking runtime (dangerous) permissions for Android >= 23         */
 /*=====================================================================*/
@@ -71,11 +71,15 @@ public class HopPermission implements HopStage {
 		  }
 	       }
 	    }
+
+	    if( j > 0 ) {
+	       String[] perms = new String[ j ];
+	       System.arraycopy( tmp, 0, perms, 0, j );
 	    
-	    String[] perms = new String[ j ];
-	    System.arraycopy( tmp, 0, perms, 0, j );
-	    
-	    activity.requestPermissions( perms, HopLauncher.PERM_REQUEST_ID );
+	       activity.requestPermissions( perms, HopLauncher.PERM_REQUEST_ID );
+	    } else {
+	       handler.sendEmptyMessage( HopLauncher.MSG_INSTALL_PERMISSION );
+	    }
 	 } catch (Exception e) {
 	    e.printStackTrace();
 	 }
