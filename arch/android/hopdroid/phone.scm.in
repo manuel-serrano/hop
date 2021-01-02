@@ -41,7 +41,7 @@
 
 	   (class androidevent::event)
 
-	   (android-start-activity ::androidphone ::bstring ::bstring . opts)
+	   (android-start-intent ::androidphone ::bstring ::bstring . opts)
 	   
 	   (android-load-plugin::int ::androidphone ::bstring)
 	   (android-send-command ::androidphone ::int . args)
