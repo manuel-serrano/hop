@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
 ;*    Last change :  Wed May 20 17:16:20 2020 (serrano)                */
-;*    Copyright   :  2010-20 Manuel Serrano                            */
+;*    Copyright   :  2010-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
 ;*=====================================================================*/
@@ -41,7 +41,7 @@
 
 	   (class androidevent::event)
 
-	   (android-start-intent ::androidphone ::bstring ::bstring . opts)
+	   (android-start-activity ::androidphone ::bstring ::bstring . opts)
 	   
 	   (android-load-plugin::int ::androidphone ::bstring)
 	   (android-send-command ::androidphone ::int . args)
@@ -633,9 +633,9 @@
       (android-send-command p initid "reboot")))
 
 ;*---------------------------------------------------------------------*/
-;*    android-start-intent ...                                         */
+;*    android-start-activity ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (android-start-intent p::androidphone action::bstring uri::bstring . opts)
+(define (android-start-activity p::androidphone action::bstring uri::bstring . opts)
    (unless intent-plugin
       (set! intent-plugin (android-load-plugin p "intent")))
    (apply android-send-command/result p intent-plugin
