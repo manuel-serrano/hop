@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
 ;*    Last change :  Fri Jun  5 07:29:56 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
 ;*=====================================================================*/
@@ -705,8 +705,7 @@
       ;; see constant.scm
       (epairify loc
 	 `(js-strings->cmap
-	     (vector ,@(map symbol->string (vector->list val)))
-	     %this))))
+	     (vector ,@(map symbol->string (vector->list val)))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SNull ...                                         */

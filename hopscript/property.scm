@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
 ;*    Last change :  Fri Jun 12 12:20:52 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
 ;*    deleting).                                                       */
@@ -67,7 +67,7 @@
 	   (inline property-name::JsStringLiteral ::struct)
 
 	   (js-names->cmap::JsConstructMap ::vector ::bool)
-	   (js-strings->cmap::JsConstructMap ::vector ::JsGlobalObject)
+	   (js-strings->cmap::JsConstructMap ::vector)
 	   (js-object-literal-init! ::JsObject)
 	   (js-object-literal-spread-assign! ::JsObject ::obj ::JsGlobalObject)
 
@@ -1169,7 +1169,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Used by j2sscheme to create literal objects.                     */
 ;*---------------------------------------------------------------------*/
-(define (js-strings->cmap names %this)
+(define (js-strings->cmap names)
    (let ((len (vector-length names)))
       (instantiate::JsConstructMap
 	 (inline #t)

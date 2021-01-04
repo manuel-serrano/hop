@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
 ;*    Last change :  Thu Apr 30 10:47:02 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
 ;*=====================================================================*/
@@ -156,7 +156,7 @@
 			 ((2)
 			  ;; a literal cmap
 			  (let ((props (vector-ref el 1)))
-			     (js-strings->cmap props %this)))
+			     (js-strings->cmap props)))
 			 ((3 5)
 			  ;; an inlined regexp
 			  (constant-inline-regexp el))
