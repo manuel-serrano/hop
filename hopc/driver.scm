@@ -232,6 +232,7 @@
 		  :plugins-loader (hopc-plugins-loader)
 		  :libs-dir (hopc-libs-dir)
 		  :debug (bigloo-debug)
+		  :warning (bigloo-warning)
 		  :node-modules-directory (hopc-node-modules-directory)
 		  (hopc-j2s-flags)))))
       
@@ -264,6 +265,7 @@
 		  :plugins-loader (hopc-plugins-loader)
 		  :libs-dir (hopc-libs-dir)
 		  :debug (bigloo-debug)
+		  :warning (bigloo-warning)
 		  :node-modules-directory (hopc-node-modules-directory)
 		  (hopc-j2s-flags)))))
       
@@ -474,6 +476,7 @@
 			:plugins-loader (hopc-plugins-loader)
 			:libs-dir (hopc-libs-dir)
 			:debug (bigloo-debug)
+			:warning (bigloo-warning)
 			:function-nice-name (string? temp)
 			:node-modules-directory (hopc-node-modules-directory)
 			(hopc-j2s-flags))))

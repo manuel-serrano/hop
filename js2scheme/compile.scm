@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
 ;*    Last change :  Thu Jun  4 10:41:41 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
 ;*=====================================================================*/
@@ -431,6 +431,8 @@
 	  (conf (cons* :mmaps '() :tmp tmp opts)))
       (when (config-get opts :debug-stage)
 	 (make-directories tmp))
+      (when (>=fx (config-get opts :warning -1) 0)
+	 (bigloo-warning-set! (config-get opts :warning)))
       (unwind-protect
 	 (let ((ast (cond
 		       ((input-port? in)

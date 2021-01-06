@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
 ;*    Last change :  Sun Apr 12 16:09:16 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
 ;*=====================================================================*/
@@ -126,6 +126,12 @@
 	    `(with-access::JsGlobalObject %this (js-math) js-math))
 	 (js-def-extern 'Date #t #t
 	    `(with-access::JsGlobalObject %this (js-date) js-date))
+	 (js-def-extern 'Promise #t #t
+	    `(with-access::JsGlobalObject %this (js-promise) js-promise))
+	 (js-def-extern 'Symbol #t #t
+	    `(with-access::JsGlobalObject %this (js-symbol) js-symbol))
+	 (js-def-extern 'JSON #t #t
+	    `(with-access::JsGlobalObject %this (js-json) js-json))
 	 (if (or (string=? id "console.js") (string=? id "node_stdio.js"))
 	     (instantiate::J2SUndefined
 		(type 'undefined)

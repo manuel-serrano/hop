@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
 ;*    Last change :  Fri Jan 31 16:30:12 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
 ;*    -------------------------------------------------------------    */
@@ -28,6 +28,17 @@
 	   __js2scheme_lexer)
 
    (export j2s-symbol-stage))
+
+;*---------------------------------------------------------------------*/
+;*    well-known-variables ...                                         */
+;*---------------------------------------------------------------------*/
+(define well-known-variables
+   '(require exports Symbol JSON Promise Date Math Proxy RegExp String
+     Array Object process Buffer Number isNaN
+     setImmediate setTimeout clearTimeout
+     encodeURIComponent decodeURIComponent isFinite parseInt console
+     Uint8Array
+     Error RangeError))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-symbol-stage                                                 */
@@ -697,6 +708,10 @@
 		       (id id)
 		       (loc loc)
 		       (decl decl)))))
+	    ((eq? id 'undefined)
+	     (instantiate::J2SUndefined
+		(type 'undefined)
+		(loc loc)))
 	    (else
 	     (let ((decl (instantiate::J2SDecl
 			    (usage (usage '()))
@@ -705,6 +720,9 @@
 			    (loc loc)
 			    (id id))))
 		(set-cdr! (last-pair genv) (list decl))
+		(when (and (memq mode '(strict hopscript))
+			   (not (memq id well-known-variables)))
+		   (warning/loc loc (format "variable unbound: ~s" id)))
 		(instantiate::J2SGlobalRef
 		   (id id)
 		   (loc loc)
