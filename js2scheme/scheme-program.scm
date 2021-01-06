@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
 ;*    Last change :  Mon May 11 15:46:39 2020 (serrano)                */
-;*    Copyright   :  2018-20 Manuel Serrano                            */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
 ;*=====================================================================*/
@@ -178,12 +178,12 @@
 		(jsthis `(with-access::JsGlobalObject %this (js-object)
 			    (js-new0 %this js-object)))
 		(thunk `(lambda ()
-			   (let ((_ (set! __js_strings ,(j2s-jsstring-init this)))
-				 (__ (set! __js_rxcaches ,(j2s-regexp-caches-init this)))
-				 (%cnst-table ,cnsttable)
-				 (%scope (nodejs-new-scope-object %this))
-				 (this ,jsthis)
-				 ,@(j2s-let-globals globals))
+			   (let* ((_ (set! __js_strings ,(j2s-jsstring-init this)))
+				  (__ (set! __js_rxcaches ,(j2s-regexp-caches-init this)))
+				  (%cnst-table ,cnsttable)
+				  (%scope (nodejs-new-scope-object %this))
+				  (this ,jsthis)
+				  ,@(j2s-let-globals globals))
 			      ;; the sole purpose of the scmheaders split
 			      ;; is not minimize letrec* nesting level
 			      (letrec* ,(j2s-let-headers scmheaders)
@@ -194,7 +194,6 @@
 				      (filter fundef? body)
 				      (filter nofundef? body)))))))
 	    `(,jsmod
-		;;(define __js_strings ,(j2s-jsstring-init this))
 		(define __js_strings #f)
 		(define __js_rxcaches #f)
 		(%define-cnst-table ,(length cnsts))
