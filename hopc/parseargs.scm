@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
 ;*    Last change :  Tue Jun  2 08:19:42 2020 (serrano)                */
-;*    Copyright   :  2004-20 Manuel Serrano                            */
+;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -212,6 +212,10 @@
 	    (("--sobase" ?DIR (help "Set the base directory for shared libs (default (pwd))"))
 	     (hopc-sobase-set! DIR))
 	    (section "JavaScript dialect and features")
+	    (("--js-node-modules-dir" ?dir
+		(help (format "Set default node_modules dir [~a]"
+			 (hopc-node-modules-directory))))
+	     (hopc-node-modules-directory-set! dir))
 	    (("--js-worker" (help "Enable JavaScript workers"))
 	     (hopc-js-worker-set! #t))
 	    (("--js-no-worker" (help "Disable JavaScript workers"))

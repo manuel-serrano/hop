@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
 ;*    Last change :  Tue Jun  2 08:17:24 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
 ;*=====================================================================*/
@@ -1239,7 +1239,9 @@
 
 
    (define (hopjs-module-resolve-path name)
-      (make-file-path (hop-node-modules-dir) name))
+      (let ((dir (or (config-get conf :node-modules-directory)
+		     (hop-node-modules-dir))))
+	 (make-file-path dir name)))
 	      
    (define (consume-module-path!)
       (case (peek-token-type)
