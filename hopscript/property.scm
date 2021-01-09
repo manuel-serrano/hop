@@ -260,6 +260,33 @@
 (define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
+;*    prop-hashtable-weak ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (prop-hashtable-weak)
+   (cond-expand
+      (open-string-hashtable 'open-string)
+      (string-hashtable 'string)
+      (else #f)))
+
+;*---------------------------------------------------------------------*/
+;*    prop-hashtable-get ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (prop-hashtable-get table key)
+   (cond-expand
+      (open-string-hashtable (open-string-hashtable-get table key))
+      (string-hashtable (string-hashtable-get table key))
+      (else (hashtable-get table key))))
+
+;*---------------------------------------------------------------------*/
+;*    prop-hashtable-put! ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (prop-hashtable-put! table key val)
+   (cond-expand
+      (open-string-hashtable (open-string-hashtable-put! table key val))
+      (string-hashtable (string-hashtable-put! table key val))
+      (else (hashtable-put! table key val))))
+
+;*---------------------------------------------------------------------*/
 ;*    inline thresholds ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (inline-threshold) #u32:100)
@@ -1294,7 +1321,7 @@
 	 (prop (gensym 'prop))
 	 (name (gensym 'name)))
       `(with-access::JsObject ,o ((,hash elements))
-	  (let ((,prop (hashtable-get ,hash (js-jsstring->string ,p))))
+	  (let ((,prop (prop-hashtable-get ,hash (js-jsstring->string ,p))))
 	     (cond
 		(,prop
 		 (,succeed ,o ,prop))
@@ -1315,13 +1342,7 @@
 	 (prop (gensym 'prop))
 	 (name (gensym 'name)))
       `(with-access::JsObject ,o ((,hash elements))
-	  (let ((,prop (cond-expand
-			  (open-string-hashtable
-			   (open-string-hashtable-get ,hash ,p))
-			  (string-hashtable
-			   (string-hashtable-get ,hash ,p))
-			  (else
-			   (tprint "pas " glop)))))
+	  (let ((,prop (prop-hashtable-get ,hash ,p)))
 	     (cond
 		(,prop
 		 (,succeed ,o ,prop))
@@ -1552,10 +1573,7 @@
    (js-object-mode-enumerable-set! o #t)
    (js-object-mode-plain-set! o #f)
    (let ((table (create-hashtable
-		   :weak (cond-expand
-			    (open-string-hashtable 'open-string)
-			    (string-hashtable 'string)
-			    (else #f))
+		   :weak (prop-hashtable-weak)
 		   :size (hash-object-threshold)
 		   :max-length 65536
 		   :max-bucket-length 20)))
@@ -1570,7 +1588,7 @@
 		   (error "js-object-hash!" "illegal property descriptor" i))
 		  ((isa? (vector-ref elements i) JsPropertyDescriptor)
 		   (with-access::JsPropertyDescriptor (vector-ref elements i) (name)
-		      (hashtable-put! table (js-jsstring->string name)
+		      (prop-hashtable-put! table (js-jsstring->string name)
 			 (make-cell (vector-ref elements i)))
 		      (loop (-fx i 1))))
 		  (else
@@ -1584,7 +1602,7 @@
 					(configurable (flags-configurable? flags))
 					(name name)
 					(value (vector-ref elements i))))))
-		      (hashtable-put! table (js-jsstring->string name)
+		      (prop-hashtable-put! table (js-jsstring->string name)
 			 (make-cell descv))
 		      (loop (-fx i 1))))))))
       o))
@@ -3203,7 +3221,7 @@
 			     (enumerable #t)
 			     (configurable #t)))))
 	    (with-access::JsObject o ((table elements))
-	       (hashtable-put! table (js-jsstring->string name)
+	       (prop-hashtable-put! table (js-jsstring->string name)
 		  (make-cell descv))))
 	 v))
    
@@ -4082,7 +4100,7 @@
 			     (configurable (boolify configurable))
 			     (value (js-undefined))))))))
 	 (with-access::JsObject o (elements)
-	    (hashtable-put! elements (js-jsstring->string name)
+	    (prop-hashtable-put! elements (js-jsstring->string name)
 	       (make-cell ndesc)))
 	 #t))
 
@@ -4351,7 +4369,7 @@
       ((js-object-hashed? o)
        (with-access::JsObject o (elements)
 	  (with-access::JsPropertyDescriptor new (name)
-	     (let ((e (hashtable-get elements (js-jsstring->string name))))
+	     (let ((e (prop-hashtable-get elements (js-jsstring->string name))))
 		(if (cell? e)
 		    (cell-set! e new)
 		    (js-replace-own-property! (js-object-proto o) old new))))))
