@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
 ;*    Last change :  Mon Jun  8 07:07:29 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
 ;*=====================================================================*/
@@ -93,6 +93,7 @@
 	   (inline js-call9-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (inline js-call10-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
 	   (inline js-calln-jsprocedure ::JsGlobalObject ::JsProcedure this args)
+	   (js-call1-3-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2)
 	   
 	   (js-call0-procedure fun::procedure this)
 	   (js-call1-procedure fun::procedure this a0)
@@ -131,6 +132,7 @@
 	   (inline js-call9 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8)
 	   (inline js-call10 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
 	   (js-calln ::JsGlobalObject ::obj this args)
+	   (js-call1-3 ::JsGlobalObject ::obj this a0 a1 a2)
 	   
 	   (js-call0/debug ::JsGlobalObject loc fun::obj this)
 	   (js-call1/debug ::JsGlobalObject loc fun::obj this a0)
@@ -278,24 +280,31 @@
 	 (if (js-function? fun)
 	     (with-access::JsFunction fun (arity len)
 		(let* ((name (js-get fun (& "name") %this))
-		       (m (format "~a: wrong number of arguments ~a provided, ~a expected"
+		       (m (format "~a: wrong number of arguments: ~a expected, ~a provided"
 			     (if (js-jsstring? name) (js-jsstring->string name) "")
-			     n
 			     (cond
 				((>fx arity 0) arity)
 				((>fx arity -2049) (format ">= ~a" minlen))
-				(else (format "[~a..~a]" minlen (procedure-arity procedure))))))
-		       (src (js-function-src fun)))
-		   (if src
-		       (js-raise-type-error/loc %this src m fun)
+				(else (format "[~a..~a]" minlen (procedure-arity procedure))))
+			     n))
+		       (loc (js-function-loc fun)))
+		   (if loc
+		       (js-raise-type-error/loc %this loc m fun)
 		       (js-raise-type-error %this m fun))))
-	     (let ((m (format "~a: wrong number of arguments ~a provided, ~a expected"
-			 n
+	     (let ((m (format "~a: wrong number of arguments: ~a expected, ~a provided"
+			 (if (isa? fun JsProcedureInfo)
+			     (with-access::JsProcedureInfo fun (info)
+				(js-function-debug-name fun %this))
+			     procedure)
 			 (cond
-			    ((>fx arity 0) arity)
+			    ((>fx arity 0) (-fx arity 1))
 			    ((>fx arity -2049) (format ">= ~a" minlen))
-			    (else (format "[~a..~a]" minlen (procedure-arity procedure)))))))
-		(js-raise-type-error %this m fun))))))
+			    (else (format "[~a..~a]" minlen (-fx (procedure-arity procedure) 1))))
+			 n)))
+		(if (isa? fun JsProcedureInfo)
+		    (let ((loc (js-function-loc fun)))
+		       (js-raise-type-error/loc %this loc m fun))
+		    (js-raise-type-error %this m fun)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    optionals ...                                                    */
@@ -852,6 +861,16 @@
    (with-access::JsProcedure fun (procedure)
       (js-calln% %this fun procedure this args)))
 
+(define (js-call1-3-jsprocedure %this fun this a0 a1 a2)
+   ;; this is used to implement array functions such map or find
+   ;; it is needed to handle array function in hopscript mode
+   (with-access::JsProcedure fun (arity procedure)
+      (case arity
+	 ((1) (procedure this a0))
+	 ((2) (procedure this a0 a1))
+	 ((3) (procedure this a0 a1 a2))
+	 (else (js-call3 %this fun this a0 a1 a2)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    gen-call-procedure ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -933,8 +952,6 @@
        ((js-procedure? ,fun)
 	(with-access::JsProcedure ,fun (procedure)
 	   (gen-calln fun procedure this ,@args)))
-;* 	   (,(string->symbol (format "js-call~a%" (length args)))      */
-;* 	    ,%this ,fun procedure ,this ,@args)))                      */
        ((js-procedure-proxy? ,fun)
 	(,(string->symbol (format "js-call-proxy/cache-miss~a" (length args)))
 	 ,%this ,fun ,this ,@args))
@@ -1046,6 +1063,18 @@
        (js-raise-type-error %this
 	  (format "call(~a): not a function ~~s" (length args))
 	  fun))))
+
+(define (js-call1-3 %this fun this a0 a1 a2)
+   ;; this is used to implement array functions such map or find
+   ;; it is needed to handle array function in hopscript mode
+   (if (js-procedure? fun)
+       (with-access::JsProcedure fun (arity procedure)
+	  (case arity
+	     ((1) (procedure this a0))
+	     ((2) (procedure this a0 a1))
+	     ((3) (procedure this a0 a1 a2))
+	     (else (js-call3 %this fun this a0 a1 a2))))
+       (js-call3 %this fun this a0 a1 a2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    gen-call/debug ...                                               */

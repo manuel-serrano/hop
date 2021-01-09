@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
 /*    Last change :  Thu May 28 13:52:21 2020 (serrano)                */
-/*    Copyright   :  2015-20 Manuel Serrano                            */
+/*    Copyright   :  2015-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
 /*=====================================================================*/

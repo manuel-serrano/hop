@@ -1252,7 +1252,7 @@
 		   %acc)))
       
       (let* ((whileid (string->symbol
-			 (format "while:~a" (cadr loc) (caddr loc))))
+			 (format "while@~a:~a" (cadr loc) (caddr loc))))
 	     (loop (if (in-eval? return) (eval-loop whileid) (comp-loop whileid))))
 	 (epairify-deep loc
 	    (if need-bind-exit-break

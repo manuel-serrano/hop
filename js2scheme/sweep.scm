@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
 ;*    Last change :  Sat Dec 14 18:48:11 2019 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removal                                                */
 ;*=====================================================================*/
@@ -217,13 +217,16 @@
 ;*    sweep! ::J2SProgram ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (sweep! this::J2SProgram rems stamp)
-   (with-access::J2SProgram this (decls nodes)
+   (with-access::J2SProgram this (headers decls nodes)
       (set! decls (filter (lambda (d)
 			     (with-access::J2SDecl d (%info id)
 				(if (eq? %info stamp)
 				    ;; used, keep it
 				    (begin
 				       (sweep! d rems stamp)
+				       (when (isa? d J2SDeclInit)
+					  (with-access::J2SDeclInit d (val)
+					     (sweep! val rems stamp)))
 				       #t)
 				    (begin
 				       ;; unused, remove it
@@ -231,6 +234,12 @@
 					  (cons id (cell-ref rems)))
 				       #f))))
 		     decls))
+      (set! headers (filter (lambda (n)
+			       (if (isa? n J2SDeclExtern)
+				   (with-access::J2SDeclExtern n (%info sweepable)
+				      (or (eq? %info stamp) (not sweepable)))
+				   #t))
+		       headers))
       (for-each (lambda (n) (sweep! n rems stamp)) nodes)
       this))
       

@@ -30,15 +30,24 @@
    (export j2s-symbol-stage))
 
 ;*---------------------------------------------------------------------*/
-;*    well-known-variables ...                                         */
+;*    get-this-symbols ...                                             */
+;*    -------------------------------------------------------------    */
+;*    This file "this-symbols.sch" is optional. If it exists it        */
+;*    is read by this macro to extract the list of pre-defined         */
+;*    existing properties in the THIS object. This is only used        */
+;*    to remove irrelevant "unbound variable" error message in         */
+;*    "hopscript" mode.                                                */
 ;*---------------------------------------------------------------------*/
-(define well-known-variables
-   '(require exports Symbol JSON Promise Date Math Proxy RegExp String
-     Array Object process Buffer Number isNaN
-     setImmediate setTimeout clearTimeout
-     encodeURIComponent decodeURIComponent isFinite parseInt console
-     Uint8Array
-     Error RangeError))
+(define-macro (get-this-symbols)
+   (if (file-exists? "this-symbols.sch")
+       `',(call-with-input-file "this-symbols.sch" read)
+       '()))
+
+;*---------------------------------------------------------------------*/
+;*    this-symbols ...                                                 */
+;*---------------------------------------------------------------------*/
+(define this-symbols
+   (get-this-symbols))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-symbol-stage                                                 */
@@ -721,8 +730,8 @@
 			    (id id))))
 		(set-cdr! (last-pair genv) (list decl))
 		(when (and (memq mode '(strict hopscript))
-			   (not (memq id well-known-variables)))
-		   (warning/loc loc (format "variable unbound: ~s" id)))
+			   (not (memq id this-symbols)))
+		   (warning/loc loc (format "variable unbound \"~s\"" id)))
 		(instantiate::J2SGlobalRef
 		   (id id)
 		   (loc loc)

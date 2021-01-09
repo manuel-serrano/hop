@@ -246,6 +246,8 @@
 	   (js-get-vindex::long ::JsGlobalObject)
 	   (inline js-call-with-stack-list ::pair-nil ::procedure))
 
+   (option (register-srfi! 'open-string-hashtable))
+   
    (cond-expand
       ((config have-c99-stack-alloc #t)
        (pragma
@@ -1313,7 +1315,13 @@
 	 (prop (gensym 'prop))
 	 (name (gensym 'name)))
       `(with-access::JsObject ,o ((,hash elements))
-	  (let ((,prop (string-hashtable-get ,hash ,p)))
+	  (let ((,prop (cond-expand
+			  (open-string-hashtable
+			   (open-string-hashtable-get ,hash ,p))
+			  (string-hashtable
+			   (string-hashtable-get ,hash ,p))
+			  (else
+			   (tprint "pas " glop)))))
 	     (cond
 		(,prop
 		 (,succeed ,o ,prop))
@@ -1544,7 +1552,10 @@
    (js-object-mode-enumerable-set! o #t)
    (js-object-mode-plain-set! o #f)
    (let ((table (create-hashtable
-		   :weak 'string
+		   :weak (cond-expand
+			    (open-string-hashtable 'open-string)
+			    (string-hashtable 'string)
+			    (else #f))
 		   :size (hash-object-threshold)
 		   :max-length 65536
 		   :max-bucket-length 20)))

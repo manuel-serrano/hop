@@ -1076,7 +1076,7 @@
 	    (idthis '%)
 	    (loc loc)
 	    (name '||)
-	    (mode 'strict)
+	    (mode (if (eq? current-mode 'hopscript) 'hopscript 'strict))
 	    (params params)
 	    (body (arrow-body params args))
 	    (vararg (rest-params params)))))

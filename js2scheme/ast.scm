@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
 ;*    Last change :  Tue Jun  2 07:33:35 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
 ;*=====================================================================*/
@@ -115,7 +115,10 @@
 
 	   (final-class J2SDeclExtern::J2SDeclInit
 	      (bind::bool read-only (default #f))
-	      (hidden-class::bool read-only (default #t)))
+	      (hidden-class::bool read-only (default #t))
+	      ;; extern are sweepable (i.e., removable) when not used
+	      ;; by the code generator to optimize expressions
+	      (sweepable::bool read-only (default #f)))
 
 	   (final-class J2SDeclImport::J2SDecl
 	      (alias read-only (default #f) (info '("notraverse")))
