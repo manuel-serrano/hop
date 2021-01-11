@@ -71,11 +71,11 @@
 	     (multiple-value-bind (inits rest)
 		(nodes-collect-inits nodes)
 		(let ((finits (filter (lambda (i) (init-fun? i vars)) inits))
-		      (vinits (filter (lambda (i) (not (init-fun? i vars))) inits)))
+		      (assigs (filter (lambda (i) (assig-nofun? i vars)) inits)))
 		   (when (pair? finits)
 		      (let* ((odecls (map initvdecl finits))
 			     (ndecls (map initfdecl finits))
-			     (vdecls (map initvdecl vinits))
+			     (vdecls (filter-map initvdecl assigs))
 			     (noinits (filter (lambda (v)
 						 (and (not (memq v odecls))
 						      (not (memq v vdecls))))
@@ -90,16 +90,13 @@
 					    noinits)
 					 (map (lambda (n)
 						 (decl-alpha n odecls ndecls))
-					    ndecls)
-					 (map (lambda (n)
-						 (decl-alpha n odecls ndecls))
 					    vdecls)
 					 (map (lambda (n)
-						 (with-access::J2SInit n (loc)
-						    (instantiate::J2SStmtExpr
-						       (loc loc)
-						       (expr n))))
-					    vinits)
+						 (decl-alpha n odecls ndecls))
+					    ndecls)
+					 (map (lambda (n)
+						 (assig-alpha n odecls ndecls))
+					    assigs)
 					 (list (j2s-alpha nblock
 						  odecls ndecls)))))))))))))
    this)
@@ -107,19 +104,28 @@
 ;*---------------------------------------------------------------------*/
 ;*    init-fun? ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (init-fun? this::J2SInit vars)
-   (with-access::J2SInit this (lhs rhs)
-      (when (isa? rhs J2SFun)
-	 (with-access::J2SRef lhs (decl)
-	    (memq decl vars)))))
+(define (init-fun? this::J2SAssig vars)
+   (when (isa? this J2SInit)
+      (with-access::J2SAssig this (lhs rhs)
+	 (when (isa? rhs J2SFun)
+	    (with-access::J2SRef lhs (decl)
+	       (memq decl vars))))))
+
+;*---------------------------------------------------------------------*/
+;*    assig-nofun? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (assig-nofun? this::J2SAssig vars)
+   (or (not (isa? this J2SInit))
+       (not (init-fun? this vars))))
 
 ;*---------------------------------------------------------------------*/
 ;*    initvdecl ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (initvdecl this::J2SInit)
-   (with-access::J2SInit this (lhs rhs)
-      (with-access::J2SRef lhs (decl)
-	 decl)))
+(define (initvdecl this::J2SAssig)
+   (when (isa? this J2SInit)
+      (with-access::J2SAssig this (lhs rhs)
+	 (with-access::J2SRef lhs (decl)
+	    decl))))
 
 ;*---------------------------------------------------------------------*/
 ;*    initfdecl ...                                                    */
@@ -147,6 +153,15 @@
       (with-access::J2SDeclInit d (val)
 	 (set! val (j2s-alpha val olds news))))
    d)
+
+;*---------------------------------------------------------------------*/
+;*    assig-alpha ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (assig-alpha n::J2SAssig olds news)
+   (with-access::J2SAssig n (loc)
+      (instantiate::J2SStmtExpr
+	 (loc loc)
+	 (expr (j2s-alpha n olds news)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    block-collect-vars ...                                           */
@@ -212,8 +227,8 @@
    (define (init node blacklist)
       (when (isa? node J2SStmtExpr)
 	 (with-access::J2SStmtExpr node (expr)
-	    (when (isa? expr J2SInit)
-	       (with-access::J2SInit expr (rhs)
+	    (when (isa? expr J2SAssig)
+	       (with-access::J2SAssig expr (rhs)
 		  (when (safe-expr? rhs blacklist)
 		     expr))))))
    
