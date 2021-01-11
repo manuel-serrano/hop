@@ -1574,7 +1574,7 @@
    (js-object-mode-plain-set! o #f)
    (let ((table (create-hashtable
 		   :weak (prop-hashtable-weak)
-		   :size (hash-object-threshold)
+		   :size (+fx (/fx (hash-object-threshold) 3) (hash-object-threshold))
 		   :max-length 65536
 		   :max-bucket-length 20)))
       (with-access::JsObject o (cmap elements)

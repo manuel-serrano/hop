@@ -4,9 +4,9 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
 ;*    Last change :  Fri Jan 31 08:04:38 2020 (serrano)                */
-;*    Copyright   :  2015-20 Manuel Serrano                            */
+;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Let function optimisation                                        */
+;*    Let function optimization                                        */
 ;*    -------------------------------------------------------------    */
 ;*    Rewrite the following pattern:                                   */
 ;*       var f = function() { ... }                                    */
@@ -54,6 +54,11 @@
 (define-walk-method (letfun! this::J2SNode args)
    (call-default-walker))
 
+(define (dump n)
+   (with-access::J2SInit n (lhs)
+      (with-access::J2SRef lhs (decl)
+	 (j2s->list decl))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    letfun! ::J2SFun ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -65,12 +70,15 @@
 	     (block-collect-vars body)
 	     (multiple-value-bind (inits rest)
 		(nodes-collect-inits nodes)
-		(let ((inits (filter (lambda (i) (init-fun? i vars)) inits)))
-		   (when (pair? inits)
-		      (let* ((odecls (map decloinit inits))
-			     (ndecls (map declninit inits))
+		(let ((finits (filter (lambda (i) (init-fun? i vars)) inits))
+		      (vinits (filter (lambda (i) (not (init-fun? i vars))) inits)))
+		   (when (pair? finits)
+		      (let* ((odecls (map initvdecl finits))
+			     (ndecls (map initfdecl finits))
+			     (vdecls (map initvdecl vinits))
 			     (noinits (filter (lambda (v)
-						 (not (memq v odecls)))
+						 (and (not (memq v odecls))
+						      (not (memq v vdecls))))
 					 vars))
 			     (nblock (duplicate::J2SBlock body
 					(nodes rest))))
@@ -83,49 +91,18 @@
 					 (map (lambda (n)
 						 (decl-alpha n odecls ndecls))
 					    ndecls)
+					 (map (lambda (n)
+						 (decl-alpha n odecls ndecls))
+					    vdecls)
+					 (map (lambda (n)
+						 (with-access::J2SInit n (loc)
+						    (instantiate::J2SStmtExpr
+						       (loc loc)
+						       (expr n))))
+					    vinits)
 					 (list (j2s-alpha nblock
-						  odecls
-						  ndecls)))))))))))))
+						  odecls ndecls)))))))))))))
    this)
-
-;*---------------------------------------------------------------------*/
-;*    decl-alpha ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (decl-alpha d::J2SDecl olds news)
-   (when (isa? d J2SDeclInit)
-      (with-access::J2SDeclInit d (val)
-	 (set! val (j2s-alpha val olds news))))
-   d)
-
-;*---------------------------------------------------------------------*/
-;*    decloinit ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (decloinit this::J2SInit)
-   (with-access::J2SInit this (lhs rhs)
-      (with-access::J2SRef lhs (decl)
-	 decl)))
-
-;*---------------------------------------------------------------------*/
-;*    declninit ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (declninit this::J2SInit)
-   (with-access::J2SInit this (lhs rhs)
-      (with-access::J2SRef lhs (decl)
-	 (if (isa? rhs J2SFun)
-	     (with-access::J2SDecl decl (id writable scope usage binder utype vtype loc)
-		(instantiate::J2SDeclFun
-		   (loc loc)
-		   (id id)
-		   (writable writable)
-		   (scope scope)
-		   (usage usage)
-		   (binder binder)
-		   (utype utype)
-		   (vtype vtype)
-		   (val rhs)))
-	     (duplicate::J2SDeclInit decl
-		(key (ast-decl-key))
-		(val rhs))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-fun? ...                                                    */
@@ -135,6 +112,41 @@
       (when (isa? rhs J2SFun)
 	 (with-access::J2SRef lhs (decl)
 	    (memq decl vars)))))
+
+;*---------------------------------------------------------------------*/
+;*    initvdecl ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (initvdecl this::J2SInit)
+   (with-access::J2SInit this (lhs rhs)
+      (with-access::J2SRef lhs (decl)
+	 decl)))
+
+;*---------------------------------------------------------------------*/
+;*    initfdecl ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (initfdecl this::J2SInit)
+   (with-access::J2SInit this (lhs rhs)
+      (with-access::J2SRef lhs (decl)
+	 (with-access::J2SDecl decl (id writable scope usage binder utype vtype loc)
+	    (instantiate::J2SDeclFun
+	       (loc loc)
+	       (id id)
+	       (writable writable)
+	       (scope scope)
+	       (usage usage)
+	       (binder binder)
+	       (utype utype)
+	       (vtype vtype)
+	       (val rhs))))))
+
+;*---------------------------------------------------------------------*/
+;*    decl-alpha ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (decl-alpha d::J2SDecl olds news)
+   (when (isa? d J2SDeclInit)
+      (with-access::J2SDeclInit d (val)
+	 (set! val (j2s-alpha val olds news))))
+   d)
 
 ;*---------------------------------------------------------------------*/
 ;*    block-collect-vars ...                                           */
@@ -155,17 +167,59 @@
 ;*    nodes-collect-inits ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (nodes-collect-inits nodes::pair-nil)
+
+   (define (safe-access? rhs blacklist)
+      (when (isa? rhs J2SAccess)
+	 (with-access::J2SAccess rhs (obj field)
+	    (and (safe-expr? obj blacklist) (safe-expr? field blacklist)))))
+
+   (define (safe-array? rhs blacklist)
+      (when (isa? rhs J2SArray)
+	 (with-access::J2SArray rhs (exprs)
+	    (every (lambda (e) (safe-expr? e blacklist)) exprs))))
+
+   (define (safe-objinit? rhs blacklist)
+      
+      (define (safe-init? init)
+	 (when (isa? init J2SDataPropertyInit)
+	    (with-access::J2SDataPropertyInit init (name val)
+	       (and (safe-expr? name blacklist) (safe-expr? val blacklist)))))
    
-   (define (init node)
+      (when (isa? rhs J2SObjInit)
+	 (with-access::J2SObjInit rhs (inits)
+	    (every safe-init? inits))))
+		    
+   (define (safe-ref? rhs)
+      (when (isa? rhs J2SRef)
+	 (with-access::J2SRef rhs (decl)
+	    (with-access::J2SDecl decl (scope binder id)
+	       (or (memq scope '(%scope global))
+		   (eq? binder 'param))))))
+
+   (define (safe-expr? expr blacklist)
+      (or (isa? expr J2SFun)
+	  (isa? expr J2SLiteral)
+	  (safe-ref? expr)
+	  (when (isa? expr J2SRef)
+	     (with-access::J2SRef expr (decl)
+		 (unless (memq decl blacklist)
+		    (set-cdr! blacklist (cons decl (cdr blacklist)))
+		    #t)))
+	  (safe-access? expr blacklist)
+	  (safe-array? expr blacklist)
+	  (safe-objinit? expr blacklist)))
+
+   (define (init node blacklist)
       (when (isa? node J2SStmtExpr)
 	 (with-access::J2SStmtExpr node (expr)
 	    (when (isa? expr J2SInit)
 	       (with-access::J2SInit expr (rhs)
-		  (when (or (isa? rhs J2SFun) (isa? rhs J2SLiteral))
+		  (when (safe-expr? rhs blacklist)
 		     expr))))))
    
    (let loop ((nodes nodes)
-	      (inits '()))
+	      (inits '())
+	      (blacklist (cons 'mark '())))
       (cond
 	 ((null? nodes)
 	  (values (reverse! inits) '()))
@@ -173,11 +227,11 @@
 	  (values (reverse! inits) nodes))
 	 ((isa? (car nodes) J2SSeq)
 	  (with-access::J2SSeq (car nodes) ((bnodes nodes))
-	     (loop (append bnodes (cdr nodes)) inits)))
-	 ((init (car nodes))
+	     (loop (append bnodes (cdr nodes)) inits blacklist)))
+	 ((init (car nodes) blacklist)
 	  =>
 	  (lambda (init)
-	     (loop (cdr nodes) (cons init inits))))
+	     (loop (cdr nodes) (cons init inits) blacklist)))
 	 (else
 	  (values (reverse! inits) nodes)))))
 
