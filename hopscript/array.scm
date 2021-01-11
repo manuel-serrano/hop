@@ -2069,7 +2069,7 @@
 		       (loop (+u32 i #u32:1) acc)
 		       (let ((v pv))
 			  (loop (+u32 i #u32:1)
-			     (js-call4 %this proc (js-undefined) acc v
+			     (js-call2-4 %this proc (js-undefined) acc v
 				(js-uint32-tointeger i) o)))))
 		acc)))
       

@@ -699,7 +699,13 @@
 		 (when (isa? decl J2SDeclArguments)
 		    (with-access::J2SDeclArguments decl (usecnt)
 		       (set! usecnt (+fx 1 usecnt))))
-		 (j2sref decl loc withs wenv))))
+		 (with-access::J2SDecl decl (scope)
+		    (if (eq? scope 'unbound)
+			(instantiate::J2SGlobalRef
+			   (id id)
+			   (loc loc)
+			   (decl decl))
+			(j2sref decl loc withs wenv))))))
 	    ((pair? withs)
 	     (instantiate::J2SWithRef
 		(loc loc)

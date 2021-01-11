@@ -94,6 +94,7 @@
 	   (inline js-call10-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
 	   (inline js-calln-jsprocedure ::JsGlobalObject ::JsProcedure this args)
 	   (js-call1-3-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2)
+	   (js-call2-4-jsprocedure ::JsGlobalObject ::JsProcedure this a0 a1 a2 a3)
 	   
 	   (js-call0-procedure fun::procedure this)
 	   (js-call1-procedure fun::procedure this a0)
@@ -133,6 +134,7 @@
 	   (inline js-call10 ::JsGlobalObject ::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
 	   (js-calln ::JsGlobalObject ::obj this args)
 	   (js-call1-3 ::JsGlobalObject ::obj this a0 a1 a2)
+	   (js-call2-4 ::JsGlobalObject ::obj this a0 a1 a2 a3)
 	   
 	   (js-call0/debug ::JsGlobalObject loc fun::obj this)
 	   (js-call1/debug ::JsGlobalObject loc fun::obj this a0)
@@ -366,7 +368,9 @@
       `((,(negfx (+fx offset i)))
 	(let ((,parity (procedure-arity ,procedure)))
 	   (if (js-procedure-hopscript-mode? ,fun)
-	       (js-raise-arity-error %this ,fun ,(-fx n 1))
+	       (begin
+		  ;; (tprint "ICI.10")
+		  (js-raise-arity-error %this ,fun ,(-fx n 1)))
 	       (,procedure ,this ,@args
 		  ,@(make-list (-fx (+fx i 1) n) '(js-undefined))
 		  ,vec)))))
@@ -395,7 +399,9 @@
       `((,(negfx (+fx 1024 i)))
 	(let ((,parity (evprocedure-arity ,procedure)))
 	   (if (js-procedure-hopscript-mode? ,fun)
-	       (js-raise-arity-error %this ,fun ,(-fx n 1))
+	       (begin
+		  ;; (tprint "ICI.11 " ,n " parity=" ,parity " i=" ,i " arity=" ,arity)
+		  (js-raise-arity-error %this ,fun ,(-fx n 1)))
 	       (case ,parity
 		  ;; no need to generate [1.. i-1] because parity > -arity
 		  ,@(map (lambda (a)
@@ -421,13 +427,18 @@
 			  ,(cond
 			      ((<fx a n)
 			       `(if (js-procedure-hopscript-mode? ,fun)
-				    (js-raise-arity-error %this ,fun ,(-fx n 1))
+				    (begin
+				       ;; (tprint "ICI.12")
+				       (js-raise-arity-error %this ,fun ,(-fx n 1)))
 				    (,procedure ,this ,@(take args (-fx a 1)))))
 			      ((=fx a n)
 			       `(,procedure ,this ,@args))
 			      (else
-			       `(if (js-procedure-hopscript-mode? ,fun)
-				    (js-raise-arity-error %this ,fun ,(-fx n 1))
+			       `(if (and (js-procedure-hopscript-mode? ,fun)
+					 (<fx ,arity ,(negfx (+fx 1024 i))))
+				    (begin
+				       ;; (tprint "ICI.13 " ,a " " ,n " parity=" ,parity " i=" ,i " arity=" ,arity)
+				       (js-raise-arity-error %this ,fun ,(-fx n 1)))
 				    (,procedure ,this ,@args
 				       ,@(make-list (-fx a n)
 					    '(js-undefined))))))))
@@ -452,14 +463,18 @@
       ;; too many fix arguments
       `((,i)
 	(if (js-procedure-hopscript-mode? ,fun)
-	    (js-raise-arity-error %this ,fun ,(-fx n 1))
+	    (begin
+	       ;; (tprint "ICI.14")
+	       (js-raise-arity-error %this ,fun ,(-fx n 1)))
 	    (,procedure ,this ,@(take args (-fx i 1))))))
    
    (define (call-fix-missing i)
       ;; missing fix arguments
       `((,i)
 	(if (js-procedure-hopscript-mode? ,fun)
-	    (js-raise-arity-error %this ,fun ,(-fx n 1))
+	    (begin
+	       ;; (tprint "ICI.1")
+	       (js-raise-arity-error %this ,fun ,(-fx n 1)))
 	    (,procedure ,this ,@args ,@(make-list (-fx i n) '(js-undefined))))))
    
    (define (call-many-arguments-opt-norest)
@@ -471,7 +486,9 @@
 	     ((<fx ,required ,n)
 	      ;; required arguments missing
 	      (if (js-procedure-hopscript-mode? ,fun)
-		  (js-raise-arity-error %this ,fun ,(-fx n 1))
+		  (begin
+		     ;; (tprint "ICI.2")
+		     (js-raise-arity-error %this ,fun ,(-fx n 1)))
 		  (apply ,procedure ,this
 		     ,@args (make-args-list (-fx ,parity ,n)))))
 	     ((<fx ,n ,parity)
@@ -479,7 +496,9 @@
 		 ,@args (make-args-list (-fx ,parity ,n))))
 	     (else
 	      (if (js-procedure-hopscript-mode? ,fun)
-		  (js-raise-arity-error %this ,fun ,(-fx n 1))
+		  (begin
+		     ;; (tprint "ICI.3")
+		     (js-raise-arity-error %this ,fun ,(-fx n 1)))
 		  (apply ,procedure ,this
 		     (take (list ,@args) ,parity)))))))
    
@@ -549,11 +568,13 @@
 		 (make-args-list (-fx ,n ,required))))))
 	  
    (define (call-many-arguments)
-      ;; dyamic call sequence for many arguments
+      ;; dynamic call sequence for many arguments
       `(cond
 	  ((>fx ,arity 0)
 	   (if (js-procedure-hopscript-mode? ,fun)
-	       (js-raise-arity-error %this ,fun ,(-fx n 1))
+	       (begin
+		  ;; (tprint "ICI.5")
+		  (js-raise-arity-error %this ,fun ,(-fx n 1)))
 	       ;; fixed number of arguments
 	       (if (>fx ,arity ,n)
 		   ;; missing arguments
@@ -686,7 +707,9 @@
 	    ((<fx required n)
 	     ;; required arguments missing
 	     (if (js-procedure-hopscript-mode? fun)
-		 (js-raise-arity-error %this fun (-fx n 1))
+		 (begin
+		    ;; (tprint "ICI.6")
+		    (js-raise-arity-error %this fun (-fx n 1)))
 		 (apply procedure this
 		    (append args
 		       (make-list (-fx parity n) (js-undefined))))))
@@ -696,7 +719,9 @@
 		   (make-list (-fx parity n) (js-undefined)))))
 	    (else
 	     (if (js-procedure-hopscript-mode? fun)
-		 (js-raise-arity-error %this fun (-fx n 1))
+		 (begin
+		    ;; (tprint "ICI.7")
+		    (js-raise-arity-error %this fun (-fx n 1)))
 		 (apply procedure this (take args parity)))))))
 
    (define (calln-many-opt-rest arity)
@@ -713,6 +738,7 @@
 		(cond
 		   ((and (>=fx required n) (js-procedure-hopscript-mode? fun))
 		    ;; required arguments missing
+		    (tprint "ici.8")
 		    (js-raise-arity-error %this fun (-fx n 1)))
 		   ((<fx n parity)
 		    ;; arguments missing
@@ -744,7 +770,9 @@
 	 (cond
 	    ((>fx arity 0)
 	     (if (js-procedure-hopscript-mode? fun)
-		 (js-raise-arity-error %this fun (-fx n 1))
+		 (begin
+		    ;; (tprint "ICI.9")
+		    (js-raise-arity-error %this fun (-fx n 1)))
 		 (if (>fx arity n)
 		     ;; missing arguments
 		     (apply procedure this
@@ -870,6 +898,16 @@
 	 ((2) (procedure this a0 a1))
 	 ((3) (procedure this a0 a1 a2))
 	 (else (js-call3 %this fun this a0 a1 a2)))))
+
+(define (js-call2-4-jsprocedure %this fun this a0 a1 a2 a3)
+   ;; this is used to implement array functions such reduce
+   ;; it is needed to handle array function in hopscript mode
+   (with-access::JsProcedure fun (arity procedure)
+      (case arity
+	 ((2) (procedure this a0 a1))
+	 ((3) (procedure this a0 a1 a2))
+	 ((4) (procedure this a0 a1 a2 a3))
+	 (else (js-call4 %this fun this a0 a1 a2 a3)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    gen-call-procedure ...                                           */
@@ -1075,6 +1113,18 @@
 	     ((3) (procedure this a0 a1 a2))
 	     (else (js-call3 %this fun this a0 a1 a2))))
        (js-call3 %this fun this a0 a1 a2)))
+
+(define (js-call2-4 %this fun this a0 a1 a2 a3)
+   ;; this is used to implement array functions such reduce
+   ;; it is needed to handle array function in hopscript mode
+   (if (js-procedure? fun)
+       (with-access::JsProcedure fun (arity procedure)
+	  (case arity
+	     ((2) (procedure this a0 a1))
+	     ((3) (procedure this a0 a1 a2))
+	     ((4) (procedure this a0 a1 a2 a3))
+	     (else (js-call4 %this fun this a0 a1 a2 a3))))
+       (js-call4 %this fun this a0 a1 a2 a3)))
 
 ;*---------------------------------------------------------------------*/
 ;*    gen-call/debug ...                                               */

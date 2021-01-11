@@ -75,6 +75,15 @@
 		     (loc loc)
 		     (expr expr))))))
 
+   (define (js-def js writable #!key (type 'unknown) (scope 'unbound))
+      (instantiate::J2SDecl
+	 (loc loc)
+	 (id js)
+	 (writable writable)
+	 (usage (usage '()))
+	 (scope scope)
+	 (itype type)))
+
    (let ((%require (js-def-extern '%require #t #f 
 		     `(nodejs-require %worker %this %module
 			 ,(config-get conf :language "hopscript"))
@@ -200,8 +209,7 @@
 	     (instantiate::J2SUndefined
 		(type 'undefined)
 		(loc loc))
-	     (js-def-extern 'Buffer #t writable
-		'(js-undefined)))
+	     (js-def 'Buffer writable))
 	 (if (string=? path "hop")
 	     (instantiate::J2SUndefined
 		(type 'undefined)
@@ -214,12 +222,9 @@
 		(nodejs-eval %this %scope)
 		(nodejs-function %this %scope)
 		,(unless (string=? path "buffer")
-		    `(begin
-			(nodejs-bind-export! %this %scope
-			   (nodejs-require-core "buffer" %worker %this)
-			   ,(& "Buffer" prog))
-			(set! !Buffer
-			   (js-get %scope ,(& "Buffer" prog) %scope))))
+		    `(nodejs-bind-export! %this %scope
+			(nodejs-require-core "buffer" %worker %this)
+			,(& "Buffer" prog)))
 		,(unless (string=? path "timers")
 		    `(nodejs-bind-export! %this %scope
 			(nodejs-require-core "timers" %worker %this)
