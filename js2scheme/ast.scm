@@ -116,6 +116,8 @@
 	   (final-class J2SDeclExtern::J2SDeclInit
 	      (bind::bool read-only (default #f))
 	      (hidden-class::bool read-only (default #t))
+	      ;; #t if an error should be raised on write (for strict mode)
+	      (raise-on-write::bool read-only (default #f))
 	      ;; extern are sweepable (i.e., removable) when not used
 	      ;; by the code generator to optimize expressions
 	      (sweepable::bool read-only (default #f)))

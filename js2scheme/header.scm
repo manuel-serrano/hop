@@ -56,7 +56,9 @@
    
    (define (js-def-extern js bind writable expr
 	      #!key
-	      (type 'unknown) (hidden-class #t) (scope '%scope) (sweepable #f))
+	      (type 'unknown) (hidden-class #t)
+	      (scope '%scope) (raise-on-write #f)
+	      (sweepable #f))
       (instantiate::J2SDeclExtern
 	 (loc loc)
 	 (id js)
@@ -68,6 +70,7 @@
 	 (itype type)
 	 (binder 'let-opt)
 	 (hidden-class hidden-class)
+	 (raise-on-write raise-on-write)
 	 (val (if (isa? expr J2SNode)
 		  expr
 		  (instantiate::J2SPragma
@@ -214,8 +217,10 @@
 	     (instantiate::J2SUndefined
 		(type 'undefined)
 		(loc loc))
-	     (js-def-extern 'hop #t writable
-		'(nodejs-require-core "hop" %worker %this)))
+	     (with-access::J2SProgram prog (mode)
+		(js-def-extern 'hop #t writable
+		   '(nodejs-require-core "hop" %worker %this)
+		   :raise-on-write (memq mode '(scrit hopscript)))))
 	 (js-def-extern '%__INIT #f #f
 	    ;; this will not be compiled as a global (see scheme.scm)
 	    `(begin
