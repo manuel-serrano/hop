@@ -190,6 +190,7 @@
 	  j2s-multivar-stage
 	  j2s-narrow-stage
 	  j2s-letfusion-stage
+	  j2s-ronly-stage
 	  j2s-letfun-stage
 	  j2s-letopt-stage
 	  j2s-unletrec-stage

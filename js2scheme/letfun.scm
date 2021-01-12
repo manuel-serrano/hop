@@ -27,7 +27,8 @@
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_lexer
-	   __js2scheme_alpha)
+	   __js2scheme_alpha
+	   __js2scheme_usage)
 
    (export j2s-letfun-stage))
 
@@ -109,7 +110,8 @@
       (with-access::J2SAssig this (lhs rhs)
 	 (when (isa? rhs J2SFun)
 	    (with-access::J2SRef lhs (decl)
-	       (memq decl vars))))))
+	       (unless (decl-usage-has? decl '(assig))
+		  (memq decl vars)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    assig-nofun? ...                                                 */
