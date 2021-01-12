@@ -1662,6 +1662,7 @@
 	       ((isa? from J2SBindExit)
 		(with-access::J2SBindExit from (type loc)
 		   (let ((tyr (merge-types type tye)))
+		      (tprint "type=" type " tye=" tye " -> " tyr)
 		      (unless (eq? tyr type)
 			 (unfix! fix
 			    (format "J2SReturn(~a) e=~a ~a/~a" loc tye tyr type))
