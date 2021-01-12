@@ -88,14 +88,16 @@
 	 (itype type)))
 
    (let ((%require (js-def-extern '%require #t #f 
-		     `(nodejs-require %worker %this %module
-			 ,(config-get conf :language "hopscript"))
-		     :type 'function :scope '%hop))
+		      `(nodejs-require %worker %this %module
+			  ,(config-get conf :language "hopscript"))
+		      :type 'function :scope '%hop))
 	 (%import-meta (js-def-extern '%import-meta #t #f 
 			  `(nodejs-import-meta %worker %this %module ,path)
 			  :type 'object :scope '%hop))
 	 (writable (with-access::J2SProgram prog (mode)
-		      (not (eq? mode 'hopscript)))))
+		      (not (eq? mode 'hopscript))))
+	 (progmod (with-access::J2SProgram prog (mode)
+		     mode)))
       (list
 	 %require
 	 %import-meta

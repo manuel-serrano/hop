@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
 ;*    Last change :  Thu Jun  4 11:13:03 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
 ;*=====================================================================*/
@@ -166,11 +166,16 @@
 		 `(js-delete! ,j2s-unresolved-del-workspace
 		     ,(& id (context-program ctx)) #f %this))))
 	 ((and (isa? expr J2SRef) (not (isa? expr J2SThis)))
-	  (if (strict-mode? mode)
+	  (cond
+	     ((strict-mode? mode)
 	      (with-access::J2SRef expr (decl)
 		 (with-access::J2SDecl decl (id)
-		    (err id)))
-	      '(begin #f)))
+		    (err id))))
+	     ((with-access::J2SRef expr (decl)
+		 (isa? decl J2SDeclExtern))
+	      '(begin #t))
+	     (else
+	      '(begin #f))))
 	 ((isa? expr J2SParen)
 	  (with-access::J2SParen expr (expr)
 	     (delete->scheme expr)))
