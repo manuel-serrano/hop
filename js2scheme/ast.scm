@@ -120,7 +120,8 @@
 	      (raise-on-write::bool read-only (default #f))
 	      ;; extern are sweepable (i.e., removable) when not used
 	      ;; by the code generator to optimize expressions
-	      (sweepable::bool read-only (default #f)))
+	      (sweepable::bool read-only (default #f))
+	      (configurable::bool read-only (default #t)))
 
 	   (final-class J2SDeclImport::J2SDecl
 	      (alias read-only (default #f) (info '("notraverse")))

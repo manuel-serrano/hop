@@ -173,12 +173,16 @@
 		    (err id))))
 	     ((with-access::J2SRef expr (decl)
 		 (isa? decl J2SDeclExtern))
-	      '(begin #t))
+	      (with-access::J2SRef expr (decl)
+		 (with-access::J2SDeclExtern decl (configurable)
+		    `(begin ,configurable))))
 	     (else
 	      '(begin #f))))
 	 ((isa? expr J2SParen)
 	  (with-access::J2SParen expr (expr)
 	     (delete->scheme expr)))
+	 ((isa? expr J2SUndefined)
+	  `(begin #f))
 	 (else
 	  `(begin ,(j2s-scheme expr mode return ctx) #t))))
 
