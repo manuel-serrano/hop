@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Tue Dec 22 16:42:30 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 09:45:03 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -46,12 +46,15 @@ public class HopDroid extends Thread {
    static final int HOPDROID_STATE_ERROR = 3;
    static final int HOPDROID_STATE_RUN = 4;
    static final int HOPDROID_STATE_REBOOT = 5;
+
+   static String HOPDROID = "HopDroid";
    
    // instance variables
    int state = HOPDROID_STATE_NULL;
    Exception exn = null;
    Activity activity = null;
    HopService service;
+   Class activityclass = null;
    
    HopLocalServerSocket pluginserv = null;
    LocalSocket pluginclient = null;
@@ -62,14 +65,18 @@ public class HopDroid extends Thread {
    HopLocalServerSocket cmdserv = null;
    
    final Hashtable eventtable = new Hashtable();
+
+   boolean delayed_start_notification = false;
    
    // constructor
-   public HopDroid( HopService s, Activity a ) {
+   public HopDroid( HopService s, Class c ) {
       super();
 
       service = s;
       plugins = new Vector( 16 );
-      activity = a;
+      activityclass = c;
+
+      HOPDROID = "HopDroid/" + c.getName();
       
       try {
 	 state = HOPDROID_STATE_INIT;
@@ -77,7 +84,7 @@ public class HopDroid extends Thread {
 	 initPlugins();
 	 initServers();
       } catch( Exception e ) {
-	 Log.e( "HopDroid", "error in constructor state=" + state
+	 Log.e( HOPDROID, "error in constructor state=" + state
 		+ " exception="
 		+ e.getClass().getName(), e );
 	 e.printStackTrace();
@@ -94,7 +101,7 @@ public class HopDroid extends Thread {
 		     service.handler, HopLauncher.MSG_HOPDROID_FAIL, e ) );
 	    }
 	 } catch( Throwable t ) {
-	    Log.e( "HopDroid", "error while initializing plugins: " + e );
+	    Log.e( HOPDROID, "error while initializing plugins: " + e );
 	    e.printStackTrace();
 	 }
 	 
@@ -153,12 +160,15 @@ public class HopDroid extends Thread {
 	 if( HopConfig.PLUGINCALL ) {
 	    registerPlugin( new HopPluginCall( this, "call" ) );
 	 }
+	 if( HopConfig.PLUGININTENT ) {
+	    registerPlugin( new HopPluginIntent( this, "intent" ) );
+	 }
       }
    }
 
    // initServers
    void initServers() throws Exception {
-      Log.d( "HopDroid", "initServers app=" + HopConfig.APP );
+      Log.d( HOPDROID, "initServers app=" + HopConfig.APP );
       String app = HopConfig.APP;
 	 
       // previous HopDroid instances might have left open local
@@ -168,13 +178,14 @@ public class HopDroid extends Thread {
       String appCmdName = app + "-cmd:" + Hop.port;
 
       // create the three servers
-      Log.d( "HopDroid", "creating new sockets port=" + Hop.port );
       pluginserv = new HopLocalServerSocket( appPluginName );
-      Log.d( "HopDroid", "pluginserv=" + pluginserv.toString() );
+      Log.d( HOPDROID, "pluginserv=" + pluginserv.toString() );
+      
       eventserv = new HopLocalServerSocket( appEventName );
-      Log.d( "HopDroid", "eventserv=" + eventserv.toString() );
+      Log.d( HOPDROID, "eventserv=" + eventserv.toString() );
+      
       cmdserv = new HopLocalServerSocket( appCmdName  );
-      Log.d( "HopDroid", "cmdserv=" + cmdserv.toString() );
+      Log.d( HOPDROID, "cmdserv=" + cmdserv.toString() );
    }
 
    // run hopdroid
@@ -182,16 +193,20 @@ public class HopDroid extends Thread {
       state = HOPDROID_STATE_RUN;
 
       // the event server handles add-event-listener! registration
-      Log.d( "HopDroid", "run..." );
+      Log.d( HOPDROID, "run..." );
 
       // spawn eventserv
       new Thread( new Runnable () {
 	    public void run() {
+	       String abortreason = "server teminated";
+	       
 	       try {
 		  serverEvent();
 	       } catch( Throwable e ) {
-		  Log.e( "HopDroid", "eventserv error: " + e );
+		  Log.e( HOPDROID, "eventserv error: " + e );
 		  e.printStackTrace();
+		  
+		  abortreason = "server error: " + e.toString();
 		  
 		  synchronized( this ) {
 		     if( eventserv != null ) {
@@ -200,7 +215,7 @@ public class HopDroid extends Thread {
 		     }
 		  }
 	       } finally {
-		  abortCmdServer( "eventsrv error" );
+		  abortCmdServer( abortreason );
 	       }
 	    }
 	 } ).start();
@@ -211,7 +226,7 @@ public class HopDroid extends Thread {
 	       try {
 		  serverPlugin();
 	       } catch( Throwable e ) {
-		  Log.e( "HopDroid", "pluginserv error: " + e );
+		  Log.e( HOPDROID, "pluginserv error: " + e );
 		  e.printStackTrace();
 		  
 		  // might have been set to null by safeclose
@@ -226,6 +241,14 @@ public class HopDroid extends Thread {
 	    }
 	 } ).start();
 
+      synchronized( this ) {
+	 if( service.handler != null ) {
+	    service.handler.sendEmptyMessage( HopLauncher.MSG_HOPDROID_START );
+	 } else {
+	    delayed_start_notification = true;
+	 }
+      }
+      
       // the cmd server handles ping and stop commands
       try {
 	 LocalSocket sock = null;
@@ -250,15 +273,15 @@ public class HopDroid extends Thread {
 
 	       switch( cmd ) {
 		  case HopDroid.SERVER_STOP_CMD:
-		     Log.d( "HopDroid", "serverCmd cmd=SERVER_STOP_CMD" );
+		     Log.d( HOPDROID, "serverCmd cmd=SERVER_STOP_CMD" );
 		     return;
 
 		  case HopDroid.SERVER_PING_CMD:
-		     Log.d( "HopDroid", "serverCmd cmd=SERVER_PING_CMD" );
+		     Log.d( HOPDROID, "serverCmd cmd=SERVER_PING_CMD" );
 		     break;
 
 		  case HopDroid.SERVER_ABORT_CMD:
-		     Log.d( "HopDroid", "serverCmd cmd=SERVER_ABORT_CMD" );
+		     Log.d( HOPDROID, "serverCmd cmd=SERVER_ABORT_CMD" );
 		     if( state != HOPDROID_STATE_REBOOT ) {
 			throw new IOException( "force hopdroid abort" );
 		     }
@@ -273,22 +296,34 @@ public class HopDroid extends Thread {
 		     sock.close();
 		  }
 	       } catch( Throwable t ) {
-		  Log.e( "HopDroid", "Cannot close cmd client: " + t );
+		  Log.e( HOPDROID, "Cannot close cmd client: " + t );
 		  t.printStackTrace();
 	       }
 	    }
 	 }
       } catch( IOException e ) {
-	 Log.e( "HopDroid", "cmdserv error: " + e + " state=" + state );
+	 Log.e( HOPDROID, "cmdserv error: " + e + " state=" + state );
 	 e.printStackTrace();
 
 	 // kill everything on error
 	 kill();
       }
+
+      Log.d( HOPDROID, "thread ended." );
    }
 
    // onConnect
    public void onConnect() {
+      // notify that HopDroid is ready
+      // service.handler has been initialized before onConnect got called
+      service.handler.sendEmptyMessage( HopLauncher.MSG_HOPDROID_CONNECT );
+
+      synchronized( this ) {
+	 if( delayed_start_notification ) {
+	    service.handler.sendEmptyMessage( HopLauncher.MSG_HOPDROID_START );
+	 }
+      }
+      
       // bind the plugins that need the activity
       synchronized( plugins ) {
 	 if( HopConfig.PLUGINPREFS ) {
@@ -316,7 +351,7 @@ public class HopDroid extends Thread {
       if( state != HOPDROID_STATE_END ) {
 	 state = HOPDROID_STATE_END;
 	 
-	 Log.i( "HopDroid", "kill..." );
+	 Log.i( HOPDROID, "kill..." );
 
 	 killServers();
 	 killPlugins();
@@ -329,7 +364,7 @@ public class HopDroid extends Thread {
 
    // reboot
    public void reboot() {
-      Log.i( "HopDroid", "reboot..." );
+      Log.i( HOPDROID, "reboot..." );
 
       state = HOPDROID_STATE_REBOOT;
 
@@ -343,6 +378,7 @@ public class HopDroid extends Thread {
 	 }
 	 if( eventclient != null ) {
 	    eventserv.reset = true;
+	    pushClientCloseEvent();
 	    try {
 	       eventclient.close();
 	    } catch( Throwable e ) {
@@ -356,7 +392,7 @@ public class HopDroid extends Thread {
       throws Exception {
       LocalSocket ls = new LocalSocket();
       
-      Log.d( "HopDroid", "execCmd addr=" + addr.getName() + " cmd=" + cmd );
+      Log.d( HOPDROID, "execCmd addr=" + addr.getName() + " cmd=" + cmd );
       
       ls.connect( addr );
       final OutputStream op = ls.getOutputStream();
@@ -382,7 +418,7 @@ public class HopDroid extends Thread {
          execCmd( addr, SERVER_STOP_CMD );
       } catch( Exception e ) {
 	 if( notify ) {
-	    Log.d( "HopDroid", "serverStop failed: " + e );
+	    Log.d( HOPDROID, "serverStop failed: " + e );
 	    e.printStackTrace();
 	 }
       }
@@ -391,10 +427,10 @@ public class HopDroid extends Thread {
    // serverPing
    private static boolean serverPing( LocalSocketAddress addr ) {
       try {
-	 Log.d( "HopDroid", "serverPing..." );
+	 Log.d( HOPDROID, "serverPing..." );
 	 return execCmd( addr, SERVER_PING_CMD );
       } catch( Exception e ) {
-	 Log.e( "HopDroid", "serverPing error: " + e );
+	 Log.e( HOPDROID, "serverPing error: " + e );
 	 e.printStackTrace();
          return false;
       }
@@ -414,7 +450,7 @@ public class HopDroid extends Thread {
       final InputStream ip = pluginclient.getInputStream();
       final OutputStream op = pluginclient.getOutputStream();
 
-      Log.i( "HopDroid", "serverPlugin (" + HopConfig.APP + ") connected sock=" + pluginclient );
+      Log.i( HOPDROID, "serverPlugin (" + HopConfig.APP + ") connected sock=" + pluginclient );
 
       try {
 	 while( true ) {
@@ -422,38 +458,39 @@ public class HopDroid extends Thread {
 
 	    if( version != protocol ) {
 	       if( version != -1 ) {
-		  Log.e( "HopDroid", "serverPlugin protocol error: incompatible version " +
+		  Log.e( HOPDROID, "serverPlugin protocol error: incompatible version " +
 			 version );
 	       } else {
-		  Log.d( "HopDroid", "serverPlugin, connection reset by peer protocol=" + version );
+		  Log.e( HOPDROID, "serverPlugin, connection reset by peer" );
 	       }
 	       return;
 	    }
 
 	    final int id = read_int32( ip );
 
-	    Log.d( "HopDroid", "plugin id=" + id );
-	    
 	    try {
 	       HopPlugin p = (HopPlugin)plugins.get( id );
 
+	       Log.d( HOPDROID, "executing plugin " + p.name + "...(activity="
+		      + (activity == null ? "null" : activity.toString() )
+		      + ")" );
 	       p.server( ip, op );
 
 	       final int m = ip.read();
 		  
 	       if( m != 127 ) {
-		  Log.e( "HopDroid", "protocol error: illegal " 
-			 + p.name + " mark: " + m );
+		  Log.e( HOPDROID, "protocol error: illegal plugin \"" 
+			 + p.name + "\" mark: " + m );
 	       }
 	       op.flush();
 	    } catch( ArrayIndexOutOfBoundsException a ) {
-	       Log.e( "HopDroid", "plugin not found: " + id );
+	       Log.e( HOPDROID, "plugin not found: " + id );
 	       // we got an eof, escape from here
 	       return;
 	    }
 	 }
       } catch( Throwable e ) {
-	 Log.e( "HopDroid", "serverPlugin error (catched)  " + e );
+	 Log.e( HOPDROID, "serverPlugin error (catched)  " + e );
 	 e.printStackTrace();
 	 
 	 synchronized( this ) {
@@ -462,12 +499,12 @@ public class HopDroid extends Thread {
 		  pluginclient.close();
 		  pluginclient = null;
 	       } catch( Throwable ne ) {
-		  Log.e( "HopDroid", "error while closing plugin client: " + e );
+		  Log.e( HOPDROID, "error while closing plugin client: " + e );
 		  e.printStackTrace();
 	       }
 	    }
 
-	    if( pluginserv.reset ) {
+	    if( pluginserv != null && pluginserv.reset ) {
 	       pluginserv.reset = false;
 	       serverPlugin();
 	    }
@@ -480,7 +517,7 @@ public class HopDroid extends Thread {
       eventclient = eventserv.accept();
       final InputStream ip = eventclient.getInputStream();
 
-      Log.i( "HopDroid", "serverEvent connected eventserv=" +
+      Log.i( HOPDROID, "serverEvent (" + HopConfig.APP + ") connected eventserv=" +
 	     eventserv + " client=" + eventclient );
 
       // initialize the eventable
@@ -494,7 +531,7 @@ public class HopDroid extends Thread {
 	 
 	    if( version != protocol ) {
 	       if( version != -1 ) {
-		  Log.e( "HopDroid", "protocol error: incompatible version " +
+		  Log.e( HOPDROID, "protocol error: incompatible version " +
 			 version );
 	       }
 	       return;
@@ -506,7 +543,7 @@ public class HopDroid extends Thread {
 	    synchronized( eventtable ) {
 	       Integer i = (Integer)eventtable.get( event );
 	    
-	       Log.i( "HopDroid", (a == 1 ? "register" : "unregister") +
+	       Log.i( HOPDROID, (a == 1 ? "register" : "unregister") +
 		      " event [" + event + "]" );
 	       // a == 1, add an event listener. a == 0, remove listener
 	       if( i == null ) {
@@ -527,22 +564,23 @@ public class HopDroid extends Thread {
 	    int m = ip.read();
       
 	    if( m != 127 ) {
-	       Log.e( "HopDroid", "protocol error: illegal ping mark " + m );
+	       Log.e( HOPDROID, "protocol error: illegal ping mark " + m );
 	       return;
 	    }
 	 }
       } catch( Throwable e ) {
-	 Log.e( "HopDroid", "serverEvent error " + e );
+	 Log.e( HOPDROID, "serverEvent error " + e );
 	 e.printStackTrace();
 	 
 	 synchronized( this ) {
 	    if( eventserv != null && !eventserv.isClosed() ) {
+	       pushClientCloseEvent();
 	       eventclient.close();
 	       eventclient = null;
 	    }
 	 }
 
-	 if( eventserv.reset ) {
+	 if( eventserv != null && eventserv.reset ) {
 	    eventserv.reset = false;
 	    serverEvent();
 	 }
@@ -553,7 +591,7 @@ public class HopDroid extends Thread {
    private synchronized void killPlugins() {
       int s = plugins.size();
 
-      Log.d( "HopDroid", "killPlugins..." );
+      Log.d( HOPDROID, "killPlugins..." );
 
       // plugin 0 is null
       for( int i = 1; i < s; i++ ) {
@@ -566,43 +604,35 @@ public class HopDroid extends Thread {
       plugins = null;
    }
 
+   // pushClientClose
+   private void pushClientCloseEvent() {
+      pushEvent( "phone", "client-stop" );
+   }
+      
    // safeclose
    private void safeClose( HopLocalServerSocket serv, LocalSocket client ) {
-/*       // Android is buggous, closing a server that has not accepted  */
-/*       // any connection yet, raises no exception and then does not  */
-/*       // unblock the pending accept call. Our function safeclose establishes */
-/*       // a fake connection and closes it at once to work around this */
-/*       // Android error.                                             */
-/*       Log.d( "HopDroid", "safeClose" );                             */
-/*       if( client == null ) {                                        */
-/* 	 try {                                                         */
-/* 	    LocalSocket ls = new LocalSocket();                        */
-/*                                                                     */
-/* 	    ls.connect( serv.getLocalSocketAddress() );                */
-/* 	    ls.close();                                                */
-/* 	 } catch( Throwable e ) {                                      */
-/* 	    Log.e( "HopDroid", "safeClose error, cannot connect, serv=" */
-/* 		   + serv + " exc=" + e );                             */
-/* 	    e.printStackTrace();                                       */
-/* 	 }                                                             */
-/*       } else {                                                      */
-/* 	 try {                                                         */
-/* 	    client.close();                                            */
-/* 	 } catch( Throwable e ) {                                      */
-/* 	    Log.e( "HopDroid", "safeClose error, serv="                */
-/* 		   + serv + " client=" + client + " exc=" + e );       */
-/* 	    e.printStackTrace();                                       */
-/* 	 }                                                             */
-/*       }                                                             */
-
-      Log.d( "HopDroid", "closing serv="
-	     + (serv == null ? "null" : serv.toString())
-	     + " client=" + (client == null ? "null" : client.toString()) );
-
+      // Android is buggous, closing a server that has not accepted 
+      // any connection yet, raises no exceptions and then does not
+      // unblock the pending accept call. Our function safeclose establishes
+      // a fake connection and closes it at once to work around this
+      // Android error.
+      Log.d( HOPDROID, "safeClose" );
       try {
-	 if( client != null ) client.close();
+	 if( client == null ) {
+	    try {
+	       LocalSocket ls = new LocalSocket();
+
+	       ls.connect( serv.getLocalSocketAddress() );
+	       ls.close();
+	    } catch( Throwable e ) {
+	       Log.d( HOPDROID, "safeClose error, cannot connect, serv="
+		      + serv + " exc=" + e );
+	    }
+	 } else {
+	    client.close();
+	 }
       } catch( Throwable e ) {
-	 Log.e( "HopDroid", "cannot close " + e );
+	 Log.e( HOPDROID, "cannot close " + e );
 	 e.printStackTrace();
       }
       if( serv != null ) serv.close();
@@ -610,27 +640,31 @@ public class HopDroid extends Thread {
 
    // abortCmdServer
    private synchronized void abortCmdServer( String reason ) {
-      Log.d( "HopDroid", "abortCmdServer " + reason );
+      Log.d( HOPDROID, "abortCmdServer " + reason );
+      
       if( cmdserv != null ) {
 	 synchronized( cmdserv ) {
 	    if( !cmdserv.isClosed() ) {
 	       try {
 		  execCmd( cmdserv.getLocalSocketAddress(), SERVER_ABORT_CMD );
 	       } catch( Exception e ) {
-		  Log.e( "HopDroid", "serverThrow failed: " + e );
+		  Log.e( HOPDROID, "serverThrow failed: " + e );
 		  e.printStackTrace();
 	       }
 	    }
 	 }
       }
    }
-      
+
    // killServers
    private synchronized void killServers() {
-      Log.d( "HopDroid", "killServers..." );
+      Log.d( HOPDROID, "killServers..." );
       
       // event server
       if( eventserv != null ) {
+	 if( eventclient != null ) {
+	    pushClientCloseEvent();
+	 }
 	 safeClose( eventserv, eventclient );
 	 eventclient = null;
 	 eventserv = null;
@@ -645,16 +679,11 @@ public class HopDroid extends Thread {
 
       // cmd server
       if( cmdserv != null ) {
-	 cmdserv.close();
+	 safeClose( cmdserv, null );
 	 cmdserv = null;
       }
       
-      // wait the socket servers to be cleanup by the system
-      try {
-	 Thread.sleep( 2000 );
-      } catch( Exception e ) {
-      }
-      Log.d( "HopDroid", "killServers...all servers stopped" );
+      Log.d( HOPDROID, "killServers...all servers stopped" );
    }
 
    // get plugin
@@ -685,12 +714,12 @@ public class HopDroid extends Thread {
       synchronized( eventtable ) {
 	 Integer i = (Integer)eventtable.get( event );
 
-	 Log.i( "HopDroid", "pushEvent event=[" + event + "] value=["
+	 Log.i( HOPDROID, "pushEvent event=[" + event + "] value=["
 		+ value + "] i=" + i );
 	 if( (i != null) && (i > 0) ) {
 	    try {
 	       final OutputStream op = eventclient.getOutputStream();
-	       Log.i( "HopDroid", "pushEvent event=[" + event + "] op=" + op );
+	       Log.i( HOPDROID, "pushEvent event=[" + event + "] op=" + op );
 
 	       if( op != null ) {
 		  op.write( "\"".getBytes() );
@@ -701,7 +730,7 @@ public class HopDroid extends Thread {
 		  op.flush();
 	       }
 	    } catch( Exception e ) {
-	       Log.e( "HopDroid", "pushEvent error: " + e );
+	       Log.e( HOPDROID, "pushEvent error: " + e );
 	       e.printStackTrace();
 	    }
 	 }
@@ -791,7 +820,7 @@ class HopLocalServerSocket extends LocalServerSocket {
    
    HopLocalServerSocket( String name ) throws IOException {
       super( name );
-      Log.d( "HopDroid", "creating server name=" + name + " this=" + this );
+      Log.d( "HopLocalServerSocket", "creating server name=" + name + " this=" + this );
    }
 
    public synchronized void close() {

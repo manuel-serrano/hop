@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
 ;*    Last change :  Mon Apr 13 07:51:37 2020 (serrano)                */
-;*    Copyright   :  2019-20 Manuel Serrano                            */
+;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
 ;*=====================================================================*/
@@ -53,6 +53,8 @@
    (static js-names js-integer-length)
    (export js-integer-names js-string-names)
 
+   (option (register-srfi! 'string-hashtable))
+   
    (cond-expand
       (enable-tls
        (export gcroots)))
@@ -63,6 +65,33 @@
 	  (js-integer-length thread-local)
 	  (js-integer-names thread-local)
 	  (js-string-names thread-local)))))
+
+;*---------------------------------------------------------------------*/
+;*    name-hashtable-weak ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (name-hashtable-weak)
+   (cond-expand
+      (open-string-hashtable 'open-string)
+      (string-hashtable 'string)
+      (else #f)))
+
+;*---------------------------------------------------------------------*/
+;*    name-hashtable-get ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (name-hashtable-get table key)
+   (cond-expand
+      (open-string-hashtable (open-string-hashtable-get table key))
+      (string-hashtable (string-hashtable-get table key))
+      (else (hashtable-get table key))))
+
+;*---------------------------------------------------------------------*/
+;*    name-hashtable-put! ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (name-hashtable-put! table key val)
+   (cond-expand
+      (open-string-hashtable (open-string-hashtable-put! table key val))
+      (string-hashtable (string-hashtable-put! table key val))
+      (else (hashtable-put! table key val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    name tables                                                      */
@@ -139,7 +168,7 @@
 	    100)
 	 (set! js-names
 	    (let ((table (create-hashtable
-			    :weak 'string
+			    :weak (name-hashtable-weak)
 			    :size 512
 			    :max-length 65536
 			    :max-bucket-length 20)))
@@ -302,10 +331,10 @@
    ;; before being potentially added in the name hashtable
    
    (define (string-name str)
-      (let ((n (hashtable-get js-names str)))
+      (let ((n (name-hashtable-get js-names str)))
 	 (unless n
 	    (set! n o)
-	    (hashtable-put! js-names str n))
+	    (name-hashtable-put! js-names str n))
 	 (js-jsstring-name-set! o n)
 	 n))
    
@@ -322,13 +351,13 @@
 ;*    js-ascii-toname-unsafe ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-ascii-toname-unsafe::JsStringLiteralASCII str::bstring)
-   (let ((n (hashtable-get js-names str)))
+   (let ((n (name-hashtable-get js-names str)))
       (or n
 	  (let ((o (instantiate::JsStringLiteralASCII
 		      (length (fixnum->uint32 (string-length str)))
 		      (left str))))
 	     (js-object-mode-set! o (js-jsstring-normalized-ascii-mode))
-	     (hashtable-put! js-names str o)
+	     (name-hashtable-put! js-names str o)
 	     (js-jsstring-name-set! o o)
 	     o))))
 
@@ -385,13 +414,13 @@
 ;*---------------------------------------------------------------------*/
 (define (js-utf8-name->jsstring str::bstring)
    (synchronize-name
-      (let ((n (hashtable-get js-names str)))
+      (let ((n (name-hashtable-get js-names str)))
 	 (or n
 	     (let ((o (instantiate::JsStringLiteralUTF8
 			 (length (fixnum->uint32 (string-length str)))
 			 (left str))))
 		(js-object-mode-set! o (js-jsstring-normalized-utf8-mode))
-		(hashtable-put! js-names str o)
+		(name-hashtable-put! js-names str o)
 		(js-jsstring-name-set! o o)
 		o)))))
 
@@ -400,14 +429,14 @@
 ;*---------------------------------------------------------------------*/
 (define (js-utf8-name->jsstring/culen str::bstring culen)
    (synchronize-name
-      (let ((n (hashtable-get js-names str)))
+      (let ((n (name-hashtable-get js-names str)))
 	 (or n
 	     (let ((o (instantiate::JsStringLiteralUTF8
 			 (%culen (fixnum->uint32 culen))
 			 (length (fixnum->uint32 (string-length str)))
 			 (left str))))
 		(js-object-mode-set! o (js-jsstring-normalized-utf8-mode))
-		(hashtable-put! js-names str o)
+		(name-hashtable-put! js-names str o)
 		(js-jsstring-name-set! o o)
 		o)))))
 

@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
 ;*    Last change :  Sun May 24 16:25:01 2020 (serrano)                */
-;*    Copyright   :  2004-20 Manuel Serrano                            */
+;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
 ;*=====================================================================*/
@@ -94,6 +94,9 @@
 	    (hopc-optim-level::int)
 	    (hopc-optim-level-set! ::int)
 
+	    (hopc-node-modules-directory::obj)
+	    (hopc-node-modules-directory-set! ::obj)
+	    
 	    (hopc-js-worker::bool)
 	    (hopc-js-worker-set! ::bool)
 
@@ -315,6 +318,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-optim-level
    0)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-node-modules-directory ...                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-node-modules-directory
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-js-worker ...                                               */

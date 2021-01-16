@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
 ;*    Last change :  Fri Jun  5 05:15:02 2020 (serrano)                */
-;*    Copyright   :  2016-20 Manuel Serrano                            */
+;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
 ;*    -------------------------------------------------------------    */
@@ -97,8 +97,9 @@
 		       (loop (+fx i 1)))
 		      ((config-get conf :optim-tyflow-resolve #f)
 		       ;; type check resolution
-		       (j2s-resolve! this conf fix)
+		       '(j2s-resolve! this conf fix)
 		       (cond
+			  (#t #t)
 			  ((not (=fx (cell-ref fix) ofix))
 			   (loop (+fx i 1)))
 			  ((config-get conf :optim-hint #f)
@@ -867,14 +868,14 @@
 	 (else 'number)))
    
    (with-access::J2SPostfix this (lhs rhs op type loc)
-      (when (eq? (caddr loc) '8489)
+      (when (eq? (caddr loc) '643)
 	 (tprint "------------- postfix env=" (dump-env env)))
       (multiple-value-bind (tyr envr bkr)
 	 (node-type rhs env fix)
 	 (multiple-value-bind (tyv __ lbk)
 	    (node-type lhs env fix)
 	    (expr-type-add! rhs envr fix (numty tyr) bkr)
-	    (when (eq? (caddr loc) '8489)
+	    (when (eq? (caddr loc) '643)
 	       (tprint "------------- postfix lhs=" tyv))
 	    (cond
 	       ((isa? lhs J2SRef)
@@ -891,12 +892,14 @@
 			 ((not (eq? utype 'unknown))
 			  (return utype env bkr))
 			 (else
-			  (decl-vtype-add! decl (numty tyr) fix)
-			  (let ((nenv (extend-env envr decl (numty tyr))))
-			     (expr-type-add! this nenv fix (numty tyr)
-				(append lbk bkr))))))))
+			  (let* ((ntyr (numty tyr))
+				 (nty (if (eq? ntyr 'unknown) (numty tyv) ntyr)))
+			     (decl-vtype-add! decl nty fix)
+			     (let ((nenv (extend-env envr decl nty)))
+				(expr-type-add! this nenv fix nty
+				   (append lbk bkr)))))))))
 	       (else
-		;; a non variable assinment
+		;; a non variable assignment
 		(expr-type-add! this envr fix (numty tyr) bkr)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -2016,6 +2019,8 @@
 	     (case op
 		((== === eq?)
 		 (with-access::J2SExpr ref (type)
+		    (tprint "BINARY " (j2s->list this) " decl="
+		       (j2s->list decl) " type=" type " typ=" typ)
 		    (cond
 		       ((eq-typeof? type typ)
 			(unfix! fix "resolve.J2SBinary")

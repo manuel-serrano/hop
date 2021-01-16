@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
 ;*    Last change :  Wed Apr 15 18:29:14 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
 ;*=====================================================================*/
@@ -1737,7 +1737,7 @@
    (define (array-prototype-every this::obj proc t)
 
       (define (test-val proc t v i::uint32 o)
-	 (js-totest (js-call3 %this proc t v (js-uint32-tointeger i) o)))
+	 (js-totest (js-call1-3 %this proc t v (js-uint32-tointeger i) o)))
 
       (define (vector-every this o len::uint32 proc t i::uint32 %this)
 	 (with-access::JsArray o (vec ilen)
@@ -1786,7 +1786,7 @@
    (define (array-prototype-some this::obj proc t)
 
       (define (test-val proc t v i::uint32 o)
-	 (js-totest (js-call3 %this proc t v (js-uint32-tointeger i) o)))
+	 (js-totest (js-call1-3 %this proc t v (js-uint32-tointeger i) o)))
 
       (define (vector-some this o len::uint32 proc t i::uint32 %this)
 	 (with-access::JsArray o (vec ilen)
@@ -1910,7 +1910,9 @@
 		  (else
 		   (let ((v (vector-ref vec (uint32->fixnum i))))
 		      (cond
-			 ((js-totest (js-call3 %this proc t v (js-uint32-tointeger i) o))
+			 ((js-totest
+			     (js-call1-3-jsprocedure %this proc
+				t v (js-uint32-tointeger i) o))
 			  v)
 			 (else
 			  (loop (+u32 i 1))))))))))
@@ -1921,7 +1923,9 @@
 		(js-undefined)
 		(let* ((pv (js-get-property-value o o i %this))
 		       (v (if (js-absent? pv) (js-undefined) pv)))
-		   (if (js-totest (js-call3 %this proc t v (js-uint32-tointeger i) o))
+		   (if (js-totest
+			  (js-call1-3-jsprocedure %this
+			     proc t v (js-uint32-tointeger i) o))
 		       v
 		       (loop (+u32 i 1)))))))
 
@@ -1950,7 +1954,9 @@
 		  (else
 		   (let ((v (vector-ref vec (uint32->fixnum i))))
 		      (cond
-			 ((js-totest (js-call3 %this proc t v (js-uint32-tointeger i) o))
+			 ((js-totest
+			     (js-call1-3-jsprocedure %this proc
+				t v (js-uint32-tointeger i) o))
 			  (js-uint32-tointeger i))
 			 (else
 			  (loop (+u32 i 1))))))))))
@@ -1961,7 +1967,7 @@
 		-1
 		(let* ((pv (js-get-property-value o o i %this))
 		       (v (if (js-absent? pv) (js-undefined) pv)))
-		   (if (js-totest (js-call3 %this proc t v (js-uint32-tointeger i) o))
+		   (if (js-totest (js-call1-3-jsprocedure %this proc t v (js-uint32-tointeger i) o))
 		       (js-uint32-tointeger i)
 		       (loop (+u32 i 1)))))))
 
@@ -2063,7 +2069,7 @@
 		       (loop (+u32 i #u32:1) acc)
 		       (let ((v pv))
 			  (loop (+u32 i #u32:1)
-			     (js-call4 %this proc (js-undefined) acc v
+			     (js-call2-4 %this proc (js-undefined) acc v
 				(js-uint32-tointeger i) o)))))
 		acc)))
       
@@ -4119,7 +4125,7 @@
    (if (js-object-mode-plain? this)
        (js-array-prototype-fill this value start end %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
-	  (js-call3 %this
+	  (js-call1-3 %this
 	     (js-get-name/cache this (& "fill") #f %this
 		(or cache (js-pcache-ref js-array-pcache 4)))
 	     this value start end))))
@@ -4131,7 +4137,7 @@
    (if (and (js-array? this) (js-object-mode-plain? this))
        (js-array-prototype-fill this value start end %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
-	  (js-call3 %this
+	  (js-call1-3 %this
 	     (js-get-name/cache this (& "fill") #f %this
 		(or cache (js-pcache-ref js-array-pcache 5)))
 	     this value start end))))
@@ -4178,7 +4184,7 @@
 		    (array-foreach this o len proc t i %this))
 		   (else
 		    (let ((v (vector-ref vec (uint32->fixnum i))))
-		       (js-call3 %this proc t v (js-uint32-tointeger i) o)
+		       (js-call1-3 %this proc t v (js-uint32-tointeger i) o)
 		       (loop (+u32 i 1)))))))
 	  (array-foreach this o len proc t i %this)))
    
@@ -4187,7 +4193,7 @@
 	 (when (<u32 i len)
 	    (let ((pv (js-get-property-value o o i %this)))
 	       (unless (js-absent? pv)
-		  (js-call3 %this proc t pv (uint32->fixnum i) o))
+		  (js-call1-3 %this proc t pv (uint32->fixnum i) o))
 	       (loop (+u32 i 1))))))
 
    (array-prototype-iterator this proc t array-foreach vector-foreach %this)
@@ -4301,7 +4307,7 @@
 			  (if (>u32 i 0)
 			      (set! ilen (-u32 i #u32:1))
 			      (set! ilen #u32:0))))
-		    (let ((v (js-call3 %this proc thisarg pv
+		    (let ((v (js-call1-3 %this proc thisarg pv
 				(js-uint32-tointeger i) o)))
 		       (with-access::JsArray a (vec)
 			  (if (<u32 i (fixnum->uint32 (vector-length vec)))
@@ -4334,7 +4340,7 @@
 		  (else
 		   (let ((val (vector-ref vec (uint32->fixnum i))))
 		      (vector-set! v (uint32->fixnum i)
-			 ((@ js-call3 __hopscript_public)
+			 ((@ js-call1-3 __hopscript_public)
 			  %this proc thisarg val
 			  (js-uint32-tointeger i) o))
 		      (loop (+u32 i 1)))))))))
@@ -4525,7 +4531,7 @@
 	     (let ((val (js-get-property-value o o i %this)))
 		(if (js-absent? val)
 		    (loop (+u32 1 #u32:1) j flen)
-		    (let ((nval (js-call3 %this proc thisarg val
+		    (let ((nval (js-call1-3 %this proc thisarg val
 				   (uint32->fixnum i) o)))
 		       (vector-set! vec (uint32->fixnum j) nval)
 		       (loop (+u32 i 1)
@@ -4554,7 +4560,7 @@
 			     (array-flatmap/array this o len proc thisarg i v flen %this)))
 			(else
 			 (let* ((val (vector-ref vec (uint32->fixnum i)))
-				(nval ((@ js-call3 __hopscript_public)
+				(nval ((@ js-call1-3 __hopscript_public)
 				       %this proc thisarg val
 				       (uint32->fixnum i) o)))
 			    (vector-set! v (uint32->fixnum i) nval)
@@ -4709,7 +4715,7 @@
 		       (loop (+u32 i 1) j))
 		    (let ((v pv)
 			  (nj (js-toname j %this)))
-		       (if (js-totest (js-call3 %this proc t v
+		       (if (js-totest (js-call1-3 %this proc t v
 					 (js-uint32-tointeger i) o))
 			   (let ((newdesc (instantiate::JsValueDescriptor
 					     (name nj)
@@ -4742,7 +4748,7 @@
 		      (else
 		       (let ((val (vector-ref vec (uint32->fixnum i))))
 			  (cond
-			     ((js-totest (js-call3 %this proc t val
+			     ((js-totest (js-call1-3 %this proc t val
 					    (js-uint32-tointeger i) o))
 			      (vector-set! v (uint32->fixnum j) val)
 			      (loop (+u32 i 1) (+u32 j 1)))

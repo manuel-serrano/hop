@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
 ;*    Last change :  Wed May 20 17:16:20 2020 (serrano)                */
-;*    Copyright   :  2010-20 Manuel Serrano                            */
+;*    Copyright   :  2010-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
 ;*=====================================================================*/
@@ -41,6 +41,8 @@
 
 	   (class androidevent::event)
 
+	   (android-start-activity ::androidphone ::bstring ::bstring . opts)
+	   
 	   (android-load-plugin::int ::androidphone ::bstring)
 	   (android-send-command ::androidphone ::int . args)
 	   (android-send-command/result ::androidphone ::int . args)))
@@ -59,6 +61,7 @@
 (define build-plugin #f)
 (define ui-plugin #f)
 (define system-plugin #f)
+(define intent-plugin #f)
 
 (define event-thread #f)
 (define event-mutex (make-mutex))
@@ -84,7 +87,15 @@
 	    (make-client-socket (format "\000~a-event:~a" app (hop-port))
 	       0 :domain 'unix))
 	 ;; hopdroid event table
-	 (set! %event-table (make-hashtable 8))
+	 (let ((evtable %event-table))
+	    (set! %event-table (make-hashtable 8))
+	    (when (hashtable? evtable)
+	       ;; restore all the event listeners
+	       (hashtable-for-each evtable
+		  (lambda (event procs)
+		     (for-each (lambda (proc)
+				  (add-event-listener! p event proc))
+			procs)))))
 	 ;; switch to running state
 	 (set! state 'running)
 	 ;; start the event listener thread
@@ -100,8 +111,11 @@
 				  (unwind-protect
 				     (android-event-listener p)
 				     (begin
+					(tprint "CLIENT CLOSING SOCKETS...")
 					(socket-close %sock-plugin)
 					(socket-close %sock-event)
+					(set! %sock-plugin #f)
+					(set! %sock-event #f)
 					(set! state 'close))))))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -314,6 +328,7 @@
 	    (let loop ()
 	       (let ((name (read ip)))
 		  (unless (eof-object? name)
+		     (tprint "ANDROID-EVENT-LISTENER name=" name)
 		     (let ((args (read ip)))
 			(set! phone-events '())
 			(unless (or (eof-object? args)
@@ -462,6 +477,10 @@
 	  (if (string? family)
 	      family
 	      "")))
+
+   (define (img data)
+      (when (string? data)
+	 `(:format "jpeg" :encoding "base64" :data ,data)))
    
    (match-case contact
       (#(?id ?firstname ?family ?thumb)
@@ -472,14 +491,14 @@
 	  (firstname firstname)
 	  (org #unspecified)
 	  (photo #unspecified)
-	  (x-thumbnail thumb)
+	  (x-thumbnail (img thumb))
 	  (x-color #unspecified)
 	  (url #unspecified)
 	  (phones '())
 	  (addresses '())
 	  (emails '())
 	  (notes '())))
-      (#(?id ?firstname ?family ?thumb ?photo ?color ?url ?akas ?comp ?phones ?addrs ?emails ?notes)
+      (#(?id ?firstname ?family ?thumb ?akas ?org ?phones ?addrs ?emails ?photo ?url ?notes)
        (let* ((notes (if (pair? akas)
 			 (cons (cons 'akas akas) notes)
 			 notes)))
@@ -488,10 +507,10 @@
 	     (fn (fn firstname family))
 	     (familyname family)
 	     (firstname firstname)
-	     (org comp)
-	     (photo photo)
-	     (x-thumbnail thumb)
-	     (x-color color)
+	     (org org)
+	     (photo (img photo))
+	     (x-thumbnail (img thumb))
+	     (x-color #f)
 	     (url url)
 	     (phones phones)
 	     (addresses addrs)
@@ -502,7 +521,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    phone-contact-list ::androidphone ...                            */
 ;*---------------------------------------------------------------------*/
-(define-method (phone-contact-list p::androidphone #!optional projection filter)
+(define-method (phone-contact-list p::androidphone #!optional projection selection)
    (unless contact-plugin
       (set! contact-plugin (android-load-plugin p "contact")))
    (if contact-plugin
@@ -515,11 +534,11 @@
 			 (format "wrong projection (~a)" (typeof projection))
 			 projection)))
 	     (cond
-		((string? filter) filter)
-		((not filter) "")
+		((string? selection) selection)
+		((not selection) "")
 		(else (error "phone-contact-list"
-			 (format "wrong filter (~a)" (typeof filter))
-			 filter)))))
+			 (format "wrong selection (~a)" (typeof selection))
+			 selection)))))
        '()))
 
 ;*---------------------------------------------------------------------*/
@@ -613,6 +632,15 @@
    (with-access::androidphone p (initid)
       (android-send-command p initid "reboot")))
 
+;*---------------------------------------------------------------------*/
+;*    android-start-activity ...                                       */
+;*---------------------------------------------------------------------*/
+(define (android-start-activity p::androidphone action::bstring uri::bstring . opts)
+   (unless intent-plugin
+      (set! intent-plugin (android-load-plugin p "intent")))
+   (apply android-send-command/result p intent-plugin
+      action uri (length opts) opts))
+   
 ;*---------------------------------------------------------------------*/
 ;*    send-string ...                                                  */
 ;*---------------------------------------------------------------------*/

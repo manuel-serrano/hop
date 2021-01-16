@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 04:58:36 2007                          */
 ;*    Last change :  Mon May 18 20:17:52 2015 (serrano)                */
-;*    Copyright   :  2007-15 Manuel Serrano                            */
+;*    Copyright   :  2007-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ xml extensions                                                */
 ;*=====================================================================*/
@@ -504,18 +504,22 @@ reduce
 ;*    <HZ:WEBLET> ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (<HZ:WEBLET> w)
-   (with-access::weblet w (name version author title comment home install url depends)
+   (with-access::weblet w (name version author title description home install url depends)
       (<VBOX> :class "weblet"
 	 (<VBOX-BLOCK> (<SPAN> :class "title" name " " version))
 	 (<VBOX-SEPARATOR>)
 	 (<VBOX-BLOCK>
 	    (<TABLE> :class "weblet"
 	       (<TR> (<TD> :class "author" "By " author))
-	       (unless (or (not (string? home)) (string=? home ""))
-		  (<TR> (<TD> :class "homepage" 
-			   (<A> :href home :title home (<TT> home)))))
+	       (cond
+		  ((and (string? home) (not (string=? home "")))
+		   (<TR> (<TD> :class "homepage" 
+			    (<A> :href home :title home (<TT> home)))))
+		  ((and (string? url) (not (string=? url "")))
+		   (<TR> (<TD> :class "homepage" 
+			    (<A> :href url (<TT> (basename url)))))))
 	       (<TR> (<TD> (<P> :class "title" title)))
-	       (<TR> (<TD> (<P> :class "comment" comment)))
+	       (<TR> (<TD> (<P> :class "comment" description)))
 	       (<TR> (<TD> (<SPAN> :class "requires" "requires: ")
 			   (reduce (lambda (a b)
 				      (cons* a ", " (if (pair? b) b (list b))))

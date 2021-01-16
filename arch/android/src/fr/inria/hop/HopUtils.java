@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  manuel serrano                                    */
 /*    Creation    :  Thu Nov 12 16:24:37 2020                          */
-/*    Last change :  Fri Nov 13 10:55:28 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 09:24:56 2020 (serrano)                */
 /*    Copyright   :  2020 manuel serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Utility functions                                                */
@@ -90,6 +90,18 @@ public class HopUtils {
       } catch( IOException e ) {
 	 Log.d( "HopUtils", "chmod \"" + abspath + "\" failed..." );
 	 e.printStackTrace();
+      }
+   }
+
+   // shortClassName
+   static String shortClassName( Class c ) {
+      String name = c.getName();
+      int i = name.lastIndexOf( '.' );
+
+      if( i > 0 ) {
+	 return name.substring( i + 1 );
+      } else {
+	 return name + "XX";
       }
    }
 }

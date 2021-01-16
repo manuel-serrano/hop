@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
 ;*    Last change :  Fri Jun  5 07:29:56 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
 ;*=====================================================================*/
@@ -202,6 +202,11 @@
 	    (when (not hidden-class)
 	       `(:hidden-class #f)))))
 
+   (define (raise-on-write? decl::J2SDecl)
+      (when (isa? decl J2SDeclExtern)
+	 (with-access::J2SDeclExtern decl (raise-on-write)
+	    raise-on-write)))
+   
    (with-access::J2SDecl this (loc scope id vtype)
       (let ((ident (j2s-decl-scm-id this ctx)))
 	 (epairify-deep loc
@@ -218,7 +223,11 @@
 				  (js-define %this %scope
 				     ,(j2s-decl-name this ctx)
 				     (lambda (%) ,ident)
-				     (lambda (% %v) (set! ,ident %v))
+				     ,(if (raise-on-write? this)
+					  `(lambda (% %v)
+					     (js-raise-type-error %this
+						,(format "Cannot assign to read only property '~s' of object" id) this))
+					  `(lambda (% %v) (set! ,ident %v)))
 				     %source ,(caddr loc)
 				     ,@(or (hidden-class this) '()))
 				  %%tmp))
@@ -705,8 +714,7 @@
       ;; see constant.scm
       (epairify loc
 	 `(js-strings->cmap
-	     (vector ,@(map symbol->string (vector->list val)))
-	     %this))))
+	     (vector ,@(map symbol->string (vector->list val)))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SNull ...                                         */
@@ -1253,7 +1261,7 @@
 		   %acc)))
       
       (let* ((whileid (string->symbol
-			 (format "while:~a" (cadr loc) (caddr loc))))
+			 (format "while@~a:~a" (cadr loc) (caddr loc))))
 	     (loop (if (in-eval? return) (eval-loop whileid) (comp-loop whileid))))
 	 (epairify-deep loc
 	    (if need-bind-exit-break
@@ -1918,7 +1926,11 @@
 				   #f ctx #f #f :cachefun #f)
 			       ,(liip (cdr withs))))))))
 	    ((isa? lhs J2SUndefined)
-	     (j2s-scheme rhs mode return ctx))
+	     (if (memq mode '(strict hopscript))
+		 '(js-raise-type-error %this
+		    "Cannot assign to read only property 'undefined' of object"
+		   (js-undefined))
+		 (j2s-scheme rhs mode return ctx)))
 	    ((isa? lhs J2SParen)
 	     (with-access::J2SParen lhs (expr)
 		(loop expr rhs)))

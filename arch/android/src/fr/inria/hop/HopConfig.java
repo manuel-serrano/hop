@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul 10 08:08:45 2016                          */
-/*    Last change :  Mon Dec  7 06:51:21 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 09:19:52 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop configuration                                                */
@@ -38,6 +38,7 @@ public class HopConfig {
    static String SERVICE;
    static String ARGS;
    static String DEBUG;
+   static String VERBOSE;
 
    static String DEFLANG;
    static boolean NOTITLE;
@@ -61,6 +62,10 @@ public class HopConfig {
    static boolean PLUGINTTS;
    static boolean PLUGINCALL;
    static boolean PLUGINPREFS;
+   static boolean PLUGININTENT;
+
+   static String HOME;
+   static String RCDIR;
 
    static void init( Context context ) {
       final Resources res = context.getResources();
@@ -74,6 +79,7 @@ public class HopConfig {
       HOPAPK = res.getString( R.string.hopapk );
       HOPHZ = res.getString( R.string.hophz );
       DEBUG = res.getString( R.string.hopdebug );
+      VERBOSE = res.getString( R.string.hopverbose );
       APP = res.getString( R.string.hopapp );
       ARGS = res.getString( R.string.hopargs );
       SERVICE = APP.equals( "hop" ) ? "/hop/hopdroid" : "/hop/" + APP;
@@ -99,6 +105,10 @@ public class HopConfig {
       PLUGINTTS = res.getBoolean( R.bool.plugintts );
       PLUGINCALL = res.getBoolean( R.bool.plugincall );
       PLUGINPREFS = res.getBoolean( R.bool.pluginprefs );
+      PLUGININTENT = res.getBoolean( R.bool.pluginintent );
+
+      HOME = context.getExternalFilesDir( null ).getAbsolutePath();
+      RCDIR = context.getExternalFilesDir( null ).getAbsolutePath() + "/rcdir";
    }
 
    HopConfig() {

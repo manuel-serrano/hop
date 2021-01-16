@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
 ;*    Last change :  Mon Aug 26 08:33:27 2019 (serrano)                */
-;*    Copyright   :  2018-20 Manuel Serrano                            */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
 ;*=====================================================================*/
@@ -1258,14 +1258,14 @@
    etok
    (hopjs-parse-token-string etok)
    (hopjs-parse-peek-token)
-   (letn loop ((etok (hopjs-parse-peek-token-type)))
+   (letn loop ((etok (hopjs-parse-peek-token)))
 	 (case (hopjs-parse-peek-token-type)
 	   ((ident)
 	    (hopjs-debug 0 "hopjs-indent-function-expression.ident")
-	    (funcall loop (hopjs-parse-expr (hopjs-parse-peek-token) nil)))
+	    (funcall loop (hopjs-parse-expr etok nil)))
 	   ((return throw var let const)
 	    (hopjs-debug 0 "hopjs-indent-function-expression.return")
-	    (hopjs-indent-column-token (hopjs-parse-peek-token) level))
+	    (hopjs-indent-column-token etok level))
 	   ((=)
 	    (hopjs-debug 0 "hopjs-indent-function-expression.=")
 	    (let ((tok (hopjs-parse-expr (hopjs-parse-consume-token-any) t)))

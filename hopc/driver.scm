@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
 ;*    Last change :  Sun Mar 29 06:47:58 2020 (serrano)                */
-;*    Copyright   :  2014-20 Manuel Serrano                            */
+;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
 ;*=====================================================================*/
@@ -232,6 +232,8 @@
 		  :plugins-loader (hopc-plugins-loader)
 		  :libs-dir (hopc-libs-dir)
 		  :debug (bigloo-debug)
+		  :warning (bigloo-warning)
+		  :node-modules-directory (hopc-node-modules-directory)
 		  (hopc-j2s-flags)))))
       
       (define (generate-js out::output-port)
@@ -263,6 +265,8 @@
 		  :plugins-loader (hopc-plugins-loader)
 		  :libs-dir (hopc-libs-dir)
 		  :debug (bigloo-debug)
+		  :warning (bigloo-warning)
+		  :node-modules-directory (hopc-node-modules-directory)
 		  (hopc-j2s-flags)))))
       
       (define (generate out::output-port lang::symbol)
@@ -472,7 +476,9 @@
 			:plugins-loader (hopc-plugins-loader)
 			:libs-dir (hopc-libs-dir)
 			:debug (bigloo-debug)
+			:warning (bigloo-warning)
 			:function-nice-name (string? temp)
+			:node-modules-directory (hopc-node-modules-directory)
 			(hopc-j2s-flags))))
 	       file
 	       temp)))

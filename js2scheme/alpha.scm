@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
 ;*    Last change :  Fri Jan 31 16:43:33 2020 (serrano)                */
-;*    Copyright   :  2016-20 Manuel Serrano                            */
+;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
 ;*=====================================================================*/
@@ -300,6 +300,16 @@
       (duplicate::J2SMethod this
 	 (function (alpha function))
 	 (method (alpha method)))))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SCatch ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SCatch)
+   (with-access::J2SCatch this (body param)
+      (let ((nparam (j2sdecl-duplicate param)))
+	 (duplicate::J2SCatch this
+	    (param nparam)
+	    (body (j2s-alpha body (list param) (list nparam)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SBlock ...                                             */

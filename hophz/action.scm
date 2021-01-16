@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 29 09:52:32 2012                          */
 ;*    Last change :  Tue Dec 17 16:41:27 2013 (serrano)                */
-;*    Copyright   :  2012-13 Manuel Serrano                            */
+;*    Copyright   :  2012-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hophz actions                                                    */
 ;*=====================================================================*/
@@ -101,7 +101,7 @@
 ;*    show-weblet ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (show-weblet w #!optional (verb 1))
-   (with-access::weblet w (name version install category title comment url publisher depends installable)
+   (with-access::weblet w (name version install category title description url publisher depends installable)
       (display-color 'category category "/")
       (display-color 'weblet name)
       (display " ")
@@ -128,8 +128,8 @@
       (when (>=fx verb 1)
 	 (when (>fx (string-length title) 0)
 	    (print title ":")))
-      (when (and (>=fx verb 3) (not (string-null? comment)))
-	 (print "    " comment))
+      (when (and (>=fx verb 3) (not (string-null? description)))
+	 (print "    " description))
       (when (>=fx verb 1)
 	 (newline))))
 

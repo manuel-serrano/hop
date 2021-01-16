@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
 ;*    Last change :  Sat May 23 07:01:06 2015 (serrano)                */
-;*    Copyright   :  2007-15 Manuel Serrano                            */
+;*    Copyright   :  2007-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with weblets.                              */
 ;*=====================================================================*/
@@ -24,6 +24,7 @@
 	      (stamp::int (default -1) (info "INTEGER"))
 	      (driver::bstring (default "hz"))
 	      (name::bstring read-only)
+	      (id::bstring read-only)
 	      (version::bstring read-only (info "VERSION"))
 	      (install::bstring (default "") (info "VERSION"))
 	      (url read-only)
@@ -36,7 +37,7 @@
 	      (depends::pair-nil read-only)
 	      (installable::bool (default #t))
 	      (title::bstring read-only)
-	      (comment::bstring read-only (info "BLOB"))
+	      (description::bstring read-only (info "BLOB"))
 	      (signature::bstring read-only (default ""))
 	      (authorization read-only (default #f))
 	      (directory::bstring read-only (default "")))
@@ -106,6 +107,7 @@
 ;*                                                                     */
 ;*      - charset: the charset of the info file                        */
 ;*      - name: the name of the weblet                                 */
+;*      - id: a unique that designate the weblet (default to name)     */
 ;*      - author:                                                      */
 ;*      - url: download url                                            */
 ;*      - home: home page                                              */
@@ -114,7 +116,7 @@
 ;*      - maxhop: the maximal Hop version that can run the weblet      */
 ;*      - depends: dependences list                                    */
 ;*      - title:                                                       */
-;*      - comment:                                                     */
+;*      - description:                                                 */
 ;*      - signature:                                                   */
 ;*      - directory: the local directory where the weblet is installed */
 ;*                                                                     */
@@ -147,6 +149,7 @@
 		       (error "info->weblet"
 			      (format "weblet ~a name mismatch" name)
 			      (format "~a expected, ~a provided" name v)))))
+	  (id (find 'id name))
 	  (version (let ((v (find 'version (or version "0.0.0"))))
 		      (if (or (not (string? version)) (string=? v version))
 			  (convert v)
@@ -167,6 +170,7 @@
 	 (name name)
 	 (version version)
 	 (url url)
+	 (id id)
 	 (publisher publisher)
 	 (home (find 'home #unspecified))
 	 (author (convert (find 'author #unspecified)))
@@ -178,7 +182,7 @@
 	 (minhop (find 'minhop "0"))
 	 (maxhop (find 'maxhop "z"))
 	 (title (convert (find 'title "")))
-	 (comment (convert (find 'comment "")))
+	 (description (convert (find 'description (find 'comment ""))))
 	 (authorization authorization)
 	 (depends (map (lambda (x) (if (symbol? x) (list x) x))
 		     (find 'depends '())))

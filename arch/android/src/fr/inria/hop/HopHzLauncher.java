@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Tue Dec 22 16:44:28 2020 (serrano)                */
-/*    Copyright   :  2010-20 Manuel Serrano                            */
+/*    Last change :  Fri Jan  1 06:30:32 2021 (serrano)                */
+/*    Copyright   :  2010-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop Hz Launcher (used to launch an Hop client app).              */
 /*=====================================================================*/
@@ -37,12 +37,37 @@ import java.security.*;
 
 /*---------------------------------------------------------------------*/
 /*    The class                                                        */
+/*    -------------------------------------------------------------    */
+/*    Spawning a Hop client (a Hop HZ) goes through the following      */
+/*    steps:                                                           */
+/*                                                                     */
+/*      _:                                                             */
+/*         HopInstaller                                                */
+/*            -> MSG_INSTALL_UNPACK                                    */
+/*      MSG_INSTALL_UNPACK:                                            */
+/*         splash                                                      */
+/*         startHopActivity                                            */
+/*            -> MSG_INSTALL_ACTIVITY_READY                            */
+/*             | MSG_INSTALL_ACTIVITY_ERROR                            */
+/*             | MSG_INSTALL_ACTIVITY_NOT_FOUND                        */
+/*      MSG_INSTALL_ACTIVITY_READY:			               */
+/*          HopPermission                                              */
+/*      MSG_INSTALL_PERMISSION:                                        */
+/*          HopIntenter                                                */
+/*          HopService                                                 */
+/*          HopDroid                                                   */
+/*            -> MSG_HOPDROID_CONNECT                                  */
+/*            -> MSG_HOPDROID_START                                    */
+/*      MSG_HOPDROID_START:                                            */
+/*          installHopHz, if not installed                             */
+/*            -> MSG_INSTALL_HZ_READY                                  */
+/*             | MSG_INSTALL_HZ_ERROR                                  */
+/*      MSG_INSTALL_HZ_READY:                                          */
+/*          loadUrl                                                    */
+/*          raiseHzActivity                                            */
 /*---------------------------------------------------------------------*/
 public class HopHzLauncher extends HopLauncher {
 
-   // instance variables
-   HopDroid hzhopdroid = null;
-   
    // static initialization
    static {
       HopUtils.initWifiPolicy();
@@ -54,16 +79,17 @@ public class HopHzLauncher extends HopLauncher {
       String hopdir = activity.getApplicationInfo().dataDir + "/assets";
 
       HopInstaller installer = new HopInstaller( activity, handler, hopapk, hopdir, true );
-      installer.exec( hopctx );
+      installer.exec( hopctx, null );
    }
 
    // start the Hop Android activity
    private void startHopActivity() {
+      Log.i( "HopHzLauncher", "startHopActivity..." );
+      
       new Thread( new Runnable() {
 	    public void run() {
-	       Log.i( "HopHzLauncher", "startHopActivity..." );
 	       
-	       if( Hop.ping( Hop.port, 5 ) ) {
+	       if( Hop.ping( Hop.port, 5 ) > 0 ) {
 		  Log.i( "HopHzLauncher", "Hop ready..." );
 		  handler.sendEmptyMessage( MSG_INSTALL_ACTIVITY_READY );
 	       } else {
@@ -71,9 +97,11 @@ public class HopHzLauncher extends HopLauncher {
 		  Intent launchIntent = getPackageManager().getLaunchIntentForPackage( HopConfig.HOPAPK );
 		  if( launchIntent != null ) {
 		     Log.i( "HopHzLauncher", "Starting Hop activity..." );
-
+		     
+		     launchIntent.addFlags( Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP );
 		     startActivity( launchIntent );
-		     if( Hop.ping( Hop.port, 20 ) ) {
+		     
+		     if( Hop.ping( Hop.port, 20 ) > 0 ) {
 			handler.sendEmptyMessage( MSG_INSTALL_ACTIVITY_READY );
 		     } else {
 			handler.sendEmptyMessage( MSG_INSTALL_ACTIVITY_ERROR );
@@ -109,6 +137,17 @@ public class HopHzLauncher extends HopLauncher {
 	 return "";
       }
    }
+
+   static void writeFile( OutputStream op, String source ) throws IOException {
+      final int BUFSIZE = 8192;
+      FileInputStream is = new FileInputStream( source );
+      byte data[] = new byte[ BUFSIZE ];
+      int count;
+	 
+      while( (count = is.read( data, 0, BUFSIZE) ) != -1 ) {
+	 op.write( data, 0, count );
+      }
+   }
    
    // request the running Hop server to install the HZ package
    private void installHopHz() {
@@ -120,27 +159,63 @@ public class HopHzLauncher extends HopLauncher {
 		  String hopdir = activity.getApplicationInfo().dataDir + "/assets";
 		  String hophzdir = activity.getApplicationInfo().dataDir + "/assets/hz/";
 		  String path = hophzdir + HopConfig.HOPHZ;
-		  MessageDigest md = MessageDigest.getInstance( "MD5" );
 		  
-		  URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/install?url=" + path + md5sum( path ) );
-		  Log.i( "HopHzLauncher", "Install URL=" + hzURL.toString() );
+		  URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/install" );
 
-		  HopUtils.chmod( hopdir, 555 );
-		  HopUtils.chmod( hophzdir, 555 );
-		  HopUtils.chmod( path, 644 );
 		  HttpURLConnection conn = (HttpURLConnection)hzURL.openConnection();
 
-		  conn.setRequestMethod( "GET" );
+		  final String boundary = "----HZDROID";
+		  
+		  conn.setRequestMethod( "POST" );
+		  conn.setDoOutput( true );
+		  conn.setUseCaches( false );
+		  
+		  conn.setRequestProperty( "Content-Type", "multipart/form-data; boundary=" + boundary );
+		  
+		  try {
+		     OutputStream op = conn.getOutputStream();
 
-		  conn.setConnectTimeout( 500 );
-	 
+		     // op.write( "\r\n".getBytes() );
+
+		     op.write( "--".getBytes() );
+		     op.write( boundary.getBytes() );
+		     op.write( "\r\n".getBytes() );
+		     op.write( "Content-Disposition: form-data; name=\"url\"; filename=\"".getBytes() );
+		     op.write( HopConfig.HOPHZ.getBytes() );
+		     op.write( "\"\r\n".getBytes() );
+		     op.write( "Content-Type: text/plain\r\n".getBytes() );
+		     op.write( "\r\n".getBytes() );
+		     writeFile( op, path );
+		     op.write( "\r\n".getBytes() );
+		     
+		     op.write( "--".getBytes() );
+		     op.write( boundary.getBytes() );
+		     op.write( "\r\n".getBytes() );
+		     op.write( "Content-Disposition: form-data; name=\"checksum\"\r\n".getBytes() );
+		     op.write( "\r\n".getBytes() );
+		     op.write( md5sum( path ).toString().getBytes() );
+		     op.write( "\r\n".getBytes() );
+		     
+		     op.write( "--".getBytes() );
+		     op.write( boundary.getBytes() );
+		     op.write( "--\r\n".getBytes() );
+
+		     op.flush();
+		     op.close();
+		  } catch( Exception e ) {
+		     Log.e( "HopHzLauncher", "Cannot post file:" + e.toString() );
+		     e.printStackTrace();
+		  }
+		     
+		     
 		  int status = conn.getResponseCode();
 		  conn.disconnect();
 
+		  Log.d( "HopHzLauncher", "hz/install status=" + status );
+		  
 		  if( status == HttpURLConnection.HTTP_OK ) {
 		     handler.sendEmptyMessage( MSG_INSTALL_HZ_READY );
 		  } else {
-		     Log.d( "HopHzLauncher", "hz/install status=" + status );
 		     handler.sendEmptyMessage( MSG_INSTALL_HZ_ERROR );
 		  }
 	       } catch( Exception e ) {
@@ -152,25 +227,86 @@ public class HopHzLauncher extends HopLauncher {
 	 } ).start();
    }
 
-   // hzInstalledp
-   static boolean hzInstalledp( String port, String service ) {
-      return Hop.ping( port, 0, service );
-   }
+   // request the running Hop server to uninstall the HZ package
+   public static void unInstallHopHz( String id ) {
+      new Thread( new Runnable() {
+	    public void run() {
+	       try {
+		  URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/uninstall?id=" + id );
+		  Log.i( "HopHzLauncher", "Uninstall id=" + id );
+		  HttpURLConnection conn = (HttpURLConnection)hzURL.openConnection();
 
+		  conn.setRequestMethod( "GET" );
+
+		  conn.setConnectTimeout( 500 );
+	 
+		  int status = conn.getResponseCode();
+		  conn.disconnect();
+
+		  if( status != HttpURLConnection.HTTP_OK ) {
+		     Log.d( "HopHzLauncher", "hz/uninstall status=" + status );
+		  }
+	       } catch( Exception e ) {
+		  Log.d( "HopHzLauncher", "cannot uninstall: " + e );
+		  e.printStackTrace();
+	       }
+	    }
+	 } ).start();
+   }
+   
+   // request the running Hop server to remove the HZ package
+   public static void removeHopHz( String id ) {
+      Log.d( "HopHzLauncher", "remove hz" );
+
+      new Thread ( new Runnable() {
+	    public void run() {
+	       try {
+		  URL hzURL = new URL( "http://localhost:" + Hop.port + "/hop/hz/remove?id=" + id );
+		  Log.i( "HopHzLauncher", "Remove id=" + id );
+		  HttpURLConnection conn = (HttpURLConnection)hzURL.openConnection();
+
+		  conn.setRequestMethod( "GET" );
+
+		  conn.setConnectTimeout( 500 );
+	 
+		  int status = conn.getResponseCode();
+		  conn.disconnect();
+
+		  if( status != HttpURLConnection.HTTP_OK ) {
+		     Log.d( "HopHzLauncher", "hz/remove status=" + status );
+		  }
+	       } catch( Exception e ) {
+		  Log.d( "HopHzLauncher", "cannot remove: " + e );
+		  e.printStackTrace();
+	       }
+	       synchronized( id ) {
+		  id.notify();
+	       }
+	    }
+	 } ).start();
+   }
+   
    // raiseHzActivity
    void raiseHzActivity() {
       Log.i( "HopHzLauncher", "raiseHzActivity" );
       
-      Intent i = new Intent( activity.getApplicationContext(), HopHzLauncher.class );
-      i.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );
-      i.addFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
-      
-      startActivity( i );      
+/*       Intent i = new Intent( activity.getApplicationContext(), HopHzLauncher.class ); */
+/*       i.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );                 */
+/*       i.addFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );          */
+/*                                                                     */
+/*       startActivity( i );                                           */
    }
    
    // install handlers
    @Override protected void onInstallUnpacked() {
       Log.d( "HopHzLauncher", "===== onInstallUnpacked" );
+      
+      hoppermission = new HopPermission( activity, handler );
+      hoppermission.exec( hopctx, null );
+   }
+
+   @Override protected void onPermission() {
+      Log.d( "HopHzLauncher", "===== onPermission" );
       
       splashScreen( "splash.html" );
       startHopActivity();
@@ -178,12 +314,26 @@ public class HopHzLauncher extends HopLauncher {
 
    @Override protected void onInstallActivityReady() {
       Log.d( "HopHzLauncher", "===== onInstallActivityReady" );
-      
-      if( hzInstalledp( Hop.port, HopConfig.SERVICE ) ) {
-	 onInstallHzReady();
-      } else {
-	 installHopHz();
-      }
+
+      hopintenter = new HopIntenter( activity, handler, queue );
+      hopintenter.exec( hopctx, HopHzService.class );
+   }
+   
+   @Override protected void onHopDroidStart() {
+      Log.d( "HopHzLauncher", "===== onHopDroidStart" );
+
+      new Thread( new Runnable() {
+	    public void run() {
+	       int status = Hop.ping( Hop.port, 0, HopConfig.SERVICE );
+	       
+	       if( status >= 200 && status != 404 && status < 500 ) { 
+		  Log.i( "HopHzLauncher", "Hz service ready..." );
+		  handler.sendEmptyMessage( MSG_INSTALL_HZ_READY );
+	       } else {
+		  installHopHz();
+	       }
+	    }
+	 } ).start();
    }
 
    @Override protected void onInstallActivityError() {
@@ -200,12 +350,8 @@ public class HopHzLauncher extends HopLauncher {
 
    @Override protected void onInstallHzReady() {
       Log.d( "HopHzLauncher", "===== onInstallHzReady" );
-      
-      hzhopdroid = new HopDroid( null, activity );
-      hzhopdroid.start();
-      
-      webview.loadUrl( "http://localhost:" + Hop.port + HopConfig.SERVICE );
 
+      webview.loadUrl( "http://localhost:" + Hop.port + HopConfig.SERVICE );
       raiseHzActivity();
    }
    
@@ -219,9 +365,7 @@ public class HopHzLauncher extends HopLauncher {
    @Override public void onStop() {
       super.onStop();
 
-      Log.d( "HopHzLauncher", "onStop" );
-      
-      hzhopdroid.pushEvent( "phone", "stop" );
+      if( hopservice !=null ) hopservice.hopdroid.pushEvent( "phone", "stop" );
    }
 }
 

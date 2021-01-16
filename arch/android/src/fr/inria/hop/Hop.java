@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Mon Dec 21 08:51:25 2020 (serrano)                */
+/*    Last change :  Thu Dec 31 08:14:14 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -36,7 +36,6 @@ import java.lang.String;
 /*---------------------------------------------------------------------*/
 public class Hop extends Thread {
    // global constants
-   private static File _HOME = null;
    final static String HOP = "/bin/hop";
    final static String HOPARGS = "--no-color";
    final static String SHELL = "/system/bin/sh";
@@ -45,6 +44,7 @@ public class Hop extends Thread {
    // global variables
    static String root = HopConfig.ROOT;
    static String debug = HopConfig.DEBUG;
+   static String verbose = HopConfig.VERBOSE;
    static String maxthreads = HopConfig.MAXTHREADS;
    static String url = HopConfig.APP;
    static boolean zeroconf = true;
@@ -53,7 +53,6 @@ public class Hop extends Thread {
 
    // see setHopActivityParams
    static String port;
-   static String rcdir;
    static String args;
 
    // instance variables
@@ -88,42 +87,9 @@ public class Hop extends Thread {
       Resources res = activity.getResources();
       SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences( activity );
       port = getPrefString( sp, HopConfig.APP + "-port", HopConfig.PORT );
-      rcdir = HOME().getAbsolutePath() + "/"
-	 + getPrefString( sp, HopConfig.APP + "-rcdir", ".config/" + HopConfig.APP );
       args = getPrefString( sp, HopConfig.ARGS, "" );
-      rcdir = activity.getApplicationInfo().dataDir + "/assets/rcdir";
-      rcdir = HOME().getAbsolutePath() + "/.config/" + HopConfig.APP;
    }
    
-   // HOME
-   public static File HOME() {
-      if( _HOME == null ) {
-	 // try to find an actual directory
-	 File sdcard = new File( "/mnt/sdcard" );
-	 if( sdcard.exists() ) {
-	    Log.d( "Hop", "HOME, /mnt/sdcard exists..." );
-	    _HOME = new File( sdcard, "home" );
-
-	    if( !_HOME.canWrite() ) {
-	       _HOME = null;
-	    }
-		   
-	 }
-
-	 if( _HOME == null ) {
-	    // fallback
-	    _HOME = new File( Environment.getExternalStorageDirectory(), "home" );
-	 }
-      }
-      
-      return _HOME;
-   }
-      
-   // is hop already configured
-   public boolean configured() {
-      return HOME().exists();
-   }
-
    // run hop
    public void run() {
       final int[] pid = new int[ 1 ];
@@ -192,21 +158,23 @@ public class Hop extends Thread {
 	    ahost.wait();
 	 }
 
-	 String cmd = "export HOME=" + HOME().getAbsolutePath() + "; "
+	 String cmd = "export HOME=" + HopConfig.HOME + "; "
 	    + "export LD_LIBRARY_PATH="
 	    + root + "/lib/bigloo/" + HopConfig.BIGLOORELEASE + ":"
 	    + root + "/lib/hop/" + HopConfig.HOPRELEASE + ":$LD_LIBRARY_PATH;"
 	    + "exec " + root + HOP + " " + HOPARGS
-	    + " -p " + port
-	    + " " + debug
+	    + " -p " + port + " "
+	    + (HopLauncher.debugCmdArg != null ? HopLauncher.debugCmdArg : debug)
 	    + " --max-threads " + maxthreads
 	    + (zeroconf ? " -z" : " --no-zeroconf")
 	    + (webdav ? " -d" : "")
 	    + (jobs ? " --jobs" : " --no-jobs")
-	    + " --rc-dir " + rcdir
+	    + " --rc-dir " + HopConfig.RCDIR
 	    + " --acknowledge " + ahost[ 0 ]
 	    + " --so-policy none"
-	    + " -v2 " + args;
+	    + " "
+	    + (HopLauncher.verboseCmdArg != null ? HopLauncher.verboseCmdArg : verbose)
+	    + " " + args;
 
 	 Log.i( "Hop", HopConfig.APP + " exec [" + sh + " -c \"" + cmd + "\"]");
 	 HopFd = HopExec.createSubprocess( sh, "-c", cmd, null, null, null, pid );
@@ -264,8 +232,8 @@ public class Hop extends Thread {
 	       int l;
 
 	       try {
-		  for( l = fin.read( buffer ); l > 0; l = fin.read( buffer ) ) {
-		     if( service.handler != null ) {
+		  for( l = 0; l >= 0; l = fin.read( buffer ) ) {
+		     if( l > 0 && service.handler != null ) {
 			String s = new String( buffer, 0, l );
 			service.queue.put( s );
 			service.handler.sendEmptyMessage( HopLauncher.MSG_HOP_OUTPUT_AVAILABLE );
@@ -304,10 +272,8 @@ public class Hop extends Thread {
       } catch( Exception e ) {
 	 Log.e( "Hop", "Acknowledge error " + e );
 	 e.printStackTrace();
-	 ;
       }
       
-      Log.d( "Hop", "acknowledge received... server is ready" );
       // spawn the initial Hop service
       service.handler.sendEmptyMessage( HopLauncher.MSG_HOP_START );
    }
@@ -347,7 +313,7 @@ public class Hop extends Thread {
    }
 
    // ping
-   public static boolean ping( String port, int errcnt, String svc ) {
+   public static int ping( String port, int errcnt, String svc ) {
       Log.d( "Hop", "ping ping port=" + port + " svc=" + svc );
       while( true ) {
 	 try {
@@ -364,25 +330,23 @@ public class Hop extends Thread {
 	    conn.disconnect();
 
 	    Log.d( "Hop", "  <<< ping, status=" + status );
-	    return (status == HttpURLConnection.HTTP_OK)
-	       || (status == HttpURLConnection.HTTP_NOT_FOUND)
-	       || (status == HttpURLConnection.HTTP_UNAUTHORIZED);
+	    return status;
 	 } catch( Exception e ) {
 	    Log.d( "Hop", "  !!! ping, exn=" + e.toString() );
 	    if( errcnt-- > 0 ) {
 	       try {
 		  Thread.sleep( 500 );
 	       } catch( Exception ee ) {
-		  return false;
+		  return -1;
 	       }
 	    } else {
-	       return false;
+	       return -1;
 	    }
 	 }
       }
    }
 
-   public static boolean ping( String port, int errcnt ) {
+   public static int ping( String port, int errcnt ) {
       return ping( port, errcnt, "/hop" );
    }
 
@@ -394,7 +358,7 @@ public class Hop extends Thread {
 	 synchronized( currentpid ) {
 	    Log.d( "Hop", "isRunning currentpid=" + currentpid[ 0 ] );
 	    if( currentpid[ 0 ] > 0 ) {
-	       return ping( port, 10 );
+	       return ping( port, 10 ) > 0;
 	    } else if( currentpid[ 0 ] == -1 ) {
 	       return false;
 	    } else {

@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Nov 20 07:27:15 2020                          */
 /*    Last change :  Sun Nov 22 09:08:58 2020 (serrano)                */
-/*    Copyright   :  2020 Manuel Serrano                               */
+/*    Copyright   :  2020-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side library for spage (version 2).                       */
 /*=====================================================================*/
@@ -330,15 +330,15 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 	 // mark the tab no longer pushed
 	 tbody.tab.pushed = false;
 	 
-	 // decrement the number of pushed elements
-	 spage.depth--;
-	 spage.tabs.pop();
-	 spage.spoffset -= spage.spwidth;
-	 
 	 // invoke the listener before removing any node
 	 if( spage.tabs.length > 0 ) {
 	    invokePopListeners( spage, spage.tabs[ spage.tabs.length - 1 ] );
 	 }
+	 
+	 // decrement the number of pushed elements
+	 spage.depth--;
+	 spage.tabs.pop();
+	 spage.spoffset -= spage.spwidth;
 	 
 	 // pop the element from the gui
 	 switch( spageTransitionStyle( spage ) ) {
@@ -358,7 +358,7 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       }
    }
 
-   // findFromTag
+   // spageFindFromTag
    function spageFindFromTag( el, tag ) {
       let parent = el.parentNode; 
       

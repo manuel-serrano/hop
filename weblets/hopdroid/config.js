@@ -22,13 +22,15 @@ import { config } from hop.config;
 const localConfig = {
    get enableWebdav() { return config.enableWebdav; },
    set enableWebdav( v ) { return config.enableWebdav = v; },
+   get enableRemote() { return config.enableRemote; },
+   set enableRemote( v ) { return config.enableRemote = v; },
    theme: undefined
 }
 /*---------------------------------------------------------------------*/
 /*    init ...                                                         */
 /*---------------------------------------------------------------------*/
 export function init() {
-   localConfig.enableWebdav = config.enableWebdav;
+   // localConfig.enableWebdav = config.enableWebdav;
 }
 
 /*---------------------------------------------------------------------*/
@@ -45,6 +47,7 @@ export function update() {
    const fd = fs.openSync( path.join( config.rcDirectory, "config.json" ), "w+" );
    purge( localConfig );
    fs.writeSync( fd, JSON.stringify( localConfig ) );
+   fs.writeSync( fd, "\n" );
    fs.close( fd );
 }
 

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Tue Dec 22 15:26:16 2020 (serrano)                */
-/*    Copyright   :  2012-20 Manuel Serrano                            */
+/*    Last change :  Fri Jan  1 08:27:29 2021 (serrano)                */
+/*    Copyright   :  2012-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
 /*=====================================================================*/
@@ -28,15 +28,13 @@ public class HopService extends Service {
    private int NOTIFICATION = R.string.hopservicestarted;
    private final int HOP_ID = 17051966;
 
-   // class variables
-   static Hop lasthop = null;
-   static HopDroid lasthopdroid;
-   
    // instance variables
-   protected Hop hop = null;
-   protected HopDroid hopdroid = null;
+   public static Hop hop = null;
+   public static HopDroid hopdroid = null;
    protected Boolean inrestart = false;
    Handler handler;
+   
+   String HOPSERVICE = "HopService";
    
    // communication with the launcher
    ArrayBlockingQueue<String> queue;
@@ -51,7 +49,10 @@ public class HopService extends Service {
    
    @Override
    public void onCreate() {
-      Log.i( "HopService", "onCreate..." );
+      HOPSERVICE = HopUtils.shortClassName( this.getClass() );
+      
+      Log.i( HOPSERVICE, "onCreate..." );
+      
       // status bar notification
       mNM = (NotificationManager)getSystemService( NOTIFICATION_SERVICE );
 
@@ -62,7 +63,7 @@ public class HopService extends Service {
 
    @Override
    public void onDestroy() {
-      Log.i( "HopService", "onDestroy..." );
+      Log.i( HOPSERVICE, "onDestroy..." );
 
       kill();
       
@@ -77,21 +78,21 @@ public class HopService extends Service {
       // destroy, it can notify the launcher to start a new HopService instance
       if( inrestart ) {
 	 inrestart = false;
-	 Log.i( "HopService", "sending restart message" );
+	 Log.i( HOPSERVICE, "sending restart message" );
 	 handler.sendEmptyMessage( HopLauncher.MSG_START_HOP_SERVICE );
       }
    }
 
    @Override
    public IBinder onBind( Intent intent ) {
-      Log.d( "HopService", "onBind: this=" + this + " hopbinder=" + hopbinder );
+      Log.d( HOPSERVICE, "onBind: this=" + this + " hopbinder=" + hopbinder );
       
       return hopbinder;
    }
 
    @Override
    public void onRebind( Intent intent ) {
-      Log.d( "HopService", "onRebind: " + this );
+      Log.d( HOPSERVICE, "onRebind: " + this );
       
       super.onRebind( intent );
       handler.sendEmptyMessage( HopLauncher.MSG_REBIND_HOP_SERVICE );
@@ -99,7 +100,7 @@ public class HopService extends Service {
 
    @Override
    public boolean onUnbind( Intent intent ) {
-      Log.i( "HopService", "onUnbind: " + this );
+      Log.i( HOPSERVICE, "onUnbind: " + this );
 
       kill();
       // true is returned to get onRebind invoked
@@ -107,35 +108,37 @@ public class HopService extends Service {
    }
 
    public void onConnect() {
+      Log.d( HOPSERVICE, "onConnect" );
+
       // invoked by HopLauncher when the connection is established.
       // this is used to complete the plugin initialization
       hopdroid.onConnect();
    }
    
    public synchronized void kill() {
-      Log.i( "HopService", "kill..." );
+      Log.i( HOPSERVICE, "kill..." );
 
       if( hop != null ) {
 	 hop.kill();
-	 lasthop = hop = null;
+	 hop = null;
       }
       
       if( hopdroid != null ) {
 	 hopdroid.kill();
-	 lasthopdroid = hopdroid = null;
+	 hopdroid = null;
       }
    }
 
    @Override
-    public int onStartCommand( Intent intent, int flags, int startid ) {
-      Log.d( "HopService", "onStartCommand " + this + "..." + " flags=" + flags + " startid=" + startid );
-      
+   public int onStartCommand( Intent intent, int flags, int startid ) {
+      Log.d( HOPSERVICE, "onStartCommand " + this + "..." + " flags=" + flags + " startid=" + startid );
+
       // create hopdroid
-      lasthopdroid = hopdroid = new HopDroid( HopService.this, null );
+      hopdroid = new HopDroid( HopService.this, HopLauncher.class );
 
       if( hopdroid.state == HopDroid.HOPDROID_STATE_INIT ) {
 	 // create hop 
-	 lasthop = hop = new Hop( HopService.this );
+	 hop = new Hop( HopService.this );
       
 	 // starting hopdroid
 	 hopdroid.start();
@@ -146,6 +149,7 @@ public class HopService extends Service {
 	 // sticky service
 	 return START_NOT_STICKY;
       } else {
+	 Log.d( HOPSERVICE, "stopSelf" );
 	 stopSelf();
 
 	 return 0;
@@ -153,7 +157,7 @@ public class HopService extends Service {
    }
 
    public void reboot() {
-      Log.i( "HopService", "reboot..." );
+      Log.i( HOPSERVICE, "reboot..." );
       
       // reboot hopdroid
       hopdroid.reboot();
@@ -163,7 +167,7 @@ public class HopService extends Service {
    }
 
    public static boolean isBackground() {
-      return lasthop != null && lasthop.isRunning( 0 );
+      return hop != null && hop.isRunning( 0 );
       //return HopDroid.isBackground();
    }
 
@@ -185,7 +189,7 @@ public class HopService extends Service {
 /* {* 	 .setContentText( text ).build();                              *} */
 /*       notification.flags = Notification.FLAG_NO_CLEAR;              */
 /*                                                                     */
-/*       Log.d( "HopService", "statusNotification" );                  */
+/*       Log.d( HOPSERVICE, "statusNotification" );                  */
 /*       notification.setLatestEventInfo(                              */
 /* 	 this, HopConfig.HOPRELEASE, text, contentIntent );            */
 

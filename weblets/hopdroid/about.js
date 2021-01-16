@@ -95,7 +95,7 @@ function ABOUTENTRY( attr, ... nodes ) {
      <svg:img class="icon" width="16px" height="16px" src=${attr.icon}/>
      <div>
        <div class="title">${attr.title}</div> 
-       <div class=${`value ${attr.valueclass || ""}`}>${attr.value} </div>
+       <div class=${`value ${attr.valueclass || ""}`}> ${hop.encodeHTML( attr.value ) } </div>
      </div>
    </div>
 }

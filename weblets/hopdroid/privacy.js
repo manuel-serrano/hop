@@ -18,6 +18,7 @@ import * as sp from hop.spage;
 import { NAVTITLE } from './xml.js';
 import { config, update as updateConfig } from './config.js';
 import * as localConfig from './config.js';
+import { phone } from './phone.js';
 
 /*---------------------------------------------------------------------*/
 /*    authorizeRequest ...                                             */
@@ -85,7 +86,7 @@ service privacy() {
        </div>
        <div class="button" onclick=~{ privacyRemoteToggle() }>
 	 <svg:img id="privacy-remote-toggle" 
-		  data-on=${config.enablePrivacy ? "on" : "off" }
+		  data-on=${config.enableRemote ? "on" : "off" }
 		  class="icon-toggle" width="24px" height="24px" 
 		  src=${require.resolve( "./icons/toggle-on.svg" )}/>
        </div>
@@ -148,7 +149,7 @@ service privacyPasswd() {
 		     src=${require.resolve( "./icons/lock.svg" )}/>
        	  </div>
 	  <div>
-       	    Remote Password
+       	    Remote Password for device "${phone.name}"
 	  </div>
        	  <div>
 	    <form>

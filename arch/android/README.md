@@ -132,10 +132,14 @@ To uninstall it:
 To stop it:
 
     $ adb shell am force-stop fr.inria.hop
+
+To run Hop in debug mode
+
+    $ adb shell am start -n fr.inria.hop/.HopLauncher -ei -g 4 -ei -v 2
 	
 To stop and restart:
 
-    $ adb shell am force-stop fr.inria.hop && adb shell monkey -p fr.inria.hop 1
+    $ adb shell am force-stop fr.inria.hop && adb shell am start -n fr.inria.hop/.HopLauncher -ei --g 4 --ei -v 2
 
 To switch the screen on:
 
@@ -388,17 +392,19 @@ Note: the simulator only supports _one_ phone object at a time. That
 is, the simulator will only let you access the state of the last created
 simulated phone.
 
+
 Debugging
 ---------
 
 Here are some hints for debugging the application running on the device.
 The first is the logging facility offered by `adb`. On new devices:
 
-    $ adb logcat -e 'Hop'
+    $ adb logcat | grep '[VDIE] [Hh]op'
+	
+or 
 
-On old ones:
+	$ adb logcat -e 'Hop'
 
-    $ adb logcat | grep -i 'hop'
 	
 This will show all Java message and also all the output of the application,
 in particular, all the application write on its standard output and standard
@@ -422,3 +428,27 @@ as follows:
     $ adb forward tcp:$port tcp:$port
     $ gdb app_process
     (gdb) target remote :$port
+
+
+Androidx
+--------
+
+Androidx is a library of extra features that are not pre-installed on
+the phone. The `androidx` classes then have to be shipped with applications.
+The `jar` files can be found on the official Google Maven
+
+  [Repository](https://maven.google.com/web/index.html)
+  
+For instance, `androidx` core jar file is 
+
+  [core-1.3.2](https://dl.google.com/android/maven2/androidx/core/core/1.3.2/core-1.3.2-sources.jar)
+  
+To use this set of classes in an application, download the jar file 
+and add the following declaration to the `Makefile.config` of your
+application
+
+  ANDROIDX=<the-location-of-the-androidx-jar-file>
+  
+For instance  
+
+  ANDROIDX=/home/myproject/hopapp/androidx/core-1.3.2-sources.jar

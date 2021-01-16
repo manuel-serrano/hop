@@ -4,7 +4,7 @@
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
 #*    Last change :  Wed May 27 16:19:08 2020 (serrano)                */
-#*    Copyright   :  2010-20 Manuel Serrano                            */
+#*    Copyright   :  2010-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
 #*    -------------------------------------------------------------    */
@@ -28,8 +28,8 @@ ANDROIDHOST = -d
 ANDROIDDIR= $(BUILDDIR)/arch/android
 ANDROIDKEYSTORE = $(ANDROIDDIR)/hop.keystore
 ANDROIDTARGET = armv7a-linux-androideabi26
-ANDROIDSDKVERSION = 21
-
+ANDROIDSDKVERSION = 26
+ANDROIDX = 
 ANDROIDLINK = dynamic
 
 #*---------------------------------------------------------------------*/
@@ -88,6 +88,7 @@ PLUGINSYSTEM = true
 PLUGINTTS = false
 PLUGINCALL = true
 PLUGINPREFS = true
+PLUGININTENT = true
 
 APKCUSTOM =
 APKCUSTOMDIR =
@@ -143,6 +144,7 @@ config:
 	@echo "plugintts=$(PLUGINTTS)"
 	@echo "plugincall=$(PLUGINCALL)"
 	@echo "pluginprefs=$(PLUGINPREFS)"
+	@echo "pluginintent=$(PLUGININTENT)"
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -217,7 +219,9 @@ ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java \
   HopAndroidAudioRecorder.java HopPluginBuild.java HopPluginConnectivity.java \
   HopSettings.java HopPluginZeroconf.java HopZeroconf.java HopJmDns.java \
   HopNsdManager.java HopPluginSystem.java HopStage.java HopIntenter.java \
-  HopConfig.java HopHzLauncher.java HopUtils.java HopConfiguration.java
+  HopConfig.java HopHzLauncher.java HopUtils.java HopConfiguration.java \
+  HopHzService.java HopIntent.java HopAppRemoved.java HopPluginIntent.java \
+  HopPermission.java
 
 JMDNS_JAVA = JmDNS.java ServiceInfo.java JmmDNS.java ServiceListener.java \
   NetworkTopologyDiscovery.java ServiceTypeListener.java \
@@ -374,6 +378,7 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml \
                 -e "s|@PLUGINSYSTEM@|$(PLUGINSYSTEM)|" \
                 -e "s|@PLUGINTTS@|$(PLUGINTTS)|" \
                 -e "s|@PLUGINPREFS@|$(PLUGINPREFS)|" \
+                -e "s|@PLUGININTENT@|$(PLUGININTENT)|" \
                 -e "s|@PLUGINCALL@|$(PLUGINCALL)|" > $@
 
 $(ANDROIDBUILDDIR)/res/values/strings.xml: \
@@ -451,6 +456,7 @@ assets.post-install.static:
 
 assets.post-install.client:
 
+.PHONY: $(ANDROIDBUILDDIR)/assets/etc
 $(ANDROIDBUILDDIR)/assets/etc: splash/splash.html splash/hopnotfound.html splash/hoperror.html
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
@@ -466,6 +472,7 @@ $(ANDROIDBUILDDIR)/assets/splash:
 	$(MAKE) $(ANDROIDBUILDDIR)/assets/splash/hopnotfound.html
 	$(MAKE) $(ANDROIDBUILDDIR)/assets/splash/hoperror.html
 
+.PHONY: $(ANDROIDBUILDDIR)/assets/share
 $(ANDROIDBUILDDIR)/assets/share:
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
@@ -496,6 +503,7 @@ rename-jsgz:
 
 $(ANDROIDBUILDDIR)/assets/bin: $(ANDROIDBUILDDIR)/assets/bin/hop
 
+.PHONY: $(ANDROIDBUILDDIR)/assets/bin/hop
 $(ANDROIDBUILDDIR)/assets/bin/hop:
 	mkdir -p $(ANDROIDBUILDDIR)/assets/bin
 	cp $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/bin/hop $@
@@ -504,11 +512,13 @@ $(ANDROIDBUILDDIR)/assets/lib: \
   $(ANDROIDBUILDDIR)/assets/lib/bigloo \
   $(ANDROIDBUILDDIR)/assets/lib/hop
 
+.PHONY: $(ANDROIDBUILDDIR)/assets/lib/bigloo
 $(ANDROIDBUILDDIR)/assets/lib/bigloo:
 	mkdir -p $(ANDROIDBUILDDIR)/assets/lib
 	rm -rf $@
 	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/lib/bigloo $(ANDROIDBUILDDIR)/assets/lib
 
+.PHONY: $(ANDROIDBUILDDIR)/assets/lib/hop
 $(ANDROIDBUILDDIR)/assets/lib/hop:
 	mkdir -p $(ANDROIDBUILDDIR)/assets/lib
 	rm -rf $@
@@ -619,6 +629,9 @@ $(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR) \
   $(ANDROID_JAVA:%=$(ANDROIDDIR)/src/fr/inria/hop/%)
 	$(RM) -rf $@
 	cp -r $(ANDROIDDIR)/src $@
+	if [ "$(ANDROIDX) " != " " ]; then \
+	  unzip $(ANDROIDDIR)/androidx/$(ANDROIDX) -d $@; \
+        fi
 	for p in `find $(ANDROIDBUILDDIR)/src -name '*.java' -print`; do \
            cat $$p \
                | sed -e 's|fr.inria.hop;|fr.inria.$(HOPAPP);|g' \

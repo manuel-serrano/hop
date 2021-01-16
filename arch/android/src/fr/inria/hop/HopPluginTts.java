@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Fri Dec 18 19:17:09 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 14:55:50 2020 (serrano)                */
 /*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
@@ -62,7 +62,7 @@ public class HopPluginTts extends HopPlugin
       if( tts != null ) tts.shutdown();
    }
    
-   // TTS initialization, delayed to onConnect because it needs that actitivy
+   // TTS initialization, delayed to onConnect because it needs that activity
    // to be fully initialized
    public void onConnect() {
       Log.v( "HopPluginTts", "onConnect" );

@@ -104,8 +104,8 @@ $AAPT package -f -m -J src -M AndroidManifest.xml -S res -I $ANDROIDCP || exit 1
 
 mkdir -p bin
 
-echo "$javac -classpath $ANDROIDCP -sourcepath 'src' -d 'bin' `find src -name "*.java"`"
-$javac -classpath $ANDROIDCP -sourcepath 'src' -d 'bin' `find src -name "*.java"`  || exit 1
+echo "$javac -classpath $ANDROIDCP -sourcepath 'src' -d 'bin' `find src/fr -name "*.java"`"
+$javac -classpath $ANDROIDCP -sourcepath 'src' -d 'bin' `find src/fr -name "*.java"`  || exit 1
 
 echo "$DX --dex --output=classes.dex bin"
 $DX --dex --output=classes.dex bin || exit 1

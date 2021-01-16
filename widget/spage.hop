@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
 ;*    Last change :  Mon Mar 23 14:19:21 2020 (serrano)                */
-;*    Copyright   :  2009-20 Manuel Serrano                            */
+;*    Copyright   :  2009-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
 ;*=====================================================================*/
@@ -268,7 +268,9 @@
 			 body)
    (instantiate::xml-sphead-element
       (tag 'div)
-      (attributes `(:data-hss-tag "hop-sptabhead" ,@attr))
+      (attributes `(:data-hss-tag "hop-sptabhead"
+		      ,@(if onclick `(:onclick ,onclick) '())
+		      ,@attr))
       (id id)
       (body (list (<DIV> :data-hss-tag "hop-sptabhead-body" body)
 	       (<DIV> :data-hss-tag "hop-sppushbutton" "")))))

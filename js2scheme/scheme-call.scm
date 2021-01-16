@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
 ;*    Last change :  Sun Jun 14 06:56:47 2020 (serrano)                */
-;*    Copyright   :  2018-20 Manuel Serrano                            */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
 ;*=====================================================================*/
@@ -1158,16 +1158,17 @@
 		     ((rest)
 		      (unless (>=fx la (-fx (j2s-minlen val)  1))
 			 (j2s-error id
-			    (format "wrong number of arguments, minimum expected: ~a" (j2s-minlen val) la)
+			    (format "wrong number of arguments, minimum expected: ~a"
+			       (j2s-minlen val))
 			    this (format "~a provided" la))))
 		     ((arguments)
 		      #t)
 		     (else
 		      (unless (and (>=fx la (j2s-minlen val)) (<=fx la lp))
 			 (j2s-error id
-			    (format "wrong number of arguments, minimum expected: ~a" (j2s-minlen val))
-			    this
-			    (format "~a provided" la))))))))))
+			    (format "wrong number of arguments, minimum expected: ~a"
+			       (j2s-minlen val))
+			    this (format "~a provided" la))))))))))
 
    (define (call-fun-function profid fun::J2SFun thisarg::pair-nil protocol f %gen::pair-nil args::pair-nil)
       (with-access::J2SFun fun (params vararg idthis loc argumentsp)
