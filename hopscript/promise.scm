@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
 ;*    Last change :  Wed Apr 29 07:09:28 2020 (serrano)                */
-;*    Copyright   :  2015-20 Manuel Serrano                            */
+;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
 ;*    -------------------------------------------------------------    */
@@ -563,7 +563,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-promise-reject ...                                            */
 ;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/6.0/#25.4.1.3.1       */
+;*    http://www.ecma-international.org/ecma-262/6.0#25.4.1.3.1        */
 ;*---------------------------------------------------------------------*/
 (define (js-promise-reject o::JsPromise reason)
    (with-access::JsPromise o (state)
@@ -573,7 +573,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-promise-resolve ...                                           */
 ;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/6.0/#25.4.1.3.2       */
+;*    http://www.ecma-international.org/ecma-262/6.0#25.4.1.3.2       */
 ;*---------------------------------------------------------------------*/
 (define (js-promise-resolve o::JsPromise resolution)
    
