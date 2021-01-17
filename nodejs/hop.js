@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
 /*    Last change :  Sun May 17 13:49:02 2020 (serrano)                */
-/*    Copyright   :  2014-20 Manuel Serrano                            */
+/*    Copyright   :  2014-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
 /*=====================================================================*/
@@ -225,25 +225,26 @@ exports.compilerDriver = hop.compilerDriver;
 /*---------------------------------------------------------------------*/
 /*    Hop sub modules                                                  */
 /*---------------------------------------------------------------------*/
-exports.tree = hop.modulesDir + "/tree";
-exports.notepad = hop.modulesDir + "/notepad";
-exports.spage = hop.modulesDir + "/spage";
-exports.fontifier = hop.modulesDir + "/fontifier";
-exports.wiki = hop.modulesDir + "/wiki";
-exports.security = hop.modulesDir + "/security";
 exports.config = hop.modulesDir + "/config";
-exports.user = hop.modulesDir + "/user";
-exports.hss = hop.modulesDir + "/hss";
-exports.markdown = hop.modulesDir + "/markdown";
-exports.texinfo = hop.modulesDir + "/texinfo";
-exports.syslog = hop.modulesDir + "/syslog";
-exports.systime = hop.modulesDir + "/systime";
-exports.hopc = hop.modulesDir + "/hopc";
-exports.feed = hop.modulesDir + "/feed";
-exports.xml = hop.modulesDir + "/xml";
-exports.hopdroid = hop.modulesDir + "/hopdroid";
 exports.csv = hop.modulesDir + "/csv";
+exports.feed = hop.modulesDir + "/feed";
+exports.fontifier = hop.modulesDir + "/fontifier";
+exports.hss = hop.modulesDir + "/hss";
+exports.hopc = hop.modulesDir + "/hopc";
+exports.hopdroid = hop.modulesDir + "/hopdroid";
+exports.markdown = hop.modulesDir + "/markdown";
+exports.notepad = hop.modulesDir + "/notepad";
+exports.security = hop.modulesDir + "/security";
+exports.spage = hop.modulesDir + "/spage";
+exports.syslog = hop.modulesDir + "/syslog";
+exports.system = hop.modulesDir + "/system";
+exports.systime = hop.modulesDir + "/systime";
+exports.texinfo = hop.modulesDir + "/texinfo";
+exports.tree = hop.modulesDir + "/tree";
+exports.user = hop.modulesDir + "/user";
 exports.vcf = hop.modulesDir + "/vcf";
+exports.wiki = hop.modulesDir + "/wiki";
+exports.xml = hop.modulesDir + "/xml";
 
 Object.seal( exports );
 Object.freeze( exports );
