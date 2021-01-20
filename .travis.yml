@@ -11,9 +11,6 @@ env:
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y dh-make
-  - sudo apt-get install -y gcc
-  - sudo apt-get install -y make
-  - sudo apt-get install -y patch
   - sudo apt-get install -y libssl1.0.2
   - sudo apt-get install -y libssl-dev
   - sudo apt-get install -y libsqlite3-0

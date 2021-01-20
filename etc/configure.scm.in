@@ -21,6 +21,7 @@
 	    (hop-minor-version)
 	    (hop-branch)
 	    (hop-backend)
+	    (hop-arch)
 	    (hop-url)
 	    (inline hop-bigloo)
 	    (inline hop-bin-directory)
@@ -51,6 +52,7 @@
 	    (export hop-minor-version)
 	    (export hop-branch)
 	    (export hop-backend)
+	    (export hop-arch)
 	    (export hop-url)
 	    (export hop-bigloo)
 	    (export hop-etc-directory)
@@ -166,6 +168,7 @@
 (define (hop-minor-version) "@MINORVERSION@")
 (define (hop-branch) "@BRANCH@")
 (define (hop-backend) "@BACKEND@")
+(define (hop-arch) "@ARCH@")
 (define (hop-url) "@URL@")
 
 (define (hop-build-id) "@BUILDID@")

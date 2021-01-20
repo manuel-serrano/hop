@@ -75,6 +75,14 @@ The Hop version.
 console.log( "Hop version:", hop.version );
 ```
 
+### hop.arch ###
+[:@glyphicon glyphicon-tag parameter]  
+The Hop architecture. 
+
+```hopscript
+console.log( "Hop arch:", hop.arch );
+```
+
 ### hop.loginCookieCryptKey ###
 [:@glyphicon glyphicon-tag parameter]  
 An unique integer seed to for password encryption. This value is

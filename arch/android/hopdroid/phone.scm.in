@@ -41,11 +41,11 @@
 
 	   (class androidevent::event)
 
-	   (android-start-activity ::androidphone ::bstring ::bstring . opts)
+	   (generic android-start-activity ::androidphone ::bstring ::bstring . opts)
+	   (generic android-load-plugin::int ::androidphone ::bstring  #!optional data)
 	   
-	   (android-load-plugin::int ::androidphone ::bstring)
-	   (android-send-command ::androidphone ::int . args)
-	   (android-send-command/result ::androidphone ::int . args)))
+	   (generic android-send-command ::androidphone ::int . args)
+	   (generic android-send-command/result ::androidphone ::int . args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Standard plugins                                                 */
@@ -328,7 +328,6 @@
 	    (let loop ()
 	       (let ((name (read ip)))
 		  (unless (eof-object? name)
-		     (tprint "ANDROID-EVENT-LISTENER name=" name)
 		     (let ((args (read ip)))
 			(set! phone-events '())
 			(unless (or (eof-object? args)
@@ -349,7 +348,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    android-load-plugin ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (android-load-plugin p::androidphone name)
+(define-generic (android-load-plugin p::androidphone name #!optional data)
    (with-access::androidphone p (initid app)
       (hop-verb 2 "Loading android plugin \"" name "\" (" app ")...\n")
       (let ((n (android-send-command/result p initid name)))
@@ -635,7 +634,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    android-start-activity ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (android-start-activity p::androidphone action::bstring uri::bstring . opts)
+(define-generic (android-start-activity p::androidphone action::bstring uri::bstring . opts)
    (unless intent-plugin
       (set! intent-plugin (android-load-plugin p "intent")))
    (apply android-send-command/result p intent-plugin
@@ -766,7 +765,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    android-send-command ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (android-send-command p::androidphone plugin::int . args)
+(define-generic (android-send-command p::androidphone plugin::int . args)
    (with-access::androidphone p (%mutex)
       (synchronize %mutex
 	 (android-send p plugin args))))
@@ -774,7 +773,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    android-send-command/result ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (android-send-command/result p::androidphone plugin::int . args)
+(define-generic (android-send-command/result p::androidphone plugin::int . args)
    (with-access::androidphone p (%mutex %sock-plugin)
       (synchronize %mutex
 	 (android-send p plugin args)

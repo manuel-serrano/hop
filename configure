@@ -5,7 +5,7 @@
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
 #*    Last change :  Thu May 28 11:48:52 2020 (serrano)                */
-#*    Copyright   :  2004-20 Manuel Serrano                            */
+#*    Copyright   :  2004-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -29,6 +29,7 @@ hostcc=cc
 flashcc=/usr/bin/mtasc
 fflags="-main -version 9 -cp /usr/share/mtasc/std -cp /usr/share/mtasc/std8 -swf"
 backend=native
+platform=pc
 link=dynamic
 unzip=unzip
 gzip="gzip -9"
@@ -55,6 +56,7 @@ bcflagspmem2="-pmem2 -fno-user-inlining"
 bcflagsopt="-unsafe -O3"
 
 bcflagsrts="-unsafe -safee"
+bcflagsmodules="-unsafe"
 bscm2jsflags="-unsafe"
 bhopcflags=""
 
@@ -307,6 +309,7 @@ while : ; do
     --devel)
       devmode="devel";
       bcflagsrts=-cg;
+      bcflagsmodules=-cg;
       bcflagsdev=-cg;
       bscm2jsflags=;
       bcflags="$bcflags -Wall -Wno-slot -srfi devel";;
@@ -315,6 +318,7 @@ while : ; do
       devmode="debug";
       debug=yes;
       bcflagsrts=-g;
+      bcflagsmodules=-g;
       bscm2jsflags=-g;
       bhopcflags=-g;
       ccflagsdebug=-g;
@@ -325,6 +329,7 @@ while : ; do
       devmode="debug2";
       debug=yes;
       bcflagsrts=-g;
+      bcflagsmodules=-g;
       bscm2jsflags=-g;
       bhopcflags=-g;
       hflags=-g;
@@ -1188,6 +1193,7 @@ cat $mkmf.in \
         -e "s|@HSFLAGS@|$hsflags|" \
         -e "s|@BTFLAGS@|$btflags|" \
         -e "s|@BCFLAGSRTS@|$bcflagsrts|" \
+        -e "s|@BCFLAGSMODULES@|$bcflagsmodules|" \
         -e "s|@BSCM2JSFLAGS@|$bscm2jsflags|" \
         -e "s|@BHOPCFLAGS@|$bhopcflags|" \
         -e "s|@BLFLAGS@|$blflags|" \
@@ -1247,6 +1253,7 @@ for p in configure.scm configure_noarch.sch configure_macosx.sch configure_andro
           -e "s|@BIGLOOVERSION@|$bglversion|" \
           -e "s|@BRANCH@|$branch|" \
           -e "s|@BACKEND@|$backend|" \
+          -e "s|@ARCH@|$arch|" \
           -e "s|@LINK@|$link|" \
           -e "s|@URL@|$url|" \
           -e "s|@BINDIR@|$bindir|" \
@@ -1816,6 +1823,7 @@ echo "Internals:"
 echo "  bigloo compilation flags.............. $bcflags"
 echo "  bigloo link flags..................... $bldflags"
 echo "  runtime compilation flags............. $bcflagsrts"
+echo "  modules compilation flags............. $bcflagsmodules"
 echo "  mime types............................ $mimetypes"
 echo "  default JavaScript mime type.......... $jsmimetype"
 echo "  default CSS mime type................. $cssmimetype"

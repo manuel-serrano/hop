@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
 ;*    Last change :  Mon Apr 13 11:14:10 2020 (serrano)                */
-;*    Copyright   :  2014-20 Manuel Serrano                            */
+;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
 ;*=====================================================================*/
@@ -297,6 +297,7 @@
 	       ;; info
 	       `(version . ,(hop-version))
 	       `(hostname . ,(js-string->jsstring (hostname)))
+	       `(arch . ,(js-string->jsstring (hop-arch)))
 	       `(modulesDir . ,(js-string->jsstring (nodejs-modules-directory)))
 	       `(standalone . ,hopjs-standalone)
 	       `(engine . ,(& "hop"))

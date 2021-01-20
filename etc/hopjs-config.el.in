@@ -5,7 +5,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
 ;*    Last change :  Thu Jan  3 19:47:48 2019 (serrano)                */
-;*    Copyright   :  2018-20 Manuel Serrano                            */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs config                                                     */
 ;*=====================================================================*/
@@ -18,9 +18,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    configuration                                                    */
 ;*---------------------------------------------------------------------*/
-(defconst hopjs-version "3.2.0")
+(defconst hopjs-version "@VERSION@")
 
-(defcustom hopjs-doc-dir "/usr/local/share/doc/hop/3.2.0"
+(defcustom hopjs-doc-dir "/usr/local/share/doc/hop/@VERSION@"
   "The main directory containing the documentation indexes"
   :type 'string
   :safe 'stringp
