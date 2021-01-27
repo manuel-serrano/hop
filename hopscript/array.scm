@@ -4182,7 +4182,7 @@
 		  (=fx arity 2)))
 	  ;; fast path
 	  (with-access::JsProcedure proc (procedure)
-	     (let ((fun (procedure)))
+	     (let ((fun procedure))
 		(with-access::JsArray o (vec ilen)
 		   (let loop ((i i))
 		      (cond
