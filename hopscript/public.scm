@@ -892,11 +892,11 @@
 (define (js-call1-3-jsprocedure %this fun this a0 a1 a2)
    ;; this is used to implement array functions such map or find
    ;; it is needed to handle array function in hopscript mode
-   (with-access::JsProcedure fun (arity procedure)
+   (with-access::JsProcedure fun (arity procedure info)
       (case arity
-	 ((1) (procedure this a0))
-	 ((2) (procedure this a0 a1))
-	 ((3) (procedure this a0 a1 a2))
+	 ((2) (procedure this a0))
+	 ((3) (procedure this a0 a1))
+	 ((4) (procedure this a0 a1 a2))
 	 (else (js-call3 %this fun this a0 a1 a2)))))
 
 (define (js-call2-4-jsprocedure %this fun this a0 a1 a2 a3)
@@ -904,9 +904,9 @@
    ;; it is needed to handle array function in hopscript mode
    (with-access::JsProcedure fun (arity procedure)
       (case arity
-	 ((2) (procedure this a0 a1))
-	 ((3) (procedure this a0 a1 a2))
-	 ((4) (procedure this a0 a1 a2 a3))
+	 ((3) (procedure this a0 a1))
+	 ((4) (procedure this a0 a1 a2))
+	 ((5) (procedure this a0 a1 a2 a3))
 	 (else (js-call4 %this fun this a0 a1 a2 a3)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1108,9 +1108,9 @@
    (if (js-procedure? fun)
        (with-access::JsProcedure fun (arity procedure)
 	  (case arity
-	     ((1) (procedure this a0))
-	     ((2) (procedure this a0 a1))
-	     ((3) (procedure this a0 a1 a2))
+	     ((2) (procedure this a0))
+	     ((3) (procedure this a0 a1))
+	     ((4) (procedure this a0 a1 a2))
 	     (else (js-call3 %this fun this a0 a1 a2))))
        (js-call3 %this fun this a0 a1 a2)))
 
@@ -1120,9 +1120,9 @@
    (if (js-procedure? fun)
        (with-access::JsProcedure fun (arity procedure)
 	  (case arity
-	     ((2) (procedure this a0 a1))
-	     ((3) (procedure this a0 a1 a2))
-	     ((4) (procedure this a0 a1 a2 a3))
+	     ((3) (procedure this a0 a1))
+	     ((4) (procedure this a0 a1 a2))
+	     ((5) (procedure this a0 a1 a2 a3))
 	     (else (js-call4 %this fun this a0 a1 a2 a3))))
        (js-call4 %this fun this a0 a1 a2 a3)))
 
