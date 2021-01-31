@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
 ;*    Last change :  Thu May 21 09:25:53 2020 (serrano)                */
-;*    Copyright   :  2006-20 Manuel Serrano                            */
+;*    Copyright   :  2006-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
 ;*=====================================================================*/
@@ -60,6 +60,7 @@
 	    (hop-apply-url::bstring ::bstring ::pair-nil #!optional (ctx 'hop-to-hop))
 	    (hop-request-service-name::bstring ::http-request)
 	    (service-invoke ::hop-service ::http-request ::obj)
+	    (service-apply ::hop-service ::http-request)
 	    (service-parse-request ::hop-service ::http-request)
 	    (procedure->service::procedure ::procedure)
 	    (service-filter ::http-request)
@@ -664,6 +665,37 @@
 	     `(,id ,vals))))))
 
 ;*---------------------------------------------------------------------*/
+;*    service-apply ...                                                */
+;*---------------------------------------------------------------------*/
+(define (service-apply svc req)
+   (with-access::http-server-request req (abspath service method)
+      (when (hop-force-reload-service)
+	 (set! svc (force-reload-service svc)))
+      (set! service svc)
+      (with-access::hop-service svc (ttl path id wid ctx)
+	 (cond
+	    ((service-expired? svc)
+	     (mark-service-path-expired! path)
+	     (http-invalidated-service-error req))
+	    ((or (authorized-service? req wid)
+		 (authorized-service? req id))
+	     (cond
+		((eq? method 'HEAD)
+		 (instantiate::http-response-string))
+		((>fx ttl 0)
+		 (unwind-protect
+		    (scheme->response
+		       (service-handler svc req) req ctx)
+		    (if (=fx ttl 1)
+			(unregister-service! svc)
+			(set! ttl (-fx ttl 1)))))
+		(else
+		 (scheme->response
+		    (service-handler svc req) req ctx))))
+	    (else
+	     (service-denied req id))))))
+
+;*---------------------------------------------------------------------*/
 ;*    service-handler ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (service-handler svc req)
@@ -814,31 +846,7 @@
 			       (hashtable-get *service-table* abspath))))
 	       (cond
 		  ((isa? svc hop-service)
-		   (when (hop-force-reload-service)
-		      (set! svc (force-reload-service svc)))
-		   (set! service svc)
-		   (with-access::hop-service svc (ttl path id wid ctx)
-		      (cond
-			 ((service-expired? svc)
-			  (mark-service-path-expired! path)
-			  (http-invalidated-service-error req))
-			 ((or (authorized-service? req wid)
-			      (authorized-service? req id))
-			  (cond
-			     ((eq? method 'HEAD)
-			      (instantiate::http-response-string))
-			     ((>fx ttl 0)
-			      (unwind-protect
-				 (scheme->response
-				    (service-handler svc req) req ctx)
-				 (if (=fx ttl 1)
-				     (unregister-service! svc)
-				     (set! ttl (-fx ttl 1)))))
-			     (else
-			      (scheme->response
-				 (service-handler svc req) req ctx))))
-			 (else
-			  (service-denied req id)))))
+		   (service-apply svc req))
 		  (else
 		   (let ((ini (hop-initial-weblet)))
 		      (cond

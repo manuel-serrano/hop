@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
 ;*    Last change :  Tue Oct  8 13:18:29 2019 (serrano)                */
-;*    Copyright   :  2005-20 Manuel Serrano                            */
+;*    Copyright   :  2005-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -329,6 +329,7 @@
 				 (cannot-authenticate "digest (3):" n)))
 			  (cannot-authenticate "digest (2):" n)))
 		   (cannot-authenticate "digest (1):" n))))))
+
    (case (car l)
       ((basic url)
        (let* ((auth (cdr l))
@@ -468,14 +469,12 @@
    
    (define (get-user req)
       (with-access::http-request req (authorization userinfo method abspath socket)
-	 (if (not socket)
-	     (anonymous-user)
-	     (let ((ip (input-port-name (socket-input socket))))
-		(or (and (string? authorization)
-			 (find-authenticated-user authorization abspath method ip))
-		    (and (string? userinfo)
-			 (find-authenticated-user userinfo abspath method ip))
-		    (anonymous-user))))))
+	 (let ((ip (if socket (input-port-name (socket-input socket)) "")))
+	    (or (and (string? authorization)
+		     (find-authenticated-user authorization abspath method ip))
+		(and (string? userinfo)
+		     (find-authenticated-user userinfo abspath method ip))
+		(anonymous-user)))))
 
    (with-access::http-request req (%user)
       (or %user

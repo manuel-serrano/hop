@@ -5,7 +5,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
 /*    Last change :  Tue Sep  3 08:06:22 2019 (serrano)                */
-/*    Copyright   :  2006-20 Manuel Serrano                            */
+/*    Copyright   :  2006-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
 /*    HOP script libraries are supposed *not* to check features        */
@@ -717,14 +717,17 @@ function node_style_set_native( el, prop, value ) {
    var obj = (typeof el === "string") ? document.getElementById( el ) : el;
 
    if( obj === undefined ) {
-      sc_error( "node-style-set!", "Cannot find object", el );
+      sc_error( "node-style-set!(" + prop + ")", "Cannot find object", el );
    }
 
    if( arguments.length === 2 ) {
       for( let p in prop ) {
 	 const v = prop[ p ].toString() || "0";
 	 
-	 if( p in obj.style ) {
+	 if( obj.stle === undefined ) {
+	    sc_error( "node-style-set!(" + prop + ")", 
+	       "No style property in object", el );
+	 } if( p in obj.style ) {
 	    obj.style[ p ] =  v;
 	 } else {
 	    obj.style.setProperty( p, v, "" );
@@ -739,7 +742,7 @@ function node_style_set_native( el, prop, value ) {
 	    p = sc_keyword2jsstring( p );
 
       	 if( v == undefined ) {
-	    sc_error( "node-style-set!",
+	    sc_error( "node-style-set!(" + prop + ")", 
 	       "undefined value for property \"" + p + "\"",
 	       el );
       	 } else {
@@ -765,7 +768,7 @@ function node_style_set_array( el, prop, value ) {
    var obj = (typeof el === "string") ? document.getElementById( el ) : el;
 
    if( obj === undefined ) {
-      sc_error( "node-style-set!", "Cannot find object", el );
+      sc_error( "node-style-set!(" + prop + ")", "Cannot find object", el );
    }
 
    if( arguments.length === 1 ) {
@@ -781,7 +784,7 @@ function node_style_set_array( el, prop, value ) {
 	    p = sc_keyword2jsstring( p );
       	 
       	 if( v == undefined ) {
-	    sc_error( "node-style-set!",
+	    sc_error( "node-style-set!(" + prop + ")",
 	       "undefined value for property \"" + p + "\"",
 	       el );
       	 } else {
@@ -807,12 +810,15 @@ var node_style_set = function( el, prop, value ) {
       obj = document.getElementById( el );
       
       if( obj === undefined ) {
-	 sc_error( "node-style-set!", "Cannot find object", el );
+	 sc_error( "node-style-set!(" + prop + ")", "Cannot find object", el );
       }
    }
 
    try {
-      if( "setProperty" in obj.style ) {
+      if( obj.style === undefined ) {
+	 sc_error( "node-style-set!(" + prop + ")", 
+	    "No style property in object", el );
+      } else if( "setProperty" in obj.style ) {
          node_style_set = node_style_set_native;
       	 return node_style_set_native.apply( null, arguments );
       } else {
@@ -822,7 +828,7 @@ var node_style_set = function( el, prop, value ) {
    } catch( exc ) {
       var msg = "message" in exc ? exc.message : "Cannot set style";
 
-      sc_error( "node-style-set!", msg, el );
+      sc_error( "node-style-set!(" + prop + ")", msg, el );
   }
 }
 

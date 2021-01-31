@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
 ;*    Last change :  Tue Oct  8 13:10:22 2019 (serrano)                */
-;*    Copyright   :  2006-19 Manuel Serrano                            */
+;*    Copyright   :  2006-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
 ;*    at compile-time and runtime-time.                                */
@@ -112,7 +112,8 @@
 			       ;; this is a local service, thus an autoload
 			       ;; that must replace the current service
 			       ,(let ((autoload (gensym 'autoload))
-				      (loop (gensym 'loop)))
+				      (loop (gensym 'loop))
+				      (proc (gensym 'proc)))
 				   `(let ((,autoload #unspecified))
 				       (lambda ,(cons req args)
 					   (let ,loop ()
@@ -120,6 +121,7 @@
 						   ((eq? ,autoload #t)
 						    (instantiate::http-response-autoload
 						       (request (duplicate::http-server-request ,req
+								   (%user #f)
 								   (query (substring ,mkurl (+fx 1 (string-length ,path))))
 								   (abspath ,mkurl)
 								   (path ,mkurl)))))
@@ -246,8 +248,10 @@
 (define (hop-with-hop-expander x e)
    
    (define (with-hop-local svc args success failure auth header)
-      `(with-access::hop-service (procedure-attr ,svc) (proc)
+      `(with-access::hop-service (procedure-attr ,svc) (proc path)
 	  (let ((req (instantiate::http-server-request
+			(path path)
+			(abspath path)
 			(authorization ,auth))))
 	     (with-hop-local (proc req ,@args) ,success ,failure ,auth ,header))))
    
