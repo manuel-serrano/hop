@@ -379,3 +379,18 @@ function endWritable(stream, state, cb) {
   }
   state.ended = true;
 }
+
+/*---------------------------------------------------------------------*/
+/*    setDefaultEncoding (Added in: v0.11.15)                          */
+/*---------------------------------------------------------------------*/
+Writable.prototype.setDefaultEncoding = function setDefaultEncoding(encoding) {
+  // node::ParseEncoding() requires lower case.
+  if (typeof encoding === 'string')
+    encoding = encoding.toLowerCase();
+  if (!Buffer.isEncoding(encoding))
+    throw new ERR_UNKNOWN_ENCODING(encoding);
+  this._writableState.defaultEncoding = encoding;
+  return this;
+};
+
+   
