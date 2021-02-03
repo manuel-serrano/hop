@@ -838,6 +838,7 @@
 	     ;; a variable assignment
 	     (with-access::J2SRef lhs (decl)
 		(with-access::J2SDecl decl (writable utype)
+		   (tprint "ICI " (j2s->list this) " tyr=" tyr)
 		   (cond
 		      ((not writable)
 		       (multiple-value-bind (tyv envl lbk)
@@ -1380,6 +1381,9 @@
 			   ((and (eq? typl 'real) (eq? typr 'real))
 			    'real)
 			   ((and (type-integer? typl) (type-integer? typr))
+			    'integer)
+			   ((or (and (type-integer? typl) (eq? typr 'bool))
+				(and (eq? typl 'bool) (type-integer? typr)))
 			    'integer)
 			   ((and (typnum? typl) (typnum? typr))
 			    'number)
@@ -2019,8 +2023,6 @@
 	     (case op
 		((== === eq?)
 		 (with-access::J2SExpr ref (type)
-		    (tprint "BINARY " (j2s->list this) " decl="
-		       (j2s->list decl) " type=" type " typ=" typ)
 		    (cond
 		       ((eq-typeof? type typ)
 			(unfix! fix "resolve.J2SBinary")
