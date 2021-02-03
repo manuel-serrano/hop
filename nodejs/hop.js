@@ -243,6 +243,7 @@ exports.texinfo = hop.modulesDir + "/texinfo";
 exports.tree = hop.modulesDir + "/tree";
 exports.user = hop.modulesDir + "/user";
 exports.vcf = hop.modulesDir + "/vcf";
+exports.openpgp = hop.modulesDir + "/openpgp";
 exports.wiki = hop.modulesDir + "/wiki";
 exports.xml = hop.modulesDir + "/xml";
 

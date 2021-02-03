@@ -66,12 +66,12 @@ mimetypes=/etc/mime.types
 jsmimetype="application/x-javascript"
 cssmimetype="text/css"
 
-libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite js2scheme hopscript nodejs"
-bglcloselibs="web multimedia"
+libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite js2scheme hopscript nodejs openpgp"
+bglcloselibs="web multimedia openpgp"
 bglextracloselibs=
 
 extralibs=
-bglextralibs="biglooweb bigloomultimedia"
+bglextralibs="biglooweb bigloomultimedia biglooopenpgp"
 hopapplibs=
 
 closure=

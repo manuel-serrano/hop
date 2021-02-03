@@ -848,6 +848,11 @@ Home brewed markdown parser. See [markdown](markdown.html).
 
 XML widget.
 
+### hop.openpgp ###
+[:@glyphicon glyphicon-tag parameter]
+
+Minimalist Openpgp binding. See [openpgp](openpgp.html).
+
 ### hop.security ###
 [:@glyphicon glyphicon-tag parameter]
 
