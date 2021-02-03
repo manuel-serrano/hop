@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.4.x/arch/android/src/fr/inria/hop/HopPluginCall.java       */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopPluginCall.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Fri Jul  6 18:24:37 2012 (serrano)                */
-/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    Last change :  Sun Dec 27 17:13:34 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with phone Calls                                         */
 /*=====================================================================*/
@@ -96,7 +96,7 @@ public class HopPluginCall extends HopPlugin {
    }
 
     // calllog manager
-   protected void server( final InputStream ip, final OutputStream op )
+   public void server( final InputStream ip, final OutputStream op )
       throws IOException {
       
       switch( HopDroid.read_int( ip ) ) {
@@ -124,6 +124,11 @@ public class HopPluginCall extends HopPlugin {
 	 case (byte)'c':
 	    // start a new call
 	    startCall( ip, op );
+	    break;
+	    
+	 case (byte)'d':
+	    // dial a new call
+	    dial( ip, op );
 	    break;
 	    
 	 case (byte)'k':
@@ -267,26 +272,43 @@ public class HopPluginCall extends HopPlugin {
       }
    }
 
+   // dial
+   void dial( final InputStream ip, final OutputStream op ) throws IOException {
+      String number = HopDroid.read_string( ip );
+
+      Intent dialIntent = new Intent( Intent.ACTION_DIAL );
+      dialIntent.setData( Uri.parse( "tel:" + number ) );
+
+      hopdroid.service.startActivity( dialIntent );
+      Log.d( "HopPluginCall", "dial activity started..." );
+   }
+
    // startCall
    void startCall( final InputStream ip, final OutputStream op ) throws IOException {
       String number = HopDroid.read_string( ip );
       boolean newactivity = HopDroid.read_int( ip ) != 0;
 
-      Log.d( "HopPluginCall", "Creating indent" );
       Intent callIntent = new Intent( Intent.ACTION_CALL );
       callIntent.setData( Uri.parse( "tel:" + number ) );
 
-      Log.d( "HopPluginCall", "Intent created..." );
+      Intent i = new Intent( hopdroid.service.getApplicationContext(), hopdroid.activityclass );
+      
+      i.addFlags( Intent.FLAG_ACTIVITY_CLEAR_TOP );
+      i.addFlags( Intent.FLAG_ACTIVITY_REORDER_TO_FRONT );
+      i.addFlags( Intent.FLAG_ACTIVITY_NEW_TASK );
+      Log.d( "HopPluginCall", "raising/starting..." +  hopdroid.service.getClass().getName() );
+      hopdroid.service.startActivity( i );
 
       if( newactivity ) {
 	 ci = null;
 	 ca = startHopActivityForResult( callIntent );
-	 Log.d( "HopPluginCall", "Activity started..." );
+	 Log.d( "HopPluginCall", "startCall activity started..." );
       } else {
 	 
 	 ci = callIntent;
 	 ca = 0;
-	 hopdroid.activity.startService( callIntent );
+	 hopdroid.service.startService( callIntent );
+	 Log.d( "HopPluginCall", "startCall Service started..." );
       }
    }
 
@@ -294,7 +316,7 @@ public class HopPluginCall extends HopPlugin {
    void stopCall() {
       if( ci != null ) {
 	 Log.d( "HopPluginCall", "stopping service..." );
-	 hopdroid.activity.stopService( ci );
+	 hopdroid.service.stopService( ci );
 	 Log.d( "HopPluginCall", "service stopped." );
       }
       if( ca > 0 ) {
@@ -302,22 +324,25 @@ public class HopPluginCall extends HopPlugin {
 	 // as of 10 Jan 2010, switching to airplane mode is apparantly
 	 // the only way to abort a phone call
 	 android.provider.Settings.System.putInt(
-	    hopdroid.activity.getContentResolver(),
+	    hopdroid.service.getContentResolver(),
 	    android.provider.Settings.System.AIRPLANE_MODE_ON, 1 );
 
 	 Intent intent = new Intent( Intent.ACTION_AIRPLANE_MODE_CHANGED );
 	 intent.putExtra( "state", 1 );
-	 hopdroid.activity.sendBroadcast( new Intent( "android.intent.action.AIRPLANE_MODE" ) );
-	 hopdroid.activity.sendBroadcast( intent );
+	 hopdroid.service.sendBroadcast( new Intent( "android.intent.action.AIRPLANE_MODE" ) );
+	 hopdroid.service.sendBroadcast( intent );
 	 android.provider.Settings.System.putInt(
-	    hopdroid.activity.getContentResolver(),
+	    hopdroid.service.getContentResolver(),
 	    android.provider.Settings.System.AIRPLANE_MODE_ON,
 	    0 );
 
 	 intent.putExtra( "state", 0 );
-	 hopdroid.activity.sendBroadcast( new Intent( "android.intent.action.AIRPLANE_MODE" ) );
-	 hopdroid.activity.sendBroadcast( intent );
-	 hopdroid.activity.finishActivity( ca );
+	 hopdroid.service.sendBroadcast( new Intent( "android.intent.action.AIRPLANE_MODE" ) );
+	 hopdroid.service.sendBroadcast( intent );
+
+	 if( hopdroid.activity != null ) {
+	    hopdroid.activity.finishActivity( ca );
+	 }
 	 Log.d( "HopPluginCall", "Activity finished" );
       }
    }

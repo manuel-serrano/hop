@@ -1,0 +1,30 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/hop/weblets/hopdroid/about-dark.hss     */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sat Dec 12 10:58:09 2020                          */
+/*    Last change :  Sat Dec 12 10:58:10 2020 (serrano)                */
+/*    Copyright   :  2020 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    ABOUT dark style                                                 */
+/*=====================================================================*/
+
+body[data-theme=dark] div.about-logo {
+    border: 0px;
+    background-color: var( --dark-margincolor );
+    color: white;
+}
+
+body[data-theme=dark] div.about-phone-model,
+body[data-theme=dark] div.about-phone-product {
+    color: #ccc;
+}
+
+body[data-theme=dark] div.about-info {
+    background-color: var( --dark-bgcolor );
+    border-top: 1px solid #555;
+}
+
+body[data-theme=dark] div.section-end {
+    border-bottom: 1px solid #555;
+}

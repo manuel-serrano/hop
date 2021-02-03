@@ -27,6 +27,9 @@ jarsigner=jarsigner
 
 androidkeystore=$HOME/.android/debug.keystore
 
+libdir=lib
+pluginjava=
+
 #*---------------------------------------------------------------------*/
 #*    argument parsing                                                 */
 #*---------------------------------------------------------------------*/
@@ -58,6 +61,15 @@ while : ; do
 
     --jarsigner=*)
       jarsigner="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --pluginjava=*)
+      pluginjava="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --nolibdir)
+      libdir=;;
+
+    --hopapp=*)
+      hopapp="`echo $1 | sed 's/^[^=]*=//'`";;
     
     *)
       apkname=$1;;
@@ -90,12 +102,42 @@ ZIPALIGN=$ANDROIDSDK/build-tools/$ANDROIDBUILDTOOLSVERSION/zipalign
 echo "$AAPT package -f -m -J src -M AndroidManifest.xml -S res -I $ANDROIDCP"
 $AAPT package -f -m -J src -M AndroidManifest.xml -S res -I $ANDROIDCP || exit 1
 
-echo "$javac -classpath $ANDROIDCP -sourcepath 'src' -d 'bin' -target 1.7 -source 1.7 `find src -name "*.java"`"
-$javac -classpath $ANDROIDCP -sourcepath 'src' -d 'bin' -target 1.7 -source 1.7 `find src -name "*.java"`  || exit 1
+mkdir -p bin
+
+echo "$javac -classpath $ANDROIDCP -sourcepath 'src' -d 'bin' `find src/fr -name "*.java"`"
+$javac -classpath $ANDROIDCP -sourcepath 'src' -d 'bin' `find src/fr -name "*.java"`  || exit 1
 
 echo "$DX --dex --output=classes.dex bin"
 $DX --dex --output=classes.dex bin || exit 1
 
+#*---------------------------------------------------------------------*/
+#*    Build the client Java plugin, if any                             */
+#*---------------------------------------------------------------------*/
+if [ "$pluginjava " != " " ]; then
+  # untar the hz tarball into which plugins will be inserted
+  tar xvfz assets/hz/$apkname.hz
+  
+  hzplugindir=arch/android/src/fr/inria/hop
+
+  # copy the R.java file so that plugin javac compilation succeeds
+  cat src/fr/inria/$hopapp/R.java | \
+     sed -e "s|fr.inria.$hopapp|fr.inria.hop|" \
+         > plugin/fr/inria/hop/R.java
+  
+  for p in $pluginjava; do
+     file=`basename $p .java`
+
+     (cd plugin && $javac -classpath $ANDROIDCP -sourcepath '.' fr/inria/hop/$file.java) || exit 1
+
+     (cd plugin && $DX --dex --output=../$apkname/$hzplugindir/$file.jar fr/inria/hop/$file.class) || exit 1
+  done
+
+  tar cvfz assets/hz/$apkname.hz $apkname
+fi
+
+#*---------------------------------------------------------------------*/
+#*    Complete the APK build                                           */
+#*---------------------------------------------------------------------*/
 /bin/rm -f $apkname.apk.unaligned 
 echo "$AAPT package -f -M AndroidManifest.xml -S res -I $ANDROIDCP -F $apkname.apk.unaligned "
 $AAPT package -f -M AndroidManifest.xml -S res -I $ANDROIDCP -F $apkname.apk.unaligned || exit 1
@@ -104,14 +146,19 @@ echo "$AAPT add $apkname.apk.unaligned classes.dex"
 $AAPT add $apkname.apk.unaligned classes.dex || exit 1
 
 rm -rf lib
-cp -r libs lib
 
-for p in `find lib -type f -print`; do
-  $AAPT add $apkname.apk.unaligned $p
-done
+if [ "$libdir " = " " ]; then
+  rm -rf libs
+else  
+  mv libs $libdir
+  
+  for p in `find $libdir -type f -print`; do
+    $AAPT add $apkname.apk.unaligned $p || exit 1
+  done
+fi  
 
 for p in `find assets -type f -print`; do
-  $AAPT add $apkname.apk.unaligned $p
+  $AAPT add $apkname.apk.unaligned $p || exit 1
 done
 
 echo "jarsigner -keystore $androidkeystore -storepass 'android' $apkname.apk.unaligned androiddebugkey"

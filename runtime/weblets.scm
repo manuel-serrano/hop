@@ -177,22 +177,36 @@
 ;*    get-weblet-info ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (get-weblet-info wdir::bstring)
+
+   (define (normalize-prop a d)
+      (cond
+	 ((and (eq? a 'author) (pair? d))
+	  (if (pair? d)
+	      (let ((c (assq 'name d)))
+		 (if (pair? c)
+		     (list a (cdr c))
+		     #f))))
+	 (else
+	  (list a d))))
    
    (define (normalize-json l)
       (if (list? l)
-	  (map (lambda (a)
-		  (match-case a
-		     ((?a . ?d) (list a d))
-		     (else (list #f #f))))
+	  (filter-map (lambda (a)
+			 (match-case a
+			    ((?a . ?d) (normalize-prop a d))
+			    (else #f)))
 	     l)
 	  '()))
    
    (let ((file (make-file-path wdir "etc" "weblet.info")))
       (if (file-exists? file)
-	  `((info "weblet.info") ,@(call-with-input-file file read))
+	  `((info "weblet.info")
+	    (path ,wdir)
+	    ,@(call-with-input-file file read))
 	  (let ((pkg (make-file-path wdir "package.json")))
 	     (if (file-exists? pkg)
 		 `((info "package.json")
+		   (path ,wdir)
 		   ,@(normalize-json
 			(call-with-input-file pkg javascript->obj)))
 		 '())))))
@@ -216,7 +230,13 @@
 ;*    reset-autoload! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (reset-autoload!)
-   (install-autoload-weblets! *weblet-autoload-dirs*))
+   (let ((warn (bigloo-warning)))
+      (unwind-protect
+	 (begin
+	    (bigloo-warning-set! 0)
+	    (set! *weblet-table* (make-hashtable))
+	    (install-autoload-weblets! *weblet-autoload-dirs*))
+	 (bigloo-warning-set! warn))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-autoload-directories ...                                     */

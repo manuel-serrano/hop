@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
 ;*    Last change :  Tue Jun  2 07:33:35 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
 ;*=====================================================================*/
@@ -59,7 +59,7 @@
 	      (direct-eval::bool (default #t))
 	      (source-map (default #f))
 	      (imports::pair-nil (default '()))
-	      (exports::pair-nil (default '())))
+	      (exports::pair-nil (default '()) (info '("notraverse"))))
 
 	   (class J2SDecl::J2SStmt
 	      id::symbol
@@ -115,7 +115,13 @@
 
 	   (final-class J2SDeclExtern::J2SDeclInit
 	      (bind::bool read-only (default #f))
-	      (hidden-class::bool read-only (default #t)))
+	      (hidden-class::bool read-only (default #t))
+	      ;; #t if an error should be raised on write (for strict mode)
+	      (raise-on-write::bool read-only (default #f))
+	      ;; extern are sweepable (i.e., removable) when not used
+	      ;; by the code generator to optimize expressions
+	      (sweepable::bool read-only (default #f))
+	      (configurable::bool read-only (default #t)))
 
 	   (final-class J2SDeclImport::J2SDecl
 	      (alias read-only (default #f) (info '("notraverse")))
@@ -500,8 +506,8 @@
 
 	   (final-class J2SExportVars::J2SStmt
 	      (refs::pair-nil read-only)
-	      (aliases::pair-nil read-only)
-	      (program (default #f)))
+	      (aliases::pair-nil read-only (info '("notraverse")))
+	      (program (default #f) (info '("notraverse"))))
 	   
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)

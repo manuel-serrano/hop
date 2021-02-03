@@ -98,6 +98,18 @@
       (error "string->obj" "Cannot unserialize JsResponse" o)))
 
 ;*---------------------------------------------------------------------*/
+;*    object-print ::JsObject ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (object-print obj::JsObject op proc)
+   (with-access::JsObject obj (elements)
+      (display "#<JsObject " op)
+      (display (vector-length elements) op)
+      (cond
+	 ((js-object-mapped? obj) (display " mapped>" op))
+	 ((js-object-hashed? obj) (display " hashed>" op))
+	 (else (display ">" op)))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-extensible? ...                                               */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.13    */
@@ -122,8 +134,14 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.14    */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-ownkeys obj %this)
-   (let ((o (js-cast-object obj %this "Object.keys")))
-      (js-ownkeys o %this)))
+   (cond
+      ((epair? obj)
+       (js-vector->jsarray (vector (& "car") (& "cdr") (& "cer")) %this))
+      ((pair? obj)
+       (js-vector->jsarray (vector (& "car") (& "cdr")) %this))
+      (else
+       (let ((o (js-cast-object obj %this "Object.keys")))
+	  (js-ownkeys o %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ::JsObject ...                                       */
@@ -502,7 +520,8 @@
 			    (append
 			       (js-jsobject->keyword-plist attrs %this)
 			       nodes))
-			 (apply <HTML> :idiom "javascript" nodes)))
+			 (apply <HTML> :idiom "javascript" :%context %this
+			    nodes)))
 		  (js-function-arity 1 -1 'scheme)
 		  (js-function-info :name "HTML" :len 1)))
 	    

@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
 ;*    Last change :  Fri Jan 31 16:30:12 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
 ;*    -------------------------------------------------------------    */
@@ -28,6 +28,26 @@
 	   __js2scheme_lexer)
 
    (export j2s-symbol-stage))
+
+;*---------------------------------------------------------------------*/
+;*    get-this-symbols ...                                             */
+;*    -------------------------------------------------------------    */
+;*    This file "this-symbols.sch" is optional. If it exists it        */
+;*    is read by this macro to extract the list of pre-defined         */
+;*    existing properties in the THIS object. This is only used        */
+;*    to remove irrelevant "unbound variable" error message in         */
+;*    "hopscript" mode.                                                */
+;*---------------------------------------------------------------------*/
+(define-macro (get-this-symbols)
+   (if (file-exists? "this-symbols.sch")
+       `',(call-with-input-file "this-symbols.sch" read)
+       '()))
+
+;*---------------------------------------------------------------------*/
+;*    this-symbols ...                                                 */
+;*---------------------------------------------------------------------*/
+(define this-symbols
+   (get-this-symbols))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-symbol-stage                                                 */
@@ -679,7 +699,13 @@
 		 (when (isa? decl J2SDeclArguments)
 		    (with-access::J2SDeclArguments decl (usecnt)
 		       (set! usecnt (+fx 1 usecnt))))
-		 (j2sref decl loc withs wenv))))
+		 (with-access::J2SDecl decl (scope)
+		    (if (eq? scope 'unbound)
+			(instantiate::J2SGlobalRef
+			   (id id)
+			   (loc loc)
+			   (decl decl))
+			(j2sref decl loc withs wenv))))))
 	    ((pair? withs)
 	     (instantiate::J2SWithRef
 		(loc loc)
@@ -697,6 +723,10 @@
 		       (id id)
 		       (loc loc)
 		       (decl decl)))))
+	    ((eq? id 'undefined)
+	     (instantiate::J2SUndefined
+		(type 'undefined)
+		(loc loc)))
 	    (else
 	     (let ((decl (instantiate::J2SDecl
 			    (usage (usage '()))
@@ -705,6 +735,9 @@
 			    (loc loc)
 			    (id id))))
 		(set-cdr! (last-pair genv) (list decl))
+		(when (and (memq mode '(strict hopscript))
+			   (not (memq id this-symbols)))
+		   (warning/loc loc (format "variable unbound \"~s\"" id)))
 		(instantiate::J2SGlobalRef
 		   (id id)
 		   (loc loc)

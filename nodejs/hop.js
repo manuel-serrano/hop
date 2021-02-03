@@ -64,6 +64,11 @@ exports.HTTPResponseError = function( obj ) {
 };
 
 /*---------------------------------------------------------------------*/
+/*    Requests                                                         */
+/*---------------------------------------------------------------------*/
+exports.isLocalRequest = hop.isLocalRequest;
+
+/*---------------------------------------------------------------------*/
 /*    Request Filters                                                  */
 /*---------------------------------------------------------------------*/
 exports.addRequestFilter = hop.addRequestFilter;
@@ -98,6 +103,8 @@ exports.decodeURIComponent = hop.decodeURIComponent;
 exports.decodeHTML = hop.decodeHTML;
 exports.md5sum = hop.md5sum;
 exports.sha1sum = hop.sha1sum;
+exports.base64encode = hop.base64encode;
+exports.base64decode = hop.base64decode;
 
 /*---------------------------------------------------------------------*/
 /*    Lists                                                            */
@@ -236,6 +243,7 @@ exports.feed = hop.modulesDir + "/feed";
 exports.xml = hop.modulesDir + "/xml";
 exports.hopdroid = hop.modulesDir + "/hopdroid";
 exports.csv = hop.modulesDir + "/csv";
+exports.vcf = hop.modulesDir + "/vcf";
 
 Object.seal( exports );
 Object.freeze( exports );

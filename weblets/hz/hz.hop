@@ -26,6 +26,8 @@
 	   hz/documentation
 	   hz/preferences
 	   hz/install
+	   hz/uninstall
+	   hz/remove
 	   hz/exists
 	   hz/run))
 
@@ -74,13 +76,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz/install ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-service (hz/install #!key url)
+(define-service (hz/install #!key url checksum)
    (let ((req (current-request)))
       (if (not (authorized-service? req 'admin))
 	  (access-denied req)
 	  (begin
 	     (when (file-exists? (hz-prefs)) (hz-preferences-load (hz-prefs)))
-	     (let ((w (hz-install-url url)))
+	     (let ((w (hz-install-url url :checksum checksum)))
 		(cond
 		   ((isa? w weblet)
 		    (<HZ> req :weblet w))
@@ -88,11 +90,56 @@
 		    (match-case w
 		       ((?status ?url ?msg)
 			(http-error
-			 (format "Cannot install weblet from ~s\n~a" url msg)))
+			   (format "Cannot install weblet from ~s\n~a" url msg)
+			   req))
 		       (else
-			(http-error w))))
+			(http-error w req))))
 		   (else
-		    (http-error w))))))))
+		    (http-error w req))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/uninstall ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-service (hz/uninstall #!key name url id)
+   (let ((req (current-request)))
+      (if (not (authorized-service? req 'admin))
+	  (access-denied req)
+	  (begin
+	     (when (file-exists? (hz-prefs)) (hz-preferences-load (hz-prefs)))
+	     (hz-db-init!)
+	     (let ((w (cond
+			 (name (hz-db-find-by-name name))
+			 (url (hz-db-find-by-url url))
+			 (id (hz-db-find-by-id id)))))
+		(if (isa? w weblet)
+		    (begin
+		       (hz-uninstall-weblet w)
+		       #t)
+		    (http-error
+		       (format "Cannot find weblet ~s" id)
+		       req)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hz/remove ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-service (hz/remove #!key name url id)
+   (let ((req (current-request)))
+      (if (not (authorized-service? req 'admin))
+	  (access-denied req)
+	  (begin
+	     (when (file-exists? (hz-prefs)) (hz-preferences-load (hz-prefs)))
+	     (hz-db-init!)
+	     (let ((w (cond
+			 (name (hz-db-find-by-name name))
+			 (url (hz-db-find-by-url url))
+			 (id (hz-db-find-by-id id)))))
+		(if (isa? w weblet)
+		    (begin
+		       (hz-remove-weblet w req)
+		       #t)
+		    (http-error
+		       (format "Cannot find weblet ~s" id)
+		       req)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz/exists ...                                                    */
@@ -119,8 +166,7 @@
    (multiple-value-bind (name version)
       (package-url-parse url)
       (with-handler
-	 (lambda (e)
-	    (http-error e))
+	 (lambda (e) (http-error e (current-request)))
 	 (begin
 	    (if install
 		(let ((w (or (let ((w (hz-db-find-by-url url)))
@@ -133,20 +179,22 @@
 		      ((isa? w weblet)
 		       (run name version))
 		      ((not (pair? w))
-		       (http-error w))
+		       (http-error w (current-request)))
 		      (else
 		       (case (car w)
 			  ((404)
 			   (http-error (instantiate::&io-file-not-found-error
 					  (proc "hz/run")
 					  (msg "File not found")
-					  (obj url))))
+					  (obj url))
+			      (current-request)))
 			  (else
 			   (http-error (instantiate::&io-error
 					  (proc "hz/run")
 					  (msg (format "File not found (~a)"
 						       (car w)))
-					  (obj url))))))))
+					  (obj url))
+			      (current-request)))))))
 		(begin
 		   (hz-load url)
 		   (run name version)))))))

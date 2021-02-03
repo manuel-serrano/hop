@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../arch/android/src/fr/inria/hop/HopPluginBattery.java          */
+/*    .../hop/arch/android/src/fr/inria/hop/HopPluginBattery.java      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Oct 17 18:30:34 2010                          */
-/*    Last change :  Thu Jul  5 17:47:29 2012 (serrano)                */
-/*    Copyright   :  2010-12 Manuel Serrano                            */
+/*    Last change :  Fri Dec 18 19:14:49 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with Battery                                             */
 /*=====================================================================*/
@@ -42,7 +42,7 @@ public class HopPluginBattery extends HopPlugin {
    }
    
    // battery manager
-   protected void server( final InputStream ip, final OutputStream op )
+   public void server( final InputStream ip, final OutputStream op )
       throws IOException {
       
       switch( HopDroid.read_int( ip ) ) {

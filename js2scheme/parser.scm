@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
 ;*    Last change :  Tue Jun  2 08:17:24 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
 ;*=====================================================================*/
@@ -26,6 +26,24 @@
 
    (export (j2s-parser ::input-port ::pair-nil #!optional plugins)
 	   (j2s-tag->expr ::pair ::bool)))
+
+;*---------------------------------------------------------------------*/
+;*    hop-node-modules-dir ...                                         */
+;*---------------------------------------------------------------------*/
+(define-macro (hop-node-modules-dir)
+   (call-with-input-file "./hopc_config.sch"
+      (lambda (p)
+	 (let loop ((e (read p)))
+	    (if (eof-object? e)
+		(error "hop-node-modules-dir" "Cannot find node_modules dir" 
+		   "./hopc_config.sch")
+		(let ((v (eval e)))
+		   (if (pair? v)
+		       (let ((dir (assq '--node_modules v)))
+			  (if (pair? dir)
+			      (cdr dir)
+			      (loop (read p))))
+		       (loop (read p)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-parser ...                                                   */
@@ -1058,7 +1076,7 @@
 	    (idthis '%)
 	    (loc loc)
 	    (name '||)
-	    (mode 'strict)
+	    (mode (if (eq? current-mode 'hopscript) 'hopscript 'strict))
 	    (params params)
 	    (body (arrow-body params args))
 	    (vararg (rest-params params)))))
@@ -1219,6 +1237,30 @@
 	 (service-create token id params args body mode
 	    #t declaration? #f)))
 
+
+   (define (hopjs-module-resolve-path name)
+      (let ((dir (or (config-get conf :node-modules-directory)
+		     (hop-node-modules-dir))))
+	 (make-file-path dir name)))
+	      
+   (define (consume-module-path!)
+      (case (peek-token-type)
+	 ((STRING)
+	  (consume-any!))
+	 ((ID)
+	  (let ((id (consume-any!)))
+	     (if (eq? (token-value id) 'hop)
+		 (begin
+		    (consume-token! 'DOT)
+		    (let ((mod (consume-token! 'ID)))
+		       (make-token 'STRING
+			  (hopjs-module-resolve-path
+			     (symbol->string (token-value mod)))
+			  (token-loc id))))
+		 (parse-token-error "Illegal import path (should be hop.xxx)" id))))
+	 (else
+	  (parse-token-error "Illegal import path" (consume-any!)))))
+   
    (define (import token)
       (set! es-module #t)
       (let loop ((first #t))
@@ -1229,7 +1271,7 @@
 		    (parse-token-error "Illegal empty import" token)
 		    (let ((fro (consume-token! 'ID)))
 		       (if (eq? (token-value fro) 'from)
-			   (let ((path (consume-token! 'STRING)))
+			   (let ((path (consume-module-path!)))
 			      (instantiate::J2SImport
 				 (names lst)
 				 (loc (token-loc token))
@@ -1253,7 +1295,7 @@
 		    (let* ((id (consume-token! 'ID))
 			   (fro (consume-token! 'ID)))
 		       (if (eq? (token-value fro) 'from)
-			   (let ((path (consume-token! 'STRING)))
+			   (let ((path (consume-module-path!)))
 			      (instantiate::J2SImport
 				 (names (cons '* (token-value id)))
 				 (loc (token-loc token))
@@ -1386,7 +1428,7 @@
 		       (if (peek-token-id? 'from)
 			   (begin
 			      (consume-any!)
-			      (let ((path (consume-token! 'STRING)))
+			      (let ((path (consume-module-path!)))
 				 (instantiate::J2SImport
 				    (names (cons 'redirect
 					      (map (lambda (r a)
@@ -1438,7 +1480,7 @@
 	  (let* ((* (consume-token! '*))
 		 (fro (consume-token! 'ID)))
 	     (if (eq? (token-value fro) 'from)
-		 (let ((path (consume-token! 'STRING)))
+		 (let ((path (consume-module-path!)))
 		    (instantiate::J2SImport
 		       (names '(redirect))
 		       (loc (token-loc token))

@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
 ;*    Last change :  Wed Jun 10 17:52:25 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
 ;*=====================================================================*/
@@ -661,14 +661,24 @@
 		   (j2s-fun-prototype this) #f))
 	       ((and (isa? this J2SArrow)
 		     (not (context-get ctx :profile-call #f)))
-		`(,(if (eq? mode 'hopscript)
-		       'js-make-procedure-hopscript
-		       'js-make-procedure)
-		  %this
-		  ,(or tmp
-		       (jsfun->lambda this mode return ctx
-			  (j2s-fun-prototype this) #f))
-		  ,arity))
+		(if (>fx (context-get ctx :debug 0) 0)
+		    `(,(if (eq? mode 'hopscript)
+			   'js-make-procedure-hopscript/debug
+			   'js-make-procedure/debug)
+		      %this
+		      ,(or tmp
+			   (jsfun->lambda this mode return ctx
+			      (j2s-fun-prototype this) #f))
+		      ,arity
+		      ,(j2s-function-info this '=> loc ctx))
+		    `(,(if (eq? mode 'hopscript)
+			   'js-make-procedure-hopscript
+			   'js-make-procedure)
+		      %this
+		      ,(or tmp
+			   (jsfun->lambda this mode return ctx
+			      (j2s-fun-prototype this) #f))
+		      ,arity)))
 	       ((and (or src prototype __proto__ method new-target)
 		     (memq mode '(strict hopscript))
 		     (not prototype)

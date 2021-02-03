@@ -4,7 +4,7 @@
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
 #*    Last change :  Wed May 27 16:19:08 2020 (serrano)                */
-#*    Copyright   :  2010-20 Manuel Serrano                            */
+#*    Copyright   :  2010-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
 #*    -------------------------------------------------------------    */
@@ -28,8 +28,8 @@ ANDROIDHOST = -d
 ANDROIDDIR= $(BUILDDIR)/arch/android
 ANDROIDKEYSTORE = $(ANDROIDDIR)/hop.keystore
 ANDROIDTARGET = armv7a-linux-androideabi26
-ANDROIDSDKVERSION = 21
-
+ANDROIDSDKVERSION = 26
+ANDROIDX = 
 ANDROIDLINK = dynamic
 
 #*---------------------------------------------------------------------*/
@@ -41,6 +41,12 @@ ANDROIDNDK = $(shell echo "$$ANDROIDNDK")
 ANDROIDCC=$(ANDROIDNDK)/toolchains/llvm/prebuilt/linux-$(shell uname -m)/bin/clang
 
 #*---------------------------------------------------------------------*/
+#*    HOPSOURCE                                                        */
+#*---------------------------------------------------------------------*/
+HOPSOURCE = $(REPOSITORY)/$(HOPFULLNAME).tar.gz
+HOPSOURCE = $(BUILDDIR)
+
+#*---------------------------------------------------------------------*/
 #*    hopdroid configuration                                           */
 #*---------------------------------------------------------------------*/
 ANDROIDHOPPORT = 8080
@@ -49,7 +55,7 @@ ANDROIDHOPZEROCONF = true
 ANDROIDHOPDEBUG = true
 ANDROIDHOPURL = http://hop.inria.fr
 ANDROIDHOPCONSOLELOG = false
-ANDROIDHOPDEBUGLEVEL = -g0
+ANDROIDHOPDEBUGLEVEL = # -g0
 ANDROIDHOPVERBOSELEVEL = -v
 ANDROIDHOPPREFIX = /data/data/fr.inria.$(HOPAPP)/assets
 
@@ -59,23 +65,30 @@ ANDROIDRES = $(ANDROIDDIR)/res
 ANDROIDMANIFEST = $(ANDROIDDIR)/AndroidManifest.xml
 ANDROIDSPLASH = $(ANDROIDDIR)/splash
 
+# Config
+DEFLANG = javascript
+NOTITLE = true
+CUSTOMTITLE = false
+STATUSBARCOLOR = default
+
 # Plugins
 PLUGINBUILD = true
-PLUGINLOCALE = false
-PLUGINVIBRATE = false
+PLUGINLOCALE = true
+PLUGINVIBRATE = true
 PLUGINMUSICPLAYER = true
 PLUGINMEDIAAUDIO = true
-PLUGINSENSOR = false
-PLUGINBATTERY = false
-PLUGINSMS = false
-PLUGINWIFI = false
-PLUGINCONNECTIVITY = false
-PLUGINCONTACT = false
+PLUGINSENSOR = true
+PLUGINBATTERY = true
+PLUGINSMS = true
+PLUGINWIFI = true
+PLUGINCONNECTIVITY = true
+PLUGINCONTACT = true
 PLUGINZEROCONF = true
-PLUGINSYSTEM = false
+PLUGINSYSTEM = true
 PLUGINTTS = false
-PLUGINCALL = false
-PLUGINPREFS = false
+PLUGINCALL = true
+PLUGINPREFS = true
+PLUGININTENT = true
 
 APKCUSTOM =
 APKCUSTOMDIR =
@@ -88,6 +101,10 @@ HOPAPP = hop
 HOPARGS = 
 HOPMINOR = -$(HOPDEVEL)1
 HOPFULLNAME = hop-$(HOPRELEASE)$(HOPMINOR)
+HOPAPK = fr.inria.hop
+
+# only for client
+HOPHZ = only-for-client
 
 JAVAC = javac -target 1.7 -source 1.7 
 
@@ -127,6 +144,7 @@ config:
 	@echo "plugintts=$(PLUGINTTS)"
 	@echo "plugincall=$(PLUGINCALL)"
 	@echo "pluginprefs=$(PLUGINPREFS)"
+	@echo "pluginintent=$(PLUGININTENT)"
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -189,7 +207,7 @@ ANDROID_RES = res/drawable/logo.png \
   res/layout-sw480dp/about.xml \
   res/xml/preferences.xml.in \
   res/values/hopstyle.xml res/values/arrays.xml res/values/strings.xml.in \
-  res/values/plugins.xml.in res/menu/hop_menu.xml
+  res/values/plugins.xml.in res/values/config.xml.in res/menu/hop_menu.xml
 
 ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java \
   HopUiUtils.java HopExec.java HopLauncher.java HopService.java \
@@ -201,7 +219,9 @@ ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java \
   HopAndroidAudioRecorder.java HopPluginBuild.java HopPluginConnectivity.java \
   HopSettings.java HopPluginZeroconf.java HopZeroconf.java HopJmDns.java \
   HopNsdManager.java HopPluginSystem.java HopStage.java HopIntenter.java \
-  HopConfig.java HopSpawner.java
+  HopConfig.java HopHzLauncher.java HopUtils.java HopConfiguration.java \
+  HopHzService.java HopIntent.java HopAppRemoved.java HopPluginIntent.java \
+  HopPermission.java
 
 JMDNS_JAVA = JmDNS.java ServiceInfo.java JmmDNS.java ServiceListener.java \
   NetworkTopologyDiscovery.java ServiceTypeListener.java \
@@ -317,10 +337,16 @@ $(ANDROIDBUILDDIR)/res: $(ANDROIDRES) $(ANDROIDBUILDDIR)
 	$(RM) -rf $@
 	cp -r $(ANDROIDRES) $@
 
-$(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/values/plugins.xml $(ANDROIDBUILDDIR)/res/xml/preferences.xml $(ANDROIDBUILDDIR)/src/fr/inria/hop/Hop.java:
+$(ANDROIDBUILDDIR)/res/values/strings.xml \
+  $(ANDROIDBUILDDIR)/res/values/plugins.xml \
+  $(ANDROIDBUILDDIR)/res/values/config.xml \
+  $(ANDROIDBUILDDIR)/res/xml/preferences.xml \
+  $(ANDROIDBUILDDIR)/src/fr/inria/hop/Hop.java:
 	rm -f $@.in
-	cat $< \
+	hz=`basename $(HOPHZ)` && cat $< \
           | sed -e "s|@HOPVERSION@|$(HOPRELEASE)|" \
+		-e "s|@HOPAPK@|$(HOPAPK)|" \
+		-e "s|@HOPHZ@|$$hz|" \
 		-e "s|@BIGLOOVERSION@|$(RELEASE)|" \
                 -e "s|@HOPPORT@|$(ANDROIDHOPPORT)|" \
                 -e "s|@HOPTHREADS@|$(ANDROIDHOPTHREADS)|" \
@@ -333,6 +359,10 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/values/plugins.
                 -e "s|@HOPARGS@|$(HOPARGS)|" \
                 -e "s|@HOPAPPVERSION@|$(HOPAPPVERSION)|" \
                 -e "s|@HOPURL@|$(ANDROIDHOPURL)|" \
+                -e "s|@NOTITLE@|$(NOTITLE)|" \
+                -e "s|@DEFLANG@|$(DEFLANG)|" \
+                -e "s|@CUSTOMTITLE@|$(CUSTOMTITLE)|" \
+                -e "s|@STATUSBARCOLOR@|$(STATUSBARCOLOR)|" \
                 -e "s|@PLUGINBUILD@|$(PLUGINBUILD)|" \
                 -e "s|@PLUGINLOCALE@|$(PLUGINLOCALE)|" \
                 -e "s|@PLUGINVIBRATE@|$(PLUGINVIBRATE)|" \
@@ -348,6 +378,7 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/values/plugins.
                 -e "s|@PLUGINSYSTEM@|$(PLUGINSYSTEM)|" \
                 -e "s|@PLUGINTTS@|$(PLUGINTTS)|" \
                 -e "s|@PLUGINPREFS@|$(PLUGINPREFS)|" \
+                -e "s|@PLUGININTENT@|$(PLUGININTENT)|" \
                 -e "s|@PLUGINCALL@|$(PLUGINCALL)|" > $@
 
 $(ANDROIDBUILDDIR)/res/values/strings.xml: \
@@ -356,6 +387,9 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml: \
 $(ANDROIDBUILDDIR)/res/values/plugins.xml: \
    $(ANDROIDDIR)/res/values/plugins.xml.in \
    $(ANDROIDBUILDDIR)/res
+$(ANDROIDBUILDDIR)/res/values/config.xml: \
+   $(ANDROIDDIR)/res/values/config.xml.in \
+   $(ANDROIDBUILDDIR)/res
 $(ANDROIDBUILDDIR)/res/xml/preferences.xml: \
    $(ANDROIDDIR)/res/xml/preferences.xml.in \
    $(ANDROIDBUILDDIR)/res
@@ -363,18 +397,29 @@ $(ANDROIDBUILDDIR)/res/xml/preferences.xml: \
 #*---------------------------------------------------------------------*/
 #*    assets                                                           */
 #*---------------------------------------------------------------------*/
-.PHONY: $(ANDROIDBUILDDIR)/assets
+.PHONY: $(ANDROIDBUILDDIR)/assets $(ANDROIDBUILDDIR)/assets.client
 
 $(ANDROIDBUILDDIR)/assets: \
   $(ANDROIDBUILDDIR)/assets/etc \
   $(ANDROIDBUILDDIR)/assets/bin \
   $(ANDROIDBUILDDIR)/assets/lib \
   $(ANDROIDBUILDDIR)/assets/share \
-  $(ANDROIDBUILDDIR)/cache
+  $(ANDROIDBUILDDIR)/assets/cache \
+  $(ANDROIDBUILDDIR)/assets/rcdir \
+  $(ANDROIDBUILDDIR)/assets/splash
 	$(MAKE) rename-afiles
 	$(MAKE) assets.weblet
 	$(MAKE) assets.module
 	$(MAKE) assets.post-install
+
+$(ANDROIDBUILDDIR)/assets.client: \
+  $(ANDROIDBUILDDIR)/assets/etc \
+  $(ANDROIDBUILDDIR)/assets/cache \
+  $(ANDROIDBUILDDIR)/assets/rcdir \
+  $(ANDROIDBUILDDIR)/assets/hz \
+  $(ANDROIDBUILDDIR)/assets/splash
+	$(MAKE) rename-afiles
+	$(MAKE) assets.post-install.client
 
 assets.weblet:
 	if [ "$(ANDROIDWEBLET) " != " " ]; then \
@@ -409,21 +454,44 @@ assets.post-install.static:
 	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libscheme2js*_[su]-*.so' -exec rm {} \;
 	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libbigloo*_[su]-*.so.keep' -exec rm {} \;
 
-$(ANDROIDBUILDDIR)/assets/etc: splash/splash.html
+assets.post-install.client:
+
+.PHONY: $(ANDROIDBUILDDIR)/assets/etc
+$(ANDROIDBUILDDIR)/assets/etc: splash/splash.html splash/hopnotfound.html splash/hoperror.html
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
 	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/etc $(ANDROIDBUILDDIR)/assets
-	mkdir -p $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
-	cp -r $(ANDROIDSPLASH) $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
+	# mkdir -p $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
 
+
+$(ANDROIDBUILDDIR)/assets/splash:
+	mkdir -p $(ANDROIDBUILDDIR)/assets
+	rm -rf $@
+	mkdir -p $@
+	$(MAKE) $(ANDROIDBUILDDIR)/assets/splash/splash.html
+	$(MAKE) $(ANDROIDBUILDDIR)/assets/splash/hopnotfound.html
+	$(MAKE) $(ANDROIDBUILDDIR)/assets/splash/hoperror.html
+
+.PHONY: $(ANDROIDBUILDDIR)/assets/share
 $(ANDROIDBUILDDIR)/assets/share:
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
 	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/share $(ANDROIDBUILDDIR)/assets
 	$(MAKE) rename-jsgz
 
-$(ANDROIDBUILDDIR)/cache:
-	mkdir -p $(ANDROIDBUILDDIR)/cache
+$(ANDROIDBUILDDIR)/assets/cache:
+	mkdir -p $(ANDROIDBUILDDIR)/assets/cache
+
+$(ANDROIDBUILDDIR)/assets/rcdir: rcdir
+	mkdir -p $(ANDROIDBUILDDIR)/assets
+	rm -rf $@
+	cp -r $(ANDROIDDIR)/rcdir $(ANDROIDBUILDDIR)/assets
+
+$(ANDROIDBUILDDIR)/assets/hz: $(HOPHZ)
+	if [ "$(HOPHZ) " != " " ]; then \
+	  mkdir -p $(ANDROIDBUILDDIR)/assets/hz; \
+	  cp $(HOPHZ) $(ANDROIDBUILDDIR)/assets/hz; \
+        fi
 
 rename-jsgz:
 	for jsgz in `find $(ANDROIDBUILDDIR)/assets/share/hop -name '*.js.gz' -print`; do \
@@ -435,6 +503,7 @@ rename-jsgz:
 
 $(ANDROIDBUILDDIR)/assets/bin: $(ANDROIDBUILDDIR)/assets/bin/hop
 
+.PHONY: $(ANDROIDBUILDDIR)/assets/bin/hop
 $(ANDROIDBUILDDIR)/assets/bin/hop:
 	mkdir -p $(ANDROIDBUILDDIR)/assets/bin
 	cp $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/bin/hop $@
@@ -443,11 +512,13 @@ $(ANDROIDBUILDDIR)/assets/lib: \
   $(ANDROIDBUILDDIR)/assets/lib/bigloo \
   $(ANDROIDBUILDDIR)/assets/lib/hop
 
+.PHONY: $(ANDROIDBUILDDIR)/assets/lib/bigloo
 $(ANDROIDBUILDDIR)/assets/lib/bigloo:
 	mkdir -p $(ANDROIDBUILDDIR)/assets/lib
 	rm -rf $@
 	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/lib/bigloo $(ANDROIDBUILDDIR)/assets/lib
 
+.PHONY: $(ANDROIDBUILDDIR)/assets/lib/hop
 $(ANDROIDBUILDDIR)/assets/lib/hop:
 	mkdir -p $(ANDROIDBUILDDIR)/assets/lib
 	rm -rf $@
@@ -462,6 +533,9 @@ rename-afiles:
 ndk-build: $(ANDROIDBUILDDIR)/assets
 	$(ANDROIDNDK)/ndk-build -C $(ANDROIDBUILDDIR) V=1
 
+ndk-build.client: $(ANDROIDBUILDDIR)/assets.client
+	$(ANDROIDNDK)/ndk-build -C $(ANDROIDBUILDDIR) V=1
+
 apk-build:
 	(hopdir=`pwd`; cd $(ANDROIDBUILDDIR); \
            $$hopdir/buildapk.sh \
@@ -471,26 +545,46 @@ apk-build:
            --androidkeystore=$(ANDROIDKEYSTORE) \
            $(HOPAPKNAME))
 
+apk-build.client: 
+	(hopdir=`pwd`; cd $(ANDROIDBUILDDIR); \
+           $$hopdir/buildapk.sh \
+           --androidsdk=$(ANDROIDSDK) \
+           --androidndk=$(ANDROIDNDK) \
+           --javac=$(JAVAC) \
+           --androidkeystore=$(ANDROIDKEYSTORE) \
+           --pluginjava="$(PLUGIN_JAVA)" \
+           --hopapp=$(HOPAPP) \
+           --nolibdir \
+           $(HOPAPKNAME))
+
 #*---------------------------------------------------------------------*/
 #*    apk                                                              */
 #*---------------------------------------------------------------------*/
 .PHONY: apk install.apk click.apk uninstall.apk \
-  apk.bigloo apk.hop apk.hop.android apk.lib
+  apk.bigloo apk.bigloo.post-install apk.hop apk.lib
 
-apk: apk.bigloo
+apk: apk.bigloo apk.bigloo.post-install
 	$(MAKE) apk-sans-bigloo
 
 apk-sans-bigloo: apk.common apk.res apk.jni apk.src apk.hop apk.custom
 	$(MAKE) ndk-build
 	$(MAKE) apk-build
 
-apk-sans-hop: apk.common apk.res apk.jni apk.src
+apk-sans-hop: apk.common apk.res apk.jni apk.src apk.weblets
 	$(MAKE) ndk-build
 	$(MAKE) apk-build
 
-apk-hop-app: apk.common apk.res apk.jni apk.src
+apk-re-hop: apk.common apk.res apk.jni apk.src apk.rehop apk.recustom
 	$(MAKE) ndk-build
 	$(MAKE) apk-build
+
+apk-sans-bigloo.client: apk.common apk.res apk.jni apk.src apk.hop.client
+	$(MAKE) ndk-build.client
+	$(MAKE) apk-build.client
+
+apk-sans-hop.client: apk.common apk.res apk.jni apk.src.client apk.plugin.client apk.hop.client
+	$(MAKE) ndk-build.client
+	$(MAKE) apk-build.client
 
 install.apk:
 	adb $(ANDROIDHOST) install $(ANDROIDBUILDDIR)/bin/$(HOPAPKNAME).apk
@@ -508,6 +602,7 @@ apk.common: $(ANDROIDBUILDDIR)/Android.mk \
 apk.res: $(ANDROIDBUILDDIR)/res \
   $(ANDROIDBUILDDIR)/res/values/strings.xml \
   $(ANDROIDBUILDDIR)/res/values/plugins.xml \
+  $(ANDROIDBUILDDIR)/res/values/config.xml \
   $(ANDROIDBUILDDIR)/res/xml/preferences.xml
 
 apk.jni: $(ANDROIDBUILDDIR)/jni
@@ -522,11 +617,21 @@ $(ANDROIDBUILDDIR)/jni: jni $(ANDROIDBUILDDIR)
            mv $$p.__tmp $$p; \
         done
 
+# this goal is only used by the apk-sans-hop target
+apk.weblets:
+	$(RM) -rf $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets
+	$(RM) -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME)/weblets
+	cp -r $(BUILDDIR)/weblets $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
+	cp -r $(ANDROIDBUILDDIR)/$(HOPFULLNAME)/weblets $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)
+
 apk.src: $(ANDROIDBUILDDIR)/src
 $(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR) \
   $(ANDROID_JAVA:%=$(ANDROIDDIR)/src/fr/inria/hop/%)
 	$(RM) -rf $@
 	cp -r $(ANDROIDDIR)/src $@
+	if [ "$(ANDROIDX) " != " " ]; then \
+	  unzip $(ANDROIDDIR)/androidx/$(ANDROIDX) -d $@; \
+        fi
 	for p in `find $(ANDROIDBUILDDIR)/src -name '*.java' -print`; do \
            cat $$p \
                | sed -e 's|fr.inria.hop;|fr.inria.$(HOPAPP);|g' \
@@ -538,10 +643,33 @@ $(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR) \
 	  mv $(ANDROIDBUILDDIR)/src/fr/inria/hop $(ANDROIDBUILDDIR)/src/fr/inria/$(HOPAPP); \
         fi
 
+apk.src.client: apk.src
+	if [ -d $(ANDROIDSRCCLIENT) ]; then \
+	   cp -r $(ANDROIDSRCCLIENT) $(ANDROIDBUILDDIR); \
+	fi
+
+apk.plugin.client:
+	if [ "$(PLUGIN_JAVA) " != " " ]l; then \
+	   $(RM) -rf $(ANDROIDBUILDDIR)/tmpsrc && \
+	   $(RM) -rf $(ANDROIDBUILDDIR)/plugin && \
+	   $(MAKE) apk.src.client ANDROIDBUILDDIR=$(ANDROIDBUILDDIR)/tmpsrc HOPAPP=hop && \
+	   mv $(ANDROIDBUILDDIR)/tmpsrc/src $(ANDROIDBUILDDIR)/plugin && \
+	   rm -rf $(ANDROIDBUILDDIR)/tmpsrc || exit 1; \
+        fi
+	for p in $(PLUGIN_JAVA); do \
+	   cp $(ANDROIDWEBLET)/arch/android/$$p \
+              $(ANDROIDBUILDDIR)/plugin/fr/inria/hop/`basename $$p`; \
+        done
+
 apk.bigloo: $(ANDROIDBUILDDIR)/bigloo-$(RELEASE) /tmp/droidcc.sh
 	$(MAKE) apk.bigloo.configure
 	$(MAKE) -C $(ANDROIDBUILDDIR)/bigloo-$(RELEASE)
 	$(MAKE) -C $(ANDROIDBUILDDIR)/bigloo-$(RELEASE) install DESTDIR=$(ANDROIDBUILDDIR)
+
+apk.bigloo.post-install: apk.bigloo
+	rm $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre.so.1
+	cp $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre.so.1.2.11 \
+           $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre.so.1
 
 apk.bigloo.configure:
 	(cd $(ANDROIDBUILDDIR)/bigloo-$(RELEASE); \
@@ -550,25 +678,34 @@ apk.bigloo.configure:
             --cc=/tmp/droidcc.sh \
             --cpicflags=-fPIC \
             --cflags="-fPIC -DBGL_GC_ROOTS" \
-            --lflags=-fPIC \
+            --lflags="-fPIC" \
             --customlibuv=yes \
             --customlibuvversion=v1.20.3 \
             --libuvconfigureopt="--host=arm-linux-androideabi" \
+            --custompcre=yes \
             --stack-check=no \
             --prefix=$(ANDROIDHOPPREFIX) \
             --build-bindir=$(HOPBINDIR) \
-            --disable-doc --disable-pcre --disable-unistring --disable-gmp \
+            --disable-doc --disable-unistring --disable-gmp \
             $(BIGLOOCONFIGUREOPT))
 
 $(ANDROIDBUILDDIR)/bigloo-$(RELEASE): $(REPOSITORY)/bigloo-$(RELEASE).tar.gz
 	mkdir -p $(ANDROIDBUILDDIR)
 	(cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/bigloo-$(RELEASE))
-	(cd $(ANDROIDBUILDDIR); tar xvf $< 2> /dev/null > /dev/null)
+	(cd $(ANDROIDBUILDDIR); tar xf $< 2> /dev/null > /dev/null)
 
 apk.hop: $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
 	$(MAKE) apk.hop.configure
 	$(MAKE) -C $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
 	$(MAKE) -C $(ANDROIDBUILDDIR)/$(HOPFULLNAME) install DESTDIR=$(ANDROIDBUILDDIR)
+
+apk.rehop:
+	$(MAKE) -C $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
+	$(MAKE) -C $(ANDROIDBUILDDIR)/$(HOPFULLNAME) install DESTDIR=$(ANDROIDBUILDDIR)
+
+apk.hop.client: $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
+	mkdir -p $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/etc
+	cp -r $(ANDROIDBUILDDIR)/$(HOPFULLNAME)/etc/hoprc.hop $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/etc
 
 apk.hop.configure:
 	(cd $(ANDROIDBUILDDIR)/$(HOPFULLNAME); \
@@ -590,9 +727,17 @@ apk.hop.configure:
             --bigloo-pcre=no --bigloo-unistring=no \
             $(HOPCONFIGUREOPT))
 
-$(ANDROIDBUILDDIR)/$(HOPFULLNAME): $(REPOSITORY)/$(HOPFULLNAME).tar.gz
-	(cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME))
-	(cd $(ANDROIDBUILDDIR); tar xvf $<)
+$(ANDROIDBUILDDIR)/$(HOPFULLNAME):
+	if [ -d $(HOPSOURCE) ]; then \
+	  (cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/hop $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) && \
+          (cd $(ANDROIDBUILDDIR); git clone $(HOPSOURCE)) && \
+          (cd $(ANDROIDBUILDDIR); cp $(HOPSOURCE)/share/hop-builtin-serializers.js $(ANDROIDBUILDDIR)/hop/share) && \
+          (cd $(ANDROIDBUILDDIR); cp $(HOPSOURCE)/etc/hoprc.hop $(ANDROIDBUILDDIR)/hop/etc) && \
+          (mv $(ANDROIDBUILDDIR)/hop $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) || exit 1; \
+        else \
+	  (cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME)) && \
+	  (cd $(ANDROIDBUILDDIR); tar xf $(HOPSOURCE)) || exit 1; \
+        fi
 
 apk-clean:
 	rm -rf $(ANDROIDBUILDDIR)
@@ -608,6 +753,10 @@ apk.custom: apk.hop $(ANDROIDBUILDDIR)/assets
                ANDROIDHOPPREFIX=$(ANDROIDHOPPREFIX); \
 	fi
 
+apk.recustom:
+	rm -rf $(ANDROIDBUILDDIR)/assets
+	$(MAKE) apk.custom
+
 #*---------------------------------------------------------------------*/
 #*    droidcc ...                                                      */
 #*---------------------------------------------------------------------*/
@@ -620,5 +769,17 @@ apk.custom: apk.hop $(ANDROIDBUILDDIR)/assets
 #*    splash                                                           */
 #*---------------------------------------------------------------------*/
 splash/splash.html: splash/splash.js splash/hop.svgz
+	hop --no-server $< > $@
+
+splash/hopnotfound.html: splash/hopnotfound.js splash/hop.svgz
+	hop --no-server $< > $@
+
+splash/hoperror.html: splash/hoperror.js splash/hop.svgz
+	hop --no-server $< > $@
+
+$(ANDROIDBUILDDIR)/assets/splash/%.html: $(ANDROIDSPLASH)/%.html
+	cp $< $@
+
+$(ANDROIDSPLASH)/%.html: $(ANDROIDSPLASH)/%.js
 	hop --no-server $< > $@
 

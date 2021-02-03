@@ -234,7 +234,10 @@
 	  (nodejs-mkdir %worker %this process path mode callback)))
    
    (define (close this fd callback)
-      (nodejs-fs-close %worker %this process fd callback))
+      (if (fixnum? fd)
+	  (nodejs-fs-close %worker %this process fd callback)
+	  (let ((fd (js-tointeger fd %this)))
+	     (nodejs-fs-close %worker %this process fd callback))))
    
    (define (open this path flags mode callback)
       (unless (integer? flags)

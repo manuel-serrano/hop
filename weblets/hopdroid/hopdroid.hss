@@ -1,0 +1,293 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/work/hopdroid/hopdroid.hss              */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Mon Nov 23 18:58:15 2020                          */
+/*    Last change :  Thu Nov 26 15:26:52 2020 (serrano)                */
+/*    Copyright   :  2020 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    hopdroid default css                                             */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    import                                                           */
+/*---------------------------------------------------------------------*/
+@import url("hopdroid-dark.hss");
+
+/*---------------------------------------------------------------------*/
+/*    global variables                                                 */
+/*---------------------------------------------------------------------*/
+:root {
+    --margincolor: #f7f7f7;
+    --bgcolor-status: #3a3a3a;
+    --spheadheight: 96px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    main configuration                                               */
+/*---------------------------------------------------------------------*/
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+}
+
+/*---------------------------------------------------------------------*/
+/*    spage configuration                                              */
+/*---------------------------------------------------------------------*/
+.hopdroid spage {
+    transition-style: zoom;
+}
+
+.hopdroid [data-hss-tag=hop-sphead].main,
+.hopdroid spage.main {
+  background: transparent;
+  /* -hop-background-gradient: #3A3A3A #3A3A3A #3F3F3F; */
+  background-color: var( --bgcolor-status );
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  width: 100%;
+  font-size: 24px;
+  border-top: 1px solid #000;
+  position: fixed;
+  top: 0;
+  height: var( --spheadheight );
+  z-index: 1000;
+}
+
+.hopdroid div[data-hss-tag=hop-sppopbutton].visible {
+    display: none;
+}
+
+.hopdroid .round {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px #ccc solid;
+}
+
+.hopdroid [data-hss-tag=hop-spviewport],
+.hopdroid spage.spviewport {
+    margin-top: var( --spheadheight );
+}
+
+/*---------------------------------------------------------------------*/
+/*    Hop logo                                                         */
+/*---------------------------------------------------------------------*/
+.hop-logo .hop-logo-background {
+    fill: #ffcb00;
+    stroke: #000;
+}
+
+.hop-logo .hop-logo-kangaroo {
+    fill: #202020;
+}
+
+/* local configuration */
+.hop-logo-sans .hop-logo-background {
+    fill: none;
+    stroke: none;
+}
+
+.hop-logo-sans .hop-logo-kangaroo {
+    fill: white;
+}
+
+/*---------------------------------------------------------------------*/
+/*    spage-block                                                      */
+/*---------------------------------------------------------------------*/
+div.spage-block {
+    border-top: 8px solid var( --margincolor );
+    background-color: white;
+}
+
+/*---------------------------------------------------------------------*/
+/*    sptabhead                                                        */
+/*---------------------------------------------------------------------*/
+nav.sptabhead {
+    font-size: 16px;
+}
+
+nav.sptabhead ul {
+    display: flex;
+    list-style-type: none;
+    margin: 0;
+    padding: 10px;
+    margin-top: 4px;
+}
+
+nav.sptabhead ul li {
+    margin: 0 10px;
+}
+
+nav.sptabhead ul li.icon {
+    width: 64px;
+}
+
+nav.sptabhead .title {
+    font-weight: normal;
+}
+
+nav.sptabhead .subtitle {
+    font-size: 80%;
+    color: #777;
+}
+
+div[ data-hss-tag=hop-sppushbutton ] {
+    display: none;
+}
+
+/*---------------------------------------------------------------------*/
+/*    icon                                                             */
+/*---------------------------------------------------------------------*/
+div.icon,
+div.icon-sans {
+    height: 28px;
+    width: 28px;
+    text-align: center;
+    display: inline-block;
+}
+
+nav div.icon {
+    border-radius: 50%;
+    background-color: var( --margincolor );
+    border: 1px solid #ddd;
+    height: 32px;
+    width: 32px;
+}
+
+div.icon > div {
+/*     padding-top: 6px;                                               */
+    top: 2px;
+}    
+
+div.icon {
+    height: 28px;
+    width: 28px;
+    text-align: center;
+    display: inline-block;
+}
+
+div.icon > div {
+    padding-top: 6px;
+}    
+
+/* icons color */
+div.icon div.apps-icon svg * {
+    fill: #8342d2;
+}
+
+div.icon div.hdd-icon svg * {
+    fill: #f3ac27;
+}
+
+div.icon div.privacy-icon svg * {
+    fill: #b00;
+}
+
+div.icon div.about-icon svg * {
+    fill: #33d;
+}
+
+div.icon div.system-icon svg * {
+    fill: #777;
+}
+
+div.icon-sans svg * {
+    fill: #999;
+}
+
+div.icon-toggle[ data-on=on ] svg * {
+    fill: #05f;
+}
+    
+div.icon-toggle svg * {
+    fill: #888;
+}
+
+div.icon-toggle[ data-on=off ] svg {
+    transform: rotate( 180deg );
+}
+
+/*---------------------------------------------------------------------*/
+/*    setting                                                          */
+/*---------------------------------------------------------------------*/
+div.setting {
+    display: flex;
+    height: 48px;
+    font-size: 14px;
+    font-weight: normal;
+}
+
+div.setting div.icon-sans,
+div.setting div.text {
+    margin-top: 14px;
+}
+
+div.setting div.button {
+    margin-top: 8px;
+}
+
+div.setting div.icon-sans {
+    width: 4em;
+}
+
+div.setting div.button {
+    margin-left: auto;
+    width: 48px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    config                                                           */
+/*---------------------------------------------------------------------*/
+div.config {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 64px;
+    padding-left: 16px;
+}
+
+div.config .title {
+    align-self: center;
+}
+
+div.config .comment {
+    font-size: 70%;
+}
+
+div.config .value {
+    font-size: 70%;
+}
+
+div.config .icon {
+    margin-right: 16px;
+}
+
+div.config .button {
+    flex-grow: 4;
+    text-align: right;
+    padding-right: 32px;
+}
+
+/* colors */
+div.config {
+    background-color: white;
+}
+
+div.config .text,
+div.config .title {
+    color: #222;
+}
+
+div.config .text .comment {
+    color: #666;
+}
+
+div.config value {
+    color: #555;
+}
+
+div.config .icon svg *{
+    fill: #999;
+}

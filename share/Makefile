@@ -50,7 +50,8 @@ EXTRA		= hop.hss \
                   hop-lframe.hss \
                   hop-canvas.scm hop-exception.scm hop-debug.scm \
                   hop-orientation.scm \
-                  hop-spage.scm hop-spage.hss hop-spage-iphone.hss\
+                  hop-spage.scm hop-spage.hss hop-spage-iphone.hss \
+                  hopjs-spage.js \
                   hop-gauge.scm hop-gauge.hss \
                   hop-font.scm \
                   hop-password.scm \
@@ -297,9 +298,18 @@ hopjs_u.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
                | sed -e "/^[ \t]*$$/D" \
                | $(BGLCPP) -DHOP_JAVASCRIPT | $(CLOSURE) \
                >> $@
+	$(MAKE) hopjs_sha1 >> $@
+
 
 hopjs_s.js: hop_s.js
 	cp $^ $@
+	$(MAKE) hopjs_sha1 >> $@
+
+hopjs_sha1:
+	@echo "hop.sha1sum = (function() {"
+	@cat sha1.js
+	@echo "return sha1sum;"
+	@echo "})();"
 
 #*---------------------------------------------------------------------*/
 #*    hop-runtime.sch ...                                              */

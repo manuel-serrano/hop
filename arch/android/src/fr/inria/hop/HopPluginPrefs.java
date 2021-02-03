@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul 17 13:19:20 2016                          */
-/*    Last change :  Sun May 17 10:27:00 2020 (serrano)                */
+/*    Last change :  Sun Dec 27 15:02:25 2020 (serrano)                */
 /*    Copyright   :  2016-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android preferences plugins                                      */
@@ -33,8 +33,8 @@ public class HopPluginPrefs extends HopPlugin {
    public HopPluginPrefs( HopDroid h, String n ) {
       super( h, n );
 
-      res = h.activity.getResources();
-      sp = PreferenceManager.getDefaultSharedPreferences( h.activity );
+      res = h.service.getResources();
+      sp = PreferenceManager.getDefaultSharedPreferences( h.service );
    }
 
    // kill
@@ -66,7 +66,7 @@ public class HopPluginPrefs extends HopPlugin {
    }
    
    // server
-   void server( InputStream ip, OutputStream op ) throws IOException {
+   public void server( InputStream ip, OutputStream op ) throws IOException {
       switch( HopDroid.read_int( ip ) ) {
 	 case (byte)'s':
 	    // set

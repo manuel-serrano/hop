@@ -346,6 +346,20 @@ ${ <span class="label label-info">image/image.js</span> }
 ${ doc.include( doc.BUILDDIR + "/examples/image/image.js", 14 ) }
 ```
 
+Requests
+--------
+[:requests]
+
+The `this` value of service invokations is an object that denotes the
+current request.
+
+### hop.isLocalRequest( req ) ###
+[:@glyphicon glyphicon-tag function]
+
+Returns `true` if and only if `req` denotes a locate request, i.e., an
+http request emitted from the same machine that runs the server. Returns
+`false` otherwise.
+
 
 Request Filtering
 -----------------
@@ -740,6 +754,17 @@ Computes the sha1 sum of a string.
 hop.sha1sum( 'jean dupont' );
 // "7461340811509ec24dd1c1a32504a01e24423768"
 ```
+
+### hop.base64encode( string ) ###
+[:@glyphicon glyphicon-tag function]
+
+Encodes a string into base64.
+
+### hop.base64decode( string ) ###
+[:@glyphicon glyphicon-tag function]
+
+Decodes a base64 string.
+
 
 ### hop.compileXML( node [, ofile] [, backend] ) ###
 [:@glyphicon glyphicon-tag function]

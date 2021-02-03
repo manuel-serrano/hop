@@ -1,0 +1,22 @@
+/*=====================================================================*/
+/*    .../prgm/project/hop/hop/weblets/hopdroid/webdav-dark.hss        */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Sat Dec 12 15:46:56 2020                          */
+/*    Last change :  Sat Dec 12 15:46:57 2020 (serrano)                */
+/*    Copyright   :  2020 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    WEBDAV dark hss                                                  */
+/*=====================================================================*/
+
+body[data-theme=dark] div.webdav {
+    background-color: var( --dark-margincolor );
+}
+
+body[data-theme=dark] div.webdav nav.sptabhead,
+body[data-theme=dark] div.webdav sptabhead,
+body[data-theme=dark] div.webdav div[data-hss-tag=hop-sptabhead],
+body[data-theme=dark] div.webdav-config {
+    color: white;
+    background-color: var( --dark-bgcolor );
+}

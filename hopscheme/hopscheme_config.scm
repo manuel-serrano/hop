@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jan 15 07:17:18 2012                          */
 ;*    Last change :  Fri Aug 23 07:16:22 2013 (serrano)                */
-;*    Copyright   :  2012-13 Manuel Serrano                            */
+;*    Copyright   :  2012-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Default scheme2js configuration for Hop                          */
 ;*=====================================================================*/
@@ -63,7 +63,7 @@
 (define *hop-eval*
    (lambda (e) (error "hop-eval" "not initialized yet" e)))
 (define *hop-compile*
-   (lambda (v p) (error "hop-compile" "not initialized yet" v)))
+   (lambda (v p ctx) (error "hop-compile" "not initialized yet" v)))
 (define *hop-register*
    (lambda (v) (error "hop-register" "not initialized yet" v)))
 (define *hop-library-path*
@@ -132,6 +132,8 @@
 	      (module-preprocessor . ,(dollar-modules-adder))
 	      ;; hop-compile compiles HOP values.
 	      (host-compiler . ,*hop-compile*)
+	      ;; host-context context for host compilation
+	      (host-context . #f)
 	      ;; register values
 	      (host-register . ,*hop-register*)
 	      ;; library path

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.6.x/arch/android/src/fr/inria/hop/HopPluginTts.java        */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopPluginTts.java      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 25 17:50:30 2010                          */
-/*    Last change :  Fri Feb 21 13:30:58 2014 (serrano)                */
-/*    Copyright   :  2010-14 Manuel Serrano                            */
+/*    Last change :  Sun Dec 27 14:55:50 2020 (serrano)                */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Text-to-speech facilities                                        */
 /*=====================================================================*/
@@ -62,7 +62,7 @@ public class HopPluginTts extends HopPlugin
       if( tts != null ) tts.shutdown();
    }
    
-   // TTS initialization, delayed to onConnect because it needs that actitivy
+   // TTS initialization, delayed to onConnect because it needs that activity
    // to be fully initialized
    public void onConnect() {
       Log.v( "HopPluginTts", "onConnect" );
@@ -76,7 +76,7 @@ public class HopPluginTts extends HopPlugin
    }
 
    // onActivityResult
-   public void onHopActivityResult( int result, Intent intent ) {
+   public void onHopActivityResult( int request, int result, Intent intent ) {
       Log.v( "HopPluginTts", "onHopActivityResult.1: activity started" );
       if( result == TextToSpeech.Engine.CHECK_VOICE_DATA_PASS ) {
          Log.v( "HopPluginTts", "onHopActivityResult.2: creating TextToSpeech" );
@@ -118,7 +118,7 @@ public class HopPluginTts extends HopPlugin
    }
 
    // server
-   synchronized void server( InputStream ip, OutputStream op )
+   public synchronized void server( InputStream ip, OutputStream op )
       throws IOException {
 
       switch( HopDroid.read_int( ip ) ) {

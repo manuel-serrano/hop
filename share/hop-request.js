@@ -878,7 +878,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
       }
    }
 
-   if( arg == null ) {
+   if( arg === null ) {
       xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8' );
       if( hop_config.navigator_family != "safari" &&
 	  hop_config.navigator_family != "mozilla" &&

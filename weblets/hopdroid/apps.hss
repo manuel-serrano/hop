@@ -1,0 +1,158 @@
+/*=====================================================================*/
+/*    serrano/prgm/project/hop/work/hopdroid/apps.hss                  */
+/*    -------------------------------------------------------------    */
+/*    Author      :  Manuel Serrano                                    */
+/*    Creation    :  Wed Nov 25 14:11:20 2020                          */
+/*    Last change :  Thu Nov 26 10:59:36 2020 (serrano)                */
+/*    Copyright   :  2020 Manuel Serrano                               */
+/*    -------------------------------------------------------------    */
+/*    APPS hss                                                         */
+/*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    import                                                           */
+/*---------------------------------------------------------------------*/
+@import url("apps-dark.hss");
+
+/*---------------------------------------------------------------------*/
+/*    apps ...                                                         */
+/*---------------------------------------------------------------------*/
+div.apps {
+    background-color: var( --bgcolor );
+    padding: 16px 0 16px 0;
+    font-size: 18px;
+}
+
+div.apps sptabhead {
+    background-color: white;
+    font-weight: normal;
+    height: 64px;
+    width: 100%;
+}
+
+/*---------------------------------------------------------------------*/
+/*    apps-app ...                                                     */
+/*---------------------------------------------------------------------*/
+div.apps-app {
+    padding: 16px;
+    margin: 0;
+    font-size: 18px;
+}
+
+div.apps-app ul {
+    justify-content: space-between;
+    list-style-type: none;
+    margin: 0;
+    padding: 16px;
+}
+
+div.apps-app ul li {
+    margin: 0 10px;
+}
+
+div.tabapp sptabhead {
+    height: 80px;
+    width: 100%;
+}
+
+div.apps-app .app-icon {
+    width: 64px;
+    display: inline-block;
+}
+
+div.apps-app .app-title {
+    display: inline-block;
+    color: #222;
+}
+
+div.apps-app .app-description {
+    color: #666;
+    font-size: 70%;
+}
+
+div.app-icon img {
+    max-width: 32px;
+    max-height: 32px;
+}
+
+.app-smallicon img {
+    max-width: 24px;
+    max-height: 24px;
+    margin-right: 16px;
+    margin-left: 85px;
+}
+
+/*---------------------------------------------------------------------*/
+/*    app-page                                                         */
+/*---------------------------------------------------------------------*/
+div.app-page {
+    background-color: var( --bgcolor );
+}
+
+div.app-page .app-header {
+    border-bottom: 1px solid #eee;
+    font-size: 18px;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 32px;
+    background: white;
+}
+
+.app-page div.app-title {
+    font-weight: bold;
+    margin-bottom: 32px;
+}
+
+div.app-action-buttons {
+    display: flex;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+div.app-action-button {
+    flex-grow: 1;
+    margin-left: 32px;
+    margin-right: 32px;
+    text-align: center;
+    padding: 16px;
+    font-weight: normal;
+    line-height: 16px;
+    font-weight: bold;
+    color: #1f9bc3;
+    background: white;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    width: 96px;
+}
+
+div[ data-hss-reboot=on ] div.app-action svg * {
+    color: #ccc;
+}
+
+div.app-action div.system-button-text {
+    vertical-align: top;
+    margin-top: 4px;
+    display: inline-block;
+}
+
+/*---------------------------------------------------------------------*/
+/*    app-info                                                         */
+/*---------------------------------------------------------------------*/
+div.app-info {
+    background: white;
+    font-size: 18px;
+}
+
+div.app-info-description {
+    padding: 32px;
+    font-size: 80%;
+    color: #666;
+}
+
+div.app-info-entry .valuedate {
+    color: #1f9bc3;
+}

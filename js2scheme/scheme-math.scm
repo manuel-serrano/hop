@@ -167,7 +167,8 @@
 	 ((not p2)
 	  (let ((p3 (divide arg)))
 	     (if (not p3)
-		 (let ((sexp (j2s-scheme arg mode return conf)))
+		 (let* ((arg (j2s-asreal arg))
+			(sexp (j2s-scheme arg mode return conf)))
 		    (if (eq? (j2s-type arg) 'real)
 			`(js-math-floorfl ,sexp)
 			(match-case sexp
@@ -321,3 +322,24 @@
 	    ((string=? val "SQRT1_2") (sqrt (/ 1 2)))
 	    ((string=? val "SQRT2") (sqrt 2))
 	    (else #f)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-asreal ::J2SExpr ...                                         */
+;*---------------------------------------------------------------------*/
+(define-generic (j2s-asreal expr::J2SExpr)
+   (with-access::J2SExpr expr (loc)
+      (J2SCast 'real expr)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-asreal ::J2SBinary ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-asreal expr::J2SBinary)
+   (with-access::J2SBinary expr (loc op type lhs rhs)
+      (case op
+	 ((/ * + -)
+	  (set! type 'real)
+	  (set! lhs (j2s-asreal lhs))
+	  (set! rhs (j2s-asreal rhs))
+	  expr)
+	 (else
+	  (J2SCast 'real expr)))))

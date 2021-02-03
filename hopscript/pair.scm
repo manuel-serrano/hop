@@ -121,7 +121,7 @@
 	  (if (epair? o)
 	      (js-obj->jsobject (cer o) %this)
 	      (js-raise-type-error %this
-		 (format "get: no such field \"~a\" ~~a" (js-toname prop %this)) o)))
+		 (format "get: no such field \"~a\" ~~a" n) o)))
 	 ((eq? n (& "length"))
 	  (js-make-function %this length
 	     (js-function-arity length)
@@ -200,7 +200,7 @@
 	  (js-vector->jsarray (list->vector o) %this))
 	 (else
 	  (js-raise-type-error %this
-	     (format "get: no such field \"~a\" ~~a" (js-tostring prop %this))
+	     (format "get: no such field \"~a\" ~~a" n)
 	     o)))))
    
 ;*---------------------------------------------------------------------*/

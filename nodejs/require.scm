@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
 ;*    Last change :  Sat May  2 15:07:05 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
 ;*=====================================================================*/
@@ -795,7 +795,8 @@
 		     (<SCRIPT>
 			(format "hop[ '%root' ] = ~s"
 			   (dirname
-			      (js-jsstring->string (js-get %module (& "filename") %scope))))))
+			      (js-jsstring->string
+				 (js-get %module (& "filename") %scope))))))
 		  (when (js-object? attrs)
 		     (js-object->keyword-arguments* attrs %this))
 		  (filter (lambda (n)
@@ -2332,7 +2333,9 @@
                                   (js-function-arity 0 0)
 				  (js-function-info :name "get" :len 0))
                           :hidden-class #f))
-             bindings))))
+             bindings)))
+
+   e)
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-eval ...                                                  */

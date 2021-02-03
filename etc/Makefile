@@ -4,7 +4,7 @@
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
 #*    Last change :  Sun May 24 19:16:18 2020 (serrano)                */
-#*    Copyright   :  2006-20 Manuel Serrano                            */
+#*    Copyright   :  2006-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
 #*=====================================================================*/
@@ -35,7 +35,8 @@ POPULATION	= Makefile Makefile.weblet Makefile.library \
                   mkserializer.hop hop.sh.in hopc.sh.in \
                   hop-autoconf.js.in hop-boot.js.in \
                   hopjs-config.el.in hopjs.el hopjs-indent.el \
-                  hopjs-parse.el hopjs-macro.el hop_config.sch.in
+                  hopjs-parse.el hopjs-macro.el hop_config.sch.in \
+                  mkthissymbols.js
 
 install:
 	cat Makefile.hopconfig \

@@ -37,8 +37,11 @@ POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \
   share-afile scheme2js hopscript js2scheme nodejs \
   android node_modules doc test .buildtag
 
-build: bindir libdir lib weblets widget nodejs doc \
-  $(BUILDSPECIFIC) bin share node_modules
+build: build-sans-modules
+	$(MAKE) -C node_modules
+
+build-sans-modules: bindir libdir lib weblets widget nodejs doc \
+  $(BUILDSPECIFIC) bin share
 
 bindir:
 	mkdir -p bin
@@ -92,7 +95,7 @@ scheme2js:
 node_modules: libdir hopc-bin hopscript-lib nodejs
 	$(MAKE) -C node_modules build
 
-doc: lib hopc-bin src-bin js2scheme scheme2js hopscript nodejs node_modules
+doc: lib hopc-bin src-bin js2scheme scheme2js hopscript nodejs
 	if [ "$(NODOC) " != "yes " -a "$(THREADS) " = "yes " ]; then \
 	  $(MAKE) -C doc build; \
         fi
@@ -219,7 +222,7 @@ install-android:
            HOPLIBDIR=$(HOPTMPDIR)/android/assets/hoplib \
            HOPSHAREDIR=$(HOPTMPDIR)/android/assets/share/hop \
            HOPMANDIR=$(HOPTMPDIR)/android/assets/man \
-           HOPWEBLETSDIR=$(HOPTMPDIR)/android/assets/hoplib/hop/$branch/weblets \
+           HOPWEBLETSDIR=$(HOPTMPDIR)/android/assets/hoplib/hop/$(HOPBRANCH)/weblets \
            HOPCONTTRIBSDIR=$(HOPTMPDIR)/android/assets/contribs \
 	   INSTALLSPECIFIC=
 	$(INSTALL) $(BUILDLIBDIR)/hopdroid.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopdroid.init && \
@@ -481,7 +484,7 @@ distrib-tmp:
 .PHONY: predistrib
 
 predistrib:
-	$(MAKE)
+	$(MAKE) build-sans-modules
 	$(MAKE) -C widget predistrib
 	$(MAKE) -C share predistrib
 	$(MAKE) -C hophz predistrib

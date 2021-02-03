@@ -11,6 +11,8 @@
    <string name="hopdebug">@HOPDEBUGLEVEL@</string>
    <string name="hopzeroconf">@HOPZEROCONF@</string>
    <string name="hoproot">@HOPPREFIX@</string>
+   <string name="hopapk">@HOPAPK@</string>
+   <string name="hophz">@HOPHZ@</string>
 
    <!-- Application configuration -->
    <string name="hopapp">@HOPAPP@</string>

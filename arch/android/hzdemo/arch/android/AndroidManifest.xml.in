@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+      package="fr.inria.@HOPAPP@"
+      android:versionCode="2"
+      android:versionName="@HOPVERSION@">
+    <uses-sdk android:minSdkVersion="19"
+              android:targetSdkVersion="@ANDROIDSDKVERSION@"/>
+    <application android:label="@string/hopapp"
+                 android:persistent="true"
+                 android:theme="@style/hopstyle"
+                 android:debuggable="@HOPDEBUG@"
+                 android:icon="@drawable/logo">
+
+        <activity android:name="fr.inria.@HOPAPP@.HopHzLauncher"
+                  android:launchMode="singleTop"
+                  android:configChanges="keyboard|keyboardHidden|screenLayout"
+                  android:label="@string/hopapp"
+		  android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+	<!--
+        <activity android:name="fr.inria.@HOPAPP@.HopSettings"
+                  android:label="@string/activity_settings"
+                  android:noHistory="true"> 
+            <intent-filter>
+                <category android:name="android.intent.category.PREFERENCE" />
+            </intent-filter>
+        </activity>
+        -->
+
+	<!--
+        <receiver android:name="fr.inria.@HOPAPP@.HopBootReceiver"
+                  android:enabled="true"
+                  android:exported="true"
+                  android:label="HopBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.PACKAGE_RESTARTED" />
+            </intent-filter>
+        </receiver>
+        -->
+
+	<!--
+        <service android:name="fr.inria.@HOPAPP@.HopService"/>
+        -->
+    </application>
+    <supports-screens android:largeScreens="true" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.RESTART_PACKAGES"/>
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_CONFIGURATION"/>
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
+    <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+</manifest>

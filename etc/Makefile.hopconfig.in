@@ -89,7 +89,7 @@ BHOPCFLAGS	= @BHOPCFLAGS@
 #*---------------------------------------------------------------------*/
 HOPEXTRALIBS	= @EXTRALIBS@
 HOPBIGLOOEXTRALIBS = @BIGLOOEXTRALIBS@
-HOPAPPLIBS	=
+HOPAPPLIBS	= @HOPAPPLIBS@
 
 #*---------------------------------------------------------------------*/
 #*    Build                                                            */

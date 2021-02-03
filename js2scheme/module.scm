@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
 ;*    Last change :  Sat May  2 14:48:54 2020 (serrano)                */
-;*    Copyright   :  2018-20 Manuel Serrano                            */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
 ;*=====================================================================*/
@@ -186,6 +186,7 @@
 					  :module-stack (cons respath stack))
 				       (j2s-compile in
 					  :driver (j2s-export-driver)
+					  :warning 0
 					  :verbose (config-get args :verbose 0)
 					  :verbmargin margin
 					  :module-stack (cons respath stack)))))
@@ -221,6 +222,14 @@
 			    (file-name-canonicalize
 			       (make-file-name (pwd) src)))))))
 	    (set! respath (resolve-module-file path base loc))
+	    (when (string=? respath src)
+		(raise
+		   (instantiate::&io-parse-error
+		      (proc "import")
+		      (msg "Illegal self-import")
+		      (obj path)
+		      (fname respath)
+		      (location (caddr loc)))))
 	    (unless (member respath stack)
 	       (set! iprgm (import-module respath path loc))
 	       (set! decls (append (import-module-decls this iprgm) decls)))

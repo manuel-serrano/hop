@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Dec  6 17:10:05 2010                          */
 /*    Last change :  Sun Apr 17 22:01:52 2016 (serrano)                */
-/*    Copyright   :  2010-16 Manuel Serrano                            */
+/*    Copyright   :  2010-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for spage tag                                                */
 /*=====================================================================*/
@@ -28,6 +28,8 @@ $(define-hss-type spage "div[data-hss-tag=hop-spage]"
            (format "span[data-hss-tag=hop-spstyle] { cursor: wait; }"))
 	  ((string=? (car v) "auto")
            (format "span[data-hss-tag=hop-spstyle] { cursor: auto; }"))
+	  ((string=? (car v) "zoom")
+           (format "span[data-hss-tag=hop-spstyle] { cursor: wait; }"))
 	  (else
            (format "span[data-hss-tag=hop-spstyle] { cursor: default; }")))))
 
@@ -76,7 +78,7 @@ sphead {
   font-size: 11pt;
   text-align: left;
   padding-left: 2em;
-  white-space: nospace;
+  white-space: nowrap;
   background: #f7f7f7;
   background-image: -moz-linear-gradient( -90deg, #f7f7f7, #e7e7e7 );
   background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#f7f7f7), to(#e7e7e7) );
@@ -172,6 +174,10 @@ div[data-hss-tag=hop-spviewport] {
   height: 100%;
 }
   
+spbody[data-transition=zoom] {
+  transition: none 0.1s ease-in;
+}
+
 spbody {
   overflow: auto;
   transition: none 0.4s ease-in;
@@ -180,7 +186,7 @@ spbody {
   clear: none;
   z-index: 0;
 }
- 
+
 div[data-hss-tag=hop-sppopbutton] {
   user-select: none;
   display: none;

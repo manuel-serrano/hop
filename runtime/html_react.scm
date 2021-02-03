@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr 28 18:01:20 2016                          */
 ;*    Last change :  Tue Nov 13 20:50:36 2018 (serrano)                */
-;*    Copyright   :  2016-18 Manuel Serrano                            */
+;*    Copyright   :  2016-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dynamic nodes                                                    */
 ;*=====================================================================*/
@@ -43,6 +43,7 @@
 		     (inline #f boolean)
 		     (alt #f)
 		     (src #unspecified)
+		     (%context #f)
 		     (attributes)
 		     body)
    (let ((nodes (filter-map (lambda (node)
@@ -55,6 +56,7 @@
 	     (instantiate::xml-react
 		(tag 'react)
 		(id id)
+		(%context %context)
 		(body `(lambda () ,@nodes)))))))
 	       
 ;*---------------------------------------------------------------------*/
@@ -89,8 +91,8 @@
 	      `((pragma "window.hop.reactNode")
 		,thunk ,(parent-id parent) ,#f , #f ,key)))))
    
-   (with-access::xml-react obj (id body parent)
+   (with-access::xml-react obj (id body parent %context)
       (let ((expr (react-init id parent body)))
-	 (xml-write (sexp->xml-tilde expr) p backend))))
+	 (xml-write (sexp->xml-tilde expr :%context %context) p backend))))
    
    

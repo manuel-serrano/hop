@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
 ;*    Last change :  Sun Jun 14 06:29:03 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
 ;*    -------------------------------------------------------------    */
@@ -239,12 +239,14 @@
 	      (procedure::procedure read-only)
 	      (arity::int read-only (default -1)))
 	      
-	   (class JsFunction::JsProcedure
+	   (class JsProcedureInfo::JsProcedure
+	      (info::vector read-only (default '#())))
+	      
+	   (class JsFunction::JsProcedureInfo
 	      (constrsize::int (default 3))
 	      ;; alloc cannot be read-only, see _buffer.scm
 	      alloc::procedure
 	      (constrmap::JsConstructMap (default (js-not-a-cmap)))
-	      (info::vector read-only (default '#()))
 	      prototype)
 	   
 	   (class JsMethod::JsFunction
@@ -1097,7 +1099,7 @@
 	 (typeof set))))
 
 ;*---------------------------------------------------------------------*/
-;*    object-print ::JsWrapperDescriptor ...                          */
+;*    object-print ::JsWrapperDescriptor ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (object-print p::JsWrapperDescriptor port pslot::procedure)
    (with-access::JsWrapperDescriptor p (name configurable enumerable writable)

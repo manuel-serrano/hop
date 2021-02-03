@@ -114,3 +114,22 @@
        val)
       (else
        `((@ js-jsstring->string __hopscript_stringliteral) ,str))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-codeunit-length ...                                  */
+;*---------------------------------------------------------------------*/
+(define-expander js-jsstring-codeunit-length
+   (lambda (x e)
+      (match-case x
+	 ((js-jsstring-codeunit-length (and ?js (? symbol?)))
+	  (e `(if (js-jsstring-ascii? ,js)
+		  (with-access::JsStringLiteralASCII ,js (length)
+		     length)
+		  ((@ js-jsstring-codeunit-length __hopscript_stringliteral) ,js))
+	     e))
+	 ((js-jsstring-codeunit-length ?expr)
+	  (let ((js (gensym)))
+	     (e `(let ((,js ,expr)) (js-jsstring-codeunit-length ,js)) e)))
+	 (else
+	  `((@ js-jsstring-codeunit-length __hopscript_stringliteral)
+	    ,(map (lambda (x) (e x e)) (cdr x)))))))

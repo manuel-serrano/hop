@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 28 07:11:12 2005                          */
 ;*    Last change :  Tue May 14 08:02:41 2019 (serrano)                */
-;*    Copyright   :  2005-19 Manuel Serrano                            */
+;*    Copyright   :  2005-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HZ configuration                                                 */
 ;*=====================================================================*/
@@ -73,23 +73,13 @@
 ;*    hz-download-directory ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-parameter hz-download-directory
-   (make-file-name (hz-rc-directory) "download")
-   (lambda (v)
-      (unless (directory? v)
-	 (unless (make-directories v)
-	    (error 'hz-download-directory "Cannot create directory" v)))
-      v))
+   (make-file-name (hz-rc-directory) "download"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-weblets-directory ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-parameter hz-weblets-directory
-   (make-file-name (hop-rc-directory) "weblets")
-   (lambda (v)
-      (unless (directory? v)
-	 (unless (make-directories v)
-	    (error 'hz-weblet-directory "Cannot create directory" v)))
-      v))
+   (make-file-name (hop-rc-directory) "weblets"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-package-suffix ...                                            */

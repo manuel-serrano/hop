@@ -27,8 +27,14 @@ assert.equal( "hux" + s4, "huxfoobargee" );
 /*    Unicode strings                                                  */
 /*---------------------------------------------------------------------*/
 var s5 = 'A\uD835\uDC68C';
+var s5a = 'A\uD835';
+var s5b = '\uDC68C';
+var s5c = s5a + (s5b.length === 2 ? s5b : "");
 
 assert.equal( s5.length, 4, "utf16 string length" );
+assert.equal( s5a.length, 2, "utf16 string length" );
+assert.equal( s5b.length, 2, "utf16 string length" );
+assert.equal( s5c.length, 4, "utf16 string-append length" );
 
 assert.equal( s5[ 0 ], 'A' );
 assert.equal( s5[ 1 ].length, 1 );
@@ -221,6 +227,4 @@ assert.equal( "foo".indexOf( "" ), 0, "indexOf with empty string" );
 /*---------------------------------------------------------------------*/
 /*    keys                                                             */
 /*---------------------------------------------------------------------*/
-#:tprint( "..............." );
-console.log( Object.keys( "foobar" ) );
 assert.ok( Object.keys( "foobar" ).length === 6, "Object.keys" );

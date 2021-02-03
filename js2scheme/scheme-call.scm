@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
 ;*    Last change :  Sun Jun 14 06:56:47 2020 (serrano)                */
-;*    Copyright   :  2018-20 Manuel Serrano                            */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
 ;*=====================================================================*/
@@ -129,6 +129,8 @@
 	("concat" js-array-maybe-concat any (any . any) %this #t ,j2s-array-plain?)
 	("sort" js-array-sort array (any) %this #t ,j2s-array-plain?)
 	("sort" js-array-maybe-sort any (any) %this #t ,j2s-array-plain?)
+	("fill" js-array-fill1 array (any) %this #t ,j2s-array-plain?)
+	("fill" js-array-maybe-fill1 any (any) %this #t ,j2s-array-plain?)
 	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this #t ,j2s-array-plain?)
 	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this #t ,j2s-array-plain?)
 	("forEach" ,j2s-array-foreach array (function) %this #t ,j2s-array-plain?)
@@ -159,6 +161,18 @@
 	("filter" ,j2s-array-filter array (arrow any) %this #t ,j2s-array-plain?)
 	("filter" ,j2s-array-maybe-filter any (arrow) %this #t ,j2s-array-plain?)
 	("filter" ,j2s-array-maybe-filter any (arrow any) %this #t ,j2s-array-plain?)
+	("flatMap" ,j2s-array-flatmap array (function) %this #t ,j2s-array-plain?)
+	("flatMap" ,j2s-array-flatmap array (function any) %this #t ,j2s-array-plain?)
+	("flatMap" ,j2s-array-maybe-flatmap any (function) %this #t ,j2s-array-plain?)
+	("flatMap" ,j2s-array-maybe-flatmap any (function any) %this #t ,j2s-array-plain?)
+	("flatMap" ,j2s-array-flatmap array (arrow) %this #t ,j2s-array-plain?)
+	("flatMap" ,j2s-array-flatmap array (arrow any) %this #t ,j2s-array-plain?)
+	("flatMap" ,j2s-array-maybe-flatmap any (arrow) %this #t ,j2s-array-plain?)
+	("flatMap" ,j2s-array-maybe-flatmap any (arrow any) %this #t ,j2s-array-plain?)
+	("flatMap" ,j2s-array-flatmap array (any) %this #t ,j2s-array-plain?)
+	("flatMap" ,j2s-array-flatmap array (any any) %this #t ,j2s-array-plain?)
+	("flatMap" ,j2s-array-maybe-flatmap any (any) %this #t ,j2s-array-plain?)
+	("flatMap" ,j2s-array-maybe-flatmap any (any any) %this #t ,j2s-array-plain?)
 	("join" js-array-join array (any) %this #t ,j2s-array-plain?)
 	("join" ,j2s-array-maybe-join any (any) %this #t ,j2s-array-plain?)
 	("push" js-array-push array (any) %this #t ,j2s-array-plain?)
@@ -1144,16 +1158,17 @@
 		     ((rest)
 		      (unless (>=fx la (-fx (j2s-minlen val)  1))
 			 (j2s-error id
-			    (format "wrong number of arguments, minimum expected: ~a" (j2s-minlen val) la)
+			    (format "wrong number of arguments, minimum expected: ~a"
+			       (j2s-minlen val))
 			    this (format "~a provided" la))))
 		     ((arguments)
 		      #t)
 		     (else
 		      (unless (and (>=fx la (j2s-minlen val)) (<=fx la lp))
 			 (j2s-error id
-			    (format "wrong number of arguments, minimum expected: ~a" (j2s-minlen val))
-			    this
-			    (format "~a provided" la))))))))))
+			    (format "wrong number of arguments, minimum expected: ~a"
+			       (j2s-minlen val))
+			    this (format "~a provided" la))))))))))
 
    (define (call-fun-function profid fun::J2SFun thisarg::pair-nil protocol f %gen::pair-nil args::pair-nil)
       (with-access::J2SFun fun (params vararg idthis loc argumentsp)

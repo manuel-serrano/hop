@@ -250,7 +250,7 @@
 	   (int64->int32 (fixnum->int64 obj)))))
       ((flonum? obj)
        (cond
-	  ((or (= obj +inf.0) (= obj -inf.0) (nanfl? obj))
+	  ((or (=fl obj +inf.0) (=fl obj -inf.0) (nanfl? obj))
 	   (fixnum->int32 0))
 	  ((<fl obj 0.)
 	   (let ((i (*fl -1. (floorfl (absfl obj)))))
@@ -283,7 +283,7 @@
    
    (define (double->uint32::uint32 obj::double)
       (cond
-	 ((or (= obj +inf.0) (= obj -inf.0) (not (= obj obj)))
+	 ((or (=fl obj +inf.0) (=fl obj -inf.0) (not (=fl obj obj)))
 	  #u32:0)
 	 ((<fl obj 0.)
 	  (positive-double->uint32 (+fl 2^32 (*fl -1. (floor (abs obj))))))
@@ -344,7 +344,7 @@
    
    (define (double->uint32::uint32 i::double)
       (cond
-	 ((or (= i +inf.0) (= i -inf.0) (not (= i i)))
+	 ((or (=fl i +inf.0) (=fl i -inf.0) (not (=fl i i)))
 	  #u32:0)
 	 ((<fl i 0.)
 	  (positive-double->uint32 (+fl 2^32 (*fl -1. (floor (abs i))))))
@@ -413,7 +413,7 @@
 	   (int64->int32 (fixnum->int64 i)))))
       ((flonum? i)
        (cond
-	  ((or (= i +inf.0) (= i -inf.0) (nanfl? i))
+	  ((or (=fl i +inf.0) (=fl i -inf.0) (nanfl? i))
 	   (fixnum->int32 0))
 	  ((<fl i 0.)
 	   (let ((i (*fl -1. (floor (abs i)))))

@@ -77,6 +77,10 @@ To build a full hop+bigloo stack and to produce an `apk` file:
     $ cd arch/android
     $ export REPODIR=repodir
     $ make apk 
+	
+To build for debugging:
+
+    $ make apk HOPCONFIGUREOPT=--debug
 
 This will use the android sdk and ndk pointed to by the environment variables
 `$ANDROIDSDK` and `$ANDROIDNDK`. The default configuration can be 
@@ -91,9 +95,13 @@ the USB bus. If an emulator is used, add the following to all
     $ make apk ANDROIDHOST=-e
 
 
-If only hop needs to be recompiled:
+If only hop needs to be reinstalled and recompiled:
 
     $ make apk-sans-bigloo
+
+If only hop needs to be recompiled (after a modification in the Hop build dir):
+
+    $ make apk-re-hop
 
 If only the `apk` file has be to regenerated:
 
@@ -114,13 +122,29 @@ Installing
 
 The standard `adb` Android tool tool is used to installed:
 
-    $ adb install hop-3.3.0.apk
+    $ adb install -r hop-3.3.0.apk
     $ adb shell monkey -p fr.inria.hop 1
 
 To uninstall it:
 
     $ adb uninstall fr.inria.hop
 
+To stop it:
+
+    $ adb shell am force-stop fr.inria.hop
+
+To run Hop in debug mode
+
+    $ adb shell am start -n fr.inria.hop/.HopLauncher -ei -g 4 -ei -v 2
+	
+To stop and restart:
+
+    $ adb shell am force-stop fr.inria.hop && adb shell am start -n fr.inria.hop/.HopLauncher -ei --g 4 --ei -v 2
+
+To switch the screen on:
+
+    $ adb shell input keyevent KEYCODE_POWER
+	
 
 Building a Client Application
 -----------------------------
@@ -368,17 +392,19 @@ Note: the simulator only supports _one_ phone object at a time. That
 is, the simulator will only let you access the state of the last created
 simulated phone.
 
+
 Debugging
 ---------
 
 Here are some hints for debugging the application running on the device.
 The first is the logging facility offered by `adb`. On new devices:
 
-    $ adb logcat -e 'Hop'
+    $ adb logcat | grep '[VDIE] [Hh]op'
+	
+or 
 
-On old ones:
+	$ adb logcat -e 'Hop'
 
-    $ adb logcat | grep -i 'hop'
 	
 This will show all Java message and also all the output of the application,
 in particular, all the application write on its standard output and standard
@@ -390,7 +416,7 @@ application. For that use the `adb exec-out run-as fr.inria.hop` command.
 Examples:
 
     $ adb exec-out run-as fr.inria.hop ls /data/data/fr.inria.hop/assets/bin/hop
-    $ adb exec-out run-as fr.inria.hop /system/bin/sh -c "export HOME=/mnt/sdcard/home; export LD_LIBRARY_PATH=/data/data/fr.inria.hop/assets/lib/bigloo/4.3h:/data/data/fr.inria.hop/assets/lib/hop/3.3.0:$LD_LIBRARY_PATH;exec /data/data/fr.inria.hop/assets/bin/hop --no-color -p 8080 -g0 --max-threads 6 -z --no-jobs --rc-dir /mnt/sdcard/home/.config/hopdemo -v2"
+    $ adb exec-out run-as fr.inria.hop /system/bin/sh -c "export HOME=/mnt/sdcard/home; export LD_LIBRARY_PATH=/data/data/fr.inria.hop/assets/lib/bigloo/4.4b:/data/data/fr.inria.hop/assets/lib/hop/3.4.0:$LD_LIBRARY_PATH;exec /data/data/fr.inria.hop/assets/bin/hop --no-color -p 8080 -g0 --max-threads 6 -z --no-jobs --rc-dir /mnt/sdcard/home/.config/hop -v2"
 
 If more debugging is needed, `gdb` can be used remotely. For that, proceed
 as follows:
@@ -402,3 +428,27 @@ as follows:
     $ adb forward tcp:$port tcp:$port
     $ gdb app_process
     (gdb) target remote :$port
+
+
+Androidx
+--------
+
+Androidx is a library of extra features that are not pre-installed on
+the phone. The `androidx` classes then have to be shipped with applications.
+The `jar` files can be found on the official Google Maven
+
+  [Repository](https://maven.google.com/web/index.html)
+  
+For instance, `androidx` core jar file is 
+
+  [core-1.3.2](https://dl.google.com/android/maven2/androidx/core/core/1.3.2/core-1.3.2-sources.jar)
+  
+To use this set of classes in an application, download the jar file 
+and add the following declaration to the `Makefile.config` of your
+application
+
+  ANDROIDX=<the-location-of-the-androidx-jar-file>
+  
+For instance  
+
+  ANDROIDX=/home/myproject/hopapp/androidx/core-1.3.2-sources.jar

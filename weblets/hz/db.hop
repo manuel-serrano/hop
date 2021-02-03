@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Mar 20 17:06:26 2006                          */
 ;*    Last change :  Sat Mar 30 19:22:46 2013 (serrano)                */
-;*    Copyright   :  2006-13 Manuel Serrano                            */
+;*    Copyright   :  2006-20 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz db management                                             */
 ;*=====================================================================*/
@@ -31,6 +31,7 @@
 	   (hz-db-sync-date-update! ::date)
 	   (hz-db-find ::bstring ::bstring)
 	   (hz-db-find-by-name ::bstring)
+	   (hz-db-find-by-id ::bstring)
 	   (hz-db-find-by-url ::bstring)
 	   (hz-db-find-new::pair-nil)
 	   (hz-db-find-update::pair-nil)
@@ -84,6 +85,8 @@
 		   (with-handler
 		      (lambda (e)
 			 (exception-notify e)
+			 (fprintf (current-error-port)
+			    "Deleting exising database ~s..." (hz-db))
 			 (delete-file (hz-db))
 			 (loop))
 		      (hz-db-reconfigure!
@@ -116,7 +119,7 @@
 (define (hz-db-reconfigure! db)
    (let ((cols (sqlite-table-name-of-columns db "weblets")))
       (if (not (pair? cols))
-	  (error 'hz "Cannot reconfigure database" db)
+	  (error "hz" "Cannot reconfigure database" db)
 	  (let ((names (map string->symbol cols)))
 	     (for-each (lambda (f)
 			  (unless (memq (class-field-name f) names)
@@ -174,19 +177,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-make-weblet ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (hz-make-weblet st dr na ve in ur ho pu au ca mi ma dp is ti co sig auth dir)
-   (unless (and (string? ve) (string? in))
-      (error "hz-make-weblet" "pas bon" 
-	 (format "~s ~a ~a" na ve in)))
+(define (hz-make-weblet st dr na id ve in ur ho pu au ca mi ma dp is ti co sig auth dir)
    (instantiate::weblet
       (stamp (string->integer st))
       (driver dr)
       (name na)
+      (id id)
       (version (version-unpadding ve))
       (install (version-unpadding in))
-      (url ur)
-      (home ho)
-      (publisher pu)
+      (url (if (equal? ur ";") #unspecified ur))
+      (home (if (equal? ho ";") #unspecified ho))
+      (publisher (if (equal? pu ";") #unspecified pu))
       (author au)
       (category ca)
       (minhop mi)
@@ -194,7 +195,7 @@
       (depends (string->obj dp))
       (installable (string->obj is))
       (title ti)
-      (comment co)
+      (description co)
       (signature sig)
       (authorization auth)
       (directory dir)))
@@ -214,6 +215,14 @@
    (sqlite-eval *db* hz-make-weblet
       "SELECT ~a FROM weblets WHERE (name=~q)"
       (hz-db-row) name))
+
+;*---------------------------------------------------------------------*/
+;*    hz-db-find-by-id ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hz-db-find-by-id id)
+   (sqlite-eval *db* hz-make-weblet
+      "SELECT ~a FROM weblets WHERE (id=~q)"
+      (hz-db-row) id))
 
 ;*---------------------------------------------------------------------*/
 ;*    hz-db-find-by-url ...                                            */
@@ -247,7 +256,7 @@
    (with-lock *db-mutex*
       (lambda ()
 	 (sqlite-map *db* hz-make-weblet
-	    "SELECT * FROM weblets WHERE (name LIKE '%~a%') || (author LIKE '%~a%') || (title LIKE '%~a%') || (comment LIKE '%~a%') ORDER BY name ASC"
+	    "SELECT * FROM weblets WHERE (name LIKE '%~a%') || (author LIKE '%~a%') || (title LIKE '%~a%') || (description LIKE '%~a%') ORDER BY name ASC"
 	    key key key key))))
 
 ;*---------------------------------------------------------------------*/

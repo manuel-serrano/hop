@@ -126,6 +126,7 @@
 	 SVG:TEXTPATH SVG:TREF SVG:TSPAN
 	 SVG:RADIALGRADIENT SVG:LINEARGRADIENT)
       
+      ;;(js-bind-tag! %this builtin js-function-prototype SVG:IMG)
       (js-bind-tag! %this builtin js-function-prototype SVG:IMG)
       
       ;; mathml

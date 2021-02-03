@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.6.x/arch/android/src/fr/inria/hop/HopPluginWifi.java       */
+/*    .../hop/hop/arch/android/src/fr/inria/hop/HopPluginWifi.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 17 06:55:59 2011                          */
-/*    Last change :  Fri Feb 21 13:31:13 2014 (serrano)                */
-/*    Copyright   :  2011-14 Manuel Serrano                            */
+/*    Last change :  Tue Dec 29 08:54:33 2020 (serrano)                */
+/*    Copyright   :  2011-20 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Dealing with Wifi configuration                                  */
 /*=====================================================================*/
@@ -18,8 +18,9 @@ import android.app.*;
 import android.content.*;
 import android.os.Bundle;
 import android.util.Log;
-import android.net.wifi.WifiManager;
+import android.net.wifi.*;
 import android.net.wifi.WifiManager.*;
+import android.text.format.Formatter;
 
 import java.io.*;
 
@@ -81,7 +82,7 @@ public class HopPluginWifi extends HopPlugin {
    }
    
    // sensor manager
-   protected void server( final InputStream ip, final OutputStream op )
+   public void server( final InputStream ip, final OutputStream op )
       throws IOException {
       
       switch( HopDroid.read_int( ip ) ) {
@@ -123,8 +124,30 @@ public class HopPluginWifi extends HopPlugin {
 
 	 case (byte)'i':
 	    initWifi( hopdroid );
-	    op.write( "(wifi ssid: ".getBytes() );
-	    op.write( wifi.getConnectionInfo().getSSID().getBytes() );
+	    WifiInfo winfo = wifi.getConnectionInfo();
+	    String ssid = winfo.getSSID();
+
+	    if( ssid.charAt( 0 ) == '"' ) {
+	       op.write( "(wifi ssid: ".getBytes() );
+	       op.write( ssid.getBytes() );
+	    } else {
+	       op.write( "(wifi ssid: \"".getBytes() );
+	       op.write( ssid.getBytes() );
+	       op.write( "\"".getBytes() );
+	    }
+	    
+	    op.write( " ip: \"".getBytes() );
+	    op.write( Formatter.formatIpAddress( winfo.getIpAddress() ).getBytes() );
+	    op.write( "\" mac: \"".getBytes() );
+	    op.write( winfo.getMacAddress().getBytes() );
+	    op.write( "\" speed: \"".getBytes() );
+	    op.write( String.valueOf( winfo.getLinkSpeed() ).getBytes() );
+	    op.write( WifiInfo.LINK_SPEED_UNITS.getBytes() );
+	    op.write( "\"".getBytes() );
+	    if( android.os.Build.VERSION.SDK_INT >= 29 ) {
+	       op.write( "rxspeed: ".getBytes() );
+	       op.write( String.valueOf( winfo.getRxLinkSpeedMbps() ).getBytes() );
+	    }
 	    op.write( ")".getBytes() );
 	    return;
       }

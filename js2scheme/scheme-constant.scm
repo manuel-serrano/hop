@@ -29,7 +29,8 @@
 	   __js2scheme_scheme-fun)
 
    (export (& obj ::J2SProgram)
-	   (&string ::bstring)))
+	   (&string ::bstring)
+	   (utf8-codeunit-length::long ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    & ...                                                            */
@@ -99,4 +100,24 @@
       ((eq? (string-minimal-charset val) 'ascii)
        (vector 0 val))
       (else
-       (vector 1 val))))
+       (vector 3 val (utf8-codeunit-length val)))))
+
+;*---------------------------------------------------------------------*/
+;*    utf8-codeunit-length ...                                         */
+;*    -------------------------------------------------------------    */
+;*    Returns the number of code points required to encode that        */
+;*    UTF8 string (might be bigger than the UTF8 length).              */
+;*---------------------------------------------------------------------*/
+(define (utf8-codeunit-length::long str::bstring)
+   (let ((len (string-length str)))
+      (let loop ((r 0)
+		 (l 0))
+	 (if (>=fx r len)
+	     l
+	     (let* ((c (string-ref str r))
+		    (s (utf8-char-size c)))
+		(if (and (=fx s 4)
+			 (or (=fx (char->integer c) #xf0)
+			     (=fx (char->integer c) #xf4)))
+		    (loop (+fx r s) (+fx l 2))
+		    (loop (+fx r s) (+fx l 1))))))))

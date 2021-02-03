@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
 ;*    Last change :  Mon May 18 07:11:57 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
 ;*    -------------------------------------------------------------    */
@@ -38,7 +38,8 @@
 	   thrower-get
 	   thrower-set
 
-	   (js-function-src ::JsFunction)
+	   (js-function-src ::JsProcedureInfo)
+	   (js-function-loc ::JsProcedureInfo)
 	   (inline js-function-path ::JsFunction)
 	   (js-function-debug-name::bstring ::JsProcedure ::JsGlobalObject)
 	   (js-function-arity::long ::obj #!optional opl (protocol 'fix))
@@ -69,8 +70,12 @@
 	      ::procedure)
 	   (inline js-make-procedure::JsProcedure ::JsGlobalObject
 	      ::procedure ::int)
+	   (js-make-procedure/debug::JsProcedure ::JsGlobalObject
+	      ::procedure ::int ::obj)
 	   (inline js-make-procedure-hopscript::JsProcedure ::JsGlobalObject
 	      ::procedure ::int)
+	   (js-make-procedure-hopscript/debug::JsProcedure ::JsGlobalObject
+	      ::procedure ::int loc)
 	   
 	   (inline js-function-prototype-get ::obj ::JsFunction ::obj ::JsGlobalObject)
 	   (js-function-setup-prototype!::JsObject ::JsGlobalObject ::JsFunction)
@@ -143,8 +148,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-function-src ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-function-src obj::JsFunction)
-   (with-access::JsFunction obj (info)
+(define (js-function-src obj::JsProcedureInfo)
+   (with-access::JsProcedureInfo obj (info)
       (match-case info
 	 (#(?- ?- (and (? js-jsstring?) ?src) ?- ?- ?- ?-)
 	  src)
@@ -167,6 +172,17 @@
 	     jstr)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-function-loc ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-function-loc obj::JsProcedureInfo)
+   (with-access::JsProcedureInfo obj (info)
+      (match-case info
+	 (#(?- ?- ?- (and (? string?) ?path) ?start ?end ?-)
+	  `(at ,path ,start))
+	 (else
+	  #f))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-function-path ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function-path obj::JsFunction)
@@ -177,10 +193,15 @@
 ;*    js-function-debug-name ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-function-debug-name::bstring obj::JsProcedure %this)
-   (if (js-function? obj)
+   (cond
+      ((js-function? obj)
        (with-access::JsFunction obj (info)
-	  (vector-ref info 0))
-       "procedure"))
+	  (vector-ref info 0)))
+      ((isa? obj JsProcedureInfo)
+       (with-access::JsProcedureInfo obj (info)
+	  (vector-ref info 0)))
+      (else
+       "procedure")))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ::JsFunction ...                                 */
@@ -771,10 +792,35 @@
       ($js-make-procedure procedure arity (js-object-proto js-function))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-make-procedure/debug ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-make-procedure/debug %this procedure arity info)
+   
+   (define ($js-make-procedure proc arity loc proto)
+      (let ((o (instantiate::JsProcedureInfo
+		  (procedure proc)
+		  (arity arity)
+		  (info info))))
+	 (js-object-proto-set! o proto)
+	 (js-object-mode-set! o (js-procedure-default-mode))
+	 o))
+
+   (with-access::JsGlobalObject %this (js-function)
+      ($js-make-procedure procedure arity info (js-object-proto js-function))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-make-procedure-hopscript ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-make-procedure-hopscript %this procedure arity)
    (let ((o (js-make-procedure %this procedure arity)))
+      (js-object-mode-set! o (js-procedure-hopscript-mode))
+      o))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-procedure-hopscript/debug ...                            */
+;*---------------------------------------------------------------------*/
+(define (js-make-procedure-hopscript/debug %this procedure arity loc)
+   (let ((o (js-make-procedure/debug %this procedure arity loc)))
       (js-object-mode-set! o (js-procedure-hopscript-mode))
       o))
 
@@ -1368,9 +1414,11 @@
 ;*---------------------------------------------------------------------*/
 (define (read-function-source info path start end)
    (if (and (string? path) (file-exists? path))
-       (let ((mmap (open-mmap path :write #f)))
-	  (mmap-substring mmap
-	     (fixnum->elong start) (fixnum->elong end)))
+       (let* ((mmap (open-mmap path :write #f))
+	      (s (mmap-substring mmap
+		    (fixnum->elong start) (fixnum->elong end))))
+	  (close-mmap mmap)
+	  s)
        (format "[~a:~a..~a]" path start end)))
 
 ;*---------------------------------------------------------------------*/
