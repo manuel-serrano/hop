@@ -2901,7 +2901,7 @@
 				(if destructuring?
 				    (begin
 				       (consume-any!)
-				       (J2SBinary 'OR
+				       (destructure-or loc
 					  (J2SUnresolvedRef (token-value token))
 					  (assig-expr #f #f #f)))
 				    (parse-token-error "Unexpected \"=\""
@@ -3178,6 +3178,16 @@
       (destructure-path lhs decl '* bind)))
 
 ;*---------------------------------------------------------------------*/
+;*    desctructure-or ...                                              */
+;*    -------------------------------------------------------------    */
+;*    When destructuring, the undefined (and only it) value is         */
+;*    considered as absent. Hence, a tradition OR that that            */
+;*    checks, undefined, false, null, cannot be used.                  */
+;*---------------------------------------------------------------------*/
+(define (destructure-or loc axs def)
+   (J2SBinary 'OR* axs def))
+
+;*---------------------------------------------------------------------*/
 ;*    destructure-path ...                                             */
 ;*    -------------------------------------------------------------    */
 ;*    Useful information located at:                                   */
@@ -3233,7 +3243,7 @@
 				   ;; { ...., id:alias = def, ... }
 				   (with-access::J2SAssig val (lhs rhs)
 				      (destructure lhs
-					 (J2SBinary 'OR
+					 (destructure-or loc
 					    (J2SAccess tmp name) rhs)
 					 `(get-alias-default ,rhs)
 					 bind)))
@@ -3270,7 +3280,7 @@
 	     ;; [ ...., id = def, ... ]
 	     (with-access::J2SAssig e (lhs rhs loc)
 		(destructure lhs
-		   (J2SBinary 'OR (J2SAccess tmp (J2SNumber i)) rhs)
+		   (destructure-or loc (J2SAccess tmp (J2SNumber i)) rhs)
 		   `(get-alias-default ,rhs)
 		   bind)))
 	    (else

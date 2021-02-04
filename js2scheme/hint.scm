@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
 ;*    Last change :  Sun Jun 14 06:57:45 2020 (serrano)                */
-;*    Copyright   :  2016-20 Manuel Serrano                            */
+;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
 ;*=====================================================================*/
@@ -273,7 +273,7 @@
       ((<< >> >>> ^ & BIT_OR)
        (j2s-hint rhs  '((integer . 5)))
        (j2s-hint lhs '((integer . 5))))
-      ((&& OR)
+      ((&& OR OR*)
        (j2s-hint rhs  (cons '(bool . 10) hints))
        (j2s-hint lhs  (cons '(bool . 10) hints)))
       ((- * /)

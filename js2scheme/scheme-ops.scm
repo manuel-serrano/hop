@@ -85,7 +85,7 @@
 		    this etype type ctx))
 	      (epairify-deep loc
 		 (js-binop2 loc op type lhs rhs mode return ctx))))
-	 ((and (eq? type 'bool) (memq op '(OR &&)))
+	 ((and (eq? type 'bool) (memq op '(OR OR* &&)))
 	  (epairify-deep loc
 	     (js-binop2 loc op 'bool
 		(if (eq? (j2s-type lhs) 'bool) lhs (J2SCast 'bool lhs))
@@ -472,6 +472,13 @@
 			    ,(j2s-cast lhsv lhs (j2s-type lhs) type ctx)
 			    ,(j2s-cast (j2s-scheme rhs mode return ctx) rhs
 				(j2s-type rhs) type ctx))))))))
+      ((OR*)
+       (let ((tmp (gensym '%or*)))
+	  `(let ((,tmp ,(j2s-scheme lhs mode return ctx)))
+	      (if (eq? ,tmp (js-undefined))
+		  ,(j2s-cast (j2s-scheme rhs mode return ctx) rhs
+		      (j2s-type rhs) type ctx)
+		  ,(j2s-cast tmp lhs (j2s-type lhs) type ctx)))))
       ((&&)
        (if (eq? type 'bool)
 	   `(and ,(j2s-scheme lhs mode return ctx)

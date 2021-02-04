@@ -1453,7 +1453,7 @@
 			   (with-access::J2SRef lhs (decl)
 			      (set! env (extend-env env decl 'function))))
 			'bool)
-		       ((&& OR)
+		       ((&& OR OR*)
 			(cond
 			   ((or (eq? typr 'any) (eq? typl 'any) )
 			    'any)
@@ -1465,7 +1465,7 @@
 			'integer)
 		       (else
 			'any))))
-	    (return typ (if (eq? op 'OR) (env-merge envl envr) envr)
+	    (return typ (if (memq op '(OR OR*)) (env-merge envl envr) envr)
 	       (append bkl bkr))))))
    
 ;*---------------------------------------------------------------------*/

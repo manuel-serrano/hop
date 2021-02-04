@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
 ;*    Last change :  Mon Apr 20 08:36:37 2020 (serrano)                */
-;*    Copyright   :  2016-20 Manuel Serrano                            */
+;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
 ;*    -------------------------------------------------------------    */
@@ -526,7 +526,7 @@
 		 (set! lhs (type-cast! lhs '*))
 		 (set! rhs (type-cast! rhs '*))))
 	  (cast this totype))
-	 ((OR &&)
+	 ((OR && OR*)
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs '*))
 	  (cast this totype))
