@@ -3,7 +3,7 @@
    "version": "@VERSION@",
    "branch": "@BRANCH@",
    "date": "@DATE@",
-   "bglversion": "4.3h",
+   "bglversion": "4.4b",
    "homepage": "@HOMEPAGE@",
    "urlbase": "ftp://ftp-sop.inria.fr/indes/fp/Hop",
    "github": "https://github.com/manuel-serrano/hop.git",

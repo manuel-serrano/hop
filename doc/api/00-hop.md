@@ -75,6 +75,14 @@ The Hop version.
 console.log( "Hop version:", hop.version );
 ```
 
+### hop.arch ###
+[:@glyphicon glyphicon-tag parameter]  
+The Hop architecture. 
+
+```hopscript
+console.log( "Hop arch:", hop.arch );
+```
+
 ### hop.loginCookieCryptKey ###
 [:@glyphicon glyphicon-tag parameter]  
 An unique integer seed to for password encryption. This value is
@@ -800,19 +808,50 @@ var config = require( hop.config );
 ### hop.config ###
 [:@glyphicon glyphicon-tag parameter]
 
-See [config](config.html).
+Hop configutation. See [config](config.html).
+
+### hop.csv ###
+[:@glyphicon glyphicon-tag parameter]
+
+Efficient CSV parser. See [csv](csv.html).
+
+### hop.feed ###
+[:@glyphicon glyphicon-tag parameter]
+
+RSS manipulation. See [feed](feed.html).
 
 ### hop.fontifier ###
 [:@glyphicon glyphicon-tag parameter]
 
+### hop.hss ###
+[:@glyphicon glyphicon-tag parameter]
+
+See [hss](hss.html).
+
+### hop.hopc ###
+[:@glyphicon glyphicon-tag parameter]
+
+API for deadling with the Hop compiler. See [hopc](hopc.html).
+
+### hop.hopdroid ###
+[:@glyphicon glyphicon-tag parameter]
+
+Hop Android environment. See [hopdroid](hopdroid.html).
 
 ### hop.markdown ###
 [:@glyphicon glyphicon-tag parameter]
 
-See [markdown](markdown.html).
+Home brewed markdown parser. See [markdown](markdown.html).
 
 ### hop.notepad ###
 [:@glyphicon glyphicon-tag parameter]
+
+XML widget.
+
+### hop.openpgp ###
+[:@glyphicon glyphicon-tag parameter]
+
+Minimalist Openpgp binding. See [openpgp](openpgp.html).
 
 ### hop.security ###
 [:@glyphicon glyphicon-tag parameter]
@@ -820,16 +859,49 @@ See [markdown](markdown.html).
 ### hop.spage ###
 [:@glyphicon glyphicon-tag parameter]
 
-See [spage](spage.html).
+XML widget. See [spage](spage.html).
+
+### hop.syslog ###
+[:@glyphicon glyphicon-tag parameter]
+
+Unix syslog. See [syslog](syslog.html).
+
+### hop.systime ###
+[:@glyphicon glyphicon-tag parameter]
+
+Execution time. See [systime](systime.html).
+
+### hop.system ###
+[:@glyphicon glyphicon-tag parameter]
+
+Unix system like command. See [system](system.html).
 
 ### hop.tree ###
 [:@glyphicon glyphicon-tag parameter]
+
+### hop.texinfo ###
+[:@glyphicon glyphicon-tag parameter]
+
+See [texinfo](texinfo.html).
 
 See [tree](tree.html).
 ### hop.user ###
 [:@glyphicon glyphicon-tag parameter]
 
-See [user](user.html).
+XML widget. See [user](user.html).
+
+### hop.vcf ###
+[:@glyphicon glyphicon-tag parameter]
+
+VCards and other contact formats. See [vcf](vcf.html).
 
 ### hop.wiki ###
 [:@glyphicon glyphicon-tag parameter]
+
+Hop user declaration and manipulation. See [tree](tree.html).
+
+### hop.xml ###
+[:@glyphicon glyphicon-tag parameter]
+
+See [xml](xml.html).
+

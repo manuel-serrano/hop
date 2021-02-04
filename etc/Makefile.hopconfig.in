@@ -4,7 +4,7 @@
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
 #*    Last change :  Mon May 18 08:52:54 2020 (serrano)                */
-#*    Copyright   :  2004-20 Manuel Serrano                            */
+#*    Copyright   :  2004-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autoconf Makefile skeleton for HOP.                          */
 #*=====================================================================*/
@@ -66,6 +66,7 @@ LDHOPOPTS	= @LDHOPOPTS@
 BTFLAGS		= @BTFLAGS@
 BCFLAGSDEV	= @BCFLAGSDEV@
 BCFLAGSRTS	= @BCFLAGSRTS@
+BCFLAGSMODULES	= @BCFLAGSMODULES@
 FFLAGS		= @FFLAGS@
 BLFLAGS         = @BLFLAGS@ $(BLIBFLAGS)
 BHFLAGS		= @BHFLAGS@ -q -mkaddheap -mkaddlib $(EFLAGS)

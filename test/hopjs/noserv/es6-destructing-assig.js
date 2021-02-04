@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb  7 09:48:34 2018                          */
 /*    Last change :  Mon Jul  9 08:57:33 2018 (serrano)                */
-/*    Copyright   :  2018 Manuel Serrano                               */
+/*    Copyright   :  2018-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2015+ destructuring function parameters       */
 /*=====================================================================*/
@@ -43,11 +43,18 @@ function hopd() {
       obj.prop[ 0 ] == "b" && obj.prop[ 1 ] == "c";
 }
 
+function hope( a, o ) {
+   const { x = true } = o;
+   
+   return x === false;
+}
+
 console.log( "hop" );
 console.log( "   hopa()"); assert.ok( hopa(), "hopa" );
 console.log( "   hopb()"); assert.ok( hopb(), "hopb" )
 console.log( "   hopc()"); assert.ok( hopc(), "hopc" )
 console.log( "   hopd()"); assert.ok( hopd(), "hopd" )
+console.log( "   hope()"); assert.ok( hope(), "hope" )
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */

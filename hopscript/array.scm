@@ -4174,7 +4174,27 @@
 (define (js-array-prototype-foreach this proc t %this)
    
    (define (vector-foreach this o len::uint32 proc t i::uint32 %this)
-      (if (js-object-mode-inline? o)
+      (cond
+	 ((not (js-object-mode-inline? o))
+	  (array-foreach this o len proc t i %this))
+	 ((and (js-procedure? proc)
+	       (with-access::JsProcedure proc (arity)
+		  (=fx arity 2)))
+	  ;; fast path
+	  (with-access::JsProcedure proc (procedure)
+	     (let ((fun procedure))
+		(with-access::JsArray o (vec ilen)
+		   (let loop ((i i))
+		      (cond
+			 ((>=u32 i ilen)
+			  (js-undefined))
+			 ((not (js-object-mode-inline? o))
+			  (array-foreach this o len proc t i %this))
+			 (else
+			  (let ((v (vector-ref vec (uint32->fixnum i))))
+			     (fun t v)
+			     (loop (+u32 i 1))))))))))
+	 (else
 	  (with-access::JsArray o (vec ilen)
 	     (let loop ((i i))
 		(cond
@@ -4185,8 +4205,7 @@
 		   (else
 		    (let ((v (vector-ref vec (uint32->fixnum i))))
 		       (js-call1-3 %this proc t v (js-uint32-tointeger i) o)
-		       (loop (+u32 i 1)))))))
-	  (array-foreach this o len proc t i %this)))
+		       (loop (+u32 i 1))))))))))
    
    (define (array-foreach this o len proc t i::uint32 %this)
       (let loop ((i i))

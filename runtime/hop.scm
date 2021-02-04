@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
 ;*    Last change :  Fri Mar 20 13:56:43 2020 (serrano)                */
-;*    Copyright   :  2004-20 Manuel Serrano                            */
+;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
 ;*=====================================================================*/
@@ -625,8 +625,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (with-hop-local obj::http-response-string success fail auth header)
    (when (procedure? success)
-      (with-access::http-response-string obj (body)
-	 (success body))))
+      (with-access::http-response-string obj (body content-type)
+	 (if (string=? content-type "application/json")
+	     (success
+		(call-with-input-string body
+		   (lambda (p) (javascript->obj p))))
+	     (success body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-hop-local ::http-response-hop ...                           */

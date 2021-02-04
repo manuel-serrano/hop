@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
 ;*    Last change :  Sun Apr 12 08:50:03 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
 ;*=====================================================================*/
@@ -351,6 +351,13 @@
    (with-access::J2SDeclClass this (val binder writable scope id)
       (append (j2s-js val tildec dollarc mode evalp ctx)
 	 (if (j2s-param? this) '() '(";")))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SDProducer ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SDProducer tildec dollarc mode evalp ctx)
+   (with-access::J2SDProducer this (expr size)
+      (j2s-js expr tildec dollarc mode evalp ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SReturn ...                                           */
@@ -1097,10 +1104,19 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SBinary tildec dollarc mode evalp ctx)
    (with-access::J2SBinary this (lhs rhs op)
-      (cons this
-	 (append (j2s-js lhs tildec dollarc mode evalp ctx)
-	    (list " " (j2s-op op) " ")
-	    (j2s-js rhs tildec dollarc mode evalp ctx)))))
+      (if (eq? op 'OR*)
+	  (let ((tmp (gensym)))
+	     (cons this
+		(append
+		   (list (format "((function (~a) { return (~a !== undefined) ? ~a :" tmp tmp tmp))
+		   (j2s-js rhs tildec dollarc mode evalp ctx)
+		   (list ";})(")
+		   (j2s-js lhs tildec dollarc mode evalp ctx)
+		   (list "))"))))
+	  (cons this
+	     (append (j2s-js lhs tildec dollarc mode evalp ctx)
+		(list " " (j2s-op op) " ")
+		(j2s-js rhs tildec dollarc mode evalp ctx))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2STilde ...                                            */

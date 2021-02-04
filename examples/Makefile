@@ -4,7 +4,7 @@
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
 #*    Last change :  Mon Jan 28 16:46:24 2019 (serrano)                */
-#*    Copyright   :  2006-19 Manuel Serrano                            */
+#*    Copyright   :  2006-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
 #*=====================================================================*/
@@ -114,6 +114,7 @@ POPULATION = Makefile \
   md/md.js md/markdown.hss md/tex.hss md/README.md md/example.json \
   mdtag/mdtag.js mdtag/README.md mdtag/example.json \
   syslog/README.md syslog/syslog.js syslog/example.json \
+  system/README.md system/system.js system/example.json \
   systime/README.md systime/systime.js systime/example.json \
   examples/doc.js examples/doc.wiki examples/example.json examples/examples.hss \
   examples/examples.js examples/libs/bootstrap/css/bootstrap-theme.css \

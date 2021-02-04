@@ -1,0 +1,6 @@
+{
+   "tags": [ "system" ],
+   "description": "Simple facility for spawning extern processes",
+   "service": false,
+   "level": 3.1
+}

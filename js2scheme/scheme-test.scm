@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:41:17 2017                          */
 ;*    Last change :  Fri Jul 12 09:27:41 2019 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme test code generation                                      */
 ;*=====================================================================*/
@@ -143,6 +143,21 @@
 		 (epairify loc
 		    `(or ,(j2s-test lhs mode return conf)
 			 ,(j2s-test rhs mode return conf)))))))
+	 ((OR*)
+	  ;; special form used only for destructuing values
+	  (let ((t1 (j2s-scheme lhs mode return conf)))
+	     (cond
+		((eq? t1 #t)
+		 #t)
+		((eq? t1 #f)
+		 (j2s-test rhs mode return conf))
+		(else
+		 (let ((tmp (gensym '%or*)))
+		    (epairify loc
+		       `(let ((,tmp ,t1))
+			   (if (eq? ,tmp (js-undefined))
+			       ,(j2s-test rhs mode return conf)
+			       ,tmp))))))))
 	 (else
 	  (call-next-method)))))
 
