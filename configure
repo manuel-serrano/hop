@@ -40,7 +40,7 @@ javac=javac
 devmode=product
 debug=no
 
-bcflags="-O3 -fsharing -L \$(BUILDLIBDIR) -srfi bigloo-compile"
+bcflags="-O3 -fstackable -fsharing -L \$(BUILDLIBDIR) -srfi bigloo-compile"
 bhflags=
 btflags="-gtrace"
 hflags="-Os"
@@ -53,7 +53,7 @@ bcflagsdbg="-copt -g -O2"
 bcflagsdbg2="-g -cg"
 bcflagspmem="-pmem -O2 -fno-user-inlining"
 bcflagspmem2="-pmem2 -fno-user-inlining"
-bcflagsopt="-unsafe -O3"
+bcflagsopt="-unsafe -O3 -fstackable"
 
 bcflagsrts="-unsafe -safee"
 bcflagsmodules="-unsafe"

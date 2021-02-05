@@ -1365,7 +1365,9 @@
       (let loop ((this this))
 	 (cond
 	    ((js-procedure? this)
-	     (js-function-call1 %this this thisarg arg cache))
+	     (if (js-object-mode-plain? this)
+		 (js-call1-jsprocedure %this this thisarg arg)
+		 (js-function-call1 %this this thisarg arg cache)))
 	    ((js-object? this)
 	     (with-access::JsGlobalObject %this (js-function-pcache)
 		(js-call2 %this
@@ -1382,7 +1384,9 @@
    (let loop ((this this))
       (cond
 	 ((js-procedure? this)
-	  (js-function-call2 %this this thisarg arg0 arg1 cache))
+	  (if (js-object-mode-plain? this)
+	      (js-call2-jsprocedure %this this thisarg arg0 arg1)
+	      (js-function-call2 %this this thisarg arg0 arg1 cache)))
 	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-function-pcache)
 	     (js-call3 %this
@@ -1399,7 +1403,9 @@
    (let loop ((this this))
       (cond
 	 ((js-procedure? this)
-	  (js-function-call3 %this this thisarg arg0 arg1 arg2 cache))
+	  (if (js-object-mode-plain? this)
+	      (js-call3-jsprocedure %this this thisarg arg0 arg1 arg2)
+	      (js-function-call3 %this this thisarg arg0 arg1 arg2 cache)))
 	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-function-pcache)
 	     (js-call4 %this
