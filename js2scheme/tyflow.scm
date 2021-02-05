@@ -838,7 +838,6 @@
 	     ;; a variable assignment
 	     (with-access::J2SRef lhs (decl)
 		(with-access::J2SDecl decl (writable utype)
-		   (tprint "ICI " (j2s->list this) " tyr=" tyr)
 		   (cond
 		      ((not writable)
 		       (multiple-value-bind (tyv envl lbk)

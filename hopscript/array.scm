@@ -5374,7 +5374,22 @@
 	       (nothask #t)
 	       ((eq? x (js-undefined)) (eq? y (js-undefined)))
 	       ((eq? y (js-undefined)) #t)
-	       (else (<= (js-tointeger (js-call2 %this comparefn (js-undefined) x y) %this) 0))))))
+	       (else (<= (js-tointeger (js-call2-jsprocedure %this comparefn (js-undefined) x y) %this) 0))))))
+
+   (define (make-compare-proc3 proc)
+      (lambda (x y)
+	 (let ((nothasj (js-absent? x))
+	       (nothask (js-absent? y)))
+	    (cond
+	       (nothasj nothask)
+	       (nothask #t)
+	       ((eq? x (js-undefined)) (eq? y (js-undefined)))
+	       ((eq? y (js-undefined)) #t)
+	       (else
+		(let ((t (proc (js-undefined) x y)))
+		   (if (fixnum? t)
+		       (<=fx t 0)
+		       (<= (js-tointeger t %this) 0))))))))
    
    (define (get-compare comparefn)
       (cond
@@ -5384,12 +5399,34 @@
 	  (js-raise-type-error %this
 	     "sort: argument not a function ~s" comparefn))
 	 (else
-	  (with-access::JsProcedure comparefn (proc)
-	     (make-compare comparefn)))))
+	  (with-access::JsProcedure comparefn (arity procedure)
+	     (if (=fx arity 3)
+		 (make-compare-proc3 procedure)
+		 (make-compare comparefn))))))
    
-   (define (vector-sort this cmp)
+   (define (vector-sort this comparefn)
       (with-access::JsArray this (vec)
-	 ($sort-vector vec cmp)
+	 (if (and (js-procedure? comparefn)
+		  (with-access::JsProcedure comparefn (arity)
+		     (=fx arity 3)))
+	     ;; expansion of the lambda so that it can be stack allocated
+	     (with-access::JsProcedure comparefn (procedure)
+		(let ((proc procedure))
+		   ($sort-vector vec
+		      (lambda (x y)
+			 (let ((nothasj (js-absent? x))
+			       (nothask (js-absent? y)))
+			    (cond
+			       (nothasj nothask)
+			       (nothask #t)
+			       ((eq? x (js-undefined)) (eq? y (js-undefined)))
+			       ((eq? y (js-undefined)) #t)
+			       (else
+				(let ((t (proc (js-undefined) x y)))
+				   (if (fixnum? t)
+				       (<=fx t 0)
+				       (<= (js-tointeger t %this) 0))))))))))
+	     ($sort-vector vec (get-compare comparefn)))
 	 this))
    
    (define (partition arr cmp left right pivotindex)
@@ -5435,7 +5472,7 @@
 	  (with-access::JsArray this (vec)
 	     (cond
 		((js-object-mode-inline? this)
-		 (vector-sort this (get-compare comparefn)))
+		 (vector-sort this comparefn))
 		((=u32 (js-get-lengthu32 o %this) #u32:0)
 		 this)
 		(else

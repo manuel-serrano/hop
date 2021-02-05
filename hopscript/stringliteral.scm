@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
 ;*    Last change :  Sun Apr 19 08:03:24 2020 (serrano)                */
-;*    Copyright   :  2014-20 Manuel Serrano                            */
+;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
 ;*=====================================================================*/
@@ -868,12 +868,17 @@
 	  left)
 	 ((js-jsstring-substring? js)
 	  (js-jsstring-normalize-SUBSTRING! js))
-	 ((<u32 length #u32:16384)
-	  (normalize-small! js))
-	 ((<fx (js-jsstring-depth js 1024) 1024)
-	  (normalize-small! js))
 	 (else
-	  (normalize-big! js)))))
+	  ;; because we are tail recursing on the longest branch
+	  ;; we cannot have a stack overflow during the travseral
+	  ;; (the maximum depth is LOG( max-string-length ).
+	  (normalize-small! js)))))
+;* 	 ((<u32 length #u32:16384)                                     */
+;* 	  (normalize-small! js))                                       */
+;* 	 ((<fx (js-jsstring-depth js 1024) 1024)                       */
+;* 	  (normalize-small! js))                                       */
+;* 	 (else                                                         */
+;* 	  (normalize-big! js)))))                                      */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-SUBSTRING! ...                             */
