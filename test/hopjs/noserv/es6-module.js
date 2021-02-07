@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Oct 24 11:42:37 2018                          */
 /*    Last change :  Sun Oct 28 08:42:24 2018 (serrano)                */
-/*    Copyright   :  2018 Manuel Serrano                               */
+/*    Copyright   :  2018-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 module                                               */
 /*=====================================================================*/
@@ -148,3 +148,13 @@ import.meta.ext = "ext";
 assert.ok( typeof import.meta.url === "string" );
 assert.equal( import.meta.ext, "ext" );
 
+/*---------------------------------------------------------------------*/
+/*    recursive modules                                                */
+/*---------------------------------------------------------------------*/
+import * as esmod1 from "../mod/esmod1.js";
+import * as esmod2 from "../mod/esmod2.js";
+
+assert.equal( esmod1.foo( 1 ), "foo" );
+assert.equal( esmod1.foo( 1000 ), "bar" );
+assert.equal( esmod2.bar( 1 ), "foo" );
+assert.equal( esmod2.bar( 1000 ), "bar" );

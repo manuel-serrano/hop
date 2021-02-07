@@ -517,6 +517,8 @@
 	   (generic walk5 n::J2SNode p::procedure a0 a1 a2 a3 a4)
 	   (generic walk6 n::J2SNode p::procedure a0 a1 a2 a3 a4 a5)
 	   (generic walk7 n::J2SNode p::procedure a0 a1 a2 a3 a4 a5 a6)
+	   (generic walk8 n::J2SNode p::procedure a0 a1 a2 a3 a4 a5 a6 a7)
+	   
 	   (generic walk0*::pair-nil n::J2SNode p::procedure)
 	   (generic walk1*::pair-nil n::J2SNode p::procedure a0)
 	   (generic walk2*::pair-nil n::J2SNode p::procedure a0 a1)
@@ -525,6 +527,8 @@
 	   (generic walk5*::pair-nil n::J2SNode p::procedure a0 a1 a2 a3 a4)
 	   (generic walk6*::pair-nil n::J2SNode p::procedure a0 a1 a2 a3 a4 a5)
 	   (generic walk7*::pair-nil n::J2SNode p::procedure a0 a1 a2 a3 a4 a5 a6)
+	   (generic walk8*::pair-nil n::J2SNode p::procedure a0 a1 a2 a3 a4 a5 a6 a7)
+	   
 	   (generic walk0!::J2SNode n::J2SNode p::procedure)
 	   (generic walk1!::J2SNode n::J2SNode p::procedure a0)
 	   (generic walk2!::J2SNode n::J2SNode p::procedure a0 a1)
@@ -533,6 +537,7 @@
 	   (generic walk5!::J2SNode n::J2SNode p::procedure a0 a1 a2 a3 a4)
 	   (generic walk6!::J2SNode n::J2SNode p::procedure a0 a1 a2 a3 a4 a5)
 	   (generic walk7!::J2SNode n::J2SNode p::procedure a0 a1 a2 a3 a4 a5 a6)
+	   (generic walk8!::J2SNode n::J2SNode p::procedure a0 a1 a2 a3 a4 a5 a6 a7)
 	   
 	   (macro define-walk-method)
 
@@ -734,6 +739,9 @@
 (define-generic (walk7 n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5 arg6)
    (error "walk7" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
+(define-generic (walk8 n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5 arg6 a7)
+   (error "walk8" (format "Illegal node type \"~a\"" (typeof n))
+      (with-output-to-string (lambda () (write-circle n)))))
 
 (define-generic (walk0*::pair-nil n::J2SNode p::procedure)
    (error "walk0*" (format "Illegal node type \"~a\"" (typeof n))
@@ -759,6 +767,9 @@
 (define-generic (walk7*::pair-nil n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5 arg6)
    (error "walk7*" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
+(define-generic (walk8*::pair-nil n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5 arg6 arg7)
+   (error "walk8*" (format "Illegal node type \"~a\"" (typeof n))
+      (with-output-to-string (lambda () (write-circle n)))))
 
 (define-generic (walk0!::J2SNode n::J2SNode p::procedure)
    (error "walk0!" (format "Illegal node type \"~a\"" (typeof n))
@@ -783,6 +794,9 @@
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk7!::J2SNode n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5 arg6)
    (error "walk7!" (format "Illegal node type \"~a\"" (typeof n))
+      (with-output-to-string (lambda () (write-circle n)))))
+(define-generic (walk8!::J2SNode n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5 arg6 arg7)
+   (error "walk8!" (format "Illegal node type \"~a\"" (typeof n))
       (with-output-to-string (lambda () (write-circle n)))))
 
 ;*---------------------------------------------------------------------*/
@@ -895,9 +909,9 @@
        (print "   return _ast;\n};\n\n")))
    
    `(begin
-       ,@(map (lambda (nb) (gen-method nb)) (iota 8))
-       ,@(map (lambda (nb) (gen-method* nb)) (iota 8))
-       ,@(map (lambda (nb) (gen-method! nb)) (iota 8))))
+       ,@(map (lambda (nb) (gen-method nb)) (iota 9))
+       ,@(map (lambda (nb) (gen-method* nb)) (iota 9))
+       ,@(map (lambda (nb) (gen-method! nb)) (iota 9))))
 
 ;*---------------------------------------------------------------------*/
 ;*    gen-traversals ...                                               */
