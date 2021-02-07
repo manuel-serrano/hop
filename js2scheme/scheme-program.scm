@@ -68,8 +68,8 @@
 		   (define %cnst-table ,cnsttable)
 		   ,@scmheaders
 		   ,@globals
-		   ,@esimports
 		   ,esexports
+		   ,@esimports
 		   ,@(exit-body ctx
 			(filter fundef? body) (filter nofundef? body))))
 	    ;; for dynamic loading
@@ -107,8 +107,8 @@
 		   (define %cnst-table ,cnsttable)
 		   ,@scmheaders
 		   ,@globals
-		   ,@esimports
 		   ,esexports
+		   ,@esimports
 		   ,@(exit-body ctx
 			(filter fundef? body) (filter nofundef? body))))
 	    ;; for dynamic loading
@@ -147,8 +147,8 @@
 		(define %cnst-table ,cnsttable)
 		,@scmheaders
 		,@globals
-		,@esimports
 		,esexports
+		,@esimports
 		,@(exit-body ctx
 		     (filter fundef? body) (filter nofundef? body))))))
    
@@ -188,8 +188,8 @@
 			      ;; is not minimize letrec* nesting level
 			      (letrec* ,(j2s-let-headers scmheaders)
 				 ,@(j2s-expr-headers scmheaders)
-				 ,@esimports
 				 ,esexports
+				 ,@esimports
 				 ,@(exit-body ctx
 				      (filter fundef? body)
 				      (filter nofundef? body)))))))
@@ -348,8 +348,8 @@
 		   (nodejs-new-module ,(basename path) ,(absolute path)
 		      %worker %this))
 		(define %cnst-table ,cnsttable)
-		,@esimports
 		,esexports
+		,@esimports
 		,@(filter nofundef? globals)
 		,@toplevel
 		,@(if (context-get ctx :libs-dir #f)

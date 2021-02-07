@@ -51,10 +51,10 @@ function hope( a, o ) {
 
 console.log( "hop" );
 console.log( "   hopa()"); assert.ok( hopa(), "hopa" );
-console.log( "   hopb()"); assert.ok( hopb(), "hopb" )
-console.log( "   hopc()"); assert.ok( hopc(), "hopc" )
-console.log( "   hopd()"); assert.ok( hopd(), "hopd" )
-console.log( "   hope()"); assert.ok( hope(), "hope" )
+console.log( "   hopb()"); assert.ok( hopb(), "hopb" );
+console.log( "   hopc()"); assert.ok( hopc(), "hopc" );
+console.log( "   hopd()"); assert.ok( hopd(), "hopd" );
+console.log( "   hope()"); assert.ok( hope( 1, { x : false } ), "hope" );
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */

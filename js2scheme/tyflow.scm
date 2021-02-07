@@ -1087,7 +1087,7 @@
 ;*    detailed in the code below.                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SCall env::pair-nil fix::cell)
-   (with-access::J2SCall this (fun thisarg args protocol loc)
+   (with-access::J2SCall this (fun thisarg args protocol type loc)
       (multiple-value-bind (tty env bkt)
 	 (if (pair? thisarg)
 	     (node-type (car thisarg) env fix)
@@ -2271,7 +2271,7 @@
 	  (and (eq? t1 'number) (eq? t2 'integer))
 	  (and (eq? t1 'integer) (eq? t2 'number))))
 	      
-   (with-access::J2SDeclInit this (vtype loc val)
+   (with-access::J2SDeclInit this (vtype utype loc val)
       (when (and (eq? vtype from) (not (eq? vtype to)))
 	 (when (and (eq? from 'unknown) debug-tyflow)
 	    (tprint "*** COMPILER WARNING : unpexected `unknown' type " loc
@@ -2283,7 +2283,7 @@
 	    ((decl-usage-has? this '(uninit))
 	     (error "force-type!" "Declaration inconsistent with init"
 		(j2s->list this)))
-	    ((not (isa? val J2SUndefined))
+	    ((and (not (isa? val J2SUndefined)) (eq? utype 'unknown))
 	     (error "force-type!"
 		(format "Pre-value type mismatch (~a/~a)" vtype (j2s-type val))
 		(j2s->list this)))
