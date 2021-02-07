@@ -1043,7 +1043,8 @@
    
    (define (cache-path filename)
       (make-cache-name 
-	 (string-append (string-replace (prefix filename) #\/ #\_) ".scm")))
+	 (string-append (string-replace (prefix filename) #\/ #\_)
+	    (if (>fx (bigloo-debug) 0) "-g.scm" ".scm"))))
    
    (define (load-cache filename)
       (when (hop-cache-enable)
@@ -1051,6 +1052,7 @@
 	    (when (and (file-exists? path)
 		       (<elong (file-modification-time filename)
 			  (file-modification-time path)))
+	       (hop-verb 3 "using cache \"" (hop-color 7 "" path) "\"\n")
 	       (call-with-input-file path
 		  port->sexp-list)))))
    
