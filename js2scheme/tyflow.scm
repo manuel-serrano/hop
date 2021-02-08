@@ -664,8 +664,9 @@
 ;*    node-type ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SDecl env::pair-nil fix::cell)
+   (decl-itype-add! this 'undefined fix)
    (decl-vtype-add! this 'undefined fix)
-   (return 'void env '()))
+   (return 'void (extend-env env this 'undefined) '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SDeclArguments ...                                 */
@@ -1814,9 +1815,10 @@
 	       (trace-item "while seq loc=" loc)
 	       (multiple-value-bind (typ envb bk)
 		  (node-type-seq (list test body) env fix 'void)
-		  (if (=fx ofix (cell-ref fix))
-		      (return typ envb (filter-breaks bk this))
-		      (loop (env-merge env envb) (+fx i 1)))))))))
+		  (let ((nenv (env-merge env envb)))
+		     (if (=fx ofix (cell-ref fix))
+			 (return typ nenv (filter-breaks bk this))
+			 (loop nenv (+fx i 1))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SDo ...                                            */
@@ -1830,9 +1832,10 @@
 	       (trace-item "while seq loc=" loc)
 	       (multiple-value-bind (typ envb bk)
 		  (node-type-seq (list body test) env fix 'void)
-		  (if (=fx ofix (cell-ref fix))
-		      (return typ (env-merge env envb) (filter-breaks bk this))
-		      (loop (env-merge env envb)))))))))
+		  (let ((nenv (env-merge env envb)))
+		     (if (=fx ofix (cell-ref fix))
+			 (return typ nenv (filter-breaks bk this))
+			 (loop nenv)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SFor ...                                           */
@@ -1846,9 +1849,10 @@
 	       (trace-item "for seq loc=" loc)
 	       (multiple-value-bind (typ envb bk)
 		  (node-type-seq (list init test body incr) env fix 'void)
-		  (if (=fx ofix (cell-ref fix))
-		      (return typ (env-merge env envb) (filter-breaks bk this))
-		      (loop (env-merge env envb)))))))))
+		  (let ((nenv (env-merge env envb)))
+		     (if (=fx ofix (cell-ref fix))
+			 (return typ nenv (filter-breaks bk this))
+			 (loop nenv)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SForIn ...                                         */
