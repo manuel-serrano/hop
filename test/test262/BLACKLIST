@@ -253,6 +253,7 @@
  "12.2.1-9-s.js"
  ;; ES6 incompatibilities
  "10.1.1-18-s.js" ;; public is a reserved keyword in strict mode
+ "10.1.1-26-s.js" ;; public is a reserved keyword in strict mode
  "15.2.3.8-1.js"
  "15.2.3.8-1-1.js"
  "15.2.3.8-1-2.js"
