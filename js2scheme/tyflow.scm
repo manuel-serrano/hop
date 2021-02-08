@@ -97,9 +97,8 @@
 		       (loop (+fx i 1)))
 		      ((config-get conf :optim-tyflow-resolve #f)
 		       ;; type check resolution
-		       '(j2s-resolve! this conf fix)
+		       (j2s-resolve! this conf fix)
 		       (cond
-			  (#t #t)
 			  ((not (=fx (cell-ref fix) ofix))
 			   (loop (+fx i 1)))
 			  ((config-get conf :optim-hint #f)
