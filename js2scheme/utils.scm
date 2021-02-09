@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
 ;*    Last change :  Thu Jun  4 13:55:17 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
 ;*=====================================================================*/
@@ -727,7 +727,7 @@
 	("reduce" . (any array function))
 	("reduceRight" . (any array function))
 	("reverse" . (array array))
-	("shift" . (array array))
+	("shift" . (any array))
 	("slice" . (array array index index))
 	("sort" . (array array function))
 	("some" . (bool array function))
