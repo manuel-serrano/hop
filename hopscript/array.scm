@@ -167,6 +167,7 @@
 	   (js-array-maybe-shift0 ::obj ::JsGlobalObject ::obj)
 	   (js-array-sort ::JsArray ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-sort ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-some ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-iterator-to-array ::obj ::long ::JsGlobalObject)
 	   (js-call-with-stack-vector ::vector ::procedure)
 	   
@@ -1784,39 +1785,7 @@
    ;; some
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.17
    (define (array-prototype-some this::obj proc t)
-
-      (define (test-val proc t v i::uint32 o)
-	 (js-totest (js-call1-3 %this proc t v (js-uint32-tointeger i) o)))
-
-      (define (vector-some this o len::uint32 proc t i::uint32 %this)
-	 (with-access::JsArray o (vec ilen)
-	    (let loop ((i i))
-	       (cond
-		  ((>=u32 i ilen)
-		   (unless (js-object-mode-inline? o)
-		      (array-some this o len proc t i %this)))
-		  (else
-		   (let ((v (vector-ref vec (uint32->fixnum i))))
-		      (cond
-			 ((test-val proc t v i o)
-			  #t)
-			 (else
-			  (loop (+u32 i 1))))))))))
-
-      (define (array-some this o len proc t i::uint32 %this)
-	 (let loop ((i i))
-	    (if (>=u32 i len)
-		#f
-		(let ((pv (js-get-property-value o o i %this)))
-		   (cond
-		      ((js-absent? pv)
-		       (loop (+u32 i 1)))
-		      ((test-val proc t pv i o)
-		       #t)
-		      (else
-		       (loop (+u32 i 1))))))))
-
-      (array-prototype-iterator this proc t array-some vector-some %this))
+      (js-array-prototype-some this proc t %this))
 
    (js-bind! %this js-array-prototype (& "some")
       :value (js-make-function %this array-prototype-some
@@ -5348,6 +5317,56 @@
 	     (js-get-name/cache this (& "shift") #f %this
 		(or cache (js-pcache-ref js-array-pcache 17)))
 	     this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-some ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-some this proc thisarg %this cache)
+   (if (and (js-array? this) (js-object-mode-plain? this))
+       (js-array-prototype-some this proc thisarg %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call2 %this
+	     (js-get-name/cache this (& "some") #f %this
+		(or cache (js-pcache-ref js-array-pcache 12)))
+	     this proc thisarg))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-some ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-some this proc t %this)
+
+      (define (test-val proc t v i::uint32 o)
+	 (js-totest (js-call1-3 %this proc t v (js-uint32-tointeger i) o)))
+
+      (define (vector-some this o len::uint32 proc t i::uint32 %this)
+	 (with-access::JsArray o (vec ilen)
+	    (let loop ((i i))
+	       (cond
+		  ((>=u32 i ilen)
+		   (unless (js-object-mode-inline? o)
+		      (array-some this o len proc t i %this)))
+		  (else
+		   (let ((v (vector-ref vec (uint32->fixnum i))))
+		      (cond
+			 ((test-val proc t v i o)
+			  #t)
+			 (else
+			  (loop (+u32 i 1))))))))))
+
+      (define (array-some this o len proc t i::uint32 %this)
+	 (let loop ((i i))
+	    (if (>=u32 i len)
+		#f
+		(let ((pv (js-get-property-value o o i %this)))
+		   (cond
+		      ((js-absent? pv)
+		       (loop (+u32 i 1)))
+		      ((test-val proc t pv i o)
+		       #t)
+		      (else
+		       (loop (+u32 i 1))))))))
+
+      (array-prototype-iterator this proc t array-some vector-some %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-sort ...                                      */

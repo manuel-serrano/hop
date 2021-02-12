@@ -2518,7 +2518,7 @@
 (define (js-get-jsobject-name/cache o::JsObject name::obj
 	   throw::bool %this::JsGlobalObject cache::JsPropertyCache
 	   #!optional (point -1) (cspecs '()))
-   (js-get-jsobject-name/cache o name throw %this cache point cspecs))
+   (js-get-jsobject-name/cache o name throw %this cache point '*))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-global-object-get-name ...                                    */
