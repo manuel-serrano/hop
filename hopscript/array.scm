@@ -133,11 +133,15 @@
 	   (js-array-maybe-fill1 ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-foreach ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-foreach ::obj ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-array-foreach-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
+	   (inline js-array-foreach-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
+	   (js-array-foreach-procedure-slow ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
+	   (js-array-prototype-foreach-procedure this::JsArray proc::procedure thisarg %this)
 	   (js-array-maybe-foreach-procedure ::obj proc::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-map ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-map ::obj ::obj ::obj ::JsGlobalObject ::obj)
-	   (js-array-map-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
+	   (inline js-array-map-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
+	   (js-array-map-procedure-slow ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
+	   (js-array-prototype-map-procedure this::JsArray proc::procedure thisarg %this)
 	   (js-array-maybe-map-procedure ::obj proc::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-filter ::JsArray proc thisarg %this cache)
 	   (js-array-maybe-filter this proc thisarg %this cache)
@@ -843,9 +847,15 @@
 (define (js-array-noindex-ref arr::JsArray prop::obj %this)
    (with-access::JsArray arr (vec ilen length)
       (let ((i::uint32 (js-toindex prop)))
-	 (if (<u32 i ilen)
-	     (u32vref vec i)
-	     (js-get arr prop %this)))))
+	 (cond
+	    ((<u32 i ilen)
+	     (u32vref vec i))
+	    ((eq? prop (& "length"))
+	     (js-uint32-tointeger length))
+	    ((not (js-isindex? i))
+	     (js-get-jsobject arr arr (js-toname prop %this) %this))
+	    (else
+	     (js-get arr prop %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-index-ref ...                                           */
@@ -4244,18 +4254,24 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-foreach-procedure ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (js-array-foreach-procedure this::JsArray proc thisarg %this cache)
+(define-inline (js-array-foreach-procedure this::JsArray proc thisarg %this cache)
    (if (js-object-mode-plain? this)
        (js-array-prototype-foreach-procedure this proc thisarg %this)
-       ;; proc is a stack allocated procedure
-       (let* ((proc ($dup-procedure proc))
-	      (jsproc (js-make-function %this
-			 (lambda (_this x y z) (proc _this x y z %this))
-			 (js-function-arity 3 0)
-			 (js-function-info :name "forEachProc" :len 3)
-			 :constrsize 0
-			 :alloc js-object-alloc)))
-	  (js-array-foreach this jsproc thisarg %this cache))))
+       (js-array-foreach-procedure-slow this proc thisarg %this cache)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-foreach-procedure-slow ...                              */
+;*---------------------------------------------------------------------*/
+(define (js-array-foreach-procedure-slow this proc thisarg %this cache)
+   ;; proc is a stack allocated procedure
+   (let* ((proc ($dup-procedure proc))
+	  (jsproc (js-make-function %this
+		     (lambda (_this x y z) (proc _this x y z %this))
+		     (js-function-arity 3 0)
+		     (js-function-info :name "forEachProc" :len 3)
+		     :constrsize 0
+		     :alloc js-object-alloc)))
+      (js-array-foreach this jsproc thisarg %this cache)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-foreach-procedure ...                             */
@@ -4423,18 +4439,28 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-map-procedure ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (js-array-map-procedure this::JsArray proc thisarg %this cache)
+(define-inline (js-array-map-procedure this::JsArray proc thisarg %this cache)
    (if (js-object-mode-plain? this)
        (js-array-prototype-map-procedure this proc thisarg %this)
-       ;; proc is a stack allocated procedure
-       (let* ((proc ($dup-procedure proc))
-	      (jsproc (js-make-function %this
-			 (lambda (_this x y z) (proc _this x y z %this))
-			 (js-function-arity 3 0)
-			 (js-function-info :name "mapProc" :len 3)
-			 :constrsize 0
-			 :alloc js-object-alloc)))
-	  (js-array-map this jsproc thisarg %this cache))))
+       (js-array-map-procedure-slow this proc thisarg %this cache)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-map-procedure-slow ...                                  */
+;*---------------------------------------------------------------------*/
+(define (js-array-map-procedure-slow this proc thisarg %this cache)
+   ;; proc is a stack allocated procedure
+   (let* ((proc ($dup-procedure proc))
+	  (jsproc (js-make-function %this
+		     (lambda (_this x y z) (proc _this x y z %this))
+		     (js-function-arity 3 0)
+		     (js-function-info :name "mapProc" :len 3)
+		     :constrsize 0
+		     :alloc js-object-alloc)))
+      (with-access::JsGlobalObject %this (js-array-pcache)
+	 (js-call2 %this
+	    (js-get-name/cache this (& "map") #f %this
+	       (or cache (js-pcache-ref js-array-pcache 11)))
+	    this jsproc thisarg))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-map-procedure ...                                 */
