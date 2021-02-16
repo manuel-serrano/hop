@@ -168,7 +168,7 @@ static obj_t bgl_make_jsprocedure_sans( obj_t procedure, long arity, obj_t __pro
 static obj_t bgl_make_jsstringliteralascii_sans( uint32_t len, obj_t left, obj_t right );
 #endif
 
-#define POOLSZ( sz ) (12800 >> sz)
+#define POOLSZ( sz ) ((12800 >> sz) + 400)
 #define JSPROXY_POOLSZ POOLSZ( 3 )
 #define JSFUNCTION_POOLSZ POOLSZ( 4 )
 #define JSMETHOD_POOLSZ POOLSZ( 4 )
@@ -347,6 +347,7 @@ int inlproxy = 0, sndproxy = 0, slowproxy = 0, qszproxy = 0;
 int inlfunction = 0, sndfunction = 0, slowfunction = 0, qszfunction = 0;
 int inlmethod = 0, sndmethod = 0, slowmethod = 0, qszmethod = 0;
 int inlprocedure = 0, sndprocedure = 0, slowprocedure = 0, qszprocedure = 0;
+int inlstringliteralascii = 0, sndstringliteralascii = 0, slowstringliteralascii = 0, qszstringliteralascii = 0;
 
 /*---------------------------------------------------------------------*/
 /*    static void                                                      */
@@ -800,7 +801,7 @@ BGL_MAKE_JSOBJECT( 8 )
 obj_t
 bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
    obj_t o;
-   
+
    switch( constrsize ) {
       case 1: return bgl_make_jsobject1( constrmap, __proto__, mode );
       case 2: return bgl_make_jsobject2( constrmap, __proto__, mode );

@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
 ;*    Last change :  Thu Apr  9 07:16:09 2020 (serrano)                */
-;*    Copyright   :  2016-20 Manuel Serrano                            */
+;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*    -------------------------------------------------------------    */
@@ -70,6 +70,12 @@
 ;*---------------------------------------------------------------------*/
 (define-expander js-getprototypeof
    js-getprototypeof-expander)
+
+;*---------------------------------------------------------------------*/
+;*    js-has-own-property ...                                          */
+;*---------------------------------------------------------------------*/
+(define-expander js-has-own-property
+   js-has-own-property-expander)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-XXX ...                                                   */

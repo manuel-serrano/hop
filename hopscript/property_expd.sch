@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
 ;*    Last change :  Sat Apr 18 17:26:06 2020 (serrano)                */
-;*    Copyright   :  2016-20 Manuel Serrano                            */
+;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*    -------------------------------------------------------------    */
@@ -380,7 +380,6 @@
 		       (vector-ref elements idx))))
 	       ((eq? cs 'amap)
 		`(let* ((idx (js-pcache-index ,cache))
-;* 			(propowner (js-pcache-owner ,cache))           */
 			(propowner ,obj))
 		    (with-access::JsObject propowner (elements)
 		       (let ((desc (vector-ref elements idx)))
@@ -392,7 +391,7 @@
 		;; cached cache miss
 		`(js-undefined))
 	       ((not (pair? cs))
-		(error "js-get-jsobject-name/cache" "bad form" x))
+		(error "js-get-jsobject-name/cache" "bad formx" x))
 	       (else
 		(case (car cs)
 		   ((imap-incache)
@@ -500,6 +499,9 @@
 	  ((js-get-jsobject-name/cache (and (? (lambda (o) (not (symbol? o)))) ?obj) . ?rest)
 	   (let ((o (gensym '%o)))
 	      (e `(let ((,o ,obj)) (js-get-jsobject-name/cache ,o ,@rest)) e)))
+	  ((js-get-jsobject-name/cache ?obj ?prop ?throw ?%this ?cache ?loc ((kwote quote) *))
+	   (set-car! (last-pair x) ''(imap emap cmap pmap amap xmap vtable))
+	   (e x e))
 	  ((js-get-jsobject-name/cache (and (? symbol?) ?obj)
 	      ?prop ?throw ?%this ?cache
 	      ?loc ((kwote quote) ?cspecs))
@@ -527,6 +529,27 @@
       ((?- ?obj)
        (let ((tmp (gensym 'obj)))
 	  (e `(let ((,tmp ,obj)) (js-getprototypeof ,tmp)) e)))
+      (else
+       (map (lambda (x) (e x e)) x))))
+       
+;*---------------------------------------------------------------------*/
+;*    js-has-own-property-expander ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-has-own-property-expander x e)
+   (match-case x
+      ((?- (and (? symbol?) ?obj) (and (? symbol?) ?prop) (and (? symbol?) ?%this))
+       (e `(if (js-object? ,obj)
+	       ((@ js-has-own-property-jsobject __hopscript_property) ,obj ,prop ,%this)
+	       ((@ js-has-own-property __hopscript_property) ,obj ,prop ,%this))
+	  e))
+      ((?- ?obj ?prop ?%this)
+       (let ((tmpo (gensym 'obj))
+	     (tmpp (gensym 'prop))
+	     (tmpt (gensym '%this)))
+	  (e `(let ((,tmpo ,obj)
+		    (,tmpp ,prop)
+		    (,tmpt ,%this))
+		 (js-has-own-property ,tmpo ,tmpp ,tmpt)) e)))
       (else
        (map (lambda (x) (e x e)) x))))
        

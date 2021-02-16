@@ -4,7 +4,7 @@
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Tue Jul  7 19:27:03 2020                          */
 ;*    Last change :  Tue Jul  7 19:27:07 2020 (serrano)                */
-;*    Copyright   :  2020 manuel serrano                               */
+;*    Copyright   :  2020-21 manuel serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constant lifting optimization.                                   */
 ;*                                                                     */
@@ -129,7 +129,8 @@
 	    (set! vdepth (cons 'depth ndepth)))
 	 (with-access::J2SDecl exn ((vdepth %info))
 	    (set! vdepth (cons 'depth ndepth)))
-	 (j2s-cnstlift-expression! body vars mode ndepth verb))))
+	 (j2s-cnstlift-expression! body vars mode ndepth verb)
+	 this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cnstlift-expression! ::J2SLetBlock ...                       */

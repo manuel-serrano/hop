@@ -156,6 +156,7 @@
 	("filter" ,j2s-array-filter array (function) %this #t ,j2s-array-plain?)
 	("filter" ,j2s-array-filter array (function any) %this #t ,j2s-array-plain?)
 	("filter" ,j2s-array-maybe-filter any (function) %this #t ,j2s-array-plain?)
+	("filter" ,j2s-array-maybe-filter any (any) %this #t ,j2s-array-plain?)
 	("filter" ,j2s-array-maybe-filter any (function any) %this #t ,j2s-array-plain?)
 	("filter" ,j2s-array-filter array (arrow) %this #t ,j2s-array-plain?)
 	("filter" ,j2s-array-filter array (arrow any) %this #t ,j2s-array-plain?)
@@ -188,6 +189,7 @@
 	("shift" js-array-maybe-shift0 any () %this #t)
 	("reverse" js-array-reverse array () %this #f ,j2s-array-plain?)
 	("reverse" js-array-maybe-reverse any () %this #t)
+	("some" js-array-maybe-some any (any (any #unspecified)) %this #t ,j2s-array-plain?)
 	;; functions
 	("apply",j2s-apply any (any any) %this #t)
 	("call" ,j2s-call0 any (any) %this #t)
@@ -231,6 +233,7 @@
 	("setUTCMinutes" ,j2s-date-setutcminutes date (any any any) #t #t)
 	;; object
 	("hasOwnProperty" js-has-own-property any (any) %this #f ,j2s-object-plain?)
+	("hasOwnProperty" js-has-own-property-jsobject any (object) %this #f ,j2s-object-plain?)
 	("isFrozen" ,j2s-object-isfrozen any (any) #f #f ,j2s-object-plain?)
 	)))
 

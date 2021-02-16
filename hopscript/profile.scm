@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
 ;*    Last change :  Mon May 11 15:56:07 2020 (serrano)                */
-;*    Copyright   :  2018-20 Manuel Serrano                            */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
 ;*=====================================================================*/
@@ -675,7 +675,7 @@
 		    (show-json-alloc)
 		    (show-text-alloc)))
 	       (else
-		(print "Allocation profiling disabled (re-configure Hop with \"--profile\"")))))))
+		(print "Allocation profiling disabled (re-configure Hop with \"--profile\")")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-cache-index ...                                          */
