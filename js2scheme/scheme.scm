@@ -2684,11 +2684,17 @@
 		     (with-access::J2SDataPropertyInit i (val)
 			(maybe-function? (uncast val))))
 		inits)
-	     `(js-object-literal-init!
-		 (instantiateJsObject
-		    (cmap ,(j2s-scheme cmap mode return ctx))
-		    (__proto__ (js-object-proto %this))
-		    (elements (vector ,@vals)))))
+	     (let ((ctorcmap (gensym)))
+		`(let ((,ctorcmap ,(j2s-scheme cmap mode return ctx)))
+		    (js-object-literal-init!
+		       (instantiateJsObject
+			  (cmap ,ctorcmap)
+			  (__proto__ (js-object-proto %this))
+			  (elements (subvector (with-access::JsConstructMap ,ctorcmap (ctor)
+						  (if (cell? ctor)
+						      (cell-ref ctor)
+						      ,(length vals)))
+				       ,@vals)))))))
 	    ((null? vals)
 	     (let ((omap (gensym 'cmap)))
 		`(let ((,omap ,(j2s-scheme cmap mode return ctx)))
