@@ -2022,6 +2022,7 @@
 ;*    js-has-own-property ::JsObject ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (js-has-own-property o::JsObject p::obj %this)
+   (tprint "ICI....")
    (js-has-own-property-jsobject o p %this))
 
 ;*---------------------------------------------------------------------*/

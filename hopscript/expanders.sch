@@ -51,6 +51,11 @@
    (eval `(define-expander js-get-name/cache
 	     ,js-get-name/cache-expander))
 
+   (eval `(define-expander js-getprototypeof
+	     ,js-getprototypeof-expander))
+   (eval `(define-expander js-has-own-property
+	     ,js-has-own-property-expander))
+   
    (eval `(define-expander %define-cnst-table
 	     ,%define-cnst-table-expander))
    (eval `(define-expander js-cnst-table

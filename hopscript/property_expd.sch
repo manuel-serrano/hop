@@ -533,6 +533,27 @@
        (map (lambda (x) (e x e)) x))))
        
 ;*---------------------------------------------------------------------*/
+;*    js-has-own-property-expander ...                                 */
+;*---------------------------------------------------------------------*/
+(define (js-has-own-property-expander x e)
+   (match-case x
+      ((?- (and (? symbol?) ?obj) (and (? symbol?) ?prop) (and (? symbol?) ?%this))
+       (e `(if (js-object? ,obj)
+	       ((@ js-has-own-property-jsobject __hopscript_property) ,obj ,prop ,%this)
+	       ((@ js-has-own-property __hopscript_property) ,obj ,prop ,%this))
+	  e))
+      ((?- ?obj ?prop ?%this)
+       (let ((tmpo (gensym 'obj))
+	     (tmpp (gensym 'prop))
+	     (tmpt (gensym '%this)))
+	  (e `(let ((,tmpo ,obj)
+		    (,tmpp ,prop)
+		    (,tmpt ,%this))
+		 (js-has-own-property ,tmpo ,tmpp ,tmpt)) e)))
+      (else
+       (map (lambda (x) (e x e)) x))))
+       
+;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache-expander ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (js-get-name/cache-expander x e)
