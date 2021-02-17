@@ -205,6 +205,7 @@
 	   (js-equality?::bool ::obj ::obj ::JsGlobalObject)
 	   (js-same-value-zero?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-strict-equal?::bool ::obj ::obj)
+	   (js-eq-no-eq?::bool ::obj ::obj)
 	   (inline js-strict-equal-no-string?::bool ::obj ::obj)
 	   (js-eq?::bool ::obj ::obj)
 	   (js-eq-no-string?::bool ::obj ::obj)
