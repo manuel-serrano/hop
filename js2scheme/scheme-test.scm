@@ -52,6 +52,7 @@
 	 ((eq? ty 'string)
 	  `(js-jsstring-toboolean ,(j2s-scheme test mode return conf)))
 	 ((notbool-expr? test)
+	  (tprint "NOT BOOL test=" (j2s->list test))
 	  (j2s-toboolean (j2s-scheme test mode return conf)))
 	 (else
 	  (with-access::J2SExpr test (hint)
@@ -194,6 +195,3 @@
        expr)
       (else
        `(js-toboolean ,expr))))
-
-
-   

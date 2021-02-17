@@ -310,7 +310,7 @@
 	 (with-access::J2SExport (car exports) (index)
 	    `(vector-set! %evars ,index
 		,(j2s-scheme val mode return ctx)))))
-   
+
    (cond
       ((j2s-export? this) (j2s-scheme-export this))
       ((j2s-param? this) (call-next-method))

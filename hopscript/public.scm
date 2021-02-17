@@ -738,7 +738,6 @@
 		(cond
 		   ((and (>=fx required n) (js-procedure-hopscript-mode? fun))
 		    ;; required arguments missing
-		    (tprint "ici.8")
 		    (js-raise-arity-error %this fun (-fx n 1)))
 		   ((<fx n parity)
 		    ;; arguments missing
@@ -1738,6 +1737,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.2          */
 ;*---------------------------------------------------------------------*/
 (define (js-toboolean-no-boolean obj)
+;*    (tprint "js-toboolean-no-boolean obj=" obj)                      */
    (cond
       ((js-null-or-undefined? obj) #f)
       ((fixnum? obj) (not (=fx obj 0)))
@@ -2175,7 +2175,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-same-value-zero? x y %this::JsGlobalObject)
    (js-equality? x y %this))
-   
 
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-equal?                                                 */
@@ -2183,7 +2182,21 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.4       */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-strict-equal? o1 o2)
-   (or (and (eq? o1 o2) (not (flonum? o1))) (js-eq? o1 o2)))
+   (or (and (eq? o1 o2) (not (flonum? o1))) (js-eq-no-eq? o1 o2)))
+
+;*---------------------------------------------------------------------*/
+;*    js-eq-no-eq? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-eq-no-eq? x y)
+   (cond
+      ((fixnum? x)
+       (when (flonum? y) (=fl (fixnum->flonum x) y)))
+      ((js-jsstring? x)
+       (and (js-jsstring? y) (js-jsstring=? x y)))
+      ((flonum? x)
+       (if (flonum? y) (=fl x y) (when (fixnum? y) (=fl x (fixnum->flonum y)))))
+      (else
+       #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-equal-no-string?                                       */

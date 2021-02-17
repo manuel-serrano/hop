@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
 ;*    Last change :  Wed Jun 10 17:56:34 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
 ;*=====================================================================*/
@@ -866,8 +866,10 @@
 ;*    j2s->list ::J2SCond ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCond)
-   (with-access::J2SCond this (test then else)
-      `(,@(call-next-method) ,@(dump-info this)
+   (with-access::J2SCond this (test then else loc)
+      `(,@(call-next-method)
+	  ,@(dump-loc loc)
+	  ,@(dump-info this)
 	  ,@(dump-type this)
 	  ,@(dump-range this)
 	  ,(j2s->list test)
@@ -1056,8 +1058,9 @@
 ;*    j2s->list ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclInit)
-   (with-access::J2SDeclInit this (val)
+   (with-access::J2SDeclInit this (val loc)
       `(,@(call-next-method)
+	  ,@(dump-loc loc)
 	  ,@(if (nodefval? val) '() (list (j2s->list val))))))
 
 ;*---------------------------------------------------------------------*/

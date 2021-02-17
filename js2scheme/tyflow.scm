@@ -118,19 +118,19 @@
 				  (for-each reset-type! decls)
 				  (for-each reset-type! nodes)
 				  (loop (+fx i 1)))
-				 ((force-type this 'unknown 'any)
+				 ((force-type this 'unknown 'any #f)
 				  (when (>=fx j2s-verbose 3)
 				     (fprintf (current-error-port) "."))
 				  (loop (+fx i 1))))))
-			  ((force-type this 'unknown 'any)
+			  ((force-type this 'unknown 'any #f)
 			   (loop (+fx i 1)))))))))
-	  (force-type this 'unknown 'any))
+	  (force-type this 'unknown 'any #t))
       (when (config-get conf :optim-hintblock)
 	 (when (>=fx (config-get conf :verbose 0) 4)
 	    (display " hint-block" (current-error-port)))
 	 (j2s-hint-block! this conf))
       (unless (config-get conf :optim-integer)
-	 (force-type this 'integer 'number))
+	 (force-type this 'integer 'number #t))
 	 ;;(force-unary-type! this))
       (cleanup-hint! this)
       (program-cleanup! this))
@@ -2151,21 +2151,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    force-type ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (force-type::bool this::J2SNode from to)
+(define (force-type::bool this::J2SNode from to final::bool)
    (let ((cell (make-cell #f)))
-      (force-type! this from to cell)
+      (force-type! this from to cell final)
       (cell-ref cell)))
 
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-type! this::J2SNode from to cell::cell)
+(define-walk-method (force-type! this::J2SNode from to cell::cell final::bool)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ::J2SExpr ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-type! this::J2SExpr from to cell)
+(define-walk-method (force-type! this::J2SExpr from to cell final)
    (with-access::J2SExpr this (type loc)
       (when (and (eq? type from) (not (eq? type to)))
 	 (when (and (eq? from 'unknown) debug-tyflow)
@@ -2178,9 +2178,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ::J2SFun ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-type! this::J2SFun from to cell)
-   (with-access::J2SFun this (rtype thisp loc type)
-      (when (isa? thisp J2SNode) (force-type! thisp from to cell))
+(define-walk-method (force-type! this::J2SFun from to cell final)
+   (with-access::J2SFun this (rtype thisp loc type params)
+      (when (isa? thisp J2SNode) (force-type! thisp from to cell final))
       (when (and (eq? type from) (not (eq? type to)))
 	 (when (and (eq? from 'unknown) debug-tyflow)
 	    (tprint "*** COMPILER WARNING : unpexected `unknown' type " loc
@@ -2198,10 +2198,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ::J2JRef ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-type! this::J2SRef from to cell)
+(define-walk-method (force-type! this::J2SRef from to cell final)
    (with-access::J2SRef this (decl type loc)
       (when (isa? decl J2SDeclArguments)
-	 (force-type! decl from to cell))
+	 (force-type! decl from to cell final))
       (when (eq? type from)
 	 (set! type to)
 	 (cell-set! cell #t))
@@ -2210,7 +2210,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ::J2JHopRef ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-type! this::J2SHopRef from to cell)
+(define-walk-method (force-type! this::J2SHopRef from to cell final)
    (with-access::J2SHopRef this (type)
       (when (eq? type from)
 	 (set! type to)
@@ -2220,7 +2220,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ::J2JGlobalRef ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-type! this::J2SGlobalRef from to cell)
+(define-walk-method (force-type! this::J2SGlobalRef from to cell final)
    (with-access::J2SGlobalRef this (type loc decl)
       (with-access::J2SDecl decl (vtype)
 	 (when (and (eq? vtype from) (not (eq? vtype to)))
@@ -2234,7 +2234,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ::J2SDecl ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-type! this::J2SDecl from to cell)
+(define-walk-method (force-type! this::J2SDecl from to cell final)
    (with-access::J2SDecl this (vtype loc)
       (when (and (eq? vtype from) (not (eq? vtype to)))
 	 (when (and (eq? from 'unknown) debug-tyflow)
@@ -2257,7 +2257,7 @@
 ;*         a well-type constant                                        */
 ;*      2- it changes the variable type                                */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-type! this::J2SDeclInit from to cell)
+(define-walk-method (force-type! this::J2SDeclInit from to cell final)
 
    (define (type->init type val)
       (with-access::J2SExpr val (loc)
@@ -2281,7 +2281,7 @@
 	       " " (j2s->list this)))
 	 (cell-set! cell #t)
 	 (set! vtype to))
-      (when (and (not (eq? vtype 'any)) (not (type-eq? vtype (j2s-type val))))
+      (when (and final (not (eq? vtype 'any)) (not (type-eq? vtype (j2s-type val))))
 	 (cond
 	    ((decl-usage-has? this '(uninit))
 	     (error "force-type!" "Declaration inconsistent with init"
@@ -2301,24 +2301,24 @@
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ::J2SCatch ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-type! this::J2SCatch from to cell)
+(define-walk-method (force-type! this::J2SCatch from to cell final)
    (with-access::J2SCatch this (param)
-      (force-type! param from to cell)
+      (force-type! param from to cell final)
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ::J2SClass ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-type! this::J2SClass from to cell)
+(define-walk-method (force-type! this::J2SClass from to cell final)
    (with-access::J2SClass this (decl)
       (when decl
-	 (force-type! decl from to cell)))
+	 (force-type! decl from to cell final)))
    (call-next-method))
 
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ::J2SPostfix ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-type! this::J2SPostfix from to cell)
+(define-walk-method (force-type! this::J2SPostfix from to cell final)
    (with-access::J2SPostfix this (type)
       (when (eq? type 'unknown)
 	 (set! type 'number)
@@ -2328,7 +2328,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ::J2SPrefix ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (force-type! this::J2SPrefix from to cell)
+(define-walk-method (force-type! this::J2SPrefix from to cell final)
    (with-access::J2SPrefix this (type)
       (when (eq? type 'unknown)
 	 (set! type 'number)

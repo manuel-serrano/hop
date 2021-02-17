@@ -770,7 +770,7 @@
 ;*    j2s-scheme ::J2SMethod ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SMethod mode return ctx)
-   (with-access::J2SMethod this (function)
+   (with-access::J2SMethod this (function loc)
       (j2s-scheme function mode return ctx)))
 
 ;*---------------------------------------------------------------------*/
