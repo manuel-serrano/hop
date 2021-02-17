@@ -297,9 +297,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (alpha this::J2SMethod)
    (with-access::J2SMethod this (function method)
-      (duplicate::J2SMethod this
-	 (function (alpha function))
-	 (method (alpha method)))))
+      (let ((nmethod (alpha method))
+	    (nfunction (alpha function)))
+	 (with-access::J2SFun nfunction (method)
+	    (set! method nmethod))
+	 (duplicate::J2SMethod this
+	    (function nfunction)
+	    (method nmethod)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SCatch ...                                             */

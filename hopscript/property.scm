@@ -1214,10 +1214,15 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-literal-init! o::JsObject)
    (with-access::JsObject o ((%elements elements) cmap)
-      (with-access::JsConstructMap cmap ((%methods methods) props)
+      (with-access::JsConstructMap cmap ((%methods methods) (%props props))
 	 (let ((elements %elements)
-	       (methods %methods))
-	    (let loop ((i (-fx (vector-length elements) 1)))
+	       (methods %methods)
+	       (props %props))
+	    ;; Because the inline size might be dynamically extended
+	    ;; we may have elements.length > props.length so to avoid
+	    ;; array overflow, it is required to scan only the elements
+	    ;; that have an associated prop
+	    (let loop ((i (-fx (vector-length props) 1)))
 	       (if (=fx i -1)
 		   o
 		   (let ((v (vector-ref elements i)))
