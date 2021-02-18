@@ -39,8 +39,8 @@ before_install:
   
 before_script:
   - wget ftp://ftp-sop.inria.fr/indes/fp/Bigloo/bigloo-unstable.tar.gz -O /tmp/bigloo-unstable.tar.gz
-  - pushd /tmp && tar xvfz /tmp/bigloo-latest.tar.gz && popd
-  - pushd /tmp/bigloo-latest && ./configure && make && sudo make install && popd
+  - pushd /tmp && tar xvfz /tmp/bigloo-unstable.tar.gz && popd
+  - pushd /tmp/bigloo-unstable && ./configure && make && sudo make install && popd
   
 script:
   - set -e
