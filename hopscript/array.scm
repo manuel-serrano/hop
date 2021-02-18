@@ -103,7 +103,11 @@
 	   (js-array-put! ::JsArray p ::obj ::bool ::JsGlobalObject)
 	   
 	   (js-array-set-ur! ::JsArray ::uint32 ::obj ::bool ::JsGlobalObject)
-	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
+ 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
+	   (js-vector1->jsarray::JsArray ::obj ::JsGlobalObject)
+	   (js-vector2->jsarray::JsArray ::obj ::obj ::JsGlobalObject)
+	   (js-vector3->jsarray::JsArray ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-vector4->jsarray::JsArray ::obj ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-vector->sparse-jsarray::JsArray ::vector ::JsGlobalObject)
 	   
 	   (js-array-new1::JsArray ::obj ::JsGlobalObject)
@@ -2404,15 +2408,69 @@
        
 ;*---------------------------------------------------------------------*/
 ;*    js-vector->jsarray ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Overriden by a macro in array.sch                                */
 ;*---------------------------------------------------------------------*/
 (define (js-vector->jsarray::JsArray vec::vector %this::JsGlobalObject)
-   (let* ((len (vector-length vec)))
+   (let ((len (vector-length vec)))
       (with-access::JsGlobalObject %this (js-array-prototype)
 	 (instantiateJsArray
 	    (__proto__ js-array-prototype)
 	    (length (fixnum->uint32 len))
 	    (ilen (fixnum->uint32 len))
 	    (vec vec)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-vector1->jsarray ...                                          */
+;*    -------------------------------------------------------------    */
+;*    see array.sch                                                    */
+;*---------------------------------------------------------------------*/
+(define (js-vector1->jsarray::JsArray a0 %this::JsGlobalObject)
+   (let ((arr (js-array-construct-alloc-small-sans-init %this #u32:1)))
+      (with-access::JsArray arr (vec ilen)
+	 (let ((vec vec))
+	    (vector-set! vec 0 a0)
+	    (set! ilen #u32:1)
+	    arr))))
+
+;*---------------------------------------------------------------------*/
+;*    js-vector2->jsarray ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-vector2->jsarray::JsArray a0 a1 %this::JsGlobalObject)
+   (let ((arr (js-array-construct-alloc-small-sans-init %this #u32:2)))
+      (with-access::JsArray arr (vec ilen)
+	 (let ((vec vec))
+	    (vector-set! vec 0 a0)
+	    (vector-set! vec 1 a1)
+	    (set! ilen #u32:2)
+	    arr))))
+
+;*---------------------------------------------------------------------*/
+;*    js-vector3->jsarray ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-vector3->jsarray::JsArray a0 a1 a2 %this::JsGlobalObject)
+   (let ((arr (js-array-construct-alloc-small-sans-init %this #u32:3)))
+      (with-access::JsArray arr (vec ilen)
+	 (let ((vec vec))
+	    (vector-set! vec 0 a0)
+	    (vector-set! vec 1 a1)
+	    (vector-set! vec 2 a2)
+	    (set! ilen #u32:3)
+	    arr))))
+
+;*---------------------------------------------------------------------*/
+;*    js-vector4->jsarray ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-vector4->jsarray::JsArray a0 a1 a2 a3 %this::JsGlobalObject)
+   (let ((arr (js-array-construct-alloc-small-sans-init %this #u32:4)))
+      (with-access::JsArray arr (vec ilen)
+	 (let ((vec vec))
+	    (vector-set! vec 0 a0)
+	    (vector-set! vec 1 a1)
+	    (vector-set! vec 2 a2)
+	    (vector-set! vec 3 a3)
+	    (set! ilen #u32:4)
+	    arr))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-vector->jsarray/proto ...                                     */

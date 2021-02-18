@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
 ;*    Last change :  Sat Dec  7 18:59:46 2019 (serrano)                */
-;*    Copyright   :  2016-20 Manuel Serrano                            */
+;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
 ;*=====================================================================*/
@@ -286,3 +286,19 @@
       (else
        `((@ js-call-with-stack-vector __hopscript_array) ,vec ,proc))))
 
+;*---------------------------------------------------------------------*/
+;*    js-vector->jsarray                                               */
+;*---------------------------------------------------------------------*/
+(define-expander js-vector->jsarray
+   (lambda (x e)
+      (match-case x
+	 ((js-vector->jsarray (vector ?a0) ?%this)
+	  (e `(js-vector1->jsarray ,a0 ,%this) e))
+	 ((js-vector->jsarray (vector ?a0 ?a1) ?%this)
+	  (e `(js-vector2->jsarray ,a0 ,a1 ,%this) e))
+	 ((js-vector->jsarray (vector ?a0 ?a1 ?a2) ?%this)
+	  (e `(js-vector3->jsarray ,a0 ,a1 ,a2 ,%this) e))
+	 ((js-vector->jsarray (vector ?a0 ?a1 ?a2 ?a3) ?%this)
+	  (e `(js-vector4->jsarray ,a0 ,a1 ,a2 ,a3 ,%this) e))
+	 (else
+	  (e `((@ js-vector->jsarray __hopscript_array) ,@(cdr x)) e)))))
