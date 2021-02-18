@@ -248,6 +248,7 @@
 			   :parser 'client-program
 			   :site 'client
 			   :driver (j2s-javascript-driver)
+			   :warning-global #f
 			   :driver-name "j2s-javascript-driver")))
 	       (filter (lambda (exp)
 			  (not (isa? exp J2SNode)))
@@ -358,6 +359,7 @@
 	 :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
 	 :parser 'client-program
 	 :es6-module-client (eq? query 'mjs)
+	 :warning-global #f
 	 :driver (if (or (<=fx (bigloo-debug) 0) esplainp)
 		     (j2s-javascript-driver)
 		     (j2s-javascript-debug-driver))
