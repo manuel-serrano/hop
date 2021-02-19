@@ -24,7 +24,7 @@
    
    (extern ($js-make-jsarray::JsArray (::long ::uint32 ::JsConstructMap ::obj ::obj ::uint32)
 	      "bgl_make_jsarray")
-	   ($js-make-jsarray-sans-init::JsArray (::long ::uint32 ::JsConstructMap ::obj ::uint32)
+	   ($js-make-jsarray-sans-init::JsArray (::long ::uint32 ::uint32 ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsarray_sans_init")
 	   ($js-jsarray-shift-builtin::obj (::JsArray)
 	      "bgl_jsarray_shift_builtin")
@@ -2279,7 +2279,7 @@
    (cond-expand
       ((and bigloo-c (not devel) (not debug))
        (with-access::JsGlobalObject %this (js-array-prototype)
-	  ($js-make-jsarray-sans-init (uint32->fixnum len) len
+	  ($js-make-jsarray-sans-init (uint32->fixnum len) len #u32:0
 	     (js-not-a-cmap)
 	     js-array-prototype
 	     (js-array-default-mode))))
@@ -2289,6 +2289,30 @@
 	  (js-object-mode-set! this (js-array-default-mode))
 	  (with-access::JsArray this (vec ilen length)
 	     (set! length #u32:0)
+	     (set! ilen #u32:0)
+	     (set! vec v)
+	     this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-construct-alloc-small-sans-init ...                     */
+;*    -------------------------------------------------------------    */
+;*    Specialised version of js-array-construct and js-array-alloc     */
+;*    for small arrays.                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-construct-alloc-small-sans-init-len %this::JsGlobalObject len)
+   (cond-expand
+      ((and bigloo-c (not devel) (not debug))
+       (with-access::JsGlobalObject %this (js-array-prototype)
+	  ($js-make-jsarray-sans-init (uint32->fixnum len) len len
+	     (js-not-a-cmap)
+	     js-array-prototype
+	     (js-array-default-mode))))
+      (else
+       (let* ((this (js-array-alloc %this))
+	      (v (make-vector (uint32->fixnum len) (js-absent))))
+	  (js-object-mode-set! this (js-array-default-mode))
+	  (with-access::JsArray this (vec ilen length)
+	     (set! length len)
 	     (set! ilen len)
 	     (set! vec v)
 	     this)))))
@@ -2426,50 +2450,46 @@
 ;*    see array.sch                                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-vector1->jsarray::JsArray a0 %this::JsGlobalObject)
-   (let ((arr (js-array-construct-alloc-small-sans-init %this #u32:1)))
-      (with-access::JsArray arr (vec ilen)
+   (let ((arr (js-array-construct-alloc-small-sans-init-len %this #u32:1)))
+      (with-access::JsArray arr (vec)
 	 (let ((vec vec))
 	    (vector-set! vec 0 a0)
-	    (set! ilen #u32:1)
 	    arr))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-vector2->jsarray ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-vector2->jsarray::JsArray a0 a1 %this::JsGlobalObject)
-   (let ((arr (js-array-construct-alloc-small-sans-init %this #u32:2)))
-      (with-access::JsArray arr (vec ilen)
+   (let ((arr (js-array-construct-alloc-small-sans-init-len %this #u32:2)))
+      (with-access::JsArray arr (vec)
 	 (let ((vec vec))
 	    (vector-set! vec 0 a0)
 	    (vector-set! vec 1 a1)
-	    (set! ilen #u32:2)
 	    arr))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-vector3->jsarray ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-vector3->jsarray::JsArray a0 a1 a2 %this::JsGlobalObject)
-   (let ((arr (js-array-construct-alloc-small-sans-init %this #u32:3)))
-      (with-access::JsArray arr (vec ilen)
+   (let ((arr (js-array-construct-alloc-small-sans-init-len %this #u32:3)))
+      (with-access::JsArray arr (vec)
 	 (let ((vec vec))
 	    (vector-set! vec 0 a0)
 	    (vector-set! vec 1 a1)
 	    (vector-set! vec 2 a2)
-	    (set! ilen #u32:3)
 	    arr))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-vector4->jsarray ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-vector4->jsarray::JsArray a0 a1 a2 a3 %this::JsGlobalObject)
-   (let ((arr (js-array-construct-alloc-small-sans-init %this #u32:4)))
-      (with-access::JsArray arr (vec ilen)
+   (let ((arr (js-array-construct-alloc-small-sans-init-len %this #u32:4)))
+      (with-access::JsArray arr (vec)
 	 (let ((vec vec))
 	    (vector-set! vec 0 a0)
 	    (vector-set! vec 1 a1)
 	    (vector-set! vec 2 a2)
 	    (vector-set! vec 3 a3)
-	    (set! ilen #u32:4)
 	    arr))))
 
 ;*---------------------------------------------------------------------*/

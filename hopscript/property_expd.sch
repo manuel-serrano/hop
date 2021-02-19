@@ -538,7 +538,7 @@
 (define (js-has-own-property-expander x e)
    (match-case x
       ((?- (and (? symbol?) ?obj) (and (? symbol?) ?prop) (and (? symbol?) ?%this))
-       (e `(if (js-object? ,obj)
+       (e `(if (js-jsobject? ,obj)
 	       ((@ js-has-own-property-jsobject __hopscript_property) ,obj ,prop ,%this)
 	       ((@ js-has-own-property __hopscript_property) ,obj ,prop ,%this))
 	  e))

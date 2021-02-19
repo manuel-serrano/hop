@@ -2063,7 +2063,7 @@
 		   ;; not found
 		   (lambda (o)
 		      #f))))))
-   
+
    (if (js-jsstring? p)
        (let ((pname (js-toname p %this)))
 	  (let ((cacher (js-name-pcacher pname)))
