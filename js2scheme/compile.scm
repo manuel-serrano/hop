@@ -598,6 +598,9 @@
 			 (set! o (cons* k #t o))))
 	    '(:es6-let :es6-default-value :es6-arrow-function
 	      :es6-rest-argument :es2017-async :es6-module)))
+
+      (unless (memq :warning-global o)
+	 (set! o (cons* :warning-global #t o)))
       
       (let ((v (getenv "HOPCFLAGS")))
 	 (when (string? v)

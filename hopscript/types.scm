@@ -580,6 +580,7 @@
 	   (inline js-not-a-string-cache::pair)
 	   
 	   (inline js-object?::bool ::obj)
+	   (inline js-jsobject?::bool ::obj)
 	   (inline js-object-mapped?::bool ::JsObject)
 	   (inline js-object-hashed?::bool ::JsObject)
 	   
@@ -1371,6 +1372,12 @@
    (and (%object? o)
 	(=u32 (JS-OBJECT-MODE-JSOBJECTTAG)
 	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSOBJECTTAG)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsobject? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (js-jsobject? o)
+   (and (%object? o) (eq? (object-class o) JsObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-mapped? ...                                            */

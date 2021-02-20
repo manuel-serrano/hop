@@ -233,7 +233,6 @@
 	("setUTCMinutes" ,j2s-date-setutcminutes date (any any any) #t #t)
 	;; object
 	("hasOwnProperty" js-has-own-property any (any) %this #f ,j2s-object-plain?)
-	("hasOwnProperty" js-has-own-property-jsobject any (object) %this #f ,j2s-object-plain?)
 	("isFrozen" ,j2s-object-isfrozen any (any) #f #f ,j2s-object-plain?)
 	)))
 

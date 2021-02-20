@@ -357,7 +357,7 @@
    (when js-pmap-valid
       (synchronize js-cache-table-lock
 	 (when #f
-	    (tprint "--- invalidate " reason " " who " len=" js-cache-index " ---------------------------")
+	    (tprint "--- invalidate " reason " [" who "] pcache-table-len=" js-cache-index " ---------------------------")
 	    (set! invcount (+fx 1 invcount))
 	    (tprint "invcount=" invcount))
 	 (let loop ((i (-fx js-cache-index 1)))
@@ -2063,7 +2063,7 @@
 		   ;; not found
 		   (lambda (o)
 		      #f))))))
-   
+
    (if (js-jsstring? p)
        (let ((pname (js-toname p %this)))
 	  (let ((cacher (js-name-pcacher pname)))

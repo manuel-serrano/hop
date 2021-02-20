@@ -1509,7 +1509,7 @@ static obj_t empty_vector = BVECTOR( &(_empty_vector.length ) );
 /*    GC has to be configured with INNER_POINTER activated.            */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_make_jsarray_sans_init( long size, uint32_t len, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
+bgl_make_jsarray_sans_init( long size, uint32_t len, uint32_t ilen, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
    long bsize = JSARRAY_SIZE + VECTOR_SIZE + ( (size-1) * OBJ_SIZE );
    BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)HOP_MALLOC( bsize );
    obj_t vector;
@@ -1522,7 +1522,7 @@ bgl_make_jsarray_sans_init( long size, uint32_t len, obj_t constrmap, obj_t __pr
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
    o->BgL_elementsz00 = empty_vector;
    o->BgL_lengthz00 = len;
-   o->BgL_ilenz00 = 0;
+   o->BgL_ilenz00 = ilen;
    BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)mode );
    BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), __proto__ );
   
@@ -1546,7 +1546,7 @@ bgl_make_jsarray_sans_init( long size, uint32_t len, obj_t constrmap, obj_t __pr
 /*---------------------------------------------------------------------*/
 obj_t
 bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj_t absent, uint32_t mode ) {
-   obj_t array = bgl_make_jsarray_sans_init( size, len, constrmap, __proto__, mode );
+   obj_t array = bgl_make_jsarray_sans_init( size, len, 0, constrmap, __proto__, mode );
    BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)COBJECT( array );
    obj_t vector = o->BgL_vecz00;
    int i;

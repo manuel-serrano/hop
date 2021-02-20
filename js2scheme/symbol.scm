@@ -736,7 +736,8 @@
 			    (id id))))
 		(set-cdr! (last-pair genv) (list decl))
 		(when (and (memq mode '(strict hopscript))
-			   (not (memq id this-symbols)))
+			   (not (memq id this-symbols))
+			   (config-get conf :warning-global))
 		   (warning/loc loc (format "variable unbound \"~s\"" id)))
 		(instantiate::J2SGlobalRef
 		   (id id)
