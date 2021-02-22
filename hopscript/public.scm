@@ -181,8 +181,10 @@
 	   (macro js-tointeger obj %this)
 	   (generic js-tointeger ::obj ::JsGlobalObject)
 	   (js-touint16::uint16 ::obj ::JsGlobalObject)
-	   
+
+	   (inline not-an-index::uint32)
 	   (generic js-toindex::uint32 ::obj)
+	   (inline js-toindex-fixnum::uint32 ::obj)
 	   (inline js-isindex?::bool ::uint32)
 	   (inline js-index?::bool ::obj)
 
@@ -1842,6 +1844,12 @@
       (else (js-touint16 (js-tointeger obj %this) %this))))
 
 ;*---------------------------------------------------------------------*/
+;*    not-an-index ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (not-an-index)
+   (-u32 #u32:0 #u32:1))
+
+;*---------------------------------------------------------------------*/
 ;*    js-toindex ...                                                   */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.4         */
@@ -1850,25 +1858,9 @@
 ;*    result. So, false is here denoted 1^32-1, as an uint32.          */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-toindex p)
-   
-   (define false (-u32 #u32:0 #u32:1))
-
    (cond
       ((fixnum? p)
-       (cond-expand
-	  (bint30
-	   (if (>=fx p 0)
-	       (fixnum->uint32 p)
-	       false))
-	  (bint32
-	   (let ((e (fixnum->elong p)))
-	      (if (and (>=elong e #e0) (<=elong e (bit-lshelong #e1 31)))
-		  (elong->uint32 e)
-		  false)))
-	  (else
-	   (if (and (>=fx p 0) (<fx p (-fx (bit-lsh 1 32) 1)))
-	       (fixnum->uint32 p)
-	       false))))
+       (js-toindex-fixnum p))
       ((flonum? p)
        (if (and (>=fl p 0.) (<fl p (exptfl 2. 31.)) (=fl (roundfl p) p))
 	   (cond-expand
@@ -1878,13 +1870,32 @@
 		   (llong->uint32 (flonum->llong p))))
 	      (else
 	       (flonum->uint32 p)))
-	   false))
+	   (not-an-index)))
       ((uint32? p)
        p)
       ((int32? p)
        (int32->uint32 p))
       (else
-       false)))
+       (not-an-index))))
+
+;*---------------------------------------------------------------------*/
+;*    js-toindex-fixnum ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (js-toindex-fixnum p)
+   (cond-expand
+      (bint30
+       (if (>=fx p 0)
+	   (fixnum->uint32 p)
+	   (not-an-index)))
+      (bint32
+       (let ((e (fixnum->elong p)))
+	  (if (and (>=elong e #e0) (<=elong e (bit-lshelong #e1 31)))
+	      (elong->uint32 e)
+	      (not-an-index))))
+      (else
+       (if (and (>=fx p 0) (<fx p (-fx (bit-lsh 1 32) 1)))
+	   (fixnum->uint32 p)
+	   (not-an-index)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-isindex? ...                                                  */

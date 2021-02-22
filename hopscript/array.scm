@@ -520,7 +520,7 @@
 	 (instantiateJsArray
 	    (vec '#())
 	    (__proto__ (js-object-proto %this))
-	    (cmap (js-not-a-cmap))
+	    (cmap js-array-cmap)
 	    (elements (vector
 			 ;; cannot be defined with js-bind! because
 			 ;; of bootstrap specificities
@@ -1028,12 +1028,10 @@
 ;*    js-array-string-set! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-string-set! arr::JsArray idx::obj val throw %this)
-   (with-access::JsArray arr (vec ilen)
-      (let* ((s (js-jsstring->string idx))
-	     (n (string->integer s)))
-	 (if (or (>fx n 0) (eq? idx (js-integer->jsstring 0)))
-	     (js-array-fixnum-set! arr n val throw %this)
-	     (js-array-put! arr idx val throw %this)))))
+   (let ((i::uint32 (js-toindex idx)))
+      (if (<u32 i (not-an-index))
+	  (js-array-fixnum-set! arr (uint32->fixnum i) val throw %this)
+	  (js-array-put! arr idx val throw %this))))
       
 ;*---------------------------------------------------------------------*/
 ;*    js-array-set! ...                                                */
@@ -2226,23 +2224,23 @@
 ;*    js-array-alloc ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-array-alloc::JsArray %this)
-   (with-access::JsGlobalObject %this (js-array-prototype)
+   (with-access::JsGlobalObject %this (js-array-prototype js-array-cmap)
       (instantiateJsArray
-	 (cmap (js-not-a-cmap))
+	 (cmap js-array-cmap)
 	 (__proto__ js-array-prototype))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-alloc-ctor ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-array-alloc-ctor::JsArray %this constructor::JsFunction)
-   (with-access::JsGlobalObject %this (js-array js-array-prototype js-array-pcache js-new-target)
+   (with-access::JsGlobalObject %this (js-array js-array-prototype js-array-pcache js-new-target js-array-cmap)
       (let ((proto (if (eq? constructor js-array)
 		       js-array-prototype
 		       (js-get-jsobject-name/cache constructor (& "prototype") #f %this
 			  (js-pcache-ref js-array-pcache 0)))))
 	 (set! js-new-target constructor)
 	 (instantiateJsArray
-	    (cmap (js-not-a-cmap))
+	    (cmap js-array-cmap)
 	    (__proto__ proto)))))
 
 ;*---------------------------------------------------------------------*/
@@ -2254,9 +2252,9 @@
 (define-inline (js-array-construct-alloc-small %this::JsGlobalObject len::uint32)
    (cond-expand
       ((and bigloo-c (not devel) (not debug))
-       (with-access::JsGlobalObject %this (js-array-prototype)
+       (with-access::JsGlobalObject %this (js-array-prototype js-array-cmap)
 	  ($js-make-jsarray (uint32->fixnum len) len
-	     (js-not-a-cmap)
+	     js-array-cmap
 	     js-array-prototype
 	     (js-absent) (js-array-default-mode))))
       (else
@@ -2278,9 +2276,9 @@
 (define-inline (js-array-construct-alloc-small-sans-init %this::JsGlobalObject len::uint32)
    (cond-expand
       ((and bigloo-c (not devel) (not debug))
-       (with-access::JsGlobalObject %this (js-array-prototype)
+       (with-access::JsGlobalObject %this (js-array-prototype js-array-cmap)
 	  ($js-make-jsarray-sans-init (uint32->fixnum len) len #u32:0
-	     (js-not-a-cmap)
+	     js-array-cmap
 	     js-array-prototype
 	     (js-array-default-mode))))
       (else
@@ -2302,9 +2300,9 @@
 (define-inline (js-array-construct-alloc-small-sans-init-len %this::JsGlobalObject len)
    (cond-expand
       ((and bigloo-c (not devel) (not debug))
-       (with-access::JsGlobalObject %this (js-array-prototype)
+       (with-access::JsGlobalObject %this (js-array-prototype js-array-cmap)
 	  ($js-make-jsarray-sans-init (uint32->fixnum len) len len
-	     (js-not-a-cmap)
+	     js-array-cmap
 	     js-array-prototype
 	     (js-array-default-mode))))
       (else
@@ -2437,8 +2435,9 @@
 ;*---------------------------------------------------------------------*/
 (define (js-vector->jsarray::JsArray vec::vector %this::JsGlobalObject)
    (let ((len (vector-length vec)))
-      (with-access::JsGlobalObject %this (js-array-prototype)
+      (with-access::JsGlobalObject %this (js-array-prototype js-array-cmap)
 	 (instantiateJsArray
+	    (cmap js-array-cmap)
 	    (__proto__ js-array-prototype)
 	    (length (fixnum->uint32 len))
 	    (ilen (fixnum->uint32 len))
@@ -2496,12 +2495,14 @@
 ;*    js-vector->jsarray/proto ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-vector->jsarray/proto::JsArray vec::vector proto %this::JsGlobalObject)
-   (let* ((len (vector-length vec)))
-      (instantiateJsArray
-	 (__proto__ proto)
-	 (length (fixnum->uint32 len))
-	 (ilen (fixnum->uint32 len))
-	 (vec vec))))
+   (with-access::JsGlobalObject %this (js-array-cmap)
+      (let* ((len (vector-length vec)))
+	 (instantiateJsArray
+	    (cmap js-array-cmap)
+	    (__proto__ proto)
+	    (length (fixnum->uint32 len))
+	    (ilen (fixnum->uint32 len))
+	    (vec vec)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-vector->sparse-jsarray ...                                    */
@@ -2520,13 +2521,15 @@
    (let ((mode (js-array-default-mode)))
       (cond-expand
 	 ((and bigloo-c (not devel) (not debug))
-	  (with-access::JsGlobalObject %this (js-array-prototype)
-	     ($js-make-jsarray (DEFAULT-EMPTY-ARRAY-SIZE) #u32:0 (js-not-a-cmap)
+	  (with-access::JsGlobalObject %this (js-array-prototype js-array-cmap)
+	     ($js-make-jsarray (DEFAULT-EMPTY-ARRAY-SIZE) #u32:0
+		js-array-cmap
 		js-array-prototype (js-absent) mode)))
 	 (else
-	  (with-access::JsGlobalObject %this (js-array-prototype)
+	  (with-access::JsGlobalObject %this (js-array-prototype js-array-cmap)
 	     (let* ((vec (make-vector (DEFAULT-EMPTY-ARRAY-SIZE) (js-absent)))
 		    (o (instantiate::JsArray
+			  (cmap js-array-cmap)
 			  (length #u32:0)
 			  (ilen #u32:0)
 			  (vec vec))))
@@ -2544,12 +2547,15 @@
 ;*    js-properties-names ::JsArray ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-names obj::JsArray enump %this)
-   (js-array-update-length-property! obj)
+   ;;(js-array-update-length-property! obj)
    (with-access::JsArray obj (vec ilen)
       (let loop ((i (-fx (uint32->fixnum ilen) 1))
 		 (acc '()))
 	 (if (=fx i -1)
-	     (append! acc (call-next-method))
+	     (let ((onames (call-next-method)))
+		(if (and (not enump) (js-object-mapped? obj))
+		    (append! acc (cons (& "length") onames))
+		    (append! acc onames)))
 	     (loop (-fx i 1) (cons (js-integer->jsstring i) acc))))))
 
 ;*---------------------------------------------------------------------*/

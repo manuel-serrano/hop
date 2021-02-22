@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 25 17:49:28 2017                          */
 ;*    Last change :  Thu Mar 28 15:57:16 2019 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript regexp functions            */
 ;*=====================================================================*/
@@ -50,10 +50,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-regexp-test ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (j2s-regexp-test obj args mode return conf)
-   (when (isa? obj J2SLiteralCnst)
-      (with-access::J2SLiteralCnst obj (index val)
-	 `(js-regexp-literal-test (js-cnst-table-ref ,index)
-	     ,@(map (lambda (arg)
-		       (j2s-scheme arg mode return conf))
-		  args)))))
+(define (j2s-regexp-test obj args mode return ctx)
+   (if (isa? obj J2SLiteralCnst)
+       (with-access::J2SLiteralCnst obj (index val)
+	  `(js-regexp-literal-test (js-cnst-table-ref ,index)
+	      ,@(map (lambda (arg)
+			(j2s-scheme arg mode return ctx))
+		   args)))
+       (with-access::J2SLiteralCnst obj (index val)
+	  `(js-regexp-test ,(j2s-scheme obj mode return ctx)
+	      ,@(map (lambda (arg)
+			(j2s-scheme arg mode return ctx))
+		   args)))))

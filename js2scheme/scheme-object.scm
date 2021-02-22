@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr  3 14:42:40 2020                          */
 ;*    Last change :  Fri Apr  3 17:15:12 2020 (serrano)                */
-;*    Copyright   :  2020 Manuel Serrano                               */
+;*    Copyright   :  2020-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Object functions            */
 ;*=====================================================================*/
@@ -53,6 +53,10 @@
 			  ,(j2s-scheme (car args) mode return conf)
 			  ,(j2s-scheme (cadr args) mode return conf)
 			  %this))))
+	       ((string=? val "keys")
+		(when (=fx (length args) 1)
+		   `(js-ownkeys ,(j2s-scheme (car args) mode return conf)
+		       %this)))
 	       (else
 		#f))))))
 

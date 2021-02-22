@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
 ;*    Last change :  Sat Mar  7 06:30:39 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
 ;*=====================================================================*/
@@ -39,14 +39,15 @@
 	   (js-new-regexp1/cache ::JsGlobalObject ::obj ::struct)
 	   (inline js-regexp?::bool ::obj)
 	   (js-regexp->jsregexp ::regexp ::JsGlobalObject)
+	   (inline js-regexp-test this::JsRegExp string %this)
 	   (js-regexp-literal-test::bool ::JsRegExp ::obj ::JsGlobalObject)
-	   (js-regexp-prototype-exec-global this::JsRegExp string::obj %this::JsGlobalObject)
-	   (js-regexp-prototype-exec-no-global this::JsRegExp string::obj %this::JsGlobalObject)
+	   (js-regexp-prototype-exec-global ::JsRegExp ::obj ::JsGlobalObject)
+	   (js-regexp-prototype-exec-no-global ::JsRegExp ::obj ::JsGlobalObject)
 	   (js-regexp-prototype-exec ::JsRegExp ::obj ::JsGlobalObject)
 	   (js-regexp-prototype-maybe-exec ::obj ::obj ::JsGlobalObject cache)
 	   (inline js-regexp-prototype-exec-as-bool::bool ::JsRegExp ::obj ::JsGlobalObject)
 	   (js-regexp-prototype-maybe-exec-as-bool::bool ::JsRegExp ::obj ::JsGlobalObject cache)
-	   (js-regexp-prototype-exec-for-match-string %this::JsGlobalObject this::JsRegExp string::obj))
+	   (js-regexp-prototype-exec-for-match-string ::JsGlobalObject ::JsRegExp ::obj))
 
    ;; export for memory profiling
    (export (js-regexp-construct ::JsGlobalObject pattern uflags loc)))
@@ -775,6 +776,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-substring s start end utf8 %this)
    (cond
+      ((=fx start end)
+       (& ""))
       ((and (=fx end (+fx start 1)) (not utf8))
        (js-jsstring-fromcharcode
 	  (char->integer (string-ref s start)) %this))
@@ -788,7 +791,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-regexp-prototype-exec-no-global this::JsRegExp string::obj %this::JsGlobalObject)
    
-   (define (match/vector r l clen enc jss s)
+   (define (match/vector r l clen enc jss s offset)
       (if (<fx l 0)
 	  (js-null)
 	  ;; 10
@@ -819,8 +822,8 @@
 			 (vector-set! vec i
 			    (if (>=fx (vector-ref r j) 0)
 				(js-substring s
-				   (vector-ref r j)
-				   (vector-ref r (+fx j 1))
+				   (+fx offset (vector-ref r j))
+				   (+fx offset (vector-ref r (+fx j 1)))
 				   enc
 				   %this)
 				(js-undefined)))
@@ -831,29 +834,35 @@
 		      (loop (+fx i 1))))
 		a))))
    
-   (with-access::JsGlobalObject %this (js-regexp-pcache js-regexp-positions)
-      (with-access::JsRegExp this (rx flags)
-	 (let* ((jss (js-tojsstring string %this))
-		(s (js-jsstring->string jss))
-		(len (string-length s))
-		(enc (isa? jss JsStringLiteralUTF8))
-		(clen (regexp-capture-count rx)))
-	    (cond
-	       ((>=fx clen 0)
-		(when (>=fx (*fx (+fx clen 1) 2)
-			 (vector-length js-regexp-positions))
-		   (set! js-regexp-positions
-		      (make-vector (* (+fx clen 1) 2))))
-		(let* ((r js-regexp-positions)
-		       (l (pregexp-match-n-positions! rx s r 0 len)))
-		   (match/vector r l clen enc jss s)))
-	       (else
-		(let ((p (pregexp-match-positions rx s 0)))
-		   (if (pair? p)
-		       (let* ((v (match-positions->vector p))
-			      (l (/fx (vector-length v) 2)))
-			  (match/vector v l l enc jss s))
-		       (js-null)))))))))
+   (define (exec-string this jss s beg len offset enc)
+      (with-access::JsGlobalObject %this (js-regexp-pcache js-regexp-positions)
+	 (with-access::JsRegExp this (rx flags)
+	    (let ((clen (regexp-capture-count rx)))
+	       (cond
+		  ((>=fx clen 0)
+		   (when (>=fx (*fx (+fx clen 1) 2)
+			    (vector-length js-regexp-positions))
+		      (set! js-regexp-positions
+			 (make-vector (* (+fx clen 2) 2))))
+		   (let* ((r js-regexp-positions)
+			  (l (pregexp-match-n-positions! rx s r beg len offset)))
+		      (match/vector r l clen enc jss s offset)))
+		  (else
+		   (let ((p (pregexp-match-positions rx s beg len offset)))
+		      (if (pair? p)
+			  (let* ((v (match-positions->vector p))
+				 (l (/fx (vector-length v) 2)))
+			     (match/vector v l l enc jss s offset))
+			  (js-null)))))))))
+   
+   (if (and (js-jsstring? string) (js-jsstring-substring? string))
+       (with-access::JsStringLiteralSubstring string (left right length)
+	  (exec-string this string left 0 (uint32->fixnum length) right #f))
+       (let* ((jss (js-tojsstring string %this))
+	      (s (js-jsstring->string jss))
+	      (len (string-length s))
+	      (enc (isa? jss JsStringLiteralUTF8)))
+	  (exec-string this jss s 0 len 0 enc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    match-positions->vector ...                                      */
@@ -1155,7 +1164,13 @@
    (lambda (this string::obj)
       (if (not (js-regexp? this))
 	  (js-raise-type-error %this "Not a RegExp ~s" this)
-	  (not (eq? (js-regexp-prototype-exec this string %this) (js-null))))))
+	  (js-regexp-test this string %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-regexp-test ...                                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-regexp-test this::JsRegExp string %this)
+   (not (eq? (js-regexp-prototype-exec this string %this) (js-null))))
 
 ;*---------------------------------------------------------------------*/
 ;*    literal-test-pos ...                                             */
