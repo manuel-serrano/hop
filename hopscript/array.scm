@@ -5204,17 +5204,12 @@
 ;*    js-array-prototype-slice ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-slice this::obj start end %this::JsGlobalObject)
-   (tprint "proto slice start=" start " end=" end " obj=" (typeof this)
-      " " (js-array? this) " " (js-object-mode-plain? this)
-      " " (js-object-mode-inline? this))
    (if (and (js-array? this)
 	    (js-object-mode-plain? this)
 	    (js-object-mode-inline? this)
 	    (fixnum? start))
        (cond
 	  ((fixnum? end)
-	   (with-access::JsGlobalObject %this (js-array-prototype)
-	      (tprint "ICI... " (eq? (js-object-proto this) js-array-prototype)))
 	   (js-array-inlined-slice2 this start end %this))
 	  ((eq? end (js-undefined))
 	   (with-access::JsArray this (ilen)

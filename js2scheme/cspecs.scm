@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
 ;*    Last change :  Sun Apr 19 08:23:15 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
 ;*    This analysis scans the AST to find property assignments and     */
@@ -68,9 +68,9 @@
 		       ;; fast code
 		       (cspecs
 			  ;; access
-			  '(imap emap cmap vtable)
+			  (config-get conf :cspecs-get '(imap emap cmap vtable))
 			  ;; assig
-			  '(imap emap cmap nmap amap vtable)
+			  (config-get conf :cspecs-put '(imap emap cmap nmap amap vtable))
 			  ;; assiggop
 			  '(imap cmap)
 			  ;; assignew

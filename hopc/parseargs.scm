@@ -481,6 +481,16 @@
 		(lambda (ip)
 		   (hopc-j2s-flags-set!
 		      (cons* :cspecs (read ip) (hopc-j2s-flags))))))
+	    (("--js-cspecs-get" ?cspecs (help "Use get specs"))
+	     (call-with-input-string cspecs
+		(lambda (ip)
+		   (hopc-j2s-flags-set!
+		      (cons* :cspecs-get (read ip) (hopc-j2s-flags))))))
+	    (("--js-cspecs-put" ?cspecs (help "Use put specs"))
+	     (call-with-input-string cspecs
+		(lambda (ip)
+		   (hopc-j2s-flags-set!
+		      (cons* :cspecs-put (read ip) (hopc-j2s-flags))))))
 	    (("--tls" (help "Thread local storage"))
 	     (cond-expand
 		(enable-tls
