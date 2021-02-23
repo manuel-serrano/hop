@@ -285,7 +285,6 @@
 (define-inline (js-create-vector len)
    (make-vector len (js-absent)))
 
-
 ;*---------------------------------------------------------------------*/
 ;*    gc-cleanup-inline-vector! ...                                    */
 ;*---------------------------------------------------------------------*/
@@ -2234,14 +2233,21 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-alloc-ctor::JsArray %this constructor::JsFunction)
    (with-access::JsGlobalObject %this (js-array js-array-prototype js-array-pcache js-new-target js-array-cmap)
-      (let ((proto (if (eq? constructor js-array)
-		       js-array-prototype
-		       (js-get-jsobject-name/cache constructor (& "prototype") #f %this
-			  (js-pcache-ref js-array-pcache 0)))))
-	 (set! js-new-target constructor)
-	 (instantiateJsArray
-	    (cmap js-array-cmap)
-	    (__proto__ proto)))))
+      (if (eq? constructor js-array)
+	  (begin
+	     (set! js-new-target constructor)
+	     (instantiateJsArray
+		(cmap js-array-cmap)
+		(__proto__ js-array-prototype)))
+	  (let ((proto (js-get-jsobject-name/cache constructor (& "prototype") #f %this
+			  (js-pcache-ref js-array-pcache 0))))
+	     (set! js-new-target constructor)
+	     (let ((arr (instantiateJsArray
+			   (cmap js-array-cmap)
+			   (__proto__ proto))))
+		(unless (eq? proto js-array-prototype)
+		   (js-object-mode-plain-set! arr #f))
+		arr)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-construct-alloc-small ...                               */
@@ -2495,14 +2501,17 @@
 ;*    js-vector->jsarray/proto ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-vector->jsarray/proto::JsArray vec::vector proto %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (js-array-cmap)
-      (let* ((len (vector-length vec)))
-	 (instantiateJsArray
-	    (cmap js-array-cmap)
-	    (__proto__ proto)
-	    (length (fixnum->uint32 len))
-	    (ilen (fixnum->uint32 len))
-	    (vec vec)))))
+   (with-access::JsGlobalObject %this (js-array-cmap js-array-prototype)
+      (let* ((len (vector-length vec))
+	     (arr (instantiateJsArray
+		     (cmap js-array-cmap)
+		     (__proto__ proto)
+		     (length (fixnum->uint32 len))
+		     (ilen (fixnum->uint32 len))
+		     (vec vec))))
+	 (unless (eq? proto js-array-prototype)
+	    (js-object-mode-plain-set! arr #f))
+	 arr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-vector->sparse-jsarray ...                                    */
@@ -5195,12 +5204,17 @@
 ;*    js-array-prototype-slice ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-slice this::obj start end %this::JsGlobalObject)
+   (tprint "proto slice start=" start " end=" end " obj=" (typeof this)
+      " " (js-array? this) " " (js-object-mode-plain? this)
+      " " (js-object-mode-inline? this))
    (if (and (js-array? this)
 	    (js-object-mode-plain? this)
 	    (js-object-mode-inline? this)
 	    (fixnum? start))
        (cond
 	  ((fixnum? end)
+	   (with-access::JsGlobalObject %this (js-array-prototype)
+	      (tprint "ICI... " (eq? (js-object-proto this) js-array-prototype)))
 	   (js-array-inlined-slice2 this start end %this))
 	  ((eq? end (js-undefined))
 	   (with-access::JsArray this (ilen)
