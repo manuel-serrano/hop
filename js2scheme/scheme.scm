@@ -2093,7 +2093,7 @@
 		   `(with-access::JsObject ,otmp (cmap elements)
 		       (if (eq? cmap (js-pcache-cmap (js-pcache-ref %pcache ,cache)))
 			   (let* ((,els elements)
-				  (,idx (js-pcache-index (js-pcache-ref %pcache ,cache))))
+				  (,idx (js-pcache-cindex (js-pcache-ref %pcache ,cache))))
 			      ,(if (eq? retval 'new)
 				   (let ((new (gensym '%new)))
 				      `(let* ((,tmp (vector-ref ,els ,idx))
@@ -2267,7 +2267,7 @@
 		      `(with-access::JsObject ,otmp (cmap elements)
 			  (if (eq? cmap (js-pcache-cmap (js-pcache-ref %pcache ,cache)))
 			      (let* ((,els elements)
-				     (,idx (js-pcache-index (js-pcache-ref %pcache ,cache)))
+				     (,idx (js-pcache-cindex (js-pcache-ref %pcache ,cache)))
 				     (,tmp (vector-ref ,els ,idx))
 				     (,res ,(js-binop2 loc op typea
 					       (instantiate::J2SHopRef
@@ -3168,7 +3168,7 @@
 					    (props)
 					 (vector-length props)))))
 		      (set! ,offset
-			 (js-pcache-index
+			 (js-pcache-nindex
 			    (js-pcache-ref %pcache ,(node-cache (car nodes)))))
 		      (set! ,%cmap cmap)
 		      (js-validate-pmap-pcache! (js-pcache-ref %pcache ,pcache))

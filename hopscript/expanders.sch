@@ -22,8 +22,6 @@
 	     ,js-make-pcache-table-expander))
    (eval `(define-expander js-pcache-ref
 	     ,js-pcache-ref-expander))
-   (eval `(define-expander js-pcache-pctable
-	     ,js-pcache-pctable-expander))
    (eval `(define-expander js-pcache-imap
 	     ,js-pcache-imap-expander))
    (eval `(define-expander js-pcache-cmap
@@ -38,8 +36,18 @@
 	     ,js-pcache-emap-expander))
    (eval `(define-expander js-pcache-amap
 	     ,js-pcache-amap-expander))
-   (eval `(define-expander js-pcache-index
-	     ,js-pcache-index-expander))
+   (eval `(define-expander js-pcache-iindex
+	     ,js-pcache-iindex-expander))
+   (eval `(define-expander js-pcache-eindex
+	     ,js-pcache-eindex-expander))
+   (eval `(define-expander js-pcache-cindex
+	     ,js-pcache-cindex-expander))
+   (eval `(define-expander js-pcache-pindex
+	     ,js-pcache-pindex-expander))
+   (eval `(define-expander js-pcache-nindex
+	     ,js-pcache-nindex-expander))
+   (eval `(define-expander js-pcache-aindex
+	     ,js-pcache-aindex-expander))
    (eval `(define-expander js-pcache-vindex
 	     ,js-pcache-vindex-expander))
    (eval `(define-expander js-pcache-owner
@@ -62,9 +70,6 @@
 	     ,js-cnst-table-expander))
    (eval `(define-expander js-cnst-table-ref
 	     ,js-cnst-table-ref-expander))
-   
-   (eval `(define-expander js-pcache-prefetch-index
-	     ,js-pcache-prefetch-index-expander))
    
    (eval `(define-expander js-profile-log-cache
 	     ,js-profile-log-cache-expander))

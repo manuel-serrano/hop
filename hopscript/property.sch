@@ -39,8 +39,6 @@
    js-make-pcache-table-expander)
 (define-expander js-pcache-ref
    js-pcache-ref-expander)
-(define-expander js-pcache-pctable
-   js-pcache-pctable-expander)
 (define-expander js-pcache-imap
    js-pcache-imap-expander)
 (define-expander js-pcache-cmap
@@ -53,17 +51,24 @@
    js-pcache-nmap-expander)
 (define-expander js-pcache-xmap
    js-pcache-xmap-expander)
-(define-expander js-pcache-index
-   js-pcache-index-expander)
+(define-expander js-pcache-iindex
+   js-pcache-iindex-expander)
+(define-expander js-pcache-eindex
+   js-pcache-eindex-expander)
+(define-expander js-pcache-cindex
+   js-pcache-cindex-expander)
+(define-expander js-pcache-pindex
+   js-pcache-pindex-expander)
+(define-expander js-pcache-nindex
+   js-pcache-nindex-expander)
+(define-expander js-pcache-aindex
+   js-pcache-aindex-expander)
 (define-expander js-pcache-vindex
    js-pcache-vindex-expander)
 (define-expander js-pcache-owner
    js-pcache-owner-expander)
 (define-expander js-pcache-method
    js-pcache-method-expander)
-
-(define-expander js-pcache-prefetch-index
-   js-pcache-prefetch-index-expander)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-getprototypeof ...                                            */

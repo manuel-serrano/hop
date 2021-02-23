@@ -602,7 +602,10 @@
 		       in (language (car srcs))))))
 	     (else
 	      (let* ((files (cdr srcs))
-		     (ip (open-input-file (car srcs)))
+		     (ip (let ((ip (open-input-file (car srcs))))
+			    (if (input-port? ip)
+				ip
+				(error "hopc" "Cannot open file" (car srcs)))))
 		     (in (open-input-procedure
 			    (lambda ()
 			       (let loop ()
