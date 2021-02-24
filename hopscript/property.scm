@@ -376,14 +376,26 @@
 ;*    classes (see bug nodejs/simple/test-stream2-readable-wrap.js).   */
 ;*---------------------------------------------------------------------*/
 (define (js-invalidate-cache-method! cmap::JsConstructMap idx::long reason who)
-   (with-access::JsConstructMap cmap (methods transitions)
+   (with-access::JsConstructMap cmap (methods transitions %id)
       (when (vector-ref methods idx)
 	 (vector-set! methods idx #f)
 	 (for-each (lambda (tr)
 		      (let ((ncmap (transition-nextmap tr)))
 			 (js-invalidate-cache-method! ncmap idx reason who)))
-	    transitions))))
-   
+	    transitions)
+	 #t)))
+
+;*---------------------------------------------------------------------*/
+;*    js-invalidate-cache-pmap-method! ...                             */
+;*    -------------------------------------------------------------    */
+;*    Method invalidation must be proppagated to all the sub hidden    */
+;*    classes (see bug nodejs/simple/test-stream2-readable-wrap.js).   */
+;*---------------------------------------------------------------------*/
+(define (js-invalidate-cache-pmap-method! %this::JsGlobalObject
+	   cmap::JsConstructMap idx::long reason who)
+   (when (js-invalidate-cache-method! cmap idx reason who)
+      (js-invalidate-pmap-pcaches! %this reason who)))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-init-property! ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -2890,8 +2902,7 @@
 		    v)
 		   (else
 		    ;; invalidate cache method and cache
-		    (js-invalidate-cache-method! cmap i "update-mapped with new function" name)
-		    (js-invalidate-pmap-pcaches! %this "update-mapped.1" name)
+		    (js-invalidate-cache-pmap-method! %this cmap i "update-mapped with new function" name)
 		    (reset-cmap-vtable! cmap)
 		    (when cache
 		       (js-pcache-update-direct! cache i o #t))
@@ -2899,8 +2910,7 @@
 		    v)))
 	       ((js-function? (vector-ref methods i))
 		;; invalidate cache method and cache
-		(js-invalidate-cache-method! cmap i "update-mapped with non function" name)
-		(js-invalidate-pmap-pcaches! %this "update-mapped.2" name)
+		(js-invalidate-cache-pmap-method! %this cmap i "update-mapped with non function" name)
 		(reset-cmap-vtable! cmap)
 		(when cache
 		   (js-pcache-update-direct! cache i o #t))
@@ -3005,7 +3015,7 @@
 		  ((or (not cachefun) (not (js-function? v)))
 		   (when (js-function? (vector-ref methods index))
 		      ;; invalidate cache method and cache
-		      (js-invalidate-cache-method! nextmap index
+		      (js-invalidate-cache-pmap-method! %this nextmap index
 			 "extend-mapped with non-function" v)
 		      (reset-cmap-vtable! nextmap))
 		   (when cache
@@ -3015,7 +3025,7 @@
 		      (js-pcache-next-direct! cache o nextmap index)))
 		  ((eq? (vector-ref methods index) #f)
 		   ;; invalidate the pmap caches as it might
-		   ;; be that this function will be now be used
+		   ;; be that this function will be now used
 		   ;; when searching for a prototype chain
 		   (when cache
 		      (js-pcache-next-direct! cache o nextmap index)))
@@ -3028,7 +3038,7 @@
 		   ;; see the prototype initialization
 		   ;; in js-make-function@function.scm
 		   ;; invalidate cache method and cache
-		   (js-invalidate-cache-method! nextmap index
+		   (js-invalidate-cache-pmap-method! %this nextmap index
 		      "extend-mapped polymorphic threshold" name)
 		   (reset-cmap-vtable! nextmap)
 		   (when cache
@@ -3083,7 +3093,7 @@
 				    ;; validate cache method and don't cache
 				    (vector-set! methods index v)
 				    (begin
-				       (js-invalidate-cache-method! cmap index
+				       (js-invalidate-cache-pmap-method! %this cmap index
 					  "extend-mapped single non-function" name)
 				       (when cache
 					  (js-pcache-next-direct! cache o cmap index))))
@@ -3100,7 +3110,7 @@
 				       (vector-set! methods index v)
 				       ;; invalidate cache method and cache
 				       (begin
-					  (js-invalidate-cache-method! nextmap index
+					  (js-invalidate-cache-pmap-method! %this nextmap index
 					     "exptend-mapped non-function" name)
 					  (when cache
 					     (js-pcache-next-direct! cache o nextmap index))))
@@ -4781,30 +4791,50 @@
 			   (cond
 			      ((or (isa? el-or-desc JsAccessorDescriptor)
 				   (isa? el-or-desc JsWrapperDescriptor))
-			       (with-access::JsPropertyCache ccache (pmap emap cmap function)
-				  (set! function #f)
-				  (set! pmap (js-not-a-pmap))
-				  (set! emap #t)
-				  (set! cmap #t))
+			       (if (eq? name (& "getAt"))
+				   (tprint "MISS.1"))
+;* 			       (with-access::JsPropertyCache ccache (pmap emap cmap function) */
+;* 				  (set! function #f)                   */
+;* 				  (set! emap #t)                       */
+;* 				  (set! cmap #t)                       */
+;* 				  (set! pmap (js-not-a-pmap)))         */
 			       (jsapply (js-property-value o obj name el-or-desc %this)))
 			      ((js-function? (vector-ref methods i))
+;* 			       (when (eq? name (& "getAt"))            */
+;* 				  (with-access::JsPropertyCache ccache (emap cmap pmap pindex (cmethod method) function) */
+;* 				     (tprint "MISS.2 " name " eq=" (eq? o obj) */
+;* 					" pmap="                       */
+;* 					(when (isa? pmap JsConstructMap) */
+;* 					   (with-access::JsConstructMap pmap (%id) */
+;* 					      %id))                    */
+;* 					" cmap="                       */
+;* 					(when (isa? cmap JsConstructMap) */
+;* 					   (with-access::JsConstructMap cmap (%id) */
+;* 					      %id))                    */
+;* 					" omap="                       */
+;* 					(when (isa? omap JsConstructMap) */
+;* 					   (with-access::JsConstructMap omap (%id) */
+;* 					      %id)))))                 */
 			       (let ((f (funval obj el-or-desc)))
 				  (cond
 				     ((js-function? f)
+				      
 				      (with-access::JsFunction f (len procedure arity info)
 					 (cond
 					    ((<fx arity 0)
 					     ;; varargs functions, currently not cached...
-					     (with-access::JsPropertyCache ccache (pmap emap cmap)
-						(set! pmap (js-not-a-pmap))
+					     '(with-access::JsPropertyCache ccache (pmap emap cmap)
 						(set! emap #t)
-						(set! cmap #t)))
+						(set! cmap #t)
+						(set! pmap (js-not-a-pmap))))
 					    ((=fx (procedure-arity procedure) (+fx 1 (length args)))
-					     (with-access::JsPropertyCache ccache (pmap pindex (cmethod method) function)
+					     (with-access::JsPropertyCache ccache (emap cmap pmap pindex (cmethod method) function)
 						;; correct arity, put in cache
 						(js-validate-pmap-pcache! ccache)
+;* 						(set! emap #t)         */
+;* 						(set! cmap #f)         */
 						(set! pmap omap)
-						(set! pindex i)
+;* 						(set! pindex i)        */
 						(set! function f)
 						(let ((proc (if (js-method? f)
 								(with-access::JsMethod f (method) method)
@@ -4817,32 +4847,65 @@
 						(length args))
 					     =>
 					     (lambda (proc)
-						(with-access::JsPropertyCache ccache (pmap pindex (cmethod method) function)
+						(with-access::JsPropertyCache ccache (emap cmap pmap pindex (cmethod method) function)
 						   ;; correct arity, put in cache
 						   (js-validate-pmap-pcache! ccache)
+;* 						   (set! emap #t)      */
+;* 						   (set! cmap #f)      */
 						   (set! pmap omap)
-						   (set! pindex i)
+;* 						   (set! pindex i)     */
 						   (set! function f)
 						   (procedure-attr-set! proc f)
 						   (set! cmethod proc))))
 					    (else
 					     ;; arity missmatch, never cache
-					     (with-access::JsPropertyCache ccache (pmap)
+					     '(with-access::JsPropertyCache ccache (pmap emap cmap)
+						(set! emap #t)
+						(set! cmap #t)
 						(set! pmap (js-not-a-pmap)))))))
 				     ((procedure? f)
 				      (error "js-method-jsobject-call/cache-fill" "should not be here" f)))
 				  (jsapply f)))
 			      ((eq? obj o)
-			       (with-access::JsPropertyCache ccache (cmap cindex)
+			       (with-access::JsPropertyCache ccache (cmap pmap emap cindex)
 				  ;; invalidate the call cache and update the
 				  ;; object cache
+;* 				  (set! emap #t)                       */
+;* 				  (set! pmap (js-not-a-pmap))          */
+;* 				  (unless (eq? pmap (js-not-a-pmap))   */
+;* 				     (if (eq? name (& "getAt"))        */
+;* 					 (begin                        */
+;* 					    (tprint "MISS.3 " name     */
+;* 					       " pmap="                */
+;* 					       (when (isa? pmap JsConstructMap) */
+;* 						  (with-access::JsConstructMap pmap (%id) */
+;* 						     %id))             */
+;* 					       " cmap="                */
+;* 					       (when (isa? cmap JsConstructMap) */
+;* 						  (with-access::JsConstructMap cmap (%id) */
+;* 						     %id))             */
+;* 					       " omap="                */
+;* 					       (when (isa? omap JsConstructMap) */
+;* 						  (with-access::JsConstructMap omap (%id) */
+;* 						     %id))))           */
+;* 					 (set! pmap (js-not-a-pmap)))) */
 				  (set! cmap omap)
 				  (set! cindex i)
 				  (jsapply (funval obj el-or-desc))))
 			      (else
-			       (jsapply (funval obj el-or-desc)))))))))
+			       (with-access::JsPropertyCache ccache (pmap cmap emap)
+				  ;; invalidate the call cache and update the
+				  ;; object cache
+				  (set! cmap #t)
+				  (set! emap #t)
+				  (set! pmap (js-not-a-pmap))
+				  (jsapply (funval obj el-or-desc))))))))))
 	    ;; hash search
 	    (lambda (obj e)
+;* 	       (with-access::JsPropertyCache ccache (cmap emap pmap)   */
+;* 		  (set! pmap (js-not-a-pmap))                          */
+;* 		  (set! emap #t)                                       */
+;* 		  (set! cmap #t))                                      */
 	       (let ((d (cell-ref e)))
 		  (if (isa? d JsPropertyDescriptor)
 		      (jsapply (js-property-value o obj name d %this))
