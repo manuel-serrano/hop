@@ -1920,10 +1920,14 @@
 ;*    node-type ::J2SClass ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SClass env::pair-nil fix::cell)
-   (with-access::J2SClass this (expr decl)
-      (call-default-walker)
+   (with-access::J2SClass this (expr decl super elements)
+      (for-each (lambda (e)
+		   (node-type e env fix))
+	 elements)
       (when decl (decl-vtype-add! decl 'function fix))
-      (expr-type-add! this env fix 'class)))
+      (multiple-value-bind (tys env bki)
+	 (node-type super env fix)
+	 (expr-type-add! this env fix 'class))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SClassElement ...                                  */
@@ -2313,7 +2317,7 @@
    (with-access::J2SClass this (decl)
       (when decl
 	 (force-type! decl from to cell final)))
-   (call-next-method))
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ::J2SPostfix ...                                     */
