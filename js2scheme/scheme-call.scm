@@ -81,7 +81,9 @@
 	("indexOf" js-jsstring-maybe-indexof0 any (any) %this #t)
 	("lastIndexOf" js-jsstring-lastindexof string (string (any +nan.0)) %this)
 	("lastIndexOf" js-jsstring-maybe-lastindexof string (any (any +nan.0)) %this #t)
+	("substring" ,j2s-jsstring-substring string (any) %this #f)
 	("substring" ,j2s-jsstring-substring string (any any) %this #f)
+	("substring" js-jsstring-maybe-substring1 any (any) %this #t)
 	("substring" js-jsstring-maybe-substring any (any any) %this #t)
 	("substr" ,j2s-jsstring-substr string (any any) %this)
 	("substr" ,j2s-jsstring-substr string (any (any (js-undefined))) %this)
@@ -119,7 +121,7 @@
 	("padEnd" ,j2s-jsstring-maybe-padend any (any any) #t)
 	("padEnd" ,j2s-jsstring-padend string (any any) #t)
 	;; regexp
-	("test" ,j2s-regexp-test regexp (any) %this)
+	("test" ,j2s-regexp-test regexp (any) %this #f ,j2s-regexp-plain?)
 	("exec" js-regexp-prototype-exec regexp (any) %this #f ,j2s-regexp-plain?)
 	("exec" js-regexp-prototype-maybe-exec any (any) %this #t ,j2s-regexp-plain?)
 	;; array methods

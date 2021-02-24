@@ -427,7 +427,7 @@
 	     (let ((omap cmap))
 		(cond
 		   ((eq? omap pmap)
-		    (let ((idx (js-pcache-index cache)))
+		    (let ((idx (js-pcache-pindex cache)))
 		       (with-access::JsObject (js-pcache-owner cache) (elements)
 			  (cond-expand
 			     (profile
@@ -435,7 +435,7 @@
 			      (js-profile-log-index idx)))
 			  (vector-ref elements idx))))
 		   ((eq? omap amap)
-		    (let* ((idx (js-pcache-index cache))
+		    (let* ((idx (js-pcache-aindex cache))
 			   (propowner (js-pcache-owner cache)))
 		       (with-access::JsObject propowner (elements)
 			  (let ((desc (vector-ref elements idx)))

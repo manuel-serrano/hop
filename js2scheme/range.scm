@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
 ;*    Last change :  Sat Jan  4 05:46:44 2020 (serrano)                */
-;*    Copyright   :  2016-20 Manuel Serrano                            */
+;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
 ;*=====================================================================*/
@@ -739,8 +739,12 @@
 	 (cond
 	    ((> oa *max-int53*)
 	     (set! oa *+inf.0*))
+	    ((> oa *max-length*)
+	     (set! oa *max-int53*))
+	    ((> oa *max-index*)
+	     (set! oa *max-length*))
 	    ((> oa *max-int32*)
-	     (set! oa *max-int53*)))
+	     (set! oa *max-index*)))
 	 (interval oi oa)))
 
    (let ((intv (infinity-widen (widen))))
@@ -2314,7 +2318,7 @@
 ;*    range-type? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (range-type? ty)
-   (memq ty '(integer number)))
+   (memq ty '(integer number int32 uint32 int53)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SDecl ...                                        */
@@ -2444,6 +2448,26 @@
 	    (set! type ty)))))
 
 ;*---------------------------------------------------------------------*/
+;*    map-types ::J2SPostfix ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SPostfix tmap)
+   (call-default-walker)
+   (with-access::J2SPostfix this (range type rhs)
+      (when (range-type? type)
+	 (let ((ty (interval->type range tmap type)))
+	    (set! type ty)))))
+
+;*---------------------------------------------------------------------*/
+;*    map-types ::J2SPrefix ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SPrefix tmap)
+   (call-default-walker)
+   (with-access::J2SPrefix this (range type)
+      (when (range-type? type)
+	 (let ((ty (interval->type range tmap type)))
+	    (set! type ty)))))
+
+;*---------------------------------------------------------------------*/
 ;*    map-types ::J2SExpr ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SExpr tmap)
@@ -2534,11 +2558,11 @@
 	  (set! type 'uint32))
 	 ((++ --)
 	  (if (range-type? type)
-	      (set! type (interval->type range tmap 'number))
+	      (set! type (interval->type range tmap type))
 	      (set! type 'number)))
 	 (else
 	  (when (range-type? type)
-	     (set! type (interval->type range tmap 'number))))))
+	     (set! type (interval->type range tmap type))))))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -2550,7 +2574,7 @@
 	 ((eq? op '~)
 	  (set! type 'int32))
 	 ((range-type? type)
-	  (set! type (interval->type range tmap 'number)))))
+	  (set! type (interval->type range tmap type)))))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/

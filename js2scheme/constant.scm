@@ -129,7 +129,7 @@
 (define (add-cmap! loc keys env::struct)
    (let* ((t (env-inits-table env))
 	  (k keys)
-	  (old (when (pair? keys) (hashtable-get t k))))
+	  (old (when (vector? keys) (hashtable-get t k))))
       ;; don't store empty cmap in the hash table in order to get
       ;; separated cmap for all empty object create sites
       (or old

@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
 ;*    Last change :  Tue Apr 14 07:19:46 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
 ;*=====================================================================*/
@@ -384,10 +384,14 @@
 (define (j2s-jsstring-substring obj args mode return ctx)
    (if (is-buffer-cast? obj)
        (with-access::J2SCast obj (expr)
-	  `(js-jsbuffer-substring
+	  `(,(if (pair? (cddr args))
+		 'js-jsbuffer-substring
+		 'js-jsbuffer-substring1)
 	      ,(j2s-scheme expr mode return ctx)
 	      ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))
-       `(js-jsstring-substring
+       `(,(if (pair? (cddr args))
+	      'js-jsstring-substring
+	      'js-jsstring-substring1)
 	   ,(j2s-scheme obj mode return ctx)
 	   ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args))))
 

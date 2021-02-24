@@ -124,7 +124,12 @@
 	      (nmap::obj (default (js-not-a-pmap)))
 	      (amap::obj (default #t))
 	      (xmap::obj (default (js-not-a-pmap)))
-	      (index::long (default -1))
+	      (iindex::long (default -1))
+	      (eindex::long (default -1))
+	      (cindex::long (default -1))
+	      (pindex::long (default -1))
+	      (nindex::long (default -1))
+	      (aindex::long (default -1))
 	      (vindex::long (default (js-not-a-index)))
 	      (owner::obj (default #f))
 	      (src::bstring read-only (default ""))
@@ -161,6 +166,9 @@
 	      (sibling (default #f))
 	      (inline::bool read-only (default #f))
 	      (parent::JsConstructMap (default (class-nil JsConstructMap))))
+
+	   (final-class JsConstructMapSibling
+	      (sibling (default #f)))
 	   
 	   ;; Literal strings that are not plain Scheme strings.
 	   ;; For performance sake they are trees.

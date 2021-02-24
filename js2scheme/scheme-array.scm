@@ -224,6 +224,16 @@
 			   ,scmarray ,scmalen
 			   ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
 			   %this)))
+		  ((int53)
+		   (if amark
+		       `(JS-ARRAY-FIXNUM-MARK-REF ,scmobj ,scmfield
+			   ,scmarray ,scmalen
+			   ,(j2s-decl-scheme-id amark)
+			   %this)
+		       `(JS-ARRAY-FIXNUM-FAST-REF ,scmobj ,scmfield
+			   ,scmarray ,scmalen
+			   ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
+			   %this)))
 		  ((fixnum)
 		   (if amark
 		       `(JS-ARRAY-FIXNUM-MARK-REF ,scmobj ,scmfield

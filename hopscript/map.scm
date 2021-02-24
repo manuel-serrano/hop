@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
 ;*    Last change :  Wed Apr  8 08:25:03 2020 (serrano)                */
-;*    Copyright   :  2019-20 Manuel Serrano                            */
+;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
 ;*    -------------------------------------------------------------    */
@@ -148,7 +148,6 @@
 		  ((not ni)
 		   this)
 		  ((not (js-object? ni))
-		   (close-iterator iter)
 		   (js-raise-type-error %this "Illegal IteratorValue" ni))
 		  (else
 		   (if (js-totest (js-get ni (& "done") %this))
@@ -159,9 +158,7 @@
 				    (v (js-get value (& "1") %this)))
 				 (js-call2 %this set this k v)
 				 (loop))
-			      (begin
-				 (close-iterator iter)
-				 (js-raise-type-error %this "Illegal IteratorValue" value)))))))))))
+			      (js-raise-type-error %this "Illegal IteratorValue" value))))))))))
    
    (define (js-map-construct-iterable this::JsMap iterable)
       (with-access::JsGlobalObject %this (js-symbol-iterator)
