@@ -3291,7 +3291,6 @@
       (let* ((jsS this)
 	     (S (js-jsstring->string jsS))
 	     (enc (isa? this JsStringLiteralUTF8))
-	     (A (js-empty-vector->jsarray %this))
 	     (s (string-length S))
 	     (lim (if (eq? limit (js-undefined))
 		      (+fx s 1)
@@ -3306,142 +3305,162 @@
 	 (cond
 	    ((=fx lim 0)
 	     ;; 9
-	     A)
+	     (js-empty-vector->jsarray %this))
 	    ((eq? separator (js-undefined))
 	     ;; 10
-	     (js-array-index-set! A #u32:0 jsS #f %this)
-	     A)
+	     (js-vector1->jsarray jsS %this))
 	    ((=fx s 0)
 	     ;; 11
 	     (let ((z (split-match S 0 R)))
-		(when (<fx z 0)
-		   (js-array-index-set! A #u32:0 jsS #f %this))
-		A))
+		(if (<fx z 0)
+		    (js-vector1->jsarray jsS %this)
+		    (js-empty-vector->jsarray %this))))
 	    ((and (string? R)
 		  (=fx (string-length R) 1)
 		  (not enc))
 	     ;; fast path for ascii strings, split around single characters
 	     (let ((C (string-ref R 0)))
-		;; 13
+		(if (not (string-index S C))
+		    (js-vector1->jsarray jsS %this)
+		    (let ((A (js-empty-vector->jsarray %this)))
+		       ;; 13
+		       (let loop ((q p)
+				  (p p)
+				  (l #u32:0))
+			  (if (not (=fx q s))
+			      (if (not (char=? (string-ref S q) C))
+				  (loop (+fx q 1) p l)
+				  ;; 13.c.i
+				  (let* ((e (+fx q 1)))
+				     (if (=fx e p)
+					 ;; 13.c.ii
+					 (loop e p l)
+					 ;; 13.c.iii.1
+					 (let ((T (js-substring/enc S p q enc %this)))
+					    ;; 13.c.iii.2
+					    (js-array-index-set! A l T #f %this)
+					    (if (=fx (uint32->fixnum (+u32 l #u32:1)) lim)
+						;; 13.c.iii.4
+						A
+						;; 13.c.iii.5
+						(loop e e (+u32 l 1)))))))
+			      ;; 14
+			      (let ((T (js-substring/enc S p s enc %this)))
+				 ;; 15
+				 (js-array-index-set! A l T #f %this)
+				 ;;16
+				 A)))))))
+	    ((and (string? R)
+		  (=fx (string-length R) 0)
+		  (not enc))
+	     ;; fast path for ascii strings, split all characters
+	     (with-access::JsGlobalObject %this (char-table)
+		(let* ((slen (minfx s lim))
+		       (vec (make-vector slen))
+		       (ctable char-table))
+		   (let loop ((i (-fx slen 1)))
+		      (if (=fx i -1)
+			  (js-vector->jsarray vec %this)
+			  (let* ((c (string-ref-ur S i))
+				 (n (char->integer c)))
+			     (vector-set! vec i (vector-ref ctable n))
+			     (loop (-fx i 1))))))))
+	    ((isa? R JsRegExp)
+	     ;; regular expression split
+	     (let ((A (js-empty-vector->jsarray %this)))
 		(let loop ((q p)
 			   (p p)
 			   (l #u32:0))
 		   (if (not (=fx q s))
-		       (if (not (char=? (string-ref S q) C))
-			   (loop (+fx q 1) p l)
-			   ;; 13.c.i
-			   (let* ((e (+fx q 1)))
-			      (if (=fx e p)
-				  ;; 13.c.ii
-				  (loop e p l)
-				  ;; 13.c.iii.1
-				  (let ((T (js-substring/enc S p q enc %this)))
-				     ;; 13.c.iii.2
-				     (js-array-index-set! A l T #f %this)
-				     (if (=fx (uint32->fixnum (+u32 l #u32:1)) lim)
-					 ;; 13.c.iii.4
-					 A
-					 ;; 13.c.iii.5
-					 (loop e e (+u32 l 1)))))))
+		       (let ((z (split-match-regexp S q R)))
+			  (if (<fx z 0)
+			      (loop s p l)
+			      ;; 13.c.i
+			      (let* ((r js-regexp-positions)
+				     (q (vector-ref r 0))
+				     (e (vector-ref r 1)))
+				 (if (=fx e p)
+				     ;; 13.c.ii
+				     (loop (+fx q (if enc (utf8-char-size (string-ref S q)) 1)) p l)
+				     ;; 13.c.iii.1
+				     (let ((T (js-substring/enc S p q enc %this))
+					   (l (js-get-lengthu32 A %this)))
+					;; 13.c.iii.2
+					(js-array-index-set! A l T #f %this)
+					(if (=fx (uint32->fixnum (+u32 l #u32:1)) lim)
+					    ;; 13.c.iii.4
+					    A
+					    ;; 13.c.iii.5
+					    (let ((p e))
+					       (let repeat ((cap 1)
+							    (l (+u32 l #u32:1)))
+						  (if (<fx cap z)
+						      (let ((T (js-substring/enc S
+								  (vector-ref r (*fx cap 2))
+								  (vector-ref r (+fx (*fx cap 2) 1))
+								  enc %this)))
+							 ;; 13.c.iii.7.b
+							 (js-array-index-set! A l T #f %this)
+							 (if (=fx (uint32->fixnum (+u32 l #u32:1)) lim)
+							     ;; 13.c.iii.7.d
+							     A
+							     ;; 13.c.iii.8
+							     (repeat (+fx cap 1) (+u32 l #u32:1))))
+						      (loop p e l))))))))))
 		       ;; 14
 		       (let ((T (js-substring/enc S p s enc %this)))
 			  ;; 15
 			  (js-array-index-set! A l T #f %this)
 			  ;;16
 			  A)))))
-	    ((isa? R JsRegExp)
-	     ;; regular expression split
-	     (let loop ((q p)
-			(p p)
-			(l #u32:0))
-		(if (not (=fx q s))
-		    (let ((z (split-match-regexp S q R)))
-		       (if (<fx z 0)
-			   (loop s p l)
-			   ;; 13.c.i
-			   (let* ((r js-regexp-positions)
-				  (q (vector-ref r 0))
-				  (e (vector-ref r 1)))
-			      (if (=fx e p)
-				  ;; 13.c.ii
-				  (loop (+fx q (if enc (utf8-char-size (string-ref S q)) 1)) p l)
-				  ;; 13.c.iii.1
-				  (let ((T (js-substring/enc S p q enc %this))
-					(l (js-get-lengthu32 A %this)))
-				     ;; 13.c.iii.2
-				     (js-array-index-set! A l T #f %this)
-				     (if (=fx (uint32->fixnum (+u32 l #u32:1)) lim)
-					 ;; 13.c.iii.4
-					 A
-					 ;; 13.c.iii.5
-					 (let ((p e))
-					    (let repeat ((cap 1)
-							 (l (+u32 l #u32:1)))
-					       (if (<fx cap z)
-						   (let ((T (js-substring/enc S
-							       (vector-ref r (*fx cap 2))
-							       (vector-ref r (+fx (*fx cap 2) 1))
-							       enc %this)))
-						      ;; 13.c.iii.7.b
-						      (js-array-index-set! A l T #f %this)
-						      (if (=fx (uint32->fixnum (+u32 l #u32:1)) lim)
-							  ;; 13.c.iii.7.d
-							  A
-							  ;; 13.c.iii.8
-							  (repeat (+fx cap 1) (+u32 l #u32:1))))
-						   (loop p e l))))))))))
-		    ;; 14
-		    (let ((T (js-substring/enc S p s enc %this)))
-		       ;; 15
-		       (js-array-index-set! A l T #f %this)
-		       ;;16
-		       A))))
 	    (else
-	     (let loop ((q p)
-			(p p)
-			(l #u32:0))
-		(if (not (=fx q s))
-		    (let ((z (split-match-string S q R)))
-		       (if (<fx z 0)
-			   (loop (+fx q (if enc (utf8-char-size (string-ref S q)) 1)) p l)
-			   ;; 13.c.i
-			   (let* ((r js-regexp-positions)
-				  (q (vector-ref r 0))
-				  (e (vector-ref r 1)))
-			      (if (=fx e p)
-				  ;; 13.c.ii
-				  (loop (+fx q (if enc (utf8-char-size (string-ref S q)) 1)) p l)
-				  ;; 13.c.iii.1
-				  (let ((T (js-substring/enc S p q enc %this))
-					(l (js-get-lengthu32 A %this)))
-				     ;; 13.c.iii.2
-				     (js-array-index-set! A l T #f %this)
-				     (if (=fx (uint32->fixnum (+u32 l #u32:1)) lim)
-					 ;; 13.c.iii.4
-					 A
-					 ;; 13.c.iii.5
-					 (let ((p e))
-					    (let repeat ((cap 1)
-							 (l (+u32 l #u32:1)))
-					       (if (<fx cap z)
-						   (let ((T (js-substring/enc S
-							       (vector-ref r (*fx cap 2))
-							       (vector-ref r (+fx (*fx cap 2) 1))
-							       enc %this)))
-						      ;; 13.c.iii.7.b
-						      (js-array-index-set! A l T #f %this)
-						      (if (=fx (uint32->fixnum (+u32 l #u32:1)) lim)
-							  ;; 13.c.iii.7.d
-							  A
-							  ;; 13.c.iii.8
-							  (repeat (+fx cap 1) (+u32 l #u32:1))))
-						   (loop p e l))))))))))
-		    ;; 14
-		    (let ((T (js-substring/enc S p s enc %this)))
-		       ;; 15
-		       (js-array-index-set! A l T #f %this)
-		       ;;16
-		       A))))))))
+	     (tprint "LA..." S " R=" R "]")
+	     (let ((A (js-empty-vector->jsarray %this)))
+		(let loop ((q p)
+			   (p p)
+			   (l #u32:0))
+		   (if (not (=fx q s))
+		       (let ((z (split-match-string S q R)))
+			  (if (<fx z 0)
+			      (loop (+fx q (if enc (utf8-char-size (string-ref S q)) 1)) p l)
+			      ;; 13.c.i
+			      (let* ((r js-regexp-positions)
+				     (q (vector-ref r 0))
+				     (e (vector-ref r 1)))
+				 (if (=fx e p)
+				     ;; 13.c.ii
+				     (loop (+fx q (if enc (utf8-char-size (string-ref S q)) 1)) p l)
+				     ;; 13.c.iii.1
+				     (let ((T (js-substring/enc S p q enc %this))
+					   (l (js-get-lengthu32 A %this)))
+					;; 13.c.iii.2
+					(js-array-index-set! A l T #f %this)
+					(if (=fx (uint32->fixnum (+u32 l #u32:1)) lim)
+					    ;; 13.c.iii.4
+					    A
+					    ;; 13.c.iii.5
+					    (let ((p e))
+					       (let repeat ((cap 1)
+							    (l (+u32 l #u32:1)))
+						  (if (<fx cap z)
+						      (let ((T (js-substring/enc S
+								  (vector-ref r (*fx cap 2))
+								  (vector-ref r (+fx (*fx cap 2) 1))
+								  enc %this)))
+							 ;; 13.c.iii.7.b
+							 (js-array-index-set! A l T #f %this)
+							 (if (=fx (uint32->fixnum (+u32 l #u32:1)) lim)
+							     ;; 13.c.iii.7.d
+							     A
+							     ;; 13.c.iii.8
+							     (repeat (+fx cap 1) (+u32 l #u32:1))))
+						      (loop p e l))))))))))
+		       ;; 14
+		       (let ((T (js-substring/enc S p s enc %this)))
+			  ;; 15
+			  (js-array-index-set! A l T #f %this)
+			  ;;16
+			  A)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-split ...                                      */
