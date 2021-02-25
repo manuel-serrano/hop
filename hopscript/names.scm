@@ -23,7 +23,8 @@
    (use    __hopscript_stringliteral
 	   __hopscript_lib
 	   __hopscript_public
-	   __hopscript_private)
+	   __hopscript_private
+	   __hopscript_property)
    
    (export (js-init-names!)
 	   (js-get-js-string-names)

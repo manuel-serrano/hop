@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  5 09:14:00 2019                          */
 ;*    Last change :  Tue Feb 25 15:58:17 2020 (serrano)                */
-;*    Copyright   :  2019-20 Manuel Serrano                            */
+;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arguments optimization                                           */
 ;*    -------------------------------------------------------------    */
@@ -47,7 +47,8 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-arguments this conf)
    (when (isa? this J2SProgram)
-      (annotate-arguments this this #f))
+      (unless (> (config-get conf :debug 0) 0)
+	 (annotate-arguments this this #f)))
    this)
 
 ;*---------------------------------------------------------------------*/

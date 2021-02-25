@@ -3414,7 +3414,6 @@
 			  ;;16
 			  A)))))
 	    (else
-	     (tprint "LA..." S " R=" R "]")
 	     (let ((A (js-empty-vector->jsarray %this)))
 		(let loop ((q p)
 			   (p p)
