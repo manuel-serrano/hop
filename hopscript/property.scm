@@ -842,20 +842,11 @@
 	    (set! aindex i)))))
 
 ;*---------------------------------------------------------------------*/
-;*    reset-pcache! ...                                                */
+;*    reset-cache! ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (reset-pcache! pcache::JsPropertyCache)
-   (with-access::JsPropertyCache pcache (imap cmap pmap nmap emap amap xmap vindex)
-      (set! imap #f)
-      (set! emap #f)
-      (set! cmap #f)
-      (set! pmap (js-not-a-pmap))
-      (set! nmap (js-not-a-pmap))
-      (set! amap #t)
-      (set! xmap (js-not-a-pmap))))
-
 (define (reset-cache! pcache)
-   (with-access::JsPropertyCache pcache (imap cmap pmap nmap emap amap xmap)
+   ;; to be removed when proved useless
+   '''(with-access::JsPropertyCache pcache (imap cmap pmap nmap emap amap xmap)
       (set! imap #f)
       (set! emap #f)
       (set! cmap #f)
