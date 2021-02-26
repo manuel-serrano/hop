@@ -168,7 +168,9 @@ static obj_t bgl_make_jsprocedure_sans( obj_t procedure, long arity, obj_t __pro
 static obj_t bgl_make_jsstringliteralascii_sans( uint32_t len, obj_t left, obj_t right );
 #endif
 
-#define POOLSZ( sz ) ((12800 >> sz) + 400)
+#define MINPOOLSZ 400
+#define POOLSZ( sz ) ((12800 >> sz) < MINPOOLSZ ? MINPOOLSZ : (12800 >> sz))
+#define JSOBJECT_POOLSZ( z ) POOLSZ( z )
 #define JSPROXY_POOLSZ POOLSZ( 3 )
 #define JSFUNCTION_POOLSZ POOLSZ( 4 )
 #define JSMETHOD_POOLSZ POOLSZ( 4 )
@@ -255,8 +257,8 @@ static pthread_cond_t alloc_pool_cond;
 
 #define APOOL_JSOBJECT_INIT( sz ) { \
    .fill_buffer = &jsobject_fill_buffer, \
-   .idx = POOLSZ( sz ), \
-   .size = POOLSZ( sz ), \
+   .idx = JSOBJECT_POOLSZ( sz ), \
+   .size = JSOBJECT_POOLSZ( sz ), \
    .payload = { .objsize = sz } \
 };
 
@@ -730,7 +732,7 @@ BGL_MAKE_JSOBJECT_SANS( int constrsize, obj_t constrmap, obj_t __proto__, uint32
 #define BGL_MAKE_JSOBJECT( sz ) \
    static obj_t bgl_make_jsobject##sz( obj_t constrmap, obj_t __proto__, uint32_t md ) { \
    alloc_spin_lock( &lock##sz ); \
-   if( pool##sz.idx < POOLSZ( sz ) ) { \
+   if( pool##sz.idx < JSOBJECT_POOLSZ( sz ) ) { \
       obj_t o = pool##sz.buffer[ pool##sz.idx ]; \
       pool##sz.buffer[ pool##sz.idx++ ] = 0; \
       alloc_spin_unlock( &lock##sz ); \
@@ -763,13 +765,13 @@ BGL_MAKE_JSOBJECT_SANS( int constrsize, obj_t constrmap, obj_t __proto__, uint32
       /* initialize the two alloc pools */ \
       if( !pool##sz.buffer ) { \
 	 pool##sz.buffer = \
-	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*POOLSZ( sz ) ); \
-	 pool##sz.idx = POOLSZ( sz ); \
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( sz ) ); \
+	 pool##sz.idx = JSOBJECT_POOLSZ( sz ); \
       } \
       if( !npool##sz.buffer ) { \
 	 npool##sz.buffer = \
-	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*POOLSZ( sz ) ); \
-	 npool##sz.idx = POOLSZ( sz ); \
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( sz ) ); \
+	 npool##sz.idx = JSOBJECT_POOLSZ( sz ); \
 	 pool_queue_add( &npool##sz ); \
       } \
       \
