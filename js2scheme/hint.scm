@@ -1351,7 +1351,6 @@
 						       (eq? t 'integer)
 						       (memq tya '(int53 uint32 int32)))
 						  (and (eq? t 'integer)
-						       #f
 						       (memq tya '(int53 uint32 int32))
 						       (inrange-int30? a))))))
 				args types)
