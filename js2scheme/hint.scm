@@ -26,7 +26,8 @@
 	   __js2scheme_use
 	   __js2scheme_alpha
 	   __js2scheme_node-size
-	   __js2scheme_usage)
+	   __js2scheme_usage
+	   __js2scheme_scheme-utils)
 
    (static (class FunHintInfo
 	      hinted
@@ -1318,9 +1319,13 @@
 					      (or (and (eq? t 'number)
 						       (type-number? tya))
 						  (eq? tya t)
+						  
 						  (and (m64? conf)
 						       (eq? t 'integer)
-						       (memq tya '(int53 uint32 int32)))))))
+						       (memq tya '(int53 uint32 int32)))
+						  (and (eq? t 'integer)
+						       (memq tya '(int53 uint32 int32))
+						       (inrange-int30? a))))))
 				args types)
 			     (with-access::J2SFun val (idthis)
 				;; adjust the usecnt count
@@ -1344,7 +1349,11 @@
 						       (type-number? t))
 						  (and (m64? conf)
 						       (eq? t 'integer)
-						       (memq tya '(int53 uint32 int32)))))))
+						       (memq tya '(int53 uint32 int32)))
+						  (and (eq? t 'integer)
+						       #f
+						       (memq tya '(int53 uint32 int32))
+						       (inrange-int30? a))))))
 				args types)
 			     this)
 			    (else
