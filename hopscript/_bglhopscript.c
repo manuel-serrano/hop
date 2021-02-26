@@ -168,8 +168,9 @@ static obj_t bgl_make_jsprocedure_sans( obj_t procedure, long arity, obj_t __pro
 static obj_t bgl_make_jsstringliteralascii_sans( uint32_t len, obj_t left, obj_t right );
 #endif
 
-#define MINPOOLSZ 400
-#define POOLSZ( sz ) ((12800 >> sz) < MINPOOLSZ ? MINPOOLSZ : (12800 >> sz))
+#define MINPOOLSZ 512
+//#define POOLSZ( sz ) ((12800 >> sz) < MINPOOLSZ ? MINPOOLSZ : (12800 >> sz))
+#define POOLSZ( sz ) ((16384 >> sz) < MINPOOLSZ ? MINPOOLSZ : (8192 >> sz))
 #define JSOBJECT_POOLSZ( z ) POOLSZ( z )
 #define JSPROXY_POOLSZ POOLSZ( 3 )
 #define JSFUNCTION_POOLSZ POOLSZ( 4 )
