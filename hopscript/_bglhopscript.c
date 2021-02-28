@@ -372,7 +372,10 @@ int inlstringliteralascii = 0, sndstringliteralascii = 0, slowstringliteralascii
    } else { \
       pthread_mutex_lock( &alloc_pool_mutex ),	\
       pool_queue[ pool_queue_idx++ ] = pool;	\
-      pthread_cond_signal( &alloc_pool_cond );	\
+      if( pool_queue_idx == 1 ) {		\
+	 /* wake up the worker only when it was sleeping */ \
+	 pthread_cond_signal( &alloc_pool_cond ); \
+      } \
       pthread_mutex_unlock( &alloc_pool_mutex );  \
    }; 0
 
