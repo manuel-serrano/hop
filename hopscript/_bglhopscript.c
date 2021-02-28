@@ -252,13 +252,15 @@ static void jsstringliteralascii_fill_buffer( apool_t *pool, void *arg );
 /*---------------------------------------------------------------------*/
 #define MAX_POOL_QUEUE_SIZE 13 
 static int pool_queue_idx = 0;
-static apool_t *pool_queue[ MAX_POOL_QUEUE_SIZE ];
+static int pool_queue_len = 0;
+static apool_t **pool_queue = 0;;
 
 static pthread_mutex_t alloc_pool_mutex;
 static pthread_cond_t alloc_pool_cond;
 
 #define APOOL_JSOBJECT_INIT( pool_num, sz ) {\
    .fill_buffer = &jsobject_fill_buffer, \
+   .buffer = 0L, \
    .idx = JSOBJECT_POOLSZ( sz ), \
    .pool_number = pool_num, \
    .size = JSOBJECT_POOLSZ( sz ), \
@@ -267,6 +269,7 @@ static pthread_cond_t alloc_pool_cond;
 
 #define APOOL_JSPROXY_INIT( pool_num ) { \
    .fill_buffer = &jsproxy_fill_buffer,	\
+   .buffer = 0L, \
    .idx = JSPROXY_POOLSZ, \
    .pool_number = pool_num, \
    .size = JSPROXY_POOLSZ, \
@@ -275,6 +278,7 @@ static pthread_cond_t alloc_pool_cond;
 
 #define APOOL_JSFUNCTION_INIT( pool_num ) { \
    .fill_buffer = &jsfunction_fill_buffer, \
+   .buffer = 0L, \
    .idx = JSFUNCTION_POOLSZ, \
    .pool_number = pool_num, \
    .size = JSFUNCTION_POOLSZ, \
@@ -283,6 +287,7 @@ static pthread_cond_t alloc_pool_cond;
 
 #define APOOL_JSMETHOD_INIT( pool_num ) { \
    .fill_buffer = &jsmethod_fill_buffer, \
+   .buffer = 0L, \
    .idx = JSMETHOD_POOLSZ, \
    .pool_number = pool_num, \
    .size = JSMETHOD_POOLSZ, \
@@ -291,6 +296,7 @@ static pthread_cond_t alloc_pool_cond;
 
 #define APOOL_JSPROCEDURE_INIT( pool_num ) { \
    .fill_buffer = &jsprocedure_fill_buffer, \
+   .buffer = 0L, \
    .idx = JSPROCEDURE_POOLSZ, \
    .pool_number = pool_num, \
    .size = JSPROCEDURE_POOLSZ, \
@@ -299,6 +305,7 @@ static pthread_cond_t alloc_pool_cond;
 
 #define APOOL_JSSTRINGLITERALASCII_INIT( pool_num ) {	\
    .fill_buffer = &jsstringliteralascii_fill_buffer, \
+   .buffer = 0L, \
    .idx = JSSTRINGLITERALASCII_POOLSZ, \
    .pool_number = pool_num, \
    .size = JSSTRINGLITERALASCII_POOLSZ, \
@@ -363,14 +370,21 @@ int inlstringliteralascii = 0, sndstringliteralascii = 0, slowstringliteralascii
 /*    static void                                                      */
 /*    pool_queue_add ...                                               */
 /*---------------------------------------------------------------------*/
+#define pool_queue_add_safe( pool ) \
+   pthread_mutex_lock( &alloc_pool_mutex ); \
+   pool_queue[ pool_queue_idx++ ] = pool; \
+   pthread_cond_signal( &alloc_pool_cond ); \
+   pthread_mutex_unlock( &alloc_pool_mutex ); \
+ 0
+
 #define pool_queue_add( pool ) \
-   /* when pool_queue_idx == 0, no one, but us can change it's value */ \
+/* when pool_queue_idx == 0, no one, but us can change it's value */	\
    if( pool_queue_idx == 0 ) { \
       pool_queue[ 0 ] = pool;	\
       pool_queue_idx = 1; \
       pthread_cond_signal( &alloc_pool_cond );	\
    } else { \
-      pthread_mutex_lock( &alloc_pool_mutex ),	\
+      pthread_mutex_lock( &alloc_pool_mutex );	\
       pool_queue[ pool_queue_idx++ ] = pool;	\
       if( pool_queue_idx == 1 ) {		\
 	 /* wake up the worker only when it was sleeping */ \
@@ -387,13 +401,19 @@ int inlstringliteralascii = 0, sndstringliteralascii = 0, slowstringliteralascii
 static void *
 thread_alloc_worker( void *arg ) {
    apool_t *pool;
+   long k = 0;
 
    while( 1 ) {
       pthread_mutex_lock( &alloc_pool_mutex );
       while( pool_queue_idx == 0 ) {
 	 pthread_cond_wait( &alloc_pool_cond, &alloc_pool_mutex );
+	 k = 0;
       }
       
+      k--;
+      if( pool_queue_idx < 0 ) {
+	 fprintf( stderr, "BAD INDEX %d %d\n", pool_queue_idx, k );
+      }
       pool = pool_queue[ --pool_queue_idx ];
       pthread_mutex_unlock( &alloc_pool_mutex );
 
@@ -557,6 +577,10 @@ int bgl_init_jsalloc( uint32_t md ) {
 
    /* initializes the mutexes and condition variables */
    bgl_init_jsalloc_locks();
+
+   /* initialize the pool queue */
+   pool_queue_len = MAX_POOL_QUEUE_SIZE;
+   pool_queue = malloc( pool_queue_len * sizeof( apool_t * ) );
    
    /* start the allocator workers */
    for( i = 0; i < WORK_NUMBER; i++ ) {
@@ -569,6 +593,22 @@ int bgl_init_jsalloc( uint32_t md ) {
 
    return 0;
 #endif   
+}
+
+/*---------------------------------------------------------------------*/
+/*    int                                                              */
+/*    bgl_init_worker_jsalloc ...                                      */
+/*    -------------------------------------------------------------    */
+/*    Each time a new worker is created the pool queue must be         */
+/*    extended.                                                        */
+/*---------------------------------------------------------------------*/
+int
+bgl_init_worker_jsalloc() {
+   pthread_mutex_lock( &alloc_pool_mutex );
+
+   pool_queue_len += MAX_POOL_QUEUE_SIZE;
+   pool_queue = realloc( pool_queue, pool_queue_len * sizeof( apool_t * ) );
+   pthread_mutex_unlock( &alloc_pool_mutex );
 }
 
 /*---------------------------------------------------------------------*/
@@ -734,7 +774,7 @@ BGL_MAKE_JSOBJECT_SANS( int constrsize, obj_t constrmap, obj_t __proto__, uint32
 /*    BGL_MAKE_JSOBJECT ...                                            */
 /*---------------------------------------------------------------------*/
 #define BGL_MAKE_JSOBJECT( sz ) \
-   static obj_t bgl_make_jsobject##sz( obj_t constrmap, obj_t __proto__, uint32_t md ) { \
+   static obj_t _bgl_make_jsobject##sz( obj_t constrmap, obj_t __proto__, uint32_t md ) { \
    alloc_spin_lock( &lock##sz ); \
    if( pool##sz.idx < JSOBJECT_POOLSZ( sz ) ) { \
       obj_t o = pool##sz.buffer[ pool##sz.idx ]; \
@@ -795,6 +835,414 @@ BGL_MAKE_JSOBJECT( 6 )
 BGL_MAKE_JSOBJECT( 7 )
 BGL_MAKE_JSOBJECT( 8 )
 #endif
+
+   static obj_t bgl_make_jsobject1( obj_t constrmap, obj_t __proto__, uint32_t md ) { 
+   alloc_spin_lock( &lock1 ); 
+   if( pool1.idx < JSOBJECT_POOLSZ( 1 ) ) { 
+      obj_t o = pool1.buffer[ pool1.idx ]; 
+      pool1.buffer[ pool1.idx++ ] = 0; 
+      alloc_spin_unlock( &lock1 ); 
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); 
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; 
+      ALLOC_STAT( inl1++ ); 
+      return o; 
+   } else if( npool1.idx == 0 ) { 
+      /* swap the two pools */ 
+      obj_t *buffer = pool1.buffer; 
+      obj_t o = npool1.buffer[ 0 ]; 
+      
+      pool1.buffer = npool1.buffer; 
+      pool1.buffer[ 0 ] = 0; 
+      pool1.idx = 1; 
+      
+      npool1.buffer = buffer; 
+      npool1.idx = npool1.size; 
+      
+      /* add the pool to the pool queue */ 
+      pool_queue_add( &npool1 ); 
+      
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); 
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; 
+      
+      ALLOC_STAT( snd1++ ); 
+      alloc_spin_unlock( &lock1 ); 
+      return o; 
+   } else { 
+      /* initialize the two alloc pools */ 
+      if( !pool1.buffer ) { 
+	 pool1.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( 1 ) ); 
+      } 
+      if( !npool1.buffer ) { 
+	 npool1.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( 1 ) ); 
+	 pool_queue_add( &npool1 ); 
+      } 
+      
+      /* default slow alloc */ 
+      ALLOC_STAT( slow1++ ); 
+      ALLOC_STAT( (slow1 % ALLOC_STAT_FREQ == 0) ? fprintf( stderr, "sz=%d inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%dn", 1, inl1, snd1, slow1, (long)(100*(double)slow1/(double)(inl1+snd1)), inl1 + snd1 + slow1, qsz1) : 0 ); 
+      alloc_spin_unlock( &lock1 ); 
+      return bgl_make_jsobject_sans( 1, constrmap, __proto__, md ); 
+   } 
+}
+
+   static obj_t bgl_make_jsobject2( obj_t constrmap, obj_t __proto__, uint32_t md ) { 
+   alloc_spin_lock( &lock2 ); 
+   if( pool2.idx < JSOBJECT_POOLSZ( 2 ) ) { 
+      obj_t o = pool2.buffer[ pool2.idx ]; 
+      pool2.buffer[ pool2.idx++ ] = 0; 
+      alloc_spin_unlock( &lock2 ); 
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); 
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; 
+      ALLOC_STAT( inl2++ ); 
+      return o; 
+   } else if( npool2.idx == 0 ) { 
+      /* swap the two pools */ 
+      obj_t *buffer = pool2.buffer; 
+      obj_t o = npool2.buffer[ 0 ]; 
+      
+      pool2.buffer = npool2.buffer; 
+      pool2.buffer[ 0 ] = 0; 
+      pool2.idx = 1; 
+      
+      npool2.buffer = buffer; 
+      npool2.idx = npool2.size; 
+      
+      /* add the pool to the pool queue */ 
+      pool_queue_add( &npool2 ); 
+      
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); 
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; 
+      
+      ALLOC_STAT( snd2++ ); 
+      alloc_spin_unlock( &lock2 ); 
+      return o; 
+   } else { 
+      /* initialize the two alloc pools */ 
+      if( !pool2.buffer ) { 
+	 pool2.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( 2 ) ); 
+      } 
+      if( !npool2.buffer ) { 
+	 npool2.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( 2 ) ); 
+	 pool_queue_add( &npool2 ); 
+      } 
+      
+      /* default slow alloc */ 
+      ALLOC_STAT( slow2++ ); 
+      ALLOC_STAT( (slow2 % ALLOC_STAT_FREQ == 0) ? fprintf( stderr, "sz=%d inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%dn", 2, inl2, snd2, slow2, (long)(100*(double)slow2/(double)(inl2+snd2)), inl2 + snd2 + slow2, qsz2) : 0 ); 
+      alloc_spin_unlock( &lock2 ); 
+      return bgl_make_jsobject_sans( 2, constrmap, __proto__, md ); 
+   } 
+}
+
+   static obj_t bgl_make_jsobject3( obj_t constrmap, obj_t __proto__, uint32_t md ) { 
+   alloc_spin_lock( &lock3 ); 
+   if( pool3.idx < JSOBJECT_POOLSZ( 3 ) ) { 
+      obj_t o = pool3.buffer[ pool3.idx ]; 
+      pool3.buffer[ pool3.idx++ ] = 0; 
+      alloc_spin_unlock( &lock3 ); 
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); 
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; 
+      ALLOC_STAT( inl3++ ); 
+      return o; 
+   } else if( npool3.idx == 0 ) { 
+      /* swap the two pools */ 
+      obj_t *buffer = pool3.buffer; 
+      obj_t o = npool3.buffer[ 0 ]; 
+      
+      pool3.buffer = npool3.buffer; 
+      pool3.buffer[ 0 ] = 0; 
+      pool3.idx = 1; 
+      
+      npool3.buffer = buffer; 
+      npool3.idx = npool3.size; 
+      
+      /* add the pool to the pool queue */ 
+      pool_queue_add( &npool3 ); 
+      
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); 
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; 
+      
+      ALLOC_STAT( snd3++ ); 
+      alloc_spin_unlock( &lock3 ); 
+      return o; 
+   } else { 
+      /* initialize the two alloc pools */ 
+      if( !pool3.buffer ) { 
+	 pool3.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( 3 ) ); 
+      } 
+      if( !npool3.buffer ) { 
+	 npool3.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( 3 ) ); 
+	 pool_queue_add( &npool3 ); 
+      } 
+      
+      /* default slow alloc */ 
+      ALLOC_STAT( slow3++ ); 
+      ALLOC_STAT( (slow3 % ALLOC_STAT_FREQ == 0) ? fprintf( stderr, "sz=%d inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%dn", 3, inl3, snd3, slow3, (long)(100*(double)slow3/(double)(inl3+snd3)), inl3 + snd3 + slow3, qsz3) : 0 ); 
+      alloc_spin_unlock( &lock3 ); 
+      return bgl_make_jsobject_sans( 3, constrmap, __proto__, md ); 
+   } 
+}
+
+   static obj_t bgl_make_jsobject4( obj_t constrmap, obj_t __proto__, uint32_t md ) { 
+   alloc_spin_lock( &lock4 ); 
+   if( pool4.idx < JSOBJECT_POOLSZ( 4 ) ) { 
+      obj_t o = pool4.buffer[ pool4.idx ]; 
+      pool4.buffer[ pool4.idx++ ] = 0; 
+      alloc_spin_unlock( &lock4 ); 
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); 
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; 
+      ALLOC_STAT( inl4++ ); 
+      return o; 
+   } else if( npool4.idx == 0 ) { 
+      /* swap the two pools */ 
+      obj_t *buffer = pool4.buffer; 
+      obj_t o = npool4.buffer[ 0 ]; 
+      
+      pool4.buffer = npool4.buffer; 
+      pool4.buffer[ 0 ] = 0; 
+      pool4.idx = 1; 
+      
+      npool4.buffer = buffer; 
+      npool4.idx = npool4.size; 
+      
+      /* add the pool to the pool queue */ 
+      pool_queue_add( &npool4 ); 
+      
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); 
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; 
+      
+      ALLOC_STAT( snd4++ ); 
+      alloc_spin_unlock( &lock4 ); 
+      return o; 
+   } else { 
+      /* initialize the two alloc pools */ 
+      if( !pool4.buffer ) { 
+	 pool4.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( 4 ) ); 
+      } 
+      if( !npool4.buffer ) { 
+	 npool4.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( 4 ) ); 
+	 pool_queue_add( &npool4 ); 
+      } 
+      
+      /* default slow alloc */ 
+      ALLOC_STAT( slow4++ ); 
+      ALLOC_STAT( (slow4 % ALLOC_STAT_FREQ == 0) ? fprintf( stderr, "sz=%d inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%dn", 4, inl4, snd4, slow4, (long)(100*(double)slow4/(double)(inl4+snd4)), inl4 + snd4 + slow4, qsz4) : 0 ); 
+      alloc_spin_unlock( &lock4 ); 
+      return bgl_make_jsobject_sans( 4, constrmap, __proto__, md ); 
+   } 
+}
+
+   static obj_t bgl_make_jsobject5( obj_t constrmap, obj_t __proto__, uint32_t md ) { 
+   alloc_spin_lock( &lock5 ); 
+   if( pool5.idx < JSOBJECT_POOLSZ( 5 ) ) { 
+      obj_t o = pool5.buffer[ pool5.idx ]; 
+      pool5.buffer[ pool5.idx++ ] = 0; 
+      alloc_spin_unlock( &lock5 ); 
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); 
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; 
+      ALLOC_STAT( inl5++ ); 
+      return o; 
+   } else if( npool5.idx == 0 ) { 
+      /* swap the two pools */ 
+      obj_t *buffer = pool5.buffer; 
+      obj_t o = npool5.buffer[ 0 ]; 
+      
+      pool5.buffer = npool5.buffer; 
+      pool5.buffer[ 0 ] = 0; 
+      pool5.idx = 1; 
+      
+      npool5.buffer = buffer; 
+      npool5.idx = npool5.size; 
+      
+      /* add the pool to the pool queue */ 
+      pool_queue_add( &npool5 ); 
+      
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); 
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; 
+      
+      ALLOC_STAT( snd5++ ); 
+      alloc_spin_unlock( &lock5 ); 
+      return o; 
+   } else { 
+      /* initialize the two alloc pools */ 
+      if( !pool5.buffer ) { 
+	 pool5.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( 5 ) ); 
+      } 
+      if( !npool5.buffer ) { 
+	 npool5.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( 5 ) ); 
+	 pool_queue_add( &npool5 ); 
+      } 
+      
+      /* default slow alloc */ 
+      ALLOC_STAT( slow5++ ); 
+      ALLOC_STAT( (slow5 % ALLOC_STAT_FREQ == 0) ? fprintf( stderr, "sz=%d inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%dn", 5, inl5, snd5, slow5, (long)(100*(double)slow5/(double)(inl5+snd5)), inl5 + snd5 + slow5, qsz5) : 0 ); 
+      alloc_spin_unlock( &lock5 ); 
+      return bgl_make_jsobject_sans( 5, constrmap, __proto__, md ); 
+   } 
+}
+
+   static obj_t bgl_make_jsobject6( obj_t constrmap, obj_t __proto__, uint32_t md ) { 
+   alloc_spin_lock( &lock6 ); 
+   if( pool6.idx < JSOBJECT_POOLSZ( 6 ) ) { 
+      obj_t o = pool6.buffer[ pool6.idx ]; 
+      pool6.buffer[ pool6.idx++ ] = 0; 
+      alloc_spin_unlock( &lock6 ); 
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); 
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; 
+      ALLOC_STAT( inl6++ ); 
+      return o; 
+   } else if( npool6.idx == 0 ) { 
+      /* swap the two pools */ 
+      obj_t *buffer = pool6.buffer; 
+      obj_t o = npool6.buffer[ 0 ]; 
+      
+      pool6.buffer = npool6.buffer; 
+      pool6.buffer[ 0 ] = 0; 
+      pool6.idx = 1; 
+      
+      npool6.buffer = buffer; 
+      npool6.idx = npool6.size; 
+      
+      /* add the pool to the pool queue */ 
+      pool_queue_add( &npool6 ); 
+      
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); 
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; 
+      
+      ALLOC_STAT( snd6++ ); 
+      alloc_spin_unlock( &lock6 ); 
+      return o; 
+   } else { 
+      /* initialize the two alloc pools */ 
+      if( !pool6.buffer ) { 
+	 pool6.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( 6 ) ); 
+      } 
+      if( !npool6.buffer ) { 
+	 npool6.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( 6 ) ); 
+	 pool_queue_add( &npool6 ); 
+      } 
+      
+      /* default slow alloc */ 
+      ALLOC_STAT( slow6++ ); 
+      ALLOC_STAT( (slow6 % ALLOC_STAT_FREQ == 0) ? fprintf( stderr, "sz=%d inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%dn", 6, inl6, snd6, slow6, (long)(100*(double)slow6/(double)(inl6+snd6)), inl6 + snd6 + slow6, qsz6) : 0 ); 
+      alloc_spin_unlock( &lock6 ); 
+      return bgl_make_jsobject_sans( 6, constrmap, __proto__, md ); 
+   } 
+}
+
+   static obj_t bgl_make_jsobject7( obj_t constrmap, obj_t __proto__, uint32_t md ) { 
+   alloc_spin_lock( &lock7 ); 
+   if( pool7.idx < JSOBJECT_POOLSZ( 7 ) ) { 
+      obj_t o = pool7.buffer[ pool7.idx ]; 
+      pool7.buffer[ pool7.idx++ ] = 0; 
+      alloc_spin_unlock( &lock7 ); 
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); 
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; 
+      ALLOC_STAT( inl7++ ); 
+      return o; 
+   } else if( npool7.idx == 0 ) { 
+      /* swap the two pools */ 
+      obj_t *buffer = pool7.buffer; 
+      obj_t o = npool7.buffer[ 0 ]; 
+      
+      pool7.buffer = npool7.buffer; 
+      pool7.buffer[ 0 ] = 0; 
+      pool7.idx = 1; 
+      
+      npool7.buffer = buffer; 
+      npool7.idx = npool7.size; 
+      
+      /* add the pool to the pool queue */ 
+      pool_queue_add( &npool7 ); 
+      
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); 
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; 
+      
+      ALLOC_STAT( snd7++ ); 
+      alloc_spin_unlock( &lock7 ); 
+      return o; 
+   } else { 
+      /* initialize the two alloc pools */ 
+      if( !pool7.buffer ) { 
+	 pool7.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( 7 ) ); 
+      } 
+      if( !npool7.buffer ) { 
+	 npool7.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( 7 ) ); 
+	 pool_queue_add( &npool7 ); 
+      } 
+      
+      /* default slow alloc */ 
+      ALLOC_STAT( slow7++ ); 
+      ALLOC_STAT( (slow7 % ALLOC_STAT_FREQ == 0) ? fprintf( stderr, "sz=%d inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%dn", 7, inl7, snd7, slow7, (long)(100*(double)slow7/(double)(inl7+snd7)), inl7 + snd7 + slow7, qsz7) : 0 ); 
+      alloc_spin_unlock( &lock7 ); 
+      return bgl_make_jsobject_sans( 7, constrmap, __proto__, md ); 
+   } 
+}
+
+   static obj_t bgl_make_jsobject8( obj_t constrmap, obj_t __proto__, uint32_t md ) { 
+   alloc_spin_lock( &lock8 ); 
+   if( pool8.idx < JSOBJECT_POOLSZ( 8 ) ) { 
+      obj_t o = pool8.buffer[ pool8.idx ]; 
+      pool8.buffer[ pool8.idx++ ] = 0; 
+      alloc_spin_unlock( &lock8 ); 
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); 
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; 
+      ALLOC_STAT( inl8++ ); 
+      return o; 
+   } else if( npool8.idx == 0 ) { 
+      /* swap the two pools */ 
+      obj_t *buffer = pool8.buffer; 
+      obj_t o = npool8.buffer[ 0 ]; 
+      
+      pool8.buffer = npool8.buffer; 
+      pool8.buffer[ 0 ] = 0; 
+      pool8.idx = 1; 
+      
+      npool8.buffer = buffer; 
+      npool8.idx = npool8.size; 
+      
+      /* add the pool to the pool queue */ 
+      pool_queue_add( &npool8 ); 
+      
+      BGL_OBJECT_WIDENING_SET( o, __proto__ ); 
+      ((BgL_jsobjectz00_bglt)(COBJECT( o )))->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap; 
+      
+      ALLOC_STAT( snd8++ ); 
+      alloc_spin_unlock( &lock8 ); 
+      return o; 
+   } else { 
+      /* initialize the two alloc pools */ 
+      if( !pool8.buffer ) { 
+	 pool8.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( 8 ) ); 
+      } 
+      if( !npool8.buffer ) { 
+	 npool8.buffer = 
+	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( 8 ) ); 
+	 pool_queue_add( &npool8 ); 
+      } 
+      
+      /* default slow alloc */ 
+      ALLOC_STAT( slow8++ ); 
+      ALLOC_STAT( (slow8 % ALLOC_STAT_FREQ == 0) ? fprintf( stderr, "sz=%d inl=%d snd=%d slow=%d %d%% sum=%ld qsz=%dn", 8, inl8, snd8, slow8, (long)(100*(double)slow8/(double)(inl8+snd8)), inl8 + snd8 + slow8, qsz8) : 0 ); 
+      alloc_spin_unlock( &lock8 ); 
+      return bgl_make_jsobject_sans( 8, constrmap, __proto__, md ); 
+   } 
+}
 
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */

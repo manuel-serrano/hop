@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
 ;*    Last change :  Sat Apr 11 14:04:30 2020 (serrano)                */
-;*    Copyright   :  2014-20 Manuel Serrano                            */
+;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
 ;*    -------------------------------------------------------------    */
@@ -203,6 +203,7 @@
 	 (letrec* ((parent (js-current-worker))
 		   (source (js-tostring src %this))
 		   (setup (lambda ()
+			     ($js-init-worker-jsalloc)
 			     (let ((this (%global-constructor
 					    :name (string-append source "_w"))))
 				;; store the worker in global object

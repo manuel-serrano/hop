@@ -34,6 +34,8 @@
 
    (extern ($js-init-jsalloc::int (::uint32)
 	      "bgl_init_jsalloc")
+	   ($js-init-worker-jsalloc::int ()
+	      "bgl_init_worker_jsalloc")
 	   ($js-init-jsalloc-proxy::int (::obj ::obj)
 	      "bgl_init_jsalloc_proxy")
 	   ($js-init-jsalloc-function::int (::JsConstructMap ::JsConstructMap
