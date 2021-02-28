@@ -370,28 +370,12 @@ int inlstringliteralascii = 0, sndstringliteralascii = 0, slowstringliteralascii
 /*    static void                                                      */
 /*    pool_queue_add ...                                               */
 /*---------------------------------------------------------------------*/
-#define pool_queue_add_safe( pool ) \
+#define pool_queue_add( pool ) \
    pthread_mutex_lock( &alloc_pool_mutex ); \
    pool_queue[ pool_queue_idx++ ] = pool; \
    pthread_cond_signal( &alloc_pool_cond ); \
    pthread_mutex_unlock( &alloc_pool_mutex ); \
  0
-
-#define pool_queue_add( pool ) \
-/* when pool_queue_idx == 0, no one, but us can change it's value */	\
-   if( pool_queue_idx == 0 ) { \
-      pool_queue[ 0 ] = pool;	\
-      pool_queue_idx = 1; \
-      pthread_cond_signal( &alloc_pool_cond );	\
-   } else { \
-      pthread_mutex_lock( &alloc_pool_mutex );	\
-      pool_queue[ pool_queue_idx++ ] = pool;	\
-      if( pool_queue_idx == 1 ) {		\
-	 /* wake up the worker only when it was sleeping */ \
-	 pthread_cond_signal( &alloc_pool_cond ); \
-      } \
-      pthread_mutex_unlock( &alloc_pool_mutex );  \
-   }; 0
 
 /*---------------------------------------------------------------------*/
 /*    static void *                                                    */
