@@ -370,12 +370,12 @@ int inlstringliteralascii = 0, sndstringliteralascii = 0, slowstringliteralascii
 /*    static void                                                      */
 /*    pool_queue_add ...                                               */
 /*---------------------------------------------------------------------*/
-#define pool_queue_add( pool ) \
-   pthread_mutex_lock( &alloc_pool_mutex ); \
-   pool_queue[ pool_queue_idx++ ] = pool; \
-   pthread_cond_signal( &alloc_pool_cond ); \
-   pthread_mutex_unlock( &alloc_pool_mutex ); \
- 0
+static void pool_queue_add( apool_t *pool ) {
+   pthread_mutex_lock( &alloc_pool_mutex );
+   pool_queue[ pool_queue_idx++ ] = pool;
+   pthread_cond_signal( &alloc_pool_cond );
+   pthread_mutex_unlock( &alloc_pool_mutex );
+}
 
 /*---------------------------------------------------------------------*/
 /*    static void *                                                    */
