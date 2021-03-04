@@ -128,10 +128,10 @@ typedef struct BgL_jspropertycachez00_bgl pcache_t;
 #define HOP_ALLOC_JSPROCEDURE_POLICY HOP_ALLOC_POLICY
 #define HOP_ALLOC_JSSTRINGLITERALASCII_POLICY HOP_ALLOC_POLICY
 
-/* #undef HOP_ALLOC_JSFUNCTION_POLICY                                  */
-/* #define HOP_ALLOC_JSFUNCTION_POLICY HOP_ALLOC_CLASSIC               */
-/* #undef HOP_ALLOC_JSMETHOD_POLICY                                  */
-/* #define HOP_ALLOC_JSMETHOD_POLICY HOP_ALLOC_CLASSIC               */
+#undef HOP_ALLOC_JSFUNCTION_POLICY
+#define HOP_ALLOC_JSFUNCTION_POLICY HOP_ALLOC_CLASSIC
+#undef HOP_ALLOC_JSMETHOD_POLICY
+#define HOP_ALLOC_JSMETHOD_POLICY HOP_ALLOC_CLASSIC
 
 extern obj_t bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode );
 
@@ -168,9 +168,10 @@ static obj_t bgl_make_jsprocedure_sans( obj_t procedure, long arity, obj_t __pro
 static obj_t bgl_make_jsstringliteralascii_sans( uint32_t len, obj_t left, obj_t right );
 #endif
 
-#define MINPOOLSZ 256
-//#define POOLSZ( sz ) ((12800 >> sz) < MINPOOLSZ ? MINPOOLSZ : (12800 >> sz))
-#define POOLSZ( sz ) ((8192 >> sz) < MINPOOLSZ ? MINPOOLSZ : (8192 >> sz))
+static const int __POOLSZ[] =
+{ 0, /* 1 */ 512, /* 2 */ 512, /* 3 */ 128, /* 4 */ 128,
+  /* 5 */ 64, /* 6 */ 64, /* 7 */ 64, /* 8 */ 64, /* 9 */ 32 };
+#define POOLSZ( sz ) __POOLSZ[ sz ]
 #define JSOBJECT_POOLSZ( z ) POOLSZ( z )
 #define JSPROXY_POOLSZ POOLSZ( 3 )
 #define JSFUNCTION_POOLSZ POOLSZ( 4 )
@@ -181,6 +182,10 @@ static obj_t bgl_make_jsstringliteralascii_sans( uint32_t len, obj_t left, obj_t
 
 #define ALLOC_STATS 0
 #define ALLOC_STAT_FREQ 100000
+
+long FOO() {
+   return POOLSZ( 4 );
+}
 
 /*---------------------------------------------------------------------*/
 /*    stat                                                             */
@@ -385,18 +390,15 @@ static void pool_queue_add( apool_t *pool ) {
 static void *
 thread_alloc_worker( void *arg ) {
    apool_t *pool;
-   long k = 0;
 
    while( 1 ) {
       pthread_mutex_lock( &alloc_pool_mutex );
       while( pool_queue_idx == 0 ) {
 	 pthread_cond_wait( &alloc_pool_cond, &alloc_pool_mutex );
-	 k = 0;
       }
       
-      k--;
       if( pool_queue_idx < 0 ) {
-	 fprintf( stderr, "BAD INDEX %d %d\n", pool_queue_idx, k );
+	 fprintf( stderr, "BAD INDEX %d\n", pool_queue_idx );
       }
       pool = pool_queue[ --pool_queue_idx ];
       pthread_mutex_unlock( &alloc_pool_mutex );
@@ -473,8 +475,7 @@ jsmethod_fill_buffer( apool_t *pool, void *arg ) {
    const uint32_t size = pool->size;
 
    for( i = 0; i < size; i++ ) {
-      buffer[ i ] =
-	 bgl_make_jsmethod_sans( 0L, 0L, 0L, 0L, 0L, 0L );
+      buffer[ i ] = bgl_make_jsmethod_sans( 0L, 0L, 0L, 0L, 0L, 0L );
    }
 #endif   
 }
@@ -491,8 +492,7 @@ jsprocedure_fill_buffer( apool_t *pool, void *arg ) {
    const uint32_t size = pool->size;
 
    for( i = 0; i < size; i++ ) {
-      buffer[ i ] =
-	 bgl_make_jsprocedure_sans( 0L, 0L, 0L );
+      buffer[ i ] = bgl_make_jsprocedure_sans( 0L, 0L, 0L );
    }
 #endif   
 }
@@ -509,8 +509,7 @@ jsstringliteralascii_fill_buffer( apool_t *pool, void *arg ) {
    const uint32_t size = pool->size;
 
    for( i = 0; i < size; i++ ) {
-      buffer[ i ] =
-	 bgl_make_jsstringliteralascii_sans( 0, 0L, 0L );
+      buffer[ i ] = bgl_make_jsstringliteralascii_sans( 0, 0L, 0L );
    }
 #endif   
 }
@@ -771,10 +770,11 @@ BGL_MAKE_JSOBJECT_SANS( int constrsize, obj_t constrmap, obj_t __proto__, uint32
    } else if( npool##sz.idx == 0 ) { \
       /* swap the two pools */ \
       obj_t *buffer = pool##sz.buffer; \
-      obj_t o = npool##sz.buffer[ 0 ]; \
+      obj_t *nbuffer = npool##sz.buffer; \
+      obj_t o = nbuffer[ 0 ]; \
       \
-      pool##sz.buffer = npool##sz.buffer; \
-      pool##sz.buffer[ 0 ] = 0; \
+      nbuffer[ 0 ] = 0; \
+      pool##sz.buffer = nbuffer; \
       pool##sz.idx = 1; \
       \
       npool##sz.buffer = buffer; \
@@ -794,11 +794,9 @@ BGL_MAKE_JSOBJECT_SANS( int constrsize, obj_t constrmap, obj_t __proto__, uint32
       if( !pool##sz.buffer ) { \
 	 pool##sz.buffer = \
 	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( sz ) ); \
-      } \
-      if( !npool##sz.buffer ) { \
-	 npool##sz.buffer = \
+	 npool##sz.buffer =						\
 	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSOBJECT_POOLSZ( sz ) ); \
-	 pool_queue_add( &npool##sz ); \
+	 pool_queue_add( &npool##sz );					\
       } \
       \
       /* default slow alloc */ \
@@ -943,8 +941,6 @@ bgl_make_jsproxy( obj_t target, obj_t handler,
 	 poolproxy.buffer = 
 	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSPROXY_POOLSZ ); 
 	 poolproxy.idx = JSPROXY_POOLSZ; 
-      } 
-      if( !npoolproxy.buffer ) { 
 	 npoolproxy.buffer = 
 	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSPROXY_POOLSZ ); 
 	 npoolproxy.idx = JSPROXY_POOLSZ; 
@@ -1081,8 +1077,6 @@ bgl_make_jsfunction( obj_t procedure,
 	 poolfunction.buffer = 
 	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSFUNCTION_POOLSZ ); 
 	 poolfunction.idx = JSFUNCTION_POOLSZ; 
-      } 
-      if( !npoolfunction.buffer ) { 
 	 npoolfunction.buffer = 
 	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSFUNCTION_POOLSZ ); 
 	 npoolfunction.idx = JSFUNCTION_POOLSZ; 
@@ -1223,8 +1217,6 @@ bgl_make_jsmethod( obj_t procedure, obj_t method,
 	 poolmethod.buffer = 
 	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSMETHOD_POOLSZ ); 
 	 poolmethod.idx = JSMETHOD_POOLSZ; 
-      } 
-      if( !npoolmethod.buffer ) { 
 	 npoolmethod.buffer = 
 	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSMETHOD_POOLSZ ); 
 	 npoolmethod.idx = JSMETHOD_POOLSZ; 
@@ -1326,8 +1318,6 @@ bgl_make_jsprocedure( obj_t procedure, long arity, obj_t __proto__ ) {
 	 poolprocedure.buffer = 
 	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSPROCEDURE_POOLSZ ); 
 	 poolprocedure.idx = JSPROCEDURE_POOLSZ; 
-      } 
-      if( !npoolprocedure.buffer ) { 
 	 npoolprocedure.buffer = 
 	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSPROCEDURE_POOLSZ ); 
 	 npoolprocedure.idx = JSPROCEDURE_POOLSZ; 
@@ -1394,9 +1384,10 @@ bgl_make_jsstringliteralascii( uint32_t len, obj_t left, obj_t right ) {
    } else if( npoolstringliteralascii.idx == 0 ) {
       /* swap the two pools */
       obj_t *buffer = poolstringliteralascii.buffer;
-      obj_t o = npoolstringliteralascii.buffer[ 0 ];
+      obj_t *nbuffer = npoolstringliteralascii.buffer;
+      obj_t o = nbuffer[ 0 ];
 
-      poolstringliteralascii.buffer = npoolstringliteralascii.buffer;
+      poolstringliteralascii.buffer = nbuffer;
       poolstringliteralascii.buffer[ 0 ] = 0;
       poolstringliteralascii.idx = 1;
 
@@ -1420,8 +1411,6 @@ bgl_make_jsstringliteralascii( uint32_t len, obj_t left, obj_t right ) {
 	 poolstringliteralascii.buffer =
 	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSSTRINGLITERALASCII_POOLSZ );
 	 poolstringliteralascii.idx = JSSTRINGLITERALASCII_POOLSZ;
-      }
-      if( !npoolstringliteralascii.buffer ) {
 	 npoolstringliteralascii.buffer =
 	    (obj_t *)GC_MALLOC_UNCOLLECTABLE( sizeof(obj_t)*JSSTRINGLITERALASCII_POOLSZ );
 	 npoolstringliteralascii.idx = JSSTRINGLITERALASCII_POOLSZ;
