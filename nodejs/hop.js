@@ -236,6 +236,7 @@ exports.markdown = hop.modulesDir + "/markdown";
 exports.notepad = hop.modulesDir + "/notepad";
 exports.security = hop.modulesDir + "/security";
 exports.spage = hop.modulesDir + "/spage";
+exports.filechooser = hop.modulesDir + "/filechooser";
 exports.syslog = hop.modulesDir + "/syslog";
 exports.system = hop.modulesDir + "/system";
 exports.systime = hop.modulesDir + "/systime";
