@@ -52,6 +52,7 @@ POPULATION = Makefile \
   hss/hss.hss hss/hss.js hss/example.json hss/README.md \
   tree/tree.js tree/example.json tree/README.md \
   spage/spage.js spage/example.json spage/README.md \
+  filechooser/filechooser.js filechooser/example.json filechooser/README.md \
   tower/tower.js tower/example.json \
   dom/dom.js dom/example.json dom/README.md \
   jquery/jquery.js jquery/example.json \
