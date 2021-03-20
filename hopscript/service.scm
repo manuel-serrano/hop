@@ -4,7 +4,7 @@
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
 ;*    Last change :  Wed Apr  8 08:15:07 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
 ;*=====================================================================*/
@@ -584,9 +584,6 @@
    (define (scheme->js val)
       (js-obj->jsobject val %this))
    
-   (define (ms-scheme->js val)
-      val)
-   
    (define (js-get-string opt key)
       (let ((v (js-get opt key %this)))
 	 (unless (eq? v (js-undefined))
@@ -631,13 +628,11 @@
 	 (letrec* ((callback (lambda (x)
 				(js-promise-async p
 				   (lambda ()
-				      (js-promise-resolve p
-					 (ms-scheme->js x))))))
+				      (js-promise-resolve p x)))))
 		   (fail (lambda (x)
 			    (js-promise-async p
 			       (lambda ()
-				  (js-promise-reject p
-				     (ms-scheme->js x))))))
+				  (js-promise-reject p x)))))
 		   (p (js-new %this js-promise
 			 (js-make-function %this
 			    (lambda (_ resolve reject)
@@ -652,8 +647,7 @@
 	 (with-access::JsGlobalObject %this (worker)
 	    (let ((callback (when (js-procedure? success)
 			       (lambda (x)
-				  (js-call1 %this success %this
-				     (ms-scheme->js x)))))
+				  (js-call1 %this success %this x))))
 		  (fail (if (js-procedure? failure)
 			    (lambda (obj)
 			       (js-call1 %this failure %this obj))
@@ -666,7 +660,7 @@
 	 (let ((receiver (lambda (ctx thunk)
 			    (with-access::JsGlobalObject ctx (worker)
 			       (js-worker-exec worker path #t thunk)))))
-	    (with-hop-remote path ms-scheme->js #f
+	    (with-hop-remote path (lambda (x) x) #f
 	       :scheme scheme
 	       :host host :port port 
 	       :user (js-get-string options (& "user"))
@@ -709,8 +703,7 @@
 			    (lambda (x)
 			       (js-worker-push-thunk! (js-current-worker) path
 				  (lambda ()
-				     (js-call1 %this success %this
-					(ms-scheme->js x)))))))
+				     (js-call1 %this success %this x))))))
 	       (fail (when (js-procedure? failure)
 			(lambda (obj)
 			   (js-worker-push-thunk! (js-current-worker) path
@@ -945,6 +938,12 @@
 	     (js-service/debug id loc proc))
 	  proc))
 
+   (define (js-service-parse-request svc req)
+      (let ((args (service-parse-request svc req)))
+	 (if (null? args)
+	     (js-literal->jsobject '#() '#() %this)
+	     (js-obj->jsobject args %this))))
+
    (when (and (eq? proc (js-undefined)) (not (eq? path (js-undefined))))
       (set! path (js-tostring proc %this)))
    
@@ -973,9 +972,7 @@
 					       (service-debug id
 						  (lambda ()
 						     (service-invoke svc req
-							(js-obj->jsobject
-							   (service-parse-request svc req)
-							   %this)))))))
+							(js-service-parse-request svc req)))))))
 				(javascript "HopService( ~s, ~s )")
 				(path hoppath)
 				(id id)
