@@ -939,10 +939,12 @@
 	  proc))
 
    (define (js-service-parse-request svc req)
-      (let ((args (service-parse-request svc req)))
-	 (if (null? args)
-	     (js-literal->jsobject '#() '#() %this)
-	     (js-obj->jsobject args %this))))
+      (with-access::http-request req (path abspath)
+	 (let ((args (service-parse-request svc req)))
+	    (if (and (null? args)
+		     (=fx (string-length path) (string-length abspath)))
+		(js-literal->jsobject '#() '#() %this)
+		(js-obj->jsobject args %this)))))
 
    (when (and (eq? proc (js-undefined)) (not (eq? path (js-undefined))))
       (set! path (js-tostring proc %this)))

@@ -242,6 +242,7 @@ exports.systime = hop.modulesDir + "/systime";
 exports.texinfo = hop.modulesDir + "/texinfo";
 exports.tree = hop.modulesDir + "/tree";
 exports.user = hop.modulesDir + "/user";
+exports.utils = hop.modulesDir + "/utils";
 exports.vcf = hop.modulesDir + "/vcf";
 exports.openpgp = hop.modulesDir + "/openpgp";
 exports.wiki = hop.modulesDir + "/wiki";
