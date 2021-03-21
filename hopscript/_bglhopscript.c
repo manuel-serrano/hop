@@ -171,10 +171,17 @@ static obj_t bgl_make_jsprocedure_sans( obj_t procedure, long arity, obj_t __pro
 static obj_t bgl_make_jsstringliteralascii_sans( uint32_t len, obj_t left, obj_t right );
 #endif
 
-static const int __POOLSZ[] =
-{ 0, /* 1 */ 512, /* 2 */ 512, /* 3 */ 256, /* 4 */ 128,
-  /* 5 */ 64, /* 6 */ 64, /* 7 */ 64, /* 8 */ 64, /* 9 */ 32 };
-#define POOLSZ( sz ) __POOLSZ[ sz ]
+#define POOLSZ( sz )				\
+   ((sz == 0) ? 0 :				\
+    ((sz == 1) ? 512 :				\
+     ((sz == 2) ? 512 :				\
+      ((sz == 3) ? 256 :			\
+       ((sz == 4) ? 128 :			\
+	((sz == 5) ? 64 :			\
+	 ((sz == 6) ? 64 :			\
+	  ((sz == 7) ? 64 :			\
+	   ((sz == 8) ? 64 :			\
+	    32)))))))))
 #define JSOBJECT_POOLSZ( z ) POOLSZ( z )
 #define JSPROXY_POOLSZ POOLSZ( 3 )
 #define JSFUNCTION_POOLSZ POOLSZ( 4 )
