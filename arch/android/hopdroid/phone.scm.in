@@ -484,7 +484,7 @@
    (match-case contact
       (#(?id ?firstname ?family ?thumb)
        (instantiate::vcard
-	  (id id)
+	  (uid id)
 	  (fn (fn firstname family))
 	  (familyname family)
 	  (firstname firstname)
@@ -502,7 +502,7 @@
 			 (cons (cons 'akas akas) notes)
 			 notes)))
 	  (instantiate::vcard
-	     (id id)
+	     (uid id)
 	     (fn (fn firstname family))
 	     (familyname family)
 	     (firstname firstname)
