@@ -444,6 +444,9 @@
       (when (js-object-mapped? o)
 	 (with-access::JsConstructMap cmap (inline props)
 	    (unless (or (eq? inline (js-object-inline-elements? o))
+			(cond-expand
+			   (debug inline)
+			   (else #f))
 			(=fx (vector-length props) 0))
 	       (fprintf (current-error-port)
 		  "*** ASSERT FAILURE:js-check-object: ~a" msg)
