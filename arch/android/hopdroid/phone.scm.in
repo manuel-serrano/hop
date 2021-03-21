@@ -565,8 +565,8 @@
    (unless contact-plugin
       (set! contact-plugin (android-load-plugin p "contact")))
    (when contact-plugin
-      (with-access::vcard vcard (id)
-	 (android-send-command/result p contact-plugin #\e id))))
+      (with-access::vcard vcard (uid)
+	 (android-send-command/result p contact-plugin #\e uid))))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-call-log ::androidphone ...                                */
