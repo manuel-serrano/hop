@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
 /*    Last change :  Tue Apr 16 18:16:33 2019 (serrano)                */
-/*    Copyright   :  2007-19 Manuel Serrano                            */
+/*    Copyright   :  2007-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
 /*=====================================================================*/
@@ -358,7 +358,7 @@ function start_servevt_websocket_proxy( key, host, port, ssl ) {
 	 }
 	 
 	 // we are ready to register now
-	 hop_server.state = 2;
+	 hop_server.state = "open";
 	 hop_servevt_proxy.register = register;
 	 hop_servevt_proxy.unregister = unregister;
 	 hop_servevt_proxy.reconnect = reconnect;
@@ -394,11 +394,14 @@ function start_servevt_websocket_proxy( key, host, port, ssl ) {
       }
       
       ws.onerror = function( e ) {
+	 hop_server.state = "error";
+	 hop_serverready_triggered = false
+	 hop_servevt_onclose();
 	 throw e;
       }
 	 
       ws.onclose = function( e ) {
-	 hop_server.state = 3;
+	 hop_server.state = "close";
 	 hop_serverready_triggered = false
 	 hop_servevt_onclose();
       }
@@ -439,8 +442,8 @@ function start_servevt_websocket_proxy( key, host, port, ssl ) {
    };
 
    var reconnect = function( wait, max ) {
-      if( hop_server.state != 4 ) {
-	 hop_server.state = 4;
+      if( hop_server.state !== "reconnect" ) {
+	 hop_server.state = "reconnect";
 
 	 open_websocket( hop_servevt_proxy.reconnect_url );
       
@@ -471,7 +474,6 @@ function start_servevt_websocket_proxy( key, host, port, ssl ) {
       open_websocket( url );
    }
 }
-
 
 /*---------------------------------------------------------------------*/
 /*    start_servevt_xhr_multipart_proxy ...                            */
@@ -620,7 +622,7 @@ function servevt_scriptp() {
 /*    for details on the Web protocol.                                 */
 /*---------------------------------------------------------------------*/
 function hop_start_servevt_proxy() {
-   hop_server.state = 1;
+   hop_server.state = "start";
 
    hop_servevt_proxy = new Object();
    hop_servevt_proxy.websocket = false;
