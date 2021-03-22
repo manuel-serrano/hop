@@ -1583,7 +1583,10 @@
 	       ((eq? tmp 'loop) (loop))
 	       (else
 		(with-handler
-		   exception-notify
+		   (lambda (e)
+		      (exception-notify e)
+		      (fprintf (current-error-port) "sofile ~s not generated."
+			 filename))
 		   (let* ((sopath (hop-sofile-path filename
 				     :suffix (if worker-slave "_w" "")))
 			  (sopathtmp (make-file-name
