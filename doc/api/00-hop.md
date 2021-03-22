@@ -210,6 +210,15 @@ The options list is:
   * `charset`: the charset.
   * `header`: the full response header, an object.
 
+#### Example ####
+
+${ doc.include( doc.BUILDDIR + "/examples/redirection/README.md" ) }
+
+${ <span class="label label-info">redirection/redirection.js</span> }
+
+```hopscript
+${ doc.include( doc.BUILDDIR + "/examples/redirection/redirection.js", 14 ) }
+```
 
 ### hop.HTTPResponseJson( object ) ###
 [:@glyphicon glyphicon-tag function]

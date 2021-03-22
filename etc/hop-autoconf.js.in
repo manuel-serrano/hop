@@ -724,7 +724,7 @@ function node_style_set_native( el, prop, value ) {
       for( let p in prop ) {
 	 const v = prop[ p ].toString() || "0";
 	 
-	 if( obj.stle === undefined ) {
+	 if( obj.style === undefined ) {
 	    sc_error( "node-style-set!(" + prop + ")", 
 	       "No style property in object", el );
 	 } if( p in obj.style ) {

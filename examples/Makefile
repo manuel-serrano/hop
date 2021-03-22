@@ -35,6 +35,7 @@ POPULATION = Makefile \
   fs/fs.js fs/example.json \
   url/url.js url/example.json url/README.md \
   file/file.js file/example.json file/README.md \
+  redirection/redirection.js redirection/example.json redirection/README.md \
   websocket/wsserver.js websocket/wsclient.js websocket/example.json \
   websocket/README.md \
   wspost/wsserver.js wspost/wsclient.js wspost/example.json \

@@ -119,138 +119,7 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 	 0.5;
    }
       
-   // push
-   function spagePush( spage, tab, tbody ) {
-      
-      function spagePushNone( spage, spviewport, tbody, otab ) {
-	 // mark the transition style (needed on resize)
-	 spage.transitionstyle = "none";
-	 tbody.setAttribute( "data-transition", "none" );
-	 node_style_set( otab, "display", "none" );
-      }
-      
-      function spagePushSlide( spage, spviewport, tbody, otab ) {
-	 // mark the transition style (needed on resize)
-	 spage.transitionstyle = "slide";
-	 tbody.setAttribute( "data-transition", "slide" );
-	 node_style_set( spviewport, "left", -spage.spoffset + "px" );
-      }
-      
-      function spagePushFade( spage, spviewport, tbody, otab ) {
-	 // mark the transition style (needed on resize)
-	 spage.transitionstyle = "fade";
-	 tbody.setAttribute( "data-transition", "fade" );
-	 node_style_set( tbody, {
-	    "-webkit-transition-property": "none",
-	    "-moz-transition-property": "none",
-	    "-o-transition-property": "none",
-	    "transition-property": "none",
-	    "opacity": "0",
-	    "z-index": spage.depth + "",
-	    "top": "0",
-	    "left": -spage.spoffset + "px"
-	 } );
-	 setTimeout( () => {
-	       node_style_set( tbody, {
-		  "webkit-transition-property": "opacity",
-		  "-moz-transition-property": "opacity",
-		  "-o-transition-property": "opacity",
-		  "transition-property": "opacity",
-		  "opacity": 1
-	       } );
-	       node_style_set( spage.tabs[ spage.tabs.length - 2 ], {
-		  "webkit-transition-property": "opacity",
-		  "-moz-transition-property": "opacity",
-		  "-o-transition-property": "opacity",
-		  "transition-property": "opacity",
-		  "opacity": 0
-	       } );
-	    }, 1 );
-      }
-      
-      function spagePushZoom( spage, spviewport, tbody, otab ) {
-	 // mark the transition style (needed on resize)
-	 spage.transitionstyle = "zoom";
-	 tbody.setAttribute( "data-transition", "zoom" );
-	 node_style_set( tbody, {
-	    "-webkit-transition-property": "none",
-	    "-moz-transition-property": "none",
-	    "-o-transition-property": "none",
-	    "transition-property": "none",
-	    "z-index": spage.depth + "",
-	    "top": "0",
-	    "left": -spage.spoffset + "px"
-	 } );
-	 node_style_set( tbody, {
-	    "transform": "scale( 0.90 )"
-	 } );
-	 setTimeout( () => {
-	       node_style_set( tbody, {
-		  "webkit-transition-property": "all",
-		  "-moz-transition-property": "all",
-		  "-o-transition-property": "all",
-		  "transition-property": "all"
-	       } );
-	       node_style_set( tbody, {
-	    	  "transform": "scale( 1 )"
-	       } );
-	       node_style_set( spage.tabs[ spage.tabs.length - 2 ], {
-		  "webkit-transition-property": "all",
-		  "-moz-transition-property": "all",
-		  "-o-transition-property": "all",
-		  "transition-property": "all",
-	    	  "transform": "scale( 0.90 )",
-		  "opacity": "0"
-	       } );
-	    }, 1 );
-      }
-      
-      tab = getElement( tab );
-      const spviewport = spage.spviewport;
-      const otab = spage.tabs[ spage.tabs.length - 1 ];
-      
-      // adjust the size of the viewport
-      spageResize( spage );
-      
-      // increment the number of pushed elements
-      spage.depth++;
-      spage.tabs.push( tbody );
-      tbody.tab = tab;
-      
-      // expand the body div when necessary
-      // MS 12dec2020: spoffset re-computation
-      // spage.spoffset = spage.depth * spage.spwidth;
-      spage.spoffset += spage.spwidth;
-      spage.spscrollwidth = (spage.depth + 1) * spage.spwidth;
-      
-      // set the tab and viewport dimensions
-      // webkit requires spviewport to larger that the sum of the bodies
-      // we provision it with an extra body width
-      node_style_set( spviewport, "width", spage.spbodywidth + spage.spscrollwidth + "px" );
-      node_style_set( otab, "width", spage.spbodywidth + "px" );
-      node_style_set( tbody, "width", spage.spbodywidth + "px" );
-      
-      // sptab event listener
-      sptabInvokeOnselectListener( tab, tbody, "select" );
-      
-      // add the new tab
-      dom_add_child( spviewport, tbody );
-      
-      // the event listeners
-      spageInvokeOnchangeListener( spage, tbody, "push" );
-      sptabInvokeOnselectListener( tab, tbody, "push" );
-      
-      // show the new tbody
-      switch( spageTransitionStyle( spage ) ) {
-	 case "auto":
-	 case "move": spagePushSlide( spage, spviewport, tbody, otab ); break;
-	 case "help": spagePushFade( spage, spviewport, tbody, otab ); break;
-	 case "wait": spagePushZoom( spage, spviewport, tbody, otab ); break;
-	 default: spagePushNode( spage, spviewport, tbody, otab );
-      }
-   }
-
-   // pop
+   // spagePop
    function spagePop( spage, kont = undefined ) {
       
       function shrinkViewport( spage, spviewport ) {
@@ -283,7 +152,7 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       function spagePopFade( spage, spviewport, tbody, otab ) {
 	 const d = cssTransitionDuration( tbody );
 	 node_style_set( tbody, "opacity", "0" );
-	 node_style_set( spage.tabs[ spage.tabs.length - 1 ], "opacity", "1" );
+	 node_style_set( spage.tbodies[ spage.tbodies.length - 1 ], "opacity", "1" );
 	 
 	 setTimeout( () => {
 	       spviewport.removeChild( tbody );
@@ -309,8 +178,8 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       
       function spagePopZoom( spage, spviewport, tbody, otab ) {
 	 const d = cssTransitionDuration( tbody );
-	 node_style_set( spage.tabs[ spage.tabs.length - 1 ], "transform", "scale(1)" );
-	 node_style_set( spage.tabs[ spage.tabs.length - 1 ], "opacity", "1" );
+	 node_style_set( spage.tbodies[ spage.tbodies.length - 1 ], "transform", "scale(1)" );
+	 node_style_set( spage.tbodies[ spage.tbodies.length - 1 ], "opacity", "1" );
 	 
 	 setTimeout( () => {
 	       spviewport.removeChild( tbody );
@@ -323,22 +192,24 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       
       const spviewport = spage.spviewport;
       
-      if( spage.tabs.length > 0 ) {
-	 const tbody = spage.tabs[ spage.tabs.length - 1 ];
-	 const otab = spage.tabs[ spage.tabs.length - 2 ];
+      if( spage.tbodies.length > 0 ) {
+	 const tbody = spage.tbodies[ spage.tbodies.length - 1 ];
+	 const otab = spage.tbodies[ spage.tbodies.length - 2 ];
 	 
 	 // mark the tab no longer pushed
 	 tbody.tab.pushed = false;
 	 
 	 // invoke the listener before removing any node
-	 if( spage.tabs.length > 0 ) {
-	    invokePopListeners( spage, spage.tabs[ spage.tabs.length - 1 ] );
+	 if( spage.tbodies.length > 0 ) {
+	    invokePopListeners( spage, spage.tbodies[ spage.tbodies.length - 1 ] );
 	 }
 	 
 	 // decrement the number of pushed elements
 	 spage.depth--;
-	 spage.tabs.pop();
+	 spage.tbodies.pop();
 	 spage.spoffset -= spage.spwidth;
+	 
+	 console.log( "spagePop depth=", spage.depth, " tbodies=", spage.tbodies.length, " spoffset=", spage.spoffset );
 	 
 	 // pop the element from the gui
 	 switch( spageTransitionStyle( spage ) ) {
@@ -381,8 +252,8 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 	 const sphead = spage.sphead;
 	 const spheadcontent = sphead.firstChild;
 	 const spheadbutton = sphead.lastChild;
-	 const tabs = spage.tabs;
-	 const tbody = tabs[ tabs.length - 1 ];
+	 const tbodies = spage.tbodies;
+	 const tbody = tbodies[ tbodies.length - 1 ];
 	 const tab = tbody.tab;
 	 
 	 window.scrollTo( 0, head[ 3 ] );
@@ -397,21 +268,69 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       
       function spageTabUpdate( spage ) {
 	 
+	 function updateSlide( spage, tbody ) {
+	    tbody.setAttribute( "data-transition", "slide" );
+	 }
+	 
+	 function updateFade( spage, tbody ) {
+	    tbody.setAttribute( "data-transition", "fade" );
+	    node_style_set( tbody, {
+	       "-webkit-transition-property": "none",
+	       "-moz-transition-property": "none",
+	       "-o-transition-property": "none",
+	       "transition-property": "none",
+	       "opacity": "1",
+	       "z-index": spage.depth + "",
+	       "top": "0",
+	       "left": -spage.spoffset + "px"
+	    } );
+	 }
+	    
+	 function updateZoom( spage, tbody ) {
+	    tbody.setAttribute( "data-transition", "zoom" );
+	    node_style_set( tbody, {
+	       "-webkit-transition-property": "none",
+	       "-moz-transition-property": "none",
+	       "-o-transition-property": "none",
+	       "transition-property": "none",
+	       "opacity": "1",
+	       "z-index": spage.depth + "",
+	       "top": "0",
+	       "left": -spage.spoffset + "px"
+	    } );
+	 }
+	    
 	 function update( tab, body ) {
 	    const spage = spageFindFromTag( tab, "hop-spage" );
 	    const spviewport = spage.spviewport;
 	    
 	    spageResize( spage );
 	    node_style_set( body, "width", spage.spbodywidth + "px" );
-	    spage.tabs.pop();
-	    spage.tabs.push( body );
+	    const obody = spage.tbodies.pop();
+	    spage.tbodies.push( body );
 	    body.tab = tab;
+	    
+	    spviewport.removeChild( obody );
 	    dom_add_child( spviewport, body );
+
+      	    switch( spageTransitionStyle( spage ) ) {
+	       case "auto":
+	       case "move": updateSlide( spage, body ); break;
+	       case "help": UpdateFade( spage, body ); break;
+	       case "wait": updateZoom( spage, body ); break;
+	       default: spageUpdateNode( spage, body );
+      	    }
+	    
+	    console.log( "spageTabUpdate depth=", spage.depth, " tbodies=", spage.tbodies.length );
+	    console.log( "tabupdate..." );
+	    console.log( "body=", body );
+	    console.log( "obody=", obody );
 	 }
 	 
-	 const t = spage.tabs;
-	 const tab = t[ t.length - 1 ];
+	 const t = spage.tbodies;
+	 const tab = t[ t.length - 1 ].tab;
 	 
+	 console.log( "tab.svc=", tab.svc );
 	 if( typeof( tab.svc ) === "string" ) {
 	    with_hop( tab.svc, body => update( tab, tab.build( body ) ) );
 	 } else {
@@ -422,17 +341,20 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       const spage = (el.getAttribute( "data-hss-tag" ) === "hop-spage") 
 	 ? el : spageFindFromTag( el, "hop-spage" );
       
-      if( !spage.inpop ) {
+      console.log( "spagePopUpdate inpop=", spage.inpop, " deth=", spage.depth,
+ 	 " length=", spage.tbodies.length );
+      if( !spage.inpop && spage.depth >= 1 ) {
 	 spage.inpop = true;
-	 const tabs = spage.tabs;
-	 const tbody = tabs[ tabs.length - 1 ];
-	 const tparent = tabs.length > 1 ? tabs[ 1 ] : false;
-	 const tab = tparent ? tparent.tab : false;
+	 const tbodies = spage.tbodies;
+	 const tbody = tbodies[ tbodies.length - 1 ];
+	 const tparent = tbodies[ tbodies.length - 2 ];
+	 const ptab = tparent.tab;
 	 
 	 if( tbody.tab.pushed ) {
-	    if( tab 
-		&& (typeof( tab.svc ) === "function" || typeof( tab.svc ) === "string")
-		&& tab.getAttribute( "data-hop-svc-direction" ) === "both" ) {
+	    if( ptab 
+		&& (typeof( ptab.svc ) === "function" || typeof( ptab.svc ) === "string")
+		&& ptab.getAttribute( "data-hop-svc-direction" ) === "both" ) {
+	 console.log( "ptab.svc=", ptab.svc );
 	       popBodyNode( spage, spageTabUpdate );
 	    } else {
 	       popBodyNode( spage, false );
@@ -441,8 +363,143 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       }
    }
 
+   // spagePush
+   function spagePush( spage, tab, tbody ) {
+      
+      function spagePushNone( spage, spviewport, tbody, otab ) {
+	 // mark the transition style (needed on resize)
+	 spage.transitionstyle = "none";
+	 tbody.setAttribute( "data-transition", "none" );
+	 node_style_set( otab, "display", "none" );
+      }
+      
+      function spagePushSlide( spage, spviewport, tbody, otab ) {
+	 // mark the transition style (needed on resize)
+	 spage.transitionstyle = "slide";
+	 tbody.setAttribute( "data-transition", "slide" );
+	 node_style_set( spviewport, "left", -spage.spoffset + "px" );
+      }
+      
+      function spagePushFade( spage, spviewport, tbody, otab ) {
+	 // mark the transition style (needed on resize)
+	 spage.transitionstyle = "fade";
+	 tbody.setAttribute( "data-transition", "fade" );
+	 node_style_set( tbody, {
+	    "-webkit-transition-property": "none",
+	    "-moz-transition-property": "none",
+	    "-o-transition-property": "none",
+	    "transition-property": "none",
+	    "opacity": "0",
+	    "z-index": spage.depth + "",
+	    "top": "0",
+	    "left": -spage.spoffset + "px"
+	 } );
+	 setTimeout( () => {
+	       node_style_set( tbody, {
+		  "webkit-transition-property": "opacity",
+		  "-moz-transition-property": "opacity",
+		  "-o-transition-property": "opacity",
+		  "transition-property": "opacity",
+		  "opacity": 1
+	       } );
+	       node_style_set( spage.tbodies[ spage.tbodies.length - 2 ], {
+		  "webkit-transition-property": "opacity",
+		  "-moz-transition-property": "opacity",
+		  "-o-transition-property": "opacity",
+		  "transition-property": "opacity",
+		  "opacity": 0
+	       } );
+	    }, 1 );
+      }
+      
+      function spagePushZoom( spage, spviewport, tbody, otab ) {
+	 // mark the transition style (needed on resize)
+	 console.log( "spagePushZoom spoffset=", spage.spoffset );
+	 spage.transitionstyle = "zoom";
+	 tbody.setAttribute( "data-transition", "zoom" );
+	 node_style_set( tbody, {
+	    "-webkit-transition-property": "none",
+	    "-moz-transition-property": "none",
+	    "-o-transition-property": "none",
+	    "transition-property": "none",
+	    "z-index": spage.depth + "",
+	    "top": "0",
+	    "left": -spage.spoffset + "px"
+	 } );
+	 node_style_set( tbody, {
+	    "transform": "scale( 0.90 )"
+	 } );
+	 setTimeout( () => {
+	       node_style_set( tbody, {
+		  "webkit-transition-property": "all",
+		  "-moz-transition-property": "all",
+		  "-o-transition-property": "all",
+		  "transition-property": "all"
+	       } );
+	       node_style_set( tbody, {
+	    	  "transform": "scale( 1 )"
+	       } );
+	       node_style_set( spage.tbodies[ spage.tbodies.length - 2 ], {
+		  "webkit-transition-property": "all",
+		  "-moz-transition-property": "all",
+		  "-o-transition-property": "all",
+		  "transition-property": "all",
+	    	  "transform": "scale( 0.90 )",
+		  "opacity": "0"
+	       } );
+	    }, 1 );
+      }
+      
+      tab = getElement( tab );
+      const spviewport = spage.spviewport;
+      const otbody = spage.tbodies[ spage.tbodies.length - 1 ];
+      
+      // adjust the size of the viewport
+      spageResize( spage );
+      
+      // increment the number of pushed elements
+      spage.depth++;
+      spage.tbodies.push( tbody );
+      tbody.tab = tab;
+      
+      console.log( "spagPush.1 depth=", spage.depth, 
+	 " tbodies.len=", spage.tbodies.length );
+      // expand the body div when necessary
+      // MS 12dec2020: spoffset re-computation
+      // spage.spoffset = spage.depth * spage.spwidth;
+      spage.spoffset += spage.spwidth;
+      spage.spscrollwidth = (spage.depth + 1) * spage.spwidth;
+      
+      // set the tab and viewport dimensions
+      // webkit requires spviewport to larger that the sum of the bodies
+      // we provision it with an extra body width
+      node_style_set( spviewport, "width", spage.spbodywidth + spage.spscrollwidth + "px" );
+      node_style_set( otbody, "width", spage.spbodywidth + "px" );
+      node_style_set( tbody, "width", spage.spbodywidth + "px" );
+      
+      // sptab event listener
+      sptabInvokeOnselectListener( tab, tbody, "select" );
+      
+      // add the new tab
+      dom_add_child( spviewport, tbody );
+      
+      // the event listeners
+      spageInvokeOnchangeListener( spage, tbody, "push" );
+      sptabInvokeOnselectListener( tab, tbody, "push" );
+      
+      // show the new tbody
+      console.log( "transition=", spageTransitionStyle( spage ), " spoffset=", spage.spoffset, " scrollwidth=", spage.spscrollwidth );
+      console.log( "tbody=", tbody );
+      switch( spageTransitionStyle( spage ) ) {
+	 case "auto":
+	 case "move": spagePushSlide( spage, spviewport, tbody, otbody ); break;
+	 case "help": spagePushFade( spage, spviewport, tbody, otbody ); break;
+	 case "wait": spagePushZoom( spage, spviewport, tbody, otbody ); break;
+      }
+   }
+
    // tabPushBody
-   function tabPushBody( tab, body ) {
+   function tabPushBody( tab, tbody ) {
       const spage = spageFindFromTag( tab, "hop-spage" );
       const sphead = spage.sphead;
       const spheadcontent = sphead.firstChild;
@@ -459,18 +516,20 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       window.scrollTo( 0, 0 );
 
       spheadbutton.className = "visible";
-      spagePush( spage, tab, body );
+      console.log( "tabPushBody..." );
+      spagePush( spage, tab, tbody );
    }
       
    // spagePushService
    function spagePushService( tab, svc ) {
+      console.log( "spagePushService...", svc);
       if( !tab.pushed ) {
 	 tab.pushed = true;
 	 with_hop( svc(),
-	    body => { 
+	    tbody => { 
 	       tab.svc = svc;
 	       tab.staticNode = undefined;
-	       tabPushBody( tab, body );
+	       tabPushBody( tab, tbody );
 	    },
 	    xhr => {
 	       tab.pushed = false;
@@ -480,15 +539,16 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       
    // spagePushUrl
    function spagePushUrl( tab, svcurl, build ) {
+      console.log( "spagePushUrl...", svcurl);
       if( !tab.pushed ) {
 	 tab.pushed = true;
 
 	 with_hop( svcurl,
-	    body => {
+	    tbody => {
 	       tab.svc = svcurl;
 	       tab.staticNode = undefined;
 	       tab.build = build;
-	       tabPushBody( tab, build( body ) );
+	       tabPushBody( tab, build( tbody ) );
 	    },
 	    xhr => {
 	       tab.pushed = false;
@@ -505,6 +565,7 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       tab.staticBody = p;
       p.removeChild( node );
       
+      console.log( "spagePushNode...");
       tabPushBody( tab, node );
    }
       
@@ -520,29 +581,29 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       }
    }
       
-   // spageTabUpdate
-   function spageTabUpdate( tab ) {
-      
-      function update( body ) {
-	 const spage = findSpageFromTag( tab, "hop-spage" );
-	 const spviewport = spage.spviewport;
-	 
-	 spageResize( spage );
-	 node_style_set( body, "width", spage.spbodywidth + "px" );
-	 spage.tabs.pop();
-	 spage.tabs.push( body );
-	 body.tab = tab;
-	 dom_add_child( spviewport, body );
-      }
-      
-      tab = getElement( tab );
-      
-      if( typeof( tab.svc ) === "string" ) {
-	 with_hop( tab.svc, body => update( tab.build( body ) ) );
-      } else {
-	 with_hop( tab.svc, update );
-      }
-   }
+/*    // spageTabUpdate                                                */
+/*    function spageTabUpdate( tab ) {                                 */
+/*                                                                     */
+/*       function update( body ) {                                     */
+/* 	 const spage = findSpageFromTag( tab, "hop-spage" );           */
+/* 	 const spviewport = spage.spviewport;                          */
+/* 	                                                               */
+/* 	 spageResize( spage );                                         */
+/* 	 node_style_set( body, "width", spage.spbodywidth + "px" );    */
+/* 	 spage.tbodies.pop();                                             */
+/* 	 spage.tbodies.push( body );                                      */
+/* 	 body.tab = tab;                                               */
+/* 	 dom_add_child( spviewport, body );                            */
+/*       }                                                             */
+/*                                                                     */
+/*       tab = getElement( tab );                                      */
+/*                                                                     */
+/*       if( typeof( tab.svc ) === "string" ) {                        */
+/* 	 with_hop( tab.svc, body => update( tab.build( body ) ) );     */
+/*       } else {                                                      */
+/* 	 with_hop( tab.svc, update );                                  */
+/*       }                                                             */
+/*    }                                                                */
       
    // spageTabPop
    function spageTabPop( tab ) {
@@ -591,7 +652,7 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       spage.spwindow = childs[ 2 ];
       spage.spviewport = spage.spwindow.firstChild;
       spage.depth = 0;
-      spage.tabs = [ spage.spviewport.firstChild ];
+      spage.tbodies = [ spage.spviewport.firstChild ];
       spage.heads = [];
       spage.inpop = false;
       spage.onchg = onchange;

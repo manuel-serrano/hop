@@ -1,0 +1,6 @@
+{
+   "source": "redirection.js",
+   "tags": ["io", "http"],
+   "description": "A basic example of HTTP redirection",
+   "doc": "This example shows how using Hop.js responses, HTTP redirections is implemented.",
+}

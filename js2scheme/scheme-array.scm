@@ -43,6 +43,8 @@
 	   (j2s-array-maybe-map obj args mode return conf)
 	   (j2s-array-filter obj args mode return conf)
 	   (j2s-array-maybe-filter obj args mode return conf)
+	   (j2s-array-filter-map obj args mode return conf)
+	   (j2s-array-maybe-filter-map obj args mode return conf)
 	   (j2s-array-flatmap obj args mode return conf)
 	   (j2s-array-maybe-flatmap obj args mode return conf)
 	   (j2s-array-maybe-join obj args mode return conf)
@@ -619,6 +621,20 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-maybe-filter obj args mode return ctx)
    (j2s-array-foreach-map-filter 'js-array-maybe-filter
+      obj args mode return ctx))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-filter-map ...                                         */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-filter-map obj args mode return ctx)
+   (j2s-array-foreach-map-filter 'js-array-filter-map
+      obj args mode return ctx))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-maybe-filter-map ...                                   */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-maybe-filter-map obj args mode return ctx)
+   (j2s-array-foreach-map-filter 'js-array-maybe-filter-map
       obj args mode return ctx))
 
 ;*---------------------------------------------------------------------*/

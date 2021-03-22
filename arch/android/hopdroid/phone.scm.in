@@ -484,7 +484,7 @@
    (match-case contact
       (#(?id ?firstname ?family ?thumb)
        (instantiate::vcard
-	  (id id)
+	  (uid id)
 	  (fn (fn firstname family))
 	  (familyname family)
 	  (firstname firstname)
@@ -502,7 +502,7 @@
 			 (cons (cons 'akas akas) notes)
 			 notes)))
 	  (instantiate::vcard
-	     (id id)
+	     (uid id)
 	     (fn (fn firstname family))
 	     (familyname family)
 	     (firstname firstname)
@@ -565,8 +565,8 @@
    (unless contact-plugin
       (set! contact-plugin (android-load-plugin p "contact")))
    (when contact-plugin
-      (with-access::vcard vcard (id)
-	 (android-send-command/result p contact-plugin #\e id))))
+      (with-access::vcard vcard (uid)
+	 (android-send-command/result p contact-plugin #\e uid))))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-call-log ::androidphone ...                                */

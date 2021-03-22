@@ -5,7 +5,7 @@
 #*    Author      :  manuel serrano                                    */
 #*    Creation    :  Wed May 13 18:51:59 2020                          */
 #*    Last change :  Wed May 20 08:38:53 2020 (serrano)                */
-#*    Copyright   :  2020 manuel serrano                               */
+#*    Copyright   :  2020-21 manuel serrano                            */
 #*    -------------------------------------------------------------    */
 #*    build the Android APK after ndk-build                            */
 #*    -------------------------------------------------------------    */
@@ -153,12 +153,12 @@ else
   mv libs $libdir
   
   for p in `find $libdir -type f -print`; do
-    $AAPT add $apkname.apk.unaligned $p || exit 1
+    $AAPT add $apkname.apk.unaligned "$p" || exit 1
   done
 fi  
 
 for p in `find assets -type f -print`; do
-  $AAPT add $apkname.apk.unaligned $p || exit 1
+  $AAPT add $apkname.apk.unaligned "$p" || exit 1
 done
 
 echo "jarsigner -keystore $androidkeystore -storepass 'android' $apkname.apk.unaligned androiddebugkey"

@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
 /*    Last change :  Sat Mar 21 11:38:17 2020 (serrano)                */
-/*    Copyright   :  2004-20 Manuel Serrano                            */
+/*    Copyright   :  2004-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
 /*=====================================================================*/
@@ -906,7 +906,12 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
    }
 
    xhr.svc = svc;
-   xhr.onerror = function( e ) { return fail( e, xhr ) };
+   xhr.onerror = function( e ) { 
+      if( typeof hop_stop_anim === "function" ) { 
+	 hop_stop_anim( xhr );
+      }
+      return fail( e, xhr );
+   };
    
    try {
       xhr.send( arg );
