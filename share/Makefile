@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon May 18 09:02:17 2020 (serrano)                */
-#*    Copyright   :  2004-20 Manuel Serrano                            */
+#*    Last change :  Tue Mar 23 16:14:27 2021 (serrano)                */
+#*    Copyright   :  2004-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -301,10 +301,12 @@ hopjs_u.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
 	$(MAKE) hopjs_sha1 >> $@
 
 
+.SILENT:
 hopjs_s.js: hop_s.js
 	cp $^ $@
 	$(MAKE) hopjs_sha1 >> $@
 
+.SILENT:
 hopjs_sha1:
 	@echo "hop.sha1sum = (function() {"
 	@cat sha1.js
