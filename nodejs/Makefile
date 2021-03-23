@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.3.x/nodejs/Makefile                   */
+#*    serrano/prgm/project/hop/hop/nodejs/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Jun  2 16:29:56 2020 (serrano)                */
+#*    Last change :  Tue Mar 23 16:42:51 2021 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -64,6 +64,7 @@ include ../etc/Makefile.library
 .PHONY: build native jvm
 
 build: .afile
+	$(MAKE) heap-c
 	$(MAKE) $(BACKEND)
 
 native: o heap-c lib-c
