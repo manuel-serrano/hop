@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopc/parseargs.scm                  */
+;*    serrano/prgm/project/hop/3.5.x/hopc/parseargs.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Jun  2 08:19:42 2020 (serrano)                */
+;*    Last change :  Mon Mar 22 12:46:21 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -205,7 +205,7 @@
 	     (hopc-clientc-type-check-set! #f))
 	    ((("-l" "--language") ?lang (help "Set the source language (\"auto\", \"hop\", or \"hopscript\")"))
 	     (unless (member lang '("hop" "hopscript"))
-		(error "hopc" "Unknown language, see -help" lang))
+		(error "hopc" "Unknown language, see --help" lang))
 	     (hopc-source-language-set! (string->symbol lang)))
 	    (("--libs-dir" ?DIR (help "Generate libs-dir directive (main only)"))
 	     (hopc-libs-dir-set! DIR))
@@ -280,6 +280,8 @@
 		   (j2s-compile-options))))
 	    (("--js-plugins" (help "Enables JavaScript plugins"))
 	     (hopc-j2s-plugins-set! #t))
+	    (("--js-preprocessor" ?pp (help "Enables JavaScript preprocessor"))
+	     (hopc-j2s-preprocessor-set! pp))
 	    
 	    (section "Optimization, profiling, and Debugging")
 	    (("-ftyflow" (help "Enable tyflow typing (-O)"))

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/js2scheme/ast.scm                 */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/ast.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Jun  2 07:33:35 2020 (serrano)                */
+;*    Last change :  Mon Mar 22 15:36:18 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -1298,6 +1298,15 @@
 ;*---------------------------------------------------------------------*/
 (define (json->ast ip::input-port)
 
+   (define (cast val ty)
+      (case ty
+	 ((uint32)
+	  (fixnum->uint32 val))
+	 ((int32)
+	  (fixnum->int32 val))
+	 (else
+	  val)))
+
    (define (alist->node cname l)
       (let* ((clazz (find-class cname))
 	     (ctor (class-constructor clazz))
@@ -1307,12 +1316,13 @@
 	 (let loop ((i (-fx (vector-length fields) 1)))
 	    (when (>=fx i 0)
 	       (let* ((f (vector-ref-ur fields i))
-		      (n (class-field-name f)))
+		      (n (class-field-name f))
+		      (t (class-field-type f)))
 		  (cond
 		     ((assq n l)
 		      =>
 		      (lambda (c)
-			 ((class-field-mutator f) inst (cdr c))))
+			 ((class-field-mutator f) inst (cast (cdr c) t))))
 		     ((class-field-default-value? f)
 		      ((class-field-mutator f) inst (class-field-default-value f)))
 		     ((not (member "nojson" (class-field-info f)))
@@ -1375,7 +1385,7 @@
 			      ((assq '__undefined__ alist)
 			       #unspecified)
 			      (else
-			       (tprint "UNKNWON: " o)
+			       (tprint "UNKNWON: " (cell-ref o))
 			       o))))
       :parse-error (lambda (msg fname loc)
 		      (error "json->ast" "Wrong JSON file" msg))))
