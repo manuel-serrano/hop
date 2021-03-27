@@ -4,7 +4,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Tue Sep  3 08:06:22 2019 (serrano)                */
+/*    Last change :  Fri Mar 26 07:07:56 2021 (serrano)                */
 /*    Copyright   :  2006-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -721,8 +721,8 @@ function node_style_set_native( el, prop, value ) {
    }
 
    if( arguments.length === 2 ) {
-      for( let p in prop ) {
-	 const v = prop[ p ].toString() || "0";
+      for( var p in prop ) {
+	 var v = prop[ p ].toString() || "0";
 	 
 	 if( obj.style === undefined ) {
 	    sc_error( "node-style-set!(" + prop + ")", 
@@ -772,7 +772,7 @@ function node_style_set_array( el, prop, value ) {
    }
 
    if( arguments.length === 1 ) {
-      for( let p in prop ) {
+      for( var p in prop ) {
 	 obj.style[ p ] = prop[ p ].toString() || "0";
       }
    } else {
