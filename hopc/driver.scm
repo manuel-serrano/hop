@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopc/driver.scm                     */
+;*    serrano/prgm/project/hop/3.5.x/hopc/driver.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Sun Mar 29 06:47:58 2020 (serrano)                */
+;*    Last change :  Mon Mar 22 12:56:22 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -547,12 +547,12 @@
 	    (case lang
 	       ((hop)
 		(compile-hop in opts file (hopc-temp)))
-	       ((hopscript)
+	       ((hopscript ast.json)
 		(compile-hopscript in opts file exec (hopc-temp)))
 	       ((scheme)
 		(compile-scheme in opts file (hopc-temp)))
 	       (else
-		(error "bigloo" "Unknown language" lang)))
+		(error "hopc" "Unknown language" lang)))
 	    (when (and (string? file) (eq? (hopc-pass) 'so))
 	       (let ((obj (string-append (prefix file) ".o")))
 		  (when (file-exists? obj)
@@ -567,13 +567,19 @@
 	 (else
 	  (compile-bigloo filename in lang))))
 
+   (define (preprocess src)
+      (if (hopc-j2s-preprocessor)
+	  'preprocessor
+	  (error "hopc" "Unknown language source" src)))
+   
    (define (language src)
       (if (eq? (hopc-source-language) 'auto)
 	  (case (string->symbol (suffix src))
 	     ((hop) 'hop)
 	     ((scm) 'scheme)
 	     ((js) 'hopscript)
-	     (else (error "hopc" "Unknown language source" src)))
+	     ((json) (if (string-suffix? ".ast.json" src) 'ast.json 'json))
+	     (else (preprocess src)))
 	  (hopc-source-language)))
 
    (cond
@@ -691,7 +697,7 @@
 ;*    hopc-plugins-loader ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hopc-plugins-loader)
-   (when (hopc-j2s-plugins)
+   (when (or (hopc-j2s-plugins) (hopc-j2s-preprocessor))
       (let ((oldw (bigloo-warning))
 	    (oldd (bigloo-debug)))
 	 (bigloo-warning-set! 0)

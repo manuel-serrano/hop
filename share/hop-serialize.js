@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/share/hop-serialize.js              */
+/*    serrano/prgm/project/hop/3.5.x/share/hop-serialize.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Fri Mar 26 07:13:33 2021 (serrano)                */
+/*    Last change :  Fri Mar 26 12:11:38 2021 (serrano)                */
 /*    Copyright   :  2007-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -724,7 +724,7 @@ function hop_serialize_html( item ) {
 	 if( item.nodeType == 3 ) {
 	    return hop_serialize_string( item.nodeValue );
 	 } else {
-	    return hop_bigloo_serialize_string( "#<" + tname + ">" );
+	    return hop_serialize_string( "#<" + tname + ">" );
 	 }
       }
    }

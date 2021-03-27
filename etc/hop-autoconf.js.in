@@ -1,10 +1,10 @@
 // -*- Mode: js -*-
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/etc/hop-autoconf.js.in              */
+/*    serrano/prgm/project/hop/3.5.x/etc/hop-autoconf.js.in            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Fri Mar 26 07:07:56 2021 (serrano)                */
+/*    Last change :  Fri Mar 26 12:12:42 2021 (serrano)                */
 /*    Copyright   :  2006-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */

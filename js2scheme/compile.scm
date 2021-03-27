@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/compile.scm               */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/compile.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Jun  4 10:41:41 2020 (serrano)                */
+;*    Last change :  Mon Mar 22 11:52:50 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -436,10 +436,14 @@
 	 (bigloo-warning-set! (config-get opts :warning)))
       (unwind-protect
 	 (let ((ast (cond
-		       ((input-port? in)
-			(j2s-parser in conf))
 		       ((isa? in J2SProgram)
-			in))))
+			in)
+		       ((not (input-port? in))
+			(error "hopc" "Not input file provided" in))
+		       ((string-suffix? "ast.json" (input-port-name in))
+			(json->ast in))
+		       (else
+			(j2s-parser in conf)))))
 	    (if (eof-object? ast)
 		'()
 		(let loop ((ast ast)

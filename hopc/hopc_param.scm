@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopc/hopc_param.scm                 */
+;*    serrano/prgm/project/hop/3.5.x/hopc/hopc_param.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun May 24 16:25:01 2020 (serrano)                */
+;*    Last change :  Mon Mar 22 12:54:34 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -137,6 +137,9 @@
 
 	    (hopc-j2s-plugins::bool)
 	    (hopc-j2s-plugins-set! ::bool)
+
+	    (hopc-j2s-preprocessor::obj)
+	    (hopc-j2s-preprocessor-set! ::obj)
 
 	    (hop-max-threads::int))
 	    
@@ -420,6 +423,12 @@
 ;*    Enable/disable j2s plugins                                       */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-j2s-plugins
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-j2s-preprocessor ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-j2s-preprocessor
    #f)
 
 ;*---------------------------------------------------------------------*/
