@@ -93,7 +93,7 @@ function hop_add( id, e, insert ) {
 	    } else if( sc_isVector( e ) || Array.isArray( e ) ) {
 	       e.forEach( add );
 	    } else if( e instanceof NodeList ) {
-	       e.forEach( function( n ) { return node.appendChild( n ) } );
+	       e.forEach( function( n ) { node.appendChild( n ) } );
 	    } else if( typeof e === "boolean" || e == null || e == undefined ) {
 	       return;
 	    } else {
