@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Thu May 21 08:50:57 2020 (serrano)                */
-/*    Copyright   :  2006-20 Manuel Serrano                            */
+/*    Last change :  Fri Mar 26 07:11:56 2021 (serrano)                */
+/*    Copyright   :  2006-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
 /*    -------------------------------------------------------------    */
@@ -93,7 +93,7 @@ function hop_add( id, e, insert ) {
 	    } else if( sc_isVector( e ) || Array.isArray( e ) ) {
 	       e.forEach( add );
 	    } else if( e instanceof NodeList ) {
-	       e.forEach( n => node.appendChild( n ) );
+	       e.forEach( function( n ) { node.appendChild( n ) } );
 	    } else if( typeof e === "boolean" || e == null || e == undefined ) {
 	       return;
 	    } else {
