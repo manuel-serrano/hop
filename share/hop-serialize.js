@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/share/hop-serialize.js              */
+/*    serrano/prgm/project/hop/3.5.x/share/hop-serialize.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Thu May 21 07:12:41 2020 (serrano)                */
-/*    Copyright   :  2007-20 Manuel Serrano                            */
+/*    Last change :  Fri Mar 26 12:11:38 2021 (serrano)                */
+/*    Copyright   :  2007-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
@@ -724,7 +724,7 @@ function hop_serialize_html( item ) {
 	 if( item.nodeType == 3 ) {
 	    return hop_serialize_string( item.nodeValue );
 	 } else {
-	    return hop_bigloo_serialize_string( "#<" + tname + ">" );
+	    return hop_serialize_string( "#<" + tname + ">" );
 	 }
       }
    }
@@ -914,7 +914,7 @@ function hop_bytearray_to_obj( s, extension, cset ) {
 
    function utf8substring( s, end ) {
       var res = "";
-      let start = pointer;
+      var start = pointer;
 
       while( pointer < end ) {
 	 var code = s[ pointer++ ];
@@ -1390,7 +1390,7 @@ function hop_dom_unserialize( obj ) {
    
    if( "id" in obj ) el.id = obj.id;
    if( obj.body ) {
-      obj.body.forEach( n => { 
+      obj.body.forEach( function( n ) { 
 	    if( n ) {
 	       if( n instanceof Object && "__class__" in n ) {
 		  if( n.__class__ in hop_builtin_class_unserializer ) {
