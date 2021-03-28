@@ -1,10 +1,10 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.5.x/configure                         */
+#*    serrano/prgm/project/hop/hop/configure                           */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Mar 22 10:49:55 2021 (serrano)                */
+#*    Last change :  Sun Mar 28 16:39:07 2021 (serrano)                */
 #*    Copyright   :  2004-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1746,21 +1746,22 @@ done
 #*    Debian script                                                    */
 #*---------------------------------------------------------------------*/
 # debian
-deb=arch/debian/makedeb.sh
-rm -f $deb 2> /dev/null
-echo "#!/bin/sh" > $deb
-echo "#* Automatically generated file (don't edit) */" >> $deb
+for deb in arch/debian/makedeb.sh arch/debian/makedebremote.sh; do
+  rm -f $deb 2> /dev/null
+  echo "#!/bin/sh" > $deb
+  echo "#* Automatically generated file (don't edit) */" >> $deb
 
-cat $deb.in \
-  | sed -e "s|#!/bin/sh||" \
-        -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
-        -e "s|@VERSION@|$version|" \
-        -e "s|@WEBLETSDIR@|$webletsdir|" \
-        -e "s|@NMODULESDIR@|$nodemodulesdir|" \
-        -e "s|@MINOR@|$minorversion|" \
-	>> $deb  
-chmod a+rx $deb
- 
+  cat $deb.in \
+    | sed -e "s|#!/bin/sh||" \
+          -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
+          -e "s|@VERSION@|$version|" \
+          -e "s|@WEBLETSDIR@|$webletsdir|" \
+          -e "s|@NMODULESDIR@|$nodemodulesdir|" \
+          -e "s|@MINOR@|$minorversion|" \
+  	>> $deb  
+  chmod a+rx $deb
+done
+
 # homebrew
 deb=arch/homebrew/makebrew.sh
 rm -f $deb 2> /dev/null
