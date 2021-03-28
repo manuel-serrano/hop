@@ -1,12 +1,30 @@
-Hopdac Debian Package - 24 mar 2020
-===================================
+Hop Debian Package - 28 mar 2021
+================================
 
-This document explains how to use the `makedeb.sh' script to
-build the Hop Debian packages.
+1. To build the debian packages on the local machine
+----------------------------------------------------
 
-This script install the Hopdac version out of a tarball stored in:
+```shell
+./makedeb.sh [-O targetdir] [--repodir dir]
+```
 
-   $HOME/prgm/project/hop/repository
+example:
 
-It uses the currently "configured" Hop version.
+```shell
+./makedeb.sh -O /tmp/debhop
+```
 
+2. To build the debian packages on a remote machine via ssh
+-----------------------------------------------------------
+
+```shell
+./makedebremote.sh [-O targetdir] [host] [user]
+```
+
+Warning! This assumes that bash is available on the remote host
+
+example:
+
+```shell
+./makedebremote.sh -O /tmp/debraspbian raspbian hop
+```
