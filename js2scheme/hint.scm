@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/hint.scm                  */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/hint.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sun Jun 14 06:57:45 2020 (serrano)                */
+;*    Last change :  Mon Mar 29 16:10:31 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -75,7 +75,7 @@
 		      decls)))
 	     (for-each (lambda (n) (j2s-call-hint! n #f conf)) decls)
 	     (for-each (lambda (n) (j2s-call-hint! n #f conf)) nodes)
-	     (when (config-get conf :optim-hintloop #f)
+	     (when (and #f (config-get conf :optim-hintloop #f))
 		(for-each (lambda (n) (j2s-hint-loop! n #f 0)) decls)
 		(for-each (lambda (n) (j2s-hint-loop! n #f 0)) nodes))
 	     dups)
@@ -1485,7 +1485,7 @@
 		(vtype type)
 		(utype type)
 		(itype type)
-		(val (J2SRef p loc))))
+		(val (J2SRef p loc :type type))))
 	  (duplicate::J2SDecl p
 	     (key (ast-decl-key))
 	     (hint '())
