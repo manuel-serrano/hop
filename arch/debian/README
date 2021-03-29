@@ -1,15 +1,1 @@
-That directory contains the necessary scripts to build a Hop package
-for Debian (dpkg). 
-
-When the scripts are invoked under a Maemo development environnement 
-they will additional build a Hop Maemo Launcher.
-
-To run the scripts uses:
-
-   $ REPODIR=<directory containing hop tarball> make -f hop<version>/arch/debian/Makefile
-
-example:
-
-   $ (cd /tmp; REPODIR=/usr/local/src make -f hop-3.3.0-pre1/arch/debian/Makefile)
-
-This will build a hop-3.3.0-pre1_XXX.deb package in the /tmp directory.
+See README.md
