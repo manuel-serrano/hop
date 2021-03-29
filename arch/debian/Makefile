@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.4.x/arch/debian/Makefile              */
+#*    serrano/prgm/project/hop/hop/arch/debian/Makefile                */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri May 13 10:19:41 2011                          */
-#*    Last change :  Wed Jan  9 07:26:37 2013 (serrano)                */
-#*    Copyright   :  2011-13 Manuel Serrano                            */
+#*    Last change :  Mon Mar 29 07:11:44 2021 (serrano)                */
+#*    Copyright   :  2011-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Debian (maemo) port                                              */
 #*=====================================================================*/
@@ -20,7 +20,7 @@ do: build
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-MAEMO = Makefile.maemo README.maemo \
+MAEMO = Makefile.maemo \
   hop-16x16.png hop-26x26.png hop-40x40.png hop-48x48.png hop-64x64.png \
   hop.desktop.in hop.install hop.service.in
 
