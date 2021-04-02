@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/hopc/driver.scm                   */
+;*    serrano/prgm/project/hop/hop/hopc/driver.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Mon Mar 22 12:56:22 2021 (serrano)                */
+;*    Last change :  Tue Mar 30 10:22:40 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -434,7 +434,7 @@
 	    file
 	    temp))
 
-      (define (compile-hopscript in opts file exec temp)
+      (define (compile-hopscript in opts file syn exec temp)
 	 (let ((mmap (when (and (string? fname) (file-exists? fname))
 			(open-mmap fname :read #t :write #f))))
 	    (compiler
@@ -478,10 +478,33 @@
 			:debug (bigloo-debug)
 			:warning (bigloo-warning)
 			:function-nice-name (string? temp)
+			:syntax syn
 			:node-modules-directory (hopc-node-modules-directory)
 			(hopc-j2s-flags))))
 	       file
 	       temp)))
+
+      (define (compile-language lang in opts file exec temp)
+	 (let* ((comp (hopc-language-loader))
+		(obj (nowarning (lambda () (comp (symbol->string lang) file '()))))
+		(ty (assq :type obj))
+		(val (assq :value obj)))
+	    (cond
+	       ((or (not (pair? ty)) (not (pair? val)))
+		(error (format "hopc:~a" lang) "wrong status" obj))
+	       ((equal? (cdr ty) "error")
+		(error (format "hopc:~a" lang) "error" (cdr val)))
+	       ((equal? (cdr ty) "filename")
+		(let ((fmt (assq :syntax obj)))
+		   (cond
+		      ((input-port? in)
+		       (close-input-port in)
+		       (set! in (open-input-file (cdr val)))))
+		   (if (pair? fmt)
+		       (compile-hopscript in opts file (cdr fmt) exec temp)
+		       (compile-hopscript in opts file (suffix file) exec temp))))
+	       (else
+		(error (format "hopc:~a" lang) "don't know what to do with" obj)))))
 
       (define (bigloo-options)
 	 (let ((l (hopc-optim-level)))
@@ -548,11 +571,11 @@
 	       ((hop)
 		(compile-hop in opts file (hopc-temp)))
 	       ((hopscript ast.json)
-		(compile-hopscript in opts file exec (hopc-temp)))
+		(compile-hopscript in opts file (symbol->string lang) exec (hopc-temp)))
 	       ((scheme)
 		(compile-scheme in opts file (hopc-temp)))
 	       (else
-		(error "hopc" "Unknown language" lang)))
+		(compile-language lang in opts file exec (hopc-temp))))
 	    (when (and (string? file) (eq? (hopc-pass) 'so))
 	       (let ((obj (string-append (prefix file) ".o")))
 		  (when (file-exists? obj)
@@ -567,19 +590,15 @@
 	 (else
 	  (compile-bigloo filename in lang))))
 
-   (define (preprocess src)
-      (if (hopc-j2s-preprocessor)
-	  'preprocessor
-	  (error "hopc" "Unknown language source" src)))
-   
    (define (language src)
       (if (eq? (hopc-source-language) 'auto)
-	  (case (string->symbol (suffix src))
-	     ((hop) 'hop)
-	     ((scm) 'scheme)
-	     ((js) 'hopscript)
-	     ((json) (if (string-suffix? ".ast.json" src) 'ast.json 'json))
-	     (else (preprocess src)))
+	  (let ((lang (string->symbol (suffix src))))
+	     (case lang
+		((hop) 'hop)
+		((scm) 'scheme)
+		((js) 'hopscript)
+		((json) (if (string-suffix? ".ast.json" src) 'ast.json 'json))
+		(else lang)))
 	  (hopc-source-language)))
 
    (cond
@@ -698,22 +717,44 @@
 ;*---------------------------------------------------------------------*/
 (define (hopc-plugins-loader)
    (when (or (hopc-j2s-plugins) (hopc-j2s-preprocessor))
-      (let ((oldw (bigloo-warning))
-	    (oldd (bigloo-debug)))
-	 (bigloo-warning-set! 0)
-	 (bigloo-debug-set! 0)
-	 (hop-sofile-compile-policy-set! 'none)
-	 (unwind-protect
+      (hop-sofile-compile-policy-set! 'none)
+      (nowarning
+	 (lambda ()
 	    (when (library-load-init 'nodejs (hop-library-path))
 	       (library-load-init 'hopscript (hop-library-path))
 	       (library-load 'hopscript)
 	       (library-load 'nodejs)
 	       (eval '((@ hopscript-install-expanders! __hopscript_expanders)))
-	       (eval '((@ nodejs-plugins-toplevel-loader __nodejs_require))))
-	    (begin
-	       (bigloo-warning-set! oldw)
-	       (bigloo-debug-set! oldd))))))
+	       (eval '((@ nodejs-plugins-toplevel-loader __nodejs_require))))))))
 
+;*---------------------------------------------------------------------*/
+;*    hopc-language-loader ...                                         */
+;*---------------------------------------------------------------------*/
+(define (hopc-language-loader)
+   (hop-sofile-compile-policy-set! 'none)
+   (nowarning
+      (lambda ()
+	 (when (library-load-init 'nodejs (hop-library-path))
+	    (library-load-init 'hopscript (hop-library-path))
+	    (library-load 'hopscript)
+	    (library-load 'nodejs)
+	    (eval '((@ hopscript-install-expanders! __hopscript_expanders)))
+	    (eval '((@ nodejs-language-toplevel-loader __nodejs_require)))))))
+
+;*---------------------------------------------------------------------*/
+;*    nowarning ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (nowarning thunk)
+   (let ((oldw (bigloo-warning))
+	 (oldd (bigloo-debug)))
+      (bigloo-warning-set! 0)
+      (bigloo-debug-set! 0)
+      (unwind-protect
+	 (thunk)
+	 (begin
+	    (bigloo-warning-set! oldw)
+	    (bigloo-debug-set! oldd)))))
+	 
 ;*---------------------------------------------------------------------*/
 ;*    sobase-path ...                                                  */
 ;*    -------------------------------------------------------------    */

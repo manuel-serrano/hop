@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat May  2 15:07:05 2020 (serrano)                */
+;*    Last change :  Tue Mar 30 10:20:27 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -51,7 +51,8 @@
 	   (nodejs-eval ::JsGlobalObject ::JsObject)
 	   (nodejs-function ::JsGlobalObject ::JsObject)
 	   (nodejs-worker ::JsGlobalObject ::JsObject ::JsObject)
-	   (nodejs-plugins-toplevel-loader)))
+	   (nodejs-plugins-toplevel-loader)
+	   (nodejs-language-toplevel-loader)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -2482,6 +2483,25 @@
 			 '()))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    make-language-loader ...                                         */
+;*---------------------------------------------------------------------*/
+(define (make-language-loader %ctxthis %ctxmodule worker)
+   (when (and (isa? %ctxthis JsGlobalObject) (isa? %ctxmodule JsObject))
+      (lambda (lang file conf)
+	 (js-worker-exec worker "language-loader" #f
+	    (lambda ()
+	       (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
+		  (let* ((langmode (nodejs-require-module lang worker
+				      %ctxthis %ctxmodule))
+			 (key (js-get js-symbol (& "compiler") %ctxthis))
+			 (comp (js-get langmode key %ctxthis)))
+		     (js-jsobject->alist
+			 (js-call2 %ctxthis comp (js-undefined)
+			    (js-string->jsstring file)
+			    (js-alist->jsobject conf %ctxthis))
+			 %ctxthis))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-plugins-toplevel-loader ...                               */
 ;*    -------------------------------------------------------------    */
 ;*    This function is intended to be used by external tools only      */
@@ -2492,6 +2512,18 @@
       (js-main-worker! "plugin" "plugin" #t
 	 nodejs-new-global-object nodejs-new-module)
       (make-plugins-loader this module worker)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-language-toplevel-loader ...                              */
+;*    -------------------------------------------------------------    */
+;*    This function is intended to be used by external tools only      */
+;*    (e.g., hopc).                                                    */
+;*---------------------------------------------------------------------*/
+(define (nodejs-language-toplevel-loader)
+   (multiple-value-bind (worker this module)
+      (js-main-worker! "language" "language" #t
+	 nodejs-new-global-object nodejs-new-module)
+      (make-language-loader this module worker)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Bind the nodejs require functions                                */

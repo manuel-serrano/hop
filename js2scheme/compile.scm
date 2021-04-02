@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/compile.scm             */
+;*    serrano/prgm/project/hop/hop/js2scheme/compile.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Mon Mar 22 11:52:50 2021 (serrano)                */
+;*    Last change :  Tue Mar 30 10:27:41 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -440,6 +440,8 @@
 			in)
 		       ((not (input-port? in))
 			(error "hopc" "Not input file provided" in))
+		       ((string=? (config-get opts :syntax "") "ast.json")
+			(json->ast in))
 		       ((string-suffix? "ast.json" (input-port-name in))
 			(json->ast in))
 		       (else
