@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Jan  7 15:48:04 2020 (serrano)                */
-;*    Copyright   :  2004-20 Manuel Serrano                            */
+;*    Last change :  Tue Apr  6 07:24:36 2021 (serrano)                */
+;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -161,6 +161,8 @@
 		      (synchronize jsmutex
 			 (set! jsinit #t)
 			 (condition-variable-broadcast! jscondv)))
+		   ;; start zeroconf
+		   (when (hop-enable-zeroconf) (init-zeroconf!))
 		   ;; start the main loop
 		   (cond
 		      ((and serv servs)
@@ -187,6 +189,8 @@
 		   (users-close!)
 		   (hop-filters-close!)
 		   (javascript-load-files files exprsjs jsctx)
+		   ;; start zeroconf
+		   (when (hop-enable-zeroconf) (init-zeroconf!))
 		   (synchronize jsmutex
 		      (set! jsinit #t)
 		      (condition-variable-broadcast! jscondv))
