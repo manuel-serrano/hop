@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/hop/share/Makefile                      */
+#*    serrano/prgm/project/hop/3.4.x/share/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Tue Mar 23 16:14:27 2021 (serrano)                */
+#*    Last change :  Tue Apr  6 14:26:46 2021 (serrano)                */
 #*    Copyright   :  2004-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -298,20 +298,17 @@ hopjs_u.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
                | sed -e "/^[ \t]*$$/D" \
                | $(BGLCPP) -DHOP_JAVASCRIPT | $(CLOSURE) \
                >> $@
-	$(MAKE) hopjs_sha1 >> $@
+	echo "hop.sha1sum = (function() {" >> $@
+	cat sha1.js >> $@
+	echo "return sha1sum;" >> $@
+	echo "})();" >> $@
 
-
-.SILENT:
 hopjs_s.js: hop_s.js
 	cp $^ $@
-	$(MAKE) hopjs_sha1 >> $@
-
-.SILENT:
-hopjs_sha1:
-	@echo "hop.sha1sum = (function() {"
-	@cat sha1.js
-	@echo "return sha1sum;"
-	@echo "})();"
+	echo "hop.sha1sum = (function() {" >> $@
+	cat sha1.js >> $@
+	echo "return sha1sum;" >> $@
+	echo "})();" >> $@
 
 #*---------------------------------------------------------------------*/
 #*    hop-runtime.sch ...                                              */
