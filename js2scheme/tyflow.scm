@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/js2scheme/tyflow.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/tyflow.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Jun  5 05:15:02 2020 (serrano)                */
+;*    Last change :  Tue Apr  6 16:22:48 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -11,8 +11,8 @@
 ;*    This pass does not assume any type decoration in the AST, not    */
 ;*    even for literals and constants.                                 */
 ;*    -------------------------------------------------------------    */
-;*    This stage assigns type to variable declaration and variable     */
-;*    references. At the a declaration site, the types are:            */
+;*    This stage assigns types to variable declarations and variable   */
+;*    references. At a declaration site, the types are:                */
 ;*                                                                     */
 ;*      itype: the initial type of the variable                        */
 ;*      utype: the user given type, enforced on assignments            */
@@ -213,7 +213,7 @@
 (define (decl-itype-add! decl::J2SDecl ty::symbol fix::cell)
    (with-access::J2SDecl decl (itype id)
       (unless (or (eq? ty 'unknown) (subtype? ty itype) (eq? itype 'any))
-	 (unfix! fix (format "J2SDecl.itype(~a) vtype=~a/~a" id itype ty))
+	 (unfix! fix (format "J2SDecl.itype(~a) itype=~a/~a" id itype ty))
 	 (set! itype (tyflow-type (merge-types itype ty))))))
 
 ;*---------------------------------------------------------------------*/

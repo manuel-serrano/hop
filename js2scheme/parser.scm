@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Jun  2 08:17:24 2020 (serrano)                */
+;*    Last change :  Tue Apr  6 15:48:06 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -3112,7 +3112,7 @@
 	  (let ((m (javascript-mode (car nodes))))
 	     (cond
 		((symbol? m)
-		 (when (eq? m 'strict)
+		 (when (memq m '(strict hopscript typescript))
 		    (for-each check-octal-string nnodes))
 		 (loop (cdr nodes) (stricter-mode mode m)))
 		(m

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/ast.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/ast.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Mar 22 15:36:18 2021 (serrano)                */
+;*    Last change :  Tue Apr  6 16:01:00 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -1322,7 +1322,12 @@
 		     ((assq n l)
 		      =>
 		      (lambda (c)
-			 ((class-field-mutator f) inst (cast (cdr c) t))))
+			 (with-handler
+			    (lambda (exn)
+			       (error "json->ast"
+				  (format "~a: illegal field assignment \"~s::~a\"" cname n t)
+				  (cdr c)))
+			    ((class-field-mutator f) inst (cast (cdr c) t)))))
 		     ((class-field-default-value? f)
 		      ((class-field-mutator f) inst (class-field-default-value f)))
 		     ((not (member "nojson" (class-field-info f)))
@@ -1384,6 +1389,10 @@
 					 (%id (cdr r))))))
 			      ((assq '__undefined__ alist)
 			       #unspecified)
+			      ((assq '__car__ alist)
+			       =>
+			       (lambda (a)
+				  (cons (cdr a) (cdr (assq '__cdr__ alist)))))
 			      (else
 			       (tprint "UNKNWON: " (cell-ref o))
 			       o))))
