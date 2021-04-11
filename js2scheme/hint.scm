@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Apr  9 11:35:18 2021 (serrano)                */
+;*    Last change :  Sun Apr 11 10:03:01 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -89,7 +89,8 @@
       ((memq ty
 	  '(any unknown
 	    integer real number bool string
-	    regexp array no-array date arguments function arrow procedure
+	    regexp array no-array date arguments function arrow service
+	    procedure
 	    class object promise
 	    null undefined void
 	    cmap scmstring tilde pair no-string no-integer

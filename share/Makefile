@@ -1,5 +1,5 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/hop/share/Makefile                      */
+#*    serrano/prgm/project/hop/3.4.x/share/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
