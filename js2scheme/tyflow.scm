@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/js2scheme/tyflow.scm              */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/tyflow.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Jun  5 05:15:02 2020 (serrano)                */
+;*    Last change :  Sun Apr 11 09:55:40 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -254,6 +254,15 @@
 ;*---------------------------------------------------------------------*/
 (define (typnum? ty::symbol)
    (memq ty '(index length indexof integer real number)))
+
+;*---------------------------------------------------------------------*/
+;*    funtype ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (funtype this::J2SFun)
+   (cond
+      ((isa? this J2SArrow) 'arrow)
+      ((isa? this J2SSvc) 'service)
+      (else 'function)))
 
 ;*---------------------------------------------------------------------*/
 ;*    env? ...                                                         */
@@ -727,9 +736,10 @@
 	  (with-access::J2SMethod val (function method)
 	     (node-type-optional-args function env fix)
 	     (node-type-optional-args method env fix)))
-      (if (decl-ronly? this)
-	  (decl-vtype-set! this 'function fix)
-	  (decl-vtype-add! this 'function fix))
+      (let ((ty (if (isa? this J2SDeclSvc) 'service 'function)))
+	 (if (decl-ronly? this)
+	     (decl-vtype-set! this ty fix)
+	     (decl-vtype-add! this ty fix)))
       (cond
 	 ((or (isa? this J2SDeclSvc) (eq? scope 'export))
 	  ;; services and exported function are as escaping functions,
@@ -1010,8 +1020,7 @@
 	    (multiple-value-bind (_ envf _)
 	       (node-type body fenv fix)
 	       (set! %info envf)))
-	 (expr-type-add! this env fix
-	    (if (isa? this J2SArrow) 'arrow 'function)))))
+	 (expr-type-add! this env fix (funtype this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type-fun-decl ::J2SFun ...                                  */
@@ -1019,7 +1028,7 @@
 (define (node-type-fun-decl this::J2SFun env::pair-nil fix)
    (with-access::J2SFun this (body decl)
       (when (isa? decl J2SDecl)
-	 (decl-vtype-set! decl 'function fix))
+	 (decl-vtype-set! decl (funtype this) fix))
       (filter-map (lambda (c)
 		     (let ((d (car c))
 			   (t (cdr c)))
@@ -1167,7 +1176,7 @@
       ;; the new node-type environment is a merge of env and the environment
       ;; produced by the function
       (with-access::J2SRef ref (decl)
-	 (expr-type-add! ref env fix 'function)
+	 (expr-type-add! ref env fix (funtype fun))
 	 (type-known-call-args fun args env bk)
 	 (with-access::J2SDecl decl (scope id)
 	    (with-access::J2SFun fun (rtype %info)

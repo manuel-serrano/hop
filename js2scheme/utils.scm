@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/utils.scm                 */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/utils.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Thu Jun  4 13:55:17 2020 (serrano)                */
+;*    Last change :  Sun Apr 11 10:04:29 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -313,6 +313,7 @@
       ((float64array) 'JsFloat64Array)
       ((function) 'JsFunction)
       ((arrow) 'JsProcedure)
+      ((service) 'JsService)
       ((date) 'JsDate)
       ((string buffer) 'JsStringLiteral)
       ((null) 'nil)

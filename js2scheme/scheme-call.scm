@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-call.scm           */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/scheme-call.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sun Jun 14 06:56:47 2020 (serrano)                */
+;*    Last change :  Sun Apr 11 11:46:08 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -603,7 +603,9 @@
 	  (when (decl-ronly? decl) decl))
 	 ((j2s-let-opt? decl)
 	  (with-access::J2SDeclInit decl (val)
-	     (when (and (isa? val J2SFun) (decl-ronly? decl))
+	     (when (and (isa? val J2SFun)
+			(decl-ronly? decl)
+			(not (isa? val J2SSvc)))
 		decl)))
 	 (else
 	  #f))))
@@ -1402,6 +1404,9 @@
 		(call-hop-function fun thisarg args))
 	       ((isa? fun J2SSuper)
 		(j2s-scheme-super this mode return ctx))
+	       ((isa? fun J2SSvc)
+		(call-unknown-function protocol fun
+		   (j2s-scheme thisarg mode return ctx) args))
 	       ((and (isa? fun J2SFun)
 		     (with-access::J2SFun fun (decl)
 			(not decl)))
