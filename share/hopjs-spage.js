@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/share/hop-spage.js                  */
+/*    serrano/prgm/project/hop/hop/share/hopjs-spage.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Nov 20 07:27:15 2020                          */
-/*    Last change :  Sun Nov 22 09:08:58 2020 (serrano)                */
+/*    Last change :  Sun Apr 11 15:08:21 2021 (serrano)                */
 /*    Copyright   :  2020-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side library for spage (version 2).                       */
@@ -209,8 +209,6 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 	 spage.tbodies.pop();
 	 spage.spoffset -= spage.spwidth;
 	 
-	 console.log( "spagePop depth=", spage.depth, " tbodies=", spage.tbodies.length, " spoffset=", spage.spoffset );
-	 
 	 // pop the element from the gui
 	 switch( spageTransitionStyle( spage ) ) {
 	    case "auto":
@@ -320,17 +318,11 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 	       case "wait": updateZoom( spage, body ); break;
 	       default: spageUpdateNode( spage, body );
       	    }
-	    
-	    console.log( "spageTabUpdate depth=", spage.depth, " tbodies=", spage.tbodies.length );
-	    console.log( "tabupdate..." );
-	    console.log( "body=", body );
-	    console.log( "obody=", obody );
 	 }
 	 
 	 const t = spage.tbodies;
 	 const tab = t[ t.length - 1 ].tab;
 	 
-	 console.log( "tab.svc=", tab.svc );
 	 if( typeof( tab.svc ) === "string" ) {
 	    with_hop( tab.svc, body => update( tab, tab.build( body ) ) );
 	 } else {
@@ -341,8 +333,6 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       const spage = (el.getAttribute( "data-hss-tag" ) === "hop-spage") 
 	 ? el : spageFindFromTag( el, "hop-spage" );
       
-      console.log( "spagePopUpdate inpop=", spage.inpop, " deth=", spage.depth,
- 	 " length=", spage.tbodies.length );
       if( !spage.inpop && spage.depth >= 1 ) {
 	 spage.inpop = true;
 	 const tbodies = spage.tbodies;
@@ -354,7 +344,6 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
 	    if( ptab 
 		&& (typeof( ptab.svc ) === "function" || typeof( ptab.svc ) === "string")
 		&& ptab.getAttribute( "data-hop-svc-direction" ) === "both" ) {
-	 console.log( "ptab.svc=", ptab.svc );
 	       popBodyNode( spage, spageTabUpdate );
 	    } else {
 	       popBodyNode( spage, false );
@@ -414,7 +403,6 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       
       function spagePushZoom( spage, spviewport, tbody, otab ) {
 	 // mark the transition style (needed on resize)
-	 console.log( "spagePushZoom spoffset=", spage.spoffset );
 	 spage.transitionstyle = "zoom";
 	 tbody.setAttribute( "data-transition", "zoom" );
 	 node_style_set( tbody, {
@@ -462,8 +450,6 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       spage.tbodies.push( tbody );
       tbody.tab = tab;
       
-      console.log( "spagPush.1 depth=", spage.depth, 
-	 " tbodies.len=", spage.tbodies.length );
       // expand the body div when necessary
       // MS 12dec2020: spoffset re-computation
       // spage.spoffset = spage.depth * spage.spwidth;
@@ -488,8 +474,6 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       sptabInvokeOnselectListener( tab, tbody, "push" );
       
       // show the new tbody
-      console.log( "transition=", spageTransitionStyle( spage ), " spoffset=", spage.spoffset, " scrollwidth=", spage.spscrollwidth );
-      console.log( "tbody=", tbody );
       switch( spageTransitionStyle( spage ) ) {
 	 case "auto":
 	 case "move": spagePushSlide( spage, spviewport, tbody, otbody ); break;
@@ -516,13 +500,11 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       window.scrollTo( 0, 0 );
 
       spheadbutton.className = "visible";
-      console.log( "tabPushBody..." );
       spagePush( spage, tab, tbody );
    }
       
    // spagePushService
    function spagePushService( tab, svc ) {
-      console.log( "spagePushService...", svc);
       if( !tab.pushed ) {
 	 tab.pushed = true;
 	 with_hop( svc(),
@@ -539,7 +521,6 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       
    // spagePushUrl
    function spagePushUrl( tab, svcurl, build ) {
-      console.log( "spagePushUrl...", svcurl);
       if( !tab.pushed ) {
 	 tab.pushed = true;
 
@@ -565,7 +546,6 @@ let { spageInit: BGl_spagezd2initzd2zz__hopzd2spagezd2,
       tab.staticBody = p;
       p.removeChild( node );
       
-      console.log( "spagePushNode...");
       tabPushBody( tab, node );
    }
       

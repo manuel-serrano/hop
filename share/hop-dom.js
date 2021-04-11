@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.5.x/share/hop-dom.js                  */
+/*    serrano/prgm/project/hop/hop/share/hop-dom.js                    */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Mar 26 12:14:13 2021 (serrano)                */
+/*    Last change :  Sun Apr 11 15:32:12 2021 (serrano)                */
 /*    Copyright   :  2006-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -822,7 +822,7 @@ function IFRAME( attrs ) {
      (let ((k (memq :type args)))
          (if (and (pair? k) (pair? (cdr k)))
 	     (cond
-	        ((or (equal? (cadr k) '(quote url)) (equal? (cadr k) "url"))
+	        ((or (equal? (cadr k) '(quote kurl)) (equal? (cadr k) "kurl"))
 	         `(hop_dom_create "input" :onkeydown (hop_inputurl_keydown this event)
       		                  ,@args))
 	        ((or (equal? (cadr k) '(quote radio)) (equal? (cadr k) "radio"))

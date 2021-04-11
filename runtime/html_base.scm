@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Thu Apr 18 05:49:25 2019 (serrano)                */
-;*    Copyright   :  2010-19 Manuel Serrano                            */
+;*    Last change :  Sun Apr 11 15:34:32 2021 (serrano)                */
+;*    Copyright   :  2010-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
 ;*=====================================================================*/
@@ -298,7 +298,7 @@
 		     (type 'text)
 		     (onkeydown #f)
 		     (attributes))
-   (if (or (eq? type 'url) (equal? type "url"))
+   (if (or (eq? type 'kurl) (equal? type "kurl"))
        (let* ((id (xml-make-id (xml-primitive-value id %context) 'input))
 	      (comp "hop_inputurl_keydown( this, event )")
 	      (onkeydown (if onkeydown

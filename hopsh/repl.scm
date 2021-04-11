@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Oct  7 16:45:39 2006                          */
-;*    Last change :  Thu Apr 25 18:54:49 2019 (serrano)                */
-;*    Copyright   :  2006-19 Manuel Serrano                            */
+;*    Last change :  Sun Apr 11 13:52:16 2021 (serrano)                */
+;*    Copyright   :  2006-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HopSh read-eval-print loop                                   */
 ;*=====================================================================*/
@@ -109,22 +109,28 @@
 	       (lambda (s) s)
 	       :timeout (hopsh-timeout)
 	       :fail (lambda (xhr)
-			(with-access::xml-http-request xhr (status input-port)
-			   (case status
-			      ((404)
-			       (error "hopsh" "document not found" url))
-			      ((401)
-			       (if (=fx count 0)
-				   (error "hop-sh" "permission denied'" url)
-				   (begin
-				      (login!)
-				      (when (hopsh-login)
-					 (loop (login->header (hopsh-login))
-					    (-fx count 1))))))
-			      (else
-			       (error "hopsh"
-				  (format "Illegal status code `~a'" status)
-				  (read-string input-port))))))
+			(cond
+			   ((isa? xhr xml-http-request)
+			    (with-access::xml-http-request xhr (status input-port)
+			       (case status
+				  ((404)
+				   (error "hopsh" "document not found" url))
+				  ((401)
+				   (if (=fx count 0)
+				       (error "hop-sh" "permission denied'" url)
+				       (begin
+					  (login!)
+					  (when (hopsh-login)
+					     (loop (login->header (hopsh-login))
+						(-fx count 1))))))
+				  (else
+				   (error "hopsh"
+				      (format "Illegal status code `~a'" status)
+				      (read-string input-port))))))
+			   ((isa? xhr &error)
+			    (exception-notify xhr))
+			   (else
+			    (error "hopsh" "request error" xhr))))
 	       :header header)))))
 
 ;*---------------------------------------------------------------------*/
