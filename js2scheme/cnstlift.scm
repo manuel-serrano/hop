@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Tue Jul  7 19:27:03 2020                          */
-;*    Last change :  Tue Jul  7 19:27:07 2020 (serrano)                */
+;*    Last change :  Fri Apr  9 11:37:15 2021 (serrano)                */
 ;*    Copyright   :  2020-21 manuel serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constant lifting optimization.                                   */
@@ -268,7 +268,9 @@
 (define-walk-method (j2s-cnstlift-expression! this::J2SExpr vars mode depth verb)
    (if (and (cell? vars) (pair? (cnst-expression-freevars this depth)))
        (with-access::J2SExpr this (loc type)
-	  (let ((decl (J2SLetOptVUtype type '(ref) (gensym '%clift) this)))
+	  ;; MS CARE UTYPE
+	  ;; (let ((decl (J2SLetOptVUtype type '(ref) (gensym '%clift) this)))
+	  (let ((decl (J2SLetOptVtype type '(ref) (gensym '%clift) this)))
 	     (cell-set! verb (cons loc (cell-ref verb)))
 	     (cell-set! vars (cons decl (cell-ref vars)))
 	     (J2SRef decl :type type)))

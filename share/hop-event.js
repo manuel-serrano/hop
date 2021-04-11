@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Tue Apr 16 18:16:33 2019 (serrano)                */
+/*    Last change :  Sun Apr 11 07:16:28 2021 (serrano)                */
 /*    Copyright   :  2007-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -354,7 +354,7 @@ function start_servevt_websocket_proxy( key, host, port, ssl ) {
 	 ws.registry = {};
 
 	 if( reconnect_debug > 0 ) {
-	    alert( "reconnect onopen" );
+	    console.log( "reconnect onopen" );
 	 }
 	 
 	 // we are ready to register now
@@ -374,8 +374,9 @@ function start_servevt_websocket_proxy( key, host, port, ssl ) {
 	       }
 	    }
 	    
-	    alert( "reconnect register: " + s );
-	    
+	    if( reconnect_debug > 0 ) {
+	       console.log( "reconnect register: " + s );
+	    }
 	 }
 	 
 	 // register the unitialized events
@@ -386,7 +387,8 @@ function start_servevt_websocket_proxy( key, host, port, ssl ) {
 	 }
 
 	 if( reconnect_debug > 0 ) {
-	    alert( "reconnect trigger ready" );
+	    console.log( "reconnect trigger ready" );
+      	    reconnect_debug = 0;
 	 }
 	 hop_trigger_serverready_event();
 	 
@@ -394,6 +396,10 @@ function start_servevt_websocket_proxy( key, host, port, ssl ) {
       }
       
       ws.onerror = function( e ) {
+	 if( reconnect_debug > 0 ) {
+	    console.log( "reconnect error" );
+      	    reconnect_debug = 0;
+	 }
 	 hop_server.state = "error";
 	 hop_serverready_triggered = false
 	 hop_servevt_onclose();
@@ -401,11 +407,14 @@ function start_servevt_websocket_proxy( key, host, port, ssl ) {
       }
 	 
       ws.onclose = function( e ) {
+      	 reconnect_debug = 0;
 	 hop_server.state = "close";
 	 hop_serverready_triggered = false
 	 hop_servevt_onclose();
       }
+      
       ws.onmessage = function ( e ) {
+      	 reconnect_debug = 0;
 	 e.responseText = e.data;
 	 hop_servevt_envelope_parse( e.data, e );
       }
@@ -422,7 +431,7 @@ function start_servevt_websocket_proxy( key, host, port, ssl ) {
 	    "&key=" + key  + "&mode=websocket";
 
 	 if( reconnect_debug > 0 ) {
-	    alert( "re-registering: " + id );
+	    console.log( "re-registering: " + id );
 	 }
 	 hop_send_request( svc, false, function() { ; }, false, false, [] );
       }
@@ -445,9 +454,11 @@ function start_servevt_websocket_proxy( key, host, port, ssl ) {
       if( hop_server.state !== "reconnect" ) {
 	 hop_server.state = "reconnect";
 
+	 // reconnect_debug = 10;
 	 open_websocket( hop_servevt_proxy.reconnect_url );
       
 	 hop_servevt_proxy.websocket.onerror = function( e ) {
+	    console.log( "reconnection error..." );
 	    if( !wait ) wait = 1000;
 
 	    if( max == -1 ) {
@@ -905,10 +916,8 @@ function hop_add_serverready_listener( obj, proc ) {
       if( hop_serverready_triggered ) {
 	 // the server is ready
 	 proc();
-      } else {
-	 // the server is not ready yet, we register the callback
-	 hop_serverready_list = sc_cons( proc, hop_serverready_list );
       }
+      hop_serverready_list = sc_cons( proc, hop_serverready_list );
    } else {
       throw new Error( "add-event-listener!: Illegal `serverready' recipient"
 		       + obj );

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/js2scheme/cps.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/cps.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Jun 10 12:19:04 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Last change :  Fri Apr  9 10:29:15 2021 (serrano)                */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
 ;*    -------------------------------------------------------------    */
@@ -765,7 +765,9 @@
 	  (let* ((v (gensym '%kkeys))
 		 (l (gensym '%klen))
 		 (i (gensym '%ki))
-		 (keys (J2SLetOptVUtype 'array '(ref) v
+		 ;; MS CARE UTYPE
+		 ;; (keys (J2SLetOptVUtype 'array '(ref) v
+		 (keys (J2SLetOptVtype 'array '(ref) v
 			  (J2SCall
 			     (J2SAccess
 				(J2SUnresolvedRef 'Object)

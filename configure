@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Mar 28 16:39:07 2021 (serrano)                */
+#*    Last change :  Thu Apr  8 13:23:12 2021 (serrano)                */
 #*    Copyright   :  2004-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -932,7 +932,7 @@ fi
 #*---------------------------------------------------------------------*/
 pcre=`$bigloo -lib-dir $bigloolibdir -q -eval "(exit (display (bigloo-config 'regexp)))"`
 
-if [ "$pcre " != "pcre " -a "$bglpcre " != "no " ]; then
+if [ "$pcre " != "pcre " -a "$pcre " != "pcre2 " -a "$bglpcre " != "no " ]; then
     echo "*** ERROR:configure: your Bigloo setting  does not support \"pcre\"." >&2
     echo "  As a consequence JavaScript regular expressions are not fully supported." >&2
     echo "  If you known what you are doing and if you don't want compatible regexp" >&2

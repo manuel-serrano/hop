@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Apr 20 08:36:37 2020 (serrano)                */
+;*    Last change :  Fri Apr  9 11:36:33 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -393,10 +393,17 @@
       (cond
 	 ((and (isa? lhs J2SRef)
 	       (with-access::J2SRef lhs (decl)
-		  (with-access::J2SDecl decl (vtype utype)
-		     (and (not (memq utype '(unknown any object)))
-			  (not (eq? vtype (j2s-type rhs)))))))
-	  (error "type-cast!" "not implemented yet" (j2s->list this)))
+		  (with-access::J2SDecl decl (vtype)
+		     ;; MS CARE UTYPE
+		     (and ;; (not (memq utype '(unknown any object)))
+		      (not (eq? vtype 'any))
+		      (not (eq? vtype (j2s-type rhs)))
+		      vtype))))
+	  =>
+	  (lambda (vtype)
+	     (error "type-cast!"
+		(format "not implemented yet (~a/~a)" vtype (j2s-type rhs))
+		(j2s->list this))))
 	 ((and (isa? lhs J2SRef)
 	       (not (isa? this J2SInit))
 	       (with-access::J2SRef lhs (decl)

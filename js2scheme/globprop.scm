@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu Mar 12 18:39:43 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Fri Apr  9 10:19:29 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
 ;*                                                                     */
@@ -275,7 +275,9 @@
 		(let ((ndecl (J2SDeclGlobal 'let
 				'(ref init)
 				(gensym val)))
-		      (ndeclo (J2SLetOptVUtype 'bool '(ref init assig)
+		      ;; MS CARE UTYPE
+		      ;; (ndeclo (J2SLetOptVUtype 'bool '(ref init assig)
+		      (ndeclo (J2SLetOptVtype 'bool '(ref init assig)
 				 (gensym val) (J2SBool #f))))
 		   (with-access::J2SDeclInit ndeclo (scope)
 		      (set! scope 'global))

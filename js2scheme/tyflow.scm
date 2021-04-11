@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Apr  6 16:22:48 2021 (serrano)                */
+;*    Last change :  Fri Apr  9 10:52:32 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -611,35 +611,35 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SGlobalRef env::pair-nil fix::cell)
    (with-access::J2SGlobalRef this (decl id)
-      (with-access::J2SDecl decl (utype)
-	 (cond
-	    ((eq? id 'undefined)
-	     (decl-vtype-add! decl 'undefined fix)
-	     (expr-type-add! this env fix 'undefined))
-	    ((eq? id 'NaN)
-	     (decl-vtype-add! decl 'real fix)
-	     (expr-type-add! this env fix 'real))
-	    ((memq id '(Math String Error Regex Date Function Array Promise))
-	     (decl-vtype-add! decl 'object fix)
-	     (expr-type-add! this env fix 'object))
-	    ((not (eq? utype 'unknown))
-	     (decl-vtype-add! decl utype fix)
-	     (expr-type-add! this env fix utype))
-	    ((not (decl-ronly? decl))
-	     (multiple-value-bind (tyv env bk)
-		(call-next-method)
-		(decl-vtype-add! decl tyv fix)
-		(return tyv env bk)))
-	    (else
-	     (decl-vtype-add! decl 'any fix)
-	     (expr-type-add! this env fix 'any))))))
+      (cond
+	 ((eq? id 'undefined)
+	  (decl-vtype-add! decl 'undefined fix)
+	  (expr-type-add! this env fix 'undefined))
+	 ((eq? id 'NaN)
+	  (decl-vtype-add! decl 'real fix)
+	  (expr-type-add! this env fix 'real))
+	 ((memq id '(Math String Error Regex Date Function Array Promise))
+	  (decl-vtype-add! decl 'object fix)
+	  (expr-type-add! this env fix 'object))
+	 ;; MS CARE UTYPE
+;* 	 ((not (eq? utype 'unknown))                                   */
+;* 	  (decl-vtype-add! decl utype fix)                             */
+;* 	  (expr-type-add! this env fix utype))                         */
+	 ((not (decl-ronly? decl))
+	  (multiple-value-bind (tyv env bk)
+	     (call-next-method)
+	     (decl-vtype-add! decl tyv fix)
+	     (return tyv env bk)))
+	 (else
+	  (decl-vtype-add! decl 'any fix)
+	  (expr-type-add! this env fix 'any)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SRef ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SRef env::pair-nil fix::cell)
    (with-access::J2SRef this (decl loc)
-      (with-access::J2SDecl decl (id key utype)
+      (with-access::J2SDecl decl (id key)
 	 (let ((nenv env))
 	    (when (and (isa? decl J2SDeclFun) (not (constructor-only? decl)))
 	       (set! nenv (env-nocapture env))
@@ -647,10 +647,13 @@
 		  (if (isa? val J2SMethod)
 		      (escape-method val fix)
 		      (escape-fun val fix #f))))
-	    (if (memq utype '(unknown any))
-		(let ((ty (env-lookup env decl)))
-		   (expr-type-add! this nenv fix ty))
-		(expr-type-add! this nenv fix utype))))))
+	    ;; MS CARE UTYPE
+;* 	    (if (memq utype '(unknown any))                            */
+;* 		(let ((ty (env-lookup env decl)))                      */
+;* 		   (expr-type-add! this nenv fix ty))                  */
+;* 		(expr-type-add! this nenv fix utype))                  */
+	    (let ((ty (env-lookup env decl)))
+		   (expr-type-add! this nenv fix ty))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SWithRef ...                                       */
@@ -680,13 +683,14 @@
 ;*    node-type ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SDeclInit env::pair-nil fix::cell)
-   (with-access::J2SDeclInit this (val utype id loc _usage writable)
+   (with-access::J2SDeclInit this (val id loc _usage writable)
       (multiple-value-bind (ty env bk)
 	 (node-type val env fix)
 	 (cond
-	    ((not (eq? utype 'unknown))
-	     (decl-vtype-set! this utype fix)
-	     (return 'void (extend-env env this utype) bk))
+	    ;; MS CARE UTYPE
+;* 	    ((not (eq? utype 'unknown))                                */
+;* 	     (decl-vtype-set! this utype fix)                          */
+;* 	     (return 'void (extend-env env this utype) bk))            */
 	    ((decl-usage-has? this '(eval))
 	     (decl-vtype-add! this 'any fix)
 	     (return 'void (extend-env env this ty) bk))
@@ -783,7 +787,7 @@
 	       ;; variable assignment
 	       ((isa? lhs J2SRef)
 		(with-access::J2SRef lhs (decl)
-		   (with-access::J2SDecl decl (writable utype id)
+		   (with-access::J2SDecl decl (writable id)
 		      (multiple-value-bind (tyr env rbk)
 			 (node-type rhs envl fix)
 			 (cond
@@ -791,12 +795,13 @@
 			     (let ((nenv (extend-env env decl tyv)))
 				(expr-type-add! this nenv fix tyv
 				   (append lbk rbk))))
-			    ((not (eq? utype 'unknown))
-			     ;; force utype to be in vtype (for instance, for
-			     ;; argumentsp)
-			     (decl-vtype-add! decl utype fix)
-			     (expr-type-add! this (extend-env env decl tyr) fix utype
-				(append lbk rbk)))
+			    ;; MS CARE UTYPE
+;* 			    ((not (eq? utype 'unknown))                */
+;* 			     ;; force utype to be in vtype (for instance, for */
+;* 			     ;; argumentsp)                            */
+;* 			     (decl-vtype-add! decl utype fix)          */
+;* 			     (expr-type-add! this (extend-env env decl tyr) fix utype */
+;* 				(append lbk rbk)))                     */
 			    (tyr
 			     (with-access::J2SRef lhs (decl loc)
 				(decl-vtype-add! decl tyr fix)
@@ -837,7 +842,7 @@
 	    ((isa? lhs J2SRef)
 	     ;; a variable assignment
 	     (with-access::J2SRef lhs (decl)
-		(with-access::J2SDecl decl (writable utype)
+		(with-access::J2SDecl decl (writable)
 		   (cond
 		      ((not writable)
 		       (multiple-value-bind (tyv envl lbk)
@@ -845,8 +850,9 @@
 			  (let ((nenv (extend-env env decl tyv)))
 			     (expr-type-add! this nenv fix tyv
 				(append lbk bkr)))))
-		      ((not (eq? utype 'unknown))
-		       (return utype env bkr))
+		      ;; MS CARE UTYPE
+;* 		      ((not (eq? utype 'unknown))                      */
+;* 		       (return utype env bkr))                         */
 		      (else
 		       (decl-vtype-add! decl tyr fix)
 		       (let ((nenv (extend-env envr decl tyr)))
@@ -881,7 +887,7 @@
 	       ((isa? lhs J2SRef)
 		;; a variable assignment
 		(with-access::J2SRef lhs (decl)
-		   (with-access::J2SDecl decl (writable utype)
+		   (with-access::J2SDecl decl (writable)
 		      (cond
 			 ((not writable)
 			  (multiple-value-bind (tyv envl lbk)
@@ -889,8 +895,9 @@
 			     (let ((nenv (extend-env env decl (numty tyv))))
 				(expr-type-add! this nenv fix (numty tyv)
 				   (append lbk bkr)))))
-			 ((not (eq? utype 'unknown))
-			  (return utype env bkr))
+			 ;; MS CARE UTYPE
+;* 			 ((not (eq? utype 'unknown))                   */
+;* 			  (return utype env bkr))                      */
 			 (else
 			  (let* ((ntyr (numty tyr))
 				 (nty (if (eq? ntyr 'unknown) (numty tyv) ntyr)))
@@ -924,7 +931,7 @@
 	       ((isa? lhs J2SRef)
 		;; a variable assignment
 		(with-access::J2SRef lhs (decl)
-		   (with-access::J2SDecl decl (writable utype)
+		   (with-access::J2SDecl decl (writable)
 		      (cond
 			 ((not writable)
 			  (multiple-value-bind (tyv envl lbk)
@@ -932,8 +939,9 @@
 			     (let ((nenv (extend-env env decl (numty tyv))))
 				(expr-type-add! this nenv fix (numty tyv)
 				   (append lbk bkr)))))
-			 ((not (eq? utype 'unknown))
-			  (return utype env bkr))
+			 ;; MS CARE UTYPE
+;* 			 ((not (eq? utype 'unknown))                   */
+;* 			  (return utype env bkr))                      */
 			 (else
 			  (decl-vtype-add! decl (numty tyr) fix)
 			  (let ((nenv (extend-env envr decl (numty tyr))))
@@ -967,21 +975,22 @@
 (define (node-type-fun this::J2SFun env::pair-nil fix::cell)
    (with-access::J2SFun this (body thisp params %info vararg argumentsp type loc)
       (let ((envp (map (lambda (p::J2SDecl)
-			  (with-access::J2SDecl p (utype itype)
+			  (with-access::J2SDecl p (itype)
 			     (cond
-				((not (eq? utype 'unknown))
-				 (set! itype utype)
-				 (cond
-				    ((not (decl-usage-has? p '(rest)))
-				     (decl-vtype-add! p utype fix)
-				     (cons p utype))
-				    ((eq? utype 'array)
-				     (decl-vtype-add! p utype fix)
-				     (cons p utype))
-				    (else
-				     (error "js2scheme"
-					"Illegal parameter type"
-					p))))
+				;; MS CARE UTYPE
+;* 				((not (eq? utype 'unknown))            */
+;* 				 (set! itype utype)                    */
+;* 				 (cond                                 */
+;* 				    ((not (decl-usage-has? p '(rest))) */
+;* 				     (decl-vtype-add! p utype fix)     */
+;* 				     (cons p utype))                   */
+;* 				    ((eq? utype 'array)                */
+;* 				     (decl-vtype-add! p utype fix)     */
+;* 				     (cons p utype))                   */
+;* 				    (else                              */
+;* 				     (error "js2scheme"                */
+;* 					"Illegal parameter type"       */
+;* 					p))))                          */
 				((decl-usage-has? p '(rest))
 				 (decl-vtype-add! p 'array fix)
 				 (cons p 'array))
@@ -998,10 +1007,11 @@
 	    params)
 	 (let ((fenv (append envp env)))
 	    (when thisp
-	       (with-access::J2SDecl thisp (utype itype loc)
-		  (if (eq? utype 'object)
-		      (decl-vtype-add! thisp utype fix)
-		      (decl-vtype-add! thisp itype fix))
+	       (with-access::J2SDecl thisp (vtype itype loc)
+		  ;; MS CARE UTYPE
+		  ;; (if (eq? utype 'object)
+		  (unless (eq? vtype 'object)
+		     (decl-vtype-add! thisp itype fix))
 		  (set! fenv (extend-env fenv thisp itype))))
 	    (when argumentsp
 	       (decl-itype-add! argumentsp 'arguments fix)
@@ -1044,9 +1054,11 @@
 	 (decl-vtype-add! thisp 'any fix))
       (set! rtype (tyflow-type (escape-type rtype)))
       (for-each (lambda (p::J2SDecl)
-		   (with-access::J2SDecl p (utype itype)
-		      (when (eq? utype 'unknown)
-			 (decl-itype-add! p 'any fix))))
+		   (with-access::J2SDecl p (itype)
+		      ;; MS CARE UTYPE
+;* 		      (when (eq? utype 'unknown)                       */
+;* 			 (decl-itype-add! p 'any fix))                 */
+		      (decl-itype-add! p 'any fix)))
 	 params)))
 
 ;*---------------------------------------------------------------------*/
@@ -1618,12 +1630,15 @@
       (with-access::J2SLetBlock this (decls nodes loc)
 	 (trace-item "loc=" loc)
 	 (let ((ienv (filter-map (lambda (d::J2SDecl)
-				    (with-access::J2SDecl d (utype vtype)
-				       (if (eq? utype 'unknown)
-					   (if (eq? vtype 'unknown)
-					       #f
-					       (cons d vtype))
-					   (cons d utype))))
+				    (with-access::J2SDecl d (vtype)
+				       ;; MS CARE UTYPE
+;* 				       (if (eq? utype 'unknown)        */
+;* 					   (if (eq? vtype 'unknown)    */
+;* 					       #f                      */
+;* 					       (cons d vtype))         */
+;* 					   (cons d utype))             */
+				       (unless (eq? vtype 'unknown)
+					  (cons d vtype))))
 			decls)))
 	    (multiple-value-bind (_ denv bk)
 	       (node-type-seq decls (append ienv env) fix 'void)
@@ -1691,16 +1706,18 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SKont env::pair-nil fix::cell)
    (with-access::J2SKont this (body exn param)
-      (with-access::J2SDecl param (%info itype utype)
+      (with-access::J2SDecl param (%info itype)
 	 (cond
-	    ((not (eq? utype 'unknown))
-	     (decl-vtype-add! param utype fix))
+	    ;; MS CARE UTYPE
+;* 	    ((not (eq? utype 'unknown))                                */
+;* 	     (decl-vtype-add! param utype fix))                        */
 	    ((not (eq? itype 'unknown))
 	     (decl-vtype-add! param itype fix))))
-      (with-access::J2SDecl exn (%info itype utype)
+      (with-access::J2SDecl exn (%info itype)
 	 (cond
-	    ((not (eq? utype 'unknown))
-	     (decl-vtype-add! exn utype fix))
+	    ;; MS CARE UTYPE
+;* 	    ((not (eq? utype 'unknown))                                */
+;* 	     (decl-vtype-add! exn utype fix))                          */
 	    ((not (eq? itype 'unknown))
 	     (decl-vtype-add! exn itype fix))))
       (node-type body env fix)
@@ -1949,9 +1966,10 @@
       (when (constructor? prop)
 	 (with-access::J2SDataPropertyInit prop (val)
 	    (with-access::J2SFun val (thisp)
-	       (with-access::J2SDecl thisp (utype itype vtype eloc)
-		  (unless (eq? utype 'object)
-		     (set! utype 'object)
+	       (with-access::J2SDecl thisp (itype vtype eloc)
+		  ;; MS CARE UTYPE
+		  ;; (unless (eq? utype 'object)
+		  (unless (eq? vtype 'object)
 		     (set! itype 'object)
 		     (set! vtype 'object)
 		     (unfix! fix "constructor type"))))))
@@ -2278,7 +2296,7 @@
 	  (and (eq? t1 'number) (eq? t2 'integer))
 	  (and (eq? t1 'integer) (eq? t2 'number))))
 	      
-   (with-access::J2SDeclInit this (vtype utype loc val)
+   (with-access::J2SDeclInit this (vtype loc val)
       (when (and (eq? vtype from) (not (eq? vtype to)))
 	 (when (and (eq? from 'unknown) debug-tyflow)
 	    (tprint "*** COMPILER WARNING : unpexected `unknown' type " loc
@@ -2290,10 +2308,11 @@
 	    ((decl-usage-has? this '(uninit))
 	     (error "force-type!" "Declaration inconsistent with init"
 		(j2s->list this)))
-	    ((and (not (isa? val J2SUndefined)) (eq? utype 'unknown))
-	     (error "force-type!"
-		(format "Pre-value type mismatch (~a/~a)" vtype (j2s-type val))
-		(j2s->list this)))
+	    ;; MS CARE UTYPE
+;* 	    ((and (not (isa? val J2SUndefined)) (eq? utype 'unknown))  */
+;* 	     (error "force-type!"                                      */
+;* 		(format "Pre-value type mismatch (~a/~a)" vtype (j2s-type val)) */
+;* 		(j2s->list this)))                                     */
 	    ((type->init vtype val)
 	     =>
 	     (lambda (v)
@@ -2358,8 +2377,11 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (reset-type! this::J2SDecl)
    (call-default-walker)
-   (with-access::J2SDecl this (vtype utype)
-      (when (eq? utype 'unknown)
+   (with-access::J2SDecl this (vtype)
+      ;; MS CARE UTYPE
+;*       (when (eq? utype 'unknown)                                    */
+;* 	 (set! vtype 'unknown))                                        */
+      (when (eq? vtype '(any))
 	 (set! vtype 'unknown)))
    this)
 

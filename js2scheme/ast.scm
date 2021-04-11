@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Apr  6 16:01:00 2021 (serrano)                */
+;*    Last change :  Fri Apr  9 13:39:42 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -76,7 +76,7 @@
 	      (usage::uint32 (default (usage '())))
 	      ;; variable range
 	      (binder::symbol (default 'var) (info '("notraverse")))
-	      ;; user declared type, if set, assign will be guarded
+	      ;; user declared type (only a mere annotation)
 	      (utype::symbol (default 'unknown) (info '("notraverse")))
 	      ;; initial parameter type
 	      (itype::symbol (default 'unknown) (info '("notraverse")))

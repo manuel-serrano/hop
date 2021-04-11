@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sun Apr 12 16:12:57 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Fri Apr  9 10:20:29 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
 ;*    -------------------------------------------------------------    */
@@ -106,8 +106,11 @@
 	       ((and (not (decl-usage-has? this
 			     '(assig ref assig get set call delete instanceof uninit rest eval)))
 		     (not (isa? this J2SDeclSvc)))
-		(with-access::J2SDecl thisp (utype)
-		   (set! utype 'object)))
+		(with-access::J2SDecl thisp (vtype)
+		   ;; MS CARE UTYPE
+		   ;; (set! utype 'object)
+		   (set! vtype 'object)
+		   ))
 	       ((and (decl-usage-has? this '(ref get))
 		     (not (decl-usage-has? this '(new)))
 		     (>=fx usecnt this-occurrence-threshold)
@@ -164,8 +167,10 @@
 	     (nbody (j2s-alpha body (cons thisp params) (cons nthisp nparams))))
 	 (set! optimize #f)
 	 (use-count nbody +1 0)
-	 (with-access::J2SDecl nthisp (utype)
-	    (set! utype 'object)
+	 (with-access::J2SDecl nthisp (vtype)
+	    ;; MS CARE UTYPE
+	    ;; (set! utype 'object)
+	    (set! vtype 'object)
 	    (let ((m (duplicate::J2SFun this
 			(optimize #t)
 			(name (when (symbol? name) (symbol-append name '&)))

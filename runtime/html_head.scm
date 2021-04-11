@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Oct  8 13:17:02 2019 (serrano)                */
-;*    Copyright   :  2005-20 Manuel Serrano                            */
+;*    Last change :  Fri Apr  9 10:11:16 2021 (serrano)                */
+;*    Copyright   :  2005-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
 ;*=====================================================================*/
@@ -204,8 +204,11 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 (define (init-head!)
    ;; this is used for non-inlined header on common regular browsers
    (unless head-runtime-system-packed-scheme
-      (let* ((hopcss (make-file-path (hop-share-directory) "hop.hss"))
-	     (suffix (if (=fx (bigloo-debug) 0) "_u.js" "_s.js"))
+      (let* ((hopcss (make-file-path (hop-share-directory)
+			"hop.hss"))
+	     (suffix (if (=fx (bigloo-debug) 0)
+			 (format "_u-~a.js" (hop-version))
+			 (format "_s-~a.js" (hop-version))))
 	     (rts (map (lambda (s) (string-append s suffix))
 		     (hop-runtime-system)))
 	     (rtsjs (map (lambda (s) (string-append s "js" suffix))

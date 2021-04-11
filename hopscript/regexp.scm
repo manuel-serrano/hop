@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Mar  7 06:30:39 2020 (serrano)                */
+;*    Last change :  Thu Apr  8 14:00:13 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -41,7 +41,7 @@
 	   (js-regexp->jsregexp ::regexp ::JsGlobalObject)
 	   (inline js-regexp-test this::JsRegExp string %this)
 	   (js-regexp-literal-test::bool ::JsRegExp ::obj ::JsGlobalObject)
-	   (js-regexp-prototype-exec-global ::JsRegExp ::obj ::JsGlobalObject)
+	   (js-regexp-prototype-exec-string-global ::JsRegExp ::JsStringLiteral ::long ::JsGlobalObject)
 	   (js-regexp-prototype-exec-no-global ::JsRegExp ::obj ::JsGlobalObject)
 	   (js-regexp-prototype-exec ::JsRegExp ::obj ::JsGlobalObject)
 	   (js-regexp-prototype-maybe-exec ::obj ::obj ::JsGlobalObject cache)
@@ -880,127 +880,133 @@
                 (loop (+fx i 2) (cdr l)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-regexp-prototype-exec-string-global ...                       */
+;*---------------------------------------------------------------------*/
+(define (js-regexp-prototype-exec-string-global this::JsRegExp
+	   jss::JsStringLiteral lastindex::long
+	   %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-regexp-pcache js-regexp-positions)
+      (with-access::JsRegExp this (rx flags)
+	 (let* ((s (js-jsstring->string jss))
+		(len (string-length s))
+		(enc (isa? jss JsStringLiteralUTF8))
+		(clen (regexp-capture-count rx)))
+	    (cond
+	       ((or (<fx lastindex 0) (>fx lastindex len))
+		(js-put-jsobject-name/cache! this (& "lastIndex") 0
+		   #f %this (js-pcache-ref js-regexp-pcache 0))
+		(js-null))
+	       ((>=fx clen 0)
+		(when (>=fx (*fx (+fx clen 1) 2)
+			 (vector-length js-regexp-positions))
+		   (set! js-regexp-positions
+		      (make-vector (* (+fx clen 1) 2))))
+		(let* ((r js-regexp-positions)
+		       (l (pregexp-match-n-positions! rx s r lastindex len)))
+		   (if (<fx l 0)
+		       (begin
+			  (js-put-jsobject-name/cache! this (& "lastIndex") 0
+			     #f %this (js-pcache-ref js-regexp-pcache 0))
+			  (js-null))
+		       ;; 10
+		       (let ((e (vector-ref r 1)))
+			  ;; 11
+			  (js-put-jsobject-name/cache! this (& "lastIndex") e
+			     #f %this (js-pcache-ref js-regexp-pcache 0))
+			  (let* ((vec ($create-vector (maxfx l clen)))
+				 (a (js-vector->jsarray vec %this))
+				 (matchindex (vector-ref r 0))
+				 (els ($create-vector 2)))
+			     ;; bind the result cmap and add the elements
+			     (with-access::JsArray a (elements cmap)
+				(with-access::JsGlobalObject %this (js-regexp-exec-cmap)
+				   (set! cmap js-regexp-exec-cmap))
+				(set! elements els))
+			     ;; 15
+			     (vector-set! els 0 matchindex)
+			     ;; (js-bind! %this a 'index :value matchindex)
+			     ;; 16
+			     (vector-set! els 1 jss)
+			     ;; (js-bind! %this a 'input :value jss)
+			     ;; 17
+			     ;; no need as already automatically set
+			     ;; 19 & 20
+			     ;; 20
+			     (let loop ((i 0))
+				(when (<fx i l)
+				   (let ((j (*fx i 2)))
+				      (vector-set! vec i
+					 (if (>=fx (vector-ref r j) 0)
+					     (js-substring s
+						(vector-ref r j)
+						(vector-ref r (+fx j 1))
+						enc
+						%this)
+					     (js-undefined)))
+				      (loop (+fx i 1)))))
+			     (let loop ((i l))
+				(when (<fx i clen)
+				   (vector-set! vec i (js-undefined))
+				   (loop (+fx i 1))))
+			     a)))))
+	       ((pregexp-match-positions rx s lastindex)
+		=>
+		(lambda (r)
+		   ;; 10
+		   (let ((e (cdar r)))
+		      ;; 11
+		      (js-put-jsobject-name/cache! this (& "lastIndex") e
+			 #f %this (js-pcache-ref js-regexp-pcache 0))
+		      (let* ((n (length r))
+			     ;;(_ (tprint "match-positions n=" n))
+			     (vec ($create-vector n))
+			     (a (js-vector->jsarray vec %this))
+			     (matchindex (caar r))
+			     (els ($create-vector 2)))
+			 ;; bind the result cmap and add the elements
+			 (with-access::JsArray a (elements cmap)
+			    (with-access::JsGlobalObject %this (js-regexp-exec-cmap)
+			       (set! cmap js-regexp-exec-cmap))
+			    (set! elements els))
+			 ;; 15
+			 (vector-set! els 0 matchindex)
+			 ;; (js-bind! %this a 'index :value matchindex)
+			 ;; 16
+			 (vector-set! els 1 jss)
+			 ;; (js-bind! %this a 'input :value jss)
+			 ;; 17
+			 ;; no need as already automatically set
+			 ;; 19
+			 (vector-set! vec 0
+			    (js-substring s (caar r) (cdar r) enc %this))
+			 ;; 20
+			 (let loop ((c (cdr r))
+				    (i 1))
+			    (when (pair? c)
+			       (let ((r (car c)))
+				  (vector-set! vec i
+				     (if (pair? r)
+					 (js-substring s (car r) (cdr r) enc %this)
+					 (js-undefined))))
+			       (loop (cdr c) (+fx i 1))))
+			 a))))
+	       (else
+		(js-put-jsobject-name/cache! this (& "lastIndex") 0
+		   #f %this (js-pcache-ref js-regexp-pcache 0))
+		(js-null)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-regexp-prototype-exec-global ...                              */
 ;*---------------------------------------------------------------------*/
 (define (js-regexp-prototype-exec-global this::JsRegExp string::obj %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-regexp-pcache js-regexp-positions)
       (with-access::JsRegExp this (rx flags)
-	 (let ((lastindex (js-get-jsobject-name/cache this (& "lastIndex")
-			     #f %this (js-pcache-ref js-regexp-pcache 0))))
-	    (let* ((jss (js-tojsstring string %this))
-		   (s (js-jsstring->string jss))
-		   (len (string-length s))
-		   (i (js-tointeger lastindex %this))
-		   (enc (isa? jss JsStringLiteralUTF8))
-		   (clen (regexp-capture-count rx)))
-	       (cond
-		  ((or (<fx i 0) (>fx i len))
-		   (set! lastindex 0)
-		   (js-put-jsobject-name/cache! this (& "lastIndex") lastindex
-		      #f %this (js-pcache-ref js-regexp-pcache 0))
-		   (js-null))
-		  ((>=fx clen 0)
-		   (when (>=fx (*fx (+fx clen 1) 2)
-			    (vector-length js-regexp-positions))
-		      (set! js-regexp-positions
-			 (make-vector (* (+fx clen 1) 2))))
-		   (let* ((r js-regexp-positions)
-			  (l (pregexp-match-n-positions! rx s r i len)))
-		      (if (<fx l 0)
-			  (begin
-			     (set! lastindex 0)
-			     (js-put-jsobject-name/cache! this (& "lastIndex") lastindex
+	 (let ((lastindex (js-tointeger
+			     (js-get-jsobject-name/cache this (& "lastIndex")
 				#f %this (js-pcache-ref js-regexp-pcache 0))
-			     (js-null))
-			  ;; 10
-			  (let ((e (vector-ref r 1)))
-			     ;; 11
-			     (set! lastindex e)
-			     (js-put-jsobject-name/cache! this (& "lastIndex") lastindex
-				#f %this (js-pcache-ref js-regexp-pcache 0))
-			     (let* ((vec ($create-vector (maxfx l clen)))
-				    (a (js-vector->jsarray vec %this))
-				    (matchindex (vector-ref r 0))
-				    (els ($create-vector 2)))
-				;; bind the result cmap and add the elements
-				(with-access::JsArray a (elements cmap)
-				   (with-access::JsGlobalObject %this (js-regexp-exec-cmap)
-				      (set! cmap js-regexp-exec-cmap))
-				   (set! elements els))
-				;; 15
-				(vector-set! els 0 matchindex)
-				;; (js-bind! %this a 'index :value matchindex)
-				;; 16
-				(vector-set! els 1 jss)
-				;; (js-bind! %this a 'input :value jss)
-				;; 17
-				;; no need as already automatically set
-				;; 19 & 20
-				;; 20
-				(let loop ((i 0))
-				   (when (<fx i l)
-				      (let ((j (*fx i 2)))
-					 (vector-set! vec i
-					    (if (>=fx (vector-ref r j) 0)
-						(js-substring s
-						   (vector-ref r j)
-						   (vector-ref r (+fx j 1))
-						   enc
-						   %this)
-						(js-undefined)))
-					 (loop (+fx i 1)))))
-				(let loop ((i l))
-				   (when (<fx i clen)
-				      (vector-set! vec i (js-undefined))
-				      (loop (+fx i 1))))
-				a)))))
-		  ((pregexp-match-positions rx s i)
-		   =>
-		   (lambda (r)
-		      ;; 10
-		      (let ((e (cdar r)))
-			 ;; 11
-			 (set! lastindex e)
-			 (js-put-jsobject-name/cache! this (& "lastIndex") lastindex
-			    #f %this (js-pcache-ref js-regexp-pcache 0))
-			 (let* ((n (length r))
-				;;(_ (tprint "match-positions n=" n))
-				(vec ($create-vector n))
-				(a (js-vector->jsarray vec %this))
-				(matchindex (caar r))
-				(els ($create-vector 2)))
-			    ;; bind the result cmap and add the elements
-			    (with-access::JsArray a (elements cmap)
-			       (with-access::JsGlobalObject %this (js-regexp-exec-cmap)
-				  (set! cmap js-regexp-exec-cmap))
-			       (set! elements els))
-			    ;; 15
-			    (vector-set! els 0 matchindex)
-			    ;; (js-bind! %this a 'index :value matchindex)
-			    ;; 16
-			    (vector-set! els 1 jss)
-			    ;; (js-bind! %this a 'input :value jss)
-			    ;; 17
-			    ;; no need as already automatically set
-			    ;; 19
-			    (vector-set! vec 0
-			       (js-substring s (caar r) (cdar r) enc %this))
-			    ;; 20
-			    (let loop ((c (cdr r))
-				       (i 1))
-			       (when (pair? c)
-				  (let ((r (car c)))
-				     (vector-set! vec i
-					(if (pair? r)
-					    (js-substring s (car r) (cdr r) enc %this)
-					    (js-undefined))))
-				  (loop (cdr c) (+fx i 1))))
-			    a))))
-		  (else
-		   (set! lastindex 0)
-		   (js-put-jsobject-name/cache! this (& "lastIndex") lastindex
-		      #f %this (js-pcache-ref js-regexp-pcache 0))
-		   (js-null))))))))
+			     %this))
+	       (jss (js-tojsstring string %this)))
+	    (js-regexp-prototype-exec-string-global this jss lastindex %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-prototype-exec ...                                     */

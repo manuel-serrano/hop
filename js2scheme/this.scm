@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/js2scheme/this.scm                */
+;*    serrano/prgm/project/hop/hop/js2scheme/this.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Jun  2 07:34:39 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Last change :  Fri Apr  9 10:28:04 2021 (serrano)                */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all non-strict mode functions.         */
 ;*=====================================================================*/
@@ -78,8 +78,9 @@
       (when (eq? mode 'normal)
 	 (let ((nbody (this! body)))
 	    (when (this? nbody)
-	       (with-access::J2SDecl thisp (utype)
-		  (set! utype 'any))
+	       (with-access::J2SDecl thisp (vtype)
+		  ;; MS CARE UTYPE
+		  (set! vtype 'any))
 	       (set! body
 		  (with-access::J2SBlock body (endloc)
 		     (instantiate::J2SBlock

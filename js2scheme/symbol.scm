@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Jan 31 16:30:12 2020 (serrano)                */
+;*    Last change :  Fri Apr  9 10:26:26 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -71,7 +71,8 @@
 	 (set! nodes (decl-cleanup-duplicate! nodes))
 	 (let* ((%this (instantiate::J2SDecl
 			  (loc loc)
-			  (utype 'object)
+			  ;; MS CARE UTYPE
+			  ;; (utype 'object)
 			  (vtype 'object)
 			  (id 'this)
 			  (_scmid '%this)))
@@ -353,7 +354,8 @@
 		(arguments (instantiate::J2SDeclArguments
 			      (id 'arguments)
 			      (argid (gensym 'arguments))
-			      (utype (if (eq? fmode 'normal) 'any 'arguments))
+			      ;; MS CARE UTYPE
+			      (vtype (if (eq? fmode 'normal) 'any 'arguments))
 			      (mode mode)
 			      (loc loc)))
 		(envl (append decls params))
@@ -730,7 +732,8 @@
 	    (else
 	     (let ((decl (instantiate::J2SDecl
 			    (usage (usage '()))
-			    (utype 'any)
+			    ;; MS CARE UTYPE
+			    ;; (utype 'any)
 			    (scope 'unbound)
 			    (loc loc)
 			    (id id))))

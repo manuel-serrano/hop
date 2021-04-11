@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 10 10:07:35 2020                          */
-;*    Last change :  Thu Sep 10 10:07:36 2020 (serrano)                */
-;*    Copyright   :  2020 Manuel Serrano                               */
+;*    Last change :  Fri Apr  9 11:37:37 2021 (serrano)                */
+;*    Copyright   :  2020-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common subexpressions elimination optimization                   */
 ;*    -------------------------------------------------------------    */
@@ -429,7 +429,9 @@
        (ce-decl ce)
        (let ((expr (ce-expr ce)))
 	  (with-access::J2SExpr expr (loc)
-	     (let ((decl (J2SLetOptVUtype (j2s-type expr) '(ref assig)
+	     ;; MS CARE UTYPE
+	     ;; (let ((decl (J2SLetOptVUtype (j2s-type expr) '(ref assig)
+	     (let ((decl (J2SLetOptVtype (j2s-type expr) '(ref assig)
 			    (gensym '%cse) (default-expr expr))))
 		(ce-decl-set! ce decl)
 		(with-access::J2SBlock (ce-block ce) (%info)

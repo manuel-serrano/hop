@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/hint.scm                */
+;*    serrano/prgm/project/hop/hop/js2scheme/hint.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Mar 29 16:10:31 2021 (serrano)                */
+;*    Last change :  Fri Apr  9 11:35:18 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -1134,7 +1134,8 @@
 			    (writable #f)
 			    (binder 'let)
 			    (usecnt 1)
-			    (utype 'function)
+			    ;; MS CARE UTYPE
+			    (vtype 'function)
 			    (%info fun)
 			    (hintinfo fun)
 			    (val (duplicate::J2SFun val
@@ -1212,7 +1213,8 @@
 			       (binder 'let)
 			       (usecnt 1)
 			       (%info fun)
-			       (utype 'function)
+			       ;; MS CARE UTYPE
+			       (vtype 'function)
 			       (hintinfo fun)
 			       (val newfun))))
 	       (with-access::J2SFun newfun (body)
@@ -1483,14 +1485,16 @@
 		(key (ast-decl-key))
 		(hint '())
 		(vtype type)
-		(utype type)
+		;; MS CARE UTYPE
+;* 		(utype type)                                           */
 		(itype type)
 		(val (J2SRef p loc :type type))))
 	  (duplicate::J2SDecl p
 	     (key (ast-decl-key))
 	     (hint '())
 	     (vtype type)
-	     (utype type)
+	     ;; MS CARE UTYPE
+;* 	     (utype type)                                              */
 	     (itype type))))
 
    (define (block-dispatch this::J2SLetBlock decls::pair-nil htypes::pair-nil)
