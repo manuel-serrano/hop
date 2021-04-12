@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Apr 14 09:56:21 2020 (serrano)                */
-;*    Copyright   :  2004-20 Manuel Serrano                            */
+;*    Last change :  Mon Apr 12 07:39:27 2021 (serrano)                */
+;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -480,9 +480,12 @@
       
       ;; clear all caches
       (when clear-cache
-	 (let ((cache (make-cache-name)))
-	    (when (directory? cache)
-	       (delete-path cache))))
+	 (for-each (lambda (cache)
+		      (when (directory? cache)
+			 (hop-verb 1 "deleting cache directory \""
+			    (hop-color 4 cache "") "\"\n")
+			 (delete-path cache)))
+	    (list (make-cache-name) (hop-sofile-directory))))
 
       ;; create cache directory
       (when (hop-cache-enable)

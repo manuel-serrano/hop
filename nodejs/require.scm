@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Mar 30 10:20:27 2021 (serrano)                */
+;*    Last change :  Mon Apr 12 07:38:00 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -520,7 +520,8 @@
 	    ;; register the module in the current worker thread
 	    (with-access::WorkerHopThread worker (module-cache)
 	       (when (js-object? module-cache)
-		  (js-put! module-cache (js-string->jsstring filename) m #f %this)))
+		  (js-put! module-cache
+		     (js-string->jsstring filename) m #f %this)))
 	    ;; return the newly allocated module
 	    (trace-item "module=" (typeof m))
 	    m))))
