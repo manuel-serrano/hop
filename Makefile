@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.3.x/Makefile                          */
+#*    serrano/prgm/project/hop/hop/Makefile                            */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Jun  2 12:14:16 2020 (serrano)                */
+#*    Last change :  Mon Apr 12 15:46:16 2021 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -276,6 +276,7 @@ clean-quick:
 	$(MAKE) -C share clean
 	$(MAKE) -C node_modules clean
 	$(MAKE) -C doc clean
+	$(RM) -f bin/hopc.sh bin/hop.sh bin/hopaot.sh 
 
 clean:
 	$(MAKE) -C runtime clean
