@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/parser.scm                */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/parser.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Jun  2 08:17:24 2020 (serrano)                */
+;*    Last change :  Tue Apr 13 09:37:45 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2383,7 +2383,95 @@
 	  (fixnum->flonum val))
 	 (else
 	  val)))
-	      
+
+   (define (id-sans-async token)
+      (cond
+	 ((eq? (peek-token-type) '=>)
+	  (arrow-function (list token) (token-loc token)))
+	 ((eq? (token-value token) 'import)
+	  (case (peek-token-type)
+	     ((LPAREN)
+	      (consume-any!)
+	      (let ((path (expression #f #f)))
+		 (consume-token! 'RPAREN)
+		 (instantiate::J2SImportDynamic
+		    (loc (token-loc token))
+		    (path path))))
+	     ((DOT)
+	      (consume-any!)
+	      (let ((loc (token-loc token))
+		    (id (consume-token! 'ID)))
+		 (if (eq? (token-value id) 'meta)
+		     (access-or-call (J2SHopRef '%import-meta) loc #t)
+		     (parse-token-error "Illegal import" id))))
+	     (else
+	      (parse-token-error "Illegal import" (consume-any!)))))
+	 (else
+	  (instantiate::J2SUnresolvedRef
+	     (loc (token-loc token))
+	     (id (token-value token))))))
+
+   (define (primary-async token)
+      (case (peek-token-type)
+	 ((function)
+	  (async-expression token))
+	 ((ID)
+	  (let ((id (consume-any!)))
+	     (if (eq? (peek-token-type) '=>)
+		 (begin
+		    (token-push-back! id)
+		    (async-expression token))
+		 (id-sans-async token))))
+	 ((LPAREN)
+	  (let ((loc (token-loc token))
+		(lpar (consume-any!)))
+	     (if (eq? (peek-token-type) 'RPAREN)
+		 (let ((rpar (consume-any!)))
+		    (if (eq? (peek-token-type) '=>)
+			(begin
+			   (token-push-back! rpar)
+			   (token-push-back! lpar)
+			   (async-expression token))
+			(let ((fun (instantiate::J2SUnresolvedRef
+				      (loc loc)
+				      (id 'async))))
+			   (instantiate::J2SCall
+			      (loc loc)
+			      (fun fun)
+			      (protocol (args-protocol '()))
+			      (thisarg (list (J2SUndefined)))
+			      (args '())))))
+		 (begin
+		    (token-push-back! lpar)
+		    (let ((p (primary #f #f)))
+		       (cond
+			  ((isa? p J2SArrow)
+			   (async->generator p))
+			  ((isa? p J2SParen)
+			   (let* ((loc (token-loc token))
+				  (fun (instantiate::J2SUnresolvedRef
+					  (loc loc)
+					  (id 'async))))
+			      (with-access::J2SParen p (expr)
+				 (if (isa? expr J2SSequence)
+				     (with-access::J2SSequence expr (exprs)
+					(instantiate::J2SCall
+					   (loc loc)
+					   (fun fun)
+					   (protocol (args-protocol exprs))
+					   (thisarg (list (J2SUndefined)))
+					   (args exprs)))
+				     (instantiate::J2SCall
+					(loc loc)
+					(fun fun)
+					(protocol (args-protocol (list expr)))
+					(thisarg (list (J2SUndefined)))
+					(args (list expr)))))))
+			  (else
+			   (parse-token-error "wrong async expression" token))))))))
+	 (else
+	  (id-sans-async token))))
+   
    (define (primary destructuring? spread?)
       (case (peek-token-type)
 	 ((PRAGMA)
@@ -2415,33 +2503,10 @@
 		      (memq (peek-token-type) '(LPAREN ID)))
 		 (token-push-back! token)
 		 (service-expression))
-		((and (eq? (token-value token) 'async)
-		      (eq? (peek-token-value) 'function))
-		 (async-expression token))
-		((eq? (peek-token-type) '=>)
-		 (arrow-function (list token) (token-loc token)))
-		((eq? (token-value token) 'import)
-		 (case (peek-token-type)
-		    ((LPAREN)
-		     (consume-any!)
-		     (let ((path (expression #f #f)))
-			(consume-token! 'RPAREN)
-			(instantiate::J2SImportDynamic
-			   (loc (token-loc token))
-			   (path path))))
-		    ((DOT)
-		     (consume-any!)
-		     (let ((loc (token-loc token))
-			   (id (consume-token! 'ID)))
-			(if (eq? (token-value id) 'meta)
-			    (access-or-call (J2SHopRef '%import-meta) loc #t)
-			    (parse-token-error "Illegal import" id))))
-		    (else
-		     (parse-token-error "Illegal import" (consume-any!)))))
+		((eq? (token-value token) 'async)
+		 (primary-async token))
 		(else
-		 (instantiate::J2SUnresolvedRef
-		    (loc (token-loc token))
-		    (id (token-value token)))))))
+		 (id-sans-async token)))))
 	 ((HOP)
 	  (let ((token (consume-token! 'HOP)))
 	     (instantiate::J2SHopRef

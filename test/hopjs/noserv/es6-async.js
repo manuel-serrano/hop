@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.2.x/test/hopjs/noserv/es6-async.js        */
+/*    .../prgm/project/hop/3.4.x/test/hopjs/noserv/es6-async.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue May 15 11:33:27 2018                          */
-/*    Last change :  Fri Aug 24 05:48:11 2018 (serrano)                */
-/*    Copyright   :  2018 Manuel Serrano                               */
+/*    Last change :  Tue Apr 13 09:51:33 2021 (serrano)                */
+/*    Copyright   :  2018-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 async functions                           */
 /*=====================================================================*/
@@ -76,3 +76,28 @@ asyncCtorReturn.prototype.test = async function() {
 } 
 
 new asyncCtorReturn().test();
+
+/*---------------------------------------------------------------------*/
+/*    expressions                                                      */
+/*---------------------------------------------------------------------*/
+let ares;
+const ff = async function() { ares = 23 };
+const hf = async function( h ) { ares = (h === 55) };
+const fa = async () => ares = 23;
+const ha = async (h) => ares = (h === 55);
+const ha2 = async (h,i) => ares = (h === 55); 
+const ha3 = async h => ares = (h === 55);
+
+assert.ok( ff() instanceof Promise, "async function expression" );
+assert.ok( ares, 23, "async function expression" );
+assert.ok( hf( 55 ) instanceof Promise, "async function expression" );
+assert.ok( ares, true, "async function expression" );
+assert.ok( fa() instanceof Promise, "async function expression" );
+assert.ok( ares, 23, "async function expression" );
+assert.ok( ha( 55 ) instanceof Promise, "async function expression" );
+assert.ok( ares, true, "async function expression" );
+assert.ok( ha2( 55, 3 ) instanceof Promise, "async function expression" ); 
+assert.ok( ares, true, "async function expression" );
+assert.ok( ha3( 55 ) instanceof Promise, "async function expression" ); 
+assert.ok( ares, true, "async function expression" );
+	  
