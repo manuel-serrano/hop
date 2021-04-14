@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/js2scheme/scheme-program.scm      */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-program.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon May 11 15:46:39 2020 (serrano)                */
+;*    Last change :  Wed Apr 14 08:07:18 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -448,11 +448,18 @@
 			 (+fx idx (length nres))
 			 (append nres res)
 			 (cons iprgm stack))))))))
-   
+
+   (define (import-module-default? im)
+      (with-access::J2SImport im (names)
+	 (when (and (pair? names) (null? (cdr names)))
+	    (with-access::J2SImportName (car names) (id)
+	       (eq? id 'default)))))
+      
    (define (import-module im)
       (with-access::J2SImport im (path iprgm loc names iprgm)
 	 (with-access::J2SProgram iprgm (mode exports)
-	    (if (eq? mode 'hop)
+	    (case mode
+	       ((hop)
 		`(nodejs-import-module-hop %worker %this %module
 		    ,path
 		    ,(j2s-program-checksum! iprgm)
@@ -462,11 +469,26 @@
 				 (with-access::J2SExport e (alias decl)
 				    (with-access::J2SDecl decl (vtype)
 				       (cons alias vtype))))
-			    exports)))
+			    exports))))
+	       ((core)
+		(if (import-module-default? im)
+		    `(nodejs-import-module %worker %this %module
+			,path
+			,(j2s-program-checksum! iprgm)
+			',loc)
+		    `(nodejs-import-module-core %worker %this %module
+			,path
+			,(j2s-program-checksum! iprgm)
+			',loc
+			',(list->vector
+			     (map (lambda (name)
+				     (with-access::J2SImportName name (id) id))
+				names)))))
+	       (else
 		`(nodejs-import-module %worker %this %module
 		    ,path
 		    ,(j2s-program-checksum! iprgm)
-		    ',loc)))))
+		    ',loc))))))
 
    (with-access::J2SProgram this (imports path %info)
       (set! %info '())

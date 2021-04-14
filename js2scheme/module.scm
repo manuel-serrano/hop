@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Sat May  2 14:48:54 2020 (serrano)                */
+;*    Last change :  Tue Apr 13 13:31:18 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -47,6 +47,53 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    core-module-list ...                                             */
+;*---------------------------------------------------------------------*/
+(define core-module-list
+   '("console"
+     "constants"
+     "util"
+     "sys"
+     "path"
+     "_linklist"
+     "events"
+     "assert"
+     "_stream_readable"
+     "_stream_writable"
+     "_stream_duplex"
+     "_stream_transform"
+     "_stream_passthrough"
+     "stream"
+     "fs"
+     "punycode"
+     "dgram"
+     "vm"
+     "timers"
+     "net"
+     "querystring"
+     "string_decoder"
+     "child_process"
+     "cluster"
+     "crypto"
+     "dns"
+     "domain"
+     "freelist"
+     "url"
+     "tls"
+     "tty"
+     "http"
+     "https"
+     "zlib"
+     "os"
+     "hop"
+     "hophz"
+     "node_tick"
+     "node_stdio"
+     "node_proc"
+     "node_timers"
+     "node_cluster"))
+
+;*---------------------------------------------------------------------*/
 ;*    module-cache                                                     */
 ;*---------------------------------------------------------------------*/
 (define module-cache #f)
@@ -70,6 +117,11 @@
    export)
 
 ;*---------------------------------------------------------------------*/
+;*    core-modules ...                                                 */
+;*---------------------------------------------------------------------*/
+(define core-modules #f)
+
+;*---------------------------------------------------------------------*/
 ;*    esimport ::J2SNode ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (esimport this::J2SNode prgm::J2SProgram stack args)
@@ -90,7 +142,7 @@
    
    (define (import-decl::pair-nil iprgm::J2SProgram name::J2SImportName)
       (with-access::J2SImportName name (id alias loc)
-	 (with-access::J2SProgram iprgm (exports path)
+	 (with-access::J2SProgram iprgm (exports path mode)
 	    (let ((expo (find (lambda (export)
 				 (with-access::J2SExport export ((imp id))
 				    (eq? id imp)))
@@ -113,6 +165,27 @@
 					  (export export)
 					  (import this)))))
 			    exports))))
+		  ((eq? mode 'core)
+		   (co-instantiate ((decl (instantiate::J2SDecl
+					     (id id)
+					     (loc loc)
+					     (vtype 'any)
+					     (exports (list expo))))
+				    (expo (instantiate::J2SExport
+					     (id id)
+					     (alias id)
+					     (index 0)
+					     (decl decl))))
+		      (list (instantiate::J2SDeclImport
+			       (loc loc)
+			       (id alias)
+			       (alias id)
+			       (binder 'let)
+			       (writable #f)
+			       (vtype 'any)
+			       (scope 'core)
+			       (export expo)
+			       (import this)))))
 		  (else
 		   (raise
 		      (instantiate::&io-parse-error
@@ -160,7 +233,8 @@
       '())
 
    (define (import-module respath path loc)
-      (or (module-cache-get respath)
+      (or (open-string-hashtable-get core-modules respath)
+	  (module-cache-get respath)
 	  (with-handler
 	     (lambda (e)
 		(with-access::&exception e (fname location)
@@ -209,6 +283,35 @@
 		   (obj path)
 		   (fname (cadr loc))
 		   (location (caddr loc))))))))
+
+   (unless core-modules
+      (set! core-modules   
+	 (create-hashtable
+	    :weak 'open-string
+	    :size 64
+	    :max-length 4096
+	    :max-bucket-length 10))
+      (for-each (lambda (cm)
+		   (let ((loc `(at ,(string-append cm ".js") 0)))
+		      (co-instantiate ((decl (instantiate::J2SDecl
+						(id 'default)
+						(loc loc)
+						(vtype 'any)
+						(exports (list expo))))
+				       (expo (instantiate::J2SExport
+						(id 'default)
+						(alias 'default)
+						(index 0)
+						(decl decl))))
+			 (hashtable-put! core-modules cm
+			    (instantiate::J2SProgram
+			       (loc loc)
+			       (endloc loc)
+			       (path cm)
+			       (mode 'core)
+			       (nodes '())
+			       (exports (list expo)))))))
+	 core-module-list))
    
    (with-access::J2SProgram prgm ((src path) imports decls)
       (with-access::J2SImport this (path loc respath names iprgm)
@@ -365,8 +468,13 @@
 	    (obj name)
 	    (fname (cadr loc))
 	    (location (caddr loc)))))
+
+   (define (core-module? name)
+      (open-string-hashtable-get core-modules name))
    
    (cond
+      ((core-module? name)
+       name)
       ((or (string-prefix? "http://" name)
 	   (string-prefix? "https://" name))
        name)

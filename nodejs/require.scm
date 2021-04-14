@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Apr 12 07:38:00 2021 (serrano)                */
+;*    Last change :  Wed Apr 14 08:23:05 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -26,6 +26,7 @@
    (export (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
 	   (nodejs-import-module::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::obj)
+	   (nodejs-import-module-core::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::obj ::vector)
 	   (nodejs-import-module-hop::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::obj ::vector)
 	   (nodejs-import-module-dynamic::JsPromise ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::bstring ::obj)
 	   (nodejs-import-meta::JsObject ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
@@ -649,7 +650,30 @@
 		(js-get mod (& "filename") %this))))))
 
 ;*---------------------------------------------------------------------*/
+;*    nodejs-import-module-core ...                                    */
+;*    -------------------------------------------------------------    */
+;*    Function used to (es6-)import bindings from a core module.       */
+;*    As these modules do not contain any ES6 export declarations,     */
+;*    this function extracts from MODULE.EXPORTS exported bindings.    */
+;*---------------------------------------------------------------------*/
+(define (nodejs-import-module-core::JsModule worker::WorkerHopThread
+	   %this::JsGlobalObject %module::JsObject
+	   path::bstring checksum::long loc symbols::vector)
+   
+   (define (import-var exports sym)
+      (let* ((name (js-string->jsstring (symbol->string! sym)))
+	     (v (js-get exports name %this)))
+	 v))
+   
+   (let* ((mod (nodejs-import-module worker %this %module path checksum loc))
+	  (exports (js-get mod (& "exports") %this)))
+      (duplicate::JsModule mod
+	 (evars (vector-map (lambda (s) (import-var exports s)) symbols)))))
+   
+;*---------------------------------------------------------------------*/
 ;*    nodejs-import-module-hop ...                                     */
+;*    -------------------------------------------------------------    */
+;*    Function used to (es6-)import bindings from a Hop module.        */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-import-module-hop::JsModule worker::WorkerHopThread
 	   %this::JsGlobalObject %module::JsObject
