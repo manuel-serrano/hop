@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/src/parseargs.scm                   */
+;*    serrano/prgm/project/hop/3.4.x/src/parseargs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Apr 12 07:39:27 2021 (serrano)                */
+;*    Last change :  Thu Apr 15 08:21:31 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -87,6 +87,8 @@
 	    (("--buildtag" (help "Print the buildtag and exit"))
 	     (print (hop-build-tag))
 	     (exit 0))
+	    (("--default-so-dir" (help "Display default so dir"))
+	     (print (dirname (hop-sofile-path "dummy.hop"))))
 	    
 	    ;; RC
 	    (section "RC & Autoload")
@@ -119,8 +121,6 @@
 	    (("--so-dir" ?dir (help (format "Set libs directory (~a)" (hop-sofile-directory))))
 	     (set! sofile-dir #t)
 	     (hop-sofile-directory-set! dir))
-	    (("--display-so-dir"  (help "Display default so dir"))
-	     (print (dirname (hop-sofile-path "dummy.hop"))))
 	    (("--clear-so" (help "Clear sofiles directory"))
 	     (set! clear-so #t))
 	    (("--no-clear-so" (help "Don't clear libs"))

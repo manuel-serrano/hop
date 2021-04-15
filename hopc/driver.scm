@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Tue Mar 30 10:22:40 2021 (serrano)                */
+;*    Last change :  Thu Apr 15 11:04:04 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -494,6 +494,11 @@
 		(error (format "hopc:~a" lang) "wrong status" obj))
 	       ((equal? (cdr ty) "error")
 		(error (format "hopc:~a" lang) "error" (cdr val)))
+	       ((equal? (cdr ty) "json-error")
+		(let ((proc (format "hopc:~a" lang)))
+		   (for-each (lambda (e) (notify-json-error proc e))
+		      (parse-json-error (cdr val)))
+		   (error proc file "compilation aborted.")))
 	       ((equal? (cdr ty) "filename")
 		(let ((fmt (assq :syntax obj)))
 		   (cond
@@ -764,3 +769,52 @@
    (if (hopc-sobase)
        (make-file-name (relative-file-name (hopc-sobase) (pwd)) path)
        path))
+
+;*---------------------------------------------------------------------*/
+;*    parse-json-error ...                                             */
+;*---------------------------------------------------------------------*/
+(define (parse-json-error str)
+   (call-with-input-string str
+      (lambda (ip)
+	 (json-parse ip
+	    :array-alloc (lambda () (make-cell '()))
+	    :array-set (lambda (a i val)
+			  (cell-set! a (cons val (cell-ref a))))
+	    :array-return (lambda (a i)
+			     (reverse! (cell-ref a)))
+	    :object-alloc (lambda ()
+			     (make-cell '()))
+	    :object-set (lambda (o p val)
+			   (cell-set! o
+			      (cons (cons (string->symbol p) val)
+				 (cell-ref o))))
+	    :object-return (lambda (o)
+			      (reverse! (cell-ref o)))
+	    :parse-error (lambda (msg fname loc)
+			    (error/location "hopc" "Wrong JSON file" msg
+			       fname loc))))))
+
+;*---------------------------------------------------------------------*/
+;*    notify-json-error ...                                            */
+;*---------------------------------------------------------------------*/
+(define (notify-json-error proc err)
+   (match-case err
+      (((error . ?msg) (at (file . ?filename) (loc . ?loc)))
+       (error-notify/location
+	  (instantiate::&error
+	     (proc "hopc")
+	     (msg msg)
+	     (obj proc))
+	  filename loc))
+      (((error . ?msg))
+       (error-notify
+	  (instantiate::&error
+	     (proc "hopc")
+	     (msg msg)
+	     (obj proc))))
+      (else
+       (error-notify
+	  (instantiate::&error
+	     (proc proc)
+	     (msg "compilation error")
+	     (obj err))))))
