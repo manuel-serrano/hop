@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/hopscript/types.scm               */
+;*    serrano/prgm/project/hop/3.4.x/hopscript/types.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Jun 14 06:29:03 2020 (serrano)                */
+;*    Last change :  Fri Apr 16 13:10:37 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -998,11 +998,8 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-inline-elements?::bool o::JsObject)
    (cond-expand
-      (bigloo-c
-       (with-access::JsObject o (elements)
-	  (eq? elements
-	     (pragma::obj "BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1)))"
-		o))))
+      ((and bigloo-c (not devel) (not debug))
+       ($jsobject-elements-inline? o))
       (else
        #f)))
 
@@ -1011,9 +1008,9 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-inline-ref o::JsObject idx::long)
    (cond-expand
-      ((and XXX bigloo-c (not devel) (not debug))
+      ((and bigloo-c (not devel) (not debug))
        (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx))
-      ((and bigloo-c (not devel))
+      ((and bigloo-c debug)
        (let ((o1 (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx))
 	     (o2 (with-access::JsObject o (elements)
 		    (vector-ref elements idx))))
@@ -1034,9 +1031,9 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-inline-set! o::JsObject idx::long val::obj)
    (cond-expand
-      ((and XXX bigloo-c (not devel) (not debug))
+      ((and bigloo-c (not devel) (not debug))
        (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val))
-      ((and bigloo-c (not devel))
+      ((and bigloo-c debug)
        (let ((o1 (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx))
 	     (o2 (with-access::JsObject o (elements)
 		    (vector-ref elements idx))))

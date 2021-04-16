@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Thu Apr 15 11:04:04 2021 (serrano)                */
+;*    Last change :  Fri Apr 16 10:05:20 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -791,7 +791,7 @@
 	    :object-return (lambda (o)
 			      (reverse! (cell-ref o)))
 	    :parse-error (lambda (msg fname loc)
-			    (error/location "hopc" "Wrong JSON file" msg
+			    (error/location "hopc" msg str
 			       fname loc))))))
 
 ;*---------------------------------------------------------------------*/
