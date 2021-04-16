@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../project/hop/3.2.x/test/hopjs/serv/serviceArguments.js        */
+/*    .../project/hop/3.4.x/test/hopjs/serv/serviceArguments.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  25 11:43:00 2015                         */
-/*    Last change :  Sat Mar 17 11:18:23 2018 (serrano)                */
-/*    Copyright   :  2015-20 Inria                                     */
+/*    Last change :  Fri Apr 16 18:37:10 2021 (serrano)                */
+/*    Copyright   :  2015-21 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Test service constructor and arguments                           */
 /*=====================================================================*/
@@ -13,7 +13,6 @@ var hop = require( 'hop' );
 var assert = require( 'assert' );
 
 var svc = service() {
-console.log( "AVC=", arguments );
    return arguments.length;
 };
 
@@ -38,8 +37,6 @@ var svcnew2 = new Service( function() {
 });
 
 var svcF = service( a, b ) {
-   console.log( "a=", a, " a[0]=", arguments[ 0 ] );
-   console.log( "b=", b, " a[1]=", arguments[ 1 ] );
    assert.equal( a, arguments[ 0 ], "svcF.a" );
    assert.equal( b, arguments [ 1 ], "svcF.b" );
    return b;
@@ -100,7 +97,6 @@ var svc11 = new Service( fn11 );
 var testSuite = [
    function() {
       svc().post( function( result ) {
-	 console.log( "result=", result );
 	 assert.equal( result, 0, "svc" );
 	 pass();
       }, fail );

@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/stringliteral.scm         */
+;*    serrano/prgm/project/hop/3.4.x/hopscript/stringliteral.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/runtime/hop.scm                     */
+;*    serrano/prgm/project/hop/3.4.x/runtime/hop.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Mar 20 13:56:43 2020 (serrano)                */
+;*    Last change :  Fri Apr 16 15:20:32 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -558,11 +558,7 @@
 		    (lambda (p status header clength tenc)
 		       (receiver ctx
 			  (lambda ()
-			     (with-handler
-				(lambda (e)
-				   (tprint "RECEIVER HANDLER TBR " (typeof e))
-				   (exception-notify e))
-				(hdl p status header clength tenc)))))
+			     (hdl p status header clength tenc))))
 		    hdl)
 		:args args))))))
 
