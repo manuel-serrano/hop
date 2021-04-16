@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/service.scm               */
+;*    serrano/prgm/project/hop/3.4.x/hopscript/service.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Apr  8 08:15:07 2020 (serrano)                */
+;*    Last change :  Fri Apr 16 18:35:08 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -941,10 +941,7 @@
    (define (js-service-parse-request svc req)
       (with-access::http-request req (path abspath)
 	 (let ((args (service-parse-request svc req)))
-	    (if (and (null? args)
-		     (=fx (string-length path) (string-length abspath)))
-		(js-literal->jsobject '#() '#() %this)
-		(js-obj->jsobject args %this)))))
+	    (js-obj->jsobject args %this))))
 
    (when (and (eq? proc (js-undefined)) (not (eq? path (js-undefined))))
       (set! path (js-tostring proc %this)))
