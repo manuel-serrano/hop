@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Apr  6 07:24:36 2021 (serrano)                */
+;*    Last change :  Sat Apr 17 07:05:52 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -246,6 +246,12 @@
 	    (js-worker-exec %worker "hop-loader" #t
 	       (lambda ()
 		  (nodejs-load path path %global %module %worker)))))
+      ;; ts loader
+      (hop-loader-add! "ts"
+	 (lambda (path . test)
+	    (js-worker-exec %worker "hop-loader" #t
+	       (lambda ()
+		  (nodejs-load path path %global %module %worker)))))
       ;; profiling
       (when (hop-profile)
 	 (js-profile-init `(:server #t) #f #f))
@@ -472,8 +478,8 @@
 		 (load-package pkg))
 		(else
 		 (load-js-directory path)))))
-	 ((string-suffix? ".js" path)
-	  ;; javascript
+	 ((or (string-suffix? ".js" path) (string-suffix? ".ts" path))
+	  ;; javascript/typescript
 	  (when %worker
 	     (with-access::WorkerHopThread %worker (%this prerun)
 		(js-worker-push-thunk! %worker "nodejs-load"

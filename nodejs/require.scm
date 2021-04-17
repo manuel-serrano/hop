@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Apr 14 08:23:05 2021 (serrano)                */
+;*    Last change :  Sat Apr 17 07:07:03 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -53,7 +53,8 @@
 	   (nodejs-function ::JsGlobalObject ::JsObject)
 	   (nodejs-worker ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-plugins-toplevel-loader)
-	   (nodejs-language-toplevel-loader)))
+	   (nodejs-language-toplevel-loader)
+	   (nodejs-language-notify-error ::bstring ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -528,6 +529,38 @@
 	    m))))
 
 ;*---------------------------------------------------------------------*/
+;*    language-compiler ...                                            */
+;*---------------------------------------------------------------------*/
+(define (language-compiler language lang this %module worker)
+   (let loop ((lang lang))
+      (cond
+	 ((js-object? lang)
+	  (with-access::JsGlobalObject this (js-symbol)
+	     (let* ((key (js-get js-symbol (& "compiler") this))
+		    (comp (js-get lang key this)))
+		(if (js-procedure? comp)
+		    comp
+		    (js-raise-error this "Wrong language object" lang)))))
+	 ((js-jsstring? lang)
+	  (let ((str (js-jsstring->string lang)))
+	     (unless (builtin-language? str)
+		(let ((langmod (nodejs-require-module str
+				  worker this %module)))
+		   (loop langmod)))))
+	 ((string? lang)
+	  (let ((str lang))
+	     (unless (builtin-language? str)
+		(let ((langmod (nodejs-require-module str
+				  worker this %module)))
+		   (loop langmod)))))
+	 ((not (builtin-language? language))
+	  (let ((langmod (nodejs-require-module language
+			    worker this %module)))
+	     (loop langmod)))
+	 (else
+	  #f))))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-require ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-require worker::WorkerHopThread this::JsGlobalObject %module::JsObject language::bstring)
@@ -541,31 +574,7 @@
 	       (if (eq? lang (js-undefined))
 		   language
 		   (js-tostring lang this))
-	       (let loop ((lang lang))
-		  (cond
-		     ((js-object? lang)
-		      (with-access::JsGlobalObject this (js-symbol)
-			 (let* ((key (js-get js-symbol (& "compiler") this))
-				(comp (js-get lang key this)))
-			    (if (js-procedure? comp)
-				comp
-				(js-raise-error this
-				   "Wrong language object"
-				   lang)))))
-		     ((js-jsstring? lang)
-		      (let ((str (js-jsstring->string lang)))
-			 (unless (builtin-language? str)
-			    (let ((langmod (nodejs-require-module str
-					      (js-current-worker)
-					      this %module)))
-			       (loop langmod)))))
-		     ((not (builtin-language? language))
-		      (let ((langmod (nodejs-require-module language
-					(js-current-worker)
-					this %module)))
-			 (loop langmod)))
-		     (else
-		      #f)))
+	       (language-compiler language lang this %module (js-current-worker))
 	       opt))
 	 (js-function-arity 3 0)
 	 (js-function-info :name "require" :len 3)
@@ -1907,7 +1916,7 @@
    
    (define (not-found filename)
       (js-raise-error %ctxthis
-	 (format "Don't know how to load module ~s" filename)
+	 (format "don't know how to load module ~s" filename)
 	 filename))
 
    (define (mime-html? url)
@@ -1929,9 +1938,23 @@
 			(string-prefix? "text/html"
 			   (cdr ct)))))))))
 
+   (define (compiler-available? filename)
+      (js-worker-exec worker "language-loader" #f
+	 (lambda ()
+	    (with-access::JsGlobalObject %ctxthis (js-object js-symbol)
+	       (let* ((langmode (nodejs-require-module lang worker
+				   %ctxthis %ctxmodule))
+		      (key (js-get js-symbol (& "compiler") %ctxthis))
+		      (comp (js-get langmode key %ctxthis)))
+		  (isa? comp JsFunction))))))
+      
    (define (load-module)
       (cond
 	 ((or (string-suffix? ".js" filename) (string-suffix? ".mjs" filename))
+	  (load-module-js))
+	 ((string-suffix? ".ts" filename)
+	  (load-module-js))
+	 ((string-suffix? ".ast.json" filename)
 	  (load-module-js))
 	 ((string-suffix? ".html" filename)
 	  (load-module-html))
@@ -1951,6 +1974,8 @@
 	     (else
 	      (load-module-js))))
 	 ((not (string-index (basename filename) #\.))
+	  (load-module-js))
+	 ((compiler-available? filename)
 	  (load-module-js))
 	 (else
 	  (not-found filename))))
@@ -2549,6 +2574,54 @@
       (js-main-worker! "language" "language" #t
 	 nodejs-new-global-object nodejs-new-module)
       (make-language-loader this module worker)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-language-notify-error ...                                 */
+;*---------------------------------------------------------------------*/
+(define (nodejs-language-notify-error str proc)
+
+   (define (parse ip)
+      (json-parse ip
+	 :array-alloc (lambda () (make-cell '()))
+	 :array-set (lambda (a i val)
+		       (cell-set! a (cons val (cell-ref a))))
+	 :array-return (lambda (a i)
+			  (reverse! (cell-ref a)))
+	 :object-alloc (lambda ()
+			  (make-cell '()))
+	 :object-set (lambda (o p val)
+			(cell-set! o
+			   (cons (cons (string->symbol p) val)
+			      (cell-ref o))))
+	 :object-return (lambda (o)
+			   (reverse! (cell-ref o)))
+	 :parse-error (lambda (msg fname loc)
+			 (error/location "hopc" msg str
+			    fname loc))))
+      
+   (let ((errs (call-with-input-string str parse)))
+      (for-each (lambda (err)
+		   (match-case err
+		      (((error . ?msg) (at (file . ?filename) (loc . ?loc)))
+		       (error-notify/location
+			  (instantiate::&error
+			     (proc "hopc")
+			     (msg msg)
+			     (obj proc))
+			  filename loc))
+		      (((error . ?msg))
+		       (error-notify
+			  (instantiate::&error
+			     (proc "hopc")
+			     (msg msg)
+			     (obj proc))))
+		      (else
+		       (error-notify
+			  (instantiate::&error
+			     (proc proc)
+			     (msg "compilation error")
+			     (obj err))))))
+	 errs)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Bind the nodejs require functions                                */

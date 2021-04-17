@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Fri Apr 16 10:05:20 2021 (serrano)                */
+;*    Last change :  Sat Apr 17 06:51:45 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -496,9 +496,8 @@
 		(error (format "hopc:~a" lang) "error" (cdr val)))
 	       ((equal? (cdr ty) "json-error")
 		(let ((proc (format "hopc:~a" lang)))
-		   (for-each (lambda (e) (notify-json-error proc e))
-		      (parse-json-error (cdr val)))
-		   (error proc file "compilation aborted.")))
+		   ((hopc-nodejs-language-notify-error) (cdr val) proc)
+		   (exit 1)))
 	       ((equal? (cdr ty) "filename")
 		(let ((fmt (assq :syntax obj)))
 		   (cond
@@ -736,6 +735,25 @@
 ;*    hopc-language-loader ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hopc-language-loader)
+   (tprint "hopc-language-loader...")
+   (hopc-nodejs-load
+      '((@ hopscript-install-expanders! __hopscript_expanders))
+      '((@ nodejs-language-toplevel-loader __nodejs_require))))
+
+;*---------------------------------------------------------------------*/
+;*    hopc-nodejs-language-notify-error ...                            */
+;*---------------------------------------------------------------------*/
+(define (hopc-nodejs-language-notify-error)
+   (tprint "hopc-language-notify-error...")
+   (or (hopc-nodejs-load
+	  '((@ nodejs-language-notify-error __nodejs_require)))
+       (lambda (err proc)
+	  (display err (current-error-port)))))
+
+;*---------------------------------------------------------------------*/
+;*    hopc-nodejs-load ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hopc-nodejs-load . bindings)
    (hop-sofile-compile-policy-set! 'none)
    (nowarning
       (lambda ()
@@ -743,9 +761,10 @@
 	    (library-load-init 'hopscript (hop-library-path))
 	    (library-load 'hopscript)
 	    (library-load 'nodejs)
-	    (eval '((@ hopscript-install-expanders! __hopscript_expanders)))
-	    (eval '((@ nodejs-language-toplevel-loader __nodejs_require)))))))
-
+	    (let ((res #f))
+	       (for-each (lambda (b) (set! res (eval b))) bindings)
+	       res)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    nowarning ...                                                    */
 ;*---------------------------------------------------------------------*/
@@ -769,52 +788,3 @@
    (if (hopc-sobase)
        (make-file-name (relative-file-name (hopc-sobase) (pwd)) path)
        path))
-
-;*---------------------------------------------------------------------*/
-;*    parse-json-error ...                                             */
-;*---------------------------------------------------------------------*/
-(define (parse-json-error str)
-   (call-with-input-string str
-      (lambda (ip)
-	 (json-parse ip
-	    :array-alloc (lambda () (make-cell '()))
-	    :array-set (lambda (a i val)
-			  (cell-set! a (cons val (cell-ref a))))
-	    :array-return (lambda (a i)
-			     (reverse! (cell-ref a)))
-	    :object-alloc (lambda ()
-			     (make-cell '()))
-	    :object-set (lambda (o p val)
-			   (cell-set! o
-			      (cons (cons (string->symbol p) val)
-				 (cell-ref o))))
-	    :object-return (lambda (o)
-			      (reverse! (cell-ref o)))
-	    :parse-error (lambda (msg fname loc)
-			    (error/location "hopc" msg str
-			       fname loc))))))
-
-;*---------------------------------------------------------------------*/
-;*    notify-json-error ...                                            */
-;*---------------------------------------------------------------------*/
-(define (notify-json-error proc err)
-   (match-case err
-      (((error . ?msg) (at (file . ?filename) (loc . ?loc)))
-       (error-notify/location
-	  (instantiate::&error
-	     (proc "hopc")
-	     (msg msg)
-	     (obj proc))
-	  filename loc))
-      (((error . ?msg))
-       (error-notify
-	  (instantiate::&error
-	     (proc "hopc")
-	     (msg msg)
-	     (obj proc))))
-      (else
-       (error-notify
-	  (instantiate::&error
-	     (proc proc)
-	     (msg "compilation error")
-	     (obj err))))))

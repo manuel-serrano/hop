@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Apr  9 13:39:42 2021 (serrano)                */
+;*    Last change :  Sat Apr 17 10:07:11 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -1354,7 +1354,7 @@
 			(let ((i (string-index-right val #\:)))
 			   (when i
 			      (set! val
-				 `(at ,(substring val 0 1)
+				 `(at ,(substring val 0 i)
 				     ,(string->integer
 					 (substring val (+fx i 1))))))))
 		     (cell-set! o
