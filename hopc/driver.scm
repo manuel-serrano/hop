@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Sat Apr 17 06:51:45 2021 (serrano)                */
+;*    Last change :  Mon Apr 19 15:44:11 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -735,7 +735,6 @@
 ;*    hopc-language-loader ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (hopc-language-loader)
-   (tprint "hopc-language-loader...")
    (hopc-nodejs-load
       '((@ hopscript-install-expanders! __hopscript_expanders))
       '((@ nodejs-language-toplevel-loader __nodejs_require))))
@@ -744,26 +743,32 @@
 ;*    hopc-nodejs-language-notify-error ...                            */
 ;*---------------------------------------------------------------------*/
 (define (hopc-nodejs-language-notify-error)
-   (tprint "hopc-language-notify-error...")
    (or (hopc-nodejs-load
-	  '((@ nodejs-language-notify-error __nodejs_require)))
+	  '(@ nodejs-language-notify-error __nodejs_require))
        (lambda (err proc)
 	  (display err (current-error-port)))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-loaded ...                                                */
+;*---------------------------------------------------------------------*/
+(define nodejs-loaded #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-nodejs-load ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (hopc-nodejs-load . bindings)
-   (hop-sofile-compile-policy-set! 'none)
    (nowarning
       (lambda ()
-	 (when (library-load-init 'nodejs (hop-library-path))
-	    (library-load-init 'hopscript (hop-library-path))
-	    (library-load 'hopscript)
-	    (library-load 'nodejs)
-	    (let ((res #f))
-	       (for-each (lambda (b) (set! res (eval b))) bindings)
-	       res)))))
+	 (hop-sofile-compile-policy-set! 'none)
+	 (unless nodejs-loaded
+	    (set! nodejs-loaded #t)
+	    (when (library-load-init 'nodejs (hop-library-path))
+	       (library-load-init 'hopscript (hop-library-path))
+	       (library-load 'hopscript)
+	       (library-load 'nodejs)))
+	 (let ((res #f))
+	    (for-each (lambda (b) (set! res (eval b))) bindings)
+	    res))))
    
 ;*---------------------------------------------------------------------*/
 ;*    nowarning ...                                                    */
