@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/regexp.scm                */
+;*    serrano/prgm/project/hop/3.4.x/hopscript/regexp.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Apr  8 14:00:13 2021 (serrano)                */
+;*    Last change :  Tue Apr 20 14:12:18 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -453,7 +453,7 @@
 					 (loop (+fx j 4) (+fx w 2) chars ascii))
 					((and (>=fx n 128) ascii)
 					 (if (or (ending-range? res w)
-						 (starting-range? str (+fx j 3)))
+						 (starting-range? str (+fx j 4)))
 					     (let* ((s (integer->utf8 n))
 						    (l (string-length s)))
 						(blit-string! s 0 res w l)
