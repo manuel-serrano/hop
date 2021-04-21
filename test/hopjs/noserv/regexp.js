@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/regexp.js       */
+/*    serrano/prgm/project/hop/3.4.x/test/hopjs/noserv/regexp.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Jan  9 10:03:04 2019 (serrano)                */
-/*    Copyright   :  2014-19 Manuel Serrano                            */
+/*    Last change :  Wed Apr 21 19:16:57 2021 (serrano)                */
+/*    Copyright   :  2014-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing REGEXP matching                                          */
 /*=====================================================================*/
@@ -101,15 +101,29 @@ function rxReplace3() {
    return rx2 === "n+|$)";
 }
 
+function rxReplace4() {
+   function escCtrlChars(str) {
+      return str.replace(/[\0\t\n\v\f\r\xa0'"!-]/g, function(c) {
+      	 return '!' + c.charCodeAt(0) + '!'; });
+   } 
+   const enc = 
+      encodeURI( escCtrlChars( String.fromCharCode( 21,219,229,218,160 ) ) );
+   return enc === "%15%C3%9B%C3%A5%C3%9A!160!";
+}
+
+
 
 console.log( "rxReplace" );
 assert.ok( rxReplace(), "regexp replace" );
 
 console.log( "rxReplace2" );
-assert.ok( rxReplace2(), "regexp replace" );
+assert.ok( rxReplace2(), "regexp replace2" );
 
 console.log( "rxReplace3" );
-assert.ok( rxReplace3(), "regexp replace" );
+assert.ok( rxReplace3(), "regexp replace3" );
+
+console.log( "rxReplace4" );
+assert.ok( rxReplace4(), "regexp replace4" );
 
 /*---------------------------------------------------------------------*/
 /*    properties                                                       */

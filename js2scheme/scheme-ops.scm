@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/js2scheme/scheme-ops.scm          */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/scheme-ops.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Jun  4 11:13:03 2020 (serrano)                */
+;*    Last change :  Wed Apr 21 17:10:33 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -299,84 +299,6 @@
 	      (epairify loc `(negjs ,sexp)))
 	     (else
 	      (epairify loc `(negjs (js-tonumber ,sexp %this)))))))
-      ((-TBR-15oc2020)
-       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7
-       (let ((sexpr (j2s-scheme expr mode return ctx))
-	     (vtyp (j2s-vtype expr))
-	     (typ (j2s-type expr)))
-	  (case type
-	     ((int32)
-	      (cond
-		 ((int32? sexpr)
-		  (if (=s32 sexpr #s32:0) -0.0 (negs32 sexpr)))
-		 ((eq? vtyp 'int32)
-		  (epairify loc `(negs32 ,sexpr)))
-		 ((eq? vtyp 'uint32)
-		  (epairify loc `(negs32 ,(asint32 sexpr 'uint32))))
-		 ((memq typ '(int32 uint32))
-		  (epairify loc `(js-toint32 (negfx ,sexpr) %this)))
-		 ((memq typ '(int32 uint32))
-		  (epairify loc `(js-toint32 (negfx ,sexpr) %this)))
-		 (else
-		  (epairify loc `(js-toint32 (negjs ,sexpr) %this)))))
-	     ((uint32)
-	      (cond
-		 ((eq? vtyp 'int32)
-		  (epairify loc `(int32->uint32 (negs32 ,sexpr))))
-		 ((memq type '(int32 uint32))
-		  (epairify loc `(js-touint32 (negfx ,sexpr) %this)))
-		 (else
-		  (epairify loc `(js-touint32 (negjs ,sexpr) %this)))))
-	     ((eqv? sexpr 0)
-	      -0.0)
-	     ((integer)
-	      (if (fixnum? sexpr)
-		  (negfx sexpr)
-		  (epairify loc `(negfx ,sexpr))))
-	     ((real)
-	      (if (flonum? sexpr)
-		  (negfl sexpr)
-		  (epairify loc `(negfl ,sexpr))))
-	     ((number)
-	      (epairify loc
-		 (case vtyp
-		    ((int32)
-		     `(if (=s32 ,sexpr #s32:0)
-			  -0.0
-			  ,(tonumber `(negs32 ,sexpr) vtyp ctx)))
-		    ((uint32)
-		     (cond
-			((m64? (context-conf ctx))
-			 `(if (=u32 ,sexpr #u32:0)
-			      -0.0
-			      (negfx (uint32->fixnum ,sexpr))))
-			((inrange-int30? expr)
-			 `(if (=u32 ,sexpr #u32:0)
-			      -0.0
-			      (negfx (uint32->fixnum ,sexpr))))
-			((inrange-int32? expr)
-			 `(if (=u32 ,sexpr #u32:0)
-			      -0.0
-			      ,(tonumber
-				  `(negs32 (uint32->int32 ,sexpr)) 'int32 ctx)))
-			(else
-			 `(cond
-			     ((=u32 ,sexpr #u32:0)
-			      -0.0)
-			     ((>u32 ,sexpr (fixnum->uint32 (maxvalfx)))
-			      (negfl (uint32->flonum ,sexpr)))
-			     (else
-			      (negfx (uint32->fixxnum ,sexpr)))))))
-		    ((int53)
-		     `(if (=fx ,sexpr 0)
-			  -0.0
-			  (negfx ,sexpr)))
-		    (else
-		     (if (eq? typ 'integer)
-			 `(negjs-int ,sexpr)
-			 `(negjs ,sexpr))))))
-	     (else
-	      (epairify loc `(negjs ,sexpr))))))
       ((~)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.8
        (if (eq? type 'int32)
@@ -2031,10 +1953,11 @@
 	     `(flonum->int32 (/fl ,(asreal left tl) ,(asreal right tr)))))))
 
    (define (divu32 left right tl tr)
-      (tprint "divu32 left=" left " right=" right " tl=" tl " tr=" tr)
       (cond
 	 ((and (eq? tl 'uint32) (eq? tr 'uint32))
 	  `(/u32 ,left ,right))
+	 ((and (eq? tl 'int53) (eq? tr 'int53))
+	  `(fixnum->uint32 (/fx ,left ,right)))
 	 ((and (eq? tl 'int32) (eq? tr 'int32))
 	  `(int32->uint32 (/s32 ,left ,right)))
 	 ((and (eq? tr 'int32) (inrange-uint32? rhs))
