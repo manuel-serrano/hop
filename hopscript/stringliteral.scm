@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Apr 21 19:11:59 2021 (serrano)                */
+;*    Last change :  Thu Apr 22 12:49:27 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -307,7 +307,7 @@
 	    " length=" length
 	    " strlength=" (if (js-jsstring-normalized? obj)
 			      (string-length left)
-			      -1)
+			      "_")
 	    " depth=" (js-jsstring-depth obj 1024))
 	 (unless (or (js-jsstring-normalized? obj) (js-jsstring-substring? obj))
 	    (let ((nm (string-append " " margin)))
@@ -2725,21 +2725,25 @@
 			   (s (utf8-char-size c)))
 		       (cond
 			  ((=fx n start)
-			   (if (>fx (-fx end n) (-fx culen end))
+			   (cond
+			      ((= culen end)
+			       (js-utf8->jsstring/ulen (substring str r len) ulen))
+			      ((>fx (-fx end n) (-fx culen end))
 			       ;; right to left read
 			       (let liip ((j (-fx len 1))
 					  (e (-fx culen 1)))
 				  (let ((c (char->integer (string-ref str j))))
 				     (cond
-					((=fx (bit-rsh c 6) #x10)
+					((=fx (bit-rsh c 6) #x2)
 					 (liip (-fx j 1) e))
 					((=fx e end)
 					 (js-utf8->jsstring/ulen
-					    (substring str i j)
+					    (substring str r j)
 					    ulen))
 					(else
-					 (liip (-fx j 1) (-fx e 1))))))
-			       (loop (+fx r s) (+fx n 1) r)))
+					 (liip (-fx j 1) (-fx e 1)))))))
+			      (else
+			       (loop (+fx r s) (+fx n 1) r))))
 			  ((=fx n end)
 			   (js-utf8->jsstring/ulen (substring str i r) ulen))
 			  (else
@@ -2893,7 +2897,7 @@
 					  (e (-fx culen 1)))
 				  (let ((c (char->integer (string-ref str j))))
 				     (cond
-					((=fx (bit-rsh c 6) #x10)
+					((=fx (bit-rsh c 6) #x2)
 					 (liip (-fx j 1) e))
 					((=fx e end)
 					 (js-utf8->jsstring/ulen! this
