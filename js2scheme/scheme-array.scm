@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-array.scm          */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/scheme-array.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Thu Apr 16 18:45:17 2020 (serrano)                */
+;*    Last change :  Wed Apr 21 18:20:20 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -499,11 +499,19 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-vector-set! this::J2SAssig mode return ctx)
    (with-access::J2SAssig this (lhs rhs)
-      (with-access::J2SAccess lhs (obj field)
-	 `(vector-set! ,(j2s-scheme obj mode return ctx)
-	     (uint32->fixnum
-		,(j2s-scheme-as-uint32 field mode return ctx))
-	     ,(j2s-scheme rhs mode return ctx)))))
+      (with-access::J2SAssig this (lhs rhs)
+	 (let loop ((rhs rhs))
+	    (if (boxed-type? (j2s-type rhs))
+		(with-access::J2SExpr rhs (loc type)
+		   (let ((tmp (gensym)))
+		      `(let ((,tmp ,(j2s-scheme rhs mode return ctx)))
+			  ,(loop (J2SCast 'any (J2SHopRef/type tmp type)))
+			  ,tmp)))
+		(with-access::J2SAccess lhs (obj field)
+		   `(vector-set! ,(j2s-scheme obj mode return ctx)
+		       (uint32->fixnum
+			  ,(j2s-scheme-as-uint32 field mode return ctx))
+		       ,(j2s-scheme rhs mode return ctx))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-as-uint32 ...                                         */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Apr  7 13:31:37 2021 (serrano)                */
+;*    Last change :  Wed Apr 21 19:11:59 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -3913,9 +3913,9 @@
 (define (js-jsstring-replace-regexp-fun1 this::obj rx::regexp
 	   lastindex::long global::bool replacevalue %this)
    
-   (define (first-match pos::vector s::bstring)
+   (define (first-match pos::vector s::bstring enc)
       (if (>=fx (vector-ref pos 0) 0)
-	  (js-substring s (vector-ref pos 0) (vector-ref pos 1) %this)
+	  (js-substring/enc s (vector-ref pos 0) (vector-ref pos 1) enc %this)
 	  (& "")))
 
    (with-access::JsGlobalObject %this (js-regexp js-array)
@@ -3935,7 +3935,7 @@
 		       (js-jsstring-append
 			  (js-tojsstring
 			     (replacevalue (js-undefined)
-				(first-match pos s))
+				(first-match pos s enc))
 			     %this)
 			  (js-substring/enc s
 			     (vector-ref pos 1) (string-length s) enc %this)))))))
@@ -3954,7 +3954,7 @@
 			      (js-substring/enc s i len enc %this))))
 		       (let ((v (js-tojsstring
 				   (replacevalue (js-undefined)
-				      (first-match pos s))
+				      (first-match pos s enc))
 				   %this)))
 			  (cond
 			     ((>fx (vector-ref pos 1) i)

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme.scm                */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/scheme.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jun  5 07:29:56 2020 (serrano)                */
+;*    Last change :  Wed Apr 21 17:27:19 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1982,7 +1982,8 @@
 	     ;; is cast into the expression type.
 	     (j2s-scheme-set! lhs rhs
 		(j2s-scheme rhs mode return ctx)
-		(j2s-cast lhse lhs (j2s-vtype lhs) type ctx) mode return ctx #f loc))))
+		(j2s-cast lhse lhs (j2s-type lhs) type ctx)
+		mode return ctx #f loc))))
    
    (define (unresolved-inc lhs inc)
       (with-access::J2SUnresolvedRef lhs (id cache loc)
