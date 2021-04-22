@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Apr 11 09:55:40 2021 (serrano)                */
+;*    Last change :  Thu Apr 22 08:13:58 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -648,7 +648,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SRef env::pair-nil fix::cell)
    (with-access::J2SRef this (decl loc)
-      (with-access::J2SDecl decl (id key utype)
+      (with-access::J2SDecl decl (id key vtype utype scope)
 	 (let ((nenv env))
 	    (when (and (isa? decl J2SDeclFun) (not (constructor-only? decl)))
 	       (set! nenv (env-nocapture env))
@@ -656,10 +656,14 @@
 		  (if (isa? val J2SMethod)
 		      (escape-method val fix)
 		      (escape-fun val fix #f))))
-	    (if (memq utype '(unknown any))
+	    (cond
+	       ((and (memq scope '(%scope global)) (not (eq? vtype 'unknown)))
+		(expr-type-add! this nenv fix vtype))
+	       ((memq utype '(unknown any))
 		(let ((ty (env-lookup env decl)))
-		   (expr-type-add! this nenv fix ty))
-		(expr-type-add! this nenv fix utype))))))
+		   (expr-type-add! this nenv fix ty)))
+	       (else
+		(expr-type-add! this nenv fix utype)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SWithRef ...                                       */
