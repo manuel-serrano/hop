@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jun  5 05:52:17 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Last change :  Wed Apr 28 09:27:42 2021 (serrano)                */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
 ;*    -------------------------------------------------------------    */
@@ -72,7 +72,7 @@
       ;; create the math object
       (set! js-math
 	 (instantiateJsMath
-	    (cmap (instantiate::JsConstructMap))
+	    (cmap (js-make-jsconstructmap))
 	    (__proto__ (js-object-proto %this))
 	    (elements ($create-vector 26))))
       ;; other properties

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Apr 13 09:37:45 2021 (serrano)                */
+;*    Last change :  Mon Apr 26 14:54:36 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1295,9 +1295,12 @@
 		    (let* ((id (consume-token! 'ID))
 			   (fro (consume-token! 'ID)))
 		       (if (eq? (token-value fro) 'from)
-			   (let ((path (consume-module-path!)))
+			   (let* ((path (consume-module-path!))
+				  (impns (instantiate::J2SImportNamespace
+					    (loc (token-loc id))
+					    (id (token-value id)))))
 			      (instantiate::J2SImport
-				 (names (cons '* (token-value id)))
+				 (names (list impns))
 				 (loc (token-loc token))
 				 (path (token-value path))))
 			   (parse-token-error "Illegal import, \"from\" expected"
@@ -1325,24 +1328,26 @@
 			(sep (consume-any!)))
 		    (cond
 		       ((and (eq? (token-tag sep) 'ID) (eq? (token-value sep) 'from))
-			(let ((path (consume-token! 'STRING))
-			      (loc (token-loc token)))
+			(let* ((path (consume-token! 'STRING))
+			       (loc (token-loc token))
+			       (impnm (instantiate::J2SImportName
+					 (id 'default)
+					 (alias id)
+					 (loc loc))))
 			   (instantiate::J2SImport
-			      (names (list (instantiate::J2SImportName
-					      (id 'default)
-					      (alias id)
-					      (loc loc))))
+			      (names (list impnm))
 			      (loc loc)
 			      (path (token-value path)))))
 		       ((eq? (token-tag sep) 'COMMA)
-			(let ((imp (loop #f)))
+			(let ((imp (loop #f))
+			      (impnm (instantiate::J2SImportName
+				       (id 'default)
+				       (alias id)
+				       (loc (token-loc sep)))))
 			   (with-access::J2SImport imp (path)
 			      (let* ((loc (token-loc token))
 				     (defi (instantiate::J2SImport
-					      (names (list (instantiate::J2SImportName
-							      (id 'default)
-							      (alias id)
-							      (loc loc))))
+					      (names (list impnm))
 					      (loc loc)
 					      (path path))))
 				 (instantiate::J2SSeq
@@ -1367,22 +1372,21 @@
 			      (consume-any!)
 			      (token-value (consume-token! 'ID)))
 			   id))
-		(import (instantiate::J2SImportName
+		(impnm (instantiate::J2SImportName
 			   (id id)
 			   (alias alias)
 			   (loc loc)))
 		(next (consume-any!)))
 	    (case (token-tag next)
 	       ((RBRACE)
-		(cons import lst))
+		(cons impnm lst))
 	       ((COMMA)
-		(loop (cons import lst)))
+		(loop (cons impnm lst)))
 	       (else
 		(parse-token-error "Illegal import" next))))))
 
    (define (export-decl decl::J2SDecl)
       (with-access::J2SDecl decl (id exports scope)
-	 ;; (set! binder 'export)
 	 (set! scope 'export)
 	 (set! exports (cons (instantiate::J2SExport
 				(id id)
@@ -1430,12 +1434,14 @@
 			      (consume-any!)
 			      (let ((path (consume-module-path!)))
 				 (instantiate::J2SImport
-				    (names (cons 'redirect
-					      (map (lambda (r a)
-						      (with-access::J2SUnresolvedRef r (id)
-							 (cons id a)))
-						 (cons ref refs)
-						 (cons alias aliases))))
+				    (names (map (lambda (r a)
+						   (with-access::J2SUnresolvedRef r (id loc)
+						      (instantiate::J2SImportRedirect
+							 (loc loc)
+							 (id id)
+							 (alias a))))
+					      (cons ref refs)
+					      (cons alias aliases)))
 				    (loc (token-loc token))
 				    (path (token-value path)))))
 			   (instantiate::J2SExportVars
@@ -1458,10 +1464,10 @@
 	  (let ((loc (token-loc (consume-any!)))
 		(val (expression #f #f)))
 	     (co-instantiate ((expo (instantiate::J2SExport
-				      (id 'default)
-				      (alias 'default)
-				      (decl decl)
-				      (index (get-export-index))))
+				       (id 'default)
+				       (alias 'default)
+				       (decl decl)
+				       (index (get-export-index))))
 			      (decl (instantiate::J2SDeclInit
 				       (loc loc)
 				       (id 'default)
@@ -1480,11 +1486,13 @@
 	  (let* ((* (consume-token! '*))
 		 (fro (consume-token! 'ID)))
 	     (if (eq? (token-value fro) 'from)
-		 (let ((path (consume-module-path!)))
+		 (let* ((path (consume-module-path!))
+			(impexp (instantiate::J2SImportExport
+				   (loc (token-loc *)))))
 		    (instantiate::J2SImport
-		       (names '(redirect))
 		       (loc (token-loc token))
-		       (path (token-value path))))
+		       (path (token-value path))
+		       (names (list impexp))))
 		 (parse-token-error "Illegal export, \"from\" expected"
 		    fro))))
 	 (else

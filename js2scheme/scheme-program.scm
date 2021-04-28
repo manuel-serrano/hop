@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Wed Apr 14 08:07:18 2021 (serrano)                */
+;*    Last change :  Mon Apr 26 14:37:20 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -240,16 +240,18 @@
 
    (with-access::J2SProgram this (module main nodes headers decls
 					 mode name pcache-size call-size
-					 cnsts loc)
-      (let* ((esimports (j2s-module-imports this))
-	     (esexports (j2s-module-exports this))
-	     (nctx (compiler-context-set! ctx
+					 cnsts loc
+					 %info)
+      (set! %info '())
+      (let* ((nctx (compiler-context-set! ctx
 		      :array (j2s-find-extern-decl headers 'Array)
 		      :string (j2s-find-extern-decl headers 'String)
 		      :regexp (j2s-find-extern-decl headers 'RegExp)
 		      :math (j2s-find-extern-decl headers 'Math)
 		      :object (j2s-find-extern-decl headers 'Object)
 		      :program this))
+	     (esimports (j2s-module-imports this nctx))
+	     (esexports (j2s-module-exports this nctx))
 	     (scmheaders (j2s-scheme headers mode return nctx))
 	     (scmdecls (j2s-scheme decls mode return nctx))
 	     (scmclos (filter-map (lambda (d)
@@ -367,7 +369,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-module-imports ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (j2s-module-imports this::J2SProgram)
+(define (j2s-module-imports this::J2SProgram ctx)
 
    (define (import-iprgm i) (with-access::J2SImport i (iprgm) iprgm))
    (define (import-mvar i) (with-access::J2SImport i (mvar) mvar))
@@ -377,7 +379,7 @@
 
    (define (reindex! this::J2SProgram iprgm::J2SProgram reindex)
       (with-access::J2SProgram this (%info)
-	 (set! %info (cons (cons iprgm  reindex) %info))))
+	 (set! %info (cons (cons iprgm reindex) %info))))
 
    (define (module-import-es6 im idx)
       (with-access::J2SImport im (mvar ivar path iprgm)
@@ -412,17 +414,19 @@
 	       (nqueue '()))
 	    (for-each (lambda (im idx)
 			 (with-access::J2SImport im (names iprgm path)
-			    (when (and (pair? names) (eq? (car names) 'redirect))
+			    (when (and (pair? names)
+				       (or (isa? (car names) J2SImportExport)
+					   (isa? (car names) J2SImportRedirect)))
 			       (unless (redirect-only? iprgm)
 				  (let ((evid (evar-ident eidx)))
 				     (reindex! this iprgm eidx)
 				     (set! eidx (+fx eidx 1))
 				     (let ((x `(with-access::JsModule ,mvar (imports)
-						 (with-access::JsModule
-						       (vector-ref imports ,idx)
-						       (evars)
-						    ,(format "redirect: ~a ~a" ipath path)
-						    evars))))
+						  (with-access::JsModule
+							(vector-ref imports ,idx)
+							(evars)
+						     ,(format "redirect: ~a ~a" ipath path)
+						     evars))))
 					(set! nres (cons x nres)))))
 			       (let ((q (cons iprgm `(vector-ref (with-access::JsModule ,mvar (imports) imports) ,idx))))
 				  (set! nqueue (append! nqueue (list q)))))))
@@ -451,9 +455,14 @@
 
    (define (import-module-default? im)
       (with-access::J2SImport im (names)
-	 (when (and (pair? names) (null? (cdr names)))
-	    (with-access::J2SImportName (car names) (id)
-	       (eq? id 'default)))))
+	 (when (pair? names)
+	    (when (and (null? (cdr names)) (isa? (car names) J2SImportName))
+	       (with-access::J2SImportName (car names) (id)
+		  (eq? id 'default))))))
+   
+   (define (import-module-namespace? im)
+      (with-access::J2SImport im (names)
+	 (and (pair? names) (isa? (car names) J2SImportNamespace))))
       
    (define (import-module im)
       (with-access::J2SImport im (path iprgm loc names iprgm)
@@ -463,6 +472,7 @@
 		`(nodejs-import-module-hop %worker %this %module
 		    ,path
 		    ,(j2s-program-checksum! iprgm)
+		    ,(context-get ctx :commonjs-export)
 		    ',loc
 		    ',(list->vector
 			 (map (lambda (e)
@@ -471,27 +481,35 @@
 				       (cons alias vtype))))
 			    exports))))
 	       ((core)
-		(if (import-module-default? im)
+		(cond
+		   ((import-module-default? im)
 		    `(nodejs-import-module %worker %this %module
 			,path
 			,(j2s-program-checksum! iprgm)
-			',loc)
+			#t ',loc))
+		   ((import-module-namespace? im)
+		    `(nodejs-import-module %worker %this %module
+			,path
+			,(j2s-program-checksum! iprgm)
+			#t ',loc))
+		   (else
 		    `(nodejs-import-module-core %worker %this %module
 			,path
 			,(j2s-program-checksum! iprgm)
+			#t
 			',loc
 			',(list->vector
 			     (map (lambda (name)
 				     (with-access::J2SImportName name (id) id))
-				names)))))
+				names))))))
 	       (else
 		`(nodejs-import-module %worker %this %module
 		    ,path
 		    ,(j2s-program-checksum! iprgm)
+		    ,(context-get ctx :commonjs-export)
 		    ',loc))))))
 
-   (with-access::J2SProgram this (imports path %info)
-      (set! %info '())
+   (with-access::J2SProgram this (imports path)     
       ;; WARNING !!! the evaluation order matters module-imports _must_ be
       ;; called before module-redirect (as module-imports assigned the mvar
       ;; properties used by module-redirect).
@@ -516,7 +534,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-module-exports ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (j2s-module-exports this::J2SProgram)
+(define (j2s-module-exports this::J2SProgram ctx)
    
    (define (redirect-index this::J2SProgram id iprgm::J2SProgram loc)
       ;; Find the root program (module) that exports id, and return
@@ -545,17 +563,16 @@
 			     (cdr c))))
 		      (else
 		       (with-access::J2SProgram this (%info)
-			  (let ((c (assq iprgm %info)))
-			     (cdr c))))))))))
+			  (cdr (assq iprgm %info))))))))))
    
-   (define (export e::J2SExport)
+   (define (j2s-export e::J2SExport)
       (with-access::J2SExport e (index decl from id alias)
 	 (with-access::J2SDecl decl ((w writable) loc)
 	    (cond
 	       ((isa? from J2SProgram)
-		`(vector ,(& alias this) (cons ,index ,(redirect-index this id from loc)) ,w))
+		`(js-export ,(& alias this) ,index ,(redirect-index this id from loc) ,w))
 	       (else
-		`(vector ,(& alias this) ,index ,w))))))
+		`(js-export ,(& alias this) ,index -1 ,w))))))
    
    (with-access::J2SProgram this (exports imports path checksum)
       (let ((idx (j2sprogram-get-export-index this))
@@ -565,7 +582,7 @@
 	     `(define %evars
 		 (with-access::JsModule %module (evars exports checksum)
 		    (set! checksum ,(j2s-program-checksum! this))
-		    (set! exports (list ,@(map export exports)))
+		    (set! exports (vector ,@(map j2s-export exports)))
 		    ,@(if (>fx idx 0)
 			  `((set! evars (make-vector ,idx (js-undefined))))
 			  '())

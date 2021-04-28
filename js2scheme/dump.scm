@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Jun 10 17:56:34 2020 (serrano)                */
+;*    Last change :  Mon Apr 26 14:33:54 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -462,10 +462,11 @@
 ;*    j2s->list ::J2SProgram ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SProgram)
-   (with-access::J2SProgram this (nodes headers decls mode direct-eval)
+   (with-access::J2SProgram this (nodes headers decls mode direct-eval exports)
       `(,(string->symbol (typeof this))
 	mode: ,mode
 	direct-eval: ,direct-eval
+	exports: ,(map j2s->list exports)
 	headers: ,(map j2s->list headers)
 	decls: ,(map j2s->list decls)
 	nodes: ,(map j2s->list nodes))))
@@ -1230,8 +1231,46 @@
 ;*    j2s->list ::J2SImport ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SImport)
-   (with-access::J2SImport this (path)
-      `(,@(call-next-method) ,path)))
+   (with-access::J2SImport this (path names)
+      `(,@(call-next-method) :path ,path
+	  :names ,@(map j2s->list names))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SImportExports ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SImportExports)
+   (with-access::J2SImportExports this (import)
+      `(,@(call-next-method)
+	  ,(with-access::J2SImport import (path)
+	      `(J2SImport :path ,path |...|)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SImportName ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SImportName)
+   (with-access::J2SImportName this (loc id alias)
+      `(J2SImportName ,id ,alias)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SImportRedirect ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SImportRedirect)
+   (with-access::J2SImportRedirect this (loc id alias)
+      `(J2SImportRedirect ,id ,alias)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SImportNamespace ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SImportNamespace)
+   (with-access::J2SImportNamespace this (loc id)
+      `(J2SImportNamespace ,id)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SImportExport ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SImportExport)
+   (with-access::J2SImportExport this (loc)
+      '(J2SImportExport)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SExportVars ...                                    */
@@ -1244,11 +1283,11 @@
 ;*    j2s->list ::J2SExport ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SExport)
-   (with-access::J2SExport this (id index from writable)
-      `(,@(call-next-method) ,id
+   (with-access::J2SExport this (id alias index from writable)
+      `(,@(call-next-method) ,id ,@(if (eq? alias id) '() `(:alias ,alias))
 	  index: ,index
 	  writable: writable
-	  from: ,(typeof from) )))
+	  from: ,(typeof from))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2ssum ...                                                       */

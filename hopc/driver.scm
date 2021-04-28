@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Mon Apr 19 15:44:11 2021 (serrano)                */
+;*    Last change :  Tue Apr 27 08:00:13 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -144,7 +144,7 @@
 	     (format "%%~a_~a" dir mod))))
    
    (define (compile-javascript p)
-      (if (string-suffix? ".js" p)
+      (if (or (string-suffix? ".js" p) (string-suffix? ".mjs" p))
 	  (call-with-input-file p
 	     (lambda (in) (compile p in (language p))))
 	  (hopscheme-compile-file p
@@ -600,7 +600,7 @@
 	     (case lang
 		((hop) 'hop)
 		((scm) 'scheme)
-		((js) 'hopscript)
+		((js mjs) 'hopscript)
 		((json) (if (string-suffix? ".ast.json" src) 'ast.json 'json))
 		(else lang)))
 	  (hopc-source-language)))

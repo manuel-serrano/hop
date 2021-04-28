@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/nodejs/_pipe_wrap.scm                            */
+;*    serrano/prgm/project/hop/hop/nodejs/_pipe_wrap.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sun Feb 23 15:07:58 2020 (serrano)                */
-;*    Copyright   :  2014-20 Manuel Serrano                            */
+;*    Last change :  Wed Apr 28 09:33:54 2021 (serrano)                */
+;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
 ;*=====================================================================*/
@@ -212,7 +212,7 @@
 		(obj (instantiateJsHandle
 			(handle hdl)
 			(__proto__ pipe-prototype)
-			(cmap (instantiate::JsConstructMap))
+			(cmap (js-make-jsconstructmap))
 			(elements ($create-vector 1)))))
 	    ;; fd
 	    (js-bind! %this obj (& "fd")

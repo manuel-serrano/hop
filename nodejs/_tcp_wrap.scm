@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/nodejs/_tcp_wrap.scm                             */
+;*    serrano/prgm/project/hop/hop/nodejs/_tcp_wrap.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sun Feb 23 15:53:49 2020 (serrano)                */
-;*    Copyright   :  2014-20 Manuel Serrano                            */
+;*    Last change :  Wed Apr 28 09:35:25 2021 (serrano)                */
+;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TCP bindings                                              */
 ;*=====================================================================*/
@@ -272,7 +272,7 @@
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((obj (instantiateJsHandle
 		       (handle hdl)
-		       (cmap (instantiate::JsConstructMap))
+		       (cmap (js-make-jsconstructmap))
 		       (__proto__ (get-tcp-proto))
 		       (elements ($create-vector 2)))))
 	    (js-bind! %this obj (& "fd")

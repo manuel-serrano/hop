@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.2.x/test/hopjs/noserv/es6-module.js       */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/es6-module.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Oct 24 11:42:37 2018                          */
-/*    Last change :  Sun Oct 28 08:42:24 2018 (serrano)                */
+/*    Last change :  Tue Apr 27 07:43:37 2021 (serrano)                */
 /*    Copyright   :  2018-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 module                                               */
@@ -91,8 +91,8 @@ console.log( "   def.js (setX alias)");
 assert.deepEqual( oo, {z: 100} );
 
 console.log( "   def.js (named default)");
-import * as allDef from "../mod/def.js";
-assert.deepEqual( allDef[ "default" ], { z: 100 } );
+import * as ns from "../mod/def.js";
+assert.deepEqual( Object.keys( ns ), [ "default", "oo", "setX" ] );
 
 /*---------------------------------------------------------------------*/
 /*    redirect                                                         */
@@ -103,18 +103,18 @@ assert.strictEqual( getLog( "exporter.js" ),
 		    "exporter2.js exporter3.js exporter.js" );
 
 console.log( "   exporter.js (vars)");
-assert.deepEqual( rexp, { default: {}, dummy: 5555, e3a: "e3a", e3b: "e3b", e5a: "e5a", e5b: "e5b", e5c: "e5c" } );
+assert.deepEqual( rexp, { dummy: 5555, e3a: "e3a", e3b: "e3b", e5a: "e5a", e5b: "e5b", e5c: "e5c" } );
 
 /*---------------------------------------------------------------------*/
 /*    named redirect                                                   */
 /*---------------------------------------------------------------------*/
 console.log( "   named-exporter.js");
 import * as nrexp from "../mod/named-exporter.js";
-assert.deepEqual( nrexp, { default: {}, ndummy: 6666, e3a: "e3a", e5a: "e5a", e5z: "e5c" } );
+assert.deepEqual( nrexp, { ndummy: 6666, e3a: "e3a", e5a: "e5a", e5z: "e5c" } );
 
 console.log( "   alias-exporter.js");
 import * as arexp from "../mod/alias-exporter.js";
-assert.deepEqual( arexp, { default: {}, adummy: 7777, e3a: "e3a", e6a: "e5a", e6z: "e5b" } );
+assert.deepEqual( arexp, { adummy: 7777, e3a: "e3a", e6a: "e5a", e6z: "e5b" } );
 
 /*---------------------------------------------------------------------*/
 /*    default redirect                                                 */

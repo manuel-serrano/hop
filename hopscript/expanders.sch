@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Mon Apr  6 07:43:25 2020 (serrano)                */
+;*    Last change :  Wed Apr 28 07:54:39 2021 (serrano)                */
 ;*    Copyright   :  2006-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -195,4 +195,15 @@
    (eval `(define-expander instantiateJsWebSocketServer
 	     ,js-instantiate-JsWebSocketServer-expander))
    (eval `(define-expander instantiateJsWebSocketEvent
-	     ,js-instantiate-JsWebSocketEvent-expander)))
+	     ,js-instantiate-JsWebSocketEvent-expander))
+
+   (eval `(define-expander js-export
+	     ,js-export-expander))
+   (eval `(define-expander js-export-id
+	     ,js-export-id-expander))
+   (eval `(define-expander js-export-index
+	     ,js-export-index-expander))
+   (eval `(define-expander js-export-redirect
+	     ,js-export-redirect-expander))
+   (eval `(define-expander js-export-writable
+	     ,js-export-writable-expander)))

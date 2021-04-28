@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Tue Apr 13 13:31:18 2021 (serrano)                */
+;*    Last change :  Mon Apr 26 16:09:39 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -196,14 +196,14 @@
 			 (fname (cadr loc))
 			 (location (caddr loc))))))))))
    
-   (define (export-expr::J2SDecl prgm::J2SProgram id loc)
+   (define (export-exports::J2SDecl prgm::J2SProgram id loc)
       (instantiate::J2SDeclInit
 	 (loc loc)
 	 (id id)
 	 (binder 'let-opt)
 	 (scope 'global)
 	 (writable #f)
-	 (val (instantiate::J2SImportExpr
+	 (val (instantiate::J2SImportExports
 		 (loc loc)
 		 (type 'object)
 		 (import this)))))
@@ -213,22 +213,29 @@
 	 (with-access::J2SProgram iprgm ((iexports exports))
 	    (set! exports
 	       (append exports
+		  (append-map (lambda (export)
+				 (with-access::J2SExport export (id alias)
+				    (filter-map (lambda (n)
+						   (with-access::J2SImportRedirect n ((rid id) (ralias alias))
+						      (when (eq? rid alias)
+							 (duplicate::J2SExport export
+							    (id id)
+							    (alias ralias)
+							    (from iprgm)))))
+				       names)))
+		     iexports)))))
+      '())
+
+   (define (reexport this::J2SImport prgm::J2SProgram iprgm::J2SProgram)
+      (with-access::J2SProgram prgm (exports imports path)
+	 (with-access::J2SProgram iprgm ((iexports exports))
+	    (set! exports
+	       (append exports
 		  (filter-map (lambda (export)
 				 (with-access::J2SExport export (id alias)
-				    (cond
-				       ((and (null? names)
-					     (not (eq? id 'default)))
-					(duplicate::J2SExport export
-					   (from iprgm)))
-				       ((assq alias names)
-					=>
-					(lambda (c)
-					   (duplicate::J2SExport export
-					      (id id)
-					      (alias (cdr c))
-					      (from iprgm))))
-				       (else
-					#f))))
+				    (unless (eq? id 'default)
+				       (duplicate::J2SExport export
+					  (from iprgm)))))
 		     iexports)))))
       '())
 
@@ -269,10 +276,15 @@
    (define (import-module-decls this iprgm)
       (with-access::J2SImport this (names loc path)
 	 (cond
-	    ((and (pair? names) (eq? (car names) '*))
-	     (list (export-expr iprgm (cdr names) loc)))
-	    ((and (pair? names) (eq? (car names) 'redirect))
-	     (redirect this prgm iprgm (cdr names)))
+	    ((null? names)
+	     '())
+	    ((isa? (car names) J2SImportNamespace)
+	     (with-access::J2SImportNamespace (car names) (id)
+		(list (export-exports iprgm id loc))))
+	    ((isa? (car names) J2SImportRedirect)
+	     (redirect this prgm iprgm names))
+	    ((isa? (car names) J2SImportExport)
+	     (reexport this prgm iprgm))
 	    ((list? names)
 	     (append-map (lambda (n) (import-decl iprgm n)) names))
 	    (else

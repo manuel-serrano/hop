@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Apr 30 10:47:02 2020 (serrano)                */
+;*    Last change :  Wed Apr 28 09:27:34 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -295,10 +295,10 @@
       (let* ((len (length alist))
 	     (props ($create-vector len))
 	     (methods (make-vector len #f))
-	     (cmap (instantiate::JsConstructMap
-		      (inline #t)
-		      (props props)
-		      (methods methods)))
+	     (cmap (js-make-jsconstructmap
+		      :inline #t
+		      :props props
+		      :methods methods))
 	     (obj (instantiateJsObject
 		     (cmap cmap)
 		     (__proto__ (js-object-proto %this))
@@ -333,9 +333,9 @@
 	 (let loop ((i 0)
 		    (plist plist))
 	    (if (=fx i len)
-		(let ((cmap (instantiate::JsConstructMap
-			       (methods methods)
-			       (props props))))
+		(let ((cmap (js-make-jsconstructmap
+			       :methods methods
+			       :props props)))
 		   (instantiateJsObject
 		      (cmap cmap)
 		      (__proto__ (js-object-proto %this))

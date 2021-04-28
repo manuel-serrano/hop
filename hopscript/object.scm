@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon May 18 11:46:57 2020 (serrano)                */
+;*    Last change :  Wed Apr 28 09:29:17 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -284,15 +284,13 @@
 ;*---------------------------------------------------------------------*/
 (define (js-new-global-object #!key (size 64) name)
    (let* ((%proto (instantiateJsObject
-		     (cmap (instantiate::JsConstructMap
-			      (inline #t)))
+		     (cmap (js-make-jsconstructmap
+			      :inline #t))
 		     (__proto__ (js-null))
 		     (elements (make-vector 128))))
 	  (%this (instantiateJsGlobalObject
 		    (name name)
-		    (cmap (instantiate::JsConstructMap
-			     (methods '#())
-			     (props '#())))
+		    (cmap (js-make-jsconstructmap))
 		    (__proto__ %proto)
 		    (elements (make-vector size)))))
       ;; local constant strings
@@ -316,7 +314,7 @@
       (js-init-function! %this)
       ;; the object constructor
       (with-access::JsGlobalObject %this (js-function js-object js-initial-cmap)
-	 (set! js-initial-cmap (instantiate::JsConstructMap))
+	 (set! js-initial-cmap (js-make-jsconstructmap))
 	 (let ((js-function-prototype (js-object-proto js-function)))
 	    ;; the prototypes and other builtin classes
 	    (js-init-public! %this)

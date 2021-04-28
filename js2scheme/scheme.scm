@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/scheme.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Apr 21 17:27:19 2021 (serrano)                */
+;*    Last change :  Tue Apr 27 09:25:47 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -3234,16 +3234,17 @@
 	 `(nodejs-import-module-dynamic %worker %this %module
 	     ,(j2s-scheme path mode return ctx)
 	     ,base
+	     ,(context-get ctx :commonjs-export)
 	     ',loc))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SImportExpr ...                                   */
+;*    j2s-scheme ::J2SImportExports ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SImportExpr mode return ctx)
-   (with-access::J2SImportExpr this (import op loc)
+(define-method (j2s-scheme this::J2SImportExports mode return ctx)
+   (with-access::J2SImportExports this (import op loc)
       (with-access::J2SImport import (mvar)
 	 (epairify loc
-	    `(nodejs-exports-module ,mvar %worker %this)))))
+	    `(nodejs-module-exports ,mvar %worker %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SExportVars ...                                   */

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/generator.scm                          */
+;*    serrano/prgm/project/hop/hop/hopscript/generator.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Sun Feb 23 14:54:07 2020 (serrano)                */
-;*    Copyright   :  2015-20 Manuel Serrano                            */
+;*    Last change :  Wed Apr 28 09:26:24 2021 (serrano)                */
+;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
 ;*    -------------------------------------------------------------    */
@@ -93,8 +93,7 @@
       
       (define js-gen-proto-proto
 	 (let ((proto (instantiateJsObject
-			 (cmap (instantiate::JsConstructMap (inline #t)))
-			 (__proto__ (js-object-proto %this))
+			 (cmap (js-make-jsconstructmap :inline #t))			 (__proto__ (js-object-proto %this))
 			 (elements ($create-vector 1)))))
 	    (js-bind! %this proto js-symbol-iterator
 	       :value (js-make-function %this
@@ -108,13 +107,13 @@
       
       (define js-gen-proto
 	 (instantiateJsObject
-	    (cmap (instantiate::JsConstructMap (inline #t)))
+	    (cmap (js-make-jsconstructmap :inline #t))
 	    (__proto__ js-gen-proto-proto)
 	    (elements ($create-vector 4))))
       
       (define js-genfun-proto
 	 (instantiateJsObject
-	    (cmap (instantiate::JsConstructMap (inline #t)))
+	    (cmap (js-make-jsconstructmap :inline #t))
 	    (__proto__ js-function-prototype)
 	    (elements ($create-vector 2))))
       
@@ -218,9 +217,9 @@
       (set! js-yield-cmap
 	 (let ((props `#(,(prop (& "value") (property-flags #t #t #t #f))
 			 ,(prop (& "done") (property-flags #t #t #t #f)))))
-	    (instantiate::JsConstructMap
-	       (props props)
-	       (methods (make-vector (vector-length props))))))))
+	    (js-make-jsconstructmap
+	       :props props
+	       :methods (make-vector (vector-length props)))))))
 	    
 ;*---------------------------------------------------------------------*/
 ;*    js-function-construct ...                                        */

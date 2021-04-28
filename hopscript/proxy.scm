@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Mon Apr 13 11:31:15 2020 (serrano)                */
+;*    Last change :  Wed Apr 28 09:30:51 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -109,9 +109,9 @@
 ;*---------------------------------------------------------------------*/
 (define proxy-cmap
    ;; this cmap is shared by all proxy objects
-   (instantiate::JsConstructMap
-      (methods '#(#f))
-      (props '#())))
+   (js-make-jsconstructmap
+      :methods '#(#f)
+      :props '#()))
 
 (define proxy-elements #f)
 

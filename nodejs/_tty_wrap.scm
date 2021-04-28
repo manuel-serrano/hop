@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/nodejs/_tty_wrap.scm                             */
+;*    serrano/prgm/project/hop/hop/nodejs/_tty_wrap.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sun Feb 23 15:08:27 2020 (serrano)                */
-;*    Copyright   :  2014-20 Manuel Serrano                            */
+;*    Last change :  Wed Apr 28 09:35:31 2021 (serrano)                */
+;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
 ;*=====================================================================*/
@@ -145,7 +145,7 @@
 	 (let ((obj (instantiateJsHandle
 		       (handle hdl)
 		       (__proto__ (get-tty-proto))
-		       (cmap (instantiate::JsConstructMap))
+		       (cmap (js-make-jsconstructmap))
 		       (elements ($create-vector 1)))))
 	    (js-bind! %this obj (& "fd")
 	       :get (js-make-function %this

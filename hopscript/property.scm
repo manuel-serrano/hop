@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/hopscript/property.scm            */
+;*    serrano/prgm/project/hop/hop/hopscript/property.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Apr 16 13:08:48 2021 (serrano)                */
+;*    Last change :  Wed Apr 28 08:03:36 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -402,10 +402,10 @@
 (define (js-init-property! %this)
    
    (define (make-cmap inline props)
-      (instantiate::JsConstructMap
-	 (inline inline)
-	 (methods (make-vector (vector-length props)))
-	 (props props)))
+      (js-make-jsconstructmap
+	 :inline inline
+	 :methods (make-vector (vector-length props))
+	 :props props))
 
    (unless (vector? __js_strings)
       (set! __js_strings (&init!))
@@ -503,7 +503,7 @@
 		" inline-els=" (js-object-inline-elements? obj)
 		" extensible=" (js-object-mode-extensible? obj)
 		" met.vlen=" (vector-length methods)
-		"\n   cmap.%id=" %id " (" inline ")"
+		"\n   cmap.%id=" %id " (inline: " inline ")"
 		"\n   elements=" (vector-map
 				    (lambda (v)
 				       (if (js-object? v)
@@ -1036,11 +1036,11 @@
    (with-access::JsConstructMap omap (props methods ctor)
       (let ((newprops (vector-extend props (prop name flags)))
 	    (newmethods (vector-extend methods #unspecified)))
-	 (instantiate::JsConstructMap
-	    (inline inline)
-	    (ctor ctor)
-	    (props newprops)
-	    (methods newmethods)))))
+	 (js-make-jsconstructmap
+	    :inline inline
+	    :ctor ctor
+	    :props newprops
+	    :methods newmethods))))
 
 ;*---------------------------------------------------------------------*/
 ;*    extend-cmap! ...                                                 */
@@ -1196,11 +1196,11 @@
 ;*    Used by j2sscheme to create literal objects.                     */
 ;*---------------------------------------------------------------------*/
 (define (js-names->cmap names inline)
-   (instantiate::JsConstructMap
-      (inline inline)
-      (props (vector-map (lambda (n) (prop n (property-flags #t #t #t #f)))
-		names))
-      (methods (make-vector (vector-length names) #unspecified))))
+   (js-make-jsconstructmap
+      :inline inline
+      :props (vector-map (lambda (n) (prop n (property-flags #t #t #t #f)))
+		names)
+      :methods (make-vector (vector-length names) #unspecified)))
       
 ;*---------------------------------------------------------------------*/
 ;*    js-strings->cmap ...                                             */
@@ -1209,14 +1209,14 @@
 ;*---------------------------------------------------------------------*/
 (define (js-strings->cmap names)
    (let ((len (vector-length names)))
-      (instantiate::JsConstructMap
-	 (inline #t)
-	 (ctor (make-cell len))
-	 (props (vector-map (lambda (n)
+      (js-make-jsconstructmap
+	 :inline #t
+	 :ctor (make-cell len)
+	 :props (vector-map (lambda (n)
 			       (prop (js-string->name n)
 				  (property-flags #t #t #t #f)))
-		   names))
-	 (methods (make-vector len #unspecified)))))
+		   names)
+	 :methods (make-vector len #unspecified))))
       
 ;*---------------------------------------------------------------------*/
 ;*    js-object-literal-init! ...                                      */

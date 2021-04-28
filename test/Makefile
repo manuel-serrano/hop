@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.3.x/test/Makefile                     */
+#*    serrano/prgm/project/hop/hop/test/Makefile                       */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sat Jun 13 08:37:04 2020 (serrano)                */
-#*    Copyright   :  2006-20 Manuel Serrano                            */
+#*    Last change :  Mon Apr 26 12:15:43 2021 (serrano)                */
+#*    Copyright   :  2006-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
 #*=====================================================================*/
@@ -124,5 +124,7 @@ POPULATION = Makefile \
   hopjs/serv/aux/workerNOOP.js \
   hopjs/serv/aux/wsOpenClient.js \
   hopjs/serv/https/cert.pem \
-  hopjs/serv/https/key.pem
+  hopjs/serv/https/key.pem \
+  hopts/TEST.in \
+  hopts/reactgo.ts
   

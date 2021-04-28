@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sun Apr 12 08:50:03 2020 (serrano)                */
+;*    Last change :  Mon Apr 26 15:49:47 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -1411,27 +1411,31 @@
    
    (define (import-name->js this::J2SImportName)
       (with-access::J2SImportName this (id alias)
-	 (list id " as " alias)))
+	 (if (eq? id alias)
+	     id
+	     (list id " as " alias))))
 
    (if (context-get ctx :es6-module-client #f)
        (with-access::J2SImport this (names path)
-	  (match-case names
-	     (()
+	  (cond
+	     ((null? names)
 	      (list this "import '" path "';"))
-	     ((redirect)
+	     ((isa? (car names) J2SImportExport)
 	      (list this "export * from " "'" path "';"))
-	     ((redirect . ?aliases)
+	     ((isa? (car names) J2SImportNamespace)
+	      (with-access::J2SImportNamespace (car names) (id)
+		 (list this "import * as "
+		    (symbol->string id) " from '" path "';")))
+	     ((isa? (car names) J2SImportRedirect)
 	      (cons* this "export {"
 		 (append (append-map* ","
 			    (lambda (a)
-			       (if (pair? a)
-				   (list (car a) " as " (cdr a))
-				   a))
-			    aliases)
+			       (with-access::J2SImportRedirect a (id alias)
+				  (if (eq? id alias)
+				      id
+				      (list id " as " alias))))
+			    names)
 		    `("} from " "'" ,path "';"))))
-	     ((* . ?alias)
-	      (list this "import * as "
-		 (symbol->string alias) " from '" path "';"))
 	     (else
 	      (cons* this "import {"
 		 (append (append-map* "," import-name->js names)

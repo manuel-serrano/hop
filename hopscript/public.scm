@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Jun  8 07:07:29 2020 (serrano)                */
+;*    Last change :  Wed Apr 28 09:31:07 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1450,9 +1450,9 @@
 (define-inline (js-function-set-constrmap! ctor::JsFunction)
    (with-access::JsFunction ctor (constrmap constrsize)
       (set! constrmap
-	 (instantiate::JsConstructMap
-	    (ctor ctor)
-	    (inline #t)))
+	 (js-make-jsconstructmap
+	    :ctor ctor
+	    :inline #t))
       ctor))
    
 ;*---------------------------------------------------------------------*/

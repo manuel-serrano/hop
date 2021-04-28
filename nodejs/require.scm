@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Apr 17 07:07:03 2021 (serrano)                */
+;*    Last change :  Mon Apr 26 16:33:00 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -25,12 +25,12 @@
 
    (export (nodejs-new-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
-	   (nodejs-import-module::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::obj)
-	   (nodejs-import-module-core::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::obj ::vector)
-	   (nodejs-import-module-hop::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::obj ::vector)
-	   (nodejs-import-module-dynamic::JsPromise ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::bstring ::obj)
+	   (nodejs-import-module::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj)
+	   (nodejs-import-module-core::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj ::vector)
+	   (nodejs-import-module-hop::JsModule ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring ::long ::bool ::obj ::vector)
+	   (nodejs-import-module-dynamic::JsPromise ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::bstring ::bool ::obj)
 	   (nodejs-import-meta::JsObject ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
-	   (nodejs-exports-module::JsObject ::JsModule ::WorkerHopThread ::JsGlobalObject)
+	   (nodejs-module-exports::JsObject ::JsModule ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
@@ -489,9 +489,9 @@
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((expo (js-new0 %this js-object)))
 	    (with-access::JsObject expo (cmap)
-	       (set! cmap (instantiate::JsConstructMap
-			     (single #t)
-			     (inline #t))))
+	       (set! cmap (js-make-jsconstructmap
+			     :single #t
+			     :inline #t)))
 	    ;; id field
 	    (js-put! m (& "id") (js-string->jsstring id) #f %this)
 	    ;; exports
@@ -647,10 +647,10 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-import-module::JsModule worker::WorkerHopThread
 	   %this::JsGlobalObject %module::JsObject
-	   path::bstring checksum::long loc)
+	   path::bstring checksum::long commonjs-export::bool loc)
    (let* ((respath (nodejs-resolve path %this %module 'import))
 	  (mod (nodejs-load-module respath worker %this %module
-		 :commonjs-export #t :loc loc)))
+		 :commonjs-export commonjs-export :loc loc)))
       (with-access::JsModule mod ((mc checksum))
 	 (if (or (=fx checksum 0) (=fx checksum mc) (=fx mc 0))
 	     mod
@@ -667,14 +667,16 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-import-module-core::JsModule worker::WorkerHopThread
 	   %this::JsGlobalObject %module::JsObject
-	   path::bstring checksum::long loc symbols::vector)
+	   path::bstring checksum::long commonjs-export::bool
+	   loc symbols::vector)
    
    (define (import-var exports sym)
       (let* ((name (js-string->jsstring (symbol->string! sym)))
 	     (v (js-get exports name %this)))
 	 v))
    
-   (let* ((mod (nodejs-import-module worker %this %module path checksum loc))
+   (let* ((mod (nodejs-import-module worker %this %module path
+		  checksum commonjs-export loc))
 	  (exports (js-get mod (& "exports") %this)))
       (duplicate::JsModule mod
 	 (evars (vector-map (lambda (s) (import-var exports s)) symbols)))))
@@ -686,7 +688,8 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-import-module-hop::JsModule worker::WorkerHopThread
 	   %this::JsGlobalObject %module::JsObject
-	   path::bstring checksum::long loc symbols::vector)
+	   path::bstring checksum::long commonjs-export::bool
+	   loc symbols::vector)
    
    (define (import-var mod sym sopath)
       (with-access::JsModule mod (%module)
@@ -709,7 +712,8 @@
 		       (symbol->string (car sym)))
 		   %module))))))
 
-   (let ((mod (nodejs-import-module worker %this %module path checksum loc))
+   (let ((mod (nodejs-import-module worker %this %module path
+		 checksum commonjs-export loc))
 	 (sopath (hop-sofile-path path)))
       (with-access::JsModule mod (evars)
 	 (set! evars
@@ -724,7 +728,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-import-module-dynamic::JsPromise worker::WorkerHopThread
 	   %this::JsGlobalObject %module::JsObject name::obj
-	   base::bstring loc)
+	   base::bstring commonjs-export::bool loc)
    (with-access::JsGlobalObject %this (js-promise)
       (let ((name (js-tostring name %this)))
 	 (js-new1 %this js-promise
@@ -735,9 +739,9 @@
 			(js-call1 %this reject (js-undefined) exn))
 		     (let* ((path (nodejs-resolve name %this %module 'body))
 			    (mod (nodejs-import-module worker %this %module
-				    path 0 loc)))
+				    path 0 commonjs-export loc)))
 			(js-call1 %this resolve (js-undefined)
-			   (nodejs-exports-module mod worker %this)))))
+			   (nodejs-module-exports mod worker %this)))))
 	       (js-function-arity 2 0)
 	       (js-function-info :name "import" :len 2))))))
 
@@ -756,61 +760,60 @@
       obj))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-exports-module ...                                        */
+;*    nodejs-module-exports ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-exports-module::JsObject mod::JsModule worker::WorkerHopThread %this)
+(define (nodejs-module-exports::JsObject mod::JsModule worker::WorkerHopThread %this)
    
    (define (constant? n)
       (or (number? n) (boolean? n) (string? n) (js-jsstring? n)))
    
    (with-access::JsGlobalObject %this (js-symbol-tostringtag)
       (with-access::JsModule mod (evars exports default imports redirects)
-	 (let ((mod (instantiateJsObject
-		       (__proto__ (js-object-proto %this)))))
-	    (js-bind! %this mod js-symbol-tostringtag
+	 (let ((modobj (instantiateJsObject
+			  (__proto__ (js-object-proto %this)))))
+	    (js-bind! %this modobj js-symbol-tostringtag
 	       :value (js-string->jsstring "Module")
 	       :configurable #f :writable #f :enumerable #f)
-	    (for-each (lambda (export)
-			 (let* ((id (vector-ref export 0))
-				(idx (vector-ref export 1))
-				(writable (vector-ref export 2)))
-			    (cond
-			       ((pair? idx)
-				;; a redirect
-				(let* ((i (car idx))
-				       (j (cdr idx))
-				       (evars (vector-ref redirects j)))
-				   (js-bind! %this mod id
-				      :get (js-make-function %this
-					      (lambda (this)
-						 (vector-ref evars i))
-					      (js-function-arity 0 0)
-					      (js-function-info :name "get" :len 0))
-				      :configurable #f :writable #f)))
-			       ((=fx idx -1)
-				;; named default
-				(js-bind! %this mod  id
-				   :get (js-make-function %this
-					   (lambda (this)
-					      default)
-					   (js-function-arity 0 0)
-					   (js-function-info :name "get" :len 0))
-				   :configurable #f :writable #f))
-			       ((and (not writable)
-				     (constant? (vector-ref evars idx)))
-				(js-bind! %this mod id
-				   :value (vector-ref evars idx)
-				   :configurable #f :writable #f))
-			       (else
-				(js-bind! %this mod id
-				   :get (js-make-function %this
-					   (lambda (this)
-					      (vector-ref evars idx))
-					   (js-function-arity 0 0)
-					   (js-function-info :name "get" :len 0))
-				   :configurable #f :writable #f)))))
+	    (vector-for-each
+	       (lambda (export)
+		  (let* ((id (js-export-id export))
+			 (idx (js-export-index export))
+			 (redirect (js-export-redirect export))
+			 (writable (js-export-writable export)))
+		     (cond
+			((>=fx redirect 0)
+			 (let ((evars (vector-ref redirects redirect)))
+			    (js-bind! %this modobj id
+			       :get (js-make-function %this
+				       (lambda (this)
+					  (vector-ref evars idx))
+				       (js-function-arity 0 0)
+				       (js-function-info :name "get" :len 0))
+			       :configurable #f :writable #f)))
+			((and (not writable)
+			      (constant? (vector-ref evars idx)))
+			 (js-bind! %this modobj id
+			    :value (vector-ref evars idx)
+			    :configurable #f :writable #f))
+			(else
+			 (js-bind! %this modobj id
+			    :get (js-make-function %this
+				    (lambda (this)
+				       (vector-ref evars idx))
+				    (js-function-arity 0 0)
+				    (js-function-info :name "get" :len 0))
+			    :configurable #f :writable #f)))))
 	       exports)
-	    mod))))
+	    (let ((commonjs (js-get mod (& "exports") %this)))
+	       (with-access::JsModule mod (%module)
+		  (when (isa? commonjs JsObject)
+		     (js-for-in commonjs
+			(lambda (id %this)
+			   (js-bind! %this modobj id
+			      :value (js-get commonjs id %this)
+			      :configurable #t :writable #t))
+			%this))))
+	    modobj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-head ...                                                  */
@@ -1039,7 +1042,7 @@
 (define (nodejs-new-scope-object global::JsGlobalObject)
    (with-access::JsGlobalObject global (elements js-scope-cmap)
       (when (eq? js-scope-cmap (class-nil JsConstructMap))
-	 (set! js-scope-cmap (instantiate::JsConstructMap)))
+	 (set! js-scope-cmap (js-make-jsconstructmap)))
       (let ((scope (duplicate::JsGlobalObject global
 		      (cmap js-scope-cmap)
 		      (elements ($create-vector (SCOPE-ELEMENTS-LENGTH))))))
@@ -1183,13 +1186,34 @@
 		     :debug (bigloo-debug))
 		  (when (mmap? m)
 		     (close-mmap m)))))))
+
+   (define (compile-lang src::bstring mod lang)
+      (let* ((comp (nodejs-language-toplevel-loader))
+	     (obj (comp lang src '()))
+	     (ty (assq :type obj))
+	     (val (assq :value obj)))
+	 (cond
+	    ((or (not (pair? ty)) (not (pair? val)))
+	     (error (format "nodejs-compile:~a" lang) "wrong status" obj))
+	    ((equal? (cdr ty) "error")
+	     (error (format "nodejs-compile:~a" lang) "error" (cdr val)))
+	    ((equal? (cdr ty) "json-error")
+	     (let ((proc (format "nodejs-compile:~a" lang)))
+		(nodejs-language-notify-error (cdr val) proc)
+		(error (format "nodejs-compile:~a" lang) "aborting" src)))
+	    ((equal? (cdr ty) "filename")
+	     (compile-file (cdr val) mod))
+	    (else
+	     (error (format "nodejs-compile:~a" lang) "don't know what to do with" obj)))))
    
-   (define (compile src mod)
+   (define (compile src mod lang)
       (cond
 	 ((isa? src J2SProgram)
 	  (compile-ast src mod))
 	 ((not (string? src))
 	  (bigloo-type-error "nodejs-compile" "string or J2SProgram" src))
+	 ((and (string? lang) (not (member lang '("hopscript" "javascript"))))
+	  (compile-lang src mod lang))
 	 ((file-exists? filename)
 	  (compile-file filename mod))
 	 (else
@@ -1209,7 +1233,7 @@
 			filename))
 	       (tgt #f))
 	    (or (let* ((mod (gensym (string->symbol (basename filename))))
-		       (expr (compile src mod))
+		       (expr (compile src mod lang))
 		       (evmod (eval-module)))
 		   (when (eq? nodejs-debug-compile 'yes)
 		      (unless (directory? "/tmp/HOP")

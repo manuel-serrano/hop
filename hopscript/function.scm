@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon May 18 07:11:57 2020 (serrano)                */
+;*    Last change :  Wed Apr 28 09:25:40 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -287,11 +287,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-cmap ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (make-cmap inline props)
-   (instantiate::JsConstructMap
-      (inline inline)
-      (methods (make-vector (vector-length props)))
-      (props props)))
+(define-inline (make-cmap inline props)
+   (js-make-jsconstructmap :inline inline 
+      :methods (make-vector (vector-length props))
+      :props props))
 
 ;*---------------------------------------------------------------------*/
 ;*    current-loc ...                                                  */
@@ -339,7 +338,7 @@
 	 (set! js-function-prototype
 	    (instantiateJsFunction
 	       (procedure proc)
-	       (cmap (instantiate::JsConstructMap))
+	       (cmap (js-make-jsconstructmap))
 	       (alloc js-not-a-constructor-alloc)
 	       (info (js-function-info :name "" :len 0))
 	       (arity (js-function-arity 0 0))
@@ -349,7 +348,7 @@
 
       (set! js-function-strict-prototype
 	 (instantiateJsObject
-	    (cmap (instantiate::JsConstructMap (inline #t)))
+	    (cmap (js-make-jsconstructmap :inline #t))
 	    (__proto__ js-function-prototype)
 	    (elements (make-vector 10 (js-undefined)))))
       

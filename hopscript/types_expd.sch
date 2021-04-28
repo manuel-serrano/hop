@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Mon Apr  6 07:44:18 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Wed Apr 28 07:31:10 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
 ;*=====================================================================*/
@@ -204,7 +204,7 @@
 		       (vec (gensym 'v)))
 		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
 				      ,n
-				      (instantiate::JsConstructMap (inline #t))
+				      (js-make-jsconstructmap :inline #t)
 				      ,__proto__)))
 			   ,obj)
 		       e)))
@@ -216,7 +216,7 @@
 					   (append (if (assq 'cmap (cdr x))
 						       '()
 						       ;; MS WARNING: inline shold be #f, left #t just for debugging
-						       '((cmap (instantiate::JsConstructMap (inline #t)))))
+						       '((cmap (js-make-jsconstructmap :inline #t))))
 					      (filter (lambda (f)
 							 (not (builtin? f)))
 						 (cdr x))))))
@@ -324,3 +324,42 @@
 (define-instantiate-expander JsWebSocketServer)
 (define-instantiate-expander JsWebSocketEvent)
 
+;*---------------------------------------------------------------------*/
+;*    js-export                                                        */
+;*    -------------------------------------------------------------    */
+;*    See js2scheme/scheme-program.scm and nodejs/require.scm.         */
+;*---------------------------------------------------------------------*/
+(define (js-export-expander x e)
+   (match-case x
+      ((?- ?id ?idx ?redirect ?ronly)
+       (e `(vector ,@(cdr x)) e))
+      (else
+       (error "js-export" "wrong syntax" x))))
+
+(define (js-export-id-expander x e)
+   (match-case x
+      ((?- ?o)
+       (e `(vector-ref ,o 0) e))
+      (else
+       (error "export-id" "wrong syntax" x))))
+
+(define (js-export-index-expander x e)
+   (match-case x
+      ((?- ?o)
+       (e `(vector-ref ,o 1) e))
+      (else
+       (error "export-index" "wrong syntax" x))))
+
+(define (js-export-redirect-expander x e)
+   (match-case x
+      ((?- ?o)
+       (e `(vector-ref ,o 2) e))
+      (else
+       (error "export-redirect" "wrong syntax" x))))
+
+(define (js-export-writable-expander x e)
+   (match-case x
+      ((?- ?o)
+       (e `(vector-ref ,o 3) e))
+      (else
+       (error "export-writable" "wrong syntax" x))))

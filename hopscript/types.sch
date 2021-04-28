@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Mon Apr  6 07:44:09 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Wed Apr 28 07:34:17 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Companion macros                                                 */
 ;*=====================================================================*/
@@ -68,6 +68,15 @@
 (define-instantiate-sans JsWebSocketClient)
 (define-instantiate-sans JsWebSocketServer)
 (define-instantiate-sans JsWebSocketEvent)
+
+;*---------------------------------------------------------------------*/
+;*    js-export                                                        */
+;*---------------------------------------------------------------------*/
+(define-expander js-export js-export-expander)
+(define-expander js-export-id js-export-id-expander)
+(define-expander js-export-index js-export-index-expander)
+(define-expander js-export-redirect js-export-redirect-expander)
+(define-expander js-export-writable js-export-writable-expander)
 
 ;*---------------------------------------------------------------------*/
 ;*    isa?                                                             */

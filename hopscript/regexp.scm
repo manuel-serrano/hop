@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/hopscript/regexp.scm              */
+;*    serrano/prgm/project/hop/hop/hopscript/regexp.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Apr 20 14:12:18 2021 (serrano)                */
+;*    Last change :  Wed Apr 28 09:31:33 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -189,16 +189,16 @@
       
       ;; default regexp cmap
       (set! js-regexp-cmap
-	 (instantiate::JsConstructMap
-	    (methods (make-vector 1))
-	    (props `#(,(prop (& "lastIndex") (property-flags #t #f #f #f))))))
+	 (js-make-jsconstructmap
+	    :methods (make-vector 1)
+	    :props `#(,(prop (& "lastIndex") (property-flags #t #f #f #f)))))
       
       (let ((props `#(,(prop (& "index") (property-flags #t #t #t #f))
 		      ,(prop (& "input") (property-flags #t #t #t #f)))))
 	 (set! js-regexp-exec-cmap
-	    (instantiate::JsConstructMap
-	       (methods (make-vector (vector-length props)))
-	       (props props))))
+	    (js-make-jsconstructmap
+	       :methods (make-vector (vector-length props))
+	       :props props)))
       
       (set! js-regexp-prototype
 	 (instantiateJsRegExp

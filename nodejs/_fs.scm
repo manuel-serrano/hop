@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Sat May 16 09:03:37 2020 (serrano)                */
-;*    Copyright   :  2014-20 Manuel Serrano                            */
+;*    Last change :  Wed Apr 28 09:33:47 2021 (serrano)                */
+;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
 ;*=====================================================================*/
@@ -323,7 +323,7 @@
    (define (fs-watcher this)
       (instantiateJsHandle
 	 (handle (nodejs-make-fs-poll %worker))
-	 (cmap (instantiate::JsConstructMap))
+	 (cmap (js-make-jsconstructmap))
 	 (__proto__ (get-fs-watcher-proto process))))
 
    (set! __js_strings (&init!))

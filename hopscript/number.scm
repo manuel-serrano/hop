@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Jun  8 07:15:36 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Last change :  Wed Apr 28 09:28:04 2021 (serrano)                */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
 ;*=====================================================================*/
@@ -197,10 +197,7 @@
       (with-access::JsFunction constructor (constrmap)
 	 (unless constrmap
 	    (set! constrmap
-	       (instantiate::JsConstructMap
-		  (ctor constructor)
-;* 		  (size 1)                                             */
-		  )))
+	       (js-make-jsconstructmap :ctor constructor)))
 	 (instantiateJsNumber
 	    (cmap constrmap)
 	    (__proto__ (js-get-jsobject-name/cache constructor

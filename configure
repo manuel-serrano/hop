@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Apr 16 18:51:27 2021 (serrano)                */
+#*    Last change :  Mon Apr 26 12:22:35 2021 (serrano)                */
 #*    Copyright   :  2004-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1320,7 +1320,7 @@ for p in nodejs.sch; do
 done
 
 # script
-for script in test/nodejs/TEST test/nodejs/HOP.exe test/hopjs/TEST; do
+for script in test/nodejs/TEST test/nodejs/HOP.exe test/hopjs/TEST test/hopts/TEST; do
   rm -f $script 2> /dev/null
   cat $script.in \
     | sed -e "s|@VERSION@|$version|g" \

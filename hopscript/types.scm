@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/hopscript/types.scm               */
+;*    serrano/prgm/project/hop/hop/hopscript/types.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Apr 16 13:10:37 2021 (serrano)                */
+;*    Last change :  Wed Apr 28 07:14:31 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -307,7 +307,8 @@
 	   (class JsModule::JsObject
 	      (%module (default #f))
 	      (evars::vector (default '#()))
-	      (exports::pair-nil (default '()))
+	      (defaultexport::obj (default (js-undefined)))
+	      (exports::vector (default '#()))
 	      (imports::vector (default '#()))
 	      (redirects::vector (default '#()))
 	      (default (default #f))
@@ -457,6 +458,10 @@
 	   (js-property-cache-init!::JsPropertyCache ::obj)
 	   
 	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
+	   (inline js-make-jsconstructmap::JsConstructMap
+	      #!key (%id (gencmapid))
+	      inline single ctor
+	      (methods '#()) (props '#()))
 
 	   (inline js-object-default-mode::uint32)
 	   (inline js-array-default-mode::uint32)
@@ -674,6 +679,24 @@
 	     (js-object-mode-inline-set! o #f)
 	     o)))))
 
+;*---------------------------------------------------------------------*/
+;*    js-make-jsconstructmap ...                                       */
+;*---------------------------------------------------------------------*/
+(define-inline (js-make-jsconstructmap::JsConstructMap
+		  #!key (%id (gencmapid))
+		  inline single ctor
+		  (methods '#()) (props '#()))
+   (let ((inl (cond-expand
+		 ((and bigloo-c (not devel) (not debug)) inline)
+		 (else #f))))
+      (instantiate::JsConstructMap
+	 (%id %id)
+	 (single single)
+	 (methods methods)
+	 (props props)
+	 (inline inl)
+	 (ctor ctor))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-object-default-mode ...                                       */
 ;*---------------------------------------------------------------------*/
@@ -1375,17 +1398,13 @@
 ;*    *js-not-a-cmap* ...                                              */
 ;*---------------------------------------------------------------------*/
 (define *js-not-a-cmap*
-   (instantiate::JsConstructMap
-      (inline #f)
-      (%id 0)))
+   (js-make-jsconstructmap :%id 0))
 
 ;*---------------------------------------------------------------------*/
 ;*    *js-not-a-pmap* ...                                              */
 ;*---------------------------------------------------------------------*/
 (define *js-not-a-pmap*
-   (instantiate::JsConstructMap
-      (inline #f)
-      (%id -1)))
+   (js-make-jsconstructmap :%id -1))
 
 ;*---------------------------------------------------------------------*/
 ;*    *js-not-a-string-cache* ...                                      */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Apr 15 18:29:14 2020 (serrano)                */
+;*    Last change :  Wed Apr 28 09:21:22 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -516,9 +516,7 @@
       
       ;; default arrays cmap
       (set! js-array-cmap
-	 (instantiate::JsConstructMap
-	    (methods '#())
-	    (props '#())))
+	 (js-make-jsconstructmap))
       
       ;; builtin prototype
       (set! js-array-prototype
