@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Mar 22 12:46:21 2021 (serrano)                */
+;*    Last change :  Wed Apr 28 17:50:51 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -143,6 +143,8 @@
 	     (hopc-temp-set! string))
 	    (("-s" (help "Stop after Bigloo code generation"))
 	     (hopc-pass-set! 'bigloo))
+	    (("-n" (help "Stop after .ast.json generation"))
+	     (hopc-pass-set! 'ast.json))
 	    (("-c" (help "Stop after code object generation"))
 	     (hopc-pass-set! 'object)
 	     (hopc-bigloo-options-set!

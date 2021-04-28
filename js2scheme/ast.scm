@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Apr 26 14:49:14 2021 (serrano)                */
+;*    Last change :  Wed Apr 28 18:58:07 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -1297,10 +1297,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->json this::J2SImportName op::output-port)
    (with-access::J2SImportName this (loc id alias)
-      (display "{ \"__node__\": \"J2SImportName\", \"id\": \"" op)
-      (display id op)
-      (display "\", \"alias\": " op)
-      (display alias op)
+      (display "{ \"__node__\": \"J2SImportName\", \"id\": " op)
+      (j2s->json id op)
+      (display ", \"alias\": " op)
+      (j2s->json alias op)
       (display ", \"loc\": " op)
       (j2s->json loc op)
       (display " }" op)))
@@ -1310,8 +1310,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->json this::J2SImportNamespace op::output-port)
    (with-access::J2SImportNamespace this (loc id)
-      (display "{ \"__node__\": \"J2SImportNamespace\", \"id\": \"" op)
-      (display id op)
+      (display "{ \"__node__\": \"J2SImportNamespace\", \"id\": " op)
+      (j2s->json id op)
       (display ", \"loc\": " op)
       (j2s->json loc op)
       (display " }" op)))
@@ -1321,10 +1321,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->json this::J2SImportRedirect op::output-port)
    (with-access::J2SImportRedirect this (loc id alias)
-      (display "{ \"__node__\": \"J2SImportRedirect\", \"id\": \"" op)
-      (display id op)
-      (display "\", \"alias\": " op)
-      (display alias op)
+      (display "{ \"__node__\": \"J2SImportRedirect\", \"id\": " op)
+      (j2s->json id op)
+      (display ", \"alias\": " op)
+      (j2s->json alias op)
       (display ", \"loc\": " op)
       (j2s->json loc op)
       (display " }" op)))
@@ -1349,6 +1349,8 @@
 	  (fixnum->uint32 val))
 	 ((int32)
 	  (fixnum->int32 val))
+	 ((symbol)
+	  (if (string? val) (string->symbol val) val))
 	 (else
 	  val)))
 

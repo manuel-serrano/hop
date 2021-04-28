@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Apr 27 07:48:35 2021 (serrano)                */
+;*    Last change :  Wed Apr 28 13:44:13 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -251,6 +251,11 @@
 	    (js-worker-exec %worker "hop-loader" #t
 	       (lambda ()
 		  (nodejs-load path path %global %module %worker)))))
+      (hop-loader-add! "ast.json"
+	 (lambda (path . test)
+	    (js-worker-exec %worker "hop-loader" #t
+	       (lambda ()
+		  (nodejs-load path path %global %module %worker)))))
       ;; ts loader
       (hop-loader-add! "ts"
 	 (lambda (path . test)
@@ -483,7 +488,9 @@
 		 (load-package pkg))
 		(else
 		 (load-js-directory path)))))
-	 ((or (string-suffix? ".js" path) (string-suffix? ".mjs" path))
+	 ((or (string-suffix? ".js" path)
+	      (string-suffix? ".mjs" path)
+	      (string-suffix? ".ast.json" path))
 	  ;; javascript
 	  (when %worker
 	     (with-access::WorkerHopThread %worker (%this prerun)

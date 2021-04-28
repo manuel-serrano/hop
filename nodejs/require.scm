@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Apr 26 16:33:00 2021 (serrano)                */
+;*    Last change :  Wed Apr 28 19:15:21 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1189,7 +1189,7 @@
 
    (define (compile-lang src::bstring mod lang)
       (let* ((comp (nodejs-language-toplevel-loader))
-	     (obj (comp lang src '()))
+	     (obj (comp lang src '((module-main . #f))))
 	     (ty (assq :type obj))
 	     (val (assq :value obj)))
 	 (cond
@@ -1780,8 +1780,8 @@
 		 (when (hop-sofile-enable)
 		    (nodejs-socompile-queue-push filename lang worker-slave))
 		 (nodejs-compile src filename %ctxthis %ctxmodule
-		    :lang lang :commonjs-export commonjs-export
-		    :worker-slave worker-slave))
+			     :lang lang :commonjs-export commonjs-export
+			     :worker-slave worker-slave))
 		(else
 		 (nodejs-compile src filename %ctxthis %ctxmodule
 		    :lang lang :commonjs-export commonjs-export

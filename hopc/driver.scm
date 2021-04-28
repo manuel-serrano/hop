@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Tue Apr 27 08:00:13 2021 (serrano)                */
+;*    Last change :  Wed Apr 28 17:53:33 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -486,7 +486,8 @@
 
       (define (compile-language lang in opts file exec temp)
 	 (let* ((comp (hopc-language-loader))
-		(obj (nowarning (lambda () (comp (symbol->string lang) file '()))))
+		(obj (nowarning (lambda ()
+				   (comp (symbol->string lang) file `((tempfile . ,(hopc-temp)))))))
 		(ty (assq :type obj))
 		(val (assq :value obj)))
 	    (cond
@@ -504,9 +505,11 @@
 		      ((input-port? in)
 		       (close-input-port in)
 		       (set! in (open-input-file (cdr val)))))
-		   (if (pair? fmt)
-		       (compile-hopscript in opts file (cdr fmt) exec temp)
-		       (compile-hopscript in opts file (suffix file) exec temp))))
+		   (if (eq? (hopc-pass) 'ast.json)
+		       0
+		       (if (pair? fmt)
+			   (compile-hopscript in opts file (cdr fmt) exec temp)
+			   (compile-hopscript in opts file (suffix file) exec temp)))))
 	       (else
 		(error (format "hopc:~a" lang) "don't know what to do with" obj)))))
 
