@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Apr 29 07:23:10 2021 (serrano)                */
+;*    Last change :  Thu Apr 29 10:49:31 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -77,8 +77,9 @@
 ;*    builtin-language? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (builtin-language? str)
-   (member str '("hopscript" "html" "json" "hop" "ecmascript5"
-		 "ecmascript6" "ecmascript2017")))
+   (member str
+      '("hopscript" "html" "json" "hop" "ecmascript5"
+	"ecmascript6" "ecmascript2017")))
 
 ;*---------------------------------------------------------------------*/
 ;*    default scope length                                             */
@@ -1212,7 +1213,7 @@
 	  (compile-ast src mod))
 	 ((not (string? src))
 	  (bigloo-type-error "nodejs-compile" "string or J2SProgram" src))
-	 ((and (string? lang) (not (member lang '("hopscript" "javascript"))))
+	 ((and (string? lang) (not (builtin-language? lang)))
 	  (compile-lang src mod lang))
 	 ((file-exists? filename)
 	  (compile-file filename mod))
