@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Apr 26 12:18:40 2021                          */
-/*    Last change :  Thu Apr 29 10:01:37 2021 (serrano)                */
+/*    Last change :  Thu Apr 29 10:07:26 2021 (serrano)                */
 /*    Copyright   :  2021 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing core TypeScript features from:                           */
@@ -90,12 +90,12 @@ console.log( "   fun()"); assert.ok( fun(), "fun" );
 /*---------------------------------------------------------------------*/
 function optional() {
    function welcome(name: string, age?: number): string {
-    if (name && age) {
-        return `Welcome ${name} and ${age}`
-    } else {
-        return `Welcome ${name}`
-    }
-}
+      if (name && age) {
+         return `Welcome ${name} and ${age}`
+      } else {
+         return `Welcome ${name}`
+      }
+   }
 
    welcome('gowtham'); // ok
    welcome('gowtham',22); // ok
