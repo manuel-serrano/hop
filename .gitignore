@@ -135,6 +135,7 @@ arch/android/androidemo/etc/androidemo.wiki
 # testing
 test/hopjs/TEST
 test/nodejs/TEST
+test/hopts/TEST
 
 # Mercurial/GIT compatibility
 .hg
