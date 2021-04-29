@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Apr 26 12:22:35 2021 (serrano)                */
+#*    Last change :  Thu Apr 29 07:36:08 2021 (serrano)                */
 #*    Copyright   :  2004-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1763,20 +1763,20 @@ for deb in arch/debian/makedeb.sh arch/debian/makedebremote.sh; do
 done
 
 # homebrew
-deb=arch/homebrew/makebrew.sh
-rm -f $deb 2> /dev/null
-echo "#!/bin/sh" > $deb
-echo "#* Automatically generated file (don't edit) */" >> $deb
+brew=arch/homebrew/makebrew.sh
+rm -f $brew 2> /dev/null
+echo "#!/bin/sh" > $brew
+echo "#* Automatically generated file (don't edit) */" >> $brew
 
-cat $deb.in \
+cat $brew.in \
   | sed -e "s|#!/bin/sh||" \
         -e "s|@BIGLOOREQUIRED@|$bigloorequired|" \
         -e "s|@VERSION@|$version|" \
         -e "s|@WEBLETSDIR@|$webletsdir|" \
         -e "s|@NMODULESDIR@|$nodemodulesdir|" \
         -e "s|@MINOR@|$minorversion|" \
-	>> $deb  
-chmod a+rx $deb
+	>> $brew  
+chmod a+rx $brew
  
 #*---------------------------------------------------------------------*/
 #*    Summary                                                          */

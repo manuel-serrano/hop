@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Wed Feb 26 10:29:44 2020 (serrano)                */
-;*    Copyright   :  2015-20 Manuel Serrano                            */
+;*    Last change :  Thu Apr 29 08:42:36 2021 (serrano)                */
+;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
 ;*    -------------------------------------------------------------    */
@@ -767,7 +767,7 @@
 ;*    Amongst DECLS, returns those that appear in NODE.                */
 ;*---------------------------------------------------------------------*/
 (define (get-used-decls node::J2SNode decls::pair-nil)
-   (delete-duplicates! (node-used* node decls #t)))
+   (delete-duplicates! (node-used* node decls #t) eq?))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-used* ...                                                   */

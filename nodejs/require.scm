@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Apr 28 19:15:21 2021 (serrano)                */
+;*    Last change :  Thu Apr 29 07:23:10 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1693,7 +1693,8 @@
 						  (j2s-compile-options))))
 				       '())
 				 ;; other options
-				 ,@(call-with-input-string (hop-hopc-flags) port->string-list)))
+				 ,@(call-with-input-string (hop-hopc-flags)
+				      port->string-list)))
 			  (ksucc (make-ksucc sopath sopathtmp astfile))
 			  (kfail (make-kfail sopath sopathtmp astfile)))
 		      (make-directories (dirname sopath))

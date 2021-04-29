@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Apr 28 17:53:33 2021 (serrano)                */
+;*    Last change :  Thu Apr 29 07:14:26 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -487,7 +487,21 @@
       (define (compile-language lang in opts file exec temp)
 	 (let* ((comp (hopc-language-loader))
 		(obj (nowarning (lambda ()
-				   (comp (symbol->string lang) file `((tempfile . ,(hopc-temp)))))))
+				   (let ((tmp (cond
+						 ((not (hopc-temp))
+						  #f)
+						 ((eq? (hopc-pass) 'ast.json)
+						  (hopc-temp))
+						 (else
+						  (string-append
+						     (prefix (hopc-temp))
+						     ".ast.json"))))
+					 (jsmain (if (boolean? (hopc-js-module-main))
+						     (hopc-js-module-main)
+						     #f)))
+				      (comp (symbol->string lang) file
+					 `((tempfile . ,tmp)
+					   (module-main . ,jsmain)))))))
 		(ty (assq :type obj))
 		(val (assq :value obj)))
 	    (cond

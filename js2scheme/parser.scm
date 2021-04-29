@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Apr 26 14:54:36 2021 (serrano)                */
+;*    Last change :  Thu Apr 29 08:23:53 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1246,7 +1246,13 @@
    (define (consume-module-path!)
       (case (peek-token-type)
 	 ((STRING)
-	  (consume-any!))
+	  (let* ((mod (consume-any!))
+		 (url (token-value mod)))
+	     (if (string-prefix? "hop:" url)
+		 (make-token 'STRING
+		    (hopjs-module-resolve-path (substring url 4))
+		    (token-loc mod))
+		 mod)))
 	 ((ID)
 	  (let ((id (consume-any!)))
 	     (if (eq? (token-value id) 'hop)
