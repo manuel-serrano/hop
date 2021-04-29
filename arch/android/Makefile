@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed May 27 16:19:08 2020 (serrano)                */
+#*    Last change :  Thu Apr 29 12:48:40 2021 (serrano)                */
 #*    Copyright   :  2010-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -667,9 +667,8 @@ apk.bigloo: $(ANDROIDBUILDDIR)/bigloo-$(RELEASE) /tmp/droidcc.sh
 	$(MAKE) -C $(ANDROIDBUILDDIR)/bigloo-$(RELEASE) install DESTDIR=$(ANDROIDBUILDDIR)
 
 apk.bigloo.post-install: apk.bigloo
-	rm $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre.so.1
-	cp $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre.so.1.2.11 \
-           $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre.so.1
+	cp $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre2-8.so \
+           $(ANDROIDBUILDDIR)/$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE)/libpcre2-8.so.1
 
 apk.bigloo.configure:
 	(cd $(ANDROIDBUILDDIR)/bigloo-$(RELEASE); \
