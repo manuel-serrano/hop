@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Apr 26 12:18:40 2021                          */
-/*    Last change :  Tue May  4 11:08:54 2021 (serrano)                */
+/*    Last change :  Tue May  4 13:48:41 2021 (serrano)                */
 /*    Copyright   :  2021 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing core TypeScript features from:                           */
@@ -169,23 +169,23 @@ function intf() {
 
 console.log( "   intf()"); assert.ok( intf(), "intf" );
 
-/* {*---------------------------------------------------------------------*} */
-/* {*    enum ...                                                         *} */
-/* {*---------------------------------------------------------------------*} */
-/* function enu() {                                                    */
-/* {*    enum Day {                                                       *} */
-/* {*       Monday,                                                       *} */
-/* {*       Tuesday,                                                      *} */
-/* {*       Wednesday                                                     *} */
-/* {*    };                                                               *} */
-/* {*                                                                     *} */
-/* {*    enum Colors {                                                    *} */
-/* {*      Red = "#FF0000",                                               *} */
-/* {*      Green= "#008000",                                              *} */
-/* {*      Blue = "#0000FF"                                               *} */
-/* {*    }                                                                *} */
-/* {*                                                                     *} */
-/* {*    return Day.Tuesday === 1 && Colors.Blue === "#0000FF";           *} */
-/* }                                                                   */
+/*---------------------------------------------------------------------*/
+/*    enum ...                                                         */
+/*---------------------------------------------------------------------*/
+function enu() {
+   enum Day {
+      Monday,
+      Tuesday,
+      Wednesday
+   };
 
-/* console.log( "   enu()"); assert.ok( enu(), "enu" );                */
+   enum Colors {
+     Red = "#FF0000",
+     Green= "#008000",
+     Blue = "#0000FF"
+   }
+
+   return Day.Tuesday === 1 && Colors.Blue === "#0000FF";
+}
+
+console.log( "   enu()"); assert.ok( enu(), "enu" );
