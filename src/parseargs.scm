@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Apr 15 08:21:31 2021 (serrano)                */
+;*    Last change :  Tue May  4 13:11:31 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -485,7 +485,9 @@
 			 (hop-verb 1 "deleting cache directory \""
 			    (hop-color 4 cache "") "\"\n")
 			 (delete-path cache)))
-	    (list (make-cache-name) (hop-sofile-directory))))
+	    (list (make-cache-name)
+	       (hop-sofile-directory)
+	       (hop-cache-directory))))
 
       ;; create cache directory
       (when (hop-cache-enable)

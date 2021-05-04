@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Thu Apr 29 17:29:22 2021 (serrano)                */
+#*    Last change :  Fri Apr 30 19:17:45 2021 (serrano)                */
 #*    Copyright   :  2010-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -587,13 +587,11 @@ apk-sans-hop.client: apk.common apk.res apk.jni apk.src.client apk.plugin.client
 	$(MAKE) apk-build.client
 
 install.apk:
-	adb $(ANDROIDHOST) install $(ANDROIDBUILDDIR)/bin/$(HOPAPKNAME).apk
-
-click.apk:
-	adb $(ANDROIDHOST) shell monkey -p fr.inria.hop 1
+	adb $(ANDROIDHOST) install $(ANDROIDBUILDDIR)/$(HOPAPKNAME).apk
+	adb $(ANDROIDHOST) shell monkey -p fr.inria.$(HOPAPP) 1
 
 uninstall.apk:
-	adb $(ANDROIDHOST) uninstall fr.inria.hop
+	adb $(ANDROIDHOST) uninstall fr.inria.$(HOPAPP)
 
 apk.common: $(ANDROIDBUILDDIR)/Android.mk \
   $(ANDROIDBUILDDIR)/AndroidManifest.xml \

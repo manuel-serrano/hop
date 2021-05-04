@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/scheme-ops.scm          */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-ops.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Apr 21 17:10:33 2021 (serrano)                */
+;*    Last change :  Tue May  4 12:53:56 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -190,9 +190,9 @@
       (let ((ty (j2s-type expr)))
 	 (cond
 	    ((memq ty '(int30 int32 uint32 fixnum integer real number))
-	     `(js-ascii->jsstring "number"))
+	     `(& "number"))
 	    ((memq ty '(string buffer))
-	     `(js-ascii->jsstring "string"))
+	     `(& "string"))
 	    ((isa? expr J2SUnresolvedRef)
 	     ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.3
 	     (with-access::J2SUnresolvedRef expr (id loc cache)

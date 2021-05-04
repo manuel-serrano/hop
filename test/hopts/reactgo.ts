@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Apr 26 12:18:40 2021                          */
-/*    Last change :  Thu Apr 29 10:07:26 2021 (serrano)                */
+/*    Last change :  Tue May  4 11:08:54 2021 (serrano)                */
 /*    Copyright   :  2021 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing core TypeScript features from:                           */
@@ -105,69 +105,70 @@ function optional() {
 
 console.log( "   optional()"); assert.ok( optional(), "optional" );
 
+/* {*---------------------------------------------------------------------*} */
+/* {*    def ...                                                          *} */
+/* {*---------------------------------------------------------------------*} */
+/* function def() {                                                    */
+/*    function getLength(arr: number[], length = arr.length) {         */
+/*     return length                                                   */
+/*    }                                                                */
+/*                                                                     */
+/*    console.log( "LEN=", getLength([1,2,3,4,5]) );                   */
+/*    return getLength([1,2,3,4,5]) === 5;                             */
+/* }                                                                   */
+/*                                                                     */
+/* console.log( "   def()"); assert.ok( def(), "def" );                */
+
 /*---------------------------------------------------------------------*/
-/*    def ...                                                          */
+/*    never ...                                                        */
 /*---------------------------------------------------------------------*/
-function def() {
-   function getLength(arr: number[], length = arr.length) {
-    return length
+function never() {
+   // throw an exception
+   function error(err:string):never{
+      throw new Error(err);
    }
 
-   return getLength([1,2,3,4,5]) === 5;
+   try {
+      error( "foo" );
+   } catch( e ) {
+      return true;
+   }
 }
 
-console.log( "   def()"); assert.ok( def(), "def" );
+console.log( "   never()"); assert.ok( never(), "never" );
 
-/* {*---------------------------------------------------------------------*} */
-/* {*    never ...                                                        *} */
-/* {*---------------------------------------------------------------------*} */
-/* function never() {                                                  */
-/*    // throw an exception                                            */
-/*    function error(err:string):never{                                */
-/*       throw new Error(err);                                         */
-/*    }                                                                */
-/*                                                                     */
-/*    try {                                                            */
-/*       error( "foo" );                                               */
-/*    } catch( e ) {                                                   */
-/*       return true;                                                  */
-/*    }                                                                */
-/* }                                                                   */
-/*                                                                     */
-/* console.log( "   never()"); assert.ok( never(), "never" );          */
-/*                                                                     */
-/* {*---------------------------------------------------------------------*} */
-/* {*    intf ...                                                         *} */
-/* {*---------------------------------------------------------------------*} */
-/* function intf() {                                                   */
-/*    interface User {                                                 */
-/*       name: string,                                                 */
-/*       active: boolean                                               */
-/*    }                                                                */
-/*                                                                     */
-/*    let user: User = {                                               */
-/*       name: "gowtham",                                              */
-/*       active: true                                                  */
-/*    }                                                                */
-/*                                                                     */
-/*    // extending the User interface                                  */
-/*    interface AdminUser extends User {                               */
-/*       id: string                                                    */
-/*    }                                                                */
-/*                                                                     */
-/*    // admin object  should have properties                          */
-/*    //present in User interface + AdminUser interface                */
-/*    let admin: AdminUser = {                                         */
-/*       name: "john",                                                 */
-/*       active: true,                                                 */
-/*       id: "3232hejdjdjf"                                            */
-/*    }                                                                */
-/*                                                                     */
-/*    return user.name === "gowtham" && user.active && typeof( admin.id ) === "string"; */
-/* }                                                                   */
-/*                                                                     */
-/* console.log( "   intf()"); assert.ok( intf(), "intf" );             */
-/*                                                                     */
+/*---------------------------------------------------------------------*/
+/*    intf ...                                                         */
+/*---------------------------------------------------------------------*/
+function intf() {
+   interface User {
+      name: string,
+      active: boolean
+   }
+
+   let user: User = {
+      name: "gowtham",
+      active: true
+   }
+
+   // extending the User interface
+   interface AdminUser extends User {
+      id: string
+   }
+
+   // admin object  should have properties
+   // present in User interface + AdminUser interface
+   let admin: AdminUser = {
+      name: "john",
+      active: true,
+      id: "3232hejdjdjf"
+   }
+
+   return user.name === "gowtham" && user.active && typeof( admin.id ) === "string";
+}
+
+console.log( "   intf()"); assert.ok( intf(), "intf" );
+
 /* {*---------------------------------------------------------------------*} */
 /* {*    enum ...                                                         *} */
 /* {*---------------------------------------------------------------------*} */

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 14:10:47 2012                          */
-/*    Last change :  Sun May 17 10:26:25 2020 (serrano)                */
-/*    Copyright   :  2012-20 Manuel Serrano                            */
+/*    Last change :  Fri Apr 30 19:16:12 2021 (serrano)                */
+/*    Copyright   :  2012-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The NsdManager (zeroconf) Hop binding                            */
 /*=====================================================================*/
@@ -31,7 +31,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 /*---------------------------------------------------------------------*/
 public class HopNsdManager extends HopZeroconf {
    NsdManager nsd;
-   NsdManager.ResolveListener resolver;
    
    Hashtable dlisteners = new Hashtable();
    Hashtable plisteners = new Hashtable();
@@ -42,24 +41,38 @@ public class HopNsdManager extends HopZeroconf {
    // constructor
    public HopNsdManager( HopDroid h ) {
       super( h );
+      final HopNsdManager _this = this;
       
       Thread resolverthread = new Thread( new Runnable() {
 	    public void run() {
 	       boolean keep = true;
+	       Log.d( "hopNsdManager", "starting resolverThread" );
 	       while( keep ) {
 		  try {
 		     NsdServiceInfo info = queue.take();
 		     if( info == null ) {
+			// A null value is pushed when the thread
+			// is terminated. See the stop method below. 
 			keep = false;
 		     } else {
+			NsdManager.ResolveListener resolver =
+			   new ResolveListener( _this );
+			
+			Log.d( "hopNsdManager", ">>> resolveService..."
+			       + info.getServiceName() + " "
+			       + info.getServiceType() );
 			nsd.resolveService( info, resolver );
+			Log.d( "hopNsdManager", "<<< resolveService..."
+			       + info.getServiceName() + " "
+			       + info.getServiceType() );
 			Thread.sleep( 150 );
-			keep = (queue.size() > 0);
 		     }
 		  } catch( Exception _e ) {
-		     ;
+		     Log.e( "hopNsdManager", "resolverThread error "
+			    + _e.getClass().getName(), _e );
 		  }
 	       }
+	       Log.d( "hopNsdManager", "ending resolverThread" );
 	    }
 	 } );
    
@@ -69,7 +82,6 @@ public class HopNsdManager extends HopZeroconf {
    public void start( String name ) {
       if( nsd == null ) {
 	 nsd = (NsdManager)hopdroid.service.getSystemService( Context.NSD_SERVICE );
-	 resolver = new ResolveListener( this );
 	 Log.d( "HopNsdManager", "nsd=" + nsd );
       }
    }
@@ -97,7 +109,8 @@ public class HopNsdManager extends HopZeroconf {
 	 try {
 	    queue.put( (NsdServiceInfo)null );
 	 } catch( Exception _e ) {
-	    ;
+	    Log.e( "hopNsdManager", "cannot put in queue.1..."
+		   + _e.getClass().getName(), _e );
 	 }
       }
    }
@@ -204,7 +217,8 @@ class DiscoveryListener implements NsdManager.DiscoveryListener {
       try {
 	 hopnsd.queue.put( svc );
       } catch( Exception _e ) {
-	 ;
+	 Log.e( "hopNsdManager", "cannot put in queue.2..."
+		+ _e.getClass().getName(), _e );
       }
    }
 
@@ -258,9 +272,11 @@ class ResolveListener implements NsdManager.ResolveListener {
 	 // already active error
 	 try {
 	    // random number
-	    hopnsd.queue.put( svc );
-	 } catch( Exception _e ) {
+	    // hopnsd.queue.put( svc );
 	    ;
+	 } catch( Exception _e ) {
+	    Log.e( "hopNsdManager", "cannot put in queue.3..."
+		   + _e.getClass().getName(), _e );
 	 }
       }
    }
