@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Apr 29 10:49:31 2021 (serrano)                */
+;*    Last change :  Tue May  4 14:55:28 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -2267,7 +2267,8 @@
    (define (resolve-error x)
       (with-access::JsGlobalObject %this (js-uri-error)
 	 (let ((exn (js-new %this js-uri-error
-		       (js-string->jsstring (format "Cannot find module ~s" name))
+		       (js-string->jsstring
+			  (format "Cannot find module ~s" name))
 		       7)))
 	    (js-put! exn (& "code") (js-string->jsstring "MODULE_NOT_FOUND")
 	       #f %this)
@@ -2325,7 +2326,9 @@
 		      (lambda (x) #f)
 		      :host host
 		      :port port))))
-	    ((or (string-prefix? "./" name) (string-prefix? "../" name))
+	    ((or (string-prefix? "./" name)
+		 (string-prefix? "../" name)
+		 (string=? ".." name))
 	     (or (resolve-file-or-directory name dir)
 		 (resolve-modules mod name)
 		 (resolve-error name)))

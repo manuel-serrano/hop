@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Apr 28 08:03:36 2021 (serrano)                */
+;*    Last change :  Tue May  4 17:37:22 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -92,8 +92,8 @@
 	   (generic js-properties-name::vector ::obj ::bool ::JsGlobalObject)
 	   (generic js-properties-symbol::vector ::obj ::JsGlobalObject)
 	   
-	   (js-in?::bool ::obj ::JsStringLiteral ::JsGlobalObject)
-	   (js-in?/debug::bool ::obj ::JsStringLiteral ::JsGlobalObject loc)
+	   (js-in?::bool ::obj ::obj ::JsGlobalObject)
+	   (js-in?/debug::bool ::obj ::obj ::JsGlobalObject loc)
 
 	   (generic js-has-property::bool ::obj ::obj ::JsGlobalObject)
 	   (generic js-has-own-property::bool ::obj ::obj ::JsGlobalObject)

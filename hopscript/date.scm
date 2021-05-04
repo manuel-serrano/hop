@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Apr 28 09:24:22 2021 (serrano)                */
+;*    Last change :  Tue May  4 17:47:54 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -690,7 +690,7 @@
    ;; toLocaleDateString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.6
    (define (date-prototype-tolocaledatestring this::JsDate)
-      date-prototype-todatestring this)
+      (date-prototype-todatestring this))
 
    (js-bind! %this obj (& "toLocaleDateString")
       :value (js-make-function %this date-prototype-tolocaledatestring
@@ -808,7 +808,11 @@
    ;; getTime
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.9
    (js-bind! %this obj (& "getTime")
-      :value (js-make-function %this js-date-gettime
+      :value (js-make-function %this
+		(lambda (this)
+		   (if (js-date? this)
+		       (js-date-gettime this)
+		       (js-raise-type-error %this "Not a date ~s" (typeof this))))
 		(js-function-arity js-date-gettime)
 		(js-function-info :name "getTime" :len 0))
       :writable #t :configurable #t :enumerable #f :hidden-class #f)
@@ -880,10 +884,12 @@
    ;; getDay
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.16
    (define (date-prototype-getday this::JsDate)
-      (with-access::JsDate this (val)
-	 (if (date? val)
-	     (-fx (date-wday val) 1)
-	     +nan.0)))
+      (if (js-date? this)
+	  (with-access::JsDate this (val)
+	     (if (date? val)
+		 (-fx (date-wday val) 1)
+		 +nan.0))
+	  (js-raise-type-error %this "Not a date ~s" (typeof this))))
 	 
    (js-bind! %this obj (& "getDay")
       :value (js-make-function %this date-prototype-getday

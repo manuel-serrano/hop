@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sat Apr 11 14:04:30 2020 (serrano)                */
+;*    Last change :  Tue May  4 20:19:25 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -545,7 +545,7 @@
 	    (set! module-cache (js-new0 %this js-object))
 	    (set! %this %global)
 	    (js-put! module-cache (js-string->jsstring path) %module #f %this))))
-      
+
    (unless %worker
       ($js-init-jsalloc (js-object-default-mode))
       (set! %global-constructor ctor)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Erick Gallesio                                    */
 ;*    Creation    :  Sat Jan 28 15:38:06 2006 (eg)                     */
-;*    Last change :  Mon Apr 20 06:27:44 2020 (serrano)                */
+;*    Last change :  Tue May  4 14:51:51 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Weblets Management                                               */
@@ -356,7 +356,7 @@
 		;; rc setup
 		(when (pair? rc) (eval (cadr rc)))
 		;; zeroconf
-		(when (pair? zc)
+		(when (and (pair? zc) (hop-enable-zeroconf))
 		   (hop-verb 2 "zeroconf publish " name " "
 		      (hop-color 3 "" path)
 		      "\n")
