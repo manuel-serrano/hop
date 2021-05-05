@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Mon Apr 26 15:49:47 2021 (serrano)                */
+;*    Last change :  Wed May  5 13:24:43 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -58,6 +58,7 @@
 			   (lambda (this::J2SDollar tildec dollarc mode evalp ctx)
 			      (with-access::J2SDollar this (node)
 				 (let ((expr (j2s-scheme node mode evalp ctx)))
+				    (tprint "EXPR=" expr)
 				    (list (j2s-js-literal (eval! expr)
 					     (context-get ctx :%this))))))
 			   'normal (lambda (x) x) ctx))))))))
@@ -1178,10 +1179,9 @@
 ;*    j2s-js ::J2SDollar ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDollar tildec dollarc mode evalp ctx)
-   (cons this
-      (if (procedure? dollarc)
-	  (dollarc this tildec dollarc mode evalp ctx)
-	  (j2s-js-default-dollar this tildec dollarc mode evalp ctx))))
+   (if (procedure? dollarc)
+       (cons this (dollarc this tildec dollarc mode evalp ctx))
+       (j2s-js-default-dollar this tildec dollarc mode evalp ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-default-dollar ...                                        */
@@ -1412,34 +1412,41 @@
    (define (import-name->js this::J2SImportName)
       (with-access::J2SImportName this (id alias)
 	 (if (eq? id alias)
-	     id
-	     (list id " as " alias))))
+	     (list (symbol->string! id))
+	     (list (symbol->string! id) " as " (symbol->string! alias)))))
 
+   (define (import-path this path)
+      (with-access::J2SImport this (names)
+	 (cond
+	    ((null? names)
+	     (list this "import " path ";"))
+	    ((isa? (car names) J2SImportExport)
+	     (list this "export * from " path ";"))
+	    ((isa? (car names) J2SImportNamespace)
+	     (with-access::J2SImportNamespace (car names) (id)
+		(list this "import * as "
+		   (symbol->string id) " from " path ";")))
+	    ((isa? (car names) J2SImportRedirect)
+	     (cons* this "export {"
+		(append (append-map* ","
+			   (lambda (a)
+			      (with-access::J2SImportRedirect a (id alias)
+				 (if (eq? id alias)
+				     id
+				     (list id " as " alias))))
+			   names)
+		   `("} from " ,path ";"))))
+	    (else
+	     (cons* this "import {"
+		(append (append-map* "," import-name->js names)
+		   `("} from " ,path ";")))))))
+   
    (if (context-get ctx :es6-module-client #f)
-       (with-access::J2SImport this (names path)
-	  (cond
-	     ((null? names)
-	      (list this "import '" path "';"))
-	     ((isa? (car names) J2SImportExport)
-	      (list this "export * from " "'" path "';"))
-	     ((isa? (car names) J2SImportNamespace)
-	      (with-access::J2SImportNamespace (car names) (id)
-		 (list this "import * as "
-		    (symbol->string id) " from '" path "';")))
-	     ((isa? (car names) J2SImportRedirect)
-	      (cons* this "export {"
-		 (append (append-map* ","
-			    (lambda (a)
-			       (with-access::J2SImportRedirect a (id alias)
-				  (if (eq? id alias)
-				      id
-				      (list id " as " alias))))
-			    names)
-		    `("} from " "'" ,path "';"))))
-	     (else
-	      (cons* this "import {"
-		 (append (append-map* "," import-name->js names)
-		    `("} from " "'" ,path "';"))))))
+       (with-access::J2SImport this (names path dollarpath)
+	  (let ((p (if (isa? dollarpath J2SDollar)
+		       (cadr (j2s-js dollarpath tildec dollarc mode evalp ctx))
+		       (string-append "'" path "'"))))
+	     (import-path this p)))
        '()))
 
 ;*---------------------------------------------------------------------*/

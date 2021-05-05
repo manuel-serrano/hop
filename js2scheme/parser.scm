@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Apr 29 08:23:53 2021 (serrano)                */
+;*    Last change :  Wed May  5 15:20:55 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1248,22 +1248,35 @@
 	 ((STRING)
 	  (let* ((mod (consume-any!))
 		 (url (token-value mod)))
-	     (if (string-prefix? "hop:" url)
-		 (make-token 'STRING
+	     (values
+		(if (string-prefix? "hop:" url)
 		    (hopjs-module-resolve-path (substring url 4))
-		    (token-loc mod))
-		 mod)))
+		    mod)
+		(instantiate::J2SUndefined (loc (token-loc url))))))
 	 ((ID)
 	  (let ((id (consume-any!)))
 	     (if (eq? (token-value id) 'hop)
 		 (begin
 		    (consume-token! 'DOT)
-		    (let ((mod (consume-token! 'ID)))
-		       (make-token 'STRING
+		    (values 
+		       (let ((mod (consume-token! 'ID)))
 			  (hopjs-module-resolve-path
-			     (symbol->string (token-value mod)))
-			  (token-loc id))))
+			     (symbol->string (token-value mod))))
+		       (instantiate::J2SUndefined (loc (token-loc id)))))
 		 (parse-token-error "Illegal import path (should be hop.xxx)" id))))
+	 ((DOLLAR)
+	  (if (>fx tilde-level 0)
+	      (with-dollar
+		 (lambda ()
+		    (let* ((ignore (push-open-token (consume-any!)))
+			   (expr (expression #f #f)))
+		       (pop-open-token (consume-token! 'RBRACE))
+		       (values
+			  ""
+			  (instantiate::J2SDollar
+			     (loc (token-loc ignore))
+			     (node expr))))))
+	      (parse-token-error "Illegal import path" (consume-any!))))
 	 (else
 	  (parse-token-error "Illegal import path" (consume-any!)))))
    
@@ -1277,11 +1290,13 @@
 		    (parse-token-error "Illegal empty import" token)
 		    (let ((fro (consume-token! 'ID)))
 		       (if (eq? (token-value fro) 'from)
-			   (let ((path (consume-module-path!)))
+			   (multiple-value-bind (path dollarpath)
+			      (consume-module-path!)
 			      (instantiate::J2SImport
 				 (names lst)
 				 (loc (token-loc token))
-				 (path (token-value path))))
+				 (path path)
+				 (dollarpath dollarpath)))
 			   (parse-token-error
 			      "Illegal import, \"from\" expected"
 			      fro))))))
@@ -1289,11 +1304,13 @@
 	     (if (not first)
 		 (parse-token-error "Illegal import, unexpected string"
 		    (consume-any!))
-		 (let ((path (consume-any!)))
+		 (let ((path (consume-any!))
+		       (loc (token-loc token)))
 		    (instantiate::J2SImport
 		       (names '())
-		       (loc (token-loc token))
-		       (path (token-value path))))))
+		       (loc loc)
+		       (path (token-value path))
+		       (dollarpath (instantiate::J2SUndefined (loc loc)))))))
 	    ((*)
 	     (consume-any!)
 	     (let ((as (consume-token! 'ID)))
@@ -1301,14 +1318,16 @@
 		    (let* ((id (consume-token! 'ID))
 			   (fro (consume-token! 'ID)))
 		       (if (eq? (token-value fro) 'from)
-			   (let* ((path (consume-module-path!))
-				  (impns (instantiate::J2SImportNamespace
-					    (loc (token-loc id))
-					    (id (token-value id)))))
-			      (instantiate::J2SImport
-				 (names (list impns))
-				 (loc (token-loc token))
-				 (path (token-value path))))
+			   (multiple-value-bind (path dollarpath)
+			      (consume-module-path!)
+			      (let ((impns (instantiate::J2SImportNamespace
+					      (loc (token-loc id))
+					      (id (token-value id)))))
+				 (instantiate::J2SImport
+				    (names (list impns))
+				    (loc (token-loc token))
+				    (path path)
+				    (dollarpath dollarpath))))
 			   (parse-token-error "Illegal import, \"from\" expected"
 			      fro)))
 		    (parse-token-error "Illegal import, \"as\" expected" as))))
@@ -1343,18 +1362,20 @@
 			   (instantiate::J2SImport
 			      (names (list impnm))
 			      (loc loc)
-			      (path (token-value path)))))
+			      (path (token-value path))
+			      (dollarpath (instantiate::J2SUndefined (loc loc))))))
 		       ((eq? (token-tag sep) 'COMMA)
 			(let ((imp (loop #f))
 			      (impnm (instantiate::J2SImportName
 				       (id 'default)
 				       (alias id)
 				       (loc (token-loc sep)))))
-			   (with-access::J2SImport imp (path)
+			   (with-access::J2SImport imp (path dollarpath)
 			      (let* ((loc (token-loc token))
 				     (defi (instantiate::J2SImport
 					      (names (list impnm))
 					      (loc loc)
+					      (dollarpath dollarpath)
 					      (path path))))
 				 (instantiate::J2SSeq
 				    (loc loc)
@@ -1438,7 +1459,8 @@
 		       (if (peek-token-id? 'from)
 			   (begin
 			      (consume-any!)
-			      (let ((path (consume-module-path!)))
+			      (multiple-value-bind (path dollarpath)
+				 (consume-module-path!)
 				 (instantiate::J2SImport
 				    (names (map (lambda (r a)
 						   (with-access::J2SUnresolvedRef r (id loc)
@@ -1449,7 +1471,8 @@
 					      (cons ref refs)
 					      (cons alias aliases)))
 				    (loc (token-loc token))
-				    (path (token-value path)))))
+				    (path path)
+				    (dollarpath dollarpath))))
 			   (instantiate::J2SExportVars
 			      (loc (token-loc token))
 			      (refs (cons ref refs))
@@ -1492,15 +1515,16 @@
 	  (let* ((* (consume-token! '*))
 		 (fro (consume-token! 'ID)))
 	     (if (eq? (token-value fro) 'from)
-		 (let* ((path (consume-module-path!))
-			(impexp (instantiate::J2SImportExport
-				   (loc (token-loc *)))))
-		    (instantiate::J2SImport
-		       (loc (token-loc token))
-		       (path (token-value path))
-		       (names (list impexp))))
-		 (parse-token-error "Illegal export, \"from\" expected"
-		    fro))))
+		 (multiple-value-bind (path dollarpath)
+		    (consume-module-path!)
+		    (let ((impexp (instantiate::J2SImportExport
+				     (loc (token-loc *)))))
+		       (instantiate::J2SImport
+			  (loc (token-loc token))
+			  (path path)
+			  (dollarpath dollarpath)
+			  (names (list impexp)))))
+		 (parse-token-error "Illegal export, \"from\" expected" fro))))
 	 (else
 	  (parse-token-error "Illegal export declaration" token))))
 

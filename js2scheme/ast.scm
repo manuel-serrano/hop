@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Apr 28 18:58:07 2021 (serrano)                */
+;*    Last change :  Wed May  5 13:56:40 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -478,6 +478,9 @@
 
 	   (final-class J2SImport::J2SStmt
 	      (path::bstring read-only (info '("notraverse")))
+	      ;; dollarpath is only used for client-side imports whose
+	      ;; module name is a dollar expression (see js.scm)
+	      dollarpath::J2SExpr
 	      (names::pair-nil (default '()) (info '("notraverse")))
 	      (respath (default #f) (info '("notraverse")))
 	      (mvar (default #f) (info '("notraverse")))
@@ -1069,6 +1072,7 @@
 (gen-walks J2SDProducer expr)
 (gen-walks J2SDConsumer expr)
 (gen-walks J2SPragma (vals))
+(gen-walks J2SImport dollarpath)
 (gen-walks J2SImportDynamic path)
 (gen-walks J2SExportVars (refs))
 
