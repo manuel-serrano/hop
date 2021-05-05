@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed May  5 15:20:55 2021 (serrano)                */
+;*    Last change :  Wed May  5 15:49:39 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1251,8 +1251,8 @@
 	     (values
 		(if (string-prefix? "hop:" url)
 		    (hopjs-module-resolve-path (substring url 4))
-		    mod)
-		(instantiate::J2SUndefined (loc (token-loc url))))))
+		    url)
+		(instantiate::J2SUndefined (loc (token-loc mod))))))
 	 ((ID)
 	  (let ((id (consume-any!)))
 	     (if (eq? (token-value id) 'hop)
