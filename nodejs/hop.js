@@ -3,14 +3,14 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Thu Apr 29 08:46:13 2021 (serrano)                */
+/*    Last change :  Thu May  6 18:07:41 2021 (serrano)                */
 /*    Copyright   :  2014-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
 /*=====================================================================*/
 "use hopscript";
 
-var hop = process.binding( "hop" );
+const hop = process.binding( "hop" );
 
 /*---------------------------------------------------------------------*/
 /*    info                                                             */
@@ -50,7 +50,7 @@ exports.HTTPResponseAuthentication = hop.HTTPResponseAuthentication;
 exports.HTTPResponseAsync = hop.HTTPResponseAsync;
 exports.HTTPResponseProxy = hop.HTTPResponseProxy;
 
-var jsonContentType = { "contentType": "application/json" };
+const jsonContentType = { "contentType": "application/json" };
 
 exports.HTTPResponseJson = function( obj ) {
    return hop.HTTPResponseString( JSON.stringify( obj ), jsonContentType );
