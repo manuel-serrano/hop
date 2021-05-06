@@ -1,14 +1,14 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.2.x/test/hopjs/noserv/es6-literal.js      */
+/*    .../prgm/project/hop/hop/test/hopjs/noserv/es6-literal.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Feb  6 09:07:26 2018                          */
-/*    Last change :  Fri Jan 18 18:24:34 2019 (serrano)                */
-/*    Copyright   :  2018-19 Manuel Serrano                            */
+/*    Last change :  Thu May  6 16:20:11 2021 (serrano)                */
+/*    Copyright   :  2018-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2015+ object literal syntaxes                 */
 /*=====================================================================*/
-"use hopscript";
+"use strict";
 
 var assert = require( "assert" );
 

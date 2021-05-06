@@ -1,15 +1,14 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.2.x/test/hopjs/noserv/es6-reflect.js      */
+/*    .../prgm/project/hop/hop/test/hopjs/noserv/es6-reflect.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Mon Feb 25 14:53:38 2019 (serrano)                */
-/*    Copyright   :  2014-19 Manuel Serrano                            */
+/*    Last change :  Thu May  6 16:20:53 2021 (serrano)                */
+/*    Copyright   :  2014-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 REFLECT object.                          */
 /*=====================================================================*/
 "use strict";
-"use hopscript";
 
 const assert = require( "assert" );
 

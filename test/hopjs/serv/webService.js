@@ -3,17 +3,17 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  11 14:00:00 2015                         */
-/*    Last change :  Sun Jan  5 19:50:57 2020 (serrano)                */
-/*    Copyright   :  2015-20 Inria                                     */
+/*    Last change :  Thu May  6 16:21:53 2021 (serrano)                */
+/*    Copyright   :  2015-21 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing WebService                                               */
 /*=====================================================================*/
 "use hopscript";
 
-var assert = require( 'assert' );
+const assert = require( 'assert' );
 
 function test3rdPartyWS() {
-   var mymemory = hop.webService( "http://mymemory.translated.net/api/get" );
+   const mymemory = hop.webService( "http://mymemory.translated.net/api/get" );
    mymemory( {q: 'My tailor is rich.', langpair: 'en|fr' } ).post( function( result ) {
       console.log( result.responseData );
       if (!result.responseData.translatedText ) {
@@ -29,22 +29,22 @@ function test3rdPartyWS() {
 }
 
 service myNamedArgsService( o ) {
-   var arg = (o && "arg" in o) ? o.arg : "default";
+   const arg = (o && "arg" in o) ? o.arg : "default";
    console.log( 'server side: arg = %s, (%s)', arg, typeof( arg ));
    return arg ;
 }
 
 function testLocalWS() {
 
-   var myWebService =
+   const myWebService =
        hop.webService( 'http://' + 'localhost' + ':' + hop.port + '/hop/myNamedArgsService' );
 
    function test( count = undefined ) {
-      var expected;
-      var positive;
-      var args;
-      var frame;
-      var next;
+      let expected;
+      let positive;
+      let args;
+      let frame;
+      let next;
       if (count == testValues.length) {
 	 console.log( 'local tests completed' );
 	 //	 test3rdPartyWS();
@@ -89,7 +89,7 @@ function testLocalWS() {
 
    }
 
-   var testValues = [
+   const testValues = [
       { positive: true, args: {} },
       { positive: true, args: { arg: 'my string' }},
       { positive: true, args: { arg: 'used' }},

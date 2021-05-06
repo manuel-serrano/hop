@@ -3,13 +3,12 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Feb 25 11:33:29 2019                          */
-/*    Last change :  Mon Apr  6 08:41:13 2020 (serrano)                */
-/*    Copyright   :  2019-20 Manuel Serrano                            */
+/*    Last change :  Thu May  6 16:20:18 2021 (serrano)                */
+/*    Copyright   :  2019-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 MAP object.                              */
 /*=====================================================================*/
 "use strict";
-"use hopscript";
 
 const assert = require( "assert" );
 

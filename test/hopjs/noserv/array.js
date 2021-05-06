@@ -3,13 +3,13 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Thu Apr  9 10:34:38 2020 (serrano)                */
-/*    Copyright   :  2014-20 Manuel Serrano                            */
+/*    Last change :  Thu May  6 16:12:13 2021 (serrano)                */
+/*    Copyright   :  2014-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
 /*=====================================================================*/
 "use strict";
-"use hopscript";
+//"use hopscript";
 
 var assert = require( "assert" );
 

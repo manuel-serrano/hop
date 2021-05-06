@@ -1,15 +1,14 @@
 /*=====================================================================*/
-/*    .../hop/3.2.x/test/hopjs/noserv/es6-destructing-param.js         */
+/*    .../hop/hop/test/hopjs/noserv/es6-destructing-param.js           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb  7 09:48:34 2018                          */
-/*    Last change :  Mon Jul  9 08:53:37 2018 (serrano)                */
-/*    Copyright   :  2018 Manuel Serrano                               */
+/*    Last change :  Thu May  6 16:19:45 2021 (serrano)                */
+/*    Copyright   :  2018-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2015+ destructuring function parameters       */
 /*=====================================================================*/
-
-"use hopscript";
+"use strict";
 
 var assert = require( "assert" );
 

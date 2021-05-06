@@ -4,11 +4,11 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  5 07:37:47 2015                          */
 /*    Last commit :  2015-12-27 [9d6434f] (Manuel Serrano)             */
-/*    Copyright   :  2015-17 Manuel Serrano                            */
+/*    Copyright   :  2015-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Top level let tests                                              */
 /*=====================================================================*/
-"use hopscript";
+"use strict";
 
 const assert = require( "assert" );
 

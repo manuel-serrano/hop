@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed May  5 15:49:39 2021 (serrano)                */
+;*    Last change :  Thu May  6 07:31:09 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -22,7 +22,8 @@
 	   __js2scheme_html
 	   __js2scheme_ast
 	   __js2scheme_dump
-	   __js2scheme_utils)
+	   __js2scheme_utils
+	   __js2scheme_hopscript)
 
    (export (j2s-parser ::input-port ::pair-nil #!optional plugins)
 	   (j2s-tag->expr ::pair ::bool)))
@@ -1227,7 +1228,7 @@
 					(loc loc))))))
 	       (init (instantiate::J2SNop
 			(loc loc))))
-	    (service-create token id params args body 'strict
+	    (service-create token id params args body 'hopstrict
 	       #f declaration? #t))))
       
    (define (service-implement token id params args declaration?)
@@ -3303,6 +3304,7 @@
 	  (instantiate::J2SDeclInit
 	     (loc loc)
 	     (id id)
+	     (binder 'let)
 	     (val val))
 	  (instantiate::J2SAssig
 	     (loc loc)
@@ -3529,10 +3531,12 @@
 ;*    specified by the MODE argument).                                 */
 ;*---------------------------------------------------------------------*/
 (define (dialect node::J2SNode mode conf)
-   ;; propage function definition modes
+   ;; propagate function definition modes
    (hopscript-mode-fun! node mode)
    ;; make hopscript function constant
-   (hopscript-cnst-fun! node)
+   (hopscript-cnst-fun! node mode)
+   ;; disable hopscript var binders, and force let at beginning of blocks
+   (hopscript-let! node mode)
    (unless (memq mode '(strict hopscript ecmascript6 ecmascript2017))
       (unless (config-get conf :es6-let #f)
 	 (disable-es6-let node))
@@ -3544,68 +3548,6 @@
 	 (disable-es6-rest-argument node)))
    (disable-reserved-ident node mode)
    node)
-
-;*---------------------------------------------------------------------*/
-;*    hopscript-mode-fun! ...                                          */
-;*    -------------------------------------------------------------    */
-;*    Propagate the JavaScript mode into the funtion definitions       */ 
-;*---------------------------------------------------------------------*/
-(define-walk-method (hopscript-mode-fun! this::J2SNode mode::symbol)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    hopscript-mode-fun! ::J2SFun ...                                 */
-;*---------------------------------------------------------------------*/
-(define-walk-method (hopscript-mode-fun! this::J2SFun mode)
-   (with-access::J2SFun this ((fmode mode) body name)
-      (when (eq? fmode 'normal) (set! fmode mode))
-      (hopscript-mode-fun! body fmode)
-      this))
-
-;*---------------------------------------------------------------------*/
-;*    hopscript-mode-fun! ::J2SDeclFun ...                             */
-;*---------------------------------------------------------------------*/
-(define-walk-method (hopscript-mode-fun! this::J2SDeclFun mode)
-   (with-access::J2SDeclFun this (val writable)
-      (if writable
-	  (call-default-walker)
-	  (begin
-	     (hopscript-mode-fun! val mode)
-	     this))))
-
-;*---------------------------------------------------------------------*/
-;*    hopscript-cnst-fun! ...                                          */
-;*    -------------------------------------------------------------    */
-;*    In HopScript mode, function declarations are read-only. To       */
-;*    implement this, this walker siwtches J2SDeclFun ronly attribute  */
-;*    to #t.                                                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (hopscript-cnst-fun! this::J2SNode)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    hopscript-cnst-fun! ::J2SDeclFun ...                             */
-;*---------------------------------------------------------------------*/
-(define-walk-method (hopscript-cnst-fun! this::J2SDeclFun)
-   (with-access::J2SDeclFun this (val mode writable)
-      (with-access::J2SFun val (mode)
-	 (when (eq? mode 'hopscript)
-	    (set! writable #f)
-	    (decl-usage-rem! this 'assig)))
-      (if writable
-	  (call-default-walker)
-	  this)))
-
-;*---------------------------------------------------------------------*/
-;*    hopscript-cnst-fun! ::J2SFun ...                                 */
-;*---------------------------------------------------------------------*/
-(define-walk-method (hopscript-cnst-fun! this::J2SFun)
-   (with-access::J2SFun this (decl)
-      (when (isa? decl J2SDeclFun)
-	 (with-access::J2SDeclFun decl (writable)
-	    (unless writable
-	       (hopscript-cnst-fun! decl)))))
-   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    disable-es6-let ...                                              */

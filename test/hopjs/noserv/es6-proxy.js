@@ -3,13 +3,12 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Sat Apr 11 06:44:32 2020 (serrano)                */
-/*    Copyright   :  2014-20 Manuel Serrano                            */
+/*    Last change :  Thu May  6 16:20:46 2021 (serrano)                */
+/*    Copyright   :  2014-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Proxy objects                            */
 /*=====================================================================*/
 "use strict";
-"use hopscript";
 
 var assert = require( "assert" );
 

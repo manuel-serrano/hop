@@ -1,15 +1,14 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.2.x/test/hopjs/noserv/es6-forof.js        */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/es6-forof.js      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Fri Jan 26 10:07:16 2018 (serrano)                */
-/*    Copyright   :  2014-18 Manuel Serrano                            */
+/*    Last change :  Thu May  6 16:19:57 2021 (serrano)                */
+/*    Copyright   :  2014-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing for ... of                                               */
 /*=====================================================================*/
 "use strict";
-"use hopscript";
 
 var assert = require( "assert" );
 

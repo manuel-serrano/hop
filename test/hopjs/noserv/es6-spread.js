@@ -3,13 +3,12 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Sat Apr 11 07:59:04 2020 (serrano)                */
-/*    Copyright   :  2014-20 Manuel Serrano                            */
+/*    Last change :  Thu May  6 16:21:03 2021 (serrano)                */
+/*    Copyright   :  2014-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Spread syntax                            */
 /*=====================================================================*/
 "use strict";
-"use hopscript";
 
 var assert = require( "assert" );
 

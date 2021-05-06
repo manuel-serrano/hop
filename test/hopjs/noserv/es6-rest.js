@@ -3,12 +3,12 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Thu Apr  9 13:52:38 2020 (serrano)                */
-/*    Copyright   :  2015-20 Manuel Serrano                            */
+/*    Last change :  Thu May  6 16:24:52 2021 (serrano)                */
+/*    Copyright   :  2015-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 rest arguments                            */
 /*=====================================================================*/
-"use hopscript";
+"use strict";
 
 var assert = require( "assert" );
 

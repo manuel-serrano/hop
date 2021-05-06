@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Apr 26 14:33:54 2021 (serrano)                */
+;*    Last change :  Thu May  6 17:48:05 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1189,7 +1189,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDProducer)
    (with-access::J2SDProducer this (decl expr size)
-      `(,@(call-next-method) ,@(dump-type this) ,size ,(j2s->list expr))))
+      (with-access::J2SDecl decl (id)
+	 `(,@(call-next-method) ,id ,@(dump-type this) ,size
+	     ,(j2s->list expr)))))
 		  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDConsumer ...                                     */

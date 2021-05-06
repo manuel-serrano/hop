@@ -1,14 +1,14 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.2.x/test/hopjs/noserv/es6-defval.js       */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/es6-defval.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Tue Feb  6 09:07:02 2018 (serrano)                */
-/*    Copyright   :  2015-18 Manuel Serrano                            */
+/*    Last change :  Thu May  6 16:19:29 2021 (serrano)                */
+/*    Copyright   :  2015-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 default parameter values                  */
 /*=====================================================================*/
-"use hopscript";
+"use strict";
 
 var assert = require( "assert" );
 

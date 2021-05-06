@@ -1,15 +1,14 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.2.x/test/hopjs/noserv/es6-weakset.js      */
+/*    .../prgm/project/hop/hop/test/hopjs/noserv/es6-weakset.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Feb 25 11:33:29 2019                          */
-/*    Last change :  Wed Feb 27 08:10:53 2019 (serrano)                */
-/*    Copyright   :  2019 Manuel Serrano                               */
+/*    Last change :  Thu May  6 16:21:22 2021 (serrano)                */
+/*    Copyright   :  2019-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 WEAKMAP object.                          */
 /*=====================================================================*/
 "use strict";
-"use hopscript";
 
 const assert = require( "assert" );
 

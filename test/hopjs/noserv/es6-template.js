@@ -3,13 +3,12 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Aug 14 09:43:13 2015                          */
-/*    Last change :  Fri Aug  9 08:27:35 2019 (serrano)                */
-/*    Copyright   :  2015-19 Manuel Serrano                            */
+/*    Last change :  Thu May  6 16:21:10 2021 (serrano)                */
+/*    Copyright   :  2015-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 template strings                                     */
 /*=====================================================================*/
 "use strict";
-"use hopscript";
 
 var assert = require( "assert" );
 

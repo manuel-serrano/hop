@@ -1,17 +1,17 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.1.x/test/hopjs/serv/serialization.js      */
+/*    .../prgm/project/hop/hop/test/hopjs/serv/serialization.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jan 11 18:14:33 2015                          */
-/*    Last change :  Sat Feb  4 10:23:58 2017 (serrano)                */
-/*    Copyright   :  2015-17 Manuel Serrano                            */
+/*    Last change :  Thu May  6 16:21:47 2021 (serrano)                */
+/*    Copyright   :  2015-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing server-to-server serialization                           */
 /*=====================================================================*/
 "use hopscript";
 
-var assert = require( "assert" );
-var res = 0;
+const assert = require( "assert" );
+let res = 0;
 
 function doBufTest( buf, md5 ) {
    assert.ok( hop.md5sum( buf.toString() ) === md5 );
@@ -39,10 +39,10 @@ service servbuf( buf, md5 ) {
 }
 
 function test() {
-   var dt = new Date();
-   var re = new RegExp( "[az]" );
-   var buf = new Buffer( "toto n'est pas content" );
-   var md5 = hop.md5sum( buf.toString() );
+   const dt = new Date();
+   const re = new RegExp( "[az]" );
+   const buf = new Buffer( "toto n'est pas content" );
+   const md5 = hop.md5sum( buf.toString() );
 
    serv( [
       [ new Number( 0 ), 0 ],

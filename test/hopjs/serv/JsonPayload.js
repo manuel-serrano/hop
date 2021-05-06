@@ -1,41 +1,41 @@
 "use hopscript";
 
-var path = require( 'path' );
-var fs = require( 'fs' );
-var assert = require( 'assert' );
-var util = require( 'util' );
+const path = require( 'path' );
+const fs = require( 'fs' );
+const assert = require( 'assert' );
+const util = require( 'util' );
 
 
-var smallFile =  module.filename;
-var largeFile =  path.dirname( module.filename ) + '/../../../bin/hop';
+const smallFile =  module.filename;
+const largeFile =  path.dirname( module.filename ) + '/../../../bin/hop';
 
-var refData = {};
+const refData = {};
 refData[ smallFile ] = fs.readFileSync( smallFile );
 refData[ largeFile ] = fs.readFileSync( largeFile );
 
 
 service getPayload( filename ) {
    console.log( "getPayload ", filename );
-   var x = { filename: filename, payloadType: 'Buffer', payload: refData[ filename ] }
+   const x = { filename: filename, payloadType: 'Buffer', payload: refData[ filename ] }
    return hop.HTTPResponseJson( x );
 }
 
 service getPayloadWebService( o ) {
-   var filename = (o && "filename" in o) ? o.filename : smallFile;
+   const filename = (o && "filename" in o) ? o.filename : smallFile;
    return hop.HTTPResponseJson( { filename: filename, payloadType: 'Buffer', payload: refData[ filename ]});
 }
 
 service getPayloadWSBase64( o ) {
-   var filename = (o && "filename" in o) ? o.filename : smallFile;
+   const filename = (o && "filename" in o) ? o.filename : smallFile;
    return hop.HTTPResponseJson( { filename: filename, payloadType: 'String', payloadEncoding: 'base64', payload: refData[ filename ].toString( 'base64' )});
 }
 
-var url = util.format( 'http://%s:%s/hop/getPayloadWebService', 'localhost', hop.port );
+const url = util.format( 'http://%s:%s/hop/getPayloadWebService', 'localhost', hop.port );
 
-var webService = hop.webService( url );
+const webService = hop.webService( url );
 
 
-var webServiceBase64 = hop.webService(
+const webServiceBase64 = hop.webService(
    util.format( 'http://%s:%s/hop/getPayloadWSBase64',
 		'localhost', hop.port ));
 
@@ -45,9 +45,9 @@ var webServiceBase64 = hop.webService(
 
 function processJsonResult( arg ) {
    return function( result ) {
-      var filename = result.filename;
+      const filename = result.filename;
       assert.equal( filename, arg );
-      var copy =  result.payload;
+      let copy = result.payload;
       if (result.payloadType == 'String' ) {
 	 copy = new Buffer( copy, result.payloadEncoding )
       };
@@ -59,7 +59,7 @@ function processJsonResult( arg ) {
 	 console.log( 'filename', filename );
 	 console.log( 'payload size:', copy.length );
 	 assert.equal( copy.length, refData[ arg ].length );
-	 for (var i = 0; i < copy.length; i++) {
+	 for (let i = 0; i < copy.length; i++) {
 	    assert.equal( copy[ i ], refData[ arg ][i] );
 	 };
       } else fail();
@@ -67,11 +67,11 @@ function processJsonResult( arg ) {
    }
 }
 
-var passed = 0
-var nextTest = 0;
+let passed = 0
+let nextTest = 0;
 
 function next() {
-   var testFunction = testSuite[ nextTest ];
+   const testFunction = testSuite[ nextTest ];
    console.log( 'running test', nextTest );
    nextTest ++;
    testFunction();
@@ -94,7 +94,7 @@ function fail( err = undefined ) {
 
 
 
-var testSuite = [
+const testSuite = [
    function() {
       getPayload( smallFile ).post( processJsonResult( smallFile ), fail );
    },

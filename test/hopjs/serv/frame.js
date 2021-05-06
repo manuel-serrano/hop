@@ -1,26 +1,26 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/serv/frame.js          */
+/*    serrano/prgm/project/hop/hop/test/hopjs/serv/frame.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 26 09:36:15 2015                          */
-/*    Last change :  Tue Jun  5 09:48:37 2018 (serrano)                */
-/*    Copyright   :  2015-18 Manuel Serrano                            */
+/*    Last change :  Thu May  6 16:18:50 2021 (serrano)                */
+/*    Copyright   :  2015-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing HopFrames                                                */
 /*=====================================================================*/
 "use hopscript";
 
-var assert = require( "assert" );
-var srv = new hop.Server();
-var res = 0;
+const assert = require( "assert" );
+const srv = new hop.Server();
+let res = 0;
 
 service foo( o ) {
    return o.a + o.b;
 }
 
-var o = { a: 1, b: 2 };
+const o = { a: 1, b: 2 };
 
-var f = foo.call( srv, o );
+const f = foo.call( srv, o );
 
 f.post( function( v ) {
    assert.ok( v == 3, "post.1" );

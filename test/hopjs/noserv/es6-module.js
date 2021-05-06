@@ -3,12 +3,12 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Oct 24 11:42:37 2018                          */
-/*    Last change :  Tue Apr 27 07:43:37 2021 (serrano)                */
+/*    Last change :  Thu May  6 16:20:38 2021 (serrano)                */
 /*    Copyright   :  2018-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 module                                               */
 /*=====================================================================*/
-"use hopscript";
+"use strict";
 
 var assert = require( "assert" );
 

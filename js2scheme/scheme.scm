@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Apr 27 09:25:47 2021 (serrano)                */
+;*    Last change :  Thu May  6 11:55:55 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -979,7 +979,13 @@
 					   (null? (cdr decls))
 					   (not rec)))
 				       ((isa? d J2SDeclFun)
-					(j2s-scheme d mode return ctx))
+					(with-access::J2SDeclFun d (binder)
+					   (if (eq? binder 'let)
+					       (j2s-let-decl-inner d
+						  mode return ctx
+						  (null? (cdr decls))
+						  (not rec))
+					       (j2s-scheme d mode return ctx))))
 				       (else
 					(list (j2s-scheme d mode return ctx)))))
 			decls))

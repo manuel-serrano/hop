@@ -1,15 +1,15 @@
 /*=====================================================================*/
-/*    .../project/hop/3.2.x/test/hopjs/noserv/es6-array-class.js       */
+/*    .../project/hop/hop/test/hopjs/noserv/es6-array-class.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Feb 25 11:33:29 2019                          */
-/*    Last change :  Wed Feb 27 08:31:03 2019 (serrano)                */
-/*    Copyright   :  2019 Manuel Serrano                               */
+/*    Last change :  Thu May  6 16:18:35 2021 (serrano)                */
+/*    Copyright   :  2019-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2016 Array subclassing.                       */
 /*=====================================================================*/
 "use strict";
-"use hopscript";
+//"use hopscript";
 
 const assert = require( "assert" );
 

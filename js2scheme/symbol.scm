@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Apr  9 10:26:26 2021 (serrano)                */
+;*    Last change :  Thu May  6 11:37:38 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -79,9 +79,9 @@
 		(%dummy (instantiate::J2SDecl
 			   (loc loc)
 			   (id '__%dummy%__)))
-		(hds (append-map (lambda (s) (collect* s)) headers))
-		(vars (append-map (lambda (s) (collect* s)) nodes))
-		(lets (collect-let nodes))
+		(hds (append-map (lambda (s) (collect* s mode)) headers))
+		(vars (append-map (lambda (s) (collect* s mode)) nodes))
+		(lets (collect-let nodes mode))
 		(env (append decls hds vars lets))
 		(genv (list %this %dummy))
 		(scope (config-get conf :bind-global '%scope))
@@ -331,75 +331,101 @@
       (with-access::J2SDecl d (id)
 	 (not (find-decl id params))))
 
+   (define (resolve-fun! this)
+      (with-access::J2SFun this (body params thisp loc (fmode mode) decl name
+				   ismethodof mode)
+	 (let ((nm (or name
+		       (when (isa? decl J2SDecl)
+			  (with-access::J2SDecl decl (id)
+			     id)))))
+	    ;; check parameter correctness
+	    (if (eq? fmode 'normal)
+		(nonstrict-params! params)
+		(begin
+		   (check-strict-mode-params params loc)
+		   (when (symbol? nm)
+		      (check-strict-mode-eval nm "Function name" loc))))
+	    ;; walk throught the function body
+	    (let* ((env0 (if (j2sfun-expression? this) (cons decl env) env))
+		   (decls (filter (lambda (d)
+				     ;; see ecma-262-51.html#sec-10.2
+				     (or (isa? d J2SDeclFun)
+					 (not-in? d params)))
+			     (collect* body fmode)))
+		   (arguments (instantiate::J2SDeclArguments
+				 (id 'arguments)
+				 (argid (gensym 'arguments))
+				 ;; MS CARE UTYPE
+				 (vtype (if (eq? fmode 'normal) 'any 'arguments))
+				 (mode mode)
+				 (loc loc)))
+		   (envl (append decls params))
+		   (env1 (append envl env0))
+		   (ldecls (with-access::J2SBlock body (nodes)
+			      (collect-let nodes fmode)))
+		   (nenv (if (find-decl 'arguments envl)
+			     (append ldecls env1)
+			     (cons arguments (append ldecls env1))))
+		   (bdenv (if (isa? thisp J2SDecl) (cons thisp nenv) nenv))
+		   (nwenv (cons arguments (append decls params wenv))))
+	       (for-each (lambda (decl::J2SDecl)
+			    (with-access::J2SDecl decl (scope)
+			       (set! scope 'fun)))
+		  ldecls)
+	       (if (pair? decls)
+		   (set! body
+		      (with-access::J2SBlock body (endloc)
+			 (instantiate::J2SBlock
+			    (loc loc)
+			    (endloc endloc)
+			    (nodes (append
+				      (bind-decls! decls bdenv fmode 'inner
+					 withs wenv genv conf)
+				      (list (walk! body bdenv fmode
+					       withs nwenv genv
+					       ctx conf)))))))
+		   (set! body (resolve! body bdenv fmode withs nwenv genv ctx conf)))
+	       (with-access::J2SDeclArguments arguments (usecnt)
+		  (when (>fx usecnt 0)
+		     (with-access::J2SFun this (vararg argumentsp params loc)
+			(if vararg
+			    (with-access::J2SDecl (car (last-pair params)) (id loc)
+			       (raise
+				  (instantiate::&io-parse-error
+				     (proc "symbol resolution (symbol)")
+				     (msg "\"arguments\" object may not be used in conjunction with a rest parameter")
+				     (obj id)
+				     (fname (cadr loc))
+				     (location (caddr loc)))))
+			    (begin
+			       (set! argumentsp arguments)
+			       (set! vararg 'arguments))))))
+	       this))))
+
+   (define (resolve-fun-hopscript! this)
+      (with-access::J2SFun this (body params thisp loc (fmode mode) decl name
+				   ismethodof mode)
+	 (let ((nm (or name
+		       (when (isa? decl J2SDecl)
+			  (with-access::J2SDecl decl (id)
+			     id)))))
+	    ;; check parameter correctness
+	    (check-strict-mode-params params loc)
+	    (when (symbol? nm)
+	       (check-strict-mode-eval nm "Function name" loc))
+	    ;; walk throught the function body
+	    (let* ((env0 (if (j2sfun-expression? this) (cons decl env) env))
+		   (nenv (append params env0))
+		   (bdenv (if (isa? thisp J2SDecl) (cons thisp nenv) nenv))
+		   (nwenv (append params wenv)))
+	       (set! body (resolve! body bdenv fmode withs nwenv genv ctx conf))
+	       this))))
+   
    (with-access::J2SFun this (body params thisp loc (fmode mode) decl name
-				ismethodof)
-      (let ((nm (or name
-		    (when (isa? decl J2SDecl)
-		       (with-access::J2SDecl decl (id)
-			  id)))))
-	 ;; check parameter correctness
-	 (if (eq? fmode 'normal)
-	     (nonstrict-params! params)
-	     (begin
-		(check-strict-mode-params params loc)
-		(when (symbol? nm)
-		   (check-strict-mode-eval nm "Function name" loc))))
-	 ;; walk throught the function body
-	 (let* ((env0 (if (j2sfun-expression? this) (cons decl env) env))
-		(decls (filter (lambda (d)
-				  ;; see ecma-262-51.html#sec-10.2
-				  (or (isa? d J2SDeclFun)
-				      (not-in? d params)))
-			  (collect* body)))
-		(arguments (instantiate::J2SDeclArguments
-			      (id 'arguments)
-			      (argid (gensym 'arguments))
-			      ;; MS CARE UTYPE
-			      (vtype (if (eq? fmode 'normal) 'any 'arguments))
-			      (mode mode)
-			      (loc loc)))
-		(envl (append decls params))
-		(env1 (append envl env0))
-		(ldecls (with-access::J2SBlock body (nodes)
-			   (collect-let nodes)))
-		(nenv (if (find-decl 'arguments envl)
-			  (append ldecls env1)
-			  (cons arguments (append ldecls env1))))
-		(bdenv (if (isa? thisp J2SDecl) (cons thisp nenv) nenv))
-		(nwenv (cons arguments (append decls params wenv))))
-	    (for-each (lambda (decl::J2SDecl)
-			 (with-access::J2SDecl decl (scope)
-			    (set! scope 'fun)))
-	       ldecls)
-	    (if (pair? decls)
-		(set! body
-		   (with-access::J2SBlock body (endloc)
-		      (instantiate::J2SBlock
-			 (loc loc)
-			 (endloc endloc)
-			 (nodes (append
-				   (bind-decls! decls bdenv fmode 'inner
-				      withs wenv genv conf)
-				   (list (walk! body bdenv fmode
-					    withs nwenv genv
-					    ctx conf)))))))
-		(set! body (walk! body bdenv fmode withs nwenv genv ctx conf)))
-	    (with-access::J2SDeclArguments arguments (usecnt)
-	       (when (>fx usecnt 0)
-		  (with-access::J2SFun this (vararg argumentsp params loc)
-		     (if vararg
-			 (with-access::J2SDecl (car (last-pair params)) (id loc)
-			    (raise
-			       (instantiate::&io-parse-error
-				  (proc "symbol resolution (symbol)")
-				  (msg "\"arguments\" object may not be used in conjunction with a rest parameter")
-				  (obj id)
-				  (fname (cadr loc))
-				  (location (caddr loc)))))
-			 (begin
-			    (set! argumentsp arguments)
-			    (set! vararg 'arguments)))))))))
-   this)
+				ismethodof mode)
+      (if (eq? fmode 'hopscript)
+	  (resolve-fun-hopscript! this)
+	  (resolve-fun! this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2STilde ...                                          */
@@ -442,11 +468,30 @@
 (define-walk-method (resolve! this::J2SBlock env mode withs wenv genv ctx conf)
    ;; a block is a letrec if it contains let or const declaration
    (with-access::J2SBlock this (nodes endloc)
-      (let ((ldecls (collect-let nodes)))
+      (let ((ldecls (collect-let nodes mode)))
 	 (if (pair? ldecls)
 	     (resolve-let! this env mode withs wenv genv ldecls ctx conf)
 	     (call-default-walker)))))
 
+;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SLetBlock ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve! this::J2SLetBlock env mode withs wenv genv ctx conf)
+   (if (eq? mode 'hopscript)
+       (with-access::J2SLetBlock this (nodes endloc loc decls)
+	  (let ((env (append decls env)))
+	     (set! decls
+		(map (lambda (d)
+			(with-access::J2SDecl d (binder)
+			   (set! binder 'let-opt))
+			(resolve! d env mode withs wenv genv ctx conf))
+		   decls))
+	     (set! nodes
+		(map (lambda (n) (resolve! n env mode withs wenv genv ctx conf))
+		   nodes))
+	     this))
+       (call-next-method)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SWith ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -810,7 +855,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    export-error ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (export-err id loc #!optional msg)
+(define (export-err id loc #!optional (msg ""))
    (raise
       (instantiate::&io-parse-error
 	 (proc "symbol resolution (symbol)")
@@ -840,17 +885,19 @@
 ;*    resolve! ::J2SDecl ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SDecl env mode withs wenv genv ctx conf)
-   (with-access::J2SDecl this (loc id)
+   (with-access::J2SDecl this (loc id scope)
       (when (eq? mode 'strict)
 	 (check-strict-mode-eval id  "Declaration name" loc))
-      (instantiate::J2SNop
-	 (loc loc))))
+      (if (and (eq? mode 'hopscript) (eq? scope 'letblock))
+	  this
+	  (instantiate::J2SNop
+	     (loc loc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SDeclInit ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SDeclInit env mode withs wenv genv ctx conf)
-   (with-access::J2SDeclInit this (loc id val exports)
+   (with-access::J2SDeclInit this (loc id val exports scope)
       (let ((ndecl::J2SDecl (or (find-decl id env) this)))
 	 ;; strict mode restrictions
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-10.1.1
@@ -870,26 +917,33 @@
 	       (with-access::J2SFun rhs (name)
 		  (when (eq? name '||)
 		     (set! name id))))
-	    (if (j2s-let-opt? this)
-		(begin
-		   (set! val rhs)
-		   (instantiate::J2SNop (loc loc)))
-		(begin
-		   (set! val (instantiate::J2SUndefined (loc loc)))
-		   (instantiate::J2SStmtExpr
-		      (loc loc)
-		      (expr (instantiate::J2SInit
-			       (loc loc)
-			       (lhs (j2sref ndecl loc withs wenv))
-			       (rhs rhs))))))))))
+	    (cond
+	       ((and (eq? mode 'hopscript) (eq? scope 'letblock))
+		(set! val rhs)
+		this)
+	       ((j2s-let-opt? this)
+		(set! val rhs)
+		(instantiate::J2SNop (loc loc)))
+	       (else
+		(set! val (instantiate::J2SUndefined (loc loc)))
+		(instantiate::J2SStmtExpr
+		   (loc loc)
+		   (expr (instantiate::J2SInit
+			    (loc loc)
+			    (lhs (j2sref ndecl loc withs wenv))
+			    (rhs rhs))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SDeclFun ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SDeclFun env mode withs wenv genv ctx conf)
-   (with-access::J2SDecl this (loc exports id)
-      (instantiate::J2SNop
-	 (loc loc))))
+   (with-access::J2SDeclFun this (loc val scope)
+      (if (and (eq? mode 'hopscript) (eq? scope 'letblock))
+	  (begin
+	     (set! val (resolve! val env mode withs wenv genv ctx conf))
+	     this)
+	  (instantiate::J2SNop
+	     (loc loc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SDeclExtern ...                                     */
@@ -978,7 +1032,7 @@
 		      (unless (string=? better-name "")
 			 (set! name (string->symbol better-name))))))))))
    
-   (when (eq? mode 'strict)
+   (when (memq mode '(strict hopscript))
       ;; strict mode restrictions
       (with-access::J2SAssig this (lhs loc)
 	 (let loop ((lhs lhs))
@@ -987,7 +1041,7 @@
 		(with-access::J2SRef lhs (decl)
 		   (with-access::J2SDecl decl (id)
 		      (check-strict-mode-eval id "Assignment to" loc)
-		      (check-immutable decl loc conf))))
+		      (check-immutable decl loc mode))))
 	       ((isa? lhs J2SUnresolvedRef)
 		(with-access::J2SUnresolvedRef lhs (id)
 		   (check-strict-mode-eval id "Assignment to" loc)))
@@ -1133,9 +1187,12 @@
 ;*    resolve! ::J2SDProducer ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SDProducer env mode withs wenvs genv ctx conf)
-   (with-access::J2SDProducer this (decl)
+   (with-access::J2SDProducer this (decl loc)
       (with-access::J2SDecl decl (id)
 	 (let ((d (find-decl id env)))
+	    (unless d
+	       (tprint "PAS BON " id " loc=" loc)
+	       (tprint "this=" (j2s->list this)))
 	    (set! decl d)))
       (call-default-walker)))
 
@@ -1183,7 +1240,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    collect-let ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (collect-let::pair-nil nodes::pair-nil)
+(define (collect-let::pair-nil nodes::pair-nil mode::symbol)
    (append-map (lambda (d)
 		  (if (isa? d J2SVarDecls)
 		      (with-access::J2SVarDecls d (decls)
@@ -1201,13 +1258,13 @@
 ;*    -------------------------------------------------------------    */
 ;*    Collect all the variables declared in a tree.                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect* this::J2SNode)
+(define-walk-method (collect* this::J2SNode mode)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect* ::J2SVarDecls ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect* this::J2SVarDecls)
+(define-walk-method (collect* this::J2SVarDecls mode)
    (with-access::J2SVarDecls this (decls)
       (filter-map (lambda (d::J2SDecl)
 		     (cond
@@ -1224,33 +1281,42 @@
 	 decls)))
 
 ;*---------------------------------------------------------------------*/
+;*    collect* ::J2SLetBlock ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect* this::J2SLetBlock mode)
+   (if (eq? mode 'hopscript)
+       (with-access::J2SBlock this (nodes)
+	  (append-map (lambda (n) (collect* n mode)) nodes))
+       (call-default-walker)))
+   
+;*---------------------------------------------------------------------*/
 ;*    collect* ::J2SDecl ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect* this::J2SDecl)
+(define-walk-method (collect* this::J2SDecl mode)
    (if (j2s-var? this) (list this) '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect* ::J2SDeclFun ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect* this::J2SDeclFun)
+(define-walk-method (collect* this::J2SDeclFun mode)
    (list this))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect* ::J2SDeclExtern ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect* this::J2SDeclExtern)
+(define-walk-method (collect* this::J2SDeclExtern mode)
    (list this))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect* ::J2SFun ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect* this::J2SFun)
+(define-walk-method (collect* this::J2SFun mode)
    '())
 
 ;*---------------------------------------------------------------------*/
 ;*    collect* ::J2SDollar ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect* this::J2SDollar)
+(define-walk-method (collect* this::J2SDollar mode)
    '())
 
 ;*---------------------------------------------------------------------*/
@@ -1294,11 +1360,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    check-immutable ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (check-immutable decl::J2SDecl loc conf)
+(define (check-immutable decl::J2SDecl loc mode)
    (with-access::J2SDecl decl (writable id)
       (when (and (not writable) (or (isa? decl J2SDeclClass) (isa? decl J2SDeclFun)))
 	 (cond
-	    ((eq-conf-lang? conf "hopscript")
+	    ((eq? mode 'hopscript)
 	     (raise
 		(instantiate::&io-parse-error
 		   (proc "symbol resolution (symbol)")
