@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/scheme-call.scm         */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-call.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sun Apr 11 11:46:08 2021 (serrano)                */
+;*    Last change :  Fri May  7 15:58:40 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -132,6 +132,7 @@
 	("sort" js-array-sort array (any) %this #t ,j2s-array-plain?)
 	("sort" js-array-maybe-sort any (any) %this #t ,j2s-array-plain?)
 	("fill" js-array-fill1 array (any) %this #t ,j2s-array-plain?)
+	("fill" js-array-fill1 jsvector (any) %this #t)
 	("fill" js-array-maybe-fill1 any (any) %this #t ,j2s-array-plain?)
 	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this #t ,j2s-array-plain?)
 	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this #t ,j2s-array-plain?)

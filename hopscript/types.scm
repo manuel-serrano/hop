@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri May  7 10:01:59 2021 (serrano)                */
+;*    Last change :  Fri May  7 16:18:02 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -566,6 +566,9 @@
 	   (inline js-object-inline-ref ::JsObject ::long)
 	   (inline js-object-inline-set! ::JsObject ::long ::obj)
 
+	   (inline js-vector-inline-ref ::JsArray ::long)
+	   (inline js-vector-inline-set! ::JsArray ::long ::obj)
+
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
 	   
@@ -1092,6 +1095,28 @@
       (else
        (with-access::JsObject o (elements)
 	  (vector-set! elements idx val)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-vector-inline-ref ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-vector-inline-ref o::JsArray idx::long)
+   (cond-expand
+      ((and bigloo-c (not devel) (not debug))
+       (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsarrayz00_bglt)(COBJECT($1)))->BgL_vecz00))) + 1))), $2 )" o idx))
+      (else
+       (with-access::JsArray o (vec)
+	  (vector-ref vec idx)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-vector-inline-set! ...                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (js-vector-inline-set! o::JsArray idx::long val)
+   (cond-expand
+      ((and bigloo-c (not devel) (not debug))
+       (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsarrayz00_bglt)(COBJECT($1)))->BgL_vecz00))) + 1))), $2, $3 )" o idx val))
+      (else
+       (with-access::JsArray o (vec)
+	  (vector-set! vec idx val)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsWrapper ...                              */

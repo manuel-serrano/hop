@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/scheme-array.scm        */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-array.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Wed Apr 21 18:20:20 2021 (serrano)                */
+;*    Last change :  Fri May  7 15:48:46 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -33,10 +33,13 @@
    (export (j2s-array-builtin-method fun::J2SAccess args
 	      expr mode return::procedure conf)
 	   (j2s-new-array ::J2SNew mode return conf)
+	   (j2s-new-jsvector ::J2SNew mode return conf)
 	   (j2s-array-ref ::J2SAccess mode return conf)
 	   (j2s-array-set! ::J2SAssig mode return conf)
 	   (j2s-vector-ref ::J2SAccess mode return conf)
 	   (j2s-vector-set! ::J2SAssig mode return conf)
+	   (j2s-jsvector-ref ::J2SAccess mode return conf)
+	   (j2s-jsvector-set! ::J2SAssig mode return conf)
 	   (j2s-array-foreach obj args mode return conf)
 	   (j2s-array-maybe-foreach obj args mode return conf)
 	   (j2s-array-map obj args mode return conf)
@@ -183,6 +186,52 @@
 		   (else
 		    `(js-array-construct-alloc %this 
 			,(j2s-scheme arg mode return ctx))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-new-jsvector ...                                             */
+;*---------------------------------------------------------------------*/
+(define (j2s-new-jsvector this::J2SNew mode return ctx)
+   
+   (define (uncast a)
+      (if (isa? a J2SCast)
+	  (with-access::J2SCast a (expr type)
+	     (if (eq? type 'any)
+		 expr
+		 a))
+	  a))
+   
+   (with-access::J2SNew this (loc cache clazz args type)
+      (cond
+	 ((null? args)
+	  (error/location "hopscript" "new Vector(), missing argument" this
+	     (cadr loc) (caddr loc)))
+	 ((pair? (cdr args))
+	  (error/location "hopscript" "new Vector(...), too many arguments" this
+	     (cadr loc) (caddr loc)))
+	 ((eq? type 'vector)
+	  `(js-make-vector
+	      ,(j2s-scheme (car args) mode return ctx)
+	      (js-undefined)))
+	 (else
+	  (let loop ((arg (uncast (car args))))
+	     (let ((t (j2s-type arg)))
+		(cond
+		   ((eq? t 'int32)
+		    `(js-vector-alloc
+			,(int32->uint32 (j2s-scheme arg mode return ctx))
+			%this))
+		   ((eq? t 'uint32)
+		    `(js-vector-alloc
+			,(j2s-scheme arg mode return ctx)
+			%this))
+		   ((memq t '(integer bint int53))
+		    `(js-vector-alloc
+			,(fixnum->uint32 (j2s-scheme arg mode return ctx))
+			%this))
+		   (else
+		    `(js-vector-new1
+			,(box (j2s-scheme arg mode return ctx) type ctx)
+			%this)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-index-ref ...                                          */
@@ -499,19 +548,64 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-vector-set! this::J2SAssig mode return ctx)
    (with-access::J2SAssig this (lhs rhs)
-      (with-access::J2SAssig this (lhs rhs)
+      (let loop ((rhs rhs))
+	 (if (boxed-type? (j2s-type rhs))
+	     (with-access::J2SExpr rhs (loc type)
+		(let ((tmp (gensym)))
+		   `(let ((,tmp ,(j2s-scheme rhs mode return ctx)))
+		       ,(loop (J2SCast 'any (J2SHopRef/type tmp type)))
+		       ,tmp)))
+	     (with-access::J2SAccess lhs (obj field)
+		`(vector-set! ,(j2s-scheme obj mode return ctx)
+		    (uint32->fixnum
+		       ,(j2s-scheme-as-uint32 field mode return ctx))
+		    ,(j2s-scheme rhs mode return ctx)))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-jsvector-ref ...                                             */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsvector-ref this::J2SAccess mode return ctx)
+   (with-access::J2SAccess this (obj field type)
+      (cond
+	 ((memq (j2s-type field) '(uint32 int32 int53))
+	  `(js-vector-index-ref ,(j2s-scheme obj mode return ctx)
+	      ,(j2s-scheme-as-uint32 field mode return ctx)
+	      %this))
+	 ((j2s-field-length? field)
+	  (let ((x `(js-vector-length
+		       ,(j2s-scheme obj mode return ctx))))
+	     (if (eq? type 'uint32)
+		 x
+		 `(uint32->fixnum ,x))))
+	 (else
+	  `(js-vector-get ,(j2s-scheme obj mode return ctx)
+	      ,(j2s-scheme field mode return ctx)
+	      %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-jsvector-set! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsvector-set! this::J2SAssig mode return ctx)
+   (with-access::J2SAssig this (lhs rhs)
+      (with-access::J2SAccess lhs (obj field)
 	 (let loop ((rhs rhs))
-	    (if (boxed-type? (j2s-type rhs))
+	    (cond
+	       ((boxed-type? (j2s-type rhs))
 		(with-access::J2SExpr rhs (loc type)
 		   (let ((tmp (gensym)))
 		      `(let ((,tmp ,(j2s-scheme rhs mode return ctx)))
 			  ,(loop (J2SCast 'any (J2SHopRef/type tmp type)))
-			  ,tmp)))
-		(with-access::J2SAccess lhs (obj field)
-		   `(vector-set! ,(j2s-scheme obj mode return ctx)
-		       (uint32->fixnum
-			  ,(j2s-scheme-as-uint32 field mode return ctx))
-		       ,(j2s-scheme rhs mode return ctx))))))))
+			  ,tmp))))
+	       ((memq (j2s-type field) '(uint32 int32 int53))
+		`(js-vector-index-set! ,(j2s-scheme obj mode return ctx)
+		    ,(j2s-scheme-as-uint32 field mode return ctx)
+		    ,(j2s-scheme rhs mode return ctx)
+		    %this))
+	       (else
+		`(js-vector-put! ,(j2s-scheme obj mode return ctx)
+		    ,(j2s-scheme field mode return ctx)
+		    ,(j2s-scheme rhs mode return ctx)
+		    %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-as-uint32 ...                                         */

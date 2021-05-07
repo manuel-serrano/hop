@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/utils.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/utils.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sun Apr 11 10:04:29 2021 (serrano)                */
+;*    Last change :  Fri May  7 15:43:09 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -266,7 +266,7 @@
 ;*    type-object? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (type-object? type)
-   (memq type '(object regexp date Promise array arguments global this)))
+   (memq type '(object regexp date Promise array jsvector arguments global this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-maybe? ...                                                  */
@@ -303,6 +303,7 @@
       ((undefined) 'unspecified)
       ((regexp) 'JsRegExp)
       ((array) 'JsArray)
+      ((jsvector) 'JsArray)
       ((int8array) 'JsInt8Array)
       ((uint8array) 'JsUint8Array)
       ((int16array) 'JsInt16Array)

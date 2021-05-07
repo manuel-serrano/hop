@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/js2scheme/scheme-utils.scm        */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-utils.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Tue Jun  2 07:44:16 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Fri May  7 17:40:02 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
 ;*=====================================================================*/
@@ -770,6 +770,16 @@
 			  ,(strict-mode? mode) %this)
 		      `(js-array-noindex-set! ,obj ,prop ,val
 			  ,(strict-mode? mode) %this)))))
+	     ((eq? tyobj 'jsvector)
+	      (case typrop
+		 ((uint32)
+		  `(js-vector-index-set! ,obj ,prop ,val %this))
+		 ((int32)
+		  `(js-vector-index-set! ,obj (int32->fixnum ,prop) ,val %this))
+		 ((int53)
+		  `(js-vector-set! ,obj (int32->fixnum ,prop) ,val %this))
+		 (else
+		  `(js-vector-put! ,obj ,prop ,val %this))))
 	     ((eq? tyobj 'arguments)
 	      `(js-put! ,obj ,prop ,val ,mode %this))
 	     ((and cache cspecs)

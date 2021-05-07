@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Sun Apr 12 16:09:16 2020 (serrano)                */
+;*    Last change :  Fri May  7 15:08:27 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -134,6 +134,8 @@
 	    `(with-access::JsGlobalObject %this (js-object) js-object))
 	 (js-def-extern 'Array #t writable
 	    `(with-access::JsGlobalObject %this (js-array) js-array))
+	 (js-def-extern 'Vector #t #f
+	    `(with-access::JsGlobalObject %this (js-vector) js-vector))
 	 (js-def-extern 'Uint8Array #t writable
 	    `(with-access::JsGlobalObject %this (js-uint8array) js-uint8array)
 	    :sweepable #t)

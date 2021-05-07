@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu May  6 11:55:55 2021 (serrano)                */
+;*    Last change :  Fri May  7 15:47:06 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1864,6 +1864,8 @@
 		   (cond
 		      ((eq? (j2s-type obj) 'vector)
 		       (j2s-vector-set! this mode return ctx))
+		      ((eq? (j2s-type obj) 'jsvector)
+		       (j2s-jsvector-set! this mode return ctx))
 		      ((and (eq? (j2s-type obj) 'array) (maybe-number? field))
 		       (j2s-array-set! this mode return ctx))
 		      ((and (memq (j2s-type obj) '(int8array uint8array))
@@ -2131,6 +2133,8 @@
 	 (cond
 	    ((eq? (j2s-type obj) 'array)
 	     (aput-inc 'array otmp prop op lhs field cache inc '() #f))
+	    ((eq? (j2s-type obj) 'jsvector)
+	     (aput-inc 'jsvector otmp prop op lhs field cache inc '() #f))
 	    ((not cache)
 	     (aput-inc 'object otmp prop op lhs field cache inc '() #f))
 	    ((or (not cache) (memq (j2s-type field) '(integer number)))
@@ -2489,6 +2493,8 @@
 	     `(js-object-proto %this))
 	    ((eq? (j2s-type obj) 'vector)
 	     (j2s-vector-ref this mode return ctx))
+	    ((eq? (j2s-type obj) 'jsvector)
+	     (j2s-jsvector-ref this mode return ctx))
 	    ((eq? (j2s-type obj) 'array)
 	     (or (j2s-rest-ref this mode return ctx)
 		 (j2s-array-ref this mode return ctx)
@@ -2817,6 +2823,9 @@
    (define (new-array? clazz)
       (new-builtin? clazz 'Array))
 
+   (define (new-jsvector? clazz)
+      (new-builtin? clazz 'Vector))
+
    (define (new-proxy? clazz)
       (new-builtin? clazz 'Proxy))
 
@@ -2918,6 +2927,10 @@
 	       (or (=fx (bigloo-debug) 0) (eq? type 'vector)))
 	  (epairify loc
 	     (j2s-new-array this mode return ctx)))
+	 ((and (new-jsvector? clazz)
+	       (or (=fx (bigloo-debug) 0) (eq? type 'vector)))
+	  (epairify loc
+	     (j2s-new-jsvector this mode return ctx)))
 	 ((and (=fx (length args) 1)
 	       (or (new-int8array? clazz)
 		   (new-uint8array? clazz)))

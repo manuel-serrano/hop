@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu May  6 17:48:05 2021 (serrano)                */
+;*    Last change :  Fri May  7 16:46:30 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -177,6 +177,16 @@
 		     '())))
 	     (else
 	      '())))
+       '()))
+      
+;*---------------------------------------------------------------------*/
+;*    dump-rutype ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (dump-rutype this)
+   (if (or (>= (bigloo-debug) 2)
+	   (string-contains  (or (getenv "HOPTRACE") "") "j2s:type+"))
+       (with-access::J2SFun this (rutype)
+	  `(:rutype ,rutype))
        '()))
       
 ;*---------------------------------------------------------------------*/
@@ -661,7 +671,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFun)
    (with-access::J2SFun this (name thisp argumentsp params body decl mode
-				rtype optimize src 
+				rutype rtype optimize src 
 				need-bind-exit-return new-target
 				idthis generator loc vararg)
       (cond
@@ -677,6 +687,7 @@
 		 ,@(dump-info this)
 		 ,@(dump-type this)
 		 ,@(dump-rtype this)
+		 ,@(dump-rutype this)
 		 ,@(dump-need-bind-exit-return need-bind-exit-return)
 		 ,@(if optimize '() `(:optimize ,optimize))
 		 ,@(if new-target '(:new-target #t) '())
@@ -699,6 +710,7 @@
 		 ,@(dump-info this)
 		 ,@(dump-type this)
 		 ,@(dump-rtype this)
+		 ,@(dump-rutype this)
 		 ,@(dump-need-bind-exit-return need-bind-exit-return)
 		 ,@(if optimize '() `(:optimize ,optimize))
 		 ,@(if src '() `(:src #f))
@@ -716,6 +728,7 @@
 	      ,@(dump-info this)
 	      ,@(dump-type this)
 	      ,@(dump-rtype this)
+	      ,@(dump-rutype this)
 	      ,@(dump-need-bind-exit-return need-bind-exit-return)
 	      ,@(if optimize '() `(:optimize ,optimize))
 	      ,@(if src '() `(:src #f))

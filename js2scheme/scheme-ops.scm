@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue May  4 12:53:56 2021 (serrano)                */
+;*    Last change :  Fri May  7 17:39:35 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -558,6 +558,11 @@
 	   `(or (js-array? ,lhs) (js-instanceof? %this ,lhs ,rhs))
 	   `(let ((%o ,lhs))
 	       (or (js-array? %o) (js-instanceof? %this %o ,rhs)))))
+      ((!Vector)
+       (if (symbol? lhs)
+	   `(js-vector? ,lhs)
+	   `(let ((%o ,lhs))
+	       (js-vector? %o))))
       ((!Function)
        (if (symbol? lhs)
 	   `(or (js-function? ,lhs) (js-instanceof? %this ,lhs ,rhs))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Apr 22 08:13:58 2021 (serrano)                */
+;*    Last change :  Fri May  7 15:11:51 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1333,6 +1333,7 @@
 	  (with-access::J2SUnresolvedRef clazz (id)
 	     (case id
 		((Array) 'array)
+		((Vector) 'jsvector)
 		((Date) 'date)
 		((RegExp) 'regexp)
 		((Int8Array) 'int8array)
@@ -1345,6 +1346,7 @@
 		   (when (decl-ronly? decl)
 		      (case id
 			 ((Array) 'array)
+			 ((Vector) 'jsvector)
 			 ((Int8Array) 'int8array)
 			 ((Uint8Array) 'uint8array)
 			 ((Date) 'date)
@@ -1517,7 +1519,7 @@
 	 (multiple-value-bind (tyf envf bkf)
 	    (node-type field envo fix)
 	    (cond
-	       ((and (memq tyo '(array string)) (j2s-field-length? field))
+	       ((and (memq tyo '(array string jsvector)) (j2s-field-length? field))
 		(with-access::J2SString field (val)
 		   (expr-type-add! this envf fix 'integer (append bko bkf))))
 	       ((and (eq? tyo 'arguments)

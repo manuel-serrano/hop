@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Sat Apr 11 13:53:49 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Last change :  Fri May  7 16:00:33 2021 (serrano)                */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
 ;*=====================================================================*/
@@ -32,6 +32,7 @@
 	   __hopscript_array
 	   __hopscript_arraybuffer	   
 	   __hopscript_arraybufferview
+	   __hopscript_vector
 	   __hopscript_string
 	   __hopscript_stringliteral
 	   __hopscript_names

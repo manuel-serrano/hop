@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Jan  4 05:46:44 2020 (serrano)                */
+;*    Last change :  Fri May  7 17:22:33 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1755,7 +1755,7 @@
 	 (multiple-value-bind (intff envf)
 	    (node-range field envo conf mode fix)
 	    (with-access::J2SExpr obj (type)
-	       (if (and (memq type '(string array)) (j2s-field-length? field))
+	       (if (and (memq type '(string array jsvector)) (j2s-field-length? field))
 		   (expr-range-add! this envf fix *length-intv*)
 		   (expr-range-add! this envf fix *infinity-intv*)))))))
 

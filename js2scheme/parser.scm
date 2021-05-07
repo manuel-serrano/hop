@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu May  6 07:31:09 2021 (serrano)                */
+;*    Last change :  Fri May  7 14:59:50 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -444,64 +444,83 @@
    
    (define (var-decl-list in-for-init?)
       (decl-list (consume-token! 'var) in-for-init?
-	 (lambda (loc id val)
+	 (lambda (loc id val ty)
 	    (instantiate::J2SDeclInit
 	       (loc loc)
 	       (id id)
-	       (val val)))
-	 (lambda (loc id)
+	       (val val)
+	       (utype ty)))
+	 (lambda (loc id ty)
 	    (instantiate::J2SDecl
 	       (loc loc)
-	       (id id)))))
+	       (id id)
+	       (utype ty)))))
    
    (define (let-decl-list in-for-init?)
       ;; ES6 let block
       (decl-list (consume-token! 'let) in-for-init?
-	 (lambda (loc id val)
+	 (lambda (loc id val ty)
 	    (instantiate::J2SDeclInit
 	       (loc loc)
 	       (id id)
 	       (binder 'let)
-	       (val val)))
-	 (lambda (loc id)
+	       (val val)
+	       (utype ty)))
+	 (lambda (loc id ty)
 	    (instantiate::J2SDeclInit
 	       (loc loc)
 	       (id id)
 	       (binder 'let)
-	       (val (J2SUndefined))))))
+	       (val (J2SUndefined))
+	       (utype ty)))))
    
    (define (const-decl-list in-for-init?)
       ;; ES6 const block
       (decl-list (consume-token! 'const) in-for-init?
-	 (lambda (loc id val)
+	 (lambda (loc id val ty)
 	    (instantiate::J2SDeclInit
 	       (loc loc)
 	       (id id)
 	       (writable #f)
 	       (binder 'let)
-	       (val val)))
-	 (lambda (loc id)
+	       (val val)
+	       (utype ty)))
+	 (lambda (loc id ty)
 	    (instantiate::J2SDeclInit
 	       (loc loc)
 	       (id id)
 	       (writable #f)
 	       (binder 'let)
-	       (val (J2SUndefined))))))
-   
+	       (val (J2SUndefined))
+	       (utype ty)))))
+
+   (define (opt-type)
+      (cond
+	 ((and (eq? (peek-token-type) ':) (eq? current-mode 'hopscript))
+	  (consume-any!)
+	  (let ((ty (consume-token! 'ID)))
+	     (token-value ty)))
+	 ((eq? (peek-token-type) 'TYPE)
+	  (token-value (consume-any!)))
+	 (else
+	  'unknown)))
+
    (define (var::pair in-for-init? constrinit constr)
       (let ((id (peek-token)))
 	 (case (token-tag id)
 	    ((ID)
 	     (consume-any!)
-	     (if (or (eq? (token-tag id) 'ID) (eq? current-mode 'normal))
-		 (case (peek-token-type)
-		    ((=)
-		     (let* ((token (consume-any!))
-			    (expr (assig-expr in-for-init? #f #f)))
-			(list (constrinit (token-loc token) (cdr id) expr))))
-		    (else
-		     (list (constr (token-loc id) (cdr id)))))
-		 (parse-token-error "Illegal lhs" id))) 
+	     (let ((ty (opt-type)))
+		(if (or (eq? (token-tag id) 'ID) (eq? current-mode 'normal))
+		    (case (peek-token-type)
+		       ((=)
+			(let* ((token (consume-any!))
+			       (expr (assig-expr in-for-init? #f #f)))
+			   (list
+			      (constrinit (token-loc token) (cdr id) expr ty))))
+		       (else
+			(list (constr (token-loc id) (cdr id) ty))))
+		    (parse-token-error "Illegal lhs" id))) )
 	    ((undefined NaN Infinity)
 	     (consume-any!)
 	     (case (peek-token-type)
@@ -514,7 +533,7 @@
 	     (let* ((objectp (eq? (peek-token-type) 'LBRACE))
 		    (loc (token-loc id))
 		    (lhs (if objectp (object-literal #t) (array-literal #t #f)))
-		    (decl (constrinit loc (gensym '%obj) (J2SUndefined)))
+		    (decl (constrinit loc (gensym '%obj) (J2SUndefined) 'unknown))
 		    (bindings (j2s-destructure lhs decl #t)))
 		(if in-for-init?
 		    (let* ((tmp (instantiate::J2SDecl
@@ -873,15 +892,17 @@
 		  (body body)))))
 	    ((LBRACE LBRACKET)
 	     (let ((vars (var #t
-			      (lambda (loc id val)
-				(instantiate::J2SDeclInit
-				 (loc loc)
-				 (id id)
-				 (val val)))
-			      (lambda (loc id)
-				(instantiate::J2SDecl
-				 (loc loc)
-				 (id id))))))
+			      (lambda (loc id val ty)
+				 (instantiate::J2SDeclInit
+				    (loc loc)
+				    (id id)
+				    (val val)
+				    (utype ty)))
+			      (lambda (loc id ty)
+				 (instantiate::J2SDecl
+				    (loc loc)
+				    (id id)
+				    (utype ty))))))
 	       (pop-open-token (consume-token! 'RPAREN))
 	       (with-access::J2SDecl (car vars) (binder)
 				     (set! binder 'param))
@@ -1099,7 +1120,8 @@
 		       (consume-any!))))
 	    (multiple-value-bind (params args)
 	       (function-params #f)
-	       (let* ((body (fun-body params args current-mode))
+	       (let* ((ty (opt-type))
+		      (body (fun-body params args current-mode))
 		      (mode (or (javascript-mode body) current-mode)))
 		  (cond
 		     (declaration?
@@ -1112,6 +1134,7 @@
 					       (mode mode)
 					       (generator gen)
 					       (ismethodof methodof)
+					       (rutype ty)
 					       (body body)
 					       (vararg (rest-params params))))
 				       (decl (instantiate::J2SDeclFun
@@ -1564,9 +1587,7 @@
 	  (let* ((token (consume-any!))
 		 (loc (token-loc token))
 		 (hint '())
-		 (typ (if (eq? (peek-token-type) 'TYPE)
-			  (token-value (consume-any!))
-			  'unknown)))
+		 (typ (opt-type)))
 	     (if (eq? (peek-token-type) '=)
 		 ;; a parameter with a default value
 		 (begin
@@ -1807,7 +1828,8 @@
 	    ((isa? name-or-get J2SNode)
 	     (multiple-value-bind (params args)
 		(function-params #f)
-		(let* ((body (fun-body params args 'strict))
+		(let* ((ty (opt-type))
+		       (body (fun-body params args 'strict))
 		       (fun (instantiate::J2SFun
 			       (loc loc)
 			       (src fun-src)
@@ -1816,6 +1838,7 @@
 			       (mode 'strict)
 			       (name (loc->funname "met" loc))
 			       (generator gen)
+			       (rutype ty)
 			       (body body)
 			       (ismethodof super?)
 			       (vararg (rest-params params))))
@@ -1830,7 +1853,8 @@
 	    ((eq? (peek-token-type) 'LPAREN)
 	     (multiple-value-bind (params args)
 		(function-params #f)
-		(let* ((body (fun-body params args 'strict))
+		(let* ((ty (opt-type))
+		       (body (fun-body params args 'strict))
 		       (fun (instantiate::J2SFun
 			       (loc loc)
 			       (src fun-src)
@@ -1839,6 +1863,7 @@
 			       (mode 'strict)
 			       (name (loc->funname "met" loc))
 			       (generator gen)
+			       (rutype ty)
 			       (body body)
 			       (ismethodof super?)
 			       (vararg (rest-params params))))
@@ -1857,7 +1882,8 @@
 	     (let ((name (property-name #f)))
 		(multiple-value-bind (params args)
 		   (function-params #f)
-		   (let* ((body (fun-body params args 'strict))
+		   (let* ((ty (opt-type))
+			  (body (fun-body params args 'strict))
 			  (fun (instantiate::J2SFun
 				  (loc loc)
 				  (src fun-src)
@@ -1866,6 +1892,7 @@
 				  (mode 'strict)
 				  (name (loc->funname "met" loc))
 				  (generator gen)
+				  (rutype ty)
 				  (body body)
 				  (ismethodof super?)
 				  (vararg (rest-params params))))
@@ -2868,7 +2895,8 @@
       (define (property-accessor id tokname name props)
 	 (multiple-value-bind (params args)
 	    (function-params #f)
-	    (let* ((body (fun-body params args current-mode))
+	    (let* ((ty (opt-type))
+		   (body (fun-body params args current-mode))
 		   (mode (or (javascript-mode body) current-mode))
 		   (loc (token-loc tokname))
 		   (fun (instantiate::J2SFun
@@ -2879,6 +2907,7 @@
 			   (params params)
 			   (name (loc->funname "get" loc))
 			   (vararg (rest-params params))
+			   (rutype ty)
 			   (body body)))
 		   (oprop (find-prop (symbol->string! (token-value id)) props))
 		   (prop (or oprop
@@ -2907,7 +2936,8 @@
       (define (dynamic-property-accessor loc propname name props)
 	 (multiple-value-bind (params args)
 	    (function-params #f)
-	    (let* ((body (fun-body params args current-mode))
+	    (let* ((ty (opt-type))
+		   (body (fun-body params args current-mode))
 		   (mode (or (javascript-mode body) current-mode))
 		   (fun (instantiate::J2SFun
 			   (name (loc->funname "dyn" loc))
@@ -2917,6 +2947,7 @@
 			   (thisp (new-decl-this loc))
 			   (params params)
 			   (vararg (rest-params params))
+			   (rutype ty)
 			   (body body)))
 		   (prop (instantiate::J2SAccessorPropertyInit
 			    (loc loc)

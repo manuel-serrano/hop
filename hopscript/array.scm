@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri May  7 10:04:39 2021 (serrano)                */
+;*    Last change :  Fri May  7 17:05:28 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -20,7 +20,8 @@
 	    "types.sch"
 	    "stringliteral.sch"
 	    "property.sch"
-	    "array.sch")
+	    "array.sch"
+	    "index.sch")
    
    (extern ($js-make-jsarray::JsArray (::long ::uint32 ::JsConstructMap ::obj ::obj ::uint32)
 	      "bgl_make_jsarray")
@@ -224,34 +225,6 @@
 	     (vector-set! v 19 "...")
 	     (fprint (current-error-port) " vec=" v)))
       (flush-output-port (current-error-port))))
-
-;*---------------------------------------------------------------------*/
-;*    js-toindex ...                                                   */
-;*---------------------------------------------------------------------*/
-(define-macro (js-toindex p)
-   (cond-expand
-      ((or bint30 bint32)
-       `(cond
-	   ((and (fixnum? ,p) (>=fx ,p 0))
-	    (fixnum->uint32 ,p))
-	   ((uint32? ,p)
-	    ,p)
-	   ((and (js-jsstring? ,p) (js-jsstring-index? ,p))
-	    (with-access::JsStringLiteralIndex ,p (index)
-	       index))
-	   (else
-	    ((@ js-toindex  __hopscript_public) ,p))))
-      ((or bint61 bint64)
-       `(cond
-	   ((and (fixnum? ,p) (>=fx ,p 0) (<fx ,p (-fx (bit-lsh 1 32) 1)))
-	    (fixnum->uint32 ,p))
-	   ((and (js-jsstring? ,p) (js-jsstring-index? ,p))
-	    (with-access::JsStringLiteralIndex ,p (index)
-	       index))
-	   (else
-	    ((@ js-toindex  __hopscript_public) ,p))))
-      (else
-       `((@ js-toindex  __hopscript_public) ,p))))
 
 ;*---------------------------------------------------------------------*/
 ;*    u32min ...                                                       */

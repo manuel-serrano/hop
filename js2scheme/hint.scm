@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sun Apr 11 10:03:01 2021 (serrano)                */
+;*    Last change :  Fri May  7 15:13:36 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -89,7 +89,7 @@
       ((memq ty
 	  '(any unknown
 	    integer real number bool string
-	    regexp array no-array date arguments function arrow service
+	    regexp array jsvector no-array date arguments function arrow service
 	    procedure
 	    class object promise
 	    null undefined void
