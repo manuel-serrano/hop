@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May  6 07:37:36 2021                          */
-;*    Last change :  Thu May  6 15:18:10 2021 (serrano)                */
+;*    Last change :  Fri May  7 09:40:51 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    A list of functions that traverse the AST after the parsing to   */
@@ -63,6 +63,35 @@
 	  (begin
 	     (hopscript-mode-fun! val mode)
 	     this))))
+
+;*---------------------------------------------------------------------*/
+;*    mode-fun! ::J2SSvc ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mode-fun! this::J2SSvc mode)
+   
+   (define (empty-body? body)
+      (cond
+	 ((isa? body J2SNop)
+	  #t)
+	 ((isa? body J2SBlock)
+	  (with-access::J2SBlock body (nodes)
+	     (cond
+		((null? nodes) #t)
+		((pair? (cdr nodes)) #f)
+		(else (empty-body? (car nodes))))))
+	 (else
+	  #f)))
+   
+   (with-access::J2SSvc this (loc path body)
+      (if (or (eq? mode 'hopscript) (empty-body? body))
+	  this
+	  (raise
+	     (instantiate::&io-parse-error
+		(proc "hopc")
+		(msg "services are available only in \"hopscript\" mode")
+		(obj path)
+		(fname (cadr loc))
+		(location (caddr loc)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscript-cnst-fun! ...                                          */
@@ -197,7 +226,7 @@
 	  (raise
 	     (instantiate::&io-parse-error
 		(proc "hopc")
-		(msg "var keyword not supported at toplevel in hopscript mode")
+		(msg "var keyword not supported in \"hopscript\" mode")
 		(obj id)
 		(fname (cadr loc))
 		(location (caddr loc))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Apr 28 09:29:17 2021 (serrano)                */
+;*    Last change :  Fri May  7 10:00:19 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -40,6 +40,7 @@
 	   __hopscript_array
 	   __hopscript_arraybuffer
 	   __hopscript_arraybufferview
+	   __hopscript_vector
 	   __hopscript_date
 	   __hopscript_error
 	   __hopscript_json
@@ -324,6 +325,7 @@
 	    (js-init-array! %this)
 	    (js-init-arraybuffer! %this)
 	    (js-init-arraybufferview! %this)
+	    (js-init-vector! %this)
 	    (js-init-string! %this)
 	    (js-init-boolean! %this)
 	    (js-init-number! %this)

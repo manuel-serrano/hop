@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Apr 28 07:14:31 2021 (serrano)                */
+;*    Last change :  Fri May  7 10:01:59 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -360,6 +360,8 @@
 	      (js-float32array::JsFunction (default (class-nil JsFunction)))
 	      (js-float64array::JsFunction (default (class-nil JsFunction)))
 	      (js-dataview::JsFunction (default (class-nil JsFunction)))
+	      (js-vector::JsFunction (default (class-nil JsFunction)))
+	      (js-vector-prototype::JsArray (default (class-nil JsArray)))
 	      (js-boolean::JsFunction (default (class-nil JsFunction)))
 	      (js-string::JsFunction (default (class-nil JsFunction)))
 	      (js-string-prototype::JsString (default (class-nil JsString)))
@@ -465,8 +467,8 @@
 
 	   (inline js-object-default-mode::uint32)
 	   (inline js-array-default-mode::uint32)
+	   (inline js-vector-default-mode::uint32)
 	   (inline js-function-default-mode::uint32)
-	   (inline js-method-default-mode::uint32)
 	   (inline js-procedure-default-mode::uint32)
 	   (inline js-procedure-hopscript-mode::uint32)
 	   (inline js-jsstring-default-ascii-mode::uint32)
@@ -523,7 +525,7 @@
 	   
 	   (inline JS-OBJECT-MODE-JSSTRINGTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSFUNCTIONTAG::uint32)
-	   (inline JS-OBJECT-MODE-JSMETHODTAG::uint32)
+	   (inline JS-OBJECT-MODE-JSVECTORTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSOBJECTTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSPROCEDURETAG::uint32)
@@ -610,6 +612,7 @@
 	   (inline js-jsstring-normalized?::bool ::JsStringLiteral)
 	   (inline js-jsstring-normalized! ::JsStringLiteral)
 	   (inline js-array?::bool ::obj)
+	   (inline js-vector?::bool ::obj)
 	   (inline js-function?::bool ::obj)
 	   (inline js-method?::bool ::obj)
 	   (inline js-procedure-proxy?::bool ::obj)
@@ -710,12 +713,18 @@
 
 (define-inline (js-array-default-mode)
    (bit-oru32 (js-object-default-mode)
-      (bit-oru32 (JS-OBJECT-MODE-PLAIN)
-	 (bit-oru32 (JS-OBJECT-MODE-JSARRAYHOLEY)
-	    (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
-	       (bit-oru32 (JS-OBJECT-MODE-JSARRAYTAG)
-		  (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
-		     (JS-OBJECT-MODE-HASNUMERALPROP))))))))
+      (bit-oru32 (JS-OBJECT-MODE-JSARRAYHOLEY)
+	 (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
+	    (bit-oru32 (JS-OBJECT-MODE-JSARRAYTAG)
+	       (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
+		  (JS-OBJECT-MODE-HASNUMERALPROP)))))))
+
+(define-inline (js-vector-default-mode)
+   (bit-oru32 (JS-OBJECT-MODE-JSVECTORTAG)
+      (bit-andu32 (js-array-default-mode)
+	 (bit-notu32
+	    (bit-oru32 (JS-OBJECT-MODE-PLAIN)
+	       (JS-OBJECT-MODE-EXTENSIBLE))))))
 
 (define-inline (js-jsstring-default-mode)
    (JS-OBJECT-MODE-JSSTRINGTAG))
@@ -771,10 +780,6 @@
 		     (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
 			(JS-OBJECT-MODE-HASNUMERALPROP)))))))))
 
-(define-inline (js-method-default-mode)
-   (bit-oru32 (js-function-default-mode)
-      (JS-OBJECT-MODE-JSMETHODTAG)))
-
 (define-inline (js-procedure-default-mode)
    (bit-oru32 (JS-OBJECT-MODE-EXTENSIBLE)
       (bit-oru32 (JS-OBJECT-MODE-PLAIN)
@@ -791,21 +796,35 @@
 ;*---------------------------------------------------------------------*/
 ;*    Object header tag (max size 1<<15==32768)                        */
 ;*---------------------------------------------------------------------*/
-;; JSSTRINGTAG, JSFUNCTIONTAG, and JSOBJECTTAG _must_ be
-;; the first 3 (see stringliteral.scm and name.scm)
+;;     1: JSSTRINGTAG (must be !)
+;;     2: JSFUNCTIONTAG (must be !)
+;;     4: JSOBJECTTAG (must be !)
+;;     8: INLINE
+;;    16: ISPROTOOF
+;;    32: HASINSTANCE
+;;    64: ENUMERABLE
+;;   128: PLAIN
+;;   256: HSNUMERALPROP
+;;   512: EXTENSIBLE
+;;  1024: SEALED, PROXYREVOKED
+;;  2048: FROZEN
+;;  4096: JSPROXYFUNCTION, JSPROCEDUREHOPSCRIPT, JSVECTORTAG
+;;  8192: PROCEDURETAG
+;; 16384: JSARRAYTAG (must be !)
+;; 32768: JSARRAYHOLEY (must be !)
 (define-inline (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1)
 (define-inline (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:2)
 (define-inline (JS-OBJECT-MODE-JSOBJECTTAG) #u32:4)
 (define-inline (JS-OBJECT-MODE-JSPROCEDURETAG) #u32:8192)
 (define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:16384)
-(define-inline (JS-OBJECT-MODE-JSMETHODTAG) #u32:32768)
+(define-inline (JS-OBJECT-MODE-JSVECTORTAG) #u32:4096)
 
 (define-macro (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1)
 (define-macro (JS-OBJECT-MODE-JSFUNCTIONTAG) #u32:2)
 (define-macro (JS-OBJECT-MODE-JSOBJECTTAG) #u32:4)
 (define-macro (JS-OBJECT-MODE-JSPROCEDURETAG) #u32:8192)
 (define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:16384)
-(define-macro (JS-OBJECT-MODE-JSMETHODTAG) #u32:32768)
+(define-macro (JS-OBJECT-MODE-JSVECTORTAG) #u32:4096)
 
 ;; common objects attributes
 (define-inline (JS-OBJECT-MODE-INLINE) #u32:8)
@@ -864,9 +883,10 @@
       (JS-OBJECT-MODE-EXTENSIBLE)))
 
 (define-inline (js-object-mode-plain-extensible? o)
-   (=u32 (bit-andu32 (bit-andu32 (JS-OBJECT-MODE-PLAIN) (JS-OBJECT-MODE-EXTENSIBLE))
+   (=u32 (bit-andu32
+	    (bit-oru32 (JS-OBJECT-MODE-PLAIN) (JS-OBJECT-MODE-EXTENSIBLE))
 	    (js-object-mode o))
-      (bit-andu32 (JS-OBJECT-MODE-PLAIN) (JS-OBJECT-MODE-EXTENSIBLE))))
+      (bit-oru32 (JS-OBJECT-MODE-PLAIN) (JS-OBJECT-MODE-EXTENSIBLE))))
 
 (define-inline (js-object-mode-extensible-set! o flag)
    (js-object-mode-set! o
@@ -1539,6 +1559,17 @@
 	(>=u32 (js-object-mode o) (JS-OBJECT-MODE-JSARRAYTAG))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-vector? ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-vector? o)
+   (and (%object? o)
+	(=u32 (bit-andu32 (js-object-mode o)
+		 (bit-oru32 (JS-OBJECT-MODE-JSARRAYTAG)
+		    (JS-OBJECT-MODE-JSVECTORTAG)))
+	   (bit-oru32 (JS-OBJECT-MODE-JSARRAYTAG)
+	      (JS-OBJECT-MODE-JSVECTORTAG)))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-function? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function? o)
@@ -1550,9 +1581,7 @@
 ;*    js-method? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-method? o)
-   (and (%object? o)
-	(=u32 (JS-OBJECT-MODE-JSMETHODTAG)
-	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSMETHODTAG)))))
+   (isa? o JsMethod))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-procedure-proxy? ...                                          */

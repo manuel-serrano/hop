@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Apr 28 09:25:40 2021 (serrano)                */
+;*    Last change :  Fri May  7 11:08:17 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -419,7 +419,7 @@
 	 ($js-init-jsalloc-method (js-not-a-cmap)
 	    js-function-writable-strict-cmap
 	    js-function-strict-elements js-object-alloc-lazy
-	    (js-method-default-mode))
+	    (js-function-default-mode))
 	 ($js-init-jsalloc-procedure
 	    js-initial-cmap
 	    (js-procedure-default-mode)))
