@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri May  7 15:13:36 2021 (serrano)                */
+;*    Last change :  Sat May  8 18:48:04 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -105,7 +105,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Maps to hint/tyflow understood types.                            */
 ;*---------------------------------------------------------------------*/
-(define (j2s-hint-type ty)
+(define (j2s-hint-type ty::symbol)
    (let ((kty (j2s-known-type ty)))
       (or kty (error "js2scheme" "Illegal tyflow/hint type" ty))))
 

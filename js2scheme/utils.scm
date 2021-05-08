@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sat May  8 16:22:39 2021 (serrano)                */
+;*    Last change :  Sat May  8 19:07:06 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -843,12 +843,24 @@
    (define (merge-candidate x y)
       (if (null? y)
 	  x
-	  (let ((ret (if (eq? (car x) (car y))
-			 (car x)
-			 (list (car x) (car y))))
-		(self (if (eq? (cadr x) (cadr y))
-			  (cadr x)
-			  (list (cadr x) (cadr y))))
+	  (let ((ret (cond
+			((pair? (car y))
+			 (if (memq (car x) (car y))
+			     (car y)
+			     (cons (car x) (car y))))
+			((eq? (car x) (car y))
+			 (car x))
+			(else
+			 (list (car x) (car y)))))
+		(self (cond
+			 ((pair? (cadr y))
+			  (if (memq (cadr x) (cadr y))
+			      (cadr y)
+			      (cons (cadr x) (cadr y))))
+			 ((eq? (cadr x) (cadr y))
+			  (cadr x))
+			 (else
+			  (list (cadr x) (cadr y)))))
 		(args (map-delete-duplicates (cddr x) (cddr y))))
 	     (cons* ret self args))))
       
