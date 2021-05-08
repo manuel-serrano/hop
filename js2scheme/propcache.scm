@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Dec 31 13:55:23 2019 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Last change :  Fri May  7 18:58:44 2021 (serrano)                */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
 ;*    -------------------------------------------------------------    */
@@ -159,7 +159,7 @@
 	     (when (>=fx (config-get conf :verbose 0) 2)
 		(fprintf (current-error-port)
 		   " ~a@~a" (j2s-type obj) (caddr loc))))
-	  (if (canbe-object? obj)
+	  (if (and (canbe-object? obj) (not (eq? (j2s-type obj) 'jsvector)))
 	      (begin
 		 (cond
 		    ((and (isa? obj J2SRef) (isa? field J2SString))

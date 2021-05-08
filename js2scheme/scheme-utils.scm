@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Fri May  7 17:40:02 2021 (serrano)                */
+;*    Last change :  Fri May  7 19:08:04 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -775,10 +775,11 @@
 		 ((uint32)
 		  `(js-vector-index-set! ,obj ,prop ,val %this))
 		 ((int32)
-		  `(js-vector-index-set! ,obj (int32->fixnum ,prop) ,val %this))
+		  `(js-vector-index-set! ,obj (int32->uint32 ,prop) ,val %this))
 		 ((int53)
-		  `(js-vector-set! ,obj (int32->fixnum ,prop) ,val %this))
+		  `(js-vector-index-set! ,obj (fixnum->uint32 ,prop) ,val %this))
 		 (else
+		  (tprint "TYPROP=" typrop)
 		  `(js-vector-put! ,obj ,prop ,val %this))))
 	     ((eq? tyobj 'arguments)
 	      `(js-put! ,obj ,prop ,val ,mode %this))

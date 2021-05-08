@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri May  7 15:47:06 2021 (serrano)                */
+;*    Last change :  Fri May  7 19:06:20 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1960,6 +1960,12 @@
    
    (define (min-cspecs cs mincs)
       (filter (lambda (c) (memq c mincs)) cs))
+
+   (define (need-temp? expr::J2SExpr)
+      (not (or (isa? expr J2SRef)
+	       (isa? expr J2SHopRef)
+	       (isa? expr J2SUnresolvedRef)
+	       (isa? expr J2SLiteral))))
    
    (define (new-or-old tmp val comp)
       (if (eq? retval 'new)
@@ -2056,11 +2062,69 @@
 					:cspecs (min-cspecs cs '(cmap))
 					:cachefun #f)
 				    ,tmp)))))))))
+
+   (define (aput-inc-jsvector fexpr scmlhs rhs tyobj otmp prop op lhs field::J2SExpr inc loc)
+      (let ((tmp (gensym 'aput)))
+	 `(let ((,tmp ,scmlhs))
+	     ,(let loop ((field field))
+		 (cond
+		    ((memq (j2s-type field) '(uint32 int32 int53))
+		     `(if (fixnum? ,tmp)
+			  ,(let ((tref (instantiate::J2SHopRef
+					  (loc loc)
+					  (id tmp)
+					  (type 'bint))))
+			      (new-or-old tmp
+				 (js-binop2 loc '+ 'number
+				    tref rhs mode return ctx)
+				 (lambda (val tmp)
+				    `(begin
+					,(j2s-put! loc otmp #f tyobj
+					    fexpr
+					    (j2s-type field)
+					    val 'number
+					    #t ctx
+					    #f #t)
+					,tmp))))
+			  ,(let* ((tmp2 (gensym 'tmp))
+				  (tref (instantiate::J2SHopRef
+					   (loc loc)
+					   (id tmp2)
+					   (type 'number))))
+			      `(let ((,tmp2 (js-tonumber ,tmp %this)))
+				  ,(new-or-old tmp2
+				      (js-binop2 loc '+ 'any
+					 tref rhs mode return ctx)
+				      (lambda (val tmp)
+					 `(begin
+					     ,(j2s-put! loc otmp #f tyobj
+						 fexpr
+						 (j2s-type field)
+						 val 'number
+						 #t ctx
+						 #f #t)
+					     ,tmp)))))))
+		    ((isa? field J2SHopRef)
+		     (let ((id (j2s-scheme field mode return ctx)))
+			`(if (fixnum? ,id)
+			     ,(loop (duplicate::J2SHopRef field (type 'int53)))
+			     (js-raise-type-error %this
+				"Cannot assign property '~s' of vector" ,id))))
+		    ((isa? field J2SLiteral)
+		     `(js-raise-type-error %this
+			 "Cannot assign property '~s' of vector"
+			 ,(j2s-scheme field mode return ctx)))
+		    (else
+		     (let ((ptmp (gensym)))
+			`(let ((,ptmp ,(j2s-scheme field mode return ctx)))
+			    (loop (instantiate::J2SHopRef
+				     (loc loc)
+				     (id ptmp)
+				     (type (j2s-type field))))))))))))
    
    (define (aput-inc tyobj otmp prop op lhs field::J2SExpr cache inc cs cache-missp::bool)
       (with-access::J2SAccess lhs (loc obj cspecs (loca loc) type cache)
-	 (let* ((tmp (gensym 'aput))
-		(oref (instantiate::J2SHopRef
+	 (let* ((oref (instantiate::J2SHopRef
 			 (loc loc)
 			 (id otmp)
 			 (type tyobj)))
@@ -2075,11 +2139,14 @@
 		(scmlhs (j2s-scheme oacc mode return ctx))
 		(fexpr (j2s-scheme field mode return ctx)))
 	    (cond
+	       ((eq? tyobj 'jsvector)
+		(aput-inc-jsvector fexpr scmlhs rhs tyobj otmp prop op lhs field inc loc))
 	       ((type-fixnum? type)
-		(let ((tref (instantiate::J2SHopRef
-			       (loc loc)
-			       (id tmp)
-			       (type (j2s-type lhs)))))
+		(let* ((tmp (gensym 'aput))
+		       (tref (instantiate::J2SHopRef
+				(loc loc)
+				(id tmp)
+				(type (j2s-type lhs)))))
 		   `(let ((,tmp ,scmlhs))
 		       ,(new-or-old tmp
 			   (js-binop2 loc '+ 'number
@@ -2094,10 +2161,10 @@
 				      cache #t :cspecs cs :cachefun #f)
 				  ,tmp))))))
 	       ((not cache)
-		;; MS
 		(aput-inc-sans-cache fexpr scmlhs rhs tyobj otmp prop op lhs field cache inc cs cache-missp loc))
 	       (else
-		(let ((els (gensym '%els))
+		(let ((tmp (gensym 'aput))
+		      (els (gensym '%els))
 		      (idx (gensym '%idx)))
 		   `(with-access::JsObject ,otmp (cmap elements)
 		       (if (eq? cmap (js-pcache-cmap (js-pcache-ref %pcache ,cache)))
@@ -2144,6 +2211,7 @@
 	     (aput-inc 'object otmp prop op lhs field (rhs-cache rhs) inc cspecs #t)))))
    
    (define (access-inc-sans-object otmp::symbol prop op::symbol lhs::J2SAccess rhs::J2SExpr inc::int)
+      ;; compile an expression such as e1[e2]++ when e1 is either an array or an object
       (with-access::J2SAccess lhs (field)
 	 (if (or (isa? field J2SRef)
 		 (and (isa? field J2SLiteral) (not (isa? field J2SArray))))
@@ -2156,8 +2224,86 @@
 			      (loc loc)
 			      (id %field)
 			      (type (j2s-type field))))))))))
-   
-   (define (access-inc op lhs::J2SAccess rhs::J2SExpr inc::int)
+
+   (define (jsvector-inc op lhs::J2SAccess rhs::J2SExpr inc::int)
+      ;; compile an expression such as e1[e2]++ when e1 is a jsvector
+      (let loop ((lhs lhs))
+	 (with-access::J2SAccess lhs (obj field loc)
+	    (cond
+	       ((need-temp? obj)
+		;; e1[e2]++ => tmp = e1; tmp[e2]++
+		(with-access::J2SExpr obj (loc)
+		   (let* ((tmp (gensym 'vput))
+			  (ref (instantiate::J2SHopRef
+				  (loc loc)
+				  (id tmp)
+				  (type (j2s-type obj)))))
+		      `(let ((,tmp ,(j2s-scheme obj mode return ctx)))
+			  ,(loop (duplicate::J2SAccess lhs (obj ref)))))))
+	       ((need-temp? field)
+		;; e1[e2]++ => tmp = e2; e1[tmp]++
+		(with-access::J2SExpr obj (loc)
+		   (let* ((tmp (gensym 'vfield))
+			  (ref (instantiate::J2SHopRef
+				  (loc loc)
+				  (id tmp)
+				  (type (j2s-type field)))))
+		      `(let ((,tmp ,(j2s-scheme field mode return ctx)))
+			  ,(loop (duplicate::J2SAccess lhs (field ref)))))))
+	       ((memq (j2s-type field) '(uint32 int32 int53))
+		;; e1[int]++
+		(let ((tmp (gensym 'val))
+		      (inc (instantiate::J2SNumber
+			      (loc loc)
+			      (val inc)
+			      (type 'int32))))
+		   `(let ((,tmp ,(j2s-scheme lhs mode return ctx)))
+		       (if (fixnum? ,tmp)
+			   ,(let ((ref (instantiate::J2SHopRef
+					   (loc loc)
+					   (id tmp)
+					   (type 'bint))))
+			       (new-or-old tmp
+				  (js-binop2 loc '+ 'number
+				     ref inc mode return ctx)
+				  (lambda (val res)
+				     `(begin
+					 ,(j2s-put! loc (j2s-scheme obj mode return ctx)
+					     #f 'jsvector
+					     (j2s-scheme field mode return ctx)
+					     (j2s-type field)
+					     val 'number
+					     #t ctx #f #t)
+					 ,res))))
+			   ,(let* ((tmp2 (gensym 'tmp))
+				   (tref (instantiate::J2SHopRef
+					    (loc loc)
+					    (id tmp2)
+					    (type 'number))))
+			       `(let ((,tmp2 (js-tonumber ,tmp %this)))
+				   ,(new-or-old tmp2
+				       (js-binop2 loc '+ 'any
+					  tref inc mode return ctx)
+				       (lambda (val res)
+					  `(begin
+					      ,(j2s-put! loc (j2s-scheme obj mode return ctx)
+						  #f 'jsvector
+						  (j2s-scheme field mode return ctx)
+						  (j2s-type field)
+						  val 'number
+						  #t ctx #f #t)
+					      ,res)))))))))
+	       (else
+		(let ((scmfield (j2s-scheme field mode return ctx)))
+		   (with-access::J2SExpr field (type)
+		      (set! type 'int53)
+		      `(if (fixnum? ,scmfield)
+			   ,(loop lhs)
+			   (js-raise-type-error %this
+			       "Cannot assign property '~s' of vector"
+			       ,(j2s-scheme field mode return ctx))))))))))
+      
+   (define (object-array-inc op lhs::J2SAccess rhs::J2SExpr inc::int)
       (with-access::J2SAccess lhs (obj field cspecs cache loc)
 	 (let ((otmp (gensym 'obj))
 	       (prop (j2s-property-scheme field mode return ctx)))
@@ -2191,6 +2337,12 @@
 					  ctx cache #t
 					  :cspecs '() :cachefun #f))))))))))
    
+   (define (access-inc op lhs::J2SAccess rhs::J2SExpr inc::int)
+      (with-access::J2SAccess lhs (obj)
+	 (if (eq? (j2s-type obj) 'jsvector)
+	     (jsvector-inc op lhs rhs inc)
+	     (object-array-inc op lhs rhs inc))))
+
    (with-access::J2SAssig this (loc lhs rhs type)
       (epairify-deep loc
 	 (let loop ((lhs lhs)

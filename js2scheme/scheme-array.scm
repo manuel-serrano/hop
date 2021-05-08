@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri May  7 15:48:46 2021 (serrano)                */
+;*    Last change :  Sat May  8 09:28:37 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -591,11 +591,13 @@
 	 (let loop ((rhs rhs))
 	    (cond
 	       ((boxed-type? (j2s-type rhs))
-		(with-access::J2SExpr rhs (loc type)
-		   (let ((tmp (gensym)))
-		      `(let ((,tmp ,(j2s-scheme rhs mode return ctx)))
-			  ,(loop (J2SCast 'any (J2SHopRef/type tmp type)))
-			  ,tmp))))
+		(with-access::J2SExpr rhs (loc)
+		   (loop (J2SCast 'any rhs))))
+;* 		(with-access::J2SExpr rhs (loc type)                   */
+;* 		   (let ((tmp (gensym)))                               */
+;* 		      `(let ((,tmp ,(j2s-scheme rhs mode return ctx))) */
+;* 			  ,(loop (J2SCast 'any (J2SHopRef/type tmp type))) */
+;* 			  ,tmp))))                                     */
 	       ((memq (j2s-type field) '(uint32 int32 int53))
 		`(js-vector-index-set! ,(j2s-scheme obj mode return ctx)
 		    ,(j2s-scheme-as-uint32 field mode return ctx)
