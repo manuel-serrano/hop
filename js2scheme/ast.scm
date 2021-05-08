@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri May  7 16:42:06 2021 (serrano)                */
+;*    Last change :  Sat May  8 15:42:48 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -136,6 +136,9 @@
 	   (class J2SCast::J2SExpr
 	      (expr::J2SExpr (info '("ast"))))
 	   
+	   (class J2SCheck::J2SExpr
+	      (expr::J2SExpr (info '("ast"))))
+	   
 	   (final-class J2SStmtExpr::J2SStmt
 	      (expr::J2SExpr (info '("ast"))))
 	   
@@ -202,6 +205,7 @@
 	   
 	   (final-class J2SBindExit::J2SExpr
 	      (lbl read-only)
+	      (utype::symbol (default 'unknown) (info '("notraverse")))
 	      (stmt::J2SStmt (info '("ast"))))
 
 	   (class J2SReturn::J2SStmt
@@ -1068,6 +1072,7 @@
 (gen-walks J2SYield expr)
 (gen-walks J2SKont body)
 (gen-walks J2SCast expr)
+(gen-walks J2SCheck expr)
 (gen-walks J2SClass super (elements))
 (gen-walks J2SClassElement prop)
 (gen-walks J2SDProducer expr)

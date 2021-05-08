@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri May  7 14:59:50 2021 (serrano)                */
+;*    Last change :  Sat May  8 15:55:30 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -494,14 +494,19 @@
 	       (val (J2SUndefined))
 	       (utype ty)))))
 
+   (define (type-name ty)
+      (if (eq? ty 'vector)
+	  'jsvector
+	  ty))
+   
    (define (opt-type)
       (cond
 	 ((and (eq? (peek-token-type) ':) (eq? current-mode 'hopscript))
 	  (consume-any!)
 	  (let ((ty (consume-token! 'ID)))
-	     (token-value ty)))
+	     (type-name (token-value ty))))
 	 ((eq? (peek-token-type) 'TYPE)
-	  (token-value (consume-any!)))
+	  (type-name (token-value (consume-any!))))
 	 (else
 	  'unknown)))
 

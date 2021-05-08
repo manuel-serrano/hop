@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/js2scheme/inline.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/inline.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Jun 10 13:00:01 2020 (serrano)                */
+;*    Last change :  Sat May  8 16:53:31 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -234,7 +234,7 @@
    
    (define (inline-call-unknown::long cli fuel allcnt inliner)
       ;; generic inline of unknown calls
-      (let ((targets (inline-filter-dynamic-targets cli)))
+      (let ((targets (filter-rutype (inline-filter-dynamic-targets cli) prgm)))
 	 (if (null? targets)
 	     0
 	     (let* ((call (callloginfo-call cli))
@@ -260,7 +260,8 @@
 				 (inline-verb loc fun (map car targets) sz fuel
 				    allcnt conf)
 				 (replace-call! (callinfo-parent %info) call
-				    (inline-stmt->expr loc node))
+				    (inline-stmt->expr loc node
+				       (function-rutype (car targets))))
 				 (function-size-reset! (callinfo-owner %info))
 				 (node-size node))
 			      0)))))))))
@@ -300,9 +301,10 @@
 			    (inline-verb loc fun
 			       (list (callloginfo-counter cli))
 			       sz fuel allcnt conf)
-			    (with-access::J2SCall call (%info)
-			       (replace-call! (callinfo-parent %info) call
-				  (inline-stmt->expr loc node)))
+			    (with-access::J2SFun val (rutype)
+			       (with-access::J2SCall call (%info)
+				  (replace-call! (callinfo-parent %info) call
+				     (inline-stmt->expr loc node rutype))))
 			    (node-size node))))))))))
    
    (define (inline-profile-call!::long cli fuel::long allcnt::llong)
@@ -840,19 +842,23 @@
    (define (inline-access-call this::J2SCall fun::J2SAccess args loc)
       (let ((mets (find-inline-methods this fun (length args))))
 	 (when (pair? mets)
-	    (let* ((mets (if (pair? targets)
-			     (filter (lambda (t) (memq t mets)) targets)
-			     mets))
+	    (let* ((mets (filter-rutype
+			    (if (pair? targets)
+				(filter (lambda (t) (memq t mets)) targets)
+				mets)
+			    prgm))
 		   (vals (map protoinfo-method mets))
 		   (sz (apply + (map function-size vals))))
-	       (inline-verb loc fun (map (lambda (x) '-) mets) sz limit 0 conf)
-	       (when (pair? stack) 
-		  (invalidate-function-size! (car stack)))
-	       (let ((e (inline-method-call fun mets args loc
-			   '() leaf limit stack pmethods ingen prgm conf)))
-		  (inline-stmt->expr loc
-		     (inline! e
-			'() leaf 0 (append vals stack) pmethods ingen prgm conf)))))))
+	       (when (pair? mets)
+		  (inline-verb loc fun (map (lambda (x) '-) mets) sz limit 0 conf)
+		  (when (pair? stack) 
+		     (invalidate-function-size! (car stack)))
+		  (let ((e (inline-method-call fun mets args loc
+			      '() leaf limit stack pmethods ingen prgm conf)))
+		     (inline-stmt->expr loc
+			(inline! e
+			   '() leaf 0 (append vals stack) pmethods ingen prgm conf)
+			(function-rutype (car mets)))))))))
    
    (define (inline-ref-call this::J2SCall fun::J2SRef thisarg args loc)
       (cond
@@ -864,13 +870,17 @@
 		(invalidate-function-size! (car stack)))
 	     (inline-stmt->expr loc
 		(inline-function-call target thisarg args loc
-		   targets leaf (if targets 0 limit) stack pmethods ingen prgm conf))))
+		   targets leaf (if targets 0 limit) stack pmethods ingen prgm conf)
+		(function-rutype target))))
 	 ((pair? targets)
-	  (when (pair? stack)
-	     (invalidate-function-size! (car stack)))
-	  (inline-stmt->expr loc
-	     (inline-unknown-call fun thisarg  args loc
-		targets leaf limit stack pmethods ingen prgm conf)))
+	  (let ((targets (filter-rutype targets prgm)))
+	     (when (pair? targets)
+		(when (pair? stack)
+		   (invalidate-function-size! (car stack)))
+		(inline-stmt->expr loc
+		   (inline-unknown-call fun thisarg  args loc
+		      targets leaf limit stack pmethods ingen prgm conf)
+		   (function-rutype (car targets))))))
 	 (else
 	  #f)))
 
@@ -878,7 +888,8 @@
       (let ((decl (J2SDeclInit '(ref) (gensym '%fun) fun)))
 	 (inline-stmt->expr loc
 	    (J2SLetBlock (list decl)
-	       (inline-ref-call this (J2SRef decl) thisarg args loc)))))
+	       (inline-ref-call this (J2SRef decl) thisarg args loc))
+	    'unknown)))
    
    (with-access::J2SCall this (fun thisarg args type loc cache protocol)
       (cond
@@ -902,6 +913,32 @@
 	      (call-default-walker)))
 	 (else
 	  (call-default-walker)))))
+
+;*---------------------------------------------------------------------*/
+;*    filter-rutype ...                                                */
+;*    -------------------------------------------------------------    */
+;*    Filter the functions to retain only those of the same rutype.    */
+;*---------------------------------------------------------------------*/
+(define (filter-rutype funs::pair-nil prgm::J2SProgram)
+   (with-access::J2SProgram prgm (mode)
+      (cond
+	 ((not (eq? mode 'hopscript))
+	  funs)
+	 ((or (null? funs) (null? (cdr funs)))
+	  funs)
+	 (else
+	  (with-access::J2SFun (car funs) (rutype)
+	     (let ((rut rutype))
+		(filter (lambda (f)
+			   (with-access::J2SFun f (rutype) (eq? rutype rut)))
+		   funs)))))))
+
+;*---------------------------------------------------------------------*/
+;*    function-rutype ...                                              */
+;*---------------------------------------------------------------------*/
+(define (function-rutype fun)
+   (with-access::J2SFun fun (rutype)
+      rutype))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-function-call ...                                         */
@@ -1387,7 +1424,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Transforms an inline function body statement into an expression. */
 ;*---------------------------------------------------------------------*/
-(define (inline-stmt->expr::J2SExpr loc body::J2SStmt)
+(define (inline-stmt->expr::J2SExpr loc body::J2SStmt utype::symbol)
    
    (define (stmt->expr node)
       (cond
@@ -1424,7 +1461,7 @@
 	  (bd (bind-exit! body lbl cell '())))
       (cond
 	 ((pair? (cell-ref cell))
-	  (let ((be (J2SBindExit lbl bd)))
+	  (let ((be (J2SBindExit/utype utype lbl bd)))
 	     (for-each (lambda (ret::J2SReturn)
 			  (with-access::J2SReturn ret (from)
 			     (set! from be)))
@@ -1434,7 +1471,7 @@
 	  =>
 	  (lambda (expr) expr))
 	 (else
-	  (J2SBindExit #f bd)))))
+	  (J2SBindExit/utype utype #f bd)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    inline-expr! ...                                                 */

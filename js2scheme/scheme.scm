@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri May  7 19:06:20 2021 (serrano)                */
+;*    Last change :  Sat May  8 16:06:47 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -30,6 +30,7 @@
 	   __js2scheme_scheme-tarray
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-cast
+	   __js2scheme_scheme-check
 	   __js2scheme_scheme-program
 	   __js2scheme_scheme-fun
 	   __js2scheme_scheme-call
@@ -414,6 +415,28 @@
 		   (j2s-scheme expr mode return ctx))))
 	    (else
 	     (j2s-cast (j2s-scheme expr mode return ctx)
+		expr (j2s-type expr) type ctx))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SCheck ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SCheck mode return ctx)
+   (with-access::J2SCheck this (expr type)
+      (let loop ((expr expr))
+	 (cond
+	    ((isa? expr J2SParen)
+	     (with-access::J2SParen expr (expr)
+		;; push the cast inside the parenthesis
+		(loop expr)))
+	    ((isa? expr J2SSequence)
+	     ;; push the cast to the last sequence expression
+	     (with-access::J2SSequence expr (exprs)
+		(with-access::J2SCast this ((cexpr expr))
+		   (set! cexpr (car (last-pair exprs)))
+		   (set-car! (last-pair exprs) this)
+		   (j2s-scheme expr mode return ctx))))
+	    (else
+	     (j2s-check (j2s-scheme expr mode return ctx)
 		expr (j2s-type expr) type ctx))))))
 
 ;*---------------------------------------------------------------------*/

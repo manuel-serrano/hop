@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri May  7 16:46:30 2021 (serrano)                */
+;*    Last change :  Sat May  8 15:44:14 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -584,7 +584,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCast)
    (with-access::J2SCast this (expr type)
-      `(,@(call-next-method) ,type :from ,(j2s-type expr) ,(j2s->list expr))))
+      `(,@(call-next-method) :type ,type ,(j2s->list expr))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SRef ...                                           */

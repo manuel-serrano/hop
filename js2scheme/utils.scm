@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri May  7 15:43:09 2021 (serrano)                */
+;*    Last change :  Sat May  8 16:22:39 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -66,6 +66,7 @@
 	   (regexp-method-type name #!optional (default '(any any)))
 	   (number-method-type name #!optional (default '(any any)))
 	   (array-method-type name #!optional (default '(any any)))
+	   (jsvector-method-type name #!optional (default '(any any)))
 	   
 	   (find-builtin-method-type ::J2SExpr ::bstring)
 	   (guess-builtin-method-type ::J2SExpr ::bstring)
@@ -737,6 +738,30 @@
 	("unshift" . (array array)))))
 
 ;*---------------------------------------------------------------------*/
+;*    jsvector-method-type ...                                         */
+;*---------------------------------------------------------------------*/
+(define (jsvector-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("concat" . (jsvector jsvector jsvector jsvector jsvector))
+	("every" . (bool jsvector function))
+	("filter" . (jsvector jsvector function))
+	("find" . (any jsvector function))
+	("indexOf" . (indexof jsvector index))
+	("forEach" . (any jsvector function))
+	("join" . (string jsvector string))
+	("lastIndexOf" . (indexof jsvector index))
+	("map" . (jsvector jsvector function))
+	("reduce" . (any jsvector function))
+	("reduceRight" . (any jsvector function))
+	("reverse" . (jsvector jsvector))
+	("shift" . (any jsvector))
+	("slice" . (jsvector jsvector index index))
+	("sort" . (jsvector jsvector function))
+	("some" . (bool jsvector function))
+	("splice" . (jsvector jsvector index integer))
+	("unshift" . (jsvector jsvector)))))
+
+;*---------------------------------------------------------------------*/
 ;*    find-builtin-method-type ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (find-builtin-method-type obj fn)
@@ -759,6 +784,7 @@
       ((regexp) (regexp-method-type fn))
       ((number integer index) (number-method-type fn))
       ((array) (array-method-type fn))
+      ((jsvector) (jsvector-method-type fn))
       ((unknown) '(unknown ()))
       (else
        (cond
@@ -832,6 +858,7 @@
 			  (regexp-method-type fn #f)
 			  (number-method-type fn #f)
 			  (array-method-type fn #f)
+			  (jsvector-method-type fn #f)
 			  (and (String? obj) (string-static-method-type fn #f))
 			  (and (Math? obj) (math-static-method-type fn #f)))))
 	 (let loop ((l candidates)

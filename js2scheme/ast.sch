@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/js2scheme/ast.sch                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/ast.sch                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Sat Jun 13 05:34:02 2020 (serrano)                */
-;*    Copyright   :  2016-20 Manuel Serrano                            */
+;*    Last change :  Sat May  8 15:51:05 2021 (serrano)                */
+;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
 ;*=====================================================================*/
@@ -564,6 +564,13 @@
        (type ,typ)
        (stmt ,stmt)))
 
+(define-macro (J2SBindExit/utype typ lbl stmt)
+   `(instantiate::J2SBindExit
+       (loc loc)
+       (lbl ,lbl)
+       (utype ,typ)
+       (stmt ,stmt)))
+
 (define-macro (J2SAssig lhs rhs)
    `(instantiate::J2SAssig
        (loc loc)
@@ -616,6 +623,12 @@
 
 (define-macro (J2SCast totype expr)
    `(instantiate::J2SCast
+       (loc loc)
+       (expr ,expr)
+       (type ,totype)))
+
+(define-macro (J2SCheck totype expr)
+   `(instantiate::J2SCheck
        (loc loc)
        (expr ,expr)
        (type ,totype)))
