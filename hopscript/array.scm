@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri May  7 17:05:28 2021 (serrano)                */
+;*    Last change :  Sat May  8 09:47:02 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1315,7 +1315,7 @@
 		(js-put-length! o n #f #f %this)
 		n))
 	  (begin
-	     (unless (and (array-extensible? this) (not (js-vector? this)))
+	     (unless (array-extensible? this)
 		(with-access::JsArray this (length)
 		   (js-raise-type-error %this
 		      "Can't add property ~a: object is not extensible" length)))
@@ -3106,9 +3106,8 @@
 		"Cannot add property ~a, object is not extensible" p))
 	    ((js-isname? p (& "length") %this)
 	     (cond
-		((js-object-mode-plain? o)
-		 ;; MS care, this test used to be false because of the extra
-		 ;; condition: (js-isindex? idx))
+		((and (js-object-mode-plain? o)
+		      (js-isindex? idx))
 		 (let ((vu (->uint32 v)))
 		    (if (>=u32 vu length)
 			(let ((nv (js-tonumber v %this)))
