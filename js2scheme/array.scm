@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Feb  9 11:33:47 2020 (serrano)                */
-;*    Copyright   :  2016-20 Manuel Serrano                            */
+;*    Last change :  Sun May  9 18:29:14 2021 (serrano)                */
+;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array loop optimization                                          */
 ;*=====================================================================*/
@@ -89,7 +89,7 @@
    (with-access::J2SDecl decl (id loc)
       (J2SLetOptVtype 'vector '(ref get assig)
 	 (symbol-append '%A id)
-	 (J2SCall (J2SHopRef 'js-array-vec) (J2SRef decl)))))
+	 (J2SHopCall (J2SHopRef 'js-array-vec) (J2SRef decl)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    decl->ldecl ...                                                  */
@@ -98,7 +98,7 @@
    (with-access::J2SDecl decl (id loc)
       (J2SLetOptVtype 'uint32 '(ref get assig)
 	 (symbol-append '%L id)
-	 (J2SCall (J2SHopRef 'js-array-ilen) (J2SRef decl)))))
+	 (J2SHopCall (J2SHopRef 'js-array-ilen) (J2SRef decl)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    mark-decl ...                                                    */
@@ -106,7 +106,7 @@
 (define (mark-decl::J2SDeclInit loc)
    (J2SLetOptVtype 'integer '(ref get assig)
       (gensym '%Marray-mark)
-      (J2SCall (J2SHopRef 'js-array-mark))))
+      (J2SHopCall (J2SHopRef 'js-array-mark))))
 
 ;*---------------------------------------------------------------------*/
 ;*    array! ::J2SFor ...                                              */

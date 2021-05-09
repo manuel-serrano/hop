@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Tue Mar 30 10:27:41 2021 (serrano)                */
+;*    Last change :  Sun May  9 08:21:09 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -446,6 +446,9 @@
 			(json->ast in))
 		       (else
 			(j2s-parser in conf)))))
+	    (when (isa? ast J2SProgram)
+	       (with-access::J2SProgram ast (mode)
+		  (set! conf (cons* :mode mode conf))))
 	    (if (eof-object? ast)
 		'()
 		(let loop ((ast ast)

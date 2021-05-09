@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Apr 28 09:31:07 2021 (serrano)                */
+;*    Last change :  Sun May  9 13:01:30 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -235,6 +235,7 @@
 	   (js-raise-syntax-error/loc ::JsGlobalObject ::obj ::bstring ::obj)
 	   (js-raise-reference-error ::JsGlobalObject ::bstring ::obj . ::obj)
 	   (js-raise-error ::JsGlobalObject ::bstring ::obj . ::obj)
+	   (js-raise-utype-error ::JsGlobalObject ::JsObject ::JsObject ::JsObject)
 
 	   (generic js-cast-object obj ::JsGlobalObject ::bstring)
 	   (generic js-inspect ::obj ::int)
@@ -2698,6 +2699,49 @@
 	 (apply js-new %this js-error
 	    (js-string->jsstring (format fmt obj)) args))))
 
+;*---------------------------------------------------------------------*/
+;*    js-raise-utype-error ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-raise-utype-error %this proc types args)
+   
+   (define (is? val typ)
+      (cond
+	 ((eq? typ (& "number")) (number? val))
+	 ((eq? typ (& "real")) (flonum? val))
+	 ((eq? typ (& "integer")) (fixnum? val))
+	 ((eq? typ (& "string")) (js-jsstring? val))
+	 ((eq? typ (& "object")) (js-object? val))
+	 ((eq? typ (& "array")) (js-array? val))
+	 ((eq? typ (& "vector")) (js-vector? val))
+	 ((eq? typ (& "regexp")) (isa? eval JsRegExp))
+	 ((eq? typ (& "function")) (js-function? val))
+	 (else #f)))
+   
+   (with-access::JsArray args ((avec vec) ilen)
+      (with-access::JsArray types ((tvec vec))
+	 (let loop ((i 0))
+	    (if (<u32 i (uint32->fixnum ilen))
+		(let ((arg (vector-ref avec i))
+		      (typ (vector-ref tvec i)))
+		   (with-access::JsArray typ (vec)
+		      (if (is? arg (vector-ref vec 0))
+			  (loop (+fx i 1))
+			  (js-raise-type-error/loc %this
+			     `(at ,(js-jsstring->string (vector-ref vec 2))
+				 ,(vector-ref vec 3))
+			     (format "~a: wrong type for ~a:~a, ~~s"
+				(js-function-debug-name proc %this)
+				(js-jsstring->string (vector-ref vec 1))
+				(js-jsstring->string (vector-ref vec 0)))
+			     arg))))
+		(with-access::JsArray (vector-ref tvec 0) (vec)
+		   (js-raise-type-error/loc %this
+		      `(at ,(js-jsstring->string (vector-ref vec 2))
+			  ,(vector-ref vec 3))
+		      (format "~a: wrong argument types, ~~s"
+			 (js-function-debug-name proc %this))
+		      args)))))))
+			    
 ;*---------------------------------------------------------------------*/
 ;*    js-cast-object ...                                               */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 25 17:24:05 2012                          */
-/*    Last change :  Fri Jan  1 08:27:29 2021 (serrano)                */
+/*    Last change :  Sat May  8 20:05:52 2021 (serrano)                */
 /*    Copyright   :  2012-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android service for the Hop process                              */
@@ -58,6 +58,16 @@ public class HopService extends Service {
 
       Notification notification = statusNotification( false );
 
+      // MS, 8may2021: notification channel, I don't know if this is
+      // needed or not but since I see the following error message:
+      // E NotificationService: No Channel found for pkg=fr.inria.hopdac,
+      //  channelId=null, id=17051966, tag=null, opPkg=fr.inria.hopdac,
+      //  callingUid=10375, userId=0, incomingUserId=0, notificationUid=10375,
+      //  notification=Notification(channel=null shortcut=null contentView=null
+      //  vibrate=null sound=null defaults=0x0 flags=0x40 color=0x00000000
+      //  vis=PRIVATE)
+      createNotificationChannel();
+      
       startForeground( HOP_ID, notification );
    }
 
@@ -205,6 +215,24 @@ public class HopService extends Service {
       }
 
       return notification;
+   }
+
+   private void createNotificationChannel() {
+      // Create the NotificationChannel, but only on API 26+ because
+      // the NotificationChannel class is new and not in the support library
+      if( Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ) {
+	 CharSequence name = "hopdac";
+	 String description = "?";
+	 int importance = NotificationManager.IMPORTANCE_DEFAULT;
+	 NotificationChannel channel =
+	    new NotificationChannel( "hopdac_channel_0", name, importance );
+	 channel.setDescription(description);
+	 // Register the channel with the system; you can't change
+	 // the importance or other notification behaviors after this
+	 NotificationManager notificationManager
+	    = getSystemService( NotificationManager.class );
+	 notificationManager.createNotificationChannel( channel );
+      }
    }
 }
 

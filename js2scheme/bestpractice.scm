@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/bestpractice.scm        */
+;*    serrano/prgm/project/hop/hop/js2scheme/bestpractice.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Oct  8 19:12:48 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Sun May  9 15:08:10 2021 (serrano)                */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Check strict mode best practice rules                            */
 ;*=====================================================================*/
@@ -69,7 +69,7 @@
 ;*    bestpractice ::J2SDeclFun ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (bestpractice this::J2SDeclFun mode parent)
-   (when (and (not (eq? mode 'normal)) parent (not (isa? parent J2SFun)))
+   (when (and (eq? mode 'strict) parent (not (isa? parent J2SFun)))
       (with-access::J2SDeclFun this (id loc)
 	 (raise
 	    (instantiate::&io-parse-error

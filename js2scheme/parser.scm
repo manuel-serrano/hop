@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat May  8 15:55:30 2021 (serrano)                */
+;*    Last change :  Sun May  9 15:02:25 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -537,7 +537,7 @@
 	    ((LBRACE LBRACKET)
 	     (let* ((objectp (eq? (peek-token-type) 'LBRACE))
 		    (loc (token-loc id))
-		    (lhs (if objectp (object-literal #t) (array-literal #t #f)))
+		    (lhs (if objectp (object-literal #t) (array-literal #t #f #f)))
 		    (decl (constrinit loc (gensym '%obj) (J2SUndefined) 'unknown))
 		    (bindings (j2s-destructure lhs decl #t)))
 		(if in-for-init?
@@ -1028,7 +1028,7 @@
 		   (set! body
 		      (J2SBlock
 			 (J2SReturn #t
-			    (J2SCall (J2SHopRef 'js-spawn)
+			    (J2SHopCall (J2SHopRef 'js-spawn)
 			       gen (instantiate::J2SUnresolvedRef
 				      (loc loc)
 				      (id 'this))
@@ -1634,7 +1634,7 @@
 		   (loc loc)
 		   (id id)
 		   (_scmid id))
-		(array-literal #f #f))))
+		(array-literal #f #f #f))))
 	 (else
 	  (if maybe-expr?
 	      (values #f (assig-expr #f #f #f))
@@ -2268,13 +2268,15 @@
 		  (fun (instantiate::J2SHopRef
 			  (loc loc)
 			  (id 'js-template-raw)))
-		  (thisarg (list (J2SUndefined)))
+		  (thisarg '())
 		  (args (list (instantiate::J2SArray
 				 (loc loc)
+				 (type 'array)
 				 (exprs strse)
 				 (len (length strs)))
 			   (instantiate::J2SArray
 			      (loc loc)
+			      (type 'array)
 			      (exprs strs)
 			      (len (length strs)))
 			   (instantiate::J2SHopRef
@@ -2319,7 +2321,9 @@
 			     (loc loc)
 			     (fun expr)
 			     (protocol (args-protocol args))
-			     (thisarg (list (J2SUndefined)))
+			     (thisarg (if (isa? expr J2SHopRef)
+					  '()
+					  (list (J2SUndefined))))
 			     (args args))))
 		 expr))
 	    ((TSTRING TEMPLATE)
@@ -2613,7 +2617,14 @@
 			   (loc (token-loc token))
 			   (expr expr)))))))
 	 ((LBRACKET)
-	  (array-literal destructuring? #t))
+	  (array-literal destructuring? #t #f))
+	 ((SHARP)
+	  (if (eq? current-mode 'hopscript)
+	      (begin
+		 (consume-any!)
+		 (if (eq? (peek-token-type) 'LBRACKET)
+		     (array-literal destructuring? #t #t)
+		     (parse-token-error "Unexpected token" (peek-token))))))
 	 ((LBRACE)
 	  ;; MS CARE: 30dec2018
 	  ;; (object-literal destructuring?)
@@ -2768,9 +2779,8 @@
 		      (expr (read ip)))))
 	     (parse-token-error "Unexpected token" str))))
    
-   (define (array-literal destructuring? spread?)
+   (define (array-literal destructuring? spread? vector?)
       (let ((token (push-open-token (consume-token! 'LBRACKET))))
-
 	 (define (parse-array-element array-el rev-els length)
 	    (case (peek-token-type)
 	       ((COMMA)
@@ -2781,7 +2791,8 @@
 		(instantiate::J2SArray
 		   (loc (token-loc token))
 		   (exprs (reverse! (cons array-el rev-els)))
-		   (len (+fx length 1))))
+		   (len (+fx length 1))
+		   (type (if vector? 'jsvector 'array))))
 	       (else
 		(parse-token-error "Unexpected token"
 		   (consume-any!)))))
@@ -2792,6 +2803,7 @@
 		(pop-open-token (consume-any!))
 		(instantiate::J2SArray
 		   (loc (token-loc token))
+		   (type 'array)
 		   (exprs (reverse! rev-els))
 		   (len length)))
 	       ((COMMA)

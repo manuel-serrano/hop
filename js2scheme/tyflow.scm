@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sat May  8 15:47:09 2021 (serrano)                */
+;*    Last change :  Sun May  9 08:25:43 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -70,6 +70,7 @@
 ;*---------------------------------------------------------------------*/
 (define (utype-compatible? utype type)
    (or (eq? utype type)
+       (eq? type 'magic)
        (and (eq? utype 'number) (memq type '(integer real)))
        (and (eq? utype 'object) (memq type '(string array jsvector)))))
 
@@ -168,9 +169,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    unfix! ...                                                       */
 ;*---------------------------------------------------------------------*/
-;* (define (unfix! fix reason)                                         */
-;*    (tprint "--- UNFIX (" (cdr ctx) ") reason=" reason)         */
-;*    (set-cdr! fix (+fx 1 (cdr ctx))))                          */
+(define (unfix! ctx reason)
+   (tprint "--- UNFIX (" (cdr ctx) ") reason=" reason)
+   (set-cdr! ctx (+fx 1 (cdr ctx))))
 
 (define-macro (unfix! ctx reason)
    `(set-cdr! ,ctx (+fx 1 (cdr ,ctx))))
@@ -182,18 +183,6 @@
    (values ty env bk))
 
 ;*---------------------------------------------------------------------*/
-;*    decl-vtype-set! ...                                              */
-;*    -------------------------------------------------------------    */
-;*    Assign a unique type to a variable declaration.                  */
-;*---------------------------------------------------------------------*/
-(define (decl-vtype-set! decl::J2SDecl ty::symbol ctx::pair)
-   (with-access::J2SDecl decl (vtype id loc)
-      [assert (ty) (or (eq? vtype 'unknown) (eq? vtype ty))]
-      (when (or (eq? vtype 'unknown) (not (eq? vtype ty)))
-	 (unfix! ctx (format "J2SDecl.set(~a, ~a) vtype=~a/~a" id loc vtype ty))
-	 (set! vtype (tyflow-type ty)))))
-
-;*---------------------------------------------------------------------*/
 ;*    subtype? ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (subtype? t1 t2)
@@ -203,6 +192,18 @@
        (and (eq? t1 'function) (eq? t2 'arrow))))
 
 ;*---------------------------------------------------------------------*/
+;*    decl-vtype-set! ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Assign a unique type to a variable declaration.                  */
+;*---------------------------------------------------------------------*/
+(define (decl-vtype-set! decl::J2SDecl ty::symbol ctx::pair)
+   (with-access::J2SDecl decl (vtype id loc)
+      [assert (ty) (or (eq? vtype 'unknown) (eq? vtype ty))]
+      (when (or (eq? vtype 'unknown) (not (eq? vtype ty)))
+	 (unfix! ctx (format "J2SDecl.vset(~a, ~a) vtype=~a/~a" id loc vtype ty))
+	 (set! vtype (tyflow-type ty)))))
+
+;*---------------------------------------------------------------------*/
 ;*    decl-vtype-add! ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    Add a new type to a variable declaration.                        */
@@ -210,7 +211,7 @@
 (define (decl-vtype-add! decl::J2SDecl ty::symbol ctx::pair)
    (with-access::J2SDecl decl (vtype id loc)
       (unless (or (eq? ty 'unknown) (subtype? ty vtype) (eq? vtype 'any))
-	 (unfix! ctx (format "J2SDecl.add(~a, ~a) vtype=~a/~a" id loc vtype ty))
+	 (unfix! ctx (format "J2SDecl.vadd(~a, ~a) vtype=~a/~a" id loc vtype ty))
 	 (set! vtype (tyflow-type (merge-types vtype ty))))))
 
 ;*---------------------------------------------------------------------*/
@@ -221,7 +222,7 @@
 (define (decl-itype-add! decl::J2SDecl ty::symbol ctx::pair)
    (with-access::J2SDecl decl (itype id)
       (unless (or (eq? ty 'unknown) (subtype? ty itype) (eq? itype 'any))
-	 (unfix! ctx (format "J2SDecl.itype(~a) itype=~a/~a" id itype ty))
+	 (unfix! ctx (format "J2SDecl.iadd(~a) itype=~a/~a" id itype ty))
 	 (set! itype (tyflow-type (merge-types itype ty))))))
 
 ;*---------------------------------------------------------------------*/
@@ -490,10 +491,10 @@
 ;*    node-type ::J2SArray ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SArray env::pair-nil ctx::pair)
-   (with-access::J2SArray this (exprs len)
+   (with-access::J2SArray this (exprs len isvector type)
       (multiple-value-bind (env bk)
 	 (node-type-args exprs env ctx)
-	 (expr-type-add! this env ctx 'array bk))))
+	 (expr-type-add! this env ctx type bk))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SSpread ...                                        */
@@ -814,7 +815,8 @@
 			     (let ((nenv (extend-env env decl tyv)))
 				(expr-type-add! this nenv ctx tyv
 				   (append lbk rbk))))
-			    ((and (not (eq? utype 'unknown)) (eq? (car ctx) 'hopscript))
+			    ((and (not (eq? utype 'unknown))
+				  (eq? (car ctx) 'hopscript))
 			     (unless (utype-compatible? utype tyr)
 				(if (memq tyr '(unknown any object))
 				    (set! rhs (J2SCheck utype rhs))
@@ -992,28 +994,14 @@
 ;*    node-type-fun ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (node-type-fun this::J2SFun env::pair-nil ctx::pair)
-   (with-access::J2SFun this (body thisp params %info vararg argumentsp type loc mode rtype rutype)
+   (with-access::J2SFun this (body thisp params %info vararg argumentsp type loc mode rtype rutype mode)
       (let ((envp (map (lambda (p::J2SDecl)
-			  (with-access::J2SDecl p (itype utype)
+			  (with-access::J2SDecl p (itype utype vtype)
 			     (cond
-				((and (not (eq? utype 'unknown)) (eq? (car ctx) 'hopscript))
-				 (decl-vtype-add! p utype ctx)
+				((and (not (eq? utype 'unknown)) (eq? mode 'hopscript))
+				 (set! itype utype)
+				 (decl-vtype-set! p utype ctx)
 				 (cons p utype))
-				 
-				;; MS CARE UTYPE
-;* 				((not (eq? utype 'unknown))            */
-;* 				 (set! itype utype)                    */
-;* 				 (cond                                 */
-;* 				    ((not (decl-usage-has? p '(rest))) */
-;* 				     (decl-vtype-add! p utype ctx)     */
-;* 				     (cons p utype))                   */
-;* 				    ((eq? utype 'array)                */
-;* 				     (decl-vtype-add! p utype ctx)     */
-;* 				     (cons p utype))                   */
-;* 				    (else                              */
-;* 				     (error "js2scheme"                */
-;* 					"Illegal parameter type"       */
-;* 					p))))                          */
 				((decl-usage-has? p '(rest))
 				 (decl-vtype-add! p 'array ctx)
 				 (cons p 'array))
@@ -1076,16 +1064,16 @@
 	 ((unknown undefined any obj object null) rtype)
 	 (else 'any)))
 
-   (with-access::J2SFun val (params rtype thisp name)
+   (with-access::J2SFun val (params rtype rutype thisp name mode)
       (when (and (not met) thisp)
 	 (decl-vtype-add! thisp 'any ctx))
-      (set! rtype (tyflow-type (escape-type rtype)))
+      (when (or (eq? rutype 'unknown) (not (eq? mode 'hopscript)))
+	 (set! rtype (tyflow-type (escape-type rtype))))
       (for-each (lambda (p::J2SDecl)
-		   (with-access::J2SDecl p (itype)
-		      ;; MS CARE UTYPE
-;* 		      (when (eq? utype 'unknown)                       */
-;* 			 (decl-itype-add! p 'any ctx))                 */
-		      (decl-itype-add! p 'any ctx)))
+		   (with-access::J2SDecl p (itype utype)
+		      (when (or (eq? utype 'unknown)
+				(not (eq? mode 'hopscript)))
+			 (decl-itype-add! p 'any ctx))))
 	 params)))
 
 ;*---------------------------------------------------------------------*/
@@ -1185,7 +1173,8 @@
 		     ((null? args)
 		      (decl-itype-add! (car params) 'undefined ctx)
 		      (loop (cdr params) '()))
-		     ((and (not (eq? utype 'unknown)) (eq? (car ctx) 'hopscript))
+		     ((and (not (eq? utype 'unknown))
+			   (eq? mode 'hopscript))
 		      (let ((ty (j2s-type (car args))))
 			 (cond
 			    ((utype-compatible? utype ty)
@@ -1718,6 +1707,7 @@
 			      (not (utype-compatible? rutype tye)))
 		      (if (memq tye '(unknown any object))
 			  (begin
+			     (tprint "ICI " rutype " " tye)
 			     (set! tye rutype)
 			     (set! expr (J2SCheck rutype expr)))
 			  (utype-error expr rutype tye)))

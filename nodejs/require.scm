@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue May  4 14:55:28 2021 (serrano)                */
+;*    Last change :  Sun May  9 18:43:31 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -575,7 +575,8 @@
 	       (if (eq? lang (js-undefined))
 		   language
 		   (js-tostring lang this))
-	       (language-compiler language lang this %module (js-current-worker))
+	       (language-compiler language lang this %module
+		  (js-current-worker))
 	       opt))
 	 (js-function-arity 3 0)
 	 (js-function-info :name "require" :len 3)

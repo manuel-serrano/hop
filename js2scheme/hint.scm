@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sat May  8 18:48:04 2021 (serrano)                */
+;*    Last change :  Sun May  9 08:15:36 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -75,7 +75,7 @@
 		      decls)))
 	     (for-each (lambda (n) (j2s-call-hint! n #f conf)) decls)
 	     (for-each (lambda (n) (j2s-call-hint! n #f conf)) nodes)
-	     (when (and #f (config-get conf :optim-hintloop #f))
+	     (when (config-get conf :optim-hintloop #f)
 		(for-each (lambda (n) (j2s-hint-loop! n #f 0)) decls)
 		(for-each (lambda (n) (j2s-hint-loop! n #f 0)) nodes))
 	     dups)
@@ -87,7 +87,7 @@
 (define (j2s-known-type ty)
    (cond
       ((memq ty
-	  '(any unknown
+	  '(any unknown magic
 	    integer real number bool string
 	    regexp array jsvector no-array date arguments function arrow service
 	    procedure
@@ -728,7 +728,39 @@
 				(type type)
 				(decl p))))
 		     params types)))))
-   
+
+   (define (call-error orig idthis params types)
+      (with-access::J2SDeclFun this (loc)
+	 (instantiate::J2SCall
+	    (loc loc)
+	    (fun (instantiate::J2SHopRef
+		    (id 'js-raise-utype-error)
+		    (rtype 'magic)
+		    (loc loc)))
+	    (thisarg (list (instantiate::J2SHopRef
+			      (loc loc)
+			      (type 'any)
+			      (id '%this))))
+	    (args (list
+		     (J2SRef this loc)
+		     (J2SArray* (length params)
+			(map (lambda (p::J2SDecl type::symbol)
+				(with-access::J2SDecl p (loc id)
+				   (J2SArray
+				      (J2SString (symbol->string type))
+				      (J2SString (symbol->string id))
+				      (J2SString (cadr loc))
+				      (J2SNumber (caddr loc)))))
+			   params types))
+		     (J2SArray* (length params)
+			(map (lambda (p::J2SDecl)
+				(with-access::J2SDecl p (hint)
+				   (instantiate::J2SRef
+				      (loc loc)
+				      (type 'any)
+				      (decl p))))
+			   params)))))))
+
    (define (dispatch-body body pred callt callu fun::J2SFun)
       (with-access::J2SBlock body (loc endloc)
 	 (instantiate::J2SBlock
@@ -783,6 +815,14 @@
 	       (((? profile-node?) (? block-check-node?)) #t)
 	       (((? check-node?)) #t)
 	       (else #f)))))
+
+   (define (hopscript-utype? val::J2SFun)
+      (with-access::J2SFun val (params)
+	 (when (config-get conf :mode 'hopscript)
+	    (any (lambda (p)
+		    (with-access::J2SDecl p (utype)
+		       (not (eq? utype 'unknown))))
+	       params))))
    
    (define (fun-duplicable? decl::J2SDeclFun)
       ;; returns #t iff the function is duplicable, returns #f otherwise
@@ -795,13 +835,14 @@
 				  (not (isa? hintinfo J2SDeclFun))
 				  (not vararg)
 				  (not (isa? val J2SSvc))
-				  (any (lambda (p)
-					  (with-access::J2SDecl p (vtype itype)
-					     ;; at least one parameter is not precisely typed
-					     (and (memq vtype '(unknown number any))
-						  (memq itype '(unknown number any)))))
-				     params)
-				  (not (type-checker? val)))))
+				  (not (type-checker? val))
+				  (or (hopscript-utype? val)
+				      (any (lambda (p)
+					      (with-access::J2SDecl p (vtype itype)
+						 ;; at least one parameter is not precisely typed
+						 (and (memq vtype '(unknown number any))
+						      (memq itype '(unknown number any)))))
+					 params)))))
 		     (when (>=fx (config-get conf :verbose 0) 6)
 			(with-output-to-port (current-error-port)
 			   (lambda ()
@@ -845,6 +886,23 @@
 		      (callt (call-hinted ft idthis newparams htypes))
 		      (callu (call-hinted fu idthis newparams vtypes))
 		      (disp (dispatch-body body pred callt callu val)))
+		  (set! params newparams)
+		  (set! body disp)
+		  (when (config-get conf :profile-hint)
+		     (profile-hint! this id 'dispatch)))))))
+
+   (define (fun-utype-dispatch! fun::J2SDecl htypes::pair-nil ft fu)
+      (with-access::J2SDeclFun this (id)
+	 (let ((val (j2sdeclinit-val-fun this)))
+	    (with-access::J2SFun val (params body idthis loc)
+	       (let* ((newparams (map j2sdecl-duplicate-as-any params))
+		      (pred (test-hint-decls newparams htypes loc))
+		      (callt (call-hinted ft idthis newparams htypes))
+		      (calle (call-error ft idthis newparams htypes))
+		      (disp (dispatch-body body pred callt calle val)))
+		  (with-access::J2SFun (j2sdeclinit-val-fun fu) (rtype rutype)
+		     (set! rtype 'any)
+		     (set! rutype 'unknown))
 		  (set! params newparams)
 		  (set! body disp)
 		  (when (config-get conf :profile-hint)
@@ -909,7 +967,19 @@
 			       " besthints:" besthints
 			       " score:" score
 			       "]]"))))
-		   (if (not (score-duplicate? score besthints body))
+		   (cond
+		      ((hopscript-utype? (j2sdeclinit-val-fun this))
+		       (let* ((htypes (map (lambda (p)
+					      (with-access::J2SDecl p (utype)
+						 (if (eq? utype 'unknown)
+						     'any
+						     utype)))
+					 params))
+			      (fu (fun-duplicate-untyped this conf))
+			      (ft (fun-duplicate-typed this htypes fu conf)))
+			  (fun-utype-dispatch! this htypes ft fu)
+			  (list ft fu)))
+		      ((not (score-duplicate? score besthints body))
 		       ;; no benefit in duplicating this function because:
 		       ;;   - the hintted parameters are not used frequently
 		       ;;     enough;
@@ -917,7 +987,8 @@
 		       ;;     improve the overall function compilation
 		       ;;   - or because the ratio of hinted parameters is
 		       ;;     too low
-		       (loop #f)
+		       (loop #f))
+		      (else
 		       (let ((htypes (map (lambda (bh p)
 					     (if (< (cadr bh) 3)
 						 (with-access::J2SDecl p (vtype)
@@ -937,7 +1008,7 @@
 				     (ft (fun-duplicate-typed this htypes fu conf)))
 				 (fun-dispatch! this htypes ft vtypes fu)
 				 (list ft fu))
-			      (loop #f)))))))
+			      (loop #f))))))))
 	    ((typed? this)
 	     (when (config-get conf :profile-hint #f)
 		(unless (profile-hint? this)
@@ -1250,6 +1321,28 @@
 	  (itype type))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2sdecl-duplicate-as-any ...                                     */
+;*    -------------------------------------------------------------    */
+;*    This function is used to duplicate an utype parameter for        */
+;*    the dispatch function.                                           */
+;*---------------------------------------------------------------------*/
+(define (j2sdecl-duplicate-as-any p::J2SDecl)
+   (if (isa? p J2SDeclInit)
+       (duplicate::J2SDeclInit p
+	  (key (ast-decl-key))
+	  (hint '())
+	  (utype 'unknown)
+	  (vtype 'any)
+	  (itype 'any))
+       (duplicate::J2SDecl p
+	  (key (ast-decl-key))
+	  (exports '())
+	  (hint '())
+	  (utype 'unknown)
+	  (vtype 'any)
+	  (itype 'any))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-call-hint! ::J2SNode ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-call-hint! this::J2SNode concrete-type::bool conf)
@@ -1486,16 +1579,12 @@
 		(key (ast-decl-key))
 		(hint '())
 		(vtype type)
-		;; MS CARE UTYPE
-;* 		(utype type)                                           */
 		(itype type)
 		(val (J2SRef p loc :type type))))
 	  (duplicate::J2SDecl p
 	     (key (ast-decl-key))
 	     (hint '())
 	     (vtype type)
-	     ;; MS CARE UTYPE
-;* 	     (utype type)                                              */
 	     (itype type))))
 
    (define (block-dispatch this::J2SLetBlock decls::pair-nil htypes::pair-nil)

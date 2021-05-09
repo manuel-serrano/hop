@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Sat May  8 15:51:05 2021 (serrano)                */
+;*    Last change :  Sun May  9 15:17:46 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -58,12 +58,14 @@
    `(instantiate::J2SArray
        (loc loc)
        (len ,(length exprs))
+       (type 'array)
        (exprs ,(if (pair? exprs) `(list ,@exprs) ''()))))
 
 (define-macro (J2SArray* size exprs)
    `(instantiate::J2SArray
        (loc loc)
        (len ,size)
+       (type 'array)
        (exprs ,exprs)))
 
 (define-macro (J2SNop)

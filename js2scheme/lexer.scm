@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Tue Apr 21 10:58:20 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Last change :  Sun May  9 15:01:49 2021 (serrano)                */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
 ;*=====================================================================*/
@@ -284,6 +284,7 @@
       (#\) (token 'RPAREN #\) 1))
       (#\[ (token 'LBRACKET #\[ 1))
       (#\] (token 'RBRACKET #\] 1))
+      (#\# (token 'SHARP #\# 1))
       (#\. (token 'DOT #\. 1))
       (#\; (token 'SEMICOLON #\; 1))
       (#\, (token 'COMMA #\, 1))

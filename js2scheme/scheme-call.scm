@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri May  7 15:58:40 2021 (serrano)                */
+;*    Last change :  Sun May  9 14:27:44 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1072,6 +1072,7 @@
    
    (define (call-hop-function fun::J2SHopRef thisarg args)
       `(,(j2s-scheme fun mode return ctx)
+	,@(j2s-scheme thisarg mode return ctx)
 	,@(j2s-scheme args mode return ctx)))
 
    (define (j2s-self thisarg)

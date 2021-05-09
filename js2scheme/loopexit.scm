@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/loopexit.scm            */
+;*    serrano/prgm/project/hop/hop/js2scheme/loopexit.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Aug 10 12:05:04 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Sun May  9 17:16:38 2021 (serrano)                */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Loopexit -> bind-exit                                 */
 ;*    -------------------------------------------------------------    */
@@ -206,6 +206,12 @@
 	     (begin
 		(walk! (car nodes) targets label)
 		(loop (cdr nodes) #f))))))
+
+;*---------------------------------------------------------------------*/
+;*    mark-exit! ::J2SLetBlock ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-exit! this::J2SLetBlock targets::pair-nil label)
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    mark-exit! ::J2SFun ...                                          */

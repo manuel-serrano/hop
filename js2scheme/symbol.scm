@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu May  6 11:37:38 2021 (serrano)                */
+;*    Last change :  Sun May  9 17:07:36 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -870,10 +870,19 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SVarDecls env mode withs wenv genv ctx conf)
    (with-access::J2SVarDecls this (decls loc)
-      (let ((ndecls (filter-map (lambda (d)
-				   (let ((nd (resolve! d env mode withs wenv genv ctx conf)))
-				      (unless (isa? nd J2SNop) nd)))
-		       decls)))
+      (let ((ndecls (let loop ((decls decls)
+			       (env env))
+		       (if (null? decls)
+			   '()
+			   (let* ((d (car decls))
+				  (nd (resolve! d env mode
+					 withs wenv genv ctx conf)))
+			      (with-access::J2SDecl d (id)
+				 (let* ((db (or (find-decl id env) this))
+					(nenv (cons db env)))
+				    (if (isa? nd J2SNop)
+					(loop (cdr decls) nenv)
+					(cons nd (loop (cdr decls) nenv))))))))))
 	 (if (pair? ndecls)
 	     (instantiate::J2SSeq
 		(loc loc)

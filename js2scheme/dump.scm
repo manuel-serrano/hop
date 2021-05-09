@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat May  8 15:44:14 2021 (serrano)                */
+;*    Last change :  Sun May  9 09:23:08 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -584,6 +584,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCast)
    (with-access::J2SCast this (expr type)
+      `(,@(call-next-method) :type ,type ,(j2s->list expr))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SChech ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SCheck)
+   (with-access::J2SCheck this (expr type)
       `(,@(call-next-method) :type ,type ,(j2s->list expr))))
 
 ;*---------------------------------------------------------------------*/

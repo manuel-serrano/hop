@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat May  8 16:06:47 2021 (serrano)                */
+;*    Last change :  Sun May  9 14:56:55 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -431,7 +431,7 @@
 	    ((isa? expr J2SSequence)
 	     ;; push the cast to the last sequence expression
 	     (with-access::J2SSequence expr (exprs)
-		(with-access::J2SCast this ((cexpr expr))
+		(with-access::J2SCheck this ((cexpr expr))
 		   (set! cexpr (car (last-pair exprs)))
 		   (set-car! (last-pair exprs) this)
 		   (j2s-scheme expr mode return ctx))))
@@ -1511,6 +1511,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SBreak mode return ctx)
    (with-access::J2SBreak this (loc target)
+      (unless (isa? target J2SIdStmt)
+	 (tprint "PAS BON : " loc))
       (with-access::J2SIdStmt target (id)
 	 (epairify loc
 	    `(,(escape-name '%break id)

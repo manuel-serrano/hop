@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed May  5 13:24:43 2021 (serrano)                */
+;*    Last change :  Sun May  9 09:33:52 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -849,6 +849,10 @@
 	  (if (context-get ctx :es6-module-client #f)
 	      (list this "import.meta")
 	      '()))
+	 ((%this)
+	  (list this "this"))
+	 ((js-raise-utype-error)
+	  (list this "raiseUtypeError"))
 	 (else
 	  (list this (symbol->string! id))))))
 

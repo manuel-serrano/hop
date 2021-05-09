@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sat May  8 09:28:37 2021 (serrano)                */
+;*    Last change :  Sun May  9 15:18:11 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -85,18 +85,25 @@
       (let ((sexprs (j2s-scheme exprs mode return ctx)))
 	 (cond
 	    ((null? sexprs)
-	     (if (eq? type 'vector)
-		 ''#()
-		 `(js-empty-vector->jsarray %this)))
+	     (case type
+		((vector)
+		 ''#())
+		((jsvector)
+		 '(js-vector-null))
+		(else
+		 `(js-empty-vector->jsarray %this))))
 	    ((and (every (lambda (x)
 			    (or (number? x) (string? x) (boolean? x)))
 		     sexprs)
 		  (unique? ctx sexprs))
-	     (let ((vec `(copy-vector ',(list->vector sexprs) ,(length sexprs))))
-		(epairify loc
-		   (if (eq? type 'vector)
-		       vec
-		       `(js-vector->jsarray ,vec %this)))))
+	     (epairify loc
+		(if (eq? type 'jsvector)
+		    `(js-vector->jsvector ',(list->vector sexprs) %this)
+		    (let ((vec `(copy-vector ',(list->vector sexprs)
+				   ,(length sexprs))))
+		       (if (eq? type 'vector)
+			   vec
+			   `(js-vector->jsarray ,vec %this))))))
 	    ((any (lambda (x) (isa? x J2SSpread)) exprs)
 	     (j2s-scheme (spread->array-expr loc exprs #t) mode return ctx))
 	    ((any (lambda (x) (isa? x J2SArrayAbsent)) exprs)
@@ -106,11 +113,20 @@
 		       vec
 		       `(js-vector->sparse-jsarray ,vec %this)))))
 	    (else
-	     (let ((vec `(vector ,@sexprs)))
-		(epairify loc
-		   (if (eq? type 'vector)
-		       vec
-		       `(js-vector->jsarray ,vec %this)))))))))
+	     (epairify loc
+		(if (eq? type 'jsvector)
+		    (let ((vec (gensym 'vec)))
+		       `(let ((,vec (js-vector-alloc
+				       ,(fixnum->uint32 (length sexprs))
+				       %this)))
+			   ,@(map (lambda (i v)
+				     `(js-vector-inline-set! ,vec ,i ,v))
+				(iota (length sexprs)) sexprs)
+			   ,vec))
+		    (let ((vec `(vector ,@sexprs)))
+		       (if (eq? type 'vector)
+			   vec
+			   `(js-vector->jsarray ,vec %this))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-new-array ...                                                */

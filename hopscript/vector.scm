@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri May  7 09:59:09 2021                          */
-;*    Last change :  Fri May  7 17:15:38 2021 (serrano)                */
+;*    Last change :  Sun May  9 15:18:58 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript vectors.                                               */
@@ -41,8 +41,11 @@
 	   __hopscript_array)
 
    (export (js-init-vector! ::JsGlobalObject)
-	   (inline js-vector-alloc ::uint32 ::JsGlobalObject)
-	   (js-vector-new1 ::obj ::JsGlobalObject)
+	   %js-vector-empty
+	   (inline js-vector-empty::JsArray)
+	   (inline js-vector-alloc::JsArray ::uint32 ::JsGlobalObject)
+	   (js-vector->jsvector::JsArray ::vector ::JsGlobalObject)
+	   (js-vector-new1::JsArray ::obj ::JsGlobalObject)
 	   (inline js-vector-length::uint32 ::JsArray)
 	   (js-vector-get ::JsArray ::obj ::JsGlobalObject)
 	   (js-vector-put! ::JsArray ::obj ::obj ::JsGlobalObject)
@@ -57,6 +60,11 @@
 (define __js_strings (&begin!))
 
 ;*---------------------------------------------------------------------*/
+;*    js-vector-empty ...                                              */
+;*---------------------------------------------------------------------*/
+(define %js-vector-empty #f)
+
+;*---------------------------------------------------------------------*/
 ;*    js-init-vector! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-init-vector! %this)
@@ -66,7 +74,10 @@
 					 js-array-pcache)
    
       ;; local constant strings
-      (unless (vector? __js_strings) (set! __js_strings (&init!)))
+      (unless (vector? __js_strings)
+	 (set! __js_strings (&init!)))
+      (unless (js-array? %js-vector-empty)
+	 (set! %js-vector-empty (js-vector-alloc #u32:0 %this)))
       
       ;; builtin prototype
       (set! js-vector-prototype (js-vector-alloc #u32:0 %this))
@@ -205,6 +216,12 @@
 	     "vector assignment, out of range" idx))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-vector-empty ...                                              */
+;*---------------------------------------------------------------------*/
+(define-inline (js-vector-empty)
+   %js-vector-empty)
+
+;*---------------------------------------------------------------------*/
 ;*    js-vector-alloc-ctor ...                                         */
 ;*    -------------------------------------------------------------    */
 ;*    This is a dummy implementation of vector constructor.            */
@@ -241,6 +258,15 @@
 		(set! ilen len)
 		(set! vec v))
 	     this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-vector->jsvector ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-vector->jsvector vec %this)
+   (let ((jsvec (js-vector-alloc (fixnum->uint32 (vector-length vec)) %this)))
+      (with-access::JsArray jsvec ((tgt vec))
+	 (vector-copy! tgt 0 vec 0))
+      jsvec))
   
 ;*---------------------------------------------------------------------*/
 ;*    %js-vector ...                                                   */
