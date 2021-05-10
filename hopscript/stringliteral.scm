@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu Apr 22 12:49:27 2021 (serrano)                */
+;*    Last change :  Mon May 10 13:46:41 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1660,7 +1660,7 @@
 		    (let ((nbuf (make-string (*fx (uint32->fixnum nlen) 2))))
 		       ;; enlarge the buffer
 		       (blit-string! buffer 0 nbuf 0 (uint32->fixnum llen))
-		       (blit-string! rright 0 buffer (uint32->fixnum llen)
+		       (blit-string! rright 0 nbuf (uint32->fixnum llen)
 			  (uint32->fixnum rlen))
 		       (set! llen nlen)
 		       (set! buffer nbuf)

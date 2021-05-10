@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/cast.scm                  */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/cast.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Apr 20 08:36:37 2020 (serrano)                */
+;*    Last change :  Mon May 10 13:19:53 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -396,7 +396,12 @@
 		  (with-access::J2SDecl decl (vtype utype)
 		     (and (not (memq utype '(unknown any object)))
 			  (not (eq? vtype (j2s-type rhs)))))))
-	  (error "type-cast!" "not implemented yet" (j2s->list this)))
+	  (with-access::J2SRef lhs (decl)
+	     (with-access::J2SDecl decl (vtype utype)
+		(error "type-cast!"
+		   (format "not implemented yet (utype=~a, vtype=~a rhs=~a)"
+		      utype vtype (j2s-type rhs))
+		   (j2s->list this)))))
 	 ((and (isa? lhs J2SRef)
 	       (not (isa? this J2SInit))
 	       (with-access::J2SRef lhs (decl)
