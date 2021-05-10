@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sun May  9 08:15:36 2021 (serrano)                */
+;*    Last change :  Mon May 10 12:06:42 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -742,7 +742,6 @@
 			      (type 'any)
 			      (id '%this))))
 	    (args (list
-		     (J2SRef this loc)
 		     (J2SArray* (length params)
 			(map (lambda (p::J2SDecl type::symbol)
 				(with-access::J2SDecl p (loc id)
@@ -1084,6 +1083,7 @@
       ((integer) 'fixnum?)
       ((string) 'js-jsstring?)
       ((array) 'js-array?)
+      ((jsvector) 'js-vector?)
       ((object) 'js-object?)
       ((function) 'js-function?)
       ((arrow) 'js-procedure?)

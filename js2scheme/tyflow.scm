@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun May  9 08:25:43 2021 (serrano)                */
+;*    Last change :  Mon May 10 11:46:13 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1171,6 +1171,9 @@
 		     ((and (null? (cdr params)) (decl-usage-has? (car params) '(rest)))
 		      (decl-itype-add! (car params) 'array ctx))
 		     ((null? args)
+		      (unless (or (eq? utype 'unknown) (not (eq? mode 'hopscript)))
+			 (unless (utype-compatible? utype 'undefined)
+			     (utype-error (car params) utype 'undefined)))
 		      (decl-itype-add! (car params) 'undefined ctx)
 		      (loop (cdr params) '()))
 		     ((and (not (eq? utype 'unknown))
@@ -1707,7 +1710,6 @@
 			      (not (utype-compatible? rutype tye)))
 		      (if (memq tye '(unknown any object))
 			  (begin
-			     (tprint "ICI " rutype " " tye)
 			     (set! tye rutype)
 			     (set! expr (J2SCheck rutype expr)))
 			  (utype-error expr rutype tye)))
@@ -2529,7 +2531,7 @@
       (raise
 	 (instantiate::&type-error
 	    (proc "hopc")
-	    (msg (format "Illegal type, \"~a\" expected" utype))
+	    (msg (format "illegal type, \"~a\" expected" utype))
 	    (obj tyv)
 	    (type utype)
 	    (fname (cadr loc))

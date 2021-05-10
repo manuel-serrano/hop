@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sat May  8 17:57:44 2021 (serrano)                */
+;*    Last change :  Mon May 10 11:21:05 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Checking values from JS.                                         */
@@ -68,10 +68,10 @@
 		      ,sexp
 		      ,(if (= (context-get ctx debug: 0) 0)
 			   `(js-raise-type-error %this
-			       ,(format "Type error, ~a expected"
+			       ,(format "~a expected: ~~a"
 				   (type-name to))
 			       ,sexp)
 			   `(js-raise-type-error/loc %this ',loc
-			       ,(format "Type error, ~a expected"
+			       ,(format "~a expected: ~~a"
 				   (type-name to))
 			       ,sexp))))))))

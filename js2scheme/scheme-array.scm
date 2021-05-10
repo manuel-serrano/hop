@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun May  9 15:18:11 2021 (serrano)                */
+;*    Last change :  Mon May 10 11:57:58 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -89,7 +89,7 @@
 		((vector)
 		 ''#())
 		((jsvector)
-		 '(js-vector-null))
+		 '(js-vector-empty))
 		(else
 		 `(js-empty-vector->jsarray %this))))
 	    ((and (every (lambda (x)

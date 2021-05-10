@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Mon Apr 26 16:09:39 2021 (serrano)                */
+;*    Last change :  Mon May 10 11:33:20 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -264,10 +264,12 @@
 				       (hop-compile in
 					  :verbose (config-get args :verbose 0)
 					  :verbmargin margin
+					  :module-import #t
 					  :module-stack (cons respath stack))
 				       (j2s-compile in
 					  :driver (j2s-export-driver)
 					  :warning 0
+					  :module-import #t
 					  :verbose (config-get args :verbose 0)
 					  :verbmargin margin
 					  :module-stack (cons respath stack)))))

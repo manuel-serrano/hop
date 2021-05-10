@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Mon May 10 07:40:20 2021 (serrano)                */
+;*    Last change :  Mon May 10 11:28:52 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -807,7 +807,7 @@
 		(set-cdr! (last-pair genv) (list decl))
 		(unless (memq id this-symbols)
 		   (cond
-		      ((config-get conf :warning-global)
+		      ((config-get conf :module-import)
 		       ;; this mode is used to parse imported modules
 		       ;; in this compilation mode, automatically imported
 		       ;; global variable are left unbound
@@ -820,6 +820,8 @@
 			     (obj id)
 			     (fname (cadr loc))
 			     (location (caddr loc)))))
+		      ((not (config-get conf :warning-global))
+		       #unspecified)
 		      (else
 		       (warning/loc loc
 			  (format "unbound variable \"~s\"" id)))))

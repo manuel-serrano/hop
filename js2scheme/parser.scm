@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun May  9 15:02:25 2021 (serrano)                */
+;*    Last change :  Mon May 10 11:49:29 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -537,7 +537,7 @@
 	    ((LBRACE LBRACKET)
 	     (let* ((objectp (eq? (peek-token-type) 'LBRACE))
 		    (loc (token-loc id))
-		    (lhs (if objectp (object-literal #t) (array-literal #t #f #f)))
+		    (lhs (if objectp (object-literal #t) (array-literal #t #f 'array)))
 		    (decl (constrinit loc (gensym '%obj) (J2SUndefined) 'unknown))
 		    (bindings (j2s-destructure lhs decl #t)))
 		(if in-for-init?
@@ -1634,7 +1634,7 @@
 		   (loc loc)
 		   (id id)
 		   (_scmid id))
-		(array-literal #f #f #f))))
+		(array-literal #f #f 'array))))
 	 (else
 	  (if maybe-expr?
 	      (values #f (assig-expr #f #f #f))
@@ -2617,14 +2617,15 @@
 			   (loc (token-loc token))
 			   (expr expr)))))))
 	 ((LBRACKET)
-	  (array-literal destructuring? #t #f))
+	  (array-literal destructuring? #t 'array))
 	 ((SHARP)
 	  (if (eq? current-mode 'hopscript)
 	      (begin
 		 (consume-any!)
 		 (if (eq? (peek-token-type) 'LBRACKET)
-		     (array-literal destructuring? #t #t)
-		     (parse-token-error "Unexpected token" (peek-token))))))
+		     (array-literal destructuring? #t 'jsvector)
+		     (parse-token-error "Unexpected token" (peek-token))))
+	      (parse-token-error "Unexpected token" (peek-token))))
 	 ((LBRACE)
 	  ;; MS CARE: 30dec2018
 	  ;; (object-literal destructuring?)
@@ -2779,7 +2780,7 @@
 		      (expr (read ip)))))
 	     (parse-token-error "Unexpected token" str))))
    
-   (define (array-literal destructuring? spread? vector?)
+   (define (array-literal destructuring? spread? type::symbol)
       (let ((token (push-open-token (consume-token! 'LBRACKET))))
 	 (define (parse-array-element array-el rev-els length)
 	    (case (peek-token-type)
@@ -2792,7 +2793,7 @@
 		   (loc (token-loc token))
 		   (exprs (reverse! (cons array-el rev-els)))
 		   (len (+fx length 1))
-		   (type (if vector? 'jsvector 'array))))
+		   (type type)))
 	       (else
 		(parse-token-error "Unexpected token"
 		   (consume-any!)))))
@@ -2803,7 +2804,7 @@
 		(pop-open-token (consume-any!))
 		(instantiate::J2SArray
 		   (loc (token-loc token))
-		   (type 'array)
+		   (type type)
 		   (exprs (reverse! rev-els))
 		   (len length)))
 	       ((COMMA)

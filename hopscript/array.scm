@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat May  8 09:47:02 2021 (serrano)                */
+;*    Last change :  Mon May 10 11:07:57 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1290,7 +1290,7 @@
 		    el)))))
 	 ((not (array-shrinkable? this))
 	  (js-raise-type-error %this
-	     "Can't remove property ~a: length is read-only" length))
+	     "can't remove property \"~a\", length is read-only" length))
 	 (else
 	  (js-array-prototype-pop this %this))))
 
@@ -1318,7 +1318,7 @@
 	     (unless (array-extensible? this)
 		(with-access::JsArray this (length)
 		   (js-raise-type-error %this
-		      "Can't add property ~a: object is not extensible" length)))
+		      "can't add property \"~a\", array is not extensible" length)))
 	     (for-each (lambda (item)
 			  (js-array-prototype-push this item %this))
 		items)
@@ -2031,7 +2031,7 @@
       (let* ((o (js-toobject %this this))
 	     (len::uint32 (js-get-lengthu32 o %this)))
 	 (if (not (js-procedure? proc))
-	     (js-raise-type-error %this "Not a procedure ~s" proc)
+	     (js-raise-type-error %this "not a procedure ~s" proc)
 	     ;; find the accumulator init value
 	     (if (null? init)
 		 (let loop ((i #u32:0))
@@ -2072,7 +2072,7 @@
       (let* ((o (js-toobject %this this))
 	     (len::uint32 (js-get-lengthu32 o %this)))
 	 (if (not (js-procedure? proc))
-	     (js-raise-type-error %this "Not a procedure ~s" proc)
+	     (js-raise-type-error %this "not a procedure ~s" proc)
 	     ;; find the accumulator init value
 	     (if (null? init)
 		 (let loop ((k (-u32 len #u32:1)))
@@ -2154,7 +2154,7 @@
 			   (js-new1 %this ctor 0))
 			  (else
 			   (js-raise-type-error %this
-			      "Not a constructor" ctor)))))
+			      "not a constructor" ctor)))))
 		 (js-array-construct/lengthu32 %this
 		    (js-array-alloc %this)
 		    (fixnum->uint32 new-len))))))))
@@ -2974,8 +2974,8 @@
 	  (if throw 
 	      (js-raise-type-error %this
 		 (if (js-object-mode-extensible? o)
-		     "Can't add property ~a"
-		     "Can't add property ~a, object not extensible")
+		     "can't add property \"~a\" to array"
+		     "can't add property \"~a\", array not extensible")
 		 q)
 	      (js-undefined))
 	  (let ((owndesc (js-get-own-property o q %this)))
@@ -3016,7 +3016,7 @@
 		(with-access::JsDataDescriptor desc (writable)
 		   (unless writable
 		      (js-raise-type-error %this
-			 "Cannot assign to read only property \"~a\" array" idx)
+			 "cannot assign to read only property \"~a\" array" idx)
 		      #f)))))))
 
    (with-access::JsArray o (vec ilen length)
@@ -3033,7 +3033,7 @@
 			(set! length (+u32 idx #u32:1))
 			(if throw
 			    (js-raise-type-error %this
-			       "Cannot add property ~a, object is not extensible" p)
+			       "cannot add property ~a, object is not extensible" p)
 			    v)))
 		(uninline-array! o %this)
 		(js-property-value-set! o o idx desc v %this)))
@@ -3045,7 +3045,7 @@
 		      ((and (>=u32 idx length) (not (array-extensible? o)))
 		       (if throw
 			   (js-raise-type-error %this
-			      "Cannot add property ~a, object is not extensible" p)
+			      "cannot add property ~a, object is not extensible" p)
 			   v))
 		      ((and (=u32 idx ilen) (js-object-mode-inline? o))
 		       (vector-set! vec (uint32->fixnum idx) v)
@@ -3103,7 +3103,7 @@
 		 (js-array-put! o p v throw %this)))
 	    ((and (js-isindex? idx) (js-vector? o))
 	     (js-raise-type-error %this
-		"Cannot add property ~a, object is not extensible" p))
+		"cannot add property ~a, object is not extensible" p))
 	    ((js-isname? p (& "length") %this)
 	     (cond
 		((and (js-object-mode-plain? o)
@@ -3114,7 +3114,7 @@
 			   (if (=uint32 vu nv)
 			       (js-array-put-length! o vu)
 			       (js-raise-range-error %this
-				  "Illegal length: ~s" (js-tostring v %this))))
+				  "illegal length: ~s" (js-tostring v %this))))
 			(aput! o (js-toname p %this) v))))
 		((js-vector? o)
 		 (js-raise-type-error %this
@@ -3372,7 +3372,7 @@
 		      (unless (=uint32 newlen nvalue)
 			 ;; 3.d
 			 (js-raise-range-error %this
-			    "Illegal length: ~s" (js-tostring value %this)))
+			    "illegal length: ~s" (js-tostring value %this)))
 		      (with-access::JsValueDescriptor newlendesc (value)
 			 ;; 3.e
 			 (set! value (js-uint32-tointeger newlen)))
@@ -3569,7 +3569,7 @@
    ;; see ch15/15.4/15.4.4/15.4.4.16/15.4.4.16-4-8.js
    (if (js-array? this)
        (if (not (js-procedure? proc))
-	   (js-raise-type-error %this "Not a procedure ~s" proc)
+	   (js-raise-type-error %this "not a procedure ~s" proc)
 	   (with-access::JsArray this (length vec ilen)
 	      (if (js-array-inlined? this)
 		  (vector-iterator this this length proc t #u32:0 %this)
@@ -3577,7 +3577,7 @@
        (let ((o (js-toobject %this this)))
 	  (let ((len (js-get-lengthu32 o %this)))
 	     (if (not (js-procedure? proc))
-		 (js-raise-type-error %this "Not a procedure ~s" proc)
+		 (js-raise-type-error %this "not a procedure ~s" proc)
 		 (array-iterator this o len proc t #u32:0 %this))))))
 
 ;*---------------------------------------------------------------------*/
@@ -5247,7 +5247,7 @@
 		 (js-put! o n item #f %this))
 	     (if (=u32 (+u32 n #u32:1) #u32:0)
 		 (js-raise-range-error %this
-		    "Illegal length: ~s"
+		    "illegal length: ~s"
 		    (js-tostring #l4294967296 %this))
 		 (js-uint32-tointeger (+u32 #u32:1 n))))))))
 
@@ -6011,7 +6011,7 @@
 				 (vector-set! vec i value)
 				 (loop (+fx i 1))))))))
 		 (js-raise-type-error %this
-		    "Invalid attempt to destructure non-iterable instance"
+		    "invalid attempt to destructure non-iterable instance"
 		    value))))))
 
 ;*---------------------------------------------------------------------*/

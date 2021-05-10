@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun May  9 13:01:30 2021 (serrano)                */
+;*    Last change :  Mon May 10 12:15:11 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -235,7 +235,7 @@
 	   (js-raise-syntax-error/loc ::JsGlobalObject ::obj ::bstring ::obj)
 	   (js-raise-reference-error ::JsGlobalObject ::bstring ::obj . ::obj)
 	   (js-raise-error ::JsGlobalObject ::bstring ::obj . ::obj)
-	   (js-raise-utype-error ::JsGlobalObject ::JsObject ::JsObject ::JsObject)
+	   (js-raise-utype-error ::JsGlobalObject ::JsArray ::JsArray)
 
 	   (generic js-cast-object obj ::JsGlobalObject ::bstring)
 	   (generic js-inspect ::obj ::int)
@@ -2702,7 +2702,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-utype-error ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (js-raise-utype-error %this proc types args)
+(define (js-raise-utype-error %this types args)
    
    (define (is? val typ)
       (cond
@@ -2729,8 +2729,7 @@
 			  (js-raise-type-error/loc %this
 			     `(at ,(js-jsstring->string (vector-ref vec 2))
 				 ,(vector-ref vec 3))
-			     (format "~a: wrong type for ~a:~a, ~~s"
-				(js-function-debug-name proc %this)
+			     (format "wrong argument type ~a:~a, ~~s"
 				(js-jsstring->string (vector-ref vec 1))
 				(js-jsstring->string (vector-ref vec 0)))
 			     arg))))
@@ -2738,8 +2737,7 @@
 		   (js-raise-type-error/loc %this
 		      `(at ,(js-jsstring->string (vector-ref vec 2))
 			  ,(vector-ref vec 3))
-		      (format "~a: wrong argument types, ~~s"
-			 (js-function-debug-name proc %this))
+		      (format "wrong argument types, ~~s")
 		      args)))))))
 			    
 ;*---------------------------------------------------------------------*/
