@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/constant.scm              */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/constant.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
@@ -251,7 +251,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constant! this::J2SDeclInit env nesting conf)
    (with-access::J2SDeclInit this (val vtype vtype itype loc scope)
-      (if (and (not (decl-usage-has? this '(set ref method)))
+      (if (and (not (decl-usage-has? this '(assig set ref method)))
 	       (constant-array? val)
 	       (not (eq? scope 'global)))
 	  (begin
