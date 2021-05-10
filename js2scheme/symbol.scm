@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/symbol.scm                */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/symbol.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Jan 31 16:30:12 2020 (serrano)                */
+;*    Last change :  Sun May  9 18:19:01 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -330,74 +330,77 @@
       (with-access::J2SDecl d (id)
 	 (not (find-decl id params))))
 
-   (with-access::J2SFun this (body params thisp loc (fmode mode) decl name
-				ismethodof)
-      (let ((nm (or name
-		    (when (isa? decl J2SDecl)
-		       (with-access::J2SDecl decl (id)
-			  id)))))
-	 ;; check parameter correctness
-	 (if (eq? fmode 'normal)
-	     (nonstrict-params! params)
-	     (begin
-		(check-strict-mode-params params loc)
-		(when (symbol? nm)
-		   (check-strict-mode-eval nm "Function name" loc))))
-	 ;; walk throught the function body
-	 (let* ((env0 (if (j2sfun-expression? this) (cons decl env) env))
-		(decls (filter (lambda (d)
-				  ;; see ecma-262-51.html#sec-10.2
-				  (or (isa? d J2SDeclFun)
-				      (not-in? d params)))
-			  (collect* body)))
-		(arguments (instantiate::J2SDeclArguments
-			      (id 'arguments)
-			      (argid (gensym 'arguments))
-			      (utype (if (eq? fmode 'normal) 'any 'arguments))
-			      (mode mode)
-			      (loc loc)))
-		(envl (append decls params))
-		(env1 (append envl env0))
-		(ldecls (with-access::J2SBlock body (nodes)
-			   (collect-let nodes)))
-		(nenv (if (find-decl 'arguments envl)
-			  (append ldecls env1)
-			  (cons arguments (append ldecls env1))))
-		(bdenv (if (isa? thisp J2SDecl) (cons thisp nenv) nenv))
-		(nwenv (cons arguments (append decls params wenv))))
-	    (for-each (lambda (decl::J2SDecl)
-			 (with-access::J2SDecl decl (scope)
-			    (set! scope 'fun)))
-	       ldecls)
-	    (if (pair? decls)
-		(set! body
-		   (with-access::J2SBlock body (endloc)
-		      (instantiate::J2SBlock
-			 (loc loc)
-			 (endloc endloc)
-			 (nodes (append
-				   (bind-decls! decls bdenv fmode 'inner
-				      withs wenv genv conf)
-				   (list (walk! body bdenv fmode
-					    withs nwenv genv
-					    ctx conf)))))))
-		(set! body (walk! body bdenv fmode withs nwenv genv ctx conf)))
-	    (with-access::J2SDeclArguments arguments (usecnt)
-	       (when (>fx usecnt 0)
-		  (with-access::J2SFun this (vararg argumentsp params loc)
-		     (if vararg
-			 (with-access::J2SDecl (car (last-pair params)) (id loc)
-			    (raise
-			       (instantiate::&io-parse-error
-				  (proc "symbol resolution (symbol)")
-				  (msg "\"arguments\" object may not be used in conjunction with a rest parameter")
-				  (obj id)
-				  (fname (cadr loc))
-				  (location (caddr loc)))))
-			 (begin
-			    (set! argumentsp arguments)
-			    (set! vararg 'arguments)))))))))
-   this)
+   (define (resolve-fun! this)
+      (with-access::J2SFun this (body params thisp loc (fmode mode) decl name
+				   ismethodof)
+	 (let ((nm (or name
+		       (when (isa? decl J2SDecl)
+			  (with-access::J2SDecl decl (id)
+			     id)))))
+	    ;; check parameter correctness
+	    (if (eq? fmode 'normal)
+		(nonstrict-params! params)
+		(begin
+		   (check-strict-mode-params params loc)
+		   (when (symbol? nm)
+		      (check-strict-mode-eval nm "Function name" loc))))
+	    ;; walk throught the function body
+	    (let* ((env0 (if (j2sfun-expression? this) (cons decl env) env))
+		   (decls (filter (lambda (d)
+				     ;; see ecma-262-51.html#sec-10.2
+				     (or (isa? d J2SDeclFun)
+					 (not-in? d params)))
+			     (collect* body)))
+		   (arguments (instantiate::J2SDeclArguments
+				 (id 'arguments)
+				 (argid (gensym 'arguments))
+				 (utype (if (eq? fmode 'normal) 'any 'arguments))
+				 (mode mode)
+				 (loc loc)))
+		   (envl (append decls params))
+		   (env1 (append envl env0))
+		   (ldecls (with-access::J2SBlock body (nodes)
+			      (collect-let nodes)))
+		   (nenv (if (find-decl 'arguments envl)
+			     (append ldecls env1)
+			     (cons arguments (append ldecls env1))))
+		   (bdenv (if (isa? thisp J2SDecl) (cons thisp nenv) nenv))
+		   (nwenv (cons arguments (append decls params wenv))))
+	       (for-each (lambda (decl::J2SDecl)
+			    (with-access::J2SDecl decl (scope)
+			       (set! scope 'fun)))
+		  ldecls)
+	       (if (pair? decls)
+		   (set! body
+		      (with-access::J2SBlock body (endloc)
+			 (instantiate::J2SBlock
+			    (loc loc)
+			    (endloc endloc)
+			    (nodes (append
+				      (bind-decls! decls bdenv fmode 'inner
+					 withs wenv genv conf)
+				      (list (walk! body bdenv fmode
+					       withs nwenv genv
+					       ctx conf)))))))
+		   (set! body (walk! body bdenv fmode withs nwenv genv ctx conf)))
+	       (with-access::J2SDeclArguments arguments (usecnt)
+		  (when (>fx usecnt 0)
+		     (with-access::J2SFun this (vararg argumentsp params loc)
+			(if vararg
+			    (with-access::J2SDecl (car (last-pair params)) (id loc)
+			       (raise
+				  (instantiate::&io-parse-error
+				     (proc "symbol resolution (symbol)")
+				     (msg "\"arguments\" object may not be used in conjunction with a rest parameter")
+				     (obj id)
+				     (fname (cadr loc))
+				     (location (caddr loc)))))
+			    (begin
+			       (set! argumentsp arguments)
+			       (set! vararg 'arguments))))))
+	       this))))
+
+   (resolve-fun! this))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2STilde ...                                          */

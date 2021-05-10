@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Apr 21 17:10:33 2021 (serrano)                */
+;*    Last change :  Mon May 10 10:49:10 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -243,28 +243,6 @@
 	      (epairify loc sexp))
 	     (else
 	      (epairify loc `(js-tonumber ,sexp %this))))))
-      ((+TBE-15oct2020)
-       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.6
-       (let ((sexpr (j2s-scheme expr mode return ctx))
-             (vtyp (j2s-vtype expr))
-	     (etyp (j2s-type expr)))
-          (cond
-             ((eqv? sexpr 0)
-              (if (memq type '(int32 uint32 int53 integer))
-                  0
-                  +0.0))
-	     ((memq etyp '(int32 uint32 int53 integer number))
-	      (j2s-cast sexpr expr vtyp type ctx))
-             ((eq? etyp 'real)
-              sexpr)
-             ((eq? etyp 'null)
-              (if (memq type '(int32 uint32 int53 integer))
-                  0
-                  +0.0))
-             (else
-              (if (eq? type 'real)
-                  (epairify loc `(js-toflonum (js-tonumber ,sexpr)))
-                  (epairify loc `(js-tonumber ,sexpr %this)))))))
       ((-)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7
        (let ((sexp (j2s-scheme expr mode return ctx))
@@ -295,10 +273,16 @@
 				    (negfl (uint32->flonum ,sexp))))))))))
 	     ((eq? ty 'int53)
 	      (epairify loc (j2s-as `(negfx ,sexp) expr 'int53 type ctx)))
-	     ((type-number? ty)
-	      (epairify loc `(negjs ,sexp)))
+	     ((eq? ty 'real)
+	      (epairify loc (j2s-as `(negfl ,sexp) expr 'real type ctx)))
+	     ((eq? ty 'number)
+	      (epairify loc (j2s-as `(- ,sexp) expr 'number type ctx)))
+	     ((memq type '(int32 uint32 int53))
+	      (epairify loc
+		 (j2s-as `(- (js-tonumber ,sexp %this)) expr 'any type ctx)))
 	     (else
-	      (epairify loc `(negjs (js-tonumber ,sexp %this)))))))
+	      (epairify loc
+		 (j2s-as `(negjs (js-tonumber ,sexp %this)) exp 'any type ctx))))))
       ((~)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.8
        (if (eq? type 'int32)
