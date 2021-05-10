@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May  6 07:37:36 2021                          */
-;*    Last change :  Fri May  7 09:40:51 2021 (serrano)                */
+;*    Last change :  Mon May 10 08:44:08 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    A list of functions that traverse the AST after the parsing to   */
@@ -186,7 +186,7 @@
 		   (isa? (car nodes) J2SDeclFun)))
 	  (multiple-value-bind (vdecls fdecls nodes)
 	     (collect-bindings nodes)
-	     (list (letrecblock (append vdecls fdecls) nodes))))
+	     (list (letrecblock (append fdecls vdecls) nodes))))
 	 ((isa? (car nodes) J2SVarDecls)
 	  (with-access::J2SVarDecls (car nodes) (decls)
 	     (loop (cdr nodes) head (append (reverse decls) vdecls) fdecls)))
@@ -197,7 +197,7 @@
 		     (append (reverse! vdecls) (reverse! fdecls)))
 	     (let*! nodes #f mode)))
 	 ((or (pair? vdecls) (pair? fdecls))
-	  (let ((decls (append (reverse! vdecls) (reverse! fdecls))))
+	  (let ((decls (append (reverse! fdecls) (reverse! vdecls))))
 	     (list (letrecblock decls nodes))))
 	 (else
 	  (cons (let! (car nodes) #f mode)

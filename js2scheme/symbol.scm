@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sun May  9 17:07:36 2021 (serrano)                */
+;*    Last change :  Mon May 10 07:40:20 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -84,12 +84,7 @@
 		(lets (collect-let nodes mode))
 		(env (append decls hds vars lets))
 		(genv (list %this %dummy))
-		(scope (config-get conf :bind-global '%scope))
-		(vdecls (bind-decls! vars env mode scope '() '() genv conf)))
-	    (when (pair? vars)
-	       (set! decls
-		  (append decls
-		     (filter (lambda (d) (isa? d J2SDecl)) vdecls))))
+		(scope (config-get conf :bind-global '%scope)))
 	    (when (pair? lets)
 	       (for-each (lambda (d::J2SDecl)
 			    (with-access::J2SDecl d (scope)
@@ -97,19 +92,26 @@
 				  (set! scope 'global))))
 		  lets)
 	       (set! decls (append decls lets)))
-	    (set! nodes
-	       (append (filter (lambda (d) (not (isa? d J2SDecl))) vdecls)
-		  nodes))
-	    (set! nodes
-	       (map! (lambda (o) (resolve! o env mode '() '() genv 'plain conf))
-		  nodes))
-	    (when (config-get conf :commonjs-export #f)
-	       (commonjs-export this (find-decl 'module env)))
-	    (for-each (lambda (d)
-			 (with-access::J2SDecl d (scope)
-			    (when (eq? scope 'unbound)
-			       (set! decls (cons d decls)))))
-	       genv))))
+	    (let ((vdecls (bind-decls! vars env mode scope '() '() genv conf)))
+	       (when (pair? vars)
+		  (set! decls
+		     (append decls
+			(filter (lambda (d) (isa? d J2SDecl)) vdecls))))
+	       
+	       (set! nodes
+		  (append (filter (lambda (d) (not (isa? d J2SDecl))) vdecls)
+		     nodes))
+	       (set! nodes
+		  (map! (lambda (o)
+			   (resolve! o env mode '() '() genv 'plain conf))
+		     nodes))
+	       (when (config-get conf :commonjs-export #f)
+		  (commonjs-export this (find-decl 'module env)))
+	       (for-each (lambda (d)
+			    (with-access::J2SDecl d (scope)
+			       (when (eq? scope 'unbound)
+				  (set! decls (cons d decls)))))
+		  genv)))))
    (when (and (>= (config-get conf :verbose 0) 2)
 	      (not (config-get conf :verbmargin #f)))
       (newline (current-error-port)))
@@ -297,7 +299,7 @@
 		  ((memq id '(eval arguments))
 		   (raise
 		      (instantiate::&io-parse-error
-			 (proc "symbol resolution (symbol)")
+			 (proc "hopc (symbol)")
 			 (msg "Illegal parameter name")
 			 (obj id)
 			 (fname (cadr loc))
@@ -305,7 +307,7 @@
 		  ((j2s-reserved-id? id)
 		   (raise
 		      (instantiate::&io-parse-error
-			 (proc "symbol resolution (symbol)")
+			 (proc "hopc (symbol)")
 			 (msg "Illegal parameter name")
 			 (obj id)
 			 (fname (cadr loc))
@@ -313,7 +315,7 @@
 		  ((find-decl id (cdr params))
 		   (raise
 		      (instantiate::&io-parse-error
-			 (proc "symbol resolution (symbol)")
+			 (proc "hopc (symbol)")
 			 (msg "Illegal duplicate parameter name")
 			 (obj id)
 			 (fname (cadr loc))
@@ -392,7 +394,7 @@
 			    (with-access::J2SDecl (car (last-pair params)) (id loc)
 			       (raise
 				  (instantiate::&io-parse-error
-				     (proc "symbol resolution (symbol)")
+				     (proc "hopc (symbol)")
 				     (msg "\"arguments\" object may not be used in conjunction with a rest parameter")
 				     (obj id)
 				     (fname (cadr loc))
@@ -479,15 +481,35 @@
 (define-walk-method (resolve! this::J2SLetBlock env mode withs wenv genv ctx conf)
    (if (eq? mode 'hopscript)
        (with-access::J2SLetBlock this (nodes endloc loc decls)
-	  (let ((env (append decls env)))
+	  (let ((nenv (append decls env)))
 	     (set! decls
 		(map (lambda (d)
-			(with-access::J2SDecl d (binder)
+			(with-access::J2SDecl d (id binder loc)
+			   (let ((od (find-decl id env)))
+			      (unless (or (not od)
+					  (eq? od d)
+					  (j2s-global? od))
+				 (let ((kind (cond
+					       ((j2s-let? od)
+						"variable")
+					       ((j2s-param? od)
+						"parameter")
+					       (else
+						"constant"))))
+				    (raise
+				       (instantiate::&io-parse-error
+					  (proc "hopc (symbol)")
+					  (msg (format "Illegal ~a redefinition"
+						  kind))
+					  (obj id)
+					  (fname (cadr loc))
+					  (location (caddr loc)))))))
 			   (set! binder 'let-opt))
-			(resolve! d env mode withs wenv genv ctx conf))
+			(resolve! d nenv mode withs wenv genv ctx conf))
 		   decls))
 	     (set! nodes
-		(map (lambda (n) (resolve! n env mode withs wenv genv ctx conf))
+		(map (lambda (n)
+			(resolve! n nenv mode withs wenv genv ctx conf))
 		   nodes))
 	     this))
        (call-next-method)))
@@ -504,7 +526,7 @@
        (with-access::J2SWith this (loc)
 	  (raise
 	     (instantiate::&io-parse-error
-		(proc "symbol resolution (symbol)")
+		(proc "hopc (symbol)")
 		(msg "strict mode code may not include with statements")
 		(obj "with")
 		(fname (cadr loc))
@@ -783,10 +805,24 @@
 			    (loc loc)
 			    (id id))))
 		(set-cdr! (last-pair genv) (list decl))
-		(when (and (memq mode '(strict hopscript))
-			   (not (memq id this-symbols))
-			   (config-get conf :warning-global))
-		   (warning/loc loc (format "variable unbound \"~s\"" id)))
+		(unless (memq id this-symbols)
+		   (cond
+		      ((config-get conf :warning-global)
+		       ;; this mode is used to parse imported modules
+		       ;; in this compilation mode, automatically imported
+		       ;; global variable are left unbound
+		       #unspecified)
+		      ((eq? mode 'hopscript)
+		       (raise
+			  (instantiate::&io-parse-error
+			     (proc "hopc (symbol)")
+			     (msg "unbound variable")
+			     (obj id)
+			     (fname (cadr loc))
+			     (location (caddr loc)))))
+		      (else
+		       (warning/loc loc
+			  (format "unbound variable \"~s\"" id)))))
 		(instantiate::J2SGlobalRef
 		   (id id)
 		   (loc loc)
@@ -858,7 +894,7 @@
 (define (export-err id loc #!optional (msg ""))
    (raise
       (instantiate::&io-parse-error
-	 (proc "symbol resolution (symbol)")
+	 (proc "hopc (symbol)")
 	 (msg (string-append "Illegal variable export"
 		 (if msg (string-append ", " msg) "")))
 	 (obj id)
@@ -907,17 +943,19 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SDeclInit env mode withs wenv genv ctx conf)
    (with-access::J2SDeclInit this (loc id val exports scope)
-      (let ((ndecl::J2SDecl (or (find-decl id env) this)))
+      (let* ((odecl (find-decl id env))
+	     (ndecl::J2SDecl (or odecl this)))
 	 ;; strict mode restrictions
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-10.1.1
 	 (when (eq? mode 'strict)
 	    (check-strict-mode-eval id "Declaration name" loc))
-	 (when (j2s-let? this)
+	 (when (and (j2s-let? this)
+		    (or (not (eq? mode 'hopscript)) (not (j2s-global? odecl))))
 	    (unless (eq? ndecl this)
 	       (raise
 		  (instantiate::&io-parse-error
-		     (proc "symbol resolution (symbol)")
-		     (msg (format "Illegal redefinition `~a'" id))
+		     (proc "hopc (symbol)")
+		     (msg "Illegal redefinition")
 		     (obj id)
 		     (fname (cadr loc))
 		     (location (caddr loc))))))
@@ -1075,7 +1113,7 @@
    (define (property-error id msg loc)
       (raise
 	 (instantiate::&io-parse-error
-	    (proc "symbol resolution (symbol)")
+	    (proc "hopc (symbol)")
 	    (msg msg)
 	    (obj id)
 	    (fname (cadr loc))
@@ -1134,7 +1172,7 @@
        (with-access::J2SOctalNumber this (loc val)
 	  (raise
 	     (instantiate::&io-parse-error
-		(proc "symbol resolution (symbol)")
+		(proc "hopc (symbol)")
 		(msg "octal literals are not allowed in strict mode")
 		(obj val)
 		(fname (cadr loc))
@@ -1149,7 +1187,7 @@
       (if (and (eq? mode 'strict) (memq 'octal escape))
 	  (raise
 	     (instantiate::&io-parse-error
-		(proc "symbol resolution (symbol)")
+		(proc "hopc (symbol)")
 		(msg "octal literals are not allowed in strict mode")
 		(obj val)
 		(fname (cadr loc))
@@ -1168,7 +1206,7 @@
 	    (with-access::J2SSuper fun (loc)
 	       (raise
 		  (instantiate::&io-parse-error
-		     (proc "symbol resolution (symbol)")
+		     (proc "hopc (symbol)")
 		     (msg "`super' keyword unexpected here")
 		     (obj (j2s-expression-src loc conf "super"))
 		     (fname (cadr loc))
@@ -1183,7 +1221,7 @@
       (if (eq? ctx 'plain)
 	  (raise
 	     (instantiate::&io-parse-error
-		(proc "symbol resolution (symbol)")
+		(proc "hopc (symbol)")
 		(msg "`super' keyword unexpected here")
 		(obj (j2s-expression-src loc conf "super"))
 		(fname (cadr loc))
@@ -1237,7 +1275,7 @@
        (with-access::J2SDollar this (loc)
 	  (raise
 	     (instantiate::&io-parse-error
-		(proc "symbol resolution (symbol)")
+		(proc "hopc (symbol)")
 		(msg "Illegal ${...} expression")
 		(obj this)
 		(fname (cadr loc))
@@ -1376,7 +1414,7 @@
 	    ((eq? mode 'hopscript)
 	     (raise
 		(instantiate::&io-parse-error
-		   (proc "symbol resolution (symbol)")
+		   (proc "hopc (symbol)")
 		   (msg "Assignment to constant variable")
 		   (obj id)
 		   (fname (cadr loc))
@@ -1394,7 +1432,7 @@
       ((or (eq? id 'eval) (eq? id 'arguments))
        (raise
 	  (instantiate::&io-parse-error
-	     (proc "symbol resolution (symbol)")
+	     (proc "hopc (symbol)")
 	     (msg (format "~a eval or arguments is not allowed in strict mode"
 		     msg ))
 	     (obj id)
@@ -1403,7 +1441,7 @@
       ((j2s-strict-reserved-id? id)
        (raise
 	  (instantiate::&io-parse-error
-	     (proc "symbol resolution (symbol)")
+	     (proc "hopc (symbol)")
 	     (msg "~a a reserved name is not allowd in strict mode")
 	     (obj id)
 	     (fname (cadr loc))

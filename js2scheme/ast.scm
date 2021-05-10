@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat May  8 15:42:48 2021 (serrano)                */
+;*    Last change :  Mon May 10 08:00:33 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -580,6 +580,7 @@
 	   (j2s-const?::bool ::J2SDecl)
 	   (j2s-param?::bool ::J2SDecl)
 	   (j2s-export?::bool ::J2SDecl)
+	   (j2s-global?::bool ::J2SDecl)
 	   
 	   (j2s-let-opt?::bool ::J2SDecl)
 
@@ -708,8 +709,15 @@
 ;*    j2s-export? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (j2s-export? decl::J2SDecl)
-   (with-access::J2SDecl decl (binder scope id loc)
+   (with-access::J2SDecl decl (binder scope)
       (or (eq? binder 'export) (eq? scope 'export))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-global? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (j2s-global? decl::J2SDecl)
+   (with-access::J2SDecl decl (scope)
+      (memq scope '(global export %scope))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun-expression? ...                                           */
