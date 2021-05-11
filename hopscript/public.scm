@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon May 10 12:15:11 2021 (serrano)                */
+;*    Last change :  Tue May 11 18:14:32 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -2457,6 +2457,7 @@
 		     :es6-defaut-value #t
 		     :es6-rest-argument #t
 		     :commonjs-export #f
+		     :warning-global #f
 		     :parser parser))
 	       (m (js-get scope (& "module") scope)))
 	    (with-trace 'hopscript-eval "%js-eval-inner"
