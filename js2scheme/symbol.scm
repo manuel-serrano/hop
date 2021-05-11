@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Mon May 10 11:28:52 2021 (serrano)                */
+;*    Last change :  Tue May 11 15:31:41 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -92,6 +92,12 @@
 				  (set! scope 'global))))
 		  lets)
 	       (set! decls (append decls lets)))
+	    (when (pair? vars)
+	       (for-each (lambda (d::J2SDecl)
+			    (with-access::J2SDecl d (scope)
+			       (unless (eq? scope 'export)
+				  (set! scope 'global))))
+		  vars))
 	    (let ((vdecls (bind-decls! vars env mode scope '() '() genv conf)))
 	       (when (pair? vars)
 		  (set! decls
