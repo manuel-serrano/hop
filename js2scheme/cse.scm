@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/cse.scm                   */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/cse.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 10 10:07:35 2020                          */
-;*    Last change :  Thu Sep 10 10:07:36 2020 (serrano)                */
-;*    Copyright   :  2020 Manuel Serrano                               */
+;*    Last change :  Tue May 11 13:54:38 2021 (serrano)                */
+;*    Copyright   :  2020-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common subexpressions elimination optimization                   */
 ;*    -------------------------------------------------------------    */
@@ -179,6 +179,19 @@
 	 this)))
 
 ;*---------------------------------------------------------------------*/
+;*    cse! ::J2SSwitch ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cse! this::J2SSwitch bag block conf)
+   (with-access::J2SSwitch this (key cases)
+      (set! key (cse! key bag block conf))
+      (when (pair? cases)
+	 (let ((bags (map (lambda (c) (bag-copy bag)) cases)))
+	    (set! cases
+	       (map! (lambda (c bag) (cse! c bag block conf)) cases bags))
+	    (bag-ces-set! bag (bag-join* bags))))
+      this))
+
+;*---------------------------------------------------------------------*/
 ;*    cse! ::J2SExpr ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cse! this::J2SExpr bag block conf)
@@ -290,7 +303,15 @@
 	  (loop (cdr ces1) ces2 res))
 	 (else
 	  (loop ces1 (cdr ces2) res)))))
-	  
+
+;*---------------------------------------------------------------------*/
+;*    bag-join* ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (bag-join* bags)
+   (if (null? (cdr bags))
+       (bag-ces (car bags))
+       (bag-join (car bags) (bag (bag-join* (cdr bags))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    bag-invalidate! ...                                              */
 ;*    -------------------------------------------------------------    */
