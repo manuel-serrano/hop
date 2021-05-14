@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Fri May 14 12:11:14 2021 (serrano)                */
+;*    Last change :  Fri May 14 15:54:16 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let function optimization. This optimizations implements         */
@@ -45,7 +45,8 @@
 (define (j2s-letfun this args)
    (when (isa? this J2SProgram)
       (letfun! this args)
-      (letfun-sa! this args)))
+      (letfun-sa! this args))
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    letfun! ...                                                      */
@@ -339,7 +340,17 @@
 ;*    node-collect-sa ::J2SLetBlock ...                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-collect-sa this::J2SLetBlock stack env)
-   (call-default-walker))
+   (with-access::J2SLetBlock this (decls)
+      ;; invalidate all letblock decls
+      (for-each (lambda (d)
+		   (let ((c (assq d (cell-ref env))))
+		      (if (pair? c)
+			  (with-access::J2SDecl d (%info)
+			     (set! %info #f)
+			     (set-cdr! c 'letblock))
+			  (cell-set! env (cons (cons d 'letblock) (cell-ref env))))))
+	 decls)
+      (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-collect-sa ::J2SRef ...                                     */
