@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/js2scheme/scheme-utils.scm        */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/scheme-utils.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Tue Jun  2 07:44:16 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Thu May 13 10:07:34 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
 ;*=====================================================================*/
@@ -392,13 +392,24 @@
 ;*---------------------------------------------------------------------*/
 (define (type-ident ident type conf)
    (cond
-      ((memq type '(int32 uint32)) (symbol-append ident '|::| type))
-      ((memq type '(bint)) (symbol-append ident '|::bint|))
-      ((eq? type 'any) (symbol-append ident '|::obj|))
+      ((memq type '(int32 uint32))
+       (symbol-append ident '|::| type))
+      ((memq type '(bint))
+       (symbol-append ident '|::bint|))
+      ((eq? type 'any)
+       (symbol-append ident '|::obj|))
+      ((eq? type 'arguments)
+       ;; The new optimization introduced in 13May2021 that optimizes
+       ;; arguments aliasing makes it difficult to ensute that a JS
+       ;; local variables of type "arguments" is a Scheme argument because
+       ;; they might be symbols. It is then simpler to consider them as
+       ;; untyped.
+       ident)
       ((type-name type conf)
        =>
        (lambda (tname) (symbol-append ident '|::| tname)))
-      (else ident)))
+      (else
+       ident)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-number ...                                                   */

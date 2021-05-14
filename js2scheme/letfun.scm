@@ -1,17 +1,14 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/letfun.scm                */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/letfun.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Fri Jan 31 08:04:38 2020 (serrano)                */
+;*    Last change :  Fri May 14 12:11:14 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Let function optimization                                        */
-;*    -------------------------------------------------------------    */
-;*    Rewrite the following pattern:                                   */
-;*       var f = function() { ... }                                    */
-;*    info                                                             */
-;*       function f() { ... }                                          */
+;*    Let function optimization. This optimizations implements         */
+;*    two transformations: letfun! and letfun-sa! that replaces        */
+;*    closure allocations with plain functions.                        */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -47,19 +44,20 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-letfun this args)
    (when (isa? this J2SProgram)
-      (letfun! this args)))
+      (letfun! this args)
+      (letfun-sa! this args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    letfun! ...                                                      */
+;*    -------------------------------------------------------------    */
+;*    letfun! rewrites the following pattern:                          */
+;*       var f = function() { ... }                                    */
+;*    info:                                                            */
+;*       function f() { ... }                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (letfun! this::J2SNode args)
    (call-default-walker))
 
-(define (dump n)
-   (with-access::J2SInit n (lhs)
-      (with-access::J2SRef lhs (decl)
-	 (j2s->list decl))))
-   
 ;*---------------------------------------------------------------------*/
 ;*    letfun! ::J2SFun ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -117,8 +115,7 @@
 ;*    assig-nofun? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (assig-nofun? this::J2SAssig vars)
-   (or (not (isa? this J2SInit))
-       (not (init-fun? this vars))))
+   (not (isa? this J2SInit)))
 
 ;*---------------------------------------------------------------------*/
 ;*    initvdecl ...                                                    */
@@ -251,6 +248,186 @@
 	     (loop (cdr nodes) (cons init inits) blacklist)))
 	 (else
 	  (values (reverse! inits) nodes)))))
-
-	 
    
+;*---------------------------------------------------------------------*/
+;*    letfun-sa! ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    letfun-sa! transforms patterns:                                  */
+;*        block {                                                      */
+;*           v = fun() { ... };                                        */
+;*           ...                                                       */
+;*           v();                                                      */
+;*        }                                                            */
+;*    into:                                                            */
+;*        block {                                                      */
+;*           letblock fun v'() { ... }                                 */
+;*             ...                                                     */
+;*             v'();                                                   */
+;*           }                                                         */
+;*        }                                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (letfun-sa! this::J2SNode args)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    letfun-sa! ::J2SFun ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (letfun-sa! this::J2SFun args)
+   (call-default-walker)
+   (with-access::J2SFun this (body name)
+      (when (isa? body J2SBlock)
+	 (let ((env (make-cell '())))
+	    (node-collect-sa body (list body) env)
+	    (let ((assig (filter (lambda (a)
+				    (isa? (cdr a) J2SNode))
+			    (cell-ref env))))
+	       (when (pair? assig)
+		  (set! body (letfun-sa-transform! body assig)))))))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    node-collect-sa ::J2SNode ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-collect-sa this::J2SNode stack::pair-nil env::cell)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    node-collect-sa ::J2SAssig ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-collect-sa this::J2SAssig stack env)
+   (with-access::J2SAssig this (lhs rhs)
+      (if (isa? lhs J2SRef)
+	  (with-access::J2SRef lhs (decl)
+	     (with-access::J2SDecl decl (scope %info id)
+		(set! %info #f)
+		(when (and (memq scope '(local inner))
+			   (or #t
+			       (any (lambda (l) (memq id l))
+				  '((loop3)
+				    (loop2)
+				    (sc_loop1_98)
+				    (rule_loop)
+				    (sc_loop1_75)
+				    (sc_loop1_116)
+				    (sc_loop1_127)
+				    (loop1 nb_deriv_trees forw conf_set_union BgL_sc_confzd2setzd2adjoinza2za2_46z00 BgL_sc_confzd2setzd2adjoinza2_45za2 conf_set_adjoin conf_set_merge_new_bang BgL_sc_confzd2setzd2getza2_44za2 make_states sc_ind_43)
+				    (def_loop BgL_sc_defzd2loop_6zd2 BgL_sc_defzd2loop_9zd2 indfoobar)))))
+		   (let ((c (assq decl (cell-ref env))))
+		      (cond
+			 ((pair? c)
+			  (set-cdr! c 'multiple))
+			 ((not (isa? rhs J2SFun))
+			  (cell-set! env (cons (cons decl 'nofun) (cell-ref env))))
+			 (else
+			  (with-access::J2SFun rhs ((fdecl decl))
+			     (if fdecl
+				 (cell-set! env (cons (cons decl 'otherfun) (cell-ref env)))
+				 (begin
+				    (set! %info rhs)
+				    (cell-set! env (cons (cons decl (car stack)) (cell-ref env))))))))))
+		(node-collect-sa rhs stack env)))
+	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    node-collect-sa ::J2SBlock ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-collect-sa this::J2SBlock stack env)
+   (set! stack (cons this stack))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    node-collect-sa ::J2SLetBlock ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-collect-sa this::J2SLetBlock stack env)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    node-collect-sa ::J2SRef ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-collect-sa this::J2SRef stack env)
+   (with-access::J2SRef this (decl)
+      (let ((c (assq decl (cell-ref env))))
+	 (with-access::J2SDecl decl (scope %info)
+	    (cond
+	       ((pair? c)
+		(set! %info #f)
+		(set-cdr! c 'escape))
+	       ((memq scope '(local inner))
+		(cell-set! env (cons (cons decl 'uninit) (cell-ref env)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    node-collect-sa ::J2SCall ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-collect-sa this::J2SCall stack env)
+   (with-access::J2SCall this (fun args)
+      (if (isa? fun J2SRef)
+	  (with-access::J2SRef fun (decl)
+	     (let ((c (assq decl (cell-ref env))))
+		(with-access::J2SDecl decl (scope %info)
+		   (cond
+		      ((pair? c)
+		       (unless (memq (cdr c) stack)
+			  (set! %info #f)
+			  (set-cdr! c 'outscope)))
+		      ((memq scope '(local inner))
+		       (cell-set! env (cons (cons decl 'uninit) (cell-ref env))))))
+		(for-each (lambda (a)
+			     (node-collect-sa a stack env))
+		   args)))
+	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    letfun-sa-transform! ::J2SNode ...                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (letfun-sa-transform! this::J2SNode env)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    letfun-sa-transform! ::J2SBlock ...                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (letfun-sa-transform! this::J2SBlock env)
+   (let ((odecls (filter-map (lambda (d) (when (eq? (cdr d) this) (car d))) env)))
+      (if (pair? odecls)
+	  (let ((ndecls (map (lambda (d)
+				(with-access::J2SDecl d (%info id usage)
+				   (with-access::J2SFun %info (loc)
+				      (instantiate::J2SDeclFun
+					 (loc loc)
+					 (id id)
+					 (writable #f)
+					 (scope 'local)
+					 (usage (usage-rem usage 'assig))
+					 (binder 'let-opt)
+					 (utype 'function)
+					 (vtype 'function)
+					 (val %info)))))
+			   odecls)))
+	     (for-each (lambda (d)
+			  (with-access::J2SDecl d (%info id)
+			     (with-access::J2SFun %info (body)
+				(set! body
+				   (letfun-sa-transform!
+				      (j2s-alpha body odecls ndecls)
+				      env)))))
+		odecls)
+	     (with-access::J2SBlock this (loc nodes)
+		(J2SLetBlock* ndecls
+		   (map! (lambda (n)
+			    (j2s-alpha (letfun-sa-transform! n env) odecls ndecls))
+		      nodes))))
+	  ;; rewrite
+	  (call-default-walker))))
+		   
+;*---------------------------------------------------------------------*/
+;*    letfun-sa-transform! ::J2SAssig ...                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (letfun-sa-transform! this::J2SAssig env)
+   (with-access::J2SAssig this (lhs rhs loc)
+      (if (isa? lhs J2SRef)
+	  (with-access::J2SRef lhs (decl)
+	     (with-access::J2SDecl decl (%info id)
+		(if (isa? %info J2SFun)
+		    (J2SNop)
+		    (call-default-walker))))
+	  (call-default-walker))))
+		   

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu May 13 09:08:24 2021 (serrano)                */
+;*    Last change :  Thu May 13 09:25:26 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removal                                                */
@@ -42,12 +42,6 @@
 (define (j2s-sweep! this::J2SNode args)
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes decls direct-eval)
-	 ;; filters out global variables that are never references
-	 (set! decls
-	    (filter! (lambda (d)
-			(with-access::J2SDecl d (usecnt)
-			   (>fx usecnt 0)))
-	       decls))
 	 (let loop ((stamp (cons 1 2))
 		    (removed '()))
 	    (let ((deval (make-cell #f)))
