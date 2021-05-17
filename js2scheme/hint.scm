@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sun Apr 11 10:03:01 2021 (serrano)                */
+;*    Last change :  Sun May 16 07:00:49 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -376,16 +376,16 @@
 	   (j2s-hint rhs '()))
 	  ((eq? (j2s-type lhs) 'integer)
 	   (j2s-hint lhs '())
-	   (j2s-hint rhs '((integer . 3)  (no-string . 1))))
+	   (j2s-hint rhs '((integer . 3) (no-string . 1))))
 	  ((eq? (j2s-type rhs) 'integer)
-	   (j2s-hint lhs '((integer . 3)  (no-string . 1)))
+	   (j2s-hint lhs '((integer . 3) (no-string . 1)))
 	   (j2s-hint rhs '()))
 	  ((eq? (j2s-type lhs) 'real)
 	   (j2s-hint lhs '())
-	   (j2s-hint rhs '((real . 5)  (no-string . 1))))
+	   (j2s-hint rhs '((real . 5) (no-string . 1))))
 	  ((eq? (j2s-type lhs) 'real)
 	   (j2s-hint lhs '())
-	   (j2s-hint rhs '((real . 5)  (no-string . 1))))
+	   (j2s-hint rhs '((real . 5) (no-string . 1))))
 	  ((not (memq (j2s-type lhs) '(any unknown)))
 	   (j2s-hint lhs '())
 	   (j2s-hint rhs `((,(j2s-type lhs) . 5))))

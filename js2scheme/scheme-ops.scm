@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon May 10 10:49:10 2021 (serrano)                */
+;*    Last change :  Sat May 15 17:51:07 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2577,9 +2577,14 @@
       ((real)
        `(js-real->jsstring ,val))
       ((number)
-       `(if (fixnum? ,val)
-	    (js-integer->jsstring ,val)
-	    (js-real->jsstring ,val)))
+       (let loop ((val val))
+	  (if (symbol? val)
+	      `(if (fixnum? ,val)
+		   (js-integer->jsstring ,val)
+		   (js-real->jsstring ,val))
+	      (let ((tmp (gensym 't)))
+		 `(let ((,tmp ,val))
+		     ,(loop tmp))))))
       (else
        `(js-toprimitive-for-string ,val %this))))
 

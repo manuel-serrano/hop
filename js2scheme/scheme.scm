@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Apr 21 17:27:19 2021 (serrano)                */
+;*    Last change :  Sun May 16 07:21:12 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -343,7 +343,8 @@
 		    `(begin
 			,(j2s-put! loc '%scope #f (j2s-vtype lhs)
 			    (& id (context-program ctx)) 'propname
-			    val type (strict-mode? mode) ctx #f #f
+			    val type (strict-mode? mode) ctx #f
+			    :optim #f
 			    :cachefun (is-lambda? val type))
 			,result))
 		   ((pair? exports)
@@ -475,7 +476,7 @@
 		(j2s-scheme expr mode return ctx)
 		`(if ,(j2s-in? loc (& id (context-program ctx)) (car withs) ctx)
 		     ,(j2s-get loc (car withs) #f 'object
-			 (& id (context-program ctx)) 'string 'any ctx #f #f)
+			 (& id (context-program ctx)) 'string 'any ctx #f)
 		     ,(loop (cdr withs))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1423,7 +1424,8 @@
 		      (typeof-this obj ctx)
 		      (j2s-scheme field mode return ctx)
 		      (j2s-type field)
-		      name 'any (strict-mode? mode) ctx #t #f
+		      name 'any (strict-mode? mode) ctx #t
+		      :optim #f
 		      :cachefun #f))))
 	    ((isa? lhs J2SWithRef)
 	     (with-access::J2SWithRef lhs (id withs expr loc)
@@ -1436,7 +1438,8 @@
 			       ,(j2s-put! loc (car withs) #f
 				   'object
 				   (& id (context-program ctx)) 'propname
-				   name 'any #f ctx #t #f
+				   name 'any #f ctx #t
+				   :optim #f
 				   :cachefun #f)
 			       ,(liip (cdr withs))))))))
 	    (else
@@ -1815,8 +1818,8 @@
 		      (j2s-type rhs)
 		      (strict-mode? mode)
 		      ctx
-		      #f
 		      cache
+		      :optim #f
 		      :cachefun (or (is-function? rhs) (is-prototype? obj))))
 	     (let* ((tmp (gensym 'tmp))
 		    (access (duplicate::J2SAccess lhs (obj (J2SHopRef tmp))))
@@ -1843,8 +1846,8 @@
 				(j2s-type rhs)
 				(strict-mode? mode)
 				ctx
-				#f
 				cache
+				:optim #f
 				:cachefun (or (is-function? rhs)
 					      (is-prototype? obj)))))))))))
 
@@ -1878,7 +1881,7 @@
 			  (strict-mode? mode)
 			  ctx
 			  cache
-			  #f
+			  :optim #f
 			  :cspecs cspecs
 			  :cachefun (or (is-function? rhs)
 					(is-prototype? obj))))))))
@@ -1923,7 +1926,7 @@
 				   (& id (context-program ctx)) 'propname
 				   (j2s-scheme rhs mode return ctx)
 				   (j2s-type rhs)
-				   #f ctx #f #f :cachefun #f)
+				   #f ctx #f :optim #f :cachefun #f)
 			       ,(liip (cdr withs))))))))
 	    ((isa? lhs J2SUndefined)
 	     (if (memq mode '(strict hopscript))
@@ -2025,7 +2028,8 @@
 				   (j2s-type field)
 				   val 'number
 				   (strict-mode? mode) ctx
-				   cache #t
+				   cache
+				   :optim 'array
 				   :cspecs cs :cachefun #f)
 			       ,tmp))))
 		 ,(let* ((tmp2 (gensym 'tmp))
@@ -2044,7 +2048,8 @@
 					(j2s-type field)
 					val 'number
 					(strict-mode? mode) ctx
-					cache #t
+					cache
+					:optim 'array
 					:cspecs (min-cspecs cs '(cmap))
 					:cachefun #f)
 				    ,tmp)))))))))
@@ -2083,7 +2088,8 @@
 				      (j2s-type field)
 				      val 'number
 				      (strict-mode? mode) ctx
-				      cache #t :cspecs cs :cachefun #f)
+				      cache
+				      :optim 'array :cspecs cs :cachefun #f)
 				  ,tmp))))))
 	       ((not cache)
 		;; MS
@@ -2163,8 +2169,8 @@
 				     (access-inc-sans-object otmp
 					prop op lhs rhs inc)))
 			      ,(j2s-put! loc otmp field 'any prop 'any 1 'any
-				  (strict-mode? mode) ctx cache #t
-				  :cspecs '() :cachefun #f))))
+				  (strict-mode? mode) ctx cache
+				  :optim 'array :cspecs '() :cachefun #f))))
 		     (let* ((ptmp (gensym 'iprop))
 			    (pvar (J2SHopRef ptmp)))
 			`(let ((,ptmp ,(j2s-scheme field mode return ctx)))
@@ -2178,7 +2184,8 @@
 						pvar op lhs rhs inc)))
 				      ,(j2s-put! loc otmp field 'any pvar 'any 1 'any
 					  (strict-mode? mode)
-					  ctx cache #t
+					  ctx cache
+					  :optim 'array
 					  :cspecs '() :cachefun #f))))))))))
    
    (with-access::J2SAssig this (loc lhs rhs type)
@@ -2250,7 +2257,8 @@
 			  (or pro prov) (j2s-type field)
 			  (j2s-cast vtmp #f typea typel ctx) typel
 			  (strict-mode? mode) ctx
-			  (and cachep cache) #t
+			  (and cachep cache)
+			  :optim 'array
 			  :cspecs (if (mightbe-number? field) '() cspecs)
 			  :cachefun #f)
 		      ,vtmp))))))
@@ -2361,23 +2369,24 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SAccess mode return ctx)
    
-   (define (get obj tmp field cache cspecs optim loc)
+   (define (get loc obj tmp field cache cspecs optim)
       (let ((tyo (typeof-this obj ctx)))
 	 (j2s-get loc tmp field tyo
 	    (j2s-property-scheme field mode return ctx)
-	    (j2s-type field) (j2s-vtype this) ctx cache optim
+	    (j2s-type field) (j2s-vtype this) ctx cache
+	    :optim optim
 	    :cspecs cspecs)))
-
+   
    (define (canbe-array? obj)
       (memq (j2s-type obj) '(array any undefined unknown)))
-
+   
    (define (canbe-string? obj)
       (when (memq (j2s-type obj) '(any unknown string))
 	 (if (isa? obj J2SRef)
 	     (with-access::J2SRef obj (hint)
 		(not (pair? (assq 'no-string hint))))
 	     #t)))
-
+   
    (define (hint-string? obj)
       (when (memq (j2s-type obj) '(any unknown string))
 	 (with-access::J2SExpr obj (hint)
@@ -2400,10 +2409,10 @@
 		   #f)
 		  (else
 		   #t))))))
-
+   
    (define (canbe-arguments? obj)
       (memq (j2s-type obj) '(any undefined unknown object)))
-
+   
    (define (index-obj-literal-ref this obj field cache cspecs loc)
       (let ((tmp (j2s-scheme obj mode return ctx)))
 	 `(cond
@@ -2411,16 +2420,16 @@
 			(not (eq? (j2s-type field) 'string)))
 		`(((js-array? ,tmp)
 		   ,(or (j2s-array-ref this mode return ctx)
-			(get obj tmp field cache cspecs #f loc))))
+			(get loc obj tmp field cache cspecs #f))))
 		'())
 	     ,@(if (and (canbe-string? obj) (hint-string? obj)
 			(hint-string? this))
 		`(((js-jsstring? ,tmp)
 		   ,(or (j2s-string-ref this mode return ctx)
-			(get obj tmp field cache cspecs #f loc))))
+			(get loc obj tmp field cache cspecs #f))))
 		'())
 	     (else
-	      ,(get obj tmp field cache cspecs #f loc)))))
+	      ,(get loc obj tmp field cache cspecs #f)))))
    
    (define (index-obj-ref this obj field cache cspecs loc)
       (if (or (isa? field J2SRef) (isa? field J2SHopRef) (isa? field J2SLiteral))
@@ -2445,7 +2454,7 @@
 		   (set! ahint hint)))
 	     `(let ((,tmp ,(j2s-scheme obj mode return ctx)))
 		 ,(index-obj-ref access ref field cache cspecs loc)))))
-
+   
    (define (math-object? obj ctx)
       (when (isa? obj J2SRef)
 	 (with-access::J2SRef obj (decl)
@@ -2457,25 +2466,51 @@
 	    (with-access::J2SDecl decl (id)
 	       (when (decl-ronly? decl)
 		  (memq id '(Object Function Math Array Boolean RegExp String Number)))))))
-
+   
    (define (get-builtin-object obj field mode return ctx)
       (when (isa? field J2SString)
-	  (with-access::J2SString field (val)
-	     (cond
-		((string=? val "prototype")
-		 `(js-function-prototype-get
-		     (js-undefined)
-		     ,(j2s-scheme obj mode return ctx)
-		     ,(& "prototype" (context-program ctx)) %this))
-		(else
-		 #f)))))
-
+	 (with-access::J2SString field (val)
+	    (cond
+	       ((string=? val "prototype")
+		`(js-function-prototype-get
+		    (js-undefined)
+		    ,(j2s-scheme obj mode return ctx)
+		    ,(& "prototype" (context-program ctx)) %this))
+	       (else
+		#f)))))
+   
    (define (is-object-prototype? obj field)
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)
 	    (when (string=? val "prototype")
 	       (is-builtin-ref? obj 'Object)))))
-
+   
+   (define (hint-optim obj field)
+      ;; try go guess, checking the object hint which
+      ;; specialization might be best
+      (with-access::J2SExpr obj (hint)
+	 (let loop ((hint hint)
+		    (optim (cons 'array 0)))
+	    (cond
+	       ((null? hint)
+		;; if the hint is object but field is "length", favor arrays
+		(if (and (eq? (car optim) 'object)
+			 (isa? field J2SString)
+			 (with-access::J2SString field (val)
+			    (string=? val "length")))
+		    'array
+		    (car optim)))
+	       ((and (>=fx (cdar hint) (cdr optim))
+		     (not (memq (caar hint)
+			     '(no-array no-string no-integer))))
+		;; always favor array over string
+		(if (and (=fx (cdar hint) (cdr optim))
+			 (eq? (car optim) 'array))
+		    (loop (cdr hint) optim)
+		    (loop (cdr hint) (car hint))))
+	       (else
+		(loop (cdr hint) optim))))))
+   
    (with-access::J2SAccess this (loc obj field cache cspecs type)
       (epairify-deep loc 
 	 (cond
@@ -2486,16 +2521,16 @@
 	    ((eq? (j2s-type obj) 'array)
 	     (or (j2s-rest-ref this mode return ctx)
 		 (j2s-array-ref this mode return ctx)
-		 (get obj (j2s-scheme obj mode return ctx)
-		    field cache cspecs #f loc)))
+		 (get loc obj (j2s-scheme obj mode return ctx)
+		    field cache cspecs #f)))
  	    ((eq? (j2s-type obj) 'string)
 	     (or (j2s-string-ref this mode return ctx)
-		 (get obj (j2s-scheme obj mode return ctx)
-		    field cache cspecs #f loc)))
+		 (get loc obj (j2s-scheme obj mode return ctx)
+		    field cache cspecs 'string)))
 	    ((eq? (j2s-type obj) 'arguments)
 	     (or (j2s-arguments-ref this mode return ctx)
-		 (get obj (j2s-scheme obj mode return ctx)
-		    field cache cspecs #f loc)))
+		 (get loc obj (j2s-scheme obj mode return ctx)
+		    field cache cspecs 'arguments)))
 	    ((and (eq? (j2s-type obj) 'function)
 		  (isa? field J2SString)
 		  (with-access::J2SString field (val)
@@ -2515,8 +2550,9 @@
 	     =>
 	     (lambda (sexp) sexp))
 	    (else
-	     (get obj (j2s-scheme obj mode return ctx)
-		field cache cspecs #t loc))))))
+	     (get loc obj (j2s-scheme obj mode return ctx)
+		field cache cspecs
+		(hint-optim obj field)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SCacheCheck ...                                   */
@@ -2731,7 +2767,8 @@
 					'propname
 					(j2s-scheme val mode return ctx)
 					(j2s-type val)
-					(strict-mode? mode) ctx #f #f
+					(strict-mode? mode) ctx #f
+					:optim #f
 					:cachefun (is-function? val)))
 				    ((isa? name J2SUndefined)
 				     (with-access::J2SDataPropertyInit i (val)

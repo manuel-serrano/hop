@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Thu May 13 18:33:36 2021 (serrano)                */
+;*    Last change :  Sun May 16 07:18:14 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
@@ -141,7 +141,7 @@
 		    (strict-mode? mode)
 		    ctx
 		    cache
-		    #f
+		    :optim #f
 		    :cspecs cspecs
 		    :cachefun #f))
 	     (j2s-put! loc (j2s-scheme obj mode return ctx) field
@@ -153,7 +153,7 @@
 		(strict-mode? mode)
 		ctx
 		cache
-		#f
+		:optim #f
 		:cspecs cspecs
 		:cachefun #f)))))
 

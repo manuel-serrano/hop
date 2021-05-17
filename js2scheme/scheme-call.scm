@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu May 13 20:08:10 2021 (serrano)                */
+;*    Last change :  Sat May 15 18:25:44 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -129,8 +129,8 @@
 	("concat" ,j2s-array-maybe-concat1 any (any) %this #t ,j2s-array-plain?)
 	("concat" js-array-concat array (array . any) %this #f ,j2s-array-plain?)
 	("concat" js-array-maybe-concat any (any . any) %this #t ,j2s-array-plain?)
-	("sort" js-array-sort array (any) %this #t ,j2s-array-plain?)
-	("sort" js-array-maybe-sort any (any) %this #t ,j2s-array-plain?)
+	("sort" ,j2s-array-sort array (any) %this #t ,j2s-array-plain?)
+	("sort" ,j2s-array-maybe-sort any (any) %this #t ,j2s-array-plain?)
 	("fill" js-array-fill1 array (any) %this #t ,j2s-array-plain?)
 	("fill" js-array-maybe-fill1 any (any) %this #t ,j2s-array-plain?)
 	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this #t ,j2s-array-plain?)

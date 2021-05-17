@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu May 13 08:25:48 2021 (serrano)                */
+;*    Last change :  Sun May 16 09:54:43 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1451,6 +1451,7 @@
    (with-access::JsFunction ctor (constrmap constrsize)
       (set! constrmap
 	 (instantiate::JsConstructMap
+	    (%id (gencmapid))
 	    (ctor ctor)
 	    (inline #t)))
       ctor))
@@ -1978,7 +1979,12 @@
       ((eq? obj #t) (& "true"))
       ((eq? obj #f) (& "false"))
       ((js-jsstring? obj) obj)
-      (else (js-tojsstring (js-toprimitive obj 'any %this) %this))))
+      (else
+       ;; use a qualified notation to avoid macro expansion
+       (let ((r ((@ js-toprimitive __hopscript_public) obj 'string %this)))
+	  (if (js-jsstring? r)
+	      r
+	      (js-tojsstring r %this))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-toprimitive ::obj ...                                         */
@@ -2005,7 +2011,7 @@
 	 (if (eq? p obj)
 	     (js-ascii->jsstring (format "#<~a>" (typeof p)))
 	     (js-tojsstring p %this))))
-      
+
    (cond
       ((js-jsstring? obj) obj)
       ((fixnum? obj) (js-integer->jsstring obj))

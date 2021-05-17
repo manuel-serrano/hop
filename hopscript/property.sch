@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/property.sch              */
+;*    serrano/prgm/project/hop/3.4.x/hopscript/property.sch            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Apr  9 07:16:09 2020 (serrano)                */
+;*    Last change :  Sun May 16 07:29:27 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -93,6 +93,16 @@
    js-global-object-get-name/cache-expander)
 (define-expander js-get-length
    js-get-length-expander)
+(define-expander js-get-lengthu32
+   js-get-lengthu32-expander)
+(define-expander js-get-length-maybe-string
+   js-get-length-maybe-string-expander)
+(define-expander js-get-lengthu32-maybe-string
+   js-get-lengthu32-maybe-string-expander)
+(define-expander js-get-length-maybe-arguments
+   js-get-length-maybe-arguments-expander)
+(define-expander js-get-lengthu32-maybe-arguments
+   js-get-lengthu32-maybe-arguments-expander)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-XXX ...                                                   */

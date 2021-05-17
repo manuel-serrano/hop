@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/property_expd.sch         */
+;*    serrano/prgm/project/hop/3.4.x/hopscript/property_expd.sch       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Apr 18 17:26:06 2020 (serrano)                */
+;*    Last change :  Sun May 16 07:28:49 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -665,19 +665,103 @@
 (define (js-get-length-expander x e)
    (match-case x
       ((js-get-length (and (? symbol?) ?o) ?%this . ?-)
-       (e `(if (isa? ,o JsArray)
+       (e `(if (js-array? ,o)
 	       (js-uint32-tointeger (js-array-length ,o))
 	       ((@ js-get-length __hopscript_property) ,@(cdr x)))
 	  e))
-      ((js-get-length ?o ?%this . ?-)
+      ((js-get-length ?o ?%this . ?rest)
        (let ((tmp (gensym)))
-	  (e `(let ((,tmp ,o))
-		 (if (isa? ,tmp JsArray)
-		     (js-uint32-tointeger (js-array-length ,tmp))
-		     ((@ js-get-length __hopscript_property) ,tmp ,@(cddr x))))
-	     e)))
+	  (e `(let ((,tmp ,o)) (js-get-length ,tmp ,%this ,@rest)) e)))
       (else
        (error "js-get-length" "bad form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-lengthu32 ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-get-lengthu32-expander x e)
+   (match-case x
+      ((js-get-length (and (? symbol?) ?o) ?%this . ?-)
+       (e `(if (js-array? ,o)
+	       (js-array-length ,o)
+	       ((@ js-get-lengthu32 __hopscript_property) ,@(cdr x)))
+	  e))
+      ((js-get-length ?o ?%this . ?rest)
+       (let ((tmp (gensym)))
+	  (e `(let ((,tmp ,o)) (js-get-length ,tmp ,%this ,@rest)) e)))
+      (else
+       (error "js-get-lengthu32" "bad form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-length-maybe-string ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-get-length-maybe-string-expander x e)
+   (match-case x
+      ((js-get-length-maybe-string (and (? symbol?) ?o) ?%this . ?-)
+       (e `(if (isa? ,o JsStringLiteralASCII)
+	       (js-uint32-tointeger (js-jsstring-length ,o))
+	       ((@ js-get-length __hopscript_property) ,@(cdr x)))
+	  e))
+      ((js-get-length-maybe-string ?o ?%this . ?rest)
+       (let ((tmp (gensym)))
+	  (e `(let ((,tmp ,o))
+		 (js-get-length-maybe-string ,tmp ,%this ,@rest))
+	     e)))
+      (else
+       (error "js-get-length-maybe-string" "bad form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-lengthu32-maybe-string ...                                */
+;*---------------------------------------------------------------------*/
+(define (js-get-lengthu32-maybe-string-expander x e)
+   (match-case x
+      ((js-get-length-maybe-string (and (? symbol?) ?o) ?%this . ?-)
+       (e `(if (isa? ,o JsStringLiteralASCII)
+	       (js-jsstring-length ,o)
+	       ((@ js-get-lengthu32 __hopscript_property) ,@(cdr x)))
+	  e))
+      ((js-get-length-maybe-string ?o ?%this . ?rest)
+       (let ((tmp (gensym)))
+	  (e `(let ((,tmp ,o))
+		 (js-get-length-maybe-string ,o ,%this ,@rest))
+	     e)))
+      (else
+       (error "js-get-lengthu32-maybe-string" "bad form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-length-maybe-arguments ...                                */
+;*---------------------------------------------------------------------*/
+(define (js-get-length-maybe-arguments-expander x e)
+   (match-case x
+      ((js-get-length-maybe-arguments (and (? symbol?) ?o) ?%this . ?-)
+       (e `(if (isa? ,o JsArgumentsLiteralASCII)
+	       (js-uint32-tointeger (js-jsarguments-length ,o))
+	       ((@ js-get-length __hopscript_property) ,@(cdr x)))
+	  e))
+      ((js-get-length-maybe-arguments ?o ?%this . ?rest)
+       (let ((tmp (gensym)))
+	  (e `(let ((,tmp ,o))
+		 (js-get-length-maybe-arguments ,tmp ,%this ,@rest))
+	     e)))
+      (else
+       (error "js-get-length-maybe-arguments" "bad form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-lengthu32-maybe-arguments ...                             */
+;*---------------------------------------------------------------------*/
+(define (js-get-lengthu32-maybe-arguments-expander x e)
+   (match-case x
+      ((js-get-length-maybe-arguments (and (? symbol?) ?o) ?%this . ?-)
+       (e `(if (isa? ,o JsArgumentsLiteralASCII)
+	       (js-jsarguments-length ,o)
+	       ((@ js-get-lengthu32 __hopscript_property) ,@(cdr x)))
+	  e))
+      ((js-get-length-maybe-arguments ?o ?%this . ?rest)
+       (let ((tmp (gensym)))
+	  (e `(let ((,tmp ,o))
+		 (js-get-length-maybe-arguments ,o ,%this ,@rest))
+	     e)))
+      (else
+       (error "js-get-lengthu32-maybe-arguments" "bad form" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-jsobject-name/cache-expander ...                          */

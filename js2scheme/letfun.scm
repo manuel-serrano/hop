@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Fri May 14 15:54:16 2021 (serrano)                */
+;*    Last change :  Sun May 16 10:30:08 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let function optimization. This optimizations implements         */
@@ -279,8 +279,9 @@
       (when (isa? body J2SBlock)
 	 (let ((env (make-cell '())))
 	    (node-collect-sa body (list body) env)
-	    (let ((assig (filter (lambda (a)
-				    (isa? (cdr a) J2SNode))
+	    (let ((assig (filter (lambda (d)
+				    (with-access::J2SDecl d (%info)
+				       (pair? %info)))
 			    (cell-ref env))))
 	       (when (pair? assig)
 		  (set! body (letfun-sa-transform! body assig)))))))
@@ -293,6 +294,21 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
+;*    node-collect-sa ::J2SDecl ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-collect-sa this::J2SDecl stack::pair-nil env)
+   (with-access::J2SDecl this (%info)
+      (set! %info #unspecified)))
+
+;*---------------------------------------------------------------------*/
+;*    node-collect-sa ::J2SDeclInit ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-collect-sa this::J2SDeclInit stack::pair-nil env)
+   (with-access::J2SDecl this (%info)
+      (set! %info #f)
+      (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
 ;*    node-collect-sa ::J2SAssig ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-collect-sa this::J2SAssig stack env)
@@ -300,32 +316,16 @@
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
 	     (with-access::J2SDecl decl (scope %info id)
-		(set! %info #f)
-		(when (and (memq scope '(local inner))
-			   (or #t
-			       (any (lambda (l) (memq id l))
-				  '((loop3)
-				    (loop2)
-				    (sc_loop1_98)
-				    (rule_loop)
-				    (sc_loop1_75)
-				    (sc_loop1_116)
-				    (sc_loop1_127)
-				    (loop1 nb_deriv_trees forw conf_set_union BgL_sc_confzd2setzd2adjoinza2za2_46z00 BgL_sc_confzd2setzd2adjoinza2_45za2 conf_set_adjoin conf_set_merge_new_bang BgL_sc_confzd2setzd2getza2_44za2 make_states sc_ind_43)
-				    (def_loop BgL_sc_defzd2loop_6zd2 BgL_sc_defzd2loop_9zd2 indfoobar)))))
-		   (let ((c (assq decl (cell-ref env))))
-		      (cond
-			 ((pair? c)
-			  (set-cdr! c 'multiple))
-			 ((not (isa? rhs J2SFun))
-			  (cell-set! env (cons (cons decl 'nofun) (cell-ref env))))
-			 (else
-			  (with-access::J2SFun rhs ((fdecl decl))
-			     (if fdecl
-				 (cell-set! env (cons (cons decl 'otherfun) (cell-ref env)))
-				 (begin
-				    (set! %info rhs)
-				    (cell-set! env (cons (cons decl (car stack)) (cell-ref env))))))))))
+		(when (and (eq? %info #unspecified)
+			   (memq scope '(local inner)))
+		   (if (and (isa? rhs J2SFun)
+			    (with-access::J2SFun rhs (decl) (not decl)))
+		       ;; optimize funtion expression only
+		       (begin
+			  (cell-set! env (cons decl (cell-ref env)))
+			  (set! %info (cons rhs (car stack))))
+		       ;; don't optimize function declaration
+		       (set! %info #f)))
 		(node-collect-sa rhs stack env)))
 	  (call-default-walker))))
 
@@ -343,12 +343,7 @@
    (with-access::J2SLetBlock this (decls)
       ;; invalidate all letblock decls
       (for-each (lambda (d)
-		   (let ((c (assq d (cell-ref env))))
-		      (if (pair? c)
-			  (with-access::J2SDecl d (%info)
-			     (set! %info #f)
-			     (set-cdr! c 'letblock))
-			  (cell-set! env (cons (cons d 'letblock) (cell-ref env))))))
+		   (with-access::J2SDecl d (%info) (set! %info #f)))
 	 decls)
       (call-default-walker)))
 
@@ -357,14 +352,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-collect-sa this::J2SRef stack env)
    (with-access::J2SRef this (decl)
-      (let ((c (assq decl (cell-ref env))))
-	 (with-access::J2SDecl decl (scope %info)
-	    (cond
-	       ((pair? c)
-		(set! %info #f)
-		(set-cdr! c 'escape))
-	       ((memq scope '(local inner))
-		(cell-set! env (cons (cons decl 'uninit) (cell-ref env)))))))))
+      (with-access::J2SDecl decl (%info)
+	 ;; don't optimize closures, i.e., functions that escape
+	 (set! %info #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-collect-sa ::J2SCall ...                                    */
@@ -373,18 +363,14 @@
    (with-access::J2SCall this (fun args)
       (if (isa? fun J2SRef)
 	  (with-access::J2SRef fun (decl)
-	     (let ((c (assq decl (cell-ref env))))
-		(with-access::J2SDecl decl (scope %info)
-		   (cond
-		      ((pair? c)
-		       (unless (memq (cdr c) stack)
-			  (set! %info #f)
-			  (set-cdr! c 'outscope)))
-		      ((memq scope '(local inner))
-		       (cell-set! env (cons (cons decl 'uninit) (cell-ref env))))))
-		(for-each (lambda (a)
-			     (node-collect-sa a stack env))
-		   args)))
+	     (with-access::J2SDecl decl (scope %info)
+		(when (pair? %info)
+		   ;; if the call is outside the assignment block
+		   ;; disable the optimization
+		   (let ((block (cdr %info)))
+		      (unless (memq block stack)
+			 (set! %info #f))))
+		(for-each (lambda (a) (node-collect-sa a stack env)) args)))
 	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
@@ -397,11 +383,14 @@
 ;*    letfun-sa-transform! ::J2SBlock ...                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (letfun-sa-transform! this::J2SBlock env)
-   (let ((odecls (filter-map (lambda (d) (when (eq? (cdr d) this) (car d))) env)))
+   (let ((odecls (filter (lambda (d)
+			    (with-access::J2SDecl d (%info)
+			       (eq? (cdr %info) this)))
+		    env)))
       (if (pair? odecls)
 	  (let ((ndecls (map (lambda (d)
 				(with-access::J2SDecl d (%info id usage)
-				   (with-access::J2SFun %info (loc)
+				   (with-access::J2SFun (car %info) (loc)
 				      (instantiate::J2SDeclFun
 					 (loc loc)
 					 (id id)
@@ -411,11 +400,11 @@
 					 (binder 'let-opt)
 					 (utype 'function)
 					 (vtype 'function)
-					 (val %info)))))
+					 (val (car %info))))))
 			   odecls)))
 	     (for-each (lambda (d)
 			  (with-access::J2SDecl d (%info id)
-			     (with-access::J2SFun %info (body)
+			     (with-access::J2SFun (car %info) (body)
 				(set! body
 				   (letfun-sa-transform!
 				      (j2s-alpha body odecls ndecls)
@@ -424,7 +413,8 @@
 	     (with-access::J2SBlock this (loc nodes)
 		(J2SLetBlock* ndecls
 		   (map! (lambda (n)
-			    (j2s-alpha (letfun-sa-transform! n env) odecls ndecls))
+			    (j2s-alpha (letfun-sa-transform! n env)
+			       odecls ndecls))
 		      nodes))))
 	  ;; rewrite
 	  (call-default-walker))))
@@ -437,7 +427,7 @@
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
 	     (with-access::J2SDecl decl (%info id)
-		(if (isa? %info J2SFun)
+		(if (and (pair? %info) (isa? (car %info) J2SFun))
 		    (J2SNop)
 		    (call-default-walker))))
 	  (call-default-walker))))
