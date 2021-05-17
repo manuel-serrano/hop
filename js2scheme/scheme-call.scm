@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat May 15 18:25:44 2021 (serrano)                */
+;*    Last change :  Mon May 17 05:14:00 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1207,7 +1207,7 @@
 			 (car withs) ctx)
 		     ,(call-unknown-function 'direct
 			 (j2s-get loc (car withs) #f 'object
-			    (& id (context-program ctx)) 'string 'any ctx #f #f)
+			    (& id (context-program ctx)) 'string 'any ctx #f)
 			(list (car withs)) args)
 		     ,(loop (cdr withs)))))))
 
