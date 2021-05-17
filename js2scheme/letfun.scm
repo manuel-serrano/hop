@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sun May 16 10:30:08 2021 (serrano)                */
+;*    Last change :  Mon May 17 07:15:19 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let function optimization. This optimizations implements         */
@@ -428,7 +428,7 @@
 	  (with-access::J2SRef lhs (decl)
 	     (with-access::J2SDecl decl (%info id)
 		(if (and (pair? %info) (isa? (car %info) J2SFun))
-		    (J2SNop)
+		    (J2SUndefined)
 		    (call-default-walker))))
 	  (call-default-walker))))
 		   
