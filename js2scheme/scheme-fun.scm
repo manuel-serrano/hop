@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/js2scheme/scheme-fun.scm          */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/scheme-fun.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Wed Jun 10 17:52:25 2020 (serrano)                */
+;*    Last change :  Thu May 13 19:04:16 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -27,7 +27,8 @@
 	   __js2scheme_stage
 	   __js2scheme_scheme
 	   __js2scheme_scheme-utils
-	   __js2scheme_scheme-constant)
+	   __js2scheme_scheme-constant
+	   __js2scheme_scheme-arguments)
 
    (export (j2s-scheme-closure ::J2SDecl mode return ::struct)
 	   (jsfun->lambda ::J2SFun mode return ::struct proto ::bool)
@@ -583,17 +584,18 @@
    
    (define (optim-arguments-prelude argumentsp params body)
       (with-access::J2SDeclArguments argumentsp (alloc-policy argid mode)
-	 `(let* ((%len (vector-length ,argid))
-		 ,@(map (lambda (p i)
-			   (list (j2s-decl-scm-id p ctx)
-			      `(if (<fx ,i %len)
-				   (vector-ref ,argid ,i)
-				   (js-undefined))))
-		      params (iota (length params)))
-		 (arguments ,(if (eq? alloc-policy 'lazy)
-				 `',mode
-				 `(js-strict-arguments-vector %this ,rest))))
-	     ,body)))
+	 (let ((%len (j2s-arguments-length-id argid)))
+	    `(let* ((,%len (vector-length ,argid))
+		    ,@(map (lambda (p i)
+			      (list (j2s-decl-scm-id p ctx)
+				 `(if (<fx ,i ,%len)
+				      (vector-ref ,argid ,i)
+				      (js-undefined))))
+			 params (iota (length params)))
+		    (arguments ,(if (eq? alloc-policy 'lazy)
+				    `',mode
+				    `(js-strict-arguments-vector %this ,rest))))
+		,body))))
    
    (define (regular-arguments-prelude argumentsp params body)
       `(let ((arguments (js-strict-arguments %this ,rest)))
@@ -998,39 +1000,40 @@
    
    (define (optim-arguments-prelude argumentsp params body loc)
       (with-access::J2SDeclArguments argumentsp (argid alloc-policy mode)
-	 (if (eq? alloc-policy 'lazy)
-	     `(let* ((%len (vector-length ,argid))
-		     (arguments ',mode)
-		     ,@(map (lambda (p i)
-			       (list (j2s-decl-scm-id p ctx)
-				  `(if (<fx ,i %len)
-				       (vector-ref ,argid ,i)
-				       (js-undefined))))
-			  params (iota (length params))))
-		 ,body)
-	     `(let* ((%len (vector-length ,argid))
-		     (arguments (js-arguments %this ,argid))
-		     ,@(map (lambda (p i)
-			       (list (j2s-decl-scm-id p ctx)
-				  `(if (<fx ,i %len)
-				       (vector-ref ,argid ,i)
-				       (js-undefined))))
-			  params (iota (length params))))
-		 ,@(map (lambda (param i)
-			   `(when (<fx ,i %len)
-			       ,(init-alias-argument param #f i)))
-		      params (iota (length params)))
-		 (let loop ((,rest ,rest)
-			    (%i ,(length params)))
-		    (when (<fx %i (vector-length ,rest))
-		       ,(init-argument `(vector-ref ,rest %i) '%i)
-		       (loop (cdr ,rest) (+fx %i 1))))
-		 (js-bind! %this arguments ,(& "callee" (context-program ctx))
-		    :value (js-make-function %this ,id
-			      (js-function-arity 0 0)
-			      (js-function-info :name ,(symbol->string id) :len 0))
-		    :enumerable #f)
-		 ,body))))
+	 (let ((%len (j2s-arguments-length-id argid)))
+	    (if (eq? alloc-policy 'lazy)
+		`(let* ((,%len (vector-length ,argid))
+			(arguments ',mode)
+			,@(map (lambda (p i)
+				  (list (j2s-decl-scm-id p ctx)
+				     `(if (<fx ,i ,%len)
+					  (vector-ref ,argid ,i)
+					  (js-undefined))))
+			     params (iota (length params))))
+		    ,body)
+		`(let* ((,%len (vector-length ,argid))
+			(arguments (js-arguments %this ,argid))
+			,@(map (lambda (p i)
+				  (list (j2s-decl-scm-id p ctx)
+				     `(if (<fx ,i ,%len)
+					  (vector-ref ,argid ,i)
+					  (js-undefined))))
+			     params (iota (length params))))
+		    ,@(map (lambda (param i)
+			      `(when (<fx ,i ,%len)
+				  ,(init-alias-argument param #f i)))
+			 params (iota (length params)))
+		    (let loop ((,rest ,rest)
+			       (%i ,(length params)))
+		       (when (<fx %i (vector-length ,rest))
+			  ,(init-argument `(vector-ref ,rest %i) '%i)
+			  (loop (cdr ,rest) (+fx %i 1))))
+		    (js-bind! %this arguments ,(& "callee" (context-program ctx))
+		       :value (js-make-function %this ,id
+				 (js-function-arity 0 0)
+				 (js-function-info :name ,(symbol->string id) :len 0))
+		       :enumerable #f)
+		    ,body)))))
 	     
    (define (regular-arguments-prelude argumentsp params body loc)
       `(let ((arguments

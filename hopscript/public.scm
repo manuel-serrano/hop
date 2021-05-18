@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/public.scm                */
+;*    serrano/prgm/project/hop/3.4.x/hopscript/public.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue May 11 18:14:32 2021 (serrano)                */
+;*    Last change :  Thu May 13 08:25:48 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1603,18 +1603,21 @@
 (define (js-ordinary-instanceof? %this v f)
    (with-access::JsFunction f (prototype)
       (let ((o prototype))
-	 (if (not (js-object? o))
-	     (js-raise-type-error %this "instanceof: no prototype ~s" v)
-	     (let loop ((v v))
-		(let ((nv (js-object-proto v)))
+	 (let loop ((v v))
+	    (let ((nv (js-object-proto v)))
+	       (cond
+		  ((eq? o nv)
+		   #t)
+		  ((eq? nv (js-null))
 		   (cond
-		      ((eq? o nv)
-		       #t)
-		      ((eq? nv (js-null))
-		       (when (eq? (object-class v) JsProxy)
-			  (loop (js-proxy-target v))))
+		      ((eq? (object-class v) JsProxy)
+		       (loop (js-proxy-target v)))
+		      ((not (js-object? o))
+		       (js-raise-type-error %this "instanceof: no prototype ~s" v))
 		      (else
-		       (loop nv)))))))))
+		       #f)))
+		  (else
+		   (loop nv))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-instanceof? ...                                      */

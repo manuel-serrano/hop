@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sun May  9 14:27:44 2021 (serrano)                */
+;*    Last change :  Thu May 13 20:08:10 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1390,7 +1390,11 @@
 	       ((eq? (j2s-type fun) 'procedure)
 		(case protocol
 		   ((procedure-this)
-		    (call-scheme-this this fun thisarg args))
+		    (let ((d (when (isa? fun J2SRef)
+				(read-only-function fun))))
+		       (if (isa? d J2SDeclFun)
+			   (call-known-function protocol profid d thisarg args)
+			   (call-scheme-this this fun thisarg args))))
 		   ((procedure-this-arity)
 		    (call-scheme-this-arity this fun thisarg args))
 		   ((procedure-nothis)
