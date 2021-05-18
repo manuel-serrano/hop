@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun May 16 07:28:49 2021 (serrano)                */
+;*    Last change :  Tue May 18 19:01:52 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -680,12 +680,12 @@
 ;*---------------------------------------------------------------------*/
 (define (js-get-lengthu32-expander x e)
    (match-case x
-      ((js-get-length (and (? symbol?) ?o) ?%this . ?-)
+      ((js-get-lengthu32 (and (? symbol?) ?o) ?%this . ?-)
        (e `(if (js-array? ,o)
 	       (js-array-length ,o)
 	       ((@ js-get-lengthu32 __hopscript_property) ,@(cdr x)))
 	  e))
-      ((js-get-length ?o ?%this . ?rest)
+      ((js-get-lengthu32 ?o ?%this . ?rest)
        (let ((tmp (gensym)))
 	  (e `(let ((,tmp ,o)) (js-get-length ,tmp ,%this ,@rest)) e)))
       (else
@@ -714,12 +714,12 @@
 ;*---------------------------------------------------------------------*/
 (define (js-get-lengthu32-maybe-string-expander x e)
    (match-case x
-      ((js-get-length-maybe-string (and (? symbol?) ?o) ?%this . ?-)
+      ((js-get-lengthu32-maybe-string (and (? symbol?) ?o) ?%this . ?-)
        (e `(if (isa? ,o JsStringLiteralASCII)
 	       (js-jsstring-length ,o)
 	       ((@ js-get-lengthu32 __hopscript_property) ,@(cdr x)))
 	  e))
-      ((js-get-length-maybe-string ?o ?%this . ?rest)
+      ((js-get-lengthu32-maybe-string ?o ?%this . ?rest)
        (let ((tmp (gensym)))
 	  (e `(let ((,tmp ,o))
 		 (js-get-length-maybe-string ,o ,%this ,@rest))

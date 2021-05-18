@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/scheme-array.scm        */
+;*    /tmp/HOP3/3.4.x/js2scheme/scheme-array.scm                       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sat May 15 18:26:17 2021 (serrano)                */
+;*    Last change :  Tue May 18 14:29:50 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -750,7 +750,7 @@
 		      (else
 		       #f))))))
 	 (else
-	  (j2s-sort sort
+	  (j2s-sort sortfn
 	     obj (j2s-scheme fun mode return ctx) %this cache))))
 
    (match-case args
