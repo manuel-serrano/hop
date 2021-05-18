@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue May 18 19:01:52 2021 (serrano)                */
+;*    Last change :  Tue May 18 19:05:24 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -750,12 +750,12 @@
 ;*---------------------------------------------------------------------*/
 (define (js-get-lengthu32-maybe-arguments-expander x e)
    (match-case x
-      ((js-get-length-maybe-arguments (and (? symbol?) ?o) ?%this . ?-)
+      ((js-get-lengthu32-maybe-arguments (and (? symbol?) ?o) ?%this . ?-)
        (e `(if (isa? ,o JsArgumentsLiteralASCII)
 	       (js-jsarguments-length ,o)
 	       ((@ js-get-lengthu32 __hopscript_property) ,@(cdr x)))
 	  e))
-      ((js-get-length-maybe-arguments ?o ?%this . ?rest)
+      ((js-get-lengthu32-maybe-arguments ?o ?%this . ?rest)
        (let ((tmp (gensym)))
 	  (e `(let ((,tmp ,o))
 		 (js-get-length-maybe-arguments ,o ,%this ,@rest))

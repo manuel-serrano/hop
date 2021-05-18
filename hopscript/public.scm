@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun May 16 09:54:43 2021 (serrano)                */
+;*    Last change :  Mon May 17 06:43:51 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1979,12 +1979,7 @@
       ((eq? obj #t) (& "true"))
       ((eq? obj #f) (& "false"))
       ((js-jsstring? obj) obj)
-      (else
-       ;; use a qualified notation to avoid macro expansion
-       (let ((r ((@ js-toprimitive __hopscript_public) obj 'string %this)))
-	  (if (js-jsstring? r)
-	      r
-	      (js-tojsstring r %this))))))
+      (else (js-tojsstring (js-toprimitive obj 'any %this) %this))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-toprimitive ::obj ...                                         */
