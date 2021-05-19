@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun May  9 18:43:31 2021 (serrano)                */
+;*    Last change :  Wed May 19 08:56:05 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -247,6 +247,7 @@
       (call-with-input-file filename
 	 (lambda (in)
 	    (debug-compile-trace "nodejs-compile-html" filename)
+	    (tprint "COMPILE HTML...")
 	    (let ((tree (j2s-compile in
 			   :filename filename
 			   :parser 'client-program
@@ -1081,7 +1082,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-compile src filename::bstring
 	   %ctxthis %ctxmodule
-	   #!key lang worker-slave commonjs-export)
+	   #!key lang worker-slave commonjs-export warning-global)
    
    (define (cache-path filename)
       (make-cache-name 
@@ -1139,6 +1140,7 @@
 			       :plugins-loader (make-plugins-loader %ctxthis %ctxmodule (js-current-worker))
 			       :commonjs-export commonjs-export
 			       :es6-module-client #t
+			       :warning-global warning-global
 			       :debug (bigloo-debug))
 			    (close-mmap m)))))))))
    
@@ -1829,7 +1831,8 @@
 	       (let ((hopscript (nodejs-compile filename filename
 				   %ctxthis %ctxmodule
 				   :lang lang
-				   :commonjs-export #f))
+				   :commonjs-export #f
+				   :warning-global #f))
 		     (this (js-new0 %this js-object))
 		     (scope (nodejs-new-scope-object %this))
 		     (mod (nodejs-new-module (if js-main filename ".")
