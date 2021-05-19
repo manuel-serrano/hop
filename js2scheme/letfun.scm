@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Wed May 19 07:00:30 2021 (serrano)                */
+;*    Last change :  Wed May 19 19:47:31 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let function optimization. This optimizations implements         */
@@ -419,6 +419,53 @@
 		      nodes))))
 	  ;; rewrite
 	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    letfun-sa-transform! ::J2SLetBlock ...                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (letfun-sa-transform! this::J2SLetBlock env)
+   (if (any (lambda (d)
+	       (with-access::J2SDecl d (%info)
+		  (eq? (cdr %info) this)))
+	  env)
+       (with-access::J2SLetBlock this (decls nodes loc)
+	  (let* ((ndecls '())
+		 (odecls '())
+		 (decls (map (lambda (d)
+				(with-access::J2SDecl d (%info id usage)
+				   (if (and (pair? %info)
+					    (eq? (cdr %info) this))
+				       (let ((n (with-access::J2SFun (car %info) (loc)
+						   (instantiate::J2SDeclFun
+						      (loc loc)
+						      (id id)
+						      (writable #f)
+						      (scope 'local)
+						      (usage (usage-rem usage 'assig))
+						      (binder 'let-opt)
+						      (utype 'function)
+						      (vtype 'function)
+						      (val (letfun-sa-transform! (car %info) env))))))
+					  (set! ndecls (cons n ndecls))
+					  (set! odecls (cons d odecls))
+					  n)
+				       d)))
+			   decls)))
+	     (for-each (lambda (d)
+			  (when (isa? d J2SDeclInit)
+			     (with-access::J2SDeclInit d (val)
+				(set! val
+				   (letfun-sa-transform!
+				      (j2s-alpha val odecls ndecls)
+				      env)))))
+		decls)
+	     (J2SLetBlock* decls
+		(map (lambda (n)
+			 (j2s-alpha (letfun-sa-transform! n env)
+			    odecls ndecls))
+		   nodes))))
+       ;; rewrite
+       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
 ;*    letfun-sa-transform! ::J2SAssig ...                              */
