@@ -3,14 +3,14 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Mar  1 07:13:49 2016                          */
-/*    Last change :  Wed Apr  8 08:12:20 2020 (serrano)                */
-/*    Copyright   :  2016-20 Manuel Serrano                            */
+/*    Last change :  Wed May 19 07:17:13 2021 (serrano)                */
+/*    Copyright   :  2016-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing asynchronous responses                                   */
 /*=====================================================================*/
-"use strict";
+"use hopscript";
 
-var assert = require( "assert" );
+const assert = require( "assert" );
 
 service bar( arg ) {
    console.log( ">>> bar ", arg );
