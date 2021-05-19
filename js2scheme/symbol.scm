@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Tue May 11 15:31:41 2021 (serrano)                */
+;*    Last change :  Wed May 19 08:54:44 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -829,6 +829,7 @@
 		      ((not (config-get conf :warning-global))
 		       #unspecified)
 		      (else
+		       (tprint "conf=" conf)
 		       (warning/loc loc
 			  (format "unbound variable \"~s\"" id)))))
 		(instantiate::J2SGlobalRef
