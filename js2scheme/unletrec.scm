@@ -1,15 +1,15 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/unletrec.scm              */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/unletrec.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Tue Dec 31 16:35:59 2019 (serrano)                */
-;*    Copyright   :  2018-19 Manuel Serrano                            */
+;*    Last change :  Fri May 14 10:45:52 2021 (serrano)                */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Letrec optimization                                              */
 ;*    -------------------------------------------------------------    */
 ;*    This optimization transforms letrec into let(*). This improves   */
-;*    generated code because it avoids boxing mutated rec variables    */
+;*    generated codes because it avoids boxing mutated rec variables   */
 ;*    and it enables other optimizations such as PCE.                  */
 ;*=====================================================================*/
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sun May  9 14:27:44 2021 (serrano)                */
+;*    Last change :  Mon May 17 05:14:00 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -129,8 +129,8 @@
 	("concat" ,j2s-array-maybe-concat1 any (any) %this #t ,j2s-array-plain?)
 	("concat" js-array-concat array (array . any) %this #f ,j2s-array-plain?)
 	("concat" js-array-maybe-concat any (any . any) %this #t ,j2s-array-plain?)
-	("sort" js-array-sort array (any) %this #t ,j2s-array-plain?)
-	("sort" js-array-maybe-sort any (any) %this #t ,j2s-array-plain?)
+	("sort" ,j2s-array-sort array (any) %this #t ,j2s-array-plain?)
+	("sort" ,j2s-array-maybe-sort any (any) %this #t ,j2s-array-plain?)
 	("fill" js-array-fill1 array (any) %this #t ,j2s-array-plain?)
 	("fill" js-array-fill1 jsvector (any) %this #t)
 	("fill" js-array-maybe-fill1 any (any) %this #t ,j2s-array-plain?)
@@ -1209,7 +1209,7 @@
 			 (car withs) ctx)
 		     ,(call-unknown-function 'direct
 			 (j2s-get loc (car withs) #f 'object
-			    (& id (context-program ctx)) 'string 'any ctx #f #f)
+			    (& id (context-program ctx)) 'string 'any ctx #f)
 			(list (car withs)) args)
 		     ,(loop (cdr withs)))))))
 
@@ -1390,7 +1390,11 @@
 	       ((eq? (j2s-type fun) 'procedure)
 		(case protocol
 		   ((procedure-this)
-		    (call-scheme-this this fun thisarg args))
+		    (let ((d (when (isa? fun J2SRef)
+				(read-only-function fun))))
+		       (if (isa? d J2SDeclFun)
+			   (call-known-function protocol profid d thisarg args)
+			   (call-scheme-this this fun thisarg args))))
 		   ((procedure-this-arity)
 		    (call-scheme-this-arity this fun thisarg args))
 		   ((procedure-nothis)

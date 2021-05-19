@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/private.scm               */
+;*    serrano/prgm/project/hop/3.4.x/hopscript/private.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Feb 12 07:44:21 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Last change :  Sat May 15 17:58:00 2021 (serrano)                */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
 ;*=====================================================================*/
@@ -136,7 +136,7 @@
 	     `(let ((,tmp ,(e val e)))
 		 (if ,(e `(js-jsstring? ,tmp) e)
 		     ,tmp
-		     (js-toprimitive ,tmp 'string ,this))))
+		     (js-toprimitive-for-string ,tmp ,this))))
 	    ((?- ?val 'any ?this)
 	     `(let ((,tmp ,(e val e)))
 		 (if ,(e `(js-number? ,tmp) e)
@@ -232,8 +232,21 @@
    (define (js-real->string m)
       (if (=fl m 0.0)
 	  "0"
-	  (let ((s (real->string m)))
+	  (let* ((s (real->string m))
+		 (e (string-char-index-ur s #\e 0 (string-length s))))
 	     (cond
+		((not e)
+		 (let ((d (string-index s #\.))
+		       (l (string-length s)))
+		    (cond
+		       ((<fx d (-fx l 2))
+			s)
+		       ((=fx d (-fx l 2))
+			(if (char=? (string-ref s (-fx l 1)) #\0)
+			    (string-shrink! s (-fx l 2))
+			    s))
+		       (else
+			(string-shrink! s (-fx l 1))))))
 		((pregexp-match "^([-]?[0-9]+)[eE]([0-9]+)$" s)
 		 =>
 		 (lambda (m)
@@ -247,17 +260,14 @@
 		 =>
 		 (lambda (m)
 		    (js-bignum->string (negbx (match->bignum m)))))
-		((pregexp-match "^([-]?[.0-9]+)[.]0+$" s)
-		 =>
-		 cadr)
 		(else
 		 s)))))
 
    (cond
       ((fixnum? obj) (integer->string obj))
-      ((not (= obj obj)) "NaN")
-      ((= obj +inf.0) "Infinity")
-      ((= obj -inf.0) "-Infinity")
+      ((not (=fl obj obj)) "NaN")
+      ((=fl obj +inf.0) "Infinity")
+      ((=fl obj -inf.0) "-Infinity")
       ((real? obj) (js-real->string obj))
       ((bignum? obj) (js-bignum->string obj))
       (else (number->string obj))))

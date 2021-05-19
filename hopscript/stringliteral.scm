@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon May 10 13:46:41 2021 (serrano)                */
+;*    Last change :  Sun May 16 09:09:23 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -545,7 +545,8 @@
 (define-inline (js-ascii->jsstring::JsStringLiteralASCII val::bstring)
    (let ((o (instantiate::JsStringLiteralASCII
 	       (length (fixnum->uint32 (string-length val)))
-	       (left val))))
+	       (left val)
+	       (right (js-not-a-string-cache)))))
       (js-object-mode-set! o (js-jsstring-normalized-ascii-mode))
       (object-widening-set! o #f)
       o))
@@ -1461,21 +1462,23 @@
       buf))
 
 ;*---------------------------------------------------------------------*/
+;*    js-jsstring-blit-buffer-ascii! ...                               */
+;*---------------------------------------------------------------------*/
+(define (blit-buffer-ascii! buf::bstring offset::long string::JsStringLiteral)
+   (with-access::JsStringLiteral string (left right length)
+      (cond
+	 ((js-jsstring-normalized? string)
+	  (blit-string! left 0 buf offset (uint32->fixnum length)))
+	 ((js-jsstring-substring? string)
+	  (blit-string! left right buf offset (uint32->fixnum length)))
+	 (else
+	  (let ((s (js-jsstring-normalize-ASCII! string)))
+	     (blit-string! s 0 buf offset (uint32->fixnum length)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append-ASCII ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-append-ASCII left right)
-
-   (define (blit-buffer! buffer::bstring offset::long string::JsStringLiteral)
-      (with-access::JsStringLiteral string (left right length)
-	 (cond
-	    ((js-jsstring-normalized? string)
-	     (blit-string! left 0 buffer offset (uint32->fixnum length)))
-	    ((js-jsstring-substring? string)
-	     (blit-string! left right buffer offset (uint32->fixnum length)))
-	    (else
-	     (let ((s (js-jsstring-normalize-ASCII! string)))
-		(blit-string! s 0 buffer offset (uint32->fixnum length)))))))
-
    (with-access::JsStringLiteral left ((llen length)
 				       (lstr left))
       (with-access::JsStringLiteral right ((rlen length)
@@ -1491,8 +1494,8 @@
 			     (length len)
 			     (left buffer)
 			     (right (js-not-a-string-cache)))))
-		   (blit-buffer! buffer 0 left)
-		   (blit-buffer! buffer (uint32->fixnum llen) right)
+		   (blit-buffer-ascii! buffer 0 left)
+		   (blit-buffer-ascii! buffer (uint32->fixnum llen) right)
 		   (js-object-mode-set! s (js-jsstring-normalized-ascii-mode))
 		   (object-widening-set! s #f)
 		   s)
@@ -1679,18 +1682,6 @@
 ;*    js-jsstring-append-ascii3 ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-append-ascii3::JsStringLiteral left::JsStringLiteral  middle::JsStringLiteral right::JsStringLiteral)
-
-   (define (blit-buffer! buffer::bstring offset::long string::JsStringLiteral)
-      (with-access::JsStringLiteral string (left right length)
-	 (cond
-	    ((js-jsstring-normalized? string)
-	     (blit-string! left 0 buffer offset (uint32->fixnum length)))
-	    ((js-jsstring-substring? string)
-	     (blit-string! left right buffer offset (uint32->fixnum length)))
-	    (else
-	     (let ((s (js-jsstring-normalize-ASCII! string)))
-		(blit-string! s 0 buffer offset (uint32->fixnum length)))))))
-      
    (with-access::JsStringLiteral left ((llen length) (lstr left))
       (with-access::JsStringLiteral middle ((mlen length) (mstr left))
 	 (with-access::JsStringLiteral right ((rlen length) (rstr left))
@@ -1702,18 +1693,21 @@
 				(length len)
 				(left buffer)
 				(right (js-not-a-string-cache)))))
-		      (blit-buffer! buffer 0 left)
-		      (blit-buffer! buffer (uint32->fixnum llen) middle)
-		      (blit-buffer! buffer (uint32->fixnum (+u32 llen mlen)) right)
+		      (blit-buffer-ascii! buffer 0 left)
+		      (blit-buffer-ascii! buffer (uint32->fixnum llen) middle)
+		      (blit-buffer-ascii! buffer (uint32->fixnum (+u32 llen mlen)) right)
 		      (js-object-mode-set! s (js-jsstring-normalized-ascii-mode))
 		      (object-widening-set! s #f)
 		      s))
 		  ((>u32 llen rlen)
-		   (js-jsstring-append-ASCII left
-		      (js-jsstring-append-ASCII middle right)))
+		   ($js-make-stringliteralascii len
+		      left 
+		      ($js-make-stringliteralascii (+u32 mlen rlen)
+			 middle right)))
 		  (else
-		   (js-jsstring-append-ASCII
-		      (js-jsstring-append-ASCII left middle)
+		   ($js-make-stringliteralascii len
+		      ($js-make-stringliteralascii (+u32 llen mlen)
+			 left middle)
 		      right))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -4117,9 +4111,11 @@
 	  this)
 	 ((not need22)
 	  (let* ((j (+fx i (js-jsstring-lengthfx searchstr)))
-		 (tail (js-jsstring-append replacevalue
-			  (js-substring/enc string
-			     j (string-length string) enc %this))))
+		 (suf (js-substring/enc string
+			 j (string-length string) enc %this))
+		 (tail (if (>fx (js-jsstring-lengthfx replacevalue) 0)
+			   (js-jsstring-append replacevalue suf)
+			   suf)))
 	     (if (>fx i 0)
 		 (js-jsstring-append
 		    (js-substring/enc string 0 i enc %this) tail)

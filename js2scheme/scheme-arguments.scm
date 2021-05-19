@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-arguments.scm      */
+;*    .../prgm/project/hop/3.4.x/js2scheme/scheme-arguments.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Thu Apr 16 18:30:46 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Sun May 16 07:18:14 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
 ;*=====================================================================*/
@@ -32,6 +32,7 @@
    (export (j2s-rest-ref ::J2SAccess mode return ::struct)
 	   (j2s-arguments-ref ::J2SAccess mode return ::struct)
 	   (j2s-arguments-set! ::J2SAssig mode return ::struct)
+	   (j2s-arguments-length-id ::symbol)
 	   (j2s-ref-arguments-lazy?::bool ::J2SRef)
 	   (j2s-ref-arguments-argid::symbol ::J2SRef)
 	   (j2s-ref-arguments-mode::symbol ::J2SRef)))
@@ -102,10 +103,11 @@
 		  %this))))
 	 ((j2s-field-length? field)
 	  (if (and (isa? obj J2SRef) (j2s-ref-arguments-lazy? obj))
-	      `(if (object? ,(j2s-scheme obj mode return ctx))
+	      `(if (js-object? ,(j2s-scheme obj mode return ctx))
 		   (js-arguments-length
 		      ,(j2s-scheme obj mode return ctx) %this)
-		   (vector-length ,(j2s-ref-arguments-argid obj)))
+		   ,(j2s-arguments-length-id
+		      (j2s-ref-arguments-argid obj)))
 	      `(js-arguments-length
 		  ,(j2s-scheme obj mode return ctx) %this)))
 	 (else
@@ -139,7 +141,7 @@
 		    (strict-mode? mode)
 		    ctx
 		    cache
-		    #f
+		    :optim #f
 		    :cspecs cspecs
 		    :cachefun #f))
 	     (j2s-put! loc (j2s-scheme obj mode return ctx) field
@@ -151,26 +153,42 @@
 		(strict-mode? mode)
 		ctx
 		cache
-		#f
+		:optim #f
 		:cspecs cspecs
 		:cachefun #f)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-arguments-length-id ...                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-arguments-length-id id)
+   (symbol-append id '-len))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-ref-arguments-lazy? ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-ref-arguments-lazy? obj)
    (with-access::J2SRef obj (decl)
-      (when (isa? decl J2SDeclArguments)
+      (cond
+	 ((isa? decl J2SDeclArguments)
 	  (with-access::J2SDeclArguments decl (alloc-policy)
-	     (eq? alloc-policy 'lazy)))))
+	     (eq? alloc-policy 'lazy)))
+	 ((isa? decl J2SDeclInit)
+	  (with-access::J2SDeclInit decl (val)
+	     (when (isa? val J2SRef)
+		(j2s-ref-arguments-lazy? val))))
+	 (else
+	  #f))))
 		 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-ref-arguments-argid ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-ref-arguments-argid obj::J2SRef)
    (with-access::J2SRef obj (decl)
-      (with-access::J2SDeclArguments decl (argid)
-	 argid)))
+      (if (isa? decl J2SDeclArguments)
+	  (with-access::J2SDeclArguments decl (argid)
+	     argid)
+	  (with-access::J2SDeclInit decl (val)
+	     (j2s-ref-arguments-argid val)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-ref-arguments-mode ...                                       */
@@ -178,4 +196,7 @@
 (define (j2s-ref-arguments-mode obj::J2SRef)
    (with-access::J2SRef obj (decl)
       (with-access::J2SDeclArguments decl (mode)
-	 mode)))
+	 (if (isa? decl J2SDeclArguments)
+	     mode
+	     (with-access::J2SDeclInit decl (val)
+		(j2s-ref-arguments-mode val))))))

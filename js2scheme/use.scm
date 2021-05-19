@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/use.scm                   */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/use.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Jan 16 08:31:50 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Last change :  Thu May 13 09:27:09 2021 (serrano)                */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
 ;*=====================================================================*/
@@ -54,7 +54,7 @@
 (define (j2s-use! this::J2SProgram args)
    
    (define deval
-      (make-cell #f))
+      (make-cell 0))
    
    (define (use-nodes nodes)
       (for-each (lambda (o)
@@ -67,15 +67,17 @@
 	 (use-nodes headers)
 	 (use-nodes decls)
 	 (use-nodes nodes)
-	 (if (cell-ref deval)
+	 (cond
+	    ((=fx (cell-ref deval) 0)
+	     (set! direct-eval #f)
+	     (j2s-dead! this args))
+	    ((j2s-dead-eval? this (cell-ref deval) args)
+	     (set! direct-eval #f)
+	     (j2s-dead! this args))
+	    (else
 	     (for-each (lambda (d::J2SDecl)
  			  (decl-usage-add! d 'eval))
-		decls)
-	     (begin
-		;; it might be valuable to count the number of direct
-		;; eval calls instead of using a simple boolean.
-		(set! direct-eval #f)
-		(j2s-dead! this args)))))
+		decls)))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -94,41 +96,60 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-dead-eval? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-dead-eval? this::J2SProgram cnteval args)
+   (with-access::J2SProgram this (decls)
+      (for-each (lambda (d)
+		   (unless (live-decl? d)
+		      (let ((deval (make-cell 0)))
+			 (j2s-use d 'ref deval #f)
+			 (set! cnteval (-fx cnteval (cell-ref deval))))))
+	 decls)
+      (=fx cnteval 0)))
+
+;*---------------------------------------------------------------------*/
+;*    live-decl? ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (live-decl? d::J2SDecl)
+   (with-access::J2SDecl d (usecnt id scope)
+      (or (>fx usecnt 0)
+	  (eq? scope 'export)
+	  (and (isa? d J2SDeclInit)
+	       (with-access::J2SDeclInit d (val)
+		  (or (isa? val J2SSvc)
+		      (and (not (isa? val J2SLiteral))
+			   (not (isa? val J2SFun)))
+		      (isa? val J2SArray)))))))
+
+;*---------------------------------------------------------------------*/
+;*    filter-dead-declarations ...                                     */
+;*---------------------------------------------------------------------*/
+(define (filter-dead-declarations decls)
+   (let ((fix #f))
+      (let loop ()
+	 (unless fix
+	    (set! fix #t)
+	    (set! decls
+	       (filter (lambda (d::J2SDecl)
+			  (or (live-decl? d)
+			      (begin
+				 (set! fix #f)
+				 (when (isa? d J2SDeclInit)
+				    (with-access::J2SDeclInit d (val)
+				       (use-count val -1 0)))
+				 #f)))
+		  decls))
+	    (loop)))
+      decls))
+
+;*---------------------------------------------------------------------*/
 ;*    decl-usage-add*! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (decl-usage-add*! decl keys)
    (if (pair? keys)
        (for-each (lambda (key) (decl-usage-add! decl key)) keys)
        (decl-usage-add! decl keys)))
-
-;*---------------------------------------------------------------------*/
-;*    filter-dead-declarations ...                                     */
-;*---------------------------------------------------------------------*/
-(define (filter-dead-declarations decls)
-   (let ((keep #t))
-      (let loop ()
-	 (when keep
-	    (set! keep #f)
-	    (set! decls
-	       (filter (lambda (d::J2SDecl)
-			  (with-access::J2SDecl d (usecnt id scope)
-			     (or (>fx usecnt 0)
-				 (eq? scope 'export)
-				 (and (isa? d J2SDeclInit)
-				      (with-access::J2SDeclInit d (val)
-					 (or (isa? val J2SSvc)
-					     (and (not (isa? val J2SLiteral))
-						  (not (isa? val J2SFun)))
-					     (isa? val J2SArray))))
-				 (begin
-				    (set! keep #t)
-				    (when (isa? d J2SDeclInit)
-				       (with-access::J2SDeclInit d (val)
-					  (use-count val -1 0)))
-				    #f))))
-		  decls))
-	    (loop)))
-      decls))
 
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SNode ...                                          */
@@ -314,7 +335,7 @@
    (call-default-walker)
    (with-access::J2SUnresolvedRef this (id)
       (when (and (eq? id 'eval) (eq? ctx 'call))
-	 (cell-set! deval #t)))
+	 (cell-set! deval (+fx 1 (cell-ref deval)))))
    this)
 
 ;*---------------------------------------------------------------------*/

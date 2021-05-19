@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/hintnum.scm               */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/hintnum.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Thu Jun  4 12:35:39 2020 (serrano)                */
-;*    Copyright   :  2018-20 Manuel Serrano                            */
+;*    Last change :  Sun May 16 07:06:02 2021 (serrano)                */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
 ;*    -------------------------------------------------------------    */
@@ -179,7 +179,22 @@
 	  (let ((hint (union-hint! (expr-hint this) (expr-hint rhs))))
 	     (add-expr-hint! lhs hint #t fix)
 	     (add-expr-hint! this hint #f fix))))
-      ((- -- *)
+      ((-)
+       (unless (eq? (j2s-type lhs) 'any)
+	  (unhint-string-ref lhs fix))
+       (unless (eq? (j2s-type rhs) 'any)
+	  (unhint-string-ref rhs fix))
+       (when (memq (j2s-type lhs) '(any number))
+	  (let ((hint (union-hint! (expr-hint this) (expr-hint rhs))))
+	     (unless (eq? (j2s-type lhs) 'any)
+		(add-expr-hint! lhs (cons (cons 'no-string 20) hint) #t fix))
+	     (add-expr-hint! this hint #f fix)))
+       (when (memq (j2s-type rhs) '(any number))
+	  (let ((hint (union-hint! (expr-hint this) (expr-hint lhs))))
+	     (unless (eq? (j2s-type rhs) 'any)
+		(add-expr-hint! rhs (cons (cons 'no-string 20) hint) #t fix))
+	     (add-expr-hint! this hint #f fix))))
+      ((-- *)
        (unhint-string-ref lhs fix)
        (unhint-string-ref rhs fix)
        (when (memq (j2s-type lhs) '(any number))
@@ -205,11 +220,13 @@
 	     (add-expr-hint! this hint #f fix))))
       ((< > <= >= == === != !==)
        (when (memq (j2s-type lhs) '(any number))
-	  (unhint-string-ref lhs fix)
+	  (unless (eq? (j2s-type lhs) 'any)
+	     (unhint-string-ref lhs fix))
 	  (let ((hint (expr-hint rhs)))
 	     (add-expr-hint! lhs hint #t fix)))
        (when (memq (j2s-type rhs) '(any number))
-	  (unhint-string-ref rhs fix)
+	  (unless (eq? (j2s-type rhs) 'any)
+	     (unhint-string-ref rhs fix))
 	  (let ((hint (expr-hint lhs)))
 	     (add-expr-hint! rhs hint #t fix))))
       ((>> >>> << BIT_OR & ^)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon May 10 11:46:13 2021 (serrano)                */
+;*    Last change :  Thu May 13 19:20:55 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1552,7 +1552,9 @@
 		     (isa? obj J2SRef)
 		     (j2s-field-length? field)
 		     (with-access::J2SRef obj (decl)
-			(and (isa? decl J2SDeclArguments)
+			;; MS 13may2021: because of the new arguments
+			;; optimization, alias arguments are optimized too
+			(and ;; (isa? decl J2SDeclArguments)
 			     (not (decl-usage-has? decl '(set ref))))))
 		;; The length field of a arguments is not necessarily
 		;; an number (when assigned a random value, see
