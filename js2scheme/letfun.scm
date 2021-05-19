@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Wed May 19 06:53:38 2021 (serrano)                */
+;*    Last change :  Wed May 19 07:00:30 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let function optimization. This optimizations implements         */
@@ -283,11 +283,6 @@
 				    (with-access::J2SDecl d (%info)
 				       (pair? %info)))
 			    (cell-ref env))))
-	       (tprint "COLLECT : "
-		  (map (lambda (d)
-			  (with-access::J2SDecl d (id key)
-			     (cons id key)))
-		     assig))
 	       (when (pair? assig)
 		  (set! body (letfun-sa-transform! body assig)))))))
    this)
