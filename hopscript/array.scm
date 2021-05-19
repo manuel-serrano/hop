@@ -3,7 +3,6 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat May 15 18:30:54 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -5864,14 +5863,18 @@
       (with-access::JsArray this (vec)
 	 ($sort-vector vec
 	    (lambda (x y)
-	       (cond
-		  ((eq? x (js-undefined)) (eq? y (js-undefined)))
-		  ((eq? y (js-undefined)) #t)
-		  (else
-		   (let ((t (comparefn (js-undefined) x y %this)))
-		      (if (fixnum? t)
-			  (<=fx t 0)
-			  (<= (js-tointeger t %this) 0)))))))
+	       (let ((nothasj (js-absent? x))
+		     (nothask (js-absent? y)))
+		  (cond
+		     (nothasj nothask)
+		     (nothask #t)
+		     ((eq? x (js-undefined)) (eq? y (js-undefined)))
+		     ((eq? y (js-undefined)) #t)
+		     (else
+		      (let ((t (comparefn (js-undefined) x y %this)))
+			 (if (fixnum? t)
+			     (<=fx t 0)
+			     (<= (js-tointeger t %this) 0))))))))
 	 this))
    
    (define (partition arr cmp left right pivotindex)
@@ -5951,7 +5954,7 @@
 ;*    js-array-sort-procedure ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-array-sort-procedure this::JsArray comparefn %this cache)
-   (if (js-object-mode-plain? this)
+   (if (and (js-array? this) (js-object-mode-plain? this))
        (js-array-prototype-sort-procedure this comparefn %this)
        (let* ((comparefn ($dup-procedure comparefn))
 	      (jsproc (js-make-function %this

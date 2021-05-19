@@ -3,7 +3,6 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sat May 15 18:26:17 2021 (serrano)                */
 ;*    Last change :  Mon May 10 11:57:58 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
@@ -863,7 +862,7 @@
 		      (else
 		       #f))))))
 	 (else
-	  (j2s-sort sort
+	  (j2s-sort sortfn
 	     obj (j2s-scheme fun mode return ctx) %this cache))))
 
    (match-case args
