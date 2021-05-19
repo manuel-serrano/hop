@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu May 13 08:25:48 2021 (serrano)                */
+;*    Last change :  Mon May 17 06:43:51 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -2006,7 +2006,7 @@
 	 (if (eq? p obj)
 	     (js-ascii->jsstring (format "#<~a>" (typeof p)))
 	     (js-tojsstring p %this))))
-      
+
    (cond
       ((js-jsstring? obj) obj)
       ((fixnum? obj) (js-integer->jsstring obj))

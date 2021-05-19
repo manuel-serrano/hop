@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Thu May 13 10:07:34 2021 (serrano)                */
+;*    Last change :  Sun May 16 07:17:02 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -82,11 +82,11 @@
 	   
 	   (js-pcache cache)
 	   
-	   (j2s-get loc obj field tyobj prop typrop tyval conf cache optimp
-	      #!key (cspecs '(cmap pmap amap vtable)))
+	   (j2s-get loc obj field tyobj prop typrop tyval conf cache
+	      #!key optim (cspecs '(cmap pmap amap vtable)))
 	   (j2s-put! loc obj field tyobj prop typrop val tyval mode conf
-	      cache optimp
-	      #!key (cspecs '(cmap pmap nmap amap vtable)) (cachefun #t))
+	      cache 
+	      #!key optim (cspecs '(cmap pmap nmap amap vtable)) (cachefun #t))
 
 	   (inrange-positive?::bool ::J2SExpr)
 	   (inrange-positive-number?::bool ::J2SExpr)
@@ -590,7 +590,7 @@
 ;*    j2s-get ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-get loc obj field tyobj prop typrop tyval ctx cache
-	   optim-arrayp #!key (cspecs '(cmap pmap amap vtable)))
+	   #!key optim (cspecs '(cmap pmap amap vtable)))
 
    (define conf (context-conf ctx))
    
@@ -659,10 +659,20 @@
 	 ((and cache cspecs)
 	  (cond
 	     ((string? propstr)
-	      (if (string=? propstr "length")
-		  (if (eq? tyval 'uint32)
-		      `(js-get-lengthu32 ,obj %this ,(js-pcache cache))
-		      `(js-get-length ,obj %this ,(js-pcache cache)))
+ 	      (if (string=? propstr "length")
+		  (case optim
+		     ((string)
+		      (if (eq? tyval 'uint32)
+			  `(js-get-lengthu32-maybe-string ,obj %this ,(js-pcache cache))
+			  `(js-get-length-maybe-string ,obj %this ,(js-pcache cache))))
+		     ((arguments)
+		      (if (eq? tyval 'uint32)
+			  `(js-get-lengthu32-maybe-arguments ,obj %this ,(js-pcache cache))
+			  `(js-get-length-maybe-arguments ,obj %this ,(js-pcache cache))))
+		     (else
+		      (if (eq? tyval 'uint32)
+			  `(js-get-lengthu32 ,obj %this ,(js-pcache cache))
+			  `(js-get-length ,obj %this ,(js-pcache cache)))))
 		  (case tyobj
 		     ((object this)
 		      `(js-get-jsobject-name/cache ,obj ,prop #f %this
@@ -695,7 +705,7 @@
 		  `(js-get-lengthu32 ,obj %this #f)
 		  `(js-get-length ,obj %this #f))
 	      `(js-get ,obj ,prop %this)))
-	 ((and field optim-arrayp (mightbe-number? field))
+	 ((and field (eq? optim 'array) (mightbe-number? field))
 	  (let ((o (gensym '%obj))
 		(p (gensym '%prop)))
 	     `(let ((,o ,obj)
@@ -712,8 +722,7 @@
 ;*    j2s-put! ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-put! loc obj field tyobj prop typrop val tyval mode ctx cache
-	   optim-arrayp
-	   #!key (cspecs '(cmap pmap nmap amap vtable)) (cachefun #t))
+	   #!key optim (cspecs '(cmap pmap nmap amap vtable)) (cachefun #t))
 
    (define conf (context-conf ctx))
    
@@ -744,13 +753,13 @@
 	   `(begin
 	       ,(j2s-put! loc obj field tyobj prop typrop
 		   (box val tyval ctx) 'any mode ctx
-		   cache optim-arrayp :cspecs cspecs :cachefun cachefun)
+		   cache :optim optim :cspecs cspecs :cachefun cachefun)
 	       ,val)
 	   (let ((tmp (gensym)))
 	      `(let ((,tmp ,val))
 		  ,(j2s-put! loc obj field tyobj prop typrop
 		      (box tmp tyval ctx) 'any mode ctx
-		      cache optim-arrayp :cspecs cspecs :cachefun cachefun)
+		      cache :optim optim :cspecs cspecs :cachefun cachefun)
 		  ,tmp)))
        (let ((propstr (match-case prop
 			 ((& ?str . ?-) str)
@@ -836,13 +845,13 @@
 			  ,(loc->point loc) ,(loc->src loc))))
 		 (else
 		  `(js-put! ,obj ,prop ,val ,mode %this))))
-	     ((and field optim-arrayp (mightbe-number? field))
+	     ((and field (eq? optim 'array) (mightbe-number? field))
 	      (maybe-array-set! (box prop typrop ctx) val))
 	     (else
 	      (cond
 		 ((string? propstr)
 		  (js-put! obj prop val mode '%this))
-		 ((and optim-arrayp (memq typrop '(int32 uint32)))
+		 ((and (eq? optim 'array) (memq typrop '(int32 uint32)))
 		  (maybe-array-set! (box prop typrop ctx) val))
 		 (else
 		  (js-put! obj (box prop typrop ctx) val mode '%this))))))))

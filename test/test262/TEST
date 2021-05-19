@@ -3,7 +3,7 @@
 chapters=
 rest=
 verb=-v
-basedir=/usr/local/src/ecma-262-51/test262-d067d2f0ca30
+basedir=/opt/JS/TEST262/ecma-262-51/test262-d067d2f0ca30
 hopc=../../bin/hopc
 testjs=../../bin/testjs
 flags=-O3

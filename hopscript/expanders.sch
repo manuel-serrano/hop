@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/expanders.sch             */
+;*    serrano/prgm/project/hop/3.4.x/hopscript/expanders.sch           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
@@ -83,6 +83,16 @@
    
    (eval `(define-expander js-get-length
 	     ,js-get-length-expander))
+   (eval `(define-expander js-get-lengthu32
+	     ,js-get-lengthu32-expander))
+   (eval `(define-expander js-get-length-maybe-string
+	     ,js-get-length-maybe-string-expander))
+   (eval `(define-expander js-get-lengthu32-maybe-string
+	     ,js-get-lengthu32-maybe-string-expander))
+   (eval `(define-expander js-get-length-maybe-arguments
+	     ,js-get-length-maybe-arguments-expander))
+   (eval `(define-expander js-get-lengthu32-maybe-arguments
+	     ,js-get-lengthu32-maybe-arguments-expander))
    
    (eval `(define-expander js-put-name/cache!
 	     ,js-put-name/cache-expander))

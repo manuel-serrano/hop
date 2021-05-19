@@ -2586,9 +2586,14 @@
       ((real)
        `(js-real->jsstring ,val))
       ((number)
-       `(if (fixnum? ,val)
-	    (js-integer->jsstring ,val)
-	    (js-real->jsstring ,val)))
+       (let loop ((val val))
+	  (if (symbol? val)
+	      `(if (fixnum? ,val)
+		   (js-integer->jsstring ,val)
+		   (js-real->jsstring ,val))
+	      (let ((tmp (gensym 't)))
+		 `(let ((,tmp ,val))
+		     ,(loop tmp))))))
       (else
        `(js-toprimitive-for-string ,val %this))))
 
