@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Fri May 21 08:43:55 2021 (serrano)                */
+;*    Last change :  Fri May 21 09:09:01 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let function optimization. This optimizations implements         */
@@ -440,7 +440,7 @@
 				(with-access::J2SDecl d (%info id usage)
 				   (if (and (sainfo? %info)
 					    (eq? (sainfo-block %info) this))
-				       (let ((n (a-decl->declfun d)))
+				       (let ((n (sa-decl->declfun d)))
 					  (set! ndecls (cons n ndecls))
 					  (set! odecls (cons d odecls))
 					  n)
@@ -452,7 +452,7 @@
 					   (when (and (sainfo? %info)
 						      (eq? (sainfo-block %info) this)
 						      (not (memq d idecls)))
-					      (let ((n (a-decl->declfun d)))
+					      (let ((n (sa-decl->declfun d)))
 						 (set! ndecls (cons n ndecls))
 						 (set! odecls (cons d odecls))
 						 n))))
