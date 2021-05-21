@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun May 16 09:09:23 2021 (serrano)                */
+;*    Last change :  Fri May 21 09:36:21 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -161,6 +161,7 @@
 	   (js-jsbuffer-slice ::JsStringLiteral ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-slice1 ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-maybe-slice2 ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-jsstring-concat::JsStringLiteral ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring->jsarray ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring->list ::obj ::JsGlobalObject)
 	   (trim-whitespaces+ s::bstring #!key (left #t) (right #f) (plus #f))
@@ -4951,6 +4952,14 @@
 			  (or cache (js-pcache-ref js-string-pcache 22))
 			  -1 '(imap+))))
 	     (js-call2 %this slice this start end))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-concat ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-concat this::JsStringLiteral x %this)
+   (if (js-jsstring? this)
+       (js-jsstring-append this x)
+       (js-jsstring-append this (js-tojsstring x %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->jsarray ...                                         */
