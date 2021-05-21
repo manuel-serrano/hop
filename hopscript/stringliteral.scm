@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri May 21 09:36:21 2021 (serrano)                */
+;*    Last change :  Fri May 21 19:24:53 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -4957,7 +4957,7 @@
 ;*    js-jsstring-concat ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-concat this::JsStringLiteral x %this)
-   (if (js-jsstring? this)
+   (if (js-jsstring? x)
        (js-jsstring-append this x)
        (js-jsstring-append this (js-tojsstring x %this))))
 
