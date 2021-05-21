@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Thu May 20 22:03:40 2021 (serrano)                */
+;*    Last change :  Fri May 21 08:43:55 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let function optimization. This optimizations implements         */
@@ -381,28 +381,33 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
+;*    sa-decl->declfun ...                                             */
+;*---------------------------------------------------------------------*/
+(define (sa-decl->declfun d)
+   (with-access::J2SDecl d (%info id usage loc)
+      (with-access::J2SFun (sainfo-fun %info) (loc)
+	 (instantiate::J2SDeclFun
+	    (loc loc)
+	    (id id)
+	    (writable #f)
+	    (scope 'local)
+	    (usage (usage-rem usage 'assig))
+	    (binder 'let-opt)
+	    (utype 'function)
+	    (vtype 'function)
+	    (val (sainfo-fun %info))))))
+
+;*---------------------------------------------------------------------*/
 ;*    letfun-sa-transform! ::J2SBlock ...                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (letfun-sa-transform! this::J2SBlock env)
    (let ((odecls (filter (lambda (d)
-			    (with-access::J2SDecl d (%info)
-			       (eq? (sainfo-block %info) this)))
+			    (with-access::J2SDecl d (%info id)
+			       (and (sainfo? %info)
+				    (eq? (sainfo-block %info) this))))
 		    env)))
       (if (pair? odecls)
-	  (let ((ndecls (map (lambda (d)
-				(with-access::J2SDecl d (%info id usage loc)
-				   (with-access::J2SFun (sainfo-fun %info) (loc)
-				      (instantiate::J2SDeclFun
-					 (loc loc)
-					 (id id)
-					 (writable #f)
-					 (scope 'local)
-					 (usage (usage-rem usage 'assig))
-					 (binder 'let-opt)
-					 (utype 'function)
-					 (vtype 'function)
-					 (val (sainfo-fun %info))))))
-			   odecls)))
+	  (let ((ndecls (map sa-decl->declfun odecls)))
 	     (for-each (lambda (d)
 			  (with-access::J2SDecl d (%info id)
 			     (with-access::J2SFun (sainfo-fun %info) (body)
@@ -428,29 +433,30 @@
 	       (with-access::J2SDecl d (%info)
 		  (eq? (sainfo-block %info) this)))
 	  env)
-       (with-access::J2SLetBlock this (decls nodes loc)
+       (with-access::J2SLetBlock this ((idecls decls) nodes loc rec)
 	  (let* ((ndecls '())
 		 (odecls '())
 		 (decls (map (lambda (d)
 				(with-access::J2SDecl d (%info id usage)
 				   (if (and (sainfo? %info)
 					    (eq? (sainfo-block %info) this))
-				       (let ((n (with-access::J2SFun (sainfo-fun %info) (loc)
-						   (instantiate::J2SDeclFun
-						      (loc loc)
-						      (id id)
-						      (writable #f)
-						      (scope 'local)
-						      (usage (usage-rem usage 'assig))
-						      (binder 'let-opt)
-						      (utype 'function)
-						      (vtype 'function)
-						      (val (letfun-sa-transform! (sainfo-fun %info) env))))))
+				       (let ((n (a-decl->declfun d)))
 					  (set! ndecls (cons n ndecls))
 					  (set! odecls (cons d odecls))
 					  n)
 				       d)))
-			   decls)))
+			   idecls))
+		 ;; add the bindings that are narrowed down to this list letblock
+		 (adecls (filter-map (lambda (d)
+					(with-access::J2SDecl d (%info id usage key)
+					   (when (and (sainfo? %info)
+						      (eq? (sainfo-block %info) this)
+						      (not (memq d idecls)))
+					      (let ((n (a-decl->declfun d)))
+						 (set! ndecls (cons n ndecls))
+						 (set! odecls (cons d odecls))
+						 n))))
+			    env)))
 	     (for-each (lambda (d)
 			  (when (isa? d J2SDeclInit)
 			     (with-access::J2SDeclInit d (val)
@@ -459,10 +465,18 @@
 				      (j2s-alpha val odecls ndecls)
 				      env)))))
 		decls)
-	     (J2SLetBlock* decls
+	     (for-each (lambda (d)
+			  (when (isa? d J2SDeclInit)
+			     (with-access::J2SDeclInit d (val)
+				(set! val
+				   (letfun-sa-transform!
+				      (j2s-alpha val odecls ndecls)
+				      env)))))
+		adecls)
+	     (J2SLetRecBlock* rec (append adecls decls)
 		(map (lambda (n)
-			 (j2s-alpha (letfun-sa-transform! n env)
-			    odecls ndecls))
+			(j2s-alpha (letfun-sa-transform! n env)
+			   odecls ndecls))
 		   nodes))))
        ;; rewrite
        (call-default-walker)))
@@ -474,7 +488,7 @@
    (with-access::J2SAssig this (lhs rhs loc)
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
-	     (with-access::J2SDecl decl (%info id)
+	     (with-access::J2SDecl decl (%info id key)
 		(if (sainfo? %info)
 		    (J2SUndefined)
 		    (call-default-walker))))
