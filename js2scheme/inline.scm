@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/js2scheme/inline.scm              */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/inline.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Jun 10 13:00:01 2020 (serrano)                */
+;*    Last change :  Fri May 21 06:43:39 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -35,7 +35,8 @@
 	   __js2scheme_type-hint
 	   __js2scheme_alpha
 	   __js2scheme_use
-	   __js2scheme_node-size)
+	   __js2scheme_node-size
+	   __js2scheme_freevars)
 
    (static (class J2SMetaInl::J2SMeta
 	      (inlstack::pair-nil (info '("notraverse")))))
@@ -553,9 +554,9 @@
    (with-access::J2SFun this (%info body loc)
       (cond
 	 ((not (funinfo? %info))
-	  (set! %info (funinfo #unspecified (free-vars? this '()) #f #f)))
+	  (set! %info (funinfo #unspecified (free-vars? this) #f #f)))
 	 ((eq? (funinfo-freevars %info) #unspecified)
-	  (funinfo-freevars-set! %info (free-vars? this '()))))
+	  (funinfo-freevars-set! %info (free-vars? this))))
       (funinfo-freevars %info)))
 
 ;*---------------------------------------------------------------------*/
@@ -1990,72 +1991,6 @@
 		(cons this next))
 	     next))))
 
-;*---------------------------------------------------------------------*/
-;*    free-vars? ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (free-vars? this::J2SNode env)
-   (let ((res (make-cell #f)))
-      (free-vars this env res)
-      (cell-ref res)))
-
-;*---------------------------------------------------------------------*/
-;*    free-vars ...                                                    */
-;*    -------------------------------------------------------------    */
-;*    A predicate that is true IFF the ast uses free variables.        */
-;*---------------------------------------------------------------------*/
-(define-walk-method (free-vars this::J2SNode env res::cell)
-   (unless (cell-ref res)
-      (call-default-walker)))
-
-;*---------------------------------------------------------------------*/
-;*    free-vars ::J2SRef ...                                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (free-vars this::J2SRef env res::cell)
-   (with-access::J2SRef this (decl loc)
-      (with-access::J2SDecl decl (scope id)
-	 (when (and (not (isa? decl J2SDeclExtern))
-		    (not (eq? scope '%scope))
-		    (not (memq decl env)))
-	    (cell-set! res #t)))))
-
-;*---------------------------------------------------------------------*/
-;*    free-vars ::J2SFun ...                                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (free-vars this::J2SFun env res)
-   (unless (cell-ref res)
-      (with-access::J2SFun this (decl params thisp body)
-	 (free-vars body (cons* decl thisp (append params env)) res))))
-
-;*---------------------------------------------------------------------*/
-;*    free-vars ::J2SLetBlock ...                                      */
-;*---------------------------------------------------------------------*/
-(define-walk-method (free-vars this::J2SLetBlock env res)
-   (unless (cell-ref res)
-      (with-access::J2SLetBlock this (decls nodes)
-	 (let ((env (append decls env)))
-	    (find (lambda (n) (free-vars n env res)) nodes)))))
-   
-;*---------------------------------------------------------------------*/
-;*    free-vars ::J2SBlock ...                                         */
-;*---------------------------------------------------------------------*/
-(define-walk-method (free-vars this::J2SBlock env res)
-   (unless (cell-ref res)
-      (with-access::J2SBlock this (decls nodes)
-	 (let loop ((env env)
-		    (nodes nodes))
-	    (cond
-	       ((null? nodes)
-		#f)
-	       ((isa? (car nodes) J2SDeclInit)
-		(with-access::J2SDeclInit (car nodes) (val)
-		   (let ((env (cons (car nodes) env)))
-		      (unless (free-vars val (cons (car nodes) env) res)
-			 (loop env (cdr nodes))))))
-	       ((isa? (car nodes) J2SDecl)
-		(loop (cons (car nodes) env) (cdr nodes)))
-	       (else
-		(find (lambda (n) (free-vars n env res)) nodes)))))))
-   
 ;*---------------------------------------------------------------------*/
 ;*    update-parent! ...                                               */
 ;*---------------------------------------------------------------------*/

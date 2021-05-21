@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Wed May 19 19:47:31 2021 (serrano)                */
+;*    Last change :  Thu May 20 22:03:40 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let function optimization. This optimizations implements         */
@@ -25,7 +25,8 @@
 	   __js2scheme_stage
 	   __js2scheme_lexer
 	   __js2scheme_alpha
-	   __js2scheme_usage)
+	   __js2scheme_usage
+	   __js2scheme_freevars)
 
    (export j2s-letfun-stage))
 
@@ -49,6 +50,11 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    sainfo ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-struct sainfo fun block)
+
+;*---------------------------------------------------------------------*/
 ;*    letfun! ...                                                      */
 ;*    -------------------------------------------------------------    */
 ;*    letfun! rewrites the following pattern:                          */
@@ -69,9 +75,9 @@
 	  (multiple-value-bind (vars nodes)
 	     (block-collect-vars body)
 	     (multiple-value-bind (inits rest)
-		(nodes-collect-inits nodes)
-		(let ((finits (filter (lambda (i) (init-fun? i vars)) inits))
-		      (assigs (filter (lambda (i) (assig-nofun? i vars)) inits)))
+		(nodes-collect-assigs nodes)
+		(let ((finits (filter (lambda (i) (assig-fun? i vars)) inits))
+		      (assigs (filter (lambda (i) (not (assig-fun? i vars))) inits)))
 		   (when (pair? finits)
 		      (let* ((odecls (map initvdecl finits))
 			     (ndecls (map initfdecl finits))
@@ -102,21 +108,15 @@
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    init-fun? ...                                                    */
+;*    assig-fun? ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (init-fun? this::J2SAssig vars)
+(define (assig-fun? this::J2SAssig vars)
    (when (isa? this J2SInit)
       (with-access::J2SAssig this (lhs rhs)
 	 (when (isa? rhs J2SFun)
 	    (with-access::J2SRef lhs (decl)
 	       (unless (decl-usage-has? decl '(assig))
 		  (memq decl vars)))))))
-
-;*---------------------------------------------------------------------*/
-;*    assig-nofun? ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (assig-nofun? this::J2SAssig vars)
-   (not (isa? this J2SInit)))
 
 ;*---------------------------------------------------------------------*/
 ;*    initvdecl ...                                                    */
@@ -179,9 +179,9 @@
 	     (values (reverse! vars) nodes))))))
 
 ;*---------------------------------------------------------------------*/
-;*    nodes-collect-inits ...                                          */
+;*    nodes-collect-assigs ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (nodes-collect-inits nodes::pair-nil)
+(define (nodes-collect-assigs nodes::pair-nil)
 
    (define (safe-access? rhs blacklist)
       (when (isa? rhs J2SAccess)
@@ -224,31 +224,32 @@
 	  (safe-array? expr blacklist)
 	  (safe-objinit? expr blacklist)))
 
-   (define (init node blacklist)
+   (define (assig node blacklist)
       (when (isa? node J2SStmtExpr)
 	 (with-access::J2SStmtExpr node (expr)
 	    (when (isa? expr J2SAssig)
-	       (with-access::J2SAssig expr (rhs)
-		  (when (safe-expr? rhs blacklist)
+	       (with-access::J2SAssig expr (rhs lhs)
+		  (when (and (isa? lhs J2SRef)
+			     (safe-expr? rhs blacklist))
 		     expr))))))
    
    (let loop ((nodes nodes)
-	      (inits '())
+	      (assigs '())
 	      (blacklist (cons 'mark '())))
       (cond
 	 ((null? nodes)
-	  (values (reverse! inits) '()))
+	  (values (reverse! assigs) '()))
 	 ((isa? (car nodes) J2SLetBlock)
-	  (values (reverse! inits) nodes))
+	  (values (reverse! assigs) nodes))
 	 ((isa? (car nodes) J2SSeq)
 	  (with-access::J2SSeq (car nodes) ((bnodes nodes))
-	     (loop (append bnodes (cdr nodes)) inits blacklist)))
-	 ((init (car nodes) blacklist)
+	     (loop (append bnodes (cdr nodes)) assigs blacklist)))
+	 ((assig (car nodes) blacklist)
 	  =>
 	  (lambda (init)
-	     (loop (cdr nodes) (cons init inits) blacklist)))
+	     (loop (cdr nodes) (cons init assigs) blacklist)))
 	 (else
-	  (values (reverse! inits) nodes)))))
+	  (values (reverse! assigs) nodes)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    letfun-sa! ...                                                   */
@@ -281,7 +282,7 @@
 	    (node-collect-sa body (list body) env)
 	    (let ((assig (filter (lambda (d)
 				    (with-access::J2SDecl d (%info)
-				       (pair? %info)))
+				       (sainfo? %info)))
 			    (cell-ref env))))
 	       (when (pair? assig)
 		  (set! body (letfun-sa-transform! body assig)))))))
@@ -323,7 +324,8 @@
 		       ;; optimize funtion expression only
 		       (begin
 			  (cell-set! env (cons decl (cell-ref env)))
-			  (set! %info (cons rhs (car stack))))
+			  (set! %info (sainfo rhs (car stack)))
+			  (node-collect-sa rhs stack env))
 		       ;; don't optimize function declaration
 		       (set! %info #f)))
 		(node-collect-sa rhs stack env)))
@@ -341,10 +343,6 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-collect-sa this::J2SLetBlock stack env)
    (with-access::J2SLetBlock this (decls)
-      ;; invalidate all letblock decls
-      (for-each (lambda (d)
-		   (with-access::J2SDecl d (%info) (set! %info #f)))
-	 decls)
       (set! stack (cons this stack))
       (call-default-walker)))
 
@@ -353,7 +351,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-collect-sa this::J2SRef stack env)
    (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (%info)
+      (with-access::J2SDecl decl (%info id)
 	 ;; don't optimize closures, i.e., functions that escape
 	 (set! %info #f))))
 
@@ -364,13 +362,15 @@
    (with-access::J2SCall this (fun args)
       (if (isa? fun J2SRef)
 	  (with-access::J2SRef fun (decl)
-	     (with-access::J2SDecl decl (scope %info)
-		(when (pair? %info)
-		   ;; if the call is outside the assignment block
-		   ;; disable the optimization
-		   (let ((block (cdr %info)))
-		      (unless (memq block stack)
-			 (set! %info #f))))
+	     (with-access::J2SDecl decl (scope %info id)
+		(if (sainfo? %info)
+		    ;; if the call is outside the assignment block
+		    ;; disable the optimization
+		    (let ((block (sainfo-block %info)))
+		       (unless (memq block stack)
+			  (set! %info #f)))
+		    ;; a call before the initial assignment
+		    (set! %info #f))
 		(for-each (lambda (a) (node-collect-sa a stack env)) args)))
 	  (call-default-walker))))
 
@@ -386,12 +386,12 @@
 (define-walk-method (letfun-sa-transform! this::J2SBlock env)
    (let ((odecls (filter (lambda (d)
 			    (with-access::J2SDecl d (%info)
-			       (eq? (cdr %info) this)))
+			       (eq? (sainfo-block %info) this)))
 		    env)))
       (if (pair? odecls)
 	  (let ((ndecls (map (lambda (d)
-				(with-access::J2SDecl d (%info id usage)
-				   (with-access::J2SFun (car %info) (loc)
+				(with-access::J2SDecl d (%info id usage loc)
+				   (with-access::J2SFun (sainfo-fun %info) (loc)
 				      (instantiate::J2SDeclFun
 					 (loc loc)
 					 (id id)
@@ -401,11 +401,11 @@
 					 (binder 'let-opt)
 					 (utype 'function)
 					 (vtype 'function)
-					 (val (car %info))))))
+					 (val (sainfo-fun %info))))))
 			   odecls)))
 	     (for-each (lambda (d)
 			  (with-access::J2SDecl d (%info id)
-			     (with-access::J2SFun (car %info) (body)
+			     (with-access::J2SFun (sainfo-fun %info) (body)
 				(set! body
 				   (letfun-sa-transform!
 				      (j2s-alpha body odecls ndecls)
@@ -426,16 +426,16 @@
 (define-walk-method (letfun-sa-transform! this::J2SLetBlock env)
    (if (any (lambda (d)
 	       (with-access::J2SDecl d (%info)
-		  (eq? (cdr %info) this)))
+		  (eq? (sainfo-block %info) this)))
 	  env)
        (with-access::J2SLetBlock this (decls nodes loc)
 	  (let* ((ndecls '())
 		 (odecls '())
 		 (decls (map (lambda (d)
 				(with-access::J2SDecl d (%info id usage)
-				   (if (and (pair? %info)
-					    (eq? (cdr %info) this))
-				       (let ((n (with-access::J2SFun (car %info) (loc)
+				   (if (and (sainfo? %info)
+					    (eq? (sainfo-block %info) this))
+				       (let ((n (with-access::J2SFun (sainfo-fun %info) (loc)
 						   (instantiate::J2SDeclFun
 						      (loc loc)
 						      (id id)
@@ -445,7 +445,7 @@
 						      (binder 'let-opt)
 						      (utype 'function)
 						      (vtype 'function)
-						      (val (letfun-sa-transform! (car %info) env))))))
+						      (val (letfun-sa-transform! (sainfo-fun %info) env))))))
 					  (set! ndecls (cons n ndecls))
 					  (set! odecls (cons d odecls))
 					  n)
@@ -475,7 +475,7 @@
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
 	     (with-access::J2SDecl decl (%info id)
-		(if (and (pair? %info) (isa? (car %info) J2SFun))
+		(if (sainfo? %info)
 		    (J2SUndefined)
 		    (call-default-walker))))
 	  (call-default-walker))))
