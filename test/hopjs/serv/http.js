@@ -3,12 +3,13 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  4 18:43:00 2015                          */
-/*    Last change :  Tue Oct  8 13:30:08 2019 (serrano)                */
-/*    Copyright   :  2015-19 Inria                                     */
+/*    Last change :  Sat May 22 06:57:00 2021 (serrano)                */
+/*    Copyright   :  2015-21 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing services, webSockets and Broadcast over http and https   */
 /*=====================================================================*/
-
+"use hopscript";
+		  
 setTimeout( function() {
    if( hop.compilerDriver.pending > 0 ) {
       hop.compilerDriver.addEventListener( "all", function( e ) {
@@ -27,17 +28,17 @@ function checkCompletion() {
    }, 2000 );
 }
 
-var assert = require( 'assert' );
-var hop = require( 'hop' );
-var config = require( hop.config );
+const assert = require( 'assert' );
+const hop = require( 'hop' );
+const config = require( hop.config );
 
-var objectEqual = require( './aux/objectEqual.js' );
+const objectEqual = require( './aux/objectEqual.js' );
 
-var payload = [ 1999, 'This is not a string', {key: {subkey: 'subkey', otherKey: 'enough'}, andALastOne: ['d', 'i', 's', 'c', 'o' ]}, [ 3.14, 1837, -765 ],
+const payload = [ 1999, 'This is not a string', {key: {subkey: 'subkey', otherKey: 'enough'}, andALastOne: ['d', 'i', 's', 'c', 'o' ]}, [ 3.14, 1837, -765 ],
 		[ { foo: 'oof', bar : 'rab' }, { gee: 'eeg' } ]];
 
-var ssl;
-var wsScheme;
+let ssl;
+let wsScheme;
 
 if (config.HTTPSPort) {
    ssl = true;
@@ -99,20 +100,20 @@ function goToServiceNamedArgs() {
 
 
 
-var WSFlag = false;
+let WSFlag = false;
 
 /* WebSocket test. We test that a string is passed unchanged from the
  * ws client, to the server, and back to the client */
 
 function goToWS() {
-   var message = 'my test string';
+   const message = 'my test string';
    console.log( 'WS test' );
-   var server = new WebSocketServer( {path: 'server'} );
+   const server = new WebSocketServer( {path: 'server'} );
    console.log( 'server WS listening' );
 
    server.onconnection = function( event ) {
       console.log( 'server: accepting new connection' );
-      var ws = event.value;
+      const ws = event.value;
       console.log( 'server: ws readyState:', ws.readyState );
       ws.onmessage = function( event ) {
 	 console.log( 'server: ws received message', event.data );
@@ -126,7 +127,7 @@ function goToWS() {
 	 WSFlag = true;
       };
    };
-   var ws = new WebSocket( wsScheme + '://localhost:' 
+   const ws = new WebSocket( wsScheme + '://localhost:' 
 			   + (hop.ports.http || hop.ports.https) 
 			   + '/hop/server' );
    console.log( 'client: WS created' );
@@ -142,6 +143,7 @@ function goToWS() {
       ws.close();
       console.log( 'attempting to close ws' );
    };
+   // ws.server = server;
    // ws.onclose = goToBroadcast;
    // commented out until server.addEventListener is supported by hop processes.
    ws.onclose = function() {
@@ -157,12 +159,12 @@ function goToWS() {
 
 function goToBroadcast(){
    console.log( 'Broadcast test' );
-   var i = 0
-   server.addEventListener( 'foo', function( event ) {
+   let i = 0
+   this.server.addEventListener( 'foo', function( event ) {
       assert.ok( event.data, payload[ i ] );
       i++;
       if ( i < payload.length ) {
-	 broadcast( 'foo', payload[ i ] );
+	 hop.broadcast( 'foo', payload[ i ] );
       } else {
 	 console.log( 'Broadcast test ok' );
 	 goToEnd();

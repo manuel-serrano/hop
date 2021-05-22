@@ -1,76 +1,77 @@
 /*=====================================================================*/
-/*    .../project/hop/3.4.x/test/hopjs/serv/serviceArguments.js        */
+/*    .../prgm/project/hop/hop/test/hopjs/serv/serviceArguments.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  25 11:43:00 2015                         */
-/*    Last change :  Fri Apr 16 18:37:10 2021 (serrano)                */
+/*    Last change :  Sat May 22 07:01:44 2021 (serrano)                */
 /*    Copyright   :  2015-21 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Test service constructor and arguments                           */
 /*=====================================================================*/
+"use hopscript";
 
-var hop = require( 'hop' );
-var assert = require( 'assert' );
+const hop = require( 'hop' );
+const assert = require( 'assert' );
 
-var svc = service() {
+const svc = service() {
    return arguments.length;
 };
 
-var svc1 = service() {
+const svc1 = service() {
    return arguments[ 0 ];
 };
 
-var svc2 = service() {
+const svc2 = service() {
    return arguments[ arguments.length - 1 ];
 };
 
-var svcnew = new Service( function() {
+const svcnew = new Service( function( ... arguments ) {
    return arguments.length;
 });
 
-var svcnew1 = new Service( function() {
+const svcnew1 = new Service( function( ... arguments ) {
    return arguments[ 0 ];
 });
 
-var svcnew2 = new Service( function() {
+const svcnew2 = new Service( function( ... arguments ) {
    return arguments[ arguments.length - 1 ];
 });
 
-var svcF = service( a, b ) {
+const svcF = service( a, b ) {
    assert.equal( a, arguments[ 0 ], "svcF.a" );
    assert.equal( b, arguments [ 1 ], "svcF.b" );
    return b;
 };
 
-var svcN = service( o ) {
-   var a = (o && "a" in o) ? o.a : 1;
-   var b = (o && "b" in o) ? o.b : 'foo';
+const svcN = service( o ) {
+   const a = (o && "a" in o) ? o.a : 1;
+   const b = (o && "b" in o) ? o.b : 'foo';
    return b;
 };
 
-var svcNN = service svcName( o ) {
-   var a = ("a" in o) ? o.a : 1;
-   var b = ("b" in o) ? o.b : 'foo';
+const svcNN = service svcName( o ) {
+   const a = ("a" in o) ? o.a : 1;
+   const b = ("b" in o) ? o.b : 'foo';
    return a;
 };
 
 assert.equal( svcNN.path, '/hop/svcName' );
 
-var svcnew3 = new Service( function() {
+const svcnew3 = new Service( function() {
    return true;
 }, 'path' );
 
 assert.equal( svcnew3.path, '/hop/path' );
 
-var svcnew4 = new Service( function( o ) {
-   var a = (o && "a" in o) ? o.a : 1;
-   var b = (o && "b" in o) ? o.b : 'foo';
+const svcnew4 = new Service( function( o ) {
+   const a = (o && "a" in o) ? o.a : 1;
+   const b = (o && "b" in o) ? o.b : 'foo';
    return b;
 }, 'servName' );
 
 assert.equal( svcnew4.path, '/hop/servName' );
 
-var svcCount= 0;
+let svcCount= 0;
 
 function fn10( fName, fAge ) {
    return hop.HTTPResponseAsync( function( sendResponse) {
@@ -79,22 +80,22 @@ function fn10( fName, fAge ) {
 }
 
 function fn10o( o ) {
-   var fName = (o && "name" in o) ? o.name : "anonymous";
-   var fAge = (o && "age" in o) ? o.age : 100;
+   const fName = (o && "name" in o) ? o.name : "anonymous";
+   const fAge = (o && "age" in o) ? o.age : 100;
    return fn10.apply( this, [fName, fAge] );
 }
 
-var svc10 = new Service( fn10 );
+const svc10 = new Service( fn10 );
 
-var svc10bis = new Service( fn10o );
+const svc10bis = new Service( fn10o );
 
-function fn11() {
+function fn11( ... arguments ) {
    return arguments.length;
 }
 
-var svc11 = new Service( fn11 );
+const svc11 = new Service( fn11 );
 
-var testSuite = [
+const testSuite = [
    function() {
       svc().post( function( result ) {
 	 assert.equal( result, 0, "svc" );
@@ -337,11 +338,11 @@ var testSuite = [
    },
 ];
 
-var passed = 0
-var nextTest = 0;
+let passed = 0
+let nextTest = 0;
 
 function next() {
-   var testFunction = testSuite[ nextTest ];
+   const testFunction = testSuite[ nextTest ];
    console.log( 'running test', nextTest );
    nextTest ++;
    testFunction();

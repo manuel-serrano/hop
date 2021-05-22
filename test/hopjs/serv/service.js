@@ -1,15 +1,17 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/test/hopjs/serv/service.js        */
+/*    serrano/prgm/project/hop/hop/test/hopjs/serv/service.js          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jan 11 18:14:33 2015                          */
-/*    Last change :  Thu Oct 13 14:10:29 2016 (serrano)                */
-/*    Copyright   :  2015-16 Manuel Serrano                            */
+/*    Last change :  Sat May 22 07:00:25 2021 (serrano)                */
+/*    Copyright   :  2015-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing server-to-server services                                */
 /*=====================================================================*/
-var assert = require( "assert" );
-var res = 0;
+"use hopscript";
+
+const assert = require( "assert" );
+let res = 0;
 
 require( "./service2.js" );
  		
@@ -20,8 +22,8 @@ service serv0( val ) {
 }
 
 service serv1( o ) {
-   var n = ("n" in o) ? o.n : 10;
-   var m = ("m" in o) ? o.m : 20;
+   const n = ("n" in o) ? o.n : 10;
+   const m = ("m" in o) ? o.m : 20;
    assert.ok( n > 0 );
    assert.ok( m > n );
    res++;

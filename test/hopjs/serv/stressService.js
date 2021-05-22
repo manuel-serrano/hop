@@ -1,13 +1,14 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.0.x/test/hopjs/serv/stressService.js      */
+/*    .../prgm/project/hop/hop/test/hopjs/serv/stressService.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Mon Sep  14 11:43:00 2015                         */
-/*    Last change :  Thu Nov 26 07:30:46 2015 (serrano)                */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Sat May 22 07:08:53 2021 (serrano)                */
+/*    Copyright   :  2015-21 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Stress test for services                                         */
 /*=====================================================================*/
+"use hopscript";
 
 /* Usage: set <numClients> to specify how many clients will send
  * service requests */
@@ -17,17 +18,17 @@ service toTest( o ) {
    return true;
 }
 
-var numClients = 8;
-//var numClients = 1;
-var doneWithClients = 0;
-var clients = [];
+let numClients = 8;
+//let numClients = 1;
+let doneWithClients = 0;
+let clients = [];
 
 function prepareClient( id ) {
    if ( id == numClients ) {
       launchTest();
    } else {
       console.log( 'main: init client', id );
-      var client = new Worker( './aux/stressClient.js' );
+      const client = new Worker( './aux/stressClient.js' );
       clients.push( client );
       client.onmessage = function( e ) {
 	 doneWithClients++;

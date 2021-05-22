@@ -1,11 +1,13 @@
-var assert = require( "assert" );
-var fs = require( "fs" );
+"use hopscript";
 
-var res = 0;
-var content = "toto\nn'est\npas\ncontent";
-var boundary = '-----------------------------71500674829540217534185294';
+const assert = require( "assert" );
+const fs = require( "fs" );
 
-var fakeupload = '--' + boundary + '\r\n'
+let res = 0;
+const content = "toto\nn'est\npas\ncontent";
+const boundary = '-----------------------------71500674829540217534185294';
+
+const fakeupload = '--' + boundary + '\r\n'
     + 'Content-Disposition: form-data; name="file"; filename="exfile"\r\n'
     + 'Content-Type: application/octet-stream\r\n\r\n'
     + content
@@ -13,10 +15,10 @@ var fakeupload = '--' + boundary + '\r\n'
 
 /* server */ 		
 service serv1( o ) {
-   var x = (o && "x" in o) ? o.x : 10;
-   var y = (o && "y" in o) ? o.y : 100;
+   const x = (o && "x" in o) ? o.x : 10;
+   const y = (o && "y" in o) ? o.y : 100;
    
-   var x1 = Number( x ), y1 = Number( y );
+   const x1 = Number( x ), y1 = Number( y );
 
    assert.ok( x1 > 0 );
    assert.ok( y1 > x1 );
@@ -27,9 +29,9 @@ service serv1( o ) {
 }
 
 service upload( o ) {
-   var file = (o && "file" in o) ? o.file : "no file";
-   var stats = fs.statSync( file );
-   var chars = fs.readFileSync( file );
+   const file = (o && "file" in o) ? o.file : "no file";
+   const stats = fs.statSync( file );
+   const chars = fs.readFileSync( file );
 
    assert.ok( stats.isFile() && (Date.now() - stats.ctime.getTime() < 2000) );
    assert.equal( content, chars );
@@ -47,7 +49,7 @@ service serv2( a, b ) {
 }
 
 service serv3() {
-   var o = {
+   const o = {
       name: "foo",
       age: 34,
       nage: new Number( 43 ),
@@ -70,16 +72,16 @@ service serv3() {
 }
    
 /* client */
-var querystring = require( 'querystring' );
-var http = require( 'http' );
+const querystring = require( 'querystring' );
+const http = require( 'http' );
 
 function test() {
-   var postData = querystring.stringify( {
+   const postData = querystring.stringify( {
       'x' : 1,
       'y' : 2,
    } );
 
-   var req = http.request( {
+   let req = http.request( {
       hostname: 'localhost',
       port: hop.port,
       path: '/hop/serv1',
@@ -97,7 +99,7 @@ function test() {
    req.write( postData );
    req.end();
 
-   var req = http.request( {
+   req = http.request( {
       hostname: 'localhost',
       port: hop.port,
       path: '/hop/upload',
@@ -111,7 +113,7 @@ function test() {
    req.on( 'response', function( result ) {
       assert.ok( result.statusCode == 200, "statusCode" );
       result.on( 'data', function ( chunk ) {
-	 var c = chunk.toString();
+	 const c = chunk.toString();
 	 assert.ok( c == "OK" );
 	 console.log( "upload...test passed" );
       });

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed May 19 08:54:44 2021 (serrano)                */
+;*    Last change :  Sat May 22 06:49:50 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -302,7 +302,15 @@
 	 (when (pair? p)
 	    (with-access::J2SDecl (car p) (id)
 	       (cond
-		  ((memq id '(eval arguments))
+		  ((eq? id 'eval)
+		   (raise
+		      (instantiate::&io-parse-error
+			 (proc "hopc (symbol)")
+			 (msg "Illegal parameter name")
+			 (obj id)
+			 (fname (cadr loc))
+			 (location (caddr loc)))))
+		  ((and (eq? id 'arguments) (not (eq? mode 'hopscript)))
 		   (raise
 		      (instantiate::&io-parse-error
 			 (proc "hopc (symbol)")
@@ -829,7 +837,6 @@
 		      ((not (config-get conf :warning-global))
 		       #unspecified)
 		      (else
-		       (tprint "conf=" conf)
 		       (warning/loc loc
 			  (format "unbound variable \"~s\"" id)))))
 		(instantiate::J2SGlobalRef

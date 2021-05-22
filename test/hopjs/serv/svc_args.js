@@ -1,17 +1,19 @@
-var fs = require( 'fs' );
-var assert = require( 'assert' );
+"use hopscript";
 
-var res;
+const fs = require( 'fs' );
+const assert = require( 'assert' );
 
-var size1 = 24; // small buffer
-var buf1 = new Buffer( size1 );
-for ( var i = 0; i < size1; i++ ) {
+let res;
+
+const size1 = 24; // small buffer
+const buf1 = new Buffer( size1 );
+for ( let i = 0; i < size1; i++ ) {
    buf1[ i ] = i;
 };
 
-var size2 = 17000; // large buffer
-var buf2 = new Buffer( size2 );
-for ( var i = 0; i < size2; i++ ) {
+const size2 = 17000; // large buffer
+const buf2 = new Buffer( size2 );
+for ( let i = 0; i < size2; i++ ) {
     buf2[ i ] = i % 256;
 };
 
@@ -21,7 +23,7 @@ function checkBuffer( buf, reference ) {
    assert.ok( typeof( buf ) == 'object' );
    assert.ok( Buffer.isBuffer( buf ));
    assert.equal( buf.length, reference.length );
-   for ( var i = 0; i < reference.length; i++ ) {
+   for ( let i = 0; i < reference.length; i++ ) {
       assert.equal( buf[ i ], reference[ i ]);
    }
    return true;

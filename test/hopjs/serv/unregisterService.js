@@ -1,15 +1,16 @@
 /*=====================================================================*/
-/*    .../project/hop/3.2.x/test/hopjs/serv/unregisterService.js       */
+/*    .../project/hop/hop/test/hopjs/serv/unregisterService.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  4 18:43:00 2015                          */
-/*    Last change :  Wed Nov  1 07:49:58 2017 (serrano)                */
-/*    Copyright   :  2015-17 Inria                                     */
+/*    Last change :  Sat May 22 07:08:23 2021 (serrano)                */
+/*    Copyright   :  2015-21 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing unregister service                                       */
 /*=====================================================================*/
+"use hopscript";
 
-var assert = require( 'assert' );
+const assert = require( 'assert' );
 
 service testSvc() {
    return true;

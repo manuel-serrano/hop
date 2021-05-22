@@ -1,4 +1,6 @@
-var assert = require( "assert" );
+"use hopscript";
+
+const assert = require( "assert" );
 
 service iserv0( val ) {
    assert.ok( val == 3 );
@@ -6,8 +8,8 @@ service iserv0( val ) {
 }
 
 service iserv1( o ) {
-   var n = ("n" in o) ? o.n : 10;
-   var m = ("m" in o) ? o.m : 20;
+   const n = ("n" in o) ? o.n : 10;
+   const m = ("m" in o) ? o.m : 20;
    assert.ok( n > 0 );
    assert.ok( m > n );
    
@@ -19,9 +21,9 @@ service iserv2( val ) {
    return arguments.length;
 }
 
-var iserv3 = new Service( function( o ) {
-   var n = ("n" in o) ? o.n : 10;
-   var m = ("m" in o) ? o.m : 20;
+const iserv3 = new Service( function( o ) {
+   const n = ("n" in o) ? o.n : 10;
+   const m = ("m" in o) ? o.m : 20;
    assert.ok( n > 0 );
    assert.ok( m > n );
    

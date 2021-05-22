@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Apr 26 14:37:20 2021 (serrano)                */
+;*    Last change :  Sat May 22 08:39:39 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -668,11 +668,15 @@
        '())
       ((context-get ctx :module-main)
        `((define (%jsexit n) (exit n))
-	 ,@(apply append body)))
+	 (let ()
+	    ,@(apply append body))))
       ((context-get ctx :return-as-exit)
        `((bind-exit (%jsexit) #unspecified ,@(apply append body))))
       (else
-       (apply append body))))
+       (let ((seq (apply append body)))
+	  (if (null? seq)
+	      '()
+	      `((let () ,@seq)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %cnst-table ...                                                  */

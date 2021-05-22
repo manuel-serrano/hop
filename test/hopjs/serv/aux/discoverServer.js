@@ -1,12 +1,14 @@
-var assert = require( 'assert' );
+"use hopscript";
 
-var server = new hop.Server( 'localhost' );
+const assert = require( 'assert' );
+
+const server = new hop.Server( 'localhost' );
 
 assert.ok( server instanceof hop.Server );
 
-var counter = 0;
+let counter = 0;
 
-var addSvc = service( n ) {
+const addSvc = service( n ) {
    console.log( 'server: addSvc service' );
    counter += n;
 }

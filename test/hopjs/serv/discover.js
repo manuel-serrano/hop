@@ -1,10 +1,12 @@
-var assert = require( 'assert' );
-var remote = new Worker( './aux/discoverServer.js' );
-var remoteServer = new hop.Server( 'localhost' );
+"use hopscript";
+
+const assert = require( 'assert' );
+const remote = new Worker( './aux/discoverServer.js' );
+const remoteServer = new hop.Server( 'localhost' );
 
 assert.ok( remoteServer instanceof hop.Server );
 
-var localServer = new hop.Server( 'localhost' );
+const localServer = new hop.Server( 'localhost' );
 assert.ok( localServer instanceof hop.Server );
 
 localServer.foo = service() {
@@ -12,14 +14,14 @@ localServer.foo = service() {
 };
 
 remote.onmessage = function( message ) {
-   var remoteServer = message.data;
+   const remoteServer = message.data;
    console.log( 'client: server worker running' );
   // remoteServer.register = service register(); // comment out when fixed.
 
    remoteServer.register( localServer )
       .post(
 	 function( server ) {
-	    var s = { __proto__: server };
+	    const s = { __proto__: server };
 	    console.log( 'client: registration ok' );
 	    server.addSvc( 11 ).post(
 	       function( result ) {

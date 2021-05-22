@@ -1,18 +1,20 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.1.x/test/hopjs/serv/authentication.js     */
+/*    .../prgm/project/hop/hop/test/hopjs/serv/authentication.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Mon Sep  7 15:00:00 2015                          */
-/*    Last change :  Wed Mar  9 14:32:01 2016 (serrano)                */
-/*    Copyright   :  2015-16 Inria                                     */
+/*    Last change :  Sat May 22 06:24:17 2021 (serrano)                */
+/*    Copyright   :  2015-21 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing the user module                                          */
 /*=====================================================================*/
+"use hopscript";
 
 console.log( 'loading test module authentication.js' );
 
-var hop = require( 'hop' );
-var assert = require( 'assert' );
+const hop = require( 'hop' );
+const assert = require( 'assert' );
+const user = require( 'user' );
 
 service foo( who ) {
    console.log( 'service foo, user %s', who );

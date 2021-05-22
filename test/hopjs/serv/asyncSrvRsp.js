@@ -1,46 +1,38 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.1.x/test/hopjs/serv/asyncSrvRsp.js        */
+/*    serrano/prgm/project/hop/hop/test/hopjs/serv/asyncSrvRsp.js      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Tue Sep  15 11:43:00 2015                         */
-/*    Last change :  Wed May 17 09:59:48 2017 (serrano)                */
-/*    Copyright   :  2015-17 Inria                                     */
+/*    Last change :  Sat May 22 06:21:25 2021 (serrano)                */
+/*    Copyright   :  2015-21 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Test asynchronous responses in services                          */
 /*=====================================================================*/
+"use hopscript";
 
-var hop = require( 'hop' );
-var runTest = require( './aux/launchWorkers.js' ).runTest;
-var clientModule = require.resolve( './aux/stdClient.js' );
+const hop = require( 'hop' );
+const runTest = require( './aux/launchWorkers.js' ).runTest;
+const clientModule = require.resolve( './aux/stdClient.js' );
 
 // number of concurrent clients
-var NUMCLIENTS = 1;
+const NUMCLIENTS = 1;
 // number of service invocations per client
-var NUMCALLS = 200;
+const NUMCALLS = 200;
 // set delay for asynchronous response
-var DELAY = 1;
+const DELAY = 1;
 //global timeout (test will fail if not completed by then)
-var TIMEOUT = 10000; 
+const TIMEOUT = 10000; 
 // change TIMEOUT value to match your hardware
 // (~ 500 requests/s on a laptop for synchronous responses)
 
-var requests = 0;
+let requests = 0;
 
 service toTest( clientId, num ) {
    requests++;
    console.log( "toTest req=", requests );
    
-   var r = { clientId: clientId, num: num };
+   const r = { clientId: clientId, num: num };
    return r;
-   
-/*    return hop.HTTPResponseAsync(                                    */
-/*       function( sendResponse ) {                                    */
-/* 	 setTimeout( function () {                                     */
-/* 	    var r = { clientId: clientId, num: num };                  */
-/* 	    console.log( "sending response r=", r );                   */
-/* 	    sendResponse( r );                                         */
-/* 	 }, DELAY );                                                   */
-/*       }, this );                                                    */
 }
 
 function onTimeout() {
