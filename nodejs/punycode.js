@@ -57,7 +57,7 @@
 	 * @returns {error} Throws a `Rangeerror` with the applicable error message.
 	 */
 	function error(type) {
-		throw Rangeerror(errors[type]);
+		throw RangeError(errors[type]);
 	}
 
 	/**

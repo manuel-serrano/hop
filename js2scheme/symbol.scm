@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sat May 22 06:49:50 2021 (serrano)                */
+;*    Last change :  Sun May 23 08:54:09 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -82,7 +82,7 @@
 		(hds (append-map (lambda (s) (collect* s mode)) headers))
 		(vars (append-map (lambda (s) (collect* s mode)) nodes))
 		(lets (collect-let nodes mode))
-		(env (append decls hds vars lets))
+		(env (append decls vars lets hds))
 		(genv (list %this %dummy))
 		(scope (config-get conf :bind-global '%scope)))
 	    (when (pair? lets)

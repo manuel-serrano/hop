@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Sat May 22 06:40:16 2021 (serrano)                */
+;*    Last change :  Sun May 23 08:19:50 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -225,6 +225,12 @@
 		(js-def-extern 'hop #t writable
 		   '(nodejs-require-core "hop" %worker %this)
 		   :raise-on-write (memq mode '(strict hopscript)))))
+	 (with-access::J2SProgram prog (mode)
+	    (if (config-get conf :worker-slave)
+		(js-def 'postMessage #t)
+		(instantiate::J2SUndefined
+		   (type 'undefined)
+		   (loc loc))))
 	 (js-def-extern '%__INIT #f #f
 	    ;; this will not be compiled as a global (see scheme.scm)
 	    `(begin
@@ -247,18 +253,6 @@
 		    `(nodejs-bind-export! %this %this
 			%scope
 			,(& "console" prog)))))
-	 (with-access::J2SProgram prog (mode)
-	    (if (config-get conf :worker-slave)
-		(js-def-extern 'postMessage #t #t
-		   `(js-global-object-get-name %scope
-		       ,(& "postMessage" prog)
-		       '(at ,path 0)
-		       %this)
-		   :type 'function
-		   :raise-on-write (eq? mode 'hopscript))
-		(instantiate::J2SUndefined
-		   (type 'undefined)
-		   (loc loc))))
 	 (instantiate::J2SUndefined
 	    (type 'undefined)
 	    (loc loc)))))
