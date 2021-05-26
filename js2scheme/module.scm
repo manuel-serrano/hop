@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Mon May 10 11:33:20 2021 (serrano)                */
+;*    Last change :  Wed May 26 13:06:38 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -140,7 +140,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (esimport this::J2SImport prgm::J2SProgram stack args)
    
-   (define (import-decl::pair-nil iprgm::J2SProgram name::J2SImportName)
+   (define (import-decl::pair-nil iprgm::J2SProgram name::J2SImportName idx)
+      ;; IDX is the position in the import-list of name. It is only used
+      ;; when importing from a core module that lacks a true export stmt
       (with-access::J2SImportName name (id alias loc)
 	 (with-access::J2SProgram iprgm (exports path mode)
 	    (let ((expo (find (lambda (export)
@@ -174,7 +176,7 @@
 				    (expo (instantiate::J2SExport
 					     (id id)
 					     (alias id)
-					     (index 0)
+					     (index idx)
 					     (decl decl))))
 		      (list (instantiate::J2SDeclImport
 			       (loc loc)
@@ -288,7 +290,8 @@
 	    ((isa? (car names) J2SImportExport)
 	     (reexport this prgm iprgm))
 	    ((list? names)
-	     (append-map (lambda (n) (import-decl iprgm n)) names))
+	     (append-map (lambda (n idx) (import-decl iprgm n idx))
+		names (iota (length names))))
 	    (else
 	     (raise
 		(instantiate::&io-parse-error
@@ -328,7 +331,7 @@
 	 core-module-list))
    
    (with-access::J2SProgram prgm ((src path) imports decls)
-      (with-access::J2SImport this (path loc respath names iprgm)
+      (with-access::J2SImport this (path loc respath iprgm)
 	 (let ((base (cond
 			((string=? src "")
 			 (pwd))

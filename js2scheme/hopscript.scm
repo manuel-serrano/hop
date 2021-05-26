@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May  6 07:37:36 2021                          */
-;*    Last change :  Mon May 10 08:44:08 2021 (serrano)                */
+;*    Last change :  Wed May 26 10:29:25 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    A list of functions that traverse the AST after the parsing to   */
@@ -26,7 +26,8 @@
 
    (export (hopscript-mode-fun! ::J2SNode ::symbol)
 	   (hopscript-cnst-fun! ::J2SNode ::symbol)
-	   (hopscript-let! ::J2SNode ::symbol)))
+	   (hopscript-let! ::J2SNode ::symbol)
+	   (hopscript-async-import! ::J2SNode ::symbol)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscript-mode-fun! ...                                          */
@@ -276,3 +277,32 @@
 	     (set! nodes (let*! nodes #t mode))
 	     this)
 	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    hopscript-async-import! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (hopscript-async-import! this::J2SNode mode)
+   (async-import! this))
+
+;*---------------------------------------------------------------------*/
+;*    async-import! ...                                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (async-import! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    async-import! ::J2SFun ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (async-import! this::J2SFun)
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    async-import! ::J2SYield ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (async-import! this::J2SYield)
+   (with-access::J2SYield this (expr loc)
+      (if (isa? expr J2SImportDynamic)
+	  (with-access::J2SImportDynamic expr (path)
+	     (J2SCall (J2SUnresolvedRef 'require) path))
+	  this)))
+   

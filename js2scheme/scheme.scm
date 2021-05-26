@@ -447,7 +447,7 @@
       (with-access::J2SDecl decl (scope id vtype exports)
 	 (cond
 	    ((isa? decl J2SDeclImport)
-	     (with-access::J2SDeclImport decl (export import scope)
+	     (with-access::J2SDeclImport decl (export import)
 		(with-access::J2SExport export (index)
 		   (with-access::J2SImport import (ivar mvar)
 		      `(vector-ref ,ivar ,index)))))
