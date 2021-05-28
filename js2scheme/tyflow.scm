@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu May 13 19:20:55 2021 (serrano)                */
+;*    Last change :  Fri May 28 07:39:44 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -2498,15 +2498,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cleanup-hint! this::J2SDecl)
    (with-access::J2SDecl this (hint vtype)
-      (if (memq vtype '(number any))
-	  (begin
-	     (when (and (pair? hint) (pair? (assq 'no-string hint)))
-		(let ((c (assq 'string hint)))
-		   (set! hint (delete! c hint))))
-	     (when (and (pair? hint) (pair? (assq 'no-array hint)))
-		(let ((c (assq 'array hint)))
-		   (set! hint (delete! c hint)))))
-	  (set! hint '())))
+      (unless (memq vtype '(number any))
+	 (set! hint '())))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -2514,15 +2507,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cleanup-hint! this::J2SExpr)
    (with-access::J2SExpr this (hint type)
-      (if (memq type '(number any))
-	  (begin
-	     (when (and (pair? hint) (pair? (assq 'no-string hint)))
-		(let ((c (assq 'string hint)))
-		   (set! hint (delete! c hint))))
-	     (when (and (pair? hint) (pair? (assq 'no-array hint)))
-		(let ((c (assq 'array hint)))
-		   (set! hint (delete! c hint)))))
-	  (set! hint '())))
+      (unless (memq type '(number any))
+	 (set! hint '())))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/hintnum.scm             */
+;*    serrano/prgm/project/hop/hop/js2scheme/hintnum.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Sun May 16 07:06:02 2021 (serrano)                */
+;*    Last change :  Fri May 28 07:32:53 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
@@ -99,32 +99,36 @@
 ;*---------------------------------------------------------------------*/
 (define (add-expr-hint! this::J2SExpr newhint propagate::bool fix)
    
-   (define (add-hint! hint newhint)
+   (define (add-hint!::pair-nil hint::pair-nil newhint::pair-nil)
       (if (null? hint)
 	  (begin
 	     (cell-set! fix #f)
 	     newhint)
-	  (begin
-	     ;; handle the no-string/string relationship
-	     (when (assq 'no-string newhint)
-		(let ((c (assq 'string hint)))
-		   (when (pair? c)
-		      (set! hint (remq! c hint))
-		      (cell-set! fix #f))))
-	     (let ((c (assq 'string newhint)))
-		(when (and (pair? c) (assq 'no-string hint))
-		   (set! newhint (remq! c newhint))))
-	     (for-each (lambda (h)
-			  (let ((o (assq (car h) hint)))
-			     (if (pair? o)
-				 (when (<fx (cdr o) (cdr h))
-				    (cell-set! fix #f)
-				    (set-cdr! o (cdr h)))
-				 (begin
-				    (cell-set! fix #f)
-				    (set! hint (cons h hint))))))
-		newhint)
-	     hint)))
+	  (let loop ((hint hint)
+		     (newhint newhint))
+	     (if (null? newhint)
+		 hint
+		 (let* ((h (car newhint))
+			(o (assq (car h) hint)))
+		    (let ((nh (cond
+				 ((not (pair? o))
+				  (cell-set! fix #f)
+				  (cons h hint))
+				 ((<fx (cdr o) 0)
+				  hint)
+				 ((<fx (cdr h) 0)
+				  (if (>=fx (cdr o) 0)
+				      (begin
+					 (cell-set! fix #f)
+					 (cons h (remq o hint)))
+				      hint))
+				 ((<fx (cdr o) (cdr h))
+				  (cell-set! fix #f)
+				  (cons h (remq o hint)))
+				 (else
+				  hint))))
+		       (loop nh (cdr newhint))))))))
+   
    (when (pair? newhint)
       (with-access::J2SExpr this (hint)
 	 (set! hint (add-hint! hint newhint)))
@@ -143,9 +147,13 @@
 (define (union-hint! x y)
    (for-each (lambda (x)
 		(let ((c (assq (car x) y)))
-		   (if (pair? c)
-		       (set-cdr! c (max (cdr x) (cdr c)))
-		       (set! y (cons x y)))))
+		   (cond
+		      ((not (pair? c))
+		       (set! y (cons x y)))
+		      ((<fx (cdr x) 0)
+		       (set-cdr! c (cdr x)))
+		      ((>=fx (cdr c) 0)
+		       (set-cdr! c (max (cdr x) (cdr c)))))))
       x)
    y)
 
@@ -187,23 +195,23 @@
        (when (memq (j2s-type lhs) '(any number))
 	  (let ((hint (union-hint! (expr-hint this) (expr-hint rhs))))
 	     (unless (eq? (j2s-type lhs) 'any)
-		(add-expr-hint! lhs (cons (cons 'no-string 20) hint) #t fix))
+		(add-expr-hint! lhs (cons `(string . ,(minvalfx)) hint) #t fix))
 	     (add-expr-hint! this hint #f fix)))
        (when (memq (j2s-type rhs) '(any number))
 	  (let ((hint (union-hint! (expr-hint this) (expr-hint lhs))))
 	     (unless (eq? (j2s-type rhs) 'any)
-		(add-expr-hint! rhs (cons (cons 'no-string 20) hint) #t fix))
+		(add-expr-hint! rhs (cons `(string . ,(minvalfx)) hint) #t fix))
 	     (add-expr-hint! this hint #f fix))))
       ((-- *)
        (unhint-string-ref lhs fix)
        (unhint-string-ref rhs fix)
        (when (memq (j2s-type lhs) '(any number))
 	  (let ((hint (union-hint! (expr-hint this) (expr-hint rhs))))
-	     (add-expr-hint! lhs (cons (cons 'no-string 20) hint) #t fix)
+	     (add-expr-hint! lhs (cons `(string . ,(minvalfx)) hint) #t fix)
 	     (add-expr-hint! this hint #f fix)))
        (when (memq (j2s-type rhs) '(any number))
 	  (let ((hint (union-hint! (expr-hint this) (expr-hint lhs))))
-	     (add-expr-hint! rhs (cons (cons 'no-string 20) hint) #t fix)
+	     (add-expr-hint! rhs (cons `(string . ,(minvalfx)) hint) #t fix)
 	     (add-expr-hint! this hint #f fix))))
       ((/ %)
        (unhint-string-ref lhs fix)
@@ -211,12 +219,12 @@
        (when (memq (j2s-type lhs) '(any number))
 	  (let* ((hint (union-hint! (expr-hint this) (expr-hint rhs)))
 		 (noreal (filter (lambda (c) (not (eq? (car c) 'real))) hint)))
-	     (add-expr-hint! lhs (cons (cons 'no-string 20) noreal) #t fix)
+	     (add-expr-hint! lhs (cons `(string . ,(minvalfx)) noreal) #t fix)
 	     (add-expr-hint! this hint #f fix)))
        (when (memq (j2s-type rhs) '(any number))
 	  (let* ((hint (union-hint! (expr-hint this) (expr-hint lhs)))
 		 (noreal (filter (lambda (c) (not (eq? (car c) 'real))) hint)))
-	     (add-expr-hint! rhs (cons (cons 'no-string 20) noreal) #t fix)
+	     (add-expr-hint! rhs (cons `(string . ,(minvalfx)) noreal) #t fix)
 	     (add-expr-hint! this hint #f fix))))
       ((< > <= >= == === != !==)
        (when (memq (j2s-type lhs) '(any number))
@@ -239,7 +247,7 @@
 (define (unhint-string-ref expr fix)
    (when (isa? expr J2SAccess)
       (with-access::J2SAccess expr (obj)
-	 (add-expr-hint! obj '((no-string . 10)) #t fix))))
+	 (add-expr-hint! obj (list `(string . ,(minvalfx))) #t fix))))
       
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SBinary ...                                          */
@@ -333,9 +341,9 @@
 	     (when (isa? lhs J2SRef)
 		(add-expr-hint! lhs (expr-hint rhs) #t fix)))
 	    ((eq? (j2s-type rhs) 'real)
-	     (add-expr-hint! this (list (cons 'real 20)) #f fix)
+	     (add-expr-hint! this '((real . 20)) #f fix)
 	     (when (isa? lhs J2SRef)
-		(add-expr-hint! lhs (list (cons 'real 20)) #t fix)))))))
+		(add-expr-hint! lhs '((real . 20)) #t fix)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hinthum ::J2SCall ...                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sat May  8 19:07:06 2021 (serrano)                */
+;*    Last change :  Fri May 28 07:21:30 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -648,8 +648,8 @@
 ;*---------------------------------------------------------------------*/
 (define (string-method-type name #!optional (default '(any any)))
    (assoc-method-type name default
-      '(("charAt" . (string (string no-array) index))
-	("charCodeAt" . (number (string no-array) index))
+      '(("charAt" . (string string index))
+	("charCodeAt" . (number string index))
 	("concat" . (string string string string string))
 	("indexOf" . (indexof string index))
 	("lastIndexOf" . (indexof string index))

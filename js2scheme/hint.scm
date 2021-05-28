@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon May 10 12:06:42 2021 (serrano)                */
+;*    Last change :  Fri May 28 07:10:00 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -58,8 +58,6 @@
       ;; first collect all possible hints...
       (for-each (lambda (n) (j2s-hint n '())) decls)
       (for-each (lambda (n) (j2s-hint n '())) nodes)
-      (for-each (lambda (n) (j2s-cleanup-hint n)) decls)
-      (for-each (lambda (n) (j2s-cleanup-hint n)) nodes)
       ;; then, for each function whose parameters are "hinted", generate
       ;; an ad-hoc typed version
       (if (config-get conf :optim-hint)
@@ -89,11 +87,11 @@
       ((memq ty
 	  '(any unknown magic
 	    integer real number bool string
-	    regexp array jsvector no-array date arguments function arrow service
+	    regexp array jsvector date arguments function arrow service
 	    procedure
 	    class object promise
 	    null undefined void
-	    cmap scmstring tilde pair no-string no-integer
+	    cmap scmstring tilde pair
 	    int8array uint8array))
        ty)
       ((memq ty '(index indexof length)) 'integer)
@@ -124,27 +122,6 @@
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-cleanup-hint ::J2SNode ...                                   */
-;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-cleanup-hint this::J2SNode)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-cleanup-hint ::J2SDecl ...                                   */
-;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-cleanup-hint this::J2SDecl)
-   (with-access::J2SDecl this (hint)
-      (let ((hs (assq 'string hint)))
-	 (when (pair? hs)
-	    (when (pair? (assq 'no-string hint))
-	       (set! hint (remq! hint hs)))))
-      (let ((hs (assq 'array hint)))
-	 (when (pair? hs)
-	    (when (pair? (assq 'no-array hint))
-	       (set! hint (remq! hint hs)))))
-      (call-default-walker)))
-
-;*---------------------------------------------------------------------*/
 ;*    add-hints! ::J2SNode ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-generic (add-hints! this::J2SNode hints::pair-nil)
@@ -168,27 +145,7 @@
 		      (let ((ty (car hi))
 			    (inc (cdr hi)))
 			 (unless (memq ty '(unknown any))
-			    (case ty
-			       ((string)
-				(unless (assq 'no-string hint)
-				   (add-hint! expr ty inc)))
-			       ((no-string)
-				(let ((c (assq 'string hint)))
-				   (set! hint (delete! c hint))
-				   (add-hint! expr ty inc)))
-			       ((no-integer)
-				(let ((c (assq 'integer hint)))
-				   (set! hint (delete! c hint))
-				   (add-hint! expr ty inc)))
-			       ((array)
-				(unless (assq 'no-array hint)
-				   (add-hint! expr ty inc)))
-			       ((no-array)
-				(let ((c (assq 'array hint)))
-				   (set! hint (delete! c hint))
-				   (add-hint! expr ty inc)))
-			       (else
-				(add-hint! expr ty inc))))))
+			    (add-hint! expr ty inc))))
 	    hints))))
    
 ;*---------------------------------------------------------------------*/
@@ -199,9 +156,11 @@
    (define (add-hint! decl type::symbol inc)
       (with-access::J2SDecl decl (id hint vtype)
 	 (let ((c (assq type hint)))
-	    (if (pair? c)
-		(set-cdr! c (+fx inc (cdr c)))
-		(set! hint (cons (cons type inc) hint))))))   
+	    (cond
+	       ((not (pair? c))
+		(set! hint (cons (cons type inc) hint)))
+	       ((>=fx (cdr c) 0)
+		(set-cdr! c (+fx inc (cdr c))))))))
    
    (with-access::J2SDecl decl (id hint itype vtype)
       (when (and (pair? hints)
@@ -211,27 +170,7 @@
 		      (let ((ty (car hi))
 			    (inc (cdr hi)))
 			 (unless (memq ty '(unknown any))
-			    (case ty
-			       ((string)
-				(unless (assq 'no-string hint)
-				   (add-hint! decl ty inc)))
-			       ((no-string)
-				(let ((c (assq 'string hint)))
-				   (set! hint (delete! c hint))
-				   (add-hint! decl ty inc)))
-			       ((array)
-				(unless (assq 'no-array hint)
-				   (add-hint! decl ty inc)))
-			       ((no-array)
-				(let ((c (assq 'array hint)))
-				   (set! hint (delete! c hint))
-				   (add-hint! decl ty inc)))
-			       ((no-integer)
-				(let ((c (assq 'integer hint)))
-				   (set! hint (delete! c hint))
-				   (add-hint! decl ty inc)))
-			       (else
-				(add-hint! decl ty inc))))))
+			    (add-hint! decl ty inc))))
 	    hints))))
 
 ;*---------------------------------------------------------------------*/
@@ -282,39 +221,39 @@
        (case (j2s-type lhs)
 	  ((real)
 	   (j2s-hint lhs '())
-	   (j2s-hint rhs '((real . 5) (no-string . 1))))
+	   (j2s-hint rhs `((real . 5) (string . ,(minvalfx)))))
 	  ((integer)
 	   (j2s-hint lhs '())
-	   (j2s-hint rhs '((integer . 3) (no-string . 1))))
+	   (j2s-hint rhs `((integer . 3) (string . ,(minvalfx)))))
 	  (else
-	   (j2s-hint lhs '((no-string . 1)))
-	   (j2s-hint rhs '((integer . 2) (real . 2) (no-string . 1)))))
+	   (j2s-hint lhs `((string . ,(minvalfx))))
+	   (j2s-hint rhs `((integer . 2) (real . 2) (string . ,(minvalfx))))))
        (case (j2s-type rhs)
 	  ((real)
-	   (j2s-hint lhs '((real . 5) (no-string . 1)))
+	   (j2s-hint lhs `((real . 5) (string . ,(minvalfx))))
 	   (j2s-hint rhs '()))
 	  ((integer)
-	   (j2s-hint lhs '((integer . 3) (no-string . 1)))
+	   (j2s-hint lhs `((integer . 3) (string . ,(minvalfx))))
 	   (j2s-hint rhs '()))
 	  (else
-	   (j2s-hint lhs '((integer . 2) (real . 2) (no-string . 1)))
-	   (j2s-hint rhs '((no-string . 1))))))
+	   (j2s-hint lhs `((integer . 2) (real . 2) (string . ,(minvalfx))))
+	   (j2s-hint rhs `((string . ,(minvalfx)))))))
       ((< <= >= >)
        (case (j2s-type lhs)
 	  ((real)
 	   (j2s-hint lhs '())
-	   (j2s-hint rhs '((real . 5) (no-string . 1))))
+	   (j2s-hint rhs `((real . 5) (string . ,(minvalfx)))))
 	  ((integer)
 	   (j2s-hint lhs '())
-	   (j2s-hint rhs '((integer . 3) (no-string . 1))))
+	   (j2s-hint rhs `((integer . 3) (string . ,(minvalfx)))))
 	  (else
 	   (j2s-hint rhs '((integer . 2) (real . 2)))))
        (case (j2s-type rhs)
 	  ((real)
-	   (j2s-hint lhs '((real . 5) (no-string . 1)))
+	   (j2s-hint lhs `((real . 5) (string . ,(minvalfx))))
 	   (j2s-hint rhs '()))
 	  ((integer)
-	   (j2s-hint lhs '((integer . 3) (no-string . 1)))
+	   (j2s-hint lhs `((integer . 3) (string . ,(minvalfx))))
 	   (j2s-hint rhs '()))
 	  (else
 	   (j2s-hint lhs '((integer . 2) (real . 2))))))
@@ -322,23 +261,23 @@
        (case (j2s-type lhs)
 	  ((real)
 	   (j2s-hint lhs '())
-	   (j2s-hint rhs '((real . 5) (no-string . 1))))
+	   (j2s-hint rhs `((real . 5) (string . ,(minvalfx)))))
 	  ((integer)
 	   (j2s-hint lhs '())
-	   (j2s-hint rhs '((integer . 5) (no-string . 1))))
+	   (j2s-hint rhs `((integer . 5) (string . ,(minvalfx)))))
 	  (else
-	   (j2s-hint lhs '((no-string . 1)))
-	   (j2s-hint rhs '((integer . 4) (no-string . 1)))))
+	   (j2s-hint lhs `((string . ,(minvalfx))))
+	   (j2s-hint rhs `((integer . 4) (string . ,(minvalfx))))))
        (case (j2s-type rhs)
 	  ((real)
-	   (j2s-hint lhs '((real . 5) (no-string . 1)))
+	   (j2s-hint lhs `((real . 5) (string . ,(minvalfx))))
 	   (j2s-hint rhs '()))
 	  ((integer)
-	   (j2s-hint lhs '((integer . 5) (no-string . 1)))
+	   (j2s-hint lhs `((integer . 5) (string . ,(minvalfx))))
 	   (j2s-hint rhs '()))
 	  (else
-	   (j2s-hint lhs '((integer . 4) (no-string . 1)))
-	   (j2s-hint rhs '((no-string . 1))))))
+	   (j2s-hint lhs `((integer . 4) (string . ,(minvalfx))))
+	   (j2s-hint rhs `((string . ,(minvalfx)))))))
       ((+)
        (cond
 	  ((eq? (j2s-type lhs) 'real)
@@ -376,16 +315,16 @@
 	   (j2s-hint rhs '()))
 	  ((eq? (j2s-type lhs) 'integer)
 	   (j2s-hint lhs '())
-	   (j2s-hint rhs '((integer . 3) (no-string . 1))))
+	   (j2s-hint rhs `((integer . 3) (string . ,(minvalfx)))))
 	  ((eq? (j2s-type rhs) 'integer)
-	   (j2s-hint lhs '((integer . 3) (no-string . 1)))
+	   (j2s-hint lhs `((integer . 3) (string . ,(minvalfx))))
 	   (j2s-hint rhs '()))
 	  ((eq? (j2s-type lhs) 'real)
 	   (j2s-hint lhs '())
-	   (j2s-hint rhs '((real . 5) (no-string . 1))))
+	   (j2s-hint rhs `((real . 5) (string . ,(minvalfx)))))
 	  ((eq? (j2s-type lhs) 'real)
 	   (j2s-hint lhs '())
-	   (j2s-hint rhs '((real . 5) (no-string . 1))))
+	   (j2s-hint rhs `((real . 5) (string . ,(minvalfx)))))
 	  ((not (memq (j2s-type lhs) '(any unknown)))
 	   (j2s-hint lhs '())
 	   (j2s-hint rhs `((,(j2s-type lhs) . 5))))
@@ -458,9 +397,7 @@
 	 (when (> bc 0)
 	    ;; if the variable is not a string, neither is the rhs
 	    (with-access::J2SExpr val (hint)
-	       (unless (pair? (assq 'no-string hint))
-		  (set! hint (cons `(no-string . ,bc) hint))))))
-      (set! hints hint)
+	       (add-hints! this `((string . ,(minvalfx)))))))
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
@@ -474,13 +411,13 @@
 	     (with-access::J2SString field (val loc)
 		(if (string=? val "length")
 		    (if maybe-string
-			(j2s-hint obj '((array . 5) (string . 5) (object . 2) (no-integer . 0)))
-			(j2s-hint obj '((array . 5) (no-string . 1) (object . 2) (no-integer . 0))))
+			(j2s-hint obj `((array . 5) (string . 5) (object . 2) (integer . ,(minvalfx))))
+			(j2s-hint obj `((array . 5) (string . ,(minvalfx)) (object . 2) (integer . ,(minvalfx)))))
 		    (j2s-hint obj '((object . 5))))))
 	    ((isa? field J2SNumber)
 	     (if maybe-string
 		 (j2s-hint obj '((array . 5) (string . 5)))
-		 (j2s-hint obj '((array . 5) (no-string . 1)))))
+		 (j2s-hint obj `((array . 5) (string . ,(minvalfx))))))
 	    ((isa? field J2SLiteralCnst)
 	     (with-access::J2SLiteralCnst field (val)
 		(loop val)))
@@ -488,7 +425,7 @@
 	     (j2s-hint field '((string . 2) (integer . 2)))
 	     (if maybe-string
 		 (j2s-hint obj '((object . 5)))
-		 (j2s-hint obj '((object . 5) (no-string . 1)))))))))
+		 (j2s-hint obj `((object . 5) (string . ,(minvalfx))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SAccess ...                                         */
@@ -600,14 +537,9 @@
 	 (let loop ((rtys rtys)
 		    (armed #f))
 	    (cond
-	       ((null? rtys)
-		#f)
-	       ((memq (car rtys) '(no-array no-string no-integer))
-		(loop (cdr rtys) armed))
-	       (armed
-		#t)
-	       (else
-		(loop (cdr rtys) #t))))))
+	       ((null? rtys) #f)
+	       (armed #t)
+	       (else (loop (cdr rtys) #t))))))
 		    
    (define (hint-access-call callee args)
       (with-access::J2SAccess callee (obj field loc)
@@ -624,10 +556,9 @@
 				(map (lambda (t)
 					`(,(j2s-hint-type t) . 2))
 				   (cadr tys))))
-			    ((eq? (cadr tys) 'any)
-			     '((object . 5)))
 			    ((not (pair? (cadr tys)))
-			     `((object . 2) (,(j2s-hint-type (cadr tys)) . 5)))
+			     `((object . 2)
+			       (,(j2s-hint-type (cadr tys)) . 5)))
 			    (else
 			     `((object . 3)
 			       ,@(map (lambda (t)
@@ -925,10 +856,8 @@
 	      (< max (* mean 2)))))
 
    (define (interesting-hint-type? hint)
-      ;; some types are not intereting for duplicating functions
-      ;; ignore this hints
-      (not (memq (car hint)
-	      '(any unknown undefined null bool no-string no-object no-array))))
+      ;; only use positive hint for duplication
+      (>fx (cdr hint) 0))
    
    (define (param-best-hint-type p::J2SDecl)
       (with-access::J2SDecl p (hint usecnt useinloop vtype id)
@@ -1061,7 +990,7 @@
 	 (cond
 	    ((null? l)
 	     (return decl t c))
-	    ((memq (caar l) '(no-string no-array))
+	    ((<=fx (cdar l) 0)
 	     (loop (cdr l) t c))
 	    ((>fx (cdar l) c)
 	     (loop (cdr l) (caar l) (cdar l)))
@@ -1829,7 +1758,7 @@
       (with-access::J2SDecl decl (%info)
 	 (when (and (pair? %info) (eq? (car %info) 'unhint))
 	    (set! hint
-	       (cons `(,(symbol-append 'no- (cdr %info)) . 1000)
+	       (cons `(,(cdr %info) . ,(minvalfx))
 		  (filter (lambda (h)
 			     (not (eq? (car h) (cdr %info))))
 		     hint))))))
