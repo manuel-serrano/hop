@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/scheme-cast.scm           */
+;*    serrano/prgm/project/hop/3.4.x/js2scheme/scheme-cast.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sun Apr 12 13:05:42 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Sun May 30 08:40:15 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
 ;*=====================================================================*/
@@ -133,7 +133,7 @@
 	 (array nop)
 	 (scmstring ,js->scmstring)
 	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))
-	 (real ,(lambda (v expr ctx) `(js-toflonum (js-tonumber ,v %this))))
+	 (real ,(lambda (v expr ctx) `(js-tonumber-for-flonum ,v %this)))
 	 (integer ,(lambda (v expr ctx) `(js-tointeger ,v %this)))
 	 (number ,(lambda (v expr ctx) `(js-tonumber ,v %this)))
 	 (any nop)))
@@ -142,7 +142,7 @@
 	 (uint32 ,js-bool->uint32)
 	 (object ,js-bool->jsobject)
 	 (scmstring ,js->scmstring)
-	 (real ,(lambda (v expr ctx) `(js-toflonum (js-tonumber ,v %this))))
+	 (real ,(lambda (v expr ctx) `(js-tonumber-for-flonum ,v %this)))
 	 (integer ,(lambda (v expr ctx) `(js-tointeger ,v %this)))
 	 (number ,(lambda (v expr ctx) `(js-tonumber ,v %this)))
 	 (iterable error)
@@ -310,7 +310,7 @@
 	 (array nop)
 	 (scmstring ,js->scmstring)
 	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))
-	 (real ,(lambda (v expr ctx) `(js-toflonum (js-tonumber ,v %this))))
+	 (real ,(lambda (v expr ctx) `(js-tonumber-for-flonum ,v %this)))
 	 (integer ,(lambda (v expr ctx) `(js-tointeger ,v %this)))
 	 (number ,(lambda (v expr ctx) `(js-tonumber ,v %this)))
 	 (any nop)))
@@ -319,7 +319,7 @@
 	 (uint32 ,js-bool->uint32)
 	 (object ,js-bool->jsobject)
 	 (scmstring ,js->scmstring)
-	 (real ,(lambda (v expr ctx) `(js-toflonum (js-tonumber ,v %this))))
+	 (real ,(lambda (v expr ctx) `(js-tonumber-for-flonum ,v %this)))
 	 (integer ,(lambda (v expr ctx) `(js-tointeger ,v %this)))
 	 (number ,(lambda (v expr ctx) `(js-tonumber ,v %this)))
 	 (iterable error)
@@ -771,7 +771,7 @@
 	 ((? symbol?)
 	  (if numberp
 	      `(js-toflonum ,v)
-	      `(js-toflonum (js-tonumber ,v %this))))
+	      `(js-tonumber-for-flonum ,v %this)))
 	 ((? fixnum?)
 	  (fixnum->flonum v))
 	 ((? flonum?)
@@ -794,7 +794,7 @@
 	 (((or js-get/debug js-get-name/cache js-get-object-name/cache) . ?-)
 	  (if numberp
 	      `(js-toflonum ,v)
-	      `(js-toflonum (js-tonumber ,v %this))))
+	      `(js-tonumber-for-flonum ,v %this)))
 	 (((or -js *js /js) ?- ?- ?-)
 	  `(js-toflonum ,v))
 	 ((bind-exit (?return) ?expr)
@@ -825,7 +825,7 @@
 	 (else
 	  (if numberp
 	      `(js-toflonum ,v)
-	      `(js-toflonum (js-tonumber ,v %this)))))))
+	      `(js-tonumber-for-flonum ,v %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-as ...                                                       */

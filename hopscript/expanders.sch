@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Sun May 16 08:46:34 2021 (serrano)                */
+;*    Last change :  Sun May 30 08:42:11 2021 (serrano)                */
 ;*    Copyright   :  2006-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -114,6 +114,8 @@
 	     ,js-null-or-undefined?-expander))
    (eval `(define-expander js-tonumber
 	     ,js-tonumber-expander))
+   (eval `(define-expander js-tonumber-for-flonum
+	     ,js-tonumber-for-flonum-expander))
    (eval `(define-expander js-toprimitive-for-string
 	     ,js-toprimitive-for-string-expander))
    
