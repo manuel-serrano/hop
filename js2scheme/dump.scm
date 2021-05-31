@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun May  9 09:23:08 2021 (serrano)                */
+;*    Last change :  Sun May 30 07:26:41 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -222,15 +222,21 @@
 ;*    dump-hint ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (dump-hint this)
+   
+   (define (dump-hint-value val)
+      (if (=fx (cdr val) (minvalfx))
+	  (cons (car val) -inf.0)
+	  val))
+   
    (if (or (>= (bigloo-debug) 2)
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:hint"))
        (cond
 	  ((isa? this J2SDecl)
 	   (with-access::J2SDecl this (hint)
-	      (if (pair? hint) `(:hint ,hint) '())))
+	      (if (pair? hint) `(:hint ,(map dump-hint-value hint)) '())))
 	  ((isa? this J2SExpr)
 	   (with-access::J2SExpr this (hint)
-	      (if (pair? hint) `(:hint ,hint) '()))))
+	      (if (pair? hint) `(:hint ,(map dump-hint-value hint)) '()))))
        '()))
 
 ;*---------------------------------------------------------------------*/
@@ -587,7 +593,7 @@
       `(,@(call-next-method) :type ,type ,(j2s->list expr))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SChech ...                                         */
+;*    j2s->list ::J2SCheck ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCheck)
    (with-access::J2SCheck this (expr type)

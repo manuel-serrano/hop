@@ -3,6 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
+;*    Last change :  Sun May 30 07:23:16 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -674,8 +675,8 @@
 		     ((or (is-hint? lhs 'real) (is-hint? rhs 'real))
 		      (if-flonums? left tl right tr
 			 (binop-flonum-flonum op 'bool
-			    (asreal left tl)
-			    (asreal right tr)
+			    (asreal left 'real)
+			    (asreal right 'real)
 			    #f)
 			 (binop-any-any op 'bool
 			    (box left tl ctx)
@@ -689,8 +690,8 @@
 			    #f)
 			 (if-flonums? left tl right tr
 			    (binop-flonum-flonum op 'bool
-			       (asreal left tl)
-			       (asreal right tr)
+			       (asreal left 'real)
+			       (asreal right 'real)
 			       #f)
 			    (binop-number-number op 'bool
 			       (box left tl ctx)
@@ -704,8 +705,8 @@
 			    #f)
 			 (if-flonums? left tl right tr
 			    (binop-flonum-flonum op 'bool
-			       (asreal left tl)
-			       (asreal right tr)
+			       (asreal left 'real)
+			       (asreal right 'real)
 			       #f)
 			    (let ((op (if (and (eq? op '===)
 					       (or (type-cannot? tl '(string buffer))
@@ -1632,8 +1633,8 @@
 		  ((and (is-hint? lhs 'real) (is-hint? rhs 'real))
 		   (if-flonums? left tl right tr
 		      (binop-flonum-flonum (real-op op type lhs rhs #f) type
-			 (asreal left tl)
-			 (asreal right tr)
+			 (asreal left 'real)
+			 (asreal right 'real)
 			 #f)
 		      (if (and (eq? tl 'number) (eq? tr 'number))
 			  (if (and (fresh-real? lhs) (fresh-real? rhs))
@@ -1652,8 +1653,8 @@
 		  ((and (eq? op '-) (or (is-hint? lhs 'real) (is-hint? rhs 'real)))
 		   (if-flonums? left tl right tr
 		      (binop-flonum-flonum (real-op op type lhs rhs #f) type
-			 (asreal left tl)
-			 (asreal right tr)
+			 (asreal left 'real)
+			 (asreal right 'real)
 			 #f)
 		      (if (and (eq? tl 'number) (eq? tr 'number))
 			 (if (and (fresh-real? lhs) (fresh-real? rhs))
@@ -1677,8 +1678,8 @@
 			 #f)
 		      (if-flonums? left tl right tr
 			 (binop-flonum-flonum (real-op op type lhs rhs #f) type
-			    (asreal left tl)
-			    (asreal right tr)
+			    (asreal left 'real)
+			    (asreal right 'real)
 			    #f)
 			 (if (and (fresh-real? lhs) (fresh-real? rhs))
 			     (binop-number-number! op type
@@ -1697,8 +1698,8 @@
 			 #f)
 		      (if-flonums? left tl right tr
 			 (binop-flonum-flonum (real-op op type lhs rhs #f) type
-			    (asreal left tl)
-			    (asreal right tr)
+			    (asreal left 'real)
+			    (asreal right 'real)
 			    #f)
 			 (binop-any-any op type
 			    (box left tl ctx)
@@ -1719,8 +1720,8 @@
 			 #f)
 		      (if-flonums? left tl right tr
 			 (binop-flonum-flonum (real-op op type lhs rhs #f) type
-			    (asreal left tl)
-			    (asreal right tr)
+			    (asreal left 'real)
+			    (asreal right 'real)
 			    #f)
 			 (binop-any-any op type
 			    (box left tl ctx)
@@ -1766,8 +1767,8 @@
 	       ((eq? type 'real)
 		(if-flonums? left tl right tr
 		   (binop-flonum-flonum (real-op '* type lhs rhs #f) type
-		      (asreal left tl)
-		      (asreal right tr)
+		      (asreal left 'real)
+		      (asreal right 'real)
 		      #f)
 		   (binop-any-any '* type
 		      (box left tl ctx)
@@ -1776,8 +1777,8 @@
 	       ((or (is-hint? lhs 'real) (is-hint? rhs 'real))
 		(if-flonums? left tl right tr
 		   (binop-flonum-flonum (real-op '* type lhs rhs #f) type
-		      (asreal left tl)
-		      (asreal right tr)
+		      (asreal left 'real)
+		      (asreal right 'real)
 		      #f)
 		   (binop-any-any '* type
 		      (box left tl ctx)
@@ -1791,8 +1792,8 @@
 		      #f)
 		   (if-flonums? left tl right tr
 		      (binop-flonum-flonum (real-op '* type lhs rhs #f) type
-			 (asreal left tl)
-			 (asreal right tr)
+			 (asreal left 'real)
+			 (asreal right 'real)
 			 #f)
 		      (binop-any-any '* type
 			 (box left tl ctx)
@@ -2567,7 +2568,7 @@
 	    ,(let ((f (gensym 'f)))
 	       `(let ((,(symbol-append f '|::double|) ,val))
 		   ,f))
-	    (js-toflonum (js-tonumber ,val %this))))))
+	    (js-tonumber-for-flonum ,val %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tostring ...                                                     */

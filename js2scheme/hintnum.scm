@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Fri May 28 07:32:53 2021 (serrano)                */
+;*    Last change :  Sun May 30 07:51:59 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
@@ -368,10 +368,10 @@
    (with-access::J2SCall this (fun args)
       (cond
 	 ((math-callfl? fun args)
-	  (add-expr-hint! (car args) '((real . 20)) #f fix)
-	  (add-expr-hint! this '((real . 20)) #f fix))
+	  (add-expr-hint! (car args) '((real . 40)) #f fix)
+	  (add-expr-hint! this '((real . 40)) #f fix))
 	 ((math-call? fun args)
-	  (add-expr-hint! (car args) '((real . 20)) #f fix)))))
+	  (add-expr-hint! (car args) '((real . 40)) #f fix)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type<? ...                                                       */

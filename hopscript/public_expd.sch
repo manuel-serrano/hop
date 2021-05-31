@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/hopscript/public_expd.sch           */
+;*    serrano/prgm/project/hop/3.4.x/hopscript/public_expd.sch         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Wed Dec 18 09:18:57 2019 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Sun May 30 08:41:24 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
 ;*    -------------------------------------------------------------    */
@@ -54,6 +54,23 @@
       ((?- ?expr ?%this)
        (let ((tmp (gensym '%e)))
 	  (e `(let ((,tmp ,expr)) (js-tonumber ,tmp ,%this)) e)))
+      (else
+       (map (lambda (x) (e x e)) x))))
+      
+;*---------------------------------------------------------------------*/
+;*    js-tonumber-for-flonum-expander ...                              */
+;*---------------------------------------------------------------------*/
+(define (js-tonumber-for-flonum-expander x e)
+   (match-case x
+      ((?- (and (? symbol?) ?expr) ?%this)
+       (e `(if (flonum? ,expr)
+	       ,expr
+	       ((@ js-toflonum __hopscript_arithmetic)
+		((@ js-tonumber __hopscript_public) ,expr ,%this)))
+	  e))
+      ((?- ?expr ?%this)
+       (let ((tmp (gensym '%e)))
+	  (e `(let ((,tmp ,expr)) (js-tonumber-for-flonum ,tmp ,%this)) e)))
       (else
        (map (lambda (x) (e x e)) x))))
       
