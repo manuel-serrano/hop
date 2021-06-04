@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Apr 26 12:15:43 2021 (serrano)                */
+#*    Last change :  Fri Jun  4 13:20:46 2021 (serrano)                */
 #*    Copyright   :  2006-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -89,6 +89,7 @@ POPULATION = Makefile \
   hopjs/noserv/aux/worker2.js \
   hopjs/noserv/aux/faultySubmodule.js \
   hopjs/noserv/comp.js \
+  hopjs/noserv/es2020.js \
   hopjs/serv/asyncSrvRsp.js \
   hopjs/serv/asyncSrvRsp2.js \
   hopjs/serv/asyncSrvWS.js \

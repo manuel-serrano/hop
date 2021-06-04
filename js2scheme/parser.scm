@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed May 26 10:29:00 2021 (serrano)                */
+;*    Last change :  Fri Jun  4 13:25:38 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2021,22 +2021,23 @@
    
    (define (op-level op)
       (case op
-	 ((OR) 1)
-	 ((&&) 2)
-	 ((BIT_OR) 3)
-	 ((^) 4)
-	 ((&) 5)
-	 ((== != === !==) 6)
-	 ((< > <= >= instanceof in) 7)
-	 ((<< >> >>>) 8)
-	 ((+ -) 9)
-	 ((* / % **) 10)
+	 ((??) 5)
+	 ((OR) 6)
+	 ((&&) 7)
+	 ((BIT_OR) 8)
+	 ((^) 9)
+	 ((&) 10)
+	 ((== != === !==) 11)
+	 ((< > <= >= instanceof in) 12)
+	 ((<< >> >>>) 13)
+	 ((+ -) 14)
+	 ((* / % **) 15)
 	 (else #f)))
 
    ;; left-associative binary expressions, but ** that is right-associative
    (define (binary-expr in-for-init? destructuring? spread?)
       (let binary-aux ((level 1))
-	 (if (> level 10)
+	 (if (> level 15)
 	     (unary destructuring? spread?)
 	     (let loop ((expr (binary-aux (+fx level 1))))
 		(let* ((type (peek-token-type))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun May 30 07:23:16 2021 (serrano)                */
+;*    Last change :  Fri Jun  4 13:41:02 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -406,6 +406,9 @@
 			    ,(j2s-cast (j2s-scheme rhs mode return ctx) rhs
 				(j2s-type rhs) type ctx)
 			    ,(j2s-cast lhsv lhs (j2s-type lhs) type ctx))))))))
+      ((??)
+       `(js-nullish ,(j2s-scheme lhs mode return ctx)
+	   ,(j2s-scheme rhs mode return ctx)))
       ((MAX)
        (js-min-max loc '>>= lhs rhs mode return ctx))
       ((MIN)
