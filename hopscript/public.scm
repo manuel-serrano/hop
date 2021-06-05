@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Jun  4 13:41:20 2021 (serrano)                */
+;*    Last change :  Sat Jun  5 07:02:50 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -216,7 +216,6 @@
 	   (inline js-eqir?::bool ::obj ::long)
 	   (inline js-null-or-undefined?::bool ::obj)
 	   (inline js-object-or-null?::bool ::obj)
-	   (inline js-nullish ::obj ::obj)
 
 	   (js-super ::obj ::bool ::obj ::JsGlobalObject)
 	   
@@ -2287,14 +2286,6 @@
       (else
        (null-or-unspecified? obj))))
 
-;*---------------------------------------------------------------------*/
-;*    js-nullish ...                                                   */
-;*    -------------------------------------------------------------    */
-;*    https://tc39.es/ecma262/#prod-CoalesceExpression                 */
-;*---------------------------------------------------------------------*/
-(define-inline (js-nullish lhs rhs)
-   (if (js-null-or-undefined? lhs) rhs lhs))
-	  
 ;*---------------------------------------------------------------------*/
 ;*    js-object-or-null? ...                                           */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Jun  4 13:41:02 2021 (serrano)                */
+;*    Last change :  Sat Jun  5 06:46:45 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -288,6 +288,8 @@
        (if (eq? type 'int32)
 	   (bitnot loc (j2s-scheme expr mode return ctx))
 	   `(bit-notjs ,(j2s-scheme expr mode return ctx) %this)))
+      ((?.)
+       (error "j2s-unop" "should not be here" (j2s->list expr)))
       (else
        (epairify loc
 	  `(,op ,(j2s-scheme expr mode return ctx))))))
@@ -407,8 +409,8 @@
 				(j2s-type rhs) type ctx)
 			    ,(j2s-cast lhsv lhs (j2s-type lhs) type ctx))))))))
       ((??)
-       `(js-nullish ,(j2s-scheme lhs mode return ctx)
-	   ,(j2s-scheme rhs mode return ctx)))
+       `(js-nullish ,(box (j2s-scheme lhs mode return ctx) (j2s-type lhs) ctx)
+	   ,(box (j2s-scheme rhs mode return ctx) (j2s-type rhs) ctx)))
       ((MAX)
        (js-min-max loc '>>= lhs rhs mode return ctx))
       ((MIN)

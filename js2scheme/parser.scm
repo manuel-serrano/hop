@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jun  4 13:25:38 2021 (serrano)                */
+;*    Last change :  Sat Jun  5 08:11:23 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2034,16 +2034,22 @@
 	 ((* / % **) 15)
 	 (else #f)))
 
+   (define (is-binary? expr ops)
+      ;; use to check that ??, ||, and && are not mixed, that ES2020 forbids
+      (when (isa? expr J2SBinary)
+	 (with-access::J2SBinary expr (op)
+	    (memq op ops))))
+      
    ;; left-associative binary expressions, but ** that is right-associative
    (define (binary-expr in-for-init? destructuring? spread?)
       (let binary-aux ((level 1))
 	 (if (> level 15)
 	     (unary destructuring? spread?)
 	     (let loop ((expr (binary-aux (+fx level 1))))
-		(let* ((type (peek-token-type))
-		       (new-level (op-level type)))
+		(let* ((typ (peek-token-type))
+		       (new-level (op-level typ)))
 		   (cond
-		      ((eq? type '**)
+		      ((eq? typ '**)
 		       (let ((token (consume-any!)))
 			  (cond
 			     ((isa? expr J2SBinary)
@@ -2065,13 +2071,13 @@
 				       (op '**)
 				       (lhs expr)
 				       (rhs (binary-aux level)))))))
-		      ((and in-for-init? (eq? type 'in))
+		      ((and in-for-init? (eq? typ 'in))
 		       expr)
 		      ((not new-level)
 		       expr)
 		      ((=fx new-level level)
 		       (let ((token (consume-any!)))
-			  (when (eq? type 'OHTML)
+			  (when (eq? typ 'OHTML)
 			     ;; < operator
 			     (let* ((val (token-value token))
 				    (id (substring val 1)))
@@ -2079,11 +2085,22 @@
 				   (make-token 'ID id
 				      (token-loc token)))
 				(token-tag-set! token '<)))
-			  (loop (instantiate::J2SBinary
-				   (loc (token-loc token))
-				   (lhs expr)
-				   (op (token-tag token))
-				   (rhs (binary-aux (+fx level 1)))))))
+			  (let ((rhs (binary-aux (+fx level 1))))
+			     (cond
+				((and (eq? typ '??)
+				      (or (is-binary? expr '(OR &&))
+					  (is-binary? rhs '(OR &&))))
+				 (parse-token-error "Unexpected token" token))
+				((and (memq typ '(OR &&))
+				      (or (is-binary? expr '(??))
+					  (is-binary? rhs '(??))))
+				 (parse-token-error "Unexpected token" token))
+				(else
+				 (loop (instantiate::J2SBinary
+					  (loc (token-loc token))
+					  (lhs expr)
+					  (op (token-tag token))
+					  (rhs rhs))))))))
 		      (else
 		       expr)))))))
    
@@ -2115,17 +2132,10 @@
 	 ((delete)
 	  (let ((token (consume-any!))
 		(expr (unary #f #f)))
-	     (cond
-		((or (isa? expr J2SAccess) (isa? expr J2SUnresolvedRef))
-		 (instantiate::J2SUnary
-		    (op (token-tag token))
-		    (loc (token-loc token))
-		    (expr expr)))
-		(else
-		 (instantiate::J2SUnary
-		    (op (token-tag token))
-		    (loc (token-loc token))
-		    (expr expr))))))
+	     (instantiate::J2SUnary
+		(op (token-tag token))
+		(loc (token-loc token))
+		(expr expr))))
 	 ((void typeof ~ !)
 	  (let ((token (consume-any!)))
 	     (instantiate::J2SUnary
@@ -2284,6 +2294,30 @@
 			      (loc loc)
 			      (id '%this)))))
 	    vals)))
+
+;*    (define (optional-chaining loc obj make-expr)                    */
+;*       (let ((endloc loc))                                           */
+;* 	 (let* ((id (gensym 'tmp))                                     */
+;* 		(param (instantiate::J2SDecl                           */
+;* 			  (loc loc)                                    */
+;* 			  (id id)                                      */
+;* 			  (binder 'param)))                            */
+;* 		(test (J2SBinary 'OR                                   */
+;* 			 (J2SBinary '===                               */
+;* 			    (J2SUnresolvedRef id) (J2SUndefined))      */
+;* 			 (J2SBinary '===                               */
+;* 			    (J2SUnresolvedRef id) (J2SNull))))         */
+;* 		(body (J2SCond test                                    */
+;* 			 (J2SUndefined)                                */
+;* 			 (make-expr (J2SUnresolvedRef id))))           */
+;* 		(arrow (J2SArrow '|| (list param)                      */
+;* 			  (J2SBlock body))))                           */
+;* 	    (J2SCall arrow obj))))                                     */
+;*                                                                     */
+;*    (define (optional-chaining? expr)                                */
+;*       (when (isa? expr J2SUnary)                                    */
+;* 	 (with-access::J2SUnary expr (op)                              */
+;* 	    (eq? op '?.))))                                            */
 	      
    (define (access-or-call expr loc call-allowed?)
       (let loop ((expr expr))
@@ -2333,6 +2367,37 @@
 		(fun expr)
 		(thisarg (list (J2SUndefined)))
 		(args (tag-call-arguments loc))))
+	    ((?.)
+	     (let* ((token (consume-any!))
+		    (loc (token-loc token)))
+		(when (eq? (peek-token-type) 'ID)
+		   (token-push-back! (make-token 'DOT "." loc)))
+		(loop (J2SUnary '?. expr))))
+	    ((?.tbr)
+	     (let ((token (consume-any!)))
+		(case (peek-token-type)
+		   ((ID)
+		    (let* ((loc (token-loc token))
+			   (endloc loc))
+		       (token-push-back! (make-token 'DOT "." loc))
+		       (let* ((id (gensym 'tmp))
+			      (param (instantiate::J2SDecl
+					(loc loc)
+					(id id)
+					(binder 'param)))
+			      (test (J2SBinary 'OR
+				       (J2SBinary '===
+					  (J2SUnresolvedRef id) (J2SUndefined))
+				       (J2SBinary '===
+					  (J2SUnresolvedRef id) (J2SNull))))
+			      (body (J2SCond test
+				       (J2SUndefined)
+				       (loop (J2SUnresolvedRef id))))
+			      (arrow (J2SArrow '|| (list param)
+					(J2SBlock body))))
+			  (J2SCall arrow expr))))
+		   (else
+		    (parse-token-error "Wrong token" (consume-any!))))))
 	    (else
 	     expr))))
 

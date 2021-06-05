@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/hopscript/public_expd.sch         */
+;*    serrano/prgm/project/hop/hop/hopscript/public_expd.sch           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Sun May 30 08:41:24 2021 (serrano)                */
+;*    Last change :  Sat Jun  5 07:12:24 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -95,3 +95,18 @@
 	     e)))
       (else
        (map (lambda (x) (e x e)) x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-nullish-expander                                              */
+;*    -------------------------------------------------------------    */
+;*    https://tc39.es/ecma262/#prod-CoalesceExpression                 */
+;*---------------------------------------------------------------------*/
+(define (js-nullish-expander x e)
+   (match-case x
+      ((?- (and ?lhs (?- . ?-)) ?y)
+       (let ((x (gensym 'lhs)))
+	  (e `(let ((,x ,(e lhs e))) (js-nullish ,x ,y)) e)))
+      ((?- ?x ?y)
+       (e `(if (js-null-or-undefined? ,x) ,y ,x) e))
+      (else
+       (error "js-nullish" "bad syntax" x))))

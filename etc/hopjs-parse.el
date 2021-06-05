@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Mon Aug 26 08:20:53 2019 (serrano)                */
-;*    Copyright   :  2018-20 Manuel Serrano                            */
+;*    Last change :  Sat Jun  5 06:34:07 2021 (serrano)                */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
 ;*=====================================================================*/
@@ -71,8 +71,9 @@
      ;; binop
      (cons (rxor "<" ">" (rxq "+") (rxq "-") (rxq "*") "%" "=" "|" "/"
 		 "<<" ">>" ">>>" "[&^]") 'binop)
-     (cons (rxor "&&" "||" "in") 'binop)
+     (cons (rxor "&&" "||" "in" "??") 'binop)
      (cons "instanceof" 'binop)
+     (cons "[?][?]" 'binop)
      (cons (rxor "<=" ">="  "!==*" "===*" "[+*%^&-]=" "<<=" ">>=" ">>>=") '=)
      ;; prefix
      (cons (rxor (rx: (rxq "+") (rxq "+")) "--") 'prefix)

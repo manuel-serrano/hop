@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri May 28 07:39:44 2021 (serrano)                */
+;*    Last change :  Sat Jun  5 06:44:19 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1500,9 +1500,9 @@
 			'bool)
 		       ((&& OR OR*)
 			(cond
-			   ((or (eq? typr 'any) (eq? typl 'any) )
+			   ((or (eq? typr 'any) (eq? typl 'any))
 			    'any)
-			   ((or (eq? typr 'unknown) (eq? typl 'unknown) )
+			   ((or (eq? typr 'unknown) (eq? typl 'unknown))
 			    'unknown)
 			   (else
 			    (merge-types typr typl))))

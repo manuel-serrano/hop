@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/hopscript/expanders.sch           */
+;*    serrano/prgm/project/hop/hop/hopscript/expanders.sch             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Sun May 30 08:42:11 2021 (serrano)                */
+;*    Last change :  Sat Jun  5 07:03:24 2021 (serrano)                */
 ;*    Copyright   :  2006-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -118,6 +118,8 @@
 	     ,js-tonumber-for-flonum-expander))
    (eval `(define-expander js-toprimitive-for-string
 	     ,js-toprimitive-for-string-expander))
+   (eval `(define-expander js-nullish
+	     ,js-nullish-expander))
    
    (eval `(define-expander &
 	     ,&-expander))

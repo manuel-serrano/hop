@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sun May  9 09:33:52 2021 (serrano)                */
+;*    Last change :  Sat Jun  5 12:04:38 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -1087,11 +1087,17 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SUnary tildec dollarc mode evalp ctx)
    (with-access::J2SUnary this (op expr)
-      (if (memq op '(void typeof delete))
+      (cond
+	 ((memq op '(void typeof delete))
 	  (cons* this (symbol->string op) " "
-	     (j2s-js expr tildec dollarc mode evalp ctx))
+	     (j2s-js expr tildec dollarc mode evalp ctx)))
+	 ((eq? op '?.)
+	  (cons this 
+	     (append (j2s-js expr tildec dollarc mode evalp ctx)
+		'("?."))))
+	 (else
 	  (cons* this (symbol->string op) 
-	     (j2s-js expr tildec dollarc mode evalp ctx)))))
+	     (j2s-js expr tildec dollarc mode evalp ctx))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-op ...                                                       */

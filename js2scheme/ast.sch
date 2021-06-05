@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Sun May  9 15:17:46 2021 (serrano)                */
+;*    Last change :  Sat Jun  5 11:33:40 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -106,6 +106,13 @@
 (define-macro (J2SParen expr)
    `(instantiate::J2SParen
        (loc loc)
+       (expr ,expr)))
+
+(define-macro (J2SUnary op expr)
+   `(instantiate::J2SUnary
+       (type 'unknown)
+       (loc loc)
+       (op ,op)
        (expr ,expr)))
 
 (define-macro (J2SUnary/type op typ expr)

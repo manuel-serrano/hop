@@ -2693,10 +2693,39 @@
 		    (loop (cdr hint) (car hint))))
 	       (else
 		(loop (cdr hint) optim))))))
-   
+
+   (define (get-optional-chaining this::J2SAccess)
+      ;; find the left-most optional-chaining
+      (with-access::J2SAccess this (obj)
+	 (cond
+	    ((isa? obj J2SUnary)
+	     (with-access::J2SUnary obj (op)
+		(when (eq? op '?.) this)))
+	    ((isa? obj J2SAccess)
+	     (get-optional-chaining obj)))))
+      
+   (define (optional-chaining chain::J2SAccess axs)
+      (let loop ((this this))
+	 (with-access::J2SAccess this (loc obj field)
+	    (if (eq? this axs)
+		(let ((tmp (gensym '%tmp))
+		      (unary obj))
+		   (set! obj (J2SHopRef tmp))
+		   (epairify loc
+		      (with-access::J2SUnary unary (expr)
+			 `(let ((,tmp ,(j2s-scheme expr mode return ctx)))
+			     (if (js-null-or-undefined? ,tmp)
+				 (js-undefined)
+				 ,(j2s-scheme chain mode return ctx))))))
+		(loop obj)))))
+
    (with-access::J2SAccess this (loc obj field cache cspecs type)
       (epairify-deep loc 
 	 (cond
+	    ((get-optional-chaining this)
+	     =>
+	     (lambda (axs)
+		(optional-chaining this axs)))
 	    ((is-object-prototype? obj field)
 	     `(js-object-proto %this))
 	    ((eq? (j2s-type obj) 'vector)
