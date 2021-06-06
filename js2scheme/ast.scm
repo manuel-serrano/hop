@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon May 10 08:00:33 2021 (serrano)                */
+;*    Last change :  Sun Jun  6 06:51:14 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -566,6 +566,7 @@
 	   (node-endloc ::J2SNode)
 	   
 	   (j2sfun-expression? ::J2SFun)
+	   (j2s-chaining? ::J2SExpr)
 	   
 	   (ast-decl-key::int)
 	   
@@ -727,6 +728,14 @@
       (when (isa? decl J2SDeclFun)
 	 (with-access::J2SDeclFun decl (expression) expression))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-chaining? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (j2s-chaining? this::J2SExpr)
+   (when (isa? this J2SUnary)
+      (with-access::J2SUnary this (op)
+	 (eq? op '?.))))
+				      
 ;*---------------------------------------------------------------------*/
 ;*    *ast-decl-key* ...                                               */
 ;*---------------------------------------------------------------------*/

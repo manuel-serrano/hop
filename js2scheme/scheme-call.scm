@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri May 21 09:25:44 2021 (serrano)                */
+;*    Last change :  Sun Jun  6 06:48:45 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1010,7 +1010,32 @@
 	       (else
 		#f)))))
 
-   (define (call-method this ccache ccspecs fun::J2SAccess args)
+   (define (get-optional-chaining this::J2SAccess)
+      ;; find the left-most optional-chaining
+      (with-access::J2SAccess this (obj)
+	 (cond
+	    ((j2s-chaining? obj)
+	     this)
+	    ((isa? obj J2SAccess)
+	     (get-optional-chaining obj)))))
+      
+   (define (call-optional-chaining this::J2SCall axs)
+      (with-access::J2SCall this (fun)
+	 (let loop ((chain fun))
+	    (with-access::J2SAccess chain (loc obj)
+	       (if (eq? chain axs)
+		   (let ((tmp (gensym '%tmp))
+			 (unary obj))
+		      (set! obj (J2SHopRef tmp))
+		      (epairify loc
+			 (with-access::J2SUnary unary (expr)
+			    `(let ((,tmp ,(j2s-scheme expr mode return ctx)))
+				(if (js-null-or-undefined? ,tmp)
+				    (js-undefined)
+				    ,(j2s-scheme this mode return ctx))))))
+		   (loop obj))))))
+
+    (define (call-method this ccache ccspecs fun::J2SAccess args)
       (with-access::J2SCall this (profid cache)
 	 (with-access::J2SAccess fun (loc obj field (acache cache) (acspecs cspecs))
 	    (let loop ((obj obj))
@@ -1026,6 +1051,10 @@
 			  `(let ((,tmp ,(j2s-scheme obj mode return ctx)))
 			      ,(call-ref-method obj ccache acache
 				  ccspecs fun (J2SHopRef tmp) args)))))
+		  ((get-optional-chaining fun)
+		   =>
+		   (lambda (axs)
+		      (call-optional-chaining this axs)))
 		  ((and (context-get ctx :profile-call #f) (>=fx profid 0))
 		   (with-access::J2SAccess fun (obj loc)
 		      ;; when profile method call, inverse the call cache
@@ -1337,6 +1366,17 @@
 			,@self
 			,@(packargs (j2s-scheme args mode return ctx))))))))))
 
+   (define (call-chaining-function protocol fun::J2SUnary thisargs args)
+      (with-access::J2SCall this (loc)
+	 (let ((tmp (gensym '%tmp)))
+	    (epairify loc
+	       (with-access::J2SUnary fun (expr)
+		  `(let ((,tmp ,(j2s-scheme expr mode return ctx)))
+		      (if (js-null-or-undefined? ,tmp)
+			  (js-undefined)
+			  ,(call-unknown-function protocol (J2SHopRef tmp)
+			      thisargs args))))))))
+
    (define (call-eval-function fun args)
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.1.1
       `(%js-direct-eval 
@@ -1455,6 +1495,9 @@
 		(call-with-function fun args))
 	       ((isa? fun J2SPragma)
 		(call-pragma fun args))
+	       ((j2s-chaining? fun)
+		(call-chaining-function protocol fun
+		   (j2s-scheme thisarg mode return ctx) args))
 	       ((not (isa? fun J2SRef))
 		(call-unknown-function protocol fun
 		   (j2s-scheme thisarg mode return ctx) args))

@@ -21,25 +21,25 @@ function chainingKangaxA() {
    return foo?.baz === 42 && bar?.baz === void undefined;
 }
 
-/* function chainingKangaxB() {                                        */
-/*    var foo = { baz: 42 };                                           */
-/*    var bar = null;                                                  */
-/*    return foo?.['baz'] === 42 && bar?.['baz'] === void undefined;   */
-/* }                                                                   */
-/*                                                                     */
-/* function chainingKangaxC() {                                        */
-/*    var foo = { baz: function () { return this.value; }, value: 42 }; */
-/*    var bar = null;                                                  */
-/*    return foo?.baz() === 42 && bar?.baz() === void undefined;       */
-/* }                                                                   */
-/*                                                                     */
-/* function chainingKangaxD() {                                        */
-/*    var foo = { baz: function () { return 42; } };                   */
-/*    var bar = {};                                                    */
-/*    function baz() { return 42; };                                   */
-/*    var n;                                                           */
-/*    return foo.baz?.() === 42 && bar.baz?.() === void undefined && baz?.() === 42 && n?.() === void undefined; */
-/* }                                                                   */
+function chainingKangaxB() {
+   var foo = { baz: 42 };
+   var bar = null;
+   return foo?.['baz'] === 42 && bar?.['baz'] === void undefined;
+}
+
+function chainingKangaxC() {
+   var foo = { baz: function () { return this.value; }, value: 42 };
+   var bar = null;
+   return foo?.baz() === 42 && bar?.baz() === void undefined;
+}
+
+function chainingKangaxD() {
+   var foo = { baz: function () { return 42; } };
+   var bar = {};
+   function baz() { return 42; };
+   var n;
+   return foo.baz?.() === 42 && bar.baz?.() === void undefined && baz?.() === 42 && n?.() === void undefined;
+}
 /*                                                                     */
 /* function chainingKangaxE() {                                        */
 /*    var fn = null;                                                   */
@@ -56,27 +56,27 @@ function chainingMdnA() {
    return myMap.get("bar")?.name === undefined;
 }
 
-/* function chainingMdnB() {                                           */
-/*    let potentiallyNullObj = null;                                   */
-/*    let x = 0;                                                       */
-/*    let prop = potentiallyNullObj?.[x++];                            */
-/*                                                                     */
-/*    return x === 0; // 0 as x was not incremented                    */
-/* }                                                                   */
+function chainingMdnB() {
+   let potentiallyNullObj = null;
+   let x = 0;
+   let prop = potentiallyNullObj?.[x++];
 
-/* function chainingMdnC() {                                           */
-/*    let customer = {                                                 */
-/*       name: "Carl",                                                 */
-/*       details: {                                                    */
-/*     	 age: 82,                                                      */
-/*     	 location: "Paradise Falls" // detailed address is unknown     */
-/*       }                                                             */
-/*    };                                                               */
-/*    let customerCity = customer.details?.address?.city;              */
-/*                                                                     */
-/*    // this also works with optional chaining function call          */
-/*    return customer.name?.getName?.() === undefined;                 */
-/* }                                                                   */
+   return x === 0; // 0 as x was not incremented
+}
+
+function chainingMdnC() {
+   let customer = {
+      name: "Carl",
+      details: {
+    	 age: 82,
+    	 location: "Paradise Falls" // detailed address is unknown
+      }
+   };
+   let customerCity = customer.details?.address?.city;
+
+   // this also works with optional chaining function call
+   return customer.name?.getName?.() === undefined;
+}
 
 function chainingMdnD() {
    let customer = {
@@ -87,16 +87,36 @@ function chainingMdnD() {
    return (customerCity === "Unknown city");
 }
 
-console.log("   chaining()");
+function chainingMiscA() {
+   var x = {}
+   var foo = { baz: function () { return this.value; }, value: 42 };
+   var bar = null;
+   return x.foo?.baz(555) === undefined;
+}
+
+console.log("chaining...");
+console.log("   chainingKangaxA" );
 assert.equal(chainingKangaxA(), true, "chainingKangaxA");
-/* assert.equal(chainingKangaxB(), true, "chainingKangaxB");           */
-/* assert.equal(chainingKangaxC(), true, "chainingKangaxC");           */
-/* assert.equal(chainingKangaxD(), true, "chainingKangaxD");           */
+console.log("   chainingKangaxB" );
+assert.equal(chainingKangaxB(), true, "chainingKangaxB");
+console.log("   chainingKangaxC" );
+assert.equal(chainingKangaxC(), true, "chainingKangaxC");
+console.log("   chainingKangaxD" );
+assert.equal(chainingKangaxD(), true, "chainingKangaxD");
+/* console.log("   chainingKangaxE" );                                 */
 /* assert.equal(chainingKangaxE(), true, "chainingKangaxE");           */
+
+console.log("   chainingMdnA" );
 assert.equal(chainingMdnA(), true, "chainingMdnA");
-/* assert.equal(chainingMdnB(), true, "chainingMdnB");                 */
-/* assert.equal(chainingMdnC(), true, "chainingMdnC");                 */
+console.log("   chainingMdnB" );
+assert.equal(chainingMdnB(), true, "chainingMdnB");
+console.log("   chainingMdnC" );
+assert.equal(chainingMdnC(), true, "chainingMdnC");
+console.log("   chainingMdnD" );
 assert.equal(chainingMdnD(), true, "chainingMdnD");
+
+console.log("   chainingMiscA" );
+assert.equal(chainingMiscA(), true, "chainingMdnD");
 
 /*---------------------------------------------------------------------*/
 /*    nullish                                                          */
@@ -163,7 +183,6 @@ function nullishMdnD() {
       eval("null || undefined ?? 'foo'"); // raises a SyntaxError
       return false;
    } catch(e) {
-      console.log( "e=", e);
       ;
    }
    try {
@@ -176,11 +195,17 @@ function nullishMdnD() {
    return val === "foo";
 }
 
-console.log("   nullish()");
+console.log("nullish...");
+console.log("   nullishKangax");
 assert.equal(nullishKangax(), true, "nullishKangax");
+
+console.log("   nullishMdnA");
 assert.equal(nullishMdnA(), true, "nullishMdnA");
+console.log("   nullishMdnB");
 assert.equal(nullishMdnB(), true, "nullishMdnB");
+console.log("   nullishMdnC");
 assert.equal(nullishMdnC(), true, "nullishMdnC");
+console.log("   nullishMdnD");
 assert.equal(nullishMdnD(), true, "nullishMdnD");
 
 

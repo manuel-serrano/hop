@@ -2698,16 +2698,15 @@
       ;; find the left-most optional-chaining
       (with-access::J2SAccess this (obj)
 	 (cond
-	    ((isa? obj J2SUnary)
-	     (with-access::J2SUnary obj (op)
-		(when (eq? op '?.) this)))
+	    ((j2s-chaining? obj)
+	     this)
 	    ((isa? obj J2SAccess)
 	     (get-optional-chaining obj)))))
       
-   (define (optional-chaining chain::J2SAccess axs)
-      (let loop ((this this))
-	 (with-access::J2SAccess this (loc obj field)
-	    (if (eq? this axs)
+   (define (optional-chaining this::J2SAccess axs)
+      (let loop ((chain this))
+	 (with-access::J2SAccess chain (loc obj)
+	    (if (eq? chain axs)
 		(let ((tmp (gensym '%tmp))
 		      (unary obj))
 		   (set! obj (J2SHopRef tmp))
@@ -2716,7 +2715,7 @@
 			 `(let ((,tmp ,(j2s-scheme expr mode return ctx)))
 			     (if (js-null-or-undefined? ,tmp)
 				 (js-undefined)
-				 ,(j2s-scheme chain mode return ctx))))))
+				 ,(j2s-scheme this mode return ctx))))))
 		(loop obj)))))
 
    (with-access::J2SAccess this (loc obj field cache cspecs type)
