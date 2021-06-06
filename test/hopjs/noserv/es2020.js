@@ -40,14 +40,14 @@ function chainingKangaxD() {
    var n;
    return foo.baz?.() === 42 && bar.baz?.() === void undefined && baz?.() === 42 && n?.() === void undefined;
 }
-/*                                                                     */
-/* function chainingKangaxE() {                                        */
-/*    var fn = null;                                                   */
-/*    var n = null;                                                    */
-/*    var o = {};                                                      */
-/*                                                                     */
-/*    return fn?.(...[], 1) === void undefined && fn?.(...[], ...[]) === void undefined && o.method?.(...[], 1) === void undefined && n?.method(...[], 1) === void undefined; */
-/* }                                                                   */
+
+function chainingKangaxE() {
+   var fn = null;
+   var n = null;
+   var o = {};
+
+   return fn?.(...[], 1) === void undefined && fn?.(...[], ...[]) === void undefined && o.method?.(...[], 1) === void undefined && n?.method(...[], 1) === void undefined;
+}
 
 function chainingMdnA() {
    let myMap = new Map();
@@ -94,28 +94,28 @@ function chainingMiscA() {
    return x.foo?.baz(555) === undefined;
 }
 
-console.log("chaining...");
-console.log("   chainingKangaxA" );
+console.log("chaining");
+console.log("   KangaxA...");
 assert.equal(chainingKangaxA(), true, "chainingKangaxA");
-console.log("   chainingKangaxB" );
+console.log("   KangaxB...");
 assert.equal(chainingKangaxB(), true, "chainingKangaxB");
-console.log("   chainingKangaxC" );
+console.log("   KangaxC...");
 assert.equal(chainingKangaxC(), true, "chainingKangaxC");
-console.log("   chainingKangaxD" );
+console.log("   KangaxD...");
 assert.equal(chainingKangaxD(), true, "chainingKangaxD");
-/* console.log("   chainingKangaxE" );                                 */
-/* assert.equal(chainingKangaxE(), true, "chainingKangaxE");           */
+console.log("   KangaxE..." );
+assert.equal(chainingKangaxE(), true, "chainingKangaxE");
 
-console.log("   chainingMdnA" );
+console.log("   MdnA...");
 assert.equal(chainingMdnA(), true, "chainingMdnA");
-console.log("   chainingMdnB" );
+console.log("   MdnB...");
 assert.equal(chainingMdnB(), true, "chainingMdnB");
-console.log("   chainingMdnC" );
+console.log("   MdnC...");
 assert.equal(chainingMdnC(), true, "chainingMdnC");
-console.log("   chainingMdnD" );
+console.log("   MdnD...");
 assert.equal(chainingMdnD(), true, "chainingMdnD");
 
-console.log("   chainingMiscA" );
+console.log("   MiscA...");
 assert.equal(chainingMiscA(), true, "chainingMdnD");
 
 /*---------------------------------------------------------------------*/
@@ -195,17 +195,17 @@ function nullishMdnD() {
    return val === "foo";
 }
 
-console.log("nullish...");
-console.log("   nullishKangax");
+console.log("nullish");
+console.log("   Kangax...");
 assert.equal(nullishKangax(), true, "nullishKangax");
 
-console.log("   nullishMdnA");
+console.log("   MdnA...");
 assert.equal(nullishMdnA(), true, "nullishMdnA");
-console.log("   nullishMdnB");
+console.log("   MdnB...");
 assert.equal(nullishMdnB(), true, "nullishMdnB");
-console.log("   nullishMdnC");
+console.log("   MdnC...");
 assert.equal(nullishMdnC(), true, "nullishMdnC");
-console.log("   nullishMdnD");
+console.log("   MdnD...");
 assert.equal(nullishMdnD(), true, "nullishMdnD");
 
 

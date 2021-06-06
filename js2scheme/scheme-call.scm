@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sun Jun  6 06:48:45 2021 (serrano)                */
+;*    Last change :  Sun Jun  6 08:21:54 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1024,9 +1024,10 @@
 	 (let loop ((chain fun))
 	    (with-access::J2SAccess chain (loc obj)
 	       (if (eq? chain axs)
-		   (let ((tmp (gensym '%tmp))
-			 (unary obj))
-		      (set! obj (J2SHopRef tmp))
+		   (let* ((tmp (gensym '%tmp))
+			  (decl (J2SDecl 'let-opt '(ref call) tmp))
+			  (unary obj))
+		      (set! obj (J2SRef decl))
 		      (epairify loc
 			 (with-access::J2SUnary unary (expr)
 			    `(let ((,tmp ,(j2s-scheme expr mode return ctx)))
@@ -1051,10 +1052,6 @@
 			  `(let ((,tmp ,(j2s-scheme obj mode return ctx)))
 			      ,(call-ref-method obj ccache acache
 				  ccspecs fun (J2SHopRef tmp) args)))))
-		  ((get-optional-chaining fun)
-		   =>
-		   (lambda (axs)
-		      (call-optional-chaining this axs)))
 		  ((and (context-get ctx :profile-call #f) (>=fx profid 0))
 		   (with-access::J2SAccess fun (obj loc)
 		      ;; when profile method call, inverse the call cache
@@ -1367,15 +1364,16 @@
 			,@(packargs (j2s-scheme args mode return ctx))))))))))
 
    (define (call-chaining-function protocol fun::J2SUnary thisargs args)
-      (with-access::J2SCall this (loc)
+      (with-access::J2SCall this (loc fun)
 	 (let ((tmp (gensym '%tmp)))
 	    (epairify loc
 	       (with-access::J2SUnary fun (expr)
 		  `(let ((,tmp ,(j2s-scheme expr mode return ctx)))
 		      (if (js-null-or-undefined? ,tmp)
 			  (js-undefined)
-			  ,(call-unknown-function protocol (J2SHopRef tmp)
-			      thisargs args))))))))
+			  ,(let ((decl (J2SDecl 'let-opt '(ref call) tmp)))
+			      (set! fun (J2SRef decl))
+			      (j2s-scheme this mode return ctx)))))))))
 
    (define (call-eval-function fun args)
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.1.1
@@ -1427,6 +1425,13 @@
       (let loop ((fun fun))
 	 (epairify loc
 	    (cond
+	       ((j2s-chaining? fun)
+		(call-chaining-function protocol fun
+		   (j2s-scheme thisarg mode return ctx) args))
+	       ((get-optional-chaining fun)
+		=>
+		(lambda (axs)
+		   (call-optional-chaining this axs)))
 	       ((eq? protocol 'spread)
 		(j2s-scheme-call-spread this mode return ctx))
 	       ((eq? (j2s-type fun) 'procedure)
@@ -1495,9 +1500,6 @@
 		(call-with-function fun args))
 	       ((isa? fun J2SPragma)
 		(call-pragma fun args))
-	       ((j2s-chaining? fun)
-		(call-chaining-function protocol fun
-		   (j2s-scheme thisarg mode return ctx) args))
 	       ((not (isa? fun J2SRef))
 		(call-unknown-function protocol fun
 		   (j2s-scheme thisarg mode return ctx) args))
