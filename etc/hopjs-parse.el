@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sat Jun  5 06:34:07 2021 (serrano)                */
+;*    Last change :  Wed Jun  9 15:27:54 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -185,7 +185,7 @@
      (let ((sym (intern (hopjs-parse-token-string tok))))
        (case sym
 	 ((service return try catch while if var let const else
-		   new case switch for yield do default from throw)
+		   new case switch for yield await do default from throw export)
 	  (aset tok 0 sym))
 	 ((function)
 	  (save-excursion
@@ -203,6 +203,14 @@
 		  (aset tok 0 'yield*)
 		  (aset tok 2 (match-end 0)))
 	      (aset tok 0 'yield))))
+	 ((await)
+	  (save-excursion
+	    (goto-char (hopjs-parse-token-beginning tok))
+	    (if (looking-at "await")
+		(progn
+		  (aset tok 0 'await)
+		  (aset tok 2 (match-end 0)))
+	      (aset tok 0 'await))))
 	 ((typeof)
 	  (aset tok 0 'unop)))
        tok))
@@ -452,6 +460,8 @@
 		  tok (when tok (hopjs-parse-token-string tok)))
      (when tok
        (let ((ptok (hopjs-parse-peek-token)))
+	 (hopjs-debug 0 "hopjs-parse-expr ptok=%s [%s]"
+		      ptok (hopjs-parse-token-string ptok))
 	 (case (hopjs-parse-token-type ptok)
 	   ((colon)
 	    (if (hopjs-parse-same-linep ptok tok)
@@ -556,7 +566,7 @@
 		    (hopjs-parse-expr ntok nil)
 		  btok))
 	    tok))
-	 ((unop new yield yield*)
+	 ((unop new yield yield* await)
 	  (let ((otok (hopjs-parse-consume-token-any))
 		(ntok (hopjs-parse-peek-token)))
 	    (hopjs-debug

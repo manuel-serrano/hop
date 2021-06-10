@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Mon Aug 26 08:33:27 2019 (serrano)                */
+;*    Last change :  Wed Jun  9 15:36:30 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -172,6 +172,10 @@
 	       (hopjs-debug 0 "hopjs-indent-new-lbrace args.3.. %s %s"
 			    tok (hopjs-parse-peek-token-type))
 	       (case (hopjs-parse-peek-token-type)
+		 ((export)
+		  ;; export function foo() { ... }
+		  (hopjs-indent-column-token
+		   (hopjs-parse-peek-token) hopjs-indent-level))
 		 ((= colon)
 		  ;; lhs = function ident (args) {
 		  (let ((etok (hopjs-parse-expr (hopjs-parse-consume-and-peek-token) t)))
@@ -297,7 +301,11 @@
 	    (hopjs-indent-column-token
 	     (hopjs-parse-consume-token-any) hopjs-indent-level))))
        ((=)
-	(hopjs-indent-new-= (hopjs-parse-consume-token-any)))
+	(let ((r (hopjs-indent-new-= (hopjs-parse-consume-token-any))))
+	  (if (eq (hopjs-parse-peek-token-type) 'export)
+	      (hopjs-indent-column-token
+	       (hopjs-parse-peek-token) hopjs-indent-level)
+	    r)))
        ((colon)
 	(let ((tok (hopjs-parse-consume-token-any)))
 	  (if (memq (hopjs-parse-peek-token-type) '(ident string regexp number))
@@ -895,7 +903,7 @@
 	      (if (hopjs-indent-first-on-linep b)
 		  (hopjs-indent-column-token tok 0)
 		(hopjs-indent-new (hopjs-parse-token-beginning tok)))))
-	   ((return throw new)
+	   ((return throw new await)
 	    (let ((rtok (hopjs-parse-consume-token-any)))
 	      (hopjs-debug 0
 			   "hopjs-indent-new-semicolon.new rtok=%s [%s]"
