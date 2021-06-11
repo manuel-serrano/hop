@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Wed Jun  9 15:36:30 2021 (serrano)                */
+;*    Last change :  Fri Jun 11 11:38:28 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -183,7 +183,7 @@
 		    (if etok
 			(hopjs-indent-column-token etok hopjs-indent-level)
 		      (hopjs-indent-column-token itok hopjs-indent-level))))
-		 ((return throw)
+		 ((return throw async)
 		  (hopjs-indent-column-token
 		   (hopjs-parse-peek-token) hopjs-indent-level))
 		 (t
@@ -242,7 +242,7 @@
 	     ;; indent with respect to this line indentation
 	     (or (hopjs-indent-column-line hopjs-indent-level)
 		 (hopjs-indent-column-token tok hopjs-indent-level)))
-	    ((return throw)
+	    ((return throw async)
 	     (hopjs-indent-column-token
 	      (hopjs-parse-peek-token) hopjs-indent-level))
 	    ((comma)

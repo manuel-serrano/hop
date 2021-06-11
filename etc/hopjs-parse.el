@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Wed Jun  9 15:27:54 2021 (serrano)                */
+;*    Last change :  Fri Jun 11 11:39:32 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -185,7 +185,8 @@
      (let ((sym (intern (hopjs-parse-token-string tok))))
        (case sym
 	 ((service return try catch while if var let const else
-		   new case switch for yield await do default from throw export)
+		   new case switch for yield do default from throw export
+		   await async)
 	  (aset tok 0 sym))
 	 ((function)
 	  (save-excursion
