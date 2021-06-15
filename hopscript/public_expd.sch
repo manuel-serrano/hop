@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Mon Jun 14 07:15:47 2021 (serrano)                */
+;*    Last change :  Tue Jun 15 08:59:53 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -121,7 +121,6 @@
    (match-case x
       ((?- ?hdl ?body)
        (let ((ohs (gensym 'ohs))
-	     (nhs (gensym 'nhs))
 	     (esc (gensym 'esc))
 	     (val (gensym 'val))
 	     (hds (gensym 'hdl))
@@ -131,9 +130,8 @@
 		     (,env (current-dynamic-env))
 		     (,ohs ($env-get-error-handler ,env)))
 		 (let ((,val (bind-exit :env ,env (,esc)
-				(let* ((,hds ($acons ,esc ,cell))
-				       (,nhs (cons ,hds ,ohs)))
-				   ($env-set-error-handler! ,env ,nhs)
+				(let ((,hds (cons ,esc ,cell)))
+				   ($env-set-error-handler! ,env ,hds)
 				   ,body))))
 		    ($env-set-error-handler! ,env ,ohs)
 		    (if (eq? ,val ,cell)
