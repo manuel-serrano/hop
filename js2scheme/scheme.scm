@@ -44,6 +44,7 @@
 	   __js2scheme_scheme-arguments
 	   __js2scheme_scheme-spread
 	   __js2scheme_scheme-bexit
+	   __js2scheme_scheme-try
 	   __js2scheme_scheme-constant)
    
    (export j2s-scheme-stage
@@ -787,27 +788,6 @@
 	     `(js-throw ,(j2s-scheme expr mode return ctx)
 		 ,(j2s-jsstring (cadr loc) loc ctx) ,(caddr loc))))))
    
-;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2STry ...                                          */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2STry mode return ctx)
-   (with-access::J2STry this (loc body catch finally)
-      (epairify-deep loc
-	 (let* ((trybody (j2s-scheme body mode return ctx))
-		(trie (if (isa? catch J2SNop)
-			  (j2s-scheme body mode return ctx)
-			  (with-access::J2SCatch catch (loc param body)
-			     (epairify-deep loc
-				`(with-handler
-				    (lambda (,(j2s-scheme param mode return ctx))
-				       ,(j2s-scheme body mode return ctx))
-				    ,trybody))))))
-	    (if (isa? finally J2SNop)
-		trie
-		`(unwind-protect
-		    ,trie
-		    ,(j2s-scheme finally mode return ctx)))))))
-
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SWith ...                                         */
 ;*---------------------------------------------------------------------*/
