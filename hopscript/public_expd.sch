@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Tue Jun 15 08:59:53 2021 (serrano)                */
+;*    Last change :  Tue Jun 15 09:55:04 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -126,14 +126,16 @@
 	     (hds (gensym 'hdl))
 	     (cell (gensym 'cell))
 	     (env (gensym 'env)))
-	  (e `(let* ((,cell ($make-stack-cell #unspecified))
+	  (e `(let* ((,cell (cond-expand
+			       (bigloo-compile ($make-stack-cell #unspecified))
+			       (else (make-cell #unspecified))))
 		     (,env (current-dynamic-env))
-		     (,ohs ($env-get-error-handler ,env)))
+		     (,ohs (env-get-error-handler ,env)))
 		 (let ((,val (bind-exit :env ,env (,esc)
 				(let ((,hds (cons ,esc ,cell)))
-				   ($env-set-error-handler! ,env ,hds)
+				   (env-set-error-handler! ,env ,hds)
 				   ,body))))
-		    ($env-set-error-handler! ,env ,ohs)
+		    (env-set-error-handler! ,env ,ohs)
 		    (if (eq? ,val ,cell)
 			(begin
 			   (sigsetmask 0)
