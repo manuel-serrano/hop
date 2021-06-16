@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.3.x/test/hopjs/noserv/ecma51.js       */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/ecma51.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Fri Jun 12 12:13:13 2020 (serrano)                */
-/*    Copyright   :  2014-20 Manuel Serrano                            */
+/*    Last change :  Wed Jun 16 19:31:10 2021 (serrano)                */
+/*    Copyright   :  2014-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
 /*=====================================================================*/
@@ -722,7 +722,7 @@ function fin2() {
    let tmp = 0;
    try {
       tmp = 6666;
-      throw 8888;
+      throw new Error(8888);
    } finally {
       tmp++;
    }
@@ -741,5 +741,5 @@ function fin3() {
 }
 
 assert.ok( fin1() === 6699, "fin.1" );
-assert.throws( function() { fin2() }, 8888, "fin.2" );
+assert.throws( function() { fin2() }, Error, "fin.2" );
 assert.ok( fin3() === 9, "fin.3" );

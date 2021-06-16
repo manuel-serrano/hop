@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Wed Apr 28 09:20:00 2021 (serrano)                */
+;*    Last change :  Wed Jun 16 17:59:41 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -769,7 +769,7 @@
 		       (else
 			(array-slice! this k final)))))))
        ;; generic slow case
-       (let* ((len (js-uint32-tointeger (js-get-lengthu32 this %this)))
+       (let* ((len (js-arguments-length this %this))
 	      (relstart (js-tointeger start %this))
 	      (k (if (< relstart 0) (max (+ len relstart) 0) (min relstart len)))
 	      (relend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
