@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Jun 17 08:12:39 2021 (serrano)                */
+#*    Last change :  Thu Jun 17 08:24:44 2021 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -107,7 +107,7 @@ bglhopscript.h: types.scm
 o/_bglhopscript.o: _bglhopscript.c bglhopscript.h bglhopscript_malloc.h
 	@ $(call compile2,$(CCOMP),$(CCFLAGS), -c $< -o $@)
 
-o/expanders.o: expanders.sch public_expand.sch property_expd.sch \
+o/expanders.o: expanders.sch public_expd.sch property_expd.sch \
   arithmetic.sch array.sch number.sch call.sch function.sch arguments.sch \
   stringliteral_expd.sch types_expd.sch constants_expd.sch names_expd.sch
 o/function.o: types.sch stringliteral.sch property.sch function.sch
