@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sat May 22 08:39:39 2021 (serrano)                */
+;*    Last change :  Fri Jun 18 15:04:16 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -594,11 +594,23 @@
 		 (set! checksum ,cs)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    module-name ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (module-name name)
+   (let ((sym (string->symbol name)) )
+      ;; rewrite Bigloo illegal module names
+      (case sym
+	 ((foreign) '__js_foreign)
+	 ((t) '__js_t)
+	 ((eval) '__js_eval)
+	 (else sym))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-module/main ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-module/main loc name)
    (epairify-deep loc
-      `(module ,(string->symbol name)
+      `(module ,(module-name name)
 	  (eval (library hop) (library hopscript) (library nodejs))
 	  (library hop hopscript nodejs)
 	  (cond-expand (enable-libuv (library libuv)))
@@ -609,7 +621,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-module loc name)
    (epairify-deep loc
-      `(module ,(string->symbol name)
+      `(module ,(module-name name)
 	  (library hop hopscript js2scheme nodejs)
 	  (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))))
 
