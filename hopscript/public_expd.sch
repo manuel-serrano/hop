@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Tue Jun 22 16:18:20 2021 (serrano)                */
+;*    Last change :  Tue Jun 22 18:23:19 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -140,6 +140,31 @@
 		     (else
 		      (let* ((,env (current-dynamic-env))
 			     (,ohs (env-get-error-handler ,env)))
+			 (let ((,cell ($make-stack-cell #unspecified)))
+			    (bind-exit :env ,env (,esc)
+			       (let ((,hds ($acons ,esc ,cell)))
+				  (env-set-error-handler! ,env ,hds)
+				  (let ((,val ,body))
+				     (env-set-error-handler! ,env ,ohs)
+				     ,val))
+			       (begin
+				  (sigsetmask 0)
+				  (env-set-error-handler! ,env ,ohs)
+				  (,hdl (cell-ref ,cell))))))))
+		 e)))
+	  ((no-cell-but-incorrect ?- ?hdl ?body)
+	   (let ((ohs (gensym 'ohs))
+		 (esc (gensym 'esc))
+		 (val (gensym 'val))
+		 (hds (gensym 'hdl))
+		 (cell (gensym 'cell))
+		 (env (gensym 'env)))
+	      (e `(cond-expand
+		     ((not bigloo-compile)
+		      (with-handler ,hdl ,body))
+		     (else
+		      (let* ((,env (current-dynamic-env))
+			     (,ohs (env-get-error-handler ,env)))
 			 (bind-exit :env ,env (,esc)
 			    (let ((,hds (cons ,esc ,env)))
 			       (env-set-error-handler! ,env ,hds)
@@ -151,7 +176,7 @@
 			       (env-set-error-handler! ,env ,ohs)
 			       (,hdl (env-get-exitd-val ,env)))))))
 		 e)))
-	  ((unused ?- ?hdl ?body)
+	  ((old ?- ?hdl ?body)
 	   (e `(with-handler ,hdl ,body) e))
 	  (else
 	   (error "js-with-handler-no-unwind" "bad syntax" x))))))
