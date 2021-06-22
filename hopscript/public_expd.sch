@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Sat Jun 19 06:42:26 2021 (serrano)                */
+;*    Last change :  Tue Jun 22 13:22:10 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -127,31 +127,7 @@
 	   (error "js-with-handler-no-unwind" "bad syntax" x))))
       (else
        (match-case x
- 	  ((?- ?hdl ?body)
-	   (let ((ohs (gensym 'ohs))
-		 (esc (gensym 'esc))
-		 (val (gensym 'val))
-		 (hds (gensym 'hdl))
-		 (cell (gensym 'cell))
-		 (env (gensym 'env)))
-	      (e `(cond-expand
-		     ((not bigloo-compile)
-		      (with-handler ,hdl ,body))
-		     (else
-		      (let* ((,env (current-dynamic-env))
-			     (,ohs (env-get-error-handler ,env)))
-			 (bind-exit :env ,env (,esc)
-			    (begin
-			       (env-set-error-handler! ,env ,esc)
-			       (let ((,val ,body))
-				  (env-set-error-handler! ,env ,ohs)
-				  ,val))
-			    (begin
-			       (sigsetmask 0)
-			       (env-set-error-handler! ,env ,ohs)
-			       (,hdl (env-get-exitd-val ,env)))))))
-		 e)))
-	  ((env ?- ?hdl ?body)
+	  ((new ?- ?hdl ?body)
 	   (let ((ohs (gensym 'ohs))
 		 (esc (gensym 'esc))
 		 (val (gensym 'val))
@@ -175,53 +151,7 @@
 			       (env-set-error-handler! ,env ,ohs)
 			       (,hdl (env-get-exitd-val ,env)))))))
 		 e)))
-	  ((orig ?- ?hdl ?body)
+	  ((?- ?hdl ?body)
 	   (e `(with-handler ,hdl ,body) e))
-	  ((old bind-exit ?- ?hdl ?body)
-	   (let ((ohs (gensym 'ohs))
-		 (esc (gensym 'esc))
-		 (val (gensym 'val))
-		 (hds (gensym 'hdl))
-		 (cell (gensym 'cell))
-		 (env (gensym 'env)))
-	      (e `(let* ((,cell ($make-stack-cell #unspecified))
-			 (,env (current-dynamic-env))
-			 (,ohs (env-get-error-handler ,env)))
-		     (let ((,val (bind-exit :env ,env (,esc)
-				    (let ((,hds (cons ,esc ,cell)))
-				       (env-set-error-handler! ,env ,hds)
-				       ,body))))
-			(env-set-error-handler! ,env ,ohs)
-			(if (eq? ,val ,cell)
-			    (begin
-			       (sigsetmask 0)
-			       (,hdl (cell-ref ,val)))
-			    ,val)))
-		 e)))
-	  ((cell ?- ?hdl ?body)
-	   (let ((ohs (gensym 'ohs))
-		 (esc (gensym 'esc))
-		 (val (gensym 'val))
-		 (hds (gensym 'hdl))
-		 (cell (gensym 'cell))
-		 (env (gensym 'env)))
-	      (e `(cond-expand
-		     ((not bigloo-compile)
-		      (with-handler ,hdl ,body))
-		     (else
-		      (let* ((,cell ($make-stack-cell #unspecified))
-			     (,env (current-dynamic-env))
-			     (,ohs (env-get-error-handler ,env)))
-			 (bind-exit :env ,env (,esc)
-			    (let ((,hds (cons ,esc ,cell)))
-			       (env-set-error-handler! ,env ,hds)
-			       (let ((,val ,body))
-				  (env-set-error-handler! ,env ,ohs)
-				  ,val))
-			    (begin
-			       (sigsetmask 0)
-			       (env-set-error-handler! ,env ,ohs)
-			       (,hdl (cell-ref ,cell)))))))
-		 e)))
 	  (else
 	   (error "js-with-handler-no-unwind" "bad syntax" x))))))
