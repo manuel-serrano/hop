@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Tue Jun 22 13:22:10 2021 (serrano)                */
+;*    Last change :  Tue Jun 22 16:18:20 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -127,7 +127,7 @@
 	   (error "js-with-handler-no-unwind" "bad syntax" x))))
       (else
        (match-case x
-	  ((new ?- ?hdl ?body)
+	  ((?- ?hdl ?body)
 	   (let ((ohs (gensym 'ohs))
 		 (esc (gensym 'esc))
 		 (val (gensym 'val))
@@ -151,7 +151,7 @@
 			       (env-set-error-handler! ,env ,ohs)
 			       (,hdl (env-get-exitd-val ,env)))))))
 		 e)))
-	  ((?- ?hdl ?body)
+	  ((unused ?- ?hdl ?body)
 	   (e `(with-handler ,hdl ,body) e))
 	  (else
 	   (error "js-with-handler-no-unwind" "bad syntax" x))))))
