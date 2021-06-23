@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Wed Jun 23 06:56:05 2021 (serrano)                */
+;*    Last change :  Wed Jun 23 07:00:38 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -150,7 +150,7 @@
 			       (begin
 				  (sigsetmask 0)
 				  (env-set-error-handler! ,env ,ohs)
-				  (,hdl (car ,hds))))))))
+				  (,hdl (cdr ,hds))))))))
 		 e)))
 	  ((no-cell-but-incorrect ?- ?hdl ?body)
 	   (let ((ohs (gensym 'ohs))
