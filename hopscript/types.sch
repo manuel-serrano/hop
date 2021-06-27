@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Wed Apr 28 07:34:17 2021 (serrano)                */
+;*    Last change :  Sun Jun 27 17:30:00 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Companion macros                                                 */
@@ -52,6 +52,7 @@
 (define-instantiate-sans JsHopFrame)
 (define-instantiate-sans JsServer)
 (define-instantiate-sans JsNumber)
+(define-instantiate-sans JsBigInt)
 (define-instantiate-sans JsMath)
 (define-instantiate-sans JsModule)
 (define-instantiate-sans JsRegExp)

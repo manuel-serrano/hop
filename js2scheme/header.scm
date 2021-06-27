@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Sun May 23 08:19:50 2021 (serrano)                */
+;*    Last change :  Sun Jun 27 17:08:08 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -181,6 +181,9 @@
 	    :sweepable #t)
 	 (js-def-extern 'Number #t writable
 	    `(with-access::JsGlobalObject %this (js-number) js-number)
+	    :sweepable #t)
+	 (js-def-extern 'BigInt #t writable
+	    `(with-access::JsGlobalObject %this (js-bigint) js-bigint)
 	    :sweepable #t)
 	 (js-def-extern 'Error #t writable
 	    `(with-access::JsGlobalObject %this (js-error) js-error)

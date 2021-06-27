@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Jun 25 14:23:18 2021 (serrano)                */
+;*    Last change :  Sun Jun 27 17:03:50 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -29,6 +29,7 @@
 	   __hopscript_string
 	   __hopscript_boolean
 	   __hopscript_number
+	   __hopscript_bigint
 	   __hopscript_property
 	   __hopscript_private
 	   __hopscript_worker
@@ -1946,7 +1947,7 @@
       ((fixnum? obj) (js-integer->jsstring obj))
       ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
       ((isa? obj JsSymbolLiteral) (js-string->jsstring (js-tostring obj %this)))
-      ((bignum? obj) (js-ascii->jsstring (bignum->string obj)))
+      ((bignum? obj) (js-bigint->jsstring obj))
       (else (js-tojsstring (js-toobject %this obj) %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -1960,7 +1961,7 @@
       ((eq? obj #f) (& "false"))
       ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
       ((isa? obj JsSymbolLiteral) (js-string->jsstring (js-tostring obj %this)))
-      ((bignum? obj) (js-ascii->jsstring (bignum->string obj)))
+      ((bignum? obj) (js-bigint->jsstring obj))
       (else (js-tojsstring (js-toobject %this obj) %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -2020,7 +2021,7 @@
       ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
       ((isa? obj JsSymbolLiteral) (js-string->jsstring (js-tostring obj %this)))
       ((string? obj) (js-string->jsstring obj))
-      ((bignum? obj) (js-ascii->jsstring (bignum->string obj)))
+      ((bignum? obj) (js-bigint->jsstring obj))
       (else (primitive->jsstring obj))))
 
 ;*---------------------------------------------------------------------*/
@@ -2184,6 +2185,11 @@
 	  (if (js-object? y)
 	      (equality? x ((@ js-toprimitive __hopscript_public) y 'any %this))
 	      #f))
+	 ((bignum? x)
+	  (cond
+	     ((bignum? y) (=bx x y))
+	     ((js-number? y) (= x y))
+	     (else #f)))
 	 (else
 	  #f))))
 
@@ -2784,28 +2790,17 @@
 ;*---------------------------------------------------------------------*/
 (define (js-typeof obj %this)
    (cond
-      ((or (fixnum? obj) (real? obj))
-       (& "number"))
-      ((js-jsstring? obj)
-       (& "string"))
-      ((js-procedure? obj)
-       (& "function"))
-      ((eq? obj (js-undefined))
-       (& "undefined"))
-      ((isa? obj JsSymbolLiteral)
-       (& "symbol"))
-      ((js-proxy? obj)
-       (js-proxy-typeof obj %this))
-      ((js-object? obj)
-       (& "object"))
-      ((boolean? obj)
-       (& "boolean"))
-      ((eq? obj (js-null))
-       (& "object"))
-      ((bignum? obj)
-       (& "bigint"))
-      (else
-       (js-string->jsstring (typeof obj)))))
+      ((or (fixnum? obj) (real? obj)) (& "number"))
+      ((js-jsstring? obj) (& "string"))
+      ((js-procedure? obj) (& "function"))
+      ((eq? obj (js-undefined)) (& "undefined"))
+      ((isa? obj JsSymbolLiteral) (& "symbol"))
+      ((js-proxy? obj) (js-proxy-typeof obj %this))
+      ((js-object? obj) (& "object"))
+      ((boolean? obj) (& "boolean"))
+      ((eq? obj (js-null)) (& "object"))
+      ((bignum? obj) (& "bigint"))
+      (else (js-string->jsstring (typeof obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-html-head ...                                                 */

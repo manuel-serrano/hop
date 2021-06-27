@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Mon Jun 14 07:23:02 2021 (serrano)                */
+;*    Last change :  Sun Jun 27 17:24:24 2021 (serrano)                */
 ;*    Copyright   :  2006-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -182,6 +182,8 @@
 	     ,js-instantiate-JsServer-expander))
    (eval `(define-expander instantiateJsNumber
 	     ,js-instantiate-JsNumber-expander))
+   (eval `(define-expander instantiateJsBigInt
+	     ,js-instantiate-JsBigInt-expander))
    (eval `(define-expander instantiateJsMath
 	     ,js-instantiate-JsMath-expander))
    (eval `(define-expander instantiateJsRegExp

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Fri May  7 11:15:51 2021 (serrano)                */
+;*    Last change :  Sun Jun 27 17:24:40 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -308,6 +308,7 @@
 (define-instantiate-expander JsHopFrame)
 (define-instantiate-expander JsServer)
 (define-instantiate-expander JsNumber)
+(define-instantiate-expander JsBigInt)
 (define-instantiate-expander JsMath)
 (define-instantiate-expander JsRegExp)
 (define-instantiate-expander JsBoolean)

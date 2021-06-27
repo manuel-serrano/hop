@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri May  7 10:00:19 2021 (serrano)                */
+;*    Last change :  Sun Jun 27 16:32:23 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -34,6 +34,7 @@
 	   __hopscript_set
 	   __hopscript_function
 	   __hopscript_number
+	   __hopscript_bigint
 	   __hopscript_math
 	   __hopscript_boolean
 	   __hopscript_regexp
@@ -329,6 +330,7 @@
 	    (js-init-string! %this)
 	    (js-init-boolean! %this)
 	    (js-init-number! %this)
+	    (js-init-bigint! %this)
 	    (js-init-math! %this)
 	    (js-init-regexp! %this)
 	    (js-init-date! %this)
@@ -571,7 +573,7 @@
       ;; Object.constructor
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.2.1
       (define (%js-object _ value)
-	 (with-access::JsGlobalObject %this (js-string js-boolean js-number js-object js-symbol)
+	 (with-access::JsGlobalObject %this (js-string js-boolean js-number js-object js-symbol js-bigint-prototype)
 	    (cond
 	       ((or (eq? value (js-null)) (eq? value (js-undefined)))
 		;; 2
@@ -589,6 +591,9 @@
 	       ((js-number? value)
 		;; 1.c
 		(js-new %this js-number value))
+	       ((bignum? value)
+		;; 1.d added 27jun2021
+		(js-bigint->jsBigInt value %this))
 	       (else
 		(js-toobject %this value)))))
 

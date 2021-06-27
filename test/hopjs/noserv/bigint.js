@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Sun Jun 27 09:36:45 2021 (serrano)                */
+/*    Last change :  Sun Jun 27 16:59:30 2021 (serrano)                */
 /*    Copyright   :  2015-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript bigint                                        */
@@ -24,19 +24,19 @@ function mdnConstructor() {
    const previouslyMaxSafeInteger = 9007199254740991n;
 
    const alsoHuge = BigInt(9007199254740991);
-   assert.equal(alsoHuge, 9007199254740991n);
+   assert.equal(alsoHuge, 9007199254740991n, "alsoHuge");
 
    const hugeString = BigInt("9007199254740991");
-   assert.equal(alsoHuge, 9007199254740991n);
+   assert.equal(alsoHuge, 9007199254740991n, "hugeString");
 
    const hugeHex = BigInt("0x1fffffffffffff");
-   assert.equal(alsoHuge, 9007199254740991n);
+   assert.equal(alsoHuge, 9007199254740991n), "hugeHex";
 
    const hugeOctal = BigInt("0o377777777777777777");
-   assert.equal(alsoHuge, 9007199254740991n);
+   assert.equal(alsoHuge, 9007199254740991n, "hugeOctal");
 
    const hugeBin = BigInt("0b11111111111111111111111111111111111111111111111111111");
-   assert.equal(alsoHuge, 9007199254740991n);
+   assert.equal(alsoHuge, 9007199254740991n, "hugeBin");
 }
 
 mdnConstructor();
@@ -182,6 +182,63 @@ function mdnPrime() {
 
 assert.equal(mdnPrime(), 73n);
 
+
+/*---------------------------------------------------------------------*/
+/*    kangax                                                           */
+/*---------------------------------------------------------------------*/
+function kangaxa() {
+   return (1n + 2n) === 3n;
+}
+
+function kangaxb() {
+   return BigInt("3") === 3n;
+}
+
+function kangaxc() {
+   return typeof BigInt.asUintN === 'function';
+}
+
+function kangaxd() {
+   return typeof BigInt.asIntN === 'function';
+}
+
+/* function kangaxe() {                                                */
+/*    var buffer = new ArrayBuffer(64);                                */
+/*    var view = new BigInt64Array(buffer);                            */
+/*    view[0] = 0x8000000000000000n;                                   */
+/*    return view[0] === -0x8000000000000000n;                         */
+/* }                                                                   */
+/*                                                                     */
+/* function kangaxf() {                                                */
+/*    var buffer = new ArrayBuffer(64);                                */
+/*    var view = new BigUint64Array(buffer);                           */
+/*    view[0] = 0x10000000000000000n;                                  */
+/*    return view[0] === 0n;                                           */
+/* }                                                                   */
+/*                                                                     */
+/* function kangaxg() {                                                */
+/*    var buffer = new ArrayBuffer(64);                                */
+/*    var view = new DataView(buffer);                                 */
+/*    view.setBigInt64(0, 1n);                                         */
+/*    return view.getBigInt64(0) === 1n;                               */
+/* }                                                                   */
+/*                                                                     */
+/* function kangaxh() {                                                */
+/*    var buffer = new ArrayBuffer(64);                                */
+/*    var view = new DataView(buffer);                                 */
+/*    view.setBigUint64(0, 1n);                                        */
+/*    return view.getBigUint64(0) === 1n;                              */
+/* }                                                                   */
+
+console.log("   Kangax...");
+assert.ok(kangaxa(), "kangaxa");
+assert.ok(kangaxb(), "kangaxb");
+assert.ok(kangaxc(), "kangaxc");
+assert.ok(kangaxd(), "kangaxd");
+/* assert.ok(kangaxe(), "kangaxe");                                    */
+/* assert.ok(kangaxf(), "kangaxf");                                    */
+/* assert.ok(kangaxg(), "kangaxg");                                    */
+/* assert.ok(kangaxh(), "kangaxh");                                    */
 
 
 
