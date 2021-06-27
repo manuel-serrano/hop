@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Fri Jun 25 13:56:42 2021 (serrano)                */
+;*    Last change :  Sun Jun 27 18:47:12 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -279,7 +279,7 @@
 	  (the-length)))
 
       ;; bigint
-      ((: (+ digit) #\n)
+      ((: (? #\-) (+ digit) #\n)
        (token 'BIGINT (string->bignum (the-substring 0 (-fx (the-length) 1)))
 	  (the-length)))
       

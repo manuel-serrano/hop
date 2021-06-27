@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jun 25 14:18:45 2021 (serrano)                */
+;*    Last change :  Sun Jun 27 17:57:55 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -628,22 +628,52 @@
       (if (flonum? o)
 	  (not (=fx (signbitfl o) 0))
 	  (<fx o 0)))
-   
-   (let* ((lnum (if (js-number? left) left (js-tonumber left %this)))
-	  (rnum (if (js-number? right) right (js-tonumber right %this)))
-	  (r (* lnum rnum)))
-      (cond
-	 ((fixnum? r)
-	  (if (=fx r 0)
-	      (if (or (and (neg? lnum) (not (neg? rnum)))
-		      (and (not (neg? lnum)) (neg? rnum)))
-		  -0.0
-		  r)
-	      r))
-	 ((bignum? r)
-	  (bignum->flonum r))
-	 (else
-	  r))))
+
+   (cond
+      ((fixnums? left right)
+       (*fx/overflow left right))
+      ((flonum? left)
+       (cond
+	  ((flonum? right)
+	   (*fl left right))
+	  ((fixnum? right)
+	   (*fl left (fixnum->flonum right)))
+	  ((bignum? right)
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions"
+	      right))
+	  (else
+	   (* left (js-tonumber right %this)))))
+      ((flonum? right)
+       (cond
+	  ((bignum? right)
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions"
+	      right))
+	  (else
+	   (* (js-tonumber left %this) right))))
+      ((bignum? left)
+       (if (bignum? right)
+	   (*bx left right)
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions"
+	      right)))
+      ((bignum? right)
+       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	  left))
+      (else
+       (let* ((lnum (js-tonumber left %this))
+	      (rnum (js-tonumber right %this))
+	      (r (* lnum rnum)))
+	  (cond
+	     ((fixnum? r)
+	      (if (=fx r 0)
+		  (if (or (and (neg? lnum) (not (neg? rnum)))
+			  (and (not (neg? lnum)) (neg? rnum)))
+		      -0.0
+		      r)
+		  r))
+	     ((bignum? r)
+	      (bignum->flonum r))
+	     (else
+	      r))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js/ ...                                                          */

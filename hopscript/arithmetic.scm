@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Sat Feb  8 07:14:09 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Sun Jun 27 18:06:25 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
 ;*=====================================================================*/
@@ -63,6 +63,7 @@
 	   (%$$FF::double ::double ::double)
 	   (%$$NF::double ::obj ::double)
 	   (%$$FN::double ::double ::obj)
+	   (%$$__ x y ::JsGlobalObject)
 	   
 	   (bit-lshjs::obj ::obj ::obj ::JsGlobalObject)
 	   (bit-rshjs::obj ::obj ::obj ::JsGlobalObject)
@@ -106,9 +107,21 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
 ;*---------------------------------------------------------------------*/
 (define (+js x::obj y::obj %this)
-   (let* ((nx (if (js-number? x) x (js-tonumber x %this)))
-	  (ny (if (js-number? y) y (js-tonumber y %this))))
-      (+/overflow nx ny)))
+   (cond 
+      ((and (js-number? x) (js-number? y))
+       (+/overflow x y))
+      ((bignum? x)
+       (if (bignum? y)
+	   (+bx x y)
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	      y)))
+      ((bignum? y)
+       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	  x))
+      (else
+       (let* ((nx (js-tonumber x %this))
+	      (ny (js-tonumber y %this)))
+	  (+/overflow nx ny)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    -js ...                                                          */
@@ -116,9 +129,21 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.2       */
 ;*---------------------------------------------------------------------*/
 (define (-js x::obj y::obj %this)
-   (let* ((nx (if (js-number? x) x (js-tonumber x %this)))
-	  (ny (if (js-number? y) y (js-tonumber y %this))))
-      (-/overflow nx ny)))
+   (cond 
+      ((and (js-number? x) (js-number? y))
+       (-/overflow x y))
+      ((bignum? x)
+       (if (bignum? y)
+	   (-bx x y)
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	      y)))
+      ((bignum? y)
+       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	  x))
+      (else
+       (let* ((nx (js-tonumber x %this))
+	      (ny (js-tonumber y %this)))
+	  (-/overflow nx ny)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    *js ...                                                          */
@@ -126,9 +151,21 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.1       */
 ;*---------------------------------------------------------------------*/
 (define (*js x::obj y::obj %this)
-   (let* ((nx (if (js-number? x) x (js-tonumber x %this)))
-			 (ny (if (js-number? y) y (js-tonumber y %this))))
-      (*/overflow nx ny)))
+   (cond
+      ((and (js-number? x) (js-number? y))
+       (*/overflow x y))
+      ((bignum? x)
+       (if (bignum? y)
+	   (*bx x y)
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	      y)))
+      ((bignum? y)
+       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	  x))
+      (else
+       (let* ((nx (js-tonumber x %this))
+	      (ny (js-tonumber y %this)))
+	  (*/overflow nx ny)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    **js ...                                                         */
@@ -137,9 +174,21 @@
 ;*       #sec-applying-the-exp-operator                                */
 ;*---------------------------------------------------------------------*/
 (define (**js x::obj y::obj %this)
-   (let* ((nx (if (js-number? x) x (js-tonumber x %this)))
-	  (ny (if (js-number? y) y (js-tonumber y %this))))
-      (exptfl (js-toflonum nx) (js-toflonum ny))))
+   (cond
+      ((and (js-number? x) (js-number? y))
+       (exptfl (js-toflonum x) (js-toflonum y)))
+      ((bignum? x)
+       (if (bignum? y)
+	   (exptbx x y)
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	      y)))
+      ((bignum? y)
+       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	  x))
+      (else
+       (let* ((nx (js-tonumber x %this))
+	      (ny (js-tonumber y %this)))
+	  (exptfl (js-toflonum nx) (js-toflonum ny))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    /js ...                                                          */
@@ -147,7 +196,16 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.2       */
 ;*---------------------------------------------------------------------*/
 (define (/js x::obj y::obj %this)
-   (/fl (toflonum x %this) (toflonum y %this)))
+   (cond
+      ((and (flonum? x) (flonum? y))
+       (/fl x y))
+      ((bignum? x)
+       (if (bignum? y)
+	   (/bx x y)
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	      y)))
+      (else
+       (/fl (toflonum x %this) (toflonum y %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    toflonum ...                                                     */
@@ -257,6 +315,32 @@
        +nan.0)
       (else
        (%$$NZ lnum rnum))))
+
+;*---------------------------------------------------------------------*/
+;*    %$$__ ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (%$$__ x y %this)
+   (cond
+      ((and (fixnums? x y) (>=fx x 0) (not (=fx y 0)))
+       (remainderfx x y))
+      ((bignum? x)
+       (if (bignum? y)
+	   (remainderbx x y)
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions"
+	      y)))
+      ((bignum? y)
+       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions"
+	  x))
+      (else
+       (let ((lnum (js-tonumber x %this))
+	     (rnum (js-tonumber y %this)))
+	  (cond
+	     ((and (fixnums? lnum rnum) (>=fx lnum 0) (not (=fx rnum 0)))
+	      (remainderfx lnum rnum))
+	     ((= rnum 0)
+	      +nan.0)
+	     (else
+	      (%$$NZ lnum rnum)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %$$NZ ...                                                        */
