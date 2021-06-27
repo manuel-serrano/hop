@@ -320,11 +320,16 @@ function formatPrimitive(ctx, value) {
       return ctx.stylize('' + value, 'number');
 
     case 'boolean':
-	return ctx.stylize('' + value, 'boolean');
+      return ctx.stylize('' + value, 'boolean');
 
 // MS: 2017-11-26, symbols support	
-     case 'symbol':
-	return ctx.stylize(value.toString(), 'symbol');
+    case 'symbol':
+      return ctx.stylize(value.toString(), 'symbol');
+	
+// MS: 2021-06-15, bigint support	
+    case 'bigint':
+      return ctx.stylize('' + value, 'bigint');
+
   }
   // For some reason typeof null is "object", so special case here.
   if (value === null) {

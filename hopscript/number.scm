@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Apr 28 09:28:04 2021 (serrano)                */
+;*    Last change :  Fri Jun 25 14:18:45 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -590,6 +590,14 @@
 	  (js-jsstring-append left (js-tojsstring right %this)))
 	 ((js-jsstring? right)
 	  (js-jsstring-append (js-tojsstring left %this) right))
+	 ((bignum? left)
+	  (if (bignum? right)
+	      (+bx left right)
+	      (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions"
+		 right)))
+	 ((bignum? right)
+	  (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	     left))
 	 (else
 	  (let* ((left (js-tonumber left %this))
 		 (right (js-tonumber right %this)))

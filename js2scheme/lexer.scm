@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Sat Jun  5 08:39:23 2021 (serrano)                */
+;*    Last change :  Fri Jun 25 13:56:42 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -276,6 +276,11 @@
 	  (the-length)))
       ((: (uncase "0o") (+ odigit))
        (token 'NUMBER (js-string->number (the-substring 2 (the-length)) 8)
+	  (the-length)))
+
+      ;; bigint
+      ((: (+ digit) #\n)
+       (token 'BIGINT (string->bignum (the-substring 0 (-fx (the-length) 1)))
 	  (the-length)))
       
       (#\{ (token 'LBRACE #\{ 1))

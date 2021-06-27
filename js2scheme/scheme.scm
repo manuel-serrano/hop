@@ -633,7 +633,7 @@
 	     ((flonum? val) val)
 	     ((uint32? val) (int32->flonum val))
 	     ((uint32? val) (uint32->flonum val))
-	     ((bignum? val) (bignum->flonum val))
+	     ((bignum? val) val)
 	     (else (fixnum->flonum val)))))))
 
 ;*---------------------------------------------------------------------*/

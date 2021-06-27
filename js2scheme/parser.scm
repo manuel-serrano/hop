@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Jun  5 08:11:23 2021 (serrano)                */
+;*    Last change :  Fri Jun 25 13:58:20 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2519,6 +2519,8 @@
       (cond
 	 ((flonum? val)
 	  val)
+	 ((bignum? val)
+	  val)
 	 ((or (>llong (fixnum->llong val) (conf-max-int conf))
 	      (<llong (fixnum->llong val) (conf-min-int conf)))
 	  (fixnum->flonum val))
@@ -2727,6 +2729,11 @@
 	 ((OCTALNUMBER)
 	  (let ((token (consume-token! 'OCTALNUMBER)))
 	     (instantiate::J2SOctalNumber
+		(loc (token-loc token))
+		(val (number (token-value token) conf)))))
+	 ((BIGINT)
+	  (let ((token (consume-token! 'BIGINT)))
+	     (instantiate::J2SNumber
 		(loc (token-loc token))
 		(val (number (token-value token) conf)))))
 	 ((STRING TSTRING)

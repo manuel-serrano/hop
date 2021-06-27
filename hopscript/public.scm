@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Jun  5 07:02:50 2021 (serrano)                */
+;*    Last change :  Fri Jun 25 14:23:18 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1932,6 +1932,7 @@
       ((eq? obj #f) "false")
       ((eq? obj (js-null)) "null")
       ((js-number? obj) (js-number->string obj))
+      ((bignum? obj) (bignum->string obj))
       (else (typeof obj))))
 
 ;*---------------------------------------------------------------------*/
@@ -1945,6 +1946,7 @@
       ((fixnum? obj) (js-integer->jsstring obj))
       ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
       ((isa? obj JsSymbolLiteral) (js-string->jsstring (js-tostring obj %this)))
+      ((bignum? obj) (js-ascii->jsstring (bignum->string obj)))
       (else (js-tojsstring (js-toobject %this obj) %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -1958,6 +1960,7 @@
       ((eq? obj #f) (& "false"))
       ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
       ((isa? obj JsSymbolLiteral) (js-string->jsstring (js-tostring obj %this)))
+      ((bignum? obj) (js-ascii->jsstring (bignum->string obj)))
       (else (js-tojsstring (js-toobject %this obj) %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -2017,6 +2020,7 @@
       ((js-number? obj) (js-ascii->jsstring (js-number->string obj)))
       ((isa? obj JsSymbolLiteral) (js-string->jsstring (js-tostring obj %this)))
       ((string? obj) (js-string->jsstring obj))
+      ((bignum? obj) (js-ascii->jsstring (bignum->string obj)))
       (else (primitive->jsstring obj))))
 
 ;*---------------------------------------------------------------------*/
@@ -2798,6 +2802,8 @@
        (& "boolean"))
       ((eq? obj (js-null))
        (& "object"))
+      ((bignum? obj)
+       (& "bigint"))
       (else
        (js-string->jsstring (typeof obj)))))
 
