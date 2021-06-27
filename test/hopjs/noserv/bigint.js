@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Sun Jun 27 16:59:30 2021 (serrano)                */
+/*    Last change :  Sun Jun 27 18:55:48 2021 (serrano)                */
 /*    Copyright   :  2015-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript bigint                                        */
@@ -91,7 +91,7 @@ mdnOperator();
 
 // comparison
 function mdnComparison() {
-   console.log("   operator...");
+   console.log("   comparison...");
 
    assert.equal(0n === 0, false);
    assert.equal(0n == 0, true);
