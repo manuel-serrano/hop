@@ -90,6 +90,7 @@ POPULATION = Makefile \
   hopjs/noserv/aux/faultySubmodule.js \
   hopjs/noserv/comp.js \
   hopjs/noserv/es2020.js \
+  hopjs/noserv/bigint.js \
   hopjs/serv/asyncSrvRsp.js \
   hopjs/serv/asyncSrvRsp2.js \
   hopjs/serv/asyncSrvWS.js \
