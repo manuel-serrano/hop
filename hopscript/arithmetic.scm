@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Sun Jun 27 18:06:25 2021 (serrano)                */
+;*    Last change :  Mon Jun 28 15:33:37 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -494,8 +494,10 @@
 	   (<fl left right))
 	  ((fixnum? right)
 	   (<fl left (fixnum->flonum right)))
+	  ((bignum? right)
+	   (<fl left (bignum->flonum right)))
 	  (else
-	   (let* ((ny (js-tonumber (js-toprimitive right 'number %this) %this)))
+	   (let ((ny (js-tonumber (js-toprimitive right 'number %this) %this)))
 	      (< left ny)))))
       ((fixnum? left)
        (cond
@@ -503,6 +505,17 @@
 	   (<fx left right))
 	  ((flonum? right)
 	   (<fl (fixnum->flonum left) right))
+	  ((bignum? right)
+	   (<fx left (bignum->fixnum right)))
+	  (else
+	   (let* ((ny (js-tonumber (js-toprimitive right 'number %this) %this)))
+	      (< left ny)))))
+      ((bignum? left)
+       (cond
+	  ((fixnum? right)
+	   (<bx left (fixnum->bignum right)))
+	  ((flonum? right)
+	   (<bx left (flonum->bignum right)))
 	  (else
 	   (let* ((ny (js-tonumber (js-toprimitive right 'number %this) %this)))
 	      (< left ny)))))
@@ -524,15 +537,48 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.2       */
 ;*---------------------------------------------------------------------*/
 (define (>js left right %this::JsGlobalObject)
-   (if (and (js-number? left) (js-number? right))
-       (> left right)
-       (let* ((px (js-toprimitive left 'number %this))
-	      (py (js-toprimitive right 'number %this)))
-	  (if (and (js-jsstring? px) (js-jsstring? py))
-	      (js-jsstring>? px py)
-	      (let ((nx (js-tonumber px %this))
-		    (ny (js-tonumber py %this)))
-		 (> nx ny))))))
+   (cond
+      ((flonum? left)
+       (cond
+	  ((flonum? right)
+	   (>fl left right))
+	  ((fixnum? right)
+	   (>fl left (fixnum->flonum right)))
+	  ((bignum? right)
+	   (>fl left (bignum->flonum right)))
+	  (else
+	   (let ((ny (js-tonumber (js-toprimitive right 'number %this) %this)))
+	      (> left ny)))))
+      ((fixnum? left)
+       (cond
+	  ((fixnum? right)
+	   (>fx left right))
+	  ((flonum? right)
+	   (>fl (fixnum->flonum left) right))
+	  ((bignum? right)
+	   (>fx left (bignum->fixnum right)))
+	  (else
+	   (let* ((ny (js-tonumber (js-toprimitive right 'number %this) %this)))
+	      (> left ny)))))
+      ((bignum? left)
+       (cond
+	  ((fixnum? right)
+	   (>bx left (fixnum->bignum right)))
+	  ((flonum? right)
+	   (>bx left (flonum->bignum right)))
+	  (else
+	   (let* ((ny (js-tonumber (js-toprimitive right 'number %this) %this)))
+	      (> left ny)))))
+      (else
+       (if (and (js-number? left) (js-number? right))
+	   (> left right)
+	   (let* ((px (js-toprimitive left 'number %this))
+		  (py (js-toprimitive right 'number %this)))
+	      (if (and (js-jsstring? px) (js-jsstring? py))
+		  (js-jsstring>? px py)
+		  (let ((nx (js-tonumber px %this))
+			(ny (js-tonumber py %this)))
+		     (> nx ny))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <=js                                                             */
@@ -540,15 +586,49 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.3       */
 ;*---------------------------------------------------------------------*/
 (define (<=js left right %this::JsGlobalObject)
-   (if (and (js-number? left) (js-number? right))
-       (<= left right)
+   (cond
+      ((flonum? left)
+       (cond
+	  ((flonum? right)
+	   (<=fl left right))
+	  ((fixnum? right)
+	   (<=fl left (fixnum->flonum right)))
+	  ((bignum? right)
+	   (<=fl left (bignum->flonum right)))
+	  (else
+	   (let ((ny (js-tonumber (js-toprimitive right 'number %this) %this)))
+	      (<= left ny)))))
+      ((fixnum? left)
+       (cond
+	  ((fixnum? right)
+	   (<=fx left right))
+	  ((flonum? right)
+	   (<=fl (fixnum->flonum left) right))
+	  ((bignum? right)
+	   (<=fx left (bignum->fixnum right)))
+	  (else
+	   (let* ((ny (js-tonumber (js-toprimitive right 'number %this) %this)))
+	      (<= left ny)))))
+      ((bignum? left)
+       (cond
+	  ((fixnum? right)
+	   (<=bx left (fixnum->bignum right)))
+	  ((flonum? right)
+	   (<=bx left (flonum->bignum right)))
+	  (else
+	   (let* ((ny (js-tonumber (js-toprimitive right 'number %this) %this)))
+	      (<= left ny)))))
+      ((or (fixnum? right) (flonum? right))
+       (let* ((nx (js-tonumber (js-toprimitive left 'number %this) %this)))
+	  (<= nx right)))
+      (else
        (let* ((px (js-toprimitive left 'number %this))
 	      (py (js-toprimitive right 'number %this)))
 	  (if (and (js-jsstring? px) (js-jsstring? py))
 	      (js-jsstring<=? px py)
 	      (let ((nx (js-tonumber px %this))
 		    (ny (js-tonumber py %this)))
-		 (<= nx ny))))))
+		 (<= nx ny)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    >=js                                                             */
@@ -556,15 +636,48 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.4       */
 ;*---------------------------------------------------------------------*/
 (define (>=js left right %this::JsGlobalObject)
-   (if (and (js-number? left) (js-number? right))
-       (>= left right)
-       (let* ((px (js-toprimitive left 'number %this))
-	      (py (js-toprimitive right 'number %this)))
-	  (if (and (js-jsstring? px) (js-jsstring? py))
-	      (js-jsstring>=? px py)
-	      (let ((nx (js-tonumber px %this))
-		    (ny (js-tonumber py %this)))
-		 (>= nx ny))))))
+   (cond
+      ((flonum? left)
+       (cond
+	  ((flonum? right)
+	   (>=fl left right))
+	  ((fixnum? right)
+	   (>=fl left (fixnum->flonum right)))
+	  ((bignum? right)
+	   (>=fl left (bignum->flonum right)))
+	  (else
+	   (let ((ny (js-tonumber (js-toprimitive right 'number %this) %this)))
+	      (>= left ny)))))
+      ((fixnum? left)
+       (cond
+	  ((fixnum? right)
+	   (>=fx left right))
+	  ((flonum? right)
+	   (>=fl (fixnum->flonum left) right))
+	  ((bignum? right)
+	   (>=fx left (bignum->fixnum right)))
+	  (else
+	   (let* ((ny (js-tonumber (js-toprimitive right 'number %this) %this)))
+	      (>= left ny)))))
+      ((bignum? left)
+       (cond
+	  ((fixnum? right)
+	   (>=bx left (fixnum->bignum right)))
+	  ((flonum? right)
+	   (>=bx left (flonum->bignum right)))
+	  (else
+	   (let* ((ny (js-tonumber (js-toprimitive right 'number %this) %this)))
+	      (>= left ny)))))
+      (else
+       (if (and (js-number? left) (js-number? right))
+	   (>= left right)
+	   (let* ((px (js-toprimitive left 'number %this))
+		  (py (js-toprimitive right 'number %this)))
+	      (if (and (js-jsstring? px) (js-jsstring? py))
+		  (js-jsstring>=? px py)
+		  (let ((nx (js-tonumber px %this))
+			(ny (js-tonumber py %this)))
+		     (>= nx ny))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    >>=js ...                                                        */

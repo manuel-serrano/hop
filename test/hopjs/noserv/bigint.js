@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Sun Jun 27 18:55:48 2021 (serrano)                */
+/*    Last change :  Mon Jun 28 15:47:22 2021 (serrano)                */
 /*    Copyright   :  2015-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript bigint                                        */
@@ -103,10 +103,10 @@ function mdnComparison() {
    assert.equal(2n >= 2, true);
 
    const mixed = [4n, 6, -12n, 10, 4, 0, 0n];
-   assert.deepEqual(mixed, [4n, 6, -12n, 10, 4, 0, 0n]);
+   assert.deepEqual(mixed, [4n, 6, -12n, 10, 4, 0, 0n], "mixed");
 
    mixed.sort(); // default sorting behavior
-   assert.deepEqual(mixed, [-12n, 0, 0n, 10, 4n, 4, 6]);
+   assert.deepEqual(mixed, [-12n, 0, 0n, 10, 4n, 4, 6], "sort");
 
    assert.throws(() => {
 	 mixed.sort((a, b) => a - b);
