@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Fri Jun 25 13:34:53 2021                          */
-;*    Last change :  Sun Jun 27 17:32:22 2021 (serrano)                */
+;*    Last change :  Sun Jul  4 08:41:32 2021 (serrano)                */
 ;*    Copyright   :  2021 manuel serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript BigInt                       */
@@ -110,7 +110,7 @@
 	    :alloc js-not-a-constructor-alloc))
       ;; now the bigint constructor is fully built,
       ;; initialize the prototype properties
-      (init-builtin-bigint-prototype! %this js-bigint js-bigint-prototype)
+      (init-builtin-bigint-prototype! %this js-bigint-prototype)
       ;; bind BigInt in the global object
       (js-bind! %this %this (& "BigInt")
 	 :configurable #f :enumerable #f :value js-bigint
@@ -139,7 +139,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.6.3.1     */
 ;*---------------------------------------------------------------------*/
-(define (init-builtin-bigint-prototype! %this::JsGlobalObject js-bigint obj)
+(define (init-builtin-bigint-prototype! %this::JsGlobalObject obj)
    ;; toString
    (js-bind! %this obj (& "toString")
       :value (js-make-function %this
@@ -176,7 +176,13 @@
 		(js-function-info :name "valueOf" :len 0))
       :enumerable #f
       :hidden-class #t))
-      
+
+;*---------------------------------------------------------------------*/
+;*    js-tostring ::JsBigInt ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (js-tostring obj::JsBigInt %this::JsGlobalObject)
+   (js-bigint->jsstring obj))
+
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

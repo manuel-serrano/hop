@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Mon Jun 28 15:47:22 2021 (serrano)                */
+/*    Last change :  Sun Jul  4 07:32:16 2021 (serrano)                */
 /*    Copyright   :  2015-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript bigint                                        */
@@ -11,6 +11,13 @@
 "use strict";
 
 var assert = require("assert");
+
+/*---------------------------------------------------------------------*/
+/*    misc                                                             */
+/*---------------------------------------------------------------------*/
+console.log("misc");
+
+assert.equal(0n.toString(), "0", "toString");
 
 /*---------------------------------------------------------------------*/
 /*    mdn                                                              */
@@ -106,7 +113,7 @@ function mdnComparison() {
    assert.deepEqual(mixed, [4n, 6, -12n, 10, 4, 0, 0n], "mixed");
 
    mixed.sort(); // default sorting behavior
-   assert.deepEqual(mixed, [-12n, 0, 0n, 10, 4n, 4, 6], "sort");
+   assert.deepEqual(mixed.map(BigInt), [-12n, 0n, 0n, 10n, 4n, 4n, 6n], "sort");
 
    assert.throws(() => {
 	 mixed.sort((a, b) => a - b);

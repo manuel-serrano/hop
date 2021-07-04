@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Jun 27 17:03:50 2021 (serrano)                */
+;*    Last change :  Sun Jul  4 07:34:11 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -2047,6 +2047,8 @@
        o)
       ((string? o)
        (js-jsstring->JsString (js-string->jsstring o) %this))
+      ((bignum? o)
+       (js-bigint->jsBigInt o %this))
       (else
        #f)))
 

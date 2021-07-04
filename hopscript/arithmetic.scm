@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Mon Jun 28 15:33:37 2021 (serrano)                */
+;*    Last change :  Sun Jul  4 14:11:26 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -512,6 +512,8 @@
 	      (< left ny)))))
       ((bignum? left)
        (cond
+	  ((bignum? right)
+	   (<bx left right))
 	  ((fixnum? right)
 	   (<bx left (fixnum->bignum right)))
 	  ((flonum? right)
@@ -562,6 +564,8 @@
 	      (> left ny)))))
       ((bignum? left)
        (cond
+	  ((bignum? right)
+	   (>bx left right))
 	  ((fixnum? right)
 	   (>bx left (fixnum->bignum right)))
 	  ((flonum? right)
@@ -611,6 +615,8 @@
 	      (<= left ny)))))
       ((bignum? left)
        (cond
+	  ((bignum? right)
+	   (<=bx left right))
 	  ((fixnum? right)
 	   (<=bx left (fixnum->bignum right)))
 	  ((flonum? right)
@@ -661,6 +667,8 @@
 	      (>= left ny)))))
       ((bignum? left)
        (cond
+	  ((bignum? right)
+	   (>=bx left right))
 	  ((fixnum? right)
 	   (>=bx left (fixnum->bignum right)))
 	  ((flonum? right)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue May  4 17:37:22 2021 (serrano)                */
+;*    Last change :  Sun Jul  4 08:44:15 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2411,10 +2411,7 @@
        (js-get-null _o (js-toname prop %this) %this))
       (else
        (let ((o (js-toobject/debug %this loc _o)))
-	  ;; must still use _o object
-	  ;; see https://bugs.ecmascript.org/show_bug.cgi?id=333
-	  ;; or test262 10.4.3-1-106.js
-	  (js-get _o prop %this)))))
+	  (js-get-jsobject o _o prop %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-length ::obj ...                                          */

@@ -5727,7 +5727,7 @@
 	    (nothask #t)
 	    ((eq? x (js-undefined)) (eq? y (js-undefined)))
 	    ((eq? y (js-undefined)) #t)
-	    (else (string<=? (js-tostring x %this) (js-tostring y %this))))))
+	    (else (string<? (js-tostring x %this) (js-tostring y %this))))))
    
    (define (make-compare comparefn)
       (lambda (x y)

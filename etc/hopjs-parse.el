@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Fri Jun 11 11:39:32 2021 (serrano)                */
+;*    Last change :  Sun Jul  4 13:48:34 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -71,7 +71,7 @@
      ;; binop
      (cons (rxor "<" ">" (rxq "+") (rxq "-") (rxq "*") "%" "=" "|" "/"
 		 "<<" ">>" ">>>" "[&^]") 'binop)
-     (cons (rxor "&&" "||" "in" "??") 'binop)
+     (cons (rxor "&&" "||" "in") 'binop1)
      (cons "instanceof" 'binop)
      (cons "[?][?]" 'binop)
      (cons (rxor "<=" ">="  "!==*" "===*" "[+*%^&-]=" "<<=" ">>=" ">>>=") '=)
@@ -270,8 +270,8 @@
 	(let ((tok (looking-at-token)))
 	  (cond
 	   (tok
-;* 	    (hopjs-debug 0 "hopjs-parse-line pos=%s point=%s tok=%s"   */
-;* 			    pos (point) tok)                           */
+	    (hopjs-debug 0 "hopjs-parse-line pos=%s point=%s tok=%s"
+			    pos (point) tok)
 	    (if (eq (hopjs-parse-token-type tok) 'ohtml)
 		;; ohtml must be split in two parts: the tag and the attr
 		(progn
