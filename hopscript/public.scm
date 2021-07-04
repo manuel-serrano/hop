@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Jul  4 18:35:12 2021 (serrano)                */
+;*    Last change :  Sun Jul  4 18:58:37 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1737,6 +1737,7 @@
       ((object? obj) #t)
       ((fixnum? obj) (not (=fx obj 0)))
       ((flonum? obj) (not (or (=fl obj 0.0) (nanfl? obj))))
+      ((bignum? obj) (not (=bx obj #z0)))
       (else #t)))
 
 ;*---------------------------------------------------------------------*/
