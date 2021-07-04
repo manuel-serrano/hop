@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Jun 25 14:02:06 2021 (serrano)                */
+;*    Last change :  Sun Jul  4 18:51:01 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -71,7 +71,7 @@
 (define (utype-compatible? utype type)
    (or (eq? utype type)
        (eq? type 'magic)
-       (and (eq? utype 'number) (memq type '(integer real bignum)))
+       (and (eq? utype 'number) (memq type '(integer real bigint)))
        (and (eq? utype 'object) (memq type '(string array jsvector)))))
 
 ;*---------------------------------------------------------------------*/
@@ -262,7 +262,7 @@
 ;*    typnum? ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (typnum? ty::symbol)
-   (memq ty '(index length indexof integer real bignum number)))
+   (memq ty '(index length indexof integer real bigint number)))
 
 ;*---------------------------------------------------------------------*/
 ;*    funtype ...                                                      */
@@ -431,7 +431,7 @@
 (define-walk-method (node-type this::J2SNumber env::pair-nil ctx::pair)
    (with-access::J2SNumber this (val type)
       (expr-type-add! this env ctx
-	 (if (flonum? val) 'real (if (bignum? val) 'bignum 'integer)))))
+	 (if (flonum? val) 'real (if (bignum? val) 'bigint 'integer)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SBool ...                                          */
@@ -1425,8 +1425,8 @@
 			(cond
 			   ((and (eq? typl 'real) (eq? typr 'real))
 			    'real)
-			   ((and (eq? typl 'bignum) (eq? typr 'bignum))
-			    'bignum)
+			   ((and (eq? typl 'bigint) (eq? typr 'bigint))
+			    'bigint)
 			   ((and (type-integer? typl) (type-integer? typr))
 			    'integer)
 			   ((or (and (type-integer? typl) (eq? typr 'bool))
@@ -1446,8 +1446,8 @@
 			(cond
 			   ((and (eq? typl 'real) (eq? typr 'real))
 			    'real)
-			   ((and (eq? typl 'bignum) (eq? typr 'bignum))
-			    'bignum)
+			   ((and (eq? typl 'bigint) (eq? typr 'bigint))
+			    'bigint)
 			   ((and (type-integer? typl) (type-integer? typr))
 			    'integer)
 			   ((and (typnum? typl) (typnum? typr))
@@ -1464,8 +1464,8 @@
 			(cond
 			   ((or (eq? typl 'real) (eq? typr 'real))
 			    'real)
-			   ((or (eq? typl 'bignum) (eq? typr 'bignum))
-			    'bignum)
+			   ((or (eq? typl 'bigint) (eq? typr 'bigint))
+			    'bigint)
 			   ((and (type-integer? typl) (type-integer? typr))
 			    'integer)
 			   ((or (eq? typl 'unknown) (eq? typr 'unknown))
@@ -1476,8 +1476,8 @@
 			(cond
 			   ((or (eq? typl 'real) (eq? typr 'real))
 			    'real)
-			   ((or (eq? typl 'bignum) (eq? typr 'bignum))
-			    'bignum)
+			   ((or (eq? typl 'bigint) (eq? typr 'bigint))
+			    'bigint)
 			   ((eq? typr 'integer)
 			    'number)
 			   ((eq? typr 'unknown)
@@ -1488,8 +1488,8 @@
 			(cond
 			   ((or (eq? typl 'real) (eq? typr 'real))
 			    'real)
-			   ((or (eq? typl 'bignum) (eq? typr 'bignum))
-			    'bignum)
+			   ((or (eq? typl 'bigint) (eq? typr 'bigint))
+			    'bigint)
 			   ((or (eq? typl 'unknown) (eq? typr 'unknown))
 			    'unknown)
 			   ((or (eq? typl 'any) (eq? typr 'any))
@@ -2064,7 +2064,7 @@
    (define (eq-typeof? type typ)
       (or (eq? type typ)
 	  (and (memq type '(date array)) (eq? typ 'object))
-	  (and (eq? typ 'number) (memq type '(integer index real bignum)))
+	  (and (eq? typ 'number) (memq type '(integer index real bigint)))
 	  (and (eq? typ 'function) (memq type '(function arrow)))
 	  (and (eq? type 'bool))))
    

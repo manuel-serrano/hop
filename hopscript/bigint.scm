@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Fri Jun 25 13:34:53 2021                          */
-;*    Last change :  Sun Jul  4 08:41:32 2021 (serrano)                */
+;*    Last change :  Sun Jul  4 18:44:18 2021 (serrano)                */
 ;*    Copyright   :  2021 manuel serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript BigInt                       */
@@ -29,7 +29,7 @@
 	   __hopscript_error)
 
    (export (js-init-bigint! ::JsGlobalObject)
-	   (js-bigint->jsBigInt::JsBigInt ::bignum %this::JsGlobalObject)
+	   (js-bigint->jsbigint::JsBigInt ::bignum %this::JsGlobalObject)
 	   (inline js-bigint->jsstring::JsStringLiteral ::bignum)))
 
 ;*---------------------------------------------------------------------*/
@@ -45,7 +45,7 @@
       (with-access::JsBigInt o (val) val))
    (lambda (o ctx)
       (if (isa? ctx JsGlobalObject)
-	  (js-bigint->jsBigInt o ctx)
+	  (js-bigint->jsbigint o ctx)
 	  (error "string->obj ::JsBigInt" "Not a JavaScript context" ctx))))
 
 ;*---------------------------------------------------------------------*/
@@ -74,9 +74,9 @@
       (display "n)" op)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-bigint->jsBigInt ...                                          */
+;*    js-bigint->jsbigint ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-bigint->jsBigInt o %this::JsGlobalObject)
+(define (js-bigint->jsbigint o %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-bigint-prototype js-initial-cmap)
       (instantiateJsBigInt
 	 (val o)
@@ -145,7 +145,7 @@
       :value (js-make-function %this
 		(lambda (this)
 		   (if (bignum? this)
-		       (js-ascii->jsstring (bignum->string this))
+		       (js-bigint->jsstring this)
 		       (js-raise-type-error %this
 			  "BigInt.prototype.toString requires that 'this' be a BigInt" this)))
 		(js-function-arity 0 0)
@@ -181,7 +181,8 @@
 ;*    js-tostring ::JsBigInt ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (js-tostring obj::JsBigInt %this::JsGlobalObject)
-   (js-bigint->jsstring obj))
+   (with-access::JsBigInt obj (val)
+      (bignum->string val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

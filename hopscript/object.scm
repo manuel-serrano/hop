@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Jun 27 16:32:23 2021 (serrano)                */
+;*    Last change :  Sun Jul  4 18:45:40 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -593,7 +593,7 @@
 		(js-new %this js-number value))
 	       ((bignum? value)
 		;; 1.d added 27jun2021
-		(js-bigint->jsBigInt value %this))
+		(js-bigint->jsbigint value %this))
 	       (else
 		(js-toobject %this value)))))
 

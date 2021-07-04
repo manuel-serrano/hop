@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Jul  4 07:34:11 2021 (serrano)                */
+;*    Last change :  Sun Jul  4 18:35:12 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1752,6 +1752,7 @@
       ((js-jsstring? obj) (js-jsstring-toboolean obj))
       ((object? obj) #t)
       ((flonum? obj) (not (or (=fl obj 0.0) (nanfl? obj))))
+      ((bignum? obj) (not (=bx obj #z0)))
       (else #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -2048,7 +2049,7 @@
       ((string? o)
        (js-jsstring->JsString (js-string->jsstring o) %this))
       ((bignum? o)
-       (js-bigint->jsBigInt o %this))
+       (js-bigint->jsbigint o %this))
       (else
        #f)))
 

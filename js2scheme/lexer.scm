@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Sun Jun 27 18:47:12 2021 (serrano)                */
+;*    Last change :  Sun Jul  4 18:49:33 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -254,7 +254,7 @@
 	  (? (: (in #\e #\E) (? (in #\- #\+)) (+ digit))))
        (token 'NUMBER (js-string->number (the-string)) (the-length)))
       ((: (+ digit) (: (in #\e #\E) (? #\+) (+ digit)))
-       ;; a bignum
+       ;; a bigint
        (let* ((s (the-string))
 	      (i (string-index s "eE"))
 	      (base (string->bignum (substring s 0 i)))

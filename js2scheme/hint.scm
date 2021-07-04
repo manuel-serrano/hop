@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri May 28 07:10:00 2021 (serrano)                */
+;*    Last change :  Sun Jul  4 18:49:01 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -92,7 +92,7 @@
 	    class object promise
 	    null undefined void
 	    cmap scmstring tilde pair
-	    int8array uint8array))
+	    int8array uint8array bigint))
        ty)
       ((memq ty '(index indexof length)) 'integer)
       ((memq ty '(ureal1 real1 real4)) 'real)

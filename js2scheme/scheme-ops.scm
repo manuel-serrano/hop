@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Jun 27 19:04:58 2021 (serrano)                */
+;*    Last change :  Sun Jul  4 18:50:28 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1501,10 +1501,10 @@
 		(binop-real-xxx '+ type lhs tl left rhs tr right ctx #f))
 	       ((eq? tr 'real)
 		(binop-real-xxx '+ type rhs tr right lhs tl left ctx #t))
-	       ((eq? tl 'bignum)
-		(binop-bignum-xxx '+ type lhs tl left rhs tr right ctx #f))
-	       ((eq? tr 'bignum)
-		(binop-bignum-xxx '+ type rhs tr right lhs tl left ctx #t))
+	       ((eq? tl 'bigint)
+		(binop-bigint-xxx '+ type lhs tl left rhs tr right ctx #f))
+	       ((eq? tr 'bigint)
+		(binop-bigint-xxx '+ type rhs tr right lhs tl left ctx #t))
 	       ((and (memq type '(string buffer)) (eq? tl 'any) (eq? tr 'any))
 		`(if (and (js-jsstring? ,left) (js-jsstring? ,right))
 		     (js-jsstring-append ,left ,right)
@@ -1639,10 +1639,10 @@
 		   (binop-real-xxx op type lhs tl left rhs tr right ctx #f))
 		  ((eq? tr 'real)
 		   (binop-real-xxx op type rhs tr right lhs tl left ctx #t))
-		  ((eq? tl 'bignum)
-		   (binop-bignum-xxx op type lhs tl left rhs tr right ctx #f))
-		  ((eq? tr 'bignum)
-		   (binop-bignum-xxx op type rhs tr right lhs tl left ctx #t))
+		  ((eq? tl 'bigint)
+		   (binop-bigint-xxx op type lhs tl left rhs tr right ctx #f))
+		  ((eq? tr 'bigint)
+		   (binop-bigint-xxx op type rhs tr right lhs tl left ctx #t))
 		  ((and (is-hint? lhs 'real) (is-hint? rhs 'real))
 		   (if-flonums? left tl right tr
 		      (binop-flonum-flonum (real-op op type lhs rhs #f) type
@@ -1777,10 +1777,10 @@
 		(binop-real-xxx '* type lhs tl left rhs tr right ctx #f))
 	       ((eq? tr 'real)
 		(binop-real-xxx '* type rhs tr right lhs tl left ctx #t))
-	       ((eq? tl 'bignum)
-		(binop-bignum-xxx '* type lhs tl left rhs tr right ctx #f))
-	       ((eq? tr 'bignum)
-		(binop-bignum-xxx '* type rhs tr right lhs tl left ctx #t))
+	       ((eq? tl 'bigint)
+		(binop-bigint-xxx '* type lhs tl left rhs tr right ctx #f))
+	       ((eq? tr 'bigint)
+		(binop-bigint-xxx '* type rhs tr right lhs tl left ctx #t))
 	       ((eq? type 'real)
 		(if-flonums? left tl right tr
 		   (binop-flonum-flonum (real-op '* type lhs rhs #f) type
@@ -1836,7 +1836,7 @@
 		   `(exptfx ,left ,right))
 		  ((and (eq? tl 'real) (eq? tr 'real) (eq? type 'real))
 		   `(exptfl ,left ,right))
-		  ((and (eq? tl 'bignum) (eq? tr 'bignum))
+		  ((and (eq? tl 'bigint) (eq? tr 'bigint))
 		   `(exptbx ,left ,right))
 		  (else
 		   (let ((expr `(**js ,(box left tl ctx) ,(box right tr ctx) %this)))
@@ -2716,11 +2716,11 @@
 	 (else `(if ,test ,then ,else)))))
 
 ;*---------------------------------------------------------------------*/
-;*    if-bignum? ...                                                   */
+;*    if-bigint? ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (if-bignum? left tl then else)
+(define (if-bigint? left tl then else)
    (let ((test (cond
-		  ((eq? tl 'bignum) #t)
+		  ((eq? tl 'bigint) #t)
 		  ((memq tl '(number any unknown)) `(bignum? ,left))
 		  (else #f))))
       (cond
@@ -3150,9 +3150,9 @@
 		 left (box right tr ctx) flip))))))
 
 ;*---------------------------------------------------------------------*/
-;*    binop-bignum-xxx ...                                             */
+;*    binop-bigint-xxx ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (binop-bignum-xxx op type lhs tl left rhs tr right ctx flip)
+(define (binop-bigint-xxx op type lhs tl left rhs tr right ctx flip)
    (case tr
       ((int32 uint32 bint int53 integer flonum)
        (with-access::J2SExpr right (loc)
@@ -3164,11 +3164,11 @@
 		(type tr)
 		(fname (cadr loc))
 		(location (caddr loc))))))
-      ((bignum)
-       (binop-bignum-bignum op type left right flip))
+      ((bigint)
+       (binop-bigint-bigint op type left right flip))
       (else
-       (if-bignum? right tr 
-	  (binop-bignum-bignum op type left right flip)
+       (if-bigint? right tr 
+	  (binop-bigint-bigint op type left right flip)
 	  (binop-any-any op type left (box right tr ctx) flip)))))
 
 ;*---------------------------------------------------------------------*/
@@ -3286,7 +3286,7 @@
 	 (else
 	  (binop-flip op left right flip)))))
 
-(define (binop-bignum-bignum op type left right flip)
+(define (binop-bigint-bigint op type left right flip)
    (let ((op (if (memq op '(== ===)) '=bx (symbol-append op 'bx))))
       (binop-flip op left right flip)))
    

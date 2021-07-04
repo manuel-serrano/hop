@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:41:17 2017                          */
-;*    Last change :  Fri Jul 12 09:27:41 2019 (serrano)                */
+;*    Last change :  Sun Jul  4 18:40:07 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme test code generation                                      */
@@ -52,7 +52,6 @@
 	 ((eq? ty 'string)
 	  `(js-jsstring-toboolean ,(j2s-scheme test mode return conf)))
 	 ((notbool-expr? test)
-	  (tprint "NOT BOOL test=" (j2s->list test))
 	  (j2s-toboolean (j2s-scheme test mode return conf)))
 	 (else
 	  (with-access::J2SExpr test (hint)
@@ -182,7 +181,7 @@
 ;*---------------------------------------------------------------------*/
 (define (notbool-expr? this::J2SNode)
    (let ((ty (j2s-type this)))
-      (and (symbol? ty) (not (eq? ty 'bool) )
+      (and (symbol? ty) (not (eq? ty 'bool))
 	   (not (eq? ty 'obj))
 	   (not (eq? ty 'any)))))
 

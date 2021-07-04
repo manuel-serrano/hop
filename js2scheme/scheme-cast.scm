@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/scheme-cast.scm         */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-cast.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sun May 30 08:40:15 2021 (serrano)                */
+;*    Last change :  Sun Jul  4 18:43:00 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -289,6 +289,13 @@
 	 (object ,js-number->jsobject)
 	 (iterable error)
 	 (any nop)))
+     (bigint
+	((bool ,js-bigint->bool)
+	 (string ,js-number->string)
+	 (scmstring bignum->string)
+	 (string js-bigint->jsstring)
+	 (object js-bigint->jsbigint)
+	 (any nop)))
      (buffer
 	((string js-buffer->jsstring)
 	 (any js-buffer->jsstring)))
@@ -448,6 +455,11 @@
    (if (int32? v)
        (& (fixnum->string (int32->fixnum v)) (context-program ctx))
        `(js-ascii->jsstring (int32->string ,v))))
+
+(define (js-bigint->bool v expr ctx)
+   (if (bignum? v)
+       (not (=bx v #z0))
+       `(not (=bx ,v #z0))))
 
 ;*---------------------------------------------------------------------*/
 ;*    uint32->xxx ...                                                  */
