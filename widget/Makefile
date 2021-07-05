@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/hop/widget/Makefile                     */
+#*    serrano/prgm/project/hop/3.4.x/widget/Makefile                   */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Mar 25 08:33:42 2020 (serrano)                */
+#*    Last change :  Mon Jul  5 16:15:59 2021 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -100,6 +100,8 @@ predistrib-clean:
 #*---------------------------------------------------------------------*/
 #*    Explicit dependencies                                            */
 #*---------------------------------------------------------------------*/
+%.o: .afile
+
 colorchooser.o: colorchooser.hop
 colorchooser.scm: colorchooser.hop
 

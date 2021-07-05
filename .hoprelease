@@ -1,4 +1,4 @@
 #!/bin/sh
-major=3.4.3
+major=3.4.4
 state=
 minor=1

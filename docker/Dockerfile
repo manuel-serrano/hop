@@ -27,7 +27,7 @@ RUN wget ftp://ftp-sop.inria.fr/indes/fp/Bigloo/bigloo-latest.tar.gz \
     && tar -xzf bigloo*.tar.gz && cd bigloo*/ \
     && ./configure && make -j$(nproc) && make install
 
-RUN wget ftp://ftp-sop.inria.fr/indes/fp/Hop/hop-3.4.3.tar.gz \
+RUN wget ftp://ftp-sop.inria.fr/indes/fp/Hop/hop-3.4.4.tar.gz \
     && tar -xzf hop* && cd hop*/ \
     && ./configure --license=academic && make -j$(nproc) && make install
 

@@ -1,7 +1,7 @@
 #*=====================================================================*/
 #*    Author      :  Florian Loitsch                                   */
 #*    Creation    :  Wed Mar 15 07:27:50 2006                          */
-#*    Last change :  Mon May 27 08:43:46 2019 (serrano)                */
+#*    Last change :  Mon Jul  5 16:18:16 2021 (serrano)                */
 #*    Copyright   :  2006-20 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build the Scheme2JS library.                     */
@@ -173,6 +173,8 @@ runtime/dsssl.js:
 #*---------------------------------------------------------------------*/
 #*    Explicit Dependency
 #*---------------------------------------------------------------------*/
+%.o: .afile
+
 $(CLASS_DIR)/stdlib.class o/stdlib.o: $(SCHEME2JS_RUNTIME)/runtime.sch $(SCHEME2JS_RUNTIME)/runtime-callcc.sch
 $(CLASS_DIR)/stdlib.class o/stdlib.o: $(SCHEME2JS_RUNTIME)/mod-runtime.sch $(SCHEME2JS_RUNTIME)/mod-runtime-callcc.sch
 
