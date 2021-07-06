@@ -60,6 +60,10 @@ function replacer(key, value) {
   if (typeof value === 'function' || value instanceof RegExp) {
     return value.toString();
   }
+  // MS: 2021-06-15, bigint support	
+  if (typeof value === 'bigint') {
+    return value.toString() + 'n';
+  }
   return value;
 }
 

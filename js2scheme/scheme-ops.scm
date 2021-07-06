@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Jul  4 18:50:28 2021 (serrano)                */
+;*    Last change :  Tue Jul  6 16:44:13 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -73,7 +73,7 @@
       (cond
 	 ((and (memq op '(+ ++)) (memq type '(int32 uint32 int53 integer number)))
 	  (epairify-deep loc
-	     (js-binop2 loc '+ type lhs rhs mode return ctx)))
+	     (js-binop2 loc op type lhs rhs mode return ctx)))
 	 ((and (eq? op '+) (memq type '(string buffer)) (memq etype '(string buffer)))
 	  (epairify-deep loc
 	     (js-binop2 loc op type lhs rhs mode return ctx)))
@@ -305,17 +305,17 @@
 	   (with-tmp lhs rhs mode return ctx
 	      (lambda (left right)
 		 (j2s-cast
-		    (js-binop loc '+ left lhs right rhs ctx)
+		    (js-binop loc op left lhs right rhs ctx)
 		    #f 'any type ctx)))
-	   (js-binop-add loc type lhs rhs mode return ctx)))
+	   (js-binop-add loc op type lhs rhs mode return ctx)))
       ((- --)
        (if (=fx (context-get ctx :optim 0) 0)
 	   (with-tmp lhs rhs mode return ctx
 	      (lambda (left right)
 		 (j2s-cast
-		    (js-binop-arithmetic loc '- left lhs right rhs ctx)
+		    (js-binop-arithmetic loc op left lhs right rhs ctx)
 		    #f 'any type ctx)))
-	   (js-arithmetic-addsub loc '- type lhs rhs mode return ctx)))
+	   (js-arithmetic-addsub loc op type lhs rhs mode return ctx)))
       ((*)
        (if (=fx (context-get ctx :optim 0) 0)
 	   (with-tmp lhs rhs mode return ctx
@@ -522,8 +522,16 @@
 	   (j2s-instanceof? lhs l rhs r)))
       ((in)
        (j2s-in? loc lhs rhs ctx))
-      ((+ ++)
+      ((+)
        `(js+ ,(box lhs (j2s-type l) ctx) ,(box rhs (j2s-type r) ctx) %this))
+      ((++)
+       (if (isone? rhs)
+	   `(js++ ,(box lhs (j2s-type l) ctx) %this)
+	   (error "js-binop:++" "wrong rhs" (j2s->list r))))
+      ((--)
+       (if (isone? rhs)
+	   `(js-- ,(box lhs (j2s-type l) ctx) %this)
+	   (error "jsbinop:--" "wrong rhs" (j2s->list r))))
       ((<)
        `(<js ,(box lhs (j2s-type l) ctx) ,(box rhs (j2s-type r) ctx) %this))
       ((<=)
@@ -584,8 +592,12 @@
    (let ((tl (j2s-type l))
 	 (tr (j2s-type r)))
       (case op
-	 ((- --)
+	 ((-)
 	  `(-js ,(box left tl ctx) ,(box right tr ctx) %this))
+	 ((--)
+	  (if (isone? right)
+	      `(--js ,(box left tl ctx) %this)
+	      (error "jsbinop:--" "wrong rhs" (j2s->list r))))
 	 ((*)
 	  `(*js ,(box left tl ctx) ,(box right tr ctx) %this))
 	 ((**)
@@ -1371,8 +1383,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-binop-add ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-binop-add loc type lhs::J2SExpr rhs::J2SExpr
-	   mode return ctx)
+(define (js-binop-add loc op type lhs::J2SExpr rhs::J2SExpr mode return ctx)
 
    (define (j2sexpr-ascii? expr)
       (cond
@@ -1467,7 +1478,6 @@
 	  (fast-add  tl tr loc type lhs rhs mode return ctx))))
    
    (define (fast-add tl tr loc type lhs rhs mode return ctx)
-      
       (with-tmp lhs rhs mode return ctx
 	 (lambda (left right)
 	    (cond
@@ -1508,7 +1518,7 @@
 	       ((and (memq type '(string buffer)) (eq? tl 'any) (eq? tr 'any))
 		`(if (and (js-jsstring? ,left) (js-jsstring? ,right))
 		     (js-jsstring-append ,left ,right)
-		     ,(binop-any-any '+ type
+		     ,(binop-any-any op type
 			 (box left tl ctx)
 			 (box right tr ctx)
 			 #f)))
@@ -1519,7 +1529,7 @@
 		      (asfixnum left tl)
 		      (asfixnum right tr)
 		      #f)
-		   (binop-any-any '+ type
+		   (binop-any-any op type
 		      (box left tl ctx)
 		      (box right tr ctx)
 		      #f)))
@@ -1529,12 +1539,12 @@
 		      (asfixnum left tl)
 		      (asfixnum right tr)
 		      #f)
-		   (binop-any-any '+ type
+		   (binop-any-any op type
 		   (box left tl ctx)
 		   (box right tr ctx)
 		   #f)))
 	       (else
-		(binop-any-any '+ type
+		(binop-any-any op type
 		   (box left tl ctx)
 		   (box right tr ctx)
 		   #f))))))
@@ -1592,7 +1602,7 @@
 	     (fast-add tl tr loc type lhs rhs mode return ctx)))))
 
    (if (type-number? type)
-       (js-arithmetic-addsub loc '+ type lhs rhs mode return ctx)
+       (js-arithmetic-addsub loc op type lhs rhs mode return ctx)
        (add loc type lhs rhs mode return ctx)))
 
 ;*---------------------------------------------------------------------*/
@@ -2226,8 +2236,9 @@
 				     ,(tonumber64 right tr ctx))
 			  lhs (number type) type ctx))
 		      (else
-		       (j2s-cast `(%$$NN ,(tonumber64 left tl ctx)
-				     ,(tonumber64 right tr ctx))
+		       (j2s-cast `(%$$__ ,(tonumber64 left tl ctx)
+				     ,(tonumber64 right tr ctx)
+				     %this)
 			  lhs (number type) type ctx))))
 		  (else
 		   (cond
@@ -3241,17 +3252,25 @@
 	  (binop-flip (symbol-append opu32 '/overflow) left right flip)))))
 
 (define (binop-fixnum-fixnum/ctx ctx op type left right flip)
-   (if (m64? (context-conf ctx))
-       (binop-int53-int53 op type left right flip)
-       (binop-fixnum-fixnum op type left right flip)))
+   (let ((op (case op
+		((--) '-)
+		((++) '+)
+		(else op))))
+      (if (m64? (context-conf ctx))
+	  (binop-int53-int53 op type left right flip)
+	  (binop-fixnum-fixnum op type left right flip))))
        
 (define (binop-int53-int53 op type left right flip)
    (let ((tmp (binop-fixnum-fixnum op type left right flip)))
       (match-case tmp
 	  ((+fx/overflow ?x 1) `(js-int53-inc ,x))
+	  ((++fx/overflow ?x 1) `(js-int53-inc ,x))
 	  ((+fx/overflow ?x -1) `(js-int53-dec ,x))
+	  ((++fx/overflow ?x -1) `(js-int53-dec ,x))
 	  ((+fx/overflow 1 ?x) `(js-int53-inc ,x))
+	  ((++fx/overflow 1 ?x) `(js-int53-inc ,x))
 	  ((-fx/overflow ?x 1) `(js-int53-dec ,x))
+	  ((--fx/overflow ?x 1) `(js-int53-dec ,x))
 	  (else tmp))))
 
 (define (binop-fixnum-fixnum op type left right flip)
@@ -3305,7 +3324,9 @@
 	  `(js-toflonum
 	      ,(binop-flip (symbol-append op '/overflow) left right flip)))
 	 (else
-	  (binop-flip (symbol-append op '/overflow) left right flip)))))
+	  (if (memq op '(++ --))
+	      (binop-any-any op type left right flip)
+	      (binop-flip (symbol-append op '/overflow) left right flip))))))
 
 (define (binop-number-number! op type left right flip)
    (let ((op (if (memq op '(== ===)) '= op))
@@ -3323,7 +3344,9 @@
 	  `(js-toflonum
 	      ,(binop-flip (symbol-append op /ov) left right flip)))
 	 (else
-	  (binop-flip (symbol-append op /ov) left right flip)))))
+	  (if (memq op '(++ --))
+	      (binop-any-any op type left right flip)
+	      (binop-flip (symbol-append op /ov) left right flip))))))
    
 (define (binop-any-any op type left right flip)
    (case op
@@ -3335,6 +3358,23 @@
        (if flip
 	   `(js-strict-equal-no-string? ,right ,left)
 	   `(js-strict-equal-no-string? ,left ,right)))
+      ((++ --)
+       (let ((r (if flip left right))
+	     (l (if flip right left))
+	     (op (symbol-append 'js op)))
+	  (if (isone? r)
+	      (case type
+		 ((bool)
+		  `(,op ,l %this))
+		 ((int32)
+		  `(js-number-toint32 (,op ,l %this)))
+		 ((uint32)
+		  `(js-number-touint32 (,op ,l %this)))
+		 ((real)
+		  `(js-toflonum (,op ,l %this)))
+		 (else
+		  `(,op ,l %this)))
+	      (error (format "binop:~a" op) "wrong rhs" (cons r flip)))))
       (else
        (let ((op (cond 
 		    ((eq? op '==) 'js-equal?)
@@ -3377,4 +3417,12 @@
 	 ((real) `(fixnum->flonum (,op ,expr)))
 	 (else `(,op ,expr)))))
 
-       
+;*---------------------------------------------------------------------*/
+;*    isone? ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (isone? x)
+   (cond
+      ((fixnum? x) (=fx x 1))
+      ((int32? x) (=s32 x #s32:1))
+      ((uint32? x) (=u32 x #u32:1))
+      (else #f)))

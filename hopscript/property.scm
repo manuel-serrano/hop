@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Jul  4 08:44:15 2021 (serrano)                */
+;*    Last change :  Tue Jul  6 09:22:10 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -37,6 +37,7 @@
 	   __hopscript_profile
 	   __hopscript_arithmetic
 	   __hopscript_number
+	   __hopscript_bigint
 	   __hopscript_proxy)
 
    (use    __hopscript_array
@@ -2339,7 +2340,9 @@
       ((null? o)
        (js-get-null o (js-toname prop %this) %this))
       ((number? o)
-       (let ((obj (js-number->jsNumber o %this)))
+       (let ((obj (if (bignum? o)
+		      (js-bigint->jsbigint o %this)
+		      (js-number->jsNumber o %this))))
 	  (js-get-jsobject obj o prop %this)))
       ((pair? o)
        (js-get-pair o (js-toname prop %this) %this))
@@ -2395,23 +2398,33 @@
 ;*    Instrumented version of js-get to provide information about      */
 ;*    potential type errors.                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-get/debug _o prop %this::JsGlobalObject loc)
+(define (js-get/debug o prop %this::JsGlobalObject loc)
    (when *profile-cache*
       (cond
 	 ((js-jsstring? prop)
 	  (js-profile-log-get prop loc))
 	 ((number? prop)
-	  (unless (isa? _o JsArray)
+	  (unless (isa? o JsArray)
 	     (js-profile-log-get
 		(js-ascii-name->jsstring (number->string prop)) loc)))))
    (cond
-      ((pair? _o)
-       (js-get-pair _o (js-toname prop %this) %this))
-      ((null? _o)
-       (js-get-null _o (js-toname prop %this) %this))
+      ((js-object? o)
+       (js-get o prop %this))
+      ((null? o)
+       (js-get-null o (js-toname prop %this) %this))
+      ((number? o)
+       (let ((obj (if (bignum? o)
+		      (js-bigint->jsbigint o %this)
+		      (js-number->jsNumber o %this))))
+	  (js-get-jsobject obj o prop %this)))
+      ((pair? o)
+       (js-get-pair o (js-toname prop %this) %this))
+      ((object? o)
+       ;; see toobject
+       (js-get o prop %this))
       (else
-       (let ((o (js-toobject/debug %this loc _o)))
-	  (js-get-jsobject o _o prop %this)))))
+       (let ((obj (js-toobject/debug %this loc o)))
+	  (js-get-jsobject obj o prop %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-length ::obj ...                                          */

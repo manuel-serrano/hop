@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Sun Jul  4 07:32:16 2021 (serrano)                */
+/*    Last change :  Tue Jul  6 09:45:10 2021 (serrano)                */
 /*    Copyright   :  2015-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript bigint                                        */
@@ -18,6 +18,8 @@ var assert = require("assert");
 console.log("misc");
 
 assert.equal(0n.toString(), "0", "toString");
+assert.ok(0n == 0, "==");
+assert.ok(1n == 1, "==");
 
 /*---------------------------------------------------------------------*/
 /*    mdn                                                              */
@@ -123,7 +125,7 @@ function mdnComparison() {
 
    // sort with an appropriate numeric comparator
    mixed.sort((a, b) => (a < b) ? -1 : ((a > b) ? 1 : 0));
-   assert.deepEqual(mixed, [-12n, 0, 0n, 4n, 4, 6, 10]);
+   assert.deepEqual(mixed.map(BigInt), [-12n, 0n, 0n, 4n, 4n, 6n, 10n]);
    
    assert.equal(0n === Object(0n), false);
    assert.equal(Object(0n) === Object(0n), false);
@@ -189,6 +191,16 @@ function mdnPrime() {
 
 assert.equal(mdnPrime(), 73n);
 
+// clamp
+function mdnClamp() {
+   const max = 2n ** 64n - 1n;
+		       
+   assert.equal(BigInt.asUintN(64, max),18446744073709551615n);
+
+   assert.equal(BigInt.asUintN(64, max + 1n), 0n);
+}
+
+mdnClamp();
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */

@@ -1986,9 +1986,8 @@
 	  (j2s-cast lhse lhs tylhs type ctx)
 	  (j2s-as lhse lhs tylhs type ctx)))
    
-   (define (ref-inc op lhs::J2SRef rhs::J2SExpr inc::int type cast loc)
-      (let* ((num (J2SNumber/type 'uint32 1))
-	     (prev (when (eq? retval 'old) (gensym 'prev)))
+   (define (ref-inc op lhs::J2SRef rhs::J2SExpr type cast loc)
+      (let* ((prev (when (eq? retval 'old) (gensym 'prev)))
 	     (lhse (j2s-scheme lhs mode return ctx)))
 	 (if (eq? retval 'old)
 	     (with-access::J2SBinary rhs ((rlhs lhs))
@@ -2037,7 +2036,7 @@
 				 (id tmp)
 				 (type 'bint))))
 		     (new-or-old tmp
-			(js-binop2 loc '+ 'number
+			(js-binop2 loc '++ 'number
 			   tref rhs mode return ctx)
 			(lambda (val tmp)
 			   `(begin
@@ -2057,7 +2056,7 @@
 				  (type 'number))))
 		     `(let ((,tmp2 (js-tonumber ,tmp %this)))
 			 ,(new-or-old tmp2
-			     (js-binop2 loc '+ 'any
+			     (js-binop2 loc '++ 'any
 				tref rhs mode return ctx)
 			     (lambda (val tmp)
 				`(begin
@@ -2084,7 +2083,7 @@
 					  (id tmp)
 					  (type 'bint))))
 			      (new-or-old tmp
-				 (js-binop2 loc '+ 'number
+				 (js-binop2 loc '++ 'number
 				    tref rhs mode return ctx)
 				 (lambda (val tmp)
 				    `(begin
@@ -2102,7 +2101,7 @@
 					   (type 'number))))
 			      `(let ((,tmp2 (js-tonumber ,tmp %this)))
 				  ,(new-or-old tmp2
-				      (js-binop2 loc '+ 'any
+				      (js-binop2 loc '++ 'any
 					 tref rhs mode return ctx)
 				      (lambda (val tmp)
 					 `(begin
@@ -2158,7 +2157,7 @@
 				(type (j2s-type lhs)))))
 		   `(let ((,tmp ,scmlhs))
 		       ,(new-or-old tmp
-			   (js-binop2 loc '+ 'number
+			   (js-binop2 loc '++ 'number
 			      tref rhs mode return ctx)
 			   (lambda (val tmp)
 			      `(begin
@@ -2274,7 +2273,7 @@
 					   (id tmp)
 					   (type 'bint))))
 			       (new-or-old tmp
-				  (js-binop2 loc '+ 'number
+				  (js-binop2 loc '++ 'number
 				     ref inc mode return ctx)
 				  (lambda (val res)
 				     `(begin
@@ -2292,7 +2291,7 @@
 					    (type 'number))))
 			       `(let ((,tmp2 (js-tonumber ,tmp %this)))
 				   ,(new-or-old tmp2
-				       (js-binop2 loc '+ 'any
+				       (js-binop2 loc '++ 'any
 					  tref inc mode return ctx)
 				       (lambda (val res)
 					  `(begin
@@ -2360,7 +2359,7 @@
 		    (cast #f))
 	    (cond
 	       ((and (isa? lhs J2SRef) (not (isa? lhs J2SThis)))
-		(ref-inc op lhs rhs (if (eq? op '++) 1 -1) type cast loc))
+		(ref-inc op lhs rhs type cast loc))
 	       ((isa? lhs J2SAccess)
 		(access-inc op lhs rhs (if (eq? op '++) 1 -1)))
 	       ((isa? lhs J2SUnresolvedRef)

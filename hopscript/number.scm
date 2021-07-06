@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Jun 27 17:57:55 2021 (serrano)                */
+;*    Last change :  Tue Jul  6 16:58:49 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -41,6 +41,8 @@
 	   (inline js-number-isnan?::bool ::obj)
 	   (inline js-isnan?::bool ::obj ::JsGlobalObject)
 	   
+	   (js++ ::obj ::JsGlobalObject)
+	   (js-- ::obj ::JsGlobalObject)
 	   (js+ ::obj ::obj ::JsGlobalObject)
 	   (js-slow+ ::obj ::obj ::JsGlobalObject)
 	   (js- ::obj ::obj ::JsGlobalObject)
@@ -570,6 +572,22 @@
    (js-number-isnan? (js-tonumber val %this)))
 
 ;*---------------------------------------------------------------------*/
+;*    js++ ...                                                         */
+;*    -------------------------------------------------------------    */
+;*    As js+ but accept mixed arguments. Used to compile ++ and -- ops */
+;*---------------------------------------------------------------------*/
+(define (js++ left %this::JsGlobalObject)
+   (cond
+      ((fixnum? left)
+       (+fx/overflow left 1))
+      ((flonum? left)
+       (+fl left 1.0))
+      ((bignum? left)
+       (+bx left #z1))
+      (else
+       (js-slow+ left 1 %this))))
+
+;*---------------------------------------------------------------------*/
 ;*    js+ ...                                                          */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
@@ -604,6 +622,23 @@
 	     (if (or (not (= left left)) (not (= right right)))
 		 +nan.0
 		 (+ left right)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-- ...                                                         */
+;*    -------------------------------------------------------------    */
+;*    As js- but accept mixed arguments. Used to compile ++ op.        */
+;*---------------------------------------------------------------------*/
+(define (js-- left %this::JsGlobalObject)
+   (cond
+      ((fixnum? left)
+       (-fx/overflow left 1))
+      ((flonum? left)
+       (-fl left 1.0))
+      ((bignum? left)
+       (-bx left #z1))
+      (else
+       (let ((lnum (js-tonumber left %this)))
+	  (-/overflow lnum 1)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js- ...                                                          */

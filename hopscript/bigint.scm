@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Fri Jun 25 13:34:53 2021                          */
-;*    Last change :  Sun Jul  4 18:44:18 2021 (serrano)                */
+;*    Last change :  Tue Jul  6 19:01:13 2021 (serrano)                */
 ;*    Copyright   :  2021 manuel serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript BigInt                       */
@@ -111,6 +111,31 @@
       ;; now the bigint constructor is fully built,
       ;; initialize the prototype properties
       (init-builtin-bigint-prototype! %this js-bigint-prototype)
+      ;; asUintN
+      ;; https://tc39.es/ecma262/multipage/numbers-and-dates.html#sec-bigint.asuintn
+      (js-bind! %this js-bigint (& "asUintN")
+	 :value (js-make-function %this
+		   (lambda (this bits bigint)
+		      (if (bignum? bigint)
+			  this
+			  (js-raise-type-error %this
+			     "BigInt.prototype.asUintN requires that 'this' be a BigInt" this)))
+		   (js-function-arity 2 0)
+		   (js-function-info :name "asUintN" :len 2))
+	 :enumerable #f
+	 :hidden-class #t)
+      ;; asIntN
+      (js-bind! %this js-bigint (& "asIntN")
+	 :value (js-make-function %this
+		   (lambda (this bits bigint)
+		      (if (bignum? bigint)
+			  this
+			  (js-raise-type-error %this
+			     "BigInt.prototype.asIntN requires that 'this' be a BigInt" this)))
+		   (js-function-arity 2 0)
+		   (js-function-info :name "asIntN" :len 2))
+	 :enumerable #f
+	 :hidden-class #t)
       ;; bind BigInt in the global object
       (js-bind! %this %this (& "BigInt")
 	 :configurable #f :enumerable #f :value js-bigint

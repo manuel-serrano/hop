@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Jul  4 18:58:37 2021 (serrano)                */
+;*    Last change :  Tue Jul  6 16:27:51 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1746,7 +1746,6 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.2          */
 ;*---------------------------------------------------------------------*/
 (define (js-toboolean-no-boolean obj)
-;*    (tprint "js-toboolean-no-boolean obj=" obj)                      */
    (cond
       ((js-null-or-undefined? obj) #f)
       ((fixnum? obj) (not (=fx obj 0)))
@@ -1763,7 +1762,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-tonumber obj %this::JsGlobalObject)
    (cond
-      ((js-number? obj)
+      ((number? obj)
        obj)
       ((eq? obj (js-undefined))
        +nan.0)
@@ -2220,11 +2219,18 @@
 (define (js-eq-no-eq? x y)
    (cond
       ((fixnum? x)
-       (when (flonum? y) (=fl (fixnum->flonum x) y)))
+       (cond
+	  ((flonum? y) (=fl (fixnum->flonum x) y))
+	  (else #f)))
       ((js-jsstring? x)
        (and (js-jsstring? y) (js-jsstring=? x y)))
       ((flonum? x)
-       (if (flonum? y) (=fl x y) (when (fixnum? y) (=fl x (fixnum->flonum y)))))
+       (cond
+	  ((flonum? y) (=fl x y))
+	  ((fixnum? y) (=fl x (fixnum->flonum y)))
+	  (else #f)))
+      ((bignum? x)
+       (and (bignum? y) (=bx x y)))
       (else
        #f)))
 
@@ -2244,9 +2250,23 @@
       ((js-jsstring? x)
        (js-eqstring? x y))
       ((fixnum? x)
-       (if (fixnum? y) (=fx x y) (when (flonum? y) (=fl (fixnum->flonum x) y))))
+       (cond
+	  ((fixnum? y) (=fx x y))
+	  ((flonum? y) (=fl (fixnum->flonum x) y))
+	  ((bignum? y) (=bx (fixnum->bignum x) y))
+	  (else #f)))
       ((flonum? x)
-       (if (flonum? y) (=fl x y) (when (fixnum? y) (=fl x (fixnum->flonum y)))))
+       (cond
+	  ((flonum? y) (=fl x y))
+	  ((fixnum? y) (=fl x (fixnum->flonum y)))
+	  ((bignum? y) (=fl x (bignum->flonum y)))
+	  (else #f)))
+      ((bignum? x)
+       (cond
+	  ((fixnum? y) (=bx x (fixnum->bignum y)))
+	  ((flonum? y) (=bx x (fixnum->flonum y)))
+	  ((bignum? y) (=bx x y))
+	  (else #f)))
       (else
        #f)))
 
@@ -2256,9 +2276,23 @@
 (define (js-eq-no-string? x y)
    (cond
       ((flonum? x)
-       (if (flonum? y) (=fl x y) (when (fixnum? y) (=fl x (fixnum->flonum y)))))
+       (cond
+	  ((flonum? y) (=fl x y))
+	  ((fixnum? y) (=fl x (fixnum->flonum y)))
+	  ((bignum? y) (=fl x (bignum->flonum y)))
+	  (else #f)))
       ((fixnum? x)
-       (if (fixnum? y) (=fx x y) (when (flonum? y) (=fl (fixnum->flonum x) y))))
+       (cond
+	  ((fixnum? y) (=fx x y))
+	  ((flonum? y) (=fl (fixnum->flonum x) y))
+	  ((bignum? y) (=bx (fixnum->bignum x) y))
+	  (else #f)))
+      ((bignum? x)
+       (cond
+	  ((fixnum? y) (=bx x (fixnum->bignum y)))
+	  ((flonum? y) (=bx x (fixnum->flonum y)))
+	  ((bignum? y) (=bx x y))
+	  (else #f)))
       (else
        #f)))
 
@@ -2284,7 +2318,8 @@
 (define-inline (js-eqir? x y)
    (cond
       ((fixnum? x) (=fx x y))
-      ((flonum? x) (=fl x (fixnum->flonum y)))))
+      ((flonum? x) (=fl x (fixnum->flonum y)))
+      ((bignum? x) (=bx x (fixnum->bignum y)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-null-or-undefined? ...                                        */

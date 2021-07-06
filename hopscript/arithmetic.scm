@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Sun Jul  4 14:11:26 2021 (serrano)                */
+;*    Last change :  Tue Jul  6 16:33:35 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -35,6 +35,8 @@
    (extern (macro $real-set!::real (::real ::double) "BGL_REAL_SET"))
    
    (export (inline js-toflonum::double ::obj)
+	   (++js::obj ::obj ::JsGlobalObject)
+	   (--js::obj ::obj ::JsGlobalObject)
 	   (+js::obj ::obj ::obj ::JsGlobalObject)
 	   (-js::obj ::obj ::obj ::JsGlobalObject)
 	   (*js::obj ::obj ::obj ::JsGlobalObject)
@@ -102,6 +104,18 @@
    (if (flonum? r) r (fixnum->flonum r)))
 
 ;*---------------------------------------------------------------------*/
+;*    ++js ...                                                         */
+;*    -------------------------------------------------------------    */
+;*    As +js but accept mixed arguments. Used to compile ++ op.        */
+;*---------------------------------------------------------------------*/
+(define (++js x::obj %this)
+   (cond
+      ((fixnum? x) (+fx/overflow x 1))
+      ((flonum? x) (+fl x 1.0))
+      ((bignum? x) (+bx x #z1))
+      (else (+/overflow (js-tonumber x %this) 1))))
+   
+;*---------------------------------------------------------------------*/
 ;*    +js ...                                                          */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
@@ -122,6 +136,18 @@
        (let* ((nx (js-tonumber x %this))
 	      (ny (js-tonumber y %this)))
 	  (+/overflow nx ny)))))
+   
+;*---------------------------------------------------------------------*/
+;*    --js ...                                                         */
+;*    -------------------------------------------------------------    */
+;*    As +js but accept mixed arguments. Used to compile -- op.        */
+;*---------------------------------------------------------------------*/
+(define (--js x::obj %this)
+   (cond
+      ((fixnum? x) (-fx/overflow x 1))
+      ((flonum? x) (-fl x 1.0))
+      ((bignum? x) (-bx x #z1))
+      (else (-/overflow (js-tonumber x %this) 1))))
    
 ;*---------------------------------------------------------------------*/
 ;*    -js ...                                                          */
@@ -326,10 +352,12 @@
       ((bignum? x)
        (if (bignum? y)
 	   (remainderbx x y)
-	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions"
+	   (js-raise-type-error %this
+	      "Cannot mix BigInt and other types, use explicit conversions"
 	      y)))
       ((bignum? y)
-       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions"
+       (js-raise-type-error %this
+	  "Cannot mix BigInt and other types, use explicit conversions"
 	  x))
       (else
        (let ((lnum (js-tonumber x %this))
