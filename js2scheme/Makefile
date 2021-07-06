@@ -105,6 +105,8 @@ getsources:
 #*---------------------------------------------------------------------*/
 #*    Explicit dependencies                                            */
 #*---------------------------------------------------------------------*/
+%.o: .afile
+
 o/ecmascript5.o: ecmascript5.js
 
 #bdepend start (don't edit)

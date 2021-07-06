@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/hop/runtime/Makefile                    */
+#*    serrano/prgm/project/hop/3.4.x/runtime/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon May 27 08:43:03 2019 (serrano)                */
+#*    Last change :  Mon Jul  5 16:16:29 2021 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -111,7 +111,7 @@ getsources:
 #*---------------------------------------------------------------------*/
 #*    Explicit dependencies                                            */
 #*---------------------------------------------------------------------*/
-#* o/thread.o thread.class: enable-thread.sch disable-thread.sch       */
+o/%.o: .afile
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/

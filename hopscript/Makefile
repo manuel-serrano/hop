@@ -104,6 +104,8 @@ bglhopscript.h: types.scm
 #*---------------------------------------------------------------------*/
 #*    Explicit dependencies                                            */
 #*---------------------------------------------------------------------*/
+o/%.o: .afile
+
 o/_bglhopscript.o: _bglhopscript.c bglhopscript.h bglhopscript_malloc.h
 	@ $(call compile2,$(CCOMP),$(CCFLAGS), -c $< -o $@)
 
