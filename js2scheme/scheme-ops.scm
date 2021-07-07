@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Jul  7 08:02:42 2021 (serrano)                */
+;*    Last change :  Wed Jul  7 11:46:24 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -3208,6 +3208,8 @@
 		   ((memq op '(== ===)) '=s32)
 		   ((eq? op '<<=) '<=s32)
 		   ((eq? op '>>=) '>=s32)
+		   ((eq? op '++) '+s32)
+		   ((eq? op '--) '-s32)
 		   (else (symbol-append op 's32)))))
       (case type
 	 ((int32)
