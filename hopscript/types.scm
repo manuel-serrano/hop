@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Jul  7 07:47:39 2021 (serrano)                */
+;*    Last change :  Wed Jul  7 08:12:40 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -362,6 +362,8 @@
 	      (js-uint16array::JsFunction (default (class-nil JsFunction)))
 	      (js-int32array::JsFunction (default (class-nil JsFunction)))
 	      (js-uint32array::JsFunction (default (class-nil JsFunction)))
+	      (js-bigint64array::JsFunction (default (class-nil JsFunction)))
+	      (js-biguint64array::JsFunction (default (class-nil JsFunction)))
 	      (js-float32array::JsFunction (default (class-nil JsFunction)))
 	      (js-float64array::JsFunction (default (class-nil JsFunction)))
 	      (js-dataview::JsFunction (default (class-nil JsFunction)))

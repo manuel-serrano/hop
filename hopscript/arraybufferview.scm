@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Wed Jul  7 07:47:08 2021 (serrano)                */
+;*    Last change :  Wed Jul  7 08:10:56 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -386,6 +386,42 @@
 (define-method (js-typedarray-set! o::JsUint32Array) js-u32array-set!)
 
 ;*---------------------------------------------------------------------*/
+;*    js-typedarray-set! ::JsBigInt64Array ...                         */
+;*---------------------------------------------------------------------*/
+(define (js-i64array-ref buf::u8vector i::int)
+   (cond-expand
+      (bigloo4.4b
+       (llong->bignum (int64->llong ($s64/u8vector-ref buf (*fx 4 i)))))
+      (else
+       (int64->bignum ($s64/u8vector-ref buf (*fx 4 i))))))
+
+(define (js-i64array-set! buf::u8vector i::int v::obj %this::JsGlobalObject)
+   (if (bignum? v)
+       ($s64/u8vector-set! buf (*fx 4 i) (bignum->int64 v))
+       (js-raise-type-error %this "Cannot convert ~a to BigInt" v)))
+
+(define-method (js-typedarray-ref o::JsBigInt64Array) js-i64array-ref)
+(define-method (js-typedarray-set! o::JsBigInt64Array) js-i64array-set!)
+
+;*---------------------------------------------------------------------*/
+;*    js-typedarray-set! ::JsBigUint64Array ...                        */
+;*---------------------------------------------------------------------*/
+(define (js-u64array-ref buf::u8vector i::int)
+   (cond-expand
+      (bigloo4.4b
+       (llong->bignum (int64->llong ($s64/u8vector-ref buf (*fx 4 i)))))
+      (else
+       (uint64->bignum ($s64/u8vector-ref buf (*fx 4 i))))))
+
+(define (js-u64array-set! buf::u8vector i::int v::obj %this::JsGlobalObject)
+   (if (bignum? v)
+       ($s64/u8vector-set! buf (*fx 4 i) (bignum->uint64 v))
+       (js-raise-type-error %this "Cannot convert ~a to BigInt" v)))
+
+(define-method (js-typedarray-ref o::JsBigUint64Array) js-u64array-ref)
+(define-method (js-typedarray-set! o::JsBigUint64Array) js-u64array-set!)
+
+;*---------------------------------------------------------------------*/
 ;*    js-typedarray-set! ::JsFloat32Array ...                          */
 ;*---------------------------------------------------------------------*/
 (define (js-f32array-ref buf::u8vector i::int)
@@ -445,6 +481,12 @@
 	 (with-access::JsGlobalObject %this (js-uint32array)
 	    (set! js-uint32array
 	       (js-init-typedarray! %this "Uint32Array" 4 proto)))
+	 (with-access::JsGlobalObject %this (js-bigint64array)
+	    (set! js-bigint64array
+	       (js-init-typedarray! %this "BigInt64Array" 8 proto)))
+	 (with-access::JsGlobalObject %this (js-biguint64array)
+	    (set! js-biguint64array
+	       (js-init-typedarray! %this "BigUint64Array" 8 proto)))
 	 (with-access::JsGlobalObject %this (js-float32array)
 	    (set! js-float32array
 	       (js-init-typedarray! %this "Float32Array" 4 proto)))
@@ -1245,6 +1287,42 @@
 			:enumerable #t
 			:hidden-class #t)
 		     
+		     ;; BigInt64
+		     (js-bind! %this this (& "getBigInt64")
+			:value (js-make-function %this js-getBigInt64
+				  (js-function-arity js-getBigInt64)
+				  (js-function-info :name "getBigInt64" :len 2))
+			:configurable #t
+			:writable #t
+			:enumerable #t
+			:hidden-class #t)
+		     (js-bind! %this this (& "setBigInt64")
+			:value (js-make-function %this js-setBigInt64
+				  (js-function-arity js-setBigInt64)
+				  (js-function-info :name "setBigInt64" :len 3))
+			:configurable #t
+			:writable #t
+			:enumerable #t
+			:hidden-class #t)
+		     
+		     ;; BigUint64
+		     (js-bind! %this this (& "getBigUint64")
+			:value (js-make-function %this js-getBigUint64
+				  (js-function-arity js-getBigUint64)
+				  (js-function-info :name "getBigUint64" :len 2))
+			:configurable #t
+			:writable #t
+			:enumerable #t
+			:hidden-class #t)
+		     (js-bind! %this this (& "setBigUint64")
+			:value (js-make-function %this js-setBigInt64
+				  (js-function-arity js-setBigInt64)
+				  (js-function-info :name "setBigUint64" :len 3))
+			:configurable #t
+			:writable #t
+			:enumerable #t
+			:hidden-class #t)
+		     
 		     ;; Float32
 		     (js-bind! %this this (& "getFloat32")
 			:value (js-make-function %this js-getFloat32
@@ -1382,7 +1460,7 @@
 			(else
 			 (set %data off (->fixnum (js-tointeger value %this))
 			    lendian)))))))
-	 
+
 	 (define (js-getInt8 this::JsDataView offset)
 	    (js-dataview-get this offset #t
 	       (lambda (vec off _)
@@ -1481,6 +1559,105 @@
 				(u8vector-set! vec (+fx off 1) b1)
 				(u8vector-set! vec (+fx off 2) b2)
 				(u8vector-set! vec (+fx off 3) b3))))))))
+
+	 (define (js-get64 this::JsDataView offset lendian add)
+	    (js-dataview-get this offset (js-totest lendian)
+	       (lambda (vec off lendian)
+		  (let ((b0 (u8vector-ref vec off))
+			(b1 (u8vector-ref vec (+fx off 1)))
+			(b2 (u8vector-ref vec (+fx off 2)))
+			(b3 (u8vector-ref vec (+fx off 3)))
+			(b4 (u8vector-ref vec (+fx off 4)))
+			(b5 (u8vector-ref vec (+fx off 5)))
+			(b6 (u8vector-ref vec (+fx off 6)))
+			(b7 (u8vector-ref vec (+fx off 7))))
+		     (if lendian
+			 (add b7 b6 b5 b4 b3 b2 b1 b0)
+			 (add b0 b1 b2 b3 b4 b5 b6 b7))))))
+	 
+	 (define (js-getBigInt64 this::JsDataView offset lendian)
+
+	    (define (uint8->int64 n)
+	       (fixnum->int64 (uint8->fixnum n)))
+	    
+	    (define (add b0 b1 b2 b3 b4 b5 b6 b7)
+	       (+s64 (bit-lshs64 (uint8->int64 b0) 54)
+		  (+s64 (bit-lshs64 (uint8->int64 b1) 48)
+		     (+s64 (bit-lshs64 (uint8->int64 b2) 40)
+			(+s64 (bit-lshs64 (uint8->int64 b3) 32)
+			   (+s64 (bit-lshs64 (uint8->int64 b4) 24)
+			      (+s64 (bit-lshs64 (uint8->int64 b5) 16)
+				 (+s64 (bit-lshs64 (uint8->int64 b6) 8)
+				    (uint8->int64 b7)))))))))
+	    
+	    (int64->bignum (js-get64 this offset lendian add)))
+
+	 (define (js-getBigUint64 this::JsDataView offset lendian)
+	    
+	    (define (uint8->uint64 n)
+	       (fixnum->uint64 (uint8->fixnum n)))
+	    
+	    (define (add b0 b1 b2 b3 b4 b5 b6 b7)
+	       (+u64 (bit-lshu64 (uint8->uint64 b0) 54)
+		  (+u64 (bit-lshu64 (uint8->uint64 b1) 48)
+		     (+u64 (bit-lshu64 (uint8->uint64 b2) 40)
+			(+u64 (bit-lshu64 (uint8->uint64 b3) 32)
+			   (+u64 (bit-lshu64 (uint8->uint64 b4) 24)
+			      (+u64 (bit-lshu64 (uint8->uint64 b5) 16)
+				 (+u64 (bit-lshu64 (uint8->uint64 b6) 8)
+				    (uint8->uint64 b7)))))))))
+	    
+	    (uint64->bignum (js-get64 this offset lendian add)))
+
+	 (define (js-setBigInt64 this::JsDataView offset value lendian)
+
+	    (define (bit-rsh64 v shift)
+	       (int64->fixnum (bit-rshs64 v shift)))
+	    
+	    (let ((off (uint32->fixnum (js-touint32 offset %this))))
+	       (with-access::JsDataView this (buffer %data)
+		  (let ((len (u8vector-length %data)))
+		     (cond
+			((<fx off 0)
+			 (js-get this (js-toname offset %this) %this))
+			((>=fx off len)
+			 (js-undefined))
+			((not (bignum? value))
+			 (js-raise-type-error %this
+			    "Not a BigInt ~a" value))
+			(else
+			 (let ((v64 (bignum->int64 value))
+			       (vec %data)
+			       (lendian (js-totest lendian)))
+			    (if (eq? host-lendian lendian)
+				($s64/u8vector-set! vec off v64)
+				(let ((b0 (bit-and (bit-rsh64 v64 54) #xff))
+				      (b1 (bit-and (bit-rsh64 v64 48) #xff))
+				      (b2 (bit-and (bit-rsh64 v64 40) #xff))
+				      (b3 (bit-and (bit-rsh64 v64 32) #xff))
+				      (b4 (bit-and (bit-rsh64 v64 24) #xff))
+				      (b5 (bit-and (bit-rsh64 v64 16) #xff))
+				      (b6 (bit-and (bit-rsh64 v64 8) #xff))
+				      (b7 (int64->fixnum (bit-ands64 v64 #xff))))
+				   (if lendian
+				       (begin
+					  (u8vector-set! vec off b7)
+					  (u8vector-set! vec (+fx off 1) b6)
+					  (u8vector-set! vec (+fx off 2) b5)
+					  (u8vector-set! vec (+fx off 3) b4)
+					  (u8vector-set! vec (+fx off 4) b3)
+					  (u8vector-set! vec (+fx off 5) b2)
+					  (u8vector-set! vec (+fx off 6) b1)
+					  (u8vector-set! vec (+fx off 7) b0))
+				       (begin
+					  (u8vector-set! vec off b0)
+					  (u8vector-set! vec (+fx off 1) b1)
+					  (u8vector-set! vec (+fx off 2) b2)
+					  (u8vector-set! vec (+fx off 3) b3)
+					  (u8vector-set! vec (+fx off 4) b4)
+					  (u8vector-set! vec (+fx off 5) b5)
+					  (u8vector-set! vec (+fx off 6) b6)
+					  (u8vector-set! vec (+fx off 7) b7))))))))))))
 
 	 (define (js-getFloat32 this::JsDataView offset lendian)
 	    (with-access::JsDataView this (buffer %data)

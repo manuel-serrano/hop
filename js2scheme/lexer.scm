@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Sun Jul  4 18:49:33 2021 (serrano)                */
+;*    Last change :  Wed Jul  7 08:08:15 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -280,7 +280,12 @@
 
       ;; bigint
       ((: (? #\-) (+ digit) #\n)
-       (token 'BIGINT (string->bignum (the-substring 0 (-fx (the-length) 1)))
+       (token 'BIGINT
+	  (string->bignum (the-substring 0 (-fx (the-length) 1)) 10)
+	  (the-length)))
+      ((: "0x" (+ xdigit) #\n)
+       (token 'BIGINT
+	  (string->bignum (the-substring 2 (-fx (the-length) 1)) 16)
 	  (the-length)))
       
       (#\{ (token 'LBRACE #\{ 1))

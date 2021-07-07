@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Wed Jul  7 07:58:28 2021 (serrano)                */
+/*    Last change :  Wed Jul  7 08:06:32 2021 (serrano)                */
 /*    Copyright   :  2015-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript bigint                                        */
@@ -20,6 +20,7 @@ console.log("misc");
 assert.equal(0n.toString(), "0", "toString");
 assert.ok(0n == 0, "==");
 assert.ok(1n == 1, "==");
+assert.ok(0xfn == 15, "==");
 
 /*---------------------------------------------------------------------*/
 /*    mdn                                                              */
