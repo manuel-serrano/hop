@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Wed Jul  7 07:30:57 2021 (serrano)                */
+/*    Last change :  Wed Jul  7 07:58:28 2021 (serrano)                */
 /*    Copyright   :  2015-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript bigint                                        */
@@ -224,43 +224,43 @@ function kangaxd() {
    return typeof BigInt.asIntN === 'function';
 }
 
-/* function kangaxe() {                                                */
-/*    var buffer = new ArrayBuffer(64);                                */
-/*    var view = new BigInt64Array(buffer);                            */
-/*    view[0] = 0x8000000000000000n;                                   */
-/*    return view[0] === -0x8000000000000000n;                         */
-/* }                                                                   */
-/*                                                                     */
-/* function kangaxf() {                                                */
-/*    var buffer = new ArrayBuffer(64);                                */
-/*    var view = new BigUint64Array(buffer);                           */
-/*    view[0] = 0x10000000000000000n;                                  */
-/*    return view[0] === 0n;                                           */
-/* }                                                                   */
-/*                                                                     */
-/* function kangaxg() {                                                */
-/*    var buffer = new ArrayBuffer(64);                                */
-/*    var view = new DataView(buffer);                                 */
-/*    view.setBigInt64(0, 1n);                                         */
-/*    return view.getBigInt64(0) === 1n;                               */
-/* }                                                                   */
-/*                                                                     */
-/* function kangaxh() {                                                */
-/*    var buffer = new ArrayBuffer(64);                                */
-/*    var view = new DataView(buffer);                                 */
-/*    view.setBigUint64(0, 1n);                                        */
-/*    return view.getBigUint64(0) === 1n;                              */
-/* }                                                                   */
+function kangaxe() {
+   var buffer = new ArrayBuffer(64);
+   var view = new BigInt64Array(buffer);
+   view[0] = 0x8000000000000000n;
+   return view[0] === -0x8000000000000000n;
+}
+
+function kangaxf() {
+   var buffer = new ArrayBuffer(64);
+   var view = new BigUint64Array(buffer);
+   view[0] = 0x10000000000000000n;
+   return view[0] === 0n;
+}
+
+function kangaxg() {
+   var buffer = new ArrayBuffer(64);
+   var view = new DataView(buffer);
+   view.setBigInt64(0, 1n);
+   return view.getBigInt64(0) === 1n;
+}
+
+function kangaxh() {
+   var buffer = new ArrayBuffer(64);
+   var view = new DataView(buffer);
+   view.setBigUint64(0, 1n);
+   return view.getBigUint64(0) === 1n;
+}
 
 console.log("   Kangax...");
 assert.ok(kangaxa(), "kangaxa");
 assert.ok(kangaxb(), "kangaxb");
 assert.ok(kangaxc(), "kangaxc");
 assert.ok(kangaxd(), "kangaxd");
-/* assert.ok(kangaxe(), "kangaxe");                                    */
-/* assert.ok(kangaxf(), "kangaxf");                                    */
-/* assert.ok(kangaxg(), "kangaxg");                                    */
-/* assert.ok(kangaxh(), "kangaxh");                                    */
+assert.ok(kangaxe(), "kangaxe");
+assert.ok(kangaxf(), "kangaxf");
+assert.ok(kangaxg(), "kangaxg");
+assert.ok(kangaxh(), "kangaxh");
 
 
 

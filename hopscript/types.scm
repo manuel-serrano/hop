@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Jun 27 16:34:06 2021 (serrano)                */
+;*    Last change :  Wed Jul  7 07:47:39 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -227,6 +227,8 @@
 	   (class JsUint16Array::JsTypedArray)
 	   (class JsInt32Array::JsTypedArray)
 	   (class JsUint32Array::JsTypedArray)
+	   (class JsBigInt64Array::JsTypedArray)
+	   (class JsBigUint64Array::JsTypedArray)
 	   (class JsFloat32Array::JsTypedArray)
 	   (class JsFloat64Array::JsTypedArray)
 	   

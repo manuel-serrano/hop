@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Sun Jun 27 17:24:40 2021 (serrano)                */
+;*    Last change :  Wed Jul  7 08:00:17 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -296,6 +296,8 @@
 (define-instantiate-expander JsUint16Array)
 (define-instantiate-expander JsInt32Array)
 (define-instantiate-expander JsUint32Array)
+(define-instantiate-expander JsBigInt64Array)
+(define-instantiate-expander JsBigUint64Array)
 (define-instantiate-expander JsFloat32Array)
 (define-instantiate-expander JsFloat64Array)
 (define-instantiate-expander JsDataView)

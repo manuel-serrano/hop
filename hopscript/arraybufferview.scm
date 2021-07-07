@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Wed Apr  8 08:26:20 2020 (serrano)                */
-;*    Copyright   :  2014-20 Manuel Serrano                            */
+;*    Last change :  Wed Jul  7 07:47:08 2021 (serrano)                */
+;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
 ;*=====================================================================*/
@@ -41,8 +41,7 @@
 	   (js-int8array-fixnum-set! ::JsInt8Array ::long ::int8)
 	   (js-uint8array-index-set! ::JsUint8Array ::uint32 ::uint8)
 	   (js-uint8array-fixnum-set! ::JsUint8Array ::long ::uint8)
-	   (js-typedarray-slice ::JsTypedArray start end ::JsGlobalObject)
-	   ))
+	   (js-typedarray-slice ::JsTypedArray start end ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -92,6 +91,13 @@
 (register-class-serialization! JsUint32Array
    arraybufferview-serializer
    (arraybufferview-unserializer JsUint32Array 4))
+
+(register-class-serialization! JsBigInt64Array
+   arraybufferview-serializer
+   (arraybufferview-unserializer JsBigInt64Array 8))
+(register-class-serialization! JsBigUint64Array
+   arraybufferview-serializer
+   (arraybufferview-unserializer JsBigUint64Array 8))
 
 (register-class-serialization! JsFloat32Array
    arraybufferview-serializer

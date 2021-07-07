@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Sun Jun 27 17:30:00 2021 (serrano)                */
+;*    Last change :  Wed Jul  7 07:59:46 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Companion macros                                                 */
@@ -40,6 +40,8 @@
 (define-instantiate-sans JsUint16Array)
 (define-instantiate-sans JsInt32Array)
 (define-instantiate-sans JsUint32Array)
+(define-instantiate-sans JsBigInt64Array)
+(define-instantiate-sans JsBigUint64Array)
 (define-instantiate-sans JsFloat32Array)
 (define-instantiate-sans JsFloat64Array)
 (define-instantiate-sans JsDataView)
