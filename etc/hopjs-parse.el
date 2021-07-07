@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Sun Jul  4 13:48:34 2021 (serrano)                */
+;*    Last change :  Wed Jul  7 07:31:39 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -74,6 +74,7 @@
      (cons (rxor "&&" "||" "in") 'binop1)
      (cons "instanceof" 'binop)
      (cons "[?][?]" 'binop)
+     (cons "[*][*]" 'binop)
      (cons (rxor "<=" ">="  "!==*" "===*" "[+*%^&-]=" "<<=" ">>=" ">>>=") '=)
      ;; prefix
      (cons (rxor (rx: (rxq "+") (rxq "+")) "--") 'prefix)

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Tue Jul  6 09:45:10 2021 (serrano)                */
+/*    Last change :  Wed Jul  7 07:30:57 2021 (serrano)                */
 /*    Copyright   :  2015-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript bigint                                        */
@@ -193,11 +193,14 @@ assert.equal(mdnPrime(), 73n);
 
 // clamp
 function mdnClamp() {
-   const max = 2n ** 64n - 1n;
-		       
-   assert.equal(BigInt.asUintN(64, max),18446744073709551615n);
-
-   assert.equal(BigInt.asUintN(64, max + 1n), 0n);
+   const maxu32 = 2n ** 64n - 1n;
+   const maxs32 = 2n ** (64n - 1n) - 1n;
+   
+   console.log("   clamp...");
+   assert.equal(BigInt.asUintN(64, maxu32), 18446744073709551615n);
+   assert.equal(BigInt.asUintN(64, maxu32 + 1n), 0n);
+   assert.equal(BigInt.asIntN(64, maxs32), 9223372036854775807n);
+   assert.equal(BigInt.asIntN(64, maxs32 + 1n), -9223372036854775808n);
 }
 
 mdnClamp();

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Fri Jun 25 13:34:53 2021                          */
-;*    Last change :  Tue Jul  6 19:01:13 2021 (serrano)                */
+;*    Last change :  Wed Jul  7 07:14:29 2021 (serrano)                */
 ;*    Copyright   :  2021 manuel serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript BigInt                       */
@@ -84,6 +84,24 @@
 	 (cmap js-initial-cmap))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-tobigint ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (js-tobigint this %this)
+   (let loop ((this this))
+      (cond
+	 ((js-object? this)
+	  (loop (js-toprimitive this 'number %this)))
+	 ((boolean? this)
+	  (if this #z1 #z0))
+	 ((js-jsstring? this)
+	  (let* ((s (js-jsstring->string this)))
+	     (if (string-skip s "0123456789")
+		 (js-raise-syntax-error %this "ToBigInt, wrong string ~a" this)
+		 (string->bignum this))))
+	 (else
+	  (js-raise-type-error %this "ToBigInt cannot convert ~a" this)))))
+	 
+;*---------------------------------------------------------------------*/
 ;*    js-init-bigint! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-init-bigint! %this::JsGlobalObject)
@@ -98,7 +116,12 @@
       
       (define (%js-bigint this value)
 	 ;; https://tc39.es/ecma262/multipage/numbers-and-dates.html#sec-bigint-objects
-	 (js-tobigint value %this))
+	 (cond
+	    ((bignum? value) value)
+	    ((fixnum? value) (fixnum->bignum value))
+	    ((flonum? value) (flonum->bignum value))
+	    ((js-jsstring? value) (string->bignum (js-jsstring->string value)))
+	    (else #z0)))
       
       ;; then, Create a HopScript string object
       (set! js-bigint
@@ -116,22 +139,47 @@
       (js-bind! %this js-bigint (& "asUintN")
 	 :value (js-make-function %this
 		   (lambda (this bits bigint)
-		      (if (bignum? bigint)
-			  this
-			  (js-raise-type-error %this
-			     "BigInt.prototype.asUintN requires that 'this' be a BigInt" this)))
+		      (let ((bi (js-toindex bits))
+			    (bn (if (bignum? bigint)
+				    bigint
+				    (js-tobigint this %this))))
+			 (cond
+			    ((js-isindex? bi)
+			     (modulobx bn
+				(exptbx #z2
+				   (fixnum->bignum
+				      (uint32->fixnum bi)))))
+			    ((eq? bi (js-undefined))
+			     bn)
+			    (else
+			     (js-raise-range-error %this
+				"asUintN, illegal bits ~a" bits)))))
 		   (js-function-arity 2 0)
 		   (js-function-info :name "asUintN" :len 2))
 	 :enumerable #f
 	 :hidden-class #t)
       ;; asIntN
+      ;; https://tc39.es/ecma262/multipage/numbers-and-dates.html#sec-bigint.asintn
       (js-bind! %this js-bigint (& "asIntN")
 	 :value (js-make-function %this
 		   (lambda (this bits bigint)
-		      (if (bignum? bigint)
-			  this
-			  (js-raise-type-error %this
-			     "BigInt.prototype.asIntN requires that 'this' be a BigInt" this)))
+		      (let ((bi (js-toindex bits))
+			    (bn (if (bignum? bigint)
+				    bigint
+				    (js-tobigint this %this))))
+			 (cond
+			    ((js-isindex? bi)
+			     (let* ((po (fixnum->bignum (uint32->fixnum bi)))
+				    (ex (exptbx #z2 po))
+				    (mod (modulobx bn ex)))
+				(if (>=bx mod (exptbx #z2 (-bx po #z1)))
+				    (-bx mod ex)
+				    mod)))
+			    ((eq? bi (js-undefined))
+			     bn)
+			    (else
+			     (js-raise-range-error %this
+				"asIntN, illegal bits ~a" bits)))))
 		   (js-function-arity 2 0)
 		   (js-function-info :name "asIntN" :len 2))
 	 :enumerable #f
@@ -148,17 +196,6 @@
 (define-inline (js-bigint->jsstring n)
    (js-ascii->jsstring (bignum->string n)))
 
-;*---------------------------------------------------------------------*/
-;*    js-tobigint ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (js-tobigint value %this)
-   (cond
-      ((bignum? value) value)
-      ((fixnum? value) (fixnum->bignum value))
-      ((flonum? value) (flonum->bignum value))
-      ((js-jsstring? value) (string->bignum (js-jsstring->string value)))
-      (else #z0)))
-   
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-bigint-prototype! ...                               */
 ;*    -------------------------------------------------------------    */
