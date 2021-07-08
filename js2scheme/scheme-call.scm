@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Jul  8 09:56:14 2021 (serrano)                */
+;*    Last change :  Thu Jul  8 09:58:11 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1010,7 +1010,7 @@
 	       (else
 		#f)))))
 
-   (define (get-optional-chaining this)
+   (define (get-optional-chaining this::J2SAccess)
       ;; find the left-most optional-chaining
       (with-access::J2SAccess this (obj)
 	 (cond
@@ -1428,7 +1428,7 @@
 	       ((j2s-chaining? fun)
 		(call-chaining-function protocol fun
 		   (j2s-scheme thisarg mode return ctx) args))
-	       ((get-optional-chaining fun)
+	       ((and (isa? fun J2SAccess) (get-optional-chaining fun))
 		=>
 		(lambda (axs)
 		   (call-optional-chaining this axs)))
