@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jun 25 13:58:20 2021 (serrano)                */
+;*    Last change :  Sat Jul 10 09:52:41 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -259,6 +259,8 @@
 		      (javascript-mode node))))
 	 (when mode
 	    (unless (eq? current-mode 'hopscript)
+	       (when (eq? mode 'hopscript)
+		   (set! conf (cons* :type-annotations #t conf)))
 	       (set! current-mode mode)))))
 
    (define (source-element-plugins node::J2SNode config)
