@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Sun Jul 11 09:22:35 2021 (serrano)                */
+;*    Last change :  Sun Jul 11 09:24:00 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -1638,7 +1638,11 @@
 			 (js-raise-type-error %this
 			    "Not a BigInt ~a" value))
 			(else
-			 (let ((v64 (bignum->int64 value))
+			 (let ((v64 (cond-expand
+				       (bigloo4.4b
+					(llong->int64 (bignum->llong value)))
+				       (else
+					(bignum->int64 value))))
 			       (vec %data)
 			       (lendian (js-totest lendian)))
 			    (if (eq? host-lendian lendian)
