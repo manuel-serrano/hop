@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Jul 11 10:31:09 2021 (serrano)                */
+;*    Last change :  Sun Jul 11 18:05:58 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -591,7 +591,7 @@
 	      %this))
 	 ((eq? (j2s-type field) 'int32)
 	  `(js-vector-fixnum-ref ,(j2s-scheme obj mode return ctx)
-	      ,(int32->fixnum (j2s-scheme field mode return ctx))
+	      (int32->fixnum ,(j2s-scheme field mode return ctx))
 	      %this))
 	 ((or (memq (j2s-type field) '(fixnum int53))
 	      (memq (j2s-etype field (context-conf ctx)) '(fixnum int53)))

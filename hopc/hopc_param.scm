@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.5.x/hopc/hopc_param.scm               */
+;*    serrano/prgm/project/hop/hop/hopc/hopc_param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Mar 22 12:54:34 2021 (serrano)                */
+;*    Last change :  Sun Jul 11 17:14:06 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -326,7 +326,7 @@
 ;*    hopc-node-modules-directory ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-node-modules-directory
-   #f)
+   (make-file-path (hop-lib-directory) "hop" (hop-version) "node_modules"))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-js-worker ...                                               */

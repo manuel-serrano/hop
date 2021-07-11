@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Wed May 26 13:06:38 2021 (serrano)                */
+;*    Last change :  Sun Jul 11 16:51:50 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -341,7 +341,7 @@
 			 (dirname
 			    (file-name-canonicalize
 			       (make-file-name (pwd) src)))))))
-	    (set! respath (resolve-module-file path base loc))
+	    (set! respath (resolve-module-file path base args loc))
 	    (when (string=? respath src)
 		(raise
 		   (instantiate::&io-parse-error
@@ -401,7 +401,7 @@
 ;*    Almost similar to nodejs's resolve method (see                   */
 ;*    nodejs/require.scm).                                             */
 ;*---------------------------------------------------------------------*/
-(define (resolve-module-file name dir loc)
+(define (resolve-module-file name dir args loc)
    
    (define (resolve-file x)
       (cond
@@ -488,6 +488,15 @@
 
    (define (core-module? name)
       (open-string-hashtable-get core-modules name))
+
+   (define hop-modules-path
+      (cons (config-get args :hop-library-path ".")
+	 (list (config-get args :node-modules-directory "."))))
+   
+   (define (resolve-modules name)
+      (any (lambda (dir)
+	      (resolve-file-or-directory name dir))
+	 hop-modules-path))
    
    (cond
       ((core-module? name)
@@ -497,9 +506,12 @@
        name)
       ((or (string-prefix? "./" name) (string-prefix? "../" name))
        (or (resolve-file-or-directory name dir)
+	   (resolve-modules name)
 	   (resolve-error name)))
       ((string-prefix? "/" name)
        (or (resolve-file-or-directory name "/")
+	   (resolve-modules name)
 	   (resolve-error name)))
       (else
-       (resolve-error name))))
+       (or (resolve-modules name)
+	   (resolve-error name)))))
