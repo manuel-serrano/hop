@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Jul  4 18:51:01 2021 (serrano)                */
+;*    Last change :  Sun Jul 11 11:08:54 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -871,9 +871,6 @@
 			  (let ((nenv (extend-env env decl tyv)))
 			     (expr-type-add! this nenv ctx tyv
 				(append lbk bkr)))))
-		      ;; MS CARE UTYPE
-;* 		      ((not (eq? utype 'unknown))                      */
-;* 		       (return utype env bkr))                         */
 		      (else
 		       (decl-vtype-add! decl tyr ctx)
 		       (let ((nenv (extend-env envr decl tyr)))

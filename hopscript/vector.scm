@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri May  7 09:59:09 2021                          */
-;*    Last change :  Sun May  9 15:18:58 2021 (serrano)                */
+;*    Last change :  Sun Jul 11 10:27:36 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript vectors.                                               */
@@ -52,7 +52,9 @@
 	   (inline js-vector-ref ::JsArray ::obj ::JsGlobalObject)
 	   (inline js-vector-set! ::JsArray ::obj ::obj ::JsGlobalObject)
 	   (inline js-vector-index-ref ::JsArray ::uint32 ::JsGlobalObject)
-	   (inline js-vector-index-set! ::JsArray ::uint32 ::obj ::JsGlobalObject)))
+	   (inline js-vector-index-set! ::JsArray ::uint32 ::obj ::JsGlobalObject)
+	   (inline js-vector-fixnum-ref ::JsArray ::long ::JsGlobalObject)
+	   (inline js-vector-fixnum-set! ::JsArray ::long ::obj ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -212,6 +214,34 @@
    (with-access::JsArray this (ilen)
       (if (<u32 idx ilen)
 	  (js-vector-inline-set! this (uint32->fixnum idx) val)
+	  (js-raise-range-error %this
+	     "vector assignment, out of range" idx))))
+
+;*---------------------------------------------------------------------*/
+;*    js-vector-fixnum-ref ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-vector-fixnum-ref this::JsArray idx %this)
+   (with-access::JsArray this (ilen)
+      (if (cond-expand
+	     ((or bint30 bint32)
+	      (<u32 (fixnum->uint32 idx) ilen))
+	     (else
+	      (pragma::bool "(unsigned long)($1) < (unsigned long)($2)" idx ilen)))
+	  (js-vector-inline-ref this idx)
+	  (js-raise-range-error %this
+	     "vector reference, out of range" idx))))
+
+;*---------------------------------------------------------------------*/
+;*    js-vector-fixnum-set! ...                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (js-vector-fixnum-set! this::JsArray idx val %this)
+   (with-access::JsArray this (ilen)
+      (if (cond-expand
+	     ((or bint30 bint32)
+	      (<u32 (fixnum->uint32 idx) ilen))
+	     (else
+	      (pragma::bool "(unsigned long)($1) < (unsigned long)($2)" idx ilen)))
+	  (js-vector-inline-set! this idx val)
 	  (js-raise-range-error %this
 	     "vector assignment, out of range" idx))))
 

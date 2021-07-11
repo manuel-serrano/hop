@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Jul 11 08:49:17 2021 (serrano)                */
+;*    Last change :  Sun Jul 11 10:31:09 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -585,9 +585,18 @@
 (define (j2s-jsvector-ref this::J2SAccess mode return ctx)
    (with-access::J2SAccess this (obj field type)
       (cond
-	 ((memq (j2s-type field) '(uint32 int32 int53))
+	 ((eq? (j2s-type field) 'uint32)
 	  `(js-vector-index-ref ,(j2s-scheme obj mode return ctx)
 	      ,(j2s-scheme-as-uint32 field mode return ctx)
+	      %this))
+	 ((eq? (j2s-type field) 'int32)
+	  `(js-vector-fixnum-ref ,(j2s-scheme obj mode return ctx)
+	      ,(int32->fixnum (j2s-scheme field mode return ctx))
+	      %this))
+	 ((or (memq (j2s-type field) '(fixnum int53))
+	      (memq (j2s-etype field (context-conf ctx)) '(fixnum int53)))
+	  `(js-vector-fixnum-ref ,(j2s-scheme obj mode return ctx)
+	      ,(j2s-scheme field mode return ctx)
 	      %this))
 	 ((j2s-field-length? field)
 	  (let ((x `(js-vector-length
@@ -616,9 +625,20 @@
 ;* 		      `(let ((,tmp ,(j2s-scheme rhs mode return ctx))) */
 ;* 			  ,(loop (J2SCast 'any (J2SHopRef/type tmp type))) */
 ;* 			  ,tmp))))                                     */
-	       ((memq (j2s-type field) '(uint32 int32 int53))
+	       ((eq? (j2s-type field) 'uint32)
 		`(js-vector-index-set! ,(j2s-scheme obj mode return ctx)
 		    ,(j2s-scheme-as-uint32 field mode return ctx)
+		    ,(j2s-scheme rhs mode return ctx)
+		    %this))
+	       ((eq? (j2s-type field) 'int32)
+		`(js-vector-index-set! ,(j2s-scheme obj mode return ctx)
+		    (int32->fixnum ,(j2s-scheme field mode return ctx))
+		    ,(j2s-scheme rhs mode return ctx)
+		    %this))
+	       ((or (memq (j2s-type field) '(fixnum int53))
+		    (memq (j2s-etype field (context-conf ctx)) '(fixnum int53)))
+		`(js-vector-fixnum-set! ,(j2s-scheme obj mode return ctx)
+		    ,(j2s-scheme field mode return ctx)
 		    ,(j2s-scheme rhs mode return ctx)
 		    %this))
 	       (else
