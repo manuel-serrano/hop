@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Jul  6 16:27:51 2021 (serrano)                */
+;*    Last change :  Sun Jul 11 09:18:44 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -2264,7 +2264,7 @@
       ((bignum? x)
        (cond
 	  ((fixnum? y) (=bx x (fixnum->bignum y)))
-	  ((flonum? y) (=bx x (fixnum->flonum y)))
+	  ((flonum? y) (=bx x (flonum->bignum y)))
 	  ((bignum? y) (=bx x y))
 	  (else #f)))
       (else
@@ -2290,7 +2290,7 @@
       ((bignum? x)
        (cond
 	  ((fixnum? y) (=bx x (fixnum->bignum y)))
-	  ((flonum? y) (=bx x (fixnum->flonum y)))
+	  ((flonum? y) (=bx x (flonum->bignum y)))
 	  ((bignum? y) (=bx x y))
 	  (else #f)))
       (else

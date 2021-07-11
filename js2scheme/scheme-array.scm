@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Mon May 10 11:57:58 2021 (serrano)                */
+;*    Last change :  Sun Jul 11 08:49:17 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -236,7 +236,7 @@
 		(cond
 		   ((eq? t 'int32)
 		    `(js-vector-alloc
-			,(int32->uint32 (j2s-scheme arg mode return ctx))
+			(int32->uint32 ,(j2s-scheme arg mode return ctx))
 			%this))
 		   ((eq? t 'uint32)
 		    `(js-vector-alloc
@@ -244,7 +244,7 @@
 			%this))
 		   ((memq t '(integer bint int53))
 		    `(js-vector-alloc
-			,(fixnum->uint32 (j2s-scheme arg mode return ctx))
+			(fixnum->uint32 ,(j2s-scheme arg mode return ctx))
 			%this))
 		   (else
 		    `(js-vector-new1

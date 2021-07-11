@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Wed Jul  7 08:10:56 2021 (serrano)                */
+;*    Last change :  Sun Jul 11 09:15:09 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -397,7 +397,11 @@
 
 (define (js-i64array-set! buf::u8vector i::int v::obj %this::JsGlobalObject)
    (if (bignum? v)
-       ($s64/u8vector-set! buf (*fx 4 i) (bignum->int64 v))
+       (cond-expand
+	  (bigloo4.4b
+	   ($s64/u8vector-set! buf (*fx 4 i) (llong->int64 (bignum->llong v)))
+	   (else
+	    ($s64/u8vector-set! buf (*fx 4 i) (bignum->int64 v)))))
        (js-raise-type-error %this "Cannot convert ~a to BigInt" v)))
 
 (define-method (js-typedarray-ref o::JsBigInt64Array) js-i64array-ref)
@@ -1607,7 +1611,11 @@
 				 (+u64 (bit-lshu64 (uint8->uint64 b6) 8)
 				    (uint8->uint64 b7)))))))))
 	    
-	    (uint64->bignum (js-get64 this offset lendian add)))
+	    (cond-expand
+	       (bigloo4.4b
+		(llong->bignum (uint64->llong (js-get64 this offset lendian add))))
+	       (else
+		(uint64->bignum (js-get64 this offset lendian add)))))
 
 	 (define (js-setBigInt64 this::JsDataView offset value lendian)
 
