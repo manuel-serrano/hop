@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Sun Jul 11 09:24:00 2021 (serrano)                */
+;*    Last change :  Sun Jul 11 09:24:40 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -419,7 +419,11 @@
 
 (define (js-u64array-set! buf::u8vector i::int v::obj %this::JsGlobalObject)
    (if (bignum? v)
-       ($s64/u8vector-set! buf (*fx 4 i) (bignum->uint64 v))
+       (cond-expand
+	  (bigloo4.4b
+	   ($s64/u8vector-set! buf (*fx 4 i) (llong->uint64 (bignum->llong v))))
+	  (else
+	   ($s64/u8vector-set! buf (*fx 4 i) (bignum->uint64 v))))
        (js-raise-type-error %this "Cannot convert ~a to BigInt" v)))
 
 (define-method (js-typedarray-ref o::JsBigUint64Array) js-u64array-ref)
