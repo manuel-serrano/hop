@@ -2724,11 +2724,9 @@
 		,(record-index (j2s-type obj) val loc)))))
 
    (with-access::J2SAccess this (loc obj field cache cspecs type)
-      (tprint "THIS=" (j2s->list this))
       (epairify-deep loc 
 	 (cond
 	    ((and (is-record? obj) (isa? field J2SString))
-	     (tprint "ISREC...")
 	     (record-access obj field loc))
 	    ((get-optional-chaining this)
 	     =>
