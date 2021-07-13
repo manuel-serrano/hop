@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sun May 23 08:54:09 2021 (serrano)                */
+;*    Last change :  Tue Jul 13 16:46:42 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -1026,6 +1026,15 @@
 	 this)))
 
 ;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SDeclRecord ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve! this::J2SDeclRecord env mode withs wenv genv ctx conf)
+   (with-access::J2SDeclRecord this (loc val)
+      (let ((nenv (cons this env)))
+	 (set! val (resolve! val nenv mode withs wenv genv ctx conf))
+	 this)))
+
+;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SClass ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SClass env mode withs wenv genv ctx conf)
@@ -1336,6 +1345,8 @@
 			((isa? d J2SDeclFun)
 			 d)
 			((isa? d J2SDeclExtern)
+			 d)
+			((isa? d J2SDeclRecord)
 			 d)
 			((isa? d J2SDeclInit)
 			 (duplicate::J2SDecl d (key (ast-decl-key))))

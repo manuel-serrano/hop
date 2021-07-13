@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sun Jul  4 18:43:00 2021 (serrano)                */
+;*    Last change :  Tue Jul 13 17:59:45 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -23,8 +23,8 @@
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-constant)
    
-   (export (j2s-as expr::obj ::obj ::symbol ::symbol ::struct)
-	   (j2s-cast expr::obj ::obj ::symbol ::symbol ::struct)))
+   (export (j2s-as expr::obj ::obj ::obj ::obj ::struct)
+	   (j2s-cast expr::obj ::obj ::obj ::obj ::struct)))
 
 ;*---------------------------------------------------------------------*/
 ;*    method-as-int32-table ...                                        */
@@ -846,7 +846,8 @@
    
    (define (default sexp expr from to ctx) sexp)
    
-   (j2s-cast/table as-table sexp expr from to ctx default))
+   (j2s-cast/table as-table sexp expr
+      (type-name from ctx) (type-name to ctx) ctx default))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cast ...                                                     */
@@ -897,7 +898,8 @@
 		     ((bool) (j2s-totest sexp))
 		     (else sexp))))))))
    
-   (j2s-cast/table cast-table sexp expr from to ctx default))
+   (j2s-cast/table cast-table sexp expr
+      (type-name from ctx) (type-name to ctx) ctx default))
 
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Jun  6 06:51:14 2021 (serrano)                */
+;*    Last change :  Tue Jul 13 12:18:13 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -77,11 +77,11 @@
 	      ;; variable range
 	      (binder::symbol (default 'var) (info '("notraverse")))
 	      ;; user declared type (only a mere annotation)
-	      (utype::symbol (default 'unknown) (info '("notraverse")))
+	      (utype (default 'unknown) (info '("notraverse")))
 	      ;; initial parameter type
-	      (itype::symbol (default 'unknown) (info '("notraverse")))
+	      (itype (default 'unknown) (info '("notraverse")))
 	      ;; computed variable type value
-	      (vtype::symbol (default 'unknown) (info '("notraverse")))
+	      (vtype (default 'unknown) (info '("notraverse")))
 	      ;; initial parameter range
 	      (irange::obj (default #unspecified) (info '("notraverse")))
 	      ;; computed variable range
@@ -111,6 +111,9 @@
 	   (class J2SDeclClass::J2SDecl
 	      (val::J2SClass (info '("ast"))))
 
+	   (class J2SDeclRecord::J2SDeclInit
+	      (type (default 'unknown) (info '("notraverse"))))
+
 	   (class J2SDeclSvc::J2SDeclFun)
 
 	   (final-class J2SDeclExtern::J2SDeclInit
@@ -129,7 +132,7 @@
 	      (import::obj read-only (info '("notraverse"))))
 
 	   (abstract-class J2SExpr::J2SNode
-	      (type::symbol (default 'unknown) (info '("notraverse")))
+	      (type (default 'unknown) (info '("notraverse")))
 	      (hint::pair-nil (default '()) (info '("notraverse")))
 	      (range::obj (default #unspecified) (info '("notraverse"))))
 
@@ -205,7 +208,7 @@
 	   
 	   (final-class J2SBindExit::J2SExpr
 	      (lbl read-only)
-	      (utype::symbol (default 'unknown) (info '("notraverse")))
+	      (utype (default 'unknown) (info '("notraverse")))
 	      (stmt::J2SStmt (info '("ast"))))
 
 	   (class J2SReturn::J2SStmt
@@ -232,8 +235,8 @@
 	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (class J2SFun::J2SExpr
-	      (rtype::symbol (default 'unknown) (info '("notraverse")))
-	      (rutype::symbol (default 'unknown) (info '("notraverse")))
+	      (rtype (default 'unknown) (info '("notraverse")))
+	      (rutype (default 'unknown) (info '("notraverse")))
 	      (rrange::obj (default #unspecified) (info '("notraverse")))
 	      (idthis::obj (default 'this) (info '("notraverse")))
 	      (idgen read-only (default #f) (info '("notraverse")))
@@ -276,7 +279,9 @@
 
 	   (class J2SClassElement::J2SNode
 	      (static::bool read-only)
-	      (prop::J2SPropertyInit (info '("ast"))))
+	      (prop::J2SPropertyInit (info '("ast")))
+	      (private::bool read-only (default #f))
+	      (type (default 'any)))
 	   
 	   (final-class J2SCatch::J2SStmt
 	      param::J2SDecl
@@ -314,7 +319,7 @@
 
 	   (class J2SHopRef::J2SExpr
 	      (id::symbol read-only)
-	      (rtype::symbol (default 'any))
+	      (rtype (default 'any))
 	      (module read-only (default #f)))
 
 	   (class J2SLetRef::J2SRef)
@@ -367,7 +372,7 @@
 
 	   (final-class J2SSpread::J2SExpr
 	      ;; static type of the spread
-	      (stype::symbol read-only (info '("notraverse")))
+	      (stype read-only (info '("notraverse")))
 	      expr::J2SExpr)
 	   
 	   (final-class J2STemplate::J2SExpr
@@ -528,6 +533,15 @@
 	      (refs::pair-nil read-only)
 	      (aliases::pair-nil read-only (info '("notraverse")))
 	      (program (default #f) (info '("notraverse"))))
+
+	   ;; types
+	   (abstract-class J2SType
+	      (id::symbol read-only))
+	   
+	   (final-class J2STypeBuiltin::J2SType)
+	   
+	   (final-class J2STypeRecord::J2SType
+	      (clazz::J2SClass read-only))
 	   
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
@@ -642,7 +656,7 @@
       (case binder
 	 ((var) #t)
 	 ((let let-opt let-forin) #t)
-	 ((param class export) #f)
+	 ((param class record export) #f)
 	 (else (error "j2s-var?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
@@ -652,7 +666,7 @@
    (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((let let-opt let-forin) #t)
-	 ((var param class export) #f)
+	 ((var param class record export) #f)
 	 (else (error "j2s-let?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
@@ -663,7 +677,7 @@
       (unless writable
 	 (case binder
 	    ((let let-opt let-forin export) #t)
-	    ((var param class) #f)
+	    ((var param class record) #f)
 	    (else (error "j2s-const?" "wrong binder" (vector loc id binder)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -673,7 +687,7 @@
    (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((let-opt let-forin) #t)
-	 ((let var param class export) #f)
+	 ((let var param class record export) #f)
 	 (else (error "j2s-let-opt?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
@@ -703,7 +717,7 @@
    (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((param) #t)
-	 ((var let const let-opt let-forin const-opt class export) #f)
+	 ((var let const let-opt let-forin const-opt class record export) #f)
 	 (else (error "j2s-param?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/

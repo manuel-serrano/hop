@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun May 30 07:26:41 2021 (serrano)                */
+;*    Last change :  Tue Jul 13 16:16:40 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -26,6 +26,7 @@
 	   (j2s-dump-decls::obj ::obj)
 	   (j2s-dump-range ::obj)
 	   (j2s-dump-register-struct-info! ::symbol ::procedure)
+	   (type->sexp typ)
 	   (generic j2s->list ::obj)
 	   (generic j2s-info->list ::obj)
 	   (generic j2ssum::long ::obj)))
@@ -76,7 +77,20 @@
    (if (string-contains (or (getenv "HOPTRACE") "") "j2s:tail")
        `(:tail ,tail)
        '()))
-   
+
+;*---------------------------------------------------------------------*/
+;*    type->sexp ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (type->sexp type)
+   (cond
+      ((symbol? type)
+       type)
+      ((isa? type J2STypeRecord)
+       (with-access::J2STypeRecord type (id)
+	  (cons 'record id)))
+      (else
+       type)))
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-info->list ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -146,7 +160,7 @@
    (with-access::J2SExpr this (type)
       (if (or (>= (bigloo-debug) 2)
 	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
-	  `(:type ,type)
+	  `(:type ,(type->sexp type))
 	  '())))
 
 ;*---------------------------------------------------------------------*/
@@ -168,7 +182,7 @@
 	  (cond
 	     ((isa? this J2SFun)
 	      (with-access::J2SFun this (rtype)
-		 `(:rtype ,rtype)))
+		 `(:rtype ,(type->sexp rtype))))
 	     ((isa? this J2SRef)
 	      (with-access::J2SRef this (decl)
 		 (if (isa? decl J2SDeclInit)
@@ -186,7 +200,7 @@
    (if (or (>= (bigloo-debug) 2)
 	   (string-contains  (or (getenv "HOPTRACE") "") "j2s:type+"))
        (with-access::J2SFun this (rutype)
-	  `(:rutype ,rutype))
+	  `(:rutype ,(type->sexp rutype)))
        '()))
       
 ;*---------------------------------------------------------------------*/
@@ -201,11 +215,16 @@
 	  (if (isa? this J2SDeclFun)
 	      (with-access::J2SDeclFun this (val)
 		 (with-access::J2SFun val (rtype)
-		    `(:vtype ,vtype :utype ,utype :itype ,itype :rtype ,rtype)))
-	      `(:vtype ,vtype :utype ,utype :itype ,itype)))
+		    `(:vtype ,(type->sexp vtype)
+			:utype ,(type->sexp utype)
+			:itype ,(type->sexp itype)
+			:rtype ,(type->sexp rtype))))
+	      `(:vtype ,(type->sexp vtype)
+		  :utype ,(type->sexp utype)
+		  :itype ,(type->sexp itype))))
 	 ((or (>= (bigloo-debug) 2)
 	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
-	  `(:vtype ,vtype))
+	  `(:vtype ,(type->sexp vtype)))
 	 (else
 	  '()))))
       

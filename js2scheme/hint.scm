@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Jul 12 07:15:44 2021 (serrano)                */
+;*    Last change :  Tue Jul 13 17:12:33 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -39,7 +39,7 @@
 	   (generic j2s-hint-block!::J2SNode ::J2SNode conf)
 	   (j2s-hint-meta-noopt! ::J2SDecl)
 	   (j2s-known-type ::symbol)
-	   (j2s-hint-type::symbol ::symbol)))
+	   (j2s-hint-type ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *j2s-hint-block-node-size-factor* ...                            */
@@ -103,9 +103,11 @@
 ;*    -------------------------------------------------------------    */
 ;*    Maps to hint/tyflow understood types.                            */
 ;*---------------------------------------------------------------------*/
-(define (j2s-hint-type ty::symbol)
-   (let ((kty (j2s-known-type ty)))
-      (or kty (error "js2scheme" "Illegal tyflow/hint type" ty))))
+(define (j2s-hint-type ty)
+   (if (symbol? ty)
+       (let ((kty (j2s-known-type ty)))
+	  (or kty (error "js2scheme" "Illegal tyflow/hint type" ty)))
+       ty))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-reset-hint ::J2SNode ...                                     */

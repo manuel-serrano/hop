@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri May 28 07:21:30 2021 (serrano)                */
+;*    Last change :  Tue Jul 13 17:37:52 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -291,40 +291,49 @@
 ;*    type-name ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (type-name type conf)
-   (case type
-      ((int30 int32) 'int32)
-      ((uint32) 'uint32)
-      ((int53) (if (m64? conf) 'long 'obj))
-      ((bint) 'bint)
-      ((unknown any number) 'obj)
-      ((int30 fixnum ufixnum) 'long)
-      ((boolean) 'bool)
-      ((integer) 'obj)
-      ((object this) 'JsObject)
-      ((undefined) 'unspecified)
-      ((regexp) 'JsRegExp)
-      ((array) 'JsArray)
-      ((jsvector) 'JsArray)
-      ((int8array) 'JsInt8Array)
-      ((uint8array) 'JsUint8Array)
-      ((int16array) 'JsInt16Array)
-      ((uint16array) 'JsUint16Array)
-      ((int32array) 'JsInt32Array)
-      ((uint32array) 'JsUint32Array)
-      ((float32array) 'JsFloat32Array)
-      ((float64array) 'JsFloat64Array)
-      ((function) 'JsFunction)
-      ((arrow) 'JsProcedure)
-      ((service) 'JsService)
-      ((date) 'JsDate)
-      ((string buffer) 'JsStringLiteral)
-      ((null) 'nil)
-      ((String) 'JsString)
-      ((Promise) 'JsPromise)
-      ((class) 'JsFunction)
-      ((arguments) 'JsArguments)
-      ((real) 'double)
-      (else type)))
+   (cond
+      ((symbol? type)
+       (case type
+	  ((int30 int32) 'int32)
+	  ((uint32) 'uint32)
+	  ((int53) (if (m64? conf) 'long 'obj))
+	  ((bint) 'bint)
+	  ((unknown any number) 'obj)
+	  ((int30 fixnum ufixnum) 'long)
+	  ((boolean) 'bool)
+	  ((integer) 'obj)
+	  ((object this) 'JsObject)
+	  ((undefined) 'unspecified)
+	  ((regexp) 'JsRegExp)
+	  ((array) 'JsArray)
+	  ((jsvector) 'JsArray)
+	  ((int8array) 'JsInt8Array)
+	  ((uint8array) 'JsUint8Array)
+	  ((int16array) 'JsInt16Array)
+	  ((uint16array) 'JsUint16Array)
+	  ((int32array) 'JsInt32Array)
+	  ((uint32array) 'JsUint32Array)
+	  ((float32array) 'JsFloat32Array)
+	  ((float64array) 'JsFloat64Array)
+	  ((function) 'JsFunction)
+	  ((arrow) 'JsProcedure)
+	  ((service) 'JsService)
+	  ((date) 'JsDate)
+	  ((string buffer) 'JsStringLiteral)
+	  ((null) 'nil)
+	  ((String) 'JsString)
+	  ((Promise) 'JsPromise)
+	  ((class) 'JsFunction)
+	  ((arguments) 'JsArguments)
+	  ((real) 'double)
+	  (else type)))
+      ((isa? type J2STypeRecord)
+       'JsObject)
+      ((isa? type J2SType)
+       (with-access::J2SType type (id)
+	  id))
+      (else
+       (error "type-name" "Illegal type" type))))
    
 ;*---------------------------------------------------------------------*/
 ;*    min-type ...                                                     */

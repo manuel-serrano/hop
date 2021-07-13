@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Fri Apr 17 10:28:48 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Tue Jul 13 15:59:21 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
 ;*=====================================================================*/
@@ -31,12 +31,6 @@
 	   __js2scheme_scheme-constant)
 
    (export (j2s-scheme-super ::J2SCall mode return ctx)))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SDeclClass ...                                    */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SDeclClass mode return ctx)
-   "declclass not implemented yet")
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SClass ...                                        */

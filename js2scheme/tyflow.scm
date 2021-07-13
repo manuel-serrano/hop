@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Jul 12 07:49:16 2021 (serrano)                */
+;*    Last change :  Tue Jul 13 16:26:40 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -179,7 +179,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    return ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (return ty::symbol env::pair-nil bk::pair-nil)
+(define (return ty env::pair-nil bk::pair-nil)
    (values ty env bk))
 
 ;*---------------------------------------------------------------------*/
@@ -196,11 +196,12 @@
 ;*    -------------------------------------------------------------    */
 ;*    Assign a unique type to a variable declaration.                  */
 ;*---------------------------------------------------------------------*/
-(define (decl-vtype-set! decl::J2SDecl ty::symbol ctx::pair)
+(define (decl-vtype-set! decl::J2SDecl ty::obj ctx::pair)
    (with-access::J2SDecl decl (vtype id loc)
       [assert (ty) (or (eq? vtype 'unknown) (eq? vtype ty))]
       (when (or (eq? vtype 'unknown) (not (eq? vtype ty)))
-	 (unfix! ctx (format "J2SDecl.vset(~a, ~a) vtype=~a/~a" id loc vtype ty))
+	 (unfix! ctx (format "J2SDecl.vset(~a, ~a) vtype=~a/~a" id loc
+			(type->sexp vtype) (type->sexp ty)))
 	 (set! vtype (tyflow-type ty)))))
 
 ;*---------------------------------------------------------------------*/
@@ -208,10 +209,11 @@
 ;*    -------------------------------------------------------------    */
 ;*    Add a new type to a variable declaration.                        */
 ;*---------------------------------------------------------------------*/
-(define (decl-vtype-add! decl::J2SDecl ty::symbol ctx::pair)
+(define (decl-vtype-add! decl::J2SDecl ty ctx::pair)
    (with-access::J2SDecl decl (vtype id loc)
       (unless (or (eq? ty 'unknown) (subtype? ty vtype) (eq? vtype 'any))
-	 (unfix! ctx (format "J2SDecl.vadd(~a, ~a) vtype=~a/~a" id loc vtype ty))
+	 (unfix! ctx (format "J2SDecl.vadd(~a, ~a) vtype=~a/~a" id loc
+			(type->sexp vtype) (type->sexp ty)))
 	 (set! vtype (tyflow-type (merge-types vtype ty))))))
 
 ;*---------------------------------------------------------------------*/
@@ -219,10 +221,11 @@
 ;*    -------------------------------------------------------------    */
 ;*    Add a new initial type to a variable declaration.                */
 ;*---------------------------------------------------------------------*/
-(define (decl-itype-add! decl::J2SDecl ty::symbol ctx::pair)
+(define (decl-itype-add! decl::J2SDecl ty ctx::pair)
    (with-access::J2SDecl decl (itype id)
       (unless (or (eq? ty 'unknown) (subtype? ty itype) (eq? itype 'any))
-	 (unfix! ctx (format "J2SDecl.iadd(~a) itype=~a/~a" id itype ty))
+	 (unfix! ctx (format "J2SDecl.iadd(~a) itype=~a/~a" id
+			(type->sexp itype) (type->sexp ty)))
 	 (set! itype (tyflow-type (merge-types itype ty))))))
 
 ;*---------------------------------------------------------------------*/
@@ -230,7 +233,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Set the expression type and if needed update the ctx stamp.      */
 ;*---------------------------------------------------------------------*/
-(define (expr-type-add! this::J2SExpr env::pair-nil ctx::pair ty::symbol
+(define (expr-type-add! this::J2SExpr env::pair-nil ctx::pair ty
 	   #!optional (bk '()))
    (with-access::J2SExpr this (type loc)
       (unless (or (eq? ty 'unknown) (eq? type ty))
@@ -238,14 +241,17 @@
 	    (unless (eq? ntype type)
 	       (unfix! ctx
 		  (format "J2SExpr.add(~a) ~a ~a/~a -> ~a"
-		     loc (j2s->list this) ty type ntype))
+		     loc (j2s->list this)
+		     (type->sexp ty)
+		     (type->sexp type)
+		     (type->sexp ntype)))
 	       (set! type (tyflow-type ntype)))))
       (return type env bk)))
 
 ;*---------------------------------------------------------------------*/
 ;*    merge-types ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (merge-types left::symbol right::symbol)
+(define (merge-types left right)
    (cond
       ((eq? left right) left)
       ((and (eq? left 'arrow) (eq? right 'function)) 'arrow)
@@ -261,7 +267,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    typnum? ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (typnum? ty::symbol)
+(define (typnum? ty)
    (memq ty '(index length indexof integer real bigint number)))
 
 ;*---------------------------------------------------------------------*/
@@ -286,7 +292,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    extend-env ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (extend-env::pair-nil env::pair-nil decl::J2SDecl ty::symbol)
+(define (extend-env::pair-nil env::pair-nil decl::J2SDecl ty)
    (if (eq? ty 'unknown)
        env
        (cons (cons decl ty) env)))
@@ -294,7 +300,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    env-lookup ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (env-lookup::symbol env::pair-nil decl::J2SDecl)
+(define (env-lookup env::pair-nil decl::J2SDecl)
    (let ((c (assq decl env)))
       (if (pair? c)
 	  (cdr c)
@@ -786,6 +792,20 @@
       (multiple-value-bind (tyf env bk)
 	 (node-type val env ctx)
 	 (return 'class env bk))))
+
+;*---------------------------------------------------------------------*/
+;*    node-type ::J2SDeclRecord ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-type this::J2SDeclRecord env::pair-nil ctx::pair)
+   (with-access::J2SDeclRecord this (val id type)
+      (call-default-walker)
+      (unless (isa? type J2STypeRecord)
+	 (set! type (instantiate::J2STypeRecord
+		       (id id)
+		       (clazz val))))
+      (multiple-value-bind (tyf env bk)
+	 (node-type val env ctx)
+	 (return type env bk))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SAssig ...                                         */
@@ -1364,17 +1384,23 @@
 		(else 'object))))
 	 ((isa? clazz J2SRef)
 	  (with-access::J2SRef clazz (decl)
-	     (when (isa? decl J2SDeclExtern)
-		(with-access::J2SDeclExtern decl (id)
-		   (when (decl-ronly? decl)
-		      (case id
-			 ((Array) 'array)
-			 ((Vector) 'jsvector)
-			 ((Int8Array) 'int8array)
-			 ((Uint8Array) 'uint8array)
-			 ((Date) 'date)
-			 ((RegExp) 'regexp)
-			 (else 'object)))))))
+	     (cond
+		((isa? decl J2SDeclExtern)
+		 (with-access::J2SDeclExtern decl (id)
+		    (when (decl-ronly? decl)
+		       (case id
+			  ((Array) 'array)
+			  ((Vector) 'jsvector)
+			  ((Int8Array) 'int8array)
+			  ((Uint8Array) 'uint8array)
+			  ((Date) 'date)
+			  ((RegExp) 'regexp)
+			  (else 'object)))))
+		((isa? decl J2SDeclRecord)
+		 (with-access::J2SDeclRecord decl (val id type)
+		    type))
+		(else
+		 'object))))
 	 (else
 	  'object)))
    
@@ -1383,7 +1409,7 @@
 	 (node-type clazz env ctx)
 	 (multiple-value-bind (_ env bk)
 	    (node-type-call clazz protocol 'object args env ctx)
-	    (expr-type-add! this env ctx (or (class-type clazz) 'object) bk)))))
+	    (expr-type-add! this env ctx (class-type clazz) bk)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SUnary ...                                         */
@@ -2521,7 +2547,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    utype-error ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (utype-error this::J2SExpr utype::symbol tyv::symbol)
+(define (utype-error this::J2SExpr utype tyv)
    (with-access::J2SExpr this (loc)
       (raise
 	 (instantiate::&type-error

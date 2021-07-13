@@ -392,7 +392,7 @@
 (define (type-ident ident type conf)
    (cond
       ((memq type '(int32 uint32))
-       (symbol-append ident '|::| type))
+       (symbol-append ident '|::| (type-name type conf)))
       ((memq type '(bint))
        (symbol-append ident '|::bint|))
       ((eq? type 'any)

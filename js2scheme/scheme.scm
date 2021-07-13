@@ -303,7 +303,7 @@
       (with-access::J2SDeclInit this (scope id)
 	 (if (memq scope '(global %scope))
 	     (j2s-let-decl-toplevel this mode return ctx)
-	     (error "js-scheme" "Should not be here (not global)"
+	     (error "j2s-scheme" "Should not be here (not global)"
 		(j2s->list this)))))
 
    (define (j2s-scheme-export this)
@@ -2697,9 +2697,39 @@
 				 ,(j2s-scheme this mode return ctx))))))
 		(loop obj)))))
 
+   (define (is-record? obj)
+      (isa? (j2s-type obj) J2STypeRecord))
+
+   (define (record-index ty::J2STypeRecord field::bstring loc)
+      (with-access::J2STypeRecord ty (clazz id)
+	 (with-access::J2SClass clazz (elements)
+	    (let loop ((i 0)
+		       (els elements))
+	       (if (null? elements)
+		   (error "j2s-scheme"
+		      (format "Record type \"~a\" has no property named \"~a\""
+			 id field)
+		      (j2s->list this))
+		   (with-access::J2SClassElement (car els) (prop)
+		      (with-access::J2SPropertyInit prop (name)
+			 (with-access::J2SString name (val)
+			    (if (string=? val field)
+				i
+				(loop (+fx i 1) (cdr els)))))))))))
+
+   (define (record-access obj field::J2SString loc)
+      (with-access::J2SString field (val)
+	 (epairify loc
+	    `(js-object-inline-ref ,(j2s-scheme obj mode return ctx)
+		,(record-index (j2s-type obj) val loc)))))
+
    (with-access::J2SAccess this (loc obj field cache cspecs type)
+      (tprint "THIS=" (j2s->list this))
       (epairify-deep loc 
 	 (cond
+	    ((and (is-record? obj) (isa? field J2SString))
+	     (tprint "ISREC...")
+	     (record-access obj field loc))
 	    ((get-optional-chaining this)
 	     =>
 	     (lambda (axs)

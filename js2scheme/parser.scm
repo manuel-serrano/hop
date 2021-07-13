@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Jul 10 09:52:41 2021 (serrano)                */
+;*    Last change :  Tue Jul 13 12:25:59 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -328,6 +328,8 @@
 		 (statement)))))
 	 ((class)
 	  (class-declaration))
+	 ((record)
+	  (record-declaration))
 	 ((RESERVED)
 	  (case (peek-token-value)
 	     ((import) (import (consume-any!)))
@@ -360,6 +362,7 @@
 		   (service-declaration)
 		   (statement)))
 	 ((class) (class-declaration))
+	 ((record) (record-declaration))
 	 ((EOF) (cdr (consume-any!)))
 	 ((ERROR) (parse-token-error "Error" (consume-any!)))
 	 (else (statement))))
@@ -388,6 +391,7 @@
 	 ;; we mimic this behavior.
 	 ((function) (function-declaration))
 	 ((class) (class-declaration))
+	 ((record) (record-declaration))
 	 ((debugger) (debugger-statement))
 	 (else (expression-statement))))
    
@@ -983,6 +987,9 @@
 
    (define (class-declaration)
       (clazz #t))
+   
+   (define (record-declaration)
+      (record))
    
    (define (function-expression)
       (function #f (consume-token! 'function)))
@@ -1776,7 +1783,8 @@
 				   (name cname)
 				   (loc (token-loc token))
 				   (super extends)
-				   (elements (reverse! rev-ses)))))
+				   (elements (reverse! rev-ses))
+				   (type 'class))))
 		      (cond
 			 (declaration?
 			  (let ((vdecl (instantiate::J2SDeclInit
@@ -1790,7 +1798,7 @@
 					  (writable #f)
 					  (usage (usage '(uninit)))
 					  (scope 'global)
-					  (binder 'let)
+					  (binder 'class)
 					  (val clazz))))
 			     (with-access::J2SClass clazz (decl)
 				(set! decl cdecl))
@@ -1819,6 +1827,55 @@
 		   (cons (class-element (not (isa? extends J2SUndefined)))
 		      rev-ses)))))))
 
+   (define (record)
+      (let* ((loc (current-loc))
+	     (token (consume-token! 'record))
+	     (id (consume-token! 'ID))
+	     (cname (when id (token-value id)))
+	     (extends (if (eq? (peek-token-type) 'extends)
+			  (begin
+			     (consume-token! 'extends)
+			     (assig-expr #f #f #f))
+			  (J2SUndefined)))
+	     (lbrace (push-open-token (consume-token! 'LBRACE))))
+	 (let loop ((rev-ses '()))
+	    (case (peek-token-type)
+	       ((RBRACE)
+		(let ((etoken (consume-any!)))
+		   (pop-open-token etoken)
+		   (co-instantiate
+			 ((clazz (instantiate::J2SClass
+				    (endloc (token-loc etoken))
+				    (name cname)
+				    (loc (token-loc token))
+				    (super extends)
+				    (elements (reverse! rev-ses))
+				    (decl cdecl)))
+			  (vdecl (instantiate::J2SDeclRecord
+				    (id (token-value id))
+				    (loc loc)
+				    (binder 'class)
+				    (writable #f)
+				    (val clazz)))
+			  (cdecl (instantiate::J2SDeclClass
+				    (loc (token-loc id))
+				    (id (token-value id))
+				    (writable #f)
+				    (usage (usage '(uninit)))
+				    (scope 'global)
+				    (binder 'class)
+				    (val clazz))))
+		      (instantiate::J2SVarDecls
+			 (loc loc)
+			 (decls (list vdecl))))))
+	       ((SEMICOLON)
+		(consume-any!)
+		(loop rev-ses))
+	       (else
+		(loop
+		   (cons (class-element (not (isa? extends J2SUndefined)))
+		      rev-ses)))))))
+
    (define (class-element super?)
       (if (peek-token-id? 'static)
 	  (begin
@@ -1833,30 +1890,55 @@
 	     (name-or-get (property-name #f)))
 	 (cond
 	    ((isa? name-or-get J2SNode)
-	     (multiple-value-bind (params args)
-		(function-params #f)
-		(let* ((ty (opt-type))
-		       (body (fun-body params args 'strict))
-		       (fun (instantiate::J2SFun
-			       (loc loc)
-			       (src fun-src)
-			       (thisp (new-decl-this loc))
-			       (params params)
-			       (mode 'strict)
-			       (name (loc->funname "met" loc))
-			       (generator gen)
-			       (rutype ty)
-			       (body body)
-			       (ismethodof super?)
-			       (vararg (rest-params params))))
-		       (prop (instantiate::J2SDataPropertyInit
-				(loc loc)
-				(name name-or-get)
-				(val fun))))
-		   (instantiate::J2SClassElement
-		      (loc loc)
-		      (static static?)
-		      (prop prop)))))
+	     (case (peek-token-type)
+		((=)
+		 (consume-any!)
+		 (let* ((ty (opt-type))
+			(prop (instantiate::J2SDataPropertyInit
+				 (loc loc)
+				 (name name-or-get)
+				 (val (assig-expr #f #f #f)))))
+		    (instantiate::J2SClassElement
+		       (loc loc)
+		       (static static?)
+		       (type ty)
+		       (prop prop))))
+		((SEMICOLON)
+		 (let* ((ty (opt-type))
+			(prop (instantiate::J2SDataPropertyInit
+				 (loc loc)
+				 (name name-or-get)
+				 (val (J2SUndefined)))))
+		    (instantiate::J2SClassElement
+		       (loc loc)
+		       (static static?)
+		       (type ty)
+		       (prop prop))))
+		(else
+		 (multiple-value-bind (params args)
+		    (function-params #f)
+		    (let* ((ty (opt-type))
+			   (body (fun-body params args 'strict))
+			   (fun (instantiate::J2SFun
+				   (loc loc)
+				   (src fun-src)
+				   (thisp (new-decl-this loc))
+				   (params params)
+				   (mode 'strict)
+				   (name (loc->funname "met" loc))
+				   (generator gen)
+				   (rutype ty)
+				   (body body)
+				   (ismethodof super?)
+				   (vararg (rest-params params))))
+			   (prop (instantiate::J2SDataPropertyInit
+				    (loc loc)
+				    (name name-or-get)
+				    (val fun))))
+		       (instantiate::J2SClassElement
+			  (loc loc)
+			  (static static?)
+			  (prop prop)))))))
 	    ((eq? (peek-token-type) 'LPAREN)
 	     (multiple-value-bind (params args)
 		(function-params #f)

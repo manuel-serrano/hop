@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Sat Jul 10 09:43:17 2021 (serrano)                */
+;*    Last change :  Tue Jul 13 12:26:43 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -31,8 +31,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-reserved-id? sym)
    (or (getprop sym 'reserved)
-       (and *JS-care-future-reserved*
-	    (getprop sym 'future-reserved))))
+       (and *JS-care-future-reserved* (getprop sym 'future-reserved))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-strict-reserved-id? ...                                      */
@@ -88,6 +87,9 @@
      "export"
      "import"))
 
+(define *hopscript-reserved-list*
+   '("record"))
+
 (define *future-strict-reserved-list*
    '("implements"
      "interface"
@@ -103,6 +105,10 @@
 (for-each (lambda (word)
 	     (putprop! (string->symbol word) 'future-reserved #t))
 	  *future-reserved-list*)
+
+(for-each (lambda (word)
+	     (putprop! (string->symbol word) 'hopscript-reserved #t))
+	  *hopscript-reserved-list*)
 
 (for-each (lambda (word)
 	     (putprop! (string->symbol word) 'future-strict-reserved #t))
@@ -348,6 +354,9 @@
 	      (token symbol symbol (the-length)))
 	     ((and *JS-care-future-reserved* (getprop symbol 'future-reserved))
 	      (token 'RESERVED symbol (the-length)))
+	     ((and (getprop symbol 'hopscript-reserved)
+		   (string=? lang "hopscript"))
+	      (token symbol symbol (the-length)))
 	     (else
 	      (token 'ID symbol (the-length))))))
 
@@ -377,6 +386,9 @@
 			    (token symbol symbol (the-length)))
 			   ((and *JS-care-future-reserved*
 				 (getprop symbol 'future-reserved))
+			    (token symbol symbol (the-length)))
+			   ((and (getprop symbol 'hopscript-reserved)
+				 (string=? lang "hopscript"))
 			    (token symbol symbol (the-length)))
 			   (else
 			    (token 'ID symbol (the-length)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Fri Jan 31 16:43:33 2020 (serrano)                */
+;*    Last change :  Tue Jul 13 18:09:00 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -431,6 +431,10 @@
       ((isa? p J2SDeclFun)
        (with-access::J2SDeclFun p (val)
 	  (duplicate::J2SDeclFun p
+	     (key (ast-decl-key)))))
+      ((isa? p J2SDeclRecord)
+       (with-access::J2SDeclRecord p (val)
+	  (duplicate::J2SDeclRecord p
 	     (key (ast-decl-key)))))
       ((isa? p J2SDeclInit)
        (with-access::J2SDeclInit p (val)
