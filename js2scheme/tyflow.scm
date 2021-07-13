@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Jul 11 11:08:54 2021 (serrano)                */
+;*    Last change :  Mon Jul 12 07:49:16 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -993,7 +993,7 @@
 (define (node-type-fun this::J2SFun env::pair-nil ctx::pair)
    (with-access::J2SFun this (body thisp params %info vararg argumentsp type loc mode rtype rutype mode)
       (let ((envp (map (lambda (p::J2SDecl)
-			  (with-access::J2SDecl p (itype utype vtype)
+			  (with-access::J2SDecl p (itype utype vtype id)
 			     (cond
 				((and (not (eq? utype 'unknown)) (eq? mode 'hopscript))
 				 (set! itype utype)

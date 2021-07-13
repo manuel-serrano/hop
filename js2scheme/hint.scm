@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sun Jul  4 18:49:01 2021 (serrano)                */
+;*    Last change :  Mon Jul 12 07:15:44 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -753,6 +753,14 @@
 		    (with-access::J2SDecl p (utype)
 		       (not (eq? utype 'unknown))))
 	       params))))
+
+   (define (imprecise-params-type? params)
+      (any (lambda (p)
+	      (with-access::J2SDecl p (vtype itype)
+		 ;; at least one parameter is not precisely typed
+		 (and (memq vtype '(unknown number any))
+		      (memq itype '(unknown number any)))))
+	 params))
    
    (define (fun-duplicable? decl::J2SDeclFun)
       ;; returns #t iff the function is duplicable, returns #f otherwise
@@ -767,12 +775,7 @@
 				  (not (isa? val J2SSvc))
 				  (not (type-checker? val))
 				  (or (hopscript-utype? val)
-				      (any (lambda (p)
-					      (with-access::J2SDecl p (vtype itype)
-						 ;; at least one parameter is not precisely typed
-						 (and (memq vtype '(unknown number any))
-						      (memq itype '(unknown number any)))))
-					 params)))))
+				      (imprecise-params-type? params)))))
 		     (when (>=fx (config-get conf :verbose 0) 6)
 			(with-output-to-port (current-error-port)
 			   (lambda ()
@@ -898,10 +901,14 @@
 		   (cond
 		      ((hopscript-utype? (j2sdeclinit-val-fun this))
 		       (let* ((htypes (map (lambda (p)
-					      (with-access::J2SDecl p (utype)
-						 (if (eq? utype 'unknown)
-						     'any
-						     utype)))
+					      (with-access::J2SDecl p (utype vtype)
+						 (cond
+						    ((not (eq? utype 'unknown))
+						     utype)
+						    ((not (eq? vtype 'unknown))
+						     vtype)
+						    (else
+						     'any))))
 					 params))
 			      (fu (fun-duplicate-untyped this conf))
 			      (ft (fun-duplicate-typed this htypes fu conf)))
@@ -1173,6 +1180,7 @@
 	 ((integer) #\I)
 	 ((number) #\N)
 	 ((array) #\A)
+	 ((jsvector) #\J)
 	 ((string) #\S)
 	 ((unknown) #\X)
 	 ((any) #\_)
@@ -1236,18 +1244,20 @@
 ;*    j2sdecl-duplicate ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2sdecl-duplicate p::J2SDecl type::symbol)
-   (if (isa? p J2SDeclInit)
-       (duplicate::J2SDeclInit p
-	  (key (ast-decl-key))
-	  (hint '())
-	  (vtype 'unknown)
-	  (itype type))
-       (duplicate::J2SDecl p
-	  (key (ast-decl-key))
-	  (exports '())
-	  (hint '())
-	  (vtype 'unknown)
-	  (itype type))))
+   (with-access::J2SDecl p (vtype id)
+      (let ((nvtype (if (eq? vtype type) vtype 'unknown)))
+	 (if (isa? p J2SDeclInit)
+	     (duplicate::J2SDeclInit p
+		(key (ast-decl-key))
+		(hint '())
+		(vtype nvtype)
+		(itype type))
+	     (duplicate::J2SDecl p
+		(key (ast-decl-key))
+		(exports '())
+		(hint '())
+		(vtype nvtype)
+		(itype type))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sdecl-duplicate-as-any ...                                     */
@@ -1256,6 +1266,16 @@
 ;*    the dispatch function.                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2sdecl-duplicate-as-any p::J2SDecl)
+   (if (isa? p J2SDeclInit)
+       (duplicate::J2SDeclInit p
+	  (key (ast-decl-key))
+	  (hint '()))
+       (duplicate::J2SDecl p
+	  (key (ast-decl-key))
+	  (exports '())
+	  (hint '()))))
+
+(define (j2sdecl-duplicate-as-any-TBR-12jul21 p::J2SDecl)
    (if (isa? p J2SDeclInit)
        (duplicate::J2SDeclInit p
 	  (key (ast-decl-key))
