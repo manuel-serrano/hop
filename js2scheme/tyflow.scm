@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Jul 13 16:26:40 2021 (serrano)                */
+;*    Last change :  Wed Jul 14 08:53:45 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1636,6 +1636,16 @@
 			  (append bko bkf))
 		       (expr-type-add! this envf ctx 'any
 			  (append bko bkf)))))
+	       ((isa? tyo J2STypeRecord)
+		(if (isa? field J2SString)
+		    (with-access::J2SString field (val)
+		       (multiple-value-bind (index el)
+			  (record-get-field tyo val)
+			  (if (isa? el J2SClassElement)
+			      (with-access::J2SClassElement el (type)
+				 (expr-type-add! this envf ctx type (append bko bkf)))
+			      (expr-type-add! this envf ctx 'unknown (append bko bkf)))))
+		    (expr-type-add! this envf ctx 'any (append bko bkf))))
 	       ((eq? tyo 'unknown)
 		(expr-type-add! this envf ctx 'unknown (append bko bkf)))
 	       (else
@@ -2047,17 +2057,22 @@
 		(with-access::J2SLiteralValue name (val)
 		   (equal? val "constructor")))))))
    
-   (with-access::J2SClassElement this (prop)
-      (when (constructor? prop)
-	 (with-access::J2SDataPropertyInit prop (val)
-	    (with-access::J2SFun val (thisp)
-	       (with-access::J2SDecl thisp (itype vtype eloc)
-		  ;; MS CARE UTYPE
-		  ;; (unless (eq? utype 'object)
-		  (unless (eq? itype 'object)
-		     (set! itype 'object)
-		     (set! vtype 'any)
-		     (unfix! ctx "constructor type"))))))
+   (with-access::J2SClassElement this (prop type)
+      (cond
+	 ((constructor? prop)
+	  (with-access::J2SDataPropertyInit prop (val)
+	     (with-access::J2SFun val (thisp)
+		(with-access::J2SDecl thisp (itype vtype eloc)
+		   ;; MS CARE UTYPE
+		   ;; (unless (eq? utype 'object)
+		   (unless (eq? itype 'object)
+		      (set! itype 'object)
+		      (set! vtype 'any)
+		      (unfix! ctx "constructor type"))))))
+	 (else
+	  (when (eq? type 'unknown)
+	     (set! type 'any)
+	     (unfix! ctx "class element"))))
       (node-type prop env ctx)
       (return 'void env '())))
 
@@ -2393,11 +2408,6 @@
 	    ((decl-usage-has? this '(uninit))
 	     (error "force-type!" "Declaration inconsistent with init"
 		(j2s->list this)))
-	    ;; MS CARE UTYPE
-;* 	    ((and (not (isa? val J2SUndefined)) (eq? utype 'unknown))  */
-;* 	     (error "force-type!"                                      */
-;* 		(format "Pre-value type mismatch (~a/~a)" vtype (j2s-type val)) */
-;* 		(j2s->list this)))                                     */
 	    ((type->init vtype val)
 	     =>
 	     (lambda (v)
@@ -2463,9 +2473,6 @@
 (define-walk-method (reset-type! this::J2SDecl)
    (call-default-walker)
    (with-access::J2SDecl this (vtype)
-      ;; MS CARE UTYPE
-;*       (when (eq? utype 'unknown)                                    */
-;* 	 (set! vtype 'unknown))                                        */
       (when (eq? vtype '(any))
 	 (set! vtype 'unknown)))
    this)

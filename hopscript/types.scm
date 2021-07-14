@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Jul  7 08:12:40 2021 (serrano)                */
+;*    Last change :  Tue Jul 13 18:24:23 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -630,6 +630,7 @@
 	   (inline js-procedure-proxy?::bool ::obj)
 	   (inline js-procedure?::bool ::obj)
 	   (inline js-callable?::bool ::obj)
+	   (inline js-service?::bool ::obj)
 	   (inline js-symbol?::bool ::obj)
 	   (inline js-date?::bool ::obj)
 	   (inline js-proxy?::bool ::obj)
@@ -1644,6 +1645,12 @@
 		(bit-andu32 (js-object-mode o)
 		   (bit-oru32 (JS-OBJECT-MODE-JSFUNCTIONTAG)
 		      (JS-OBJECT-MODE-JSPROCEDURETAG)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-service? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-inline (js-service? o)
+   (isa? o JsService))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-symbol? ...                                                   */

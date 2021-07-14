@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Jul 13 12:25:59 2021 (serrano)                */
+;*    Last change :  Wed Jul 14 09:05:44 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1887,28 +1887,27 @@
       (let* ((loc (token-loc (peek-token)))
 	     (gen (when (eq? (peek-token-type) '*)
 		     (consume-any!) '*))
-	     (name-or-get (property-name #f)))
+	     (name-or-get (property-name #f))
+	     (ty (opt-type)))
 	 (cond
 	    ((isa? name-or-get J2SNode)
 	     (case (peek-token-type)
 		((=)
 		 (consume-any!)
-		 (let* ((ty (opt-type))
-			(prop (instantiate::J2SDataPropertyInit
-				 (loc loc)
-				 (name name-or-get)
-				 (val (assig-expr #f #f #f)))))
+		 (let ((prop (instantiate::J2SDataPropertyInit
+				(loc loc)
+				(name name-or-get)
+				(val (assig-expr #f #f #f)))))
 		    (instantiate::J2SClassElement
 		       (loc loc)
 		       (static static?)
 		       (type ty)
 		       (prop prop))))
 		((SEMICOLON)
-		 (let* ((ty (opt-type))
-			(prop (instantiate::J2SDataPropertyInit
-				 (loc loc)
-				 (name name-or-get)
-				 (val (J2SUndefined)))))
+		 (let ((prop (instantiate::J2SDataPropertyInit
+				(loc loc)
+				(name name-or-get)
+				(val (J2SUndefined)))))
 		    (instantiate::J2SClassElement
 		       (loc loc)
 		       (static static?)
@@ -1917,8 +1916,7 @@
 		(else
 		 (multiple-value-bind (params args)
 		    (function-params #f)
-		    (let* ((ty (opt-type))
-			   (body (fun-body params args 'strict))
+		    (let* ((body (fun-body params args 'strict))
 			   (fun (instantiate::J2SFun
 				   (loc loc)
 				   (src fun-src)
@@ -1942,8 +1940,7 @@
 	    ((eq? (peek-token-type) 'LPAREN)
 	     (multiple-value-bind (params args)
 		(function-params #f)
-		(let* ((ty (opt-type))
-		       (body (fun-body params args 'strict))
+		(let* ((body (fun-body params args 'strict))
 		       (fun (instantiate::J2SFun
 			       (loc loc)
 			       (src fun-src)
@@ -1971,8 +1968,7 @@
 	     (let ((name (property-name #f)))
 		(multiple-value-bind (params args)
 		   (function-params #f)
-		   (let* ((ty (opt-type))
-			  (body (fun-body params args 'strict))
+		   (let* ((body (fun-body params args 'strict))
 			  (fun (instantiate::J2SFun
 				  (loc loc)
 				  (src fun-src)

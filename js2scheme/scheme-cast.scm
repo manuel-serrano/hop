@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Tue Jul 13 17:59:45 2021 (serrano)                */
+;*    Last change :  Tue Jul 13 20:01:27 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -840,6 +840,21 @@
 	      `(js-tonumber-for-flonum ,v %this))))))
 
 ;*---------------------------------------------------------------------*/
+;*    type-id ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (type-id type)
+   (cond
+      ((symbol? type)
+       type)
+      ((isa? type J2STypeRecord)
+       'JsObject)
+      ((isa? type J2SType)
+       (with-access::J2SType type (id)
+	  id))
+      (else
+       (error "type-id" "Illegal type" type))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-as ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (j2s-as sexp expr from to ctx)
@@ -847,7 +862,7 @@
    (define (default sexp expr from to ctx) sexp)
    
    (j2s-cast/table as-table sexp expr
-      (type-name from ctx) (type-name to ctx) ctx default))
+      (type-id from) (type-id to) ctx default))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cast ...                                                     */
@@ -897,9 +912,9 @@
 		     ((index uint32 length) (js-fixnum->uint32 sexp expr ctx))
 		     ((bool) (j2s-totest sexp))
 		     (else sexp))))))))
-   
+
    (j2s-cast/table cast-table sexp expr
-      (type-name from ctx) (type-name to ctx) ctx default))
+      (type-id from) (type-id to) ctx default))
 
 
 ;*---------------------------------------------------------------------*/

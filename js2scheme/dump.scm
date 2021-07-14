@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Jul 13 16:16:40 2021 (serrano)                */
+;*    Last change :  Wed Jul 14 08:51:59 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1225,8 +1225,12 @@
 ;*    j2s->list ::J2SClassElement ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SClassElement)
-   (with-access::J2SClassElement this (prop static)
+   (with-access::J2SClassElement this (prop static type)
       `(J2SClassElement :static ,static
+	  ,@(if (or (>= (bigloo-debug) 2)
+		    (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
+		`(:type ,(type->sexp type))
+		'())
 	  ,(j2s->list prop))))
 
 ;*---------------------------------------------------------------------*/

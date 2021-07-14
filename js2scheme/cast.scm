@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/cast.scm                */
+;*    serrano/prgm/project/hop/hop/js2scheme/cast.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Apr 12 08:55:40 2021 (serrano)                */
+;*    Last change :  Wed Jul 14 08:45:00 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -391,19 +391,6 @@
 (define-method (type-cast! this::J2SAssig totype)
    (with-access::J2SAssig this (lhs rhs type loc)
       (cond
-;* 	 ((and (isa? lhs J2SRef)                                       */
-;* 	       (with-access::J2SRef lhs (decl)                         */
-;* 		  (with-access::J2SDecl decl (vtype)                   */
-;* 		     ;; MS CARE UTYPE                                  */
-;* 		     (and ;; (not (memq utype '(unknown any object)))  */
-;* 		      (not (eq? vtype 'any))                           */
-;* 		      (not (eq? vtype (j2s-type rhs)))                 */
-;* 		      vtype))))                                        */
-;* 	  =>                                                           */
-;* 	  (lambda (vtype)                                              */
-;* 	     (error "type-cast!"                                       */
-;* 		(format "not implemented yet (~a/~a)" vtype (j2s-type rhs)) */
-;* 		(j2s->list this))))                                    */
 	 ((and (isa? lhs J2SRef)
 	       (not (isa? this J2SInit))
 	       (with-access::J2SRef lhs (decl)
@@ -417,7 +404,7 @@
 	  (cast this totype))
 	 ((eq? totype '*)
 	  (set! lhs (type-cast! lhs '*))
-	  (set! rhs (type-cast! rhs '*))
+	  (set! rhs (type-cast! rhs (j2s-vtype lhs)))
 	  this)
 	 (else
 	  (let* ((id (gensym 'assig))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Tue Jul 13 17:37:52 2021 (serrano)                */
+;*    Last change :  Wed Jul 14 07:28:22 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -13,7 +13,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_utils
-
+   
    (include "usage.sch")
    
    (import __js2scheme_ast
@@ -48,18 +48,18 @@
 	   (min-type::symbol ::obj ::obj)
 	   (max-type::symbol ::obj ::obj)
 	   (js-uint32-tointeger expr conf)
-
+	   
 	   (j2s-expr-type-test ::J2SExpr)
-
+	   
 	   (j2s-type ::obj)
 	   (j2s-vtype ::obj)
 	   (j2s-etype ::obj ::pair-nil)
 	   
 	   (class-of ::J2SExpr)
-
+	   
 	   (best-hint::pair ::J2SExpr)
 	   (is-hint?::bool ::J2SExpr ::symbol)
-
+	   
 	   (string-method-type name #!optional (default '(any any)))
 	   (string-static-method-type name #!optional (default '(any any)))
 	   (math-static-method-type name #!optional (default '(any any)))
@@ -70,10 +70,11 @@
 	   
 	   (find-builtin-method-type ::J2SExpr ::bstring)
 	   (guess-builtin-method-type ::J2SExpr ::bstring)
-
+	   
 	   (is-builtin-ref?::bool ::J2SExpr ::symbol)
 	   (constructor-only?::bool ::J2SDeclFun)
-	   (constructor-no-return?::bool ::J2SDeclFun)))
+	   (constructor-no-return?::bool ::J2SDeclFun)
+	   (record-get-field ::J2STypeRecord ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    pass ...                                                         */
@@ -940,3 +941,20 @@
       (when (isa? fun J2SFun)
 	 (with-access::J2SFun fun (rtype)
 	    (eq? rtype 'undefined)))))
+
+;*---------------------------------------------------------------------*/
+;*    record-get-field ...                                             */
+;*---------------------------------------------------------------------*/
+(define (record-get-field ty field)
+   (with-access::J2STypeRecord ty (clazz id)
+      (with-access::J2SClass clazz (elements)
+	 (let loop ((i 0)
+		    (els elements))
+	    (if (pair? elements)
+		(with-access::J2SClassElement (car els) (prop)
+		   (with-access::J2SPropertyInit prop (name)
+		      (with-access::J2SString name (val)
+			 (if (string=? val field)
+			     (values i (car els))
+			     (loop (+fx i 1) (cdr els))))))
+		(values #f #f))))))

@@ -1861,6 +1861,15 @@
 				:cachefun (or (is-function? rhs)
 					      (is-prototype? obj)))))))))))
 
+   (define (j2s-record-set! this mode return ctx)
+      (with-access::J2SAssig this (lhs rhs)
+	 (with-access::J2SAccess lhs (obj field loc)
+	    (with-access::J2SString field (val)
+	       (epairify loc
+		  `(js-object-inline-set! ,(j2s-scheme obj mode return ctx)
+		      ,(record-index this (j2s-type obj) val)
+		      ,(j2s-scheme rhs mode return ctx)))))))
+   
    (with-access::J2SAssig this (loc lhs rhs type)
       (let loop ((lhs lhs)
 		 (rhs rhs))
@@ -1873,6 +1882,8 @@
 		       (j2s-vector-set! this mode return ctx))
 		      ((eq? (j2s-type obj) 'jsvector)
 		       (j2s-jsvector-set! this mode return ctx))
+		      ((isa? (j2s-type obj) J2STypeRecord)
+		       (j2s-record-set! this mode return ctx))
 		      ((and (eq? (j2s-type obj) 'array) (maybe-number? field))
 		       (j2s-array-set! this mode return ctx))
 		      ((and (memq (j2s-type obj) '(int8array uint8array))
@@ -2697,36 +2708,18 @@
 				 ,(j2s-scheme this mode return ctx))))))
 		(loop obj)))))
 
-   (define (is-record? obj)
-      (isa? (j2s-type obj) J2STypeRecord))
-
-   (define (record-index ty::J2STypeRecord field::bstring loc)
-      (with-access::J2STypeRecord ty (clazz id)
-	 (with-access::J2SClass clazz (elements)
-	    (let loop ((i 0)
-		       (els elements))
-	       (if (null? elements)
-		   (error "j2s-scheme"
-		      (format "Record type \"~a\" has no property named \"~a\""
-			 id field)
-		      (j2s->list this))
-		   (with-access::J2SClassElement (car els) (prop)
-		      (with-access::J2SPropertyInit prop (name)
-			 (with-access::J2SString name (val)
-			    (if (string=? val field)
-				i
-				(loop (+fx i 1) (cdr els)))))))))))
+   
 
    (define (record-access obj field::J2SString loc)
       (with-access::J2SString field (val)
 	 (epairify loc
 	    `(js-object-inline-ref ,(j2s-scheme obj mode return ctx)
-		,(record-index (j2s-type obj) val loc)))))
+		,(record-index this (j2s-type obj) val)))))
 
    (with-access::J2SAccess this (loc obj field cache cspecs type)
       (epairify-deep loc 
 	 (cond
-	    ((and (is-record? obj) (isa? field J2SString))
+	    ((and (isa? (j2s-type obj) J2STypeRecord) (isa? field J2SString))
 	     (record-access obj field loc))
 	    ((get-optional-chaining this)
 	     =>

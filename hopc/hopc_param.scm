@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Jul 11 17:14:06 2021 (serrano)                */
+;*    Last change :  Tue Jul 13 20:36:25 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -326,7 +326,7 @@
 ;*    hopc-node-modules-directory ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-node-modules-directory
-   (make-file-path (hop-lib-directory) "hop" (hop-version) "node_modules"))
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-js-worker ...                                               */
