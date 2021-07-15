@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Jul 13 12:18:13 2021 (serrano)                */
+;*    Last change :  Thu Jul 15 07:44:42 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -110,9 +110,6 @@
 
 	   (class J2SDeclClass::J2SDecl
 	      (val::J2SClass (info '("ast"))))
-
-	   (class J2SDeclRecord::J2SDeclInit
-	      (type (default 'unknown) (info '("notraverse"))))
 
 	   (class J2SDeclSvc::J2SDeclFun)
 
@@ -270,12 +267,16 @@
 	      (method::J2SFun (info '("ast"))))
 
 	   (class J2SClass::J2SExpr
+	      (itype (default 'object))
 	      (endloc::pair read-only (info '("notraverse")))
 	      (name read-only (info '("notraverse")))
 	      (decl (default #f) (info '("jsonref" "notraverse")))
 	      (super::J2SExpr (info '("ast")))
 	      (src::bool (default #t) (info '("notraverse")))
 	      (elements::pair-nil (info '("ast"))))
+
+	   (class J2SRecord::J2SClass
+	      (cmap (default #f)))
 
 	   (class J2SClassElement::J2SNode
 	      (static::bool read-only)
@@ -457,8 +458,10 @@
 	   (abstract-class J2SPropertyInit::J2SNode
 	      (name::J2SExpr (info '("ast"))))
 	   
-	   (final-class J2SDataPropertyInit::J2SPropertyInit
+	   (class J2SDataPropertyInit::J2SPropertyInit
 	      (val::J2SExpr (info '("ast"))))
+	   
+	   (final-class J2SMethodPropertyInit::J2SDataPropertyInit)
 	   
 	   (final-class J2SAccessorPropertyInit::J2SPropertyInit
 	      (get::obj (default #f) (info '("ast")))
@@ -604,7 +607,9 @@
 
 	   (j2sdeclinit-val-fun::J2SExpr ::J2SDeclInit)
 
-	   (j2sprogram-get-export-index::long ::J2SProgram))
+	   (j2sprogram-get-export-index::long ::J2SProgram)
+
+	   (j2s-class-super ::J2SClass))
    
    (static (class %JSONDecl::J2SDecl
 	      (%id read-only))))
@@ -1606,3 +1611,12 @@
        (bit-lshllong #l1 exp)
        (error "exptllong" "wrong number" n)))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-class-super ...                                              */
+;*---------------------------------------------------------------------*/
+(define (j2s-class-super clazz::J2SClass)
+   (with-access::J2SClass clazz (elements super)
+      (when (isa? super J2SRef)
+	 (with-access::J2SRef super (decl)
+	    (with-access::J2SDeclClass decl (val)
+	       val)))))

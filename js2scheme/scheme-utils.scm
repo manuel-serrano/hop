@@ -98,10 +98,10 @@
 	   (inrange-uint32-number?::bool ::J2SExpr)
 	   (inrange-int53?::bool ::J2SExpr)
 
-	   (boxed-type?::bool ::symbol)
-	   (box ::obj ::symbol ::struct #!optional proc::obj)
-	   (box32 ::obj ::symbol ::struct  #!optional proc::obj)
-	   (box64 ::obj ::symbol ::struct #!optional proc::obj)
+	   (boxed-type?::bool ::obj)
+	   (box ::obj ::obj ::struct #!optional proc::obj)
+	   (box32 ::obj ::obj ::struct  #!optional proc::obj)
+	   (box64 ::obj ::obj ::struct #!optional proc::obj)
 
 	   (expr-asuint32 expr::J2SExpr)
 	   (uncast::J2SExpr ::J2SExpr)
@@ -1052,7 +1052,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    box32 ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define (box32 val type::symbol ctx #!optional proc::obj)
+(define (box32 val type ctx #!optional proc::obj)
    (let ((conf (context-conf ctx)))
       (case type
 	 ((int32)
@@ -1093,7 +1093,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    box64 ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define (box64 val type::symbol ctx #!optional proc::obj)
+(define (box64 val type ctx #!optional proc::obj)
    (case type
       ((int32) (if (int32? val) (int32->fixnum val) `(int32->fixnum ,val)))
       ((uint32) (if (uint32? val) (uint32->fixnum val) `(uint32->fixnum ,val)))
@@ -1426,9 +1426,10 @@
 (define (record-index this::J2SNode ty::J2STypeRecord field::bstring)
    (with-access::J2STypeRecord ty (clazz id)
       (multiple-value-bind (index el)
-	 (record-get-field ty field)
-	 (or index
-	     (error "j2s-scheme"
-		(format "Record type \"~a\" has no property named \"~a\""
-		   id field)
-		(j2s->list this))))))
+	 (j2s-class-instance-get-property clazz field)
+	 (when el
+	    index))))
+;* 	     (error "j2s-scheme"                                       */
+;* 		(format "Record type \"~a\" has no property named \"~a\"" */
+;* 		   id field)                                           */
+;* 		(j2s->list this))))))                                  */

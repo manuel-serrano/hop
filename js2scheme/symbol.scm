@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Tue Jul 13 16:46:42 2021 (serrano)                */
+;*    Last change :  Thu Jul 15 08:17:36 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -71,8 +71,6 @@
 	 (set! nodes (decl-cleanup-duplicate! nodes))
 	 (let* ((%this (instantiate::J2SDecl
 			  (loc loc)
-			  ;; MS CARE UTYPE
-			  ;; (utype 'object)
 			  (vtype 'object)
 			  (id 'this)
 			  (_scmid '%this)))
@@ -103,7 +101,6 @@
 		  (set! decls
 		     (append decls
 			(filter (lambda (d) (isa? d J2SDecl)) vdecls))))
-	       
 	       (set! nodes
 		  (append (filter (lambda (d) (not (isa? d J2SDecl))) vdecls)
 		     nodes))
@@ -113,6 +110,7 @@
 		     nodes))
 	       (when (config-get conf :commonjs-export #f)
 		  (commonjs-export this (find-decl 'module env)))
+	       (resolve-type this env conf)
 	       (for-each (lambda (d)
 			    (with-access::J2SDecl d (scope)
 			       (when (eq? scope 'unbound)
@@ -371,7 +369,6 @@
 		   (arguments (instantiate::J2SDeclArguments
 				 (id 'arguments)
 				 (argid (gensym 'arguments))
-				 ;; MS CARE UTYPE
 				 (vtype (if (eq? fmode 'normal) 'any 'arguments))
 				 (mode mode)
 				 (loc loc)))
@@ -813,8 +810,6 @@
 	    (else
 	     (let ((decl (instantiate::J2SDecl
 			    (usage (usage '()))
-			    ;; MS CARE UTYPE
-			    ;; (utype 'any)
 			    (scope 'unbound)
 			    (loc loc)
 			    (id id))))
@@ -1020,19 +1015,37 @@
 ;*    resolve! ::J2SDeclClass ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SDeclClass env mode withs wenv genv ctx conf)
-   (with-access::J2SDeclClass this (loc val)
-      (let ((nenv (cons this env)))
-	 (set! val (resolve! val nenv mode withs wenv genv ctx conf))
-	 this)))
-
-;*---------------------------------------------------------------------*/
-;*    resolve! ::J2SDeclRecord ...                                     */
-;*---------------------------------------------------------------------*/
-(define-walk-method (resolve! this::J2SDeclRecord env mode withs wenv genv ctx conf)
-   (with-access::J2SDeclRecord this (loc val)
-      (let ((nenv (cons this env)))
-	 (set! val (resolve! val nenv mode withs wenv genv ctx conf))
-	 this)))
+   (with-access::J2SDeclClass this (loc id val exports scope)
+      (let* ((odecl (find-decl id env))
+	     (ndecl::J2SDecl (or odecl this)))
+	 ;; strict mode restrictions
+	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-10.1.1
+	 (when (eq? mode 'strict)
+	    (check-strict-mode-eval id "Declaration name" loc))
+	 (when (and (j2s-let? this)
+		    (or (not (eq? mode 'hopscript)) (not (j2s-global? odecl))))
+	    (unless (eq? ndecl this)
+	       (raise
+		  (instantiate::&io-parse-error
+		     (proc "hopc (symbol)")
+		     (msg "Illegal redefinition")
+		     (obj id)
+		     (fname (cadr loc))
+		     (location (caddr loc))))))
+	 (let ((nenv (cons this env)))
+	    (set! val (resolve! val env mode withs wenv genv ctx conf)))
+	 (cond
+	    ((and (eq? mode 'hopscript) (eq? scope 'letblock))
+	     this)
+	    ((j2s-let-opt? this)
+	     (instantiate::J2SNop (loc loc)))
+	    (else
+	     (instantiate::J2SStmtExpr
+		(loc loc)
+		(expr (instantiate::J2SInit
+			 (loc loc)
+			 (lhs (j2sref ndecl loc withs wenv))
+			 (rhs val)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SClass ...                                          */
@@ -1279,6 +1292,35 @@
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
+;*    resolve-type ::J2SNode ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve-type this::J2SNode env conf)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    resolve-type ::J2SFun ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve-type this::J2SFun env conf)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    resolve-type ::J2SDecl ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve-type this::J2SDecl env conf)
+   (call-default-walker)
+   (with-access::J2SDecl this (utype id)
+      (let ((decl (find-decl utype env)))
+	 (when (isa? decl J2SDeclClass)
+	    (with-access::J2SDeclClass decl (val)
+	       (when (isa? val J2SRecord)
+		  (with-access::J2SRecord val (itype)
+		     (unless (isa? itype J2STypeRecord)
+			(set! itype (instantiate::J2STypeRecord
+				       (id id)
+				       (clazz val))))
+		     (set! utype itype))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    resolve-tilde! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve-tilde! this::J2SNode resolvers)
@@ -1346,7 +1388,7 @@
 			 d)
 			((isa? d J2SDeclExtern)
 			 d)
-			((isa? d J2SDeclRecord)
+			((isa? d J2SDeclClass)
 			 d)
 			((isa? d J2SDeclInit)
 			 (duplicate::J2SDecl d (key (ast-decl-key))))
@@ -1473,3 +1515,4 @@
 	     (obj id)
 	     (fname (cadr loc))
 	     (location (caddr loc)))))))
+

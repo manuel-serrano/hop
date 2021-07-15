@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Jul 14 07:28:22 2021 (serrano)                */
+;*    Last change :  Wed Jul 14 10:33:25 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -74,7 +74,9 @@
 	   (is-builtin-ref?::bool ::J2SExpr ::symbol)
 	   (constructor-only?::bool ::J2SDeclFun)
 	   (constructor-no-return?::bool ::J2SDeclFun)
-	   (record-get-field ::J2STypeRecord ::bstring)))
+	   (j2s-class-instance-properties ::J2SClass)
+	   (j2s-class-instance-get-property ::J2SClass ::bstring)
+	   (j2s-class-get-property ::J2SClass ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    pass ...                                                         */
@@ -329,7 +331,7 @@
 	  ((real) 'double)
 	  (else type)))
       ((isa? type J2STypeRecord)
-       'JsObject)
+       'JsRecord)
       ((isa? type J2SType)
        (with-access::J2SType type (id)
 	  id))
@@ -943,18 +945,67 @@
 	    (eq? rtype 'undefined)))))
 
 ;*---------------------------------------------------------------------*/
-;*    record-get-field ...                                             */
+;*    j2s-class-instance-properties ...                                */
 ;*---------------------------------------------------------------------*/
-(define (record-get-field ty field)
-   (with-access::J2STypeRecord ty (clazz id)
+(define (j2s-class-instance-properties clazz)
+
+   (define (element-prop el)
+      (with-access::J2SClassElement el (prop static)
+	 (when (and (not static) (isa? prop J2SDataPropertyInit))
+	    prop)))
+
+   (let loop ((clazz clazz))
       (with-access::J2SClass clazz (elements)
-	 (let loop ((i 0)
+	 (let ((fs (filter-map element-prop elements))
+	       (super (j2s-class-super clazz)))
+	    (if super
+		(append fs (loop super))
+		fs)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-class-get ...                                                */
+;*---------------------------------------------------------------------*/
+(define (j2s-class-get clazz field instancep::bool)
+
+   (define (class-get-field-in-class clazz idx)
+      (with-access::J2SClass clazz (elements)
+	 (let loop ((i idx)
 		    (els elements))
-	    (if (pair? elements)
-		(with-access::J2SClassElement (car els) (prop)
-		   (with-access::J2SPropertyInit prop (name)
-		      (with-access::J2SString name (val)
-			 (if (string=? val field)
-			     (values i (car els))
-			     (loop (+fx i 1) (cdr els))))))
-		(values #f #f))))))
+	    (if (pair? els)
+		(with-access::J2SClassElement (car els) (prop static)
+		   (if (or (not instancep)
+			   (and (not static)
+				(not (isa? prop J2SMethodPropertyInit))))
+		       (if (isa? prop J2SDataPropertyInit)
+			   (with-access::J2SPropertyInit prop (name)
+			      (with-access::J2SString name (val)
+				 (if (string=? val field)
+				     (values i (car els))
+				     (loop (+fx i 1) (cdr els))))))
+		       (loop i (cdr els))))
+		(values i #f)))))
+
+   (let loop ((clazz clazz)
+	      (i 0))
+      (let ((super (j2s-class-super clazz)))
+	 (if super
+	     (multiple-value-bind (idx el)
+		(loop super i)
+		(if el
+		    (values idx el)
+		    (class-get-field-in-class clazz idx)))
+	     (class-get-field-in-class clazz i)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-class-intance-get-property ...                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-class-instance-get-property clazz field)
+   (j2s-class-get clazz field #t))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-class-get-property ...                                       */
+;*---------------------------------------------------------------------*/
+(define (j2s-class-get-property clazz field)
+   (j2s-class-get clazz field #f))
+
+

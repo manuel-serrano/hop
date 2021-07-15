@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Jul 14 09:05:44 2021 (serrano)                */
+;*    Last change :  Thu Jul 15 08:10:09 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1778,47 +1778,28 @@
 	       ((RBRACE)
 		(let ((etoken (consume-any!)))
 		   (pop-open-token etoken)
-		   (let ((clazz (instantiate::J2SClass
-				   (endloc (token-loc etoken))
-				   (name cname)
-				   (loc (token-loc token))
-				   (super extends)
-				   (elements (reverse! rev-ses))
-				   (type 'class))))
-		      (cond
-			 (declaration?
-			  (let ((vdecl (instantiate::J2SDeclInit
-					  (id (token-value id))
-					  (loc loc)
-					  (binder 'class)
-					  (val clazz)))
-				(cdecl (instantiate::J2SDeclClass
-					  (loc (token-loc id))
-					  (id (token-value id))
-					  (writable #f)
-					  (usage (usage '(uninit)))
-					  (scope 'global)
-					  (binder 'class)
-					  (val clazz))))
-			     (with-access::J2SClass clazz (decl)
-				(set! decl cdecl))
-			     (instantiate::J2SVarDecls
-				(loc loc)
-				(decls (list vdecl)))))
-			 (id
-			  (let ((cdecl (instantiate::J2SDeclClass
-					  (loc (token-loc id))
-					  (id (token-value id))
-					  (writable #f)
-					  (usage (usage '(uninit)))
-					  (scope 'global)
-					  (binder 'let)
-					  (val clazz))))
-			     (with-access::J2SClass clazz (decl)
-				(set! decl cdecl)
-				clazz)))
-			 (else
-			  clazz)))))
+		   (co-instantiate
+			 ((clazz (instantiate::J2SClass
+				    (endloc (token-loc etoken))
+				    (name cname)
+				    (loc (token-loc token))
+				    (super extends)
+				    (elements (reverse! rev-ses))
+				    (type 'class)
+				    (decl decl)))
+			  (decl (instantiate::J2SDeclClass
+				   (loc (token-loc id))
+				   (id (token-value id))
+				   (writable #f)
+				   (usage (usage '(uninit)))
+				   (scope 'global)
+				   (binder 'class)
+				   (val clazz))))
+		      (if declaration?
+			  (instantiate::J2SVarDecls
+			     (loc loc)
+			     (decls (list decl)))
+			  clazz))))
 	       ((SEMICOLON)
 		(consume-any!)
 		(loop rev-ses))
@@ -1831,7 +1812,7 @@
       (let* ((loc (current-loc))
 	     (token (consume-token! 'record))
 	     (id (consume-token! 'ID))
-	     (cname (when id (token-value id)))
+	     (cname (token-value id))
 	     (extends (if (eq? (peek-token-type) 'extends)
 			  (begin
 			     (consume-token! 'extends)
@@ -1844,30 +1825,24 @@
 		(let ((etoken (consume-any!)))
 		   (pop-open-token etoken)
 		   (co-instantiate
-			 ((clazz (instantiate::J2SClass
+			 ((clazz (instantiate::J2SRecord
 				    (endloc (token-loc etoken))
 				    (name cname)
 				    (loc (token-loc token))
 				    (super extends)
 				    (elements (reverse! rev-ses))
-				    (decl cdecl)))
-			  (vdecl (instantiate::J2SDeclRecord
-				    (id (token-value id))
-				    (loc loc)
-				    (binder 'class)
-				    (writable #f)
-				    (val clazz)))
-			  (cdecl (instantiate::J2SDeclClass
-				    (loc (token-loc id))
-				    (id (token-value id))
-				    (writable #f)
-				    (usage (usage '(uninit)))
-				    (scope 'global)
-				    (binder 'class)
-				    (val clazz))))
+				    (decl decl)))
+			  (decl (instantiate::J2SDeclClass
+				   (loc (token-loc id))
+				   (id (token-value id))
+				   (writable #f)
+				   (usage (usage '(uninit)))
+				   (scope 'global)
+				   (binder 'class)
+				   (val clazz))))
 		      (instantiate::J2SVarDecls
 			 (loc loc)
-			 (decls (list vdecl))))))
+			 (decls (list decl))))))
 	       ((SEMICOLON)
 		(consume-any!)
 		(loop rev-ses))
@@ -1929,7 +1904,7 @@
 				   (body body)
 				   (ismethodof super?)
 				   (vararg (rest-params params))))
-			   (prop (instantiate::J2SDataPropertyInit
+			   (prop (instantiate::J2SMethodPropertyInit
 				    (loc loc)
 				    (name name-or-get)
 				    (val fun))))
@@ -1953,7 +1928,7 @@
 			       (body body)
 			       (ismethodof super?)
 			       (vararg (rest-params params))))
-		       (prop (instantiate::J2SDataPropertyInit
+		       (prop (instantiate::J2SMethodPropertyInit
 				(loc loc)
 				(name (instantiate::J2SString
 					 (loc (token-loc name-or-get))

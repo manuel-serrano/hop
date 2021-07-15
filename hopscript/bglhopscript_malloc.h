@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.2.x/hopscript/bglhopscript_malloc.h       */
+/*    serrano/prgm/project/hop/hop/hopscript/bglhopscript_malloc.h     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  1 13:46:07 2017                          */
-/*    Last change :  Thu Nov  2 07:30:05 2017 (serrano)                */
-/*    Copyright   :  2017-20 Manuel Serrano                            */
+/*    Last change :  Thu Jul 15 09:19:53 2021 (serrano)                */
+/*    Copyright   :  2017-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    bglhopscript allocation                                          */
 /*=====================================================================*/
@@ -74,4 +74,4 @@ bgl_gc_bump_malloc( long sz ) {
      (obj_t)(&(((BgL_jsarrayz00_bglt)COBJECT(_o))->BgL_vecz00) + 1)) || \
     (CVECTOR( ((BgL_jsarrayz00_bglt)COBJECT(_o))->BgL_vecz00 ) == \
      (CVECTOR(*((obj_t *)(&(((BgL_jsarrayz00_bglt)COBJECT(_o))->BgL_vecz00) + 1))))))
-    
+   

@@ -45,7 +45,8 @@
 	   __js2scheme_scheme-spread
 	   __js2scheme_scheme-bexit
 	   __js2scheme_scheme-try
-	   __js2scheme_scheme-constant)
+	   __js2scheme_scheme-constant
+	   __js2scheme_scheme-record)
    
    (export j2s-scheme-stage
 	   j2s-scheme-eval-stage
@@ -1861,14 +1862,13 @@
 				:cachefun (or (is-function? rhs)
 					      (is-prototype? obj)))))))))))
 
-   (define (j2s-record-set! this mode return ctx)
+   (define (j2s-record-set! this idx mode return ctx)
       (with-access::J2SAssig this (lhs rhs)
 	 (with-access::J2SAccess lhs (obj field loc)
-	    (with-access::J2SString field (val)
-	       (epairify loc
-		  `(js-object-inline-set! ,(j2s-scheme obj mode return ctx)
-		      ,(record-index this (j2s-type obj) val)
-		      ,(j2s-scheme rhs mode return ctx)))))))
+	    (epairify loc
+	       `(js-object-inline-set! ,(j2s-scheme obj mode return ctx)
+		   ,idx
+		   ,(j2s-scheme rhs mode return ctx))))))
    
    (with-access::J2SAssig this (loc lhs rhs type)
       (let loop ((lhs lhs)
@@ -1882,8 +1882,13 @@
 		       (j2s-vector-set! this mode return ctx))
 		      ((eq? (j2s-type obj) 'jsvector)
 		       (j2s-jsvector-set! this mode return ctx))
-		      ((isa? (j2s-type obj) J2STypeRecord)
-		       (j2s-record-set! this mode return ctx))
+		      ((and (isa? (j2s-type obj) J2STypeRecord)
+			    (with-access::J2SAccess lhs (field loc)
+			       (with-access::J2SString field (val)
+				  (record-index this (j2s-type obj) val))))
+		       =>
+		       (lambda (idx)
+			  (j2s-record-set! this idx mode return ctx)))
 		      ((and (eq? (j2s-type obj) 'array) (maybe-number? field))
 		       (j2s-array-set! this mode return ctx))
 		      ((and (memq (j2s-type obj) '(int8array uint8array))
@@ -2708,19 +2713,20 @@
 				 ,(j2s-scheme this mode return ctx))))))
 		(loop obj)))))
 
-   
-
-   (define (record-access obj field::J2SString loc)
-      (with-access::J2SString field (val)
-	 (epairify loc
-	    `(js-object-inline-ref ,(j2s-scheme obj mode return ctx)
-		,(record-index this (j2s-type obj) val)))))
+   (define (record-access obj field::J2SString idx loc)
+      (epairify loc
+	 `(js-object-inline-ref ,(j2s-scheme obj mode return ctx) ,idx)))
 
    (with-access::J2SAccess this (loc obj field cache cspecs type)
       (epairify-deep loc 
 	 (cond
-	    ((and (isa? (j2s-type obj) J2STypeRecord) (isa? field J2SString))
-	     (record-access obj field loc))
+	    ((and (isa? (j2s-type obj) J2STypeRecord)
+		  (isa? field J2SString)
+		  (with-access::J2SString field (val)
+		     (record-index this (j2s-type obj) val)))
+	     =>
+	     (lambda (idx)
+		(record-access obj field idx loc)))
 	    ((get-optional-chaining this)
 	     =>
 	     (lambda (axs)
@@ -3082,6 +3088,14 @@
    (define (new-typeerror? clazz)
       (new-builtin? clazz 'TypeError))
 
+   (define (new-record? clazz)
+      (when (isa? clazz J2SRef)
+	 (with-access::J2SRef clazz (decl)
+	    (when (isa? decl J2SDeclClass)
+	       (with-access::J2SDeclClass decl (val)
+		  (when (isa? val J2SRecord)
+		     val))))))
+
    (define (constructor-no-call? decl)
       ;; does this constructor call another function?
       (let ((fun (j2sdeclinit-val-fun decl)))
@@ -3220,6 +3234,11 @@
 		(map (lambda (a)
 			(j2s-scheme-box a mode return ctx))
 		   args))))
+	 ((new-record? clazz)
+	  =>
+	  (lambda (rec)
+	     (epairify loc
+		(j2s-record-new rec args mode return ctx))))
 	 (else
 	  (epairify loc
 	     (j2s-new loc (j2s-scheme-box clazz mode return ctx)

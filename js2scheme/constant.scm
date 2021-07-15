@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/constant.scm            */
+;*    serrano/prgm/project/hop/hop/js2scheme/constant.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Apr  9 10:29:53 2021 (serrano)                */
+;*    Last change :  Thu Jul 15 10:33:55 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -474,4 +474,25 @@
 (define-walk-method (constant! this::J2SDeclFun env nesting conf)
    (with-access::J2SDeclFun this (val)
       (constant! val env nesting conf))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    constant! ::J2SRecord ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (constant! this::J2SRecord env nesting conf)
+   (call-default-walker)
+   (with-access::J2SRecord this (cmap loc)
+      (let ((n (add-cmap! loc
+		  (list->vector
+		     (map! (lambda (prop)
+			      (with-access::J2SPropertyInit prop (name)
+				 (with-access::J2SString name (val)
+				    (string->symbol val))))
+			(j2s-class-instance-properties this)))
+		  env)))
+	 (set! cmap
+	    (instantiate::J2SLiteralCnst
+	       (loc loc)
+	       (index n)
+	       (val (env-list-ref env n))))))
    this)

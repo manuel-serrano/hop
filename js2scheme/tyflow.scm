@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Jul 14 08:53:45 2021 (serrano)                */
+;*    Last change :  Thu Jul 15 10:48:01 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -784,28 +784,33 @@
 ;*    node-type ::J2SDeclClass ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SDeclClass env::pair-nil ctx::pair)
+
+   (define (node-type-class this)
+      (with-access::J2SDeclClass this (val)
+	 (if (decl-ronly? this)
+	     (decl-vtype-set! this 'function ctx)
+	     (decl-vtype-add! this 'function ctx))
+	 (multiple-value-bind (tyf env bk)
+	    (node-type val env ctx)
+	    (return 'function env bk))))
+
+   (define (node-type-record this)
+      (with-access::J2SDeclClass this (val id)
+	 (with-access::J2SRecord val (itype type)
+	    (unless (isa? itype J2STypeRecord)
+	       (decl-vtype-set! this 'function ctx)
+	       (set! itype (instantiate::J2STypeRecord
+			     (id id)
+			     (clazz val))))
+	    (multiple-value-bind (tyf env bk)
+	       (node-type val env ctx)
+	       (return 'function env bk)))))
+   
    (with-access::J2SDeclClass this (val)
       (call-default-walker)
-      (if (decl-ronly? this)
-	  (decl-vtype-set! this 'class ctx)
-	  (decl-vtype-add! this 'class ctx))
-      (multiple-value-bind (tyf env bk)
-	 (node-type val env ctx)
-	 (return 'class env bk))))
-
-;*---------------------------------------------------------------------*/
-;*    node-type ::J2SDeclRecord ...                                    */
-;*---------------------------------------------------------------------*/
-(define-walk-method (node-type this::J2SDeclRecord env::pair-nil ctx::pair)
-   (with-access::J2SDeclRecord this (val id type)
-      (call-default-walker)
-      (unless (isa? type J2STypeRecord)
-	 (set! type (instantiate::J2STypeRecord
-		       (id id)
-		       (clazz val))))
-      (multiple-value-bind (tyf env bk)
-	 (node-type val env ctx)
-	 (return type env bk))))
+      (if (isa? val J2SRecord)
+	  (node-type-record this)
+	  (node-type-class this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SAssig ...                                         */
@@ -933,9 +938,6 @@
 			     (let ((nenv (extend-env env decl (numty tyv))))
 				(expr-type-add! this nenv ctx (numty tyv)
 				   (append lbk bkr)))))
-			 ;; MS CARE UTYPE
-;* 			 ((not (eq? utype 'unknown))                   */
-;* 			  (return utype env bkr))                      */
 			 (else
 			  (let* ((ntyr (numty tyr))
 				 (nty (if (eq? ntyr 'unknown) (numty tyv) ntyr)))
@@ -1396,9 +1398,10 @@
 			  ((Date) 'date)
 			  ((RegExp) 'regexp)
 			  (else 'object)))))
-		((isa? decl J2SDeclRecord)
-		 (with-access::J2SDeclRecord decl (val id type)
-		    type))
+		((isa? decl J2SDeclClass)
+		 (with-access::J2SDeclClass decl (val)
+		    (with-access::J2SClass val (itype)
+		       itype)))
 		(else
 		 'object))))
 	 (else
@@ -1639,12 +1642,13 @@
 	       ((isa? tyo J2STypeRecord)
 		(if (isa? field J2SString)
 		    (with-access::J2SString field (val)
-		       (multiple-value-bind (index el)
-			  (record-get-field tyo val)
-			  (if (isa? el J2SClassElement)
-			      (with-access::J2SClassElement el (type)
-				 (expr-type-add! this envf ctx type (append bko bkf)))
-			      (expr-type-add! this envf ctx 'unknown (append bko bkf)))))
+		       (with-access::J2STypeRecord tyo (clazz)
+			  (multiple-value-bind (index el)
+			     (j2s-class-get-property clazz val)
+			     (if (isa? el J2SClassElement)
+				 (with-access::J2SClassElement el (type)
+				    (expr-type-add! this envf ctx type (append bko bkf)))
+				 (expr-type-add! this envf ctx 'unknown (append bko bkf))))))
 		    (expr-type-add! this envf ctx 'any (append bko bkf))))
 	       ((eq? tyo 'unknown)
 		(expr-type-add! this envf ctx 'unknown (append bko bkf)))
@@ -2559,8 +2563,9 @@
       (raise
 	 (instantiate::&type-error
 	    (proc "hopc")
-	    (msg (format "illegal type, \"~a\" expected" utype))
-	    (obj tyv)
-	    (type utype)
+	    (msg (format "illegal type, \"~a\" expected"
+		    (type-name utype '())))
+	    (obj (type-name tyv '()))
+	    (type (type-name utype '()))
 	    (fname (cadr loc))
 	    (location (caddr loc))))))

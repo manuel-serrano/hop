@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Jul 14 08:45:00 2021 (serrano)                */
+;*    Last change :  Wed Jul 14 10:45:11 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -87,7 +87,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    cast-expr ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (cast-expr expr::J2SExpr type::symbol totype::symbol)
+(define (cast-expr expr::J2SExpr type totype)
    (if (need-cast? type totype)
        (with-access::J2SExpr expr (loc)
 	  (J2SCast totype expr))
@@ -96,13 +96,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    cast ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define (cast expr::J2SExpr totype::symbol)
+(define (cast expr::J2SExpr totype)
    (cast-expr expr (j2s-type expr) totype))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SNode ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-generic (type-cast! this::obj totype::symbol)
+(define-generic (type-cast! this::obj totype)
    (if (pair? this)
        (map! (lambda (o) (type-cast! o totype)) this)
        this))

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.2.x/test/hopjs/noserv/es6-class.js        */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/es6-class.js      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Wed Feb 27 17:08:04 2019 (serrano)                */
-/*    Copyright   :  2017-20 Manuel Serrano                            */
+/*    Last change :  Thu Jul 15 14:03:19 2021 (serrano)                */
+/*    Copyright   :  2017-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
 /*=====================================================================*/
@@ -205,6 +205,21 @@ function basick() {
    return p.x === 555;
 }
 
+function basicl() {
+   class Point {
+      x = 44;
+      y;
+   }
+
+   class Point3d extends Point {
+      z = 55;
+   }
+   
+   const o = new Point3d();
+   return o.hasOwnProperty("x") 
+      && o.hasOwnProperty("y") 
+      && o.hasOwnProperty("z");
+}
 
 console.log( "basic" );
 console.log( "   basica()" ); assert.ok( basica(), "basica" );
@@ -218,6 +233,7 @@ console.log( "   basich()" ); assert.ok( basich(), "basich" );
 console.log( "   basici()" ); assert.ok( basici(), "basici" );
 console.log( "   basicj()" ); assert.ok( basicj(), "basicj" );
 console.log( "   basick()" ); assert.ok( basick(), "basick" );
+console.log( "   basicl()" ); assert.ok( basicl(), "basicl" );
 
 /*---------------------------------------------------------------------*/
 /*    misc                                                             */

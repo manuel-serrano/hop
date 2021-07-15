@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Jul 13 18:24:23 2021 (serrano)                */
+;*    Last change :  Thu Jul 15 07:02:56 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -70,7 +70,11 @@
 	   (macro $jsobject-elements-inline?::bool (::JsObject)
 		  "HOP_JSOBJECT_ELEMENTS_INLINEP")
 	   (macro $jsobject-vector-inline?::bool (::JsArray)
-		  "HOP_JSARRAY_VECTOR_INLINEP"))
+		  "HOP_JSARRAY_VECTOR_INLINEP")
+	   (macro $bgl-object-class-set!::long (::JsObject ::long)
+		  "BGL_OBJECT_CLASS_NUM_SET")
+	   (macro $bgl-class-index::long (::class)
+		  "BGL_CLASS_INDEX"))
    
    (export (class WorkerHopThread::hopthread
 	      (%loop (default #f))
@@ -196,6 +200,8 @@
 	   (class JsObject
 	      (cmap::JsConstructMap (default (js-not-a-cmap)))
 	      (elements (default '#())))
+
+	   (class JsRecord::JsObject)
 	   
 	   (class JsWrapper::JsObject
 	      obj
@@ -469,12 +475,14 @@
 	   (js-property-cache-init!::JsPropertyCache ::obj)
 	   
 	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
+	   (inline js-make-jsrecord::JsObject ::int ::obj ::obj ::obj)
 	   (inline js-make-jsconstructmap::JsConstructMap
 	      #!key (%id (gencmapid))
 	      inline single ctor
 	      (methods '#()) (props '#()))
 
 	   (inline js-object-default-mode::uint32)
+	   (inline js-record-default-mode::uint32)
 	   (inline js-array-default-mode::uint32)
 	   (inline js-vector-default-mode::uint32)
 	   (inline js-function-default-mode::uint32)
@@ -660,7 +668,8 @@
    (pragma (js-not-a-cmap side-effect-free)
 	   (js-null side-effect-free)
 	   (js-undefined side-effect-free)
-	   (js-object-default-mode side-effect-free))
+	   (js-object-default-mode side-effect-free)
+	   (js-record-default-mode side-effect-free))
    
    (cond-expand
       ((not |bigloo4.3a|)
@@ -696,6 +705,25 @@
 	     o)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-make-jsrecord ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-make-jsrecord constrsize constrmap __proto__ clazz)
+   (let ((mode (js-record-default-mode)))
+      (cond-expand
+	 ((and bigloo-c (not devel) (not debug))
+	  (let ((o ($js-make-jsobject constrsize constrmap __proto__ mode)))
+	     ($bgl-object-class-set! o ($bgl-class-index clazz))
+	     o))
+	 (else
+	  (let ((o (instantiate::JsObject
+		      (cmap constrmap)
+		      (elements (make-vector constrsize (js-undefined))))))
+	     (js-object-proto-set! o __proto__)
+	     (js-object-mode-set! o mode)
+	     (js-object-mode-inline-set! o #f)
+	     o)))))
+	   
+;*---------------------------------------------------------------------*/
 ;*    js-make-jsconstructmap ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-make-jsconstructmap::JsConstructMap
@@ -723,6 +751,13 @@
 	    (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
 	       (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
 		  (JS-OBJECT-MODE-HASNUMERALPROP)))))))
+
+(define-inline (js-record-default-mode)
+   (bit-oru32 (JS-OBJECT-MODE-SEALED)
+      (bit-oru32 (JS-OBJECT-MODE-PLAIN)
+	 (bit-oru32 (JS-OBJECT-MODE-INLINE)
+	    (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
+	       (JS-OBJECT-MODE-ENUMERABLE))))))
 
 (define-inline (js-array-default-mode)
    (bit-oru32 (js-object-default-mode)
