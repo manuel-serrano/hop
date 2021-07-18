@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Jul 15 10:48:01 2021 (serrano)                */
+;*    Last change :  Thu Jul 15 18:49:35 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -69,10 +69,7 @@
 ;*    utype-compatible? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (utype-compatible? utype type)
-   (or (eq? utype type)
-       (eq? type 'magic)
-       (and (eq? utype 'number) (memq type '(integer real bigint)))
-       (and (eq? utype 'object) (memq type '(string array jsvector)))))
+   (or (eq? type 'magic) (type-subtype? type utype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    tyflow-type ...                                                  */
@@ -2543,7 +2540,7 @@
 (define-walk-method (cleanup-hint! this::J2SDecl)
    (with-access::J2SDecl this (hint vtype)
       (unless (memq vtype '(number any))
-	 (set! hint '())))
+	 (set! hint (filter (lambda (h) (=fx (cdr h) (minvalfx))) hint))))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -2552,7 +2549,7 @@
 (define-walk-method (cleanup-hint! this::J2SExpr)
    (with-access::J2SExpr this (hint type)
       (unless (memq type '(number any))
-	 (set! hint '())))
+	 (set! hint (filter (lambda (h) (=fx (cdr h) (minvalfx))) hint))))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/

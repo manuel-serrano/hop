@@ -56,6 +56,7 @@
 	   (typeof-this obj conf)
 	   (maybe-number? expr::J2SNode)
 	   (mightbe-number?::bool field::J2SExpr)
+	   (cannot-integer?::bool field::J2SExpr)
 	   
 	   (utype-ident ident utype ::pair-nil #!optional compound)
 	   (vtype-ident ident vtype ::pair-nil #!optional compound)
@@ -356,13 +357,32 @@
 (define (mightbe-number?::bool field::J2SExpr)
    (or (is-number? field)
        (with-access::J2SExpr field (hint)
-	  (or (assq 'index hint) (assq 'number hint) (assq 'integer hint)))
+	  (any (lambda (h)
+		  (let ((c (assq h hint)))
+		     (when (pair? c)
+			(>fx (cdr c) 0))))
+	     '(index number integer)))
        (when (isa? field J2SBinary)
 	  (with-access::J2SBinary field (lhs rhs op)
 	     (when (eq? op '+)
 		(or (mightbe-number? lhs) (mightbe-number? rhs)))))
        (when (eq? (j2s-type field) 'any)
 	  (or (isa? field J2SPostfix) (isa? field J2SPrefix)))))
+
+;*---------------------------------------------------------------------*/
+;*    cannot-integer? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (cannot-integer?::bool expr::J2SExpr)
+   (let ((ty (j2s-vtype expr)))
+      (cond
+	 ((memq ty '(int32 uint32 int53 integer number))
+	  #f)
+	 ((not (eq? ty 'any))
+	  #t)
+	 (else
+	  (with-access::J2SExpr expr (hint)
+	     (let ((c (assq 'integer hint)))
+		(and (pair? c) (<fx (cdr c) 0))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    utype-ident ...                                                  */

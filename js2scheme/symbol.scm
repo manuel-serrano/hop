@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Jul 15 08:17:36 2021 (serrano)                */
+;*    Last change :  Thu Jul 15 19:01:39 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -1311,7 +1311,7 @@
    (with-access::J2SDecl this (utype id)
       (let ((decl (find-decl utype env)))
 	 (when (isa? decl J2SDeclClass)
-	    (with-access::J2SDeclClass decl (val)
+	    (with-access::J2SDeclClass decl (val id)
 	       (when (isa? val J2SRecord)
 		  (with-access::J2SRecord val (itype)
 		     (unless (isa? itype J2STypeRecord)

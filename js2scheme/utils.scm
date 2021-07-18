@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Jul 14 10:33:25 2021 (serrano)                */
+;*    Last change :  Thu Jul 15 18:49:51 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -44,7 +44,9 @@
 	   (type-object?::bool ::obj)
 	   (type-maybe?::bool ::obj ::pair-nil)
 	   (type-cannot?::bool ::obj ::pair-nil)
-	   (type-name type conf)
+	   (type-subtype?::bool ::obj ::obj)
+	   (type-name type #!optional (conf '()))
+	   
 	   (min-type::symbol ::obj ::obj)
 	   (max-type::symbol ::obj ::obj)
 	   (js-uint32-tointeger expr conf)
@@ -54,7 +56,7 @@
 	   (j2s-type ::obj)
 	   (j2s-vtype ::obj)
 	   (j2s-etype ::obj ::pair-nil)
-	   
+
 	   (class-of ::J2SExpr)
 	   
 	   (best-hint::pair ::J2SExpr)
@@ -74,6 +76,7 @@
 	   (is-builtin-ref?::bool ::J2SExpr ::symbol)
 	   (constructor-only?::bool ::J2SDeclFun)
 	   (constructor-no-return?::bool ::J2SDeclFun)
+	   
 	   (j2s-class-instance-properties ::J2SClass)
 	   (j2s-class-instance-get-property ::J2SClass ::bstring)
 	   (j2s-class-get-property ::J2SClass ::bstring)))
@@ -291,9 +294,34 @@
    (not (type-maybe? type types)))
 
 ;*---------------------------------------------------------------------*/
+;*    type-subtype? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (type-subtype? type supertype)
+   
+   (define (record-subtype? type supertype)
+      (or (eq? type supertype)
+	  (with-access::J2STypeRecord type (clazz)
+	     (with-access::J2SRecord clazz (super)
+		(when (isa? super J2SRef)
+		   (with-access::J2SRef super (decl)
+		      (when (isa? decl J2SDeclClass)
+			 (with-access::J2SDeclClass decl (val)
+			    (when (isa? val J2SRecord)
+			       (with-access::J2SRecord val (itype)
+				  (record-subtype? itype supertype)))))))))))
+   
+   (or (eq? type supertype)
+       (and (eq? supertype 'number) (memq type '(integer real bigint)))
+       (and (eq? supertype 'object) (memq type '(string array jsvector)))
+       (and (isa? supertype J2STypeRecord)
+	    (or (memq type '(any unknown))
+		(and (isa? type J2STypeRecord)
+		     (record-subtype? type supertype))))))
+
+;*---------------------------------------------------------------------*/
 ;*    type-name ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (type-name type conf)
+(define (type-name type #!optional (conf '()))
    (cond
       ((symbol? type)
        (case type

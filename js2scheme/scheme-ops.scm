@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Jul  7 11:46:24 2021 (serrano)                */
+;*    Last change :  Sun Jul 18 18:52:50 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2808,6 +2808,9 @@
 	  ((and (inrange-uint32? rhs) (m64? (context-conf ctx)))
 	   (binop-int53-int53 op type
 	      (asfixnum left tl) (asfixnum right tr) flip))
+	  ((cannot-integer? rhs)
+	   (binop-any-any op type
+	      (box left tl ctx) (box right tr ctx) flip))
 	  (else
 	   `(if (fixnum? ,right)
 		,(binop-fixnum-fixnum/ctx ctx op type
@@ -2925,6 +2928,9 @@
 	  ((and (inrange-int32? rhs) (m64? (context-conf ctx)))
 	   (binop-int53-int53 op type
 	      (asfixnum left tl) (asfixnum right tr) flip))
+	  ((cannot-integer? rhs)
+	   (binop-any-any op type
+	       (box left tl ctx) (box right tr ctx) flip))
 	  (else
 	   `(if (fixnum? ,right)
 		,(binop-fixnum-fixnum/ctx ctx op type
@@ -3011,6 +3017,9 @@
 	  ((and (inrange-uint32? rhs) (m64? (context-conf ctx)))
 	   (binop-int53-int53 op type
 	      left (asfixnum right tr) flip))
+	  ((cannot-integer? rhs)
+	   (binop-any-any op type
+	      left (box right tr ctx) flip))
 	  (else
 	   `(if (fixnum? ,right)
 		,(binop-fixnum-fixnum/ctx ctx op type

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Tue Jul 13 18:24:08 2021 (serrano)                */
+;*    Last change :  Sun Jul 18 08:46:26 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -120,7 +120,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-reset-hint this::J2SDecl)
    (with-access::J2SDecl this (hint)
-      (set! hint '())
+      (set! hint (filter (lambda (h) (=fx (cdr h) (minvalfx))) hint))
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
@@ -137,9 +137,13 @@
    (define (add-hint! expr type::symbol inc)
       (with-access::J2SExpr expr (hint)
 	 (let ((c (assq type hint)))
-	    (if (pair? c)
-		(set-cdr! c (+fx inc (cdr c)))
-		(set! hint (cons (cons type inc) hint))))))
+	    (cond
+	       ((not (pair? c))
+		(set! hint (cons (cons type inc) hint)))
+	       ((=fx inc (minvalfx))
+		(set-cdr! c  inc))
+	       ((>=fx (cdr c) 0)
+		(set-cdr! c (+fx inc (cdr c))))))))
 
    (with-access::J2SExpr expr (hint)
       (when (pair? hints)
@@ -161,6 +165,8 @@
 	    (cond
 	       ((not (pair? c))
 		(set! hint (cons (cons type inc) hint)))
+	       ((=fx inc (minvalfx))
+		(set-cdr! c  inc))
 	       ((>=fx (cdr c) 0)
 		(set-cdr! c (+fx inc (cdr c))))))))
    
@@ -912,7 +918,7 @@
 						    (else
 						     'any))))
 					 params))
-			      (fu (fun-duplicate-untyped this conf))
+			      (fu (fun-duplicate-untyped this htypes conf))
 			      (ft (fun-duplicate-typed this htypes fu conf)))
 			  (fun-utype-dispatch! this htypes ft fu)
 			  (list ft fu)))
@@ -941,7 +947,7 @@
 						     (with-access::J2SDecl p (vtype)
 							vtype))
 						params))
-				     (fu (fun-duplicate-untyped this conf))
+				     (fu (fun-duplicate-untyped this htypes conf))
 				     (ft (fun-duplicate-typed this htypes fu conf)))
 				 (fun-dispatch! this htypes ft vtypes fu)
 				 (list ft fu))
@@ -1129,7 +1135,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    fun-duplicate-untyped ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (fun-duplicate-untyped::J2SDeclFun fun::J2SDeclFun conf)
+(define (fun-duplicate-untyped::J2SDeclFun fun::J2SDeclFun htypes conf)
    (with-access::J2SDeclFun fun (id)
       (let ((val (j2sdeclinit-val-fun fun)))
 	 (with-access::J2SFun val (params body name generator idthis loc)
@@ -1157,6 +1163,7 @@
 				    (name (when (symbol? name)
 					     (symbol-append name '%%)))
 				    (params params)
+				    (rtype 'unknown)
 				    (body nbody))))))
 	       (with-access::J2SDeclFun nfun ((nval val))
 		  (with-access::J2SFun nval (body decl)
@@ -1168,7 +1175,11 @@
 		     ;; force a copy of the three to avoid sharing with the
 		     ;; typed version
 		     (set! body
-			(return-patch! (j2s-alpha body '() '()) val nval))))
+			(return-patch! (j2s-alpha body '() '()) val nval)))
+		  (with-access::J2SFun nval (params)
+		     (for-each (lambda (p h)
+				  (add-hints! p `((,h . ,(minvalfx)))))
+			params htypes)))
 	       (when (config-get conf :profile-hint)
 		  (profile-hint! nfun id 'nohint))
 	       nfun)))))
@@ -1214,6 +1225,7 @@
 			      (idthis (if (this? body) idthis #f))
 			      (thisp newthisp)
 			      (params newparams)
+			      (rtype 'unknown)
 			      (body unbody)))
 		   (newdecl (duplicate::J2SDeclFun fun
 			       (parent fun)
@@ -1231,6 +1243,8 @@
 			       (val newfun))))
 	       (with-access::J2SFun newfun (body)
 		  (set! body (return-patch! body val newfun)))
+	       (with-access::J2SFun newfun (body)
+		  (set! body (call-patch! body fun newdecl)))
 	       (use-count nbody +1 0)
 	       (with-access::J2SFun newfun (decl)
 		  (set! decl newdecl))
@@ -1668,6 +1682,28 @@
    (with-access::J2SReturn this (from)
       (when (eq? from old)
 	 (set! from new)))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    call-patch! ::J2SNode ...                                        */
+;*    -------------------------------------------------------------    */
+;*    After duplicating functions' body, the return nodes must         */
+;*    be adjusted so that the FROM fields point to the new function.   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (call-patch! this::J2SNode old new)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    call-patch! ::J2SCall ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (call-patch! this::J2SCall old new)
+   (call-default-walker)
+   (with-access::J2SCall this (fun type)
+      (when (isa? fun J2SRef)
+	 (with-access::J2SRef fun (decl)
+	    (when (eq? decl old)
+	       (set! decl new)
+	       (set! type 'unknown)))))
    this)
 
 ;*---------------------------------------------------------------------*/
