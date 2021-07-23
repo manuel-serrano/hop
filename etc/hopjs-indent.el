@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov  2 09:45:39 2018                          */
-;*    Last change :  Fri Jun 11 11:38:28 2021 (serrano)                */
+;*    Last change :  Mon Jul 19 07:17:14 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs indent                                                     */
@@ -206,7 +206,10 @@
 		((not (eq (hopjs-parse-token-type etok) 'ident))
 		 (hopjs-indent-column-token etok hopjs-indent-level))
 		((memq (hopjs-parse-peek-token-type) '(const let var))
-		 (hopjs-indent-column-token (hopjs-parse-peek-token) hopjs-indent-level))
+		 (let ((tok (hopjs-parse-peek-token)))
+		   (if (eq (hopjs-parse-peek-token-type) 'export)
+		       (hopjs-indent-column-token (hopjs-parse-peek-token) hopjs-indent-level)
+		     (hopjs-indent-column-token tok hopjs-indent-level))))
 		(t
 		 (hopjs-indent-column-token etok hopjs-indent-level)))))
 	    (t
@@ -900,9 +903,13 @@
 	      (hopjs-debug 0
 			   "hopjs-indent-new-semicolon.var=%s first=%s b=%s"
 			   tok (hopjs-indent-first-on-linep b) b)
-	      (if (hopjs-indent-first-on-linep b)
-		  (hopjs-indent-column-token tok 0)
-		(hopjs-indent-new (hopjs-parse-token-beginning tok)))))
+  	      (cond
+	       ((hopjs-indent-first-on-linep b)
+		(hopjs-indent-column-token tok 0))
+	       ((eq (hopjs-parse-peek-token-type) 'export)
+		(hopjs-indent-column-token (hopjs-parse-peek-token-type) 0))
+	       (t
+		(hopjs-indent-new (hopjs-parse-token-beginning tok))))))
 	   ((return throw new await)
 	    (let ((rtok (hopjs-parse-consume-token-any)))
 	      (hopjs-debug 0
@@ -924,7 +931,10 @@
 	    (let ((tok (hopjs-parse-consume-token-any)))
 	      (if (memq (hopjs-parse-peek-token-type)
 			'(return throw let var const ident))
-		  (hopjs-indent-column-token (hopjs-parse-peek-token) 0)
+		  (let ((tok (hopjs-parse-peek-token-type)))
+		    (if (eq (hopjs-parse-peek-token-type) 'export)
+			(hopjs-indent-column-token (hopjs-parse-peek-token) 0)
+		      (hopjs-indent-column-token tok 0)))
 		(hopjs-indent-column-token tok 0))))
 	   ((else)
 	    (hopjs-debug 0 "hopjs-indent-new-semicolon ELSE pos=%s first=%s"
