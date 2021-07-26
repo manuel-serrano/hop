@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Fri Jan 17 13:22:55 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Sun Jul 25 09:05:22 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
 ;*=====================================================================*/
@@ -56,6 +56,7 @@
 	  (js-int53-toint32::int32 ::obj)
 	  (js-int53-touint32::uint32 ::obj)
 	  
+	  (inline ++fx/overflow::obj ::obj ::obj)
 	  (inline +fx/overflow::obj ::obj ::obj)
 	  (inline +fx32/overflow::obj ::long ::long)
 	  (inline +s32/overflow::obj ::int32 ::int32)
@@ -63,6 +64,7 @@
 	  (+/overflow::obj ::obj ::obj)
 	  (+/overflow!::obj ::obj ::obj)
 	  
+	  (inline --fx/overflow::obj ::obj ::obj)
 	  (inline -fx/overflow::obj ::obj ::obj)
 	  (inline -fx32/overflow::obj ::long ::long)
 	  (inline -s32/overflow::obj ::int32 ::int32)
@@ -388,6 +390,12 @@
       (else x)))
 
 ;*---------------------------------------------------------------------*/
+;*    ++fx/overflow ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (++fx/overflow x::obj y::obj)
+   (+fx/overflow x 1))
+
+;*---------------------------------------------------------------------*/
 ;*    +fx/overflow ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-inline (+fx/overflow x::obj y::obj)
@@ -509,6 +517,12 @@
 	      ($real32-set! y (+fl y (todouble x))))
 	     (else
 	      (+fl (todouble x) (todouble y)))))))
+
+;*---------------------------------------------------------------------*/
+;*    --fx/overflow ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (--fx/overflow x::obj y::obj)
+   (-fx/overflow x 1))
 
 ;*---------------------------------------------------------------------*/
 ;*    -fx/overflow ...                                                 */
