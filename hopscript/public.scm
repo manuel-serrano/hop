@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Jul 11 09:18:44 2021 (serrano)                */
+;*    Last change :  Wed Jul 28 07:24:48 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -2149,6 +2149,8 @@
 	      (equality? x ((@ js-toprimitive __hopscript_public) y 'any %this)))
 	     ((boolean? y)
 	      (equality? x (js-tonumber y %this)))
+	     ((bignum? y)
+	      (= x y))
 	     (else #f)))
 	 ((js-jsstring? x)
 	  (cond

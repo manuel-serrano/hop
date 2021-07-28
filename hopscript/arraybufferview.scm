@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Sun Jul 11 09:24:40 2021 (serrano)                */
+;*    Last change :  Tue Jul 27 08:01:30 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -391,17 +391,17 @@
 (define (js-i64array-ref buf::u8vector i::int)
    (cond-expand
       (bigloo4.4b
-       (llong->bignum (int64->llong ($s64/u8vector-ref buf (*fx 4 i)))))
+       (llong->bignum (int64->llong ($s64/u8vector-ref buf (*fx 8 i)))))
       (else
-       (int64->bignum ($s64/u8vector-ref buf (*fx 4 i))))))
+       (int64->bignum ($s64/u8vector-ref buf (*fx 8 i))))))
 
 (define (js-i64array-set! buf::u8vector i::int v::obj %this::JsGlobalObject)
    (if (bignum? v)
        (cond-expand
 	  (bigloo4.4b
-	   ($s64/u8vector-set! buf (*fx 4 i) (llong->int64 (bignum->llong v))))
+	   ($s64/u8vector-set! buf (*fx 8 i) (llong->int64 (bignum->llong v))))
 	  (else
-	   ($s64/u8vector-set! buf (*fx 4 i) (bignum->int64 v))))
+	   ($s64/u8vector-set! buf (*fx 8 i) (bignum->int64 v))))
        (js-raise-type-error %this "Cannot convert ~a to BigInt" v)))
 
 (define-method (js-typedarray-ref o::JsBigInt64Array) js-i64array-ref)
@@ -413,17 +413,17 @@
 (define (js-u64array-ref buf::u8vector i::int)
    (cond-expand
       (bigloo4.4b
-       (llong->bignum (int64->llong ($s64/u8vector-ref buf (*fx 4 i)))))
+       (llong->bignum (int64->llong ($s64/u8vector-ref buf (*fx 8 i)))))
       (else
-       (uint64->bignum ($s64/u8vector-ref buf (*fx 4 i))))))
+       (uint64->bignum ($s64/u8vector-ref buf (*fx 8 i))))))
 
 (define (js-u64array-set! buf::u8vector i::int v::obj %this::JsGlobalObject)
    (if (bignum? v)
        (cond-expand
 	  (bigloo4.4b
-	   ($s64/u8vector-set! buf (*fx 4 i) (llong->uint64 (bignum->llong v))))
+	   ($s64/u8vector-set! buf (*fx 8 i) (llong->uint64 (bignum->llong v))))
 	  (else
-	   ($s64/u8vector-set! buf (*fx 4 i) (bignum->uint64 v))))
+	   ($s64/u8vector-set! buf (*fx 8 i) (bignum->uint64 v))))
        (js-raise-type-error %this "Cannot convert ~a to BigInt" v)))
 
 (define-method (js-typedarray-ref o::JsBigUint64Array) js-u64array-ref)

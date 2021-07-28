@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Sun Jun 27 17:08:08 2021 (serrano)                */
+;*    Last change :  Tue Jul 27 08:06:52 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -151,11 +151,11 @@
 	 (js-def-extern 'Uint32Array #t writable
 	    `(with-access::JsGlobalObject %this (js-uint32array) js-uint32array)
 	    :sweepable #t)
-	 (js-def-extern 'Int32Array #t writable
-	    `(with-access::JsGlobalObject %this (js-int32array) js-int32array)
+	 (js-def-extern 'BigInt64Array #t writable
+	    `(with-access::JsGlobalObject %this (js-bigint64array) js-bigint64array)
 	    :sweepable #t)
-	 (js-def-extern 'Uint32Array #t writable
-	    `(with-access::JsGlobalObject %this (js-uint32array) js-uint32array)
+	 (js-def-extern 'BigUint64Array #t writable
+	    `(with-access::JsGlobalObject %this (js-biguint64array) js-biguint64array)
 	    :sweepable #t)
 	 (js-def-extern 'Float32Array #t writable
 	    `(with-access::JsGlobalObject %this (js-float32array) js-float32array)

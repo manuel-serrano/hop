@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Thu Jul 15 18:49:51 2021 (serrano)                */
+;*    Last change :  Tue Jul 27 10:42:51 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -357,6 +357,7 @@
 	  ((class) 'JsFunction)
 	  ((arguments) 'JsArguments)
 	  ((real) 'double)
+	  ((bigint) 'bignum)
 	  (else type)))
       ((isa? type J2STypeRecord)
        'JsRecord)
