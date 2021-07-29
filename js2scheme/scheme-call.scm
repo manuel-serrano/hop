@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Jul  8 09:58:11 2021 (serrano)                */
+;*    Last change :  Thu Jul 29 08:58:13 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -604,7 +604,7 @@
 	  #f)
 	 ((isa? decl J2SDeclFun)
 	  (when (decl-ronly? decl) decl))
-	 ((j2s-let-opt? decl)
+	 ((and (isa? decl J2SDeclInit) (j2s-let-opt? decl) )
 	  (with-access::J2SDeclInit decl (val)
 	     (when (and (isa? val J2SFun)
 			(decl-ronly? decl)
