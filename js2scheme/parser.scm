@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Jul 15 08:10:09 2021 (serrano)                */
+;*    Last change :  Thu Jul 29 07:28:42 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1778,27 +1778,27 @@
 	       ((RBRACE)
 		(let ((etoken (consume-any!)))
 		   (pop-open-token etoken)
-		   (co-instantiate
-			 ((clazz (instantiate::J2SClass
+		   (let ((clazz (instantiate::J2SClass
 				    (endloc (token-loc etoken))
 				    (name cname)
 				    (loc (token-loc token))
 				    (super extends)
 				    (elements (reverse! rev-ses))
-				    (type 'class)
-				    (decl decl)))
-			  (decl (instantiate::J2SDeclClass
-				   (loc (token-loc id))
-				   (id (token-value id))
-				   (writable #f)
-				   (usage (usage '(uninit)))
-				   (scope 'global)
-				   (binder 'class)
-				   (val clazz))))
+				    (type 'class))))
 		      (if declaration?
-			  (instantiate::J2SVarDecls
-			     (loc loc)
-			     (decls (list decl)))
+			  (let ((decl (instantiate::J2SDeclClass
+					 (loc (token-loc id))
+					 (id (token-value id))
+					 (writable (not (eq? current-mode 'hopscript)))
+					 (usage (usage '(uninit)))
+					 (scope 'global)
+					 (binder 'class)
+					 (val clazz))))
+			     (with-access::J2SClass clazz ((cdecl decl))
+				(set! cdecl decl))
+			     (instantiate::J2SVarDecls
+				(loc loc)
+				(decls (list decl))))
 			  clazz))))
 	       ((SEMICOLON)
 		(consume-any!)

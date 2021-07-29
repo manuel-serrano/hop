@@ -240,11 +240,12 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-class-id this::J2SClass ctx)
    (with-access::J2SClass this (decl name)
-      (when decl
-	 (with-access::J2SDecl decl (_scmid)
-	    (unless _scmid
-	       (set! _scmid (symbol-append '@ name)))
-	    _scmid))))
+      (if decl
+	  (with-access::J2SDecl decl (_scmid)
+	     (unless _scmid
+		(set! _scmid (symbol-append '@ name)))
+	     _scmid)
+	  (symbol-append '@ name))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-need-global? ...                                              */

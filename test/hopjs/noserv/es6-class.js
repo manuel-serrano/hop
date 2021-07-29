@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Thu Jul 15 14:03:19 2021 (serrano)                */
+/*    Last change :  Thu Jul 29 07:40:43 2021 (serrano)                */
 /*    Copyright   :  2017-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
@@ -75,7 +75,7 @@ function basicd() {
 function basice() {
    var o = {
       foo() {
-	 return foo = 4;
+	 return foo;
       }
    }
    try {
