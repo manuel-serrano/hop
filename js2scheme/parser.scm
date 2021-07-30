@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Jul 29 07:28:42 2021 (serrano)                */
+;*    Last change :  Thu Jul 29 19:22:30 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1786,19 +1786,41 @@
 				    (elements (reverse! rev-ses))
 				    (type 'class))))
 		      (if declaration?
-			  (let ((decl (instantiate::J2SDeclClass
-					 (loc (token-loc id))
-					 (id (token-value id))
-					 (writable (not (eq? current-mode 'hopscript)))
-					 (usage (usage '(uninit)))
-					 (scope 'global)
-					 (binder 'class)
-					 (val clazz))))
-			     (with-access::J2SClass clazz ((cdecl decl))
-				(set! cdecl decl))
-			     (instantiate::J2SVarDecls
-				(loc loc)
-				(decls (list decl))))
+			  (if (eq? current-mode 'hopscript)
+			      (let ((decl (instantiate::J2SDeclClass
+					     (loc (token-loc id))
+					     (id (token-value id))
+					     (writable #f)
+					     (usage (usage '(uninit)))
+					     (scope 'global)
+					     (binder 'class)
+					     (val clazz))))
+				 (with-access::J2SClass clazz ((cdecl decl))
+				    (set! cdecl decl))
+				 (instantiate::J2SVarDecls
+				    (loc loc)
+				    (decls (list decl))))
+			      (let ((decl (instantiate::J2SDeclClass
+					     (loc (token-loc id))
+					     (id (token-value id))
+					     (writable #f)
+					     (usage (usage '(uninit)))
+					     (scope 'global)
+					     (binder 'class)
+					     (val clazz)))
+				    (declv (instantiate::J2SDeclInit
+					      (loc (token-loc id))
+					      (id (token-value id))
+					      (writable #t)
+					      (usage (usage '(uninit)))
+					      (scope 'letblock)
+					      (binder 'let)
+					      (val (J2SUnresolvedRef (token-value id))))))
+				 (with-access::J2SClass clazz ((cdecl decl))
+				    (set! cdecl decl))
+				 (instantiate::J2SVarDecls
+				    (loc loc)
+				    (decls (list decl declv)))))
 			  clazz))))
 	       ((SEMICOLON)
 		(consume-any!)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Jul 15 18:49:35 2021 (serrano)                */
+;*    Last change :  Thu Jul 29 18:46:48 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -2047,16 +2047,17 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SClassElement env::pair-nil ctx::pair)
    
-   (define (constructor? prop::J2SDataPropertyInit)
-      (with-access::J2SDataPropertyInit prop (name)
-	 (let loop ((name name))
-	    (cond
-	       ((isa? name J2SLiteralCnst)
-		(with-access::J2SLiteralCnst name (val)
-		   (loop val)))
-	       ((isa? name J2SLiteralValue)
-		(with-access::J2SLiteralValue name (val)
-		   (equal? val "constructor")))))))
+   (define (constructor? prop::J2SPropertyInit)
+      (when (isa? prop J2SDataPropertyInit)
+	 (with-access::J2SDataPropertyInit prop (name)
+	    (let loop ((name name))
+	       (cond
+		  ((isa? name J2SLiteralCnst)
+		   (with-access::J2SLiteralCnst name (val)
+		      (loop val)))
+		  ((isa? name J2SLiteralValue)
+		   (with-access::J2SLiteralValue name (val)
+		      (equal? val "constructor"))))))))
    
    (with-access::J2SClassElement this (prop type)
       (cond
@@ -2064,8 +2065,6 @@
 	  (with-access::J2SDataPropertyInit prop (val)
 	     (with-access::J2SFun val (thisp)
 		(with-access::J2SDecl thisp (itype vtype eloc)
-		   ;; MS CARE UTYPE
-		   ;; (unless (eq? utype 'object)
 		   (unless (eq? itype 'object)
 		      (set! itype 'object)
 		      (set! vtype 'any)
