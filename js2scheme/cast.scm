@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Jul 14 10:45:11 2021 (serrano)                */
+;*    Last change :  Sat Jul 31 07:51:52 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -77,7 +77,6 @@
    (unless (eq? type totype)
       (or (and (eq? totype 'any) (memq type '(int32 uint32)))
 	  (not (or (and (eq? type 'function) (eq? totype 'arrow))
-		   (eq? type totype)
 		   (eq? totype '*)
 		   (and (eq? totype 'any) (memq type *any-types*)))))))
 
