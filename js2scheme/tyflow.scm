@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Jul 30 19:25:00 2021 (serrano)                */
+;*    Last change :  Sat Jul 31 07:42:49 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1397,8 +1397,10 @@
 			  (else 'object)))))
 		((isa? decl J2SDeclClass)
 		 (with-access::J2SDeclClass decl (val)
-		    (with-access::J2SClass val (itype)
-		       itype)))
+		    (if (isa? val J2SClass)
+			(with-access::J2SClass val (itype)
+			   itype)
+			'object)))
 		(else
 		 'object))))
 	 (else

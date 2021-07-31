@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jul 30 07:32:23 2021 (serrano)                */
+;*    Last change :  Sat Jul 31 07:38:44 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1791,7 +1791,7 @@
 					 (loc (token-loc id))
 					 (id (token-value id))
 					 (writable (not (eq? current-mode 'hopscript)))
-					 (usage (usage '(uninit)))
+					 (usage (usage '()))
 					 (binder 'let)
 					 (val clazz))))
 			     (with-access::J2SClass clazz ((cdecl decl))
