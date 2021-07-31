@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Jul 15 07:44:42 2021 (serrano)                */
+;*    Last change :  Fri Jul 30 09:06:57 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -108,10 +108,9 @@
 
 	   (class J2SDeclFunType::J2SDeclFun)
 
-	   (class J2SDeclClass::J2SDecl
-	      (val::J2SClass (info '("ast"))))
-
 	   (class J2SDeclSvc::J2SDeclFun)
+
+	   (class J2SDeclClass::J2SDeclInit)
 
 	   (final-class J2SDeclExtern::J2SDeclInit
 	      (bind::bool read-only (default #f))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Tue Dec 31 14:21:02 2019 (serrano)                */
-;*    Copyright   :  2015-19 Manuel Serrano                            */
+;*    Last change :  Fri Jul 30 19:48:23 2021 (serrano)                */
+;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
 ;*    -------------------------------------------------------------    */

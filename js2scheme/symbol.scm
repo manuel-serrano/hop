@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Jul 15 19:01:39 2021 (serrano)                */
+;*    Last change :  Fri Jul 30 07:41:49 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -755,6 +755,12 @@
 	  (resolve! (for-in-var this) env mode withs wenv genv ctx conf)))))
 
 ;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SRef ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve! this::J2SRef env mode withs wenv genv ctx conf)
+   this)
+
+;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SUnresolvedRef ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SUnresolvedRef env mode withs wenv genv ctx conf)
@@ -1010,42 +1016,6 @@
    (with-access::J2SDecl this (loc)
       (instantiate::J2SNop
 	 (loc loc))))
-
-;*---------------------------------------------------------------------*/
-;*    resolve! ::J2SDeclClass ...                                      */
-;*---------------------------------------------------------------------*/
-(define-walk-method (resolve! this::J2SDeclClass env mode withs wenv genv ctx conf)
-   (with-access::J2SDeclClass this (loc id val exports scope)
-      (let* ((odecl (find-decl id env))
-	     (ndecl::J2SDecl (or odecl this)))
-	 ;; strict mode restrictions
-	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-10.1.1
-	 (when (eq? mode 'strict)
-	    (check-strict-mode-eval id "Declaration name" loc))
-	 (when (and (j2s-let? this)
-		    (or (not (eq? mode 'hopscript)) (not (j2s-global? odecl))))
-	    (unless (eq? ndecl this)
-	       (raise
-		  (instantiate::&io-parse-error
-		     (proc "hopc (symbol)")
-		     (msg "Illegal redefinition")
-		     (obj id)
-		     (fname (cadr loc))
-		     (location (caddr loc))))))
-	 (let ((nenv (cons this env)))
-	    (set! val (resolve! val env mode withs wenv genv ctx conf)))
-	 (cond
-	    ((and (eq? mode 'hopscript) (eq? scope 'letblock))
-	     this)
-	    ((j2s-let-opt? this)
-	     (instantiate::J2SNop (loc loc)))
-	    (else
-	     (instantiate::J2SStmtExpr
-		(loc loc)
-		(expr (instantiate::J2SInit
-			 (loc loc)
-			 (lhs (j2sref ndecl loc withs wenv))
-			 (rhs val)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SClass ...                                          */
@@ -1478,7 +1448,7 @@
 ;*---------------------------------------------------------------------*/
 (define (check-immutable decl::J2SDecl loc mode)
    (with-access::J2SDecl decl (writable id)
-      (when (and (not writable) (or (isa? decl J2SDeclClass) (isa? decl J2SDeclFun)))
+      (when (and (not writable) (isa? decl J2SDeclFun))
 	 (cond
 	    ((eq? mode 'hopscript)
 	     (raise

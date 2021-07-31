@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Jul 29 19:22:30 2021 (serrano)                */
+;*    Last change :  Fri Jul 30 07:32:23 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1779,49 +1779,26 @@
 		(let ((etoken (consume-any!)))
 		   (pop-open-token etoken)
 		   (let ((clazz (instantiate::J2SClass
-				    (endloc (token-loc etoken))
-				    (name cname)
-				    (loc (token-loc token))
-				    (super extends)
-				    (elements (reverse! rev-ses))
-				    (type 'class))))
-		      (if declaration?
-			  (if (eq? current-mode 'hopscript)
-			      (let ((decl (instantiate::J2SDeclClass
-					     (loc (token-loc id))
-					     (id (token-value id))
-					     (writable #f)
-					     (usage (usage '(uninit)))
-					     (scope 'global)
-					     (binder 'class)
-					     (val clazz))))
-				 (with-access::J2SClass clazz ((cdecl decl))
-				    (set! cdecl decl))
-				 (instantiate::J2SVarDecls
-				    (loc loc)
-				    (decls (list decl))))
-			      (let ((decl (instantiate::J2SDeclClass
-					     (loc (token-loc id))
-					     (id (token-value id))
-					     (writable #f)
-					     (usage (usage '(uninit)))
-					     (scope 'global)
-					     (binder 'class)
-					     (val clazz)))
-				    (declv (instantiate::J2SDeclInit
-					      (loc (token-loc id))
-					      (id (token-value id))
-					      (writable #t)
-					      (usage (usage '(uninit)))
-					      (scope 'letblock)
-					      (binder 'let)
-					      (val (J2SUnresolvedRef (token-value id))))))
-				 (with-access::J2SClass clazz ((cdecl decl))
-				    (set! cdecl decl))
-				 (instantiate::J2SVarDecls
-				    (loc loc)
-				    (decls (list decl declv)))))
-			  clazz))))
+				   (endloc (token-loc etoken))
+				   (name cname)
+				   (loc (token-loc token))
+				   (super extends)
+				   (elements (reverse! rev-ses))
+				   (type 'class))))
+		      (if (not declaration?)
+			  clazz
+			  (let ((decl (instantiate::J2SDeclClass
+					 (loc (token-loc id))
+					 (id (token-value id))
+					 (writable (not (eq? current-mode 'hopscript)))
+					 (usage (usage '(uninit)))
+					 (binder 'let)
+					 (val clazz))))
+			     (with-access::J2SClass clazz ((cdecl decl))
+				(set! cdecl decl))
+			     (instantiate::J2SVarDecls
+				(loc loc)
+				(decls (list decl))))))))
 	       ((SEMICOLON)
 		(consume-any!)
 		(loop rev-ses))

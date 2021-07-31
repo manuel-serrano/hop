@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Thu Apr 29 08:42:36 2021 (serrano)                */
+;*    Last change :  Fri Jul 30 09:05:36 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -549,11 +549,17 @@
 		(set! val rhs)
 		decl)
 	     (with-access::J2SDecl decl (loc id %info)
-		(let ((new (instantiate::J2SDeclInit
-			      (id id)
-			      (loc loc)
-			      (key -1)
-			      (val rhs)))
+		(let ((new (if (isa? decl J2SDeclClass)
+			       (instantiate::J2SDeclClass
+				  (id id)
+				  (loc loc)
+				  (key -1)
+				  (val rhs))
+			       (instantiate::J2SDeclInit
+				  (id id)
+				  (loc loc)
+				  (key -1)
+				  (val rhs))))
 		      (fields (class-all-fields J2SDecl)))
 		   (let loop ((i (-fx (vector-length fields) 1)))
 		      (when (>=fx i 0)

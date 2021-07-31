@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Jul 14 08:51:59 2021 (serrano)                */
+;*    Last change :  Sat Jul 31 06:29:48 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1195,16 +1195,6 @@
 (define-method (j2s->list this::J2SDefault)
    (with-access::J2SDefault this (body)
       (list 'J2SDefault (j2s->list body))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SDeclClass ...                                     */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SDeclClass)
-   (with-access::J2SDeclClass this (val key)
-      `(,@(call-next-method)
-	  ,@(dump-key key)
-	  ,@(dump-vtype this)
-	  ,@(if (nodefval? val) '() (list (j2s->list val))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SClass ...                                         */
