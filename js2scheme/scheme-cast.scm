@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Tue Jul 13 20:01:27 2021 (serrano)                */
+;*    Last change :  Sun Aug  1 18:51:41 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -41,6 +41,7 @@
    `((int30
 	((int30 nop)
 	 (uint32 fixnum->uint32)
+	 (length ,js-number-tolength)
 	 (int32 fixnum->int32)
 	 (int53 nop)
 	 (integer nop)
@@ -50,6 +51,7 @@
      (int32
 	((int30 nop)
 	 (uint32 int32->uint32)
+	 (length ,js-number-tolength)
 	 (int53 int32->fixnum)
 	 (integer ,js-int32->integer)
 	 (number ,js-int32->integer)
@@ -65,6 +67,7 @@
      (uint32
 	((uint29 nop)
 	 (int32 uint32->int32)
+	 (length nop)
 	 (int53 ,js-uint32->fixnum)
 	 (integer ,js-uint32->fixnum)
 	 (real ,js-uint32->real)
@@ -81,6 +84,7 @@
 	((int30 nop)
 	 (int32 fixnum->int32)
 	 (uint32 fixnum->uint32)
+	 (length ,js-number-tolength)
 	 (integer nop)
 	 (number nop)
 	 (real fixnum->flonum)
@@ -93,6 +97,7 @@
      (integer
 	((int32 fixnum->int32)
 	 (uint32 fixnum->uint32)
+	 (length ,js-number-tolength)
 	 (string ,js-integer->string)
 	 (scmstring number->string)
 	 (real fixnum->flonum)
@@ -105,6 +110,7 @@
 	((bool js-totest)
 	 (int32 ,js-number->int32)
 	 (uint32 ,js-number->uint32)
+	 (length ,js-number-tolength)
 	 (int53 nop)
 	 (integer nop)
 	 (real ,js-number->real)
@@ -140,6 +146,7 @@
      (bool
 	((int32 ,js-bool->int32)
 	 (uint32 ,js-bool->uint32)
+	 (length ,js-bool->uint32)
 	 (object ,js-bool->jsobject)
 	 (scmstring ,js->scmstring)
 	 (real ,(lambda (v expr ctx) `(js-tonumber-for-flonum ,v %this)))
@@ -153,6 +160,7 @@
 	 (number ,(lambda (v expr ctx) 0))
 	 (int32 ,(lambda (v expr ctx) #s32:0))
 	 (uint32 ,(lambda (v expr ctx) #u32:0))
+	 (length ,(lambda (v expr ctx) #u32:0))
 	 (integer ,(lambda (v expr ctx) 0))
 	 (real ,(lambda (v expr ctx) 0.0))
 	 (iterable error)
@@ -192,6 +200,7 @@
 	 (any js-string->jsstring)))
      (real
 	((uint32 ,js-number-touint32)
+	 (length ,js-number-tolength)
 	 (int32 ,js-number-toint32)
 	 (object ,js-number->jsobject)
 	 (number nop)
@@ -206,6 +215,7 @@
      (any
 	((int32 ,js->int32)
 	 (uint32 ,js->uint32)
+	 (length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
 	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -216,6 +226,7 @@
    `((int30
 	((int30 nop)
 	 (uint32 fixnum->uint32)
+	 (length ,js-number-tolength)
 	 (int32 fixnum->int32)
 	 (int53 nop)
 	 (integer nop)
@@ -225,6 +236,7 @@
      (int32
 	((int30 nop)
 	 (uint32 ,js-int32->uint32)
+	 (length ,js-number-tolength)
 	 (int53 ,js-int32->fixnum)
 	 (integer ,js-int32->integer)
 	 (number ,js-int32->integer)
@@ -240,6 +252,7 @@
      (uint32
 	((uint29 nop)
 	 (int32 ,js-uint32->int32)
+	 (length nop)
 	 (int53 ,js-uint32->fixnum)
 	 (integer ,js-uint32->integer)
 	 (real ,js-uint32->real)
@@ -256,6 +269,7 @@
 	((int30 nop)
 	 (int32 ,js-fixnum->int32)
 	 (uint32 ,js-fixnum->uint32)
+	 (length ,js-number-tolength)
 	 (integer nop)
 	 (number nop)
 	 (real fixnum->flonum)
@@ -268,6 +282,7 @@
      (integer
 	((int32 ,js-integer->int32)
 	 (uint32 ,js-integer->uint32)
+	 (length ,js-number-tolength)
 	 (string ,js-integer->string)
 	 (scmstring number->string)
 	 (real fixnum->flonum)
@@ -280,6 +295,7 @@
 	((bool js-totest)
 	 (int32 ,js-number->int32)
 	 (uint32 ,js-number->uint32)
+	 (length ,js-number-tolength)
 	 (int53 nop)
 	 (integer nop)
 	 (real ,js-number->real)
@@ -295,9 +311,11 @@
 	 (scmstring bignum->string)
 	 (string js-bigint->jsstring)
 	 (object js-bigint->jsbigint)
+	 (length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
 	 (any nop)))
      (buffer
 	((string js-buffer->jsstring)
+	 (length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
 	 (any js-buffer->jsstring)))
      (string
 	((propname nop)
@@ -306,11 +324,13 @@
 	 (scmstring js-jsstring->string)
 	 (iterable ,(lambda (v expr ctx) `(js-jsstring->jsarray ,v %this)))
 	 (number ,(lambda (v expr ctx) `(or (js-jsstring->number ,v) +nan.0)))
+	 (length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
 	 (any nop)))
      (function
 	((scmstring js-jsstring->string)
 	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))
 	 (number ,(lambda (v expr ctx) `(js-tonumber ,v %this)))
+	 (length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
 	 (any nop)))
      (object
 	((bool ,(lambda (v expr ctx) #t))
@@ -320,10 +340,12 @@
 	 (real ,(lambda (v expr ctx) `(js-tonumber-for-flonum ,v %this)))
 	 (integer ,(lambda (v expr ctx) `(js-tointeger ,v %this)))
 	 (number ,(lambda (v expr ctx) `(js-tonumber ,v %this)))
+	 (length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
 	 (any nop)))
      (bool
 	((int32 ,js-bool->int32)
 	 (uint32 ,js-bool->uint32)
+	 (length ,js-bool->uint32)
 	 (object ,js-bool->jsobject)
 	 (scmstring ,js->scmstring)
 	 (real ,(lambda (v expr ctx) `(js-tonumber-for-flonum ,v %this)))
@@ -337,6 +359,7 @@
 	 (number ,(lambda (v expr ctx) 0))
 	 (int32 ,(lambda (v expr ctx) #s32:0))
 	 (uint32 ,(lambda (v expr ctx) #u32:0))
+	 (length ,(lambda (v expr ctx) #u32:0))
 	 (integer ,(lambda (v expr ctx) 0))
 	 (real ,(lambda (v expr ctx) 0.0))
 	 (iterable error)
@@ -348,34 +371,42 @@
 	 (number ,(lambda (v expr ctx) +nan.0))
 	 (real ,(lambda (v expr ctx) +nan.0))
 	 (iterable error)
+	 (length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
 	 (any nop)))
      (regexp
 	((scmstring ,js->scmstring)
 	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))
+	 (length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
 	 (any nop)))
      (array
 	((scmstring ,js->scmstring)
 	 (bool ,(lambda (v expr ctx) #t))
 	 (iterable nop)
+	 (length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
 	 (any nop)))
      (arguments
 	((scmstring ,js->scmstring)
 	 (iterable ,(lambda (v expr ctx) `(js-arguments->jsarray ,v %this)))
+	 (length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
 	 (any nop)))
      (date
 	((scmstring ,js->scmstring)
 	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))
+	 (length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
 	 (any nop)))
      (tilde
 	((scmstring ,js->scmstring)
 	 (iterable error)
+	 (length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
 	 (any nop)))
      (scmstring
 	((bool js-string->bool)
 	 (iterable ,(lambda (v expr ctx) `(js-jsstring->jsarray ,v %this)))
+	 (length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
 	 (any js-string->jsstring)))
      (real
-	((uint32 js-number-touint32)
+	((uint32 ,js-number->uint32)
+	 (length ,js-number-tolength)
 	 (int32 js-number-toint32)
 	 (object ,js-number->jsobject)
 	 (number nop)
@@ -386,6 +417,7 @@
      (class
 	((scmstring ,js->scmstring)
 	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))
+	 (length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
 	 (any nop)))
      (any
 	((propname nop)
@@ -398,6 +430,7 @@
 	 (scmstring ,js->scmstring)
 	 (int32 ,js->int32)
 	 (real ,js-any->real)
+	 (length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
 	 (uint32 ,js->uint32)
 	 (int53 ,js-any->integer)
 	 (integer ,js-any->integer)
@@ -709,7 +742,7 @@
 	 ((and (inrange-int32? expr) (m64? conf))
 	  `(fixnum->uint32 ,v))
 	 (else
-	  `(js-number-touint32 ,v)))))
+	  (js-number-touint32 v)))))
 
 (define (js-int32->jsobject v expr ctx)
    (let ((conf (context-conf ctx)))
@@ -739,12 +772,19 @@
 
 (define (js-number-touint32 v)
    (cond
-      ((fixnum? v)
-       (fixnum->uint32 v))
-      ((flonum? v)
-       (flonum->uint32 v))
-      (else
-       `(js-number-touint32 ,v))))
+      ((fixnum? v) (fixnum->uint32 v))
+      ((flonum? v) (flonum->uint32 v))
+      (else `(js-number-touint32 ,v))))
+
+(define (js-number-tolength v expr ctx)
+   (let ((ty (j2s-vtype expr)))
+      (cond
+	 ((fixnum? v) `(js-fixnum->length ,v %this))
+	 ((flonum? v) `(js-flonum->length ,v %this))
+	 ((memq ty '(int53 integer)) `(js-fixnum->length ,v %this))
+	 ((eq? ty 'real) `(js-flonum->length ,v %this))
+	 ((eq? ty 'int32) `(js-fixnum->length (fixnum->int32 ,v) %this))
+	 (else `(js-tolength ,v %this)))))
 
 (define (js-number-toint32 v)
    (cond

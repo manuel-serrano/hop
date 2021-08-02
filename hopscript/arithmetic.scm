@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Tue Jul  6 16:33:35 2021 (serrano)                */
+;*    Last change :  Mon Aug  2 07:18:50 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -35,6 +35,9 @@
    (extern (macro $real-set!::real (::real ::double) "BGL_REAL_SET"))
    
    (export (inline js-toflonum::double ::obj)
+	   (js-tolength::uint32 ::obj ::JsGlobalObject)
+	   (inline js-fixnum->length::uint32 ::long ::JsGlobalObject)
+	   (js-flonum->length::uint32 ::double ::JsGlobalObject)
 	   (++js::obj ::obj ::JsGlobalObject)
 	   (--js::obj ::obj ::JsGlobalObject)
 	   (+js::obj ::obj ::obj ::JsGlobalObject)
@@ -89,6 +92,18 @@
 	   
 	   (>>=fl::bool ::double ::double)
 	   (<<=fl::bool ::double ::double)
+
+	   (js++ ::obj ::JsGlobalObject)
+	   (js-- ::obj ::JsGlobalObject)
+	   (js+ ::obj ::obj ::JsGlobalObject)
+	   (js-slow+ ::obj ::obj ::JsGlobalObject)
+	   (js- ::obj ::obj ::JsGlobalObject)
+	   (js* ::obj ::obj ::JsGlobalObject)
+	   (js/ ::obj ::obj ::JsGlobalObject)
+	   (js/num left right)
+
+	   (inline js-number-isnan?::bool ::obj)
+	   (inline js-isnan?::bool ::obj ::JsGlobalObject)
 	   
 	   ))
 
@@ -102,6 +117,44 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-toflonum r)
    (if (flonum? r) r (fixnum->flonum r)))
+
+;*---------------------------------------------------------------------*/
+;*    js-tolength ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    LENGTH is a pseudo-type equivalent to uint32 but that requires   */
+;*    a range check when converted.                                    */
+;*---------------------------------------------------------------------*/
+(define (js-tolength::uint32 obj %this)
+   (cond
+      ((flonum? obj) (js-flonum->length obj %this))
+      ((fixnum? obj) (js-fixnum->length obj %this))
+      ((bignum? obj) (js-bignum->length obj %this))
+      ((eq? obj (js-undefined)) #u32:0)
+      (else (js-tolength (js-tointeger obj %this) %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-fixnum->length ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (js-fixnum->length len %this)
+   (if (and (>=fx len 0) (<fx len 4294967296))
+       (fixnum->uint32 len)
+       (js-raise-range-error %this "index out of range ~a" len)))
+
+;*---------------------------------------------------------------------*/
+;*    js-flonum->length ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-flonum->length len %this)
+   (if (and (>=fl len 0.0) (<fl len 4294967296.))
+       (flonum->uint32 len)
+       (js-raise-range-error %this "index out of range ~a" len)))
+
+;*---------------------------------------------------------------------*/
+;*    js-bignum->length ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-bignum->length len %this)
+   (if (and (>=bx len #z0) (<bx len #z4294967296))
+       (fixnum->uint32 (bignum->fixnum len))
+       (js-raise-range-error %this "index out of range ~a" len)))
 
 ;*---------------------------------------------------------------------*/
 ;*    ++js ...                                                         */
@@ -762,4 +815,193 @@
       ((not (=fl left left)) #t)
       ((not (=fl right right)) #f)
       (else (<=fl left right))))
+
+;*---------------------------------------------------------------------*/
+;*    js++ ...                                                         */
+;*    -------------------------------------------------------------    */
+;*    As js+ but accept mixed arguments. Used to compile ++ and -- ops */
+;*---------------------------------------------------------------------*/
+(define (js++ left %this::JsGlobalObject)
+   (cond
+      ((fixnum? left)
+       (+fx/overflow left 1))
+      ((flonum? left)
+       (+fl left 1.0))
+      ((bignum? left)
+       (+bx left #z1))
+      (else
+       (js-slow+ left 1 %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js+ ...                                                          */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
+;*---------------------------------------------------------------------*/
+(define (js+ left right %this::JsGlobalObject)
+   (if (and (js-number? left) (js-number? right))
+       (+/overflow left right)
+       (js-slow+ left right %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-slow+ ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (js-slow+ left right %this)
+   (let* ((left (js-toprimitive left 'any %this))
+	  (right (js-toprimitive right 'any %this)))
+      (cond
+	 ((js-jsstring? left)
+	  (js-jsstring-append left (js-tojsstring right %this)))
+	 ((js-jsstring? right)
+	  (js-jsstring-append (js-tojsstring left %this) right))
+	 ((bignum? left)
+	  (if (bignum? right)
+	      (+bx left right)
+	      (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions"
+		 right)))
+	 ((bignum? right)
+	  (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	     left))
+	 (else
+	  (let* ((left (js-tonumber left %this))
+		 (right (js-tonumber right %this)))
+	     (if (or (not (= left left)) (not (= right right)))
+		 +nan.0
+		 (+ left right)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-- ...                                                         */
+;*    -------------------------------------------------------------    */
+;*    As js- but accept mixed arguments. Used to compile ++ op.        */
+;*---------------------------------------------------------------------*/
+(define (js-- left %this::JsGlobalObject)
+   (cond
+      ((fixnum? left)
+       (-fx/overflow left 1))
+      ((flonum? left)
+       (-fl left 1.0))
+      ((bignum? left)
+       (-bx left #z1))
+      (else
+       (let ((lnum (js-tonumber left %this)))
+	  (-/overflow lnum 1)))))
+
+;*---------------------------------------------------------------------*/
+;*    js- ...                                                          */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.2       */
+;*---------------------------------------------------------------------*/
+(define (js- left right %this::JsGlobalObject)
+   (if (and (js-number? left) (js-number? right))
+       (-/overflow left right)
+       (let* ((lnum (js-tonumber left %this))
+	      (rnum (js-tonumber right %this)))
+	  (-/overflow lnum rnum))))
+
+;*---------------------------------------------------------------------*/
+;*    js* ...                                                          */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.1       */
+;*---------------------------------------------------------------------*/
+(define (js* left right %this)
+   
+   (define (neg? o)
+      (if (flonum? o)
+	  (not (=fx (signbitfl o) 0))
+	  (<fx o 0)))
+
+   (cond
+      ((fixnums? left right)
+       (*fx/overflow left right))
+      ((flonum? left)
+       (cond
+	  ((flonum? right)
+	   (*fl left right))
+	  ((fixnum? right)
+	   (*fl left (fixnum->flonum right)))
+	  ((bignum? right)
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions"
+	      right))
+	  (else
+	   (* left (js-tonumber right %this)))))
+      ((flonum? right)
+       (cond
+	  ((bignum? right)
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions"
+	      right))
+	  (else
+	   (* (js-tonumber left %this) right))))
+      ((bignum? left)
+       (if (bignum? right)
+	   (*bx left right)
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions"
+	      right)))
+      ((bignum? right)
+       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	  left))
+      (else
+       (let* ((lnum (js-tonumber left %this))
+	      (rnum (js-tonumber right %this))
+	      (r (* lnum rnum)))
+	  (cond
+	     ((fixnum? r)
+	      (if (=fx r 0)
+		  (if (or (and (neg? lnum) (not (neg? rnum)))
+			  (and (not (neg? lnum)) (neg? rnum)))
+		      -0.0
+		      r)
+		  r))
+	     ((bignum? r)
+	      (bignum->flonum r))
+	     (else
+	      r))))))
+
+;*---------------------------------------------------------------------*/
+;*    js/ ...                                                          */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.2       */
+;*---------------------------------------------------------------------*/
+(define (js/ left right %this)
+   (let* ((lnum (js-tonumber left %this))
+	  (rnum (js-tonumber right %this)))
+      (js/num lnum rnum)))
+
+;*---------------------------------------------------------------------*/
+;*    js/num ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (js/num lnum rnum)
+   (cond
+      ((= rnum 0)
+       (if (flonum? rnum)
+	   (cond
+	      ((and (flonum? lnum) (nanfl? lnum))
+	       lnum)
+	      ((=fx (signbitfl rnum) 0)
+	       (cond
+		  ((> lnum 0) +inf.0)
+		  ((< lnum 0) -inf.0)
+		  (else +nan.0)))
+	      (else
+	       (cond
+		  ((< lnum 0) +inf.0)
+		  ((> lnum 0) -inf.0)
+		  (else +nan.0))))
+	   (cond
+	      ((and (flonum? lnum) (nanfl? lnum)) lnum)
+	      ((> lnum 0) +inf.0)
+	      ((< lnum 0) -inf.0)
+	      (else +nan.0))))
+      (else
+       (/ lnum rnum))))
+
+;*---------------------------------------------------------------------*/
+;*    js-number-isnan? ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-number-isnan? val)
+   (and (flonum? val) (nanfl? val)))
+
+;*---------------------------------------------------------------------*/
+;*    js-isnan? ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (js-isnan? val %this::JsGlobalObject)
+   (js-number-isnan? (js-tonumber val %this)))
 

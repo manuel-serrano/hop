@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Apr 17 14:55:17 2020 (serrano)                */
+;*    Last change :  Sun Aug  1 19:10:11 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -134,38 +134,6 @@
 	 (instantiateJsString
 	    (val (js-ascii->jsstring ""))
 	    (__proto__ (js-object-proto %this))))
-      
-;*       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5   */
-;*       (define (js-string-construct o::JsString . arg)               */
-;* 	                                                               */
-;* 	 (define (set-ascii-string! str)                               */
-;* 	    (let ((len (instantiate::JsValueDescriptor                 */
-;* 			  (name (& "length"))                          */
-;* 			  (writable #f)                                */
-;* 			  (configurable #f)                            */
-;* 			  (enumerable #f)                              */
-;* 			  (value (string-length str)))))               */
-;* 	       (with-access::JsString o (val elements)                 */
-;* 		  (set! val (js-ascii->jsstring str))                  */
-;* 		  (set! elements (vector len)))))                      */
-;* 	                                                               */
-;* 	 (with-access::JsGlobalObject %this (js-new-target)            */
-;* 	    (set! js-new-target (js-undefined)))                       */
-;*                                                                     */
-;* 	 (if (null? arg)                                               */
-;* 	     ;; 2                                                      */
-;* 	     (set-ascii-string! "")                                    */
-;* 	     (let ((value (car arg)))                                  */
-;* 		(cond                                                  */
-;* 		   ((string? value)                                    */
-;* 		    (set-ascii-string! value))                         */
-;* 		   ((js-jsstring? value)                               */
-;* 		    (js-set-string! %this o value))                    */
-;* 		   ((js-object? value)                                 */
-;* 		    (js-set-string! %this o (js-cast-string %this value))) */
-;* 		   (else                                               */
-;* 		    (let ((str (js-tojsstring value %this)))           */
-;* 		       (js-set-string! %this o str)))))))              */
       
       ;; then, create a HopScript object
       (set! js-string

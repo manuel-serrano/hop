@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Jul 31 07:51:52 2021 (serrano)                */
+;*    Last change :  Mon Aug  2 07:11:09 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -388,6 +388,15 @@
 ;*    type-cast! ::J2SAssig ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SAssig totype)
+
+   (define (array-length-assign? lhs)
+      (when (and (isa? lhs J2SAccess) (eq? (j2s-type lhs) 'uint32))
+	 (with-access::J2SAccess lhs (obj field)
+	    (when (eq? (j2s-vtype obj) 'array)
+	       (when (isa? field J2SString)
+		  (with-access::J2SString field (val)
+		     (string=? val "length")))))))
+		     
    (with-access::J2SAssig this (lhs rhs type loc)
       (cond
 	 ((and (isa? lhs J2SRef)
@@ -396,6 +405,12 @@
 		  (with-access::J2SDecl decl (writable)
 		     (not writable))))
 	  (set! rhs (type-cast! rhs '*))
+	  (cast this totype))
+	 ((array-length-assign? lhs)
+	  ;; LENGTH is a pseudo-type equivalent to uint32 but that requires
+	  ;; a range check when converted
+	  (set! lhs (type-cast! lhs '*))
+	  (set! rhs (type-cast! rhs 'length))
 	  (cast this totype))
 	 ((eq? (j2s-vtype lhs) type)
 	  (set! lhs (type-cast! lhs '*))
