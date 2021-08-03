@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Jul 31 07:38:44 2021 (serrano)                */
+;*    Last change :  Mon Aug  2 18:17:07 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1835,9 +1835,8 @@
 				   (loc (token-loc id))
 				   (id (token-value id))
 				   (writable #f)
-				   (usage (usage '(uninit)))
-				   (scope 'global)
-				   (binder 'class)
+				   (usage (usage '()))
+				   (binder 'let-opt)
 				   (val clazz))))
 		      (instantiate::J2SVarDecls
 			 (loc loc)

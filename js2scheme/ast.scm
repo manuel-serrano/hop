@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Jul 30 09:06:57 2021 (serrano)                */
+;*    Last change :  Tue Aug  3 18:44:33 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -239,7 +239,7 @@
 	      (mode::symbol (default 'normal) (info '("notraverse")))
 	      (decl (default #f) (info '("jsonref" "notraverse")))
 	      (need-bind-exit-return::bool (default #f) (info '("notraverse")))
-	      (new-target::obj (default #f) (info '("notraverse")))
+	      (new-target::obj (default #unspecified) (info '("notraverse")))
 	      (vararg::obj (default #f) (info '("notraverse")))
 	      (name::symbol (info '("notraverse")))
 	      (generator::bool (default #f) (info '("notraverse")))

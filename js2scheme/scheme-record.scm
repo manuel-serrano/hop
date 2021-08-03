@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Thu Jul 15 15:19:08 2021 (serrano)                */
+;*    Last change :  Mon Aug  2 19:25:03 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -33,10 +33,11 @@
    (export (j2s-collect-records*::pair-nil ::J2SProgram)
 	   (record-scmid::symbol ::J2SRecord)
 	   (record-prototype-scmid::symbol ::J2SRecord)
+	   (record-constructor-scmid::symbol ::J2SRecord)
 	   (j2s-record-declaration ::J2SRecord)
 	   (j2s-record-predicate ::J2SRecord)
 	   (j2s-record-new ::J2SRecord ::pair-nil mode return ctx)
-	   (j2s-record-prototype this::J2SRecord)))
+	   (j2s-record-prototype-constructor::pair this::J2SRecord)))
 
 ;*---------------------------------------------------------------------*/
 ;*    record-scmid ...                                                 */
@@ -52,6 +53,14 @@
    (with-access::J2SRecord clazz (name)
       (string->symbol
 	 (string-append "&" (symbol->string! name) "%PROTOTYPE"))))
+
+;*---------------------------------------------------------------------*/
+;*    record-constructor-scmid ...                                     */
+;*---------------------------------------------------------------------*/
+(define (record-constructor-scmid clazz)
+   (with-access::J2SRecord clazz (name)
+      (string->symbol
+	 (string-append "&" (symbol->string! name) "%CTOR"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-record-declaration ...                                       */
@@ -101,6 +110,15 @@
 		   (with-access::J2SRecord clazz (elements)
 		      (+fx s (length elements))))))))
    
+   (define (constructor this rec)
+      (multiple-value-bind (clazz ctor)
+	 (j2s-class-find-constructor this)
+	 (if ctor
+	     (let ((c (record-constructor-scmid clazz)))
+		`(,c ,rec
+		    ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))
+	     #unspecified)))
+   
    (with-access::J2SRecord this (cmap elements)
       (let ((rec (gensym 'this))
 	    (props (j2s-class-instance-properties this)))
@@ -113,12 +131,14 @@
 			  `(js-object-inline-set! ,rec ,idx
 			      ,(j2s-scheme val mode return ctx))))
 		  props (iota (length props)))
+	     ,(constructor this rec)
 	     ,rec))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-record-prototype ...                                         */
+;*    j2s-record-prototype-constructor ...                             */
 ;*---------------------------------------------------------------------*/
-(define (j2s-record-prototype this::J2SRecord)
+(define (j2s-record-prototype-constructor this::J2SRecord)
    (let ((super (j2s-class-super this)))
-      `(define ,(record-prototype-scmid this) (js-undefined))))
+      `((define ,(record-prototype-scmid this) (js-undefined))
+	(define ,(record-constructor-scmid this) (js-undefined)))))
        

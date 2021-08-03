@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May  6 07:37:36 2021                          */
-;*    Last change :  Wed May 26 10:29:25 2021 (serrano)                */
+;*    Last change :  Mon Aug  2 18:25:56 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    A list of functions that traverse the AST after the parsing to   */
@@ -305,4 +305,3 @@
 	  (with-access::J2SImportDynamic expr (path)
 	     (J2SCall (J2SUnresolvedRef 'require) path))
 	  this)))
-   

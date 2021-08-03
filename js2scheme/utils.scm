@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Tue Jul 27 10:42:51 2021 (serrano)                */
+;*    Last change :  Mon Aug  2 19:18:09 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -79,7 +79,10 @@
 	   
 	   (j2s-class-instance-properties ::J2SClass)
 	   (j2s-class-instance-get-property ::J2SClass ::bstring)
-	   (j2s-class-get-property ::J2SClass ::bstring)))
+	   (j2s-class-get-property ::J2SClass ::bstring)
+	   (j2s-class-property-constructor?::bool ::J2SDataPropertyInit)
+	   (j2s-class-get-constructor ::J2SClass)
+	   (j2s-class-find-constructor clazz)))
 
 ;*---------------------------------------------------------------------*/
 ;*    pass ...                                                         */
@@ -981,7 +984,10 @@
    (define (element-prop el)
       (with-access::J2SClassElement el (prop static)
 	 (when (and (not static) (isa? prop J2SDataPropertyInit))
-	    prop)))
+	    (with-access::J2SDataPropertyInit prop (name)
+	       (with-access::J2SString name (val)
+		  (unless (string=? val "constructor")
+		     prop))))))
 
    (let loop ((clazz clazz))
       (with-access::J2SClass clazz (elements)
@@ -1037,4 +1043,49 @@
 (define (j2s-class-get-property clazz field)
    (j2s-class-get clazz field #f))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-class-property-constructor? ...                              */
+;*---------------------------------------------------------------------*/
+(define (j2s-class-property-constructor? prop::J2SDataPropertyInit)
+   (with-access::J2SDataPropertyInit prop (name)
+      (let loop ((name name))
+	 (cond
+	    ((isa? name J2SLiteralCnst)
+	     (with-access::J2SLiteralCnst name (val)
+		(loop val)))
+	    ((isa? name J2SLiteralValue)
+	     (with-access::J2SLiteralValue name (val)
+		(equal? val "constructor")))))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-class-get-constructor ...                                    */
+;*    -------------------------------------------------------------    */
+;*    Get the class constructor if any.                                */
+;*---------------------------------------------------------------------*/
+(define (j2s-class-get-constructor clazz)
+   (with-access::J2SClass clazz (elements)
+      (find (lambda (m)
+	       (with-access::J2SClassElement m (prop static)
+		  (unless static
+		     (when (isa? prop J2SDataPropertyInit)
+			(j2s-class-property-constructor? prop)))))
+	 elements)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-class-find-constructor ...                                   */
+;*    -------------------------------------------------------------    */
+;*    Find a constructor in the class or its super class.              */
+;*---------------------------------------------------------------------*/
+(define (j2s-class-find-constructor clazz)
+   (let loop ((clazz clazz))
+      (let ((ctor (j2s-class-get-constructor clazz)))
+	 (cond
+	    (ctor
+	     (values clazz ctor))
+	    ((j2s-class-super clazz)
+	     =>
+	     (lambda (super) (loop super)))
+	    (else
+	     (values #f #f))))))
+	    
+	     

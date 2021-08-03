@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Thu Jul 15 07:08:17 2021 (serrano)                */
+;*    Last change :  Tue Aug  3 07:52:45 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -71,7 +71,7 @@
 		     (define js-integer-names (js-get-js-integer-names))
 		     (define %worker (js-current-worker))
 		     (define %cnst-table ,cnsttable)
-		     ,@(map j2s-record-prototype records)
+		     ,@(append-map j2s-record-prototype-constructor records)
 		     ,@scmheaders
 		     ,@globals
 		     ,esexports
@@ -120,7 +120,7 @@
 		    ,@globals
 		    ,esexports
 		    ,@esimports
-		    ,@(map j2s-record-prototype records)
+		    ,@(append-map j2s-record-prototype-constructor records)
 		    ,@(exit-body ctx
 			 (filter fundef? body) (filter nofundef? body))))
 	    ;; for dynamic loading
@@ -202,7 +202,7 @@
 				 ,@(j2s-expr-headers scmheaders)
 				 ,esexports
 				 ,@esimports
-				 ,@(map j2s-record-prototype records)
+				 ,@(append-map j2s-record-prototype-constructor records)
 				 ,@(exit-body ctx
 				      (filter fundef? body)
 				      (filter nofundef? body)))))))
@@ -376,7 +376,7 @@
 		      `((hop-sofile-directory-set! ,(context-get ctx :libs-dir #f)))
 		      '())
 		,@(map j2s-record-predicate records)
-		,@(map j2s-record-prototype records)
+		,@(append-map j2s-record-prototype-constructor records)
 		(define (main args)
 		   ,(profilers this ctx)
 		   (hopscript-install-expanders!)

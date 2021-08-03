@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Thu Jul 15 13:34:32 2021 (serrano)                */
+;*    Last change :  Tue Aug  3 06:56:31 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -38,25 +38,6 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SClass mode return ctx)
    
-   (define (constructor? prop::J2SDataPropertyInit)
-      (with-access::J2SDataPropertyInit prop (name)
-	 (let loop ((name name))
-	    (cond
-	       ((isa? name J2SLiteralCnst)
-		(with-access::J2SLiteralCnst name (val)
-		   (loop val)))
-	       ((isa? name J2SLiteralValue)
-		(with-access::J2SLiteralValue name (val)
-		   (equal? val "constructor")))))))
-   
-   (define (find-constructor elements)
-      (find (lambda (m)
-	       (with-access::J2SClassElement m (prop static)
-		  (unless static
-		     (when (isa? prop J2SDataPropertyInit)
-			(constructor? prop)))))
-	 elements))
-   
    (define (j2s-propname name)
       (cond
 	 ((isa? name J2SString)
@@ -82,16 +63,16 @@
       (cond
 	 ((isa? prop J2SMethodPropertyInit)
 	  (with-access::J2SMethodPropertyInit prop (name val)
-	     (unless (constructor? prop)
+	     (unless (j2s-class-property-constructor? prop)
 		`(js-bind! %this ,obj ,(j2s-propname name)
 		    :value ,(j2s-scheme val mode return ctx)
 		    :writable #t :enumerable #f :configurable #t))))
 	 ((isa? prop J2SDataPropertyInit)
 	  (with-access::J2SDataPropertyInit prop (name val)
-	     (unless (constructor? prop))
-	     `(js-bind! %this ,obj ,(j2s-propname name)
-		 :value ,(j2s-scheme val mode return ctx)
-		 :writable #t :enumerable #f :configurable #t)))
+	     (unless (j2s-class-property-constructor? prop)
+		`(js-bind! %this ,obj ,(j2s-propname name)
+		    :value ,(j2s-scheme val mode return ctx)
+		    :writable #t :enumerable #f :configurable #t))))
 	 ((isa? prop J2SAccessorPropertyInit)
 	  (with-access::J2SAccessorPropertyInit prop (name get set)
 	     `(js-bind! %this ,obj ,(j2s-propname name)
@@ -109,7 +90,7 @@
 	  #f)
 	 ((isa? prop J2SDataPropertyInit)
 	  (with-access::J2SDataPropertyInit prop (name val)
-	     (unless (constructor? prop)
+	     (unless (j2s-class-property-constructor? prop)
 		(if (isa? clazz J2SRecord)
 		    (with-access::J2SRecord clazz (itype)
 		       (with-access::J2SString name ((id val))
@@ -150,6 +131,15 @@
 	 (else
 	  `(js-new-sans-construct %this ,super))))
 
+   (define (record-not-new this::J2SClass)
+      (with-access::J2SClass this (loc name)
+	 `(lambda (this . l)
+	     (js-raise-type-error/loc %this ',loc
+		(format
+		   "Record constructor '~a' cannot be invoked without 'new'"
+		   ',name)
+		(js-undefined)))))
+   
    (define (make-class this name super els constructor arity length ctorsz src loc)
       (let* ((cname (or name (gensym 'class)))
 	     (clazz (symbol-append cname '%CLASS))
@@ -157,7 +147,11 @@
 	     (proto (symbol-append cname '%PROTOTYPE)))
 	 `(letrec* ((,ctor ,constructor)
 		    (,proto ,(class-prototype this super))
-		    (,clazz (js-make-function %this ,ctor
+		    (,clazz (js-make-function %this
+			       ,(if (isa? this J2SRecord)
+				    (record-not-new this)
+				    
+				    ctor)
 			       ,arity
 			       (js-function-info :name ,(symbol->string cname)
 				  :len ,length)
@@ -173,7 +167,8 @@
 			       :constrsize ,ctorsz))
 		    ,@(if name `((,(j2s-class-id this ctx) (js-make-let))) '()))
 	     ,@(if (isa? this J2SRecord)
-		   `((set! ,(record-prototype-scmid this) ,proto))
+		   `((set! ,(record-prototype-scmid this) ,proto)
+		     (set! ,(record-constructor-scmid this) ,ctor))
 		   '())
 	     ,@(filter-map (lambda (m) (bind-static this clazz m)) els)
 	     ,@(filter-map (lambda (m) (bind-method this proto m)) els)
@@ -196,7 +191,7 @@
 		 ,(proc superid))))))
    
    (with-access::J2SClass this (super elements name src loc decl)
-      (let ((ctor (find-constructor elements)))
+      (let ((ctor (j2s-class-get-constructor this)))
 	 (let-super super
 	    (lambda (super)
 	       (cond
@@ -277,7 +272,9 @@
 
    (define (check-body-instance body)
       (with-access::J2SFun val (new-target loc)
-	 (ctor-check-instance name new-target body loc)))
+	 (if new-target
+	     (ctor-check-instance name new-target body loc)
+	     body)))
    
    (define (unthis this loc)
       (instantiate::J2SStmtExpr

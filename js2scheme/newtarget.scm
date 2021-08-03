@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 27 18:53:16 2018                          */
-;*    Last change :  Sat Dec 14 19:02:08 2019 (serrano)                */
-;*    Copyright   :  2018-19 Manuel Serrano                            */
+;*    Last change :  Tue Aug  3 09:23:39 2021 (serrano)                */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Handling ECMAScrip 6 "new.target" meta construct.                */
 ;*=====================================================================*/
@@ -93,13 +93,14 @@
 ;*    newtarget! ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (newtarget! this::J2SFun fun)
-   (with-access::J2SFun this (%info body)
-      (set! %info #f)
-      (set! body (newtarget! body this))
-      (when %info
-	 (with-access::J2SFun this (loc new-target)
-	    (set! new-target %info)
-	    (set! body (body-bind-new-target body %info))))
+   (with-access::J2SFun this (%info body new-target)
+      (unless (boolean? new-target)
+	 (set! %info #f)
+	 (set! body (newtarget! body this))
+	 (when %info
+	    (with-access::J2SFun this (loc new-target)
+	       (set! new-target %info)
+	       (set! body (body-bind-new-target body %info)))))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -159,9 +160,18 @@
 	 (when ctor
 	    (with-access::J2SClassElement ctor (prop)
 	       (with-access::J2SDataPropertyInit prop (val)
-		  (with-access::J2SFun val (new-target body loc)
-		     (unless new-target
-			(set! new-target (make-new-target-decl loc))
-			(set! body (body-bind-new-target body new-target)))))))))
-   
+		  (if (isa? this J2SRecord)
+		      (with-access::J2SFun val (new-target thisp body loc %info)
+			 (let ((nt (if (eq? new-target #t)
+				       %info
+				       (make-new-target-decl loc))))
+			    (with-access::J2SDeclInit nt (val loc)
+			       (set! val (J2SThis thisp))
+			       (set! new-target #f)
+			       (set! body (body-bind-new-target body nt)))))
+		      (with-access::J2SFun val (new-target body loc)
+			 (when (eq? new-target #unspecified)
+			    (let ((nt (make-new-target-decl loc)))
+			       (set! new-target #t)
+			       (set! body (body-bind-new-target body nt)))))))))))
    this)

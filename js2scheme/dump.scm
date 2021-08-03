@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat Jul 31 06:29:48 2021 (serrano)                */
+;*    Last change :  Tue Aug  3 18:46:01 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -722,7 +722,7 @@
 		 ,@(dump-rutype this)
 		 ,@(dump-need-bind-exit-return need-bind-exit-return)
 		 ,@(if optimize '() `(:optimize ,optimize))
-		 ,@(if new-target '(:new-target #t) '())
+		 ,@(if (boolean? new-target) `(:new-target ,new-target) '())
 		 ,@(dump-range this)
 		 ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
 		 ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
@@ -746,7 +746,7 @@
 		 ,@(dump-need-bind-exit-return need-bind-exit-return)
 		 ,@(if optimize '() `(:optimize ,optimize))
 		 ,@(if src '() `(:src #f))
-		 ,@(if new-target '(:new-target #t) '())
+		 ,@(if (boolean? new-target) `(:new-target ,new-target) '())
 		 ,@(dump-range this)
 		 ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
 		 ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
@@ -764,7 +764,7 @@
 	      ,@(dump-need-bind-exit-return need-bind-exit-return)
 	      ,@(if optimize '() `(:optimize ,optimize))
 	      ,@(if src '() `(:src #f))
-	      ,@(if new-target '(:new-target #t) '())
+	      ,@(if (boolean? new-target) `(:new-target ,new-target) '())
 	      ,@(dump-range this)
 	      ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
 	      ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())

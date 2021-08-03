@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Jul 15 07:02:56 2021 (serrano)                */
+;*    Last change :  Mon Aug  2 18:45:54 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -709,19 +709,10 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-make-jsrecord constrsize constrmap __proto__ clazz)
    (let ((mode (js-record-default-mode)))
-      (cond-expand
-	 ((and bigloo-c (not devel) (not debug))
-	  (let ((o ($js-make-jsobject constrsize constrmap __proto__ mode)))
-	     ($bgl-object-class-set! o ($bgl-class-index clazz))
-	     o))
-	 (else
-	  (let ((o (instantiate::JsObject
-		      (cmap constrmap)
-		      (elements (make-vector constrsize (js-undefined))))))
-	     (js-object-proto-set! o __proto__)
-	     (js-object-mode-set! o mode)
-	     (js-object-mode-inline-set! o #f)
-	     o)))))
+      (let ((o ($js-make-jsobject constrsize constrmap __proto__ mode)))
+	 ($bgl-object-class-set! o ($bgl-class-index clazz))
+	 (js-object-mode-set! o mode)
+	 o)))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    js-make-jsconstructmap ...                                       */
