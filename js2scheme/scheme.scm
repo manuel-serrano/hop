@@ -814,7 +814,9 @@
 	 ((scheme-quote)
 	  `',(epairify-deep loc expr))
 	 (else
-	  "#unspecified"))))
+	  (if (j2s-new-target? this)
+	      'new-target
+	      "#unspecified")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SSequence ...                                     */

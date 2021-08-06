@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/scheme-fun.scm          */
+;*    serrano/prgm/project/hop/hop/js2scheme/scheme-fun.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Thu May 13 19:04:16 2021 (serrano)                */
+;*    Last change :  Fri Aug  6 19:04:20 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -519,7 +519,7 @@
 			,(flatten-stmt stmt)))))
 	     (flatten-stmt (j2s-scheme body mode return ctx)))))
 
-   (with-access::J2SFun this (loc body need-bind-exit-return vararg mode params generator thisp)
+   (with-access::J2SFun this (loc body need-bind-exit-return vararg mode params generator thisp new-target)
       (let ((body (cond
 		     (generator
 		      (with-access::J2SNode body (loc)
@@ -536,7 +536,13 @@
 			 (with-access::J2SNode body (loc)
 			    (epairify loc
 			       (if (pair? bd) bd `(begin ,bd)))))))))
-	 (jsfun->lambda/body this mode return ctx body))))
+	 (jsfun->lambda/body this mode return ctx
+	    (if new-target
+		`(with-access::JsGlobalObject %this (js-new-target)
+		    (let ((new-target js-new-target))
+		       (set! js-new-target (js-undefined))
+		       ,body))
+		body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun->ctor ...                                                 */

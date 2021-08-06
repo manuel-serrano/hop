@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Aug  6 08:44:42 2021 (serrano)                */
+;*    Last change :  Fri Aug  6 19:24:44 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -66,7 +66,7 @@
 ;*    dump-new-target ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (dump-new-target new-target)
-   (if (isa? new-target J2SDecl) `(:new-target ,(j2s->list new-target)) '()))
+   (if new-target `(:new-target ,new-target) '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    dump-size ...                                                    */

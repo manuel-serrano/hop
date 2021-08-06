@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Wed Aug  4 07:43:51 2021 (serrano)                */
+;*    Last change :  Fri Aug  6 19:10:01 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -285,17 +285,6 @@
 ;*---------------------------------------------------------------------*/
 (define (ctor-check-instance name new-target body loc)
    
-   (define (make-new-target-decl loc)
-      (let ((decl (J2SLetOptRo '(ref) 'new-target
-		     (J2SPragma
-			'(with-access::JsGlobalObject %this (js-new-target)
-			  (let ((nt js-new-target))
-			     (set! js-new-target (js-undefined))
-			     nt))))))
-	 (with-access::J2SDecl decl (_scmid)
-	    (set! _scmid 'new-target))
-	 decl))
-   
    (define (err name loc)
       (J2SStmtExpr
 	 (J2SPragma
@@ -306,13 +295,11 @@
 		(js-undefined)))))
    
    (with-access::J2SNode body (loc)
-      (let ((decl (make-new-target-decl loc)))
-	 (set! body
-	    (J2SLetBlock (list decl)
-	       (J2SIf (J2SPragma/type 'bool '(eq? new-target (js-undefined)))
-		  (err name loc)
-		  body)))
-	 body)))
+      (set! body
+	 (J2SIf (J2SPragma/type 'bool '(eq? new-target (js-undefined)))
+	    (err name loc)
+	    body))
+      body))
    
 ;*---------------------------------------------------------------------*/
 ;*    class-src ...                                                    */

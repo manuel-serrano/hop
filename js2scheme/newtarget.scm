@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 27 18:53:16 2018                          */
-;*    Last change :  Wed Aug  4 07:26:57 2021 (serrano)                */
+;*    Last change :  Fri Aug  6 18:57:16 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Handling ECMAScrip 6 "new.target" meta construct.                */
@@ -57,10 +57,14 @@
 ;*    See also scheme/scheme-class.scm.                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (newtarget! this::J2SPragma fun)
-   (when (and fun (j2s-new-target? this))
-      (with-access::J2SFun fun (new-target)
-	 (set! new-target #t)))
-   this)
+   (if (j2s-new-target? this)
+       (if fun
+	   (with-access::J2SFun fun (new-target)
+	      (set! new-target #t)
+	      this)
+	   (with-access::J2SPragma this (loc)
+	      (J2SUndefined)))
+       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    newtarget! ::J2SFun ...                                          */
@@ -75,7 +79,8 @@
 ;*    newtarget! ::J2SArrow ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (newtarget! this::J2SArrow fun)
-   (with-access::J2SFun this (%info body)
+   (with-access::J2SFun this (%info body new-target)
+      (set! new-target #f)
       (set! body (newtarget! body fun))
       this))
 
@@ -84,14 +89,20 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (newtarget! this::J2SDeclFun fun)
    (with-access::J2SDeclFun this (val)
-      (let ((fun (if (isa? val J2SFun)
+      (let ((f (if (isa? val J2SFun)
 		     val
 		     (with-access::J2SMethod val (function)
 			function))))
-	 (if (not (decl-usage-has? this '(assig new ref get set)))
-	     (with-access::J2SFun fun (body)
-		(set! body (newtarget! body #f)))
-	     (newtarget! fun fun))))
+	 (cond
+	    ((isa? f J2SArrow)
+	     ;; arrow functions inherit new.target
+	     (with-access::J2SFun f (body)
+		(set! body (newtarget! body fun))))
+	    ((not (decl-usage-has? this '(assig new ref get set)))
+	     (with-access::J2SFun f (body)
+		(set! body (newtarget! body #f))))
+	    (else
+	     (newtarget! f f)))))
    this)
    
 ;*---------------------------------------------------------------------*/
