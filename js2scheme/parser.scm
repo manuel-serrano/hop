@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Aug  2 18:17:07 2021 (serrano)                */
+;*    Last change :  Thu Aug  5 09:00:38 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1776,15 +1776,21 @@
 	 (let loop ((rev-ses '()))
 	    (case (peek-token-type)
 	       ((RBRACE)
-		(let ((etoken (consume-any!)))
+		(let ((etoken (consume-any!))
+		      (ses (reverse! rev-ses)))
 		   (pop-open-token etoken)
 		   (let ((clazz (instantiate::J2SClass
 				   (endloc (token-loc etoken))
 				   (name cname)
 				   (loc (token-loc token))
 				   (super extends)
-				   (elements (reverse! rev-ses))
+				   (elements ses)
 				   (type 'class))))
+		      ;; link class elements to the class object
+		      (for-each (lambda (ce)
+				   (with-access::J2SClassElement ce ((c clazz))
+				      (set! c clazz)))
+			 ses)
 		      (if (not declaration?)
 			  clazz
 			  (let ((decl (instantiate::J2SDeclClass
@@ -1821,7 +1827,8 @@
 	 (let loop ((rev-ses '()))
 	    (case (peek-token-type)
 	       ((RBRACE)
-		(let ((etoken (consume-any!)))
+		(let ((etoken (consume-any!))
+		      (ses (reverse! rev-ses)))
 		   (pop-open-token etoken)
 		   (co-instantiate
 			 ((clazz (instantiate::J2SRecord
@@ -1829,7 +1836,7 @@
 				    (name cname)
 				    (loc (token-loc token))
 				    (super extends)
-				    (elements (reverse! rev-ses))
+				    (elements ses)
 				    (decl decl)))
 			  (decl (instantiate::J2SDeclClass
 				   (loc (token-loc id))
@@ -1838,6 +1845,11 @@
 				   (usage (usage '()))
 				   (binder 'let-opt)
 				   (val clazz))))
+		      ;; link class elements to the class object
+		      (for-each (lambda (ce)
+				   (with-access::J2SClassElement ce ((c clazz))
+				      (set! c clazz)))
+			 ses)
 		      (instantiate::J2SVarDecls
 			 (loc loc)
 			 (decls (list decl))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Jul 29 08:58:13 2021 (serrano)                */
+;*    Last change :  Thu Aug  5 09:07:39 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -37,6 +37,7 @@
 	   __js2scheme_scheme-process
 	   __js2scheme_scheme-array
 	   __js2scheme_scheme-class
+	   __js2scheme_scheme-record
 	   __js2scheme_scheme-ops
 	   __js2scheme_scheme-arguments
 	   __js2scheme_scheme-spread
@@ -1456,7 +1457,14 @@
 	       ((isa? fun J2SHopRef)
 		(call-hop-function fun thisarg args))
 	       ((isa? fun J2SSuper)
-		(j2s-scheme-super this mode return ctx))
+		(with-access::J2SSuper fun (context)
+		   (cond
+		      ((isa? context J2SRecord)
+		       (j2s-scheme-record-super this mode return ctx))
+		      ((isa? context J2SClass)
+		       (j2s-scheme-class-super this mode return ctx))
+		      (else
+		       (error "hopc" "wrong super context" context)))))
 	       ((isa? fun J2SSvc)
 		(call-unknown-function protocol fun
 		   (j2s-scheme thisarg mode return ctx) args))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Mon Aug  2 19:18:09 2021 (serrano)                */
+;*    Last change :  Wed Aug  4 18:42:19 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -303,22 +303,20 @@
    
    (define (record-subtype? type supertype)
       (or (eq? type supertype)
-	  (with-access::J2STypeRecord type (clazz)
-	     (with-access::J2SRecord clazz (super)
-		(when (isa? super J2SRef)
-		   (with-access::J2SRef super (decl)
-		      (when (isa? decl J2SDeclClass)
-			 (with-access::J2SDeclClass decl (val)
-			    (when (isa? val J2SRecord)
-			       (with-access::J2SRecord val (itype)
-				  (record-subtype? itype supertype)))))))))))
+	  (with-access::J2SRecord type (super)
+	     (when (isa? super J2SRef)
+		(with-access::J2SRef super (decl)
+		   (when (isa? decl J2SDeclClass)
+		      (with-access::J2SDeclClass decl (val)
+			 (when (isa? val J2SRecord)
+			    (record-subtype? val supertype)))))))))
    
    (or (eq? type supertype)
        (and (eq? supertype 'number) (memq type '(integer real bigint)))
        (and (eq? supertype 'object) (memq type '(string array jsvector)))
        (and (isa? supertype J2STypeRecord)
 	    (or (memq type '(any unknown))
-		(and (isa? type J2STypeRecord)
+		(and (isa? type J2SRecord)
 		     (record-subtype? type supertype))))))
 
 ;*---------------------------------------------------------------------*/
@@ -994,7 +992,7 @@
 	 (let ((fs (filter-map element-prop elements))
 	       (super (j2s-class-super clazz)))
 	    (if super
-		(append fs (loop super))
+		(append (loop super) fs)
 		fs)))))
 
 ;*---------------------------------------------------------------------*/

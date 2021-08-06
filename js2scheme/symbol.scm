@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Jul 30 07:41:49 2021 (serrano)                */
+;*    Last change :  Wed Aug  4 18:33:53 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -272,21 +272,18 @@
       this))
 
 ;*---------------------------------------------------------------------*/
-;*    make-ctx ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (make-ctx typ val)
-   (cons typ val))
-
-;*---------------------------------------------------------------------*/
-;*    ctx-value ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (ctx-value ctx)
-   (cdr ctx))
-
-;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SNode ...                                           */
+;*    -------------------------------------------------------------    */
+;*     - this: the node to resolve                                     */
+;*     - env: the lexical enviroment                                   */
+;*     - mode: the program/function JavaScript mode                    */
+;*     - withs: the "with" environment (see J2SWith)                   */
+;*     - wenv: the arguments environment (see J2SDeclArguments)        */
+;*     - genv: the global environemntxs                                */
+;*     - ctx: the "super" context (see J2SClassElement)                */
+;*     - conf: the compilation environment.                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (resolve! this::J2SNode env mode withs wenv genv ctx::symbol conf)
+(define-walk-method (resolve! this::J2SNode env mode withs wenv genv ctx conf)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -1033,7 +1030,7 @@
 ;*    resolve! ::J2SClassElement ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SClassElement env mode withs wenv genv ctx conf)
-   (with-access::J2SClassElement this (static prop)
+   (with-access::J2SClassElement this (prop static clazz)
       (cond
 	 (static
 	  (set! prop (resolve! prop env mode withs withs genv ctx conf)))
@@ -1041,11 +1038,12 @@
 	  (set! prop (resolve! prop env mode withs withs genv 'class conf)))
 	 (else
 	  (with-access::J2SDataPropertyInit prop (name)
-	     (if (and (isa? name J2SString)
-		      (with-access::J2SString name (val)
-			 (string=? val "constructor")))
-		 (set! prop (resolve! prop env mode withs withs genv 'ctor conf))
-		 (set! prop (resolve! prop env mode withs withs genv 'class conf)))))))
+	     (let ((ctx (if (and (isa? name J2SString)
+				 (with-access::J2SString name (val)
+				    (string=? val "constructor")))
+			    clazz
+			    'class)))
+		(set! prop (resolve! prop env mode withs withs genv ctx conf)))))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -1282,13 +1280,7 @@
       (let ((decl (find-decl utype env)))
 	 (when (isa? decl J2SDeclClass)
 	    (with-access::J2SDeclClass decl (val id)
-	       (when (isa? val J2SRecord)
-		  (with-access::J2SRecord val (itype)
-		     (unless (isa? itype J2STypeRecord)
-			(set! itype (instantiate::J2STypeRecord
-				       (id id)
-				       (clazz val))))
-		     (set! utype itype))))))))
+	       (set! utype val))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve-tilde! ...                                               */

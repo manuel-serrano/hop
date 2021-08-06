@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat May  8 16:53:31 2021 (serrano)                */
+;*    Last change :  Wed Aug  4 07:25:59 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -580,7 +580,7 @@
 ;*---------------------------------------------------------------------*/
 (define (function-newtarget? this::J2SFun)
    (with-access::J2SFun this (new-target)
-      new-target))
+      (isa? new-target J2SDecl)))
 
 ;*---------------------------------------------------------------------*/
 ;*    function-mode ...                                                */

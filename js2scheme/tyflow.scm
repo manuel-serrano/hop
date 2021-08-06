@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sat Jul 31 07:42:49 2021 (serrano)                */
+;*    Last change :  Wed Aug  4 18:45:13 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -794,11 +794,7 @@
    (define (node-type-record this)
       (with-access::J2SDeclClass this (val id)
 	 (with-access::J2SRecord val (itype type)
-	    (unless (isa? itype J2STypeRecord)
-	       (decl-vtype-set! this 'function ctx)
-	       (set! itype (instantiate::J2STypeRecord
-			     (id id)
-			     (clazz val))))
+	    (decl-vtype-set! this 'function ctx)
 	    (multiple-value-bind (tyf env bk)
 	       (node-type val env ctx)
 	       (return 'function env bk)))))
@@ -1398,8 +1394,7 @@
 		((isa? decl J2SDeclClass)
 		 (with-access::J2SDeclClass decl (val)
 		    (if (isa? val J2SClass)
-			(with-access::J2SClass val (itype)
-			   itype)
+			val
 			'object)))
 		(else
 		 'object))))

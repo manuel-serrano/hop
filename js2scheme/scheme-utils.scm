@@ -114,7 +114,7 @@
 	   (with-tmp lhs rhs mode return ::struct gen::procedure)
 	   (with-tmp-args ::pair-nil mode return ctx gen::procedure)
 
-	   (record-index ::J2SNode ::J2STypeRecord ::bstring)))
+	   ))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
@@ -1440,17 +1440,3 @@
 (define-walk-method (side-effect this::J2SObjInit mustp::bool cell)
    (cell-set! cell #t)
    #t)
-
-;*---------------------------------------------------------------------*/
-;*    record-index ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (record-index this::J2SNode ty::J2STypeRecord field::bstring)
-   (with-access::J2STypeRecord ty (clazz id)
-      (multiple-value-bind (index el)
-	 (j2s-class-instance-get-property clazz field)
-	 (when el
-	    index))))
-;* 	     (error "j2s-scheme"                                       */
-;* 		(format "Record type \"~a\" has no property named \"~a\"" */
-;* 		   id field)                                           */
-;* 		(j2s->list this))))))                                  */

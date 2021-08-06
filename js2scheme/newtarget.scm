@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 27 18:53:16 2018                          */
-;*    Last change :  Tue Aug  3 09:23:39 2021 (serrano)                */
+;*    Last change :  Wed Aug  4 07:26:57 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Handling ECMAScrip 6 "new.target" meta construct.                */
@@ -52,55 +52,23 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    make-new-target-decl ...                                         */
-;*---------------------------------------------------------------------*/
-(define (make-new-target-decl loc)
-   (let ((decl (J2SLetOptRo '(ref) 'new-target
-		  (J2SPragma
-		     '(with-access::JsGlobalObject %this (js-new-target)
-		       (let ((nt js-new-target))
-			  (set! js-new-target (js-undefined))
-			  nt))))))
-      (with-access::J2SDecl decl (_scmid)
-	 (set! _scmid 'new-target))
-      decl))
-
-;*---------------------------------------------------------------------*/
-;*    body-bind-new-target ...                                         */
-;*---------------------------------------------------------------------*/
-(define (body-bind-new-target body decl)
-   (with-access::J2SNode body (loc)
-      (J2SLetBlock (list decl)
-	 body)))
-   
-;*---------------------------------------------------------------------*/
 ;*    newtarget! ::J2SPragma ...                                       */
 ;*    -------------------------------------------------------------    */
 ;*    See also scheme/scheme-class.scm.                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (newtarget! this::J2SPragma fun)
-   (with-access::J2SPragma this (lang expr loc)
-      (if (and (eq? lang 'javascript) (equal? expr "new.target"))
-	  (if fun
-	      (with-access::J2SFun fun (%info)
-		 (unless (isa? %info J2SDecl)
-		    (set! %info (make-new-target-decl loc)))
-		 (J2SRef %info))
-	      (J2SUndefined))
-	  this)))
+   (when (and fun (j2s-new-target? this))
+      (with-access::J2SFun fun (new-target)
+	 (set! new-target #t)))
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    newtarget! ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (newtarget! this::J2SFun fun)
-   (with-access::J2SFun this (%info body new-target)
+   (with-access::J2SFun this (body new-target)
       (unless (boolean? new-target)
-	 (set! %info #f)
-	 (set! body (newtarget! body this))
-	 (when %info
-	    (with-access::J2SFun this (loc new-target)
-	       (set! new-target %info)
-	       (set! body (body-bind-new-target body %info)))))
+	 (set! body (newtarget! body this)))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -160,18 +128,6 @@
 	 (when ctor
 	    (with-access::J2SClassElement ctor (prop)
 	       (with-access::J2SDataPropertyInit prop (val)
-		  (if (isa? this J2SRecord)
-		      (with-access::J2SFun val (new-target thisp body loc %info)
-			 (let ((nt (if (eq? new-target #t)
-				       %info
-				       (make-new-target-decl loc))))
-			    (with-access::J2SDeclInit nt (val loc)
-			       (set! val (J2SThis thisp))
-			       (set! new-target #f)
-			       (set! body (body-bind-new-target body nt)))))
-		      (with-access::J2SFun val (new-target body loc)
-			 (when (eq? new-target #unspecified)
-			    (let ((nt (make-new-target-decl loc)))
-			       (set! new-target #t)
-			       (set! body (body-bind-new-target body nt)))))))))))
+		  (with-access::J2SFun val (new-target body loc %info)
+		     (set! new-target #t)))))))
    this)

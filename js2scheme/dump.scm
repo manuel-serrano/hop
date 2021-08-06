@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Aug  3 18:46:01 2021 (serrano)                */
+;*    Last change :  Wed Aug  4 07:24:31 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -61,6 +61,12 @@
 		(string-contains (or (getenv "HOPTRACE") "") "j2s:need-bind-exit-return")))
        `(:need-bind-exit-return ,need-bind-exit-return)
        '()))
+
+;*---------------------------------------------------------------------*/
+;*    dump-new-target ...                                              */
+;*---------------------------------------------------------------------*/
+(define (dump-new-target new-target)
+   (if (isa? new-target J2SDecl) `(:new-target ,(j2s->list new-target)) '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    dump-size ...                                                    */
@@ -722,7 +728,7 @@
 		 ,@(dump-rutype this)
 		 ,@(dump-need-bind-exit-return need-bind-exit-return)
 		 ,@(if optimize '() `(:optimize ,optimize))
-		 ,@(if (boolean? new-target) `(:new-target ,new-target) '())
+		 ,@(dump-new-target new-target)
 		 ,@(dump-range this)
 		 ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
 		 ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
@@ -746,7 +752,7 @@
 		 ,@(dump-need-bind-exit-return need-bind-exit-return)
 		 ,@(if optimize '() `(:optimize ,optimize))
 		 ,@(if src '() `(:src #f))
-		 ,@(if (boolean? new-target) `(:new-target ,new-target) '())
+		 ,@(dump-new-target new-target)
 		 ,@(dump-range this)
 		 ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
 		 ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
@@ -764,7 +770,7 @@
 	      ,@(dump-need-bind-exit-return need-bind-exit-return)
 	      ,@(if optimize '() `(:optimize ,optimize))
 	      ,@(if src '() `(:src #f))
-	      ,@(if (boolean? new-target) `(:new-target ,new-target) '())
+	      ,@(dump-new-target new-target)
 	      ,@(dump-range this)
 	      ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
 	      ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
@@ -1201,7 +1207,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SClass)
    (with-access::J2SClass this (name super elements decl loc)
-      `(J2SClass ,@(if name (list :name name) '())
+      `(,(string->symbol (typeof this)) ,@(if name (list :name name) '())
 	  :super ,(j2s->list super)
 	  ,@(dump-loc loc)
 	  ,@(dump-type this)

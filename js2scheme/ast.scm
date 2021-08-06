@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Aug  3 18:44:33 2021 (serrano)                */
+;*    Last change :  Wed Aug  4 07:33:49 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -266,7 +266,6 @@
 	      (method::J2SFun (info '("ast"))))
 
 	   (class J2SClass::J2SExpr
-	      (itype (default 'object))
 	      (endloc::pair read-only (info '("notraverse")))
 	      (name read-only (info '("notraverse")))
 	      (decl (default #f) (info '("jsonref" "notraverse")))
@@ -281,7 +280,8 @@
 	      (static::bool read-only)
 	      (prop::J2SPropertyInit (info '("ast")))
 	      (private::bool read-only (default #f))
-	      (type (default 'any)))
+	      (type (default 'any))
+	      (clazz (default #f) (info '("notraverse"))))
 	   
 	   (final-class J2SCatch::J2SStmt
 	      param::J2SDecl
@@ -598,8 +598,8 @@
 	   (j2s-param?::bool ::J2SDecl)
 	   (j2s-export?::bool ::J2SDecl)
 	   (j2s-global?::bool ::J2SDecl)
-	   
 	   (j2s-let-opt?::bool ::J2SDecl)
+	   (j2s-new-target?::bool ::J2SNode)
 
 	   (j2s-field-name::obj ::J2SNode)
 	   (inline j2s-field-length?::bool ::J2SNode)
@@ -693,6 +693,14 @@
 	 ((let-opt let-forin) #t)
 	 ((let var param class record export) #f)
 	 (else (error "j2s-let-opt?" "wrong binder" (vector loc id binder))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-new-target? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (j2s-new-target? this::J2SNode)
+   (when (isa? this J2SPragma)
+      (with-access::J2SPragma this (lang expr)
+	 (and (eq? lang 'javascript) (equal? expr "new.target")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-access-field ...                                             */
