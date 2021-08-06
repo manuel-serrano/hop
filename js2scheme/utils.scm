@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Aug  4 18:42:19 2021 (serrano)                */
+;*    Last change :  Fri Aug  6 09:01:16 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -314,8 +314,12 @@
    (or (eq? type supertype)
        (and (eq? supertype 'number) (memq type '(integer real bigint)))
        (and (eq? supertype 'object) (memq type '(string array jsvector)))
-       (and (isa? supertype J2STypeRecord)
-	    (or (memq type '(any unknown))
+       (and (eq? type 'integer) (eq? supertype 'number))
+       (and (eq? type 'function) (eq? supertype 'arrow))
+       (and (memq type '(record class)) (eq? supertype 'function))
+       (and (memq type '(index length indexof)) (memq supertype '(integer number)))
+       (and (isa? supertype J2SRecord)
+	    (or (memq type '(any unknown obj object))
 		(and (isa? type J2SRecord)
 		     (record-subtype? type supertype))))))
 
@@ -360,11 +364,8 @@
 	  ((real) 'double)
 	  ((bigint) 'bignum)
 	  (else type)))
-      ((isa? type J2STypeRecord)
+      ((isa? type J2SRecord)
        'JsRecord)
-      ((isa? type J2SType)
-       (with-access::J2SType type (id)
-	  id))
       (else
        (error "type-name" "Illegal type" type))))
    

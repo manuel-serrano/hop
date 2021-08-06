@@ -1882,7 +1882,7 @@
 		       (j2s-vector-set! this mode return ctx))
 		      ((eq? (j2s-type obj) 'jsvector)
 		       (j2s-jsvector-set! this mode return ctx))
-		      ((and (isa? (j2s-type obj) J2STypeRecord)
+		      ((and (isa? (j2s-type obj) J2SRecord)
 			    (with-access::J2SAccess lhs (field loc)
 			       (with-access::J2SString field (val)
 				  (record-index this (j2s-type obj) val))))
@@ -2720,7 +2720,7 @@
    (with-access::J2SAccess this (loc obj field cache cspecs type)
       (epairify-deep loc 
 	 (cond
-	    ((and (isa? (j2s-type obj) J2STypeRecord)
+	    ((and (isa? (j2s-type obj) J2SRecord)
 		  (isa? field J2SString)
 		  (with-access::J2SString field (val)
 		     (record-index this (j2s-type obj) val)))

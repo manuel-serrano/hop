@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sun Aug  1 18:51:41 2021 (serrano)                */
+;*    Last change :  Fri Aug  6 09:06:49 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -884,15 +884,10 @@
 ;*---------------------------------------------------------------------*/
 (define (type-id type)
    (cond
-      ((symbol? type)
-       type)
-      ((isa? type J2STypeRecord)
-       'JsObject)
-      ((isa? type J2SType)
-       (with-access::J2SType type (id)
-	  id))
-      (else
-       (error "type-id" "Illegal type" type))))
+      ((symbol? type) type)
+      ((isa? type J2SRecord) 'JsRecord)
+      ((isa? type J2SClass) 'JsObject)
+      (else (error "type-id" "Illegal type" type))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-as ...                                                       */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Aug  4 18:45:13 2021 (serrano)                */
+;*    Last change :  Fri Aug  6 08:05:40 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -180,15 +180,6 @@
    (values ty env bk))
 
 ;*---------------------------------------------------------------------*/
-;*    subtype? ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (subtype? t1 t2)
-   (or (eq? t1 t2)
-       (and (memq t1 '(index length indexof)) (memq t2 '(integer number)))
-       (and (eq? t1 'integer) (eq? t2 'number))
-       (and (eq? t1 'function) (eq? t2 'arrow))))
-
-;*---------------------------------------------------------------------*/
 ;*    decl-vtype-set! ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    Assign a unique type to a variable declaration.                  */
@@ -208,7 +199,7 @@
 ;*---------------------------------------------------------------------*/
 (define (decl-vtype-add! decl::J2SDecl ty ctx::pair)
    (with-access::J2SDecl decl (vtype id loc)
-      (unless (or (eq? ty 'unknown) (subtype? ty vtype) (eq? vtype 'any))
+      (unless (or (eq? ty 'unknown) (type-subtype? ty vtype) (eq? vtype 'any))
 	 (unfix! ctx (format "J2SDecl.vadd(~a, ~a) vtype=~a/~a" id loc
 			(type->sexp vtype) (type->sexp ty)))
 	 (set! vtype (tyflow-type (merge-types vtype ty))))))
@@ -220,7 +211,7 @@
 ;*---------------------------------------------------------------------*/
 (define (decl-itype-add! decl::J2SDecl ty ctx::pair)
    (with-access::J2SDecl decl (itype id)
-      (unless (or (eq? ty 'unknown) (subtype? ty itype) (eq? itype 'any))
+      (unless (or (eq? ty 'unknown) (type-subtype? ty itype) (eq? itype 'any))
 	 (unfix! ctx (format "J2SDecl.iadd(~a) itype=~a/~a" id
 			(type->sexp itype) (type->sexp ty)))
 	 (set! itype (tyflow-type (merge-types itype ty))))))
@@ -259,6 +250,8 @@
       ((and (type-integer? left) (eq? right 'number)) 'number)
       ((and (eq? left 'number) (type-integer? right)) 'number)
       ((and (eq? left 'number) (eq? right 'integer)) 'number)
+      ((type-subtype? left right) right)
+      ((type-subtype? right left) left)
       (else 'any)))
 
 ;*---------------------------------------------------------------------*/
@@ -642,10 +635,6 @@
 	 ((memq id '(Math String Error Regex Date Function Array Promise))
 	  (decl-vtype-add! decl 'object ctx)
 	  (expr-type-add! this env ctx 'object))
-	 ;; MS CARE UTYPE
-;* 	 ((not (eq? utype 'unknown))                                   */
-;* 	  (decl-vtype-add! decl utype ctx)                             */
-;* 	  (expr-type-add! this env ctx utype))                         */
 	 ((not (decl-ronly? decl))
 	  (multiple-value-bind (tyv env bk)
 	     (call-next-method)
@@ -856,12 +845,14 @@
 		=>
 		(lambda (decl)
 		   ;; "this" property assignment
-		   (let ((envt (extend-env envl decl 'object)))
-		      (multiple-value-bind (tyr nenv rbk)
-			 (node-type rhs envt ctx)
-			 (if tyr
-			     (expr-type-add! this nenv ctx tyr (append lbk rbk))
-			     (return 'unknown envt (append lbk rbk)))))))
+		   (with-access::J2SDecl decl (vtype)
+		      (let* ((ty (if (isa? vtype J2SRecord) vtype 'object))
+			     (envt (extend-env envl decl ty)))
+			 (multiple-value-bind (tyr nenv rbk)
+			    (node-type rhs envt ctx)
+			    (if tyr
+				(expr-type-add! this nenv ctx tyr (append lbk rbk))
+				(return 'unknown envt (append lbk rbk))))))))
 	       (else
 		;; a non variable assignment
 		(multiple-value-bind (tyr nenv rbk)
@@ -1036,9 +1027,7 @@
 	 (let ((fenv (append envp env)))
 	    (when thisp
 	       (with-access::J2SDecl thisp (vtype itype loc)
-		  ;; MS CARE UTYPE
-		  ;; (if (eq? utype 'object)
-		  (unless (eq? vtype 'object)
+		  (unless (or (eq? vtype 'object) (isa? vtype J2SClass))
 		     (decl-vtype-add! thisp itype ctx))
 		  (set! fenv (extend-env fenv thisp itype))))
 	    (when argumentsp
@@ -1633,16 +1622,15 @@
 			  (append bko bkf))
 		       (expr-type-add! this envf ctx 'any
 			  (append bko bkf)))))
-	       ((isa? tyo J2STypeRecord)
+	       ((isa? tyo J2SRecord)
 		(if (isa? field J2SString)
 		    (with-access::J2SString field (val)
-		       (with-access::J2STypeRecord tyo (clazz)
-			  (multiple-value-bind (index el)
-			     (j2s-class-get-property clazz val)
-			     (if (isa? el J2SClassElement)
-				 (with-access::J2SClassElement el (type)
-				    (expr-type-add! this envf ctx type (append bko bkf)))
-				 (expr-type-add! this envf ctx 'unknown (append bko bkf))))))
+		       (multiple-value-bind (index el)
+			  (j2s-class-get-property tyo val)
+			  (if (isa? el J2SClassElement)
+			      (with-access::J2SClassElement el (type)
+				 (expr-type-add! this envf ctx type (append bko bkf)))
+			      (expr-type-add! this envf ctx 'unknown (append bko bkf)))))
 		    (expr-type-add! this envf ctx 'any (append bko bkf))))
 	       ((eq? tyo 'unknown)
 		(expr-type-add! this envf ctx 'unknown (append bko bkf)))
@@ -2037,7 +2025,8 @@
       (when decl (decl-vtype-add! decl 'function ctx))
       (multiple-value-bind (tys env bki)
 	 (node-type super env ctx)
-	 (expr-type-add! this env ctx 'class))))
+	 (expr-type-add! this env ctx
+	    (if (isa? this J2SRecord) 'record 'class)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SClassElement ...                                  */
@@ -2056,21 +2045,30 @@
 		   (with-access::J2SLiteralValue name (val)
 		      (equal? val "constructor"))))))))
    
-   (with-access::J2SClassElement this (prop type)
+   (with-access::J2SClassElement this (prop type clazz)
       (cond
 	 ((constructor? prop)
-	  (with-access::J2SDataPropertyInit prop (val)
-	     (with-access::J2SFun val (thisp)
-		(with-access::J2SDecl thisp (itype vtype eloc)
-		   (unless (eq? itype 'object)
-		      (set! itype 'object)
-		      (set! vtype 'any)
-		      (unfix! ctx "constructor type"))))))
+	  (if (isa? clazz J2SRecord)
+	      (with-access::J2SDataPropertyInit prop (val)
+		 (with-access::J2SFun val (thisp)
+		    (with-access::J2SDecl thisp (itype vtype eloc)
+		       (set! itype clazz)
+		       (decl-vtype-set! thisp clazz ctx))
+		    ;; J2SRecord constructor does not escape
+		    (node-type-fun val env ctx)))
+	      (with-access::J2SDataPropertyInit prop (val)
+		 (with-access::J2SFun val (thisp)
+		    (with-access::J2SDecl thisp (itype vtype eloc)
+		       (unless (eq? itype 'object)
+			  (set! itype 'object)
+			  (set! vtype 'any)
+			  (unfix! ctx "constructor type")))
+		    (node-type prop env ctx)))))
 	 (else
 	  (when (eq? type 'unknown)
 	     (set! type 'any)
-	     (unfix! ctx "class element"))))
-      (node-type prop env ctx)
+	     (unfix! ctx "class element"))
+	  (node-type prop env ctx)))
       (return 'void env '())))
 
 ;*---------------------------------------------------------------------*/

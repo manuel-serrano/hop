@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Aug  2 07:11:09 2021 (serrano)                */
+;*    Last change :  Fri Aug  6 09:25:09 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -74,7 +74,7 @@
 ;*    need-cast? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (need-cast? type totype)
-   (unless (eq? type totype)
+   (unless (type-subtype? type totype)
       (or (and (eq? totype 'any) (memq type '(int32 uint32)))
 	  (not (or (and (eq? type 'function) (eq? totype 'arrow))
 		   (eq? totype '*)

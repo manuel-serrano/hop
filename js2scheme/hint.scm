@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sun Jul 18 08:46:26 2021 (serrano)                */
+;*    Last change :  Fri Aug  6 09:30:55 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -89,7 +89,7 @@
 	    integer real number bool string
 	    regexp array jsvector date arguments function arrow service
 	    procedure
-	    class object promise
+	    record class object promise
 	    null undefined void
 	    cmap scmstring tilde pair
 	    int8array uint8array bigint))

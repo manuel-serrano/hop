@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Aug  4 07:24:31 2021 (serrano)                */
+;*    Last change :  Fri Aug  6 08:44:42 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -91,9 +91,9 @@
    (cond
       ((symbol? type)
        type)
-      ((isa? type J2STypeRecord)
-       (with-access::J2STypeRecord type (id)
-	  (cons 'record id)))
+      ((isa? type J2SRecord)
+       (with-access::J2SRecord type (name)
+	  (cons 'record name)))
       (else
        type)))
 
@@ -651,7 +651,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SSuper)
    (with-access::J2SSuper this (context)
-      `(,@(call-next-method) :context ,context)))
+      `(,@(call-next-method)
+	  :context ,(if (isa? context J2SClass)
+			(with-access::J2SClass context (name) name)
+			context))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SLiteral ...                                       */
