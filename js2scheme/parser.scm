@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Aug  5 09:00:38 2021 (serrano)                */
+;*    Last change :  Fri Aug  6 18:36:16 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1821,7 +1821,10 @@
 	     (extends (if (eq? (peek-token-type) 'extends)
 			  (begin
 			     (consume-token! 'extends)
-			     (assig-expr #f #f #f))
+			     (let ((tid (consume-token! 'ID)))
+				(instantiate::J2SUnresolvedRef
+				   (loc (token-loc tid))
+				   (id (token-value tid)))))
 			  (J2SUndefined)))
 	     (lbrace (push-open-token (consume-token! 'LBRACE))))
 	 (let loop ((rev-ses '()))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri Aug  6 09:01:16 2021 (serrano)                */
+;*    Last change :  Fri Aug  6 18:49:15 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -312,7 +312,7 @@
 			    (record-subtype? val supertype)))))))))
    
    (or (eq? type supertype)
-       (and (eq? supertype 'number) (memq type '(integer real bigint)))
+       (and (eq? supertype 'number) (memq type '(integer real)))
        (and (eq? supertype 'object) (memq type '(string array jsvector)))
        (and (eq? type 'integer) (eq? supertype 'number))
        (and (eq? type 'function) (eq? supertype 'arrow))
