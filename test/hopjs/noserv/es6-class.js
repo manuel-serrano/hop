@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Thu Jul 29 07:40:43 2021 (serrano)                */
+/*    Last change :  Sun Aug  8 10:04:03 2021 (serrano)                */
 /*    Copyright   :  2017-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
@@ -221,6 +221,49 @@ function basicl() {
       && o.hasOwnProperty("z");
 }
 
+function basicm() {
+   class C {
+      f = 55;
+
+      constructor(n) {
+      }
+   }
+   
+   const o = new C(20);
+   o.f = 66;
+   const o2= new C(11);
+   
+   return o.f === 66
+      && Object.getOwnPropertyDescriptor(o, "f")
+      && !o.__proto__.f
+      && !Object.getOwnPropertyDescriptor(o.__proto__, "f")
+      && o2.f === 55
+      && Object.getOwnPropertyDescriptor(o2, "f")
+      && !o2.__proto__.f
+      && !Object.getOwnPropertyDescriptor( o2.__proto__, "f" );
+}
+
+function basicn() {
+   class C {
+      f() { return  55 };
+
+      constructor(n) {
+      }
+   }
+   
+   const o = new C(20);
+   o.f = 66;
+   const o2= new C(11);
+   
+   return o.f === 66
+      && Object.getOwnPropertyDescriptor(o, "f")
+      && o.__proto__.f
+      && Object.getOwnPropertyDescriptor(o.__proto__, "f")
+      && !Object.getOwnPropertyDescriptor(o2, "f")
+      && o2.__proto__.f
+      && Object.getOwnPropertyDescriptor( o2.__proto__, "f" );
+}
+
 console.log( "basic" );
 console.log( "   basica()" ); assert.ok( basica(), "basica" );
 console.log( "   basicb()" ); assert.ok( basicb(), "basicb" );
@@ -234,6 +277,8 @@ console.log( "   basici()" ); assert.ok( basici(), "basici" );
 console.log( "   basicj()" ); assert.ok( basicj(), "basicj" );
 console.log( "   basick()" ); assert.ok( basick(), "basick" );
 console.log( "   basicl()" ); assert.ok( basicl(), "basicl" );
+console.log( "   basicm()" ); assert.ok( basicm(), "basicm" );
+console.log( "   basicn()" ); assert.ok( basicn(), "basicn" );
 
 /*---------------------------------------------------------------------*/
 /*    misc                                                             */

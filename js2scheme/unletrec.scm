@@ -1,15 +1,15 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/unletrec.scm            */
+;*    serrano/prgm/project/hop/hop/js2scheme/unletrec.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Fri May 14 10:45:52 2021 (serrano)                */
+;*    Last change :  Sun Aug  8 11:04:35 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Letrec optimization                                              */
 ;*    -------------------------------------------------------------    */
 ;*    This optimization transforms letrec into let(*). This improves   */
-;*    generated codes because it avoids boxing mutated rec variables   */
+;*    generated code because it avoids boxing mutated rec variables    */
 ;*    and it enables other optimizations such as PCE.                  */
 ;*=====================================================================*/
 
@@ -127,7 +127,7 @@
 ;*    Amongst DECLS, returns those that appear in NODE.                */
 ;*---------------------------------------------------------------------*/
 (define (get-used-decls node::J2SNode decls::pair-nil)
-   (delete-duplicates! (node-used* node decls #t)))
+   (delete-duplicates! (node-used* node decls #t) eq?))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-used* ...                                                   */
@@ -139,14 +139,14 @@
 ;*    node-used* ::J2SDecl ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-used* node::J2SDecl decls store)
-   (if (member node decls) (list node) '()))
+   (if (memq node decls) (list node) '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-used* ::J2Ref ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-used* node::J2SRef decls store)
    (with-access::J2SRef node (decl)
-      (if (member decl decls) (list decl) '())))
+      (if (memq decl decls) (list decl) '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-used* ::J2SDeclInit ...                                     */
@@ -162,7 +162,7 @@
    (with-access::J2SFun node (%info body decl)
       (if (and (isa? %info UFunInfo)
 	       (with-access::UFunInfo %info (idecls)
-		  (equal? idecls decls)))
+		  (every eq? idecls decls)))
 	  (with-access::UFunInfo %info (used decls)
 	     used)
 	  (let ((info (instantiate::UFunInfo (idecls decls))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Fri Aug  6 19:10:01 2021 (serrano)                */
+;*    Last change :  Sun Aug  8 10:15:23 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -112,9 +112,11 @@
 	 (when static
 	    (j2s-scheme-bind-class-method prop obj mode return ctx))))
    
-   (define (bind-method clazz obj m)
+   (define (bind-prototype clazz obj m)
       (with-access::J2SClassElement m (prop static)
-	 (when (not static)
+	 (when (and (not static)
+		    (or (isa? prop J2SMethodPropertyInit)
+			(isa? prop J2SAccessorPropertyInit)))
 	    (j2s-scheme-bind-class-method prop obj mode return ctx))))
    
    (define (bind-property clazz obj m)
@@ -139,7 +141,10 @@
       (let* ((cname (or name (gensym 'class)))
 	     (clazz (symbol-append cname '%CLASS))
 	     (ctor (symbol-append cname '%CTOR))
-	     (proto (symbol-append cname '%PROTOTYPE)))
+	     (proto (symbol-append cname '%PROTOTYPE))
+	     (alloc (if (or (eq? super #f) (null? super))
+			'js-object-alloc/new-target
+			`(with-access::JsFunction ,super (alloc) alloc))))
 	 `(letrec* ((,ctor ,constructor)
 		    (,proto ,(class-prototype this super))
 		    (,clazz (js-make-function %this ,ctor
@@ -147,9 +152,13 @@
 			       (js-function-info :name ,(symbol->string cname)
 				  :len ,length)
 			       :strict ',mode
-			       :alloc ,(if (or (eq? super #f) (null? super))
-					   'js-object-alloc/new-target
-					   `(with-access::JsFunction ,super (alloc) alloc))
+			       :alloc (lambda (%this ctor)
+					 ,(let ((ins (gensym 'this)))
+					     `(let ((,ins (,alloc %this ctor)))
+						 ,@(filter-map (lambda (prop)
+							   (bind-class-property this ins prop))
+						      (j2s-class-instance-properties this))
+						 ,ins)))
 			       :prototype  ,proto
 			       :__proto__ ,(if (null? super)
 					       '(with-access::JsGlobalObject %this (js-function-prototype)
@@ -158,7 +167,7 @@
 			       :constrsize ,ctorsz))
 		    ,@(if name `((,(j2s-class-id this ctx) (js-make-let))) '()))
 	     ,@(filter-map (lambda (m) (bind-static this clazz m)) els)
-	     ,@(filter-map (lambda (m) (bind-method this proto m)) els)
+	     ,@(filter-map (lambda (m) (bind-prototype this proto m)) els)
 	     ,@(if name `((set! ,(j2s-class-id this ctx) ,clazz)) '())
 	     ,clazz)))
 
@@ -233,8 +242,6 @@
 		(set! body (J2SBlock (check-body-instance body)))))))
       
       (jsfun->lambda val mode return ctx proto ctor-only))
-
-
    
    (with-access::J2SClass this (super elements name src loc decl)
       (let ((ctor (j2s-class-get-constructor this)))

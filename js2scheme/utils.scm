@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sun Aug  8 08:13:28 2021 (serrano)                */
+;*    Last change :  Sun Aug  8 10:43:22 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -366,6 +366,8 @@
 	  (else type)))
       ((isa? type J2SRecord)
        'JsRecord)
+      ((isa? type J2SClass)
+       'JsObject)
       (else
        (error "type-name" "Illegal type" type))))
    
@@ -984,16 +986,19 @@
       (with-access::J2SClassElement el (prop static)
 	 (when (and (not static) (isa? prop J2SDataPropertyInit))
 	    (with-access::J2SDataPropertyInit prop (name)
-	       (with-access::J2SString name (val)
-		  (unless (string=? val "constructor")
-		     prop))))))
+	       (when (or (not (isa? name J2SString))
+			 (with-access::J2SString name (val)
+			    (not (string=? val "constructor"))))
+		  prop)))))
 
    (let loop ((clazz clazz))
       (with-access::J2SClass clazz (elements)
 	 (let ((fs (filter-map element-prop elements))
 	       (super (j2s-class-super clazz)))
 	    (if super
-		(append (loop super) fs)
+		(if (isa? super J2SRecord)
+		    (append (loop super) fs)
+		    fs)
 		fs)))))
 
 ;*---------------------------------------------------------------------*/

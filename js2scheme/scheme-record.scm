@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Wed Aug  4 07:42:15 2021 (serrano)                */
+;*    Last change :  Sun Aug  8 10:40:05 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -66,9 +66,11 @@
 	 (when static
 	    (j2s-scheme-bind-class-method prop obj mode return ctx))))
    
-   (define (bind-method clazz obj m)
+   (define (bind-prototype clazz obj m)
       (with-access::J2SClassElement m (prop static)
-	 (when (not static)
+	 (when (and (not static)
+		    (or (isa? prop J2SMethodPropertyInit)
+			(isa? prop J2SAccessorPropertyInit)))
 	    (j2s-scheme-bind-class-method prop obj mode return ctx))))
    
    (define (bind-property clazz obj m)
@@ -126,7 +128,7 @@
 	     (set! ,(record-prototype-scmid this) ,proto)
 	     (set! ,(record-constructor-scmid this) ,ctor)
 	     ,@(filter-map (lambda (m) (bind-static this clazz m)) els)
-	     ,@(filter-map (lambda (m) (bind-method this proto m)) els)
+	     ,@(filter-map (lambda (m) (bind-prototype this proto m)) els)
 	     ,@(if name `((set! ,(j2s-class-id this ctx) ,clazz)) '())
 	     ,clazz)))
 
@@ -293,7 +295,10 @@
 (define (j2s-alloc-record this::J2SRecord mode return ctx)
    (with-access::J2SRecord this (cmap elements)
       (let ((rec (gensym 'this))
-	    (props (j2s-class-instance-properties this)))
+	    (props (filter (lambda (p)
+			      (and (not (isa? p J2SMethodPropertyInit))
+				   (isa? p J2SDataPropertyInit)))
+		      (j2s-class-instance-properties this))))
 	 `(let ((,rec (js-make-jsrecord ,(length props)
 			 ,(j2s-scheme cmap mode return ctx)
 			 ,(record-prototype-scmid this)
