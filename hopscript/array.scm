@@ -102,6 +102,7 @@
 	   
 	   (js-get-fixnum ::JsArray ::long ::JsGlobalObject)
 	   (js-array-put! ::JsArray p ::obj ::bool ::JsGlobalObject)
+	   (js-array-put-length! o::JsArray len::uint32)
 	   
 	   (js-array-set-ur! ::JsArray ::uint32 ::obj ::bool ::JsGlobalObject)
  	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)

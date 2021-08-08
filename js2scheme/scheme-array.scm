@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Jul 11 18:05:58 2021 (serrano)                */
+;*    Last change :  Sun Aug  8 09:07:57 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -482,11 +482,21 @@
 	       (else
 		(case (j2s-type field)
 		   ((string)
-		    `(js-array-string-set! ,(j2s-scheme obj mode return ctx)
-			,(j2s-scheme field mode return ctx)
-			,(j2s-scheme rhs mode return ctx)
-			,(strict-mode? mode)
-			%this))
+		    (if (eq? (j2s-type rhs) 'length)
+			(with-access::J2SString field (val loc)
+			   (if (string=? val "length")
+			       `(js-array-put-length!
+				   ,(j2s-scheme obj mode return ctx)
+				   ,(j2s-scheme rhs mode return ctx))
+			       (error/location "hopc"
+				  "Illegal assignment type \"length\""
+				  val
+				  (cadr loc) (caddr loc))))
+			`(js-array-string-set! ,(j2s-scheme obj mode return ctx)
+			    ,(j2s-scheme field mode return ctx)
+			    ,(j2s-scheme rhs mode return ctx)
+			    ,(strict-mode? mode)
+			    %this)))
 		   ((fixnum int53)
 		    `(js-array-fixnum-set! ,(j2s-scheme obj mode return ctx)
 			,(j2s-scheme field mode return ctx)

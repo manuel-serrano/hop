@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Fri Aug  6 09:06:49 2021 (serrano)                */
+;*    Last change :  Sun Aug  8 08:54:28 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -784,6 +784,7 @@
 	 ((memq ty '(int53 integer)) `(js-fixnum->length ,v %this))
 	 ((eq? ty 'real) `(js-flonum->length ,v %this))
 	 ((eq? ty 'int32) `(js-fixnum->length (fixnum->int32 ,v) %this))
+	 ((eq? ty 'uint32) v)
 	 (else `(js-tolength ,v %this)))))
 
 (define (js-number-toint32 v)
