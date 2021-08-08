@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Mon Aug  2 07:18:50 2021 (serrano)                */
+;*    Last change :  Sun Aug  8 08:39:41 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -36,7 +36,6 @@
    
    (export (inline js-toflonum::double ::obj)
 	   (js-tolength::uint32 ::obj ::JsGlobalObject)
-	   (inline js-fixnum->length::uint32 ::long ::JsGlobalObject)
 	   (js-flonum->length::uint32 ::double ::JsGlobalObject)
 	   (++js::obj ::obj ::JsGlobalObject)
 	   (--js::obj ::obj ::JsGlobalObject)
@@ -131,14 +130,6 @@
       ((bignum? obj) (js-bignum->length obj %this))
       ((eq? obj (js-undefined)) #u32:0)
       (else (js-tolength (js-tointeger obj %this) %this))))
-
-;*---------------------------------------------------------------------*/
-;*    js-fixnum->length ...                                            */
-;*---------------------------------------------------------------------*/
-(define-inline (js-fixnum->length len %this)
-   (if (and (>=fx len 0) (<fx len 4294967296))
-       (fixnum->uint32 len)
-       (js-raise-range-error %this "index out of range ~a" len)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-flonum->length ...                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Jul 25 09:05:22 2021 (serrano)                */
+;*    Last change :  Sun Aug  8 08:43:03 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
@@ -33,6 +33,8 @@
    (cond-expand
       ((or bint30 bint32)
        (export
+	  (inline js-fixnum->length::uint32 ::long ::JsGlobalObject)
+	  
 	  (js-number->jsnumber ::obj)
 	  
 	  (inline js-flonum->integer::obj ::double)
@@ -84,7 +86,15 @@
 (define __js_strings #f)
 
 ;*---------------------------------------------------------------------*/
-;*    oveflow? ...                                                     */
+;*    js-fixnum->length ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (js-fixnum->length len %this)
+   (if (>=fx len 0)
+       (fixnum->uint32 len)
+       (js-raise-range-error %this "index out of range ~a" len)))
+
+;*---------------------------------------------------------------------*/
+;*    overflow? ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-macro (overflowfx? num)
    (if (=fx (bigloo-config 'int-size) 32)

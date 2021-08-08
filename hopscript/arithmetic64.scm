@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sat Jan 18 07:21:43 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Sun Aug  8 08:43:49 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
 ;*=====================================================================*/
@@ -33,6 +33,7 @@
    (cond-expand
       ((or bint61 bint64)
        (export
+	  (inline js-fixnum->length::uint32 ::long ::JsGlobalObject)
 	  (js-number->jsnumber ::obj)
 
 	  (inline js-flonum->integer::long ::double)
@@ -83,7 +84,15 @@
 (define __js_strings #f)
 
 ;*---------------------------------------------------------------------*/
-;*    oveflow? ...                                                     */
+;*    js-fixnum->length ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (js-fixnum->length len %this)
+   (if (and (>=fx len 0) (<fx len 4294967296))
+       (fixnum->uint32 len)
+       (js-raise-range-error %this "index out of range ~a" len)))
+
+;*---------------------------------------------------------------------*/
+;*    overflow? ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-macro (overflows64? num shift)
    `(not (=s64 (bit-ands64 ,num (bit-nots64 (fixnum->int64 (-fx (bit-lsh 1 ,shift) 1)))) #s64:0)))
