@@ -804,8 +804,16 @@
 		  `(js-array-fixnum-set! ,obj (int32->fixnum ,prop)
 		      ,val ,(strict-mode? mode) %this))
 		 ((string)
-		  `(js-array-string-set! ,obj ,prop
-		      ,val ,(strict-mode? mode) %this))
+		  (if (eq? tyval 'length)
+		      (with-access::J2SString field ((name val) loc)
+			 (if (string=? name "length")
+			     `(js-array-put-length! ,obj ,val)
+			     (error/location "hopc"
+				"Illegal assignment type \"length\""
+				val
+				(cadr loc) (caddr loc))))
+		      `(js-array-string-set! ,obj ,prop
+			  ,val ,(strict-mode? mode) %this)))
 		 (else
 		  (if (or (not field) (mightbe-number? field))
 		      `(js-array-set! ,obj ,prop ,val
