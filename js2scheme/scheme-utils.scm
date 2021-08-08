@@ -807,7 +807,7 @@
 		  (if (eq? tyval 'length)
 		      (with-access::J2SString field ((name val) loc)
 			 (if (string=? name "length")
-			     `(js-array-put-length! ,obj ,val)
+			     `(js-array-length-set! ,obj ,val ,mode %this)
 			     (error/location "hopc"
 				"Illegal assignment type \"length\""
 				val

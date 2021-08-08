@@ -99,10 +99,12 @@
 	      ::vector ::uint32 ::obj ::bool ::JsGlobalObject)
 	   (inline js-array-string-set! ::JsArray ::obj ::obj
 	      ::bool ::JsGlobalObject)
+	   (js-array-length-set! o::JsArray ::uint32 
+	      ::bool ::JsGlobalObject)
 	   
 	   (js-get-fixnum ::JsArray ::long ::JsGlobalObject)
 	   (js-array-put! ::JsArray p ::obj ::bool ::JsGlobalObject)
-	   (js-array-put-length! o::JsArray len::uint32)
+	   (js-array-put-length! ::JsArray ::uint32)
 	   
 	   (js-array-set-ur! ::JsArray ::uint32 ::obj ::bool ::JsGlobalObject)
  	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
@@ -997,6 +999,15 @@
       (if (<u32 i (not-an-index))
 	  (js-array-fixnum-set! arr (uint32->fixnum i) val throw %this)
 	  (js-array-put! arr idx val throw %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-length-set! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-array-length-set! arr::JsArray val throw %this)
+   (with-access::JsArray arr (length)
+      (if (and (js-object-mode-plain? arr) (>=u32 val length))
+	  (js-array-put-length! arr val)
+	  (js-array-put! arr (& "length") (js-uint32-tointeger val) throw %this))))
       
 ;*---------------------------------------------------------------------*/
 ;*    js-array-set! ...                                                */
@@ -3151,19 +3162,6 @@
 		 (with-access::JsValueDescriptor p (writable)
 		    writable))))))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-put-length! ...                                               *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-put-length! o::JsArray v::obj throw::bool cache %this) */
-;*    (js-array-put! o (& "length") v throw %this)                     */
-;*    (with-access::JsArray o (length ilen)                            */
-;*       (let ((len (->uint32 v)))                                     */
-;* 	 (set! length len)                                             */
-;* 	 (when (<u32 len ilen)                                         */
-;* 	    (js-array-mark-invalidate!)                                */
-;* 	    (set! ilen len))                                           */
-;* 	 (%assert-array! o "js-put-length!"))))                        */
-;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    js-put-length! ...                                               */
 ;*---------------------------------------------------------------------*/

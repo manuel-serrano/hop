@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Aug  8 09:25:51 2021 (serrano)                */
+;*    Last change :  Sun Aug  8 09:46:07 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -482,13 +482,14 @@
 	       (else
 		(case (j2s-type field)
 		   ((string)
-		    (tprint "TRHS=" (j2s-type rhs))
 		    (if (eq? (j2s-type rhs) 'length)
 			(with-access::J2SString field (val loc)
 			   (if (string=? val "length")
-			       `(js-array-put-length!
+			       `(js-array-length-set!
 				   ,(j2s-scheme obj mode return ctx)
-				   ,(j2s-scheme rhs mode return ctx))
+				   ,(j2s-scheme rhs mode return ctx)
+				   ,(strict-mode? mode)
+				   %this)
 			       (error/location "hopc"
 				  "Illegal assignment type \"length\""
 				  val
