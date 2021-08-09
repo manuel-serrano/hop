@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Aug  6 19:04:20 2021 (serrano)                */
+;*    Last change :  Mon Aug  9 08:56:34 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -216,7 +216,7 @@
    (define (allocator::symbol this::J2SDecl)
       (with-access::J2SFun (declfun-fun this) (new-target)
 	 (cond
-	    (new-target 'js-object-alloc/new-target)
+	    ((eq? new-target #t) 'js-object-alloc/new-target)
 	    ((decl-usage-has? this '(new get set ref))  'js-object-alloc)
 	    (else 'js-object-alloc-lazy))))
    
@@ -233,7 +233,7 @@
       (with-access::J2SDeclFun this (loc id scope val key)
 	 (let ((val (declfun-fun this)))
 	    (with-access::J2SFun val (params mode vararg body name generator
-					constrsize method new-target)
+					constrsize method)
 	       (let* ((fastid (j2s-decl-fast-id this ctx))
 		      (lparams (length params))
 		      (arity (j2s-function-arity val ctx))
@@ -537,10 +537,9 @@
 			    (epairify loc
 			       (if (pair? bd) bd `(begin ,bd)))))))))
 	 (jsfun->lambda/body this mode return ctx
-	    (if new-target
+	    (if (eq? new-target #t)
 		`(with-access::JsGlobalObject %this (js-new-target)
 		    (let ((new-target js-new-target))
-		       (set! js-new-target (js-undefined))
 		       ,body))
 		body)))))
 
@@ -553,7 +552,7 @@
       (with-access::J2SFun this (body expr new-target)
 	 (let ((f (j2s-decl-scm-id decl ctx)))
 	    (cond
-	       (new-target
+	       ((eq? new-target #t)
 		`(js-object-alloc/new-target %this ,f))
 	       ((cancall? body #f)
 		`(js-object-alloc %this ,f))
@@ -641,7 +640,7 @@
       (with-access::J2SFun this (new-target)
 	 (cond
 	    ((isa? this J2SSvc) 'js-not-a-constructor-alloc)
-	    (new-target 'js-object-alloc/new-target)
+	    ((eq? new-target #t) 'js-object-alloc/new-target)
 	    (else 'js-object-alloc-lazy))))
 
    (define (constructor alloc method)
@@ -687,7 +686,7 @@
 			   (jsfun->lambda this mode return ctx
 			      (j2s-fun-prototype this) #f))
 		      ,arity)))
-	       ((and (or src prototype __proto__ method new-target)
+	       ((and (or src prototype __proto__ method (eq? new-target #t))
 		     (memq mode '(strict hopscript))
 		     (not prototype)
 		     (not __proto__))
@@ -701,7 +700,7 @@
 		  ,@(if (eq? alloc 'js-object-alloc-lazy)
 			'()
 			`(:alloc ,alloc))))
-	       ((or src prototype __proto__ method new-target)
+	       ((or src prototype __proto__ method (eq? new-target #t))
 		`(js-make-function %this ,tmp
 		    ,arity ,(j2s-function-info this name loc ctx)
 		    :prototype ,prototype
@@ -1205,7 +1204,7 @@
    
    (define (function-len val)
       (with-access::J2SFun val (params mode vararg body name generator
-				  constrsize method new-target)
+				  constrsize method)
 	 (let ((lparams (length params)))
 	    (if (eq? vararg 'rest) (-fx lparams 1) lparams))))
    

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sun Aug  8 10:15:23 2021 (serrano)                */
+;*    Last change :  Mon Aug  9 08:55:37 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -190,7 +190,7 @@
       
       (define (check-body-instance body)
 	 (with-access::J2SFun val (new-target loc)
-	    (if new-target
+	    (if (eq? new-target #t)
 		(ctor-check-instance name new-target body loc)
 		body)))
       

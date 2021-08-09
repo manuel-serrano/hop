@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Aug  1 19:10:11 2021 (serrano)                */
+;*    Last change :  Mon Aug  9 09:24:16 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -309,20 +309,22 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-string %this)
    (lambda (this #!optional (arg (js-ascii->jsstring "")))
-      (let ((str (cond
-		    ((js-jsstring? arg)
-		     arg)
-		    ((js-object? arg)
-		     (js-cast-string %this arg))
-		    (else
-		     (js-tojsstring arg %this)))))
-	 (with-access::JsGlobalObject %this (js-new-target js-string)
-	    (if (eq? js-new-target (js-undefined))
-		str
-		(begin
-		   (set! js-new-target (js-undefined))
-		   (js-set-string! %this this str)
-		   this))))))
+      (with-access::JsGlobalObject %this (js-new-target js-string)
+	 (let ((new-target js-new-target))
+	    (set! js-new-target (js-undefined))
+	    (let ((str (cond
+			  ((js-jsstring? arg)
+			   arg)
+			  ((js-object? arg)
+			   (js-cast-string %this arg))
+			  (else
+			   (js-tojsstring arg %this)))))
+	       (with-access::JsGlobalObject %this (js-new-target js-string)
+		  (if (eq? new-target (js-undefined))
+		      str
+		      (begin
+			 (js-set-string! %this this str)
+			 this))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-set-string! ...                                               */
