@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Jul 29 18:57:43 2021 (serrano)                */
+;*    Last change :  Wed Aug 11 16:21:48 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2151,22 +2151,6 @@
 			    (else
 			     (j2s-cast `(%$$NN ,left ,right)
 				#f (number type) type ctx))))))
-		  ((and (eq? tl 'uint32) (eq? tr 'uint32))
-		   (cond
-		      ((not (uint32? right))
-		       `(if (=u32 ,(asuint32 right tr) #u32:0)
-			    +nan.0
-			    ,(j2s-cast `(remainderu32
-					   ,(asuint32 left tl)
-					   ,(asuint32 right tr))
-				lhs 'uint32 type ctx)))
-		      ((=u32 right #u32:0)
-		       +nan.0)
-		      (else
-		       (j2s-cast `(remainderu32
-				     ,(asuint32 left tl)
-				     ,(asuint32 right tr))
-			  lhs 'uint32 type ctx))))
 		  ((and (eq? tr 'uint32) (inrange-positive? lhs))
 		   (cond
 		      ((inrange-int32? rhs)
@@ -2256,7 +2240,8 @@
 				     ,(tonumber32 right tr ctx))
 			  lhs (number type) type ctx))
 		      (else
-		       (j2s-cast `(%$$__ ,left ,right %this)
+		       (j2s-cast `(%$$__ ,(tonumber32 left tl ctx)
+				     ,(tonumber32 right tr ctx) %this)
 			  lhs (number type) type ctx))))))))))
 
 ;*---------------------------------------------------------------------*/
