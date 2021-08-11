@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Aug  4 07:25:59 2021 (serrano)                */
+;*    Last change :  Wed Aug 11 17:55:14 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -937,7 +937,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    function-rutype ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (function-rutype fun)
+(define (function-rutype fun::J2SFun)
    (with-access::J2SFun fun (rutype)
       rutype))
 

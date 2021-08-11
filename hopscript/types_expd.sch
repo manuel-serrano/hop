@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Wed Jul  7 08:00:17 2021 (serrano)                */
+;*    Last change :  Wed Aug 11 16:38:09 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -307,6 +307,7 @@
 (define-instantiate-expander JsFunction (js-function-default-mode))
 (define-instantiate-expander JsMethod (js-function-default-mode))
 (define-instantiate-expander JsService (js-function-default-mode))
+(define-instantiate-expander JsClass (js-function-default-mode))
 (define-instantiate-expander JsHopFrame)
 (define-instantiate-expander JsServer)
 (define-instantiate-expander JsNumber)

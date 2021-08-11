@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Aug  2 18:45:54 2021 (serrano)                */
+;*    Last change :  Wed Aug 11 16:26:15 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -273,6 +273,9 @@
 	   (class JsService::JsFunction
 	      (worker::obj read-only)
 	      (svc::obj read-only))
+
+	   (class JsClass::JsFunction
+	      (constructor::procedure read-only))
 	   
 	   (class JsHopFrame::JsObject
 	      (%this read-only)

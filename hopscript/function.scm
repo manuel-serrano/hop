@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri May  7 11:08:17 2021 (serrano)                */
+;*    Last change :  Wed Aug 11 16:35:38 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -48,7 +48,7 @@
 	   (js-make-function::JsFunction ::JsGlobalObject
 	      ::procedure ::int ::vector
 	      #!key
-	      method construct alloc
+	      method constructor construct alloc
 	      __proto__ prototype
 	      (strict 'normal) (minlen -1)
 	      (size 0) (constrsize 3)
@@ -598,7 +598,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-make-function %this procedure arity info
 	   #!key
-	   method construct alloc
+	   method constructor construct alloc
 	   __proto__ prototype
 	   (strict 'normal) (minlen -1) 
 	   (size 0) (constrsize 3)
@@ -636,7 +636,8 @@
 			   js-function-strict-bind-cmap)
 			  (else
 			   js-function-writable-strict-cmap))))
-	     (fun (if method
+	     (fun (cond
+		     (method
 		      (instantiateJsMethod
 			 (procedure procedure)
 			 (method method)
@@ -656,7 +657,29 @@
 				   ;; a single cmap for all their fields
 				   (duplicate::JsConstructMap cmap
 				      (%id (gencmapid)))))
-			 (prototype #\F))
+			 (prototype #\F)))
+		     (constructor
+		      (instantiateJsClass
+			 (procedure procedure)
+			 (constructor constructor)
+			 (alloc (or alloc js-not-a-constructor-alloc))
+			 (arity arity)
+			 (__proto__ (or __proto__ (js-object-proto js-function)))
+			 (info info)
+			 (constrsize constrsize)
+			 (constrmap constrmap)
+			 (elements els)
+			 (cmap (if shared-cmap
+				   ;; normal functions, i.e., user functions,
+				   ;; use shared-cmap
+				   cmap
+				   ;; non shared-cmap are used by builtin
+				   ;; objects, such as Date or Number to create
+				   ;; a single cmap for all their fields
+				   (duplicate::JsConstructMap cmap
+				      (%id (gencmapid)))))
+			 (prototype #\F)))
+		     (else
 		      (instantiateJsFunction
 			 (procedure procedure)
 			 (alloc (or alloc js-not-a-constructor-alloc))
@@ -675,7 +698,7 @@
 				   ;; a single cmap for all their fields
 				   (duplicate::JsConstructMap cmap
 				      (%id (gencmapid)))))
-			 (prototype #\F)))))
+			 (prototype #\F))))))
 	 ;; the prototype property
 	 (with-access::JsFunction fun ((fprototype prototype) alloc)
 	    (vector-set! els 0
