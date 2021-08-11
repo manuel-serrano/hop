@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sun Aug  8 08:54:28 2021 (serrano)                */
+;*    Last change :  Wed Aug 11 09:34:16 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -772,8 +772,8 @@
 
 (define (js-number-touint32 v)
    (cond
-      ((fixnum? v) (fixnum->uint32 v))
-      ((flonum? v) (flonum->uint32 v))
+      ((and (fixnum? v) (>=fx v 0)) (fixnum->uint32 v))
+      ((and (flonum? v) (>=fl v 0.0)) (flonum->uint32 v))
       (else `(js-number-touint32 ,v))))
 
 (define (js-number-tolength v expr ctx)
