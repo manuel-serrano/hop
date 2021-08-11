@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Aug  8 08:43:03 2021 (serrano)                */
+;*    Last change :  Wed Aug 11 18:17:33 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
@@ -667,9 +667,9 @@
 	     (else
 	      (pragma::bint "BINT($1)" res)))))
       ((and bigloo-c (config have-overflow #t))
-       (let ((res::int 0))
+       (let ((res::long 0))
 	  (cond
-	     ((pragma::bool "__builtin_smul_overflow((int)(CINT($1)), (int)(CINT($2)), &$3)"
+	     ((pragma::bool "__builtin_smull_overflow((long)(CINT($1)), (long)(CINT($2)), &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)(CINT(($1))))*((double)(CINT($2))))"
 		 x y))
@@ -679,7 +679,7 @@
 		  -0.0
 		  (overflowfx res)))
 	     (else
-	      (pragma::bint "BINT($1)" res)))))
+	      (overflowfx res)))))
       (else
        (define (neg? o)
 	  (if (flonum? o)
