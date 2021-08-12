@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Aug 11 18:45:23 2021 (serrano)                */
+;*    Last change :  Thu Aug 12 07:53:56 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -77,7 +77,7 @@
 	   (constructor-only?::bool ::J2SDeclFun)
 	   (constructor-no-return?::bool ::J2SDeclFun)
 	   
-	   (j2s-class-instance-properties ::J2SClass #!optional (super #t))
+	   (j2s-class-instance-properties ::J2SClass #!key (super #t))
 	   (j2s-class-instance-get-property ::J2SClass ::bstring)
 	   (j2s-class-get-property ::J2SClass ::bstring)
 	   (j2s-class-property-constructor?::bool ::J2SDataPropertyInit)
@@ -980,7 +980,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-class-instance-properties ...                                */
 ;*---------------------------------------------------------------------*/
-(define (j2s-class-instance-properties clazz #!optional (super #t))
+(define (j2s-class-instance-properties clazz #!key (super #t))
 
    (define (element-prop el)
       (with-access::J2SClassElement el (prop static)

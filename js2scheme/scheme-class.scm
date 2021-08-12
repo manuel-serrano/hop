@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Wed Aug 11 17:18:20 2021 (serrano)                */
+;*    Last change :  Thu Aug 12 07:54:33 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -370,35 +370,80 @@
 ;*    j2s-scheme-class-super ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-class-super this::J2SCall mode return ctx)
-   (with-access::J2SCall this (loc fun this args protocol cache)
+
+   (define (class-ctor-new-target? this::J2SClass)
+      (let ((ctor (j2s-class-get-constructor this)))
+	 (when (isa? ctor J2SClassElement)
+	    (with-access::J2SClassElement ctor (prop)
+	       (with-access::J2SDataPropertyInit prop (val)
+		  (with-access::J2SFun val (new-target)
+		     new-target))))))
+
+   (define (scheme-class-super this context new-target)
+      (with-access::J2SCall this (fun args)
+	 (let* ((tmp (gensym 'tmp))
+		(len (length args))
+		(call (if (>=fx len 11)
+			  `(js-calln
+			      ,j2s-unresolved-call-workspace
+			      %superctor %nothis
+			      (list ,@(j2s-scheme args mode return ctx)))
+			  `(,(string->symbol (format "js-call~a" len))
+			    ,j2s-unresolved-call-workspace
+			    %superctor %nothis
+			    ,@(j2s-scheme args mode return ctx)))))
+	    `(begin
+		,new-target
+		(let ((,tmp ,call))
+		   ,@(filter-map (lambda (prop)
+				    (bind-class-property context '%nothis
+				       prop mode return ctx))
+			(j2s-class-instance-properties context :super #f))
+		   (set! this %nothis)
+		   ,tmp)))))
+
+   (define (scheme-class-super-declclass this context decl::J2SDeclClass)
+      (with-access::J2SDeclClass decl (val)
+	 (scheme-class-super this context
+	    (if (class-ctor-new-target? val)
+		'(js-new-target-push! %this new-target)
+		#unspecified))))
+   
+   (define (scheme-class-super-fun this context val::J2SFun)
+      (with-access::J2SFun val (new-target)
+	 (scheme-class-super this context
+	    (if new-target
+		'(js-new-target-push! %this new-target)
+		#unspecified))))
+   
+   (define (scheme-class-super-declfun this context decl::J2SDeclFun)
+      (with-access::J2SDeclFun decl (val)
+	 (scheme-class-super this context val)))
+   
+   (define (scheme-class-super-expr this expr::J2SExpr)
+      (scheme-class-super this context
+	 `(cond
+	     ((not (js-function? %superctor))
+	      (js-raise-type-error %this "Bad super class ~a" %superctor))
+	     ((js-function-new-target? %superctor)
+	      (js-new-target-push! %this new-target))
+	     (else
+	      #unspecified))))
+	   
+   (with-access::J2SCall this (fun)
       (with-access::J2SSuper fun (context)
-	 (let* ((len (length args))
-		(ctor (gensym 'ctor))
-		(tmp (gensym 'tmp)))
-	    (if (>=fx len 11)
-		`(with-access::JsGlobalObject %this (js-new-target)
-		    (set! js-new-target new-target)
-		    (let ((,tmp (js-calln ,j2s-unresolved-call-workspace
-				   %superctor
-				   %nothis
-				   (list ,@(j2s-scheme args mode return ctx)))))
-		       (set! this %nothis)
-		       ,@(filter-map (lambda (prop)
-					(bind-class-property context 'nothis prop mode return ctx))
-			    (j2s-class-instance-properties context #f))
-		       ,tmp))
-		(let ((call (string->symbol (format "js-call~a" len))))
-		   `(with-access::JsGlobalObject %this (js-new-target)
-		       (set! js-new-target new-target)
-		       (let ((,tmp (,call ,j2s-unresolved-call-workspace
-				      %superctor
-				      %nothis
-				      ,@(j2s-scheme args mode return ctx))))
-			  ,@(filter-map (lambda (prop)
-					   (bind-class-property context '%nothis prop mode return ctx))
-			       (j2s-class-instance-properties context #f))
-			  (set! this %nothis)
-			  ,tmp))))))))
+	 (with-access::J2SClass context (super)
+	    (if (isa? super J2SRef)
+		(with-access::J2SRef super (decl)
+		   (cond
+		      ((isa? decl J2SDeclClass)
+		       (scheme-class-super-declclass this context decl))
+		      ((isa? decl J2SDeclFun)
+		       (scheme-class-super-declfun this context decl))
+		      ((isa? decl J2SFun)
+		       (scheme-class-super-fun this context decl))
+		      (else
+		       (scheme-class-super-expr this super)))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    need-super-check? ...                                            */

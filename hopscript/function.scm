@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Aug 11 16:35:38 2021 (serrano)                */
+;*    Last change :  Thu Aug 12 08:46:28 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -43,8 +43,9 @@
 	   (inline js-function-path ::JsFunction)
 	   (js-function-debug-name::bstring ::JsProcedure ::JsGlobalObject)
 	   (js-function-arity::long ::obj #!optional opl (protocol 'fix))
-	   (js-function-info #!key name len tostring path start end
-	      (maxconstrsize 100))
+	   (js-function-info
+	      #!key name len tostring path start end
+	      (maxconstrsize 100) new-target)
 	   (js-make-function::JsFunction ::JsGlobalObject
 	      ::procedure ::int ::vector
 	      #!key
@@ -151,14 +152,14 @@
 (define (js-function-src obj::JsProcedureInfo)
    (with-access::JsProcedureInfo obj (info)
       (match-case info
-	 (#(?- ?- (and (? js-jsstring?) ?src) ?- ?- ?- ?-)
+	 (#(?- ?- (and (? js-jsstring?) ?src) ?- ?- ?- ?- ?-)
 	  src)
-	 (#(?- ?- #f (and (? string?) ?path) ?start ?end ?-)
+	 (#(?- ?- #f (and (? string?) ?path) ?start ?end ?- ?-)
 	  (let* ((str (read-function-source info path start end))
 		 (jstr (js-string->jsstring str)))
 	     (vector-set! info 2 jstr)
 	     jstr))
-	 (#(?- ?- #f ?- ?- ?- ?-)
+	 (#(?- ?- #f ?- ?- ?- ?- ?-)
 	  (let ((jstr (js-jsstring-append
 			 (js-ascii->jsstring "[function ")
 			 (js-jsstring-append
@@ -177,7 +178,7 @@
 (define (js-function-loc obj::JsProcedureInfo)
    (with-access::JsProcedureInfo obj (info)
       (match-case info
-	 (#(?- ?- ?- (and (? string?) ?path) ?start ?end ?-)
+	 (#(?- ?- ?- (and (? string?) ?path) ?start ?end ?- ?-)
 	  `(at ,path ,start))
 	 (else
 	  #f))))
@@ -1452,8 +1453,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-function-info ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (js-function-info #!key name len tostring path start end (maxconstrsize 100))
-   (vector name len tostring path start end maxconstrsize))
+(define (js-function-info #!key name len tostring path start end (maxconstrsize 100) new-target))
+   (vector name len tostring path start end maxconstrsize new-target))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-arity ...                                            */
@@ -1519,6 +1520,17 @@
       (else
        (error "js-function-arity"
 	  "illegal arity" (vector req opl protocol)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-new-target? ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-function-new-target? obj)
+   (with-access::JsProcedureInfo obj (info)
+      (match-case info
+	 ((?- ?- (and (? js-jsstring?) ?src) ?- ?- ?- ?- ?new-target)
+	  new-target)
+	 (else
+	  #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

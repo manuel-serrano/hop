@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Mon Aug  9 08:56:34 2021 (serrano)                */
+;*    Last change :  Thu Aug 12 08:50:13 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -1208,7 +1208,7 @@
 	 (let ((lparams (length params)))
 	    (if (eq? vararg 'rest) (-fx lparams 1) lparams))))
    
-   (with-access::J2SFun val (loc body)
+   (with-access::J2SFun val (loc body new-target)
       (with-access::J2SBlock body (endloc)
 	 (match-case loc
 	    ((at ?path ?start)
@@ -1218,7 +1218,8 @@
 		     :name ,(symbol->string name)
 		     :len ,(function-len val)
 		     :path ,(absolute-path path)
-		     :start ,start :end ,(+fx 1 end)))
+		     :start ,start :end ,(+fx 1 end)
+		     :new-target ,new-target))
 		(else
 		 (error "j2s-function-src" "bad location" loc))))
 	    (else

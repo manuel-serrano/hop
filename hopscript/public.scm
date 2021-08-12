@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Jul 28 07:24:48 2021 (serrano)                */
+;*    Last change :  Thu Aug 12 07:55:27 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -68,6 +68,9 @@
 	   (js-not-a-constructor-alloc ::JsGlobalObject ::JsFunction)
 	   
 	   (inline js-function-set-constrmap!::JsFunction ::JsFunction)
+
+	   (inline js-new-target-push! ::JsGlobalObject ::obj)
+	   (inline js-new-target-pop! ::JsGlobalObject)
 	   
 	   (js-call0% ::JsGlobalObject ::JsProcedure ::procedure this)
 	   (js-call1% ::JsGlobalObject ::JsProcedure ::procedure this a0)
@@ -1456,7 +1459,23 @@
 	    :ctor ctor
 	    :inline #t))
       ctor))
-   
+
+;*---------------------------------------------------------------------*/
+;*    js-new-target-push! ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (js-new-target-push! %this val)
+   (with-access::JsGlobalObject %this (js-new-target)
+      (set! js-new-target val)))
+
+;*---------------------------------------------------------------------*/
+;*    js-new-target-pop! ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-new-target-pop! %this)
+   (with-access::JsGlobalObject %this (js-new-target)
+      (let ((nt js-new-target))
+	 (set! js-new-target (js-undefined))
+	 nt)))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-new-return ...                                                */
 ;*---------------------------------------------------------------------*/
