@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 27 18:53:16 2018                          */
-;*    Last change :  Fri Aug  6 18:57:16 2021 (serrano)                */
+;*    Last change :  Fri Aug 13 07:38:56 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Handling ECMAScrip 6 "new.target" meta construct.                */
@@ -60,7 +60,7 @@
    (if (j2s-new-target? this)
        (if fun
 	   (with-access::J2SFun fun (new-target)
-	      (set! new-target #t)
+	      (set! new-target 'global)
 	      this)
 	   (with-access::J2SPragma this (loc)
 	      (J2SUndefined)))
@@ -71,7 +71,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (newtarget! this::J2SFun fun)
    (with-access::J2SFun this (body new-target)
-      (unless (boolean? new-target)
+      (when (eq? new-target 'unknown)
 	 (set! body (newtarget! body this)))
       this))
 
@@ -80,7 +80,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (newtarget! this::J2SArrow fun)
    (with-access::J2SFun this (%info body new-target)
-      (set! new-target #f)
+      (set! new-target 'no)
       (set! body (newtarget! body fun))
       this))
 
@@ -111,34 +111,34 @@
 ;*    Force a new-target insertion for class constructor as it will    */
 ;*    be used to check that ctor are only called with new.             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (newtarget! this::J2SClass fun)
-
-   (define (constructor? prop::J2SDataPropertyInit)
-      (with-access::J2SDataPropertyInit prop (name)
-	 (let loop ((name name))
-	    (cond
-	       ((isa? name J2SLiteralCnst)
-		(with-access::J2SLiteralCnst name (val)
-		   (loop val)))
-	       ((isa? name J2SLiteralValue)
-		(with-access::J2SLiteralValue name (val)
-		   (equal? val "constructor")))))))
-   
-   (define (find-constructor elements)
-      (find (lambda (m)
-	       (with-access::J2SClassElement m (prop static)
-		  (unless static
-		     (when (isa? prop J2SDataPropertyInit)
-			(constructor? prop)))))
-	 elements))
-
-   (call-default-walker)
-
-   (with-access::J2SClass this (elements)
-      (let ((ctor (find-constructor elements)))
-	 (when ctor
-	    (with-access::J2SClassElement ctor (prop)
-	       (with-access::J2SDataPropertyInit prop (val)
-		  (with-access::J2SFun val (new-target body loc %info)
-		     (set! new-target #t)))))))
-   this)
+;* (define-walk-method (newtarget! this::J2SClass fun)                 */
+;*                                                                     */
+;*    (define (constructor? prop::J2SDataPropertyInit)                 */
+;*       (with-access::J2SDataPropertyInit prop (name)                 */
+;* 	 (let loop ((name name))                                       */
+;* 	    (cond                                                      */
+;* 	       ((isa? name J2SLiteralCnst)                             */
+;* 		(with-access::J2SLiteralCnst name (val)                */
+;* 		   (loop val)))                                        */
+;* 	       ((isa? name J2SLiteralValue)                            */
+;* 		(with-access::J2SLiteralValue name (val)               */
+;* 		   (equal? val "constructor")))))))                    */
+;*                                                                     */
+;*    (define (find-constructor elements)                              */
+;*       (find (lambda (m)                                             */
+;* 	       (with-access::J2SClassElement m (prop static)           */
+;* 		  (unless static                                       */
+;* 		     (when (isa? prop J2SDataPropertyInit)             */
+;* 			(constructor? prop)))))                        */
+;* 	 elements))                                                    */
+;*                                                                     */
+;*    (call-default-walker)                                            */
+;*                                                                     */
+;*    (with-access::J2SClass this (elements)                           */
+;*       (let ((ctor (find-constructor elements)))                     */
+;* 	 (when ctor                                                    */
+;* 	    (with-access::J2SClassElement ctor (prop)                  */
+;* 	       (with-access::J2SDataPropertyInit prop (val)            */
+;* 		  (with-access::J2SFun val (new-target body loc %info) */
+;* 		     (set! new-target #t)))))))                        */
+;*    this)                                                            */

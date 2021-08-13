@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Aug 11 17:06:36 2021 (serrano)                */
+;*    Last change :  Fri Aug 13 16:19:19 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -66,7 +66,7 @@
 ;*    dump-new-target ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (dump-new-target new-target)
-   (if new-target `(:new-target ,new-target) '()))
+   (if (eq? new-target 'unknown) '() `(:new-target ,new-target)))
 
 ;*---------------------------------------------------------------------*/
 ;*    dump-size ...                                                    */
@@ -714,12 +714,12 @@
    (with-access::J2SFun this (name thisp argumentsp params body decl mode
 				rutype rtype optimize src 
 				need-bind-exit-return new-target idgen
-				idthis generator loc vararg)
+				idthis generator loc vararg constrsize)
       (cond
 	 ((isa? decl J2SDeclFun)
 	  (with-access::J2SDecl decl (key usage scope)
 	     `(,@(call-next-method) ,@(if generator '(*) '())
-		 :name ,name :mode ,mode :idgen ,idgen
+		 :name ,name :mode ,mode :idgen ,idgen :constrsize ,constrsize
 		 ,@(dump-loc loc)
 		 ,@(dump-key key)
 		 ,@(dump-scope scope)
@@ -741,7 +741,7 @@
 	 ((isa? decl J2SDecl)
 	  (with-access::J2SDecl decl (key scope)
 	     `(,@(call-next-method) ,@(if generator '(*) '())
-		 :name ,name :mode ,mode :idgen ,idgen
+		 :name ,name :mode ,mode :idgen ,idgen :constrsize ,constrsize
 		 ,@(dump-loc loc)
 		 ,@(dump-key key)
 		 ,@(dump-scope scope)
@@ -761,7 +761,7 @@
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 (else
 	  `(,@(call-next-method) ,@(if generator '(*) '())
-	      :name ,name :mode ,mode :idgen ,idgen
+	      :name ,name :mode ,mode :idgen ,idgen :constrsize ,constrsize
 	      ,@(dump-loc loc)
 	      ,@(dump-info this)
 	      ,@(dump-type this)

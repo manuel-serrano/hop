@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Aug  4 18:33:53 2021 (serrano)                */
+;*    Last change :  Fri Aug 13 07:30:13 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -1204,19 +1204,28 @@
 ;*    resolve! ::J2SCall ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SCall env mode withs wenvs genv ctx conf)
+   
+   (define (err fun)
+      (with-access::J2SSuper fun (loc)
+	 (raise
+	    (instantiate::&io-parse-error
+	       (proc "hopc (symbol)")
+	       (msg "`super' keyword unexpected here")
+	       (obj (j2s-expression-src loc conf "super"))
+	       (fname (cadr loc))
+	       (location (caddr loc))))))
+   
    (call-default-walker)
    (with-access::J2SCall this (fun)
       (when (isa? fun J2SSuper)
 	 ;; direct calls to super are only permitted from within constructors
-	 (when (eq? ctx 'plain)
-	    (with-access::J2SSuper fun (loc)
-	       (raise
-		  (instantiate::&io-parse-error
-		     (proc "hopc (symbol)")
-		     (msg "`super' keyword unexpected here")
-		     (obj (j2s-expression-src loc conf "super"))
-		     (fname (cadr loc))
-		     (location (caddr loc)))))))
+	 (cond
+	    ((eq? ctx 'plain)
+	     (err fun))
+	    ((isa? ctx J2SClass)
+	     (with-access::J2SClass ctx (super)
+		(when (isa? super J2SUndefined)
+		   (err fun))))))
       this))
 
 ;*---------------------------------------------------------------------*/

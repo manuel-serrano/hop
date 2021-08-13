@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Aug 12 08:46:28 2021 (serrano)                */
+;*    Last change :  Thu Aug 12 18:21:06 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -40,6 +40,7 @@
 
 	   (js-function-src ::JsProcedureInfo)
 	   (js-function-loc ::JsProcedureInfo)
+	   (inline js-function-new-target? obj)
 	   (inline js-function-path ::JsFunction)
 	   (js-function-debug-name::bstring ::JsProcedure ::JsGlobalObject)
 	   (js-function-arity::long ::obj #!optional opl (protocol 'fix))
@@ -189,6 +190,13 @@
 (define-inline (js-function-path obj::JsFunction)
    (with-access::JsFunction obj (info)
       (vector-ref info 3)))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-new-target? ...                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-function-new-target? obj)
+   (with-access::JsProcedureInfo obj (info)
+      (vector-ref info 7)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-debug-name ...                                       */
@@ -700,6 +708,10 @@
 				   (duplicate::JsConstructMap cmap
 				      (%id (gencmapid)))))
 			 (prototype #\F))))))
+	 ;; adjust the user constrmap
+	 (unless (eq? constrmap (js-not-a-cmap))
+	    (with-access::JsConstructMap constrmap (ctor)
+	       (set! ctor fun)))
 	 ;; the prototype property
 	 (with-access::JsFunction fun ((fprototype prototype) alloc)
 	    (vector-set! els 0
@@ -1453,7 +1465,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-function-info ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (js-function-info #!key name len tostring path start end (maxconstrsize 100) new-target))
+(define (js-function-info #!key name len tostring path start end (maxconstrsize 100) new-target)
    (vector name len tostring path start end maxconstrsize new-target))
 
 ;*---------------------------------------------------------------------*/
@@ -1520,17 +1532,6 @@
       (else
        (error "js-function-arity"
 	  "illegal arity" (vector req opl protocol)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-function-new-target? ...                                      */
-;*---------------------------------------------------------------------*/
-(define (js-function-new-target? obj)
-   (with-access::JsProcedureInfo obj (info)
-      (match-case info
-	 ((?- ?- (and (? js-jsstring?) ?src) ?- ?- ?- ?- ?new-target)
-	  new-target)
-	 (else
-	  #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

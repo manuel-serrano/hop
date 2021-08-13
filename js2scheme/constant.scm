@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun Aug  8 11:33:39 2021 (serrano)                */
+;*    Last change :  Fri Aug 13 08:34:18 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -477,24 +477,31 @@
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    constant! ::J2SRecord ...                                        */
+;*    constant! ::J2SClass ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SRecord env nesting conf)
-   (call-default-walker)
-   (with-access::J2SRecord this (cmap loc)
-      (let ((n (add-cmap! loc
-		  (list->vector
-		     (filter-map (lambda (prop)
-				    (unless (or (isa? prop J2SMethodPropertyInit)
-						(isa? prop J2SAccessorPropertyInit))
-				       (with-access::J2SPropertyInit prop (name)
-					  (with-access::J2SString name (val)
-					     (string->symbol val)))))
-			(j2s-class-instance-properties this)))
-		  env)))
-	 (set! cmap
-	    (instantiate::J2SLiteralCnst
-	       (loc loc)
-	       (index n)
-	       (val (env-list-ref env n))))))
+(define-walk-method (constant! this::J2SClass env nesting conf)
+   (with-access::J2SClass this (super cmap loc)
+      (unless cmap
+	 (call-default-walker)
+	 (cond
+	    ((or (isa? super J2SUndefined) (isa? this J2SRecord))
+	     (let ((n (add-cmap! loc
+			 (list->vector
+			    (map (lambda (prop)
+				    (with-access::J2SPropertyInit prop (name)
+				       (with-access::J2SString name (val)
+					  (string->symbol val))))
+			       (j2s-class-instance-properties this)))
+			 env)))
+		(set! cmap
+		   (instantiate::J2SLiteralCnst
+		      (loc loc)
+		      (index n)
+		      (val (env-list-ref env n))))))
+	    ((j2s-class-super this)
+	     =>
+	     (lambda (super)
+		(constant! super env nesting conf)
+		(with-access::J2SClass super ((supercmap cmap))
+		   (set! cmap supercmap)))))))
    this)

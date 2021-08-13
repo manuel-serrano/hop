@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri May  7 18:58:44 2021 (serrano)                */
+;*    Last change :  Fri Aug 13 16:48:28 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
@@ -282,7 +282,7 @@
 	       (with-access::J2SFun val (params vararg generator new-target)
 		  (with-access::J2SDecl decl (id)
 		     (and (not (eq? id 'Buffer))
-			  (not vararg) (not generator) (not new-target)
+			  (not vararg) (not generator) (eq? new-target 'no)
 			  (=fx (length params) (length args)))))))))
    
    (with-access::J2SNew this (clazz args caches loc)

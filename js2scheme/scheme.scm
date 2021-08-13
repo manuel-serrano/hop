@@ -3098,6 +3098,13 @@
 		  (when (isa? val J2SRecord)
 		     val))))))
 
+   (define (new-class? clazz)
+      (when (isa? clazz J2SRef)
+	 (with-access::J2SRef clazz (decl)
+	    (when (isa? decl J2SDeclClass)
+	       (with-access::J2SDeclClass decl (val)
+		  val)))))
+
    (define (constructor-no-call? decl)
       ;; does this constructor call another function?
       (let ((fun (j2sdeclinit-val-fun decl)))
@@ -3241,6 +3248,11 @@
 	  (lambda (rec)
 	     (epairify loc
 		(j2s-record-new rec args mode return ctx))))
+	 ((new-class? clazz)
+	  =>
+	  (lambda (clazz)
+	     (epairify loc
+		(j2s-scheme-class-new this clazz args mode return ctx))))
 	 (else
 	  (epairify loc
 	     (j2s-new loc (j2s-scheme-box clazz mode return ctx)

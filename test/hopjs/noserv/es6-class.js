@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Sun Aug  8 10:04:03 2021 (serrano)                */
+/*    Last change :  Fri Aug 13 10:29:59 2021 (serrano)                */
 /*    Copyright   :  2017-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
@@ -264,6 +264,121 @@ function basicn() {
       && Object.getOwnPropertyDescriptor( o2.__proto__, "f" );
 }
 
+function basico() {
+   class Point {
+      constructor(n) {
+      	 this.y = n;
+      }
+      x = 44;
+      y;
+      typeof() { return "Point" };
+   }
+   const o = new Point(10);
+   return o.x === 44 && o.y === 10;
+}
+
+function basicp() {
+   class Point {
+      x = 44;
+      y;
+      typeof() { return "Point" };
+   }
+   const o = new Point(10);
+   return o.x === 44 && o.y === undefined;
+}
+
+function basicq() {
+   class Point {
+      x = 44;
+      y;
+      typeof() { return "Point" };
+   }
+   class Point3d extends Point {
+   }
+   const o = new Point3d(10);
+   return o.x === 44 && o.y === undefined;
+}
+
+function basicr() {
+   class Point {
+      x = 44;
+      y;
+      typeof() { return "Point" };
+   }
+   class Point3d extends Point {
+      z = 55;
+   }
+   const o = new Point3d(10);
+   return o.x === 44 && o.y === undefined && o.z === 55;
+}
+
+function basics() {
+   class Point {
+      constructor(n) {
+	 this.y = n;
+      }
+      x = 44;
+      y;
+      typeof() { return "Point" };
+   }
+   class Point3d extends Point {
+      constructor(n) {
+	 super(n);
+      }
+      z = 55;
+   }
+   const o = new Point3d(10);
+   return o.x === 44 && o.y === undefined && o.z === 55;
+}
+
+function basicst() {
+   class Point {
+      constructor(n) {
+	 this.y = new.target;
+      }
+      x = 44;
+      y;
+      typeof() { return "Point" };
+   }
+   class Point3d extends Point {
+      constructor(n) {
+	 super(n);
+      }
+      z = 55;
+   }
+   const o = new Point3d(10);
+   return o.x === 44 && o.y !== undefined && o.z === 55;
+}
+
+function basicu() {
+   class Point {
+      constructor(x,y) {
+      	 this.x = x;
+      	 this.y = y;
+      }
+   }
+   
+   class Point3d extends Point {
+      z = 66;
+   }
+
+   return new Point3d(10).x === 10;
+}
+
+function basicv() {
+   class Point {
+      constructor(n) {
+      	 this.y = new.target;
+      }
+      x = 44;
+      y;
+      typeof() { return "Point" };
+   }
+   const o = new Point(10);
+   return o.x === 44 && o.y !== undefined;
+}
+
+
 console.log( "basic" );
 console.log( "   basica()" ); assert.ok( basica(), "basica" );
 console.log( "   basicb()" ); assert.ok( basicb(), "basicb" );
@@ -279,6 +394,14 @@ console.log( "   basick()" ); assert.ok( basick(), "basick" );
 console.log( "   basicl()" ); assert.ok( basicl(), "basicl" );
 console.log( "   basicm()" ); assert.ok( basicm(), "basicm" );
 console.log( "   basicn()" ); assert.ok( basicn(), "basicn" );
+console.log( "   basico()" ); assert.ok( basico(), "basico" );
+console.log( "   basicp()" ); assert.ok( basicp(), "basicp" );
+console.log( "   basicq()" ); assert.ok( basicq(), "basicq" );
+console.log( "   basicr()" ); assert.ok( basicr(), "basicr" );
+console.log( "   basics()" ); assert.ok( basics(), "basics" );
+console.log( "   basict()" ); assert.ok( basict(), "basict" );
+console.log( "   basicu()" ); assert.ok( basicu(), "basicu" );
+console.log( "   basicv()" ); assert.ok( basicv(), "basicv" );
 
 /*---------------------------------------------------------------------*/
 /*    misc                                                             */

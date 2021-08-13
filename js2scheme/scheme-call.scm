@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Aug  5 09:07:39 2021 (serrano)                */
+;*    Last change :  Fri Aug 13 15:05:46 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1462,7 +1462,7 @@
 		      ((isa? context J2SRecord)
 		       (j2s-scheme-record-super this mode return ctx))
 		      ((isa? context J2SClass)
-		       (j2s-scheme-class-super this mode return ctx))
+		       (j2s-scheme-class-call-super this mode return ctx))
 		      (else
 		       (error "hopc" "wrong super context" context)))))
 	       ((isa? fun J2SSvc)

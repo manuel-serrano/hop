@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../project/hop/3.2.x-new-types/js2scheme/constrsize.scm         */
+;*    serrano/prgm/project/hop/hop/js2scheme/constrsize.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Sun Sep  2 06:45:13 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Fri Aug 13 16:23:02 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Static approximation of constructors size                        */
 ;*=====================================================================*/
@@ -63,11 +63,38 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constrsize! this::J2SFun)
    (with-access::J2SFun this (body constrsize)
-      (let ((acc (make-cell 0)))
+      (let ((acc (make-cell '())))
 	 (count-this-assig body acc)
-	 (set! constrsize (cell-ref acc)))
+	 (set! constrsize (length (cell-ref acc))))
       (call-default-walker)))
 
+;*---------------------------------------------------------------------*/
+;*    constrsize! ::J2SClass ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (constrsize! this::J2SClass)
+   
+   (define (prop-names props)
+      (filter-map (lambda (p)
+		     (with-access::J2SDataPropertyInit p (name)
+			(when (isa? name J2SString)
+			   (with-access::J2SString name (val)
+			      val))))
+	 props))
+   
+   (call-default-walker)
+   (let ((ctor (j2s-class-get-constructor this)))
+      (when ctor
+	 (with-access::J2SClassElement ctor (prop)
+	    (with-access::J2SMethodPropertyInit prop (val)
+	       (let ((props (j2s-class-instance-properties this)))
+		  (with-access::J2SFun val (body)
+		     (when (pair? props)
+			(let ((acc (make-cell (prop-names props))))
+			   (count-this-assig body acc)
+			   (with-access::J2SClass this (constrsize)
+			      (set! constrsize (length (cell-ref acc))))))))))))
+   this)
+   
 ;*---------------------------------------------------------------------*/
 ;*    count-this-assig ::J2SNode ...                                   */
 ;*---------------------------------------------------------------------*/
@@ -81,9 +108,12 @@
    (with-access::J2SAssig this (lhs rhs)
       (call-default-walker)
       (when (isa? lhs J2SAccess)
-	 (with-access::J2SAccess lhs (obj)
+	 (with-access::J2SAccess lhs (obj field)
 	    (when (isa? obj J2SThis)
-	       (cell-set! acc (+fx 1 (cell-ref acc))))))))
+	       (when (isa? field J2SString)
+		  (with-access::J2SString field (val)
+		     (unless (member val (cell-ref acc))
+			(cell-set! acc (cons val (cell-ref acc)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    count-this-assig ::J2SCond ...                                   */
@@ -91,12 +121,8 @@
 (define-walk-method (count-this-assig this::J2SCond acc::cell)
    (with-access::J2SCond this (test then else)
       (count-this-assig test acc)
-      (let ((athen (make-cell 0))
-	    (aelse (make-cell 0)))
-	 (count-this-assig then athen)
-	 (count-this-assig else aelse)
-	 (cell-set! acc
-	    (+fx (cell-ref acc) (max (cell-ref athen) (cell-ref aelse)))))))
+      (count-this-assig then acc)
+      (count-this-assig else acc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    count-this-assig ::J2SIf ...                                     */
@@ -104,12 +130,8 @@
 (define-walk-method (count-this-assig this::J2SIf acc::cell)
    (with-access::J2SIf this (test then else)
       (count-this-assig test acc)
-      (let ((athen (make-cell 0))
-	    (aelse (make-cell 0)))
-	 (count-this-assig then athen)
-	 (count-this-assig else aelse)
-	 (cell-set! acc
-	    (+fx (cell-ref acc) (max (cell-ref athen) (cell-ref aelse)))))))
+      (count-this-assig then acc)
+      (count-this-assig else acc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    count-this-assig ::J2SCall ...                                   */
@@ -122,3 +144,4 @@
 		(with-access::J2SFun val (body)
 		   (count-this-assig body acc))))
 	  (call-next-method))))
+

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Aug 12 07:55:27 2021 (serrano)                */
+;*    Last change :  Fri Aug 13 08:57:48 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -69,6 +69,7 @@
 	   
 	   (inline js-function-set-constrmap!::JsFunction ::JsFunction)
 
+	   (inline js-new-target ::JsGlobalObject)
 	   (inline js-new-target-push! ::JsGlobalObject ::obj)
 	   (inline js-new-target-pop! ::JsGlobalObject)
 	   
@@ -1461,6 +1462,13 @@
       ctor))
 
 ;*---------------------------------------------------------------------*/
+;*    js-new-target ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-new-target %this)
+   (with-access::JsGlobalObject %this (js-new-target)
+      js-new-target))
+
+;*---------------------------------------------------------------------*/
 ;*    js-new-target-push! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-new-target-push! %this val)
@@ -1511,8 +1519,7 @@
       ((js-function? ctor)
        (with-access::JsFunction ctor (name alloc)
 	  (let ((o (alloc %this ctor)))
-	     (with-access::JsGlobalObject %this (js-new-target)
-		(set! js-new-target (js-undefined)))
+	     (js-new-target-pop! %this)
 	     (js-new-return ctor o o))))
       ((js-proxy? ctor)
        (js-new/proxy %this ctor '()))

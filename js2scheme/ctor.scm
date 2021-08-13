@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Sun Apr 12 16:11:12 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Fri Aug 13 16:00:03 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constructor optimization                                         */
 ;*    -------------------------------------------------------------    */
@@ -57,73 +57,11 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-ctor-program! this::J2SProgram args)
    (with-access::J2SProgram this (decls nodes)
-      ;; compute a conservative approximation of ctor sizes
-      (for-each (lambda (n) (constrsize! n)) decls)
-      (for-each (lambda (n) (constrsize! n)) nodes)
       ;; improve the init sequences this.a = x; this.b = y; ...
       (when (config-get args :optim-ctor #f)
 	 (for-each (lambda (n) (constrinit! n this args)) decls)
 	 (for-each (lambda (n) (constrinit! n this args)) nodes))
       this))
-
-;*---------------------------------------------------------------------*/
-;*    constrsize! ::J2SNode ...                                        */
-;*---------------------------------------------------------------------*/
-(define-walk-method (constrsize! this::J2SNode)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    constrsize! ::J2SFun ...                                         */
-;*---------------------------------------------------------------------*/
-(define-walk-method (constrsize! this::J2SFun)
-   (with-access::J2SFun this (body constrsize)
-      (let ((acc (make-cell 0)))
-	 (count-this-assig body acc)
-	 (set! constrsize (cell-ref acc)))
-      (call-default-walker)))
-
-;*---------------------------------------------------------------------*/
-;*    count-this-assig ::J2SNode ...                                   */
-;*---------------------------------------------------------------------*/
-(define-walk-method (count-this-assig this::J2SNode acc::cell)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    count-this-assig ::J2SAssig ...                                  */
-;*---------------------------------------------------------------------*/
-(define-walk-method (count-this-assig this::J2SAssig acc::cell)
-   (with-access::J2SAssig this (lhs rhs)
-      (call-default-walker)
-      (when (isa? lhs J2SAccess)
-	 (with-access::J2SAccess lhs (obj)
-	    (when (isa? obj J2SThis)
-	       (cell-set! acc (+fx 1 (cell-ref acc))))))))
-
-;*---------------------------------------------------------------------*/
-;*    count-this-assig ::J2SCond ...                                   */
-;*---------------------------------------------------------------------*/
-(define-walk-method (count-this-assig this::J2SCond acc::cell)
-   (with-access::J2SCond this (test then else)
-      (count-this-assig test acc)
-      (let ((athen (make-cell 0))
-	    (aelse (make-cell 0)))
-	 (count-this-assig then athen)
-	 (count-this-assig else aelse)
-	 (cell-set! acc
-	    (+fx (cell-ref acc) (max (cell-ref athen) (cell-ref aelse)))))))
-
-;*---------------------------------------------------------------------*/
-;*    count-this-assig ::J2SIf ...                                     */
-;*---------------------------------------------------------------------*/
-(define-walk-method (count-this-assig this::J2SIf acc::cell)
-   (with-access::J2SIf this (test then else)
-      (count-this-assig test acc)
-      (let ((athen (make-cell 0))
-	    (aelse (make-cell 0)))
-	 (count-this-assig then athen)
-	 (count-this-assig else aelse)
-	 (cell-set! acc
-	    (+fx (cell-ref acc) (max (cell-ref athen) (cell-ref aelse)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    constrinit! ::J2SNode ...                                        */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Aug  6 09:02:16 2021 (serrano)                */
+;*    Last change :  Fri Aug 13 08:30:53 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -239,7 +239,7 @@
 	      (mode::symbol (default 'normal) (info '("notraverse")))
 	      (decl (default #f) (info '("jsonref" "notraverse")))
 	      (need-bind-exit-return::bool (default #f) (info '("notraverse")))
-	      (new-target::obj (default #unspecified) (info '("notraverse")))
+	      (new-target::symbol (default 'unknown) (info '("notraverse")))
 	      (vararg::obj (default #f) (info '("notraverse")))
 	      (name::symbol (info '("notraverse")))
 	      (generator::bool (default #f) (info '("notraverse")))
@@ -271,10 +271,11 @@
 	      (decl (default #f) (info '("jsonref" "notraverse")))
 	      (super::J2SExpr (info '("ast")))
 	      (src::bool (default #t) (info '("notraverse")))
-	      (elements::pair-nil (info '("ast"))))
-
-	   (class J2SRecord::J2SClass
+	      (elements::pair-nil (info '("ast")))
+	      (constrsize::int (default 0) (info '("notraverse")))
 	      (cmap (default #f)))
+
+	   (class J2SRecord::J2SClass)
 
 	   (class J2SClassElement::J2SNode
 	      (static::bool read-only)

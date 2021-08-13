@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:32:41 2019                          */
-;*    Last change :  Mon Apr 20 06:02:59 2020 (serrano)                */
-;*    Copyright   :  2019-20 Manuel Serrano                            */
+;*    Last change :  Thu Aug 12 18:25:41 2021 (serrano)                */
+;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function macros for js2scheme                                    */
 ;*=====================================================================*/
@@ -39,40 +39,47 @@
 	 ((?- :name (and (? string?) ?name)
 	     :len (and (? fixnum?) ?len)
 	     :tostring (and (? string?) ?tostring))
-	  (e `'#(,name ,len ,tostring "?" -1 -1) e))
+	  (e `'#(,name ,len ,tostring "?" -1 -1 #f) e))
 	 ((?- :name (and (? string?) ?name)
 	     :len (and (? fixnum?) ?len)
 	     :tostring #f
 	     :path (and (? string?) ?path)
 	     :start (and (? fixnum?) ?start)
 	     :end (and (? fixnum?) ?end))
-	  (e `'#(,name ,len #f ,path ,start ,end 100) e))
+	  (e `'#(,name ,len #f ,path ,start ,end 100 #f) e))
 	 ((?- :name (and (? string?) ?name)
 	     :len (and (? integer?) ?len)
 	     :path (and (? string?) ?path)
 	     :start (and (? fixnum?) ?start)
 	     :end (and (? fixnum?) ?end))
-	  (e `'#(,name ,len #f ,path ,start ,end 100) e))
+	  (e `'#(,name ,len #f ,path ,start ,end 100 3f) e))
+	 ((?- :name (and (? string?) ?name)
+	     :len (and (? integer?) ?len)
+	     :path (and (? string?) ?path)
+	     :start (and (? fixnum?) ?start)
+	     :end (and (? fixnum?) ?end)
+	     :new-target ?new-target)
+	  (e `'#(,name ,len #f ,path ,start ,end 100 ,new-target) e))
 	 ((?- :name (and (? string?) ?name)
 	     :len (and (? integer?) ?len))
 	  (if (epair? x)
-	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) ,(cadr (cer x)) ,(caddr (cer x)) -1 100) e)
-	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) "?" -1 -1 100) e)))
+	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) ,(cadr (cer x)) ,(caddr (cer x)) -1 100 #F) e)
+	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) "?" -1 -1 100 #f) e)))
 	 ((?- :name (and (? string?) ?name)
 	     :len (and (? integer?) ?len)
 	     :maxconstrsize (and (? fixnum?) ?maxconstrsize))
 	  (if (epair? x)
-	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) ,(cadr (cer x)) ,(caddr (cer x)) -1 ,maxconstrsize) e)
-	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) "?" -1 -1 ,maxconstrsize) e)))
+	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) ,(cadr (cer x)) ,(caddr (cer x)) -1 ,maxconstrsize #f) e)
+	      (e `'#(,name ,len ,(format "function ~a() { [native code] }" name) "?" -1 -1 ,maxconstrsize #f) e)))
 	 ((?- :name ?name :len ?len)
 	  (let ((tmp (gensym 'name)))
 	     (if (epair? x)
 		 (e `(let ((,tmp ,name))
 			(vector ,tmp ,len (format "function ~a() { [native code] }" ,tmp)
-			   ,(cadr (cer x)) ,(caddr (cer x)) -1 100))
+			   ,(cadr (cer x)) ,(caddr (cer x)) -1 100 #f))
 		    e)
 		 (e `(let ((,tmp ,name))
-			(vector ,tmp ,len (format "function ~a() { [native code] }" ,tmp) "?" -1 -1 100))
+			(vector ,tmp ,len (format "function ~a() { [native code] }" ,tmp) "?" -1 -1 100 #f))
 		    e))))
 	 (else
 	  (error "js-function-info" "bad form" x)))))

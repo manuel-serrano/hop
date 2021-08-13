@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Thu Aug 12 07:53:56 2021 (serrano)                */
+;*    Last change :  Fri Aug 13 08:34:02 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -984,12 +984,10 @@
 
    (define (element-prop el)
       (with-access::J2SClassElement el (prop static)
-	 (when (and (not static) (isa? prop J2SDataPropertyInit))
-	    (with-access::J2SDataPropertyInit prop (name)
-	       (when (or (not (isa? name J2SString))
-			 (with-access::J2SString name (val)
-			    (not (string=? val "constructor"))))
-		  prop)))))
+	 (when (and (not static)
+		    (isa? prop J2SDataPropertyInit)
+		    (not (isa? prop J2SMethodPropertyInit)))
+	    prop)))
 
    (let loop ((clazz clazz))
       (with-access::J2SClass clazz (elements)
@@ -1066,7 +1064,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Get the class constructor if any.                                */
 ;*---------------------------------------------------------------------*/
-(define (j2s-class-get-constructor clazz)
+(define (j2s-class-get-constructor clazz::J2SClass)
    (with-access::J2SClass clazz (elements)
       (find (lambda (m)
 	       (with-access::J2SClassElement m (prop static)
@@ -1082,14 +1080,20 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-class-find-constructor clazz)
    (let loop ((clazz clazz))
-      (let ((ctor (j2s-class-get-constructor clazz)))
-	 (cond
-	    (ctor
-	     (values clazz ctor))
-	    ((j2s-class-super clazz)
-	     =>
-	     (lambda (super) (loop super)))
-	    (else
-	     (values #f #f))))))
+      (cond
+	 ((isa? clazz J2SClass)
+	  (let ((ctor (j2s-class-get-constructor clazz)))
+	     (cond
+		((isa? ctor J2SClassElement)
+		 ctor)
+		((j2s-class-super clazz)
+		 =>
+		 (lambda (super) (loop super)))
+		(else
+		 #f))))
+	 ((isa? clazz J2SFun)
+	  clazz)
+	 (else
+	  #f))))
 	    
 	     
