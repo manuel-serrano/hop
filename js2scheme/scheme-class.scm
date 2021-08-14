@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Fri Aug 13 07:05:19 2021 (serrano)                */
+;*    Last change :  Sat Aug 14 08:09:24 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -48,7 +48,7 @@
 ;*    j2s-scheme-call-class-constructor ...                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-call-class-constructor clazz::J2SClass ecla eobj args loc mode return ctx)
-   (let ((ctor (j2s-class-get-constructor clazz))
+   (let ((ctor (j2s-class-find-constructor clazz))
 	 (args (if (class-new-target? clazz)
 		   (cons (J2SHopRef ecla) args)
 		   args)))
@@ -742,29 +742,31 @@
 ;*---------------------------------------------------------------------*/
 ;*    super-ctor->lambda ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (super-ctor->lambda clazz::J2SClass ctor mode return ctx)
+(define (super-ctor->lambda clazz::J2SClass superctor mode return ctx)
    (cond
-      ((not ctor)
+      ((not superctor)
        `(lambda (this new-target . args)
 	   (js-calln %this %super this args)))
-      ((isa? ctor J2SClassElement)
-       (with-access::J2SClassElement ctor (prop (super clazz))
-	  (with-access::J2SMethodPropertyInit prop (val)
-	     (with-access::J2SFun val (params loc)
-		(let ((args (map! (lambda (i)
-				     (string->symbol (format "a~s" i)))
-			       (iota (length params)))))
-		   `(lambda (this ,@(if (class-new-target? super)
-					'(new-target)
-					'())
-			       ,@args)
-		       ,(j2s-scheme-call-class-constructor super
-			   '%super 'this
-			   (map (lambda (a) (J2SHopRef a)) args)
-			   loc mode return ctx)
-		       ,@(j2s-scheme-init-instance-properties
-			    clazz mode return ctx)
-		       this))))))
+      ((isa? superctor J2SClassElement)
+       (with-access::J2SClassElement superctor (prop (super clazz))
+	  (if (null? (j2s-class-instance-properties clazz :super #f))
+	      `(with-access::JsClass %super (constructor) constructor)
+	      (with-access::J2SMethodPropertyInit prop (val)
+		 (with-access::J2SFun val (params loc)
+		    (let ((args (map! (lambda (i)
+					 (string->symbol (format "a~s" i)))
+				   (iota (length params)))))
+		       `(lambda (this ,@(if (class-new-target? super)
+					    '(new-target)
+					    '())
+				   ,@args)
+			   ,(j2s-scheme-call-class-constructor super
+			       '%super 'this
+			       (map (lambda (a) (J2SHopRef a)) args)
+			       loc mode return ctx)
+			   ,@(j2s-scheme-init-instance-properties
+				clazz mode return ctx)
+			   this)))))))
       (else
        'todo.2)))
 

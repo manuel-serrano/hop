@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Fri Aug 13 16:23:02 2021 (serrano)                */
+;*    Last change :  Sat Aug 14 07:52:56 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Static approximation of constructors size                        */
@@ -59,14 +59,22 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
+;*    constrsize-info ...                                              */
+;*---------------------------------------------------------------------*/
+(define-struct constrsize-info names)
+
+;*---------------------------------------------------------------------*/
 ;*    constrsize! ::J2SFun ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constrsize! this::J2SFun)
-   (with-access::J2SFun this (body constrsize)
-      (let ((acc (make-cell '())))
-	 (count-this-assig body acc)
-	 (set! constrsize (length (cell-ref acc))))
-      (call-default-walker)))
+   (with-access::J2SFun this (body constrsize %info)
+      (unless (constrsize-info? %info)
+	 (let ((acc (make-cell '())))
+	    (count-this-assig body acc)
+	    (set! %info (constrsize-info (cell-ref acc)))
+	    (set! constrsize (length (cell-ref acc))))
+	 (call-default-walker)))
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    constrsize! ::J2SClass ...                                       */
@@ -80,21 +88,37 @@
 			   (with-access::J2SString name (val)
 			      val))))
 	 props))
-   
-   (call-default-walker)
-   (let ((ctor (j2s-class-get-constructor this)))
-      (when ctor
-	 (with-access::J2SClassElement ctor (prop)
-	    (with-access::J2SMethodPropertyInit prop (val)
-	       (let ((props (j2s-class-instance-properties this)))
-		  (with-access::J2SFun val (body)
-		     (when (pair? props)
-			(let ((acc (make-cell (prop-names props))))
-			   (count-this-assig body acc)
-			   (with-access::J2SClass this (constrsize)
-			      (set! constrsize (length (cell-ref acc))))))))))))
+
+   (with-access::J2SClass this (constrsize %info)
+      (unless (constrsize-info? %info)
+	 (call-default-walker)
+	 (let ((props (j2s-class-instance-properties this)))
+	    ;; class properties size
+	    (let ((acc (make-cell (prop-names props))))
+	       (let ((ctor (j2s-class-get-constructor this)))
+		  ;; constructor size
+		  (when ctor
+		     (with-access::J2SClassElement ctor (prop)
+			(with-access::J2SMethodPropertyInit prop (val)
+			   (with-access::J2SFun val (body)
+			      (when (pair? props)
+				 (count-this-assig body acc))))))
+		  ;; super class size
+		  (let ((super (j2s-class-super this)))
+		     (when (or (isa? super J2SClass) (isa? super J2SFun))
+			(constrsize! super)
+			(with-access::J2SNode super (%info)
+			   (unless (constrsize-info? %info)
+			      (constrsize! super))
+			   (cell-set! acc
+			      (delete-duplicates!
+				 (append (constrsize-info-names %info)
+				    (cell-ref acc))))))))
+	       (set! %info (constrsize-info (cell-ref acc)))
+	       (set! constrsize (length (cell-ref acc)))))))
    this)
-   
+
+
 ;*---------------------------------------------------------------------*/
 ;*    count-this-assig ::J2SNode ...                                   */
 ;*---------------------------------------------------------------------*/
