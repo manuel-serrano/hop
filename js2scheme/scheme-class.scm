@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sat Aug 14 08:09:24 2021 (serrano)                */
+;*    Last change :  Tue Aug 17 05:40:57 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -94,7 +94,7 @@
        ((isa? ,ecla JsFunction)
 	(when (js-function-new-target? ,ecla)
 	   (js-new-target-push! %this new-target))
-	(js-callX% %this ,ecla ,eobj
+	(js-call% %this ,ecla ,eobj
 	   ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))
        (else
 	(js-raise-type-error/loc %this ',loc
@@ -746,7 +746,19 @@
    (cond
       ((not superctor)
        `(lambda (this new-target . args)
-	   (js-calln %this %super this args)))
+	   (cond
+	      ((isa? %super JsClass)
+	       (with-access::JsClass %super (constructor)
+		  (if (js-function-new-target? %super)
+		      (js-calln-procedure constructor this (cons new-target args))
+		      (js-calln-procedure constructor this args))))
+	      ((isa? %super JsFunction)
+	       (with-access::JsFunction %super (procedure)
+		  (if (js-function-new-target? %super)
+		      (js-calln-procedure procedure this (cons new-target args))
+		      (js-calln-procedure procedure this args))))
+	      (else
+	       (error 1 2 3)))))
       ((isa? superctor J2SClassElement)
        (with-access::J2SClassElement superctor (prop (super clazz))
 	  (if (null? (j2s-class-instance-properties clazz :super #f))

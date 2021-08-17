@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Fri Aug 13 14:27:47 2021 (serrano)                */
+;*    Last change :  Tue Aug 17 05:40:14 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -182,11 +182,11 @@
 	   (error "js-with-handler-no-unwind" "bad syntax" x))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-callX% ...                                                    */
+;*    js-call% ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-callX%-expander x e)
+(define (js-call%-expander x e)
    (match-case x
-      ((js-callX% ?%this (and (? symbol?) ?fun) ?this . ?args)
+      ((js-call% ?%this (and (? symbol?) ?fun) ?this . ?args)
        (let ((len (length args)))
 	  (if (<=fx len 10)
 	      (let ((call (string->symbol (format "js-call~a%" (length args)))))
@@ -196,7 +196,7 @@
 	      (e `(with-access::JsProcedure ,fun (procedure)
 		     (js-calln% ,%this ,fun procedure ,this (list ,@args)))
 		 e))))
-      ((js-callX% ?%this ?fun ?this . ?args)
+      ((js-call% ?%this ?fun ?this . ?args)
        (let ((f (gensym)))
 	  (e `(let ((,f ,fun)) (js-callX ,%this ,f ,this ,@args)) e)))
       (else
