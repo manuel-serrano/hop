@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Tue Aug 17 05:40:57 2021 (serrano)                */
+;*    Last change :  Tue Aug 17 08:12:45 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -72,8 +72,20 @@
 			    ,(j2s-scheme call mode return ctx)))))
 	       ;; default constructor
 	       `(let ((,(class-constructor-id clazz) constructor))
-		   ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)
-		   (,(class-constructor-id clazz) ,eobj))))))
+		   (constructor ,eobj
+		      ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme-call-fun-constructor ...                              */
+;*    -------------------------------------------------------------    */
+;*    Used when the class is statically unknown                        */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-call-fun-constructor ecla eobj args loc mode return ctx)
+   `(begin
+       (when (js-function-new-target? ,ecla)
+	  (js-new-target-push! %this new-target))
+       (js-call-jsprocedure %this ,ecla ,eobj
+	  ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-call-expr-constructor ...                             */
@@ -89,13 +101,11 @@
 			(J2SPragma
 			   `(with-access::JsClass ,ecla (constructor)
 			       constructor))
-			(list (J2SHopRef eobj)) args)))
+			(list (J2SHopRef eobj))
+			args)))
 	    (j2s-scheme call mode return ctx)))
        ((isa? ,ecla JsFunction)
-	(when (js-function-new-target? ,ecla)
-	   (js-new-target-push! %this new-target))
-	(js-call% %this ,ecla ,eobj
-	   ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))
+	,(j2s-scheme-call-expr-constructor ecla eobj args loc mode return ctx))
        (else
 	(js-raise-type-error/loc %this ',loc
 	   "Class extends value \"~a\" is not a constructor or null"
@@ -235,7 +245,8 @@
 			   `(with-access::JsFunction ,super (alloc) alloc)))
 		(constrmap (if cmap
 			       (j2s-scheme cmap mode return ctx)
-			       '(js-not-a-cmap))))
+			       `(js-make-jsconstructmap))))
+	    (tprint "CMAP=" constrmap " " (typeof cmap))
 	    `(letrec* ((,ctorf ,constructor)
 		       (,proto ,(class-prototype this super))
 		       (,clazz (js-make-function %this ,function
@@ -296,12 +307,19 @@
 			       src loc)))))
 		  (super
 		   (let ((ctor (j2s-class-find-constructor this)))
-		      (let ((arity (if (not ctor)
-				       0
+		      (let ((arity (cond
+				      ((not ctor)
+				       0)
+				      ((isa? ctor J2SClassElement)
 				       (with-access::J2SClassElement ctor (prop (super clazz))
 					  (with-access::J2SMethodPropertyInit prop (val)
 					     (with-access::J2SFun val (params)
-						(length params)))))))
+						(length params)))))
+				      ((isa? ctor J2SFun)
+				       (with-access::J2SFun ctor (params)
+					  (length params)))
+				      (else
+				       (error "scheme-class" "wrong ctor" (typeof ctor))))))
 			 (make-class this super
 			    (class->lambda this arity loc)
 			    (super-ctor->lambda this ctor mode return ctx)
@@ -321,6 +339,24 @@
 ;*    bind-class-property ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (bind-class-property clazz obj prop mode return ctx)
+   (cond
+      ((isa? prop J2SMethodPropertyInit)
+       #f)
+      ((isa? prop J2SDataPropertyInit)
+       (with-access::J2SDataPropertyInit prop (name val loc cache)
+	  (j2s-put! loc obj name clazz
+	     (j2s-scheme-class-propname name mode return ctx) 
+	     'any
+	     (j2s-scheme val mode return ctx)
+	     (j2s-type val)
+	     mode ctx cache)))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    bind-record-property ...                                         */
+;*---------------------------------------------------------------------*/
+(define (bind-record-property clazz obj prop mode return ctx)
    (cond
       ((isa? prop J2SMethodPropertyInit)
        #f)
@@ -623,6 +659,13 @@
    #unspecified)
 
 ;*---------------------------------------------------------------------*/
+;*    function-new-target? ...                                         */
+;*---------------------------------------------------------------------*/
+(define (function-new-target? this::J2SFun)
+   (with-access::J2SFun this (new-target)
+      (memq new-target '(global argument))))
+      
+;*---------------------------------------------------------------------*/
 ;*    class-new-target? ...                                            */
 ;*    -------------------------------------------------------------    */
 ;*    This predicates is #f iff the class constructor DOES not need    */
@@ -635,8 +678,7 @@
 	 ((isa? val J2SClass)
 	  (class-new-target? val))
 	 ((isa? val J2SFun)
-	  (with-access::J2SFun val (new-target)
-	     (memq new-target '(global argument))))
+	  (function-new-target? val))
 	 ((isa? val J2SParen)
 	  (with-access::J2SParen val (expr)
 	     (expr-new-target? expr)))
@@ -758,7 +800,13 @@
 		      (js-calln-procedure procedure this (cons new-target args))
 		      (js-calln-procedure procedure this args))))
 	      (else
-	       (error 1 2 3)))))
+	       ,(with-access::J2SClass clazz (name loc)
+		   `(js-raise-type-error/loc %this ',loc
+		       ,(format "Class `~a' has a wrong super class" name)
+		       %super))))
+	   ,@(j2s-scheme-init-instance-properties
+		clazz mode return ctx)
+	   this))
       ((isa? superctor J2SClassElement)
        (with-access::J2SClassElement superctor (prop (super clazz))
 	  (if (null? (j2s-class-instance-properties clazz :super #f))
@@ -779,8 +827,24 @@
 			   ,@(j2s-scheme-init-instance-properties
 				clazz mode return ctx)
 			   this)))))))
-      (else
-       'todo.2)))
+      ((isa? superctor J2SFun)
+       (with-access::J2SFun superctor (params loc)
+	  (let ((args (map! (lambda (i)
+			       (string->symbol (format "a~s" i)))
+			 (iota (length params)))))
+	     `(lambda (this ,@(if (function-new-target? superctor)
+				  '(new-target)
+				  '())
+			 ,@args)
+		 ,(j2s-scheme-call-fun-constructor 
+		     '%super 'this
+		     (map (lambda (a) (J2SHopRef a)) args)
+		     loc mode return ctx)
+		 ,@(j2s-scheme-init-instance-properties
+		      clazz mode return ctx)
+		 this))))
+       (else
+	(error "super-ctor->lambda" "wrong super class" superctor))))
 
 ;* 	  (with-access::J2SClassElement ctor (prop)                    */
 ;* 	     (with-access::J2SMethodPropertyInit prop (val)            */

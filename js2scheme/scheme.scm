@@ -82,6 +82,8 @@
 ;*---------------------------------------------------------------------*/
 (define (comp-return x)
    (match-case x
+      ((begin)
+       '(js-undefined))
       ((begin . ?rest)
        (let ((inv (reverse rest)))
 	  `(begin ,@(reverse (filter pair? (cdr inv))) ,(car inv))))
@@ -3102,8 +3104,9 @@
       (when (isa? clazz J2SRef)
 	 (with-access::J2SRef clazz (decl)
 	    (when (isa? decl J2SDeclClass)
-	       (with-access::J2SDeclClass decl (val)
-		  val)))))
+	       (with-access::J2SDeclClass decl (id val)
+		  (when (isa? val J2SClass)
+		     val))))))
 
    (define (constructor-no-call? decl)
       ;; does this constructor call another function?

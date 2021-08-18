@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Aug 13 16:48:28 2021 (serrano)                */
+;*    Last change :  Wed Aug 18 07:44:47 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
@@ -209,6 +209,14 @@
 	  (cons cache (call-default-walker)))
        (call-default-walker)))
 
+;*---------------------------------------------------------------------*/
+;*    propcache* ::J2SDataPropertyInit ...                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propcache* this::J2SDataPropertyInit count env ccall assig infunloop shared-pcache conf)
+   (with-access::J2SDataPropertyInit this (cache)
+      (set! cache (inc! count))
+      (cons cache (call-next-method))))
+	 
 ;*---------------------------------------------------------------------*/
 ;*    read-only-function? ...                                          */
 ;*---------------------------------------------------------------------*/

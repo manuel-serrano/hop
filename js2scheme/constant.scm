@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Aug 13 08:34:18 2021 (serrano)                */
+;*    Last change :  Wed Aug 18 08:46:09 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -502,6 +502,7 @@
 	     =>
 	     (lambda (super)
 		(constant! super env nesting conf)
-		(with-access::J2SClass super ((supercmap cmap))
-		   (set! cmap supercmap)))))))
+		(when (isa? super J2SClass)
+		   (with-access::J2SClass super ((supercmap cmap))
+		      (set! cmap supercmap))))))))
    this)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Jul  6 09:22:10 2021 (serrano)                */
+;*    Last change :  Wed Aug 18 08:03:10 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -527,8 +527,10 @@
 		" els.vlen=" (vector-length elements)
 		"\n   prop.names="
 		(map (lambda (d)
-			(with-access::JsPropertyDescriptor d (name)
-			   name))
+			(if (isa? d JsPropertyDescriptor)
+			    (with-access::JsPropertyDescriptor d (name)
+			       name)
+			    d))
 		   (vector->list elements))
 		"\n   props="
 		(map (lambda (p) (format "~s" p))

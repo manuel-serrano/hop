@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Tue Aug 17 05:40:14 2021 (serrano)                */
+;*    Last change :  Tue Aug 17 08:14:58 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -186,18 +186,65 @@
 ;*---------------------------------------------------------------------*/
 (define (js-call%-expander x e)
    (match-case x
-      ((js-call% ?%this (and (? symbol?) ?fun) ?this . ?args)
+      ((js-call% ?%this (and (? symbol?) ?fun) ?procedure ?this . ?args)
        (let ((len (length args)))
 	  (if (<=fx len 10)
 	      (let ((call (string->symbol (format "js-call~a%" (length args)))))
-		 (e `(with-access::JsProcedure ,fun (procedure)
-			(,call ,%this ,fun procedure ,this ,@args))
-		    e))
-	      (e `(with-access::JsProcedure ,fun (procedure)
-		     (js-calln% ,%this ,fun procedure ,this (list ,@args)))
-		 e))))
-      ((js-call% ?%this ?fun ?this . ?args)
+		 (e `(,call ,%this ,fun ,this ,procedure ,@args) e))
+	      (e `(js-calln% ,%this ,fun ,this (list ,@args)) e))))
+      ((js-call% ?%this ?fun ?procedure ?this . ?args)
        (let ((f (gensym)))
-	  (e `(let ((,f ,fun)) (js-callX ,%this ,f ,this ,@args)) e)))
+	  (e `(let ((,f ,fun)) (js-call% ,%this ,f ,procedure ,this ,@args)) e)))
       (else
-       (error "js-callX%" "bad form" x))))
+       (error "js-call%" "bad form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-call ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (js-call-expander x e)
+   (match-case x
+      ((js-call ?%this (and (? symbol?) ?fun) ?this . ?args)
+       (let ((len (length args)))
+	  (if (<=fx len 10)
+	      (let ((call (string->symbol (format "js-call~a" (length args)))))
+		 (e `(,call ,%this ,fun ,this ,@args) e))
+	      (e `(js-calln ,%this ,fun ,this (list ,@args)) e))))
+      ((js-call ?%this ?fun ?this . ?args)
+       (let ((f (gensym)))
+	  (e `(let ((,f ,fun)) (js-call ,%this ,f ,this ,@args)) e)))
+      (else
+       (error "js-call" "bad form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-call%-procedure ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-call%-procedure-expander x e)
+   (match-case x
+      ((js-call%-procedure (and (? symbol?) ?fun) ?this . ?args)
+       (let ((len (length args)))
+	  (if (<=fx len 10)
+	      (let ((call (string->symbol (format "js-call%~a-procedure" (length args)))))
+		 (e `(,call ,fun ,this ,@args) e))
+	      (e `(js-calln-procedure ,fun ,this (list ,@args)) e))))
+      ((js-call%-procedure ?fun ?this . ?args)
+       (let ((f (gensym)))
+	  (e `(let ((,f ,fun)) (js-call%-procedure ,f ,this ,@args)) e)))
+      (else
+       (error "js-call-procedure" "bad form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-call-jsprocedure ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-call-jsprocedure-expander x e)
+   (match-case x
+      ((js-call-jsprocedure ?%this (and (? symbol?) ?fun) ?this . ?args)
+       (let ((len (length args)))
+	  (if (<=fx len 10)
+	      (let ((call (string->symbol (format "js-call~a-jsprocedure" (length args)))))
+		 (e `(,call ,%this ,fun ,this ,@args) e))
+	      (e `(js-calln-jsprocedure ,fun ,this (list ,@args)) e))))
+      ((js-call-jsprocedure ?%this ?fun ?this . ?args)
+       (let ((f (gensym)))
+	  (e `(let ((,f ,fun)) (js-call-jsprocedure ,%this ,f ,this ,@args)) e)))
+      (else
+       (error "js-call-jsprocedure" "bad form" x))))
