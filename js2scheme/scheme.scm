@@ -470,7 +470,7 @@
    (with-access::J2SSuper this (decl loc context)
       (case context
 	 ((literal) `(js-super ,(call-next-method) #f ',loc %this))
-	 (else '%super))))
+	 (else '%super-prototype))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SWithRef ...                                      */

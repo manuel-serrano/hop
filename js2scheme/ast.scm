@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Aug 19 10:25:26 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 16:31:06 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -608,9 +608,7 @@
 
 	   (j2sdeclinit-val-fun::J2SExpr ::J2SDeclInit)
 
-	   (j2sprogram-get-export-index::long ::J2SProgram)
-
-	   (j2s-class-super ::J2SClass))
+	   (j2sprogram-get-export-index::long ::J2SProgram))
    
    (static (class %JSONDecl::J2SDecl
 	      (%id read-only))))
@@ -1620,14 +1618,4 @@
        (bit-lshllong #l1 exp)
        (error "exptllong" "wrong number" n)))
 
-;*---------------------------------------------------------------------*/
-;*    j2s-class-super ...                                              */
-;*---------------------------------------------------------------------*/
-(define (j2s-class-super clazz::J2SClass)
-   (with-access::J2SClass clazz (super)
-      (when (isa? super J2SRef)
-	 (with-access::J2SRef super (decl)
-	    (when (isa? decl J2SDeclInit)
-	       (with-access::J2SDeclInit decl (val)
-		  val))))))
 

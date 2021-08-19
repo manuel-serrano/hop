@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Thu Aug 19 08:05:14 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 15:05:44 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -57,7 +57,7 @@
 	   (j2s-type ::obj)
 	   (j2s-vtype ::obj)
 	   (j2s-etype ::obj ::pair-nil)
-
+	   
 	   (class-of ::J2SExpr)
 	   
 	   (best-hint::pair ::J2SExpr)
@@ -76,14 +76,7 @@
 	   
 	   (is-builtin-ref?::bool ::J2SExpr ::symbol)
 	   (constructor-only?::bool ::J2SDeclFun)
-	   (constructor-no-return?::bool ::J2SDeclFun)
-	   
-	   (j2s-class-instance-properties ::J2SClass #!key (super #t))
-	   (j2s-class-instance-get-property ::J2SClass ::bstring)
-	   (j2s-class-get-property ::J2SClass ::bstring)
-	   (j2s-class-property-constructor?::bool ::J2SDataPropertyInit)
-	   (j2s-class-get-constructor ::J2SClass)
-	   (j2s-class-find-constructor clazz)))
+	   (constructor-no-return?::bool ::J2SDeclFun)))
 
 ;*---------------------------------------------------------------------*/
 ;*    pass ...                                                         */
@@ -1013,130 +1006,5 @@
       (when (isa? fun J2SFun)
 	 (with-access::J2SFun fun (rtype)
 	    (eq? rtype 'undefined)))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-class-instance-properties ...                                */
-;*---------------------------------------------------------------------*/
-(define (j2s-class-instance-properties clazz #!key (super #t))
-
-   (define (element-prop el)
-      (with-access::J2SClassElement el (prop static)
-	 (when (and (not static)
-		    (isa? prop J2SDataPropertyInit)
-		    (not (isa? prop J2SMethodPropertyInit)))
-	    prop)))
-
-   (let loop ((clazz clazz))
-      (with-access::J2SClass clazz (elements)
-	 (let ((fs (filter-map element-prop elements))
-	       (super (and super (j2s-class-super clazz))))
-	    (if super
-		(if (isa? super J2SRecord)
-		    (append (loop super) fs)
-		    fs)
-		fs)))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-class-get ...                                                */
-;*---------------------------------------------------------------------*/
-(define (j2s-class-get clazz field instancep::bool)
-
-   (define (class-get-field-in-class clazz idx)
-      (with-access::J2SClass clazz (elements)
-	 (let loop ((i idx)
-		    (els elements))
-	    (if (pair? els)
-		(with-access::J2SClassElement (car els) (prop static)
-		   (if (or (not instancep)
-			   (and (not static)
-				(not (isa? prop J2SMethodPropertyInit))))
-		       (if (isa? prop J2SDataPropertyInit)
-			   (with-access::J2SPropertyInit prop (name)
-			      (with-access::J2SString name (val)
-				 (if (string=? val field)
-				     (values i (car els))
-				     (loop (+fx i 1) (cdr els))))))
-		       (loop i (cdr els))))
-		(values i #f)))))
-
-   (let loop ((clazz clazz)
-	      (i 0))
-      (let ((super (j2s-class-super clazz)))
-	 (if super
-	     (multiple-value-bind (idx el)
-		(loop super i)
-		(if el
-		    (values idx el)
-		    (class-get-field-in-class clazz idx)))
-	     (class-get-field-in-class clazz i)))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-class-intance-get-property ...                               */
-;*---------------------------------------------------------------------*/
-(define (j2s-class-instance-get-property clazz field)
-   (j2s-class-get clazz field #t))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-class-get-property ...                                       */
-;*---------------------------------------------------------------------*/
-(define (j2s-class-get-property clazz field)
-   (j2s-class-get clazz field #f))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-class-property-constructor? ...                              */
-;*---------------------------------------------------------------------*/
-(define (j2s-class-property-constructor? prop::J2SDataPropertyInit)
-   (with-access::J2SDataPropertyInit prop (name)
-      (let loop ((name name))
-	 (cond
-	    ((isa? name J2SLiteralCnst)
-	     (with-access::J2SLiteralCnst name (val)
-		(loop val)))
-	    ((isa? name J2SLiteralValue)
-	     (with-access::J2SLiteralValue name (val)
-		(equal? val "constructor")))))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-class-get-constructor ...                                    */
-;*    -------------------------------------------------------------    */
-;*    Get the class constructor if any.                                */
-;*---------------------------------------------------------------------*/
-(define (j2s-class-get-constructor clazz::J2SClass)
-   (with-access::J2SClass clazz (elements)
-      (find (lambda (m)
-	       (with-access::J2SClassElement m (prop static)
-		  (unless static
-		     (when (isa? prop J2SDataPropertyInit)
-			(j2s-class-property-constructor? prop)))))
-	 elements)))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-class-find-constructor ...                                   */
-;*    -------------------------------------------------------------    */
-;*    Find a constructor in the class or its super class.              */
-;*---------------------------------------------------------------------*/
-(define (j2s-class-find-constructor clazz)
-   (let loop ((clazz clazz))
-      (cond
-	 ((isa? clazz J2SClass)
-	  (let ((ctor (j2s-class-get-constructor clazz)))
-	     (cond
-		((isa? ctor J2SClassElement)
-		 ctor)
-		((j2s-class-super clazz)
-		 =>
-		 (lambda (super) (loop super)))
-		(else
-		 #f))))
-	 ((isa? clazz J2SFun)
-	  clazz)
-	 ((isa? clazz J2SDeclInit)
-	  (with-access::J2SDeclInit clazz (val)
-	     (loop val)))
-	 ((isa? clazz J2SRef)
-	  (with-access::J2SRef clazz (decl)
-	     (loop decl)))
-	 (else
-	  #f))))
 	    
 	     

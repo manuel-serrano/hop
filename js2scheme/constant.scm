@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Aug 18 08:46:09 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 17:50:12 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -22,7 +22,8 @@
 	    __js2scheme_dump
 	    __js2scheme_compile
 	    __js2scheme_stage
-	    __js2scheme_utils)
+	    __js2scheme_utils
+	    __js2scheme_classutils)
 
    (export  j2s-constant-stage))
 
@@ -498,7 +499,7 @@
 		      (loc loc)
 		      (index n)
 		      (val (env-list-ref env n))))))
-	    ((j2s-class-super this)
+	    ((j2s-class-super-val this)
 	     =>
 	     (lambda (super)
 		(constant! super env nesting conf)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Aug 19 10:37:04 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 17:53:02 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -38,6 +38,7 @@
 	   __js2scheme_stage
 	   __js2scheme_syntax
 	   __js2scheme_utils
+	   __js2scheme_classutils
 	   __js2scheme_type-hint
 	   __js2scheme_use)
 

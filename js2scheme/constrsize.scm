@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Sat Aug 14 07:52:56 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 17:53:20 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Static approximation of constructors size                        */
@@ -22,6 +22,7 @@
 	   __js2scheme_stage
 	   __js2scheme_syntax
 	   __js2scheme_utils
+	   __js2scheme_classutils
 	   __js2scheme_type-hint)
 
    (export j2s-constrsize-stage))
@@ -104,7 +105,7 @@
 			      (when (pair? props)
 				 (count-this-assig body acc))))))
 		  ;; super class size
-		  (let ((super (j2s-class-super this)))
+		  (let ((super (j2s-class-super-val this)))
 		     (when (or (isa? super J2SClass) (isa? super J2SFun))
 			(constrsize! super)
 			(with-access::J2SNode super (%info)

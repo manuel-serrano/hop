@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Sun Aug  8 10:40:05 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 18:09:44 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -20,6 +20,7 @@
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_utils
+	   __js2scheme_classutils
 	   __js2scheme_js
 	   __js2scheme_stmtassign
 	   __js2scheme_compile
@@ -53,7 +54,7 @@
 	  #f)
 	 ((isa? prop J2SDataPropertyInit)
 	  (with-access::J2SDataPropertyInit prop (name val)
-	     (unless (j2s-class-property-constructor? prop)
+	     (unless #f ;;(j2s-class-property-constructor? prop)
 		(with-access::J2SString name ((id val))
 		   `(js-object-inline-set! ,obj
 		       ,(record-index clazz clazz id)
@@ -242,7 +243,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-record-declaration this::J2SRecord)
    (with-access::J2SRecord this (name)
-      (let ((super (j2s-class-super this)))
+      (let ((super (j2s-class-super-val this)))
 	 `(class ,(string->symbol
 		     (if super
 			 (format "~a::~a"
@@ -314,7 +315,7 @@
 ;*    j2s-record-prototype-constructor ...                             */
 ;*---------------------------------------------------------------------*/
 (define (j2s-record-prototype-constructor this::J2SRecord)
-   (let ((super (j2s-class-super this)))
+   (let ((super (j2s-class-super-val this)))
       `((define ,(record-prototype-scmid this) (js-undefined))
 	(define ,(record-constructor-scmid this) (js-undefined)))))
        
@@ -325,7 +326,7 @@
    (with-access::J2SCall this (loc fun this args protocol cache)
       (with-access::J2SSuper fun (context)
 	 (with-access::J2SRecord context (name)
-	    (let ((super (j2s-class-super context)))
+	    (let ((super (j2s-class-super-val context)))
 	       (if (isa? super J2SRecord)
 		   (multiple-value-bind (rec ctor)
 		      (j2s-class-find-constructor super)

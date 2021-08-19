@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Fri Aug 13 10:29:59 2021 (serrano)                */
+/*    Last change :  Thu Aug 19 13:27:26 2021 (serrano)                */
 /*    Copyright   :  2017-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
@@ -331,7 +331,7 @@ function basics() {
    return o.x === 44 && o.y === undefined && o.z === 55;
 }
 
-function basicst() {
+function basict() {
    class Point {
       constructor(n) {
 	 this.y = new.target;
@@ -378,6 +378,19 @@ function basicv() {
    return o.x === 44 && o.y !== undefined;
 }
 
+function basicw() {
+   class A {
+      constructor(a) { 
+	 this.a = a;
+      }
+   }
+   class B extends A {
+      b = 23;
+   }
+   class C extends B {
+   }
+   return (new A(1).a + new B(4).a + new C(20).a) === 25;
+}
 
 console.log( "basic" );
 console.log( "   basica()" ); assert.ok( basica(), "basica" );
@@ -402,6 +415,7 @@ console.log( "   basics()" ); assert.ok( basics(), "basics" );
 console.log( "   basict()" ); assert.ok( basict(), "basict" );
 console.log( "   basicu()" ); assert.ok( basicu(), "basicu" );
 console.log( "   basicv()" ); assert.ok( basicv(), "basicv" );
+console.log( "   basicw()" ); assert.ok( basicw(), "basicw" );
 
 /*---------------------------------------------------------------------*/
 /*    misc                                                             */
