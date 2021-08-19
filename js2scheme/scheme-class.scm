@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Thu Aug 19 13:34:24 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 19:43:25 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -368,8 +368,15 @@
 	 (else
 	  0)))
 
-   (define (instance-properties->ctor this::J2SClass arity)
-      'TODO)
+   (define (init->lambda this::J2SClass init arity)
+      (tprint "INIT=" (j2s->list init))
+      (let ((names (map (lambda (i)
+			   (string->symbol (format "%a~a" i)))
+		      (iota arity))))
+	 `(lambda (this ,@(if (class-new-target? this) '(new-target) '()) ,@names)
+	     ,@(j2s-scheme-init-instance-properties
+		  this mode return ctx)
+	     this)))
       
    (with-access::J2SClass this (super elements src loc decl constrsize)
       (let ((ctor (j2s-class-get-constructor this)))
@@ -387,12 +394,12 @@
 			       (length params) constrsize
 			       src loc)))))
 		  ((pair? (j2s-class-instance-properties this :super #f))
-		   (error "TODO" "TODO" "TODO")
-		   (let ((arity (ctor-arity (j2s-class-find-constructor init))))
+		   (let* ((init (j2s-class-find-constructor this))
+			  (arity (ctor-arity init)))
 		      (make-class this %super
 			 (class->lambda this arity loc)
-			 (ctor->lambda val this mode return ctx %super)
-			 (j2s-function-arity val ctx)
+			 (init->lambda this init arity)
+			 `(with-access::JsFunction ,%super (arity) arity)
 			 arity constrsize
 			 src loc)))
 		  (%super
@@ -400,9 +407,6 @@
 		      (cond
 			 ((isa? init J2SClass)
 			  (let ((superctor (j2s-class-find-constructor init)))
-			     (tprint "SUPER.init " (j2s->list this)
-				"\n init=" (j2s->list init)
-				"\n superctor=" (j2s->list superctor))
 			     (if superctor
 				 (let ((arity (ctor-arity superctor)))
 				    (make-class this %super
