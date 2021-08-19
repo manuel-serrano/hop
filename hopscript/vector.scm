@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri May  7 09:59:09 2021                          */
-;*    Last change :  Sun Jul 11 10:27:36 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 11:37:19 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript vectors.                                               */
@@ -259,8 +259,8 @@
 ;*    they need there fixed size for being allocated.                  */
 ;*---------------------------------------------------------------------*/
 (define (js-vector-alloc-ctor %this constructor::JsFunction)
-   (with-access::JsGlobalObject %this (js-new-target js-vector)
-      (set! js-new-target js-vector))
+   (with-access::JsGlobalObject %this (js-vector)
+      (js-new-target-push! %this js-vector))
    (js-undefined))
 
 ;*---------------------------------------------------------------------*/
@@ -305,13 +305,11 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-vector %this::JsGlobalObject)
    (lambda (this len)
-      (with-access::JsGlobalObject %this (js-new-target js-vector)
-	 (if (eq? js-new-target (js-undefined))
+      (with-access::JsGlobalObject %this (js-vector)
+	 (if (eq? (js-new-target-pop! %this) (js-undefined))
 	     (js-raise-type-error %this
 		"Vector can only be used as a constructor" js-vector)
-	     (begin
-		(set! js-new-target (js-undefined))
-		(js-vector-new1 len %this))))))
+	     (js-vector-new1 len %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-vector-new1 ...                                               */

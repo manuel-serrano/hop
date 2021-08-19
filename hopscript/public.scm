@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Aug 17 08:38:42 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 11:35:30 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1485,9 +1485,8 @@
 ;*    js-object-alloc/new-target ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-alloc/new-target %this ctor::JsFunction)
-   (with-access::JsGlobalObject %this (js-new-target)
-      (set! js-new-target ctor)
-      (js-object-alloc %this ctor)))
+   (js-new-target-push! %this ctor)
+   (js-object-alloc %this ctor))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-no-alloc ...                                                  */
@@ -1503,9 +1502,8 @@
 ;*    This is used by functions that allocate ad-hoc constructors.     */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-no-alloc/new-target %this ctor::JsFunction)
-   (with-access::JsGlobalObject %this (js-new-target)
-      (set! js-new-target ctor)
-      (js-undefined)))
+   (js-new-target-push! %this ctor)
+   (js-undefined))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-not-a-constructor-alloc ...                                   */

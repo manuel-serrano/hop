@@ -87,7 +87,9 @@
 	   (j2s-put! loc obj field tyobj prop typrop val tyval mode conf
 	      cache 
 	      #!key optim (cspecs '(cmap pmap nmap amap vtable)) (cachefun #t))
-
+	   
+	   (j2s-new loc clazz args)
+	   
 	   (inrange-positive?::bool ::J2SExpr)
 	   (inrange-positive-number?::bool ::J2SExpr)
 	   (inrange-one?::bool ::J2SExpr)
@@ -695,12 +697,12 @@
 		      (if (eq? tyval 'uint32)
 			  `(js-get-lengthu32 ,obj %this ,(js-pcache cache))
 			  `(js-get-length ,obj %this ,(js-pcache cache)))))
-		  (case tyobj
-		     ((object this)
-		      `(js-get-jsobject-name/cache ,obj ,prop #f %this
-			  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
-		     ((global)
+		  (cond
+		     ((eq? tyobj 'global)
 		      `(js-global-object-get-name/cache ,obj ,prop #f %this
+			  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
+		     ((type-object? tyobj)
+		      `(js-get-jsobject-name/cache ,obj ,prop #f %this
 			  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
 		     (else
 		      `(js-get-name/cache ,obj ,prop #f %this
@@ -839,22 +841,19 @@
 		  (if (string=? propstr "length")
 		      `(js-put-length! ,obj ,val
 			  ,mode ,(js-pcache cache) %this)
-		      (begin
-			 (case tyobj
-			    ((object global this)
-			     `(js-put-jsobject-name/cache! ,obj ,prop
-				 ,val
-				 ,mode %this
-				 ,(js-pcache cache)
-				 ,(loc->point loc) ',cspecs
-				 ,cachefun))
-			    (else
-			     `(js-put-name/cache! ,obj ,prop
-				 ,val
-				 ,mode %this
-				 ,(js-pcache cache) ,(loc->point loc)
-				 ',cspecs
-				 ,cachefun))))))
+		      (if (type-object? tyobj)
+			  `(js-put-jsobject-name/cache! ,obj ,prop
+			      ,val
+			      ,mode %this
+			      ,(js-pcache cache)
+			      ,(loc->point loc) ',cspecs
+			      ,cachefun)
+			  `(js-put-name/cache! ,obj ,prop
+			      ,val
+			      ,mode %this
+			      ,(js-pcache cache) ,(loc->point loc)
+			      ',cspecs
+			      ,cachefun))))
 		 ((memq typrop '(int32 uint32))
 		  `(maybe-array-set! ,obj ,(box prop typrop ctx)
 		      ,val ,mode %this))
@@ -885,6 +884,25 @@
 		  (maybe-array-set! (box prop typrop ctx) val))
 		 (else
 		  (js-put! obj (box prop typrop ctx) val mode '%this))))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-new ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-new loc clazz args)
+   (if (> (bigloo-debug) 0)
+       `(js-new/debug %this ',loc ,clazz ,@args)
+       (let ((new (case (length args)
+		     ((0) 'js-new0)
+		     ((1) 'js-new1)
+		     ((2) 'js-new2)
+		     ((3) 'js-new3)
+		     ((4) 'js-new4)
+		     ((5) 'js-new5)
+		     ((6) 'js-new6)
+		     ((7) 'js-new7)
+		     ((8) 'js-new8)
+		     (else 'js-new))))
+	  `(,new %this ,clazz ,@args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ranges                                                           */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Tue Aug 17 08:15:34 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 09:44:15 2021 (serrano)                */
 ;*    Copyright   :  2006-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -231,5 +231,7 @@
    (eval `(define-expander js-call%-procedure
 	     ,js-call%-procedure-expander))
    (eval `(define-expander js-call-jsprocedure
-	     ,js-call-jsprocedure-expander)))
+	     ,js-call-jsprocedure-expander))
+   (eval `(define-expander js-new
+	     ,js-new-expander)))
       

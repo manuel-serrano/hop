@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue May  4 17:47:54 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 11:29:56 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -195,8 +195,8 @@
 	    (__proto__ (js-object-proto %this))))
       
       (define (js-date-alloc %this constructor::JsFunction)
-	 (with-access::JsGlobalObject %this (js-new-target js-date js-date-cmap)
-	    (set! js-new-target constructor)
+	 (with-access::JsGlobalObject %this (js-date js-date-cmap)
+	    (js-new-target-push! %this constructor)
 	    (instantiateJsDate
 	       (cmap js-date-cmap)
 	       (__proto__ (if (eq? constructor js-date)
@@ -224,18 +224,15 @@
       
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9
       (define (%js-date this . args)
-	 (with-access::JsGlobalObject %this (js-new-target)
-	    (cond
-	       ((eq? js-new-target (js-undefined))
-		(js-date->jsstring (current-date)))
-	       ((any (lambda (a) (eq? a (js-undefined))) args)
-		(set! js-new-target (js-undefined))
-		this)
-	       (else
-		(let ((val (parse-date-arguments args)))
-		   (set-date! this val)
-		   (set! js-new-target (js-undefined))
-		   this)))))
+	 (cond
+	    ((eq? (js-new-target-pop! %this) (js-undefined))
+	     (js-date->jsstring (current-date)))
+	    ((any (lambda (a) (eq? a (js-undefined))) args)
+	     this)
+	    (else
+	     (let ((val (parse-date-arguments args)))
+		(set-date! this val)
+		this))))
       
       (set! js-date
 	 (js-make-function %this %js-date

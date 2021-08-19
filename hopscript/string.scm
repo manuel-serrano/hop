@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Aug  9 09:24:16 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 11:36:23 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -222,8 +222,8 @@
 ;*    js-string-alloc ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-string-alloc::JsString %this::JsGlobalObject constructor::JsFunction)
-   (with-access::JsGlobalObject %this (js-new-target js-string-pcache)
-      (set! js-new-target constructor)
+   (with-access::JsGlobalObject %this (js-string-pcache)
+      (js-new-target-push! %this constructor)
       (instantiateJsString
 	 (val (js-ascii->jsstring ""))
 	 (__proto__ (js-get-jsobject-name/cache constructor (& "prototype") #f
@@ -309,9 +309,8 @@
 ;*---------------------------------------------------------------------*/
 (define (%js-string %this)
    (lambda (this #!optional (arg (js-ascii->jsstring "")))
-      (with-access::JsGlobalObject %this (js-new-target js-string)
-	 (let ((new-target js-new-target))
-	    (set! js-new-target (js-undefined))
+      (with-access::JsGlobalObject %this (js-string)
+	 (let ((new-target (js-new-target-pop! %this)))
 	    (let ((str (cond
 			  ((js-jsstring? arg)
 			   arg)
@@ -319,7 +318,7 @@
 			   (js-cast-string %this arg))
 			  (else
 			   (js-tojsstring arg %this)))))
-	       (with-access::JsGlobalObject %this (js-new-target js-string)
+	       (with-access::JsGlobalObject %this (js-string)
 		  (if (eq? new-target (js-undefined))
 		      str
 		      (begin

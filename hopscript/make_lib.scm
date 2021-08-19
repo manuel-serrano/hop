@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Fri May  7 16:00:33 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 12:07:54 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
@@ -58,9 +58,11 @@
            (class JsStringLiteralUTF8)
       
            (class JsObject)
+           (class JsRecord)
 	   (class JsGlobalObject)
 	   (class JsFunction)
 	   (class JsService)
+	   (class JsClass)
 	   (class JsArray)
 	   (class JsArguments)
 	   (class JsString)

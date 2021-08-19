@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Tue Aug 17 08:12:45 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 08:00:05 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -93,19 +93,26 @@
 ;*    Used when the class is statically unknown                        */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-call-expr-constructor ecla eobj args loc mode return ctx)
+   
+   (define (let-args args proc)
+      (if (every (lambda (a) (or (symbol? a) (number? a) (boolean? a))) args)
+	  (proc args)
+	  (let ((names (map (lambda (i)
+			       (string->symbol (format "%a~a" i)) i)
+			  (iota (length args)))))
+	     `(let ,(map list names args)
+		 (proc names)))))
+   
    `(cond
        ((isa? ,ecla JsClass)
-	(when (js-function-new-target? ,ecla)
-	   (js-new-target-push! %this new-target))
-	,(let ((call (J2SMethodCall*
-			(J2SPragma
-			   `(with-access::JsClass ,ecla (constructor)
-			       constructor))
-			(list (J2SHopRef eobj))
-			args)))
-	    (j2s-scheme call mode return ctx)))
+	,(let-args (map (lambda (a) (j2s-scheme a mode return ctx)) args)
+	    (lambda (args)
+	       `(with-access::JsClass ,ecla (constructor)
+		  (if (js-function-new-target? ,ecla)
+		      (constructor ,eobj new-target ,@args)
+		      (constructor ,eobj ,@args))))))
        ((isa? ,ecla JsFunction)
-	,(j2s-scheme-call-expr-constructor ecla eobj args loc mode return ctx))
+	,(j2s-scheme-call-fun-constructor ecla eobj args loc mode return ctx))
        (else
 	(js-raise-type-error/loc %this ',loc
 	   "Class extends value \"~a\" is not a constructor or null"
@@ -115,17 +122,41 @@
 ;*    j2s-scheme-class-new ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-class-new this::J2SNew clazz args mode return ctx)
+
+   (define (plain-class? clazz)
+      ;; a function is a plain class if it only inherits recursively
+      ;; from other classes or from user defined functions
+      (with-access::J2SClass clazz (super)
+	 (cond
+	    ((or (isa? super J2SUndefined) (isa? super J2SNull))
+	     #t)
+	    ((j2s-class-super clazz)
+	     =>
+	     (lambda (super)
+		(cond
+		   ((isa? super J2SClass) (plain-class? super))
+		   ((isa? super J2SFun) #t)
+		   (else #f))))
+	    (else
+	     #f))))
+		   
    (let ((obj (gensym 'this))
 	 (cla (gensym 'class)))
       (with-access::J2SClass clazz (decl)
-	 (with-access::J2SNew this (loc)
-	    `(let* ((,cla ,(if decl
-			       (j2s-scheme (J2SRef decl) mode return ctx)
-			       (j2s-scheme clazz mode return ctx)))
-		    (,obj (js-object-alloc-fast %this ,cla)))
-		,(j2s-scheme-call-class-constructor clazz cla obj args loc
-		    mode return ctx)
-		,obj)))))
+	 (if (plain-class? clazz)
+	     (with-access::J2SNew this (loc)
+		`(let* ((,cla ,(if decl
+				   (j2s-scheme (J2SRef decl) mode return ctx)
+				   (j2s-scheme clazz mode return ctx)))
+			(,obj (js-object-alloc-fast %this ,cla)))
+		    ,(j2s-scheme-call-class-constructor clazz cla obj args loc
+			mode return ctx)
+		    ,obj))
+	     (with-access::J2SNew this (loc clazz)
+		(j2s-new loc (j2s-scheme-box clazz mode return ctx)
+		   (map (lambda (a)
+			   (j2s-scheme-box a mode return ctx))
+		      args)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-class-propname ...                                    */
@@ -234,6 +265,21 @@
 		     this
 		     ,@(if (class-new-target? clazz) '(new-target) '())
 		     ,@args))))))
+
+   (define (class-unknown-super-ctor->lambda clazz::J2SClass loc)
+      `(lambda (this . args)
+	  (let ((new-target (js-new-target-pop! %this)))
+	     (if (eq? new-target (js-undefined))
+		 (js-raise-type-error/loc %this ',loc
+		    ,(with-access::J2SClass clazz (name)
+			(format
+			   "Class constructor '~a' cannot be invoked without 'new'"
+			   name))
+		    (js-undefined))
+		 (,(class-constructor-id clazz)
+		  this
+		  ,@(if (class-new-target? clazz) '(new-target) '())
+		  args)))))
    
    (define (make-class this super function constructor aritye length ctorsz src loc)
       (with-access::J2SClass this (name elements cmap)
@@ -245,15 +291,16 @@
 			   `(with-access::JsFunction ,super (alloc) alloc)))
 		(constrmap (if cmap
 			       (j2s-scheme cmap mode return ctx)
-			       `(js-make-jsconstructmap))))
-	    (tprint "CMAP=" constrmap " " (typeof cmap))
+			       '(with-access::JsGlobalObject %this (js-initial-cmap)
+				  js-initial-cmap))))
 	    `(letrec* ((,ctorf ,constructor)
 		       (,proto ,(class-prototype this super))
 		       (,clazz (js-make-function %this ,function
 				  ,aritye
 				  (js-function-info
 				     :name ,(symbol->string name)
-				     :len ,length)
+				     :len ,length
+				     :new-target ,(class-new-target? this))
 				  :strict ',mode
 				  :alloc ,alloc
 				  :constructor ,ctorf
@@ -283,15 +330,15 @@
    (with-access::J2SClass this (super elements src loc decl constrsize)
       (let ((ctor (j2s-class-get-constructor this)))
 	 (let-super super
-	    (lambda (super)
+	    (lambda (%super)
 	       (cond
-		  ((and ctor (not super))
+		  ((and ctor (not %super))
 		   (with-access::J2SClassElement ctor (prop)
 		      (with-access::J2SDataPropertyInit prop (val)
 			 (with-access::J2SFun val (params thisp)
-			    (make-class this super
+			    (make-class this %super
 			       (class->lambda this (length params) loc)
-			       (ctor->lambda val this mode return ctx super)
+			       (ctor->lambda val this mode return ctx %super)
 			       (j2s-function-arity val ctx)
 			       (length params) constrsize
 			       src loc)))))
@@ -299,35 +346,40 @@
 		   (with-access::J2SClassElement ctor (prop)
 		      (with-access::J2SDataPropertyInit prop (val)
 			 (with-access::J2SFun val (params thisp)
-			    (make-class this super
+			    (make-class this %super
 			       (class->lambda this (length params) loc)
-			       (ctor->lambda val this mode return ctx super)
+			       (ctor->lambda val this mode return ctx %super)
 			       (j2s-function-arity val ctx)
 			       (length params) constrsize
 			       src loc)))))
-		  (super
-		   (let ((ctor (j2s-class-find-constructor this)))
-		      (let ((arity (cond
-				      ((not ctor)
-				       0)
-				      ((isa? ctor J2SClassElement)
-				       (with-access::J2SClassElement ctor (prop (super clazz))
-					  (with-access::J2SMethodPropertyInit prop (val)
-					     (with-access::J2SFun val (params)
-						(length params)))))
-				      ((isa? ctor J2SFun)
-				       (with-access::J2SFun ctor (params)
-					  (length params)))
-				      (else
-				       (error "scheme-class" "wrong ctor" (typeof ctor))))))
-			 (make-class this super
-			    (class->lambda this arity loc)
-			    (super-ctor->lambda this ctor mode return ctx)
-			    `(with-access::JsFunction %super (arity) arity)
-			    arity constrsize
-			    src loc))))
+		  (%super
+		   (let ((superctor (j2s-class-find-constructor super)))
+		      (if (not superctor)
+			  (make-class this %super
+			     (class-unknown-super-ctor->lambda this loc)
+			     (super-ctor->lambda this superctor mode return ctx)
+			     `(with-access::JsFunction ,%super (arity) arity)
+			     0 constrsize
+			     src loc)
+			  (let ((arity (cond
+					  ((isa? superctor J2SClassElement)
+					   (with-access::J2SClassElement superctor (prop (super clazz))
+					      (with-access::J2SMethodPropertyInit prop (val)
+						 (with-access::J2SFun val (params)
+						    (length params)))))
+					  ((isa? superctor J2SFun)
+					   (with-access::J2SFun superctor (params)
+					      (length params)))
+					  (else
+					   (error "scheme-class" "wrong superctor" (typeof superctor))))))
+			     (make-class this %super
+				(class->lambda this arity loc)
+				(super-ctor->lambda this superctor mode return ctx)
+				`(with-access::JsFunction ,%super (arity) arity)
+				arity constrsize
+				src loc)))))
 		  (else
-		   (make-class this super
+		   (make-class this %super
 		      (class->lambda this 0 loc)
 		      `(lambda (this)
 			  ,@(j2s-scheme-init-instance-properties
@@ -349,7 +401,7 @@
 	     'any
 	     (j2s-scheme val mode return ctx)
 	     (j2s-type val)
-	     mode ctx cache)))
+	     (strict-mode? mode) ctx cache)))
       (else
        #f)))
 
@@ -420,7 +472,7 @@
 		   ,@(j2s-scheme-init-instance-properties context
 			mode return ctx)
 		   ,tmp)))))
-   
+
    (define (scheme-class-super-declclass this clazz::J2SClass decl)
       (with-access::J2SCall this (args loc)
 	 `(begin
@@ -457,13 +509,18 @@
 		(with-access::J2SRef super (decl)
 		   (cond
 		      ((isa? decl J2SDeclClass)
-		       (scheme-class-super-declclass this context decl))
+		       (with-access::J2SDeclClass decl (val)
+			  ;; val is a J2SClass only when optimizations
+			  ;; are enabled
+			  (if (isa? val J2SClass)
+			      (scheme-class-super-declclass this context decl)
+			      (scheme-class-super-expr this context super))))
 		      ((isa? decl J2SDeclFun)
 		       (scheme-class-super-declfun this context decl))
-		      ((isa? decl J2SFun)
-		       (scheme-class-super-fun this context decl))
 		      (else
 		       (scheme-class-super-expr this context super)))))
+	       ((isa? super J2SFun)
+		(scheme-class-super-fun this context super))
 	       (else
 		(scheme-class-super-expr this context super)))))))
    
@@ -661,17 +718,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    function-new-target? ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (function-new-target? this::J2SFun)
+(define (function-new-target?::bool this::J2SFun)
    (with-access::J2SFun this (new-target)
-      (memq new-target '(global argument))))
+      (when (memq new-target '(global argument)) #t)))
       
 ;*---------------------------------------------------------------------*/
 ;*    class-new-target? ...                                            */
 ;*    -------------------------------------------------------------    */
 ;*    This predicates is #f iff the class constructor DOES not need    */
-;*    to bind new-target. It is conservative, in double it returns #t. */
+;*    to bind new-target. It is conservative, in doubt it returns #t.  */
 ;*---------------------------------------------------------------------*/
-(define (class-new-target? this::J2SClass)
+(define (class-new-target?::bool this::J2SClass)
    
    (define (expr-new-target? val::J2SExpr)
       (cond
@@ -755,15 +812,7 @@
 				      (J2SNop)
 				      (returnthis thisp loc))))))))
 	       ((symbol? super)
-		(let ((decl (J2SLetOpt '(ref) '%nothis (J2SThis thisp))))
-		   (with-access::J2SDecl decl (_scmid)
-		      (set! _scmid '%nothis))
-		   (set! body
-		      (instantiate::J2SLetBlock
-			 (loc loc)
-			 (endloc endloc)
-			 (decls (list decl))
-			 (nodes (list body))))))
+		body)
 	       (else
 		;; no super class initialize the instance properties first
 		(set! body
@@ -787,7 +836,7 @@
 (define (super-ctor->lambda clazz::J2SClass superctor mode return ctx)
    (cond
       ((not superctor)
-       `(lambda (this new-target . args)
+       `(lambda (this new-target args)
 	   (cond
 	      ((isa? %super JsClass)
 	       (with-access::JsClass %super (constructor)
@@ -795,10 +844,13 @@
 		      (js-calln-procedure constructor this (cons new-target args))
 		      (js-calln-procedure constructor this args))))
 	      ((isa? %super JsFunction)
-	       (with-access::JsFunction %super (procedure)
-		  (if (js-function-new-target? %super)
-		      (js-calln-procedure procedure this (cons new-target args))
-		      (js-calln-procedure procedure this args))))
+	       (if (js-function-new-target? %super)
+		   (js-calln-jsprocedure %this %super this (cons new-target args))
+		   (begin
+		      (js-new-target-push! %this new-target)
+		      (let ((v (js-calln-jsprocedure %this %super this args)))
+			 (js-new-target-pop! %this)
+			 v))))
 	      (else
 	       ,(with-access::J2SClass clazz (name loc)
 		   `(js-raise-type-error/loc %this ',loc

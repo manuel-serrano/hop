@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec  7 06:32:41 2019                          */
-;*    Last change :  Thu Aug 12 18:25:41 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 08:38:37 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function macros for js2scheme                                    */
@@ -80,6 +80,16 @@
 		    e)
 		 (e `(let ((,tmp ,name))
 			(vector ,tmp ,len (format "function ~a() { [native code] }" ,tmp) "?" -1 -1 100 #f))
+		    e))))
+	 ((?- :name ?name :len ?len :new-target ?new-target)
+	  (let ((tmp (gensym 'name)))
+	     (if (epair? x)
+		 (e `(let ((,tmp ,name))
+			(vector ,tmp ,len (format "function ~a() { [native code] }" ,tmp)
+			   ,(cadr (cer x)) ,(caddr (cer x)) -1 100 ,new-target))
+		    e)
+		 (e `(let ((,tmp ,name))
+			(vector ,tmp ,len (format "function ~a() { [native code] }" ,tmp) "?" -1 -1 100 ,new-target))
 		    e))))
 	 (else
 	  (error "js-function-info" "bad form" x)))))

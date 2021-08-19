@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri Aug 13 08:34:02 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 08:05:14 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -45,6 +45,7 @@
 	   (type-maybe?::bool ::obj ::pair-nil)
 	   (type-cannot?::bool ::obj ::pair-nil)
 	   (type-subtype?::bool ::obj ::obj)
+	   (type-maybe-subtype?::bool ::obj ::obj)
 	   (type-name type #!optional (conf '()))
 	   
 	   (min-type::symbol ::obj ::obj)
@@ -276,7 +277,8 @@
 ;*    type-object? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (type-object? type)
-   (memq type '(object regexp date Promise array jsvector arguments global this)))
+   (or (memq type '(object regexp date Promise array jsvector arguments global this))
+       (isa? type J2SClass)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-maybe? ...                                                  */
@@ -297,31 +299,66 @@
    (not (type-maybe? type types)))
 
 ;*---------------------------------------------------------------------*/
-;*    type-subtype? ...                                                */
+;*    noclass-subtype? ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (type-subtype? type supertype)
-   
-   (define (record-subtype? type supertype)
-      (or (eq? type supertype)
-	  (with-access::J2SRecord type (super)
-	     (when (isa? super J2SRef)
-		(with-access::J2SRef super (decl)
-		   (when (isa? decl J2SDeclClass)
-		      (with-access::J2SDeclClass decl (val)
-			 (when (isa? val J2SRecord)
-			    (record-subtype? val supertype)))))))))
-   
+(define (noclass-subtype? type supertype)
    (or (eq? type supertype)
        (and (eq? supertype 'number) (memq type '(integer real)))
        (and (eq? supertype 'object) (memq type '(array jsvector)))
        (and (eq? type 'integer) (eq? supertype 'number))
        (and (eq? type 'function) (eq? supertype 'arrow))
        (and (memq type '(record class)) (eq? supertype 'function))
-       (and (memq type '(index length indexof)) (memq supertype '(integer number)))
-       (and (isa? supertype J2SRecord)
+       (and (memq type '(index length indexof)) (memq supertype '(integer number)))))
+
+;*---------------------------------------------------------------------*/
+;*    type-subtype? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (type-subtype? type supertype)
+   
+   (define (class-subtype? type supertype)
+      (or (eq? type supertype)
+	  (with-access::J2SClass type (super)
+	     (when (isa? super J2SRef)
+		(with-access::J2SRef super (decl)
+		   (when (isa? decl J2SDeclClass)
+		      (with-access::J2SDeclClass decl (val)
+			 (when (isa? val J2SClass)
+			    (class-subtype? val supertype)))))))))
+
+   (or (noclass-subtype? type supertype)
+       (and (isa? supertype J2SClass)
 	    (or (memq type '(any unknown obj object))
-		(and (isa? type J2SRecord)
-		     (record-subtype? type supertype))))))
+		(and (isa? type J2SClass) (class-subtype? type supertype))))))
+
+;*---------------------------------------------------------------------*/
+;*    type-maybe-subtype? ...                                          */
+;*    -------------------------------------------------------------    */
+;*    As type-subtype? but returns #t if the max-super class is        */
+;*    unknown or a function.                                           */
+;*---------------------------------------------------------------------*/
+(define (type-maybe-subtype? type supertype)
+   
+   (define (class-subtype? type supertype)
+      (or (eq? type supertype)
+	  (with-access::J2SClass type (super)
+	     (cond
+		((isa? super J2SRef)
+		 (with-access::J2SRef super (decl)
+		    (if (isa? decl J2SDeclClass)
+			(with-access::J2SDeclClass decl (val)
+			   (when (isa? val J2SClass)
+			      (class-subtype? val supertype)))
+			#t)))
+		((or (isa? super J2SUndefined) (isa? super J2SNull))
+		 #f)
+		(else
+		 #t)))))
+   
+   (or (eq? supertype 'unknown)
+       (noclass-subtype? type supertype)
+       (and (isa? supertype J2SClass)
+	    (or (memq type '(any unknown obj object))
+		(and (isa? type J2SClass) (class-subtype? type supertype))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-name ...                                                    */
@@ -1093,6 +1130,12 @@
 		 #f))))
 	 ((isa? clazz J2SFun)
 	  clazz)
+	 ((isa? clazz J2SDeclInit)
+	  (with-access::J2SDeclInit clazz (val)
+	     (loop val)))
+	 ((isa? clazz J2SRef)
+	  (with-access::J2SRef clazz (decl)
+	     (loop decl)))
 	 (else
 	  #f))))
 	    

@@ -310,7 +310,6 @@ function kangaxq() {
    function F(){}
    var obj = Reflect.construct(Array, [], F);
    obj[2] = 'foo';
-   console.log( "o.l=", obj.length );
    return obj.length === 3 && obj instanceof F;
 }
 

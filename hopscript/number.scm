@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Aug  2 07:59:00 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 11:25:21 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -115,13 +115,11 @@
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.1
       (define (%js-number this #!optional (arg 0))
 	 (let ((num (if (number? arg) arg (js-tonumber arg %this))))
-	    (with-access::JsGlobalObject %this (js-new-target)
-	       (if (eq? js-new-target (js-undefined))
-		   num
-		   (with-access::JsNumber this (val)
-		      (set! js-new-target (js-undefined))
-		      (set! val num)
-		      this)))))
+	    (if (eq? (js-new-target-pop! %this) (js-undefined))
+		num
+		(with-access::JsNumber this (val)
+		   (set! val num)
+		   this))))
       
       (define (is-integer?::bbool this arg)
 	 (cond

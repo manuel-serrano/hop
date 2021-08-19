@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    /tmp/HOPNEW/hop/hopscript/boolean.scm                            */
+;*    serrano/prgm/project/hop/hop/hopscript/boolean.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Feb 23 14:57:52 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Last change :  Thu Aug 19 11:29:02 2021 (serrano)                */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
 ;*    -------------------------------------------------------------    */
@@ -86,22 +86,19 @@
 	    (__proto__ (js-object-proto %this))))
       
       (define (js-boolean-alloc %this constructor::JsFunction)
-	 (with-access::JsGlobalObject %this (js-new-target)
-	    (set! js-new-target constructor))
+	 (js-new-target-push! %this constructor)
 	 (instantiateJsBoolean
 	    (__proto__ (js-get constructor (& "prototype") %this))))
 
       (define (%js-boolean this value)
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.6.1.1
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.6.2
-	 (with-access::JsGlobalObject %this (js-new-target)
-	    (let ((v (js-toboolean value)))
-	       (if (eq? js-new-target (js-undefined))
-		   v
-		   (with-access::JsBoolean this (val)
-		      (set! js-new-target (js-undefined))
-		      (set! val v)
-		      this)))))
+	 (let ((v (js-toboolean value)))
+	    (if (eq? (js-new-target-pop! %this) (js-undefined))
+		v
+		(with-access::JsBoolean this (val)
+		   (set! val v)
+		   this))))
       
       ;; then, Create a HopScript string object
       (set! js-boolean

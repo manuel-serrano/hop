@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Tue Jul 27 08:01:30 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 11:28:12 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -774,14 +774,11 @@
 	     (js-typedarray-construct this '()))))
       
       (define (%js-typedarray this . items)
-	 (with-access::JsGlobalObject %this (js-new-target)
-	    (if (eq? js-new-target (js-undefined))
-		(js-typedarray-construct 
-		   (js-typedarray-alloc %this js-typedarray)
-		   items)
-		(begin
-		   (set! js-new-target (js-undefined))
-		   (js-typedarray-construct this items)))))
+	 (if (eq? (js-new-target-pop! %this) (js-undefined))
+	     (js-typedarray-construct 
+		(js-typedarray-alloc %this js-typedarray)
+		items)
+	     (js-typedarray-construct this items)))
       
       (define (js-typedarray-alloc %this constructor::JsFunction)
 	 (with-access::JsGlobalObject %this (js-new-target)

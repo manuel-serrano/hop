@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Wed Apr  8 08:26:10 2020 (serrano)                */
-;*    Copyright   :  2014-20 Manuel Serrano                            */
+;*    Last change :  Thu Aug 19 11:27:37 2021 (serrano)                */
+;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
 ;*=====================================================================*/
@@ -161,14 +161,11 @@
 	    (elements ($create-vector 1))))
       
       (define (%js-arraybuffer this . items)
-	 (with-access::JsGlobalObject %this (js-new-target)
-	    (if (eq? js-new-target (js-undefined))
-		(js-arraybuffer-construct
-		   (js-arraybuffer-alloc-sans-new-target %this js-arraybuffer)
-		   items)
-		(begin
-		   (set! js-new-target (js-undefined))
-		   (js-arraybuffer-construct this items)))))
+	 (if (eq? (js-new-target-pop! %this) (js-undefined))
+	     (js-arraybuffer-construct
+		(js-arraybuffer-alloc-sans-new-target %this js-arraybuffer)
+		items)
+	     (js-arraybuffer-construct this items)))
       
       (define (js-arraybuffer-alloc-sans-new-target %this ctor::JsFunction)
 	 (instantiateJsArrayBuffer

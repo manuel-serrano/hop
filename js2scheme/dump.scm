@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Aug 13 16:19:19 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 10:48:58 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -94,6 +94,9 @@
       ((isa? type J2SRecord)
        (with-access::J2SRecord type (name)
 	  (cons 'record name)))
+      ((isa? type J2SClass)
+       (with-access::J2SClass type (name)
+	  (cons 'class name)))
       (else
        type)))
 

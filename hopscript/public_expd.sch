@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Tue Aug 17 08:14:58 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 09:43:12 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -189,7 +189,7 @@
       ((js-call% ?%this (and (? symbol?) ?fun) ?procedure ?this . ?args)
        (let ((len (length args)))
 	  (if (<=fx len 10)
-	      (let ((call (string->symbol (format "js-call~a%" (length args)))))
+	      (let ((call (string->symbol (format "js-call~a%" len))))
 		 (e `(,call ,%this ,fun ,this ,procedure ,@args) e))
 	      (e `(js-calln% ,%this ,fun ,this (list ,@args)) e))))
       ((js-call% ?%this ?fun ?procedure ?this . ?args)
@@ -206,7 +206,7 @@
       ((js-call ?%this (and (? symbol?) ?fun) ?this . ?args)
        (let ((len (length args)))
 	  (if (<=fx len 10)
-	      (let ((call (string->symbol (format "js-call~a" (length args)))))
+	      (let ((call (string->symbol (format "js-call~a" len))))
 		 (e `(,call ,%this ,fun ,this ,@args) e))
 	      (e `(js-calln ,%this ,fun ,this (list ,@args)) e))))
       ((js-call ?%this ?fun ?this . ?args)
@@ -223,7 +223,7 @@
       ((js-call%-procedure (and (? symbol?) ?fun) ?this . ?args)
        (let ((len (length args)))
 	  (if (<=fx len 10)
-	      (let ((call (string->symbol (format "js-call%~a-procedure" (length args)))))
+	      (let ((call (string->symbol (format "js-call%~a-procedure" len))))
 		 (e `(,call ,fun ,this ,@args) e))
 	      (e `(js-calln-procedure ,fun ,this (list ,@args)) e))))
       ((js-call%-procedure ?fun ?this . ?args)
@@ -240,7 +240,7 @@
       ((js-call-jsprocedure ?%this (and (? symbol?) ?fun) ?this . ?args)
        (let ((len (length args)))
 	  (if (<=fx len 10)
-	      (let ((call (string->symbol (format "js-call~a-jsprocedure" (length args)))))
+	      (let ((call (string->symbol (format "js-call~a-jsprocedure" len))))
 		 (e `(,call ,%this ,fun ,this ,@args) e))
 	      (e `(js-calln-jsprocedure ,fun ,this (list ,@args)) e))))
       ((js-call-jsprocedure ?%this ?fun ?this . ?args)
@@ -248,3 +248,20 @@
 	  (e `(let ((,f ,fun)) (js-call-jsprocedure ,%this ,f ,this ,@args)) e)))
       (else
        (error "js-call-jsprocedure" "bad form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-new ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (js-new-expander x e)
+   (match-case x
+      ((js-new ?%this (? symbol?) . ?args)
+       (let ((len (length args)))
+	  (if (<=fx len 8)
+	      (set-car! x (string->symbol (format "js-new~a" len)))
+	      (set-car! x '(@ js-new __hopscript_public)))
+	  (e x e)))
+      ((js-new ?%this ?fun . ?args)
+       (let ((f (gensym)))
+	  (e `(let ((,f ,fun)) (js-new ,%this ,f ,@args)) e)))
+      (else
+       (error "js-new" "bad form" x))))

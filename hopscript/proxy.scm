@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Wed Apr 28 09:30:51 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 11:34:56 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -137,8 +137,7 @@
    (with-access::JsGlobalObject %this (js-function-prototype js-proxy js-proxy-pcache)
 
       (define (js-proxy-alloc %this constructor::JsFunction)
-	 (with-access::JsGlobalObject %this (js-new-target)
-	    (set! js-new-target constructor))
+	 (js-new-target-push! %this constructor)
 	 ;; not used in optimized code, see below
 	 ;; js-new-proxy and js-new-proxy/caches
 	 (js-new-proxy %this '() (class-nil JsObject)))
@@ -175,26 +174,24 @@
 
       ;; create a HopScript object
       (define (%js-proxy this t h)
-	 (with-access::JsGlobalObject %this (js-new-target)
-	    (cond
-	       ((eq? js-new-target (js-undefined))
-		(js-raise-type-error %this "Constructor Proxy requires 'new'" this))
-	       ((not (js-object? h))
-		(js-raise-type-error %this
-		   "Cannot create proxy with a non-object as handler" this))
-	       ((not (js-object? t))
-		(js-raise-type-error %this
-		   "Cannot create proxy with a non-object as target" this))
-	       (else
-		(with-access::JsProxy this (handler id)
-		   (js-proxy-target-set! this t)
-		   (when (js-procedure? t)
-		      ;; mark proxy targetting function to enable
-		      ;; fast js-proxy-function? predicate (see types.scm)
-		      (js-proxy-mode-function-set! this #t))
-		   (set! handler h))))
-	    (set! js-new-target (js-undefined))
-	    this))
+	 (cond
+	    ((eq? (js-new-target-pop! %this) (js-undefined))
+	     (js-raise-type-error %this "Constructor Proxy requires 'new'" this))
+	    ((not (js-object? h))
+	     (js-raise-type-error %this
+		"Cannot create proxy with a non-object as handler" this))
+	    ((not (js-object? t))
+	     (js-raise-type-error %this
+		"Cannot create proxy with a non-object as target" this))
+	    (else
+	     (with-access::JsProxy this (handler id)
+		(js-proxy-target-set! this t)
+		(when (js-procedure? t)
+		   ;; mark proxy targetting function to enable
+		   ;; fast js-proxy-function? predicate (see types.scm)
+		   (js-proxy-mode-function-set! this #t))
+		(set! handler h))))
+	 this)
 
       ;; create a revokable proxy
       (define (%js-revocable this t h)

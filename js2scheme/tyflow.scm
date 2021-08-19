@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Aug  6 08:05:40 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 10:37:04 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -2093,7 +2093,7 @@
 ;*    resolve! ::J2SBinary ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SBinary ctx)
-
+   
    (define (eq-typeof? type typ)
       (or (eq? type typ)
 	  (and (memq type '(date array)) (eq? typ 'object))
@@ -2171,22 +2171,26 @@
 		    (cond
 		       ((or (memq type '(unknown any object)) (eq? typ 'object))
 			(call-default-walker))
-		       ((eq? type typ)
-			(unfix! ctx "resolve.J2SBinary")
+		       ((type-subtype? type typ)
+			(unfix! ctx "resolve.J2SBinary.instanceof")
 			(J2SBool #t))
+		       ((type-maybe-subtype? type typ)
+			(call-default-walker))
 		       (else
-			(unfix! ctx "resolve.J2SBinary")
+			(unfix! ctx "resolve.J2SBinary.instanceof")
 			(J2SBool #f)))))
 		((!instanceof)
 		 (with-access::J2SExpr ref (type)
 		    (cond
 		       ((or (memq type '(unknown any object)) (eq? typ 'object))
 			(call-default-walker))
-		       ((eq? type typ)
-			(unfix! ctx "resolve.J2SBinary")
+		       ((type-subtype? type typ)
+			(unfix! ctx "resolve.J2SBinary.!instanceof")
 			(J2SBool #f))
+		       ((type-maybe-subtype? type typ)
+			(call-default-walker))
 		       (else
-			(unfix! ctx "resolve.J2SBinary")
+			(unfix! ctx "resolve.J2SBinary.!instanceof")
 			(J2SBool #t)))))
 		(else
 		 (call-default-walker))))))))

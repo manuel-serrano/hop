@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Apr 28 09:25:14 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 11:31:51 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -227,88 +227,84 @@
 	 (js-make-jsconstructmap))
       
       (define (js-error-alloc %this constructor::JsFunction)
-	 (with-access::JsGlobalObject %this (js-new-target)
-	    (set! js-new-target constructor)
-	    (instantiateJsError
-	       (cmap (js-make-jsconstructmap))
-	       (%this %this)
-	       (name (js-get constructor (& "name") %this))
-	       (msg (& ""))
-	       (__proto__ (js-get constructor (& "prototype") %this))
-	       (stack '()))))
+	 (js-new-target-push! %this constructor)
+	 (instantiateJsError
+	    (cmap (js-make-jsconstructmap))
+	    (%this %this)
+	    (name (js-get constructor (& "name") %this))
+	    (msg (& ""))
+	    (__proto__ (js-get constructor (& "prototype") %this))
+	    (stack '())))
 
       (define (js-error-error-alloc %this constructor::JsFunction)
-	 (with-access::JsGlobalObject %this (js-new-target)
-	    (set! js-new-target constructor)
-	    (instantiateJsError
-	       (cmap error-cmap)
-	       (%this %this)
-	       (name (& "Error"))
-	       (msg (& ""))
-	       (__proto__ (if (eq? constructor %js-error)
-			      js-error-prototype
-			      (js-get constructor (& "prototype") %this)))
-	       (stack '()))))
+	 (js-new-target-push! %this constructor)
+	 (instantiateJsError
+	    (cmap error-cmap)
+	    (%this %this)
+	    (name (& "Error"))
+	    (msg (& ""))
+	    (__proto__ (if (eq? constructor %js-error)
+			   js-error-prototype
+			   (js-get constructor (& "prototype") %this)))
+	    (stack '())))
 
       (define (js-type-error-alloc %this constructor::JsFunction)
-	 (with-access::JsGlobalObject %this (js-new-target)
-	    (set! js-new-target constructor)
-	    (instantiateJsError
-	       (cmap error-cmap)
-	       (%this %this)
-	       (name (& "TypeError"))
-	       (msg (& ""))
-	       (__proto__ (if (eq? constructor js-type-error)
-			      js-type-error-prototype
-			      (js-get constructor (& "prototype") %this)))
-	       (stack '()))))
+	 (js-new-target-push! %this constructor)
+	 (instantiateJsError
+	    (cmap error-cmap)
+	    (%this %this)
+	    (name (& "TypeError"))
+	    (msg (& ""))
+	    (__proto__ (if (eq? constructor js-type-error)
+			   js-type-error-prototype
+			   (js-get constructor (& "prototype") %this)))
+	    (stack '())))
 
       (define (%js-error this message fname loc)
-	 (with-access::JsGlobalObject %this (js-new-target js-error)
-	    (if (eq? js-new-target (js-undefined))
+	 (with-access::JsGlobalObject %this (js-error)
+	    (if (eq? (js-new-target-pop! %this) (js-undefined))
 		(js-new3 %this js-error message fname loc)
 		(js-error-construct/stack this message fname loc))))
 
       (define (%js-syntax-error this message fname loc)
-	 (with-access::JsGlobalObject %this (js-new-target js-syntax-error)
-	    (if (eq? js-new-target (js-undefined))
+	 (with-access::JsGlobalObject %this (js-syntax-error)
+	    (if (eq? (js-new-target-pop! %this) (js-undefined))
 		(js-new3 %this js-syntax-error message fname loc)
 		(js-error-construct/stack this message fname loc))))
 
       (define (%js-type-error this message fname loc)
-	 (with-access::JsGlobalObject %this (js-new-target js-type-error)
-	    (if (eq? js-new-target (js-undefined))
+	 (with-access::JsGlobalObject %this (js-type-error)
+	    (if (eq? (js-new-target-pop! %this) (js-undefined))
 		(js-new3 %this js-type-error message fname loc)
 		(js-error-construct/stack this message fname loc))))
 
       (define (%js-uri-error this message fname loc)
-	 (with-access::JsGlobalObject %this (js-new-target js-uri-error)
-	    (if (eq? js-new-target (js-undefined))
+	 (with-access::JsGlobalObject %this (js-js-uri-error)
+	    (if (eq? (js-new-target-pop! %this) (js-undefined))
 		(js-new3 %this js-uri-error message fname loc)
 		(js-error-construct/stack this message fname loc))))
 
       (define (%js-eval-error this message fname loc)
-	 (with-access::JsGlobalObject %this (js-new-target js-eval-error)
-	    (if (eq? js-new-target (js-undefined))
+	 (with-access::JsGlobalObject %this (js-eval-error)
+	    (if (eq? (js-new-target-pop! %this) (js-undefined))
 		(js-new3 %this js-eval-error message fname loc)
 		(js-error-construct/stack this message fname loc))))
 
       (define (%js-range-error this message fname loc)
-	 (with-access::JsGlobalObject %this (js-new-target js-range-error)
-	    (if (eq? js-new-target (js-undefined))
+	 (with-access::JsGlobalObject %this (js-range-error)
+	    (if (eq? (js-new-target-pop! %this) (js-undefined))
 		(js-new3 %this js-range-error message fname loc)
 		(js-error-construct/stack this message fname loc))))
 
       (define (%js-reference-error this message fname loc)
-	 (with-access::JsGlobalObject %this (js-new-target js-reference-error)
-	    (if (eq? js-new-target (js-undefined))
+	 (with-access::JsGlobalObject %this (js-reference-error)
+	    (if (eq? (js-new-target-pop! %this) (js-undefined))
 		(js-new3 %this js-reference-error message fname loc)
 		(js-error-construct/stack this message fname loc))))
 
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.11
       (define (js-error-construct this::JsError m f l)
-	 (with-access::JsGlobalObject %this (js-new-target)
-	    (set! js-new-target (js-undefined)))
+	 (js-new-target-pop! %this)
 	 (with-access::JsError this (msg fname location name)
 	    (set! msg m)
 	    (cond
@@ -772,21 +768,21 @@
 ;*    js-type-error ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-type-error msg fname loc %this)
-   (with-access::JsGlobalObject %this (js-new-target js-type-error)
+   (with-access::JsGlobalObject %this (js-type-error)
       (js-new3 %this js-type-error msg fname loc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-type-error2 ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-type-error2 msg fname %this)
-   (with-access::JsGlobalObject %this (js-new-target js-type-error)
+   (with-access::JsGlobalObject %this (js-type-error)
       (js-new2 %this js-type-error msg fname)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-type-error1 ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-type-error1 msg %this)
-   (with-access::JsGlobalObject %this (js-new-target js-type-error)
+   (with-access::JsGlobalObject %this (js-type-error)
       (js-new1 %this js-type-error msg)))
 
 ;*---------------------------------------------------------------------*/

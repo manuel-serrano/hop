@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Aug 18 07:40:44 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 10:25:26 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -1624,9 +1624,10 @@
 ;*    j2s-class-super ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-class-super clazz::J2SClass)
-   (with-access::J2SClass clazz (elements super)
+   (with-access::J2SClass clazz (super)
       (when (isa? super J2SRef)
 	 (with-access::J2SRef super (decl)
 	    (when (isa? decl J2SDeclInit)
 	       (with-access::J2SDeclInit decl (val)
 		  val))))))
+

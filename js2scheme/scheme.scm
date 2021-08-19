@@ -111,25 +111,6 @@
    `(if return ,value ,value))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-new ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (j2s-new loc clazz args)
-   (if (> (bigloo-debug) 0)
-       `(js-new/debug %this ',loc ,clazz ,@args)
-       (let ((new (case (length args)
-		     ((0) 'js-new0)
-		     ((1) 'js-new1)
-		     ((2) 'js-new2)
-		     ((3) 'js-new3)
-		     ((4) 'js-new4)
-		     ((5) 'js-new5)
-		     ((6) 'js-new6)
-		     ((7) 'js-new7)
-		     ((8) 'js-new8)
-		     (else 'js-new))))
-	  `(,new %this ,clazz ,@args))))
-
-;*---------------------------------------------------------------------*/
 ;*    j2s-nodes* ...                                                   */
 ;*    -------------------------------------------------------------    */
 ;*    Compile a list of nodes, returns a list of expressions.          */

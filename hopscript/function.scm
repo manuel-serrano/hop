@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Aug 12 18:21:06 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 11:33:35 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -1043,19 +1043,15 @@
 		(js-function-setup-prototype! %this this)
 		(set! alloc js-object-alloc))
 	     (let* ((bproc (lambda (self . actuals)
-			      (with-access::JsGlobalObject %this (js-new-target)
-				 (if (eq? js-new-target (js-undefined))
-				     (js-apply %this this
-					thisarg (append args actuals))
-				     (begin
-					(set! js-new-target (js-undefined))
-					(js-apply %this this
-					   self (append args actuals)))))))
+			      (if (eq? (js-new-target-pop! %this) (js-undefined))
+				  (js-apply %this this
+				     thisarg (append args actuals))
+				  (js-apply %this this
+				     self (append args actuals)))))
 		    (bproto (js-getprototypeof this %this "getPrototypeOf"))
 		    (balloc (lambda (%this ctor)
-			       (with-access::JsGlobalObject %this (js-new-target)
-				  (set! js-new-target ctor)
-				  (alloc %this this)))))
+			       (js-new-target-push! %this ctor)
+			       (alloc %this this))))
 		(js-make-function %this bproc
 		   (js-function-arity 0 -1 'scheme)
 		   (js-function-info

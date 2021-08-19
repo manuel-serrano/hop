@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
 /*    Last change :  Wed Feb 26 09:11:18 2020 (serrano)                */
-/*    Copyright   :  2014-20 Manuel Serrano                            */
+/*    Copyright   :  2014-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 6 features                               */
 /*=====================================================================*/

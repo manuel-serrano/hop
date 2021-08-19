@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Aug 13 07:06:43 2021 (serrano)                */
+;*    Last change :  Thu Aug 19 08:25:19 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -216,7 +216,7 @@
    (define (allocator::symbol this::J2SDecl)
       (with-access::J2SFun (declfun-fun this) (new-target)
 	 (cond
-	    ((memq new-target '(#t global)) 'js-object-alloc/new-target)
+	    ((memq new-target '(global)) 'js-object-alloc/new-target)
 	    ((decl-usage-has? this '(new get set ref))  'js-object-alloc)
 	    (else 'js-object-alloc-lazy))))
    
@@ -537,7 +537,7 @@
 			    (epairify loc
 			       (if (pair? bd) bd `(begin ,bd)))))))))
 	 (jsfun->lambda/body this mode return ctx
-	    (if (memq new-target '(#t global))
+	    (if (memq new-target '(global))
 		`(let ((new-target (js-new-target-pop! %this)))
 		    ,body)
 		body)))))
@@ -551,12 +551,17 @@
       (with-access::J2SFun this (body expr new-target)
 	 (let ((f (j2s-decl-scm-id decl ctx)))
 	    (cond
-	       ((memq new-target '(#t global argument))
-		`(js-object-alloc/new-target %this ,f))
 	       ((cancall? body #f)
 		`(js-object-alloc %this ,f))
 	       (else
 		`(js-object-alloc-fast %this ,f))))))
+
+   (define (let-newtarget this::J2SFun expr)
+      (with-access::J2SFun this (new-target)
+	 (if (memq new-target '(global))
+	     `(let ((new-target ,(j2s-decl-scm-id decl ctx)))
+		 ,expr)
+	     expr)))
    
    (with-access::J2SFun this (loc body vararg mode params generator thisp)
       (with-access::J2SDecl thisp (id vtype itype)
@@ -569,8 +574,8 @@
 	       (id (j2s-decl-scm-id thisp ctx))
 	       (body (let ((ctx (new-compiler-context ctx optim-initseq: #t)))
 			`(let ((,id ,(object-alloc this)))
-			    ,(j2s-scheme (ctor-body! body)
-				mode return ctx)
+			    ,(let-newtarget this
+				(j2s-scheme (ctor-body! body) mode return ctx))
 			    ,id)))
 	       (proto (j2s-declfun-prototype decl ctx)))
 	    (jsfun->lambda/body nfun mode return ctx body)))))
@@ -640,7 +645,7 @@
 	 (cond
 	    ((isa? this J2SSvc)
 	     'js-not-a-constructor-alloc)
-	    ((memq new-target '(#t global argument))
+	    ((memq new-target '(global argument))
 	     'js-object-alloc/new-target)
 	    (else
 	     'js-object-alloc-lazy))))
@@ -689,7 +694,7 @@
 			      (j2s-fun-prototype this) #f))
 		      ,arity)))
 	       ((and (or src prototype __proto__ method
-			 (memq new-target '(#t global argument)))
+			 (memq new-target '(global argument)))
 		     (memq mode '(strict hopscript))
 		     (not prototype)
 		     (not __proto__))
@@ -704,7 +709,7 @@
 			'()
 			`(:alloc ,alloc))))
 	       ((or src prototype __proto__ method
-		    (memq new-target '(#t global argument)))
+		    (memq new-target '(global argument)))
 		`(js-make-function %this ,tmp
 		    ,arity ,(j2s-function-info this name loc ctx)
 		    :prototype ,prototype
@@ -1223,7 +1228,7 @@
 		     :len ,(function-len val)
 		     :path ,(absolute-path path)
 		     :start ,start :end ,(+fx 1 end)
-		     :new-target ,(memq new-target '(#t global argument))))
+		     :new-target ,(when (memq new-target '(global argument)) #t)))
 		(else
 		 (error "j2s-function-src" "bad location" loc))))
 	    (else

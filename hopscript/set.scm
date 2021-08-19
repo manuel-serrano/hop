@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Wed Apr  8 08:33:51 2020 (serrano)                */
-;*    Copyright   :  2019-20 Manuel Serrano                            */
+;*    Last change :  Thu Aug 19 11:35:57 2021 (serrano)                */
+;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
 ;*    -------------------------------------------------------------    */
@@ -74,19 +74,16 @@
    (with-access::JsGlobalObject %this (js-function-prototype)
       
       (define (%js-set this #!optional (iterable #\F))
-	 (with-access::JsGlobalObject %this (js-new-target)
-	    (if (eq? js-new-target (js-undefined))
-		(js-raise-type-error %this
-		   (format "Constructor ~a requires 'new'" name) this)
-		(begin
-		   (set! js-new-target (js-undefined))
-		   (unless (eq? iterable #\F)
-		      (js-set-construct %this this iterable))
-		   this))))
+	 (if (eq? (js-new-target-pop! %this) (js-undefined))
+	     (js-raise-type-error %this
+		(format "Constructor ~a requires 'new'" name) this)
+	     (begin
+		(unless (eq? iterable #\F)
+		   (js-set-construct %this this iterable))
+		this)))
       
       (define (js-set-alloc %this constructor::JsFunction)
-	 (with-access::JsGlobalObject %this (js-new-target)
-	    (set! js-new-target constructor))
+	 (js-new-target-push! %this constructor)
 	 (instantiateJsMap
 	    (__proto__ (js-get constructor (& "prototype") %this))
 	    (mapdata (create-hashtable
