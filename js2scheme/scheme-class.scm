@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Thu Aug 19 19:43:25 2021 (serrano)                */
+;*    Last change :  Fri Aug 20 05:20:39 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -293,7 +293,7 @@
 			   "Class constructor '~a' cannot be invoked without 'new'"
 			   name))
 		    (js-undefined))
-		 (,(class-constructor-id clazz)
+		 (apply ,(class-constructor-id clazz)
 		  this
 		  ,@(if (class-new-target? clazz) '(new-target) '())
 		  args)))))
@@ -369,11 +369,10 @@
 	  0)))
 
    (define (init->lambda this::J2SClass init arity)
-      (tprint "INIT=" (j2s->list init))
       (let ((names (map (lambda (i)
 			   (string->symbol (format "%a~a" i)))
 		      (iota arity))))
-	 `(lambda (this ,@(if (class-new-target? this) '(new-target) '()) ,@names)
+	 `(lambda (this ,@names)
 	     ,@(j2s-scheme-init-instance-properties
 		  this mode return ctx)
 	     this)))
@@ -393,7 +392,7 @@
 			       (j2s-function-arity val ctx)
 			       (length params) constrsize
 			       src loc)))))
-		  ((pair? (j2s-class-instance-properties this :super #f))
+		  ((and (not %super) (pair? (j2s-class-instance-properties this :super #f)))
 		   (let* ((init (j2s-class-find-constructor this))
 			  (arity (ctor-arity init)))
 		      (make-class this %super
@@ -411,7 +410,7 @@
 				 (let ((arity (ctor-arity superctor)))
 				    (make-class this %super
 				       (class->lambda this arity loc)
-				       (super-ctor->lambda this init mode return ctx)
+				       (super-ctor->lambda this superctor mode return ctx)
 				       `(with-access::JsFunction ,%super (arity) arity)
 				       arity constrsize
 				       src loc))
@@ -447,10 +446,7 @@
 			 (else
 			  (make-class this %super
 			     (class->lambda this 0 loc)
-			     `(lambda (this)
-				 ,@(j2s-scheme-init-instance-properties
-				      this mode return ctx)
-				 this)
+			     (super-ctor->lambda this #unspecified mode return ctx)
 			     1 0 0 src loc)))))
 		  (else
 		   (make-class this %super

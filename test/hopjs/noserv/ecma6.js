@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Feb 26 09:11:18 2020 (serrano)                */
+/*    Last change :  Fri Aug 20 05:52:56 2021 (serrano)                */
 /*    Copyright   :  2014-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 6 features                               */
@@ -171,11 +171,15 @@ console.log( "   misck()"); assert.ok( misck( 10 ), "misck" );
 /*    mdn                                                              */
 /*---------------------------------------------------------------------*/
 function mdna() {
+   const epsilon = 0.000000000001;
+   function eqfl(x, y) {
+      return (x === y) || Math.abs(x-y) < epsilon;
+   }
    return -(2 ** 2) === -4
       && (2 ** 3) === 8
       && (3 ** 2) === 9
-      && (3 ** 2.5) === 15.588457268119896
-      && (10 ** -1) === 0.1
+      && eqfl((3 ** 2.5),15.588457268119896)
+      && eqfl((10 ** -1), 0.1)
       && isNaN( NaN ** 2 )
       && (2 ** 3 ** 2) === 512
       && (2 ** (3 ** 2)) === 512

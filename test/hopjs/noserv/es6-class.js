@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Thu Aug 19 13:27:26 2021 (serrano)                */
+/*    Last change :  Fri Aug 20 05:28:20 2021 (serrano)                */
 /*    Copyright   :  2017-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
@@ -389,7 +389,7 @@ function basicw() {
    }
    class C extends B {
    }
-   return (new A(1).a + new B(4).a + new C(20).a) === 25;
+   return (new A(1).a + new B(4).a + new C(20).a + new C(10).b)=== 48;
 }
 
 console.log( "basic" );
