@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Fri Aug 20 05:20:39 2021 (serrano)                */
+;*    Last change :  Fri Aug 20 07:53:16 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -293,7 +293,7 @@
 			   "Class constructor '~a' cannot be invoked without 'new'"
 			   name))
 		    (js-undefined))
-		 (apply ,(class-constructor-id clazz)
+		 (,(class-constructor-id clazz)
 		  this
 		  ,@(if (class-new-target? clazz) '(new-target) '())
 		  args)))))
@@ -398,8 +398,7 @@
 		      (make-class this %super
 			 (class->lambda this arity loc)
 			 (init->lambda this init arity)
-			 `(with-access::JsFunction ,%super (arity) arity)
-			 arity constrsize
+			 arity arity constrsize
 			 src loc)))
 		  (%super
 		   (let ((init (j2s-class-find-initializer this)))
@@ -414,12 +413,14 @@
 				       `(with-access::JsFunction ,%super (arity) arity)
 				       arity constrsize
 				       src loc))
-				 (make-class this %super
-				    (class->lambda this 0 loc)
-				    (super-ctor->lambda this init mode return ctx)
-				    `(with-access::JsFunction ,%super (arity) arity)
-				    0 constrsize
-				    src loc))))
+				 (let ((superinit (j2s-class-find-initializer (j2s-class-super-val this))))
+				    (tprint "SUPERINIT=" superinit)
+				    (make-class this %super
+				       (class->lambda this 0 loc)
+				       (super-ctor->lambda this superinit mode return ctx)
+				       `(with-access::JsFunction ,%super (arity) arity)
+				       0 constrsize
+				       src loc)))))
 			 ((isa? init J2SClassElement)
 			  (let ((arity (ctor-arity init)))
 			     (make-class this %super
@@ -440,14 +441,17 @@
 			  (make-class this %super
 			     (class-unknown-super->lambda this loc)
 			     (super-ctor->lambda this init mode return ctx)
-			     `(with-access::JsFunction ,%super (arity) arity)
-			     0 constrsize
+			     `(with-access::JsFunction ,%super (arity)
+				 arity)
+			     `(with-access::JsFunction ,%super (info)
+				 (vector-ref info 1))
+			     constrsize
 			     src loc))
 			 (else
 			  (make-class this %super
-			     (class->lambda this 0 loc)
+			     (class-unknown-super->lambda this loc)
 			     (super-ctor->lambda this #unspecified mode return ctx)
-			     1 0 0 src loc)))))
+			     '(js-function-arity 0 -1 'scheme) 0 0 src loc)))))
 		  (else
 		   (make-class this %super
 		      (class->lambda this 0 loc)
@@ -967,9 +971,17 @@
 		 ,@(j2s-scheme-init-instance-properties
 		      clazz mode return ctx)
 		 this))))
+      ((isa? superctor J2SClass)
+       ;; not ctor but one of the super classes has fields
+       `(lambda (this)
+	   (with-access::JsClass %super (constructor)
+	      (constructor this)
+	      ,@(j2s-scheme-init-instance-properties
+		   clazz mode return ctx)
+	      this)))
       (else
        (with-access::J2SFun superctor (params loc)
-	  `(lambda (this new-target . args)
+	  `(lambda (this new-target args)
 	      (js-new-target-push! %this new-target)
 	      (js-calln-jsprocedure %this %super this args)
 	      (js-new-target-pop! %this)

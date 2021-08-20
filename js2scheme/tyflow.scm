@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Aug 19 17:53:02 2021 (serrano)                */
+;*    Last change :  Fri Aug 20 16:20:58 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -774,12 +774,13 @@
 
    (define (node-type-class this)
       (with-access::J2SDeclClass this (val)
-	 (if (decl-ronly? this)
-	     (decl-vtype-set! this 'function ctx)
-	     (decl-vtype-add! this 'function ctx))
-	 (multiple-value-bind (tyf env bk)
-	    (node-type val env ctx)
-	    (return 'function env bk))))
+	 (let ((ty (if (isa? val J2SClass) 'function 'any)))
+	    (if (decl-ronly? this)
+		(decl-vtype-set! this ty ctx)
+		(decl-vtype-add! this ty ctx))
+	    (multiple-value-bind (tyf env bk)
+	       (node-type val env ctx)
+	       (return ty env bk)))))
 
    (define (node-type-record this)
       (with-access::J2SDeclClass this (val id)
