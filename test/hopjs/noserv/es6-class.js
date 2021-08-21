@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Fri Aug 20 05:28:20 2021 (serrano)                */
+/*    Last change :  Sat Aug 21 07:03:58 2021 (serrano)                */
 /*    Copyright   :  2017-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
@@ -328,7 +328,7 @@ function basics() {
       z = 55;
    }
    const o = new Point3d(10);
-   return o.x === 44 && o.y === undefined && o.z === 55;
+   return o.x === 44 && o.y === 10 && o.z === 55;
 }
 
 function basict() {

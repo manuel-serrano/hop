@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Thu Aug 19 18:47:47 2021 (serrano)                */
+;*    Last change :  Sat Aug 21 06:56:49 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -33,7 +33,8 @@
 	   (j2s-class-get-constructor ::J2SClass)
 	   (j2s-class-find-constructor ::J2SClass)
 	   (j2s-class-find-initializer ::J2SClass)
-	   (j2s-class-methods-use-super? this::J2SClass)))
+	   (j2s-class-constructor-might-return?::bool ::J2SClass)
+	   (j2s-class-methods-use-super?::bool ::J2SClass)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-class-super-val ...                                          */
@@ -55,20 +56,28 @@
 ;*    Returns the root of the class inheritance.                       */
 ;*---------------------------------------------------------------------*/
 (define (j2s-class-root-val clazz::J2SClass)
-   (with-access::J2SClass clazz (super)
-      (let loop ((root #f))
-	 (cond
-	    ((or (isa? root J2SUndefined) (isa? root J2SNull))
-	     root)
-	    ((j2s-class-super-val clazz)
-	     =>
-	     (lambda (val)
+   (let ((super (j2s-class-super-val clazz)))
+      (cond
+	 ((or (isa? super J2SUndefined) (isa? super J2SNull))
+	  #f)
+	 ((isa? super J2SClass)
+	  (let loop ((clazz super)
+		     (root super))
+	     (with-access::J2SClass clazz (super)
 		(cond
-		   ((isa? super J2SClass) (loop val))
-		   ((isa? super J2SFun) val)
-		   (else super))))
-	    (else
-	     root)))))
+		   ((or (isa? clazz J2SUndefined) (isa? clazz J2SNull))
+		    root)
+		   ((j2s-class-super-val clazz)
+		    =>
+		    (lambda (val)
+		       (cond
+			  ((isa? val J2SClass) (loop val root))
+			  ((isa? val J2SFun) root)
+			  (else root))))
+		   (else
+		    root)))))
+	 (else
+	  super))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-class-property-constructor? ...                              */
@@ -225,6 +234,18 @@
 	  clazz))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-class-constructor-might-return? ...                          */
+;*---------------------------------------------------------------------*/
+(define (j2s-class-constructor-might-return? this::J2SClass)
+   (let ((ctor (j2s-class-get-constructor this)))
+      (when ctor
+	 (with-access::J2SClassElement ctor (prop)
+	    (with-access::J2SMethodPropertyInit prop (val)
+	       (with-access::J2SFun val (need-bind-exit-return)
+		  (or need-bind-exit-return
+		      (class-method-use-return? val))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-class-methods-use-super? ...                                 */
 ;*    -------------------------------------------------------------    */
 ;*    True iff at least one class methods uses "super".                */
@@ -268,6 +289,37 @@
 ;*    method-use-super? ::J2SFun ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (method-use-super? this::J2SFun cell)
+   (cell-ref cell))
+
+;*---------------------------------------------------------------------*/
+;*    class-method-use-return? ...                                     */
+;*    -------------------------------------------------------------    */
+;*    Returns true iff the function uses "return".                     */
+;*---------------------------------------------------------------------*/
+(define (class-method-use-return? this::J2SFun)
+   (let ((cell (make-cell #f)))
+      (with-access::J2SFun this (body)
+	 (method-use-return? body cell)
+	 (cell-ref cell))))
+
+;*---------------------------------------------------------------------*/
+;*    method-use-return? ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (method-use-return? this::J2SNode cell)
+   (or (cell-ref cell)
+       (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    method-use-return? ::J2SSuper ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (method-use-return? this::J2SReturn cell)
+   (cell-set! cell #t)
+   #t)
+
+;*---------------------------------------------------------------------*/
+;*    method-use-return? ::J2SFun ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (method-use-return? this::J2SFun cell)
    (cell-ref cell))
 
 
