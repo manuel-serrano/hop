@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Aug 19 16:31:06 2021 (serrano)                */
+;*    Last change :  Sat Aug 21 15:44:15 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -273,7 +273,8 @@
 	      (src::bool (default #t) (info '("notraverse")))
 	      (elements::pair-nil (info '("ast")))
 	      (constrsize::int (default 0) (info '("notraverse")))
-	      (cmap (default #f)))
+	      (cmap (default #f))
+	      (need-super-check::bool (default #f) (info '("notraverse"))))
 
 	   (class J2SRecord::J2SClass)
 

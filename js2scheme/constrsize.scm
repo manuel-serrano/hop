@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Thu Aug 19 17:53:20 2021 (serrano)                */
+;*    Last change :  Sat Aug 21 17:18:10 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Static approximation of constructors size                        */
@@ -90,7 +90,7 @@
 			      val))))
 	 props))
 
-   (with-access::J2SClass this (constrsize %info)
+   (with-access::J2SClass this (constrsize %info name)
       (unless (constrsize-info? %info)
 	 (call-default-walker)
 	 (let ((props (j2s-class-instance-properties this)))
@@ -102,8 +102,7 @@
 		     (with-access::J2SClassElement ctor (prop)
 			(with-access::J2SMethodPropertyInit prop (val)
 			   (with-access::J2SFun val (body)
-			      (when (pair? props)
-				 (count-this-assig body acc))))))
+			      (count-this-assig body acc)))))
 		  ;; super class size
 		  (let ((super (j2s-class-super-val this)))
 		     (when (or (isa? super J2SClass) (isa? super J2SFun))

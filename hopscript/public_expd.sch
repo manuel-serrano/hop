@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Thu Aug 19 09:43:12 2021 (serrano)                */
+;*    Last change :  Sat Aug 21 15:08:19 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -216,19 +216,19 @@
        (error "js-call" "bad form" x))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-call%-procedure ...                                           */
+;*    js-call-procedure ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-call%-procedure-expander x e)
+(define (js-call-procedure-expander x e)
    (match-case x
-      ((js-call%-procedure (and (? symbol?) ?fun) ?this . ?args)
+      ((js-call-procedure (and (? symbol?) ?fun) ?this . ?args)
        (let ((len (length args)))
 	  (if (<=fx len 10)
-	      (let ((call (string->symbol (format "js-call%~a-procedure" len))))
+	      (let ((call (string->symbol (format "js-call~a-procedure" len))))
 		 (e `(,call ,fun ,this ,@args) e))
 	      (e `(js-calln-procedure ,fun ,this (list ,@args)) e))))
-      ((js-call%-procedure ?fun ?this . ?args)
+      ((js-call-procedure ?fun ?this . ?args)
        (let ((f (gensym)))
-	  (e `(let ((,f ,fun)) (js-call%-procedure ,f ,this ,@args)) e)))
+	  (e `(let ((,f ,fun)) (js-call-procedure ,f ,this ,@args)) e)))
       (else
        (error "js-call-procedure" "bad form" x))))
 
