@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sat Aug 21 10:18:20 2021 (serrano)                */
+;*    Last change :  Mon Aug 23 10:17:10 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -934,7 +934,7 @@
 	    (else
 	     ;; no super class initialize the instance properties first
 	     (set! body
-		(J2SSeq
+		(J2SBlock
 		   (J2SStmtExpr
 		      (J2SPragma
 			 `(begin
