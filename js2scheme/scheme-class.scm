@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Mon Aug 23 10:17:10 2021 (serrano)                */
+;*    Last change :  Mon Aug 23 11:39:20 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -329,10 +329,14 @@
 			       (j2s-scheme cmap mode return ctx)
 			       '(with-access::JsGlobalObject %this (js-initial-cmap)
 				 js-initial-cmap)))
-		(constrsz (if cmap
-			      constrsize
+		(constrsz (cond
+			     (cmap
+			      constrsize)
+			     (super
 			      `(with-access::JsFunction ,super (constrsize)
-				  constrsize))))
+				  constrsize))
+			     (else
+			      1))))
 	    `(letrec* ((,ctorf ,constructor)
 		       (,proto ,(class-prototype this super))
 		       (,clazz (js-make-function %this ,function
@@ -932,7 +936,7 @@
 	    ((symbol? super)
 	     body)
 	    (else
-	     ;; no super class initialize the instance properties first
+	     ;; no super class initializes the instance properties first
 	     (set! body
 		(J2SBlock
 		   (J2SStmtExpr
