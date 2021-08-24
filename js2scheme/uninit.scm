@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Fri Dec 20 19:10:37 2019 (serrano)                */
-;*    Copyright   :  2019-20 Manuel Serrano                            */
+;*    Last change :  Tue Aug 24 14:38:25 2021 (serrano)                */
+;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
 ;*=====================================================================*/
@@ -135,7 +135,10 @@
 	    (unless (decl-usage-has? decl '(uninit))
 	       (with-access::J2SDecl decl (%info)
 		  (set! %info 'init))))
-	 (invalidate! val))))
+	 (unless (and (isa? decl J2SDeclClass) (isa? val J2SClass)
+		      (with-access::J2SClass val (need-dead-zone-check)
+			 need-dead-zone-check))
+	    (invalidate! val)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    scan-node ...                                                    */

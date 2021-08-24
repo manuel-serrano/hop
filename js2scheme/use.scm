@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/use.scm                 */
+;*    serrano/prgm/project/hop/hop/js2scheme/use.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu May 13 09:27:09 2021 (serrano)                */
+;*    Last change :  Tue Aug 24 11:43:17 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -427,7 +427,8 @@
    (define (already-init? lhs)
       (when (isa? lhs J2SRef)
 	 (with-access::J2SRef lhs (decl)
-	    (decl-usage-has? decl '(init)))))
+	    (and (decl-usage-has? decl '(init))
+		 (not (isa? decl J2SDeclClass))))))
    
    (with-access::J2SInit this (lhs rhs)
       (j2s-use lhs (if (already-init? lhs) 'assig 'init) deval infun)

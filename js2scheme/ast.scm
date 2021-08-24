@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Aug 21 15:44:15 2021 (serrano)                */
+;*    Last change :  Tue Aug 24 09:55:02 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -274,7 +274,8 @@
 	      (elements::pair-nil (info '("ast")))
 	      (constrsize::int (default 0) (info '("notraverse")))
 	      (cmap (default #f))
-	      (need-super-check::bool (default #f) (info '("notraverse"))))
+	      (need-super-check::bool (default #f) (info '("notraverse")))
+	      (need-dead-zone-check::bool (default #f) (info '("notraverse"))))
 
 	   (class J2SRecord::J2SClass)
 
@@ -1119,6 +1120,7 @@
 (gen-walks J2SCheck expr)
 (gen-walks J2SClass super (elements))
 (gen-walks J2SClassElement prop)
+(gen-walks J2SDataPropertyInit val)
 (gen-walks J2SDProducer expr)
 (gen-walks J2SDConsumer expr)
 (gen-walks J2SPragma (vals))

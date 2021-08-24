@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Mon Aug 23 11:39:20 2021 (serrano)                */
+;*    Last change :  Mon Aug 23 17:39:22 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -159,17 +159,22 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-class-new this::J2SNew clazz args mode return ctx)
 
-   (define (plain-class? clazz)
+   (define (plain-class? clazz decl)
       ;; a function is a plain class if it only inherits recursively
       ;; from other classes or from user defined functions
-      (let ((root (j2s-class-root-val clazz)))
-	 (or (isa? root J2SClass) (isa? root J2SFun))))
+      (when (and (isa? decl J2SDeclClass) (not (decl-usage-has? decl '(assig))))
+	 (let ((root (j2s-class-root-val clazz)))
+	    (or (isa? root J2SClass)
+		(isa? root J2SFun)
+		(with-access::J2SClass clazz (super)
+		   (or (isa? super J2SUndefined)
+		       (isa? super J2SNull)))))))
 		   
    (let ((obj (gensym 'this))
 	 (cla (gensym 'class))
 	 (res (gensym 'res)))
       (with-access::J2SClass clazz (decl)
-	 (if (plain-class? clazz)
+	 (if (plain-class? clazz decl)
 	     (with-access::J2SNew this (loc)
 		`(let* ((,cla ,(if decl
 				   (j2s-scheme (J2SRef decl) mode return ctx)
@@ -932,7 +937,10 @@
 		      (endloc endloc)
 		      (decls (list decl))
 		      (nodes (list (unthis idthis loc)
-				body))))))
+				(J2STry body
+				   ;; see test/hopjs/noserv/es6-class.js
+				   (J2SNop)
+				   (returnthis thisp loc))))))))
 	    ((symbol? super)
 	     body)
 	    (else

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Apr  9 10:19:29 2021 (serrano)                */
+;*    Last change :  Tue Aug 24 14:29:31 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -299,7 +299,7 @@
 		   (J2SSequence
 		      (J2SInit (J2SRef ndecl) rhs)
 		      (J2SAssig lhs (J2SRef ndecl)))))))))
-   
+
    (with-access::J2SAssig this (lhs rhs)
       (if (not (isa? lhs J2SAccess))
 	  (call-default-walker)

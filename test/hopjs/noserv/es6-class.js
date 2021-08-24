@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Sat Aug 21 07:03:58 2021 (serrano)                */
+/*    Last change :  Tue Aug 24 09:21:16 2021 (serrano)                */
 /*    Copyright   :  2017-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
@@ -392,6 +392,23 @@ function basicw() {
    return (new A(1).a + new B(4).a + new C(20).a + new C(10).b)=== 48;
 }
 
+function basicx() {
+   class AAAA {
+      constructor(a) { 
+      	 this.a = a;
+      }
+   }
+
+   AAAA = 4;
+   try {
+      const o = new AAAA();
+      return false;
+   } catch(e) {
+      console.log(e);
+      return AAAA === 4;
+   }
+}
+
 console.log( "basic" );
 console.log( "   basica()" ); assert.ok( basica(), "basica" );
 console.log( "   basicb()" ); assert.ok( basicb(), "basicb" );
@@ -416,6 +433,7 @@ console.log( "   basict()" ); assert.ok( basict(), "basict" );
 console.log( "   basicu()" ); assert.ok( basicu(), "basicu" );
 console.log( "   basicv()" ); assert.ok( basicv(), "basicv" );
 console.log( "   basicw()" ); assert.ok( basicw(), "basicw" );
+console.log( "   basicx()" ); assert.ok( basicx(), "basicx" );
 
 /*---------------------------------------------------------------------*/
 /*    misc                                                             */

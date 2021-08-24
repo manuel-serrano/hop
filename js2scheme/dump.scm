@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Aug 19 10:48:58 2021 (serrano)                */
+;*    Last change :  Tue Aug 24 13:21:29 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1209,16 +1209,18 @@
 ;*    j2s->list ::J2SClass ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SClass)
-   (with-access::J2SClass this (name super elements decl loc)
-      `(,(string->symbol (typeof this)) ,@(if name (list :name name) '())
-	  :super ,(j2s->list super)
-	  ,@(dump-loc loc)
-	  ,@(dump-type this)
-	  ,@(if (isa? decl J2SDecl)
-		(with-access::J2SDecl decl (key)
-		   (append (dump-key key) (dump-vtype decl)))
-		'())
-	  ,@(map j2s->list elements))))
+   (with-access::J2SClass this (name super elements decl loc need-dead-zone-check)
+      `(,(string->symbol (typeof this))
+	,@(if name (list :name name) '())
+	:super ,(j2s->list super)
+	:need-dead-zone-check ,need-dead-zone-check
+	,@(dump-loc loc)
+	,@(dump-type this)
+	,@(if (isa? decl J2SDecl)
+	      (with-access::J2SDecl decl (key)
+		 (append (dump-key key) (dump-vtype decl)))
+	      '())
+	,@(map j2s->list elements))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SClassElement ...                                  */

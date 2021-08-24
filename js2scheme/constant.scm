@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Aug 19 17:50:12 2021 (serrano)                */
+;*    Last change :  Tue Aug 24 16:47:59 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -127,15 +127,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    add-cmap! ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (add-cmap! loc keys env::struct)
+(define (add-cmap! loc keys env::struct sharing)
    (let* ((t (env-inits-table env))
 	  (k keys)
-	  (old (when (vector? keys) (hashtable-get t k))))
+	  (old (when sharing (hashtable-get t k))))
       ;; don't store empty cmap in the hash table in order to get
-      ;; separated cmap for all empty object create sites
+      ;; separated cmap for all empty object creation sites
       (or old
 	  (let ((n (env-cnt env)))
-	     (hashtable-put! t k n)
+	     (when sharing (hashtable-put! t k n))
 	     (env-cnt-set! env (+fx 1 n))
 	     (let ((cnst (instantiate::J2SCmap
 			    (type 'pair)
@@ -205,7 +205,7 @@
 	     ;; and j2sscheme/scheme-program.scm)
 	     this)
 	    ((null? keys)
-	     (let ((n (add-cmap! loc '#() env)))
+	     (let ((n (add-cmap! loc '#() env #f)))
 		(set! cmap
 		   (instantiate::J2SLiteralCnst
 		      (loc loc)
@@ -221,7 +221,7 @@
 			  (val this))))
 		 this))
 	    ((and (pair? keys) (every (lambda (x) x) keys))
-	     (let ((n (add-cmap! loc (list->vector keys) env)))
+	     (let ((n (add-cmap! loc (list->vector keys) env #t)))
 		(set! cmap
 		   (instantiate::J2SLiteralCnst
 		      (loc loc)
@@ -493,7 +493,7 @@
 				       (with-access::J2SString name (val)
 					  (string->symbol val))))
 			       (j2s-class-instance-properties this)))
-			 env)))
+			 env #f)))
 		(set! cmap
 		   (instantiate::J2SLiteralCnst
 		      (loc loc)

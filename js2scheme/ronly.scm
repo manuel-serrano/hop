@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Mon Dec 16 17:55:25 2019 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Last change :  Tue Aug 24 11:46:42 2021 (serrano)                */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
 ;*=====================================================================*/
@@ -60,7 +60,8 @@
 ;*---------------------------------------------------------------------*/
 (define (init-decls-ronly! decls)
    (for-each (lambda (d::J2SDecl)
-		(decl-usage-rem! d 'assig))
+		(decl-usage-rem! d 'assig)
+		(decl-usage-rem! d 'init))
       decls))
 
 ;*---------------------------------------------------------------------*/

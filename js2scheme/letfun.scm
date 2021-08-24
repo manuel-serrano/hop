@@ -1,12 +1,12 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/letfun.scm              */
+;*    serrano/prgm/project/hop/hop/js2scheme/letfun.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Fri May 21 09:09:01 2021 (serrano)                */
+;*    Last change :  Tue Aug 24 11:05:24 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Let function optimization. This optimizations implements         */
+;*    Let function optimization. This optimization implements          */
 ;*    two transformations: letfun! and letfun-sa! that replaces        */
 ;*    closure allocations with plain functions.                        */
 ;*=====================================================================*/
@@ -31,7 +31,7 @@
    (export j2s-letfun-stage))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-letun-stage ...                                              */
+;*    j2s-letfun-stage ...                                             */
 ;*---------------------------------------------------------------------*/
 (define j2s-letfun-stage
    (instantiate::J2SStageProc

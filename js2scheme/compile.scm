@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sun May  9 08:21:09 2021 (serrano)                */
+;*    Last change :  Tue Aug 24 11:09:04 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -47,6 +47,7 @@
 	   __js2scheme_vector
 	   __js2scheme_array
 	   __js2scheme_letfun
+	   __js2scheme_letclass
 	   __js2scheme_letfusion
 	   __js2scheme_letopt
 	   __js2scheme_unletrec
@@ -196,6 +197,7 @@
 	  j2s-unletrec-stage
 	  j2s-this-stage
 	  j2s-use-stage
+	  j2s-letclass-stage
 	  j2s-callapply-stage
 	  j2s-sweep-stage
 	  j2s-ronly-stage
@@ -575,6 +577,8 @@
 	    (set! o (cons* :optim-globvar #t o)))
 	 (unless (memq :optim-letfun o)
 	    (set! o (cons* :optim-letfun #t o)))
+	 (unless (memq :optim-letclass o)
+	    (set! o (cons* :optim-letclass #t o)))
 	 (unless (memq :optim-propcache o)
 	    (set! o (cons* :optim-propcache #t o)))
  	 (unless (memq :optim-sweep o)

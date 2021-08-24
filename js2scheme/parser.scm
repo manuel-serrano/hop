@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Aug  6 18:36:16 2021 (serrano)                */
+;*    Last change :  Tue Aug 24 14:51:05 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1810,7 +1810,7 @@
 		(loop rev-ses))
 	       (else
 		(loop
-		   (cons (class-element (not (isa? extends J2SUndefined)))
+		   (cons (class-element cname (not (isa? extends J2SUndefined)))
 		      rev-ses)))))))
 
    (define (record)
@@ -1861,17 +1861,27 @@
 		(loop rev-ses))
 	       (else
 		(loop
-		   (cons (class-element (not (isa? extends J2SUndefined)))
+		   (cons (class-element cname (not (isa? extends J2SUndefined)))
 		      rev-ses)))))))
 
-   (define (class-element super?)
+   (define (class-element cname super?)
       (if (peek-token-id? 'static)
 	  (begin
 	     (consume-token! 'ID)
-	     (class-method #t super?))
-	  (class-method #f super?)))
+	     (class-method #t cname super?))
+	  (class-method #f cname super?)))
 
-   (define (class-method static? super?)
+   (define (method-name name cname loc)
+      (let* ((met (if (isa? name J2SString)
+		      (with-access::J2SString name (val)
+			 val)
+		      "met"))
+	     (fun (if (symbol? cname)
+		      (format "~a.~a" cname met)
+		      met)))
+	 (loc->funname fun loc)))
+
+   (define (class-method static? cname super?)
       (let* ((loc (token-loc (peek-token)))
 	     (gen (when (eq? (peek-token-type) '*)
 		     (consume-any!) '*))
@@ -1911,7 +1921,7 @@
 				   (thisp (new-decl-this loc))
 				   (params params)
 				   (mode 'strict)
-				   (name (loc->funname "met" loc))
+				   (name (method-name name-or-get cname loc))
 				   (generator gen)
 				   (rutype ty)
 				   (body body)
@@ -1935,7 +1945,7 @@
 			       (thisp (new-decl-this loc))
 			       (params params)
 			       (mode 'strict)
-			       (name (loc->funname "met" loc))
+			       (name (method-name name-or-get cname loc))
 			       (generator gen)
 			       (rutype ty)
 			       (body body)
@@ -1963,7 +1973,7 @@
 				  (thisp (new-decl-this loc))
 				  (params params)
 				  (mode 'strict)
-				  (name (loc->funname "met" loc))
+				  (name (method-name name-or-get cname loc))
 				  (generator gen)
 				  (rutype ty)
 				  (body body)
