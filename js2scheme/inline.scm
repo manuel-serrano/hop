@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Aug 13 16:47:02 2021 (serrano)                */
+;*    Last change :  Wed Aug 25 08:43:59 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -36,7 +36,8 @@
 	   __js2scheme_alpha
 	   __js2scheme_use
 	   __js2scheme_node-size
-	   __js2scheme_freevars)
+	   __js2scheme_freevars
+	   __js2scheme_classutils)
 
    (static (class J2SMetaInl::J2SMeta
 	      (inlstack::pair-nil (info '("notraverse")))))
@@ -170,7 +171,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-inline-profile ...                                           */
 ;*    -------------------------------------------------------------    */
-;*    Pofile based inlining is as follows:                             */
+;*    Profile based inlining is as follows:                            */
 ;*      1- sort all calls by occurrence number                         */
 ;*      2- filter out call to large functions                          */
 ;*      3- filter out call to functions using free variables           */
@@ -720,6 +721,13 @@
 			'()))
 		 '()))
 	  '())))
+
+;*---------------------------------------------------------------------*/
+;*    collect-proto-methods* ::J2SClass ...                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-proto-methods* this::J2SClass)
+   (let ((methods (j2s-class-static-methods this)))
+      '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    ptable ...                                                       */
@@ -1284,7 +1292,7 @@
    (define (get-svar callee)
       (if (protoinfo-svar callee)
 	  (protoinfo-svar callee)
-	  (let ((fun (gensym '%met)))
+	  (let ((fun (gensym '%inlmet)))
 	     (protoinfo-svar-set! callee fun)
 	     (with-access::J2SProgram prgm (globals)
 		(set! globals (cons `(define ,fun #unspecified) globals))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Tue Aug 24 09:21:16 2021 (serrano)                */
+/*    Last change :  Wed Aug 25 10:22:05 2021 (serrano)                */
 /*    Copyright   :  2017-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
@@ -404,7 +404,6 @@ function basicx() {
       const o = new AAAA();
       return false;
    } catch(e) {
-      console.log(e);
       return AAAA === 4;
    }
 }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Mon Aug 23 17:39:22 2021 (serrano)                */
+;*    Last change :  Wed Aug 25 09:42:11 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -430,7 +430,7 @@
 		      (make-class this %super
 			 (class->lambda this arity loc)
 			 (init->lambda this init arity)
-			 arity arity
+			 `(js-function-arity ,arity 0) arity
 			 src loc)))
 		  (%super
 		   (let ((init (j2s-class-find-initializer this)))
@@ -444,17 +444,17 @@
 				       (super-ctor->lambda this superctor mode return ctx)
 				       `(with-access::JsFunction ,%super (arity) arity)
 				       arity src loc))
-				 (let* ((superval (j2s-class-super-val this))
-					(superinit (j2s-class-find-initializer superval)))
+				 (let ((superval (j2s-class-super-val this)))
 				    (if (isa? superval J2SClass)
-					(make-class this %super
-					   (class->lambda this 0 loc)
-					   (super-ctor->lambda this superinit mode return ctx)
-					   `(with-access::JsFunction ,%super (arity) arity)
-					   0 src loc)
+					(let ((superinit (j2s-class-find-initializer superval)))
+					   (make-class this %super
+					      (class->lambda this 0 loc)
+					      (super-ctor->lambda this superinit mode return ctx)
+					      `(with-access::JsFunction ,%super (arity) arity)
+					      0 src loc))
 					(make-class this %super
 					   (class-unknown-super->lambda this loc)
-					   (super-ctor->lambda this superinit mode return ctx)
+					   (super-ctor->lambda this #f mode return ctx)
 					   `(with-access::JsFunction ,%super (arity) arity)
 					   0 src loc))))))
 			 ((isa? init J2SClassElement)
@@ -463,14 +463,14 @@
 				(class->lambda this arity loc)
 				(super-ctor->lambda this init mode return ctx)
 				`(with-access::JsFunction ,%super (arity) arity)
-				arity src loc)))
+				`(js-function-arity ,arity 0) src loc)))
 			 ((isa? init J2SFun)
 			  (let ((arity (ctor-arity init)))
 			     (make-class this %super
 				(class->lambda this arity loc)
 				(super-ctor->lambda this init mode return ctx)
 				`(with-access::JsFunction ,%super (arity) arity)
-				arity src loc)))
+				`(js-function-arity ,arity 0) src loc)))
 			 (init
 			  (make-class this %super
 			     (class-unknown-super->lambda this loc)
@@ -497,7 +497,7 @@
 			  ,@(j2s-scheme-init-instance-properties
 			       this mode return ctx)
 			  this)
-		      1 0 src loc))))))))
+		      `(js-function-arity 0 0) 0 src loc))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-class-property ...                                          */
@@ -918,47 +918,48 @@
 	    (with-access::J2SDecl decl (_scmid)
 	       (set! _scmid '!this))
 	    decl)))
-   
-   (with-access::J2SFun ctor (body idthis loc thisp params loc new-target)
-      (with-access::J2SBlock body (loc endloc nodes)
-	 (cond
-	    ((and (symbol? super) (need-super-check? ctor))
-	     (with-access::J2SClass clazz (need-super-check)
-		(set! need-super-check #t))
-	     (when (> (bigloo-warning) 1)
-		(warning/loc loc "Forced super check in constructor"))
-	     (let ((decl (this-for-super-decl thisp)))
-		;; for dead-zone check
-		(decl-usage-add! thisp 'uninit)
+
+   (let ((dup (duplicate::J2SFun ctor)))
+      (with-access::J2SFun dup (body idthis loc thisp params loc new-target)
+	 (with-access::J2SBlock body (loc endloc nodes)
+	    (cond
+	       ((and (symbol? super) (need-super-check? dup))
+		(with-access::J2SClass clazz (need-super-check)
+		   (set! need-super-check #t))
+		(when (> (bigloo-warning) 1)
+		   (warning/loc loc "Forced super check in constructor"))
+		(let ((decl (this-for-super-decl thisp)))
+		   ;; for dead-zone check
+		   (decl-usage-add! thisp 'uninit)
+		   (set! body
+		      (instantiate::J2SLetBlock
+			 (loc loc)
+			 (rec #f)
+			 (endloc endloc)
+			 (decls (list decl))
+			 (nodes (list (unthis idthis loc)
+				   (J2STry body
+				      ;; see test/hopjs/noserv/es6-class.js
+				      (J2SNop)
+				      (returnthis thisp loc))))))))
+	       ((symbol? super)
+		body)
+	       (else
+		;; no super class initializes the instance properties first
 		(set! body
-		   (instantiate::J2SLetBlock
-		      (loc loc)
-		      (rec #f)
-		      (endloc endloc)
-		      (decls (list decl))
-		      (nodes (list (unthis idthis loc)
-				(J2STry body
-				   ;; see test/hopjs/noserv/es6-class.js
-				   (J2SNop)
-				   (returnthis thisp loc))))))))
-	    ((symbol? super)
-	     body)
-	    (else
-	     ;; no super class initializes the instance properties first
-	     (set! body
-		(J2SBlock
-		   (J2SStmtExpr
-		      (J2SPragma
-			 `(begin
-			     ,@(j2s-scheme-init-instance-properties
-				  clazz mode return ctx))))
-		   body)))))
-      
-      (when (class-new-target? clazz)
-	 (set! new-target 'argument)
-	 (set! params (cons (new-target-param loc) params))))
+		   (J2SBlock
+		      (J2SStmtExpr
+			 (J2SPragma
+			    `(begin
+				,@(j2s-scheme-init-instance-properties
+				     clazz mode return ctx))))
+		      body)))))
+	 
+	 (when (class-new-target? clazz)
+	    (set! new-target 'argument)
+	    (set! params (cons (new-target-param loc) params))))
    
-   (jsfun->lambda ctor mode return ctx #f #t))
+      (jsfun->lambda dup mode return ctx #f #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    super-ctor->lambda ...                                           */

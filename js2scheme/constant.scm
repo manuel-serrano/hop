@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Aug 24 16:47:59 2021 (serrano)                */
+;*    Last change :  Wed Aug 25 10:18:15 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -481,7 +481,7 @@
 ;*    constant! ::J2SClass ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constant! this::J2SClass env nesting conf)
-   (with-access::J2SClass this (super cmap loc)
+   (with-access::J2SClass this (super cmap loc constrsize)
       (unless cmap
 	 (call-default-walker)
 	 (cond
@@ -505,5 +505,8 @@
 		(constant! super env nesting conf)
 		(when (isa? super J2SClass)
 		   (with-access::J2SClass super ((supercmap cmap))
-		      (set! cmap supercmap))))))))
+		      (set! cmap supercmap))))))
+	 (when (isa? cmap J2SCmap)
+	    (with-access::J2SCmap cmap (val)
+	       (set! constrsize (length val))))))
    this)
