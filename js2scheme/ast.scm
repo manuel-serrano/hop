@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Aug 24 09:55:02 2021 (serrano)                */
+;*    Last change :  Wed Aug 25 08:40:31 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -1120,7 +1120,6 @@
 (gen-walks J2SCheck expr)
 (gen-walks J2SClass super (elements))
 (gen-walks J2SClassElement prop)
-(gen-walks J2SDataPropertyInit val)
 (gen-walks J2SDProducer expr)
 (gen-walks J2SDConsumer expr)
 (gen-walks J2SPragma (vals))
