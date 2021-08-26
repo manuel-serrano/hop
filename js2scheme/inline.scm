@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Aug 25 08:43:59 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 07:43:39 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -432,25 +432,54 @@
 ;*    j2s-inline-noprofile ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (j2s-inline-noprofile this::J2SProgram conf)
+
+   (define (verbose pms)
+      (when (string-contains (or (getenv "HOPTRACE") "") "j2s:inline")
+	 (with-output-to-port (current-error-port)
+	    (lambda ()
+	       (print "\n      proto methods:")
+	       (hashtable-for-each pms
+		  (lambda (k b)
+		     (let ((first #t))
+			(for-each (lambda (p)
+				     (when (protoinfo-svar p)
+					(when (isa? (protoinfo-assig p) J2SAssig)
+					   (when first
+					      (set! first #f)
+					      (print "        " k ": "))
+					   (with-access::J2SNode (protoinfo-assig p) (loc)
+					      (print "         " (cadr loc)
+						 ":" (caddr loc) " size="
+						 (node-size (protoinfo-method p)))))))
+			   b))))
+	       (print "\n      class proto methods:")
+	       (hashtable-for-each pms
+		  (lambda (k b)
+		     (let ((first #t))
+			(for-each (lambda (p)
+				     (when (protoinfo-svar p)
+					(when (isa? (protoinfo-assig p) J2SMethodPropertyInit)
+					   (when first
+					      (set! first #f)
+					      (print "        " k ": "))
+					   (with-access::J2SNode (protoinfo-assig p) (loc)
+					      (print "         " (cadr loc)
+						 ":" (caddr loc) " size="
+						 (node-size (protoinfo-method p)))))))
+			   b))))))))
+   
    (with-access::J2SProgram this (decls nodes)
       ;; count and mark all the calls
       (j2s-count-calls! this conf)
       ;; mark all the function sizes
       (let ((size (node-size this))
-	    (pms (ptable (append-map collect-proto-methods* nodes))))
-	 (when (string-contains (or (getenv "HOPTRACE") "") "j2s:inline")
-	    (with-output-to-port (current-error-port)
-	       (lambda ()
-		  (print "\n      proto methods:")
-		  (hashtable-for-each pms
-		     (lambda (k b)
-			(print "       " k ": ")
-			(for-each (lambda (p)
-				     (with-access::J2SAssig (protoinfo-assig p) (loc)
-					(print "         " (cadr loc)
-					   ":" (caddr loc) " size="
-					   (node-size (protoinfo-method p)))))
-			   b))))))
+	    (pms (ptable
+		    (append
+		       (append-map collect-proto-methods* nodes)
+		       (if (config-get conf :optim-inline-class-method)
+			   (append-map collect-proto-methods* decls)
+			   '())))))
+	 
 	 (let liip ((leaf #f))
 	    (let loop ((limit 20))
 	       (inline! this #f leaf limit '() pms #f this conf)
@@ -459,7 +488,8 @@
 			     (< nsize (* size inline-global-expansion)))
 		     (loop (+fx limit 5)))))
 	    (unless leaf
-	       (liip #t))))
+	       (liip #t)))
+	 (verbose pms))
       (j2s-inline-profile-cleanup! this conf)))
 
 ;*---------------------------------------------------------------------*/
@@ -725,9 +755,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    collect-proto-methods* ::J2SClass ...                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-proto-methods* this::J2SClass)
-   (let ((methods (j2s-class-static-methods this)))
-      '()))
+(define-walk-method (collect-proto-methods* this::J2SDeclClass)
+   (with-access::J2SDeclClass this (val)
+      (if (isa? val J2SClass)
+	  (filter-map (lambda (p)
+			 (when (isa? p J2SMethodPropertyInit)
+			    (with-access::J2SMethodPropertyInit p (name (met val))
+			       (with-access::J2SString name (val)
+				  (when (check-id (string->symbol val))
+				     (cons val (protoinfo p met #f)))))))
+	     (j2s-class-methods val))
+	  '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    ptable ...                                                       */
@@ -826,7 +864,8 @@
    (define (find-inline-methods this fun arity)
       (with-access::J2SAccess fun (obj field)
 	 (when (and (isa? field J2SString)
-		    (config-get conf :optim-inline-method #f))
+		    (config-get conf :optim-inline-method #f)
+		    (not (isa? obj J2SSuper)))
 	    (with-access::J2SString field (val)
 	       (let* ((mets (filter (lambda (m::struct)
 				       (let ((f (protoinfo-method m)))
@@ -867,7 +906,8 @@
 		     (inline-stmt->expr loc
 			(inline! e
 			   '() leaf 0 (append vals stack) pmethods ingen prgm conf)
-			(function-rutype (car mets)))))))))
+			(function-rutype
+			   (protoinfo-method (car mets))))))))))
    
    (define (inline-ref-call this::J2SCall fun::J2SRef thisarg args loc)
       (cond
@@ -1296,11 +1336,19 @@
 	     (protoinfo-svar-set! callee fun)
 	     (with-access::J2SProgram prgm (globals)
 		(set! globals (cons `(define ,fun #unspecified) globals))
-		(with-access::J2SAssig (protoinfo-assig callee) (rhs loc)
-		   (set! rhs
-		      (J2SSequence
-			 (J2SAssig (J2SHopRef fun) rhs)
-			 (J2SHopRef fun)))))
+		(let ((as (protoinfo-assig callee)))
+		   (cond
+		      ((isa? as J2SAssig)
+		       (with-access::J2SAssig as (rhs loc)
+			  (set! rhs
+			     (J2SSequence
+				(J2SAssig (J2SHopRef fun) rhs)
+				(J2SHopRef fun)))))
+		      ((isa? as J2SMethodPropertyInit)
+		       (with-access::J2SMethodPropertyInit as (inlinecachevar)
+			  (set! inlinecachevar fun)))
+		      (else
+		       (error "inline-method-call" "bad protoinfo" callee)))))
 	     fun)))
 
    (define (inline-method-args args)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Wed Aug 25 09:42:11 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 08:40:35 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -221,11 +221,19 @@
 (define (j2s-scheme-bind-class-method prop obj mode return ctx)
    (cond
       ((isa? prop J2SMethodPropertyInit)
-       (with-access::J2SMethodPropertyInit prop (name val)
-	  `(js-bind! %this ,obj
-	      ,(j2s-scheme-class-propname name mode return ctx)
-	      :value ,(j2s-scheme val mode return ctx)
-	      :writable #t :enumerable #f :configurable #t)))
+       (with-access::J2SMethodPropertyInit prop (name val inlinecachevar)
+	  (let ((name (j2s-scheme-class-propname name mode return ctx))
+		(val (j2s-scheme val mode return ctx)))
+	     (if inlinecachevar
+		 ;; assign the global variable used on inline call method sites
+		 `(begin
+		     (set! ,inlinecachevar ,val)
+		     (js-bind! %this ,obj ,name
+			 :value ,inlinecachevar
+			 :writable #t :enumerable #f :configurable #t))
+		 `(js-bind! %this ,obj ,name
+		     :value ,val
+		     :writable #t :enumerable #f :configurable #t)))))
       ((isa? prop J2SDataPropertyInit)
        (with-access::J2SDataPropertyInit prop (name val)
 	  `(js-bind! %this ,obj

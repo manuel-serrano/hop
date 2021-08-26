@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Aug 20 16:20:58 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 08:26:58 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1790,19 +1790,11 @@
 (define-walk-method (node-type this::J2SKont env::pair-nil ctx::pair)
    (with-access::J2SKont this (body exn param)
       (with-access::J2SDecl param (%info itype)
-	 (cond
-	    ;; MS CARE UTYPE
-;* 	    ((not (eq? utype 'unknown))                                */
-;* 	     (decl-vtype-add! param utype ctx))                        */
-	    ((not (eq? itype 'unknown))
-	     (decl-vtype-add! param itype ctx))))
+	 (unless (eq? itype 'unknown)
+	    (decl-vtype-add! param itype ctx)))
       (with-access::J2SDecl exn (%info itype)
-	 (cond
-	    ;; MS CARE UTYPE
-;* 	    ((not (eq? utype 'unknown))                                */
-;* 	     (decl-vtype-add! exn utype ctx))                          */
-	    ((not (eq? itype 'unknown))
-	     (decl-vtype-add! exn itype ctx))))
+	 (unless (eq? itype 'unknown)
+	    (decl-vtype-add! exn itype ctx)))
       (node-type body env ctx)
       (expr-type-add! this env ctx 'procedure)))
 
@@ -2250,7 +2242,9 @@
       (cond
 	 ((eq? typ tyr) #t)
 	 ((and (eq? typ 'integer) (memq tyr '(number integer))) #unspecified)
-	 (else #f)))
+	 ((type-subtype? typ tyr) #t)
+	 ((not (type-maybe-subtype? typ tyr)) #f)
+	 (else #unspecified)))
    
    (with-access::J2SCall this (loc)
       (multiple-value-bind (op decl typ ref)

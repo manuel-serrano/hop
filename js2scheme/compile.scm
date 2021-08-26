@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Tue Aug 24 11:09:04 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 08:49:41 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -505,6 +505,8 @@
 	    (set! o (cons* :optim-integer #t o)))
 	 (unless (memq :optim-inline-method o)
 	    (set! o (cons* :optim-inline-method #t o)))
+	 (unless (memq :optim-inline-class-method o)
+	    (set! o (cons* :optim-inline-class-method #t o)))
 	 (unless (memq :optim-globprop o)
 	    (set! o (cons* :optim-globprop #t o)))
 	 (unless (memq :optim-cse o)

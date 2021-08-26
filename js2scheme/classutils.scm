@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Wed Aug 25 09:00:41 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 07:58:22 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -28,7 +28,8 @@
 	   
 	   (j2s-class-instance-properties ::J2SClass #!key (super #t))
 	   (j2s-class-instance-get-property ::J2SClass ::bstring)
-	   (j2s-class-static-methods ::J2SClass)
+	   (j2s-class-static-methods::pair-nil ::J2SClass)
+	   (j2s-class-methods::pair-nil ::J2SClass)
 	   
 	   (j2s-class-get-property ::J2SClass ::bstring)
 	   (j2s-class-get-constructor ::J2SClass)
@@ -129,7 +130,18 @@
 		     (with-access::J2SClassElement el (prop static)
 			(when (and static (isa? prop J2SMethodPropertyInit))
 			   prop)))
-	 clazz)))
+	 elements)))
+   
+;*---------------------------------------------------------------------*/
+;*    j2s-class-methods ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-class-methods clazz)
+   (with-access::J2SClass clazz (elements)
+      (filter-map (lambda (el)
+		     (with-access::J2SClassElement el (prop static)
+			(when (and (not static) (isa? prop J2SMethodPropertyInit))
+			   prop)))
+	 elements)))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-class-get ...                                                */

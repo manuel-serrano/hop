@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Aug 25 08:40:31 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 08:35:22 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -464,7 +464,8 @@
 	      (val::J2SExpr (info '("ast")))
 	      (cache (default #f) (info '("nojson" "notraverse"))))
 	   
-	   (final-class J2SMethodPropertyInit::J2SDataPropertyInit)
+	   (final-class J2SMethodPropertyInit::J2SDataPropertyInit
+	      (inlinecachevar (default #f)))
 	   
 	   (final-class J2SAccessorPropertyInit::J2SPropertyInit
 	      (get::obj (default #f) (info '("ast")))

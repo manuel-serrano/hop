@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Aug  6 09:30:55 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 08:54:10 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -796,7 +796,7 @@
 				 (not (isa? val J2SSvc)) " "
 				 (map (lambda (p)
 					 (with-access::J2SDecl p (vtype itype)
-					    (cons vtype itype)))
+					    (cons (type->sexp vtype) (type->sexp itype))))
 				    params) " " 
 				 (not (type-checker? val))
 				 "]"))))
