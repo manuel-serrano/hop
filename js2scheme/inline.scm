@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Aug 26 07:43:39 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 10:02:22 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -1144,11 +1144,19 @@
 	     (protoinfo-svar-set! callee fun)
 	     (with-access::J2SProgram prgm (globals)
 		(set! globals (cons `(define ,fun #unspecified) globals))
-		(with-access::J2SAssig (protoinfo-assig callee) (rhs loc)
-		   (set! rhs
-		      (J2SSequence
-			 (J2SAssig (J2SHopRef fun) rhs)
-			 (J2SHopRef fun)))))
+		(let ((as (protoinfo-assig callee)))
+		   (cond
+		      ((isa? as J2SAssig)
+		       (with-access::J2SAssig as (rhs loc)
+			  (set! rhs
+			     (J2SSequence
+				(J2SAssig (J2SHopRef fun) rhs)
+				(J2SHopRef fun)))))
+		      ((isa? as J2SMethodPropertyInit)
+		       (with-access::J2SMethodPropertyInit as (inlinecachevar)
+			  (set! inlinecachevar fun)))
+		      (else
+		       (error "inline-method-call" "bad protoinfo" callee)))))
 	     fun)))
    
    (define (inline-method-args args)

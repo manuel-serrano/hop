@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Tue Aug 24 11:46:42 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 10:08:30 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -113,15 +113,19 @@
 	 (decl-usage-add! decl 'assig)))
    
    (with-access::J2SAssig this (lhs rhs loc)
-      (cond
-	 ((isa? lhs J2SRef)
-	  (with-access::J2SRef lhs (decl)
-	     (assig decl loc)))
-	 ((isa? lhs J2SGlobalRef)
-	  (with-access::J2SGlobalRef lhs (decl)
-	     (assig decl loc)))
-	 (else
-	  (ronly! lhs mode deval)))
+      (let loop ((lhs lhs))
+	 (cond
+	    ((isa? lhs J2SRef)
+	     (with-access::J2SRef lhs (decl)
+		(assig decl loc)))
+	    ((isa? lhs J2SGlobalRef)
+	     (with-access::J2SGlobalRef lhs (decl)
+		(assig decl loc)))
+	    ((isa? lhs J2SParen)
+	     (with-access::J2SParen lhs (expr)
+		(loop expr)))
+	    (else
+	     (ronly! lhs mode deval))))
       (ronly! rhs mode deval))
    this)
 
