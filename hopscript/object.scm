@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Aug 26 15:05:25 2021 (serrano)                */
+;*    Last change :  Fri Aug 27 16:11:37 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -103,13 +103,13 @@
 ;*    object-print ::JsObject ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (object-print obj::JsObject op proc)
-   (with-access::JsObject obj (elements)
-      (display "#<JsObject " op)
-      (display (vector-length elements) op)
-      (cond
-	 ((js-object-mapped? obj) (display " mapped>" op))
-	 ((js-object-hashed? obj) (display " hashed>" op))
-	 (else (display ">" op)))))
+   (display "#<JsObject " op)
+   (display (js-object-length obj) op)
+   (display " " op)
+   (cond
+      ((js-object-mapped? obj) (display " mapped>" op))
+      ((js-object-hashed? obj) (display " hashed>" op))
+      (else (display ">" op))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-extensible? ...                                               */
@@ -157,19 +157,18 @@
 (define-method (js-donate obj::JsObject worker::WorkerHopThread %_this)
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-object js-initial-cmap)
-	 (with-access::JsObject obj (elements)
-	    (let ((nobj (duplicate::JsObject obj
-			   (cmap js-initial-cmap)
-			   (elements (make-vector (vector-length elements))))))
-	       (js-object-proto-set! nobj (js-get js-object (& "prototype") %this))
-	       (js-object-mode-set! nobj (js-object-mode obj))
-	       (js-for-in obj
-		  (lambda (k %this)
-		     (js-put! nobj (js-donate k worker %_this)
-			(js-donate (js-get/name-cache obj k %_this) worker %_this)
-			#f %this))
-		  %this)
-	       nobj)))))
+	 (let ((nobj (duplicate::JsObject obj
+			(cmap js-initial-cmap)
+			(elements (make-vector (js-object-length obj))))))
+	    (js-object-proto-set! nobj (js-get js-object (& "prototype") %this))
+	    (js-object-mode-set! nobj (js-object-mode obj))
+	    (js-for-in obj
+	       (lambda (k %this)
+		  (js-put! nobj (js-donate k worker %_this)
+		     (js-donate (js-get/name-cache obj k %_this) worker %_this)
+		     #f %this))
+	       %this)
+	    nobj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsObject ...                               */
@@ -207,8 +206,7 @@
 ;*    js-donate ::JsGlobalObject ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (js-donate obj::JsGlobalObject worker %_this)
-   (with-access::JsGlobalObject obj (elements)
-      (js-new-global-object :size (vector-length elements) :name "donate")))
+   (js-new-global-object :size (js-object-length obj) :name "donate"))
 
 ;*---------------------------------------------------------------------*/
 ;*    scheme->response ::JsObject ...                                  */
@@ -719,7 +717,7 @@
 	 (if (not (or (eq? o (js-null)) (js-object? o)))
 	     (js-raise-type-error %this "create: bad object ~s" o)
 	     (let ((obj (js-new0 %this js-object)))
-		(with-access::JsObject obj (elements)
+		(begin
 		   (js-object-proto-set! obj o)
 		   (unless (eq? properties (js-undefined))
 		      (object-defineproperties %this this obj properties)))
@@ -1200,11 +1198,10 @@
 	       (loop (+fx i 1))))))
    
    (define (enumerable-mapped-property? obj i)
-      (with-access::JsObject obj (elements)
-	 (let ((el (vector-ref elements i)))
-	    (if (isa? el JsPropertyDescriptor)
-		(with-access::JsPropertyDescriptor el (enumerable) enumerable)
-		#t))))
+      (let ((el (js-object-ref obj i)))
+	 (if (isa? el JsPropertyDescriptor)
+	     (with-access::JsPropertyDescriptor el (enumerable) enumerable)
+	     #t)))
    
    (define (define-own-property obj name prop properties)
       (let* ((descobj (cond
@@ -1218,14 +1215,13 @@
 	 (js-define-own-property obj name desc #t %this)))
    
    (define (defineproperties/cmap cmap obj properties)
-      (with-access::JsObject properties (elements)
-	 (with-access::JsConstructMap cmap (props)
-	    (vfor-each
-	       (lambda (d::struct i)
-		  (when (flags-enumerable? (prop-flags d))
-		     (let ((prop (vector-ref elements i)))
-			(define-own-property obj (prop-name d) prop properties))))
-	       props))))
+      (with-access::JsConstructMap cmap (props)
+	 (vfor-each
+	    (lambda (d::struct i)
+	       (when (flags-enumerable? (prop-flags d))
+		  (let ((prop (js-object-ref properties i)))
+		     (define-own-property obj (prop-name d) prop properties))))
+	    props)))
    
    (define (defineproperties/hash oprops obj properties)
       (hashtable-for-each oprops

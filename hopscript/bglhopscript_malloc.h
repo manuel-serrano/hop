@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  1 13:46:07 2017                          */
-/*    Last change :  Thu Aug 26 13:06:12 2021 (serrano)                */
+/*    Last change :  Fri Aug 27 14:34:51 2021 (serrano)                */
 /*    Copyright   :  2017-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    bglhopscript allocation                                          */
@@ -57,10 +57,10 @@ bgl_gc_bump_malloc( long sz ) {
   (obj_t)(&(((BgL_jsobjectz00_bglt)COBJECT(_o))->BgL_elementsz00) + 1)
 
 /*---------------------------------------------------------------------*/
-/*    HOP_JSOBJECT_ELEMENTS_LENGTH                                     */
+/*    HOP_JSOBJECT_INLINE_ELEMENTS ...                                 */
 /*---------------------------------------------------------------------*/
-#define HOP_JSOBJECT_ELEMENTS_LENGTH( _o ) \
-   VECTOR_LENGTH( BVECTOR((obj_t)(&(((BgL_jsobjectz00_bglt)COBJECT(_o))->BgL_elementsz00) + 1)) )
+#define HOP_JSOBJECT_INLINE_ELEMENTS(_o) \
+   BVECTOR((obj_t)(&(((BgL_jsobjectz00_bglt)COBJECT(_o))->BgL_elementsz00) + 1))
 
 /*---------------------------------------------------------------------*/
 /*    HOP_JSARRAY_VECTOR_INLINEP                                       */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Thu Aug 26 15:22:02 2021 (serrano)                */
+;*    Last change :  Fri Aug 27 18:48:42 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -113,10 +113,12 @@
 	    (elements ($create-vector 4))))
       
       (define js-genfun-proto
-	 (instantiateJsObject
-	    (cmap (js-make-jsconstructmap))
-	    (__proto__ js-function-prototype)
-	    (elements ($create-vector 2))))
+	 (let ((v ($create-vector 2)))
+	    ;; force a non-inline allocation for vector
+	    (instantiateJsObject
+	       (cmap (js-make-jsconstructmap))
+	       (__proto__ js-function-prototype)
+	       (elements v))))
       
       (define (js-generator-done)
 	 (instantiateJsObject

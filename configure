@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Aug 27 11:29:56 2021 (serrano)                */
+#*    Last change :  Fri Aug 27 13:56:22 2021 (serrano)                */
 #*    Copyright   :  2004-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -323,7 +323,29 @@ while : ; do
       bhopcflags=-g;
       ccflagsdebug=-g;
       hflags="$hflags -g";
+      bcflags="$bcflags $bcflagsdbg -Wall -Wno-slot -srfi devel -srfi debug";;
+
+    --debug-inline)
+      devmode="debug-inline";
+      debug=yes;
+      bcflagsrts=-g;
+      bcflagsmodules=-g;
+      bscm2jsflags=-g;
+      bhopcflags=-g;
+      ccflagsdebug=-g;
+      hflags="$hflags -g";
       bcflags="$bcflags $bcflagsdbg -Wall -Wno-slot -srfi devel -srfi debug -srfi disable-inline";;
+
+    --debug-cache)
+      devmode="debug-cache";
+      debug=yes;
+      bcflagsrts=-g;
+      bcflagsmodules=-g;
+      bscm2jsflags=-g;
+      bhopcflags=-g;
+      ccflagsdebug=-g;
+      hflags="$hflags -g";
+      bcflags="$bcflags $bcflagsdbg -Wall -Wno-slot -srfi devel -srfi debug -srfi disable-cache";;
 
     --debug2)
       devmode="debug2";
@@ -1633,6 +1655,8 @@ echo ";* Automatically generated file (don't edit) */" > $init
 cat etc/hopscript.init.in \
     | sed -e "s|@VERSION@|$version|" \
           -e "s|@BRANCH@|$branch|" \
+          -e "s|@LIBPATH@|$libdir/hop/$version|" \
+          -e "s|@BUILDDIR@|$PWD|" \
     >> $init
 echo "" >> $init
 

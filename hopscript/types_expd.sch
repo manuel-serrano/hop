@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Thu Aug 26 15:09:48 2021 (serrano)                */
+;*    Last change :  Fri Aug 27 14:30:28 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -24,7 +24,8 @@
 	     (define builtins
 		'((mode ,(if (pair? (cddr x))
 			     (caddr x)
-			     '(js-object-default-mode)))
+			     '(bit-andu32 (js-object-default-mode)
+			       (bit-notu32 (JS-OBJECT-MODE-INLINE)))))
 		  (__proto__ ,(if (pair? (cddr x))
 				  (caddr x)
 				  '(js-null)))))
@@ -86,8 +87,7 @@
 				      ,(length elements)
 				      ,cmap
 				      ,__proto__))
-			       (,vec (with-access::JsObject ,obj (elements)
-					elements)))
+			       (,vec (js-object-alloc-elements ,obj)))
 			   ,@(map (lambda (el idx)
 				     `(vector-set! ,vec ,idx ,el))
 				elements (iota (length elements)))
@@ -107,8 +107,7 @@
 				      ,ctorsize
 				      ,cmap
 				      ,__proto__))
-			       (,vec (with-access::JsObject ,obj (elements)
-					elements)))
+			       (,vec (js-object-alloc-elements ,obj)))
 			   ,@(map (lambda (el idx)
 				     `(vector-set! ,vec ,idx ,el))
 				elements (iota (length elements)))
@@ -128,8 +127,7 @@
 				      ,n
 				      ,cmap
 				      ,__proto__))
-			       (,vec (with-access::JsObject ,obj (elements)
-					elements)))
+			       (,vec (js-object-alloc-elements ,obj)))
 			   ,@(map (lambda (idx)
 				     `(vector-set! ,vec ,idx (js-undefined)))
 				(iota n))
@@ -149,8 +147,7 @@
 				      ,n
 				      ,cmap
 				      ,__proto__))
-			       (,vec (with-access::JsObject ,obj (elements)
-					elements)))
+			       (,vec (js-object-alloc-elements ,obj)))
 			   (vector-fill! ,vec (js-undefined))
 			   ,obj)
 		       e)))
@@ -170,8 +167,7 @@
 				      ,cmap
 				      ,__proto__))
 			       (,val ,init)
-			       (,vec (with-access::JsObject ,obj (elements)
-					elements)))
+			       (,vec (js-object-alloc-elements ,obj)))
 			   ,@(map (lambda (idx)
 				     `(vector-set! ,vec ,idx ,val))
 				(iota n))
@@ -215,13 +211,11 @@
 					(cons 'instantiate::JsObject
 					   (append (if (assq 'cmap (cdr x))
 						       '()
-						       ;; MS WARNING: inline shold be #f, left #t just for debugging
 						       '((cmap (js-make-jsconstructmap))))
 					      (filter (lambda (f)
 							 (not (builtin? f)))
 						 (cdr x))))))
 			       (cons* 'begin
-				  `(js-object-mode-set! ,nobj (js-object-default-mode))
 				  `(%object-widening-set! ,nobj '())
 				  (map (lambda (f)
 					  (let ((c (assq (car f) (cdr x)))
@@ -232,6 +226,7 @@
 						 (list set nobj (cadr c))
 						 (list set nobj (cadr f)))))
 				     builtins))
+			       `(js-object-mode-inline-set! ,nobj #f)
 			       nobj)))
 		    (e nx e))))))
       
@@ -270,7 +265,7 @@
 			    ,(length elements)
 			    ,cmap
 			    ,__proto__))
-		     (,vec (with-access::JsObject ,obj (elements) elements)))
+		     (,vec (js-object-alloc-elements ,obj)))
 		 ,@(map (lambda (el idx)
 			   `(vector-set! ,vec ,idx ,el))
 		      elements (iota (length elements)))

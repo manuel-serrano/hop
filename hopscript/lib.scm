@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Aug 26 15:11:18 2021 (serrano)                */
+;*    Last change :  Fri Aug 27 14:20:52 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -103,25 +103,24 @@
 	     (vals (vector-ref el 2))
 	     (obj (js-make-jsobject (vector-length vals)
 		     cmap (js-object-proto %this))))
-	 (with-access::JsObject obj (elements)
-	    (let loop ((i (-fx (vector-length vals) 1)))
-	       (if (<fx i 0)
-		   obj
-		   (let ((prop (vector-ref vals i)))
-		      (vector-set! elements i
-			 (case (vector-ref prop 0)
-			    ((0)
-			     (vector-ref cnsts (vector-ref prop 1)))
-			    ((1)
-			     (vector-ref prop 1))
-			    ((2)
-			     (js-ascii->jsstring (vector-ref prop 1)))
-			    ((3)
-			     (js-utf8->jsstring/ulen (vector-ref prop 1)
-				(fixnum->uint32 (vector-ref prop 2))))
-			    (else
-			     (error "constant-objinit" "Illegal prop" prop))))
-		      (loop (-fx i 1))))))))
+	 (let loop ((i (-fx (vector-length vals) 1)))
+	    (if (<fx i 0)
+		obj
+		(let ((prop (vector-ref vals i)))
+		   (js-object-set! obj i
+		      (case (vector-ref prop 0)
+			 ((0)
+			  (vector-ref cnsts (vector-ref prop 1)))
+			 ((1)
+			  (vector-ref prop 1))
+			 ((2)
+			  (js-ascii->jsstring (vector-ref prop 1)))
+			 ((3)
+			  (js-utf8->jsstring/ulen (vector-ref prop 1)
+			     (fixnum->uint32 (vector-ref prop 2))))
+			 (else
+			  (error "constant-objinit" "Illegal prop" prop))))
+		   (loop (-fx i 1)))))))
 
    (let ((cnsts (if (string? str-or-vec) (string->obj str-or-vec) str-or-vec)))
       (let loop ((i 0))
@@ -302,23 +301,21 @@
 		     (cmap cmap)
 		     (__proto__ (js-object-proto %this))
 		     (elements ($create-vector len)))))
-	 (with-access::JsObject obj (elements)
-	    (let ((vec elements))
-	       (let loop ((i 0)
-			  (alist alist))
-		  (if (=fx i len)
-		      obj
-		      (let* ((name (js-key-name->jsstring (caar alist)))
-			     (val (if (pair? (cdar alist))
-				      (car (cdar alist))
-				      (cdar alist)))
-			     (jsval (js-obj->jsobject val %this)))
-			 (vector-set! props i
-			    (prop name (property-flags-default)))
-			 (vector-set! vec i jsval)
-			 (when (js-procedure? jsval)
-			    (vector-set! methods i #t))
-			 (loop (+fx i 1) (cdr alist))))))))))
+	 (let loop ((i 0)
+		    (alist alist))
+	    (if (=fx i len)
+		obj
+		(let* ((name (js-key-name->jsstring (caar alist)))
+		       (val (if (pair? (cdar alist))
+				(car (cdar alist))
+				(cdar alist)))
+		       (jsval (js-obj->jsobject val %this)))
+		   (vector-set! props i
+		      (prop name (property-flags-default)))
+		   (js-object-set! obj i jsval)
+		   (when (js-procedure? jsval)
+		      (vector-set! methods i #t))
+		   (loop (+fx i 1) (cdr alist))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-plist->jsobject ...                                           */

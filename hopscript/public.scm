@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Aug 26 15:03:11 2021 (serrano)                */
+;*    Last change :  Fri Aug 27 18:43:14 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1552,13 +1552,9 @@
    [assert (r o) (or (js-object? r) (js-object? o))]
    (with-access::JsFunction f (constrsize info)
       (if (js-object? r)
-	  (with-access::JsObject r (elements)
-	     (when (vector? elements)
-		(set! constrsize (vector-length elements)))
-	     r)
-	  (with-access::JsObject o (elements)
-	     (when (vector? elements)
-		(set! constrsize (vector-length elements)))
+	  r
+	  (begin
+	     (set! constrsize (js-object-length o))
 	     o))))
 
 ;*---------------------------------------------------------------------*/
@@ -1566,10 +1562,8 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-new-return-fast ctor o)
    (with-access::JsFunction ctor (constrsize)
-      (with-access::JsObject o (elements)
-	 (when (vector? elements)
-	    (set! constrsize (vector-length elements)))
-	 o)))
+      (set! constrsize (js-object-length o))
+      o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new-sans-construct ...                                        */

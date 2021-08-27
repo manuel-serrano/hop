@@ -275,7 +275,7 @@
 ;*    gc-cleanup-inline-vector! ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (gc-cleanup-inline-vector! arr::JsArray vec::vector)
-   (when ($jsobject-vector-inline? arr)
+   (when ($js-object-vector-inline? arr)
       (vector-fill! vec #unspecified)))
 
 ;*---------------------------------------------------------------------*/
@@ -733,7 +733,7 @@
    
    (define (add-length-property! arr::JsArray)
       (js-object-unmap! arr)
-      (with-access::JsObject arr (elements cmap)
+      (with-access::JsArray arr (elements cmap)
 	 (let ((prop (instantiate::JsValueDescriptor
 			(name (& "length"))
 			(value (js-uint32-tointeger (js-array-length arr)))
@@ -3265,7 +3265,7 @@
 		(set! writable #t)
 		r))))
    
-   (define (js-array-property-names arr)
+   (define (js-array-property-names arr::JsArray)
       (let loop ((o arr))
 	 (with-access::JsObject o (cmap elements)
 	    (append (if (not (eq? cmap (js-not-a-cmap)))
@@ -5638,7 +5638,7 @@
 	  (cond
 	     ((=u32 ilen 0)
 	      (js-undefined))
-	     (($jsobject-vector-inline? this)
+	     (($js-object-vector-inline? this)
 	      ;; fast path for shifting an array. when the the array
 	      ;; is builtin (the JsArray object contains the Scheme vector)
 	      ;; instead of shifting inside the Scheme array, we merely

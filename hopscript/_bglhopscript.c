@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Wed Apr 29 17:41:08 2020 (serrano)                */
+/*    Last change :  Fri Aug 27 12:33:37 2021 (serrano)                */
 /*    Copyright   :  2016-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -776,7 +776,7 @@ BGL_MAKE_JSOBJECT_SANS( int constrsize, obj_t constrmap, obj_t __proto__, uint32
    vector->vector.length = constrsize;
    vector = BVECTOR( vector );
    
-   o->BgL_elementsz00 = vector;
+   o->BgL_elementsz00 = empty_vector;
 
    for( i = 0; i < constrsize; i++ ) {
       VECTOR_SET( vector, i, BUNSPEC );
