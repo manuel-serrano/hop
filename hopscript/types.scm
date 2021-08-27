@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Aug 11 16:26:15 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 11:17:49 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -69,6 +69,8 @@
 	      "bgl_make_jsstringliteralascii")
 	   (macro $jsobject-elements-inline?::bool (::JsObject)
 		  "HOP_JSOBJECT_ELEMENTS_INLINEP")
+	   (macro $jsobject-elements-length::long (::JsObject)
+		  "HOP_JSOBJECT_ELEMENTS_LENGTH")
 	   (macro $jsobject-vector-inline?::bool (::JsArray)
 		  "HOP_JSARRAY_VECTOR_INLINEP")
 	   (macro $bgl-object-class-set!::long (::JsObject ::long)
@@ -169,13 +171,8 @@
 	      (vlen::long (default 0))
 	      (vtable::vector (default '#()))
 	      (vcache::obj (default #f))
-	      (sibling (default #f))
-	      (inline::bool read-only (default #f))
 	      (parent::JsConstructMap (default (class-nil JsConstructMap))))
 
-	   (final-class JsConstructMapSibling
-	      (sibling (default #f)))
-	   
 	   ;; Literal strings that are not plain Scheme strings.
 	   ;; For performance sake they are trees.
 	   (abstract-class JsStringLiteral
@@ -481,7 +478,7 @@
 	   (inline js-make-jsrecord::JsObject ::int ::obj ::obj ::obj)
 	   (inline js-make-jsconstructmap::JsConstructMap
 	      #!key (%id (gencmapid))
-	      inline single ctor
+	      single ctor
 	      (methods '#()) (props '#()))
 
 	   (inline js-object-default-mode::uint32)
@@ -583,8 +580,13 @@
 	   (inline js-regexp-flags-unicode?::bool ::uint32)
 
 	   (inline js-object-inline-elements?::bool ::JsObject)
+	   (inline js-object-inline-length::long ::JsObject)
 	   (inline js-object-inline-ref ::JsObject ::long)
 	   (inline js-object-inline-set! ::JsObject ::long ::obj)
+	   (inline js-object-noinline-ref ::JsObject ::long)
+	   (inline js-object-noinline-set! ::JsObject ::long ::obj)
+	   (inline js-object-ref ::JsObject ::long)
+	   (inline js-object-set! ::JsObject ::long ::obj)
 
 	   (inline js-vector-inline-ref ::JsArray ::long)
 	   (inline js-vector-inline-set! ::JsArray ::long ::obj)
@@ -611,7 +613,6 @@
 	   (generic js-typedarray-ref::procedure ::JsTypedArray)
 	   (generic js-typedarray-set!::procedure ::JsTypedArray)
 	   
-	   (js-cmap-check-inline cmap)
 	   *js-not-a-cmap*
 	   *js-not-a-pmap*
 	   *js-not-a-string-cache*
@@ -722,18 +723,14 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-make-jsconstructmap::JsConstructMap
 		  #!key (%id (gencmapid))
-		  inline single ctor
+		  single ctor
 		  (methods '#()) (props '#()))
-   (let ((inl (cond-expand
-		 ((and bigloo-c (not devel) (not debug)) inline)
-		 (else #f))))
-      (instantiate::JsConstructMap
-	 (%id %id)
-	 (single single)
-	 (methods methods)
-	 (props props)
-	 (inline inl)
-	 (ctor ctor))))
+   (instantiate::JsConstructMap
+      (%id %id)
+      (single single)
+      (methods methods)
+      (props props)
+      (ctor ctor)))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-object-default-mode ...                                       */
@@ -1083,64 +1080,91 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-inline-elements?::bool o::JsObject)
    (cond-expand
-      ((and bigloo-c (not devel) (not debug))
+      ((and bigloo-c (not disable-inline))
        ($jsobject-elements-inline? o))
       (else
        #f)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-inline-length ...                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-inline-length o::JsObject)
+   (cond-expand
+      ((and bigloo-c (not disable-inline))
+       ($jsobject-elements-length o))
+      (else
+       0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-inline-ref ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-inline-ref o::JsObject idx::long)
    (cond-expand
-      ((and bigloo-c (not devel) (not debug))
+      ((and bigloo-c (not disable-inline))
        (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx))
       ((and bigloo-c debug)
-       (let ((o1 (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx))
-	     (o2 (with-access::JsObject o (elements)
-		    (vector-ref elements idx))))
-	  (unless (eq? o1 o2)
-	     (tprint "*** ASSERT ERROR:js-object-inline-ref idx=" idx " inl="
-		(js-object-inline-elements? o))
-	     (js-debug-object o)
-	     (with-access::JsObject o (cmap)
-		(js-cmap-check-inline cmap))
-	     (error "js-object-inline-ref" "not an inline object" (typeof o)))
-	  o2))
+       (if (<fx idx (js-object-inline-length o))
+	   (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx)
+	   (begin
+	      (tprint "*** ASSERT ERROR:js-object-inline-ref idx=" idx)
+	      (js-debug-object o))))
       (else
-       (with-access::JsObject o (elements)
-	  (vector-ref elements idx)))))
+       (js-object-noinline-ref o idx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-inline-set! ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-inline-set! o::JsObject idx::long val::obj)
    (cond-expand
-      ((and bigloo-c (not devel) (not debug))
+      ((and bigloo-c (not disable-inline))
        (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val))
       ((and bigloo-c debug)
-       (let ((o1 (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx))
-	     (o2 (with-access::JsObject o (elements)
-		    (vector-ref elements idx))))
-	  (unless (eq? o1 o2)
-	     (tprint "*** ASSERT ERROR:js-object-inline-set! idx=" idx " inl="
-		(js-object-inline-elements? o))
-	     (js-debug-object o)
-	     (with-access::JsObject o (cmap)
-		(js-cmap-check-inline cmap))
-	     (error "js-object-inline-set!" "not an inline object" (typeof o))))
-       (with-access::JsObject o (elements)
-	  (vector-set! elements idx val)))
+       (if (<fx idx (js-object-inline-length o))
+	   (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val)
+	   (begin
+	      (tprint "*** ASSERT ERROR:js-object-inline-set! idx=" idx)
+	      (js-debug-object o))))
       (else
-       (with-access::JsObject o (elements)
-	  (vector-set! elements idx val)))))
+       (js-object-noinline-set! o idx val))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-noinline-ref ...                                       */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-noinline-ref o::JsObject idx::long)
+   (with-access::JsObject o (elements)
+      (vector-ref elements idx)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-noinline-set! ...                                       */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-noinline-set! o::JsObject idx::long val::obj)
+   (with-access::JsObject o (elements)
+      (vector-set! elements idx val)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-ref ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-ref o::JsObject idx::long)
+   (let ((ilen (js-object-inline-length o)))
+      (if (<fx idx ilen)
+	  (js-object-inline-ref o idx)
+	  (js-object-noinline-ref o idx))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-set! ...                                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-set! o::JsObject idx::long val)
+   (let ((ilen (js-object-inline-length o)))
+      (if (<fx idx ilen)
+	  (js-object-inline-set! o idx val)
+	  (js-object-noinline-set! o idx val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-vector-inline-ref ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-vector-inline-ref o::JsArray idx::long)
    (cond-expand
-      ((and bigloo-c (not devel) (not debug))
+      ((and bigloo-c (not disable-inline))
        (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsarrayz00_bglt)(COBJECT($1)))->BgL_vecz00))) + 1))), $2 )" o idx))
       (else
        (with-access::JsArray o (vec)
@@ -1151,7 +1175,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-vector-inline-set! o::JsArray idx::long val)
    (cond-expand
-      ((and bigloo-c (not devel) (not debug))
+      ((and bigloo-c (not disable-inline))
        (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsarrayz00_bglt)(COBJECT($1)))->BgL_vecz00))) + 1))), $2, $3 )" o idx val))
       (else
        (with-access::JsArray o (vec)
@@ -1447,25 +1471,6 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-typedarray-set!::procedure a::JsTypedArray))
 
-;*---------------------------------------------------------------------*/
-;*    js-cmap-check-inline ...                                         */
-;*---------------------------------------------------------------------*/
-(define (js-cmap-check-inline cmap)
-   (with-access::JsConstructMap cmap (%id inline props parent)
-      (if (or (=fx (vector-length props) 0) (not inline))
-	  #t
-	  (let loop ((c parent))
-	     (with-access::JsConstructMap c (parent props inline)
-		(cond
-		   ((=fx (vector-length props) 0)
-		    #t)
-		   ((not inline)
-		    (tprint "*** ASSERT CHECK-CMAP-INLINE failed...")
-		    (js-debug-cmap cmap "cmap=")
-		    (js-debug-cmap c "parent="))
-		   (else
-		    (loop parent))))))))
-	 
 ;*---------------------------------------------------------------------*/
 ;*    gencmapid ...                                                    */
 ;*---------------------------------------------------------------------*/

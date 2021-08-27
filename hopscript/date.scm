@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Aug 19 11:29:56 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 15:10:42 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -185,7 +185,7 @@
    (with-access::JsGlobalObject %this (js-date js-function js-date-prototype js-date-cmap)
 
       (set! js-date-cmap
-	 (js-make-jsconstructmap :inline #t))
+	 (js-make-jsconstructmap))
       
       (set! js-date-prototype
 	 (instantiateJsDate

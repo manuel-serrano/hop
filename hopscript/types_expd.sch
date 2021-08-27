@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Wed Aug 11 16:38:09 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 15:09:48 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -204,7 +204,7 @@
 		       (vec (gensym 'v)))
 		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
 				      ,n
-				      (js-make-jsconstructmap :inline #t)
+				      (js-make-jsconstructmap)
 				      ,__proto__)))
 			   ,obj)
 		       e)))
@@ -216,7 +216,7 @@
 					   (append (if (assq 'cmap (cdr x))
 						       '()
 						       ;; MS WARNING: inline shold be #f, left #t just for debugging
-						       '((cmap (js-make-jsconstructmap :inline #t))))
+						       '((cmap (js-make-jsconstructmap))))
 					      (filter (lambda (f)
 							 (not (builtin? f)))
 						 (cdr x))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Aug  3 07:52:45 2021 (serrano)                */
+;*    Last change :  Fri Aug 27 10:05:24 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -239,6 +239,7 @@
 		      '())
 		,@(map j2s-record-predicate records)
 		(define (main args)
+		   (when (getenv "BIGLOOTRACE") (bigloo-debug-set! 1))
 		   (bigloo-library-path-set! ',(bigloo-library-path))
 		   (hop-port-set! -1)
 		   (hop-ssl-port-set! -1)
@@ -378,6 +379,7 @@
 		,@(map j2s-record-predicate records)
 		,@(append-map j2s-record-prototype-constructor records)
 		(define (main args)
+		   (when (getenv "BIGLOOTRACE") (bigloo-debug-set! 1))
 		   ,(profilers this ctx)
 		   (hopscript-install-expanders!)
 		   (hop-port-set! -1)

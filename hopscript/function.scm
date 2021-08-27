@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Aug 19 11:33:35 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 15:07:11 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -296,8 +296,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-cmap ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-inline (make-cmap inline props)
-   (js-make-jsconstructmap :inline inline 
+(define-inline (make-cmap props)
+   (js-make-jsconstructmap 
       :methods (make-vector (vector-length props))
       :props props))
 
@@ -357,7 +357,7 @@
 
       (set! js-function-strict-prototype
 	 (instantiateJsObject
-	    (cmap (js-make-jsconstructmap :inline #t))
+	    (cmap (js-make-jsconstructmap))
 	    (__proto__ js-function-prototype)
 	    (elements (make-vector 10 (js-undefined)))))
       
@@ -529,50 +529,50 @@
 					 js-function-writable-strict-cmap
 					 js-function-prototype-cmap)
       (set! js-function-cmap
-	 (make-cmap #f
-	    `#(,(prop (& "prototype") (property-flags #f #f #f #f))
-	       ,(prop (& "length") (property-flags #f #f #f #f))
-	       ,(prop (& "name") (property-flags #f #f #t #f)))))
+	 (make-cmap 
+	    `#(,(prop (& "prototype") (property-flags #f #f #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f #f)))))
       
       (set! js-function-sans-prototype-cmap
-	 (make-cmap #f
-	    `#(,(prop (& "%null") (property-flags #f #f #f #f))
-	       ,(prop (& "length") (property-flags #f #f #f #f))
-	       ,(prop (& "name") (property-flags #f #f #t #f)))))
+	 (make-cmap 
+	    `#(,(prop (& "%null") (property-flags #f #f #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f #f)))))
       
       (set! js-function-strict-bind-cmap
-	 (make-cmap #f
-	    `#(,(prop (& "%bind") (property-flags #f #f #f #f))
-	       ,(prop (& "length") (property-flags #f #f #f #f))
-	       ,(prop (& "name") (property-flags #f #f #t #f))
-	       ,(prop (& "arguments") (property-flags #f #f #f #f))
-	       ,(prop (& "caller") (property-flags #f #f #f #f)))))
+	 (make-cmap 
+	    `#(,(prop (& "%bind") (property-flags #f #f #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f #f))
+	       ,(prop (& "arguments") (property-flags #f #f #f #f #f))
+	       ,(prop (& "caller") (property-flags #f #f #f #f #f)))))
 
       (set! js-function-strict-cmap
-	 (make-cmap #f
-	    `#(,(prop (& "prototype") (property-flags #f #f #f #f))
-	       ,(prop (& "length") (property-flags #f #f #f #f))
-	       ,(prop (& "name") (property-flags #f #f #t #f))
-	       ,(prop (& "arguments") (property-flags #f #f #f #f))
-	       ,(prop (& "caller") (property-flags #f #f #f #f)))))
+	 (make-cmap 
+	    `#(,(prop (& "prototype") (property-flags #f #f #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f #f))
+	       ,(prop (& "arguments") (property-flags #f #f #f #f #f))
+	       ,(prop (& "caller") (property-flags #f #f #f #f #f)))))
       
       (set! js-function-writable-cmap
-	 (make-cmap #f
-	    `#(,(prop (& "prototype") (property-flags #t #f #f #f))
-	       ,(prop (& "length") (property-flags #f #f #f #f))
-	       ,(prop (& "name") (property-flags #f #f #t #f)))))
+	 (make-cmap 
+	    `#(,(prop (& "prototype") (property-flags #t #f #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f #f)))))
       
       (set! js-function-writable-strict-cmap
-	 (make-cmap #f
-	    `#(,(prop (& "prototype") (property-flags #t #f #f #f))
-	       ,(prop (& "length") (property-flags #f #f #f #f))
-	       ,(prop (& "name") (property-flags #f #f #t #f))
-	       ,(prop (& "arguments") (property-flags #f #f #f #f))
-	       ,(prop (& "caller") (property-flags #f #f #f #f)))))
+	 (make-cmap 
+	    `#(,(prop (& "prototype") (property-flags #t #f #f #f #f))
+	       ,(prop (& "length") (property-flags #f #f #f #f #f))
+	       ,(prop (& "name") (property-flags #f #f #t #f #f))
+	       ,(prop (& "arguments") (property-flags #f #f #f #f #f))
+	       ,(prop (& "caller") (property-flags #f #f #f #f #f)))))
       
       (set! js-function-prototype-cmap
-	 (make-cmap #t
-	    `#(,(prop (& "constructor") (property-flags #t #f #t #f)))))))
+	 (make-cmap 
+	    `#(,(prop (& "constructor") (property-flags #t #f #t #f #t)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-function ...                                                 */

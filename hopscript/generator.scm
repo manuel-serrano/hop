@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Wed Apr 28 09:26:24 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 15:22:02 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -93,7 +93,8 @@
       
       (define js-gen-proto-proto
 	 (let ((proto (instantiateJsObject
-			 (cmap (js-make-jsconstructmap :inline #t))			 (__proto__ (js-object-proto %this))
+			 (cmap (js-make-jsconstructmap))
+			 (__proto__ (js-object-proto %this))
 			 (elements ($create-vector 1)))))
 	    (js-bind! %this proto js-symbol-iterator
 	       :value (js-make-function %this
@@ -107,13 +108,13 @@
       
       (define js-gen-proto
 	 (instantiateJsObject
-	    (cmap (js-make-jsconstructmap :inline #t))
+	    (cmap (js-make-jsconstructmap))
 	    (__proto__ js-gen-proto-proto)
 	    (elements ($create-vector 4))))
       
       (define js-genfun-proto
 	 (instantiateJsObject
-	    (cmap (js-make-jsconstructmap :inline #t))
+	    (cmap (js-make-jsconstructmap))
 	    (__proto__ js-function-prototype)
 	    (elements ($create-vector 2))))
       
@@ -215,8 +216,8 @@
 (define (js-init-generator-yield-cmap! %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-yield-cmap)
       (set! js-yield-cmap
-	 (let ((props `#(,(prop (& "value") (property-flags #t #t #t #f))
-			 ,(prop (& "done") (property-flags #t #t #t #f)))))
+	 (let ((props `#(,(prop (& "value") (property-flags #t #t #t #f #f))
+			 ,(prop (& "done") (property-flags #t #t #t #f #f)))))
 	    (js-make-jsconstructmap
 	       :props props
 	       :methods (make-vector (vector-length props)))))))

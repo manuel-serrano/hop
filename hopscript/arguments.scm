@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Wed Jun 16 17:59:41 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 15:10:27 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -155,17 +155,17 @@
 	       (configurable #f))))
       ;; arguments cmap
       (let ((arguments-cmap-props
-	       `#(,(prop (& "length") (property-flags #t #f #t #f))
-		  ,(prop (& "callee") (property-flags #t #f #t #f)))))
+	       `#(,(prop (& "length") (property-flags #t #f #t #f #f))
+		  ,(prop (& "callee") (property-flags #t #f #t #f #f)))))
 	 (set! js-arguments-cmap
 	    (js-make-jsconstructmap
 	       :methods (make-vector (vector-length arguments-cmap-props))
 	       :props arguments-cmap-props)))
       ;; strict arguments cmap
       (let ((strict-arguments-cmap-props
-	       `#(,(prop (& "length") (property-flags #t #f #t #f))
-		  ,(prop (& "callee") (property-flags #t #f #f #t))
-		  ,(prop (& "caller") (property-flags #t #f #f #t)))))
+	       `#(,(prop (& "length") (property-flags #t #f #t #f #f))
+		  ,(prop (& "callee") (property-flags #t #f #f #t #f))
+		  ,(prop (& "caller") (property-flags #t #f #f #t #f)))))
 	 (set! js-strict-arguments-cmap
 	    (js-make-jsconstructmap
 	       :methods (make-vector (vector-length strict-arguments-cmap-props))

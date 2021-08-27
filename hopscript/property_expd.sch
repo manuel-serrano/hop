@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/hopscript/property_expd.sch       */
+;*    serrano/prgm/project/hop/hop/hopscript/property_expd.sch         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue May 18 19:05:24 2021 (serrano)                */
+;*    Last change :  Fri Aug 27 11:17:07 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -438,14 +438,13 @@
 		`(let ((idx (js-pcache-cindex ,cache)))
 		    (js-profile-log-cache ,cache :cmap #t)
 		    (js-profile-log-index idx)
-		    (with-access::JsObject ,obj (elements)
-		       (vector-ref elements idx))))
+		    (js-object-noinline-ref ,obj idx)))
 	       ((eq? cs 'pmap)
-		`(let ((idx (js-pcache-pindex ,cache)))
-		    (with-access::JsObject (js-pcache-owner ,cache) (elements)
-		       (js-profile-log-cache ,cache :pmap #t)
-		       (js-profile-log-index idx)
-		       (vector-ref elements idx))))
+		`(let ((idx (js-pcache-pindex ,cache))
+		       (own (js-pcache-owner ,cache)))
+		    (js-profile-log-cache ,cache :pmap #t)
+		    (js-profile-log-index idx)
+		    (js-object-ref own idx)))
 	       ((eq? cs 'amap)
 		`(let* ((idx (js-pcache-aindex ,cache))
 			(propowner ,obj))

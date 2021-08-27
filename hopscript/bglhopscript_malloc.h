@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  1 13:46:07 2017                          */
-/*    Last change :  Thu Jul 15 09:19:53 2021 (serrano)                */
+/*    Last change :  Thu Aug 26 13:06:12 2021 (serrano)                */
 /*    Copyright   :  2017-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    bglhopscript allocation                                          */
@@ -51,14 +51,16 @@ bgl_gc_bump_malloc( long sz ) {
 
 /*---------------------------------------------------------------------*/
 /*    HOP_JSOBJECT_ELEMENTS_INLINEP                                    */
-/*    -------------------------------------------------------------    */
-/*    Used to detect when to reset object inline elements before an    */
-/*    expansion. This helps the collector not to retain dead objects   */
-/*    still pointed to by these inlined elements.                      */
 /*---------------------------------------------------------------------*/
 #define HOP_JSOBJECT_ELEMENTS_INLINEP( _o ) \
   CVECTOR( ((BgL_jsobjectz00_bglt)COBJECT(_o))->BgL_elementsz00 ) == \
   (obj_t)(&(((BgL_jsobjectz00_bglt)COBJECT(_o))->BgL_elementsz00) + 1)
+
+/*---------------------------------------------------------------------*/
+/*    HOP_JSOBJECT_ELEMENTS_LENGTH                                     */
+/*---------------------------------------------------------------------*/
+#define HOP_JSOBJECT_ELEMENTS_LENGTH( _o ) \
+   VECTOR_LENGTH( BVECTOR((obj_t)(&(((BgL_jsobjectz00_bglt)COBJECT(_o))->BgL_elementsz00) + 1)) )
 
 /*---------------------------------------------------------------------*/
 /*    HOP_JSARRAY_VECTOR_INLINEP                                       */

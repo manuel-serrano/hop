@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Apr 29 07:36:08 2021 (serrano)                */
+#*    Last change :  Fri Aug 27 11:29:56 2021 (serrano)                */
 #*    Copyright   :  2004-21 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -312,7 +312,7 @@ while : ; do
       bcflagsmodules=-cg;
       bcflagsdev=-cg;
       bscm2jsflags=;
-      bcflags="$bcflags -Wall -Wno-slot -srfi devel";;
+      bcflags="$bcflags -Wall -Wno-slot -srfi devel -srfi disable-inline";;
 
     --debug)
       devmode="debug";
@@ -323,7 +323,7 @@ while : ; do
       bhopcflags=-g;
       ccflagsdebug=-g;
       hflags="$hflags -g";
-      bcflags="$bcflags $bcflagsdbg -Wall -Wno-slot -srfi devel -srfi debug";;
+      bcflags="$bcflags $bcflagsdbg -Wall -Wno-slot -srfi devel -srfi debug -srfi disable-inline";;
 
     --debug2)
       devmode="debug2";
@@ -333,7 +333,7 @@ while : ; do
       bscm2jsflags=-g;
       bhopcflags=-g;
       hflags=-g;
-      bcflags="$bcflags $bcflagsdbg2 -Wall -Wno-slot -srfi devel -srfi debug";;
+      bcflags="$bcflags $bcflagsdbg2 -Wall -Wno-slot -srfi devel -srfi debug -srfi disable-inline";;
 
     --pmem)
       devmode="pmem";

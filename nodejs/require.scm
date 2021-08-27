@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed May 19 08:56:05 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 15:38:36 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -491,9 +491,7 @@
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((expo (js-new0 %this js-object)))
 	    (with-access::JsObject expo (cmap)
-	       (set! cmap (js-make-jsconstructmap
-			     :single #t
-			     :inline #t)))
+	       (set! cmap (js-make-jsconstructmap :single #t)))
 	    ;; id field
 	    (js-put! m (& "id") (js-string->jsstring id) #f %this)
 	    ;; exports

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Apr 28 09:31:33 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 15:08:40 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -191,10 +191,10 @@
       (set! js-regexp-cmap
 	 (js-make-jsconstructmap
 	    :methods (make-vector 1)
-	    :props `#(,(prop (& "lastIndex") (property-flags #t #f #f #f)))))
+	    :props `#(,(prop (& "lastIndex") (property-flags #t #f #f #f #f)))))
       
-      (let ((props `#(,(prop (& "index") (property-flags #t #t #t #f))
-		      ,(prop (& "input") (property-flags #t #t #t #f)))))
+      (let ((props `#(,(prop (& "index") (property-flags #t #t #t #f #f))
+		      ,(prop (& "input") (property-flags #t #t #t #f #f)))))
 	 (set! js-regexp-exec-cmap
 	    (js-make-jsconstructmap
 	       :methods (make-vector (vector-length props))

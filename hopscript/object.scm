@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Jul  4 18:45:40 2021 (serrano)                */
+;*    Last change :  Thu Aug 26 15:05:25 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -286,8 +286,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-new-global-object #!key (size 64) name)
    (let* ((%proto (instantiateJsObject
-		     (cmap (js-make-jsconstructmap
-			      :inline #t))
+		     (cmap (js-make-jsconstructmap))
 		     (__proto__ (js-null))
 		     (elements (make-vector 128))))
 	  (%this (instantiateJsGlobalObject
@@ -1282,7 +1281,8 @@
 	       (flags-writable? flags)
 	       (flags-enumerable? flags)
 	       #f
-	       (flags-accessor? flags)))))
+	       (flags-accessor? flags)
+	       (flags-inline? flags)))))
 
    (js-object-mode-extensible-set! o #f)
    (js-object-mode-sealed-set! o #t)
@@ -1326,7 +1326,8 @@
 	       #f
 	       (flags-enumerable? flags)
 	       #f
-	       (flags-accessor? flags)))))
+	       (flags-accessor? flags)
+	       (flags-inline? flags)))))
    
    (js-object-mode-extensible-set! o #f)
    (js-object-mode-frozen-set! o #t)
