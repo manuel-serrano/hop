@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Fri Aug 27 07:04:00 2021 (serrano)                */
+;*    Last change :  Fri Aug 27 08:44:34 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -76,7 +76,9 @@
 			     (decl-usage-add! decl 'uninit)))
 		decls))
 	    (else
+	     (tprint "decls")
 	     (uninit-nodes* decls '())
+	     (tprint "nodes")
 	     (uninit-nodes* nodes '())))))
 ;* 	     ;; collect all the globals used by all global functions   */
 ;* 	     (for-each function-collect-globals decls)                 */
@@ -94,12 +96,6 @@
 	 (for-each uninit-force! decls)
 	 (for-each uninit-force! nodes)))
    this)
-
-;*---------------------------------------------------------------------*/
-;*    not-uninit ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (not-uninit this::J2SDecl)
-   (not (decl-usage-has? this '(uninit))))
 
 ;*---------------------------------------------------------------------*/
 ;*    intersection ...                                                 */
@@ -120,15 +116,48 @@
 	  (loop (cdr nodes) (uninit* (car nodes) env)))))
 
 ;*---------------------------------------------------------------------*/
+;*    uninit-par* ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (uninit-par* nodes env0)
+   (let loop ((nodes nodes)
+	      (env env0))
+      (if (null? nodes)
+	  env
+	  (let ((nenv (uninit* (car nodes) env0)))
+	     (loop (cdr nodes) (intersection nenv env))))))
+
+;*---------------------------------------------------------------------*/
 ;*    uninit* ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (uninit* this::J2SNode env)
-   (call-default-walker))
+(define-generic (uninit* this env)
+   (if (pair? this)
+       (uninit-par* this env)
+       env))
+
+;*---------------------------------------------------------------------*/
+;*    uninit* ::J2SNode ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (uninit* this::J2SNode env)
+   (let* ((clazz (object-class this))
+	  (ctor (class-constructor clazz))
+	  (inst ((class-allocator clazz)))
+	  (fields (class-all-fields clazz)))
+      (let loop ((i (-fx (vector-length fields) 1))
+		 (env env))
+	 (if (>=fx i 0)
+	     (let* ((f (vector-ref-ur fields i))
+		    (fi (class-field-info f))
+		    (v ((class-field-accessor f) this))
+		    (env (if (and (pair? fi) (member "notraverse" fi))
+			     env
+			     (uninit* v env))))
+		(loop (-fx i 1) env))
+	     env))))
 
 ;*---------------------------------------------------------------------*/
 ;*    uninit* ::J2SRef ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (uninit* this::J2SRef env)
+(define-method (uninit* this::J2SRef env)
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (scope)
 	 (when (memq scope '(global %scope))
@@ -139,28 +168,30 @@
 ;*---------------------------------------------------------------------*/
 ;*    uninit* ::J2SInit ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (uninit* this::J2SInit env)
+(define-method (uninit* this::J2SInit env)
    (with-access::J2SInit this (lhs rhs)
       (let ((env (uninit* rhs env)))
-	 (with-access::J2SRef lhs (decl)
-	    (with-access::J2SDecl decl (scope)
-	       (if (memq scope '(global %scope))
-		   (if (decl-usage-has? decl '(uninit))
-		       env
-		       (cons decl env))
-		   env))))))
+	 (if (isa? lhs J2SRef)
+	     (with-access::J2SRef lhs (decl)
+		(with-access::J2SDecl decl (scope)
+		   (if (memq scope '(global %scope))
+		       (if (decl-usage-has? decl '(uninit))
+			   env
+			   (cons decl env))
+		       env)))
+	     (uninit* lhs env)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    uninit* ::J2SSeq ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (uninit* this::J2SSeq env)
+(define-method (uninit* this::J2SSeq env)
    (with-access::J2SSeq this (nodes)
       (uninit-nodes* nodes env)))
 
 ;*---------------------------------------------------------------------*/
 ;*    uninit* ::J2SIf ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (uninit* this::J2SIf env)
+(define-method (uninit* this::J2SIf env)
    (with-access::J2SIf this (test then else)
       (let* ((testenv (uninit* test env))
 	     (thenenv (uninit* then testenv))
@@ -170,7 +201,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    uninit* ::J2SLetBlock ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (uninit* this::J2SLetBlock env)
+(define-method (uninit* this::J2SLetBlock env)
    (with-access::J2SLetBlock this (decls nodes)
       (let loop ((decls decls)
 		 (env env))
@@ -181,20 +212,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    uninit* ::J2SSwitch ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (uninit* this::J2SSwitch env)
+(define-method (uninit* this::J2SSwitch env)
    (with-access::J2SSwitch this (key cases)
       (let ((kenv (uninit* key env)))
-	 (let loop ((cases cases)
-		    (env kenv))
-	    (if (null? cases)
-		env
-		(let ((cenv (uninit* (car cases) kenv)))
-		   (loop (cdr cases) (intersection cenv env))))))))
+	 (uninit-par* cases kenv))))
 
 ;*---------------------------------------------------------------------*/
 ;*    uninit* ::J2SCase ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (uninit* this::J2SCase env)
+(define-method (uninit* this::J2SCase env)
    (with-access::J2SCase this (expr body)
       (let ((eenv (uninit* expr env)))
 	 (uninit* body eenv))))
@@ -202,7 +228,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    uninit* ::J2SFor ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (uninit* this::J2SFor env)
+(define-method (uninit* this::J2SFor env)
    (with-access::J2SFor this (init test incr body)
       (let* ((ienv (uninit* init env))
 	     (benv (uninit* body ienv)))
@@ -212,7 +238,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    uninit* ::J2SForIn ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (uninit* this::J2SForIn env)
+(define-method (uninit* this::J2SForIn env)
    (with-access::J2SForIn this (lhs obj body)
       (let* ((lenv (uninit* lhs env))
 	     (oenv (uninit* obj lenv)))
@@ -222,7 +248,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    uninit* ::J2SWhile ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (uninit* this::J2SWhile env)
+(define-method (uninit* this::J2SWhile env)
    (with-access::J2SWhile this (test body)
       (let* ((tenv (uninit* test env)))
 	 (uninit* body tenv)
@@ -231,14 +257,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    uninit* ::J2SDo ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (uninit* this::J2SDo env)
+(define-method (uninit* this::J2SDo env)
    (with-access::J2SDo this (test body need-bind-exit-break need-bind-exit-continue)
-      (let* ((benv (uninit* body env)))
-	 (uninit* test benv)
-	 (filter (lambda (d) (not (decl-usage-has? d '(uninit))))
-	    (if (or need-bind-exit-break need-bind-exit-continue)
-		env
-		benv)))))
+      (let ((benv (uninit* body env)))
+	 (uninit* test 
+	    (filter (lambda (d) (not (decl-usage-has? d '(uninit))))
+	       (if (or need-bind-exit-break need-bind-exit-continue)
+		   env
+		   benv))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    decl-global? ...                                                 */
