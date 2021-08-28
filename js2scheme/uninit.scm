@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Fri Aug 27 08:44:34 2021 (serrano)                */
+;*    Last change :  Sat Aug 28 11:34:31 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -76,9 +76,7 @@
 			     (decl-usage-add! decl 'uninit)))
 		decls))
 	    (else
-	     (tprint "decls")
 	     (uninit-nodes* decls '())
-	     (tprint "nodes")
 	     (uninit-nodes* nodes '())))))
 ;* 	     ;; collect all the globals used by all global functions   */
 ;* 	     (for-each function-collect-globals decls)                 */
