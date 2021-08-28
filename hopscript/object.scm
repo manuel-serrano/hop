@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Aug 27 16:11:37 2021 (serrano)                */
+;*    Last change :  Sat Aug 28 08:21:07 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -289,6 +289,7 @@
 		     (elements (make-vector 128))))
 	  (%this (instantiateJsGlobalObject
 		    (name name)
+		    (mode (js-globalobject-default-mode))
 		    (cmap (js-make-jsconstructmap))
 		    (__proto__ %proto)
 		    (elements (make-vector size)))))

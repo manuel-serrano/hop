@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Aug 26 15:07:11 2021 (serrano)                */
+;*    Last change :  Sat Aug 28 08:44:10 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -1100,10 +1100,10 @@
       ((js-array? argarray)
        (with-access::JsArray argarray (vec ilen)
 	  (cond
-	     ((js-object-mode-inline? argarray)
+	     ((js-object-mode-arrayinline? argarray)
 	      ;; fast path
 	      (js-apply-vec %this this thisarg vec ilen))
-	     ((js-object-mode-holey? argarray)
+	     ((js-object-mode-arrayholey? argarray)
 	      ;; fast path
 	      (let ((len (js-get argarray (& "length") %this)))
 		 (js-apply %this this thisarg

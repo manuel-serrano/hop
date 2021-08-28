@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Aug 27 11:38:47 2021 (serrano)                */
+;*    Last change :  Sat Aug 28 08:06:10 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -45,6 +45,9 @@
 	   __hopscript_names
 	   __hopscript_arguments
 	   __hopscript_arraybufferview)
+
+   ;; TBR
+   (use __hopscript_websocket)
    
    (extern ($js-make-pcache-table::obj (::obj ::int ::obj ::obj ::JsPropertyCache)
 	      "bgl_make_pcache_table"))
@@ -478,9 +481,10 @@
 	     (fprint (current-error-port) "== " msg (typeof obj) " MAPPED"
 		" Ilen=" (vector-length (js-object-inline-elements obj))
 		" Vlen=" (vector-length (js-object-noinline-elements obj))
+		" inline=" (js-object-mode-inline? obj)
 		" plain=" (js-object-mode-plain? obj)
 		" isproto=" (js-object-mode-isprotoof? obj)
-		" extensible=" (js-object-mode-extensible? obj)
+		" ext=" (js-object-mode-extensible? obj)
 		" met.vlen=" (vector-length methods)
 		"\n   cmap.%id=" %id
 		"\n   Iels=" (vector-map
@@ -1296,12 +1300,15 @@
 	 (i (gensym 'i))
 	 (loop (gensym 'loop)))
       `(let ((,prop (with-access::JsObject ,o (elements) elements)))
+	  (unless (every (lambda (x) (isa? x JsPropertyDescriptor))
+		     (vector->list ,prop))
+	     (tprint "js-object-properties-find: " (vector-map typeof ,prop))
+	     (js-debug-object ,o))
 	  (let ,loop ((,i (-fx (vector-length ,prop) 1)))
 	     (if (=fx ,i -1)
 		 (if (js-proxy? ,o)
-		     (with-access::JsObject ,o (elements)
-			(let ((,i (js-proxy-property-descriptor-index ,o ,p)))
-			   (,succeed ,o (vector-ref elements ,i) ,i)))
+		     (let ((,i (js-proxy-property-descriptor-index ,o ,p)))
+			(,succeed ,o (vector-ref ,prop ,i) ,i))
 		     (,fail))
 		 (let ((,desc (vector-ref ,prop ,i)))
 		    (with-access::JsPropertyDescriptor ,desc ((,name name))
@@ -2758,7 +2765,6 @@
       ((pair? _o)
        (js-put-pair! _o prop v throw %this))
       (else
-       (tprint "TOOBJ..." prop)
        (let ((o (js-toobject %this _o)))
 	  (if o
 	      (js-put! o prop v throw %this)

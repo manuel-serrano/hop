@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Aug 27 11:40:14 2021 (serrano)                */
+;*    Last change :  Sat Aug 28 08:12:07 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -480,6 +480,7 @@
 	      (methods '#()) (props '#()))
 
 	   (inline js-object-default-mode::uint32)
+	   (inline js-globalobject-default-mode::uint32)
 	   (inline js-record-default-mode::uint32)
 	   (inline js-array-default-mode::uint32)
 	   (inline js-vector-default-mode::uint32)
@@ -517,8 +518,11 @@
 	   (inline js-object-mode-hasinstance?::bool ::JsObject)
 	   (inline js-object-mode-hasinstance-set! ::JsObject ::bool)
 	   
-	   (inline js-object-mode-holey?::bool ::JsObject)
-	   (inline js-object-mode-holey-set! ::JsObject ::bool)
+	   (inline js-object-mode-arrayinline?::bool ::JsObject)
+	   (inline js-object-mode-arrayinline-set! ::JsObject ::bool)
+	   
+	   (inline js-object-mode-arrayholey?::bool ::JsObject)
+	   (inline js-object-mode-arrayholey-set! ::JsObject ::bool)
 	   
 	   (inline js-object-mode-plain?::bool ::JsObject)
 	   (inline js-object-mode-plain-set! ::JsObject ::bool)
@@ -551,6 +555,7 @@
 	   (inline JS-OBJECT-MODE-INLINE::uint32)
 	   (inline JS-OBJECT-MODE-ISPROTOOF::uint32)
 	   (inline JS-OBJECT-MODE-HASINSTANCE::uint32)
+	   (inline JS-OBJECT-MODE-JSARRAYINLINE::uint32)
 	   (inline JS-OBJECT-MODE-ENUMERABLE::uint32)
 	   (inline JS-OBJECT-MODE-HASNUMERALPROP::uint32)
 	   (inline JS-OBJECT-MODE-PLAIN::uint32)
@@ -675,6 +680,7 @@
 	   (js-null side-effect-free)
 	   (js-undefined side-effect-free)
 	   (js-object-default-mode side-effect-free)
+	   (js-array-default-mode side-effect-free)
 	   (js-record-default-mode side-effect-free))
    
    (cond-expand
@@ -745,6 +751,10 @@
 	       (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
 		  (JS-OBJECT-MODE-HASNUMERALPROP)))))))
 
+(define-inline (js-globalobject-default-mode)
+   (bit-andu32 (js-object-default-mode)
+      (bit-notu32 (JS-OBJECT-MODE-INLINE))))
+
 (define-inline (js-record-default-mode)
    (bit-oru32 (JS-OBJECT-MODE-SEALED)
       (bit-oru32 (JS-OBJECT-MODE-PLAIN)
@@ -755,11 +765,12 @@
 (define-inline (js-array-default-mode)
    (bit-oru32 (bit-andu32 (js-object-default-mode)
 		 (bit-notu32 (JS-OBJECT-MODE-INLINE)))
-      (bit-oru32 (JS-OBJECT-MODE-JSARRAYHOLEY)
-	 (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
-	    (bit-oru32 (JS-OBJECT-MODE-JSARRAYTAG)
-	       (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
-		  (JS-OBJECT-MODE-HASNUMERALPROP)))))))
+      (bit-oru32 (JS-OBJECT-MODE-JSARRAYINLINE)
+	 (bit-oru32 (JS-OBJECT-MODE-JSARRAYHOLEY)
+	    (bit-oru32 (JS-OBJECT-MODE-JSOBJECTTAG)
+	       (bit-oru32 (JS-OBJECT-MODE-JSARRAYTAG)
+		  (bit-oru32 (JS-OBJECT-MODE-ENUMERABLE)
+		     (JS-OBJECT-MODE-HASNUMERALPROP))))))))
 
 (define-inline (js-vector-default-mode)
    (bit-oru32 (JS-OBJECT-MODE-JSVECTORTAG)
@@ -841,7 +852,7 @@
 ;;     4: JSOBJECTTAG (must be !)
 ;;     8: INLINE
 ;;    16: ISPROTOOF
-;;    32: HASINSTANCE
+;;    32: HASINSTANCE, JSARRAYINLINE
 ;;    64: ENUMERABLE
 ;;   128: PLAIN
 ;;   256: HSNUMERALPROP
@@ -849,7 +860,7 @@
 ;;  1024: SEALED, PROXYREVOKED
 ;;  2048: FROZEN
 ;;  4096: JSPROXYFUNCTION, JSPROCEDUREHOPSCRIPT, JSVECTORTAG
-;;  8192: PROCEDURETAG
+;;  8192: JSPROCEDURETAG
 ;; 16384: JSARRAYTAG (must be !)
 ;; 32768: JSARRAYHOLEY (must be !)
 (define-inline (JS-OBJECT-MODE-JSSTRINGTAG) #u32:1)
@@ -871,6 +882,7 @@
 ;; used to mark objects used has __proto__ of others
 (define-inline (JS-OBJECT-MODE-ISPROTOOF) #u32:16)
 (define-inline (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
+(define-inline (JS-OBJECT-MODE-JSARRAYINLINE) #u32:32)
 (define-inline (JS-OBJECT-MODE-ENUMERABLE) #u32:64)
 (define-inline (JS-OBJECT-MODE-PLAIN) #u32:128)
 (define-inline (JS-OBJECT-MODE-HASNUMERALPROP) #u32:256)
@@ -881,6 +893,7 @@
 (define-macro (JS-OBJECT-MODE-INLINE) #u32:8)
 (define-macro (JS-OBJECT-MODE-ISPROTOOF) #u32:16)
 (define-macro (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
+(define-macro (JS-OBJECT-MODE-JSARRAYINLINE) #u32:32)
 (define-macro (JS-OBJECT-MODE-ENUMERABLE) #u32:64)
 (define-macro (JS-OBJECT-MODE-PLAIN) #u32:128)
 (define-macro (JS-OBJECT-MODE-HASNUMERALPROP) #u32:256)
@@ -984,11 +997,21 @@
 	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-HASINSTANCE))
 	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-HASINSTANCE))))))
 
-(define-inline (js-object-mode-holey? o)
+(define-inline (js-object-mode-arrayinline? o)
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-JSARRAYINLINE) (js-object-mode o))
+      (JS-OBJECT-MODE-JSARRAYINLINE)))
+
+(define-inline (js-object-mode-arrayinline-set! o flag)
+   (js-object-mode-set! o
+      (if flag
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-JSARRAYINLINE))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-JSARRAYINLINE))))))
+
+(define-inline (js-object-mode-arrayholey? o)
    (=u32 (bit-andu32 (JS-OBJECT-MODE-JSARRAYHOLEY) (js-object-mode o))
       (JS-OBJECT-MODE-JSARRAYHOLEY)))
 
-(define-inline (js-object-mode-holey-set! o flag)
+(define-inline (js-object-mode-arrayholey-set! o flag)
    (js-object-mode-set! o
       (if flag
 	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-JSARRAYHOLEY))
@@ -1387,9 +1410,7 @@
 		     (cmap (js-clone cmap))
 		     (elements (vector-map js-clone elements)))))
 	 (js-object-proto-set! nobj (js-clone (js-object-proto obj)))
-	 (js-object-mode-set! nobj
-	    (bit-andu32 (js-object-mode obj)
-	       (bit-notu32 (JS-OBJECT-MODE-INLINE))))
+	 (js-object-mode-set! nobj (js-object-mode obj))
 	 nobj)))
 
 ;*---------------------------------------------------------------------*/

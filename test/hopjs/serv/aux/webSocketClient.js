@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../project/hop/3.1.x/test/hopjs/serv/aux/webSocketClient.js     */
+/*    .../project/hop/hop/test/hopjs/serv/aux/webSocketClient.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Thu Sep  17 11:43:00 2015                         */
-/*    Last change :  Thu Oct 13 09:03:04 2016 (serrano)                */
-/*    Copyright   :  2015-16 Inria                                     */
+/*    Last change :  Sat Aug 28 10:02:22 2021 (serrano)                */
+/*    Copyright   :  2015-21 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    simple worker to stress test a WebSocket server                  */
 /*=====================================================================*/

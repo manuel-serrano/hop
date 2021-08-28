@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Apr  8 08:30:13 2020 (serrano)                */
-;*    Copyright   :  2013-20 Manuel Serrano                            */
+;*    Last change :  Sat Aug 28 06:55:48 2021 (serrano)                */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
 ;*    -------------------------------------------------------------    */
@@ -318,12 +318,11 @@
 		  (proc (vector-ref vec i))
 		  (loop (+fx i 1))))))
       
-      (define (vfor-each3 proc vec vecname)
-	 (let ((len (vector-length vecname)))
-	    (let loop ((i 0))
-	       (when (<fx i len)
-		  (proc (vector-ref vec i) (vector-ref vecname i))
-		  (loop (+fx i 1))))))
+      (define (vfor-each3 proc vec vecname nameshift len)
+	 (let loop ((i 0))
+	    (when (<fx i len)
+	       (proc (vector-ref vec i) (vector-ref vecname (+fx nameshift i)))
+	       (loop (+fx i 1)))))
       
       (define (in-mapped-property el-or-descr prop)
 	 (when (and (js-jsstring? (prop-name prop))
@@ -344,12 +343,19 @@
       
       (cond
 	 ((js-object? obj)
-	  (let loop ((o obj))
-	     (with-access::JsObject o (elements cmap __proto__)
-		(if (not (eq? cmap (js-not-a-cmap)))
-		    (with-access::JsConstructMap cmap (props)
-		       (vfor-each3 in-mapped-property elements props))
-		    (vector-for-each in-property elements)))))
+	  (with-access::JsObject obj (elements cmap __proto__)
+	     (if (not (eq? cmap (js-not-a-cmap)))
+		 (with-access::JsConstructMap cmap (props)
+		    (let ((ilen (js-object-inline-length obj))
+			  (nlen (js-object-noinline-length obj)))
+		       (vfor-each3 in-mapped-property
+			  (js-object-inline-elements obj) props
+			  0 (minfx ilen (vector-length props)))
+		       (vfor-each3 in-mapped-property
+			  (js-object-noinline-elements obj) props
+			  (js-object-inline-length obj)
+			  (minfx nlen (-fx (vector-length props) ilen)))))
+		 (vector-for-each in-property elements))))
 	 ((object? obj)
 	  (vfor-each2 (lambda (f) (proc (class-field-name f)))
 	     (class-all-fields (object-class obj))))
