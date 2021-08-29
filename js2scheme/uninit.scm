@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Sat Aug 28 11:34:31 2021 (serrano)                */
+;*    Last change :  Sun Aug 29 16:55:43 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -146,7 +146,7 @@
 	     (let* ((f (vector-ref-ur fields i))
 		    (fi (class-field-info f))
 		    (v ((class-field-accessor f) this))
-		    (env (if (and (pair? fi) (member "notraverse" fi))
+		    (env (if (and (pair? fi) (member "ast" fi))
 			     env
 			     (uninit* v env))))
 		(loop (-fx i 1) env))
