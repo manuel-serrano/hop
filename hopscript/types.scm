@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Aug 28 08:12:07 2021 (serrano)                */
+;*    Last change :  Sun Aug 29 18:11:32 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -1103,13 +1103,10 @@
 (define-inline (js-object-inline-elements o::JsObject)
    (cond-expand
       ((and bigloo-c (not disable-inline))
-       (if (and (js-object-mode-inline? o) (not (js-jsobject? o)))
-	   (tprint "PAS BON INLINE " (typeof o)))
-       (if (and (js-jsobject? o) (js-object-mode-inline? o))
+       [assert (o) (or (not (js-object-mode-inline? o)) (js-jsobject? o))]
+       (if (js-object-mode-inline? o)
 	   ($js-object-inline-elements o)
-	   (begin
-	      ;; (tprint "TBR (after optim)" (typeof o))
-	      '#())))
+	   '#()))
       (else
        '#())))
 
@@ -1136,9 +1133,8 @@
 ;*    js-object-inline-length ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-inline-length o::JsObject)
-   (if (and (js-object-mode-inline? o) (not (js-jsobject? o)))
-       (tprint "PAS BON INLINE " (typeof o)))
-   (if (and (js-jsobject? o) (js-object-mode-inline? o))
+   [assert (o) (or (not (js-object-mode-inline? o)) (js-jsobject? o))]
+   (if (js-object-mode-inline? o)
        (vector-length (js-object-inline-elements o))
        0))
 
