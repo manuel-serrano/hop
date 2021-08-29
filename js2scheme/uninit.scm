@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Sun Aug 29 16:55:43 2021 (serrano)                */
+;*    Last change :  Sun Aug 29 17:59:29 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -147,8 +147,8 @@
 		    (fi (class-field-info f))
 		    (v ((class-field-accessor f) this))
 		    (env (if (and (pair? fi) (member "ast" fi))
-			     env
-			     (uninit* v env))))
+			     (uninit* v env)
+			     env)))
 		(loop (-fx i 1) env))
 	     env))))
 
@@ -227,8 +227,10 @@
 ;*    uninit* ::J2SFor ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (uninit* this::J2SFor env)
+   (tprint "j2sfor")
    (with-access::J2SFor this (init test incr body)
       (let* ((ienv (uninit* init env))
+	     (tenv (uninit* test ienv))
 	     (benv (uninit* body ienv)))
 	 (uninit* incr benv)
 	 (filter (lambda (d) (not (decl-usage-has? d '(uninit)))) ienv))))
