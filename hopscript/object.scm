@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Aug 28 08:21:07 2021 (serrano)                */
+;*    Last change :  Sat Aug 28 11:09:55 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -105,7 +105,6 @@
 (define-method (object-print obj::JsObject op proc)
    (display "#<JsObject " op)
    (display (js-object-length obj) op)
-   (display " " op)
    (cond
       ((js-object-mapped? obj) (display " mapped>" op))
       ((js-object-hashed? obj) (display " hashed>" op))
@@ -161,7 +160,7 @@
 			(cmap js-initial-cmap)
 			(elements (make-vector (js-object-length obj))))))
 	    (js-object-proto-set! nobj (js-get js-object (& "prototype") %this))
-	    (js-object-mode-set! nobj (js-object-mode obj))
+	    (js-object-mode-set! nobj (bit-andu32 (js-object-mode obj) (bit-notu32 (JS-OBJECT-MODE-INLINE))))
 	    (js-for-in obj
 	       (lambda (k %this)
 		  (js-put! nobj (js-donate k worker %_this)

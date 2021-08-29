@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Aug 28 08:06:10 2021 (serrano)                */
+;*    Last change :  Sat Aug 28 10:26:29 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1302,7 +1302,7 @@
       `(let ((,prop (with-access::JsObject ,o (elements) elements)))
 	  (unless (every (lambda (x) (isa? x JsPropertyDescriptor))
 		     (vector->list ,prop))
-	     (tprint "js-object-properties-find: " (vector-map typeof ,prop))
+	     (tprint "js-object-properties-find: " ,p " " (vector-map typeof ,prop))
 	     (js-debug-object ,o))
 	  (let ,loop ((,i (-fx (vector-length ,prop) 1)))
 	     (if (=fx ,i -1)
