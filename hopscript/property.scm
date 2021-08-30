@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Aug 28 10:26:29 2021 (serrano)                */
+;*    Last change :  Mon Aug 30 07:45:49 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3950,7 +3950,10 @@
 		   (or (and (=fl v1 v2) (=fx (signbitfl v1) (signbitfl v2)))
 		       (and (nanfl? v1) (nanfl? v2))))
 	      (and (fixnum? v2) (=fl v1 (fixnum->flonum v2))))
-	  (equal? v1 v2)))
+	  (and (equal? v1 v2)
+	       (or (not (js-object-mapped? v1))
+		   (equal? (js-object-inline-elements v1)
+		      (js-object-inline-elements v2))))))
    
    (define (same-property-descriptor? current::JsPropertyDescriptor desc::JsPropertyDescriptor)
       (with-access::JsPropertyDescriptor current
@@ -4164,8 +4167,9 @@
 			(format "\"~a.~a\" enumerability mismatch"
 			   (js-typeof o %this) name)))))
 	      (unless rejected
-		 (js-object-unmap! o)
-		 (set! current (js-get-own-property o name %this))
+		 (when (js-object-mapped? o)
+		    (js-object-unmap! o)
+		    (set! current (js-get-own-property o name %this)))
 		 (cond
 		    ((js-is-generic-descriptor? desc)
 		     ;; 8
