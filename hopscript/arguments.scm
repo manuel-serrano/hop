@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Thu Aug 26 15:10:27 2021 (serrano)                */
+;*    Last change :  Mon Aug 30 16:51:21 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -557,13 +557,11 @@
 ;*---------------------------------------------------------------------*/
 (define (js-arguments %this::JsGlobalObject vec::vector)
    (with-access::JsGlobalObject %this (js-arguments-cmap)
-      (let ((a (instantiateJsArguments
-		  (vec vec)
-		  (cmap js-arguments-cmap)
-		  (elements (vector (vector-length vec) (js-undefined)))
-		  (__proto__ (js-object-proto %this)))))
-	 (js-object-mode-inline-set! a #f)
-	 a)))
+      (instantiateJsArguments
+	 (vec vec)
+	 (cmap js-arguments-cmap)
+	 (elements (vector (vector-length vec) (js-undefined)))
+	 (__proto__ (js-object-proto %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-arguments ...                                          */
@@ -584,18 +582,16 @@
 	 (configurable #t)
 	 (enumerable #t)))
    
-   (let* ((len (vector-length vec)))
+   (let ((len (vector-length vec)))
       ;; build the arguments object
-      (let ((a (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
-		  (instantiateJsArguments
-		     (vec vec)
-		     (cmap js-strict-arguments-cmap)
-		     (elements (vector (vector-length vec)
-				  strict-callee-property
-				  strict-caller-property))
-		     (__proto__ (js-object-proto %this))))))
-	 (js-object-mode-inline-set! a #t)
-	 a)))
+      (with-access::JsGlobalObject %this (js-strict-arguments-cmap)
+	 (instantiateJsArguments
+	    (vec vec)
+	    (cmap js-strict-arguments-cmap)
+	    (elements (vector (vector-length vec)
+			 strict-callee-property
+			 strict-caller-property))
+	    (__proto__ (js-object-proto %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments->vector..                                           */
