@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Aug 30 07:45:49 2021 (serrano)                */
+;*    Last change :  Mon Aug 30 08:26:35 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -684,6 +684,7 @@
    (with-access::JsObject obj (elements cmap)
       (with-access::JsConstructMap cmap (ctor)
 	 (js-ctor-constrsize-extend! ctor (+fx idx 1)))
+      (js-object-extend! obj idx value (+fx idx 1))
       (js-object-noinline-set! obj idx value)
       (set! cmap ncmap)
       obj))
@@ -1531,22 +1532,22 @@
 		   (set! elements table))
 		  ((not (vector-ref props i))
 		   (error "js-object-hash!" "illegal property descriptor" i))
-		  ((isa? (vector-ref elements i) JsPropertyDescriptor)
-		   (with-access::JsPropertyDescriptor (vector-ref elements i) (name)
+		  ((isa? (js-object-ref o i) JsPropertyDescriptor)
+		   (with-access::JsPropertyDescriptor (js-object-ref o i) (name)
 		      (prop-hashtable-put! table (js-jsstring->string name)
-			 (make-cell (vector-ref elements i)))
+			 (make-cell (js-object-ref o i)))
 		      (loop (-fx i 1))))
 		  (else
 		   (let* ((name (prop-name (vector-ref props i)))
 			  (flags (prop-flags (vector-ref props i)))
 			  (descv (if (eq? flags (property-flags-default))
-				     (vector-ref elements i)
+				     (js-object-ref o i)
 				     (instantiate::JsValueDescriptor
 					(enumerable (flags-enumerable? flags))
 					(writable (flags-writable? flags))
 					(configurable (flags-configurable? flags))
 					(name name)
-					(value (vector-ref elements i))))))
+					(value (js-object-ref o i))))))
 		      (prop-hashtable-put! table (js-jsstring->string name)
 			 (make-cell descv))
 		      (loop (-fx i 1))))))))

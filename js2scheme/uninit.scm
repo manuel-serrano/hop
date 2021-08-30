@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Sun Aug 29 17:59:29 2021 (serrano)                */
+;*    Last change :  Mon Aug 30 08:12:21 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -72,7 +72,8 @@
 	     (j2s-uninit-force! this args))
 	    (direct-eval
 	     (for-each (lambda (decl)
-			  (unless (isa? decl J2SDeclFun)
+			  (unless (or (isa? decl J2SDeclFun)
+				      (isa? decl J2SDeclExtern))
 			     (decl-usage-add! decl 'uninit)))
 		decls))
 	    (else
@@ -159,8 +160,9 @@
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (scope)
 	 (when (memq scope '(global %scope))
-	    (unless (or (decl-usage-has? decl '(uninit)) (memq decl env))
-	       (decl-usage-add! decl 'uninit)))))
+	    (unless (or (isa? decl J2SDeclFun) (isa? decl J2SDeclExtern))
+	       (unless (or (decl-usage-has? decl '(uninit)) (memq decl env))
+		  (decl-usage-add! decl 'uninit))))))
    env)
 
 ;*---------------------------------------------------------------------*/
@@ -227,7 +229,6 @@
 ;*    uninit* ::J2SFor ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (uninit* this::J2SFor env)
-   (tprint "j2sfor")
    (with-access::J2SFor this (init test incr body)
       (let* ((ienv (uninit* init env))
 	     (tenv (uninit* test ienv))

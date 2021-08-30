@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Aug 13 15:05:46 2021 (serrano)                */
+;*    Last change :  Mon Aug 30 10:08:32 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1037,7 +1037,7 @@
 				    ,(j2s-scheme this mode return ctx))))))
 		   (loop obj))))))
 
-    (define (call-method this ccache ccspecs fun::J2SAccess args)
+   (define (call-method this ccache ccspecs fun::J2SAccess args)
       (with-access::J2SCall this (profid cache)
 	 (with-access::J2SAccess fun (loc obj field (acache cache) (acspecs cspecs))
 	    (let loop ((obj obj))
