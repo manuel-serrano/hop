@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Aug 30 08:26:35 2021 (serrano)                */
+;*    Last change :  Mon Aug 30 19:37:34 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3946,15 +3946,32 @@
       #t)
    
    (define (same-value v1 v2)
-      (if (flonum? v1)
+      (cond
+	 ((eq? v1 v2)
+	  #t)
+	 ((js-object? v1)
+	  (when (js-object? v2)
+	     (let ((len1 (js-object-length v1))
+		   (len2 (js-object-length v2)))
+		(when (=fx len1 len2)
+		   (let loop ((i 0))
+		      (cond
+			 ((=fx i len1)
+			  #t)
+			 ((equal? (js-object-ref v1 i)
+			     (js-object-ref v2 i))
+			  (loop (+fx i 1)))
+			 (else
+			  (tprint "false=" (typeof (js-object-ref v1 i))
+			     " " (typeof (js-object-ref v2 i)))
+			  #f)))))))
+	 ((flonum? v1)
 	  (or (and (flonum? v2)
 		   (or (and (=fl v1 v2) (=fx (signbitfl v1) (signbitfl v2)))
 		       (and (nanfl? v1) (nanfl? v2))))
-	      (and (fixnum? v2) (=fl v1 (fixnum->flonum v2))))
-	  (and (equal? v1 v2)
-	       (or (not (js-object-mapped? v1))
-		   (equal? (js-object-inline-elements v1)
-		      (js-object-inline-elements v2))))))
+	      (and (fixnum? v2) (=fl v1 (fixnum->flonum v2)))))
+	 (else
+	  (equal? v1 v2))))
    
    (define (same-property-descriptor? current::JsPropertyDescriptor desc::JsPropertyDescriptor)
       (with-access::JsPropertyDescriptor current
