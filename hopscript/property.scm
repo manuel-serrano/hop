@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Aug 30 19:37:34 2021 (serrano)                */
+;*    Last change :  Tue Aug 31 12:04:51 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -90,6 +90,7 @@
 	   (js-property-value-set! ::obj ::JsObject ::obj ::JsPropertyDescriptor ::obj ::JsGlobalObject)
 	   
 	   (js-object-cmap-push! ::JsObject ::long ::obj ::JsConstructMap)
+	   (js-object-vtable-push! ::JsObject ::long ::obj ::JsConstructMap)
 	   
 	   (generic js-properties-names::pair-nil ::obj ::bool ::JsGlobalObject)
 	   (generic js-properties-name::vector ::obj ::bool ::JsGlobalObject)
@@ -528,10 +529,10 @@
 ;*---------------------------------------------------------------------*/
 (define (js-debug-pcache pcache #!optional (msg ""))
    (if (isa? pcache JsPropertyCache)
-       (with-access::JsPropertyCache pcache (point src imap cmap pmap nmap emap amap xmap vindex cntmiss iindex cindex pindex nindex aindex eindex)
+       (with-access::JsPropertyCache pcache (point src imap cmap pmap nmap emap amap xmap cntmiss iindex cindex pindex nindex aindex eindex)
 	  (fprint (current-error-port) "-- " msg (typeof pcache)
 	     " loc=" point ":" src
-	     " vindex=" vindex " cntmiss=" cntmiss)
+	     " cntmiss=" cntmiss)
 	  (if (isa? imap JsConstructMap)
 	      (with-access::JsConstructMap imap (%id props)
 		 (fprint (current-error-port) "  imap %id=" %id
@@ -566,7 +567,9 @@
 	      (with-access::JsConstructMap xmap (%id props)
 		 (fprint (current-error-port) "  xmap %id=" %id
 		    " props=" (vector-map js-debug-prop props)))
-	      (fprint (current-error-port) "  xmap " xmap)))
+	      (fprint (current-error-port) "  xmap " xmap))
+	  (with-access::JsPropertyCache pcache (vindex)
+	     (fprint (current-error-port) "  vindex=" vindex)))
        (fprint (current-error-port) msg (typeof pcache))))
 
 ;*---------------------------------------------------------------------*/
@@ -688,6 +691,21 @@
       (js-object-noinline-set! obj idx value)
       (set! cmap ncmap)
       obj))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-vtable-push! ...                                       */
+;*    -------------------------------------------------------------    */
+;*    Only used after a vtable cache hit                               */
+;*    (see JS-PUT-JS-OBJECT-NAME/CACHE-EXPANDER).                      */
+;*---------------------------------------------------------------------*/
+(define (js-object-vtable-push! obj::JsObject idx::long value ncmap)
+   (with-access::JsObject obj (elements cmap)
+      (if (>=fx idx (js-object-inline-length obj))
+	  (js-object-cmap-push! obj idx value ncmap)
+	  (begin
+	     (js-object-inline-set! obj idx value)
+	     (set! cmap ncmap)
+	     obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    function0->proc ...                                              */
@@ -1301,10 +1319,6 @@
 	 (i (gensym 'i))
 	 (loop (gensym 'loop)))
       `(let ((,prop (with-access::JsObject ,o (elements) elements)))
-	  (unless (every (lambda (x) (isa? x JsPropertyDescriptor))
-		     (vector->list ,prop))
-	     (tprint "js-object-properties-find: " ,p " " (vector-map typeof ,prop))
-	     (js-debug-object ,o))
 	  (let ,loop ((,i (-fx (vector-length ,prop) 1)))
 	     (if (=fx ,i -1)
 		 (if (js-proxy? ,o)
@@ -3962,8 +3976,6 @@
 			     (js-object-ref v2 i))
 			  (loop (+fx i 1)))
 			 (else
-			  (tprint "false=" (typeof (js-object-ref v1 i))
-			     " " (typeof (js-object-ref v2 i)))
 			  #f)))))))
 	 ((flonum? v1)
 	  (or (and (flonum? v2)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Aug 29 18:11:32 2021 (serrano)                */
+;*    Last change :  Tue Aug 31 12:11:02 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -1194,7 +1194,7 @@
 	 (-fx idx (vector-length (js-object-inline-elements o))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-noinline-set! ...                                       */
+;*    js-object-noinline-set! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-noinline-set! o::JsObject idx::long val::obj)
    (with-access::JsObject o (elements)

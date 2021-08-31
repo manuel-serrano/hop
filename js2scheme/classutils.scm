@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Thu Aug 26 07:58:22 2021 (serrano)                */
+;*    Last change :  Mon Aug 30 20:44:45 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -19,9 +19,12 @@
    (import __js2scheme_ast
 	   __js2scheme_dump)
 
-   (export )
-   
-   (export (j2s-class-super-val ::J2SClass)
+   (export (class-info-name::bstring ::J2SClass)
+	   (class-constructor-id::symbol ::J2SClass)
+	   (class-class-id::symbol ::J2SClass)
+	   (class-prototype-id::symbol ::J2SClass)
+	   
+	   (j2s-class-super-val ::J2SClass)
 	   (j2s-class-root-val ::J2SClass)
 	   
 	   (j2s-class-property-constructor?::bool ::J2SPropertyInit)
@@ -37,6 +40,42 @@
 	   (j2s-class-find-initializer ::J2SClass)
 	   (j2s-class-constructor-might-return?::bool ::J2SClass)
 	   (j2s-class-methods-use-super?::bool ::J2SClass)))
+
+;*---------------------------------------------------------------------*/
+;*    class-info-name ...                                              */
+;*---------------------------------------------------------------------*/
+(define (class-info-name clazz::J2SClass)
+   (with-access::J2SClass clazz (name loc)
+      (if name
+	  (symbol->string! name)
+	  (format "~a:~a" (cadr loc) (caddr loc)))))
+
+;*---------------------------------------------------------------------*/
+;*    class-constructor-id ...                                         */
+;*---------------------------------------------------------------------*/
+(define (class-constructor-id::symbol clazz::J2SClass)
+   (with-access::J2SClass clazz (name loc)
+      (if name
+	  (symbol-append '@ name '%CTOR)
+	  (string->symbol (format "@~a:~a%CTOR" (cadr loc) (caddr loc))))))
+
+;*---------------------------------------------------------------------*/
+;*    class-class-id ...                                               */
+;*---------------------------------------------------------------------*/
+(define (class-class-id::symbol clazz::J2SClass)
+   (with-access::J2SClass clazz (name loc)
+      (if name
+	  (symbol-append '@ name '%CLASS)
+	  (string->symbol (format "@~a:~a%CLASS" (cadr loc) (caddr loc))))))
+
+;*---------------------------------------------------------------------*/
+;*    class-prototype-id ...                                           */
+;*---------------------------------------------------------------------*/
+(define (class-prototype-id::symbol clazz::J2SClass)
+   (with-access::J2SClass clazz (name loc)
+      (if name
+	  (symbol-append '@ name '%PROTOTYPE)
+	  (string->symbol (format "@~a:~a%PROTOTYPE" (cadr loc) (caddr loc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-class-super-val ...                                          */

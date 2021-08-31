@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Aug 28 06:33:29 2021 (serrano)                */
+;*    Last change :  Tue Aug 31 12:07:50 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -881,7 +881,7 @@
 					      (ncmap (cdr (vector-ref vtable vidx))))
 					   (js-profile-log-cache ,cache :vtable #t)
 					   (js-profile-log-index idx)
-					   (js-object-cmap-push! ,obj idx ,tmp ncmap)
+					   (js-object-vtable-push! ,obj idx ,tmp ncmap)
 					   ,tmp)
 					,(loop (cdr cs))))))))
 			(else

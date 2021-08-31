@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Thu Aug 26 08:40:35 2021 (serrano)                */
+;*    Last change :  Mon Aug 30 20:44:48 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -35,42 +35,6 @@
 	   (j2s-scheme-class-propname ::J2SExpr mode return ctx)
 	   (j2s-scheme-bind-class-method prop::J2SPropertyInit obj mode return ctx)
 	   (j2s-scheme-class-call-super ::J2SCall mode return ctx)))
-
-;*---------------------------------------------------------------------*/
-;*    class-info-name ...                                              */
-;*---------------------------------------------------------------------*/
-(define (class-info-name clazz::J2SClass)
-   (with-access::J2SClass clazz (name loc)
-      (if name
-	  (symbol->string! name)
-	  (format "~a:~a" (cadr loc) (caddr loc)))))
-
-;*---------------------------------------------------------------------*/
-;*    class-constructor-id ...                                         */
-;*---------------------------------------------------------------------*/
-(define (class-constructor-id::symbol clazz::J2SClass)
-   (with-access::J2SClass clazz (name loc)
-      (if name
-	  (symbol-append '@ name '%CTOR)
-	  (string->symbol (format "@~a:~a%CTOR" (cadr loc) (caddr loc))))))
-
-;*---------------------------------------------------------------------*/
-;*    class-class-id ...                                               */
-;*---------------------------------------------------------------------*/
-(define (class-class-id::symbol clazz::J2SClass)
-   (with-access::J2SClass clazz (name loc)
-      (if name
-	  (symbol-append '@ name '%CLASS)
-	  (string->symbol (format "@~a:~a%CLASS" (cadr loc) (caddr loc))))))
-
-;*---------------------------------------------------------------------*/
-;*    class-prototype-id ...                                           */
-;*---------------------------------------------------------------------*/
-(define (class-prototype-id::symbol clazz::J2SClass)
-   (with-access::J2SClass clazz (name loc)
-      (if name
-	  (symbol-append '@ name '%PROTOTYPE)
-	  (string->symbol (format "@~a:~a%PROTOTYPE" (cadr loc) (caddr loc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-call-class-constructor ...                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Wed Apr 28 09:34:06 2021 (serrano)                */
+;*    Last change :  Tue Aug 31 10:13:20 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -251,7 +251,7 @@
       (let ((proc (instantiateJsProcess
 		     (cmap (js-make-jsconstructmap))
 		     (__proto__ (js-new %this js-object))
-		     (elements ($create-vector 46)))))
+		     (elements ($create-vector 64)))))
 
 	 (define (not-implemented name)
 	    (js-put! proc (js-ascii-name->jsstring name)
