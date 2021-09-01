@@ -3428,7 +3428,7 @@
 		   (j2s->list node)))))))
    
    (define (vector-inits n elements i offset nodes cmap)
-      `(let* ((,elements elements)
+      `(let* ((,elements (js-object-inline-elements ,n))
 	      (,i ,offset))
 	  ,@(map (lambda (init offset)
 		    (j2s-scheme 
@@ -3461,22 +3461,32 @@
 		(set! ,cnt (+fx ,cnt 1))
 		(with-access::JsConstructMap cmap (props)
 		   (when (and (js-object-no-setter? ,n)
+			      (isa? (js-pcache-emap
+				       (js-pcache-ref %pcache
+					  ,(node-cache
+					      (car (last-pair nodes)))))
+				 JsConstructMap)
+			      (isa? (js-pcache-emap
+				       (js-pcache-ref %pcache
+					  ,(node-cache
+					      (car nodes))))
+				 JsConstructMap)
 			      (=fx ,(-fx (length nodes) 1)
 				 (-fx (with-access::JsConstructMap
-					    (js-pcache-nmap
+					    (js-pcache-emap
 					       (js-pcache-ref %pcache
 						  ,(node-cache
 						      (car (last-pair nodes)))))
 					    (props)
 					 (vector-length props))
 				    (with-access::JsConstructMap
-					  (js-pcache-nmap
+					  (js-pcache-emap
 					     (js-pcache-ref %pcache
 						,(node-cache (car nodes))))
 					    (props)
 					 (vector-length props)))))
 		      (set! ,offset
-			 (js-pcache-nindex
+			 (js-pcache-eindex
 			    (js-pcache-ref %pcache ,(node-cache (car nodes)))))
 		      (set! ,%cmap cmap)
 		      (js-validate-pmap-pcache! (js-pcache-ref %pcache ,pcache))
@@ -3488,7 +3498,7 @@
 	 (let ((i (gensym '%i))
 	       (elements (gensym '%elements)))
 	    (if cmap
-		`(with-access::JsObject ,n (cmap elements)
+		`(with-access::JsObject ,n (cmap)
 		    (if (eq? cmap (js-pcache-nmap (js-pcache-ref %pcache ,cache)))
 			,(vector-inits n elements i offset nodes cmap)
 			,(elements-init n offset nodes cmap cnt cache)))
