@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon Aug 30 10:08:32 2021 (serrano)                */
+;*    Last change :  Wed Sep  1 15:18:38 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1613,5 +1613,7 @@
 ;*    decl-only-call? ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (decl-only-call? decl::J2SDecl)
-   (and (decl-usage-has? decl '(get call new init instanceof))
-	(not (decl-usage-has? decl '(assig ref set uninit rest eval)))))
+   (with-access::J2SDecl decl (usecnt)
+      (or (and #f (=fx usecnt 0))
+	  (and (decl-usage-has? decl '(get call new init instanceof))
+	       (not (decl-usage-has? decl '(assig ref set uninit rest eval)))))))

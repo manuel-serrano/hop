@@ -5774,7 +5774,9 @@
 		 (make-compare comparefn))))))
    
    (define (vector-sort this comparefn)
-      (with-access::JsArray this (vec)
+      (with-access::JsArray this (vec ilen)
+	 ;; force vector resize otherwise sort will access elements out of range
+	 (vector-shrink! vec (uint32->fixnum ilen))
 	 (if (and (js-procedure? comparefn)
 		  (with-access::JsProcedure comparefn (arity)
 		     (=fx arity 3)))
@@ -5782,15 +5784,15 @@
 	     (with-access::JsProcedure comparefn (procedure)
 		(let ((proc procedure))
 		   ($sort-vector vec
-		      (lambda (x y)
-			 (cond
-			    ((eq? x (js-undefined)) (eq? y (js-undefined)))
-			    ((eq? y (js-undefined)) #t)
-			    (else
-			     (let ((t (proc (js-undefined) x y)))
-				(if (fixnum? t)
-				    (<=fx t 0)
-				    (<= (js-tointeger t %this) 0)))))))))
+			       (lambda (x y)
+				  (cond
+				     ((eq? x (js-undefined)) (eq? y (js-undefined)))
+				     ((eq? y (js-undefined)) #t)
+				     (else
+				      (let ((t (proc (js-undefined) x y)))
+					 (if (fixnum? t)
+					     (<=fx t 0)
+					     (<= (js-tointeger t %this) 0)))))))))
 	     ($sort-vector vec (get-compare comparefn)))
 	 this))
    
@@ -5830,7 +5832,6 @@
 	 (unless (< len 2)
 	    (quicksort arr cmp 0 (- len 1)))
 	 arr))
-   
    (let ((o this))
       (if (not (js-array? this))
 	  (array-sort this (get-compare comparefn))
