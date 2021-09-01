@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Sun May 30 07:51:59 2021 (serrano)                */
+;*    Last change :  Wed Sep  1 09:59:02 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
@@ -411,6 +411,28 @@
 	    (when (memq type '(number integer))
 	       (set! type 'real)
 	       (cell-set! fix #f))))))
+
+;*---------------------------------------------------------------------*/
+;*    propagate-types ::J2SPrefix ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-types this::J2SPrefix fix::cell)
+   (call-default-walker)
+   (with-access::J2SPrefix this (rhs type)
+      (when (eq? (j2s-type rhs) 'real)
+	 (when (memq type '(number integer))
+	    (set! type 'real)
+	    (cell-set! fix #f)))))
+
+;*---------------------------------------------------------------------*/
+;*    propagate-types ::J2SPostfix ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-types this::J2SPostfix fix::cell)
+   (call-default-walker)
+   (with-access::J2SPostfix this (rhs type)
+      (when (eq? (j2s-type rhs) 'real)
+	 (when (memq type '(number integer))
+	    (set! type 'real)
+	    (cell-set! fix #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    propagate-types ::J2SUnary ...                                   */

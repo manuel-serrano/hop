@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Aug 11 16:21:48 2021 (serrano)                */
+;*    Last change :  Wed Sep  1 09:23:59 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -3267,12 +3267,16 @@
       (match-case tmp
 	  ((+fx/overflow ?x 1) `(js-int53-inc ,x))
 	  ((++fx/overflow ?x 1) `(js-int53-inc ,x))
+	  ((++fx ?x 1) `(+fx ,x 1))
 	  ((+fx/overflow ?x -1) `(js-int53-dec ,x))
 	  ((++fx/overflow ?x -1) `(js-int53-dec ,x))
+	  ((++fx ?x -1) `(-fx ,x 1))
 	  ((+fx/overflow 1 ?x) `(js-int53-inc ,x))
 	  ((++fx/overflow 1 ?x) `(js-int53-inc ,x))
+	  ((++fx 1 ?x) `(+fx ,x 1))
 	  ((-fx/overflow ?x 1) `(js-int53-dec ,x))
 	  ((--fx/overflow ?x 1) `(js-int53-dec ,x))
+	  ((--fx ?x 1) `(-fx ,x 1))
 	  (else tmp))))
 
 (define (binop-fixnum-fixnum op type left right flip)
@@ -3296,7 +3300,11 @@
 	  (binop-flip (symbol-append op '/overflow) left right flip)))))
    
 (define (binop-flonum-flonum op type left right flip)
-   (let ((op (if (memq op '(== ===)) '=fl (symbol-append op 'fl))))
+   (let ((op (cond
+		((memq op '(== ===)) '=fl)
+		((eq? op '--) '-fl)
+		((eq? op '++) '+fl)
+		(else (symbol-append op 'fl)))))
       (case type
 	 ((int32)
 	  `(flonum->int32 ,(binop-flip op left right flip)))

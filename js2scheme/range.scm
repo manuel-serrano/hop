@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri May  7 17:22:33 2021 (serrano)                */
+;*    Last change :  Wed Sep  1 09:45:11 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -2557,9 +2557,9 @@
 	 ((>>>)
 	  (set! type 'uint32))
 	 ((++ --)
-	  (if (range-type? type)
-	      (set! type (interval->type range tmap type))
-	      (set! type 'number)))
+	  (cond
+	     ((range-type? type) (set! type (interval->type range tmap type)))
+	     ((not (eq? type 'real)) (set! type 'number))))
 	 (else
 	  (when (range-type? type)
 	     (set! type (interval->type range tmap type))))))
