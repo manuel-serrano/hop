@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Aug 31 12:07:50 2021 (serrano)                */
+;*    Last change :  Wed Sep  1 08:26:11 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -190,6 +190,23 @@
       e))
 
 ;*---------------------------------------------------------------------*/
+;*    js-pcache-nextnmap-expander ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-pcache-nextnmap-expander x e)
+   (e (match-case x
+	 ((js-pcache-nextnmap (and ?c (js-pcache-ref %pcache ?idx)))
+	  (cond-expand
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
+	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_nextnmapz00)" ,idx))
+	     (else
+	      `(with-access::JsPropertyCache ,c (nextnmap) nextnmap))))
+	 ((js-pcache-nextnmap ?c)
+	  `(with-access::JsPropertyCache ,c (nextnmap) nextnmap))
+	 (else
+	  (error "js-pcache-nextnmap" "bad syntax" x)))
+      e))
+
+;*---------------------------------------------------------------------*/
 ;*    js-pcache-emap-expander ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-pcache-emap-expander x e)
@@ -204,6 +221,23 @@
 	  `(with-access::JsPropertyCache ,c (emap) emap))
 	 (else
 	  (error "js-pcache-emap" "bad syntax" x)))
+      e))
+
+;*---------------------------------------------------------------------*/
+;*    js-pcache-nextemap-expander ...                                  */
+;*---------------------------------------------------------------------*/
+(define (js-pcache-nextemap-expander x e)
+   (e (match-case x
+	 ((js-pcache-nextemap (and ?c (js-pcache-ref %pcache ?idx)))
+	  (cond-expand
+	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
+	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_nextemapz00)" ,idx))
+	     (else
+	      `(with-access::JsPropertyCache ,c (nextemap) nextemap))))
+	 ((js-pcache-nextemap ?c)
+	  `(with-access::JsPropertyCache ,c (nextemap) nextemap))
+	 (else
+	  (error "js-pcache-nextemap" "bad syntax" x)))
       e))
 
 ;*---------------------------------------------------------------------*/
@@ -791,7 +825,7 @@
 			 (js-profile-log-cache ,cache :emap #t)
 			 (js-profile-log-index idx)
 			  (js-object-inline-set! ,obj idx ,tmp)
-			 (set! cmap (js-pcache-imap ,cache))
+			 (set! cmap (js-pcache-nextemap ,cache))
 			 ,tmp))
 		    ((eq? cs 'cmap)
 		     `(let ((idx (js-pcache-cindex ,cache)))
@@ -804,7 +838,7 @@
 			 (js-profile-log-cache ,cache :nmap #t)
 			 (js-profile-log-index idx)
 			 (js-object-cmap-push! ,obj idx ,tmp
-			    (js-pcache-cmap ,cache))
+			    (js-pcache-nextnmap ,cache))
 			 ,tmp))
 		    ((eq? cs 'amap)
 		     `(let* ((idx (js-pcache-aindex ,cache))

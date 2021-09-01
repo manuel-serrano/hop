@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Sat Aug 21 15:08:19 2021 (serrano)                */
+;*    Last change :  Tue Aug 31 13:42:14 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -114,7 +114,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-with-handler-no-unwind ...                                    */
 ;*    -------------------------------------------------------------    */
-;*    Simplied version of with-handle that is used when no             */
+;*    Simplied version of with-handler used only when no               */
 ;*    "RETURN", "BREAK", or "CONTINUE" is used in the body.            */
 ;*---------------------------------------------------------------------*/
 (define (js-with-handler-no-unwind-expander x e)

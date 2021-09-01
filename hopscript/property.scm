@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Aug 31 12:04:51 2021 (serrano)                */
+;*    Last change :  Tue Aug 31 18:06:39 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -869,7 +869,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-pcache-update-get-prototype! pcache::JsPropertyCache i o::JsObject obj)
    (with-access::JsObject o ((omap cmap))
-      (with-access::JsPropertyCache pcache (nmap pmap nindex pindex owner)
+      (with-access::JsPropertyCache pcache (pmap pindex owner)
 	 (js-validate-pmap-pcache! pcache)
 	 (set! pmap omap)
 	 (set! pindex i)
@@ -883,12 +883,12 @@
 (define (js-pcache-update-put-direct! pcache::JsPropertyCache i o::JsObject)
    
    (define (update-inline! pcache omap)
-      (with-access::JsPropertyCache pcache (imap nmap emap iindex)
+      (with-access::JsPropertyCache pcache (imap iindex)
 	 (set! imap omap)
 	 (set! iindex i)))
 
    (define (update-noinline! pcache omap)
-      (with-access::JsPropertyCache pcache (cmap nmap emap cindex)
+      (with-access::JsPropertyCache pcache (cmap cindex)
 	 (set! cmap omap)
 	 (set! cindex i)))
    
@@ -933,19 +933,15 @@
 (define (js-pcache-update-next-direct! pcache::JsPropertyCache o::JsObject nextmap i inlp::bool)
    
    (define (next-inline! pcache omap)
-      (with-access::JsPropertyCache pcache (imap cmap emap pmap nmap amap
-					      iindex eindex cindex nindex
-					      owner)
-	 (set! imap nextmap)
-	 (set! iindex i)
+      (with-access::JsPropertyCache pcache (nextemap emap eindex owner)
+	 (set! nextemap nextmap)
 	 (set! emap omap)
 	 (set! eindex i)
 	 (set! owner #f)))
 
    (define (next-noinline! pcache omap)
-      (with-access::JsPropertyCache pcache (cmap emap nmap cindex nindex owner)
-	 (set! cmap nextmap)
-	 (set! cindex i)
+      (with-access::JsPropertyCache pcache (nextnmap nmap nindex owner)
+	 (set! nextnmap nextmap)
 	 (set! nmap omap)
 	 (set! nindex i)
 	 (set! owner #f)))   
@@ -2615,6 +2611,7 @@
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 
+   (tprint "js-method-js-object-get-name/cache-miss name=" name)
    (let loop ((obj o))
       (jsobject-find obj o name
 	 ;; map search
@@ -2622,7 +2619,7 @@
 	    (with-access::JsObject o ((omap cmap) __proto__)
 	       (with-access::JsObject obj ((wmap cmap))
 		  (with-access::JsConstructMap wmap (methods)
-		     (let ((el-or-desc (vector-ref obj i)))
+		     (let ((el-or-desc (js-object-ref obj i)))
 			(cond
 			   ((or (isa? el-or-desc JsAccessorDescriptor)
 				(isa? el-or-desc JsWrapperDescriptor))
@@ -3331,7 +3328,7 @@
 		 =>
 		 (lambda (cache)
 		    (js-put-jsobject-name/cache! o pname v throw
-				%this cache point '(imap emap cmap nmap pmap amap) #f)))
+		       %this cache point '(imap emap cmap nmap pmap amap) #f)))
 		((eq? pname (& "length"))
 		 (js-put-length! o v throw #f %this))
 		((isa? pname JsStringLiteralIndex)
@@ -4827,7 +4824,6 @@
 			       (let ((f (funval obj el-or-desc)))
 				  (cond
 				     ((js-function? f)
-				      
 				      (with-access::JsFunction f (len procedure arity info)
 					 (cond
 					    ((<fx arity 0)

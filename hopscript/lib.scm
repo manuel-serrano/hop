@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Fri Aug 27 14:20:52 2021 (serrano)                */
+;*    Last change :  Tue Aug 31 13:25:57 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -300,7 +300,8 @@
 	     (obj (instantiateJsObject
 		     (cmap cmap)
 		     (__proto__ (js-object-proto %this))
-		     (elements ($create-vector len)))))
+		     (elements ($create-vector len))))
+	     (elements (js-object-alloc-elements obj)))
 	 (let loop ((i 0)
 		    (alist alist))
 	    (if (=fx i len)
@@ -312,7 +313,7 @@
 		       (jsval (js-obj->jsobject val %this)))
 		   (vector-set! props i
 		      (prop name (property-flags-default)))
-		   (js-object-set! obj i jsval)
+		   (vector-set! elements i jsval)
 		   (when (js-procedure? jsval)
 		      (vector-set! methods i #t))
 		   (loop (+fx i 1) (cdr alist))))))))
@@ -323,19 +324,20 @@
 (define (js-plist->jsobject plist %this)
    (with-access::JsGlobalObject %this (js-object)
       (let* ((len (/fx (length plist) 2))
-	     (elements ($create-vector len))
 	     (props ($create-vector len))
-	     (methods (make-vector len #f)))
+	     (methods (make-vector len #f))
+	     (cmap (js-make-jsconstructmap
+		      :methods methods
+		      :props props))
+	     (obj (instantiateJsObject
+		     (cmap cmap)
+		     (__proto__ (js-object-proto %this))
+		     (elements ($create-vector len))))
+	     (elements (js-object-alloc-elements obj)))
 	 (let loop ((i 0)
 		    (plist plist))
 	    (if (=fx i len)
-		(let ((cmap (js-make-jsconstructmap
-			       :methods methods
-			       :props props)))
-		   (instantiateJsObject
-		      (cmap cmap)
-		      (__proto__ (js-object-proto %this))
-		      (elements elements)))
+		obj
 		(let* ((name (js-key-name->jsstring (car plist)))
 		       (val (js-obj->jsobject (cadr plist) %this)))
 		   (vector-set! props i (prop name (property-flags-default)))

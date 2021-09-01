@@ -2177,9 +2177,27 @@
 		      (els (gensym '%els))
 		      (idx (gensym '%idx)))
 		   `(with-access::JsObject ,otmp (cmap elements)
-		       (if (eq? cmap (js-pcache-cmap (js-pcache-ref %pcache ,cache)))
+		       (cond
+			  ((eq? cmap (js-pcache-imap (js-pcache-ref %pcache ,cache)))
+			   (let* ((,idx (js-pcache-iindex (js-pcache-ref %pcache ,cache))))
+			      ,(if (eq? retval 'new)
+				   (let ((new (gensym '%new)))
+				      `(let* ((,tmp (js-object-inline-ref ,otmp ,idx))
+					      (,new (if (fixnum? ,tmp)
+							(,(if (=fx inc -1) 'js-int53-dec 'js-int53-inc) ,tmp)
+							(js+ ,tmp ,inc %this))))
+					  (js-object-inline-set! ,otmp ,idx ,new)
+					  ,new))
+				   `(let ((,tmp (js-object-inline-ref ,otmp ,idx)))
+				       (js-object-inline-set! ,otmp ,idx 
+					  (if (fixnum? ,tmp)
+					      (,(if (=fx inc -1) 'js-int53-dec 'js-int53-inc) ,tmp)
+					      (js+ ,tmp ,inc %this)))
+				       ,tmp))))
+			  ((eq? cmap (js-pcache-cmap (js-pcache-ref %pcache ,cache)))
 			   (let* ((,els elements)
-				  (,idx (js-pcache-cindex (js-pcache-ref %pcache ,cache))))
+				  (,idx (-fx (js-pcache-cindex (js-pcache-ref %pcache ,cache))
+					   (js-object-inline-length ,otmp))))
 			      ,(if (eq? retval 'new)
 				   (let ((new (gensym '%new)))
 				      `(let* ((,tmp (vector-ref ,els ,idx))
@@ -2193,8 +2211,9 @@
 					  (if (fixnum? ,tmp)
 					      (,(if (=fx inc -1) 'js-int53-dec 'js-int53-inc) ,tmp)
 					      (js+ ,tmp ,inc %this)))
-				       ,tmp)))
-			   ,(aput-inc-sans-cache fexpr scmlhs rhs tyobj otmp prop op lhs field cache inc cs cache-missp loc)))))))))
+				       ,tmp))))
+			  (else
+			   ,(aput-inc-sans-cache fexpr scmlhs rhs tyobj otmp prop op lhs field cache inc cs cache-missp loc))))))))))
    
    (define (rhs-cache rhs)
       (if (isa? rhs J2SCast)
@@ -2440,9 +2459,22 @@
 			 (tmp (gensym '%tmp))
 			 (res (gensym '%res)))
 		      `(with-access::JsObject ,otmp (cmap elements)
-			  (if (eq? cmap (js-pcache-cmap (js-pcache-ref %pcache ,cache)))
+			  (cond
+			     ((eq? cmap (js-pcache-imap (js-pcache-ref %pcache ,cache)))
+			      (let* ((,idx (js-pcache-iindex (js-pcache-ref %pcache ,cache)))
+				     (,tmp (js-object-inline-ref ,otmp ,idx))
+				     (,res ,(js-binop2 loc op typea
+					       (instantiate::J2SHopRef
+						  (loc loc)
+						  (id tmp)
+						  (type tl))
+					       rhs mode return ctx)))
+				 (js-object-inline-set! ,otmp ,idx ,res)
+				 ,res))
+			     ((eq? cmap (js-pcache-cmap (js-pcache-ref %pcache ,cache)))
 			      (let* ((,els elements)
-				     (,idx (js-pcache-cindex (js-pcache-ref %pcache ,cache)))
+				     (,idx (-fx (js-pcache-cindex (js-pcache-ref %pcache ,cache))
+					      (js-object-inline-length ,otmp)))
 				     (,tmp (vector-ref ,els ,idx))
 				     (,res ,(js-binop2 loc op typea
 					       (instantiate::J2SHopRef
@@ -2451,9 +2483,10 @@
 						  (type tl))
 					       rhs mode return ctx)))
 				 (vector-set! ,els ,idx ,res)
-				 ,res)
+				 ,res))
+			     (else
 			      ,(aput-assigop-cache-miss otmp pro prov op
-				  tl lhs rhs field cachep ctx))))
+				  tl lhs rhs field cachep ctx)))))
 		   (aput-assigop-cache-miss otmp pro prov op
 		      tl lhs rhs field cachep ctx))))))
    
