@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Aug 26 08:35:22 2021 (serrano)                */
+;*    Last change :  Thu Sep  2 15:53:10 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -605,6 +605,7 @@
 	   (j2s-global?::bool ::J2SDecl)
 	   (j2s-let-opt?::bool ::J2SDecl)
 	   (j2s-new-target?::bool ::J2SNode)
+	   (j2s-decl-record?::bool ::J2SDecl)
 
 	   (j2s-field-name::obj ::J2SNode)
 	   (inline j2s-field-length?::bool ::J2SNode)
@@ -704,6 +705,14 @@
    (when (isa? this J2SPragma)
       (with-access::J2SPragma this (lang expr)
 	 (and (eq? lang 'javascript) (equal? expr "new.target")))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-decl-record? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (j2s-decl-record? this::J2SDecl)
+   (when (isa? this J2SDeclInit)
+      (with-access::J2SDeclInit this (val)
+	 (isa? val J2SRecord))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-access-field ...                                             */

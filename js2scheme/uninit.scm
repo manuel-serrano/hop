@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Mon Aug 30 08:12:21 2021 (serrano)                */
+;*    Last change :  Thu Sep  2 15:48:14 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -73,7 +73,8 @@
 	    (direct-eval
 	     (for-each (lambda (decl)
 			  (unless (or (isa? decl J2SDeclFun)
-				      (isa? decl J2SDeclExtern))
+				      (isa? decl J2SDeclExtern)
+				      (j2s-decl-record? decl))
 			     (decl-usage-add! decl 'uninit)))
 		decls))
 	    (else
@@ -160,7 +161,9 @@
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (scope)
 	 (when (memq scope '(global %scope))
-	    (unless (or (isa? decl J2SDeclFun) (isa? decl J2SDeclExtern))
+	    (unless (or (isa? decl J2SDeclFun)
+			(isa? decl J2SDeclExtern)
+			(j2s-decl-record? decl))
 	       (unless (or (decl-usage-has? decl '(uninit)) (memq decl env))
 		  (decl-usage-add! decl 'uninit))))))
    env)
@@ -591,6 +594,6 @@
 ;*    uninit-force! ::J2SDeclInit ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (uninit-force! this::J2SDeclInit)
-   (unless (isa? this J2SDeclFun)
+   (unless (or (isa? this J2SDeclFun) (j2s-decl-record? this))
       (decl-usage-add! this 'uninit))
    (call-default-walker))
