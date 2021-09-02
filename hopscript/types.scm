@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Sep  2 08:08:58 2021 (serrano)                */
+;*    Last change :  Thu Sep  2 17:40:38 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -128,7 +128,7 @@
 	      (cmap::obj (default #f))
 	      (pmap::obj (default (js-not-a-pmap)))
 	      (nmap::obj (default (js-not-a-pmap)))
-	      (amap::obj (default #t))
+	      (amap::obj (default (js-not-a-pmap)))
 	      (xmap::obj (default (js-not-a-pmap)))
 	      (nextemap::obj (default (js-not-a-pmap)))
 	      (nextnmap::obj (default (js-not-a-pmap)))
