@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Fri Aug 27 18:44:53 2021 (serrano)                */
+;*    Last change :  Thu Sep  2 08:36:44 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -132,7 +132,7 @@
 	       (name (& "%%proxy"))
 	       (%get js-proxy-property-value)
 	       (%set js-proxy-property-value-set!))))
-      ($js-init-jsalloc-proxy proxy-cmap proxy-elements))
+      ($js-init-jsalloc-proxy proxy-cmap proxy-elements (js-proxy-default-mode)))
 
    (with-access::JsGlobalObject %this (js-function-prototype js-proxy js-proxy-pcache)
 
@@ -242,7 +242,7 @@
 	       (instantiate::JsPropertyCache)
 	       (instantiate::JsPropertyCache)
 	       (instantiate::JsPropertyCache)
-	       (js-object-default-mode))))
+	       (js-proxy-default-mode))))
       (when (js-procedure-proxy? target)
 	 (js-proxy-mode-function-set! o #t))
       o))
@@ -254,7 +254,7 @@
    (let ((o ($js-make-jsproxy
 	       target handler
 	       gcache scache acache
-	       (js-object-default-mode))))
+	       (js-proxy-default-mode))))
       (when (js-procedure-proxy? target)
 	 (js-proxy-mode-function-set! o #t))
       o))

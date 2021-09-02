@@ -3461,16 +3461,16 @@
 		(set! ,cnt (+fx ,cnt 1))
 		(with-access::JsConstructMap cmap (props)
 		   (when (and (js-object-no-setter? ,n)
-			      (isa? (js-pcache-emap
-				       (js-pcache-ref %pcache
-					  ,(node-cache
-					      (car (last-pair nodes)))))
-				 JsConstructMap)
-			      (isa? (js-pcache-emap
-				       (js-pcache-ref %pcache
-					  ,(node-cache
-					      (car nodes))))
-				 JsConstructMap)
+			      (not (eq? (js-pcache-emap
+					   (js-pcache-ref %pcache
+					      ,(node-cache
+						  (car (last-pair nodes)))))
+				      (js-not-a-pmap)))
+			      (not (eq? (js-pcache-emap
+					   (js-pcache-ref %pcache
+					      ,(node-cache
+						  (car nodes))))
+				      (js-not-a-pmap)))
 			      (=fx ,(-fx (length nodes) 1)
 				 (-fx (with-access::JsConstructMap
 					    (js-pcache-emap

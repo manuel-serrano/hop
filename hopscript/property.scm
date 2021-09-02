@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Aug 31 18:06:39 2021 (serrano)                */
+;*    Last change :  Thu Sep  2 08:08:52 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -356,7 +356,7 @@
 	 (set! pmap (js-not-a-pmap))
 	 (set! nmap (js-not-a-pmap))
 	 (set! xmap (js-not-a-pmap))
-	 (set! emap #t)
+	 (set! emap (js-not-a-pmap))
 	 ))
 
    (when js-pmap-valid
@@ -553,12 +553,12 @@
 		 (fprint (current-error-port) "  nmap %id=" %id
 		    " nindex=" nindex " props=" (vector-map js-debug-prop props)))
 	      (fprint (current-error-port) "  nmap " nmap))
-	  (if (isa? emap JsConstructMap)
+	  (if (and (isa? emap JsConstructMap) (not (eq? emap (js-not-a-pmap))))
 	      (with-access::JsConstructMap emap (%id props)
 		 (fprint (current-error-port) "  emap %id=" %id
 		    " eindex=" eindex " props=" (vector-map js-debug-prop props)))
 	      (fprint (current-error-port) "  emap " emap))
-	  (if (isa? amap JsConstructMap)
+	  (if (and (isa? amap JsConstructMap) (not (eq? amap (js-not-a-pmap))))
 	      (with-access::JsConstructMap amap (%id props)
 		 (fprint (current-error-port) "  amap %id=" %id
 		    " aindex=" aindex " props=" (vector-map js-debug-prop props)))
@@ -907,7 +907,7 @@
       (with-access::JsPropertyCache pcache (imap cmap pmap emap amap aindex owner)
 	 (js-validate-pmap-pcache! pcache)
 	 (set! pmap (js-not-a-pmap)) ;; WHY NEEDED?
-	 (set! emap #t) ;; WHY NEEDED?
+	 (set! emap (js-not-a-pmap)) ;; WHY NEEDED?
 	 (set! amap omap)
 	 (set! aindex i)
 	 (set! owner o))))
@@ -923,7 +923,7 @@
 	 (with-access::JsPropertyCache pcache (imap cmap pmap emap amap aindex owner)
 	    (js-validate-pmap-pcache! pcache)
 	    (set! pmap (js-not-a-pmap))
-	    (set! emap #t)))))
+	    (set! emap (js-not-a-pmap))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache-update-next-direct! ...                                */
@@ -2605,7 +2605,7 @@
    (define (invalidate-pcache! cache)
       (with-access::JsPropertyCache cache (pmap emap cmap)
 	 (set! pmap (js-not-a-pmap))
-	 (set! emap #t)
+	 (set! emap (js-not-a-pmap))
 	 (set! cmap #t)))
    
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
@@ -4829,7 +4829,7 @@
 					    ((<fx arity 0)
 					     ;; varargs functions, currently not cached...
 					     '(with-access::JsPropertyCache ccache (pmap emap cmap)
-						(set! emap #t)
+						(set! emap (js-not-a-pmap))
 						(set! cmap #t)
 						(set! pmap (js-not-a-pmap))))
 					    ((=fx (procedure-arity procedure) (+fx 1 (length args)))
@@ -4859,7 +4859,7 @@
 					    (else
 					     ;; arity missmatch, never cache
 					     '(with-access::JsPropertyCache ccache (pmap emap cmap)
-						(set! emap #t)
+						(set! emap (js-not-a-pmap))
 						(set! cmap #t)
 						(set! pmap (js-not-a-pmap)))))))
 				     ((procedure? f)
@@ -4877,7 +4877,7 @@
 				  ;; invalidate the call cache and update the
 				  ;; object cache
 				  (set! cmap #t)
-				  (set! emap #t)
+				  (set! emap (js-not-a-pmap))
 				  (set! pmap (js-not-a-pmap))
 				  (jsapply (funval obj el-or-desc))))))))))
 	    ;; hash search

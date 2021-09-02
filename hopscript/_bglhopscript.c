@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Fri Aug 27 12:33:37 2021 (serrano)                */
+/*    Last change :  Thu Sep  2 08:45:17 2021 (serrano)                */
 /*    Copyright   :  2016-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -80,6 +80,7 @@ extern int GC_pthread_create();
 static uint32_t jsobject_mode;
 
 static obj_t jsproxy_constrmap, jsproxy_elements;
+static uint32_t jsproxy_mode;
 
 static obj_t jsfunction_elements, jsfunction_alloc;
 static BgL_jsconstructmapz00_bglt jsfunction_constrmap, jsfunction_cmap;
@@ -476,7 +477,7 @@ jsproxy_fill_buffer( apool_t *pool, void *arg ) {
 
    for( i = 0; i < size; i++ ) {
       buffer[ i ] =
-	 bgl_make_jsproxy_sans( 0L, 0L, 0L, 0L, 0L, (uint32_t)(long)arg );
+	 bgl_make_jsproxy_sans( 0L, 0L, 0L, 0L, 0L, jsproxy_mode );
    }
 #endif   
 }
@@ -641,7 +642,7 @@ bgl_init_worker_jsalloc() {
 /*    bgl_init_jsalloc_proxy ...                                       */
 /*---------------------------------------------------------------------*/
 int
-bgl_init_jsalloc_proxy( obj_t constrmap, obj_t elements ) {
+bgl_init_jsalloc_proxy( obj_t constrmap, obj_t elements, uint32_t mode ) {
    static int jsinit = 0;
    int i;
 
@@ -651,6 +652,7 @@ bgl_init_jsalloc_proxy( obj_t constrmap, obj_t elements ) {
 
    jsproxy_constrmap = constrmap;
    jsproxy_elements = elements;
+   jsproxy_mode = mode;
 }
 
 /*---------------------------------------------------------------------*/
@@ -988,9 +990,9 @@ bgl_make_jsproxy( obj_t target, obj_t handler,
       
       /* default slow alloc */ 
       ALLOC_STAT( slowproxy++ ); 
-      alloc_spin_unlock( &lockproxy ); 
+      alloc_spin_unlock( &lockproxy );
       return bgl_make_jsproxy_sans( target, handler,
-				    getcache, setcache, applycache, md ); 
+				    getcache, setcache, applycache, jsproxy_mode ); 
    } 
 }
 #endif

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Sep  1 08:26:56 2021 (serrano)                */
+;*    Last change :  Thu Sep  2 08:08:58 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -36,7 +36,7 @@
 	      "bgl_init_jsalloc")
 	   ($js-init-worker-jsalloc::int ()
 	      "bgl_init_worker_jsalloc")
-	   ($js-init-jsalloc-proxy::int (::obj ::obj)
+	   ($js-init-jsalloc-proxy::int (::obj ::obj ::uint32)
 	      "bgl_init_jsalloc_proxy")
 	   ($js-init-jsalloc-function::int (::JsConstructMap ::JsConstructMap
 					      ::obj ::obj
@@ -124,7 +124,7 @@
 	   (final-class JsPropertyCache
 	      (js-property-cache-init!)
 	      (imap::obj (default #f))
-	      (emap::obj (default #f))
+	      (emap::obj (default (js-not-a-pmap)))
 	      (cmap::obj (default #f))
 	      (pmap::obj (default (js-not-a-pmap)))
 	      (nmap::obj (default (js-not-a-pmap)))
@@ -483,6 +483,7 @@
 
 	   (inline js-object-default-mode::uint32)
 	   (inline js-globalobject-default-mode::uint32)
+	   (inline js-proxy-default-mode::uint32)
 	   (inline js-record-default-mode::uint32)
 	   (inline js-array-default-mode::uint32)
 	   (inline js-vector-default-mode::uint32)
@@ -682,7 +683,11 @@
 	   (js-null side-effect-free)
 	   (js-undefined side-effect-free)
 	   (js-object-default-mode side-effect-free)
+	   (js-globalobject-default-mode side-effect-free)
+	   (js-proxy-default-mode side-effect-free)
 	   (js-array-default-mode side-effect-free)
+	   (js-function-default-mode side-effect-free)
+	   (js-procedure-default-mode side-effect-free)
 	   (js-record-default-mode side-effect-free))
    
    (cond-expand
@@ -754,6 +759,10 @@
 		  (JS-OBJECT-MODE-HASNUMERALPROP)))))))
 
 (define-inline (js-globalobject-default-mode)
+   (bit-andu32 (js-object-default-mode)
+      (bit-notu32 (JS-OBJECT-MODE-INLINE))))
+
+(define-inline (js-proxy-default-mode)
    (bit-andu32 (js-object-default-mode)
       (bit-notu32 (JS-OBJECT-MODE-INLINE))))
 
