@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Mon Aug 30 20:44:48 2021 (serrano)                */
+;*    Last change :  Thu Sep  2 18:04:43 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -817,48 +817,6 @@
    (with-access::J2SFun this (new-target)
       (when (memq new-target '(global argument)) #t)))
       
-;*---------------------------------------------------------------------*/
-;*    class-new-target? ...                                            */
-;*    -------------------------------------------------------------    */
-;*    This predicates is #f iff the class constructor DOES not need    */
-;*    to bind new-target. It is conservative, in doubt it returns #t.  */
-;*---------------------------------------------------------------------*/
-(define (class-new-target?::bool this::J2SClass)
-   
-   (define (expr-new-target? val::J2SExpr)
-      (cond
-	 ((isa? val J2SClass)
-	  (class-new-target? val))
-	 ((isa? val J2SFun)
-	  (function-new-target? val))
-	 ((isa? val J2SParen)
-	  (with-access::J2SParen val (expr)
-	     (expr-new-target? expr)))
-	 (else
-	  #t)))
-   
-   (define (super-new-target? super)
-      (cond
-	 ((or (isa? super J2SUndefined) (isa? super J2SNull))
-	  #f)
-	 ((isa? super J2SRef)
-	  (with-access::J2SRef super (decl)
-	     (if (isa? decl J2SDeclInit)
-		 (with-access::J2SDeclInit decl (val)
-		    (expr-new-target? val))
-		 #t)))
-	 (else
-	  (expr-new-target? super))))
-
-   (with-access::J2SClass this (super)
-      (let ((ctor (j2s-class-get-constructor this)))
-	 (if (isa? ctor J2SClassElement)
-	     (with-access::J2SClassElement ctor (prop)
-		(with-access::J2SMethodPropertyInit prop (val)
-		   (or (expr-new-target? val)
-		       (super-new-target? super))))
-	     (super-new-target? super)))))
-
 ;*---------------------------------------------------------------------*/
 ;*    ctor->lambda ...                                                 */
 ;*---------------------------------------------------------------------*/

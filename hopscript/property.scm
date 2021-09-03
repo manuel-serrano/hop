@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Sep  2 08:08:52 2021 (serrano)                */
+;*    Last change :  Fri Sep  3 08:33:53 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2606,7 +2606,7 @@
       (with-access::JsPropertyCache cache (pmap emap cmap)
 	 (set! pmap (js-not-a-pmap))
 	 (set! emap (js-not-a-pmap))
-	 (set! cmap #t)))
+	 (set! cmap (js-not-a-cmap))))
    
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
@@ -4830,7 +4830,7 @@
 					     ;; varargs functions, currently not cached...
 					     '(with-access::JsPropertyCache ccache (pmap emap cmap)
 						(set! emap (js-not-a-pmap))
-						(set! cmap #t)
+						(set! cmap (js-not-a-cmap))
 						(set! pmap (js-not-a-pmap))))
 					    ((=fx (procedure-arity procedure) (+fx 1 (length args)))
 					     (with-access::JsPropertyCache ccache (emap cmap pmap pindex (cmethod method) function)
@@ -4860,7 +4860,7 @@
 					     ;; arity missmatch, never cache
 					     '(with-access::JsPropertyCache ccache (pmap emap cmap)
 						(set! emap (js-not-a-pmap))
-						(set! cmap #t)
+						(set! cmap (js-not-a-cmap))
 						(set! pmap (js-not-a-pmap)))))))
 				     ((procedure? f)
 				      (error "js-method-jsobject-call/cache-fill" "should not be here" f)))
@@ -4876,7 +4876,7 @@
 			       (with-access::JsPropertyCache ccache (pmap cmap emap)
 				  ;; invalidate the call cache and update the
 				  ;; object cache
-				  (set! cmap #t)
+				  (set! cmap (js-not-a-pmap))
 				  (set! emap (js-not-a-pmap))
 				  (set! pmap (js-not-a-pmap))
 				  (jsapply (funval obj el-or-desc))))))))))

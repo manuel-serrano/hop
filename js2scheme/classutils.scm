@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Mon Aug 30 20:44:45 2021 (serrano)                */
+;*    Last change :  Thu Sep  2 18:02:35 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -39,7 +39,9 @@
 	   (j2s-class-find-constructor ::J2SClass)
 	   (j2s-class-find-initializer ::J2SClass)
 	   (j2s-class-constructor-might-return?::bool ::J2SClass)
-	   (j2s-class-methods-use-super?::bool ::J2SClass)))
+	   (j2s-class-methods-use-super?::bool ::J2SClass)
+
+	   (class-new-target?::bool this::J2SClass)))
 
 ;*---------------------------------------------------------------------*/
 ;*    class-info-name ...                                              */
@@ -363,7 +365,7 @@
    (let ((cell (make-cell #f)))
       (with-access::J2SFun this (body)
 	 (method-use-return? body cell)
-	 (cell-ref cell))))
+	 (not (cell-ref cell)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    method-use-return? ...                                           */
@@ -385,4 +387,49 @@
 (define-method (method-use-return? this::J2SFun cell)
    (cell-ref cell))
 
+;*---------------------------------------------------------------------*/
+;*    class-new-target? ...                                            */
+;*    -------------------------------------------------------------    */
+;*    This predicates is #f iff the class constructor DOES not need    */
+;*    to bind new-target. It is conservative, in doubt it returns #t.  */
+;*---------------------------------------------------------------------*/
+(define (class-new-target?::bool this::J2SClass)
+
+   (define (function-new-target?::bool this::J2SFun)
+      (with-access::J2SFun this (new-target)
+	 (when (memq new-target '(global argument)) #t)))
+   
+   (define (expr-new-target? val::J2SExpr)
+      (cond
+	 ((isa? val J2SClass)
+	  (class-new-target? val))
+	 ((isa? val J2SFun)
+	  (function-new-target? val))
+	 ((isa? val J2SParen)
+	  (with-access::J2SParen val (expr)
+	     (expr-new-target? expr)))
+	 (else
+	  #t)))
+   
+   (define (super-new-target? super)
+      (cond
+	 ((or (isa? super J2SUndefined) (isa? super J2SNull))
+	  #f)
+	 ((isa? super J2SRef)
+	  (with-access::J2SRef super (decl)
+	     (if (isa? decl J2SDeclInit)
+		 (with-access::J2SDeclInit decl (val)
+		    (expr-new-target? val))
+		 #t)))
+	 (else
+	  (expr-new-target? super))))
+
+   (with-access::J2SClass this (super)
+      (let ((ctor (j2s-class-get-constructor this)))
+	 (if (isa? ctor J2SClassElement)
+	     (with-access::J2SClassElement ctor (prop)
+		(with-access::J2SMethodPropertyInit prop (val)
+		   (or (expr-new-target? val)
+		       (super-new-target? super))))
+	     (super-new-target? super)))))
 

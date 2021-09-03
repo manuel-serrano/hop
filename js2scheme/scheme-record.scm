@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Thu Aug 19 18:09:44 2021 (serrano)                */
+;*    Last change :  Thu Sep  2 17:47:19 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -32,6 +32,9 @@
 	   __js2scheme_scheme-constant
 	   __js2scheme_scheme-class)
 
+   (export (j2s-scheme-record-new ::J2SNew ::J2SRecord args mode return ctx))
+   
+	   
    (export (j2s-collect-records*::pair-nil ::J2SProgram)
 	   (record-index ::J2SNode ::J2SRecord ::bstring)
 	   (record-scmid::symbol ::J2SRecord)
@@ -39,9 +42,39 @@
 	   (record-constructor-scmid::symbol ::J2SRecord)
 	   (j2s-record-declaration ::J2SRecord)
 	   (j2s-record-predicate ::J2SRecord)
-	   (j2s-record-new ::J2SRecord ::pair-nil mode return ctx)
+	   
 	   (j2s-record-prototype-constructor::pair this::J2SRecord)
 	   (j2s-scheme-record-super ::J2SCall mode return ctx)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme-call-record-constructor ...                           */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-call-record-constructor record::J2SClass ecla enewtarget eobj args loc mode return ctx)
+   `(,(class-constructor-id record)
+     ,eobj
+     ,@(if (class-new-target? record) (list enewtarget) '())
+     ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme-record-new ...                                        */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-record-new this::J2SNew record args mode return ctx)
+   (let ((obj (gensym 'this))
+	 (rec (gensym 'record))
+	 (res (gensym 'res)))
+      (with-access::J2SRecord record (decl)
+	 (with-access::J2SDeclClass decl (id)
+	    (with-access::J2SNew this (loc)
+	       `(let* ((,rec ,(j2s-scheme (J2SRef decl) mode return ctx))
+		       (,obj (js-object-alloc-fast %this ,rec))
+		       (,res ,(j2s-scheme-call-record-constructor record rec rec obj args loc
+				 mode return ctx)))
+		   ,(if (j2s-class-constructor-might-return? record)
+			`(if (eq? ,res ,obj)
+			     ,obj
+			     (js-raise-type-error %this
+				,(format "Record constructor '~s' must return the new record" id) this))
+			obj)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SRecord ...                                       */
@@ -94,10 +127,10 @@
 
    (define (make-class this name super els constructor arity length ctorsz src loc)
       (let* ((cname (or name (gensym 'class)))
-	     (clazz (symbol-append cname '%CLASS))
-	     (ctor (symbol-append cname '%CTOR))
-	     (proto (symbol-append cname '%PROTOTYPE)))
-	 `(letrec* ((,ctor ,constructor)
+	     (clazz (class-class-id this))
+	     (ctorf (class-constructor-id this))
+	     (proto (class-prototype-id this)))
+	 `(letrec* ((,ctorf ,constructor)
 		    (,proto ,(class-prototype this super))
 		    (,clazz (js-make-function %this
 			       (lambda (this . args)
@@ -108,7 +141,7 @@
 						name)
 					    (js-undefined))
 					 (set! js-new-target (js-undefined)))
-				     (apply ,ctor this args)))
+				     (apply ,ctorf this args)))
 			       ,arity
 			       (js-function-info :name ,(symbol->string cname)
 				  :len ,length)
@@ -127,7 +160,7 @@
 			       :constrsize ,ctorsz))
 		    ,@(if name `((,(j2s-class-id this ctx) (js-make-let))) '()))
 	     (set! ,(record-prototype-scmid this) ,proto)
-	     (set! ,(record-constructor-scmid this) ,ctor)
+	     (set! ,(record-constructor-scmid this) ,ctorf)
 	     ,@(filter-map (lambda (m) (bind-static this clazz m)) els)
 	     ,@(filter-map (lambda (m) (bind-prototype this proto m)) els)
 	     ,@(if name `((set! ,(j2s-class-id this ctx) ,clazz)) '())
@@ -312,12 +345,34 @@
 	     ,rec))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-record-constructor ...                                       */
+;*---------------------------------------------------------------------*/
+(define (j2s-record-constructor this::J2SRecord)
+   
+   (define (j2s-record-constructor/ctor this ctor::J2SClassElement)
+      (tprint "TODO"))
+
+   (define (j2s-record-constructor/init this init)
+      (tprint "TODO"))
+   
+   (define (j2s-record-constructor/w-ctor this)
+      (let ((init (j2s-class-instance-properties this :super #f)))
+	 (if (pair? init)
+	     (j2s-record-constructor/init this init)
+	     (tprint "TODO"))))
+   
+   (let ((ctor (j2s-class-get-constructor this)))
+      (if ctor
+	  (j2s-record-constructor/ctor this ctor)
+	  (j2s-record-constructor/w-ctor this))))
+	   
+;*---------------------------------------------------------------------*/
 ;*    j2s-record-prototype-constructor ...                             */
 ;*---------------------------------------------------------------------*/
 (define (j2s-record-prototype-constructor this::J2SRecord)
    (let ((super (j2s-class-super-val this)))
       `((define ,(record-prototype-scmid this) (js-undefined))
-	(define ,(record-constructor-scmid this) (js-undefined)))))
+	(define ,(class-constructor-id this) ,(j2s-record-constructor this)))))
        
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-record-super ...                                      */

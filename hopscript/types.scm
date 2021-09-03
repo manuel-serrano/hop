@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Sep  2 17:40:38 2021 (serrano)                */
+;*    Last change :  Fri Sep  3 08:33:03 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -124,12 +124,12 @@
 	   (final-class JsPropertyCache
 	      (js-property-cache-init!)
 	      (imap::obj (default #f))
-	      (emap::obj (default (js-not-a-pmap)))
-	      (cmap::obj (default #f))
-	      (pmap::obj (default (js-not-a-pmap)))
-	      (nmap::obj (default (js-not-a-pmap)))
-	      (amap::obj (default (js-not-a-pmap)))
-	      (xmap::obj (default (js-not-a-pmap)))
+	      (emap::JsConstructMap (default (js-not-a-pmap)))
+	      (cmap::JsConstructMap (default (js-not-a-pmap)))
+	      (pmap::JsConstructMap (default (js-not-a-pmap)))
+	      (nmap::JsConstructMap (default (js-not-a-pmap)))
+	      (amap::JsConstructMap (default (js-not-a-pmap)))
+	      (xmap::JsConstructMap (default (js-not-a-pmap)))
 	      (nextemap::obj (default (js-not-a-pmap)))
 	      (nextnmap::obj (default (js-not-a-pmap)))
 	      (iindex::long (default -1))
@@ -490,6 +490,9 @@
 	   (inline js-function-default-mode::uint32)
 	   (inline js-procedure-default-mode::uint32)
 	   (inline js-procedure-hopscript-mode::uint32)
+	   (inline js-arraybuffer-default-mode::uint32)
+	   (inline js-typedarray-default-mode::uint32)
+	   (inline js-dataview-default-mode::uint32)
 	   (inline js-jsstring-default-ascii-mode::uint32)
 	   (inline js-jsstring-normalized-ascii-mode::uint32)
 	   (inline js-jsstring-default-index-mode::uint32)
@@ -855,6 +858,18 @@
    (bit-oru32 (js-procedure-default-mode)
       (JS-OBJECT-MODE-JSPROCEDUREHOPSCRIPT)))
 
+(define-inline (js-arraybuffer-default-mode)
+   (bit-andu32 (js-object-default-mode)
+      (bit-notu32 (JS-OBJECT-MODE-INLINE))))
+
+(define-inline (js-typedarray-default-mode)
+   (bit-andu32 (js-object-default-mode)
+      (bit-notu32 (JS-OBJECT-MODE-INLINE))))
+
+(define-inline (js-dataview-default-mode)
+   (bit-andu32 (js-object-default-mode)
+      (bit-notu32 (JS-OBJECT-MODE-INLINE))))
+
 ;*---------------------------------------------------------------------*/
 ;*    Object header tag (max size 1<<15==32768)                        */
 ;*---------------------------------------------------------------------*/
@@ -1114,6 +1129,8 @@
 (define-inline (js-object-inline-elements o::JsObject)
    (cond-expand
       ((and bigloo-c (not disable-inline))
+       (unless (or (not (js-object-mode-inline? o)) (js-jsobject? o))
+	  (tprint "PAS BON " (typeof o)))
        [assert (o) (or (not (js-object-mode-inline? o)) (js-jsobject? o))]
        (if (js-object-mode-inline? o)
 	   ($js-object-inline-elements o)
@@ -1144,6 +1161,8 @@
 ;*    js-object-inline-length ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-inline-length o::JsObject)
+       (unless (or (not (js-object-mode-inline? o)) (js-jsobject? o))
+	  (tprint "PAS BON " (typeof o)))
    [assert (o) (or (not (js-object-mode-inline? o)) (js-jsobject? o))]
    (if (js-object-mode-inline? o)
        (vector-length (js-object-inline-elements o))

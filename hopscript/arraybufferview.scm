@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Thu Aug 19 11:28:12 2021 (serrano)                */
+;*    Last change :  Fri Sep  3 09:10:07 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -60,9 +60,11 @@
 	   (let ((this ctx))
 	      (with-access::JsGlobalObject this (js-arraybuffer js-int8array)
 		 (let ((abuf (instantiateJsArrayBuffer
+				(mode (js-arraybuffer-default-mode))
 				(__proto__ (js-get js-arraybuffer (& "prototype") this))
 				(data o))))
 		    (,(symbol-append 'instantiate type)
+		     (mode (js-arraybuffer-default-mode))
 		     (__proto__ (js-get js-int8array (& "prototype") this))
 		     (%data o)
 		     (bpe 1)
@@ -114,9 +116,11 @@
 	  (let ((this ctx))
 	     (with-access::JsGlobalObject this (js-arraybuffer js-int8array)
 		(let ((abuf (instantiateJsArrayBuffer
+			       (mode (js-arraybuffer-default-mode))
 			       (__proto__ (js-get js-arraybuffer (& "prototype") this))
 			       (data o))))
 		   (instantiateJsDataView
+		      (mode (js-dataview-default-mode))
 		      (__proto__ (js-get js-int8array (& "prototype") this))
 		      (%data o)
 		      (byteoffset 0)
@@ -132,6 +136,7 @@
 	 (with-access::JsDataView obj (%data buffer frozen byteoffset)
 	    (let ((nbuffer (js-donate buffer worker %_this)))
 	       (instantiateJsDataView
+		  (mode (js-dataview-default-mode))
 		  (__proto__ (js-get js-arraybuffer (& "prototype") %this))
 		  (frozen frozen)
 		  (buffer nbuffer)
@@ -180,6 +185,7 @@
 (define (javascript-buffer->arraybufferview name args %this)
    (with-access::JsArrayBuffer (caddr args) (data)
       (let ((buf (instantiateJsDataView
+		    (mode (js-dataview-default-mode))
 		    (frozen (car args))
 		    (byteoffset (fixnum->uint32 (cadr args)))
 		    (buffer (caddr args))
@@ -242,6 +248,8 @@
 		   (buffer b)
 		   (cmap (js-not-a-cmap))
 		   (byteoffset #u32:0))))
+	 (js-object-mode-set! b (js-arraybuffer-default-mode))
+	 (js-object-mode-set! o (js-typedarray-default-mode))
 	 (with-access::JsFunction js-arraybuffer (prototype)
 	    (js-object-proto-set! b prototype))
 	 (with-access::JsFunction js-int8array (prototype)
@@ -286,6 +294,8 @@
 		  (buffer b)
 		  (cmap (js-not-a-cmap))
 		  (byteoffset #u32:0))))
+	 (js-object-mode-set! b (js-arraybuffer-default-mode))
+	 (js-object-mode-set! o (js-typedarray-default-mode))
 	 (with-access::JsFunction js-arraybuffer (prototype)
 	    (js-object-proto-set! b prototype))
 	 (with-access::JsFunction js-uint8array (prototype)
@@ -785,7 +795,7 @@
 	    (set! js-new-target constructor))
 	 (let ((o (allocate-instance (string->symbol (string-append "Js" name)))))
 	    (with-access::JsTypedArray o (cmap bpe elements)
-	       (js-object-mode-set! o (js-object-default-mode))
+	       (js-object-mode-set! o (js-typedarray-default-mode))
 	       (js-object-mode-extensible-set! o #t)
 	       (set! cmap (js-not-a-cmap))
 	       (set! bpe (fixnum->uint32 bp))
@@ -1430,6 +1440,7 @@
 	    (with-access::JsGlobalObject %this (js-new-target)
 	       (set! js-new-target constructor))
 	    (instantiateJsDataView
+	       (mode (js-dataview-default-mode))
 	       (cmap (js-not-a-cmap))
 	       (__proto__ (js-get constructor (& "prototype") %this))))
 	 

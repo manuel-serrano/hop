@@ -3264,7 +3264,7 @@
 	  =>
 	  (lambda (rec)
 	     (epairify loc
-		(j2s-record-new rec args mode return ctx))))
+		(j2s-scheme-record-new this rec args mode return ctx))))
 	 ((new-class? clazz)
 	  =>
 	  (lambda (clazz)
