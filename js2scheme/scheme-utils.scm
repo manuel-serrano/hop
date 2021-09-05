@@ -26,7 +26,8 @@
 	   __js2scheme_stage
 	   __js2scheme_scheme-cast
 	   __js2scheme_scheme-constant
-	   __js2scheme_scheme)
+	   __js2scheme_scheme
+	   __js2scheme_scheme-record)
    
    (export j2s-unresolved-put-workspace
            j2s-unresolved-del-workspace
@@ -797,6 +798,12 @@
 		      ,val ,mode %this ',loc)))
 	     ((equal? propstr "__proto__")
 	      `(js-setprototypeof ,obj ,val %this "js2scheme"))
+	     ((and (isa? tyobj J2SRecord)
+		   propstr
+		   (record-index tyobj tyobj propstr))
+	      =>
+	      (lambda (idx)
+		 `(js-object-inline-set! ,obj ,idx ,val)))
 	     ((eq? tyobj 'array)
 	      (case typrop
 		 ((uint32)
@@ -831,7 +838,6 @@
 		 ((int53)
 		  `(js-vector-index-set! ,obj (fixnum->uint32 ,prop) ,val %this))
 		 (else
-		  (tprint "TYPROP=" typrop)
 		  `(js-vector-put! ,obj ,prop ,val %this))))
 	     ((eq? tyobj 'arguments)
 	      `(js-put! ,obj ,prop ,val ,mode %this))

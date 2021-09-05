@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Aug 27 10:05:24 2021 (serrano)                */
+;*    Last change :  Sun Sep  5 16:46:36 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -71,7 +71,10 @@
 		     (define js-integer-names (js-get-js-integer-names))
 		     (define %worker (js-current-worker))
 		     (define %cnst-table ,cnsttable)
-		     ,@(append-map j2s-record-prototype-constructor records)
+		     ,@(append-map (lambda (rec)
+				      (j2s-record-prototype-constructor rec
+					 mode (lambda (x) x) ctx))
+			  records)
 		     ,@scmheaders
 		     ,@globals
 		     ,esexports
@@ -120,7 +123,10 @@
 		    ,@globals
 		    ,esexports
 		    ,@esimports
-		    ,@(append-map j2s-record-prototype-constructor records)
+		    ,@(append-map (lambda (rec)
+				     (j2s-record-prototype-constructor rec
+					mode (lambda (x) x) ctx))
+			 records)
 		    ,@(exit-body ctx
 			 (filter fundef? body) (filter nofundef? body))))
 	    ;; for dynamic loading
@@ -202,7 +208,10 @@
 				 ,@(j2s-expr-headers scmheaders)
 				 ,esexports
 				 ,@esimports
-				 ,@(append-map j2s-record-prototype-constructor records)
+				 ,@(append-map (lambda (rec)
+						  (j2s-record-prototype-constructor rec
+						     mode (lambda (x) x) ctx))
+				      records)
 				 ,@(exit-body ctx
 				      (filter fundef? body)
 				      (filter nofundef? body)))))))
@@ -377,7 +386,10 @@
 		      `((hop-sofile-directory-set! ,(context-get ctx :libs-dir #f)))
 		      '())
 		,@(map j2s-record-predicate records)
-		,@(append-map j2s-record-prototype-constructor records)
+		,@(append-map (lambda (rec)
+				 (j2s-record-prototype-constructor rec
+				    mode (lambda (x) x) ctx))
+		     records)
 		(define (main args)
 		   (when (getenv "BIGLOOTRACE") (bigloo-debug-set! 1))
 		   ,(profilers this ctx)

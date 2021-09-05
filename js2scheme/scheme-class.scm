@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Thu Sep  2 18:04:43 2021 (serrano)                */
+;*    Last change :  Sun Sep  5 16:42:28 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -34,7 +34,9 @@
    (export (j2s-scheme-class-new this::J2SNew ::J2SClass args mode return ctx)
 	   (j2s-scheme-class-propname ::J2SExpr mode return ctx)
 	   (j2s-scheme-bind-class-method prop::J2SPropertyInit obj mode return ctx)
-	   (j2s-scheme-class-call-super ::J2SCall mode return ctx)))
+	   (j2s-scheme-class-call-super ::J2SCall mode return ctx)
+	   (j2s-scheme-need-super-check?::bool ::J2SFun)
+	   (j2s-scheme-init-instance-properties ::J2SClass mode return ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-call-class-constructor ...                            */
@@ -620,14 +622,14 @@
 		(scheme-class-super-expr this context super)))))))
    
 ;*---------------------------------------------------------------------*/
-;*    need-super-check? ...                                            */
+;*    j2s-scheme-need-super-check? ...                                 */
 ;*    -------------------------------------------------------------    */
 ;*    A constructor needs a super check, if it cannot be proved        */
 ;*    statically that                                                  */
 ;*      1) it always calls the super constructor                       */
 ;*      2) the call the super preceeds all "this" accesses             */
 ;*---------------------------------------------------------------------*/
-(define (need-super-check? val::J2SFun)
+(define (j2s-scheme-need-super-check? val::J2SFun)
    (with-access::J2SFun val (body)
       (not (eq? (super-call body) #t))))
 
@@ -853,7 +855,7 @@
       (with-access::J2SFun dup (body idthis loc thisp params loc new-target)
 	 (with-access::J2SBlock body (loc endloc nodes)
 	    (cond
-	       ((and (symbol? super) (need-super-check? dup))
+	       ((and (symbol? super) (j2s-scheme-need-super-check? dup))
 		(with-access::J2SClass clazz (need-super-check)
 		   (set! need-super-check #t))
 		(when (> (bigloo-warning) 1)

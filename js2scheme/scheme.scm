@@ -2570,6 +2570,10 @@
    
    (define (get loc obj tmp field cache cspecs optim)
       (let ((tyo (typeof-this obj ctx)))
+	 (when (isa? field J2SString)
+	    (with-access::J2SString field (val)
+	       (when (string=? val "BODY")
+		  (tprint "obj=" (j2s->list obj) " tyo=" tyo))))
 	 (j2s-get loc tmp field tyo
 	    (j2s-property-scheme field mode return ctx)
 	    (j2s-type field) (j2s-vtype this) ctx cache

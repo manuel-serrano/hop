@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Wed Sep  1 08:35:40 2021 (serrano)                */
+;*    Last change :  Sun Sep  5 14:38:06 2021 (serrano)                */
 ;*    Copyright   :  2006-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -84,7 +84,7 @@
 	     ,js-get-jsobject-name/cache-expander))
    (eval `(define-expander js-global-object-get-name/cache
 	     ,js-global-object-get-name/cache-expander))
-   
+
    (eval `(define-expander js-get-length
 	     ,js-get-length-expander))
    (eval `(define-expander js-get-lengthu32
@@ -97,12 +97,12 @@
 	     ,js-get-length-maybe-arguments-expander))
    (eval `(define-expander js-get-lengthu32-maybe-arguments
 	     ,js-get-lengthu32-maybe-arguments-expander))
-   
+
    (eval `(define-expander js-put-name/cache!
 	     ,js-put-name/cache-expander))
    (eval `(define-expander js-put-jsobject-name/cache!
 	     ,js-put-jsobject-name/cache-expander))
-   
+
    (eval `(define-expander js-call/cache
 	     ,js-call/cache-expander))
    (eval `(define-expander js-method-call-name/cache
