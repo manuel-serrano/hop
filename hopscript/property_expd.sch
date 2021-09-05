@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Sep  1 08:26:11 2021 (serrano)                */
+;*    Last change :  Fri Sep  3 15:59:14 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -129,7 +129,7 @@
 	 ((js-pcache-imap (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
 	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
-	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_imapz00)" ,idx))
+	      `(free-pragma::obj "(obj_t)(__bgl_pcache[ $1 ].BgL_imapz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (imap) imap))))
 	 ((js-pcache-imap ?c)
@@ -146,7 +146,7 @@
 	 ((js-pcache-cmap (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
 	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
-	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_cmapz00)" ,idx))
+	      `(free-pragma::obj "(obj_t)(__bgl_pcache[ $1 ].BgL_cmapz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (cmap) cmap))))
 	 ((js-pcache-cmap ?c)
@@ -163,7 +163,7 @@
 	 ((js-pcache-pmap (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
 	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
-	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_pmapz00)" ,idx))
+	      `(free-pragma::obj "(obj_t)(__bgl_pcache[ $1 ].BgL_pmapz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (pmap) pmap))))
 	 ((js-pcache-pmap ?c)
@@ -180,7 +180,7 @@
 	 ((js-pcache-nmap (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
 	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
-	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_nmapz00)" ,idx))
+	      `(free-pragma::obj "(obj_t)(__bgl_pcache[ $1 ].BgL_nmapz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (nmap) nmap))))
 	 ((js-pcache-nmap ?c)
@@ -190,14 +190,14 @@
       e))
 
 ;*---------------------------------------------------------------------*/
-;*    js-pcache-nextnmap-expander ...                                      */
+;*    js-pcache-nextnmap-expander ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-pcache-nextnmap-expander x e)
    (e (match-case x
 	 ((js-pcache-nextnmap (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
 	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
-	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_nextnmapz00)" ,idx))
+	      `(free-pragma::obj "(obj_t)(__bgl_pcache[ $1 ].BgL_nextnmapz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (nextnmap) nextnmap))))
 	 ((js-pcache-nextnmap ?c)
@@ -214,7 +214,7 @@
 	 ((js-pcache-emap (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
 	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
-	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_emapz00)" ,idx))
+	      `(free-pragma::obj "(obj_t)(__bgl_pcache[ $1 ].BgL_emapz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (emap) emap))))
 	 ((js-pcache-emap ?c)
@@ -231,7 +231,7 @@
 	 ((js-pcache-nextemap (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
 	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
-	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_nextemapz00)" ,idx))
+	      `(free-pragma::obj "(obj_t)(__bgl_pcache[ $1 ].BgL_nextemapz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (nextemap) nextemap))))
 	 ((js-pcache-nextemap ?c)
@@ -248,7 +248,7 @@
 	 ((js-pcache-amap (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
 	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
-	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_amapz00)" ,idx))
+	      `(free-pragma::obj "(obj_t)(__bgl_pcache[ $1 ].BgL_amapz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (amap) amap))))
 	 ((js-pcache-amap ?c)
@@ -265,7 +265,7 @@
 	 ((js-pcache-xmap (and ?c (js-pcache-ref %pcache ?idx)))
 	  (cond-expand
 	     ((and bigloo-c (not hop-eval) (not hopjs-worker-slave))
-	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_xmapz00)" ,idx))
+	      `(free-pragma::obj "(obj_t)(__bgl_pcache[ $1 ].BgL_xmapz00)" ,idx))
 	     (else
 	      `(with-access::JsPropertyCache ,c (xmap) xmap))))
 	 ((js-pcache-xmap ?c)
@@ -1019,7 +1019,7 @@
 	     ,(let loop ((cs ccspecs))
 		 (if (null? cs)
 		     (if (or (memq 'pmap ccspecs) (memq 'pmap-inline ccspecs))
-			 `(if (eq? (js-pcache-cmap ,ccache) #t)
+			 `(if (eq? (js-pcache-cmap ,ccache) (js-not-a-pmap))
 			      ,(if (memq 'pmap-inline ccspecs)
 				   `(begin
 				       (with-access::JsPropertyCache ,ccache (function)

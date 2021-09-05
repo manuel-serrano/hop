@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Sep  3 08:33:53 2021 (serrano)                */
+;*    Last change :  Sat Sep  4 06:40:46 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -533,37 +533,37 @@
 	  (fprint (current-error-port) "-- " msg (typeof pcache)
 	     " loc=" point ":" src
 	     " cntmiss=" cntmiss)
-	  (if (isa? imap JsConstructMap)
+	  (if (not (eq? imap (js-not-a-pmap)))
 	      (with-access::JsConstructMap imap (%id props)
 		 (fprint (current-error-port) "  imap %id=" %id
 		    " iindex=" iindex " props=" (vector-map js-debug-prop props)))
 	      (fprint (current-error-port) "  imap " imap))
-	  (if (isa? cmap JsConstructMap)
+	  (if (not (eq? cmap (js-not-a-pmap)))
 	      (with-access::JsConstructMap cmap (%id props)
 		 (fprint (current-error-port) "  cmap %id=" %id
 		    " cindex=" cindex " props=" (vector-map js-debug-prop props)))
 	      (fprint (current-error-port) "  cmap " cmap))
-	  (if (isa? pmap JsConstructMap)
+	  (if (not (eq? pmap (js-not-a-pmap)))
 	      (with-access::JsConstructMap pmap (%id props)
 		 (fprint (current-error-port) "  pmap %id=" %id
 		    " pindex=" pindex " props=" (vector-map js-debug-prop props)))
 	      (fprint (current-error-port) "  pmap " pmap))
-	  (if (isa? nmap JsConstructMap)
+	  (if (not (eq? nmap (js-not-a-pmap)))
 	      (with-access::JsConstructMap nmap (%id props)
 		 (fprint (current-error-port) "  nmap %id=" %id
 		    " nindex=" nindex " props=" (vector-map js-debug-prop props)))
 	      (fprint (current-error-port) "  nmap " nmap))
-	  (if (and (isa? emap JsConstructMap) (not (eq? emap (js-not-a-pmap))))
+	  (if (not (eq? emap (js-not-a-pmap)))
 	      (with-access::JsConstructMap emap (%id props)
 		 (fprint (current-error-port) "  emap %id=" %id
 		    " eindex=" eindex " props=" (vector-map js-debug-prop props)))
 	      (fprint (current-error-port) "  emap " emap))
-	  (if (and (isa? amap JsConstructMap) (not (eq? amap (js-not-a-pmap))))
+	  (if (not (eq? amap (js-not-a-pmap)))
 	      (with-access::JsConstructMap amap (%id props)
 		 (fprint (current-error-port) "  amap %id=" %id
 		    " aindex=" aindex " props=" (vector-map js-debug-prop props)))
 	      (fprint (current-error-port) "  amap " amap))
-	  (if (isa? xmap JsConstructMap)
+	  (if (not (eq? xmap (js-not-a-pmap)))
 	      (with-access::JsConstructMap xmap (%id props)
 		 (fprint (current-error-port) "  xmap %id=" %id
 		    " props=" (vector-map js-debug-prop props)))

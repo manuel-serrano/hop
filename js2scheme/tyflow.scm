@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Aug 26 08:26:58 2021 (serrano)                */
+;*    Last change :  Fri Sep  3 17:18:18 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -187,6 +187,9 @@
 ;*---------------------------------------------------------------------*/
 (define (decl-vtype-set! decl::J2SDecl ty::obj ctx::pair)
    (with-access::J2SDecl decl (vtype id loc)
+      (unless (or (eq? vtype 'unknown) (eq? vtype ty))
+	 (tprint "PAS BON decl=" (j2s->list decl) " ty=" (type->sexp ty)
+	    " vtype=" (type->sexp vtype)))
       [assert (ty) (or (eq? vtype 'unknown) (eq? vtype ty))]
       (when (or (eq? vtype 'unknown) (not (eq? vtype ty)))
 	 (unfix! ctx (format "J2SDecl.vset(~a, ~a) vtype=~a/~a" id loc
@@ -774,7 +777,10 @@
 
    (define (node-type-class this)
       (with-access::J2SDeclClass this (val)
-	 (let ((ty (if (isa? val J2SClass) 'function 'any)))
+	 (let ((ty (if (isa? val J2SClass)
+		       (with-access::J2SClass val (need-dead-zone-check)
+			  (if need-dead-zone-check 'any 'function))
+		       'any)))
 	    (if (decl-ronly? this)
 		(decl-vtype-set! this ty ctx)
 		(decl-vtype-add! this ty ctx))
@@ -2012,11 +2018,12 @@
 ;*    node-type ::J2SClass ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SClass env::pair-nil ctx::pair)
-   (with-access::J2SClass this (expr decl super elements)
+   (with-access::J2SClass this (expr decl super elements need-dead-zone-check)
       (for-each (lambda (e)
 		   (node-type e env ctx))
 	 elements)
-      (when decl (decl-vtype-add! decl 'function ctx))
+      (when decl
+	 (decl-vtype-add! decl (if need-dead-zone-check 'any 'function) ctx))
       (multiple-value-bind (tys env bki)
 	 (node-type super env ctx)
 	 (expr-type-add! this env ctx

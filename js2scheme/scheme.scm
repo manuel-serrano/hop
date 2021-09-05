@@ -2822,7 +2822,7 @@
 		    ,(j2s-scheme obj mode return ctx)))))
 	 ((proto-reset)
 	  `(with-access::JsPropertyCache (js-pcache-ref %pcache ,cache) (pmap)
-	      (set! pmap #t)))
+	      (set! pmap (js-not-a-pmap))))
 	 ((instanceof)
 	  `(with-access::JsPropertyCache (js-pcache-ref %pcache ,cache) (cmap)
 	      (when (js-object-mapped? ,(j2s-scheme obj mode return ctx))

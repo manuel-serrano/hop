@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Thu Aug 26 08:54:10 2021 (serrano)                */
+;*    Last change :  Fri Sep  3 10:28:26 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -134,7 +134,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (add-hints! expr::J2SExpr hints::pair-nil)
    
-   (define (add-hint! expr type::symbol inc)
+   (define (add-hint! expr type inc)
       (with-access::J2SExpr expr (hint)
 	 (let ((c (assq type hint)))
 	    (cond
@@ -159,7 +159,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (add-hints! decl::J2SDecl hints::pair-nil)
    
-   (define (add-hint! decl type::symbol inc)
+   (define (add-hint! decl type inc)
       (with-access::J2SDecl decl (id hint vtype)
 	 (let ((c (assq type hint)))
 	    (cond

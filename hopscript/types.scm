@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Sep  3 08:33:03 2021 (serrano)                */
+;*    Last change :  Sat Sep  4 06:39:44 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -123,7 +123,7 @@
 	   
 	   (final-class JsPropertyCache
 	      (js-property-cache-init!)
-	      (imap::obj (default #f))
+	      (imap::JsConstructMap (default (js-not-a-pmap)))
 	      (emap::JsConstructMap (default (js-not-a-pmap)))
 	      (cmap::JsConstructMap (default (js-not-a-pmap)))
 	      (pmap::JsConstructMap (default (js-not-a-pmap)))
@@ -1129,8 +1129,6 @@
 (define-inline (js-object-inline-elements o::JsObject)
    (cond-expand
       ((and bigloo-c (not disable-inline))
-       (unless (or (not (js-object-mode-inline? o)) (js-jsobject? o))
-	  (tprint "PAS BON " (typeof o)))
        [assert (o) (or (not (js-object-mode-inline? o)) (js-jsobject? o))]
        (if (js-object-mode-inline? o)
 	   ($js-object-inline-elements o)

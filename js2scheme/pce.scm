@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Fri Jan 31 16:29:41 2020 (serrano)                */
-;*    Copyright   :  2018-20 Manuel Serrano                            */
+;*    Last change :  Fri Sep  3 10:43:54 2021 (serrano)                */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
 ;*    -------------------------------------------------------------    */
@@ -669,7 +669,7 @@
 	      (J2SStmtExpr
 		 (J2SPragma
 		    `(with-access::JsPropertyCache (js-pcache-ref %pcache ,(cdr entry)) (imap)
-			(set! imap #t)))))
+			(set! imap (js-no-a-pmap))))))
 	 ncaches)))
 
 ;*---------------------------------------------------------------------*/

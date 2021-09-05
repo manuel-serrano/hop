@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Aug 13 07:30:13 2021 (serrano)                */
+;*    Last change :  Fri Sep  3 17:35:54 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -494,9 +494,10 @@
 		(map (lambda (d)
 			(with-access::J2SDecl d (id binder loc)
 			   (let ((od (find-decl id env)))
-			      (unless (or (not od)
-					  (eq? od d)
-					  (j2s-global? od))
+			      (when (and (or (not od)
+					     (eq? od d)
+					     (j2s-global? od))
+					 (config-get conf :error-variable-redefinition #f))
 				 (let ((kind (cond
 					       ((j2s-let? od)
 						"variable")
