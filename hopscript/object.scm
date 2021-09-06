@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Sep  5 17:31:46 2021 (serrano)                */
+;*    Last change :  Mon Sep  6 07:47:01 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -1097,7 +1097,6 @@
 (define-method (js-ownkeys obj::JsObject %this)
 
    (define (cmap->names cmap)
-      (tprint "CMAP->NAMES..." (typeof obj))
       (with-access::JsConstructMap cmap (props)
 	 (let* ((len (vector-length props))
 		(arr (js-array-construct-alloc/length %this len)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sun Sep  5 16:46:36 2021 (serrano)                */
+;*    Last change :  Mon Sep  6 08:06:53 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -36,7 +36,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SProgram mode return ctx)
    
-   (define (j2s-master-module module cnsttable esexports esimports scmheaders records body)
+   (define (j2s-master-module module cnsttable esexports esimports scmheaders scmrecords records body)
       (with-access::J2SProgram this (pcache-size call-size cnsts globals loc)
 	 `(,(append module
 	       (if (pair? records)
@@ -71,11 +71,8 @@
 		     (define js-integer-names (js-get-js-integer-names))
 		     (define %worker (js-current-worker))
 		     (define %cnst-table ,cnsttable)
-		     ,@(append-map (lambda (rec)
-				      (j2s-record-prototype-constructor rec
-					 mode (lambda (x) x) ctx))
-			  records)
 		     ,@scmheaders
+		     ,@scmrecords
 		     ,@globals
 		     ,esexports
 		     ,@esimports
@@ -84,7 +81,7 @@
 	     ;; for dynamic loading
 	     hopscript)))
    
-   (define (j2s-slave-module module cnsttable esexports esimports scmheaders records body)
+   (define (j2s-slave-module module cnsttable esexports esimports scmheaders scmrecords records body)
       (with-access::J2SProgram this (pcache-size call-size cnsts globals loc)
 	 `(,(append module
 	       (if (pair? records)
@@ -120,29 +117,29 @@
 		    (define %worker (js-current-worker))
 		    (define %cnst-table ,cnsttable)
 		    ,@scmheaders
+		    ,@scmrecords
 		    ,@globals
 		    ,esexports
 		    ,@esimports
-		    ,@(append-map (lambda (rec)
-				     (j2s-record-prototype-constructor rec
-					mode (lambda (x) x) ctx))
-			 records)
 		    ,@(exit-body ctx
 			 (filter fundef? body) (filter nofundef? body))))
 	    ;; for dynamic loading
 	    hopscript)))
    
-   (define (j2s-module module cnsttable esexports esimports scmheaders records body)
+   (define (j2s-module module cnsttable esexports esimports scmheaders scmrecords records body)
       (if (context-get ctx :worker-slave)
-	  (j2s-slave-module module cnsttable esexports esimports scmheaders records body)
-	  (j2s-master-module module cnsttable esexports esimports scmheaders records body)))
+	  (j2s-slave-module module cnsttable esexports esimports scmheaders scmrecords records body)
+	  (j2s-master-module module cnsttable esexports esimports scmheaders scmrecords records body)))
 
-   (define (j2s-expr module cnsttable esexports esimports scmheaders body)
+   (define (j2s-expr module cnsttable esexports esimports scmheaders scmrecords records body)
       (with-access::J2SProgram this (globals loc cnsts pcache-size call-size)
 	 (epairify-deep loc
 	    `(lambda (%this this %scope %module)
 		(define __js_strings ,(j2s-jsstring-init this))
 		(define __js_rxcaches ,(j2s-regexp-caches-init this))
+		,@(map (lambda (rec)
+			  `(define-class ,(cdr (j2s-record-declaration rec))))
+		     records)
 		(%define-cnst-table ,(length cnsts))
 		(%define-pcache ,pcache-size)	       
 		(define %pcache
@@ -164,6 +161,7 @@
 		(define %resource (dirname %source))
 		(define %cnst-table ,cnsttable)
 		,@scmheaders
+		,@scmrecords
 		,@globals
 		,esexports
 		,@esimports
@@ -189,7 +187,7 @@
 			(else expr)))
 	 headers))
    
-   (define (j2s-main-worker-module name cnsttable esexports esimports scmheaders records body)
+   (define (j2s-main-worker-module name cnsttable esexports esimports scmheaders scmrecords records body)
       (with-access::J2SProgram this (pcache-size call-size path
 				       globals cnsts loc)
 	 (let* ((jsmod (js-module/main this))
@@ -206,12 +204,9 @@
 			      ;; is not minimize letrec* nesting level
 			      (letrec* ,(j2s-let-headers scmheaders)
 				 ,@(j2s-expr-headers scmheaders)
+				 ,@scmrecords
 				 ,esexports
 				 ,@esimports
-				 ,@(append-map (lambda (rec)
-						  (j2s-record-prototype-constructor rec
-						     mode (lambda (x) x) ctx))
-				      records)
 				 ,@(exit-body ctx
 				      (filter fundef? body)
 				      (filter nofundef? body)))))))
@@ -286,7 +281,11 @@
 			 decls))
 	     (scmnodes (j2s-scheme nodes mode return nctx))
 	     (cnsttable (%cnst-table cnsts mode return nctx))
-	     (records (j2s-collect-records* this)))
+	     (records (j2s-collect-records* this))
+	     (scmrecords (append-map (lambda (rec)
+					(j2s-record-prototype-constructor rec
+					   mode (lambda (x) x) ctx))
+			    records)))
 	 (cond
 	    ((and main (context-get nctx :tls))
 	     (tprint "not implemented yet")
@@ -304,20 +303,20 @@
 		   (module
 		    ;; a module whose declaration is in the source
 		    (j2s-module module cnsttable esexports esimports scmheaders
-		       records body))
+		       scmrecords records body))
 		   ((not name)
 		    ;; a mere expression
 		    (j2s-expr module cnsttable esexports esimports scmheaders
-		       body))
+		       scmrecords records body))
 		   (main
 		    ;; generate a main hopscript module 
 		    (j2s-main-worker-module name cnsttable
-		       esexports esimports scmheaders records body))
+		       esexports esimports scmheaders scmrecords records body))
 		   (else
 		    ;; generate the module clause
 		    (let ((mod (js-module this)))
 		       (j2s-module mod cnsttable esexports esimports scmheaders
-			  records body))))))))))
+			  scmrecords records body))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring-init ...                                            */

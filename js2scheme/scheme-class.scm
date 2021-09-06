@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sun Sep  5 16:42:28 2021 (serrano)                */
+;*    Last change :  Mon Sep  6 08:15:07 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -36,12 +36,13 @@
 	   (j2s-scheme-bind-class-method prop::J2SPropertyInit obj mode return ctx)
 	   (j2s-scheme-class-call-super ::J2SCall mode return ctx)
 	   (j2s-scheme-need-super-check?::bool ::J2SFun)
-	   (j2s-scheme-init-instance-properties ::J2SClass mode return ctx)))
+	   (j2s-scheme-init-instance-properties ::J2SClass mode return ctx)
+	   (generic j2s-scheme-call-class-constructor clazz::J2SClass ecla enewtarget eobj args loc mode return ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-call-class-constructor ...                            */
 ;*---------------------------------------------------------------------*/
-(define (j2s-scheme-call-class-constructor clazz::J2SClass ecla enewtarget eobj args loc mode return ctx)
+(define-generic (j2s-scheme-call-class-constructor clazz::J2SClass ecla enewtarget eobj args loc mode return ctx)
    (let ((ctor (j2s-class-find-constructor clazz))
 	 (args (if (class-new-target? clazz)
 		   (cons (J2SHopRef enewtarget) args)
@@ -597,7 +598,7 @@
 		      ,@(j2s-scheme-init-instance-properties clazz
 			   mode return ctx)
 		      ,res))))))
-   
+
    (with-access::J2SCall this (fun)
       (with-access::J2SSuper fun (context)
 	 (with-access::J2SClass context (super)

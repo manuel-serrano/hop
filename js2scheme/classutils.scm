@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Thu Sep  2 18:02:35 2021 (serrano)                */
+;*    Last change :  Mon Sep  6 08:33:41 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -156,10 +156,8 @@
       (with-access::J2SClass clazz (elements)
 	 (let ((props (filter-map instance-element-prop elements))
 	       (superclass (and super (j2s-class-super-val clazz))))
-	    (if (isa? superclass J2SClass)
-		(if (isa? super J2SClass)
-		    (append (loop superclass) props)
-		    props)
+	    (if (and super (isa? superclass J2SClass))
+		(append (loop superclass) props)
 		props)))))
 
 ;*---------------------------------------------------------------------*/
