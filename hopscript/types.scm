@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Sep  5 17:25:35 2021 (serrano)                */
+;*    Last change :  Tue Sep  7 14:07:16 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -159,7 +159,8 @@
 	      (cntvtable::uint32 (default #u32:0)))
 	   
 	   (final-class JsConstructMap
-	      (%id::uint32 read-only (default (gencmapid)))
+	      (%id::uint32 read-only)
+	      (%mod::uint32 read-only)
 	      (lock read-only (default (make-spinlock "JsConstructMap")))
 	      (props::vector (default '#()))
 	      (methods::vector (default '#()))
@@ -628,9 +629,11 @@
 	   
 	   *js-not-a-cmap*
 	   *js-not-a-pmap*
+	   *js-uncachable-pmap*
 	   *js-not-a-string-cache*
 	   (inline js-not-a-cmap::JsConstructMap)
 	   (inline js-not-a-pmap::JsConstructMap)
+	   (inline js-uncachable-pmap::JsConstructMap)
 	   (inline js-not-a-index::long)
 	   (inline js-not-a-string-cache::pair)
 	   
@@ -745,6 +748,7 @@
 		  (methods '#()) (props '#()))
    (instantiate::JsConstructMap
       (%id %id)
+      (%mod (modulou32 %id 16))
       (single single)
       (methods methods)
       (props props)
@@ -1587,6 +1591,12 @@
    (js-make-jsconstructmap :%id -1))
 
 ;*---------------------------------------------------------------------*/
+;*    *js-uncachable-pmap* ...                                         */
+;*---------------------------------------------------------------------*/
+(define *js-uncachable-pmap*
+   (js-make-jsconstructmap :%id -1))
+
+;*---------------------------------------------------------------------*/
 ;*    *js-not-a-string-cache* ...                                      */
 ;*---------------------------------------------------------------------*/
 (define *js-not-a-string-cache*
@@ -1603,6 +1613,12 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-not-a-pmap::JsConstructMap)
    *js-not-a-pmap*)
+
+;*---------------------------------------------------------------------*/
+;*    js-uncachable-pmap ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-uncachable-pmap::JsConstructMap)
+   *js-uncachable-pmap*)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-not-a-index ...                                               */

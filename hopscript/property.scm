@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Sep  4 06:40:46 2021 (serrano)                */
+;*    Last change :  Tue Sep  7 14:11:51 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2606,12 +2606,11 @@
       (with-access::JsPropertyCache cache (pmap emap cmap)
 	 (set! pmap (js-not-a-pmap))
 	 (set! emap (js-not-a-pmap))
-	 (set! cmap (js-not-a-cmap))))
+	 (set! cmap (js-uncachable-pmap))))
    
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 
-   (tprint "js-method-js-object-get-name/cache-miss name=" name)
    (let loop ((obj o))
       (jsobject-find obj o name
 	 ;; map search
@@ -4830,7 +4829,7 @@
 					     ;; varargs functions, currently not cached...
 					     '(with-access::JsPropertyCache ccache (pmap emap cmap)
 						(set! emap (js-not-a-pmap))
-						(set! cmap (js-not-a-cmap))
+						(set! cmap (js-uncachable-pmap))
 						(set! pmap (js-not-a-pmap))))
 					    ((=fx (procedure-arity procedure) (+fx 1 (length args)))
 					     (with-access::JsPropertyCache ccache (emap cmap pmap pindex (cmethod method) function)
@@ -4860,7 +4859,7 @@
 					     ;; arity missmatch, never cache
 					     '(with-access::JsPropertyCache ccache (pmap emap cmap)
 						(set! emap (js-not-a-pmap))
-						(set! cmap (js-not-a-cmap))
+						(set! cmap (js-uncachable-pmap))
 						(set! pmap (js-not-a-pmap)))))))
 				     ((procedure? f)
 				      (error "js-method-jsobject-call/cache-fill" "should not be here" f)))
@@ -4876,7 +4875,7 @@
 			       (with-access::JsPropertyCache ccache (pmap cmap emap)
 				  ;; invalidate the call cache and update the
 				  ;; object cache
-				  (set! cmap (js-not-a-pmap))
+				  (set! cmap (js-uncachable-pmap))
 				  (set! emap (js-not-a-pmap))
 				  (set! pmap (js-not-a-pmap))
 				  (jsapply (funval obj el-or-desc))))))))))

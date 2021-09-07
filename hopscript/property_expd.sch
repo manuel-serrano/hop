@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Sep  3 15:59:14 2021 (serrano)                */
+;*    Last change :  Tue Sep  7 16:13:08 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -1019,7 +1019,7 @@
 	     ,(let loop ((cs ccspecs))
 		 (if (null? cs)
 		     (if (or (memq 'pmap ccspecs) (memq 'pmap-inline ccspecs))
-			 `(if (eq? (js-pcache-cmap ,ccache) (js-not-a-pmap))
+			 `(if (eq? (js-pcache-cmap ,ccache) (js-uncachable-pmap))
 			      ,(if (memq 'pmap-inline ccspecs)
 				   `(begin
 				       (with-access::JsPropertyCache ,ccache (function)
