@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Wed Sep  8 14:36:51 2021 (serrano)                */
+;*    Last change :  Wed Sep  8 15:59:24 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -51,11 +51,13 @@
    (with-access::J2SNode node (loc)
       (let ((ctor (j2s-class-find-constructor record))
 	    (la (length args)))
-	 (if (and (not ctor) (pair? args))
+	 (cond
+	    ((and (not ctor) (pair? args))
 	     (with-access::J2SRecord record (name)
 		(j2s-error name
 		   "wrong number of arguments, 0 expected"
-		   node (format "~a provided" la)))
+		   node (format "~a provided" la))))
+	    (ctor
 	     (with-access::J2SClassElement ctor (prop)
 		(with-access::J2SMethodPropertyInit prop (val)
 		   (with-access::J2SFun val (params vararg loc name mode)
@@ -76,11 +78,11 @@
 					     lp)
 					  (format "wrong number of arguments, expected: ~a..~a"
 					     (j2s-minlen val) lp))
-				      node (format "~a provided" la)))))))))
-		`(,(class-constructor-id record)
-		  ,eobj
-		  ,@(if (class-new-target? record) (list enewtarget) '())
-		  ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))))))
+				      node (format "~a provided" la))))))))))))
+	 `(,(class-constructor-id record)
+	   ,eobj
+	   ,@(if (class-new-target? record) (list enewtarget) '())
+	   ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-record-new ...                                        */

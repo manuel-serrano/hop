@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Sep  7 18:36:52 2021 (serrano)                */
+;*    Last change :  Wed Sep  8 16:12:14 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -282,7 +282,7 @@
 	     (records (j2s-collect-records* this))
 	     (scmrecords (append-map (lambda (rec)
 					(j2s-record-prototype-constructor rec
-					   mode (lambda (x) x) ctx))
+					   mode return ctx))
 			    records)))
 	 (cond
 	    ((and main (context-get nctx :tls))

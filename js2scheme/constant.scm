@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Aug 25 10:18:15 2021 (serrano)                */
+;*    Last change :  Wed Sep  8 19:14:24 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -484,29 +484,19 @@
    (with-access::J2SClass this (super cmap loc constrsize)
       (unless cmap
 	 (call-default-walker)
-	 (cond
-	    ((or (isa? super J2SUndefined) (isa? this J2SRecord))
-	     (let ((n (add-cmap! loc
-			 (list->vector
-			    (map (lambda (prop)
-				    (with-access::J2SPropertyInit prop (name)
-				       (with-access::J2SString name (val)
-					  (string->symbol val))))
-			       (j2s-class-instance-properties this)))
-			 env #f)))
-		(set! cmap
-		   (instantiate::J2SLiteralCnst
-		      (loc loc)
-		      (index n)
-		      (val (env-list-ref env n))))))
-	    ((j2s-class-super-val this)
-	     =>
-	     (lambda (super)
-		(constant! super env nesting conf)
-		(when (isa? super J2SClass)
-		   (with-access::J2SClass super ((supercmap cmap))
-		      (set! cmap supercmap))))))
-	 (when (isa? cmap J2SCmap)
-	    (with-access::J2SCmap cmap (val)
-	       (set! constrsize (length val))))))
+	 (let* ((p (j2s-class-instance-properties this))
+		(n (add-cmap! loc
+		      (list->vector
+			 (map (lambda (prop)
+				 (with-access::J2SPropertyInit prop (name)
+				    (with-access::J2SString name (val)
+				       (string->symbol val))))
+			    p))
+		      env #f)))
+	    (set! cmap
+	       (instantiate::J2SLiteralCnst
+		  (loc loc)
+		  (index n)
+		  (val (env-list-ref env n))))
+	    (set! constrsize (length p)))))
    this)

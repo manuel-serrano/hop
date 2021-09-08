@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/nodesize.scm      */
+;*    serrano/prgm/project/hop/hop/js2scheme/nodesize.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 24 07:26:29 2017                          */
-;*    Last change :  Tue Aug 28 08:09:12 2018 (serrano)                */
-;*    Copyright   :  2017-18 Manuel Serrano                            */
+;*    Last change :  Wed Sep  8 15:48:04 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Compute an AST size (used when inlining)                         */
 ;*=====================================================================*/
@@ -29,6 +29,7 @@
 (define FUN-TAX 3)
 (define CALL-TAX 3)
 (define LOOP-TAX 30)
+(define SUPER-TAX 100000)
 
 ;*---------------------------------------------------------------------*/
 ;*    node-size ::obj ...                                              */
@@ -114,6 +115,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (node-size this::J2SExpr)
    (+fx 1 (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    node-size ::J2SSuper ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (node-size this::J2SSuper)
+   SUPER-TAX)
 
 ;*---------------------------------------------------------------------*/
 ;*    node-size ::J2SStmtExpr ...                                      */

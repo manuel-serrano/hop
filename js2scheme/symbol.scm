@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Sep  8 15:01:38 2021 (serrano)                */
+;*    Last change :  Wed Sep  8 15:53:32 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -1039,7 +1039,6 @@
 			 (with-access::J2SPropertyInit prop (name)
 			    (with-access::J2SString name (val) val)))
 		    (j2s-class-instance-properties this))))
-      (tprint "names=" names)
       ;; verify no property duplications
       (let loop ((names names)
 		 (dups '()))
