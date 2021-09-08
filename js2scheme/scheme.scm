@@ -3254,7 +3254,10 @@
 	  (lambda (decl)
 	     (epairify loc
 		(j2s-new-opt decl clazz
-		   (map (lambda (a) (j2s-scheme-box a mode return ctx))
+		   ;; 8sep2021, seems wrong to box the arguments
+		   ;; of optimized constructors
+		   ;; (map (lambda (a) (j2s-scheme-box a mode return ctx))
+		   (map (lambda (a) (j2s-scheme a mode return ctx))
 		      args)))))
 	 ((and (=fx (bigloo-debug) 0) (pair? caches)
 	       (with-access::J2SRef clazz (decl loc)

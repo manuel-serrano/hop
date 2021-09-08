@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Sep  7 14:11:51 2021 (serrano)                */
+;*    Last change :  Tue Sep  7 16:34:31 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3257,7 +3257,7 @@
 	    (cond
 	       ((not (js-object-mode-extensible? o))
 		;; 8.12.9. step 3
-		(reject "sealed objet"))
+		(reject (format "sealed object (~s)" (typeof o))))
 	       ((not extend)
 		;; 11.13.1
 		(js-raise-reference-error/loc %this loc
@@ -4692,9 +4692,9 @@
       (set! cpoint point)
       (set! usage 'call))
 
-   (with-access::JsPropertyCache ccache (pmap vindex method cntmiss)
+   (with-access::JsPropertyCache ccache (pmap vindex method cntmiss vtable vmaps)
       (when (and (procedure? method)
-		 (isa? pmap JsConstructMap)
+		 (not (eq? pmap (js-not-a-pmap)))
 		 (=fx (procedure-arity method) (+fx 1 (length args))))
 	 (when (=fx vindex (js-not-a-index))
 	    (set! vindex (js-get-vindex %this)))

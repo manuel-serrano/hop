@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Thu Aug 19 15:05:44 2021 (serrano)                */
+;*    Last change :  Tue Sep  7 18:25:55 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -395,7 +395,8 @@
 	  ((bigint) 'bignum)
 	  (else type)))
       ((isa? type J2SRecord)
-       'JsRecord)
+       (with-access::J2SRecord type (name)
+	  (string->symbol (string-append "&JsRec" (symbol->string! name)))))
       ((isa? type J2SClass)
        'JsObject)
       (else

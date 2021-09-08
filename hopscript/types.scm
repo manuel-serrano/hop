@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Sep  7 14:07:16 2021 (serrano)                */
+;*    Last change :  Tue Sep  7 16:23:21 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -160,7 +160,6 @@
 	   
 	   (final-class JsConstructMap
 	      (%id::uint32 read-only)
-	      (%mod::uint32 read-only)
 	      (lock read-only (default (make-spinlock "JsConstructMap")))
 	      (props::vector (default '#()))
 	      (methods::vector (default '#()))
@@ -748,7 +747,6 @@
 		  (methods '#()) (props '#()))
    (instantiate::JsConstructMap
       (%id %id)
-      (%mod (modulou32 %id 16))
       (single single)
       (methods methods)
       (props props)
@@ -1579,6 +1577,12 @@
 (define cmapid 0)
 
 ;*---------------------------------------------------------------------*/
+;*    *js-not-a-vtable* ...                                            */
+;*---------------------------------------------------------------------*/
+(define *js-not-a-vtable*
+   (make-vector 10))
+
+;*---------------------------------------------------------------------*/
 ;*    *js-not-a-cmap* ...                                              */
 ;*---------------------------------------------------------------------*/
 (define *js-not-a-cmap*
@@ -1631,6 +1635,12 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-not-a-string-cache::pair)
    *js-not-a-string-cache*)
+
+;*---------------------------------------------------------------------*/
+;*    js-not-a-vtable ...                                              */
+;*---------------------------------------------------------------------*/
+(define-inline (js-not-a-vtable::vector)
+   *js-not-a-vtable*)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object? ...                                                   */

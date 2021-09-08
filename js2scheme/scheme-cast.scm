@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed Aug 11 14:44:53 2021 (serrano)                */
+;*    Last change :  Wed Sep  8 12:15:29 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -19,6 +19,7 @@
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_utils
+	   __js2scheme_classutils
 	   __js2scheme_scheme-test
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-constant)
@@ -920,33 +921,47 @@
 	 (else
 	  `(js-tojsstring ,sexp %this))))
 
-   (define (default sexp expr from to ctx)
-      (if (or (eq? from to) (eq? to '*))
+   (define (torecord sexp)
+      `(if (,(class-predicate-id to) ,sexp)
+	   ,sexp
+	   (js-raise-type-error %this
+	      ,(format "Not ~s instance: ~~a"
+		  (with-access::J2SRecord to (name) name))
+	      ,sexp)))
+   
+   (define (default sexp expr fromid toid ctx)
+      (if (or (eq? fromid toid) (eq? toid '*))
 	  sexp
 	  (cond
-	     ((eq? to 'int32)
+	     ((eq? toid 'int32)
 	      (js->int32 sexp expr ctx))
-	     ((eq? to 'uint32)
+	     ((eq? toid 'uint32)
 	      (js->uint32 sexp expr ctx))
+	     ((and (eq? fromid 'any) (isa? to J2SRecord))
+	      (if (symbol? sexp)
+		  (torecord sexp)
+		  (let ((tmp (gensym 'tmp)))
+		     `(let ((,tmp ,sexp))
+			 ,(torecord tmp)))))
 	     (else
-	      (case from
+	      (case fromid
 		 ((index uint32 length)
-		  (case to
+		  (case toid
 		     ((uint32 index length) sexp)
 		     ((bool) `(> ,sexp 0))
 		     (else sexp)))
 		 ((int53)
-		  (case to
-		     ((index uint32 length) (cast-error sexp from to))
+		  (case toid
+		     ((index uint32 length) (cast-error sexp fromid toid))
 		     ((bool) `(not (= ,sexp 0)))
 		     (else sexp)))
 		 ((integer number)
-		  (case to
+		  (case toid
 		     ((index uint32 length) (js-fixnum->uint32 sexp expr ctx))
 		     ((bool) `(not (= ,sexp 0)))
 		     (else sexp)))
 		 (else
-		  (case to
+		  (case toid
 		     ((string) (tostring sexp))
 		     ((index uint32 length) (js-fixnum->uint32 sexp expr ctx))
 		     ((bool) (j2s-totest sexp))

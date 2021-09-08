@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Sep  3 17:18:18 2021 (serrano)                */
+;*    Last change :  Wed Sep  8 11:38:27 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -40,7 +40,8 @@
 	   __js2scheme_utils
 	   __js2scheme_classutils
 	   __js2scheme_type-hint
-	   __js2scheme_use)
+	   __js2scheme_use
+	   __js2scheme_alpha)
 
    (export j2s-tyflow-stage))
 
@@ -2033,22 +2034,25 @@
 ;*    node-type ::J2SClassElement ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SClassElement env::pair-nil ctx::pair)
+
+   (define (type-record-method val::J2SFun clazz)
+      (with-access::J2SFun val (thisp body loc)
+	 (let ((self (duplicate::J2SDeclInit thisp
+			(key (ast-decl-key))
+			(id '!this)
+			(_scmid '!this)
+			(vtype clazz)
+			(itype clazz)
+			(val (J2SCast clazz (J2SRef thisp)))
+			(binder 'let-opt)
+			(hint '()))))
+	    (set! body
+	       (J2SLetRecBlock #f (list self)
+		  (j2s-alpha body (list thisp) (list self)))))))
    
-   (define (constructor? prop::J2SPropertyInit)
-      (when (isa? prop J2SDataPropertyInit)
-	 (with-access::J2SDataPropertyInit prop (name)
-	    (let loop ((name name))
-	       (cond
-		  ((isa? name J2SLiteralCnst)
-		   (with-access::J2SLiteralCnst name (val)
-		      (loop val)))
-		  ((isa? name J2SLiteralValue)
-		   (with-access::J2SLiteralValue name (val)
-		      (equal? val "constructor"))))))))
-   
-   (with-access::J2SClassElement this (prop type clazz)
+   (with-access::J2SClassElement this (prop type clazz static)
       (cond
-	 ((constructor? prop)
+	 ((j2s-class-property-constructor? prop)
 	  (if (isa? clazz J2SRecord)
 	      (with-access::J2SDataPropertyInit prop (val)
 		 (with-access::J2SFun val (thisp)
@@ -2066,6 +2070,14 @@
 			  (unfix! ctx "constructor type")))
 		    (node-type prop env ctx)))))
 	 (else
+	  (when (and (not static)
+		     (isa? prop J2SMethodPropertyInit)
+		     (isa? clazz J2SRecord))
+	     (with-access::J2SMethodPropertyInit prop (val)
+		(with-access::J2SFun val (thisp)
+		   (with-access::J2SDecl thisp (vtype)
+		      (when (eq? vtype 'unknown)
+			 (type-record-method val clazz))))))
 	  (when (eq? type 'unknown)
 	     (set! type 'any)
 	     (unfix! ctx "class element"))
@@ -2260,12 +2272,14 @@
 	     (call-default-walker)
 	     (case op
 		((==)
-		 (let ((b (same-type typ (j2s-type ref))))
+		 (let ((b (or (same-type typ (j2s-type ref))
+			      (same-type (j2s-type ref) typ))))
 		    (if (boolean? b)
 			(J2SBool b)
 			(call-default-walker))))
 		((!=)
-		 (let ((b (same-type typ (j2s-type ref))))
+		 (let ((b (or (same-type typ (j2s-type ref))
+			      (same-type (j2s-type ref) typ))))
 		    (if (boolean? b)
 			(J2SBool (not b))
 			(call-default-walker))))

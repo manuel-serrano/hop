@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Mon Sep  6 08:15:07 2021 (serrano)                */
+;*    Last change :  Wed Sep  8 07:26:13 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -187,6 +187,8 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-bind-class-method prop obj mode return ctx)
    (cond
+      ((j2s-class-property-constructor? prop)
+       #f)
       ((isa? prop J2SMethodPropertyInit)
        (with-access::J2SMethodPropertyInit prop (name val inlinecachevar)
 	  (let ((name (j2s-scheme-class-propname name mode return ctx))
@@ -483,38 +485,13 @@
        #f)
       ((isa? prop J2SDataPropertyInit)
        (with-access::J2SDataPropertyInit prop (name val loc cache)
-	  (j2s-put! loc obj name clazz
-	     (j2s-scheme-class-propname name mode return ctx) 
-	     'any
-	     (j2s-scheme val mode return ctx)
-	     (j2s-type val)
-	     (strict-mode? mode) ctx cache)))
-      (else
-       #f)))
-
-;*---------------------------------------------------------------------*/
-;*    bind-record-property ...                                         */
-;*---------------------------------------------------------------------*/
-(define (bind-record-property clazz obj prop mode return ctx)
-   (cond
-      ((isa? prop J2SMethodPropertyInit)
-       #f)
-      ((isa? prop J2SDataPropertyInit)
-       (with-access::J2SDataPropertyInit prop (name val)
-	  (let ((expr (j2s-scheme val mode return ctx)))
-	     (with-access::J2SClass clazz (super)
-		(if (and (isa? super J2SUndefined)
-			 (isa? name J2SString))
-		    (with-access::J2SString name (val)
-		       ;; instance properties of classes with
-		       ;; no super class are always inlined
-		       (multiple-value-bind (idx el)
-			  (j2s-class-instance-get-property clazz val)
-			  `(js-object-inline-set! this ,idx ,expr)))
-		    `(js-bind! %this ,obj
-			,(j2s-scheme-class-propname name mode return ctx)
-			:value ,expr
-			:writable #t :enumerable #f :configurable #t))))))
+	  (unless (isa? val J2SUndefined)
+	     (j2s-put! loc obj name clazz
+		(j2s-scheme-class-propname name mode return ctx) 
+		'any
+		(j2s-scheme val mode return ctx)
+		(j2s-type val)
+		(strict-mode? mode) ctx cache))))
       (else
        #f)))
 

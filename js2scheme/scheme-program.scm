@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Sep  6 08:06:53 2021 (serrano)                */
+;*    Last change :  Tue Sep  7 18:36:52 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -72,11 +72,10 @@
 		     (define %worker (js-current-worker))
 		     (define %cnst-table ,cnsttable)
 		     ,@scmheaders
-		     ,@scmrecords
 		     ,@globals
 		     ,esexports
 		     ,@esimports
-		     ,@(exit-body ctx
+		     ,@(exit-body ctx scmrecords
 			  (filter fundef? body) (filter nofundef? body))))
 	     ;; for dynamic loading
 	     hopscript)))
@@ -117,11 +116,11 @@
 		    (define %worker (js-current-worker))
 		    (define %cnst-table ,cnsttable)
 		    ,@scmheaders
-		    ,@scmrecords
+		    
 		    ,@globals
 		    ,esexports
 		    ,@esimports
-		    ,@(exit-body ctx
+		    ,@(exit-body ctx scmrecords
 			 (filter fundef? body) (filter nofundef? body))))
 	    ;; for dynamic loading
 	    hopscript)))
@@ -161,11 +160,10 @@
 		(define %resource (dirname %source))
 		(define %cnst-table ,cnsttable)
 		,@scmheaders
-		,@scmrecords
 		,@globals
 		,esexports
 		,@esimports
-		,@(exit-body ctx
+		,@(exit-body ctx scmrecords
 		     (filter fundef? body) (filter nofundef? body))))))
    
    (define (j2s-let-globals globals)
@@ -204,10 +202,10 @@
 			      ;; is not minimize letrec* nesting level
 			      (letrec* ,(j2s-let-headers scmheaders)
 				 ,@(j2s-expr-headers scmheaders)
-				 ,@scmrecords
 				 ,esexports
 				 ,@esimports
 				 ,@(exit-body ctx
+				      scmrecords
 				      (filter fundef? body)
 				      (filter nofundef? body)))))))
 	    `(,(append jsmod

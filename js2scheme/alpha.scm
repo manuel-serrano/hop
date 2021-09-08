@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Thu Jul 15 12:15:09 2021 (serrano)                */
+;*    Last change :  Wed Sep  8 12:12:22 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -264,19 +264,32 @@
 ;*    alpha ::J2SThis ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-method (alpha this::J2SThis)
-   (with-access::J2SThis this (decl)
+   (with-access::J2SThis this (decl type)
       (with-access::J2SDecl decl (%info)
 	 (if (isa? %info AlphaInfo)
 	     (with-access::AlphaInfo %info (new)
 		(cond
+		   ((isa? new J2SThis)
+		    (with-access::J2SDecl new (vtype)
+		       (duplicate::J2SThis this
+			  (type (min-type type vtype))
+			  (decl new))))
 		   ((isa? new J2SDecl)
-		    (duplicate::J2SThis this
-		       (decl new)))
+		    (with-access::J2SDecl new (vtype)
+		       (duplicate::J2SThis this
+			  (type (min-type type vtype))
+			  (decl new))))
 		   ((isa? new J2SExpr)
 		    (alpha new))
 		   (else
 		    (error "alpha" "new must be a decl or an expr" new))))
 	     (duplicate::J2SThis this)))))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SSuper ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SSuper)
+   (duplicate::J2SSuper this))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SFun ...                                               */

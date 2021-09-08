@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Mon Sep  6 08:33:41 2021 (serrano)                */
+;*    Last change :  Wed Sep  8 12:19:46 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -23,6 +23,7 @@
 	   (class-constructor-id::symbol ::J2SClass)
 	   (class-class-id::symbol ::J2SClass)
 	   (class-prototype-id::symbol ::J2SClass)
+	   (class-predicate-id::symbol ::J2SClass)
 	   
 	   (j2s-class-super-val ::J2SClass)
 	   (j2s-class-root-val ::J2SClass)
@@ -78,6 +79,13 @@
       (if name
 	  (symbol-append '@ name '%PROTOTYPE)
 	  (string->symbol (format "@~a:~a%PROTOTYPE" (cadr loc) (caddr loc))))))
+
+;*---------------------------------------------------------------------*/
+;*    class-predicate-id ...                                           */
+;*---------------------------------------------------------------------*/
+(define (class-predicate-id::symbol clazz::J2SClass)
+   (with-access::J2SRecord clazz (name)
+      (symbol-append 'js- name '?)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-class-super-val ...                                          */
