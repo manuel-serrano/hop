@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Wed Sep  8 07:26:13 2021 (serrano)                */
+;*    Last change :  Wed Sep  8 14:44:40 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -37,41 +37,42 @@
 	   (j2s-scheme-class-call-super ::J2SCall mode return ctx)
 	   (j2s-scheme-need-super-check?::bool ::J2SFun)
 	   (j2s-scheme-init-instance-properties ::J2SClass mode return ctx)
-	   (generic j2s-scheme-call-class-constructor clazz::J2SClass ecla enewtarget eobj args loc mode return ctx)))
+	   (generic j2s-scheme-call-class-constructor clazz::J2SClass ecla enewtarget eobj args ::J2SNode mode return ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-call-class-constructor ...                            */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-scheme-call-class-constructor clazz::J2SClass ecla enewtarget eobj args loc mode return ctx)
-   (let ((ctor (j2s-class-find-constructor clazz))
-	 (args (if (class-new-target? clazz)
-		   (cons (J2SHopRef enewtarget) args)
-		   args)))
-      `(with-access::JsClass ,ecla (constructor)
-	  ,(cond
-	      ((isa? ctor J2SClassElement)
-	       (with-access::J2SClassElement ctor (prop)
-		  (with-access::J2SMethodPropertyInit prop (val)
-		     (let* ((declf (instantiate::J2SDeclFun
-				      (loc loc)
-				      (id (class-constructor-id clazz))
-				      (writable #f)
-				      (usage (usage '(call)))
-				      (val val)))
-			    (call (J2SMethodCall* (J2SRef declf)
-				     (list (J2SHopRef eobj))
-				     args)))
-			;; the call compilation add an extra "@" to
-			;; the constructor identifier
-			`(let ((,(symbol-append '@ (class-constructor-id clazz))
-				constructor))
-			    ,(j2s-scheme call mode return ctx))))))
-	      (else
-	       ;; default constructor
-	       `(begin
-		   (constructor ,eobj
-		      ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args))
-		   this))))))
+(define-generic (j2s-scheme-call-class-constructor clazz::J2SClass ecla enewtarget eobj args node mode return ctx)
+   (with-access::J2SNode node (loc)
+      (let ((ctor (j2s-class-find-constructor clazz))
+	    (args (if (class-new-target? clazz)
+		      (cons (J2SHopRef enewtarget) args)
+		      args)))
+	 `(with-access::JsClass ,ecla (constructor)
+	     ,(cond
+		 ((isa? ctor J2SClassElement)
+		  (with-access::J2SClassElement ctor (prop)
+		     (with-access::J2SMethodPropertyInit prop (val)
+			(let* ((declf (instantiate::J2SDeclFun
+					 (loc loc)
+					 (id (class-constructor-id clazz))
+					 (writable #f)
+					 (usage (usage '(call)))
+					 (val val)))
+			       (call (J2SMethodCall* (J2SRef declf)
+					(list (J2SHopRef eobj))
+					args)))
+			   ;; the call compilation add an extra "@" to
+			   ;; the constructor identifier
+			   `(let ((,(symbol-append '@ (class-constructor-id clazz))
+				   constructor))
+			       ,(j2s-scheme call mode return ctx))))))
+		 (else
+		  ;; default constructor
+		  `(begin
+		      (constructor ,eobj
+			 ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args))
+		      this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-call-fun-constructor ...                              */
@@ -147,7 +148,7 @@
 				   (j2s-scheme (J2SRef decl) mode return ctx)
 				   (j2s-scheme clazz mode return ctx)))
 			(,obj (js-object-alloc-fast %this ,cla))
-			(,res ,(j2s-scheme-call-class-constructor clazz cla cla obj args loc
+			(,res ,(j2s-scheme-call-class-constructor clazz cla cla obj args this
 				  mode return ctx)))
 		    ,(if (j2s-class-constructor-might-return? clazz)
 			 `(if (eq? ,res (js-undefined)) ,obj ,res)
@@ -545,7 +546,7 @@
 		    (j2s-scheme (J2SRef decl) mode return ctx)
 		    'new-target
 		    (if need-super-check '!this 'this)
-		    args loc mode return ctx)
+		    args this mode return ctx)
 		,@(if need-super-check '((set! this !this)) '())
 		,@(j2s-scheme-init-instance-properties clazz
 		     mode return ctx)))))
@@ -918,7 +919,7 @@
 				  '%super 'new-target
 				  (if need-super-check '!this 'this)
 				  (map (lambda (a) (J2SHopRef a)) args)
-				  loc mode return ctx)
+				  clazz mode return ctx)
 			      ,@(if need-super-check '((set! this !this)) '())
 			      ,@(j2s-scheme-init-instance-properties
 				   clazz mode return ctx)

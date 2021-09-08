@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Sep  3 17:35:54 2021 (serrano)                */
+;*    Last change :  Wed Sep  8 15:01:38 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -25,7 +25,8 @@
 	   __js2scheme_utils
 	   __js2scheme_compile
 	   __js2scheme_stage
-	   __js2scheme_lexer)
+	   __js2scheme_lexer
+	   __js2scheme_classutils)
 
    (export j2s-symbol-stage))
 
@@ -1027,6 +1028,38 @@
 	       elements))
 	 this)))
 
+;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SRecord ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve! this::J2SRecord env mode withs wenv genv ctx conf)
+   (call-next-method)
+   ;; verify the lack of cycle in the inheritance tree
+   (let* ((root (j2s-class-root-val this))
+	  (names (map (lambda (prop)
+			 (with-access::J2SPropertyInit prop (name)
+			    (with-access::J2SString name (val) val)))
+		    (j2s-class-instance-properties this))))
+      (tprint "names=" names)
+      ;; verify no property duplications
+      (let loop ((names names)
+		 (dups '()))
+	 (cond
+	    ((null? names)
+	     (if (null? dups)
+		 this
+		 (with-access::J2SRecord this (name loc)
+		    (raise
+		       (instantiate::&io-parse-error
+			  (proc name)
+			  (msg "instance properties overriden")
+			  (obj dups)
+			  (fname (cadr loc))
+			  (location (caddr loc)))))))
+	    ((member (car names) (cdr names))
+	     (loop (cdr names) (cons (car names) dups)))
+	    (else
+	     (loop (cdr names) dups))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SClassElement ...                                   */
 ;*---------------------------------------------------------------------*/

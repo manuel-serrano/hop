@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Tue Sep  7 18:19:00 2021 (serrano)                */
+;*    Last change :  Wed Sep  8 14:36:51 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -41,17 +41,46 @@
 	   (j2s-record-declaration ::J2SRecord)
 	   (j2s-record-predicate ::J2SRecord)
 	   
-	   (j2s-record-prototype-constructor::pair this::J2SRecord mode return ctx)
+	   (j2s-record-prototype-constructor::pair ::J2SRecord mode return ctx)
 	   (j2s-scheme-record-super ::J2SCall mode return ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-call-record-constructor ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme-call-class-constructor record::J2SRecord ecla enewtarget eobj args loc mode return ctx)
-   `(,(class-constructor-id record)
-     ,eobj
-     ,@(if (class-new-target? record) (list enewtarget) '())
-     ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))
+(define-method (j2s-scheme-call-class-constructor record::J2SRecord ecla enewtarget eobj args node mode return ctx)
+   (with-access::J2SNode node (loc)
+      (let ((ctor (j2s-class-find-constructor record))
+	    (la (length args)))
+	 (if (and (not ctor) (pair? args))
+	     (with-access::J2SRecord record (name)
+		(j2s-error name
+		   "wrong number of arguments, 0 expected"
+		   node (format "~a provided" la)))
+	     (with-access::J2SClassElement ctor (prop)
+		(with-access::J2SMethodPropertyInit prop (val)
+		   (with-access::J2SFun val (params vararg loc name mode)
+		      (let ((lp (length params)))
+			 (unless (=fx lp la)
+			    (case vararg
+			       ((rest)
+				(unless (>=fx la (-fx (j2s-minlen val)  1))
+				   (j2s-error name
+				      (format "wrong number of arguments, minimum expected: ~a"
+					 (j2s-minlen val))
+				      node (format "~a provided" la))))
+			       (else
+				(unless (and (>=fx la (j2s-minlen val)) (<=fx la lp))
+				   (j2s-error name
+				      (if (=fx (j2s-minlen val) lp)
+					  (format "wrong number of arguments, expected: ~a"
+					     lp)
+					  (format "wrong number of arguments, expected: ~a..~a"
+					     (j2s-minlen val) lp))
+				      node (format "~a provided" la)))))))))
+		`(,(class-constructor-id record)
+		  ,eobj
+		  ,@(if (class-new-target? record) (list enewtarget) '())
+		  ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-record-new ...                                        */
@@ -68,7 +97,8 @@
 				,(j2s-scheme cmap mode return ctx)
 				,(class-prototype-id record)
 				,(record-scmid record)))
-		       (,res ,(j2s-scheme-call-class-constructor record rec rec obj args loc
+		       (,res ,(j2s-scheme-call-class-constructor record rec rec
+				 obj args this
 				 mode return ctx)))
 		   ,(if (j2s-class-constructor-might-return? record)
 			`(if (eq? ,res ,obj)

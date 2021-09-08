@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Wed Sep  8 12:19:46 2021 (serrano)                */
+;*    Last change :  Wed Sep  8 14:58:49 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -113,8 +113,9 @@
 	  #f)
 	 ((isa? super J2SClass)
 	  (let loop ((clazz super)
-		     (root super))
-	     (with-access::J2SClass clazz (super)
+		     (root super)
+		     (stack (list clazz)))
+	     (with-access::J2SClass clazz (super name loc)
 		(cond
 		   ((or (isa? clazz J2SUndefined) (isa? clazz J2SNull))
 		    root)
@@ -122,9 +123,20 @@
 		    =>
 		    (lambda (val)
 		       (cond
-			  ((isa? val J2SClass) (loop val root))
-			  ((isa? val J2SFun) root)
-			  (else root))))
+			  ((memq val stack)
+			   (raise
+			      (instantiate::&io-parse-error
+				 (proc "hopc (symbol)")
+				 (msg "Cyclic inheritances")
+				 (obj name)
+				 (fname (cadr loc))
+				 (location (caddr loc)))))
+			  ((isa? val J2SClass)
+			   (loop val root (cons val stack)))
+			  ((isa? val J2SFun)
+			   root)
+			  (else
+			   root))))
 		   (else
 		    root)))))
 	 (else
