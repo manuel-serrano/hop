@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Sep  7 16:23:21 2021 (serrano)                */
+;*    Last change :  Thu Sep  9 08:34:09 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -272,7 +272,8 @@
 	      (svc::obj read-only))
 
 	   (class JsClass::JsFunction
-	      (constructor::procedure read-only))
+	      (constructor::procedure read-only)
+	      (clazz read-only (default #f)))
 	   
 	   (class JsHopFrame::JsObject
 	      (%this read-only)
@@ -352,7 +353,7 @@
 	      (mapdata read-only)
 	      vec::vector
 	      cursor::long)
-	   
+
 	   (class JsGlobalObject::JsObject
 	      (name read-only)
 	      (worker::obj (default #f))

@@ -20,6 +20,7 @@
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_utils
+	   __js2scheme_classutils
 	   __js2scheme_alpha
 	   __js2scheme_js
 	   __js2scheme_stmtassign
@@ -1870,7 +1871,8 @@
 		      ((and (isa? (j2s-type obj) J2SRecord)
 			    (with-access::J2SAccess lhs (field loc)
 			       (with-access::J2SString field (val)
-				  (record-index this (j2s-type obj) val))))
+				  (j2s-class-instance-get-property-index
+				     (j2s-type obj) val))))
 		       =>
 		       (lambda (idx)
 			  (j2s-record-set! this idx mode return ctx)))
@@ -2745,7 +2747,8 @@
 	    ((and (isa? (j2s-type obj) J2SRecord)
 		  (isa? field J2SString)
 		  (with-access::J2SString field (val)
-		     (record-index this (j2s-type obj) val)))
+		     (j2s-class-instance-get-property-index
+			(j2s-type obj) val)))
 	     =>
 	     (lambda (idx)
 		(record-access obj field idx loc)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Wed Sep  8 15:59:24 2021 (serrano)                */
+;*    Last change :  Thu Sep  9 08:56:13 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -36,7 +36,6 @@
    (export (j2s-scheme-record-new ::J2SNew ::J2SRecord args mode return ctx))
 	   
    (export (j2s-collect-records*::pair-nil ::J2SProgram)
-	   (record-index ::J2SNode ::J2SRecord ::bstring)
 	   (record-scmid::symbol ::J2SRecord)
 	   (j2s-record-declaration ::J2SRecord)
 	   (j2s-record-predicate ::J2SRecord)
@@ -120,11 +119,10 @@
 	  #f)
 	 ((isa? prop J2SDataPropertyInit)
 	  (with-access::J2SDataPropertyInit prop (name val)
-	     (unless #f ;;(j2s-class-property-constructor? prop)
-		(with-access::J2SString name ((id val))
-		   `(js-object-inline-set! ,obj
-		       ,(record-index clazz clazz id)
-		       ,(j2s-scheme val mode return ctx))))))
+	     (with-access::J2SString name ((id val))
+		`(js-object-inline-set! ,obj
+		    ,(j2s-class-instance-get-property-index clazz id)
+		    ,(j2s-scheme val mode return ctx)))))
 	 (else
 	  #f)))
    
@@ -174,6 +172,8 @@
 						(with-access::JsGlobalObject %this (js-new-target)
 						   (set! js-new-target ,rec))
 						,rec)))
+			      :constructor ,ctorf
+			      :clazz ,(record-scmid this)
 			      :prototype  ,proto
 			      :__proto__ ,(if (null? super)
 					      '(with-access::JsGlobalObject %this (js-function-prototype)
@@ -221,15 +221,6 @@
 		   (make-class this name super elements
 		      '(js-function-arity 0 -1 'scheme)
 		      0 (length props) src loc))))))))
-
-;*---------------------------------------------------------------------*/
-;*    record-index ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (record-index this::J2SNode ty::J2SRecord field::bstring)
-   (multiple-value-bind (index el)
-      (j2s-class-instance-get-property ty field)
-      (when el
-	 index)))
 
 ;*---------------------------------------------------------------------*/
 ;*    record-scmid ...                                                 */

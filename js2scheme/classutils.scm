@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Wed Sep  8 14:58:49 2021 (serrano)                */
+;*    Last change :  Thu Sep  9 18:34:23 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -32,6 +32,7 @@
 	   
 	   (j2s-class-instance-properties ::J2SClass #!key (super #t))
 	   (j2s-class-instance-get-property ::J2SClass ::bstring)
+	   (j2s-class-instance-get-property-index ::J2SClass ::bstring)
 	   (j2s-class-static-methods::pair-nil ::J2SClass)
 	   (j2s-class-methods::pair-nil ::J2SClass)
 	   
@@ -241,6 +242,14 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-class-instance-get-property clazz field)
    (j2s-class-get clazz field #t))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-class-instance-get-property-index ...                        */
+;*---------------------------------------------------------------------*/
+(define (j2s-class-instance-get-property-index clazz field)
+   (multiple-value-bind (index el)
+      (j2s-class-instance-get-property clazz field)
+      (when el index)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-class-get-property ...                                       */

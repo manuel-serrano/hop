@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Aug 28 08:44:10 2021 (serrano)                */
+;*    Last change :  Thu Sep  9 08:50:20 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -54,7 +54,7 @@
 	      __proto__ prototype
 	      (strict 'normal) (minlen -1)
 	      (size 0) (constrsize 3)
-	      (constrmap (js-not-a-cmap)) (shared-cmap #t))
+	      (constrmap (js-not-a-cmap)) (shared-cmap #t) (clazz #f))
 	   (js-make-function-strict::JsFunction ::JsGlobalObject
 	      ::procedure ::int ::vector ::long
 	      #!key
@@ -611,7 +611,8 @@
 	   __proto__ prototype
 	   (strict 'normal) (minlen -1) 
 	   (size 0) (constrsize 3)
-	   (constrmap (js-not-a-cmap)) (shared-cmap #t))
+	   (constrmap (js-not-a-cmap)) (shared-cmap #t)
+	   (clazz #f))
    (with-access::JsGlobalObject %this (js-function js-object
 					 js-function-cmap
 					 js-function-strict-cmap
@@ -667,10 +668,11 @@
 				   (duplicate::JsConstructMap cmap
 				      (%id (gencmapid)))))
 			 (prototype #\F)))
-		     (constructor
+		     (clazz
 		      (instantiateJsClass
 			 (procedure procedure)
 			 (constructor constructor)
+			 (clazz clazz)
 			 (alloc (or alloc js-not-a-constructor-alloc))
 			 (arity arity)
 			 (__proto__ (or __proto__ (js-object-proto js-function)))

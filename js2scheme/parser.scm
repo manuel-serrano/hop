@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Aug 24 14:51:05 2021 (serrano)                */
+;*    Last change :  Thu Sep  9 08:25:13 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -995,12 +995,12 @@
       (function #f (consume-token! 'function)))
    
    (define (service-declaration)
-    (let ((token (consume-any!))
-	  (ntype (peek-token-type)))
-       (token-push-back! token)
-       (if (eq? ntype 'ID)
-	   (service #t)
-	   (statement))))
+      (let ((token (consume-any!))
+	    (ntype (peek-token-type)))
+	 (token-push-back! token)
+	 (if (eq? ntype 'ID)
+	     (service #t)
+	     (statement))))
    
    (define (service-expression)
       (service #f))
@@ -1885,7 +1885,7 @@
       (let* ((loc (token-loc (peek-token)))
 	     (gen (when (eq? (peek-token-type) '*)
 		     (consume-any!) '*))
-	     (name-or-get (property-name #f))
+	     (name-or-get (property-name #f #t))
 	     (ty (opt-type)))
 	 (cond
 	    ((isa? name-or-get J2SNode)
@@ -1963,7 +1963,7 @@
 		      (static static?)
 		      (prop prop)))))
 	    (else
-	     (let ((name (property-name #f)))
+	     (let ((name (property-name #f #t)))
 		(multiple-value-bind (params args)
 		   (function-params #f)
 		   (let* ((body (fun-body params args 'strict))
@@ -2373,30 +2373,6 @@
 			      (id '%this)))))
 	    vals)))
 
-;*    (define (optional-chaining loc obj make-expr)                    */
-;*       (let ((endloc loc))                                           */
-;* 	 (let* ((id (gensym 'tmp))                                     */
-;* 		(param (instantiate::J2SDecl                           */
-;* 			  (loc loc)                                    */
-;* 			  (id id)                                      */
-;* 			  (binder 'param)))                            */
-;* 		(test (J2SBinary 'OR                                   */
-;* 			 (J2SBinary '===                               */
-;* 			    (J2SUnresolvedRef id) (J2SUndefined))      */
-;* 			 (J2SBinary '===                               */
-;* 			    (J2SUnresolvedRef id) (J2SNull))))         */
-;* 		(body (J2SCond test                                    */
-;* 			 (J2SUndefined)                                */
-;* 			 (make-expr (J2SUnresolvedRef id))))           */
-;* 		(arrow (J2SArrow '|| (list param)                      */
-;* 			  (J2SBlock body))))                           */
-;* 	    (J2SCall arrow obj))))                                     */
-;*                                                                     */
-;*    (define (optional-chaining? expr)                                */
-;*       (when (isa? expr J2SUnary)                                    */
-;* 	 (with-access::J2SUnary expr (op)                              */
-;* 	    (eq? op '?.))))                                            */
-	      
    (define (access-or-call expr loc call-allowed?)
       (let loop ((expr expr))
 	 (case (peek-token-type)
@@ -2416,7 +2392,8 @@
 		    (field (consume-any!))
 		    (key (car field))
 		    (field-str (format "~a" (cdr field))))
-		(if (or (eq? key 'ID)
+		(cond
+		   ((or (eq? key 'ID)
 			(eq? key 'RESERVED)
 			(j2s-reserved-id? key))
 		    (loop (instantiate::J2SAccess
@@ -2424,8 +2401,16 @@
 			     (obj expr)
 			     (field (instantiate::J2SString
 				       (loc (token-loc field))
-				       (val field-str)))))
-		    (parse-token-error "Wrong property name" field))))
+				       (val field-str))))))
+		   ((eq? key 'SHARPID)
+		    (loop (instantiate::J2SAccess
+			     (loc (token-loc ignore))
+			     (obj expr)
+			     (field (instantiate::J2SString
+				       (loc (token-loc field))
+				       (val field-str))))))
+		   (else
+		    (parse-token-error "Wrong property name" field)))))
 	    ((LPAREN)
 	     (if call-allowed?
 		 (let* ((loc (token-loc (peek-token)))
@@ -2983,10 +2968,17 @@
 
 	 (parse-array '() 0)))
 
-   (define (property-name destructuring?)
+   (define (property-name destructuring? inclass?)
       (case (peek-token-type)
 	 ;; IDs are automatically transformed to strings.
-;* 	 ((ID RESERVED service)                                        */
+	 ((SHARPID)
+	  (if inclass?
+	      (let ((token (consume-any!)))
+		 (instantiate::J2SString
+		    (loc (token-loc token))
+		    (val (symbol->string (token-value token)))))
+	      (parse-token-error "Private field must be declared in an enclosing class"
+		 (consume-any!))))
 	 ((ID RESERVED)
 	  (let ((token (consume-any!)))
 	     (case (token-value token)
@@ -3138,7 +3130,7 @@
       
       (define (property-init props)
 	 (let* ((token (peek-token))
-		(tokname (property-name destructuring?))
+		(tokname (property-name destructuring? #f))
 		(name (when (pair? tokname) (token-value tokname))))
 	    (cond
 	       ((memq name '(get set))

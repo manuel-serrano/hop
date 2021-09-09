@@ -24,10 +24,10 @@
 	   __js2scheme_stmtassign
 	   __js2scheme_compile
 	   __js2scheme_stage
+	   __js2scheme_classutils
 	   __js2scheme_scheme-cast
 	   __js2scheme_scheme-constant
-	   __js2scheme_scheme
-	   __js2scheme_scheme-record)
+	   __js2scheme_scheme)
    
    (export j2s-unresolved-put-workspace
            j2s-unresolved-del-workspace
@@ -798,9 +798,9 @@
 		      ,val ,mode %this ',loc)))
 	     ((equal? propstr "__proto__")
 	      `(js-setprototypeof ,obj ,val %this "js2scheme"))
-	     ((and (isa? tyobj J2SRecord)
+	     ((and (isa? tyobj J2SClass)
 		   propstr
-		   (record-index tyobj tyobj propstr))
+		   (j2s-class-instance-get-property-index tyobj propstr))
 	      =>
 	      (lambda (idx)
 		 `(js-object-inline-set! ,obj ,idx ,val)))

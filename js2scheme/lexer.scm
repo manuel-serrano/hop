@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Tue Jul 13 12:26:43 2021 (serrano)                */
+;*    Last change :  Thu Sep  9 18:17:03 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -359,6 +359,9 @@
 	      (token symbol symbol (the-length)))
 	     (else
 	      (token 'ID symbol (the-length))))))
+      ((: #\# id_start (* id_part))
+       (let ((symbol (the-symbol)))
+	  (token 'SHARPID symbol (the-length))))
 
       ((: id_start_u (* id_part_u))
        (let ((str (the-string)))

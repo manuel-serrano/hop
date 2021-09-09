@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Wed Sep  8 14:44:40 2021 (serrano)                */
+;*    Last change :  Thu Sep  9 08:55:00 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -331,6 +331,7 @@
 				  :strict ',mode
 				  :alloc ,alloc
 				  :constructor ,ctorf
+				  :clazz JsObject
 				  :prototype  ,proto
 				  :__proto__ ,(if (null? super)
 						  '(with-access::JsGlobalObject %this (js-function-prototype)

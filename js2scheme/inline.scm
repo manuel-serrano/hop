@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Aug 26 10:02:22 2021 (serrano)                */
+;*    Last change :  Thu Sep  9 10:54:14 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -1188,7 +1188,7 @@
 			     (obj (J2SRef obj))))
 		       (r (J2SLetOpt '(call) (gensym 'r)
 			     (J2SMethodCall/cache* f (list (J2SRef obj)) args
-				'(pmap-inline vtable-inline) c))))
+				'(vtable-inline pmap-inline) c))))
 		   (J2SMetaInl '() 0
 		      (J2SLetRecBlock #f (list r)
 			 (let loop ((cs funcaches))
@@ -1396,7 +1396,7 @@
 			     (obj obj)))
 		       (r (J2SLetOpt '(call) (gensym 'r)
 			     (J2SMethodCall/cache* f (list obj) args
-				'(pmap-inline vtable-inline) c))))
+				'(vtable-inline pmap-inline) c))))
 		   (J2SLetRecBlock #f (list r)
 		      (let loop ((cs caches))
 			 (if (null? cs)
