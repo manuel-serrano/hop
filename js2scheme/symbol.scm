@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Sep  8 15:53:32 2021 (serrano)                */
+;*    Last change :  Fri Sep 10 08:34:28 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -116,7 +116,8 @@
 			    (with-access::J2SDecl d (scope)
 			       (when (eq? scope 'unbound)
 				  (set! decls (cons d decls)))))
-		  genv)))))
+		  genv)
+	       (resolve-class-private-fields this #f)))))
    (when (and (>= (config-get conf :verbose 0) 2)
 	      (not (config-get conf :verbmargin #f)))
       (newline (current-error-port)))
@@ -1520,3 +1521,72 @@
 	     (fname (cadr loc))
 	     (location (caddr loc)))))))
 
+;*---------------------------------------------------------------------*/
+;*    resolve-class-private-fields ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve-class-private-fields this::J2SNode clazz)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    resolve-class-private-fields ::J2SClass ...                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve-class-private-fields this::J2SClass clazz)
+   (with-access::J2SClass this (elements name)
+      ;; mark all the private fields
+      (for-each (lambda (el)
+		   (with-access::J2SClassElement el (private prop)
+		      (with-access::J2SPropertyInit prop (name)
+			 (when (isa? name J2SString)
+			    (with-access::J2SString name (val)
+			       (when (class-private-name? val)
+				  (set! val (class-private-field-name val this))))))))
+	 elements)
+      ;; resolve private field accesses
+      (for-each (lambda (el)
+		   (resolve-class-private-fields el this))
+	 elements)
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    resolve-class-private-fields ::J2SAccess ...                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve-class-private-fields this::J2SAccess clazz)
+
+   (define (err val loc)
+      (raise
+	 (instantiate::&io-parse-error
+	    (proc "hopc (symbol)")
+	    (msg "private member accessed out of class")
+	    (obj val)
+	    (fname (cadr loc))
+	    (location (caddr loc)))))
+   
+   (call-default-walker)
+   (with-access::J2SAccess this (field loc)
+      (when (isa? field J2SString)
+	 (with-access::J2SString field (val private)
+	    (when (class-private-name? val)
+	       (if (not (isa? clazz J2SClass))
+		   (err val loc)
+		   (let ((pname (class-private-field-name val clazz)))
+		      (unless (j2s-class-instance-get-property-index clazz pname)
+			 (err val loc))
+		      ;; a private fields
+		      (set! val pname)
+		      (set! private #t))))))))
+
+;*---------------------------------------------------------------------*/
+;*    class-private-name? ...                                          */
+;*---------------------------------------------------------------------*/
+(define (class-private-name? str)
+   (char=? (string-ref str 0) #\#))
+      
+;*---------------------------------------------------------------------*/
+;*    class-private-field-name ...                                     */
+;*---------------------------------------------------------------------*/
+(define (class-private-field-name field clazz)
+   (with-access::J2SClass clazz (name loc)
+      (if (symbol? name)
+	  (string-append field "@" (symbol->string! name))
+	  (string-append field "@" (format "~a:~a" (cadr loc) (caddr loc))))))
+   

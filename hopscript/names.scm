@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Mon Apr 13 07:51:37 2020 (serrano)                */
+;*    Last change :  Fri Sep 10 08:09:37 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -46,12 +46,13 @@
 	   (js-integer-name->jsstring::JsStringLiteralASCII ::long)
 	   (js-integer-name::obj ::long)
 	   (js-index-name::obj ::long)
-	   (js-string->name::JsStringLiteral ::bstring))
+	   (js-string->name::JsStringLiteral ::bstring)
+	   (js-string->private-name::JsStringLiteral ::bstring))
 
    (export js-name-lock
 	   (macro synchronize-name))
    
-   (static js-names js-integer-length)
+   (static js-names js-private-names js-integer-length)
    (export js-integer-names js-string-names)
 
    (option (register-srfi! 'string-hashtable))
@@ -62,7 +63,9 @@
    
    (cond-expand
       (enable-tls
-       (pragma (js-names thread-local)
+       (pragma
+	  (js-names thread-local)
+	  (js-private-names thread-local)
 	  (js-integer-length thread-local)
 	  (js-integer-names thread-local)
 	  (js-string-names thread-local)))))
@@ -98,6 +101,7 @@
 ;*    name tables                                                      */
 ;*---------------------------------------------------------------------*/
 (define js-names #f)
+(define js-private-names #f)
 (define js-integer-names #f)
 (define js-string-names #f)
 
@@ -191,7 +195,15 @@
 					 (js-ascii-toname-unsafe val))
 			     (& strings))))
 	       (cond-expand (enable-tls (set! gcroots (cons snames gcroots))))
-	       snames)))))
+	       snames))
+	 (set! js-private-names
+	    (let ((table (create-hashtable
+			    :weak (name-hashtable-weak)
+			    :size 128
+			    :max-length 65536
+			    :max-bucket-length 20)))
+	       (cond-expand (enable-tls (set! gcroots (cons table gcroots))))
+	       table)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-name-pcacher ...                                              */
@@ -257,6 +269,21 @@
 	 ((ascii) (js-ascii-name->jsstring str))
 	 ((latin1 utf8) (js-utf8-name->jsstring str))
 	 (else (error "js-string->name" "unsupported encoding" enc)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-string->private-name ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-string->private-name::JsStringLiteral str::bstring)
+   (synchronize-name
+      (let ((n (name-hashtable-get js-private-names str)))
+	 (or n
+	     (let ((o (instantiate::JsStringLiteralASCII
+			 (length (fixnum->uint32 (string-length str)))
+			 (left str))))
+		(js-object-mode-set! o (js-jsstring-normalized-ascii-mode))
+		(name-hashtable-put! js-private-names str o)
+		(js-jsstring-name-set! o o)
+		o)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-toname ...                                           */

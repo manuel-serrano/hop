@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Sep  3 15:34:41 2021 (serrano)                */
+;*    Last change :  Fri Sep 10 08:22:49 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -282,7 +282,6 @@
 	   (class J2SClassElement::J2SNode
 	      (static::bool read-only)
 	      (prop::J2SPropertyInit (info '("ast")))
-	      (private::bool read-only (default #f))
 	      (type (default 'any))
 	      (clazz (default #f) (info '("notraverse"))))
 	   
@@ -356,7 +355,8 @@
 	   (class J2SNativeString::J2SLiteralValue)
 	   
 	   (class J2SString::J2SLiteralValue
-	      (escape::pair-nil read-only (default '())))
+	      (escape::pair-nil read-only (default '()))
+	      (private::bool (default #f)))
 	   (final-class J2SBool::J2SLiteralValue)
 	   (class J2SNumber::J2SLiteralValue)
 	   (final-class J2SOctalNumber::J2SNumber)
@@ -541,15 +541,6 @@
 	      (aliases::pair-nil read-only (info '("notraverse")))
 	      (program (default #f) (info '("notraverse"))))
 
-;* 	   ;; types                                                    */
-;* 	   (abstract-class J2SType                                     */
-;* 	      (id::symbol read-only))                                  */
-;* 	                                                               */
-;* 	   (final-class J2STypeBuiltin::J2SType)                       */
-;* 	                                                               */
-;* 	   (final-class J2STypeRecord::J2SType                         */
-;* 	      (clazz::J2SClass read-only))                             */
-	   
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
 	   (generic walk2 n::J2SNode p::procedure a0 a1)

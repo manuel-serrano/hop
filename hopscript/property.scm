@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Sep  8 19:09:04 2021 (serrano)                */
+;*    Last change :  Fri Sep 10 08:02:49 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1133,7 +1133,9 @@
 ;*---------------------------------------------------------------------*/
 (define (js-names->cmap names inline)
    (js-make-jsconstructmap
-      :props (vector-map (lambda (n) (prop n (property-flags #t #t #t #f inline)))
+      :props (vector-map (lambda (n)
+			    (prop n
+			       (property-flags #t #t #t #f inline)))
 		names)
       :methods (make-vector (vector-length names) #unspecified)))
       
@@ -1147,8 +1149,12 @@
       (js-make-jsconstructmap
 	 :ctor (make-cell len)
 	 :props (vector-map (lambda (n)
-			       (prop (js-string->name n)
-				  (property-flags #t #t #t #f #t)))
+			       (if (char=? (string-ref n 0) #\#)
+				   ;; private name
+				   (prop (js-string->private-name n)
+				      (property-flags #t #f #f #f #t))
+				   (prop (js-string->name n)
+				      (property-flags #t #t #t #f #t))))
 		   names)
 	 :methods (make-vector len #unspecified))))
       
@@ -3264,7 +3270,7 @@
 	       (else
 		;; 8.12.5, step 6
 		(extend-properties-object!))))))
-   
+
    (check-unplain! o name)
    (let loop ((obj o))
       (jsobject-find obj o name
@@ -3424,7 +3430,6 @@
 		  (set! vindex (js-get-vindex %this)))
 	       (js-cmap-vtable-add! %omap vindex (cons vtindex omap) cache)))))
    
-   (js-assert-object o ">>> js-put-jsobject-name/cache-miss")
    (with-access::JsObject o (cmap)
       (let* ((%omap cmap)
 	     (res (js-put-jsobject! o prop v throw %this
@@ -3436,7 +3441,6 @@
 	       (when (and (>=u32 cntmiss (vtable-threshold))
 			  (<=u32 cntmiss (vtable-max-threshold)))
 		  (cache-vtable-add! o %omap cache))))
-	 (js-assert-object o "<<< js-put-jsobject-name/cache-miss")
 	 res)))
 
 ;*---------------------------------------------------------------------*/

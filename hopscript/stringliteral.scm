@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri May 21 19:24:53 2021 (serrano)                */
+;*    Last change :  Fri Sep 10 08:22:05 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -290,7 +290,11 @@
 		      ;; an utf8 name (deprectated, should use name/culen)
 		      (let ((str (vector-ref el 1)))
 			 (js-utf8-name->jsstring/culen str
-			    (utf8-codeunit-length str)))))))
+			    (utf8-codeunit-length str))))
+		     ((4)
+		      ;; private name
+		      (let ((str (vector-ref el 1)))
+			 (js-string->private-name (vector-ref el 1)))))))
 	    (loop (-fx i 1))))
       (synchronize jsstring-init-lock
 	 (set! gcroots (cons cnsts gcroots)))

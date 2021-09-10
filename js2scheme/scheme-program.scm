@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Wed Sep  8 16:12:14 2021 (serrano)                */
+;*    Last change :  Fri Sep 10 11:04:26 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -324,8 +324,7 @@
       `(&jsstring-init
 	  ,(obj->string
 	      (apply vector
-		 (map (lambda (e) (&string (car e)))
-		    (reverse! strings)))))))
+		 (map &string (reverse! strings)))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-main-sans-worker-module ...                                  */
@@ -335,7 +334,7 @@
    (with-access::J2SProgram this (mode
 				    pcache-size call-size
 				    %this path globals
-				    cnsts loc name strings)
+				    cnsts loc name)
       (let ((module (js-module/main this)))
 	 (epairify-deep loc
 	    `(,module 

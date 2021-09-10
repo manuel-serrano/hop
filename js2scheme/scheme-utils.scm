@@ -76,7 +76,6 @@
 	   (is-buffer-cast? ::J2SExpr)
 
 	   (j2s-jsstring val loc ::struct)
-	   (j2s-string->jsstring ::bstring ::struct)
 	   
 	   (j2s-unresolved name throw cache loc ::struct)
 	   (js-not expr)
@@ -570,7 +569,7 @@
 ;*    j2s-jsstring ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (j2s-jsstring val loc ctx)
-   (epairify loc (j2s-string->jsstring val ctx)))
+   (epairify loc (& val (context-program ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved ...                                               */
@@ -598,12 +597,6 @@
    (match-case expr
       (((kwote not) ?val) val)
       (else `(not ,expr))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-string->jsstring ...                                         */
-;*---------------------------------------------------------------------*/
-(define (j2s-string->jsstring val::bstring ctx)
-   (& val (context-program ctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache ...                                                    */

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr 12 08:03:03 2020                          */
-;*    Last change :  Sun Apr 12 16:49:50 2020 (serrano)                */
-;*    Copyright   :  2020 Manuel Serrano                               */
+;*    Last change :  Fri Sep 10 11:05:35 2021 (serrano)                */
+;*    Copyright   :  2020-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme compilation of JS constants.                              */
 ;*=====================================================================*/
@@ -29,7 +29,7 @@
 	   __js2scheme_scheme-fun)
 
    (export (& obj ::J2SProgram)
-	   (&string ::bstring)
+	   (&string ::pair)
 	   (utf8-codeunit-length::long ::bstring)))
 
 ;*---------------------------------------------------------------------*/
@@ -44,9 +44,9 @@
 		   (else obj)))
 	     (o (assoc s strings)))
 	 (if (pair? o)
-	     `(& ,s ,(cdr o))
+	     `(& ,s ,(cadr o))
 	     (let ((n (length strings)))
-		(set! strings (cons (cons s n) strings))
+		(set! strings (cons (list s n obj) strings))
 		`(& ,s ,n))))))
       
 ;*---------------------------------------------------------------------*/
@@ -54,7 +54,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    See name_expd.sch                                                */
 ;*---------------------------------------------------------------------*/
-(define (&string val::bstring)
+(define (&string e)
 
    (define (integer-string? str)
       (let ((len (string-length str)))
@@ -81,26 +81,30 @@
 		       ((char-numeric? (string-ref str i)) (loop (+fx i 1)))
 		       (else #f)))))))))
 
-   (cond
-      ((integer-string? val)
-       (let ((n (string->number val)))
-	  (cond
-	     ((not (fixnum? n))
-	      (vector 0 val))
-	     ((string=? val "-0")
-	      (vector 0 val))
-	     ((char=? (string-ref val 0) #\+)
-	      (vector 0 val))
-	     ((=fx (string-length val) 1)
-	      (vector 2 n))
-	     ((and (char=? (string-ref val 0) #\0) (not (=fx n 0)))
-	      (vector 0 val))
-	     (else
-	      (vector 2 n)))))
-      ((eq? (string-minimal-charset val) 'ascii)
-       (vector 0 val))
-      (else
-       (vector 3 val (utf8-codeunit-length val)))))
+   (let ((val (car e)))
+      (cond
+	 ((and (isa? (caddr e) J2SString)
+	       (with-access::J2SString (caddr e) (private) private))
+	  (vector 4 val))
+	 ((integer-string? val)
+	  (let ((n (string->number val)))
+	     (cond
+		((not (fixnum? n))
+		 (vector 0 val))
+		((string=? val "-0")
+		 (vector 0 val))
+		((char=? (string-ref val 0) #\+)
+		 (vector 0 val))
+		((=fx (string-length val) 1)
+		 (vector 2 n))
+		((and (char=? (string-ref val 0) #\0) (not (=fx n 0)))
+		 (vector 0 val))
+		(else
+		 (vector 2 n)))))
+	 ((eq? (string-minimal-charset val) 'ascii)
+	  (vector 0 val))
+	 (else
+	  (vector 3 val (utf8-codeunit-length val))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    utf8-codeunit-length ...                                         */

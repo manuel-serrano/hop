@@ -698,7 +698,7 @@
    (with-access::J2SString this (loc val type)
       (if (eq? type 'buffer)
 	  (epairify loc `(js-string->jsbuffer ,val))
-	  (j2s-jsstring val loc ctx))))
+	  (epairify loc (& this (context-program ctx))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SRegExp ...                                       */
