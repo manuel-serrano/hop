@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Mar 30 06:29:09 2019                          */
-;*    Last change :  Fri Sep 10 08:09:37 2021 (serrano)                */
+;*    Last change :  Sat Sep 11 08:17:45 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property names (see stringliteral.scm)                           */
@@ -280,7 +280,7 @@
 	     (let ((o (instantiate::JsStringLiteralASCII
 			 (length (fixnum->uint32 (string-length str)))
 			 (left str))))
-		(js-object-mode-set! o (js-jsstring-normalized-ascii-mode))
+		(js-object-mode-set! o (js-jsstring-normalized-private-mode))
 		(name-hashtable-put! js-private-names str o)
 		(js-jsstring-name-set! o o)
 		o)))))

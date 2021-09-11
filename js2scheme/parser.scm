@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Sep  9 08:25:13 2021 (serrano)                */
+;*    Last change :  Sat Sep 11 08:53:38 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2407,6 +2407,7 @@
 			     (loc (token-loc ignore))
 			     (obj expr)
 			     (field (instantiate::J2SString
+				       (private #t)
 				       (loc (token-loc field))
 				       (val field-str))))))
 		   (else
@@ -2713,6 +2714,14 @@
 		 (primary-async token))
 		(else
 		 (id-sans-async token)))))
+	 ((SHARPID)
+	  (let ((token (consume-any!)))
+	     (if (eq? (peek-token-type) 'in)
+		 (instantiate::J2SString
+		    (private #t)
+		    (loc (token-loc token))
+		    (val (format "~a" (token-value token))))
+		 (parse-token-error "unexpected token" token))))
 	 ((HOP)
 	  (let ((token (consume-token! 'HOP)))
 	     (instantiate::J2SHopRef

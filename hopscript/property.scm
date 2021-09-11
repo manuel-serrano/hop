@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Sep 10 08:02:49 2021 (serrano)                */
+;*    Last change :  Sat Sep 11 08:27:01 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2087,7 +2087,10 @@
       (lambda (owner d i)
 	 d)
       ;; not found
-      (lambda (o) (js-undefined))))
+      (lambda (o)
+	 (if (and (js-jsstring? p) (js-jsstring-private? p))
+	     (js-raise-type-error %this "Cannot read private member ~s" p)
+	     (js-undefined)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property-descriptor ...                               */
@@ -2571,11 +2574,14 @@
 	 ;; not found
 	 (lambda (_o)
 	    (with-access::JsObject o (cmap)
-	       (if (or (eq? cmap (js-not-a-cmap)) throw)
-		   (js-get-notfound name throw %this)
-		   (begin
-		      (js-pcache-update-miss! cache o)
-		      (js-undefined)))))
+	       (cond
+		  ((or (eq? cmap (js-not-a-cmap)) throw)
+		   (js-get-notfound name throw %this))
+		  ((and (js-jsstring? name) (js-jsstring-private? name))
+		   (js-raise-type-error %this "Cannot read private member ~s" name))
+		  (else
+		   (js-pcache-update-miss! cache o)
+		   (js-undefined)))))
 	 ;; loop
 	 loop)))
 
@@ -3261,6 +3267,8 @@
 		;; 11.13.1
 		(js-raise-reference-error/loc %this loc
 		   "[[PUT]], \"~a\" is not defined" name))
+	       ((and (js-jsstring? name) (js-jsstring-private? name))
+		(js-raise-type-error %this "Cannot write private member ~s" name))
 	       ((js-object-mapped? o)
 		;; 8.12.5, step 6
 		(extend-mapped-object!))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr 12 08:03:03 2020                          */
-;*    Last change :  Fri Sep 10 11:05:35 2021 (serrano)                */
+;*    Last change :  Fri Sep 10 19:51:58 2021 (serrano)                */
 ;*    Copyright   :  2020-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme compilation of JS constants.                              */
@@ -38,16 +38,21 @@
 (define (& obj prgm)
    (with-access::J2SProgram prgm (strings)
       (let* ((s (cond
-		   ((symbol? obj) (symbol->string! obj))
-		   ((number? obj) (number->string obj))
-		   ((isa? obj J2SString) (with-access::J2SString obj (val) val))
-		   (else obj)))
+		   ((symbol? obj)
+		    (cons (symbol->string! obj) #f))
+		   ((number? obj)
+		    (cons (number->string obj) #f))
+		   ((isa? obj J2SString)
+		    (with-access::J2SString obj (val private)
+		       (cons val private)))
+		   (else
+		    (cons obj #f))))
 	     (o (assoc s strings)))
 	 (if (pair? o)
-	     `(& ,s ,(cadr o))
+	     `(& ,(car s) ,(cadr o))
 	     (let ((n (length strings)))
 		(set! strings (cons (list s n obj) strings))
-		`(& ,s ,n))))))
+		`(& ,(car s) ,n))))))
       
 ;*---------------------------------------------------------------------*/
 ;*    &string ...                                                      */
@@ -81,7 +86,7 @@
 		       ((char-numeric? (string-ref str i)) (loop (+fx i 1)))
 		       (else #f)))))))))
 
-   (let ((val (car e)))
+   (let ((val (caar e)))
       (cond
 	 ((and (isa? (caddr e) J2SString)
 	       (with-access::J2SString (caddr e) (private) private))

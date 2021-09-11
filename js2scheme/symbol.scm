@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Sep 10 08:34:28 2021 (serrano)                */
+;*    Last change :  Sat Sep 11 08:59:16 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -1565,15 +1565,25 @@
    (with-access::J2SAccess this (field loc)
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val private)
-	    (when (class-private-name? val)
+	    (when private
 	       (if (not (isa? clazz J2SClass))
 		   (err val loc)
 		   (let ((pname (class-private-field-name val clazz)))
 		      (unless (j2s-class-instance-get-property-index clazz pname)
 			 (err val loc))
 		      ;; a private fields
-		      (set! val pname)
-		      (set! private #t))))))))
+		      (set! val pname))))))))
+
+;*---------------------------------------------------------------------*/
+;*    resolve-class-private-fields ::J2SBinary ...                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve-class-private-fields this::J2SBinary clazz)
+   (with-access::J2SBinary this (op lhs rhs)
+      (call-default-walker)
+      (when (and (isa? clazz J2SClass) (isa? lhs J2SString))
+	 (with-access::J2SString lhs (private val)
+	    (when (and private (eq? op 'in))
+	       (set! val (class-private-field-name val clazz)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    class-private-name? ...                                          */
