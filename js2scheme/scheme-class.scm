@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Thu Sep  9 08:55:00 2021 (serrano)                */
+;*    Last change :  Mon Sep 13 15:32:32 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -339,10 +339,9 @@
 						  super)
 				  :constrsize ,constrsz
 				  :constrmap ,constrmap))
-		       ,@(if name `((,(j2s-class-id this ctx) (js-make-let))) '()))
+		       ,@(if name `((,(j2s-class-id this ctx) ,clazz)) '()))
 		,@(filter-map (lambda (m) (bind-static this clazz m)) elements)
 		,@(filter-map (lambda (m) (bind-prototype this proto m)) elements)
-		,@(if name `((set! ,(j2s-class-id this ctx) ,clazz)) '())
 		,clazz))))
    
    (define (let-super this::J2SClass proc)

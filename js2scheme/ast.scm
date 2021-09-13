@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Sep 10 08:22:49 2021 (serrano)                */
+;*    Last change :  Mon Sep 13 09:41:41 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -275,7 +275,8 @@
 	      (constrsize::int (default 0) (info '("notraverse")))
 	      (cmap (default #f))
 	      (need-super-check::bool (default #f) (info '("notraverse")))
-	      (need-dead-zone-check::bool (default #f) (info '("notraverse"))))
+	      (need-dead-zone-check::bool (default #f) (info '("notraverse")))
+	      (methods::obj (default #unspecified) (info '("notraverse"))))
 
 	   (class J2SRecord::J2SClass)
 
@@ -283,7 +284,8 @@
 	      (static::bool read-only)
 	      (prop::J2SPropertyInit (info '("ast")))
 	      (type (default 'any))
-	      (clazz (default #f) (info '("notraverse"))))
+	      (clazz (default #f) (info '("notraverse")))
+	      (index::long (default -1) (info '("notraverse"))))
 	   
 	   (final-class J2SCatch::J2SStmt
 	      param::J2SDecl

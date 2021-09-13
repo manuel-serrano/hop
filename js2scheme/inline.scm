@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Sep  9 10:54:14 2021 (serrano)                */
+;*    Last change :  Sun Sep 12 07:47:22 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -758,13 +758,13 @@
 (define-walk-method (collect-proto-methods* this::J2SDeclClass)
    (with-access::J2SDeclClass this (val)
       (if (isa? val J2SClass)
-	  (filter-map (lambda (p)
-			 (when (isa? p J2SMethodPropertyInit)
-			    (with-access::J2SMethodPropertyInit p (name (met val))
+	  (filter-map (lambda (el)
+			 (with-access::J2SClassElement el (prop)
+			    (with-access::J2SMethodPropertyInit prop (name (met val))
 			       (with-access::J2SString name (val)
 				  (when (check-id (string->symbol val))
-				     (cons val (protoinfo p met #f)))))))
-	     (j2s-class-methods val))
+				     (cons val (protoinfo prop met #f)))))))
+	     (j2s-class-methods val :super #f))
 	  '())))
 
 ;*---------------------------------------------------------------------*/

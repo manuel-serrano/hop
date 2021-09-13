@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Thu Sep  9 18:34:23 2021 (serrano)                */
+;*    Last change :  Sun Sep 12 07:47:44 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -24,6 +24,7 @@
 	   (class-class-id::symbol ::J2SClass)
 	   (class-prototype-id::symbol ::J2SClass)
 	   (class-predicate-id::symbol ::J2SClass)
+	   (class-element-id::symbol ::J2SClass ::J2SClassElement)
 	   
 	   (j2s-class-super-val ::J2SClass)
 	   (j2s-class-root-val ::J2SClass)
@@ -34,16 +35,23 @@
 	   (j2s-class-instance-get-property ::J2SClass ::bstring)
 	   (j2s-class-instance-get-property-index ::J2SClass ::bstring)
 	   (j2s-class-static-methods::pair-nil ::J2SClass)
-	   (j2s-class-methods::pair-nil ::J2SClass)
+	   (j2s-class-methods::pair-nil ::J2SClass #!key (super #t))
+
+	   (j2s-class-find-element ::J2SClass ::bstring)
 	   
 	   (j2s-class-get-property ::J2SClass ::bstring)
 	   (j2s-class-get-constructor ::J2SClass)
 	   (j2s-class-find-constructor ::J2SClass)
 	   (j2s-class-find-initializer ::J2SClass)
+	   
 	   (j2s-class-constructor-might-return?::bool ::J2SClass)
 	   (j2s-class-methods-use-super?::bool ::J2SClass)
 
-	   (class-new-target?::bool this::J2SClass)))
+	   (class-new-target?::bool ::J2SClass)
+	   
+	   (class-sort-class-methods! ::J2SClass)
+	   (class-class-method-index ::J2SClass ::J2SClassElement)
+	   (class-instance-property-index ::J2SClass ::J2SClassElement)))
 
 ;*---------------------------------------------------------------------*/
 ;*    class-info-name ...                                              */
@@ -87,6 +95,18 @@
 (define (class-predicate-id::symbol clazz::J2SClass)
    (with-access::J2SRecord clazz (name)
       (symbol-append 'js- name '?)))
+
+;*---------------------------------------------------------------------*/
+;*    class-element-id ...                                             */
+;*---------------------------------------------------------------------*/
+(define (class-element-id::symbol clazz::J2SClass el::J2SClassElement)
+   (with-access::J2SClass clazz ((classname name))
+      (with-access::J2SClassElement el (prop)
+	 (with-access::J2SMethodPropertyInit prop (val name)
+	    (with-access::J2SString name ((str val))
+	       (string->symbol
+		  (string-append str "@"
+		     (symbol->string! classname))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-class-super-val ...                                          */
@@ -195,14 +215,42 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-class-methods ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (j2s-class-methods clazz)
-   (with-access::J2SClass clazz (elements)
-      (filter-map (lambda (el)
-		     (with-access::J2SClassElement el (prop static)
-			(when (and (not static) (isa? prop J2SMethodPropertyInit))
-			   prop)))
-	 elements)))
+(define (j2s-class-methods clazz #!key (super #t))
    
+   (define (class-method? el)
+      (with-access::J2SClassElement el (prop static)
+	 (and (not static)
+	      (isa? prop J2SMethodPropertyInit)
+	      (not (j2s-class-property-constructor? prop)))))
+   
+   (let loop ((clazz clazz))
+      (with-access::J2SClass clazz (elements)
+	 (let ((els (filter class-method? elements))
+	       (superclass (and super (j2s-class-super-val clazz))))
+	    (if (and super (isa? superclass J2SClass))
+		(append (loop superclass) els)
+		els)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-class-find-element ...                                       */
+;*---------------------------------------------------------------------*/
+(define (j2s-class-find-element clazz field)
+   
+   (define (class-get-field-in-class clazz)
+      (with-access::J2SClass clazz (elements)
+	 (find (lambda (el)
+		  (with-access::J2SClassElement el (prop)
+		     (with-access::J2SPropertyInit prop (name)
+			(with-access::J2SString name (val)
+			   (string=? val field)))))
+	    elements)))
+   
+   (let loop ((clazz clazz))
+      (let ((super (j2s-class-super-val clazz)))
+	 (if (isa? super J2SClass)
+	     (or (loop super) (class-get-field-in-class clazz))
+	     (class-get-field-in-class clazz)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-class-get ...                                                */
 ;*---------------------------------------------------------------------*/
@@ -459,4 +507,99 @@
 		   (or (expr-new-target? val)
 		       (super-new-target? super))))
 	     (super-new-target? super)))))
+
+;*---------------------------------------------------------------------*/
+;*    class-sort-class-methods! ...                                    */
+;*    -------------------------------------------------------------    */
+;*    Walk over all inheriated classes to assign class methods         */
+;*    indexes.                                                         */
+;*---------------------------------------------------------------------*/
+(define (class-sort-class-methods! this::J2SClass)
+
+   (define (assoc-index val lst)
+      (let loop ((lst lst)
+		 (index 0))
+	 (cond
+	    ((null? lst)
+	     (values #f index))
+	    ((string=? (caar lst) val)
+	     (values (car lst) index))
+	    (else
+	     (loop (cdr lst) (+fx index 1))))))
+   
+   (define (sort-methods this::J2SRecord)
+      ;; returns a list of : (name method1 method2 ... methodn)
+      ;; where method1 ... methodn are all the class method implementations
+      (let loop ((els (j2s-class-methods this))
+		 (res '()))
+	 (if (null? els)
+	     (reverse! res)
+	     (let ((el (car els)))
+		(with-access::J2SClassElement el (prop index)
+		   (with-access::J2SPropertyInit prop (name)
+		      (with-access::J2SString name (val)
+			 (multiple-value-bind (old idx)
+			    (assoc-index val res)
+			    (set! index idx)
+			    (cond
+			       ((pair? old)
+				(set-cdr! (last-pair old) (list el))
+				(loop (cdr els) res))
+			       (else
+				(loop (cdr els) (cons (list val el) res))))))))))))
+
+   (with-access::J2SClass this (methods)
+      (unless (pair? methods)
+	 (set! methods (sort-methods this)))
+      methods))
+
+;*---------------------------------------------------------------------*/
+;*    class-sort-instance-properties! ...                              */
+;*    -------------------------------------------------------------    */
+;*    Walk over all inherited classes to assign instance property      */
+;*    indexes.                                                         */
+;*---------------------------------------------------------------------*/
+(define (class-sort-instance-properties! clazz)
+   
+   (define (class-get-field-in-class clazz idx)
+      (with-access::J2SClass clazz (elements)
+	 (let loop ((i idx)
+		    (els elements))
+	    (if (pair? els)
+		(with-access::J2SClassElement (car els) (prop static index)
+		   (if (or (and (not static)
+				(isa? prop J2SDataPropertyInit)
+				(not (isa? prop J2SMethodPropertyInit))))
+		       (begin
+			  (set! index i)
+			  (loop (+fx i 1) (cdr els)))
+		       (loop i (cdr els))))
+		i))))
+   
+   (let loop ((clazz clazz)
+	      (i 0))
+      (let ((super (j2s-class-super-val clazz)))
+	 (if (isa? super J2SClass)
+	     (let ((idx (loop super i)))
+		(class-get-field-in-class clazz idx))
+	     (class-get-field-in-class clazz i)))))
+
+;*---------------------------------------------------------------------*/
+;*    class-class-method-index ...                                     */
+;*---------------------------------------------------------------------*/
+(define (class-class-method-index this::J2SClass el::J2SClassElement)
+   (with-access::J2SClassElement el (index)
+      (when (<fx index 0)
+	 (class-sort-class-methods! this))
+      index))
+      
+;*---------------------------------------------------------------------*/
+;*    class-instance-property-index ...                                */
+;*---------------------------------------------------------------------*/
+(define (class-instance-property-index this::J2SClass el::J2SClassElement)
+   (with-access::J2SClassElement el (index)
+      (when (<fx index 0)
+	 (class-sort-instance-properties! this))
+      index))
+   
 

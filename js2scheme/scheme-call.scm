@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Sep  8 14:31:16 2021 (serrano)                */
+;*    Last change :  Mon Sep 13 15:04:14 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -21,6 +21,7 @@
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_utils
+	   __js2scheme_classutils
 	   __js2scheme_js
 	   __js2scheme_stmtassign
 	   __js2scheme_compile
@@ -896,9 +897,31 @@
 		  (else
 		   (error "js2scheme" "illegal builtin method" m)))))))
 
-	 
+   (define (call-super-record-method fun::J2SAccess args::pair-nil clazz::J2SClass)
+      (with-access::J2SAccess fun (obj field)
+	 (with-access::J2SString field (val)
+	    (let ((el (j2s-class-find-element (j2s-vtype obj) val)))
+	       (when (isa? el J2SClassElement)
+		  (with-access::J2SClassElement el (prop static)
+		     (when (and (not static) (isa? prop J2SMethodPropertyInit))
+			(with-access::J2SMethodPropertyInit prop (val)
+			   (with-access::J2SFun val (params)
+			      (when (=fx (length params) (length args))
+				 `(,(class-element-id clazz el)
+				   this
+				   ,@(map (lambda (a)
+					     (j2s-scheme a mode return ctx))
+					args))))))))))))
+   
    (define (call-super-method fun args)
-      (call-unknown-function 'direct fun '(this) args))
+      (with-access::J2SAccess fun (obj field)
+	 (if (and (isa? (j2s-vtype obj) J2SRecord)
+		  (isa? field J2SString)
+		  (isa? (j2s-class-super-val (j2s-vtype obj)) J2SRecord))
+	     (or (call-super-record-method fun args
+		    (j2s-class-super-val (j2s-vtype obj)))
+		 (call-unknown-function 'direct fun '(this) args))
+	     (call-unknown-function 'direct fun '(this) args))))
 
    (define (Array? self)
       (is-builtin-ref? self 'Array))
@@ -951,6 +974,30 @@
 		  (j2s-process-builtin-method fun args this mode return ctx))
 	     =>
 	     (lambda (expr) expr))
+	    ((and (isa? (j2s-vtype self) J2SRecord)
+		  (isa? field J2SString)
+		  (with-access::J2SString field (val)
+		     (let ((el (j2s-class-find-element (j2s-vtype self) val)))
+			(when el
+			   (with-access::J2SClassElement el (prop static)
+			      (when (and (not static) (isa? prop J2SMethodPropertyInit))
+				 (with-access::J2SMethodPropertyInit prop (val)
+				    (with-access::J2SFun val (params)
+				       (when (=fx (length params) (length args))
+					  el)))))))))
+	     =>
+	     (lambda (el)
+		(with-access::J2SClassElement el (index prop)
+		   (with-access::J2SMethodPropertyInit prop (name)
+		      (let ((o (j2s-as (j2s-scheme obj mode return ctx)
+				  obj (j2s-type obj) 'any ctx)))
+			 `(with-access::JsObject ,o (cmap)
+			     (with-access::JsConstructMap cmap (mptable)
+				((vector-ref mptable ,index)
+				 ,o
+				 ,@(map (lambda (arg)
+					   (j2s-scheme arg mode return ctx))
+				      args)))))))))
 	    ((and ccache (= (context-get ctx :debug 0) 0) ccspecs)
 	     (cond
 		((isa? field J2SString)

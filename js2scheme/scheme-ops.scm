@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Sep  1 09:23:59 2021 (serrano)                */
+;*    Last change :  Mon Sep 13 19:54:50 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -800,9 +800,8 @@
 	    (j2s-aref-length? expr))))
 
    (define (cast-aref::J2SAref expr::J2SCast)
-      (when (isa? expr J2SCast)
-	 (with-access::J2SCast expr (expr)
-	    (aref expr))))
+      (with-access::J2SCast expr (expr)
+	 (aref expr)))
    
    (define (aref::J2SAref expr::J2SAccess)
       (with-access::J2SAccess expr (obj field)

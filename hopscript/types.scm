@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Sep 11 08:17:18 2021 (serrano)                */
+;*    Last change :  Sun Sep 12 07:31:15 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -171,6 +171,8 @@
 	      (vlen::long (default 0))
 	      (vtable::vector (default '#()))
 	      (vcache::obj (default #f))
+	      (mptable::vector (default '#()))
+	      (mntable::vector (default '#()))
 	      (parent::JsConstructMap (default (class-nil JsConstructMap))))
 
 	   ;; Literal strings that are not plain Scheme strings.

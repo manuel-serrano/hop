@@ -469,9 +469,16 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SSuper mode return ctx)
    (with-access::J2SSuper this (decl loc context)
-      (case context
-	 ((literal) `(js-super ,(call-next-method) #f ',loc %this))
-	 (else '%super-prototype))))
+      (cond
+	 ((eq? context 'literal)
+	  `(js-super ,(call-next-method) #f ',loc %this))
+	 ((isa? (j2s-vtype this) J2SRecord)
+	  (let ((super (j2s-class-super-val (j2s-vtype this))))
+	     (if (isa? super J2SRecord)
+		 (class-prototype-id super)
+		 (j2s-error "super" "Illegal context" this))))
+	  (else
+	   '%super-prototype))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SWithRef ...                                      */
