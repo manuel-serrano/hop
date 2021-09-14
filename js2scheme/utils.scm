@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Tue Sep  7 18:25:55 2021 (serrano)                */
+;*    Last change :  Tue Sep 14 18:29:45 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -270,7 +270,7 @@
 ;*    type-object? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (type-object? type)
-   (or (memq type '(object regexp date Promise array jsvector arguments global this))
+   (or (memq type '(object regexp date Promise array jsvector function arguments global this))
        (isa? type J2SClass)))
 
 ;*---------------------------------------------------------------------*/
