@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Sep 14 09:01:14 2021 (serrano)                */
+;*    Last change :  Tue Sep 14 17:14:11 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -884,13 +884,6 @@
 			     (map (lambda (m)
 				     (function-size (protoinfo-method m)))
 				mets))))
-		  (when (string=? val "execute")
-		     (tprint ">>> VAL=" val " sz=" sz " limit=" limit " loc=" loc " "
-			"stack=" (map (lambda (fun)
-					 (with-access::J2SFun fun (name) name))
-				    stack)
-			" " (length (or (hashtable-get pmethods val) '()))
-			" " (map (lambda (m) (function-size (protoinfo-method m))) mets)))
 		  (when (or (<fx sz (*fx limit (length mets)))
 			    (and (<fx sz inline-max-function-size)
 				 (every (lambda (m)
