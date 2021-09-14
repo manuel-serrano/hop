@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Sun Sep  5 14:38:06 2021 (serrano)                */
+;*    Last change :  Tue Sep 14 08:15:21 2021 (serrano)                */
 ;*    Copyright   :  2006-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -111,6 +111,8 @@
 	     ,js-method-jsobject-call-name/cache-expander))
    (eval `(define-expander js-method-non-jsobject-call-name
 	     ,js-method-non-jsobject-call-name-expander))
+   (eval `(define-expander js-method-jsrecord-call-index
+	     ,js-method-jsrecord-call-index-expander))
    
    (eval `(define-expander js-let-set!
 	     ,js-let-set!-expander))

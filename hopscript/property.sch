@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Sep  1 08:31:53 2021 (serrano)                */
+;*    Last change :  Tue Sep 14 08:14:45 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -127,6 +127,8 @@
    js-method-jsobject-call-name/cache-expander)
 (define-expander js-method-non-jsobject-call-name
    js-method-non-jsobject-call-name-expander)
+(define-expander js-method-jsrecord-call-index
+   js-method-jsrecord-call-index-expander)
 		    
 ;*---------------------------------------------------------------------*/
 ;*    descr ...                                                        */

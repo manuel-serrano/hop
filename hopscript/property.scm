@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Sep 11 08:27:01 2021 (serrano)                */
+;*    Last change :  Tue Sep 14 08:12:01 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -46,9 +46,6 @@
 	   __hopscript_arguments
 	   __hopscript_arraybufferview)
 
-   ;; TBR
-   (use __hopscript_websocket)
-   
    (extern ($js-make-pcache-table::obj (::obj ::int ::obj ::obj ::JsPropertyCache)
 	      "bgl_make_pcache_table"))
 

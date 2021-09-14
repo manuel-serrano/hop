@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon Sep 13 15:04:14 2021 (serrano)                */
+;*    Last change :  Tue Sep 14 08:20:35 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -991,13 +991,10 @@
 		   (with-access::J2SMethodPropertyInit prop (name)
 		      (let ((o (j2s-as (j2s-scheme obj mode return ctx)
 				  obj (j2s-type obj) 'any ctx)))
-			 `(with-access::JsObject ,o (cmap)
-			     (with-access::JsConstructMap cmap (mptable)
-				((vector-ref mptable ,index)
-				 ,o
-				 ,@(map (lambda (arg)
-					   (j2s-scheme arg mode return ctx))
-				      args)))))))))
+			 `(js-method-jsrecord-call-index ,o ,index 
+			     ,@(map (lambda (arg)
+				       (j2s-scheme arg mode return ctx))
+				  args)))))))
 	    ((and ccache (= (context-get ctx :debug 0) 0) ccspecs)
 	     (cond
 		((isa? field J2SString)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sun Sep 12 07:47:22 2021 (serrano)                */
+;*    Last change :  Tue Sep 14 08:36:56 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -890,6 +890,8 @@
    (define (inline-access-call this::J2SCall fun::J2SAccess args loc)
       (let ((mets (find-inline-methods this fun (length args))))
 	 (when (pair? mets)
+	    (tprint "CALL=" (j2s->list this))
+	    (tprint "mets=" (length mets) " " (map typeof mets))
 	    (let* ((mets (filter-rutype
 			    (if (pair? targets)
 				(filter (lambda (t) (memq t mets)) targets)
@@ -897,6 +899,7 @@
 			    prgm))
 		   (vals (map protoinfo-method mets))
 		   (sz (apply + (map function-size vals))))
+	       (tprint "mets2=" (length mets))
 	       (when (pair? mets)
 		  (inline-verb loc fun (map (lambda (x) '-) mets) sz limit 0 conf)
 		  (when (pair? stack) 
@@ -976,18 +979,23 @@
 	 ((or (null? funs) (null? (cdr funs)))
 	  funs)
 	 (else
-	  (with-access::J2SFun (car funs) (rutype)
-	     (let ((rut rutype))
-		(filter (lambda (f)
-			   (with-access::J2SFun f (rutype) (eq? rutype rut)))
-		   funs)))))))
+	  (let ((rut (function-rutype (car funs))))
+	     (filter (lambda (f)
+			(eq? (function-rutype f) rut))
+		funs))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    function-rutype ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (function-rutype fun::J2SFun)
-   (with-access::J2SFun fun (rutype)
-      rutype))
+(define (function-rutype fun)
+   (cond
+      ((isa? fun J2SFun)
+       (with-access::J2SFun fun (rutype)
+	  rutype))
+      ((protoinfo? fun)
+       (function-rutype (protoinfo-method fun)))
+      (else
+       (error "function-rutype" "bad value" fun))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-function-call ...                                         */
@@ -1276,7 +1284,7 @@
 	 ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the
 	 ;; shape of the test that suits the tyflow analysis
 	 (let* ((vals (inline-method-args args))
-		(t (filter (lambda (b) (isa? b J2SDecl)) vals))
+		(tmps (filter (lambda (b) (isa? b J2SDecl)) vals))
 		(args (map (lambda (v)
 			      (if (isa? v J2SDecl)
 				  (with-access::J2SDecl v (loc)
@@ -1287,7 +1295,7 @@
 	       ((not (eq? (j2s-type obj) 'object))
 		(if (j2sref-ronly? obj)
 		    (with-access::J2SRef obj (decl)
-		       (LetBlock loc t
+		       (LetBlock loc tmps
 			  (J2SIf (J2SHopCall
 				    (if (eq? guard 'array)
 					(J2SHopRef/rtype 'js-array? 'bool)
@@ -1300,7 +1308,7 @@
 				      args))))))
 		    (let* ((id (gensym 'this))
 			   (decl (J2SLetOpt '(get) id obj)))
-		       (LetBlock loc (cons decl t)
+		       (LetBlock loc (cons decl tmps)
 			  (J2SIf (J2SHopCall
 				    (if (eq? guard 'array)
 					(J2SHopRef/rtype 'js-array? 'bool)
@@ -1314,7 +1322,7 @@
 	       ((not (j2sref-ronly? obj))
 		(let* ((id (gensym 'this))
 		       (decl (J2SLetOpt '(get) id obj)))
-		   (LetBlock loc (cons decl t)
+		   (LetBlock loc (cons decl tmps)
 		      (inline-object-method-call fun decl args loc guard))))
 	       (else
 		(with-access::J2SRef obj (decl)
@@ -1431,18 +1439,21 @@
       ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the
       ;; shape of the test that suits the tyflow analysis
       (let* ((vals (inline-method-args args))
-	     (t (filter (lambda (b) (isa? b J2SDecl)) vals))
+	     (tmps (filter (lambda (b) (isa? b J2SDecl)) vals))
 	     (args (map (lambda (v)
 			   (if (isa? v J2SDecl)
 			       (with-access::J2SDecl v (loc)
 				  (J2SRef v))
 			       v))
 		      vals)))
+	 (tprint "inline methods..." (length callees))
+	 (tprint (j2s->list fun))
+	 (for-each (lambda (t) (tprint (typeof t))) callees)
 	 (cond
 	    ((not (eq? (j2s-type obj) 'object))
 	     (let* ((id (gensym 'this))
 		    (d (J2SLetOpt '(get) id obj)))
-		(LetBlock loc (cons d t)
+		(LetBlock loc (cons d tmps)
 		   (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
 			     (J2SRef d))
 		      (inline-object-method-call fun (J2SRef d) args)
@@ -1453,7 +1464,7 @@
 	    ((not (isa? obj J2SRef))
 	     (let* ((id (gensym 'this))
 		    (d (J2SLetOpt '(get) id obj)))
-		(LetBlock loc (cons d t)
+		(LetBlock loc (cons d tmps)
 		   (inline-object-method-call fun (J2SRef d) args))))
 	    (else
 	     (inline-object-method-call fun obj args))))))

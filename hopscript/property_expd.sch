@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Sep  7 16:13:08 2021 (serrano)                */
+;*    Last change :  Tue Sep 14 08:13:00 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -1128,6 +1128,28 @@
 	  (else
 	   (error "js-method-jsobject-call-name/cache" "bad form" x))))))
 
+;*---------------------------------------------------------------------*/
+;*    js-method-jsrecord-call-index-expander ...                       */
+;*    -------------------------------------------------------------    */
+;*    Use to call record methods                                       */
+;*---------------------------------------------------------------------*/
+(define (js-method-jsrecord-call-index-expander x e)
+   (match-case x
+      ((js-method-jsrecord-call-index
+	  (and (? symbol?) ?obj) (and (? fixnum?) ?index) . ?rest)
+       (e `(with-access::JsObject ,obj (cmap)
+	      (with-access::JsConstructMap cmap (mptable)
+		 ((vector-ref mptable ,index) ,obj ,@rest)))
+	  e))
+      ((js-method-jsrecord-call-index
+	  (and (? symbol?) ?obj) (and (? fixnum?) ?index) . ?rest)
+       (let ((o (gensym '%o)))
+	  (e `(let ((,o ,obj))
+		 (js-method-jsrecord-call-index ,o ,index ,@rest))
+	     e)))
+      (else
+       (error "js-method-jsrecord-call-index/expander" "bad form" x))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-method-non-jsobject-call-name-expander ...                    */
 ;*---------------------------------------------------------------------*/
