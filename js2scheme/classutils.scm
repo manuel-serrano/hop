@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Sun Sep 12 07:47:44 2021 (serrano)                */
+;*    Last change :  Tue Sep 14 10:40:31 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -511,7 +511,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    class-sort-class-methods! ...                                    */
 ;*    -------------------------------------------------------------    */
-;*    Walk over all inheriated classes to assign class methods         */
+;*    Walk over all inherited classes to assign class methods          */
 ;*    indexes.                                                         */
 ;*---------------------------------------------------------------------*/
 (define (class-sort-class-methods! this::J2SClass)
@@ -546,9 +546,9 @@
 				(set-cdr! (last-pair old) (list el))
 				(loop (cdr els) res))
 			       (else
-				(loop (cdr els) (cons (list val el) res))))))))))))
+				(loop (cdr els) (append! res (list (list val el))))))))))))))
 
-   (with-access::J2SClass this (methods)
+   (with-access::J2SClass this (methods name)
       (unless (pair? methods)
 	 (set! methods (sort-methods this)))
       methods))

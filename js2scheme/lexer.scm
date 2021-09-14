@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Thu Sep  9 18:17:03 2021 (serrano)                */
+;*    Last change :  Tue Sep 14 17:01:42 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -211,7 +211,7 @@
 	   (ignore)))
 
       ;; type comments
-      ((: "/*:" (+ letter) "*/")
+      ((: "/*:" (* #\Space) (+ letter) (* #\Space) "*/")
        (let ((typ (string->symbol (the-substring 3 -2))))
 	  (if (config-get conf :type-annotations #f)
 	      (token 'TYPE typ (-fx (the-length) 5))

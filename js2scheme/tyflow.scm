@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Sep  8 11:38:27 2021 (serrano)                */
+;*    Last change :  Tue Sep 14 14:49:26 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1652,8 +1652,7 @@
 (define-walk-method (node-type this::J2SCacheCheck env::pair-nil ctx::pair)
    (multiple-value-bind (typf envf bkf)
       (call-default-walker)
-      (with-access::J2SCacheCheck this (type)
-	 (expr-type-add! this envf ctx 'bool bkf))))
+      (expr-type-add! this envf ctx 'bool bkf)))
    
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SCacheUpdate ...                                   */
@@ -1661,8 +1660,7 @@
 (define-walk-method (node-type this::J2SCacheUpdate env::pair-nil ctx::pair)
    (multiple-value-bind (typf envf bkf)
       (call-default-walker)
-      (with-access::J2SCacheCheck this (type)
-	 (expr-type-add! this envf ctx 'undefined bkf))))
+      (expr-type-add! this envf ctx 'undefined bkf)))
    
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SNop ...                                           */
@@ -2207,6 +2205,20 @@
 			(J2SBool #t)))))
 		(else
 		 (call-default-walker))))))))
+
+;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SCacheCheck ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve! this::J2SCacheCheck ctx::pair)
+   (call-default-walker)
+   (with-access::J2SCacheCheck this (loc obj owner)
+      (if (and (isa? owner J2SRecord)
+	       (isa? (j2s-vtype obj) J2SRecord)
+	       (not (or (type-subtype? owner (j2s-vtype obj))
+			(type-subtype? (j2s-vtype obj) owner))))
+	  ;; inlining invalidated by the type inference
+	  (J2SBool #f)
+	  this)))
    
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SIf ...                                             */

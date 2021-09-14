@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Sep 13 09:41:41 2021 (serrano)                */
+;*    Last change :  Tue Sep 14 09:27:42 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -148,6 +148,8 @@
 
 	   (final-class J2SPrecache::J2SIf
 	      (accesses::pair-nil read-only (default '())))
+	   
+	   (final-class J2SIfIsRecord::J2SIf)
 	   
 	   (final-class J2SVarDecls::J2SStmt
 	      (decls::pair (info '("ast"))))
@@ -430,6 +432,7 @@
 	   (final-class J2SCacheCheck::J2SExpr
 	      (prop::symbol read-only)
 	      (cache read-only (info '("notraverse")))
+	      (owner::obj read-only (default #f) (info '("notraverse")))
 	      (obj::J2SExpr (info '("ast")))
 	      fields::pair-nil)
 
@@ -1126,6 +1129,7 @@
 (gen-walks J2SWithRef expr)
 (gen-walks J2SIf test then else)
 (gen-walks J2SPrecache (accesses) test then else)
+(gen-walks J2SIfIsRecord test then else)
 (gen-walks J2SCond test then else)
 (gen-walks J2SDollar node)
 (gen-walks J2SYield expr)

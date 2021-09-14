@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Sun Sep 12 07:33:00 2021 (serrano)                */
+;*    Last change :  Tue Sep 14 11:22:40 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -138,7 +138,7 @@
 			 :writable #f :enumerable #f :configurable #f))))))
       
       (define (bind-method-inherit el)
-	 (with-access::J2SClassElement el (prop index)
+	 (with-access::J2SClassElement el (prop index clazz)
 	    (with-access::J2SMethodPropertyInit prop (name)
 	       (let ((name (j2s-scheme-class-propname name mode return ctx)))
 		  (with-access::J2SClass clazz (cmap)

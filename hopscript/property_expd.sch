@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Sep 14 08:13:00 2021 (serrano)                */
+;*    Last change :  Tue Sep 14 11:08:48 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -1131,18 +1131,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-method-jsrecord-call-index-expander ...                       */
 ;*    -------------------------------------------------------------    */
-;*    Use to call record methods                                       */
+;*    Use to call record methods. The name argument is ignore, it is   */
+;*    generated only for lisibility of the Scheme file.                */
 ;*---------------------------------------------------------------------*/
 (define (js-method-jsrecord-call-index-expander x e)
    (match-case x
       ((js-method-jsrecord-call-index
-	  (and (? symbol?) ?obj) (and (? fixnum?) ?index) . ?rest)
+	  (and (? symbol?) ?obj) (and (? fixnum?) ?index) ?name . ?rest)
        (e `(with-access::JsObject ,obj (cmap)
 	      (with-access::JsConstructMap cmap (mptable)
 		 ((vector-ref mptable ,index) ,obj ,@rest)))
 	  e))
       ((js-method-jsrecord-call-index
-	  (and (? symbol?) ?obj) (and (? fixnum?) ?index) . ?rest)
+	  (and (? symbol?) ?obj) (and (? fixnum?) ?index) ?name . ?rest)
        (let ((o (gensym '%o)))
 	  (e `(let ((,o ,obj))
 		 (js-method-jsrecord-call-index ,o ,index ,@rest))

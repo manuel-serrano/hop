@@ -1187,6 +1187,28 @@
 	      ,(j2s-scheme else mode return ctx)))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SIfIsRecord ...                                   */
+;*    -------------------------------------------------------------    */
+;*    This form is only introduced by the inlining of method calls.    */
+;*    The TEST is always resolved statically and only the THEN         */
+;*    or the ELSE branch is generated. In other words, no runtime      */
+;*    test is generated and the two branches are never generated       */
+;*    at compile-time.                                                 */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SIfIsRecord mode return ctx)
+   
+   (define (j2s-vtype-uncast expr)
+      (if (isa? expr J2SCast)
+	  (with-access::J2SCast expr (expr)
+	     (j2s-vtype-uncast expr))
+	  (j2s-vtype expr)))
+   
+   (with-access::J2SIfIsRecord this (test then else)
+      (if (isa? (j2s-vtype-uncast test) J2SRecord)
+	  (j2s-scheme then mode return ctx)
+	  (j2s-scheme else mode return ctx))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDo ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.6.1       */
@@ -1487,8 +1509,6 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SBreak mode return ctx)
    (with-access::J2SBreak this (loc target)
-      (unless (isa? target J2SIdStmt)
-	 (tprint "PAS BON : " loc))
       (with-access::J2SIdStmt target (id)
 	 (epairify loc
 	    `(,(escape-name '%break id)
@@ -2579,10 +2599,6 @@
    
    (define (get loc obj tmp field cache cspecs optim)
       (let ((tyo (typeof-this obj ctx)))
-	 (when (isa? field J2SString)
-	    (with-access::J2SString field (val)
-	       (when (string=? val "BODY")
-		  (tprint "obj=" (j2s->list obj) " tyo=" tyo))))
 	 (j2s-get loc tmp field tyo
 	    (j2s-property-scheme field mode return ctx)
 	    (j2s-type field) (j2s-vtype this) ctx cache
@@ -2809,11 +2825,63 @@
 ;*    j2s-scheme ::J2SCacheCheck ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SCacheCheck mode return ctx)
-   (with-access::J2SCacheCheck this (prop cache obj)
+   
+   (define (record-cache-check-method this::J2SCacheCheck)
+      (with-access::J2SCacheCheck this (prop cache owner obj fields)
+	 (when (and (isa? (j2s-vtype obj) J2SRecord)
+		    (isa? owner J2SRecord)
+		    (pair? fields)
+		    (isa? (car fields) J2SString)
+		    (null? (cdr fields)))
+	    (with-access::J2SString (car fields) (val)
+	       (let ((el (j2s-class-find-element (j2s-vtype obj) val)))
+		  (with-access::J2SRecord owner (cmap) 
+		     (when el
+			(with-access::J2SClassElement el (prop static index)
+			   (when (and (not static) (isa? prop J2SMethodPropertyInit))
+			      `(with-access::JsObject ,(j2s-scheme obj mode return ctx) ((ocmap cmap))
+				  ,(if cmap
+				       `(with-access::JsConstructMap ocmap ((omptable mptable))
+					   (or (eq? ocmap ,(j2s-scheme cmap mode return ctx))
+					       (with-access::JsConstructMap ,(j2s-scheme cmap mode return ctx) ((fmptable mptable))
+						  (eq? (vector-ref omptable ,index)
+						     (vector-ref fmptable ,index)))))
+				       `(with-access::JsFunction ,(j2s-class-id owner ctx) (constrmap)
+					   (with-access::JsConstructMap ocmap ((omptable mptable))
+					      (with-access::JsConstructMap constrmap ((fmptable mptable))
+						 (eq? (vector-ref omptable ,index)
+						    (vector-ref fmptable ,index))))))))))))))))
+
+   (define (record-cache-check-constructmap this::J2SCacheCheck)
+      ;; compare object and record cmap: faster but less precise, does not
+      ;; support polymorphism
+      (with-access::J2SCacheCheck this (prop cache owner obj fields)
+	 (when (and (isa? (j2s-vtype obj) J2SRecord)
+		    (isa? owner J2SRecord)
+		    (pair? fields)
+		    (isa? (car fields) J2SString)
+		    (null? (cdr fields)))
+	    (with-access::J2SString (car fields) (val)
+	       (let ((el (j2s-class-find-element (j2s-vtype obj) val)))
+		  (with-access::J2SRecord owner (cmap) 
+		     (when el
+			(with-access::J2SClassElement el (prop static index)
+			   (when (and (not static) (isa? prop J2SMethodPropertyInit))
+			      `(with-access::JsObject ,(j2s-scheme obj mode return ctx) ((ocmap cmap))
+				  ,(if cmap
+				       `(eq? ocmap ,(j2s-scheme cmap mode return ctx))
+				       `(with-access::JsFunction ,(j2s-class-id owner ctx) (constrmap)
+					   (eq? ocmap constmap)))))))))))))
+
+   (define (record-cache-check this::J2SCacheCheck)
+      (record-cache-check-method this))
+      
+   (with-access::J2SCacheCheck this (prop cache obj fields)
       (case prop
 	 ((proto-method)
-	  `(eq? (js-pcache-pmap (js-pcache-ref %pcache ,cache))
-	      (js-object-cmap ,(j2s-scheme obj mode return ctx))))
+	  (or (record-cache-check this)
+	      `(eq? (js-pcache-pmap (js-pcache-ref %pcache ,cache))
+		  (js-object-cmap ,(j2s-scheme obj mode return ctx)))))
 	 ((instanceof)
 	  `(eq? (js-pcache-cmap (js-pcache-ref %pcache ,cache))
 	      (js-object-cmap ,(j2s-scheme obj mode return ctx))))

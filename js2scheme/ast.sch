@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Mon Sep  6 08:45:16 2021 (serrano)                */
+;*    Last change :  Tue Sep 14 09:29:55 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -544,6 +544,13 @@
        (then ,then)
        (else ,else)))
 
+(define-macro (J2SIfIsRecord test then else)
+   `(instantiate::J2SIfIsRecord
+       (loc loc)
+       (test ,test)
+       (then ,then)
+       (else ,else)))
+   
 (define-macro (J2SCond test then else)
    `(instantiate::J2SCond
        (loc loc)
@@ -656,11 +663,12 @@
        (debug ,debug)
        (stmt ,stmt)))
 
-(define-macro (J2SCacheCheck prop cache obj . fields)
+(define-macro (J2SCacheCheck prop cache owner obj . fields)
    `(instantiate::J2SCacheCheck
        (loc loc)
        (prop ,prop)
        (cache ,cache)
+       (owner ,owner)
        (obj ,obj)
        (type 'bool)
        (fields ,(if (pair? fields) `(list ,@fields) ''()))))
@@ -671,3 +679,5 @@
        (prop ,prop)
        (cache ,cache)
        (obj ,obj)))
+
+

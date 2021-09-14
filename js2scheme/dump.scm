@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Sep  8 12:17:03 2021 (serrano)                */
+;*    Last change :  Tue Sep 14 10:32:06 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1018,15 +1018,6 @@
 	  ,(j2s->list obj) ,(j2s->list field))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SCacheCheck ...                                    */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SCacheCheck)
-   (with-access::J2SCacheCheck this (cache obj fields)
-      `(,@(call-next-method) :cache ,cache
-	  ,(j2s->list obj)
-	  ,@(map j2s->list fields))))
-   
-;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SStmtExpr ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SStmtExpr)
@@ -1261,8 +1252,13 @@
 ;*    j2s->list ::J2SCacheCheck ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCacheCheck)
-   (with-access::J2SCacheCheck this (prop cache obj fields)
-      `(,@(call-next-method) :cache ,cache ,prop ,(j2s->list obj)
+   (with-access::J2SCacheCheck this (prop owner cache obj fields)
+      `(,@(call-next-method) ,prop :cache ,cache
+	  :owner ,(cond
+		     ((isa? owner J2SRecord) (type->sexp owner))
+		     ((isa? owner J2SNode) (j2s->list owner))
+		     (else #f))
+	  ,(j2s->list obj)
 	  ,@(map j2s->list fields))))
 
 ;*---------------------------------------------------------------------*/

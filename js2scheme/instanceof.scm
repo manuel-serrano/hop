@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 24 16:22:25 2018                          */
-;*    Last change :  Mon Dec 16 19:22:41 2019 (serrano)                */
-;*    Copyright   :  2018-19 Manuel Serrano                            */
+;*    Last change :  Tue Sep 14 10:53:28 2021 (serrano)                */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Cache instanceof tests.                                          */
 ;*=====================================================================*/
@@ -70,7 +70,7 @@
    
    (define (object-instanceof/cache obj rhs be loc)
       (let ((cache (get-cache prgm)))
-	 (J2SIf (J2SCacheCheck 'instanceof cache obj)
+	 (J2SIf (J2SCacheCheck 'instanceof cache #f obj)
 	    (J2SReturn #t (J2SBool #t) be)
 	    (J2SIf this
 	       (J2SBlock/w-endloc
