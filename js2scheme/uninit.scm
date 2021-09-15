@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Fri Sep  3 15:34:07 2021 (serrano)                */
+;*    Last change :  Wed Sep 15 16:29:37 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -155,6 +155,15 @@
 	     env))))
 
 ;*---------------------------------------------------------------------*/
+;*    uninit* ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-method (uninit* this::J2SDeclInit env)
+   (with-access::J2SDeclInit this (val)
+      (uninit* val env)
+      (decl-usage-add! this 'init)
+      (cons this env)))
+
+;*---------------------------------------------------------------------*/
 ;*    uninit* ::J2SRef ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (uninit* this::J2SRef env)
@@ -177,6 +186,7 @@
 	 (if (isa? lhs J2SRef)
 	     (with-access::J2SRef lhs (decl)
 		(with-access::J2SDecl decl (scope)
+		   (decl-usage-add! decl 'init)
 		   (if (memq scope '(global %scope))
 		       (if (decl-usage-has? decl '(uninit))
 			   env

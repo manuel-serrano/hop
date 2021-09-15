@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Sep 14 10:32:06 2021 (serrano)                */
+;*    Last change :  Wed Sep 15 17:25:59 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -809,6 +809,7 @@
    (with-access::J2SReturn this (expr tail from loc)
       `(,@(call-next-method)
 	  ,@(dump-loc loc)
+	  ,@(dump-size this)
 	  ,@(dump-from from)
 	  ,@(if (isa? from J2SFun)
 		(dump-rtype from)
@@ -865,6 +866,7 @@
    (with-access::J2SBinary this (op rhs lhs loc)
       `(,@(call-next-method) ,op
 	  ,@(dump-loc loc)
+	  ,@(dump-size this)
 	  ,@(dump-type this)
 	  ,@(dump-info this)
 	  ,@(dump-hint this)
@@ -878,6 +880,7 @@
    (with-access::J2SParen this (expr loc)
       `(,@(call-next-method)
 	  ,@(dump-loc loc)
+	  ,@(dump-size this)
 	  ,@(dump-type this)
 	  ,@(dump-range this)
 	  ,@(dump-hint this)
@@ -890,6 +893,7 @@
    (with-access::J2SUnary this (op expr)
       `(,@(call-next-method) ,op
 	  ,@(dump-type this)
+	  ,@(dump-size this)
 	  ,@(dump-info this)
 	  ,@(dump-hint this)
 	  ,(j2s->list expr))))
@@ -901,6 +905,7 @@
    (with-access::J2SIf this (test then else loc)
       `(,@(call-next-method)
 	  ,@(dump-loc loc)
+	  ,@(dump-size this)
 	  ,@(dump-info this)
 	  ,(j2s->list test)
 	  ,(j2s->list then)
@@ -925,6 +930,7 @@
       `(,@(call-next-method)
 	  ,@(dump-loc loc)
 	  ,@(dump-info this)
+	  ,@(dump-size this)
 	  ,@(dump-type this)
 	  ,@(dump-range this)
 	  ,(j2s->list test)
@@ -937,6 +943,7 @@
 (define-method (j2s->list this::J2SWhile)
    (with-access::J2SWhile this (op test body loc)
       `(,@(call-next-method) ,@(dump-loc loc) ,@(dump-info this)
+	  ,@(dump-size this)
 	  ,(j2s->list test) ,(j2s->list body))))
    
 ;*---------------------------------------------------------------------*/
@@ -945,6 +952,7 @@
 (define-method (j2s->list this::J2SFor)
    (with-access::J2SFor this (init test incr body loc)
       `(,@(call-next-method) ,@(dump-loc loc) ,@(dump-info this)
+	  ,@(dump-size this)
 	  ,(j2s->list init)
 	  ,(j2s->list test)
 	  ,(j2s->list incr)
@@ -956,6 +964,7 @@
 (define-method (j2s->list this::J2SForIn)
    (with-access::J2SForIn this (lhs obj body loc)
       `(,@(call-next-method) ,@(dump-loc loc) ,@(dump-info this)
+	  ,@(dump-size this)
 	  ,(j2s->list lhs)
 	  ,(j2s->list obj)
 	  ,(j2s->list body))))
@@ -988,6 +997,7 @@
    (with-access::J2SCall this (fun thisarg args loc protocol profid)
       `(,@(call-next-method)
 	  ,@(dump-loc loc)
+	  ,@(dump-size this)
 	  ,@(dump-type this)
 	  ,@(dump-rtype fun)
 	  ,@(dump-info this)
@@ -1010,6 +1020,7 @@
    (with-access::J2SAccess this (obj field loc)
       `(,@(call-next-method)
 	  ,@(dump-loc loc)
+	  ,@(dump-size this)
 	  ,@(dump-type this)
 	  ,@(dump-info this)
 	  ,@(dump-hint this)
@@ -1178,6 +1189,7 @@
 (define-method (j2s->list this::J2SSwitch)
    (with-access::J2SSwitch this (key cases)
       `(,@(call-next-method) ,(j2s->list key)
+	  ,@(dump-size this)
 	  ,@(map j2s->list cases))))
 
 ;*---------------------------------------------------------------------*/
@@ -1187,6 +1199,7 @@
    (with-access::J2SCase this (expr body cascade)
       (append (call-next-method)
 	 (if (>= (bigloo-debug) 3) `(:cascade ,cascade) '())
+	 (dump-size this)
 	 (list (j2s->list expr) (j2s->list body)))))
 
 ;*---------------------------------------------------------------------*/

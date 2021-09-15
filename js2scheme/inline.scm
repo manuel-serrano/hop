@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Sep 14 17:14:11 2021 (serrano)                */
+;*    Last change :  Wed Sep 15 16:35:25 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -70,11 +70,11 @@
 ;*---------------------------------------------------------------------*/
 (define inline-global-expansion
    ;; the overall program global expansion factor
-   3)
+   2)
 
 (define inline-max-function-size
    ;; the maximum body size of inlined candidates
-   80)
+   160)
 
 (define inline-min-dispatch-percentage
    ;; the minimum percentage of call
@@ -471,21 +471,19 @@
    (with-access::J2SProgram this (decls nodes)
       ;; count and mark all the calls
       (j2s-count-calls! this conf)
-      ;; mark all the function sizes
-      (let ((size (node-size this))
+      (let ((maxsize (*fx (node-size this) inline-global-expansion))
 	    (pms (ptable
 		    (append
 		       (append-map collect-proto-methods* nodes)
 		       (if (config-get conf :optim-inline-class-method)
 			   (append-map collect-proto-methods* decls)
 			   '())))))
-	 
-	 (let loop ((limit inline-max-function-size))
+	 (let loop ((limit 10))
 	    (inline! this #f limit '() pms #f this conf)
 	    (let ((nsize (node-size this)))
-	       (when (and (>fx limit 20)
-			  (< nsize (* size inline-global-expansion)))
-		  (loop (/fx limit 2)))))
+	       (when (and (<fx limit inline-max-function-size)
+			  (<fx nsize maxsize))
+		  (loop (*fx limit 2)))))
 	 (verbose pms))
       (j2s-inline-profile-cleanup! this conf)))
 
@@ -859,8 +857,7 @@
 			     (not (function-newtarget? val))
 			     (not (function-delete-argument? val))
 			     (not (memq val stack))
-			     (<=fx (function-size val)
-				(min limit (function-max-expansion val)))
+			     (<=fx (function-size val) limit)
 			     (check-id id)
 			     (not (function-self-recursive? val))
 			     (eq? (function-mode val) (function-mode (car stack)))
@@ -912,8 +909,6 @@
 		  (let ((e (inline-method-call fun mets args loc
 			      '() limit stack pmethods ingen prgm conf)))
 		     (inline-stmt->expr loc e
-;* 			(inline! e                                     */
-;* 			   '() leaf 0 (append vals stack) pmethods ingen prgm conf) */
 			(function-rutype
 			   (protoinfo-method (car mets))))))))))
    

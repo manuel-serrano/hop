@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 24 07:26:29 2017                          */
-;*    Last change :  Wed Sep  8 15:48:04 2021 (serrano)                */
+;*    Last change :  Wed Sep 15 17:20:00 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Compute an AST size (used when inlining)                         */
@@ -27,8 +27,9 @@
 ;*    Constants                                                        */
 ;*---------------------------------------------------------------------*/
 (define FUN-TAX 3)
+(define IF-TAX 2)
 (define CALL-TAX 3)
-(define LOOP-TAX 30)
+(define LOOP-TAX 80)
 (define SUPER-TAX 100000)
 
 ;*---------------------------------------------------------------------*/
@@ -96,7 +97,7 @@
 ;*    node-size ::J2SIf ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (node-size this::J2SIf)
-   (+fx 1 (call-next-method)))
+   (+fx IF-TAX (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-size ::J2SStmtExpr ...                                      */
