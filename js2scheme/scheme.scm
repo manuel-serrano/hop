@@ -2447,14 +2447,16 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SAssigOp mode return ctx)
    
-   (define (aput-assigop-cache-miss otmp::symbol pro prov op
+   (define (aput-assigop-cache-miss otmp::symbol typeo pro prov op
 	      tl::symbol lhs::J2SAccess rhs::J2SExpr field cachep ctx)
       (with-access::J2SAssigOp this ((typea type) cache)
 	 (with-access::J2SAccess lhs (cspecs obj field loc (typel type))
-	    (with-access::J2SExpr obj ((typeo type) loc)
+	    (with-access::J2SExpr obj (loc)
 	       (let* ((oref (instantiate::J2SHopRef
 			       (loc loc)
 			       (id otmp)
+			       ;; MS: 16 sep 2021 (used to be (j2s-type obj))
+ 			       ;; (type (j2s-type obj))
 			       (type typeo)))
 		      (lhs (J2SCast tl
 			      (duplicate::J2SAccess lhs
@@ -2477,7 +2479,7 @@
 			  :cachefun #f)
 		      ,vtmp))))))
    
-   (define (aput-assigop otmp::symbol pro prov op
+   (define (aput-assigop otmp::symbol typeof pro prov op
 	      tl::symbol lhs::J2SAccess rhs::J2SExpr field cachep ctx)
       (with-access::J2SAssigOp this ((typea type))
 	 (with-access::J2SAccess lhs (cspecs obj field loc (typel type) cache)
@@ -2514,9 +2516,9 @@
 				 (vector-set! ,els ,idx ,res)
 				 ,res))
 			     (else
-			      ,(aput-assigop-cache-miss otmp pro prov op
+			      ,(aput-assigop-cache-miss otmp typeo pro prov op
 				  tl lhs rhs field cachep ctx)))))
-		   (aput-assigop-cache-miss otmp pro prov op
+		   (aput-assigop-cache-miss otmp typeof pro prov op
 		      tl lhs rhs field cachep ctx))))))
    
    (define (access-assigop/otmp obj otmp::symbol op lhs::J2SAccess rhs::J2SExpr)
@@ -2532,19 +2534,19 @@
 	    `(let* (,@(if pro (list `(,pro ,prov)) '()))
 		,(cond
 		    ((or (not cache) (is-integer? field))
-		     (aput-assigop otmp pro prov op
+		     (aput-assigop otmp (j2s-type obj) pro prov op
 			tl lhs rhs field #f ctx))
 		    ((memq (typeof-this obj ctx) '(object this global))
-		     (aput-assigop otmp pro prov op
+		     (aput-assigop otmp (j2s-type obj) pro prov op
 			tl lhs rhs field #t ctx))
 		    (else
 		     `(if (js-object? ,otmp)
 			  ,(with-object obj
 			      (lambda ()
 				 `(with-access::JsObject ,otmp (cmap)
-				     ,(aput-assigop otmp pro prov op
+				     ,(aput-assigop otmp 'object pro prov op
 					 tl lhs rhs field #t ctx))))
-			  ,(aput-assigop otmp pro prov op
+			  ,(aput-assigop otmp (j2s-type obj) pro prov op
 			      tl (unoptimize lhs) (unoptimize rhs)
 			      field #f
 			      (new-compiler-context ctx :optim 0)))))))))
@@ -3702,6 +3704,7 @@
 ;*    with-object ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (with-object expr::J2SExpr thunk)
+   (tprint "WO expr=" (typeof expr))
    (with-access::J2SExpr expr (type)
       (let ((otype type))
 	 (if (isa? expr J2SRef)
