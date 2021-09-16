@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Sep 14 08:12:01 2021 (serrano)                */
+;*    Last change :  Thu Sep 16 09:33:38 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -559,7 +559,8 @@
 		 (fprint (current-error-port) "  xmap %id=" %id
 		    " props=" (vector-map js-debug-prop props))))
 	  (with-access::JsPropertyCache pcache (vindex)
-	     (fprint (current-error-port) "  vindex=" vindex)))
+	     (unless (=fx vindex (js-not-a-index))
+		(fprint (current-error-port) "  vindex=" vindex))))
        (fprint (current-error-port) msg (typeof pcache))))
 
 ;*---------------------------------------------------------------------*/
@@ -589,15 +590,17 @@
 (define (js-ctor-constrsize-extend! ctor sz)
    (cond
       ((js-function? ctor)
-       (with-access::JsFunction ctor (constrsize info)
+       (with-access::JsFunction ctor (constrsize info constrmap)
 	  (cond
 	     ((>fx constrsize sz)
 	      #unspecified)
 	     ((>=fx constrsize (js-function-info-maxconstrsize info))
 	      #unspecified)
 	     ((<fx sz (js-function-info-maxconstrsize info))
+	      (set! constrmap (clone-cmap constrmap))
 	      (set! constrsize sz))
 	     (else
+	      (set! constrmap (clone-cmap constrmap))
 	      (set! constrsize (+fx constrsize 1))))))
       ((cell? ctor)
        (cond

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 24 07:26:29 2017                          */
-;*    Last change :  Wed Sep 15 17:20:00 2021 (serrano)                */
+;*    Last change :  Wed Sep 15 18:54:59 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Compute an AST size (used when inlining)                         */
@@ -30,6 +30,9 @@
 (define IF-TAX 2)
 (define CALL-TAX 3)
 (define LOOP-TAX 80)
+(define STMT-TAX 1)
+(define LETBLOCK-TAX 1)
+(define EXPR-TAX 1)
 (define SUPER-TAX 100000)
 
 ;*---------------------------------------------------------------------*/
@@ -76,7 +79,7 @@
 ;*    node-size ::J2SStmt ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (node-size this::J2SStmt)
-   (+fx 1 (call-next-method)))
+   (+fx STMT-TAX (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-size ::J2SReturn ...                                        */
@@ -84,14 +87,14 @@
 (define-method (node-size this::J2SReturn)
    (with-access::J2SReturn this (expr)
       ;; an extra weight as be counter when declarting the function
-      (+fx 3 (node-size expr))))
+      (node-size expr)))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    node-size ::J2SLetBLock ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (node-size this::J2SLetBlock)
    (with-access::J2SLetBlock this (decls)
-      (+ 1 (apply + (map node-size decls)) (call-next-method))))
+      (+ LETBLOCK-TAX (apply + (map node-size decls)) (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-size ::J2SIf ...                                            */
@@ -115,7 +118,7 @@
 ;*    node-size ::J2SExpr ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (node-size this::J2SExpr)
-   (+fx 1 (call-next-method)))
+   (+fx EXPR-TAX (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-size ::J2SSuper ...                                         */
@@ -150,7 +153,8 @@
 (define-method (node-size this::J2SCall)
    (with-access::J2SCall this (fun args)
       ;; (length args) for the potential spills
-      (+ CALL-TAX (node-size fun) (length args)
+      (+ CALL-TAX
+	 (node-size fun) (length args)
 	 (apply + (map node-size args)))))
 
 ;*---------------------------------------------------------------------*/
