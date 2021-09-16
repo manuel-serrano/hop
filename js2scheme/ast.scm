@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Sep 14 09:27:42 2021 (serrano)                */
+;*    Last change :  Thu Sep 16 18:59:43 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -287,7 +287,9 @@
 	      (prop::J2SPropertyInit (info '("ast")))
 	      (type (default 'any))
 	      (clazz (default #f) (info '("notraverse")))
-	      (index::long (default -1) (info '("notraverse"))))
+	      (index::long (default -1) (info '("notraverse")))
+	      ;; see usage-bit.sch
+	      (usage::uint32 (default (usage '()))))
 	   
 	   (final-class J2SCatch::J2SStmt
 	      param::J2SDecl

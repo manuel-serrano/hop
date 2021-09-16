@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sat Sep 11 08:59:16 2021 (serrano)                */
+;*    Last change :  Thu Sep 16 19:00:23 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -1534,11 +1534,11 @@
    (with-access::J2SClass this (elements name)
       ;; mark all the private fields
       (for-each (lambda (el)
-		   (with-access::J2SClassElement el (private prop)
+		   (with-access::J2SClassElement el (prop)
 		      (with-access::J2SPropertyInit prop (name)
 			 (when (isa? name J2SString)
-			    (with-access::J2SString name (val)
-			       (when (class-private-name? val)
+			    (with-access::J2SString name (val private)
+			       (when private
 				  (set! val (class-private-field-name val this))))))))
 	 elements)
       ;; resolve private field accesses
@@ -1585,12 +1585,6 @@
 	    (when (and private (eq? op 'in))
 	       (set! val (class-private-field-name val clazz)))))))
 
-;*---------------------------------------------------------------------*/
-;*    class-private-name? ...                                          */
-;*---------------------------------------------------------------------*/
-(define (class-private-name? str)
-   (char=? (string-ref str 0) #\#))
-      
 ;*---------------------------------------------------------------------*/
 ;*    class-private-field-name ...                                     */
 ;*---------------------------------------------------------------------*/
