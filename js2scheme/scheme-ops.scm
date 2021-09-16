@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Sep 13 19:54:50 2021 (serrano)                */
+;*    Last change :  Thu Sep 16 13:26:36 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -527,13 +527,15 @@
       ((+)
        `(js+ ,(box lhs (j2s-type l) ctx) ,(box rhs (j2s-type r) ctx) %this))
       ((++)
-       (if (isone? rhs)
-	   `(js++ ,(box lhs (j2s-type l) ctx) %this)
-	   (error "js-binop:++" "wrong rhs" (j2s->list r))))
+       (cond
+	  ((isone? rhs) `(js++ ,(box lhs (j2s-type l) ctx) %this))
+	  ((isminusone? rhs) `(js-- ,(box lhs (j2s-type l) ctx) %this))
+	  (else (error "js-binop:++" "wrong rhs" (j2s->list r)))))
       ((--)
-       (if (isone? rhs)
-	   `(js-- ,(box lhs (j2s-type l) ctx) %this)
-	   (error "jsbinop:--" "wrong rhs" (j2s->list r))))
+       (cond
+	  ((isone? rhs) `(js-- ,(box lhs (j2s-type l) ctx) %this))
+	  ((isminusone? rhs) `(js++ ,(box lhs (j2s-type l) ctx) %this))
+	  (else (error "jsbinop:--" "wrong rhs" (j2s->list r)))))
       ((<)
        `(<js ,(box lhs (j2s-type l) ctx) ,(box rhs (j2s-type r) ctx) %this))
       ((<=)
@@ -3434,4 +3436,13 @@
       ((fixnum? x) (=fx x 1))
       ((int32? x) (=s32 x #s32:1))
       ((uint32? x) (=u32 x #u32:1))
+      (else #f)))
+
+;*---------------------------------------------------------------------*/
+;*    isminusone? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (isminusone? x)
+   (cond
+      ((fixnum? x) (=fx x -1))
+      ((int32? x) (=s32 x #s32:-1))
       (else #f)))

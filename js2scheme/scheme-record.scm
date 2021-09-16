@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Tue Sep 14 11:22:40 2021 (serrano)                */
+;*    Last change :  Thu Sep 16 14:40:48 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -326,7 +326,7 @@
 ;*    j2s-record-constructor ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (j2s-record-constructor this::J2SRecord mode return ctx)
-
+   
    (define (unthis this loc)
       (instantiate::J2SStmtExpr
 	 (loc loc)
@@ -343,7 +343,7 @@
 	 (id 'new-target)
 	 (_scmid 'new-target)
 	 (binder 'param)))
-
+   
    (define (this-for-super-decl thisp)
       (with-access::J2SDecl thisp (loc)
 	 (let* ((thisp-safe (duplicate::J2SDecl thisp (binder 'let-opt)))
@@ -353,7 +353,7 @@
 	    (with-access::J2SDecl decl (_scmid)
 	       (set! _scmid '!this))
 	    decl)))
-
+   
    (define (j2s-record-constructor-fun this::J2SRecord fun::J2SFun)
       (with-access::J2SRecord this (super)
 	 (with-access::J2SFun fun (idthis body params thisp new-target)
@@ -401,7 +401,7 @@
 	 (with-access::J2SDataPropertyInit prop (val)
 	    (let ((dup (duplicate::J2SFun val)))
 	       (j2s-record-constructor-fun this dup)))))
-
+   
    (define (j2s-record-constructor/w-ctor this superctor)
       (with-access::J2SRecord this (loc decl)
 	 (let ((self (instantiate::J2SDecl
@@ -423,16 +423,22 @@
 		     (J2SCall* (J2SSuper self this)
 			(map (lambda (d) (J2SRef d)) params))))))))
    
-   (let ((ctor (j2s-class-get-constructor this)))
-      (if ctor
-	  (j2s-record-constructor/ctor this ctor)
-	  (let ((superctor (j2s-class-find-constructor this)))
-	     (if superctor
-		 (j2s-record-constructor/w-ctor this superctor)
-		 `(lambda (this) 
-		     ,@(j2s-scheme-init-instance-properties
-			 this mode return ctx)
-		     this))))))
+   
+   (define (gen-scm-ctor this)
+      (let ((ctor (j2s-class-get-constructor this)))
+	 (if ctor
+	     (j2s-record-constructor/ctor this ctor)
+	     (let ((superctor (j2s-class-find-constructor this)))
+		(if superctor
+		    (j2s-record-constructor/w-ctor this superctor)
+		    `(lambda (this) 
+			,@(j2s-scheme-init-instance-properties
+			     this mode return ctx)
+			this))))))
+   
+   (let ((ctor (gen-scm-ctor this)))
+      (j2s-scheme-class-put-info! this :scm-cache-constructor ctor)
+      ctor))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-record-prototype ...                                         */

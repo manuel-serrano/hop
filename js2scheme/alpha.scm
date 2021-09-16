@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Mon Sep 13 11:00:05 2021 (serrano)                */
+;*    Last change :  Thu Sep 16 18:05:00 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -311,18 +311,56 @@
 	     (duplicate::J2SSuper this)))))
 
 ;*---------------------------------------------------------------------*/
+;*    alpha ::J2SDecl ...                                              */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SDecl)
+   (with-access::J2SDecl this (%info)
+      (if (isa? %info AlphaInfo)
+	  (with-access::AlphaInfo %info (new)
+	     (if (isa? new J2SDecl)
+		 new
+		 this))
+	  this)))
+
+;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SFun ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-method (alpha this::J2SFun)
-   (with-access::J2SFun this (params body method)
-      (let* ((nparams (map j2sdecl-duplicate params))
-	     (nfun (duplicate::J2SFun this
-		      (params nparams)
-		      (method (alpha method))
-		      (body body))))
-	 (with-access::J2SFun nfun (body)
-	    (set! body (j2s-alpha body (cons this params) (cons nfun nparams))))
-	 nfun)))
+
+   (define (alpha-fun/decl this)
+      (with-access::J2SFun this (params body method decl name)
+	 (let* ((ndecl (duplicate::J2SDeclFun decl))
+		(nparams (map j2sdecl-duplicate params))
+		(nfun (duplicate::J2SFun this
+			 (decl ndecl)
+			 (params nparams)
+			 (method (j2s-alpha method (list decl) (list ndecl)))
+			 (body body))))
+	    (with-access::J2SFun nfun (body)
+	       (with-access::J2SDeclFun ndecl (val)
+		  (set! val nfun))
+	       (set! body
+		  (j2s-alpha body
+		     (cons* decl this params) (cons* ndecl nfun nparams))))
+	    nfun)))
+
+   (define (alpha-fun/w-decl this)
+      (with-access::J2SFun this (params body method name)
+	 (let* ((nparams (map j2sdecl-duplicate params))
+		(nfun (duplicate::J2SFun this
+			 (params nparams)
+			 (method (alpha method))
+			 (body body))))
+	    (with-access::J2SFun nfun (body)
+	       (set! body
+		  (j2s-alpha body (cons this params) (cons nfun nparams))))
+	    nfun)))
+   
+   (with-access::J2SFun this (decl)
+      (if (isa? decl J2SDeclFun)
+	  (alpha-fun/decl this)
+	  (alpha-fun/w-decl this))))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SMethod ...                                            */

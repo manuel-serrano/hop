@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Sep 15 17:25:59 2021 (serrano)                */
+;*    Last change :  Thu Sep 16 17:39:24 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -720,7 +720,10 @@
 				idthis generator loc vararg constrsize)
       (cond
 	 ((isa? decl J2SDeclFun)
-	  (with-access::J2SDecl decl (key usage scope)
+	  (with-access::J2SDeclFun decl (key usage scope val key)
+	     (unless (eq? val this)
+		(error/loc "j2s->list" (format "inconsistent J2SFun (key=~s)" key)
+		   name loc))
 	     `(,@(call-next-method) ,@(if generator '(*) '())
 		 :name ,name :mode ,mode :idgen ,idgen :constrsize ,constrsize
 		 ,@(dump-loc loc)
@@ -736,6 +739,7 @@
 		 ,@(dump-new-target new-target)
 		 ,@(dump-range this)
 		 ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
+		 ,@(if idthis `(:idthis ,(j2s->list idthis)) '())
 		 ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
 		 ,@(if vararg `(:vararg ,vararg) '())
 		 ,@(if src '() `(:src #f))
@@ -759,6 +763,7 @@
 		 ,@(dump-new-target new-target)
 		 ,@(dump-range this)
 		 ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
+		 ,@(if idthis `(:idthis ,(j2s->list idthis)) '())
 		 ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
 		 ,@(if vararg `(:vararg ,vararg) '())
 		 ,(map j2s->list params) ,(j2s->list body))))
@@ -776,6 +781,7 @@
 	      ,@(dump-new-target new-target)
 	      ,@(dump-range this)
 	      ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
+	      ,@(if idthis `(:idthis ,(j2s->list idthis)) '())
 	      ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
 	      ,@(if vararg `(:vararg ,vararg) '())
 	      ,(map j2s->list params) ,(j2s->list body))))))

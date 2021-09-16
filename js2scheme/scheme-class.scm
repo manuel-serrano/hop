@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Mon Sep 13 15:32:32 2021 (serrano)                */
+;*    Last change :  Thu Sep 16 14:32:59 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -37,7 +37,9 @@
 	   (j2s-scheme-class-call-super ::J2SCall mode return ctx)
 	   (j2s-scheme-need-super-check?::bool ::J2SFun)
 	   (j2s-scheme-init-instance-properties ::J2SClass mode return ctx)
-	   (generic j2s-scheme-call-class-constructor clazz::J2SClass ecla enewtarget eobj args ::J2SNode mode return ctx)))
+	   (generic j2s-scheme-call-class-constructor clazz::J2SClass ecla enewtarget eobj args ::J2SNode mode return ctx)
+	   (j2s-scheme-class-put-info! ::J2SClass ::keyword ::obj)
+	   (j2s-scheme-class-get-info ::J2SClass ::keyword)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-call-class-constructor ...                            */
@@ -320,6 +322,7 @@
 				  constrsize))
 			     (else
 			      1))))
+	    (j2s-scheme-class-put-info! this :scm-cache-constructor constructor)
 	    `(letrec* ((,ctorf ,constructor)
 		       (,proto ,(class-prototype this super))
 		       (,clazz (js-make-function %this ,function
@@ -537,7 +540,7 @@
 		   ,@(j2s-scheme-init-instance-properties context
 			mode return ctx)
 		   ,tmp)))))
-
+   
    (define (scheme-class-super-declclass this clazz::J2SClass decl)
       (with-access::J2SCall this (args loc)
 	 (with-access::J2SClass clazz (need-super-check)
@@ -576,8 +579,8 @@
 		      ,@(j2s-scheme-init-instance-properties clazz
 			   mode return ctx)
 		      ,res))))))
-
-   (with-access::J2SCall this (fun)
+   
+   (with-access::J2SCall this (fun args)
       (with-access::J2SSuper fun (context)
 	 (with-access::J2SClass context (super)
 	    (cond
@@ -588,9 +591,27 @@
 		       (with-access::J2SDeclClass decl (val)
 			  ;; val is a J2SClass only when optimizations
 			  ;; are enabled
-			  (if (isa? val J2SClass)
-			      (scheme-class-super-declclass this context decl)
-			      (scheme-class-super-expr this context super))))
+			  (cond
+			     ((not (isa? val J2SClass))
+			      (scheme-class-super-expr this context super))
+			     ((j2s-scheme-class-get-info val :scm-cache-constructor)
+			      ;; try to inline super constructors
+			      =>
+			      (lambda (ctor)
+				 (match-case ctor
+				    ((lambda ?params . ?body)
+				     (if (eq? (+fx 1 (length args)) (length params))
+					 `(,ctor this ,@(j2s-scheme args mode return ctx))
+					 (scheme-class-super-declclass this context decl)))
+				    ((labels ((?id ?params . ?body)) ?id)
+				     (if (eq? (+fx 1 (length args)) (length params))
+					 `(labels ((,id ,params ,@body))
+					     (,id this ,@(j2s-scheme args mode return ctx)))
+					 (scheme-class-super-declclass this context decl)))
+				    (else
+				     (scheme-class-super-declclass this context decl)))))
+			     (else
+			      (scheme-class-super-declclass this context decl)))))
 		      ((isa? decl J2SDeclFun)
 		       (scheme-class-super-declfun this context decl))
 		      (else
@@ -960,3 +981,22 @@
 	      ,@(j2s-scheme-init-instance-properties
 		   clazz mode return ctx)
 	      this)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme-class-put-info! ...                                   */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-class-put-info! this::J2SClass key val)
+   (with-access::J2SClass this (%info name)
+      (if (pair? %info)
+	  (set! %info (cons (cons key val) %info))
+	  (set! %info (list (cons key val))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme-class-get-info ...                                    */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-class-get-info this::J2SClass key)
+   (with-access::J2SClass this (%info name)
+      (when (pair? %info)
+	 (let ((o (assq key %info)))
+	    (when (pair? o)
+	       (cdr o))))))
