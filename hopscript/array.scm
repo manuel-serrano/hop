@@ -226,7 +226,7 @@
 	 " ainline=" (js-object-mode-arrayinline? obj)
 	 " aholey=" (js-object-mode-arrayholey? obj))
       (if (<fx (vector-length vec) 20)
-	  (fprint (current-error-port) "\n   vec=" vec)
+	  (fprint (current-error-port) "   vec=" vec)
 	  (let ((v (copy-vector vec 20)))
 	     (vector-set! v 19 "...")
 	     (fprint (current-error-port) " vec=" v)))

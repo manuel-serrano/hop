@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Sep 16 19:00:23 2021 (serrano)                */
+;*    Last change :  Fri Sep 17 08:51:02 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -1539,6 +1539,7 @@
 			 (when (isa? name J2SString)
 			    (with-access::J2SString name (val private)
 			       (when private
+				  (set! private el)
 				  (set! val (class-private-field-name val this))))))))
 	 elements)
       ;; resolve private field accesses
@@ -1568,11 +1569,13 @@
 	    (when private
 	       (if (not (isa? clazz J2SClass))
 		   (err val loc)
-		   (let ((pname (class-private-field-name val clazz)))
-		      (unless (j2s-class-instance-get-property-index clazz pname)
-			 (err val loc))
-		      ;; a private fields
-		      (set! val pname))))))))
+		   (let* ((pname (class-private-field-name val clazz))
+			  (el (j2s-class-find-element clazz pname :super #f)))
+		      (if el
+			  (begin
+			     (set! val pname)
+			     (set! private el))
+			 (err val loc)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve-class-private-fields ::J2SBinary ...                     */

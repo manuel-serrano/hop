@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Sep  1 09:45:11 2021 (serrano)                */
+;*    Last change :  Fri Sep 17 09:06:20 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1107,6 +1107,15 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SPragma env::pair-nil conf mode::symbol fix::cell)
    (expr-range-add! this env fix *infinity-intv*))
+
+;*---------------------------------------------------------------------*/
+;*    node-range ::J2SPropertyInit ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-range this::J2SPropertyInit env::pair-nil conf mode::symbol fix::cell)
+   (with-access::J2SPropertyInit this (name)
+      (multiple-value-bind (intv env)
+	 (node-range name env conf mode fix)
+	 (return #f env))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SDataPropertyInit ...                             */

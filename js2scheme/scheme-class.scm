@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Thu Sep 16 14:32:59 2021 (serrano)                */
+;*    Last change :  Fri Sep 17 18:34:17 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -70,11 +70,16 @@
 				   constructor))
 			       ,(j2s-scheme call mode return ctx))))))
 		 (else
-		  ;; default constructor
 		  `(begin
-		      (constructor ,eobj
-			 ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args))
+		      ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)
+		      (constructor ,eobj)
 		      this)))))))
+;* 		 (else                                                 */
+;* 		  ;; default constructor                               */
+;* 		  `(begin                                              */
+;* 		      (constructor ,eobj                               */
+;* 			 ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)) */
+;* 		      this)))))))                                      */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-call-fun-constructor ...                              */
@@ -601,12 +606,15 @@
 				 (match-case ctor
 				    ((lambda ?params . ?body)
 				     (if (eq? (+fx 1 (length args)) (length params))
-					 `(,ctor this ,@(j2s-scheme args mode return ctx))
+					 `(begin
+					     (,ctor this ,@(j2s-scheme args mode return ctx))
+					     ,@(j2s-scheme-init-instance-properties context mode return ctx))
 					 (scheme-class-super-declclass this context decl)))
 				    ((labels ((?id ?params . ?body)) ?id)
 				     (if (eq? (+fx 1 (length args)) (length params))
 					 `(labels ((,id ,params ,@body))
-					     (,id this ,@(j2s-scheme args mode return ctx)))
+					     (,id this ,@(j2s-scheme args mode return ctx))
+					     ,@(j2s-scheme-init-instance-properties context mode return ctx))
 					 (scheme-class-super-declclass this context decl)))
 				    (else
 				     (scheme-class-super-declclass this context decl)))))

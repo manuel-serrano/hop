@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Sep 16 18:59:43 2021 (serrano)                */
+;*    Last change :  Fri Sep 17 08:05:52 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -362,7 +362,8 @@
 	   
 	   (class J2SString::J2SLiteralValue
 	      (escape::pair-nil read-only (default '()))
-	      (private::bool (default #f)))
+	      ;; either #f, #t (after parsing), a J2SClassElement (after symbol)
+	      (private (default #f) (info '("notraverse"))))
 	   (final-class J2SBool::J2SLiteralValue)
 	   (class J2SNumber::J2SLiteralValue)
 	   (final-class J2SOctalNumber::J2SNumber)
@@ -464,7 +465,7 @@
 	      (protocol::symbol (default 'direct) (info '("notraverse")))
 	      (args::pair-nil (info '("ast"))))
 
-	   (abstract-class J2SPropertyInit::J2SNode
+	   (class J2SPropertyInit::J2SNode
 	      (name::J2SExpr (info '("ast"))))
 	   
 	   (class J2SDataPropertyInit::J2SPropertyInit

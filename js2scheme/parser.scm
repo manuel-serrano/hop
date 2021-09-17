@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Sep 11 08:53:38 2021 (serrano)                */
+;*    Last change :  Fri Sep 17 08:06:29 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1902,10 +1902,9 @@
 		       (type ty)
 		       (prop prop))))
 		((SEMICOLON)
-		 (let ((prop (instantiate::J2SDataPropertyInit
+		 (let ((prop (instantiate::J2SPropertyInit
 				(loc loc)
-				(name name-or-get)
-				(val (J2SUndefined)))))
+				(name name-or-get))))
 		    (instantiate::J2SClassElement
 		       (loc loc)
 		       (static static?)
@@ -2985,6 +2984,7 @@
 	      (let ((token (consume-any!)))
 		 (instantiate::J2SString
 		    (loc (token-loc token))
+		    (private #t)
 		    (val (symbol->string (token-value token)))))
 	      (parse-token-error "Private field must be declared in an enclosing class"
 		 (consume-any!))))

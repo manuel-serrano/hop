@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Tue Sep 14 18:29:45 2021 (serrano)                */
+;*    Last change :  Fri Sep 17 13:08:41 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -48,8 +48,8 @@
 	   (type-maybe-subtype?::bool ::obj ::obj)
 	   (type-name type #!optional (conf '()))
 	   
-	   (min-type::symbol ::obj ::obj)
-	   (max-type::symbol ::obj ::obj)
+	   (min-type::obj ::obj ::obj)
+	   (max-type::obj ::obj ::obj)
 	   (js-uint32-tointeger expr conf)
 	   
 	   (j2s-expr-type-test ::J2SExpr)
@@ -412,6 +412,8 @@
       ((eq? t1 t2) t1)
       ((eq? t1 'unknown) t2)
       ((eq? t2 'unknown) t2)
+      ((type-subtype? t1 t2) t1)
+      ((type-subtype? t2 t1) t2)
       (else
        (case t1
 	  ((index) t1)

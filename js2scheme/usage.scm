@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/usage.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/usage.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 07:04:23 2019                          */
-;*    Last change :  Thu May 13 16:52:21 2021 (serrano)                */
+;*    Last change :  Fri Sep 17 08:10:08 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Ast node usage API                                               */
@@ -30,6 +30,7 @@
 	   (decl-usage-strict?::bool ::J2SDecl ::pair-nil)
 
 	   (usage-add ::uint32 ::symbol)
+	   (usage-add* ::uint32 ::pair-nil)
 	   (decl-usage-add! ::J2SDecl ::symbol)
 	   
 	   (usage-rem ::uint32 ::symbol)
@@ -104,6 +105,16 @@
 ;*---------------------------------------------------------------------*/
 (define (usage-add usage key)
    (bit-oru32 usage (usage-key->bit key)))
+
+;*---------------------------------------------------------------------*/
+;*    usage-add* ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (usage-add* usage keys)
+   (let loop ((usage usage)
+	      (keys keys))
+      (if (null? keys)
+	  usage
+	  (loop (usage-add usage (car keys)) (cdr keys)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    decl-usage-add! ...                                              */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Sep 14 14:49:26 2021 (serrano)                */
+;*    Last change :  Fri Sep 17 09:24:18 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -240,6 +240,29 @@
 		     (type->sexp ntype)))
 	       (set! type (tyflow-type ntype)))))
       (return type env bk)))
+
+;*---------------------------------------------------------------------*/
+;*    class-element-type-add! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (class-element-type-add! this::J2SClassElement ctx::pair ty)
+   (with-access::J2SClassElement this (type)
+      (unless (or (eq? ty 'unknown) (eq? type ty))
+	 (let ((ntype (merge-types type ty)))
+	    (unless (eq? ntype type)
+	       (unfix! ctx
+		  (format "J2SClassElement.add(~a) ~a ~a/~a -> ~a"
+		     loc (j2s->list this)
+		     (type->sexp ty)
+		     (type->sexp type)
+		     (type->sexp ntype)))
+	       (set! type (tyflow-type ntype))))) ))
+
+;*---------------------------------------------------------------------*/
+;*    class-element-access-type-add! ...                               */
+;*---------------------------------------------------------------------*/
+(define (class-element-access-type-add! this::J2SAccess ctx::pair ty)
+   (let ((el (class-private-element-access this)))
+      (class-element-type-add! el ctx ty)))
 
 ;*---------------------------------------------------------------------*/
 ;*    merge-types ...                                                  */
@@ -525,6 +548,12 @@
 	 (else
 	  (expr-type-add! this env ctx 'any)))))
 	  
+;*---------------------------------------------------------------------*/
+;*    node-type ::J2SPropertyInit ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-type this::J2SPropertyInit env::pair-nil ctx::pair)
+   'unknown)
+
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SDataPropertyInit ...                              */
 ;*---------------------------------------------------------------------*/
@@ -860,14 +889,20 @@
 			 (multiple-value-bind (tyr nenv rbk)
 			    (node-type rhs envt ctx)
 			    (if tyr
-				(expr-type-add! this nenv ctx tyr (append lbk rbk))
+				(begin
+				   (when (class-private-element-access lhs)
+				      (class-element-access-type-add! lhs ctx tyr))
+				   (expr-type-add! this nenv ctx tyr (append lbk rbk)))
 				(return 'unknown envt (append lbk rbk))))))))
 	       (else
 		;; a non variable assignment
 		(multiple-value-bind (tyr nenv rbk)
 		   (node-type rhs envl ctx)
 		   (if tyr
-		       (expr-type-add! this nenv ctx tyr (append lbk rbk))
+		       (begin
+			  (when (class-private-element-access lhs)
+			     (class-element-access-type-add! lhs ctx tyr))
+			  (expr-type-add! this nenv ctx tyr (append lbk rbk)))
 		       (return 'unknown env (append lbk rbk))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -895,6 +930,8 @@
 			  (expr-type-add! this nenv ctx tyr bkr)))))))
 	    (else
 	     ;; a non variable assinment
+	     (when (class-private-element-access lhs)
+		(class-element-access-type-add! lhs ctx tyr))
 	     (expr-type-add! this envr ctx tyr bkr))))))
 
 ;*---------------------------------------------------------------------*/
@@ -940,6 +977,8 @@
 				   (append lbk bkr)))))))))
 	       (else
 		;; a non variable assignment
+		(when (class-private-element-access lhs)
+		   (class-element-access-type-add! lhs ctx tyr))
 		(expr-type-add! this envr ctx (numty tyr) bkr)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -972,9 +1011,6 @@
 			     (let ((nenv (extend-env env decl (numty tyv))))
 				(expr-type-add! this nenv ctx (numty tyv)
 				   (append lbk bkr)))))
-			 ;; MS CARE UTYPE
-;* 			 ((not (eq? utype 'unknown))                   */
-;* 			  (return utype env bkr))                      */
 			 (else
 			  (decl-vtype-add! decl (numty tyr) ctx)
 			  (let ((nenv (extend-env envr decl (numty tyr))))
@@ -1641,6 +1677,11 @@
 				 (expr-type-add! this envf ctx type (append bko bkf)))
 			      (expr-type-add! this envf ctx 'unknown (append bko bkf)))))
 		    (expr-type-add! this envf ctx 'any (append bko bkf))))
+	       ((class-private-element-access this)
+		=>
+		(lambda (el)
+		   (with-access::J2SClassElement el (type)
+		      (expr-type-add! this envf ctx type (append bko bkf)))))
 	       ((eq? tyo 'unknown)
 		(expr-type-add! this envf ctx 'unknown (append bko bkf)))
 	       (else
@@ -2032,7 +2073,7 @@
 ;*    node-type ::J2SClassElement ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SClassElement env::pair-nil ctx::pair)
-
+   
    (define (type-record-method val::J2SFun clazz)
       (with-access::J2SFun val (thisp body loc)
 	 (let ((self (duplicate::J2SDeclInit thisp
@@ -2048,7 +2089,7 @@
 	       (J2SLetRecBlock #f (list self)
 		  (j2s-alpha body (list thisp) (list self)))))))
    
-   (with-access::J2SClassElement this (prop type clazz static)
+   (with-access::J2SClassElement this (prop type clazz static usage)
       (cond
 	 ((j2s-class-property-constructor? prop)
 	  (if (isa? clazz J2SRecord)
@@ -2076,10 +2117,16 @@
 		   (with-access::J2SDecl thisp (vtype)
 		      (when (eq? vtype 'unknown)
 			 (type-record-method val clazz))))))
-	  (when (eq? type 'unknown)
-	     (set! type 'any)
-	     (unfix! ctx "class element"))
-	  (node-type prop env ctx)))
+	  (let ((vty (node-type prop env ctx)))
+	     (when (eq? type 'unknown)
+		(cond
+		   ((usage-has? usage '(uninit))
+		    (if (j2s-class-element-private? this)
+			(class-element-type-add! this ctx 'undefined)
+			(class-element-type-add! this ctx 'any)))
+		   ((not (eq? vty 'unknown))
+		    (class-element-type-add! this ctx vty)))))))
+      
       (return 'void env '())))
 
 ;*---------------------------------------------------------------------*/
@@ -2456,9 +2503,11 @@
 ;*    force-type! ::J2SClass ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-type! this::J2SClass from to cell final)
-;*    (with-access::J2SClass this (decl)                               */
-;*       (when decl                                                    */
-;* 	 (force-type! decl from to cell final)))                       */
+   (with-access::J2SClass this (elements)
+      (for-each (lambda (el)
+		   (with-access::J2SClassElement el (type)
+		      (when (eq? type from) (set! type to))))
+	 elements))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/

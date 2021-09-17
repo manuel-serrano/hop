@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Sep  8 19:14:24 2021 (serrano)                */
+;*    Last change :  Fri Sep 17 18:20:35 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -487,10 +487,12 @@
 	 (let* ((p (j2s-class-instance-properties this))
 		(n (add-cmap! loc
 		      (list->vector
-			 (map (lambda (prop)
-				 (with-access::J2SPropertyInit prop (name)
-				    (with-access::J2SString name (val)
-				       (string->symbol val))))
+			 (filter-map (lambda (prop)
+					(unless (isa? prop J2SAccessorPropertyInit)
+					   (with-access::J2SPropertyInit prop (name)
+					      (when (isa? name J2SString)
+						 (with-access::J2SString name (val)
+						    (string->symbol val))))))
 			    p))
 		      env #f)))
 	    (set! cmap

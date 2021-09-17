@@ -3704,7 +3704,6 @@
 ;*    with-object ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (with-object expr::J2SExpr thunk)
-   (tprint "WO expr=" (typeof expr))
    (with-access::J2SExpr expr (type)
       (let ((otype type))
 	 (if (isa? expr J2SRef)

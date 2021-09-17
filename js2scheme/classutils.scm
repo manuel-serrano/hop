@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Tue Sep 14 10:40:31 2021 (serrano)                */
+;*    Last change :  Fri Sep 17 08:48:47 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -37,7 +37,8 @@
 	   (j2s-class-static-methods::pair-nil ::J2SClass)
 	   (j2s-class-methods::pair-nil ::J2SClass #!key (super #t))
 
-	   (j2s-class-find-element ::J2SClass ::bstring)
+	   (j2s-class-find-element ::J2SClass ::bstring #!key (super #t))
+	   (j2s-class-element-private? ::J2SClassElement)
 	   
 	   (j2s-class-get-property ::J2SClass ::bstring)
 	   (j2s-class-get-constructor ::J2SClass)
@@ -51,7 +52,9 @@
 	   
 	   (class-sort-class-methods! ::J2SClass)
 	   (class-class-method-index ::J2SClass ::J2SClassElement)
-	   (class-instance-property-index ::J2SClass ::J2SClassElement)))
+	   (class-instance-property-index ::J2SClass ::J2SClassElement)
+
+	   (class-private-element-access this::J2SAccess)))
 
 ;*---------------------------------------------------------------------*/
 ;*    class-info-name ...                                              */
@@ -189,7 +192,7 @@
    (define (instance-element-prop el)
       (with-access::J2SClassElement el (prop static)
 	 (when (and (not static)
-		    (isa? prop J2SDataPropertyInit)
+		    (isa? prop J2SPropertyInit)
 		    (not (isa? prop J2SMethodPropertyInit)))
 	    prop)))
 
@@ -234,15 +237,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-class-find-element ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (j2s-class-find-element clazz field)
+(define (j2s-class-find-element clazz field #!key (super #t))
    
    (define (class-get-field-in-class clazz)
       (with-access::J2SClass clazz (elements)
 	 (find (lambda (el)
 		  (with-access::J2SClassElement el (prop)
 		     (with-access::J2SPropertyInit prop (name)
-			(with-access::J2SString name (val)
-			   (string=? val field)))))
+			(when (isa? name J2SString)
+			   (with-access::J2SString name (val)
+			      (string=? val field))))))
 	    elements)))
    
    (let loop ((clazz clazz))
@@ -250,6 +254,16 @@
 	 (if (isa? super J2SClass)
 	     (or (loop super) (class-get-field-in-class clazz))
 	     (class-get-field-in-class clazz)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-class-element-private? ...                                   */
+;*---------------------------------------------------------------------*/
+(define (j2s-class-element-private? this::J2SClassElement)
+   (with-access::J2SClassElement this (prop)
+      (with-access::J2SPropertyInit prop (name)
+	 (when (isa? name J2SString)
+	    (with-access::J2SString name (private)
+		  private)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-class-get ...                                                */
@@ -265,12 +279,14 @@
 		   (if (or (not instancep)
 			   (and (not static)
 				(not (isa? prop J2SMethodPropertyInit))))
-		       (if (isa? prop J2SDataPropertyInit)
+		       (if (isa? prop J2SPropertyInit)
 			   (with-access::J2SPropertyInit prop (name)
-			      (with-access::J2SString name (val)
-				 (if (string=? val field)
-				     (values i (car els))
-				     (loop (+fx i 1) (cdr els))))))
+			      (if (isa? name J2SString)
+				  (with-access::J2SString name (val)
+				     (if (string=? val field)
+					 (values i (car els))
+					 (loop (+fx i 1) (cdr els))))
+				  (loop (+fx i 1) (cdr els)))))
 		       (loop i (cdr els))))
 		(values i #f)))))
 
@@ -537,16 +553,18 @@
 	     (let ((el (car els)))
 		(with-access::J2SClassElement el (prop index)
 		   (with-access::J2SPropertyInit prop (name)
-		      (with-access::J2SString name (val)
-			 (multiple-value-bind (old idx)
-			    (assoc-index val res)
-			    (set! index idx)
-			    (cond
-			       ((pair? old)
-				(set-cdr! (last-pair old) (list el))
-				(loop (cdr els) res))
-			       (else
-				(loop (cdr els) (append! res (list (list val el))))))))))))))
+		      (if (isa? name J2SString)
+			  (with-access::J2SString name (val)
+			     (multiple-value-bind (old idx)
+				(assoc-index val res)
+				(set! index idx)
+				(cond
+				   ((pair? old)
+				    (set-cdr! (last-pair old) (list el))
+				    (loop (cdr els) res))
+				   (else
+				    (loop (cdr els) (append! res (list (list val el))))))))
+			  (loop (cdr els) res))))))))
 
    (with-access::J2SClass this (methods name)
       (unless (pair? methods)
@@ -568,7 +586,7 @@
 	    (if (pair? els)
 		(with-access::J2SClassElement (car els) (prop static index)
 		   (if (or (and (not static)
-				(isa? prop J2SDataPropertyInit)
+				(isa? prop J2SPropertyInit)
 				(not (isa? prop J2SMethodPropertyInit))))
 		       (begin
 			  (set! index i)
@@ -602,4 +620,15 @@
 	 (class-sort-instance-properties! this))
       index))
    
-
+;*---------------------------------------------------------------------*/
+;*    class-private-element-access ...                                 */
+;*    -------------------------------------------------------------    */
+;*    If this is an access to a private class element, returns that    */
+;*    elements. Returns #f otherwise.                                  */
+;*---------------------------------------------------------------------*/
+(define (class-private-element-access this::J2SAccess)
+   (with-access::J2SAccess this (field)
+      (when (isa? field J2SString)
+	 (with-access::J2SString field (private)
+	    (when (isa? private J2SClassElement)
+	       private)))))

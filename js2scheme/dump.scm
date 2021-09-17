@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Sep 16 17:39:24 2021 (serrano)                */
+;*    Last change :  Fri Sep 17 08:02:53 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -744,7 +744,8 @@
 		 ,@(if vararg `(:vararg ,vararg) '())
 		 ,@(if src '() `(:src #f))
 		 ,@(dump-size this)
-		 ,(map j2s->list params) ,(j2s->list body))))
+		 ,(map j2s->list params)
+		 ,(j2s->list body))))
 	 ((isa? decl J2SDecl)
 	  (with-access::J2SDecl decl (key scope)
 	     `(,@(call-next-method) ,@(if generator '(*) '())
@@ -766,7 +767,8 @@
 		 ,@(if idthis `(:idthis ,(j2s->list idthis)) '())
 		 ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
 		 ,@(if vararg `(:vararg ,vararg) '())
-		 ,(map j2s->list params) ,(j2s->list body))))
+		 ,(map j2s->list params)
+		 ,(j2s->list body))))
 	 (else
 	  `(,@(call-next-method) ,@(if generator '(*) '())
 	      :name ,name :mode ,mode :idgen ,idgen :constrsize ,constrsize
@@ -784,7 +786,8 @@
 	      ,@(if idthis `(:idthis ,(j2s->list idthis)) '())
 	      ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
 	      ,@(if vararg `(:vararg ,vararg) '())
-	      ,(map j2s->list params) ,(j2s->list body))))))
+	      ,(map j2s->list params)
+	      ,(j2s->list body))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SMethod ...                                        */
@@ -923,10 +926,10 @@
 (define-method (j2s->list this::J2SPrecache)
    (with-access::J2SPrecache this (accesses test then else)
       `(,(class-name (object-class this))
-	  ,@(dump-info this)
-	  ,(map j2s->list accesses)
-	  ,(j2s->list then)
-	  ,(j2s->list else) )))
+	,@(dump-info this)
+	,(map j2s->list accesses)
+	,(j2s->list then)
+	,(j2s->list else) )))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SCond ...                                          */
@@ -1055,19 +1058,25 @@
 	  ,@(map j2s->list inits))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SPropertyInit ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SPropertyInit)
+   (with-access::J2SPropertyInit this (name)
+      `(,@(call-next-method) ,(j2s->list name))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDataPropertyInit ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDataPropertyInit)
-   (with-access::J2SDataPropertyInit this (name val)
-      `(,@(call-next-method) ,(j2s->list name) ,(j2s->list val))))
+   (with-access::J2SDataPropertyInit this (val)
+      `(,@(call-next-method) ,(j2s->list val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SAccessorPropertyInit ...                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SAccessorPropertyInit)
-   (with-access::J2SAccessorPropertyInit this (name get set)
-      `(,@(call-next-method) ,(j2s->list name)
-	  :get ,(j2s->list get) :set ,(j2s->list set))))
+   (with-access::J2SAccessorPropertyInit this (get set)
+      `(,@(call-next-method) :get ,(j2s->list get) :set ,(j2s->list set))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDecl ...                                          */
@@ -1222,7 +1231,11 @@
    (with-access::J2SClass this (name super elements decl loc need-dead-zone-check)
       `(,(string->symbol (typeof this))
 	,@(if name (list :name name) '())
-	:super ,(j2s->list super)
+	:super ,(if (isa? super J2SRef)
+		    (with-access::J2SRef super (decl)
+		       (with-access::J2SDecl decl (id)
+			  id))
+		    (typeof super))
 	:need-dead-zone-check ,need-dead-zone-check
 	,@(dump-loc loc)
 	,@(dump-type this)
@@ -1236,13 +1249,18 @@
 ;*    j2s->list ::J2SClassElement ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SClassElement)
-   (with-access::J2SClassElement this (prop static type)
-      `(J2SClassElement :static ,static
-	  ,@(if (or (>= (bigloo-debug) 2)
-		    (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
-		`(:type ,(type->sexp type))
-		'())
-	  ,(j2s->list prop))))
+   (with-access::J2SClassElement this (prop static type usage)
+      (with-access::J2SPropertyInit prop (name)
+	 `(J2SClassElement :static ,static
+	     ,@(if (or (>= (bigloo-debug) 2)
+		       (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
+		   `(:type ,(type->sexp type))
+		   '())
+	     ,@(if (or (>= (bigloo-debug) 2)
+		       (string-contains (or (getenv "HOPTRACE") "") "j2s:usage"))
+		   `(:usage ,(usage->keys usage))
+		   '())
+	     ,(j2s->list prop)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDProducer ...                                     */
@@ -1274,7 +1292,7 @@
    (with-access::J2SCacheCheck this (prop owner cache obj fields)
       `(,@(call-next-method) ,prop :cache ,cache
 	  :owner ,(cond
-		     ((isa? owner J2SRecord) (type->sexp owner))
+		     ((isa? owner J2SClass) (type->sexp owner))
 		     ((isa? owner J2SNode) (j2s->list owner))
 		     (else #f))
 	  ,(j2s->list obj)

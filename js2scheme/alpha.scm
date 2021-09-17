@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Thu Sep 16 18:05:00 2021 (serrano)                */
+;*    Last change :  Fri Sep 17 13:46:51 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -334,7 +334,8 @@
 		(nfun (duplicate::J2SFun this
 			 (decl ndecl)
 			 (params nparams)
-			 (method (j2s-alpha method (list decl) (list ndecl)))
+			 (method (when method
+				    (j2s-alpha method (list decl) (list ndecl))))
 			 (body body))))
 	    (with-access::J2SFun nfun (body)
 	       (with-access::J2SDeclFun ndecl (val)
