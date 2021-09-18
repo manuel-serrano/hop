@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Sep 17 09:06:20 2021 (serrano)                */
+;*    Last change :  Sat Sep 18 16:23:23 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1697,7 +1697,7 @@
 	  (expr-range-add! this env fix *infinity-intv*)))))
 
 ;*---------------------------------------------------------------------*/
-;*    range-binary ...                                                 */
+;*    node-range-binary ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (node-range-binary this op lhs rhs env::pair-nil conf mode::symbol fix::cell)
    (debug *debug-range-binary* "env=" (dump-env env))
@@ -1728,7 +1728,8 @@
 			  (>= (interval-min intl) 0))
 		     ;; a negative divider may produce -0.0
 		     (expr-range-add! this env fix intr)
-		     (expr-range-add! this env fix *infinity-intv*))))
+		     (expr-range-add! this env fix *infinity-intv*))
+		 (return #unspecified env)))
 	    ((<<)
 	     (expr-range-add! this env fix (interval-shiftl intl intr)))
 	    ((>>)
