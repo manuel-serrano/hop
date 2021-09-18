@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Sep 14 11:08:48 2021 (serrano)                */
+;*    Last change :  Sat Sep 18 13:12:46 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -1069,6 +1069,7 @@
 				    (if (and (<fx vidx vlen)
 					     (procedure? (vector-ref vtable vidx)))
 					(begin
+					   (tprint "VTABLE: " ',loc)
 					   (js-profile-log-cache ,ccache
 					      :vtable #t)
 					   ((vector-ref vtable vidx) ,obj ,@args))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Sat Sep 18 06:40:26 2021 (serrano)                */
+;*    Last change :  Sat Sep 18 12:35:10 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -313,10 +313,11 @@
 (define (j2s-class-instance-get-property-index clazz field)
    (multiple-value-bind (index el)
       (j2s-class-instance-get-property clazz field)
-      (when (and (isa? el J2SPropertyInit)
-		 (not (isa? el J2SAccessorPropertyInit))
-		 (not (isa? el J2SMethodPropertyInit)))
-	 index)))
+      (when (isa? el J2SClassElement)
+	 (with-access::J2SClassElement el (prop)
+	    (unless (or (isa? prop J2SAccessorPropertyInit)
+			(isa? prop J2SMethodPropertyInit))
+	       index)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-class-get-property ...                                       */

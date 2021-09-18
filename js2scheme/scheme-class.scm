@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sat Sep 18 06:04:27 2021 (serrano)                */
+;*    Last change :  Sat Sep 18 12:07:51 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -491,8 +491,10 @@
 (define (j2s-scheme-init-instance-properties this::J2SClass mode return ctx)
    
    (define (bind-class-property el)
-      (with-access::J2SClassElement el (prop usage)
+      (with-access::J2SClassElement el (prop usage static)
 	 (cond
+	    (static
+	     #f)
 	    ((isa? prop J2SMethodPropertyInit)
 	     #f)
 	    ((isa? prop J2SAccessorPropertyInit)
@@ -506,7 +508,8 @@
 		      (j2s-scheme val mode return ctx)
 		      (j2s-type val)
 		      (strict-mode? mode) ctx cache))))
-	    ((usage-has? usage '(uninit))
+	    ((and (usage-has? usage '(uninit))
+		  (not (isa? this J2SRecord)))
 	     (with-access::J2SPropertyInit prop (name loc cache)
 		(j2s-put! loc 'this name this
 		   (j2s-scheme-class-propname name mode return ctx) 

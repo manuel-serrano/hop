@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sat Sep 18 11:48:36 2021 (serrano)                */
+;*    Last change :  Sat Sep 18 13:15:43 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -931,7 +931,8 @@
 			  (expr-type-add! this nenv ctx tyr bkr)))))))
 	    (else
 	     ;; a non variable assinment
-	     (when (class-private-element-access lhs)
+	     (when (and (isa? lhs J2SAccess)
+			(class-private-element-access lhs))
 		(class-element-access-type-add! lhs ctx tyr))
 	     (expr-type-add! this envr ctx tyr bkr))))))
 
@@ -978,7 +979,8 @@
 				   (append lbk bkr)))))))))
 	       (else
 		;; a non variable assignment
-		(when (class-private-element-access lhs)
+		(when (and (isa? lhs J2SAccess)
+			   (class-private-element-access lhs))
 		   (class-element-access-type-add! lhs ctx tyr))
 		(expr-type-add! this envr ctx (numty tyr) bkr)))))))
 
