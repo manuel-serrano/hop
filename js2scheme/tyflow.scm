@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Sep 17 09:24:18 2021 (serrano)                */
+;*    Last change :  Sat Sep 18 11:48:36 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -900,7 +900,8 @@
 		   (node-type rhs envl ctx)
 		   (if tyr
 		       (begin
-			  (when (class-private-element-access lhs)
+			  (when (and (isa? lhs J2SAccess)
+				     (class-private-element-access lhs))
 			     (class-element-access-type-add! lhs ctx tyr))
 			  (expr-type-add! this nenv ctx tyr (append lbk rbk)))
 		       (return 'unknown env (append lbk rbk))))))))))

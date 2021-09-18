@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Thu Sep 16 14:40:48 2021 (serrano)                */
+;*    Last change :  Sat Sep 18 10:11:48 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -390,7 +390,8 @@
 			       `(begin
 				   ,@(j2s-scheme-init-instance-properties
 					this mode return ctx))))
-			 body))))
+			 body
+			 (returnthis thisp loc)))))
 	       (when (class-new-target? this)
 		  (set! new-target 'argument)
 		  (set! params (cons (new-target-param loc) params))))
