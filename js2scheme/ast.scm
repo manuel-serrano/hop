@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Sep 17 08:05:52 2021 (serrano)                */
+;*    Last change :  Sat Sep 18 07:47:36 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -241,6 +241,7 @@
 	      (mode::symbol (default 'normal) (info '("notraverse")))
 	      (decl (default #f) (info '("jsonref" "notraverse")))
 	      (need-bind-exit-return::bool (default #f) (info '("notraverse")))
+	      ;; new-target: unknown | no | global | argument
 	      (new-target::symbol (default 'unknown) (info '("notraverse")))
 	      (vararg::obj (default #f) (info '("notraverse")))
 	      (name::symbol (info '("notraverse")))
@@ -466,11 +467,11 @@
 	      (args::pair-nil (info '("ast"))))
 
 	   (class J2SPropertyInit::J2SNode
-	      (name::J2SExpr (info '("ast"))))
+	      (name::J2SExpr (info '("ast")))
+	      (cache (default #f) (info '("nojson" "notraverse"))))
 	   
 	   (class J2SDataPropertyInit::J2SPropertyInit
-	      (val::J2SExpr (info '("ast")))
-	      (cache (default #f) (info '("nojson" "notraverse"))))
+	      (val::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SMethodPropertyInit::J2SDataPropertyInit
 	      (inlinecachevar (default #f)))

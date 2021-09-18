@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/inline-new.scm            */
+;*    serrano/prgm/project/hop/hop/js2scheme/inline.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Sep 16 08:42:31 2021 (serrano)                */
+;*    Last change :  Sat Sep 18 09:28:38 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -1372,7 +1372,7 @@
 
    (define (inline-method-args args)
       (map (lambda (a)
-	      (if (isa? a J2SLiteral)
+	      (if (simple-literal? a)
 		  a
 		  (let ((id (gensym 'a)))
 		     (with-access::J2SNode a (loc)
@@ -1507,7 +1507,7 @@
 	 (lenp (length params)))
       (map (lambda (p a)
 	      (cond
-		 ((and (ronly-variable? p) (isa? a J2SLiteral))
+		 ((and (ronly-variable? p) (simple-literal? a))
 		  a)
 		 (else
 		  (with-access::J2SDecl p ((_usage usage) id writable)
@@ -1958,7 +1958,7 @@
 (define-walk-method (dead-inner-decl! this::J2SDeclInit)
    
    (define (simple-expr? val::J2SExpr)
-      (or (isa? val J2SLiteralCnst)
+      (or (simple-literal? val)
 	  (isa? val J2SFun)
 	  (isa? val J2SRef)))
    
@@ -2276,3 +2276,15 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (use-yield this::J2SYield res)
    (cell-set! res #t))
+
+;*---------------------------------------------------------------------*/
+;*    simple-literal? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (simple-literal?::bool this::J2SExpr)
+   (or (isa? this J2SNull)
+       (isa? this J2SUndefined)
+       (and (isa? this J2SLiteralValue)
+	    (not (isa? this J2SRegExp))
+	    (not (isa? this J2SCmap)))
+       (isa? this J2SLiteralCnst)))
+

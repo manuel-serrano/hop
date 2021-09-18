@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Fri Sep 17 08:48:47 2021 (serrano)                */
+;*    Last change :  Sat Sep 18 06:40:26 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -313,7 +313,10 @@
 (define (j2s-class-instance-get-property-index clazz field)
    (multiple-value-bind (index el)
       (j2s-class-instance-get-property clazz field)
-      (when el index)))
+      (when (and (isa? el J2SPropertyInit)
+		 (not (isa? el J2SAccessorPropertyInit))
+		 (not (isa? el J2SMethodPropertyInit)))
+	 index)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-class-get-property ...                                       */
@@ -456,7 +459,7 @@
    (let ((cell (make-cell #f)))
       (with-access::J2SFun this (body)
 	 (method-use-return? body cell)
-	 (not (cell-ref cell)))))
+	 (cell-ref cell))))
 
 ;*---------------------------------------------------------------------*/
 ;*    method-use-return? ...                                           */
@@ -481,7 +484,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    class-new-target? ...                                            */
 ;*    -------------------------------------------------------------    */
-;*    This predicates is #f iff the class constructor DOES not need    */
+;*    This predicates is #f iff the class constructor NEEDs            */
 ;*    to bind new-target. It is conservative, in doubt it returns #t.  */
 ;*---------------------------------------------------------------------*/
 (define (class-new-target?::bool this::J2SClass)

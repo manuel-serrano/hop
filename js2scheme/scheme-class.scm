@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Fri Sep 17 18:34:17 2021 (serrano)                */
+;*    Last change :  Sat Sep 18 06:04:27 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -46,40 +46,45 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (j2s-scheme-call-class-constructor clazz::J2SClass ecla enewtarget eobj args node mode return ctx)
    (with-access::J2SNode node (loc)
-      (let ((ctor (j2s-class-find-constructor clazz))
-	    (args (if (class-new-target? clazz)
-		      (cons (J2SHopRef enewtarget) args)
-		      args)))
-	 `(with-access::JsClass ,ecla (constructor)
-	     ,(cond
-		 ((isa? ctor J2SClassElement)
-		  (with-access::J2SClassElement ctor (prop)
-		     (with-access::J2SMethodPropertyInit prop (val)
-			(let* ((declf (instantiate::J2SDeclFun
-					 (loc loc)
-					 (id (class-constructor-id clazz))
-					 (writable #f)
-					 (usage (usage '(call)))
-					 (val val)))
-			       (call (J2SMethodCall* (J2SRef declf)
-					(list (J2SHopRef eobj))
-					args)))
-			   ;; the call compilation add an extra "@" to
-			   ;; the constructor identifier
-			   `(let ((,(symbol-append '@ (class-constructor-id clazz))
-				   constructor))
-			       ,(j2s-scheme call mode return ctx))))))
-		 (else
-		  `(begin
-		      ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)
-		      (constructor ,eobj)
-		      this)))))))
-;* 		 (else                                                 */
-;* 		  ;; default constructor                               */
-;* 		  `(begin                                              */
-;* 		      (constructor ,eobj                               */
-;* 			 ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)) */
-;* 		      this)))))))                                      */
+      (let loop ((ctor (j2s-class-find-constructor clazz)))
+	 (cond
+	    ((isa? ctor J2SClassElement)
+	     (with-access::J2SClassElement ctor (prop)
+		(with-access::J2SMethodPropertyInit prop (val)
+		   (loop val))))
+	    ((isa? ctor J2SFun)
+	     `(with-access::JsClass ,ecla (constructor)
+		 ,(with-access::J2SFun ctor (params)
+		     (let ((lparams (length params))
+			   (largs (length args))
+			   (nt (if (class-new-target? clazz)
+				   (list enewtarget)
+				   '()))
+			   (vals (map (lambda (a)
+					 (j2s-scheme a mode return ctx))
+				    args)))
+			(cond
+			   ((=fx lparams largs)
+			    `(constructor ,eobj ,@nt ,@vals))
+			   ((<fx largs lparams)
+			    `(constructor ,eobj ,@nt ,@vals
+				,@(make-list (-fx lparams largs)
+				     '(js-undefined))))
+			   (else
+			    (let ((ts (map (lambda (a) (gensym '%t)) args)))
+			       `(let* ,(map (lambda (t a) (list t a))
+					  ts vals)
+				   (constructor ,eobj ,@nt ,@(take ts lparams))))))))))
+	    ((not ctor)
+	     `(with-access::JsClass ,ecla (constructor)
+		 ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)
+		 (constructor ,eobj)))
+	    (else
+	     `(with-access::JsClass ,ecla (constructor)
+		 ;; default constructor
+		 `(constructor ,eobj
+		     ,@(if (class-new-target? clazz) (list enewtarget) '())
+		     ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-call-fun-constructor ...                              */
@@ -158,7 +163,7 @@
 			(,res ,(j2s-scheme-call-class-constructor clazz cla cla obj args this
 				  mode return ctx)))
 		    ,(if (j2s-class-constructor-might-return? clazz)
-			 `(if (eq? ,res (js-undefined)) ,obj ,res)
+			 `(if (js-object? ,res) ,res ,obj)
 			 obj)))
 	     (with-access::J2SNew this (loc clazz)
 		(j2s-new loc (j2s-scheme-box clazz mode return ctx)
@@ -246,11 +251,6 @@
 			     (not (j2s-class-property-constructor? prop)))
 			(isa? prop J2SAccessorPropertyInit)))
 	    (j2s-scheme-bind-class-method prop obj mode return ctx))))
-   
-   (define (bind-property clazz obj m)
-      (with-access::J2SClassElement m (prop static)
-	 (when (not static)
-	    (bind-class-property clazz obj prop mode return ctx))))
    
    (define (class-prototype this::J2SClass %super)
       (with-access::J2SClass this (super)
@@ -486,32 +486,39 @@
 		      `(js-function-arity 0 0) 0 src loc))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    bind-class-property ...                                          */
-;*---------------------------------------------------------------------*/
-(define (bind-class-property clazz obj prop mode return ctx)
-   (cond
-      ((isa? prop J2SMethodPropertyInit)
-       #f)
-      ((isa? prop J2SDataPropertyInit)
-       (with-access::J2SDataPropertyInit prop (name val loc cache)
-	  (unless (isa? val J2SUndefined)
-	     (j2s-put! loc obj name clazz
-		(j2s-scheme-class-propname name mode return ctx) 
-		'any
-		(j2s-scheme val mode return ctx)
-		(j2s-type val)
-		(strict-mode? mode) ctx cache))))
-      (else
-       #f)))
-
-;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-init-instance-properties ...                          */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-init-instance-properties this::J2SClass mode return ctx)
-   (filter-map (lambda (prop)
-		  (bind-class-property this 'this
-		     prop mode return ctx))
-      (j2s-class-instance-properties this :super #f)))
+   
+   (define (bind-class-property el)
+      (with-access::J2SClassElement el (prop usage)
+	 (cond
+	    ((isa? prop J2SMethodPropertyInit)
+	     #f)
+	    ((isa? prop J2SAccessorPropertyInit)
+	     #f)
+	    ((isa? prop J2SDataPropertyInit)
+	     (with-access::J2SDataPropertyInit prop (name val loc cache)
+		(unless (isa? val J2SUndefined)
+		   (j2s-put! loc 'this name this
+		      (j2s-scheme-class-propname name mode return ctx) 
+		      'any
+		      (j2s-scheme val mode return ctx)
+		      (j2s-type val)
+		      (strict-mode? mode) ctx cache))))
+	    ((usage-has? usage '(uninit))
+	     (with-access::J2SPropertyInit prop (name loc cache)
+		(j2s-put! loc 'this name this
+		   (j2s-scheme-class-propname name mode return ctx) 
+		   'any
+		   '(js-undefined)
+		   'any
+		   (strict-mode? mode) ctx cache)))
+	    (else
+	     #f))))
+   
+   (with-access::J2SClass this (elements)
+      (filter-map bind-class-property elements)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-class-call-super ...                                  */
@@ -548,7 +555,7 @@
    
    (define (scheme-class-super-declclass this clazz::J2SClass decl)
       (with-access::J2SCall this (args loc)
-	 (with-access::J2SClass clazz (need-super-check)
+	 (with-access::J2SClass clazz (need-super-check name)
 	    `(begin
 		,(j2s-scheme-call-class-constructor (j2s-class-super-val clazz)
 		    (j2s-scheme (J2SRef decl) mode return ctx)

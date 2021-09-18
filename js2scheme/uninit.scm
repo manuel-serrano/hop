@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Fri Sep 17 07:49:24 2021 (serrano)                */
+;*    Last change :  Sat Sep 18 08:55:40 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -403,3 +403,14 @@
       (decl-usage-add! this 'uninit))
    (call-default-walker))
 
+;*---------------------------------------------------------------------*/
+;*    uninit-force! ::J2SClass ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (uninit-force! this::J2SClass)
+   (with-access::J2SClass this (elements)
+      (for-each (lambda (el)
+		   (with-access::J2SClassElement el (usage)
+		      (set! usage (usage-add usage 'uninit))))
+	 elements))
+   (call-default-walker))
+   

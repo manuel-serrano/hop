@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/es6-class.js      */
+/*    serrano/trashcan/es6-class.js                                    */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Wed Aug 25 10:22:05 2021 (serrano)                */
+/*    Last change :  Sat Sep 18 06:50:39 2021 (serrano)                */
 /*    Copyright   :  2017-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
@@ -451,8 +451,176 @@ function misca() {
    return passed;
 }
 
+function misca2() {
+   let passed = false;
+   
+   function FArray( a ) {
+      passed = (a === 20) && new.target !== undefined;
+   }
+
+   class C extends FArray {}
+   
+   var c = new C( 20 );
+   
+   return passed;
+}
+
+function misca3() {
+   let passed = false;
+   
+   function FArray( a ) {
+      passed = (a === 20) && new.target !== undefined;
+   }
+
+   class C extends { f: FArray }.f {}
+   
+   var c = new C( 20 );
+   
+   return passed;
+}
+
+function misca4() {
+   let passed = false;
+   
+   class Carray {
+      constructor(a) {
+      	 passed = (a === 20) && new.target !== undefined;
+      }
+   }
+
+   class C extends { c: Carray }.c {}
+   
+   var c = new C( 20 );
+   
+   return passed;
+}
+
+function miscb() {
+   let passed = false;
+   
+   function FArray( a, b ) {
+      passed = ((a === 20) && (b === undefined));
+   }
+
+   class C extends FArray {}
+   
+   var c = new C( 20 );
+   
+   return passed;
+}
+
+function miscb2() {
+   let passed = false;
+   
+   function FArray( a, b ) {
+      passed = ((a === 20) && (b === undefined) && new.target !== undefined);
+   }
+
+   class C extends FArray {}
+   
+   var c = new C( 20 );
+   
+   return passed;
+}
+
+function miscb3() {
+   let passed = false;
+   
+   function FArray( a, b ) {
+      passed = ((a === 20) && (b === undefined) && new.target !== undefined);
+   }
+
+   class C extends { f: FArray }.f {}
+   
+   var c = new C( 20 );
+   
+   return passed;
+}
+
+function miscb4() {
+   let passed = false;
+   
+   class CArray {
+      constructur( a, b ) {
+      	 passed = ((a === 20) && (b === undefined) && new.target !== undefined);
+      }
+   }
+
+   class C extends { c: CArray }.c {}
+   
+   var c = new C( 20 );
+   
+   return passed;
+}
+
+function miscc() {
+   let passed = false;
+   
+   function FArray( a, b, c ) {
+      passed = ((a === 20) && (b === 30) && (c == 40));
+   }
+
+   class C extends FArray {}
+   
+   var c = new C( 20, 30, 40, 50 );
+   
+   return passed;
+}
+
+function miscc2() {
+   let passed = false;
+   
+   function FArray( a, b, c ) {
+      passed = ((a === 20) && (b === 30) && (c == 40) && new.target !== undefined);
+   }
+
+   class C extends FArray {}
+   
+   var c = new C( 20, 30, 40, 50 );
+   
+   return passed;
+}
+
+function miscc3() {
+   let passed = false;
+   
+   function FArray( a, b, c ) {
+      passed = ((a === 20) && (b === 30) && (c == 40) && new.target !== undefined);
+   }
+
+   class C extends { f: FArray }.f {}
+   
+   var c = new C( 20, 30, 40, 50 );
+   
+   return passed;
+}
+
+function miscc4() {
+   let passed = false;
+   
+   class CArray {
+      constructor( a, b, c ) {
+      	 passed = ((a === 20) && (b === 30) && (c == 40) && new.target !== undefined);
+      }
+   }
+
+   class C extends { c: CArray }.c {}
+   
+   var c = new C( 20, 30, 40, 50 );
+   
+   return passed;
+}
+
 console.log( "misc" );
 console.log( "   misca()" ); assert.ok( misca(), "misca" );
+console.log( "   misca2()" ); assert.ok( misca2(), "misca2" );
+console.log( "   misca3()" ); assert.ok( misca3(), "misca3" );
+console.log( "   miscb()" ); assert.ok( miscb(), "miscb" );
+console.log( "   miscb2()" ); assert.ok( miscb2(), "miscb2" );
+console.log( "   miscb3()" ); assert.ok( miscb3(), "miscb3" );
+console.log( "   miscc()" ); assert.ok( miscc(), "miscc" );
+console.log( "   miscc2()" ); assert.ok( miscc2(), "miscc2" );
+console.log( "   miscc3()" ); assert.ok( miscc3(), "miscc3" );
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */

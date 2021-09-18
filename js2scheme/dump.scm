@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Sep 17 08:02:53 2021 (serrano)                */
+;*    Last change :  Sat Sep 18 08:31:12 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -739,7 +739,7 @@
 		 ,@(dump-new-target new-target)
 		 ,@(dump-range this)
 		 ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
-		 ,@(if idthis `(:idthis ,(j2s->list idthis)) '())
+		 ,@(if idthis `(:idthis ,idthis) '())
 		 ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
 		 ,@(if vararg `(:vararg ,vararg) '())
 		 ,@(if src '() `(:src #f))
@@ -764,7 +764,7 @@
 		 ,@(dump-new-target new-target)
 		 ,@(dump-range this)
 		 ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
-		 ,@(if idthis `(:idthis ,(j2s->list idthis)) '())
+		 ,@(if idthis `(:idthis ,idthis) '())
 		 ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
 		 ,@(if vararg `(:vararg ,vararg) '())
 		 ,(map j2s->list params)
@@ -783,7 +783,7 @@
 	      ,@(dump-new-target new-target)
 	      ,@(dump-range this)
 	      ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
-	      ,@(if idthis `(:idthis ,(j2s->list idthis)) '())
+	      ,@(if idthis `(:idthis ,idthis) '())
 	      ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
 	      ,@(if vararg `(:vararg ,vararg) '())
 	      ,(map j2s->list params)
