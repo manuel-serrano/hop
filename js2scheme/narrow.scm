@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Fri Jul 30 19:48:23 2021 (serrano)                */
+;*    Last change :  Sun Sep 19 08:16:27 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -24,7 +24,8 @@
 	   __js2scheme_utils
 	   __js2scheme_compile
 	   __js2scheme_stage
-	   __js2scheme_lexer)
+	   __js2scheme_lexer
+	   __js2scheme_alpha)
 
    (static (class J2SNarrowInfo
 	      (deffun::obj (default #f))
@@ -78,6 +79,11 @@
 			 (with-access::J2SDeclFun o (val)
 			    (j2s-blockify! val))))
 	    decls)
+	 ;; transform var into let for global variables initialized
+	 ;; at the beginning of nodes
+	 (let ((news (vars->lets! this)))
+	    (when (pair? news)
+	       (j2s-alpha this (map car news) (map cdr news))))
 	 ;; statement optimization
 	 (for-each (lambda (o)
 		      (cond
@@ -126,15 +132,6 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-blockify! this::J2SBlock)
    
-   (define (is-init? n::J2SNode)
-      (when (isa? n J2SSeq)
-	 (with-access::J2SSeq n (nodes)
-	    (every (lambda (s)
-		      (when (isa? s J2SStmtExpr)
-			 (with-access::J2SStmtExpr s (expr)
-			    (isa? expr J2SInit))))
-	       nodes))))
-
    (with-access::J2SBlock this (nodes)
       (let loop ((nodes nodes)
 		 (prev #f))
@@ -142,7 +139,7 @@
 	    ((null? nodes)
 	     this)
 	    (prev
-	     (if (is-init? (car nodes))
+	     (if (inits? (car nodes))
 		 (with-access::J2SNode (car nodes) (loc)
 		    (let ((nseq (j2s-blockify! (J2SBlock*/w-endloc nodes))))
 		       (set-cdr! prev (list nseq))
@@ -152,7 +149,7 @@
 		    (loop (cdr nodes) nodes))))
 	    (else
 	     (set-car! nodes (j2s-blockify! (car nodes)))
-	     (if (is-init? (car nodes))
+	     (if (inits? (car nodes))
 		 (loop (cdr nodes) #f)
 		 (loop (cdr nodes) nodes)))))))
 
@@ -764,4 +761,125 @@
 	  (with-access::J2SRef lhs (decl)
 	     (J2SSequence (duplicate::J2SInit this) (J2SRef decl))))
        (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    inits? ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (inits? this::J2SNode)
+   (when (isa? this J2SSeq)
+      (with-access::J2SSeq this (nodes)
+	 (every (lambda (s)
+		   (when (isa? s J2SStmtExpr)
+		      (with-access::J2SStmtExpr s (expr)
+			 (when (isa? expr J2SInit)
+			    expr))))
+	    nodes))))
+
+;*---------------------------------------------------------------------*/
+;*    simple-argument? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (simple-argument? this::J2SExpr)
+   (define (simple-literal?::bool this::J2SExpr)
+      (or (isa? this J2SNull)
+	  (isa? this J2SUndefined)
+	  (and (isa? this J2SLiteralValue)
+	       (not (isa? this J2SRegExp))
+	       (not (isa? this J2SCmap)))
+	  (isa? this J2SLiteralCnst)))
    
+   (define (simple-callee? this)
+      (when (isa? this J2SRef)
+	 (with-access::J2SRef this (decl)
+	    (isa? decl J2SDeclExtern))))
+   
+   (define (simple-call? this)
+      (with-access::J2SCall this (fun args thisarg)
+	 (and (simple-callee? fun)
+	      (every simple-argument? args)
+	      (every simple-argument? thisarg))))
+   
+   (define (simple-new? this)
+      (with-access::J2SNew this (clazz args)
+	 (and (simple-callee? clazz)
+	      (every simple-argument? args))))
+   
+   (or (simple-literal? this)
+       (isa? this J2SRef)
+       (isa? this J2SGlobalRef)
+       (when (isa? this J2SCall) (simple-call? this))
+       (when (isa? this J2SNew) (simple-new? this))))
+
+;*---------------------------------------------------------------------*/
+;*    simple-expr? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (simple-expr? this::J2SExpr)
+   (or (simple-argument? this)
+       (isa? this J2SFun)))
+
+;*---------------------------------------------------------------------*/
+;*    simple-stmt? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (simple-stmt? this::J2SStmt)
+   (cond
+      ((isa? this J2SNop)
+       #t)
+      ((isa? this J2SStmtExpr)
+       (with-access::J2SStmtExpr this (expr)
+	  (simple-expr? expr)))
+      ((isa? this J2SSeq)
+       (with-access::J2SSeq this (nodes)
+	  (every simple-stmt? nodes)))
+      ((isa? this J2SIf)
+       (with-access::J2SIf this (test then else)
+	  (when (simple-expr? test)
+	     (and (simple-stmt? then) (simple-stmt? else)))))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    vars->lets ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (vars->lets!::pair-nil this::J2SProgram)
+   (with-access::J2SProgram this (decls nodes)
+      (let loop ((nodes nodes)
+		 (ndecls '()))
+	 (if (pair? nodes)
+	     (cond
+		((inits? (car nodes))
+		 (with-access::J2SSeq (car nodes) (nodes)
+		    (let liip ((inits nodes)
+			       (ndecls ndecls))
+		       (if (null? inits)
+			   (loop (cdr nodes) ndecls)
+			   (with-access::J2SStmtExpr (car nodes) (expr)
+			      (with-access::J2SInit expr (lhs rhs loc)
+				 (with-access::J2SRef lhs (decl)
+				    (with-access::J2SDecl decl (scope)
+				       (if (and (memq scope '(global %scope))
+						(simple-expr? rhs))
+					   (begin
+					      (set-car! nodes (J2SUndefined))
+					      (liip (cdr inits)
+						 (append (var->let! this decl rhs)
+						    ndecls)))
+					   ndecls)))))))))
+		((simple-stmt? (car nodes))
+		 (loop (cdr nodes) ndecls))
+		(else
+		 ndecls))
+	     ndecls))))
+
+;*---------------------------------------------------------------------*/
+;*    var->let! ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (var->let!::pair-nil this::J2SProgram decl::J2SDecl expr::J2SExpr)
+   (with-access::J2SProgram this (decls)
+      (let loop ((decls decls)
+		 (ndecls '()))
+	 (if (eq? (car decls) decl)
+	     (let ((ndecl (duplicate::J2SDeclInit decl
+			     (key (ast-decl-key))
+			     (binder 'let-opt)
+			     (val expr))))
+		(cons (cons decl ndecl) ndecls))
+	     (loop (cdr decls) ndecls)))))

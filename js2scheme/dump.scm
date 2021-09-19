@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat Sep 18 08:31:12 2021 (serrano)                */
+;*    Last change :  Sun Sep 19 08:39:05 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -632,9 +632,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SRef)
    (with-access::J2SRef this (decl loc)
-      (with-access::J2SDecl decl (id key)
+      (with-access::J2SDecl decl (id key scope)
 	 `(,@(call-next-method) ,id
 	     ,@(dump-loc loc)
+	     ,@(dump-scope scope)
 	     ,@(dump-key key)
 	     ,@(dump-type this)
 	     ,@(dump-vtype decl)
