@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu Sep  2 08:45:17 2021 (serrano)                */
+/*    Last change :  Mon Sep 20 19:27:13 2021 (serrano)                */
 /*    Copyright   :  2016-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -1541,6 +1541,42 @@ static struct {
 } _empty_vector = { __CNST_FILLER 0 };
 static obj_t empty_vector = BVECTOR( &(_empty_vector.length ) );
 #endif   
+
+/*---------------------------------------------------------------------*/
+/*    BGL_MAKE_JSARRAY_SANS_INIT                                       */
+/*---------------------------------------------------------------------*/
+#if( !defined( TAG_VECTOR ) )
+#define BGL_TAG_VECTOR(vector) \
+   vector->vector.header = MAKE_HEADER( VECTOR_TYPE, 0 )
+#else
+#define BGL_TAG_VECTOR(vector) \
+   0
+#endif
+
+
+#define BGL_MAKE_JSARRAY_SANS_INIT( o, size, len, ilen, constrmap, __proto___, mode ) \
+   long bsize = JSARRAY_SIZE + VECTOR_SIZE + ( (size-1) * OBJ_SIZE ); \
+   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)HOP_MALLOC( bsize );  \
+   obj_t vector;						      \
+								      \
+   /* class initialization */					      \
+   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSARRAY_CLASS_INDEX );  \
+								      \
+   /* fields init */						      \
+   o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;	      \
+   o->BgL_elementsz00 = empty_vector;				      \
+   o->BgL_lengthz00 = len;					      \
+   o->BgL_ilenz00 = ilen;					      \
+   BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)mode );	      \
+   BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), __proto__ );	      \
+								      \
+   /* vector initialization */					      \
+   vector = (obj_t)(&(o->BgL_vecz00) + 1);			      \
+   BGL_TAG_VECTOR( vector );					      \
+   vector->vector.length = size;				      \
+   vector = BVECTOR( vector );					      \
+								      \
+   o->BgL_vecz00 = vector;					      \
    
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
@@ -1557,34 +1593,8 @@ static obj_t empty_vector = BVECTOR( &(_empty_vector.length ) );
 /*---------------------------------------------------------------------*/
 obj_t
 bgl_make_jsarray_sans_init( long size, uint32_t len, uint32_t ilen, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
-   long bsize = JSARRAY_SIZE + VECTOR_SIZE + ( (size-1) * OBJ_SIZE );
-   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)HOP_MALLOC( bsize );
-   obj_t vector;
-   int i;
-
-   // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSARRAY_CLASS_INDEX );
-   
-   // fields init
-   o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
-   o->BgL_elementsz00 = empty_vector;
-   o->BgL_lengthz00 = len;
-   o->BgL_ilenz00 = ilen;
-   BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)mode );
-   BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), __proto__ );
-  
-   // vector initialization
-   vector = (obj_t)(&(o->BgL_vecz00) + 1);
-
-#if( !defined( TAG_VECTOR ) )
-   vector->vector.header = MAKE_HEADER( VECTOR_TYPE, 0 );
-#endif		
-   vector->vector.length = size;
-   vector = BVECTOR( vector );
-   
-   o->BgL_vecz00 = vector;
-
-   return BNANOBJECT( o );
+   BGL_MAKE_JSARRAY_SANS_INIT(o, size, len, ilen, constrmap, __proto__, mode);
+   return BNANOBJECT(o);
 }
 
 /*---------------------------------------------------------------------*/
@@ -1593,16 +1603,16 @@ bgl_make_jsarray_sans_init( long size, uint32_t len, uint32_t ilen, obj_t constr
 /*---------------------------------------------------------------------*/
 obj_t
 bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj_t absent, uint32_t mode ) {
-   obj_t array = bgl_make_jsarray_sans_init( size, len, 0, constrmap, __proto__, mode );
-   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)COBJECT( array );
-   obj_t vector = o->BgL_vecz00;
+   BGL_MAKE_JSARRAY_SANS_INIT(array, size, len, 0, constrmap, __proto__, mode);
+   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)(array);
+   obj_t ivector = o->BgL_vecz00;
    int i;
 
-   for( i = 0; i < size; i++ ) {
-      VECTOR_SET( vector, i, absent );
+   for(i = 0; i < size; i++) {
+      VECTOR_SET(ivector, i, absent);
    }
 
-   return array;
+   return BNANOBJECT(array);
 }
 
 /*---------------------------------------------------------------------*/
