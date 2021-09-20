@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Mon Sep 20 10:28:22 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 15:01:53 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -53,6 +53,7 @@
 	   __js2scheme_letopt
 	   __js2scheme_unletrec
 	   __js2scheme_narrow
+	   __js2scheme_var2let
 	   __js2scheme_scheme
 	   __js2scheme_js
 	   __js2scheme_debug
@@ -195,6 +196,7 @@
 	  j2s-ronly-stage
 	  j2s-letfun-stage
 	  j2s-letopt-stage
+	  j2s-var->let-stage
 	  j2s-unletrec-stage
 	  j2s-this-stage
 	  j2s-use-stage

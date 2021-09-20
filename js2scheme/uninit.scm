@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Sat Sep 18 08:55:40 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 14:34:00 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -97,9 +97,9 @@
 ;*    intersection ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (intersection el er)
-   (for-each (lambda (d) (with-access::J2SNode d (%info) (set! %info #t))) el)
-   (for-each (lambda (d) (with-access::J2SNode d (%info) (set! %info #f))) er)
-   (append! (filter (lambda (d) (with-access::J2SNode d (%info) %info)) el) er))
+   (for-each (lambda (d) (with-access::J2SNode d (%info) (set! %info #f))) el)
+   (for-each (lambda (d) (with-access::J2SNode d (%info) (set! %info #t))) er)
+   (filter (lambda (d) (with-access::J2SNode d (%info) %info)) el))
 
 ;*---------------------------------------------------------------------*/
 ;*    uninit-nodes* ...                                                */
@@ -166,7 +166,7 @@
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (scope)
 	 (when (memq scope '(global %scope))
-	    (unless (or (isa? decl J2SDeclFun)
+	    (unless (or (isa? decl J2SDeclInit)
 			(isa? decl J2SDeclExtern)
 			(j2s-decl-class? decl))
 	       (unless (or (decl-usage-has? decl '(uninit)) (memq decl env))
