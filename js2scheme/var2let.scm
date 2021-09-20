@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 20 14:59:28 2021                          */
-;*    Last change :  Mon Sep 20 19:22:08 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 21:04:25 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    An optimization that transforms global vars into global lets.    */
@@ -167,10 +167,14 @@
       (with-access::J2SNew this (clazz args)
 	 (and (simple-callee? clazz)
 	      (every simple-argument? args))))
-   
+
+   (define (simple-ref? this)
+      (with-access::J2SRef this (decl)
+	 (isa? decl J2SDeclInit)))
+				   
    (or (simple-literal? this)
-       (isa? this J2SRef)
        (isa? this J2SGlobalRef)
+       (when (isa? this J2SRef) (simple-ref? this))
        (when (isa? this J2SCall) (simple-call? this))
        (when (isa? this J2SNew) (simple-new? this))))
 
