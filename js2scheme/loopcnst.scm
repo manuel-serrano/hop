@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 20 07:58:36 2021                          */
-;*    Last change :  Mon Sep 20 08:08:48 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 08:11:07 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Loop constant lifting                                            */
@@ -74,6 +74,6 @@
 ;*    loopcnst! ::J2SWhile ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (loopcnst! this::J2SWhile conf)
-   (with-access::J2SWhite this (test body)
+   (with-access::J2SWhile this (test body)
       this))
 
