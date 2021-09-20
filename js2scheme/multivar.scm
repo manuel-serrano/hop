@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.2.x-new-types/js2scheme/multivar.scm      */
+;*    serrano/prgm/project/hop/hop/js2scheme/multivar.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 22 10:23:45 2018                          */
-;*    Last change :  Wed Aug 22 13:42:42 2018 (serrano)                */
-;*    Copyright   :  2018-20 Manuel Serrano                            */
+;*    Last change :  Mon Sep 20 11:14:49 2021 (serrano)                */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Multiple variable declaration split optimization.                */
 ;*=====================================================================*/

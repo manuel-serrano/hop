@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Mon Sep 20 08:01:34 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 11:53:47 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -83,7 +83,8 @@
 	 ;; at the beginning of nodes
 	 (let ((news (vars->lets! this)))
 	    (when (pair? news)
-	       (j2s-alpha this (map car news) (map cdr news))))
+	       (j2s-alpha this (map car news) (map cdr news))
+	       (init->assign! this (map cdr news))))
 	 ;; statement optimization
 	 (for-each (lambda (o)
 		      (cond
@@ -882,3 +883,22 @@
 			     (val expr))))
 		(cons (cons decl ndecl) ndecls))
 	     (loop (cdr decls) ndecls)))))
+
+;*---------------------------------------------------------------------*/
+;*    init->assign! ::J2SNode ...                                      */
+;*    -------------------------------------------------------------    */
+;*    Replacement possible remaining initializations (for variables    */
+;*    declared several times) into assignments.                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (init->assign! this::J2SNode decls)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    init->assign! ::J2SInit ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (init->assign! this::J2SInit decls)
+   (with-access::J2SInit this (lhs)
+      (with-access::J2SRef lhs (decl)
+	 (if (memq decl decls)
+	     (duplicate::J2SAssig this)
+	     this))))
