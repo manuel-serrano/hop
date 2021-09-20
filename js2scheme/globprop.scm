@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Tue Aug 24 14:29:31 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 18:43:25 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -292,9 +292,19 @@
 			    obj
 			    field
 			    (J2SPragma '%this))))))
+	       ((or (isa? rhs J2SNumber) (isa? rhs J2SBool) (isa? rhs J2SString))
+		(let ((ndecl (J2SLetOptRo '(ref init)
+				(gensym val)
+				rhs)))
+		   (with-access::J2SDecl ndecl (scope)
+		      (set! scope 'global))
+		   (set-cdr! c (list ndecl))
+		   (J2SSequence
+		      (J2SAssig lhs (J2SRef ndecl)))))
 	       (else
 		(let ((ndecl (J2SDeclGlobal 'let '(ref init)
 				(gensym val))))
+		   (tprint "ICI.2.." val " " (j2s->list rhs))
 		   (set-cdr! c (list ndecl))
 		   (J2SSequence
 		      (J2SInit (J2SRef ndecl) rhs)

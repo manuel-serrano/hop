@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Sep 14 08:14:45 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 18:59:54 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -74,6 +74,9 @@
 (define-expander js-pcache-method
    js-pcache-method-expander)
 
+(define-expander js-record-check-cmap-method
+   js-record-check-cmap-method-expander)
+
 ;*---------------------------------------------------------------------*/
 ;*    js-getprototypeof ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -129,7 +132,7 @@
    js-method-non-jsobject-call-name-expander)
 (define-expander js-method-jsrecord-call-index
    js-method-jsrecord-call-index-expander)
-		    
+
 ;*---------------------------------------------------------------------*/
 ;*    descr ...                                                        */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Aug 27 18:33:16 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 17:22:44 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -247,7 +247,6 @@
       (call-with-input-file filename
 	 (lambda (in)
 	    (debug-compile-trace "nodejs-compile-html" filename)
-	    (tprint "COMPILE HTML...")
 	    (let ((tree (j2s-compile in
 			   :filename filename
 			   :parser 'client-program

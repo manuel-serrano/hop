@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Sep 20 08:38:37 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 17:48:36 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -402,6 +402,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-letfun #t (hopc-j2s-flags))))
 	    (("-fno-letfun" (help "Disable letfun optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-letopt #f (hopc-j2s-flags))))
+	    (("-fvar2let" (help "Enable var2let optimization (-O2)"))
+	     (hopc-j2s-flags-set! (cons* :optim-var2let #t (hopc-j2s-flags))))
+	    (("-fno-var2let" (help "Disable var2let optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-var2let #f (hopc-j2s-flags))))
 	    (("-fglobprop" (help "Enable globprop optimization (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-globprop #t (hopc-j2s-flags))))
 	    (("-fno-globprop" (help "Disable globprop optimization"))

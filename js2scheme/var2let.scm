@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 20 14:59:28 2021                          */
-;*    Last change :  Mon Sep 20 15:03:00 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 17:47:56 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    An optimization that transforms global vars into global lets.    */
@@ -33,7 +33,8 @@
    (instantiate::J2SStageProc
       (name "var2let")
       (comment "Var->Let tranformation")
-      (proc j2s-var->let)))
+      (proc j2s-var->let)
+      (optional :optim-var2let)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-var->let ...                                                 */

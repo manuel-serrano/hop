@@ -791,7 +791,7 @@
 		      ,val ,mode %this ',loc)))
 	     ((equal? propstr "__proto__")
 	      `(js-setprototypeof ,obj ,val %this "js2scheme"))
-	     ((and (isa? tyobj J2SClass)
+	     ((and (isa? tyobj J2SRecord)
 		   propstr
 		   (j2s-class-instance-get-property-index tyobj propstr))
 	      =>

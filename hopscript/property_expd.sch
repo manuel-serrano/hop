@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Sep 18 16:35:10 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 18:57:49 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -443,6 +443,28 @@
 	 (else
 	  (error "js-pcache-function" "bad syntax" x)))
       e))
+
+;*---------------------------------------------------------------------*/
+;*    js-record-check-cmap-method-expander ...                         */
+;*---------------------------------------------------------------------*/
+(define (js-record-check-cmap-method-expander x e)
+   (match-case x
+      ((?- (and (? symbol?) ?obj) ?cmap (and (? integer?) ?index) . ?-)
+       (e `(with-access::JsObject ,obj ((omap cmap))
+	      (let ((%cmap ,cmap)
+		    (%omap omap))
+		 (or (eq? %omap %cmap)
+		     (with-access::JsConstructMap %omap ((omptable mptable))
+			(with-access::JsConstructMap %cmap ((fmptable mptable))
+			   (eq? (vector-ref omptable ,index)
+			      (vector-ref fmptable ,index)))))))
+	  e))
+      ((?- ?obj ?cmap (and (? integer?) ?index) . ?-)
+       (e `(let ((%obj ,obj))
+	      (j2s-record-check-cmap-method %obj ,cmap ,index))
+	  e))
+      (else
+       (error "js-record-check-cmap-method" "bad form" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject-name/cache-expander ...                          */

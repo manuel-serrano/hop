@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Mon Sep 20 15:15:20 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 17:22:57 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -462,11 +462,9 @@
 			((pair? m)
 			 (cons name
 			    (map (lambda (m)
-				    (tprint "x=" x)
 				    (resolve-file-or-directory m x))
 			       m)))
 			((string? m)
-			 (tprint "x=" x)
 			 (resolve-file-or-directory m x))
 			(else
 			 #f))))

@@ -2837,23 +2837,20 @@
 		    (null? (cdr fields)))
 	    (with-access::J2SString (car fields) (val)
 	       (let ((el (j2s-class-find-element (j2s-vtype obj) val)))
-		  (with-access::J2SRecord owner (cmap) 
+		  (with-access::J2SRecord owner (cmap name)
 		     (when el
 			(with-access::J2SClassElement el (prop static index)
 			   (when (and (not static) (isa? prop J2SMethodPropertyInit))
-			      `(with-access::JsObject ,(j2s-scheme obj mode return ctx) ((ocmap cmap))
-				  ,(if cmap
-				       (let ((scmcmap (j2s-scheme cmap mode return ctx)))
-					  `(or (eq? ocmap ,scmcmap)
-					       (with-access::JsConstructMap ocmap ((omptable mptable))
-						  (with-access::JsConstructMap ,scmcmap ((fmptable mptable))
-						     (eq? (vector-ref omptable ,index)
-							(vector-ref fmptable ,index))))))
-				       `(with-access::JsFunction ,(j2s-class-id owner ctx) (constrmap)
-					   (with-access::JsConstructMap ocmap ((omptable mptable))
-					      (with-access::JsConstructMap constrmap ((fmptable mptable))
-						 (eq? (vector-ref omptable ,index)
-						    (vector-ref fmptable ,index))))))))))))))))
+			      (if cmap
+				  `(js-record-check-cmap-method ,(j2s-scheme obj mode return ctx)
+				      ,(j2s-scheme cmap mode return ctx)
+				      ,index
+				      ,(format "~a.~a" name val))
+				  `(with-access::JsFunction ,(j2s-class-id owner ctx) (constrmap)
+				      (with-access::JsConstructMap ocmap ((omptable mptable))
+					 (with-access::JsConstructMap constrmap ((fmptable mptable))
+					    (eq? (vector-ref omptable ,index)
+					       (vector-ref fmptable ,index)))))))))))))))
 
    (define (record-cache-check-constructmap this::J2SCacheCheck)
       ;; compare object and record cmap: faster but less precise, does not

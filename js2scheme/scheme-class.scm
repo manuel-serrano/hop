@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sat Sep 18 12:07:51 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 17:30:52 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -395,7 +395,7 @@
 		  this mode return ctx)
 	     this)))
       
-   (with-access::J2SClass this (super elements src loc decl)
+   (with-access::J2SClass this (super elements src loc decl name)
       (let ((ctor (j2s-class-get-constructor this)))
 	 (let-super this
 	    (lambda (%super)

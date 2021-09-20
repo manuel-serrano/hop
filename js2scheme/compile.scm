@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Mon Sep 20 15:01:53 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 17:48:16 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -559,6 +559,8 @@
       (when (>=fx l 2)
 	 (unless (memq :optim-letopt o)
 	    (set! o (cons* :optim-letopt #t o)))
+	 (unless (memq :optim-var2let o)
+	    (set! o (cons* :optim-var2let #t o)))
 	 (unless (memq :optim-unletrec o)
 	    (set! o (cons* :optim-unletrec #t o)))
 	 (unless (memq :optim-tyflow-resolve o)
