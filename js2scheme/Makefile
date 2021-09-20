@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Aug 24 11:08:22 2021 (serrano)                */
+#*    Last change :  Mon Sep 20 07:59:58 2021 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -40,6 +40,7 @@ _OBJECTS = lexer header parser hopscript html ast usage dump utils freevars \
   array alpha letfusion constrsize ctor propcce cspecs sweep inline unthis \
   instanceof hintnum pce callapply multivar module checksum classutils \
   newtarget objinit arguments procedure cnstlift hop-module cse strbuffer \
+  loopcnst \
   scheme scheme-utils scheme-program \
   scheme-fun scheme-ops scheme-test scheme-class scheme-string scheme-math \
   scheme-date scheme-array scheme-regexp scheme-cast scheme-arguments \
