@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Sep 19 08:39:05 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 15:11:08 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1232,11 +1232,7 @@
    (with-access::J2SClass this (name super elements decl loc need-dead-zone-check)
       `(,(string->symbol (typeof this))
 	,@(if name (list :name name) '())
-	:super ,(if (isa? super J2SRef)
-		    (with-access::J2SRef super (decl)
-		       (with-access::J2SDecl decl (id)
-			  id))
-		    (typeof super))
+	:super ,(j2s->list super)
 	:need-dead-zone-check ,need-dead-zone-check
 	,@(dump-loc loc)
 	,@(dump-type this)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 15 15:16:16 2018                          */
-;*    Last change :  Sun Jul 11 16:51:50 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 15:15:20 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES6 Module handling                                              */
@@ -401,7 +401,7 @@
 ;*    Almost similar to nodejs's resolve method (see                   */
 ;*    nodejs/require.scm).                                             */
 ;*---------------------------------------------------------------------*/
-(define (resolve-module-file name dir args loc)
+(define (resolve-module-file name dir::bstring args loc)
    
    (define (resolve-file x)
       (cond
@@ -462,9 +462,11 @@
 			((pair? m)
 			 (cons name
 			    (map (lambda (m)
+				    (tprint "x=" x)
 				    (resolve-file-or-directory m x))
 			       m)))
 			((string? m)
+			 (tprint "x=" x)
 			 (resolve-file-or-directory m x))
 			(else
 			 #f))))
@@ -496,7 +498,7 @@
    (define (resolve-modules name)
       (any (lambda (dir)
 	      (resolve-file-or-directory name dir))
-	 hop-modules-path))
+	 (filter string? hop-modules-path)))
    
    (cond
       ((core-module? name)

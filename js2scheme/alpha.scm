@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Mon Sep 20 07:55:35 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 15:12:25 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -481,13 +481,14 @@
 ;*    alpha ::J2SClass ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (alpha this::J2SClass)
-   (with-access::J2SClass this (decl name elements)
+   (with-access::J2SClass this (decl name elements super)
       (when decl
 	 (with-access::J2SDecl decl (%info)
 	    (when (isa? %info AlphaInfo)
 	       (with-access::AlphaInfo %info (new)
 		  (when (isa? new J2SDecl)
 		     (set! decl new))))))
+      (set! super (alpha super))
       (set! elements (map alpha elements))
       this))
 
@@ -529,6 +530,14 @@
       (duplicate::J2SDProducer this
 	 (decl (j2sdecl-duplicate decl))
 	 (expr (alpha expr)))))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SImport ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SImport)
+   (with-access::J2SImport this (mvar)
+      (set! mvar (alpha mvar))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sdecl-duplicate ...                                            */
