@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Sep 20 07:49:32 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 08:10:30 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1149,7 +1149,7 @@
       (js-make-jsconstructmap
 	 :ctor (make-cell len)
 	 :props (vector-map (lambda (n)
-			       (if (and (string? n)
+			       (if (and (>fx (string-length n) 0)
 					(char=? (string-ref n 0) #\#))
 				   ;; private name
 				   (prop (js-string->private-name n)

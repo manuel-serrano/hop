@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 20 07:58:36 2021                          */
-;*    Last change :  Mon Sep 20 08:00:21 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 08:08:48 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Loop constant lifting                                            */
@@ -62,4 +62,18 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (loopcnst! this::J2SNode conf)
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    loopcnst! ::J2SFor ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (loopcnst! this::J2SFor conf)
+   (with-access::J2SFor this (init test incr body)
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    loopcnst! ::J2SWhile ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (loopcnst! this::J2SWhile conf)
+   (with-access::J2SWhite this (test body)
+      this))
 
