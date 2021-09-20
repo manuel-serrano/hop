@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Sun Sep 19 15:38:58 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 07:55:35 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -536,21 +536,20 @@
 (define (j2sdecl-duplicate p::J2SDecl)
    (cond
       ((isa? p J2SDeclFunType)
-       (with-access::J2SDeclFun p (val)
-	  (duplicate::J2SDeclFunType p
-	     (key (ast-decl-key)))))
+       (duplicate::J2SDeclFunType p
+	  (key (ast-decl-key))))
       ((isa? p J2SDeclFun)
-       (with-access::J2SDeclFun p (val)
-	  (duplicate::J2SDeclFun p
-	     (key (ast-decl-key)))))
+       (duplicate::J2SDeclFun p
+	  (key (ast-decl-key))))
       ((isa? p J2SDeclClass)
-       (with-access::J2SDeclClass p (val)
-	  (duplicate::J2SDeclClass p
-	     (key (ast-decl-key)))))
+       (duplicate::J2SDeclClass p
+	  (key (ast-decl-key))))
       ((isa? p J2SDeclInit)
-       (with-access::J2SDeclInit p (val)
-	  (duplicate::J2SDeclInit p
-	     (key (ast-decl-key)))))
+       (duplicate::J2SDeclInit p
+	  (key (ast-decl-key))))
+       ((isa? p J2SDeclRest)
+	(duplicate::J2SDeclRest p
+	   (key (ast-decl-key))))
       (else
        (duplicate::J2SDecl p
 	  (key (ast-decl-key))))))
