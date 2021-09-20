@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sat Sep 18 13:15:43 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 10:54:20 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -2056,6 +2056,13 @@
       (multiple-value-bind (_ env bk)
 	 (node-type expr env ctx)
 	 (return 'void env (cons this bk)))))
+
+;*---------------------------------------------------------------------*/
+;*    node-type ::J2SCacheCheck ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-type this::J2SCacheCheck env::pair-nil ctx::pair)
+   (call-default-walker)
+   (expr-type-add! this env ctx 'bool))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SClass ...                                         */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat Sep 18 09:28:38 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 10:08:46 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -1028,7 +1028,7 @@
 
    (define (inline-function-args args)
       (map (lambda (a)
-	      (let ((id (gensym 'a)))
+	      (let ((id (gensym 'iarg)))
 		 (with-access::J2SNode a (loc)
 		    (J2SLetOpt '(ref assig) id a))))
 	 args))
@@ -1098,7 +1098,7 @@
    
    (define (inline-closure-args args)
       (map (lambda (a)
-	      (let ((id (gensym 'a)))
+	      (let ((id (gensym 'iarg)))
 		 (with-access::J2SNode a (loc)
 		    (J2SLetOpt '(ref assig) id a))))
 	 args))
@@ -1173,7 +1173,7 @@
    
    (define (inline-method-args args)
       (map (lambda (a)
-	      (let ((id (gensym 'a)))
+	      (let ((id (gensym 'iarg)))
 		 (with-access::J2SNode a (loc)
 		    (J2SLetOpt '(ref assig) id a))))
 	 args))
@@ -1372,9 +1372,9 @@
 
    (define (inline-method-args args)
       (map (lambda (a)
-	      (if (simple-literal? a)
+	      (if (simple-argument? a)
 		  a
-		  (let ((id (gensym 'a)))
+		  (let ((id (gensym 'iarg)))
 		     (with-access::J2SNode a (loc)
 			(J2SLetOpt '(ref assig) id
 			   (inline! a
@@ -1467,6 +1467,13 @@
 		      (lambda ()
 			 (loop (cdr callees)
 			    (cons (cons cache (car callees)) caches)))))))))
+
+   (define (gen-check-object obj field)
+      (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool) obj)
+	 (inline-object-method-call fun obj args)
+	 (J2SMeta 'inline 0 0
+	    (J2SStmtExpr
+	       (J2SCall* (J2SAccess obj field) args)))))
    
    (with-access::J2SAccess fun (obj field loc)
       ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the
@@ -1481,16 +1488,12 @@
 		      vals)))
 	 (cond
 	    ((not (eq? (j2s-type obj) 'object))
-	     (let* ((id (gensym 'this))
-		    (d (J2SLetOpt '(get) id obj)))
-		(LetBlock loc (cons d tmps)
-		   (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
-			     (J2SRef d))
-		      (inline-object-method-call fun (J2SRef d) args)
-		      (J2SMeta 'inline 0 0
-			 (J2SStmtExpr
-			    (J2SCall* (J2SAccess (J2SRef d) field)
-			       args)))))))
+	     (if (simple-argument? obj)
+		 (gen-check-object obj field)
+		 (let* ((id (gensym 'this))
+			(d (J2SLetOpt '(get) id obj)))
+		    (LetBlock loc (cons d tmps)
+		       (gen-check-object (J2SRef d) field)))))
 	    ((not (isa? obj J2SRef))
 	     (let* ((id (gensym 'this))
 		    (d (J2SLetOpt '(get) id obj)))
@@ -1507,7 +1510,7 @@
 	 (lenp (length params)))
       (map (lambda (p a)
 	      (cond
-		 ((and (ronly-variable? p) (simple-literal? a))
+		 ((and (ronly-variable? p) (simple-argument? a))
 		  a)
 		 (else
 		  (with-access::J2SDecl p ((_usage usage) id writable)
@@ -1958,7 +1961,7 @@
 (define-walk-method (dead-inner-decl! this::J2SDeclInit)
    
    (define (simple-expr? val::J2SExpr)
-      (or (simple-literal? val)
+      (or (simple-argument? val)
 	  (isa? val J2SFun)
 	  (isa? val J2SRef)))
    
@@ -2288,3 +2291,13 @@
 	    (not (isa? this J2SCmap)))
        (isa? this J2SLiteralCnst)))
 
+;*---------------------------------------------------------------------*/
+;*    simple-argument? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (simple-argument? this::J2SExpr)
+   (or (simple-literal? this)
+       (when (isa? this J2SRef)
+	  (with-access::J2SRef this (decl)
+	     (with-access::J2SDecl decl (escape)
+		(unless escape
+		   (not (decl-usage-has? decl '(assig eval)))))))))

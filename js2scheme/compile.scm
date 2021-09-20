@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Aug 26 08:49:41 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 10:28:22 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -42,6 +42,7 @@
 	   __js2scheme_tyflow
 	   __js2scheme_range
 	   __js2scheme_loopspec
+	   __js2scheme_loopcnst
 	   __js2scheme_arguments
 	   __js2scheme_cast
 	   __js2scheme_vector
@@ -217,6 +218,7 @@
 	  j2s-tyflow-stage
 	  j2s-sweep-stage
 	  j2s-cnstlift-stage
+	  j2s-loopcnst-stage
 	  j2s-hintnum-stage
 	  j2s-cse-stage
 	  j2s-propcache-stage
@@ -513,6 +515,8 @@
 	    (set! o (cons* :optim-cse #t o)))
 	 (unless (memq :optim-loopspec o)
 	    (set! o (cons* :optim-loopspec #t o)))
+	 (unless (memq :optim-loopcnst o)
+	    (set! o (cons* :optim-loopcnst #t o)))
 	 (unless (memq :optim-arguments o)
 	    (set! o (cons* :optim-arguments #t o)))
 	 (unless (memq :optim-stack-alloc o)

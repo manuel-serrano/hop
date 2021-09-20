@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Apr 28 17:50:51 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 08:38:37 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -305,6 +305,10 @@
 	    (("-floop-spec" (help "Enable loop specialization (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-loopspec #t (hopc-j2s-flags))))
 	    (("-fno-loop-spec" (help "Disable loop specialization"))
+	     (hopc-j2s-flags-set! (cons* :optim-loopspec #f (hopc-j2s-flags))))
+	    (("-floop-cnst" (help "Enable loop constant lifting (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-loopcnst #t (hopc-j2s-flags))))
+	    (("-fno-loop-cnst" (help "Disable loop constant lifting"))
 	     (hopc-j2s-flags-set! (cons* :optim-loopspec #f (hopc-j2s-flags))))
 	    (("-fhintfun" (help "Enable function hint typing (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-hintfun #t (hopc-j2s-flags))))
