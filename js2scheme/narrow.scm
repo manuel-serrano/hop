@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Mon Sep 20 14:59:52 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 19:21:32 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -768,4 +768,3 @@
 			 (when (isa? expr J2SInit)
 			    expr))))
 	    nodes))))
-

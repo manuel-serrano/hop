@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 20 14:59:28 2021                          */
-;*    Last change :  Mon Sep 20 17:47:56 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 19:22:08 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    An optimization that transforms global vars into global lets.    */
@@ -113,10 +113,12 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (init->assign! this::J2SInit decls)
    (with-access::J2SInit this (lhs)
-      (with-access::J2SRef lhs (decl)
-	 (if (memq decl decls)
-	     (duplicate::J2SAssig this)
-	     this))))
+      (if (not (isa? lhs J2SRef))
+	  this
+	  (with-access::J2SRef lhs (decl)
+	     (if (memq decl decls)
+		 (duplicate::J2SAssig this)
+		 this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    simple-stmt? ...                                                 */
