@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Sun Sep 19 08:16:27 2021 (serrano)                */
+;*    Last change :  Mon Sep 20 07:52:37 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -858,7 +858,7 @@
 				       (if (and (memq scope '(global %scope))
 						(simple-expr? rhs))
 					   (begin
-					      (set-car! nodes (J2SUndefined))
+					      (set-car! nodes (J2SNop))
 					      (liip (cdr inits)
 						 (append (var->let! this decl rhs)
 						    ndecls)))
