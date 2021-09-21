@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Thu Aug 19 08:25:19 2021 (serrano)                */
+;*    Last change :  Tue Sep 21 11:01:18 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -89,7 +89,10 @@
 		  ((j2s-fun-no-closure? this)
 		   '())
 		  (else
-		   `((define ,scmid #unspecified)))))))
+		   ;; MS CARE: 21sep2021. I don't know why closure
+		   ;; creation was split
+		   (list (j2s-scheme-closure this mode return ctx)))))))
+;* 		   `((define ,scmid #unspecified)))))))                */
 
    (define (regular-declfun this val scmid fastid)
       (with-access::J2SDeclFun this (loc id vtype)
@@ -347,7 +350,11 @@
 			 (if (eq? vtype 'procedure)
 			     #unspecified
 			     (epairify-deep loc
-				`(set! ,scmid
+				;; MS CARE: 21sep2021. use to be an
+				;; assignment (set! ,scmid ...)
+				;; to a variable declared with #unspecified
+				;; in global-declfun
+				`(define ,scmid
 				    ,(if (js-need-global? this scope mode)
 					 `(js-bind! %this ,scope
 					     ,(j2s-decl-name this ctx)

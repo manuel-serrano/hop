@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 20 14:59:28 2021                          */
-;*    Last change :  Mon Sep 20 21:04:25 2021 (serrano)                */
+;*    Last change :  Tue Sep 21 10:56:22 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    An optimization that transforms global vars into global lets.    */
@@ -48,6 +48,17 @@
 	 ;; at the beginning of nodes
 	 (let ((news (vars->lets! this)))
 	    (when (pair? news)
+	       ;; move all the declfun at the top
+	       (let loop ((ds decls)
+			  (nonfuns '())
+			  (funs '()))
+		  (cond
+		     ((null? ds)
+		      (set! decls (append (reverse! funs) (reverse! nonfuns))))
+		     ((isa? (car ds) J2SDeclFun)
+		      (loop (cdr ds) nonfuns (cons (car ds) funs)))
+		     (else
+		      (loop (cdr ds) (cons (car ds) nonfuns) funs))))
 	       (j2s-alpha this (map car news) (map cdr news))
 	       (init->assign! this (map cdr news))))))
    this)

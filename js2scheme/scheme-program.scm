@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Sep 10 11:04:26 2021 (serrano)                */
+;*    Last change :  Tue Sep 21 11:12:49 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -274,9 +274,10 @@
 	     (esexports (j2s-module-exports this nctx))
 	     (scmheaders (j2s-scheme headers mode return nctx))
 	     (scmdecls (j2s-scheme decls mode return nctx))
-	     (scmclos (filter-map (lambda (d)
-				     (j2s-scheme-closure d mode return nctx))
-			 decls))
+;* 	     (scmclos (filter-map (lambda (d)                          */
+;* 				     (j2s-scheme-closure d mode return nctx)) */
+;* 			 decls))                                       */
+	     (scmclos '())
 	     (scmnodes (j2s-scheme nodes mode return nctx))
 	     (cnsttable (%cnst-table cnsts mode return nctx))
 	     (records (j2s-collect-records* this))
