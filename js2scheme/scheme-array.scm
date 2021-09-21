@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Aug  8 09:46:07 2021 (serrano)                */
+;*    Last change :  Tue Sep 21 18:25:14 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -905,6 +905,7 @@
 ;*    j2s-array-sort ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-sort obj args mode return ctx)
+   (tprint "SORT...")
    (array-sort 'js-array-sort
       obj args mode return ctx))
 
