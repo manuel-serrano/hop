@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Sep 20 10:54:20 2021 (serrano)                */
+;*    Last change :  Tue Sep 21 08:48:14 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1747,12 +1747,6 @@
 	 (trace-item "loc=" loc)
 	 (let ((ienv (filter-map (lambda (d::J2SDecl)
 				    (with-access::J2SDecl d (vtype)
-				       ;; MS CARE UTYPE
-;* 				       (if (eq? utype 'unknown)        */
-;* 					   (if (eq? vtype 'unknown)    */
-;* 					       #f                      */
-;* 					       (cons d vtype))         */
-;* 					   (cons d utype))             */
 				       (unless (eq? vtype 'unknown)
 					  (cons d vtype))))
 			decls)))
@@ -2058,13 +2052,6 @@
 	 (return 'void env (cons this bk)))))
 
 ;*---------------------------------------------------------------------*/
-;*    node-type ::J2SCacheCheck ...                                    */
-;*---------------------------------------------------------------------*/
-(define-walk-method (node-type this::J2SCacheCheck env::pair-nil ctx::pair)
-   (call-default-walker)
-   (expr-type-add! this env ctx 'bool))
-
-;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SClass ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SClass env::pair-nil ctx::pair)
@@ -2291,7 +2278,7 @@
 	     (and (eq? op '==)
 		  (memq (j2s-type lhs) '(null undefined))
 		  (memq (j2s-type rhs) '(null undefined)))))))
-
+   
    (define (is-false? expr)
       (cond
 	 ((isa? expr J2SBool)
@@ -2302,24 +2289,30 @@
 		  (memq (j2s-type lhs) '(null undefined))
 		  (memq (j2s-type rhs) '(null undefined)))))))
    
-   (with-access::J2SIf this (test then else)
-      (set! test (resolve! test ctx))
-      (with-access::J2SExpr test (type)
-	 (cond
-	    ((memq type '(any unknown))
-	     (set! then (resolve! then ctx))
-	     (set! else (resolve! else ctx))
-	     this)
-	    ((is-true? test)
-	     (unfix! ctx "resolve.J2SIf")
-	     (resolve! then ctx))
-	    ((is-false? test)
-	     (unfix! ctx "resolve.J2SIf")
-	     (resolve! else ctx))
-	    (else
-	     (set! then (resolve! then ctx))
-	     (set! else (resolve! else ctx))
-	     this)))))
+   (let ((ts (if-check-cache-cascade-classes this)))
+      (let ((nthis (if (and (pair? ts) (pair? (cdr ts)))
+		       (if-check-cache-cascade-resolve! this ts)
+		       this)))
+	 (if (isa? nthis J2SIf)
+	     (with-access::J2SIf nthis (test then else)
+		(set! test (resolve! test ctx))
+		(with-access::J2SExpr test (type)
+		   (cond
+		      ((memq type '(any unknown))
+		       (set! then (resolve! then ctx))
+		       (set! else (resolve! else ctx))
+		       nthis)
+		      ((is-true? test)
+		       (unfix! ctx "resolve.J2SIf")
+		       (resolve! then ctx))
+		      ((is-false? test)
+		       (unfix! ctx "resolve.J2SIf")
+		       (resolve! else ctx))
+		      (else
+		       (set! then (resolve! then ctx))
+		       (set! else (resolve! else ctx))
+		       nthis))))
+	     nthis))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SCall ...                                           */
@@ -2652,3 +2645,63 @@
 	    (type (type-name utype '()))
 	    (fname (cadr loc))
 	    (location (caddr loc))))))
+
+;*---------------------------------------------------------------------*/
+;*    if-check-cache-cascade-classes ...                               */
+;*    -------------------------------------------------------------    */
+;*    Returns the list of all the types tested in a cachecheck         */
+;*    cascade.                                                         */
+;*---------------------------------------------------------------------*/
+(define (if-check-cache-cascade-classes::pair-nil this::J2SIf)
+   (with-access::J2SIf this (test else)
+      (if (isa? test J2SCacheCheck)
+	  (with-access::J2SCacheCheck test ((o0 obj) (t0 owner))
+	     (if (and (isa? o0 J2SRef) (isa? t0 J2SClass) (isa? (j2s-vtype o0) J2SClass))
+		 (with-access::J2SRef o0 ((d0 decl))
+		    (let loop ((else else)
+			       (ts (list t0)))
+		       (if (isa? else J2SIf)
+			   (with-access::J2SIf else (test else)
+			      (if (isa? test J2SCacheCheck)
+				  (with-access::J2SCacheCheck test ((o1 obj) (t1 owner))
+				     (if (isa? o1 J2SRef) 
+					 (with-access::J2SRef o1 ((d1 decl))
+					    (if (eq? d0 d1)
+						(loop else
+						   (if (isa? t1 J2SClass) (cons t1 ts) ts))
+						ts))
+					 ts))
+				  ts))
+			   ts)))
+		 '()))
+	  '())))
+
+;*---------------------------------------------------------------------*/
+;*    if-check-cache-cascade-resolve! ...                              */
+;*    -------------------------------------------------------------    */
+;*    Remove the inlined method that the type analysis elimitated.     */
+;*---------------------------------------------------------------------*/
+(define (if-check-cache-cascade-resolve! this::J2SIf ts::pair)
+
+   (define (resolve! this ts)
+      (if (isa? this J2SIf)
+	  (with-access::J2SIf this (test then else)
+	     (with-access::J2SCacheCheck test (owner)
+		(if (memq owner ts)
+		    ;; invalidate that cachecheck
+		    (resolve! else ts)
+		    (begin
+		       (set! else (resolve! else ts))
+		       this))))
+	  this))
+      
+   (with-access::J2SIf this (test else)
+      (with-access::J2SCacheCheck test (obj)
+	 (let* ((to (j2s-vtype obj))
+		(fts (filter (lambda (t) (type-subtype? to t)) ts)))
+	    (if (or (null? fts) (null? (cdr fts)))
+		this
+		(let ((sts (sort type-subtype? fts)))
+		   ;; keep the first super types,
+		   ;; eliminate all other smaller types
+		   (resolve! this (cdr sts))))))))

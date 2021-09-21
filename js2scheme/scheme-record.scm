@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Sat Sep 18 10:11:48 2021 (serrano)                */
+;*    Last change :  Tue Sep 21 07:20:10 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -47,6 +47,14 @@
 ;*    j2s-scheme-call-record-constructor ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme-call-class-constructor record::J2SRecord ecla enewtarget eobj args node mode return ctx)
+   
+   (define (gen-new args #!optional (extras '()))
+      `(,(class-constructor-id record)
+	,eobj
+	,@(if (class-new-target? record) (list enewtarget) '())
+	,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)
+	,@extras))
+   
    (with-access::J2SNode node (loc)
       (let ((ctor (j2s-class-find-constructor record))
 	    (la (length args)))
@@ -56,32 +64,48 @@
 		(j2s-error name
 		   "wrong number of arguments, 0 expected"
 		   node (format "~a provided" la))))
-	    (ctor
+	    ((not ctor)
+	     (gen-new args))
+	    (else
 	     (with-access::J2SClassElement ctor (prop)
 		(with-access::J2SMethodPropertyInit prop (val)
 		   (with-access::J2SFun val (params vararg loc name mode)
 		      (let ((lp (length params)))
-			 (unless (=fx lp la)
-			    (case vararg
-			       ((rest)
-				(unless (>=fx la (-fx (j2s-minlen val)  1))
-				   (j2s-error name
-				      (format "wrong number of arguments, minimum expected: ~a"
-					 (j2s-minlen val))
-				      node (format "~a provided" la))))
-			       (else
-				(unless (and (>=fx la (j2s-minlen val)) (<=fx la lp))
-				   (j2s-error name
-				      (if (=fx (j2s-minlen val) lp)
-					  (format "wrong number of arguments, expected: ~a"
-					     lp)
-					  (format "wrong number of arguments, expected: ~a..~a"
-					     (j2s-minlen val) lp))
-				      node (format "~a provided" la))))))))))))
-	 `(,(class-constructor-id record)
-	   ,eobj
-	   ,@(if (class-new-target? record) (list enewtarget) '())
-	   ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))))
+			 (if (=fx lp la)
+			     (gen-new args)
+			     (cond
+				((eq? vararg 'rest)
+				 (cond
+				    ((>=fx la (-fx (j2s-minlen val)  1))
+				     (gen-new args))
+				    ((eq? mode 'hopscript)
+				     (j2s-error name
+					(format "wrong number of arguments, ~a minimum expected"
+					   (j2s-minlen val))
+					node (format "~a provided" la)))
+				    (else
+				     (gen-new args (make-list (-fx lp la) '(js-undefined))))))
+				((eq? vararg 'arguments)
+				 (j2s-error name
+				    "arguments not supported in record constructor"
+				    node name))
+				((and (>=fx la (j2s-minlen val)) (<=fx la lp))
+				 (gen-new args))
+				((eq? mode 'hopscript)
+				 (j2s-error name
+				    (if (=fx (j2s-minlen val) lp)
+					(format "wrong number of arguments, ~a expected"
+					   lp)
+					(format "wrong number of arguments, ~a..~a expected"
+					   (j2s-minlen val) lp))
+				    node (format "~a provided" la)))
+				((<fx la lp)
+				 (gen-new args (make-list (-fx lp la) '(js-undefined))))
+				(else
+				 (let ((ts (map (lambda (a) (gensym '%t)) args)))
+				    `(let* ,(map (lambda (t a) (list t (j2s-scheme a mode return ctx)))
+					       ts args)
+					,(gen-new '() (take ts lp))))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-record-new ...                                        */

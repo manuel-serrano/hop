@@ -1147,15 +1147,34 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.5         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SIf mode return ctx)
+   
+   (define (gen-if test then else)
+      `(if ,(j2s-test test mode return ctx)
+	   ,(j2s-scheme then mode return ctx)
+	   ,(j2s-scheme else mode return ctx)))
+   
    (with-access::J2SIf this (loc test then else)
       (epairify loc
 	 (if (isa? else J2SNop)
 	     `(if ,(j2s-test test mode return ctx)
 		  ,(j2s-scheme then mode return ctx)
 		  (js-undefined))
-	     `(if ,(j2s-test test mode return ctx)
-		  ,(j2s-scheme then mode return ctx)
-		  ,(j2s-scheme else mode return ctx))))))
+	     (let ((ts (if-check-cache-cascade-tests this)))
+		(if (>fx (length ts) 2)
+		    ;; optimizes this cascade
+		    (let ((cmap (gensym 'cmap)))
+		       (with-access::J2SCacheCheck (car ts) (obj)
+			  ;; patch all the tests of the cascade
+			  (for-each (lambda (t)
+				       (with-access::J2SCacheCheck t (obj prop)
+					  (set! prop 'cmap-proto-method)
+					  (with-access::J2SRef obj (%info)
+					     (set! %info cmap))))
+			     ts)
+			  ;; bind a temporary with the object hidden class
+			  `(let ((,cmap (js-object-cmap ,(j2s-scheme obj mode return ctx))))
+			      ,(gen-if test then else))))
+		    (gen-if test then else)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SPrecache ...                                     */
@@ -2828,7 +2847,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SCacheCheck mode return ctx)
    
-   (define (record-cache-check-method this::J2SCacheCheck)
+   (define (record-cache-check this::J2SCacheCheck)
       (with-access::J2SCacheCheck this (prop cache owner obj fields)
 	 (when (and (isa? (j2s-vtype obj) J2SRecord)
 		    (isa? owner J2SRecord)
@@ -2842,7 +2861,7 @@
 			(with-access::J2SClassElement el (prop static index)
 			   (when (and (not static) (isa? prop J2SMethodPropertyInit))
 			      (if cmap
-				  `(js-record-check-cmap-method ,(j2s-scheme obj mode return ctx)
+				  `(js-record-cache-check-proto-method ,(j2s-scheme obj mode return ctx)
 				      ,(j2s-scheme cmap mode return ctx)
 				      ,index
 				      ,(format "~a.~a" name val))
@@ -2852,9 +2871,7 @@
 					    (eq? (vector-ref omptable ,index)
 					       (vector-ref fmptable ,index)))))))))))))))
 
-   (define (record-cache-check-constructmap this::J2SCacheCheck)
-      ;; compare object and record cmap: faster but less precise, does not
-      ;; support polymorphism
+   (define (record-cmap-cache-check this::J2SCacheCheck)
       (with-access::J2SCacheCheck this (prop cache owner obj fields)
 	 (when (and (isa? (j2s-vtype obj) J2SRecord)
 		    (isa? owner J2SRecord)
@@ -2863,25 +2880,51 @@
 		    (null? (cdr fields)))
 	    (with-access::J2SString (car fields) (val)
 	       (let ((el (j2s-class-find-element (j2s-vtype obj) val)))
-		  (with-access::J2SRecord owner (cmap) 
+		  (with-access::J2SRecord owner (cmap name)
 		     (when el
-			(with-access::J2SClassElement el (prop static index)
-			   (when (and (not static) (isa? prop J2SMethodPropertyInit))
-			      `(with-access::JsObject ,(j2s-scheme obj mode return ctx) ((ocmap cmap))
-				  ,(if cmap
-				       `(eq? ocmap ,(j2s-scheme cmap mode return ctx))
-				       `(with-access::JsFunction ,(j2s-class-id owner ctx) (constrmap)
-					   (eq? ocmap constmap)))))))))))))
+			(with-access::J2SRef obj (%info)
+			   (with-access::J2SClassElement el (prop static index)
+			      (when (and (not static) (isa? prop J2SMethodPropertyInit))
+				 (if cmap
+				     `(js-record-cmap-cache-check-proto-method ,%info
+					 ,(j2s-scheme cmap mode return ctx)
+					 ,index
+					 ,(format "~a.~a" name val))
+				     `(with-access::JsFunction ,(j2s-class-id owner ctx) (constrmap)
+					 (with-access::JsConstructMap ocmap ((omptable mptable))
+					    (with-access::JsConstructMap constrmap ((fmptable mptable))
+					       (eq? (vector-ref omptable ,index)
+						  (vector-ref fmptable ,index))))))))))))))))
+   
+   (define (object-cache-check this::J2SCacheCheck)
+      (with-access::J2SCacheCheck this (prop cache obj fields owner)
+	 `(js-object-cache-check-proto-method ,(j2s-scheme obj mode return ctx)
+	     (js-pcache-ref %pcache ,cache)
+	     ,(with-access::J2SString (car fields) (val)
+		 (if (isa? owner J2SClass)
+		     (with-access::J2SClass owner (name)
+			(format "~a.~a" name val))
+		     val)))))
 
-   (define (record-cache-check this::J2SCacheCheck)
-      (record-cache-check-method this))
-      
-   (with-access::J2SCacheCheck this (prop cache obj fields)
+   (define (object-cmap-cache-check this::J2SCacheCheck)
+      (with-access::J2SCacheCheck this (prop cache obj fields owner)
+	 (with-access::J2SRef obj (%info)
+	    `(js-object-cmap-cache-check-proto-method ,%info
+		(js-pcache-ref %pcache ,cache)
+		,(with-access::J2SString (car fields) (val)
+		    (if (isa? owner J2SClass)
+			(with-access::J2SClass owner (name)
+			   (format "~a.~a" name val))
+			val))))))
+   
+   (with-access::J2SCacheCheck this (prop cache obj fields owner)
       (case prop
 	 ((proto-method)
 	  (or (record-cache-check this)
-	      `(eq? (js-pcache-pmap (js-pcache-ref %pcache ,cache))
-		  (js-object-cmap ,(j2s-scheme obj mode return ctx)))))
+	      (object-cache-check this)))
+	 ((cmap-proto-method)
+	  (or (record-cmap-cache-check this)
+	      (object-cmap-cache-check this)))
 	 ((instanceof)
 	  `(eq? (js-pcache-cmap (js-pcache-ref %pcache ,cache))
 	      (js-object-cmap ,(j2s-scheme obj mode return ctx))))
@@ -3798,3 +3841,52 @@
    (with-access::J2SAssigOp this (cache)
       (set! cache #f)
       (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    if-check-cache-cascade-tests ...                                 */
+;*    -------------------------------------------------------------    */
+;*    Returns the list of all the tests of a cachecheck cascade.       */
+;*    -------------------------------------------------------------    */
+;*    The purpose of this analysis is to transform a cascade:          */
+;*                                                                     */
+;*    (if (js-class-check-cache-method obj c0 ...)                     */
+;*        ...                                                          */
+;*        (if (js-class-check-cache-method obj c1 ...)                 */
+;*            ...                                                      */
+;*    	      (if (js-class-check-cache-method obj c1 ...)             */
+;*    	          ...)))                                               */
+;*                                                                     */
+;*    into:                                                            */
+;*                                                                     */
+;*    (let ((cmap (js-object-cmap obj)))                               */
+;*       (if (js-class-cmap-check-cache-method cmap c0 ...)            */
+;*           ...                                                       */
+;*           (if (js-class-cmap-check-cache-method cmap c1 ...)        */
+;*               ...                                                   */
+;*    	         (if (js-class-cmap-check-cache-method cmap c1 ...)    */
+;*    	             ...))))                                           */
+;*---------------------------------------------------------------------*/
+(define (if-check-cache-cascade-tests::pair-nil this::J2SIf)
+   (with-access::J2SIf this (test else)
+      (if (isa? test J2SCacheCheck)
+	  (with-access::J2SCacheCheck test ((o0 obj) prop)
+	     (if (and (isa? o0 J2SRef) (eq? prop 'proto-method))
+		 (with-access::J2SRef o0 ((d0 decl))
+		    (let loop ((else else)
+			       (ts (list test)))
+		       (if (isa? else J2SIf)
+			   (with-access::J2SIf else (test else)
+			      (if (isa? test J2SCacheCheck)
+				  (with-access::J2SCacheCheck test ((o1 obj) prop)
+				     (if (and (isa? o1 J2SRef) (eq? prop 'proto-method))
+					 (with-access::J2SRef o1 ((d1 decl))
+					    (if (eq? d0 d1)
+						(loop else
+						   (cons test ts))
+						ts))
+					 ts))
+				  ts))
+			   ts)))
+		 '()))
+	  '())))
+

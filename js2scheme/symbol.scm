@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Sep 17 08:51:02 2021 (serrano)                */
+;*    Last change :  Tue Sep 21 07:58:37 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -1531,7 +1531,7 @@
 ;*    resolve-class-private-fields ::J2SClass ...                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve-class-private-fields this::J2SClass clazz)
-   (with-access::J2SClass this (elements name)
+   (with-access::J2SClass this (elements)
       ;; mark all the private fields
       (for-each (lambda (el)
 		   (with-access::J2SClassElement el (prop)
@@ -1566,7 +1566,7 @@
    (with-access::J2SAccess this (field loc)
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val private)
-	    (when private
+	    (when (eq? private #t)
 	       (if (not (isa? clazz J2SClass))
 		   (err val loc)
 		   (let* ((pname (class-private-field-name val clazz))

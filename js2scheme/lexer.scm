@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Tue Sep 14 17:01:42 2021 (serrano)                */
+;*    Last change :  Tue Sep 21 07:04:06 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -229,6 +229,11 @@
 	  (+ #\*) "/")
        (token 'NEWLINE #\newline 1))
 
+      ;; builtin decorator
+      ((: (? (: "//" (or #\space #\tab))) "@record" (+ blank) "class")
+       (token 'record 'record (the-length)))
+
+      ;; numbers
       (#\0
        (token 'NUMBER 0 (the-length)))
       ((+ #\0)

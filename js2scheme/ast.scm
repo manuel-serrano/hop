@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Sep 18 07:47:36 2021 (serrano)                */
+;*    Last change :  Tue Sep 21 07:31:41 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -243,6 +243,7 @@
 	      (need-bind-exit-return::bool (default #f) (info '("notraverse")))
 	      ;; new-target: unknown | no | global | argument
 	      (new-target::symbol (default 'unknown) (info '("notraverse")))
+	      ;; #f | rest | arguments
 	      (vararg::obj (default #f) (info '("notraverse")))
 	      (name::symbol (info '("notraverse")))
 	      (generator::bool (default #f) (info '("notraverse")))
@@ -434,7 +435,8 @@
 	      (field::J2SExpr (info '("ast"))))
 
 	   (final-class J2SCacheCheck::J2SExpr
-	      (prop::symbol read-only)
+	      ;; proto-method | instanceof | method | cmap-proto-method
+	      prop::symbol
 	      (cache read-only (info '("notraverse")))
 	      (owner::obj read-only (default #f) (info '("notraverse")))
 	      (obj::J2SExpr (info '("ast")))

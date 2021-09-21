@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Mon Sep 20 18:57:49 2021 (serrano)                */
+;*    Last change :  Tue Sep 21 08:18:43 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -445,9 +445,9 @@
       e))
 
 ;*---------------------------------------------------------------------*/
-;*    js-record-check-cmap-method-expander ...                         */
+;*    js-record-cache-check-proto-method-expander ...                  */
 ;*---------------------------------------------------------------------*/
-(define (js-record-check-cmap-method-expander x e)
+(define (js-record-cache-check-proto-method-expander x e)
    (match-case x
       ((?- (and (? symbol?) ?obj) ?cmap (and (? integer?) ?index) . ?-)
        (e `(with-access::JsObject ,obj ((omap cmap))
@@ -460,11 +460,65 @@
 			      (vector-ref fmptable ,index)))))))
 	  e))
       ((?- ?obj ?cmap (and (? integer?) ?index) . ?-)
-       (e `(let ((%obj ,obj))
-	      (j2s-record-check-cmap-method %obj ,cmap ,index))
-	  e))
+       (let ((o (gensym 'obj)))
+	  (e `(let ((,o ,obj))
+		 (js-record-cache-check-proto-method ,o ,cmap ,index))
+	     e)))
       (else
-       (error "js-record-check-cmap-method" "bad form" x))))
+       (error "js-record-cache-check-proto-method" "bad form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-record-cmap-cache-check-proto-method-expander ...             */
+;*---------------------------------------------------------------------*/
+(define (js-record-cmap-cache-check-proto-method-expander x e)
+   (match-case x
+      ((?- (and (? symbol?) ?omap) ?cmap (and (? integer?) ?index) . ?-)
+       (e `(let ((%cmap ,cmap))
+	      (or (eq? ,omap %cmap)
+		  (with-access::JsConstructMap ,omap ((omptable mptable))
+		     (with-access::JsConstructMap %cmap ((fmptable mptable))
+			(eq? (vector-ref omptable ,index)
+			   (vector-ref fmptable ,index))))))
+	  e))
+      ((?- ?omap ?cmap (and (? integer?) ?index) . ?-)
+       (let ((o (gensym 'omap)))
+	  (e `(let ((,o ,omap))
+		 (js-record-cmap-cache-check-proto-method ,o ,cmap ,index))
+	     e)))
+      (else
+       (error "js-record-cmap-cache-check-proto-method" "bad form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-cache-check-proto-method-expander ...                  */
+;*---------------------------------------------------------------------*/
+(define (js-object-cache-check-proto-method-expander x e)
+   (match-case x
+      ((?- (and (? symbol?) ?obj) ?cache . ?-)
+       (e `(eq? (with-access::JsObject ,obj (cmap) cmap)
+	      (js-pcache-pmap ,cache))
+	  e))
+      ((?- ?obj ?cache . ?-)
+       (let ((o (gensym 'obj)))
+	  (e `(let ((,o ,obj))
+		 (js-object-cache-check-proto-method ,o ,cache))
+	     e)))
+      (else
+       (error "js-object-cache-check-proto-method" "bad form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-cmap-cache-check-proto-method-expander ...             */
+;*---------------------------------------------------------------------*/
+(define (js-object-cmap-cache-check-proto-method-expander x e)
+   (match-case x
+      ((?- (and (? symbol?) ?cmap) ?cache . ?-)
+       (e `(eq? ,cmap (js-pcache-pmap ,cache)) e))
+      ((?- ?cmap ?cache . ?-)
+       (let ((c (gensym 'cmap)))
+	  (e `(let ((,c ,cmap))
+		 (js-object-cmap-cache-check-proto-method ,c ,cache))
+	     e)))
+      (else
+       (error "js-object-cmap-cache-check-proto-method" "bad form" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject-name/cache-expander ...                          */
