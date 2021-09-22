@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Mon Sep 20 17:48:16 2021 (serrano)                */
+;*    Last change :  Wed Sep 22 08:16:30 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -28,6 +28,7 @@
 	   __js2scheme_bestpractice
 	   __js2scheme_this
 	   __js2scheme_callapply
+	   __js2scheme_recstatic
 	   __js2scheme_loopexit
 	   __js2scheme_ronly
 	   __js2scheme_use
@@ -202,6 +203,7 @@
 	  j2s-use-stage
 	  j2s-letclass-stage
 	  j2s-callapply-stage
+	  j2s-recstatic-stage
 	  j2s-sweep-stage
 	  j2s-ronly-stage
 	  j2s-uninit-stage
@@ -575,6 +577,8 @@
 	    (set! o (cons* :optim-cspecs #t o)))
 	 (unless (memq :optim-callapply o)
 	    (set! o (cons* :optim-callapply #t o)))
+	 (unless (memq :optim-recstatic o)
+	    (set! o (cons* :optim-recstatic #t o)))
 	 (unless (memq :optim-inline o)
 	    (set! o (cons* :optim-inline #t o)))
 	 (unless (memq :optim-uninit o)

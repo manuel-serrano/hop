@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Sat Sep 18 12:35:10 2021 (serrano)                */
+;*    Last change :  Wed Sep 22 07:30:26 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -25,6 +25,7 @@
 	   (class-prototype-id::symbol ::J2SClass)
 	   (class-predicate-id::symbol ::J2SClass)
 	   (class-element-id::symbol ::J2SClass ::J2SClassElement)
+	   (class-method-id::symbol ::J2SClass ::J2SClassElement)
 	   
 	   (j2s-class-super-val ::J2SClass)
 	   (j2s-class-root-val ::J2SClass)
@@ -110,6 +111,12 @@
 	       (string->symbol
 		  (string-append str "@"
 		     (symbol->string! classname))))))))
+
+;*---------------------------------------------------------------------*/
+;*    class-method-id ...                                              */
+;*---------------------------------------------------------------------*/
+(define (class-method-id::symbol clazz::J2SClass el::J2SClassElement)
+   (symbol-append '! (class-element-id clazz el)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-class-super-val ...                                          */
@@ -209,10 +216,9 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-class-static-methods clazz)
    (with-access::J2SClass clazz (elements)
-      (filter-map (lambda (el)
-		     (with-access::J2SClassElement el (prop static)
-			(when (and static (isa? prop J2SMethodPropertyInit))
-			   prop)))
+      (filter (lambda (el)
+		 (with-access::J2SClassElement el (prop static)
+		    (and static (isa? prop J2SMethodPropertyInit))))
 	 elements)))
    
 ;*---------------------------------------------------------------------*/
@@ -281,13 +287,16 @@
 				(not (isa? prop J2SMethodPropertyInit))))
 		       (if (isa? prop J2SPropertyInit)
 			   (with-access::J2SPropertyInit prop (name)
-			      (if (isa? name J2SString)
-				  (with-access::J2SString name (val)
-				     (if (string=? val field)
-					 (values i (car els))
-					 (loop (+fx i 1) (cdr els))))
-				  (loop (+fx i 1) (cdr els)))))
-		       (loop i (cdr els))))
+			      (let ((ni (if (isa? prop J2SAccessorPropertyInit)
+					    i
+					    (+fx i 1))))
+				 (if (isa? name J2SString)
+				     (with-access::J2SString name (val)
+					(if (string=? val field)
+					    (values i (car els))
+					    (loop ni (cdr els))))
+				     (loop ni (cdr els)))))
+			   (loop i (cdr els)))))
 		(values i #f)))))
 
    (let loop ((clazz clazz)

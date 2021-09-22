@@ -255,6 +255,7 @@
 (define (js-need-global? decl::J2SDecl scope mode)
    (with-access::J2SDecl decl (usage)
       (or (not (j2s-let-opt? decl))
+	  (not (eq? scope 'record))
 	  (decl-usage-has? decl '(eval))
 	  (not (and (eq? scope '%scope) (eq? mode 'hopscript))))))
 

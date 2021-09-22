@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Sep 20 17:48:36 2021 (serrano)                */
+;*    Last change :  Wed Sep 22 08:16:44 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -434,6 +434,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-callapply #t (hopc-j2s-flags))))
 	    (("-fno-callapply" (help "Disable CALL/APPLY optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-callapply #f (hopc-j2s-flags))))
+	    (("-frecstatic" (help "Enable record static methods optimization (-O2)"))
+	     (hopc-j2s-flags-set! (cons* :optim-recstatic #t (hopc-j2s-flags))))
+	    (("-fno-recstatic" (help "Disable record static methods optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-recstatic #f (hopc-j2s-flags))))
 	    (("-fliterals" (help "Enable literals optimization (-O3)"))
 	     (hopc-j2s-flags-set! (cons* :optim-literals #t (hopc-j2s-flags))))
 	    (("-fno-literals" (help "Disable literals optimization"))

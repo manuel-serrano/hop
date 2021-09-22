@@ -3,15 +3,15 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug  6 14:30:50 2018                          */
-;*    Last change :  Sat Dec 14 19:01:46 2019 (serrano)                */
-;*    Copyright   :  2018-19 Manuel Serrano                            */
+;*    Last change :  Wed Sep 22 07:42:14 2021 (serrano)                */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Turns indirect CALL and APPLY method calls into direction        */
 ;*    function calls.                                                  */
 ;*    -------------------------------------------------------------    */
 ;*    This early optimization differs from the Scheme code generation  */
-;*    optimization that is also able to remove CALL and APPLY calls    */
-;*    as this one enable the other analyses to eliminate totally the   */
+;*    optimization that is also able to remove CALL and APPLY calls.   */
+;*    This one enables the other analyses to eliminate totally the     */
 ;*    closure generation.                                              */
 ;*=====================================================================*/
 

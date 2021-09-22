@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Mon Sep 20 17:30:52 2021 (serrano)                */
+;*    Last change :  Tue Sep 21 18:59:54 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -178,8 +178,7 @@
    (cond
       ((isa? name J2SString)
        (with-access::J2SString name (val)
-	  (let ((str (string-for-read val)))
-	     (& val (context-program ctx)))))
+	  (& name (context-program ctx))))
       ((isa? name J2SNumber)
        (with-access::J2SNumber name (val)
 	  (if (fixnum? val)

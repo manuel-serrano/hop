@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Tue Sep 21 07:20:10 2021 (serrano)                */
+;*    Last change :  Wed Sep 22 07:19:45 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -71,41 +71,41 @@
 		(with-access::J2SMethodPropertyInit prop (val)
 		   (with-access::J2SFun val (params vararg loc name mode)
 		      (let ((lp (length params)))
-			 (if (=fx lp la)
-			     (gen-new args)
+			 (cond
+			    ((=fx lp la)
+			     (gen-new args))
+			    ((eq? vararg 'rest)
 			     (cond
-				((eq? vararg 'rest)
-				 (cond
-				    ((>=fx la (-fx (j2s-minlen val)  1))
-				     (gen-new args))
-				    ((eq? mode 'hopscript)
-				     (j2s-error name
-					(format "wrong number of arguments, ~a minimum expected"
-					   (j2s-minlen val))
-					node (format "~a provided" la)))
-				    (else
-				     (gen-new args (make-list (-fx lp la) '(js-undefined))))))
-				((eq? vararg 'arguments)
-				 (j2s-error name
-				    "arguments not supported in record constructor"
-				    node name))
-				((and (>=fx la (j2s-minlen val)) (<=fx la lp))
+				((>=fx la (-fx (j2s-minlen val)  1))
 				 (gen-new args))
 				((eq? mode 'hopscript)
 				 (j2s-error name
-				    (if (=fx (j2s-minlen val) lp)
-					(format "wrong number of arguments, ~a expected"
-					   lp)
-					(format "wrong number of arguments, ~a..~a expected"
-					   (j2s-minlen val) lp))
+				    (format "wrong number of arguments, ~a minimum expected"
+				       (j2s-minlen val))
 				    node (format "~a provided" la)))
-				((<fx la lp)
-				 (gen-new args (make-list (-fx lp la) '(js-undefined))))
 				(else
-				 (let ((ts (map (lambda (a) (gensym '%t)) args)))
-				    `(let* ,(map (lambda (t a) (list t (j2s-scheme a mode return ctx)))
-					       ts args)
-					,(gen-new '() (take ts lp))))))))))))))))
+				 (gen-new args (make-list (-fx lp la) '(js-undefined))))))
+			    ((eq? vararg 'arguments)
+			     (j2s-error name
+				"arguments not supported in record constructor"
+				node name))
+			    ((and (>=fx la (j2s-minlen val)) (<=fx la lp))
+			     (gen-new args))
+			    ((eq? mode 'hopscript)
+			     (j2s-error name
+				(if (=fx (j2s-minlen val) lp)
+				    (format "wrong number of arguments, ~a expected"
+				       lp)
+				    (format "wrong number of arguments, ~a..~a expected"
+				       (j2s-minlen val) lp))
+				node (format "~a provided" la)))
+			    ((<fx la lp)
+			     (gen-new args (make-list (-fx lp la) '(js-undefined))))
+			    (else
+			     (let ((ts (map (lambda (a) (gensym '%t)) args)))
+				`(let* ,(map (lambda (t a) (list t (j2s-scheme a mode return ctx)))
+					   ts args)
+				    ,(gen-new '() (take ts lp)))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-record-new ...                                        */
@@ -405,7 +405,7 @@
 		   ;; introduced when invoking super
 		   body)
 		  (else
-		   ;; no super class initializes the
+		   ;; no super class,  initialize the
 		   ;; instance properties first
 		   (set! body
 		      (J2SBlock
@@ -415,7 +415,7 @@
 				   ,@(j2s-scheme-init-instance-properties
 					this mode return ctx))))
 			 body
-			 (returnthis thisp loc)))))
+			 (J2SPragma 'this)))))
 	       (when (class-new-target? this)
 		  (set! new-target 'argument)
 		  (set! params (cons (new-target-param loc) params))))
