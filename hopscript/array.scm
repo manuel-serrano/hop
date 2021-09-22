@@ -3986,29 +3986,30 @@
 	 (else (js-tojsstring el %this))))
    
    (let* ((o (js-toobject-fast o %this))
-	  (lenval::uint32 (js-get-lengthu32 o %this)))
+	  (lenval::uint32 (js-get-lengthu32 o %this))
+	  (sep (cond
+		  ((eq? separator (js-undefined)) (& ","))
+		  ((js-jsstring? separator) separator)
+		  (else (js-tojsstring separator %this)))))
       (cond
 	 ((=u32 lenval #u32:0)
 	  (& ""))
 	 ((=u32 lenval #u32:1)
 	  (el->jsstring (js-get o 0 %this)))
 	 (else
-	  (let ((sep (if (eq? separator (js-undefined))
-			 (& ",")
-			 (js-tojsstring separator %this))))
-	     (let loop ((r (js-jsstring-append sep
-			      (el->jsstring
-				 (js-get o (uint32->fixnum (-u32 lenval #u32:1))
-				    %this))))
-			(i (-u32 lenval #u32:2)))
-		(if (=u32 i 0)
-		    (let* ((v0 (js-get o 0 %this))
-			   (el0 (el->jsstring v0)))
-		       (js-jsstring-append el0 r))
-		    (let ((v (js-get o (uint32->fixnum i) %this)))
-		       (loop (js-jsstring-append sep
-				(js-jsstring-append (el->jsstring v) r))
-			  (-u32 i #u32:1))))))))))
+	  (let loop ((r (js-jsstring-append sep
+			   (el->jsstring
+			      (js-get o (uint32->fixnum (-u32 lenval #u32:1))
+				 %this))))
+		     (i (-u32 lenval #u32:2)))
+	     (if (=u32 i 0)
+		 (let* ((v0 (js-get o 0 %this))
+			(el0 (el->jsstring v0)))
+		    (js-jsstring-append el0 r))
+		 (let ((v (js-get o (uint32->fixnum i) %this)))
+		    (loop (js-jsstring-append sep
+			     (js-jsstring-append (el->jsstring v) r))
+		       (-u32 i #u32:1)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-array-join ...                                */
@@ -4021,30 +4022,30 @@
 	 ((or (eq? el (js-undefined)) (eq? el (js-null))) (& ""))
 	 (else (js-tojsstring el %this))))
    
-   (let ((lenval::uint32 (js-get-lengthu32 o %this)))
+   (let* ((lenval::uint32 (js-get-lengthu32 o %this))
+	  (sep (cond
+		  ((eq? separator (js-undefined)) (& ","))
+		  ((js-jsstring? separator) separator)
+		  (else (js-tojsstring separator %this)))))
       (cond
 	 ((=u32 lenval #u32:0)
 	  (& ""))
 	 ((=u32 lenval #u32:1)
 	  (el->jsstring (js-array-index-ref o (-u32 lenval #u32:1) %this)))
 	 (else
-	  (let ((sep (cond
-			((js-jsstring? separator) separator)
-			((eq? separator (js-undefined)) (& ","))
-			(else (js-tojsstring separator %this)))))
-	     (let loop ((r (js-jsstring-append sep
-			      (el->jsstring
-				 (js-array-index-ref o (-u32 lenval #u32:1)
-				    %this))))
-			(i (-u32 lenval #u32:2)))
-		(if (=u32 i 0)
-		    (let* ((v0 (js-array-index-ref o #u32:0 %this))
-			   (el0 (el->jsstring v0)))
-		       (js-jsstring-append el0 r))
-		    (let ((v (js-array-index-ref o i %this)))
-		       (loop (js-jsstring-append sep
-				(js-jsstring-append (el->jsstring v) r))
-			  (-u32 i #u32:1))))))))))
+	  (let loop ((r (js-jsstring-append sep
+			   (el->jsstring
+			      (js-array-index-ref o (-u32 lenval #u32:1)
+				 %this))))
+		     (i (-u32 lenval #u32:2)))
+	     (if (=u32 i 0)
+		 (let* ((v0 (js-array-index-ref o #u32:0 %this))
+			(el0 (el->jsstring v0)))
+		    (js-jsstring-append el0 r))
+		 (let ((v (js-array-index-ref o i %this)))
+		    (loop (js-jsstring-append sep
+			     (js-jsstring-append (el->jsstring v) r))
+		       (-u32 i #u32:1)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-join ...                                                */
