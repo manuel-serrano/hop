@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Wed Sep 22 13:55:49 2021 (serrano)                */
+;*    Last change :  Wed Sep 22 16:01:20 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -87,7 +87,8 @@
 			     (j2s-narrow-fun! val)))
 			 ((isa? o J2SDeclClass)
 			  (with-access::J2SDeclClass o (val)
-			     (j2s-narrow-class! val)))
+			     (when (isa? val J2SDeclClass)
+				(j2s-narrow-class! val))))
 			 ((isa? o J2SDecl)
 			  (j2s-mark-unnarrowable o))))
 	    decls)
