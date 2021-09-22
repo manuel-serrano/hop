@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Sep 22 10:41:19 2021 (serrano)                */
+;*    Last change :  Wed Sep 22 16:23:01 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -920,7 +920,8 @@
 			 ,tmp))
 		    ((eq? cs 'amap)
 		     `(let* ((idx (js-pcache-aindex ,cache))
-			     (propowner ,obj))
+;* 			     (propowner ,obj)                          */
+			     (propowner (js-pcache-owner ,cache)))
 			 (let ((desc (js-object-ref propowner idx)))
 			    (js-profile-log-cache ,cache :amap #t)
 			    (js-profile-log-index idx)

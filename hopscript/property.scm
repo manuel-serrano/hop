@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Sep 22 11:33:05 2021 (serrano)                */
+;*    Last change :  Wed Sep 22 16:24:56 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -912,16 +912,15 @@
 ;*    -------------------------------------------------------------    */
 ;*    Used to access an object's descriptor                            */
 ;*---------------------------------------------------------------------*/
-(define (js-pcache-update-descriptor! pcache::JsPropertyCache i o::JsObject obj)
+(define (js-pcache-update-descriptor! pcache::JsPropertyCache i o::JsObject)
    (with-access::JsObject o ((omap cmap))
-      (unless (eq? omap (js-not-a-cmap))
-	 (with-access::JsPropertyCache pcache (imap cmap pmap emap amap aindex owner)
-	    (js-validate-pmap-pcache! pcache)
-	    (set! pmap (js-not-a-pmap))
-	    (set! emap (js-not-a-pmap))
-	    (set! amap omap)
-	    (set! aindex i)
-	    (set! owner obj)))))
+      (with-access::JsPropertyCache pcache (imap cmap pmap emap amap aindex owner)
+	 (js-validate-pmap-pcache! pcache)
+	 (set! pmap (js-not-a-pmap))
+	 (set! emap (js-not-a-pmap))
+	 (set! amap omap)
+	 (set! aindex i)
+	 (set! owner o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache-update-next-direct! ...                                */
@@ -2552,7 +2551,7 @@
 		      ;; accessor property
 		      (if (eq? o obj)
 			  (js-pcache-update-accessor! cache i o)
-			  (js-pcache-update-descriptor! cache i o obj))
+			  (js-pcache-update-descriptor! cache i obj))
 		      (js-property-value o obj name el-or-desc %this))
 		     ((eq? o obj)
 		      ;; direct access to the direct object
@@ -2873,7 +2872,7 @@
 		      (unless (eq? cmap (js-not-a-cmap))
 			 (if (eq? o propobj)
 			     (js-pcache-update-accessor! cache index propobj)
-			     (js-pcache-update-descriptor! cache index o propobj)))))
+			     (js-pcache-update-descriptor! cache index propobj)))))
 		(%set o v)
 		v)
 	     ;; 8.12.4, setp 2.a
