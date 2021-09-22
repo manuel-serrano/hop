@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Wed Sep 22 07:30:26 2021 (serrano)                */
+;*    Last change :  Wed Sep 22 14:19:29 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -285,18 +285,17 @@
 		   (if (or (not instancep)
 			   (and (not static)
 				(not (isa? prop J2SMethodPropertyInit))))
-		       (if (isa? prop J2SPropertyInit)
-			   (with-access::J2SPropertyInit prop (name)
-			      (let ((ni (if (isa? prop J2SAccessorPropertyInit)
-					    i
-					    (+fx i 1))))
-				 (if (isa? name J2SString)
-				     (with-access::J2SString name (val)
-					(if (string=? val field)
-					    (values i (car els))
-					    (loop ni (cdr els))))
-				     (loop ni (cdr els)))))
-			   (loop i (cdr els)))))
+		       (with-access::J2SPropertyInit prop (name)
+			  (let ((ni (if (isa? prop J2SAccessorPropertyInit)
+					i
+					(+fx i 1))))
+			     (if (isa? name J2SString)
+				 (with-access::J2SString name (val)
+				    (if (string=? val field)
+					(values i (car els))
+					(loop ni (cdr els))))
+				 (loop ni (cdr els)))))
+		       (loop i (cdr els))))
 		(values i #f)))))
 
    (let loop ((clazz clazz)

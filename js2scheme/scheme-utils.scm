@@ -836,6 +836,9 @@
 	     ((eq? tyobj 'arguments)
 	      `(js-put! ,obj ,prop ,val ,mode %this))
 	     ((and cache cspecs)
+	      (when (and (string? propstr) (>fx (string-length propstr) 0) (char=? (string-ref propstr 0) #\#))
+		 (when (isa? tyobj J2SRecord)
+		    (tprint "PAS BON: " loc " " obj " " (type->sexp tyobj) " " propstr " " (typeof propstr))))
 	      (cond
 		 ((string? propstr)
 		  (if (string=? propstr "length")

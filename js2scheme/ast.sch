@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Tue Sep 14 09:29:55 2021 (serrano)                */
+;*    Last change :  Wed Sep 22 14:50:58 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -647,6 +647,13 @@
    `(instantiate::J2SCast
        (loc loc)
        (expr ,expr)
+       (type ,totype)))
+
+(define-macro (J2SCast/static static totype expr)
+   `(instantiate::J2SCast
+       (loc loc)
+       (expr ,expr)
+       (static ,static)
        (type ,totype)))
 
 (define-macro (J2SCheck totype expr)

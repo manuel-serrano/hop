@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Mon Sep 20 19:21:32 2021 (serrano)                */
+;*    Last change :  Wed Sep 22 13:55:49 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -24,7 +24,8 @@
 	   __js2scheme_utils
 	   __js2scheme_compile
 	   __js2scheme_stage
-	   __js2scheme_lexer)
+	   __js2scheme_lexer
+	   __js2scheme_classutils)
 
    (static (class J2SNarrowInfo
 	      (deffun::obj (default #f))
@@ -84,6 +85,9 @@
 			 ((isa? o J2SDeclFun)
 			  (with-access::J2SDeclFun o (val)
 			     (j2s-narrow-fun! val)))
+			 ((isa? o J2SDeclClass)
+			  (with-access::J2SDeclClass o (val)
+			     (j2s-narrow-class! val)))
 			 ((isa? o J2SDecl)
 			  (j2s-mark-unnarrowable o))))
 	    decls)
@@ -194,6 +198,16 @@
       (j2s-mark-narrowable body '() #f o (make-cell #f))
       ;; narrow the function body
       (set! body (j2s-lift-inits! (j2s-narrow-body! body)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-narrow-class! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-narrow-class! o::J2SClass)
+   (for-each (lambda (el)
+		(with-access::J2SClassElement el (prop)
+		   (with-access::J2SMethodPropertyInit prop (val)
+		      (j2s-narrow-fun! val))))
+      (j2s-class-methods o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-find-init-blocks! ...                                        */

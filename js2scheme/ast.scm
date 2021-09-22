@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Sep 21 07:31:41 2021 (serrano)                */
+;*    Last change :  Wed Sep 22 11:58:09 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -82,6 +82,8 @@
 	      (itype (default 'unknown) (info '("notraverse")))
 	      ;; computed variable type value
 	      (vtype (default 'unknown) (info '("notraverse")))
+	      ;; the maximum type of the variable (for classes)
+	      (mtype (default 'unknown) (info '("notraverse")))
 	      ;; initial parameter range
 	      (irange::obj (default #unspecified) (info '("notraverse")))
 	      ;; computed variable range
@@ -128,11 +130,14 @@
 	      (import::obj read-only (info '("notraverse"))))
 
 	   (abstract-class J2SExpr::J2SNode
+	      ;; the type of the expression
 	      (type (default 'unknown) (info '("notraverse")))
+	      ;; the possible types of that expression
 	      (hint::pair-nil (default '()) (info '("notraverse")))
 	      (range::obj (default #unspecified) (info '("notraverse"))))
 
 	   (class J2SCast::J2SExpr
+	      (static::bool (default #f))
 	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (class J2SCheck::J2SExpr

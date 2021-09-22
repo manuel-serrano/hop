@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Sep 22 10:29:29 2021 (serrano)                */
+;*    Last change :  Wed Sep 22 11:33:05 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -354,6 +354,8 @@
 	 (set! nmap (js-not-a-pmap))
 	 (set! xmap (js-not-a-pmap))
 	 (set! emap (js-not-a-pmap))
+	 ;; amap must be invalidated too as amap may point to another object
+	 (set! amap (js-not-a-pmap))
 	 ))
 
    (when js-pmap-valid

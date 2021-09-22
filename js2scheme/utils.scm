@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri Sep 17 13:08:41 2021 (serrano)                */
+;*    Last change :  Wed Sep 22 12:01:29 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -56,6 +56,7 @@
 	   
 	   (j2s-type ::obj)
 	   (j2s-vtype ::obj)
+	   (j2s-mtype ::obj)
 	   (j2s-etype ::obj ::pair-nil)
 	   
 	   (class-of ::J2SExpr)
@@ -643,6 +644,20 @@
 	  type))
       (else
        'void)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-mtype ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (j2s-mtype node)
+   (cond
+      ((isa? node J2SDecl)
+       (with-access::J2SDecl node (mtype)
+	  mtype))
+      ((isa? node J2SRef)
+       (with-access::J2SRef node (decl)
+	  (j2s-mtype decl)))
+      (else
+       'unknown)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-etype ...                                                    */

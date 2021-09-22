@@ -377,9 +377,11 @@
 ;*    j2s-scheme ::J2SCast ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SCast mode return ctx)
-   (with-access::J2SCast this (expr type)
+   (with-access::J2SCast this (expr type static)
       (let loop ((expr expr))
 	 (cond
+	    (static
+	     (j2s-scheme expr mode return ctx))
 	    ((isa? expr J2SBinary)
 	     (or (j2s-scheme-binary-as expr mode return ctx type)
 		 (j2s-cast (j2s-scheme expr mode return ctx)
@@ -2279,6 +2281,8 @@
 	     (aput-inc 'array otmp prop op lhs field cache inc '() #f))
 	    ((eq? (j2s-type obj) 'jsvector)
 	     (aput-inc 'jsvector otmp prop op lhs field cache inc '() #f))
+	    ((isa? (j2s-type obj) J2SRecord)
+	     (aput-inc (j2s-type obj) otmp prop op lhs field cache inc '() #f))
 	    ((not cache)
 	     (aput-inc 'object otmp prop op lhs field cache inc '() #f))
 	    ((or (not cache) (memq (j2s-type field) '(integer number)))
@@ -2555,7 +2559,8 @@
 		    ((or (not cache) (is-integer? field))
 		     (aput-assigop otmp (j2s-type obj) pro prov op
 			tl lhs rhs field #f ctx))
-		    ((memq (typeof-this obj ctx) '(object this global))
+		    ((or (memq (typeof-this obj ctx) '(object this global))
+			 (isa? (typeof-this obj ctx) J2SClass))
 		     (aput-assigop otmp (j2s-type obj) pro prov op
 			tl lhs rhs field #t ctx))
 		    (else
@@ -2858,18 +2863,19 @@
 	       (let ((el (j2s-class-find-element (j2s-vtype obj) val)))
 		  (with-access::J2SRecord owner (cmap name)
 		     (when el
-			(with-access::J2SClassElement el (prop static index)
-			   (when (and (not static) (isa? prop J2SMethodPropertyInit))
-			      (if cmap
-				  `(js-record-cache-check-proto-method ,(j2s-scheme obj mode return ctx)
-				      ,(j2s-scheme cmap mode return ctx)
-				      ,index
-				      ,(format "~a.~a" name val))
-				  `(with-access::JsFunction ,(j2s-class-id owner ctx) (constrmap)
-				      (with-access::JsConstructMap ocmap ((omptable mptable))
-					 (with-access::JsConstructMap constrmap ((fmptable mptable))
-					    (eq? (vector-ref omptable ,index)
-					       (vector-ref fmptable ,index)))))))))))))))
+			(with-access::J2SClassElement el (prop static)
+			   (let ((index (class-class-method-index owner el)))
+			      (when (and (not static) (isa? prop J2SMethodPropertyInit))
+				 (if cmap
+				     `(js-record-cache-check-proto-method ,(j2s-scheme obj mode return ctx)
+					 ,(j2s-scheme cmap mode return ctx)
+					 ,index
+					 ,(format "~a.~a" name val))
+				     `(with-access::JsFunction ,(j2s-class-id owner ctx) (constrmap)
+					 (with-access::JsConstructMap ocmap ((omptable mptable))
+					    (with-access::JsConstructMap constrmap ((fmptable mptable))
+					       (eq? (vector-ref omptable ,index)
+						  (vector-ref fmptable ,index))))))))))))))))
 
    (define (record-cmap-cache-check this::J2SCacheCheck)
       (with-access::J2SCacheCheck this (prop cache owner obj fields)
@@ -2883,18 +2889,19 @@
 		  (with-access::J2SRecord owner (cmap name)
 		     (when el
 			(with-access::J2SRef obj (%info)
-			   (with-access::J2SClassElement el (prop static index)
-			      (when (and (not static) (isa? prop J2SMethodPropertyInit))
-				 (if cmap
-				     `(js-record-cmap-cache-check-proto-method ,%info
-					 ,(j2s-scheme cmap mode return ctx)
-					 ,index
-					 ,(format "~a.~a" name val))
-				     `(with-access::JsFunction ,(j2s-class-id owner ctx) (constrmap)
-					 (with-access::JsConstructMap ocmap ((omptable mptable))
-					    (with-access::JsConstructMap constrmap ((fmptable mptable))
-					       (eq? (vector-ref omptable ,index)
-						  (vector-ref fmptable ,index))))))))))))))))
+			   (with-access::J2SClassElement el (prop static)
+			      (let ((index (class-class-method-index owner el)))
+				 (when (and (not static) (isa? prop J2SMethodPropertyInit))
+				    (if cmap
+					`(js-record-cmap-cache-check-proto-method ,%info
+					    ,(j2s-scheme cmap mode return ctx)
+					    ,index
+					    ,(format "~a.~a" name val))
+					`(with-access::JsFunction ,(j2s-class-id owner ctx) (constrmap)
+					    (with-access::JsConstructMap ocmap ((omptable mptable))
+					       (with-access::JsConstructMap constrmap ((fmptable mptable))
+						  (eq? (vector-ref omptable ,index)
+						     (vector-ref fmptable ,index)))))))))))))))))
    
    (define (object-cache-check this::J2SCacheCheck)
       (with-access::J2SCacheCheck this (prop cache obj fields owner)

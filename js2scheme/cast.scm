@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Aug  8 11:26:25 2021 (serrano)                */
+;*    Last change :  Wed Sep 22 14:51:56 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -235,9 +235,11 @@
 	 (or (and (eq? totype 'bool)
 		  (memq type '(int32 uint32 integer number))))))
    
-   (with-access::J2SCast this (expr type loc)
+   (with-access::J2SCast this (expr type loc static)
       (type-cast! expr '*)
       (cond
+	 (static
+	  this)
 	 ((optimize-cast? totype type)
 	  (set! type totype)
 	  this)

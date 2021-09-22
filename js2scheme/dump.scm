@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Sep 20 15:11:08 2021 (serrano)                */
+;*    Last change :  Wed Sep 22 12:06:44 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -216,7 +216,7 @@
 ;*    dump-vtype ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (dump-vtype this::J2SDecl)
-   (with-access::J2SDecl this (vtype utype itype)
+   (with-access::J2SDecl this (vtype utype itype mtype)
       (cond
 	 ((or (>= (bigloo-debug) 2)
 	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type+")
@@ -230,10 +230,11 @@
 			:rtype ,(type->sexp rtype))))
 	      `(:vtype ,(type->sexp vtype)
 		  :utype ,(type->sexp utype)
-		  :itype ,(type->sexp itype))))
+		  :itype ,(type->sexp itype)
+		  :mtype ,(type->sexp mtype))))
 	 ((or (>= (bigloo-debug) 2)
 	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
-	  `(:vtype ,(type->sexp vtype)))
+	  `(:vtype ,(type->sexp vtype) :mtype ,(type->sexp mtype)))
 	 (else
 	  '()))))
       
@@ -617,8 +618,9 @@
 ;*    j2s->list ::J2SCast ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCast)
-   (with-access::J2SCast this (expr type)
-      `(,@(call-next-method) :type ,(type->sexp type) ,(j2s->list expr))))
+   (with-access::J2SCast this (expr type static)
+      `(,@(call-next-method) :type ,(type->sexp type) :static ,static
+	  ,(j2s->list expr))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SCheck ...                                         */
@@ -1246,9 +1248,10 @@
 ;*    j2s->list ::J2SClassElement ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SClassElement)
-   (with-access::J2SClassElement this (prop static type usage)
+   (with-access::J2SClassElement this (prop static type usage index)
       (with-access::J2SPropertyInit prop (name)
 	 `(J2SClassElement :static ,static
+	     :index ,index
 	     ,@(if (or (>= (bigloo-debug) 2)
 		       (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
 		   `(:type ,(type->sexp type))

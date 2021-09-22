@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Sep 20 10:08:46 2021 (serrano)                */
+;*    Last change :  Wed Sep 22 14:49:11 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -1388,7 +1388,8 @@
 	    (with-access::J2SRef obj (decl)
 	       (let ((vals (inline-args params args
 			      #f limit stack pmethods ingen prgm conf loc))
-		     (ndecl (J2SLetOpt/vtype clazz '(get) (gensym 'this) obj)))
+		     (ndecl (J2SLetOpt/vtype clazz '(get) (gensym 'this)
+			       (J2SCast/static #t clazz obj))))
 		  (cache-check cache loc (protoinfo-owner callee) obj field kont
 		     (LetBlock floc (cons ndecl
 				       (filter (lambda (b) (isa? b J2SDecl)) vals))

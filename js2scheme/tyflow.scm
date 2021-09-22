@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Sep 21 08:48:14 2021 (serrano)                */
+;*    Last change :  Wed Sep 22 11:59:54 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -724,9 +724,20 @@
 ;*    node-type ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SDeclInit env::pair-nil ctx::pair)
-   (with-access::J2SDeclInit this (val id loc _usage writable utype)
+   (with-access::J2SDeclInit this (val id loc _usage writable utype mtype)
       (multiple-value-bind (ty env bk)
 	 (node-type val env ctx)
+	 ;; check the special case
+	 ;; declinit v = new Record();
+	 (when (isa? val J2SNew)
+	    (with-access::J2SNew val (clazz)
+	       (when (isa? clazz J2SRef)
+		  (with-access::J2SRef clazz (decl)
+		     (when (isa? decl J2SDeclClass)
+			(with-access::J2SDeclClass decl (val)
+			   (when (isa? val J2SRecord)
+			      (unless (decl-usage-has? decl '(assig))
+				 (set! mtype val)))))))))
 	 (cond
 	    ((and (not (eq? utype 'unknown)) (eq? (car ctx) 'hopscript))
 	     (decl-vtype-set! this utype ctx)
@@ -2092,15 +2103,17 @@
 	  (if (isa? clazz J2SRecord)
 	      (with-access::J2SDataPropertyInit prop (val)
 		 (with-access::J2SFun val (thisp)
-		    (with-access::J2SDecl thisp (itype vtype eloc)
+		    (with-access::J2SDecl thisp (itype vtype eloc mtype)
+		       (set! mtype clazz)
 		       (set! itype clazz)
 		       (decl-vtype-set! thisp clazz ctx))
 		    ;; J2SRecord constructor does not escape
 		    (node-type-fun val env ctx)))
 	      (with-access::J2SDataPropertyInit prop (val)
 		 (with-access::J2SFun val (thisp)
-		    (with-access::J2SDecl thisp (itype vtype eloc)
+		    (with-access::J2SDecl thisp (itype vtype eloc mtype)
 		       (unless (eq? itype 'object)
+			  (set! mtype clazz)
 			  (set! itype 'object)
 			  (set! vtype 'any)
 			  (unfix! ctx "constructor type")))
@@ -2256,13 +2269,18 @@
 (define-walk-method (resolve! this::J2SCacheCheck ctx::pair)
    (call-default-walker)
    (with-access::J2SCacheCheck this (loc obj owner)
-      (if (and (isa? owner J2SRecord)
+      (cond
+	 ((and (isa? owner J2SRecord)
 	       (isa? (j2s-vtype obj) J2SRecord)
 	       (not (or (type-subtype? owner (j2s-vtype obj))
 			(type-subtype? (j2s-vtype obj) owner))))
 	  ;; inlining invalidated by the type inference
-	  (J2SBool #f)
-	  this)))
+	  (J2SBool #f))
+	 ((and (isa? owner J2SClass) (eq? (j2s-mtype obj) owner))
+	  ;; inlining validated by the type inference
+	  (J2SBool #t))
+	 (else
+	  this))))
    
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SIf ...                                             */
@@ -2435,7 +2453,7 @@
 ;*    force-type! ::J2SDecl ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-type! this::J2SDecl from to cell final)
-   (with-access::J2SDecl this (vtype loc)
+   (with-access::J2SDecl this (vtype loc id)
       (when (and (eq? vtype from) (not (eq? vtype to)))
 	 (when (and (eq? from 'unknown) debug-tyflow)
 	    (tprint "*** COMPILER WARNING : unpexected `unknown' type " loc
