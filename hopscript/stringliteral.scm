@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Sep 10 08:22:05 2021 (serrano)                */
+;*    Last change :  Thu Sep 23 10:28:01 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -947,7 +947,7 @@
       (+fx i len))
    
    (define (normalize-small! js)
-      (with-access::JsStringLiteralUTF8 js (length %idxutf8 %idxstr)
+      (with-access::JsStringLiteralUTF8 js (length)
 	 ;; small strings, no need for tail recursion
 	 (let* ((len length)
 		(buffer (make-string (uint32->fixnum len))))
@@ -1787,7 +1787,7 @@
 ;*    string.                                                          */
 ;*---------------------------------------------------------------------*/
 (define (utf8-codeunit-ref this::JsStringLiteralUTF8 str::bstring i::long)
-
+   
    (define (return-utf8 this str i j c s r u)
       (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
 	 (set! %idxstr r)
@@ -1842,11 +1842,18 @@
    (let ((len (string-length str)))
       (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
 	 ;; adjust with respect to the last position
-	 (if (and (<fx i %idxutf8)
+	 (cond
+	    ((=fx i 0)
+	     (let* ((c (string-ref-ur str 0))
+		    (s (utf8-char-size c))
+		    (u (codepoint-length c)))
+		(return-utf8 this str 0 0 c s 0 0)))
+	    ((and (<fx i %idxutf8)
 		  (>fx i 0)
 		  (>=fx i (- %idxutf8 i)))
 	     ;; rollback utf8 indexes
-	     (rollback-utf8 this str i)
+	     (rollback-utf8 this str i))
+	    (else
 	     ;; look forward
 	     (let loop ((r (if (>=fx i %idxutf8) %idxstr 0))
 			(j (if (>=fx i %idxutf8) (-fx i %idxutf8) i)))
@@ -1857,7 +1864,7 @@
 			   (u (codepoint-length c)))
 		       (if (>=fx j u)
 			   (loop (+fx r s) (-fx j u))
-			   (return-utf8 this str i j c s r (-fx i j))))))))))
+			   (return-utf8 this str i j c s r (-fx i j)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    utf8-codepoint-ref ...                                           */
