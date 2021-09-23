@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Sep 22 08:16:30 2021 (serrano)                */
+;*    Last change :  Thu Sep 23 07:13:28 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -200,10 +200,10 @@
 	  j2s-var->let-stage
 	  j2s-unletrec-stage
 	  j2s-this-stage
+	  j2s-recstatic-stage
 	  j2s-use-stage
 	  j2s-letclass-stage
 	  j2s-callapply-stage
-	  j2s-recstatic-stage
 	  j2s-sweep-stage
 	  j2s-ronly-stage
 	  j2s-uninit-stage

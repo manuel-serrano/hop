@@ -286,7 +286,7 @@
    
    (define (j2s-scheme-let-opt this)
       (with-access::J2SDeclInit this (scope id)
-	 (if (memq scope '(global %scope))
+	 (if (memq scope '(global %scope record))
 	     (j2s-let-decl-toplevel this mode return ctx)
 	     (error "j2s-scheme" "Should not be here (not global)"
 		(j2s->list this)))))
