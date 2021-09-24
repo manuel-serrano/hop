@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Apr  9 10:29:15 2021 (serrano)                */
+;*    Last change :  Fri Sep 24 08:43:01 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -24,6 +24,7 @@
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_syntax
+	   __js2scheme_alpha
 	   __js2scheme_utils)
 
    (include "ast.sch" "usage.sch")
@@ -624,20 +625,52 @@
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SLetBlock k r kbreaks kcontinues fun)
    (assert-kont k KontStmt this)
-   (with-access::J2SLetBlock this (loc endloc decls nodes)
-      (let loop ((decls decls))
-	 (if (null? decls)
+   (with-access::J2SLetBlock this (rec loc endloc decls nodes)
+      (cond
+	 ((not rec)
+	  (let loop ((decls decls))
+	     (if (null? decls)
+		 (cps (duplicate::J2SBlock this
+			 (nodes nodes))
+		    k r kbreaks kcontinues fun)
+		 (with-access::J2SDecl (car decls) (scope)
+		    (set! scope 'kont)
+		    (cps (car decls)
+		       (KontStmt (lambda (ndecl::J2SStmt)
+				    (J2SLetRecBlock #f (list ndecl)
+				       (loop (cdr decls))))
+			  this k)
+		       r kbreaks kcontinues fun)))))
+	 ((not (any (lambda (d)
+		       (or (not (isa? d J2SDeclInit))
+			   (with-access::J2SDeclInit d (val)
+			      (not (yield-expr? val kbreaks kcontinues)))))
+		  decls))
+	  (J2SLetBlock decls
 	     (cps (duplicate::J2SBlock this
 		     (nodes nodes))
-		k r kbreaks kcontinues fun)
-	     (with-access::J2SDecl (car decls) (scope)
-		(set! scope 'kont)
-		(cps (car decls)
-		   (KontStmt (lambda (ndecl::J2SStmt)
-				(J2SLetBlock (list ndecl)
-				   (loop (cdr decls))))
-		      this k)
-		   r kbreaks kcontinues fun))))))
+		k r kbreaks kcontinues fun)))
+	 (else
+	  (let* ((ndecls (map (lambda (d)
+				 (if (isa? d J2SDeclInit)
+				     (with-access::J2SDeclInit d (loc)
+					(duplicate::J2SDeclInit d
+					   (key (ast-decl-key))
+					   (val (J2SUndefined))))
+				     d))
+			    decls))
+		 (olds (filter (lambda (d) (isa? d J2SDeclInit)) decls))
+		 (news (filter (lambda (d) (isa? d J2SDeclInit)) ndecls))
+		 (assigs (filter-map (lambda (d nd)
+					(when (isa? d J2SDeclInit)
+					   (with-access::J2SDeclInit d (loc val)
+					      (J2SStmtExpr
+						 (J2SAssig (J2SRef nd)
+						    (j2s-alpha val olds news))))))
+			    decls ndecls))
+		 (anodes (map (lambda (n) (j2s-alpha n olds news)) nodes)))
+	     (cps (J2SLetRecBlock* #f ndecls (cons (J2SSeq* assigs) anodes))
+		k r kbreaks kcontinues fun))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SBindExit ...                                            */
@@ -1347,4 +1380,3 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (retthrow! this::J2SMethod decl env)
    this)
-

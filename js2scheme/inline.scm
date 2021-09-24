@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Sep 22 14:49:11 2021 (serrano)                */
+;*    Last change :  Fri Sep 24 07:30:15 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -766,9 +766,10 @@
 	  (filter-map (lambda (el)
 			 (with-access::J2SClassElement el (prop)
 			    (with-access::J2SMethodPropertyInit prop (name (met val))
-			       (with-access::J2SString name ((str val))
-				  (when (check-id (string->symbol str))
-				     (cons str (protoinfo prop met #f val)))))))
+			       (when (isa? name J2SString)
+				  (with-access::J2SString name ((str val))
+				     (when (check-id (string->symbol str))
+					(cons str (protoinfo prop met #f val))))))))
 	     (j2s-class-methods val :super #f))
 	  '())))
 

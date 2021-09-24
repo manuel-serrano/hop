@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Mon Sep 20 18:43:25 2021 (serrano)                */
+;*    Last change :  Fri Sep 24 07:28:58 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -304,7 +304,6 @@
 	       (else
 		(let ((ndecl (J2SDeclGlobal 'let '(ref init)
 				(gensym val))))
-		   (tprint "ICI.2.." val " " (j2s->list rhs))
 		   (set-cdr! c (list ndecl))
 		   (J2SSequence
 		      (J2SInit (J2SRef ndecl) rhs)
