@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Aug 26 15:08:40 2021 (serrano)                */
+;*    Last change :  Sun Sep 26 09:36:16 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -208,7 +208,7 @@
 	    (rx (pregexp ""))
 	    (source "")
 	    (flags #u32:0)))
-      
+
       ;; create a HopScript regexp object constructor
       (set! js-regexp
 	 (let ((proc (%js-regexp %this)))
@@ -220,6 +220,14 @@
 	       :alloc js-no-alloc)))
       (init-builtin-regexp-prototype! %this js-regexp js-regexp-prototype)
       
+      ;; deprecated (unsupported features)
+      (js-bind! %this js-regexp (& "rightContext")
+	 :configurable #f :enumerable #f :value (& "")
+	 :hidden-class #t)
+      (js-bind! %this js-regexp (& "leftContext")
+	 :configurable #f :enumerable #f :value (& "")
+	 :hidden-class #t)
+	 
       ;; bind Regexp in the global object
       (js-bind! %this %this (& "RegExp")
 	 :configurable #f :enumerable #f :value js-regexp

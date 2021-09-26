@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Sep 24 08:43:01 2021 (serrano)                */
+;*    Last change :  Sun Sep 26 08:33:45 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -644,7 +644,7 @@
 	 ((not (any (lambda (d)
 		       (or (not (isa? d J2SDeclInit))
 			   (with-access::J2SDeclInit d (val)
-			      (not (yield-expr? val kbreaks kcontinues)))))
+			      (yield-expr? val kbreaks kcontinues))))
 		  decls))
 	  (J2SLetBlock decls
 	     (cps (duplicate::J2SBlock this
@@ -693,7 +693,6 @@
 	  (set! stmt (cps-fun! stmt r))
 	  (kcall k this))
 	 (lbl
-	  (tprint "y: " (j2s->list stmt))
 	  ;; in order to inline code generator, the j2sreturn CPS
 	  ;; transformation must know how to map its lbl to a contination
 	  (error "cps" "generator cannot use inline expression" loc))
@@ -781,8 +780,68 @@
 ;*    cps ::J2SForIn ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SForIn k r kbreaks kcontinues fun)
+
+   (define (cps-for-in this::J2SForIn)
+      (with-access::J2SForIn this (loc lhs obj body)
+	 (let* ((v (gensym '%kkeys))
+		(l (gensym '%klen))
+		(i (gensym '%ki))
+		(keys (J2SLetOptVtype 'array '(ref) v
+			 (J2SCall
+			    (J2SAccess
+			       (J2SUnresolvedRef 'Object)
+			       (J2SString "keys"))
+			    obj)))
+		(len (J2SLetOpt '(ref) l
+			(J2SAccess (J2SRef keys) (J2SString "length"))))
+		(idx (J2SLetOpt '(assig ref) i (J2SNumber 0)))
+		(for (J2SFor (J2SUndefined)
+			(J2SBinary '< (J2SRef idx) (J2SRef len))
+			(J2SPostfix '++ (J2SRef idx)
+			   (J2SBinary '+ (J2SRef idx) (J2SNumber 1)))
+			(J2SBlock/w-endloc
+			   (J2SStmtExpr
+			      (J2SAssig lhs
+				 (J2SAccess (J2SRef keys) (J2SRef idx))))
+			   body))))
+	    (J2SLetBlock (list keys len idx)
+	       (cps for k r kbreaks kcontinues fun)))))
+
+   (define (cps-for-of this::J2SForIn)
+      (with-access::J2SForIn this (loc op lhs obj body)
+	 (let* ((o (gensym '%kobj))
+		(f (gensym '%kfun))
+		(i (gensym '%kit))
+		(n (gensym '%knext))
+		(v (gensym '%kval))
+		(kobj (J2SLetOpt '(ref) o
+			 obj))
+		(kfun (J2SLetOpt '(ref) f
+			 (J2SAccess (J2SRef kobj)
+			    (J2SAccess
+			       (J2SUnresolvedRef 'Symbol)
+			       (J2SString "iterator")))))
+		(kit (J2SLetOpt '(ref) i
+			(J2SMethodCall (J2SRef kfun) (list (J2SRef kobj)))))
+		(knext (J2SLetOpt '(ref) n
+			  (J2SAccess (J2SRef kit) (J2SString "next"))))
+		(kval (J2SLetOpt '(ref assig) v
+			 (J2SMethodCall (J2SRef knext) (list (J2SRef kit)))))
+		(for (J2SFor
+			(J2SUndefined)
+			(J2SUnary '! (J2SAccess (J2SRef kval) (J2SString "done")))
+			(J2SAssig (J2SRef kval)
+			   (J2SCall (J2SAccess (J2SRef kit) (J2SString "next"))))
+			(J2SBlock/w-endloc
+			   (J2SStmtExpr
+			      (J2SAssig lhs
+				 (J2SAccess (J2SRef kval) (J2SString "value"))))
+			   body))))
+	    (J2SLetBlock (list kobj kfun kit knext kval)
+	       (cps for k r kbreaks kcontinues fun)))))
+   
    (assert-kont k KontStmt this)
-   (with-access::J2SForIn this (loc lhs obj body)
+   (with-access::J2SForIn this (loc lhs obj body op)
       (cond
 	 ((yield-expr? obj kbreaks kcontinues)
 	  (cps obj
@@ -795,31 +854,9 @@
 		 (kbreaks+ (cons cell kbreaks))
 		 (kcontinues+ (cons cell kcontinues)))
 	     (yield-expr? body kbreaks+ kcontinues+))
-	  (let* ((v (gensym '%kkeys))
-		 (l (gensym '%klen))
-		 (i (gensym '%ki))
-		 ;; MS CARE UTYPE
-		 ;; (keys (J2SLetOptVUtype 'array '(ref) v
-		 (keys (J2SLetOptVtype 'array '(ref) v
-			  (J2SCall
-			     (J2SAccess
-				(J2SUnresolvedRef 'Object)
-				(J2SString "keys"))
-			     obj)))
-		 (len (J2SLetOpt '(ref) l
-			 (J2SAccess (J2SRef keys) (J2SString "length"))))
-		 (idx (J2SLetOpt '(assig ref) i (J2SNumber 0)))
-		 (for (J2SFor (J2SUndefined)
-			 (J2SBinary '< (J2SRef idx) (J2SRef len))
-			 (J2SPostfix '++ (J2SRef idx)
-			    (J2SBinary '+ (J2SRef idx) (J2SNumber 1)))
-			 (J2SBlock/w-endloc
-			    (J2SStmtExpr
-			       (J2SAssig lhs
-				  (J2SAccess (J2SRef keys) (J2SRef idx))))
-			    body))))
-	     (J2SLetBlock (list keys len idx)
-		(cps for k r kbreaks kcontinues fun))))
+	  (if (eq? op 'in)
+	      (cps-for-in this)
+	      (cps-for-of this)))
 	 (else
 	  (set! lhs (cps-fun! lhs r))
 	  (set! body (cps-fun! body r))

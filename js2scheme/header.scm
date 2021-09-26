@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Tue Jul 27 08:06:52 2021 (serrano)                */
+;*    Last change :  Sun Sep 26 13:58:40 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -102,6 +102,7 @@
 	 %require
 	 %import-meta
 	 (js-def-extern 'global #t #t '%this :type 'object)
+	 (js-def-extern 'globalThis #t #t '%this :type 'object)
 	 (js-def-extern 'GLOBAL #t #f '%this :type 'object)
 	 (js-def-extern 'module #t #t '%module :type 'object :hidden-class #f)
 	 (js-def-extern 'exports #t #t

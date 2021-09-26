@@ -39,6 +39,7 @@
 	   __js2scheme_scheme-class
 	   __js2scheme_scheme-string
 	   __js2scheme_scheme-regexp
+	   __js2scheme_scheme-symbol
 	   __js2scheme_scheme-math
 	   __js2scheme_scheme-date
 	   __js2scheme_scheme-array
@@ -2713,12 +2714,26 @@
 	 (with-access::J2SRef obj (decl)
 	    (eq? decl (context-math ctx)))))
    
+   (define (regexp-object? obj ctx)
+      (when (isa? obj J2SRef)
+	 (with-access::J2SRef obj (decl)
+	    (eq? decl (context-regexp ctx)))))
+   
    (define (builtin-object? obj)
       (when (isa? obj J2SGlobalRef)
 	 (with-access::J2SGlobalRef obj (decl)
 	    (with-access::J2SDecl decl (id)
 	       (when (decl-ronly? decl)
 		  (memq id '(Object Function Math Array Boolean RegExp String Number)))))))
+
+   (define (symbol-object? obj ctx)
+      (cond
+	 ((isa? obj J2SRef)
+	 (with-access::J2SRef obj (decl)
+	    (eq? decl (context-math ctx))))
+	 ((isa? obj J2SUnresolvedRef)
+	  (with-access::J2SUnresolvedRef obj (id)
+	     (eq? id 'Symbol)))))
    
    (define (get-builtin-object obj field mode return ctx)
       (when (isa? field J2SString)
@@ -2840,6 +2855,14 @@
 	     (lambda (sexp) sexp))
 	    ((and (math-object? obj ctx)
 		  (j2s-math-object-get obj field mode return ctx))
+	     =>
+	     (lambda (sexp) sexp))
+	    ((and (regexp-object? obj ctx)
+		  (j2s-regexp-object-get obj field mode return ctx))
+	     =>
+	     (lambda (sexp) sexp))
+	    ((and (symbol-object? obj ctx)
+		  (j2s-symbol-object-get obj field mode return ctx))
 	     =>
 	     (lambda (sexp) sexp))
 	    (else

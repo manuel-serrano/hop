@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Sep 22 12:06:44 2021 (serrano)                */
+;*    Last change :  Sun Sep 26 10:42:46 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -974,8 +974,8 @@
 ;*    j2s->list ::J2SForIn ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SForIn)
-   (with-access::J2SForIn this (lhs obj body loc)
-      `(,@(call-next-method) ,@(dump-loc loc) ,@(dump-info this)
+   (with-access::J2SForIn this (op lhs obj body loc)
+      `(,@(call-next-method) :op ,op ,@(dump-loc loc) ,@(dump-info this)
 	  ,@(dump-size this)
 	  ,(j2s->list lhs)
 	  ,(j2s->list obj)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Sep 21 18:28:26 2021 (serrano)                */
+;*    Last change :  Sun Sep 26 13:40:24 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -936,7 +936,10 @@
       (is-builtin-ref? self 'Date))
 
    (define (Object? self)
-      (is-builtin-ref? self 'Object))
+      (or (is-builtin-ref? self 'Object)
+	  (when (isa? self J2SUnresolvedRef)
+	     (with-access::J2SUnresolvedRef self (id)
+		(eq? id 'Object)))))
 
    (define (Process? self)
       (is-builtin-ref? self 'process))
@@ -1129,6 +1132,11 @@
 		  ((isa? obj J2SParen)
 		   (with-access::J2SParen obj (expr)
 		      (loop expr)))
+		  ((and (Object? obj)
+			(j2s-object-builtin-method fun args this mode return ctx))
+		   =>
+		   (lambda (expr) expr))
+			
 		  (else
 		   (let ((tmp (gensym 'obj)))
 		      `(let ((,tmp ,(box (j2s-scheme obj mode return ctx)

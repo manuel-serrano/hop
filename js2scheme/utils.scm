@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Sep 22 12:01:29 2021 (serrano)                */
+;*    Last change :  Sun Sep 26 14:48:23 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -67,6 +67,7 @@
 	   (string-method-type name #!optional (default '(any any)))
 	   (string-static-method-type name #!optional (default '(any any)))
 	   (math-static-method-type name #!optional (default '(any any)))
+	   (object-static-method-type name #!optional (default '(any any)))
 	   (regexp-method-type name #!optional (default '(any any)))
 	   (number-method-type name #!optional (default '(any any)))
 	   (array-method-type name #!optional (default '(any any)))
@@ -790,6 +791,13 @@
 	("sin" . (real1 undefined real))
 	("sqrt" . (real undefined real))
 	("tan" . (real undefined real)))))
+
+;*---------------------------------------------------------------------*/
+;*    object-static-method-type ...                                    */
+;*---------------------------------------------------------------------*/
+(define (object-static-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("keys" . (array object)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    regexp-method-type ...                                           */
@@ -864,13 +872,19 @@
 	  (when (isa? obj J2SGlobalRef)
 	     (with-access::J2SGlobalRef obj (id decl)
 		(when (eq? id ident)
-		   (not (decl-usage-has? decl '(assig))))))))
+		   (not (decl-usage-has? decl '(assig))))))
+	  (when (isa? obj J2SUnresolvedRef)
+	     (with-access::J2SUnresolvedRef obj (id)
+		(eq? id ident)))))
    
    (define (String? obj)
       (is-global? obj 'String))
 
    (define (Math? obj)
       (is-global? obj 'Math))
+
+   (define (Object? obj)
+      (is-global? obj 'Object))
 
    (case (j2s-type obj)
       ((string) (string-method-type fn))
@@ -883,6 +897,7 @@
        (cond
 	  ((String? obj) (string-static-method-type fn))
 	  ((Math? obj) (math-static-method-type fn))
+	  ((Object? obj) (object-static-method-type fn))
 	  (else '(any any))))))
 
 ;*---------------------------------------------------------------------*/

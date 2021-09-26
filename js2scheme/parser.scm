@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Sep 17 08:06:29 2021 (serrano)                */
+;*    Last change :  Sun Sep 26 10:46:38 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -653,11 +653,18 @@
    ;; for (lhs/var x in obj)
    (define (for-in loc lhs)
       ;; TODO: weed out bad lhs
-      (let ((op (token-tag (consume-any!)))
-	    (error-token (peek-token))
-	    (obj (expression #f #f))
-	    (ignore-RPAREN (consume! 'RPAREN))
-	    (body (statement)))
+      (let* ((tok (consume-any!))
+	     (op (cond
+		    ((eq? (token-tag tok) 'in)
+		     'in)
+		    ((and (eq? (token-tag tok) 'ID) (eq? (token-value tok) 'of))
+		     'of)
+		    (else
+		     (parse-error "Token 'in' or 'of' expectede" tok))))
+	     (error-token (peek-token))
+	     (obj (expression #f #f))
+	     (ignore-RPAREN (consume! 'RPAREN))
+	     (body (statement)))
 	 (cond
 	    ((isa? lhs J2SVarDecls)
 	     (with-access::J2SVarDecls lhs (decls)
