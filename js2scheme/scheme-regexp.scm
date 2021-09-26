@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 25 17:49:28 2017                          */
-;*    Last change :  Sun Sep 26 09:20:30 2021 (serrano)                */
+;*    Last change :  Sun Sep 26 16:54:21 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript regexp functions            */
@@ -74,7 +74,8 @@
    (when (isa? field J2SString)
       (with-access::J2SString field (val)
 	 (cond
-	    ((string=? val "rightContext") '(& ""))
-	    ((string=? val "leftContext") '(& ""))
+	    ((string=? val "rightContext") '(js-regexp-right-context %this))
+	    ((string=? val "leftContext") '(js-regexp-left-context %this))
+	    ((string=? val "lastMatch") '(js-regexp-last-match %this))
 	    (else #f)))))
 

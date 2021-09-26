@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Thu Aug 19 11:34:03 2021 (serrano)                */
+;*    Last change :  Sun Sep 26 17:56:10 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -338,7 +338,7 @@
 	       (if (<fx idx (vector-length vec))
 		   idx
 		   (let ((nvec (copy-vector vec (*fx (vector-length vec) 2))))
-		      (vector-fill! nvec (vector-length vec) (js-absent))
+		      (vector-fill! nvec (js-absent) (vector-length vec))
 		      (set! vec nvec)
 		      idx)))))
 	 

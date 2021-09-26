@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Sep 26 09:36:16 2021 (serrano)                */
+;*    Last change :  Sun Sep 26 16:53:25 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -16,7 +16,7 @@
 
    (library hop)
    
-   (include "types.sch" "stringliteral.sch" "property.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch" "array.sch")
    
    (import __hopscript_types
 	   __hopscript_arithmetic
@@ -47,7 +47,11 @@
 	   (js-regexp-prototype-maybe-exec ::obj ::obj ::JsGlobalObject cache)
 	   (inline js-regexp-prototype-exec-as-bool::bool ::JsRegExp ::obj ::JsGlobalObject)
 	   (js-regexp-prototype-maybe-exec-as-bool::bool ::JsRegExp ::obj ::JsGlobalObject cache)
-	   (js-regexp-prototype-exec-for-match-string ::JsGlobalObject ::JsRegExp ::obj))
+	   (js-regexp-prototype-exec-for-match-string ::JsGlobalObject ::JsRegExp ::obj)
+
+	   (js-regexp-right-context ::JsGlobalObject)
+	   (js-regexp-left-context ::JsGlobalObject)
+	   (js-regexp-last-match ::JsGlobalObject))
 
    ;; export for memory profiling
    (export (js-regexp-construct ::JsGlobalObject pattern uflags loc)))
@@ -840,6 +844,11 @@
 		   (when (<fx i clen)
 		      (vector-set! vec i (js-undefined))
 		      (loop (+fx i 1))))
+		(with-access::JsGlobalObject %this (js-regexp-last-match)
+		   (let ((lm js-regexp-last-match))
+		      (vector-set! lm 0 jss)
+		      (vector-set! lm 1 matchindex)
+		      (vector-set! lm 2 e)))
 		a))))
    
    (define (exec-string this jss s beg len offset enc)
@@ -1201,7 +1210,7 @@
 ;*    EXEC variables.                                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-regexp-literal-test-string::bool this::JsRegExp str::obj %this)
-   (with-access::JsGlobalObject %this (js-regexp-pcache)
+   (with-access::JsGlobalObject %this (js-regexp-pcache js-regexp-last-match)
       (with-access::JsRegExp this (rx flags)
 	 (let* ((lastindex (js-get-jsobject-name/cache this (& "lastIndex")
 			      #f %this (js-pcache-ref js-regexp-pcache 3)))
@@ -1214,8 +1223,16 @@
 		       0)
 		      (else
 		       lastindex))))
-	    (>=fx (pregexp-match-n-positions! rx s '#() i (string-length s))
-	       0)))))
+	    (js-call-with-stack-vector
+	       (make-vector 2)
+	       (lambda (v)
+		  (let ((m (pregexp-match-n-positions! rx s v i (string-length s))))
+		     (when (>=fx m 0)
+			(let ((lm js-regexp-last-match))
+			   (vector-set! lm 0 str)
+			   (vector-set! lm 1 (vector-ref v 0))
+			   (vector-set! lm 2 (vector-ref v 1))
+			   #t)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-literal-test ...                                       */
@@ -1243,6 +1260,39 @@
 (define (js-regexp->jsregexp val::regexp %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-regexp)
       (js-new1 %this js-regexp (js-string->jsstring (regexp-pattern val)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-regexp-right-context ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-regexp-right-context %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-regexp-last-match)
+      (let* ((lm js-regexp-last-match)
+	     (s (vector-ref lm 0)))
+	 (if (js-jsstring? s)
+	     (js-jsstring-substring s (vector-ref lm 2) (js-jsstring-length s) %this)
+	     (& "")))))
+
+;*---------------------------------------------------------------------*/
+;*    js-regexp-left-context ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-regexp-left-context %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-regexp-last-match)
+      (let* ((lm js-regexp-last-match)
+	     (s (vector-ref lm 0)))
+	 (if (js-jsstring? s)
+	     (js-jsstring-substring s 0 (vector-ref lm 1) %this)
+	     (& "")))))
+
+;*---------------------------------------------------------------------*/
+;*    js-regexp-last-match ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-regexp-last-match %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-regexp-last-match)
+      (let* ((lm js-regexp-last-match)
+	     (s (vector-ref lm 0)))
+	 (if (js-jsstring? s)
+	     (js-jsstring-substring s (vector-ref lm 1) (vector-ref lm 2) %this)
+	     (& "")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */

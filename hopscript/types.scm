@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Sep 12 07:31:15 2021 (serrano)                */
+;*    Last change :  Sun Sep 26 16:51:16 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -392,6 +392,7 @@
 	      (js-math::JsObject (default (class-nil JsObject)))
 	      (js-regexp::JsFunction (default (class-nil JsFunction)))
 	      (js-regexp-prototype::JsRegExp (default (class-nil JsRegExp)))
+	      (js-regexp-last-match::vector (default (make-vector 3)))
 	      (js-date::JsFunction (default (class-nil JsFunction)))
 	      (js-date-prototype::JsDate (default (class-nil JsDate)))
 	      (js-json::JsObject (default (class-nil JsObject)))
