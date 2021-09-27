@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 25 17:49:28 2017                          */
-;*    Last change :  Sun Sep 26 15:44:12 2021 (serrano)                */
+;*    Last change :  Mon Sep 27 14:17:41 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript symbol functions            */
@@ -28,7 +28,7 @@
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-fun)
 
-   (export (j2s-symbol-object-get obj::J2SRef field::J2SExpr
+   (export (j2s-symbol-object-get obj::J2SExpr field::J2SExpr
 	      mode return conf)))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Wed Sep 22 07:19:45 2021 (serrano)                */
+;*    Last change :  Mon Sep 27 14:26:54 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -90,7 +90,7 @@
 				"arguments not supported in record constructor"
 				node name))
 			    ((and (>=fx la (j2s-minlen val)) (<=fx la lp))
-			     (gen-new args))
+			     (gen-new args (make-list (-fx lp la) '(js-undefined))))
 			    ((eq? mode 'hopscript)
 			     (j2s-error name
 				(if (=fx (j2s-minlen val) lp)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Sep 24 07:30:15 2021 (serrano)                */
+;*    Last change :  Mon Sep 27 13:05:09 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -1470,7 +1470,7 @@
 			 (loop (cdr callees)
 			    (cons (cons cache (car callees)) caches)))))))))
 
-   (define (gen-check-object obj field)
+   (define (gen-check-object obj field args)
       (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool) obj)
 	 (inline-object-method-call fun obj args)
 	 (J2SMeta 'inline 0 0
@@ -1491,11 +1491,14 @@
 	 (cond
 	    ((not (eq? (j2s-type obj) 'object))
 	     (if (simple-argument? obj)
-		 (gen-check-object obj field)
+		 (if (pair? tmps)
+		     (LetBlock loc tmps
+			(gen-check-object obj field args))
+		     (gen-check-object obj field args))
 		 (let* ((id (gensym 'this))
 			(d (J2SLetOpt '(get) id obj)))
 		    (LetBlock loc (cons d tmps)
-		       (gen-check-object (J2SRef d) field)))))
+		       (gen-check-object (J2SRef d) field args)))))
 	    ((not (isa? obj J2SRef))
 	     (let* ((id (gensym 'this))
 		    (d (J2SLetOpt '(get) id obj)))

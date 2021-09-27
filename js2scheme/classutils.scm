@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Mon Sep 27 12:23:19 2021 (serrano)                */
+;*    Last change :  Mon Sep 27 14:20:08 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -107,10 +107,17 @@
    (with-access::J2SClass clazz ((classname name))
       (with-access::J2SClassElement el (prop)
 	 (with-access::J2SMethodPropertyInit prop (val name)
-	    (with-access::J2SString name ((str val))
-	       (string->symbol
-		  (string-append str "@"
-		     (symbol->string! classname))))))))
+	    (cond
+	       ((isa? name J2SString)
+		(with-access::J2SString name ((str val))
+		   (string->symbol
+		      (string-append str "@"
+			 (symbol->string! classname)))))
+	       (else
+		(let ((idx (class-class-method-index clazz el)))
+		   (string->symbol
+		      (string-append "%" (integer->string idx) "@"
+			 (symbol->string! classname))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    class-method-id ...                                              */
