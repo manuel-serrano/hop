@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Wed Sep 22 14:19:29 2021 (serrano)                */
+;*    Last change :  Mon Sep 27 12:23:19 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -478,7 +478,7 @@
        (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
-;*    method-use-return? ::J2SSuper ...                                */
+;*    method-use-return? ::J2SReturn ...                               */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (method-use-return? this::J2SReturn cell)
    (cell-set! cell #t)

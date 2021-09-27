@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Sep 24 07:28:58 2021 (serrano)                */
+;*    Last change :  Mon Sep 27 11:31:30 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -272,7 +272,7 @@
 		   (set! rhs (J2SRef ndecl))
 		   (set-cdr! c (list ndecl))))
 	       ((propinfo-needcheckp %info)
-		(let ((ndecl (J2SDeclGlobal 'let
+		(let ((ndecl (J2SDeclGlobal 'let-opt
 				'(ref init)
 				(gensym val)))
 		      ;; MS CARE UTYPE

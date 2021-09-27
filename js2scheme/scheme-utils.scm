@@ -40,12 +40,18 @@
 	   (epairify loc expr)
 	   (epairify-deep loc expr)
 	   (strict-mode? mode)
+
+	   (comp-return ::obj)
+	   (acc-return ::obj)
+	   (in-eval?::bool ::obj)
+	   
 	   (j2s-fast-constructor-id id)
 	   (j2s-scheme-id id pref)
 	   (j2s-decl-name ::J2SDecl ::struct)
 	   (j2s-decl-fast-id ::J2SDecl conf)
 	   (j2s-decl-scm-id ::J2SDecl conf)
 	   (j2s-class-id clazz::J2SClass ctx)
+	   (j2s-escape-id ::symbol ::obj)
 	   (js-need-global? ::J2SDecl scope mode)
 	   (flatten-stmt stmt)
 	   (flatten-nodes nodes)
@@ -167,6 +173,31 @@
    (or (eq? mode 'strict) (eq? mode 'hopscript)))
 
 ;*---------------------------------------------------------------------*/
+;*    comp-return ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (comp-return x)
+   (match-case x
+      ((begin)
+       '(js-undefined))
+      ((begin . ?rest)
+       (let ((inv (reverse rest)))
+	  `(begin ,@(reverse (filter pair? (cdr inv))) ,(car inv))))
+      (else
+       x)))
+
+;*---------------------------------------------------------------------*/
+;*    acc-return ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (acc-return expr)
+   `(set! %acc ,expr))
+
+;*---------------------------------------------------------------------*/
+;*    in-eval? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (in-eval? r)
+   (not (eq? r comp-return)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-profile-id ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (j2s-profile-id id loc ctx)
@@ -248,6 +279,14 @@
 		(set! _scmid (symbol-append '@ name)))
 	     _scmid)
 	  (symbol-append '@ name))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-escape-id ...                                                */
+;*---------------------------------------------------------------------*/
+(define (j2s-escape-id escape id)
+   (if (symbol? id)
+       (symbol-append escape '- id)
+       escape))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-need-global? ...                                              */
@@ -1469,3 +1508,4 @@
 (define-walk-method (side-effect this::J2SObjInit mustp::bool cell)
    (cell-set! cell #t)
    #t)
+
