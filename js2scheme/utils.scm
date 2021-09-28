@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Tue Sep 28 07:00:19 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 08:43:10 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -397,6 +397,8 @@
 	  ((arguments) 'JsArguments)
 	  ((real) 'double)
 	  ((bigint) 'bignum)
+	  ((map weakmap) 'JsMap)
+	  ((set weakset) 'JsSet)
 	  (else type)))
       ((isa? type J2SRecord)
        (with-access::J2SRecord type (name)
