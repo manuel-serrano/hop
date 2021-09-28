@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Fri Aug 27 18:48:42 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 13:36:44 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -89,7 +89,8 @@
 					 js-generatorfunction-prototype
 					 js-symbol-iterator
 					 js-symbol-tostringtag
-					 js-yield-cmap)
+					 js-yield-cmap
+					 js-generator-pcache)
       
       (define js-gen-proto-proto
 	 (let ((proto (instantiateJsObject
@@ -163,6 +164,9 @@
 		(call-with-input-string fun
 		   (lambda (ip)
 		      (%js-eval ip 'eval %this this %this))))))
+
+      (set! js-generator-pcache
+	 ((@ js-make-pcache-table __hopscript_property) 3 "generator"))
       
       (js-bind! %this js-gen-proto (& "next")
 	 :configurable #f :enumerable #f
@@ -267,7 +271,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Generators use a special encoding. They directly point to the    */
 ;*    elements and cmap of their prototype. This optimizes "next"      */
-;*    and "throw" access. To preserve the semantics, JS-PUT! is        */
+;*    and "throw" accesses. To preserve the semantics, JS-PUT! is      */
 ;*    overriden for that class.                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-make-generator proc proto %this)
@@ -374,27 +378,36 @@
 ;*---------------------------------------------------------------------*/
 (define (js-generator-yield* gen val done kont %this)
    
-   (define (yield* val)
-      (let ((next (js-get val (& "next") %this)))
-	 (let loop ((v (js-undefined)) (e #f))
-	    (let* ((n (js-call0 %this next val))
-		   (value (js-get n (& "value") %this))
-		   (done (js-get n (& "done") %this)))
-	       (if done
-		   (kont value #f)
-		   (js-generator-yield gen value #f
-		      loop %this))))))
+   (define (yield* val js-generator-pcache)
+      
+      (define next
+	 (js-get-name/cache val (& "next") #f %this
+	    (vector-ref js-generator-pcache 0)))
+      
+      (define (loop v e)
+	 (let* ((n (js-call0 %this next val))
+		(done (js-get-name/cache n (& "done") #f %this
+			 (vector-ref js-generator-pcache 2))))
+	    (if done
+		(let ((value (js-get-name/cache n (& "value") #f %this
+				(vector-ref js-generator-pcache 1))))
+		   (kont value #f))
+		n)))
+      
+      (with-access::JsGenerator gen (%next)
+	 (set! %next loop))
+      (loop (js-undefined) #f))
 
-   (with-access::JsGlobalObject %this (js-symbol-iterator)
+   (with-access::JsGlobalObject %this (js-symbol-iterator js-generator-pcache)
       (cond
 	 ((isa? val JsGenerator)
-	  (yield* val))
+	  (yield* val js-generator-pcache))
 	 ((js-get val js-symbol-iterator %this)
 	  =>
 	  (lambda (g)
-	     (yield* (js-call0 %this g val))))
+	     (yield* (js-call0 %this g val) js-generator-pcache)))
 	 (else
-	  (yield* val)))))
+	  (yield* val js-generator-pcache)))))
 
 
 ;*---------------------------------------------------------------------*/
