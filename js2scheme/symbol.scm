@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Tue Sep 28 07:54:57 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 14:54:23 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -117,9 +117,6 @@
 				  (set! decls (cons d decls)))))
 		  genv)
 	       (resolve-class-private-fields this #f)))))
-   (when (and (>= (config-get conf :verbose 0) 2)
-	      (not (config-get conf :verbmargin #f)))
-      (newline (current-error-port)))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -1141,13 +1138,22 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SObjInit env mode withs wenv genv ctx conf)
    
+   (define table (create-hashtable :weak 'open-string))
+   
    (define (find-property id::obj env::pair-nil)
-      (find (lambda (prop)
-	       (with-access::J2SPropertyInit prop (name)
-		  (when (isa? name J2SLiteralValue)
-		     (with-access::J2SLiteralValue name (val)
-			(equal? id val)))))
-	 env))
+      (if (string? id)
+	  (hashtable-get table id)
+	  (find (lambda (prop)
+		   (with-access::J2SPropertyInit prop (name)
+		      (when (isa? name J2SLiteralValue)
+			 (with-access::J2SLiteralValue name (val)
+			    (equal? id val)))))
+	     env)))
+
+   (define (add-property id::obj init env::pair-nil)
+      (when (string? id)
+	 (hashtable-put! table id init))
+      (cons init env))
    
    (define (property-error id msg loc)
       (raise
@@ -1160,7 +1166,7 @@
    
    (define (proc? o)
       (isa? o J2SFun))
-   
+
    (with-access::J2SObjInit this (inits)
       (let loop ((inits inits)
 		 (ninits '()))
@@ -1175,7 +1181,7 @@
 		       (let ((old (find-property val ninits)))
 			  (cond
 			     ((not old)
-			      (loop (cdr inits) (cons (car inits) ninits)))
+			      (loop (cdr inits) (add-property val (car inits) ninits)))
 			     ((not (eq? (object-class old) (object-class (car inits))))
 			      (property-error name
 				 "duplicate data property in object literal not allowed in strict mode"
@@ -1200,8 +1206,8 @@
 				 "duplicate data property in object literal not allowed in strict mode"
 				 loc))
 			     (else
-			      (loop (cdr inits) (cons (car inits) ninits))))))
-		    (loop (cdr inits) (cons (car inits) ninits))))))))
+			      (loop (cdr inits) (add-property val (car inits) ninits))))))
+		    (loop (cdr inits) (add-property #f (car inits) ninits))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SOctalNumber ...                                    */

@@ -2723,7 +2723,7 @@
 	  (with-access::J2SLiteralValue name (val)
 	     `(js-toname ,(j2s-scheme val mode return ctx) %this)))
 	 (else
-	 `(js-toname ,(j2s-scheme name mode return ctx) %this))))
+	  `(js-toname ,(j2s-scheme name mode return ctx) %this))))
    
    (define (is-proto? name)
       (cond
@@ -2772,6 +2772,58 @@
 			 (iota len) props vals)
 		    (js-literal->jsobject ,elements ,names %this)))))))
 
+   (define (hashtable? this)
+      (cond
+	 ((isa? this J2SObjInit)
+	  (with-access::J2SObjInit this (inits)
+	     (every (lambda (prop)
+		       (when (isa? prop J2SDataPropertyInit)
+			  (with-access::J2SDataPropertyInit prop (name val)
+			     (when (isa? name J2SString)
+				(hashtable? val)))))
+		inits)))
+	 ((isa? this J2SArray)
+	  (with-access::J2SArray this (exprs)
+	     (every hashtable? exprs)))
+	 ((isa? this J2SString)
+	  #t)
+	 ((isa? this J2SNumber)
+	  #t)
+	 ((isa? this J2SBool)
+	  #t)
+	 (else
+	  #f)))
+
+   (define (j2s-objinit-large this)
+      (cond
+	 ((isa? this J2SObjInit)
+	  (with-access::J2SObjInit this (inits)
+	     (map (lambda (prop)
+		     (when (isa? prop J2SDataPropertyInit)
+			(with-access::J2SDataPropertyInit prop (name val)
+			   (with-access::J2SString name ((name val))
+			      (cons name (j2s-objinit-large val))))))
+		inits)))
+	 ((isa? this J2SArray)
+	  (with-access::J2SArray this (exprs)
+	     (list->vector (map j2s-objinit-large exprs))))
+	 ((isa? this J2SString)
+	  (with-access::J2SString this (val)
+	     val))
+	 ((isa? this J2SNumber)
+	  (with-access::J2SNumber this (val)
+	     val))
+	 ((isa? this J2SBool)
+	  (with-access::J2SBool this (val)
+	     val))
+	 (else
+	  '(js-undefined))))
+   
+   (define (large-literal->jsobj inits)
+      (if (hashtable? this)
+	  `(js-large-literal->jsobject ',(j2s-objinit-large this) %this)
+	  (literal->jsobj inits)))
+   
    (define (cmap->jsobj inits cmap)
       (let ((vals (map (lambda (i)
 			  (with-access::J2SDataPropertyInit i (val)
@@ -2860,16 +2912,20 @@
    
    (with-access::J2SObjInit this (loc inits cmap)
       (epairify loc
-	 (if cmap
-	     (cmap->jsobj inits cmap)
-	     (if (every (lambda (i)
-			   (when (isa? i J2SDataPropertyInit)
-			      (with-access::J2SDataPropertyInit i (name)
-				 (and (not (is-proto? name))
-				      (not (isa? name J2SUndefined))))))
-		    inits)
-		 (literal->jsobj inits)
-		 (new->jsobj loc inits))))))
+	 (cond
+	    (cmap
+	     (cmap->jsobj inits cmap))
+	    ((every (lambda (i)
+		       (when (isa? i J2SDataPropertyInit)
+			  (with-access::J2SDataPropertyInit i (name)
+			     (and (not (is-proto? name))
+				  (not (isa? name J2SUndefined))))))
+		inits)
+	     (if (>=fx (length inits) (context-get ctx :max-objinit-optim-size))
+		 (large-literal->jsobj inits)
+		 (literal->jsobj inits)))
+	    (else
+	     (new->jsobj loc inits))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDataPropertyInit ...                             */

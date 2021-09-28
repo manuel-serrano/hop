@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Tue Aug 31 13:25:57 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 15:52:43 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -40,6 +40,7 @@
 	   (js-with-context ::obj ::bstring ::procedure)
 	   (generic js-obj->jsobject ::obj ::JsGlobalObject)
 	   (js-literal->jsobject::JsObject ::vector ::vector ::JsGlobalObject)
+	   (js-large-literal->jsobject::JsObject ::pair ::JsGlobalObject)
 	   (js-alist->jsobject::JsObject ::pair-nil ::JsGlobalObject)
 	   (js-plist->jsobject::JsObject ::pair-nil ::JsGlobalObject)
 	   (generic js-jsobject->obj ::obj ::JsGlobalObject)
@@ -248,7 +249,7 @@
       (when (list? l)
 	 (every (lambda (e)
 		   (and (pair? e)
-			(or (keyword? (car e)) (symbol? (car e)))
+			(or (keyword? (car e)) (string? (car e)) (symbol? (car e)))
 			(not (null? (cdr (last-pair e))))))
 	    l)))
 
@@ -273,6 +274,42 @@
 	 (cmap cm)
 	 (__proto__ (js-object-proto %this))
 	 (elements elements))))
+
+;*---------------------------------------------------------------------*/
+;*    js-large-literal->jsobject ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-large-literal->jsobject::JsObject lst %this)
+   
+   (define (obj->jsobj o %this)
+      (cond
+	 ((number? o)
+	  o)
+	 ((string? o)
+	  (js-string->jsstring o))
+	 ((pair? o)
+	  (if (>fx (length o) 192)
+	      (js-large-literal->jsobject o %this)
+	      (js-pair->jsobject o %this)))
+	 ((vector? o)
+	  (js-obj->jsobject o %this))
+	 (else
+	  o)))
+   
+   (let* ((table (create-hashtable
+		    :weak 'open-string
+		    :size (*fx (length lst) 2)))
+	  (o (instantiateJsObject
+		(cmap (js-not-a-cmap))
+		(__proto__ (js-object-proto %this))
+		(elements table))))
+      (js-object-mode-enumerable-set! o #t)
+      (js-object-mode-plain-set! o #f)
+      (for-each (lambda (e)
+		   (let ((k (car e))
+			 (o (obj->jsobj (cdr e) %this)))
+		      (hashtable-put! table k (make-cell o))))
+	 lst)
+      o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-key-name->jsstring ...                                        */

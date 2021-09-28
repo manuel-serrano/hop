@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Sep 23 07:13:28 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 15:31:12 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -533,6 +533,8 @@
 	    (set! o (cons* :optim-strbuffer #t o)))
 	 )
       (when (>=fx l 3)
+	 (unless (memq :max-objinit-optim-size o)
+	    (set! o (cons* :max-objinit-optim-size 256 o)))
 	 (unless (memq :optim-method o)
 	    (set! o (cons* :optim-method #t o)))
 	 (unless (memq :optim-literals o)
@@ -559,6 +561,8 @@
 ;* 	    (set! o (cons* :optim-pce #t o)))                          */
 	 )
       (when (>=fx l 2)
+	 (unless (memq :max-objinit-optim-size o)
+	    (set! o (cons* :max-objinit-optim-size 128 o)))
 	 (unless (memq :optim-letopt o)
 	    (set! o (cons* :optim-letopt #t o)))
 	 (unless (memq :optim-var2let o)
@@ -600,7 +604,9 @@
       (when (>=fx l 1)
 	 (unless (memq :optim-tyflow o)
 	    (set! o (cons* :optim-tyflow #t o))))
-
+      ;; max-objinit-optim-size
+      (unless (memq :max-objinit-optim-size o)
+	 (set! o (cons* :max-objinit-optim-size 16 o)))
       (let ((s (config-get args :optim-size 0)))
 	 (when (>=fx s 1)
 	    (set! o (cons* :fun-src #f o)))
