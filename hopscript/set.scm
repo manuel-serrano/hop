@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Sun Sep 26 17:57:31 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 12:02:28 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -189,6 +189,15 @@
        (js-set-construct-array this iterable))
       (else
        (js-set-construct-iterable this iterable))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-hashnumber ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (js-get-hashnumber key)
+   (if (js-jsstring? key)
+       (let ((s (js-jsstring->string key)))
+	  ($string-hash s 0 (string-length s)))
+       (get-hashnumber key)))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-set-prototype! ...                                  */

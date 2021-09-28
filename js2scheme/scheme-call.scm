@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Sep 28 07:03:08 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 12:13:14 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -252,7 +252,7 @@
 	("has" js-map-has weakmap (any) %this #f ,j2s-weakmap-plain?)
 	("get" js-map-get map (any) %this #f ,j2s-map-plain?)
 	("get" js-weakmap-get weakmap (any) %this #f ,j2s-weakmap-plain?)
-	("set" js-map-get map (any any) %this #f ,j2s-map-plain?)
+	("set" js-map-set map (any any) %this #f ,j2s-map-plain?)
 	("set" js-weakmap-set weakmap (any any) %this #f ,j2s-weakmap-plain?)
 	;; object
 	("hasOwnProperty" js-has-own-property any (any) %this #f ,j2s-object-plain?)

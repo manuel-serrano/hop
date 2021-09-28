@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Aug 27 18:43:14 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 12:00:45 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -221,7 +221,7 @@
 	   (inline js-equal-sans-flonum?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-equal-string?::bool ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-equality?::bool ::obj ::obj ::JsGlobalObject)
-	   (js-same-value-zero?::bool ::obj ::obj ::JsGlobalObject)
+	   (inline js-same-value-zero?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-strict-equal?::bool ::obj ::obj)
 	   (js-eq-no-eq?::bool ::obj ::obj)
 	   (inline js-strict-equal-no-string?::bool ::obj ::obj)
@@ -2285,7 +2285,7 @@
 ;*    https://www.ecma-international.org/ecma-262/6.0/                 */
 ;*       #sec-samevaluezero                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-same-value-zero? x y %this::JsGlobalObject)
+(define-inline (js-same-value-zero? x y %this::JsGlobalObject)
    (js-equality? x y %this))
 
 ;*---------------------------------------------------------------------*/

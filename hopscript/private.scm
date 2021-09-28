@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/hopscript/private.scm             */
+;*    serrano/prgm/project/hop/hop/hopscript/private.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed May 19 05:40:05 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 11:30:13 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -57,7 +57,6 @@
 	   (js-serializer ::JsObject)
 	   (js-unserializer ::obj)
 
-	   (js-get-hashnumber ::obj)
 	   ))
 
 ;*---------------------------------------------------------------------*/
@@ -387,7 +386,6 @@
 (define-inline (u32vlen v::vector)
    (fixnum->uint32 (vector-length v)))
 
-
 ;*---------------------------------------------------------------------*/
 ;*    js-serializer ...                                                */
 ;*---------------------------------------------------------------------*/
@@ -399,12 +397,4 @@
 ;*---------------------------------------------------------------------*/
 (define (js-unserializer s)
    s)
-
-;*---------------------------------------------------------------------*/
-;*    js-get-hashnumber ...                                            */
-;*---------------------------------------------------------------------*/
-(define (js-get-hashnumber key)
-   (if (js-jsstring? key)
-       (get-hashnumber (js-jsstring->string key))
-       (get-hashnumber key)))
 
