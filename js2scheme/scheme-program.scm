@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Sep 21 18:44:08 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 07:24:16 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -116,7 +116,6 @@
 		    (define %worker (js-current-worker))
 		    (define %cnst-table ,cnsttable)
 		    ,@scmheaders
-		    
 		    ,@globals
 		    ,esexports
 		    ,@esimports
@@ -268,6 +267,10 @@
 		      :string (j2s-find-extern-decl headers 'String)
 		      :regexp (j2s-find-extern-decl headers 'RegExp)
 		      :math (j2s-find-extern-decl headers 'Math)
+		      :map (j2s-find-extern-decl headers 'Map)
+		      :weakmap (j2s-find-extern-decl headers 'WeakMap)
+		      :set (j2s-find-extern-decl headers 'Set)
+		      :weakset (j2s-find-extern-decl headers 'WeakSet)
 		      :object (j2s-find-extern-decl headers 'Object)
 		      :program this))
 	     (esimports (j2s-module-imports this nctx))

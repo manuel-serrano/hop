@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Sep  9 08:50:20 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 08:19:58 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -240,6 +240,7 @@
 		  cache::JsPropertyCache)
    (cond
       ((eq? (js-toname p %this) (& "length"))
+       (tprint "CACHE MISS length fun: " (typeof o))
        (if (js-function? o)
 	   (call-next-method)
 	   (js-get-length-jsprocedure o)))
@@ -267,6 +268,7 @@
 ;*    js-get-length ::JsProcedure ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-length o::JsProcedure %this::JsGlobalObject #!optional cache)
+   (tprint "js-get-length procedure...")
    (if (js-function? o)
        (call-next-method)
        (js-get-length-jsprocedure o)))
@@ -488,7 +490,7 @@
 	       (configurable #f)
 	       (writable #f)
 	       (%get (lambda (obj owner propname %this)
-			(with-access::JsFunction owner (info)
+			(with-access::JsFunction obj (info)
 			   (vector-ref info 1))))
 	       (%set list))
 	    (instantiate::JsWrapperDescriptor
@@ -497,7 +499,7 @@
 	       (configurable #f)
 	       (writable #f)
 	       (%get (lambda (obj owner propname %this)
-			(with-access::JsFunction owner (info)
+			(with-access::JsFunction obj (info)
 			   (js-string->jsstring (vector-ref info 0)))))
 	       (%set list))
 	    (instantiate::JsAccessorDescriptor

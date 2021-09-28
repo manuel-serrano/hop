@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Sep  3 10:28:26 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 06:49:33 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -92,7 +92,8 @@
 	    record class object promise
 	    null undefined void
 	    cmap scmstring tilde pair
-	    int8array uint8array bigint))
+	    int8array uint8array bigint
+	    map weakmap set weakset))
        ty)
       ((memq ty '(index indexof length)) 'integer)
       ((memq ty '(ureal1 real1 real4)) 'real)

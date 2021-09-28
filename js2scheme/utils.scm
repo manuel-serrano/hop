@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sun Sep 26 14:48:23 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 07:00:19 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -69,6 +69,8 @@
 	   (math-static-method-type name #!optional (default '(any any)))
 	   (object-static-method-type name #!optional (default '(any any)))
 	   (regexp-method-type name #!optional (default '(any any)))
+	   (map-method-type name #!optional (default '(any any)))
+	   (weakmap-method-type name #!optional (default '(any any)))
 	   (number-method-type name #!optional (default '(any any)))
 	   (array-method-type name #!optional (default '(any any)))
 	   (jsvector-method-type name #!optional (default '(any any)))
@@ -807,6 +809,20 @@
       '(("test" . (bool regexp string)))))
 
 ;*---------------------------------------------------------------------*/
+;*    map-method-type ...                                              */
+;*---------------------------------------------------------------------*/
+(define (map-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("has" . (bool any)))))
+
+;*---------------------------------------------------------------------*/
+;*    weakmap-method-type ...                                          */
+;*---------------------------------------------------------------------*/
+(define (weakmap-method-type name #!optional (default '(any any)))
+   (assoc-method-type name default
+      '(("has" . (bool any)))))
+
+;*---------------------------------------------------------------------*/
 ;*    number-method-type ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (number-method-type name #!optional (default '(any any)))
@@ -889,6 +905,8 @@
    (case (j2s-type obj)
       ((string) (string-method-type fn))
       ((regexp) (regexp-method-type fn))
+      ((map) (map-method-type fn))
+      ((weakmap) (weakmap-method-type fn))
       ((number integer index) (number-method-type fn))
       ((array) (array-method-type fn))
       ((jsvector) (jsvector-method-type fn))

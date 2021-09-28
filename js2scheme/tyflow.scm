@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Sep 22 11:59:54 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 06:50:17 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1424,6 +1424,10 @@
 		((RegExp) 'regexp)
 		((Int8Array) 'int8array)
 		((Uint8Array) 'uint8array)
+		((Map) 'map)
+		((WeakMap) 'weakmap)
+		((Set) 'set)
+		((WeakSet) 'weakset)
 		(else 'object))))
 	 ((isa? clazz J2SRef)
 	  (with-access::J2SRef clazz (decl)
@@ -1438,6 +1442,10 @@
 			  ((Uint8Array) 'uint8array)
 			  ((Date) 'date)
 			  ((RegExp) 'regexp)
+			  ((Map) 'map)
+			  ((WeakMap) 'weakmap)
+			  ((Set) 'set)
+			  ((WeakSet) 'weakset)
 			  (else 'object)))))
 		((isa? decl J2SDeclClass)
 		 (with-access::J2SDeclClass decl (val)

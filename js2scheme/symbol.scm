@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Tue Sep 21 07:58:37 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 07:54:57 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -57,7 +57,6 @@
    (instantiate::J2SStageProc
       (name "symbol")
       (comment "symbol resolution")
-      (footer "")
       (proc j2s-symbol)))
 
 ;*---------------------------------------------------------------------*/

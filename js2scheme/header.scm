@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Sun Sep 26 13:58:40 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 06:54:58 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -184,7 +184,19 @@
 	    `(with-access::JsGlobalObject %this (js-number) js-number)
 	    :sweepable #t)
 	 (js-def-extern 'BigInt #t writable
-	    `(with-access::JsGlobalObject %this (js-bigint) js-bigint)
+	    `(js-get with-access::JsGlobalObject %this (js-bigint) js-bigint)
+	    :sweepable #t)
+	 (js-def-extern 'Map #t writable
+	    `(js-get %this (& "Map") %scope)
+	    :sweepable #t)
+	 (js-def-extern 'WeakMap #t writable
+	    `(js-get %this (& "WeakMap") %scope)
+	    :sweepable #t)
+	 (js-def-extern 'Set #t writable
+	    `(js-get %this (& "Set") %scope)
+	    :sweepable #t)
+	 (js-def-extern 'WeakSet #t writable
+	    `(js-get %this (& "WeakSet") %scope)
 	    :sweepable #t)
 	 (js-def-extern 'Error #t writable
 	    `(with-access::JsGlobalObject %this (js-error) js-error)

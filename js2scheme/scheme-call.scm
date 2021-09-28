@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sun Sep 26 13:40:24 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 07:03:08 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -247,6 +247,13 @@
 	("setUTCMinutes" ,j2s-date-setminutes date (any) #f #f)
 	("setUTCMinutes" ,j2s-date-setutcminutes date (any any) #f #f)
 	("setUTCMinutes" ,j2s-date-setutcminutes date (any any any) #t #t)
+	;; map
+	("has" js-map-has map (any) %this #f ,j2s-map-plain?)
+	("has" js-map-has weakmap (any) %this #f ,j2s-weakmap-plain?)
+	("get" js-map-get map (any) %this #f ,j2s-map-plain?)
+	("get" js-weakmap-get weakmap (any) %this #f ,j2s-weakmap-plain?)
+	("set" js-map-get map (any any) %this #f ,j2s-map-plain?)
+	("set" js-weakmap-set weakmap (any any) %this #f ,j2s-weakmap-plain?)
 	;; object
 	("hasOwnProperty" js-has-own-property any (any) %this #f ,j2s-object-plain?)
 	("isFrozen" ,j2s-object-isfrozen any (any) #f #f ,j2s-object-plain?)
@@ -658,6 +665,24 @@
    (let ((math (context-math ctx)))
       (if (isa? math J2SDeclExtern)
 	  (decl-only-call? math)
+	  #t)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-map-plain? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-map-plain? mode return ctx)
+   (let ((map (context-map ctx)))
+      (if (isa? map J2SDeclExtern)
+	  (decl-only-call? map)
+	  #t)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-weakmap-plain? ...                                           */
+;*---------------------------------------------------------------------*/
+(define (j2s-weakmap-plain? mode return ctx)
+   (let ((weakmap (context-weakmap ctx)))
+      (if (isa? map J2SDeclExtern)
+	  (decl-only-call? weakmap)
 	  #t)))
 
 ;*---------------------------------------------------------------------*/

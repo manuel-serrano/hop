@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Sun Sep 26 19:50:18 2021 (serrano)                */
+;*    Last change :  Tue Sep 28 07:14:38 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -40,7 +40,12 @@
 	   __hopscript_spawn)
    
    (export (js-init-map! ::JsGlobalObject)
-	   (js-init-weakmap! ::JsGlobalObject)))
+	   (js-init-weakmap! ::JsGlobalObject)
+	   (js-map-has::bool ::JsMap ::obj ::JsGlobalObject)
+	   (js-map-get ::JsMap ::obj ::JsGlobalObject)
+	   (js-weakmap-get ::JsMap ::obj ::JsGlobalObject)
+	   (js-map-set ::JsMap ::obj ::obj ::JsGlobalObject)
+	   (js-weakmap-set ::JsMap ::obj ::obj ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -50,7 +55,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    global parameters                                                */
 ;*---------------------------------------------------------------------*/
-(define-inline (DEFAULT-EMPTY-VECTOR-SIZE) 4)
+(define-inline (DEFAULT-EMPTY-VECTOR-SIZE) 16)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-map! ...                                                 */
@@ -90,7 +95,9 @@
 			:weak weak
 			:hash js-get-hashnumber
 			:eqtest (lambda (x y) (js-same-value-zero? x y %this))))
-	    (vec (make-vector (DEFAULT-EMPTY-VECTOR-SIZE) (js-absent)))
+	    (vec (if (eq? weak 'keys)
+		     '#()
+		     (make-vector (DEFAULT-EMPTY-VECTOR-SIZE) (js-absent))))
 	    (cursor -1)))
       
       (define js-map-prototype
@@ -204,11 +211,10 @@
 ;*    hashkey ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (hashkey key)
-   (if (and (flonum? key)
-	    (=fl key 0.0)
-	    (=fx (signbitfl key) 1))
-       0.0
-       key))
+   (cond
+;*       ((js-jsstring? key) (js-jsstring->string key))                */
+      ((and (flonum? key) (=fl key 0.0) (=fx (signbitfl key) 1)) 0.0)
+      (else key)))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-map-prototype! ...                                  */
@@ -294,18 +300,14 @@
    
    ;; get
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.get
-   (define (js-map-get this key)
+   (define (map-get this key)
       (if (isa? this JsMap)
-	  (with-access::JsMap this (mapdata vec)
-	     (let ((idx (hashtable-get mapdata (hashkey key))))
-		(if (fixnum? idx)
-		    (cdr (vector-ref vec idx))
-		    (js-undefined))))
+	  (js-map-get this key %this)
 	  (js-raise-type-error %this "Not a Map" this)))
 
    (js-bind! %this js-map-prototype (& "get")
-      :value (js-make-function %this js-map-get
-		(js-function-arity js-map-get)
+      :value (js-make-function %this map-get
+		(js-function-arity map-get)
 		(js-function-info :name "get" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
@@ -313,9 +315,15 @@
 
    ;; has
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.has
+   (define (map-has this key)
+      (if (isa? this JsMap)
+          (with-access::JsMap this (mapdata)
+             (hashtable-contains? mapdata (hashkey key)))
+          (js-raise-type-error %this "Not a Map" this)))
+
    (js-bind! %this js-map-prototype (& "has")
-      :value (js-make-function %this (js-map-has %this)
-		(js-function-arity 1 0)
+      :value (js-make-function %this map-has
+		(js-function-arity map-has)
 		(js-function-info :name "has" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
@@ -339,38 +347,14 @@
    
    ;; set
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.set
-   (define (js-map-set this key value)
-
-      (define (get-index! this::JsMap)
-	 (with-access::JsMap this (vec cursor)
-	    (let ((idx (+fx cursor 1)))
-	       (set! cursor idx)
-	       (if (<fx idx (vector-length vec))
-		   idx
-		   (let ((nvec (copy-vector vec (*fx (vector-length vec) 2))))
-		      (vector-fill! nvec (js-absent) (vector-length vec))
-		      (set! vec nvec)
-		      idx)))))
-	 
+   (define (map-set this key value)
       (if (isa? this JsMap)
-	  (with-access::JsMap this (mapdata vec)
-	     (let ((k (if (and (flonum? key)
-			       (=fl key 0.0)
-			       (=fx (signbitfl key) 1))
-			  0.0
-			  key)))
-		(let ((idx (hashtable-get mapdata (hashkey k))))
-		   (if (fixnum? idx)
-		       (set-cdr! (vector-ref vec idx) value)
-		       (let ((idx (get-index! this)))
-			  (hashtable-put! mapdata k idx)
-			  (vector-set! vec idx (cons k value)))))
-		this))
+	  (js-map-set this key value %this)
 	  (js-raise-type-error %this "Not a Map" this)))
    
    (js-bind! %this js-map-prototype (& "set")
-      :value (js-make-function %this js-map-set
-		(js-function-arity js-map-set)
+      :value (js-make-function %this map-set
+		(js-function-arity map-set)
 		(js-function-info :name "set" :len 2)
 		:prototype (js-undefined))
       :enumerable #f
@@ -454,9 +438,7 @@
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.get
    (define (js-map-get this key)
       (if (isa? this JsMap)
-	  (with-access::JsMap this (mapdata vec)
-	     (or (hashtable-get mapdata (hashkey key))
-		 (js-undefined)))
+	  (js-weakmap-get this key %this)
 	  (js-raise-type-error %this "Not a Map" this)))
 
    (js-bind! %this js-map-prototype (& "get")
@@ -469,15 +451,14 @@
 
    ;; has
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.has
-   (define (js-map-has this key)
+   (define (map-has this key)
       (if (isa? this JsMap)
-          (with-access::JsMap this (mapdata)
-             (hashtable-contains? mapdata (hashkey key)))
+	  (js-map-has this key %this)
           (js-raise-type-error %this "Not a Map" this)))
       
    (js-bind! %this js-map-prototype (& "has")
-      :value (js-make-function %this js-map-has
-		(js-function-arity 1 0)
+      :value (js-make-function %this map-has
+		(js-function-arity map-has)
 		(js-function-info :name "has" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
@@ -485,16 +466,14 @@
 
    ;; set
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.set
-   (define (js-map-set this key value)
+   (define (map-set this key value)
       (if (isa? this JsMap)
-	  (with-access::JsMap this (mapdata vec)
-	     (hashtable-put! mapdata (hashkey key) value)
-	     this)
+	  (js-weakmap-set this key value %this)
 	  (js-raise-type-error %this "Not a Map" this)))
    
    (js-bind! %this js-map-prototype (& "set")
-      :value (js-make-function %this js-map-set
-		(js-function-arity js-map-set)
+      :value (js-make-function %this map-set
+		(js-function-arity map-set)
 		(js-function-info :name "set" :len 2)
 		:prototype (js-undefined))
       :enumerable #f
@@ -523,12 +502,81 @@
 ;*    https://www.ecma-international.org/ecma-262/6.0/                 */
 ;*       #sec-map.prototype.has                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-map-has %this)
-   (lambda (this key)
-      (if (isa? this JsMap)
-          (with-access::JsMap this (mapdata)
-             (fixnum? (hashtable-get mapdata (hashkey key))))
-          (js-raise-type-error %this "Not a Map" this))))
+(define (js-map-has::bool this::JsMap key %this::JsGlobalObject)
+   (if (js-object-mode-plain? this)
+       (with-access::JsMap this (mapdata)
+	  (hashtable-contains? mapdata (hashkey key)))
+       (js-call1 %this
+	  (js-get this (& "has") %this)
+	  this key)))
+
+;*---------------------------------------------------------------------*/
+;*    js-map-get ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (js-map-get this::JsMap key %this::JsGlobalObject)
+   (if (js-object-mode-plain? this)
+       (with-access::JsMap this (mapdata vec)
+	  (let ((idx (hashtable-get mapdata (hashkey key))))
+	     (if (fixnum? idx)
+		 (cdr (vector-ref vec idx))
+		 (js-undefined))))
+       (js-call1 %this
+	  (js-get this (& "get") %this)
+	  this key)))
+
+;*---------------------------------------------------------------------*/
+;*    js-weakmap-get ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-weakmap-get this::JsMap key %this::JsGlobalObject)
+   (if (js-object-mode-plain? this)
+       (with-access::JsMap this (mapdata)
+	  (or (hashtable-get mapdata (hashkey key))
+	      (js-undefined)))
+       (js-call1 %this
+	  (js-get this (& "get") %this)
+	  this key)))
+
+;*---------------------------------------------------------------------*/
+;*    js-map-set ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (js-map-set this::JsMap key value %this::JsGlobalObject)
+   
+   (define (get-index! this::JsMap)
+      (with-access::JsMap this (vec cursor)
+	 (let ((idx (+fx cursor 1)))
+	    (set! cursor idx)
+	    (if (<fx idx (vector-length vec))
+		idx
+		(let ((nvec (copy-vector vec (*fx (vector-length vec) 2))))
+		   (vector-fill! nvec (js-absent) (vector-length vec))
+		   (set! vec nvec)
+		   idx)))))
+   
+   (if (js-object-mode-plain? this)
+       (with-access::JsMap this (mapdata vec)
+	  (let ((k (hashkey key)))
+	     (let ((idx (hashtable-get mapdata (hashkey k))))
+		(if (fixnum? idx)
+		    (set-cdr! (vector-ref vec idx) value)
+		    (let ((idx (get-index! this)))
+		       (hashtable-put! mapdata k idx)
+		       (vector-set! vec idx (cons k value)))))
+	     this))
+       (js-call2 %this
+	  (js-get this (& "set") %this)
+	  this key value)))
+
+;*---------------------------------------------------------------------*/
+;*    js-weakmap-set ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-weakmap-set this::JsMap key value %this::JsGlobalObject)
+   (if (js-object-mode-plain? this)
+       (with-access::JsMap this (mapdata vec)
+	  (hashtable-put! mapdata (hashkey key) value)
+	  this)
+       (js-call2 %this
+	  (js-get this (& "set") %this)
+	  this key value)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
