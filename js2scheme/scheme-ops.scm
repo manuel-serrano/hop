@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Sep 16 13:26:36 2021 (serrano)                */
+;*    Last change :  Wed Sep 29 11:26:27 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1803,8 +1803,8 @@
 		      (asreal right 'real)
 		      #f)
 		   (binop-any-any '* type
-		      (box left tl ctx)
-		      (box right tr ctx)
+		      (tonumber left tl ctx)
+		      (tonumber right tr ctx)
 		      #f)))
 	       ((or (is-hint? lhs 'real) (is-hint? rhs 'real))
 		(if-flonums? left tl right tr
@@ -3155,9 +3155,9 @@
 	     left right flip)
 	  (if (memq type '(int32 uint32 integer bint real number))
 	      (binop-number-number op type
-		 left (box right tr ctx) flip)
+		 left (tonumber right tr ctx) flip)
 	      (binop-any-any op type
-		 left (box right tr ctx) flip))))))
+		 left (tonumber right tr ctx) flip))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    binop-bigint-xxx ...                                             */

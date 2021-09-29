@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Tue Sep 21 18:59:54 2021 (serrano)                */
+;*    Last change :  Wed Sep 29 09:51:21 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -596,7 +596,7 @@
    
    (with-access::J2SCall this (fun args)
       (with-access::J2SSuper fun (context)
-	 (with-access::J2SClass context (super)
+	 (with-access::J2SClass context (super need-super-check)
 	    (cond
 	       ((isa? super J2SRef)
 		(with-access::J2SRef super (decl)
@@ -616,13 +616,17 @@
 				    ((lambda ?params . ?body)
 				     (if (eq? (+fx 1 (length args)) (length params))
 					 `(begin
-					     (,ctor this ,@(j2s-scheme args mode return ctx))
+					     (,ctor ,(if need-super-check '!this 'this)
+						,@(j2s-scheme args mode return ctx))
+					     ,(when need-super-check '(set! this !this))
 					     ,@(j2s-scheme-init-instance-properties context mode return ctx))
 					 (scheme-class-super-declclass this context decl)))
 				    ((labels ((?id ?params . ?body)) ?id)
 				     (if (eq? (+fx 1 (length args)) (length params))
 					 `(labels ((,id ,params ,@body))
-					     (,id this ,@(j2s-scheme args mode return ctx))
+					     (,id ,(if need-super-check '!this 'this)
+						,@(j2s-scheme args mode return ctx))
+					     ,(when need-super-check '(set! this !this))
 					     ,@(j2s-scheme-init-instance-properties context mode return ctx))
 					 (scheme-class-super-declclass this context decl)))
 				    (else
@@ -644,7 +648,7 @@
 ;*    A constructor needs a super check, if it cannot be proved        */
 ;*    statically that                                                  */
 ;*      1) it always calls the super constructor                       */
-;*      2) the call the super preceeds all "this" accesses             */
+;*      2) the call to super preceeds all "this" accesses              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-need-super-check? val::J2SFun)
    (with-access::J2SFun val (body)
@@ -728,7 +732,12 @@
       (when (every super-call args)
 	 (or (every (lambda (a) (eq? (super-call a) #t)) args)
 	     (isa? fun J2SSuper)
-	     (super-call fun)))))
+	     (super-call fun)
+	     (and (isa? fun J2SRef)
+		  (with-access::J2SRef fun (decl)
+		     (when (isa? decl J2SDeclFun)
+			(with-access::J2SDeclFun decl (scope)
+			   (memq scope '(global %scope))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    super-call-cond ...                                              */
