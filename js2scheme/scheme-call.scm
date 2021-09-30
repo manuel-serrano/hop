@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Sep 28 12:13:14 2021 (serrano)                */
+;*    Last change :  Thu Sep 30 06:55:34 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -927,7 +927,7 @@
 	 (with-access::J2SString field (val)
 	    (let ((el (j2s-class-find-element (j2s-vtype obj) val)))
 	       (when (isa? el J2SClassElement)
-		  (with-access::J2SClassElement el (prop static)
+		  (with-access::J2SClassElement el (prop static clazz)
 		     (when (and (not static) (isa? prop J2SMethodPropertyInit))
 			(with-access::J2SMethodPropertyInit prop (val)
 			   (with-access::J2SFun val (params)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug  6 14:30:50 2018                          */
-;*    Last change :  Thu Sep 23 07:11:30 2021 (serrano)                */
+;*    Last change :  Thu Sep 30 07:25:27 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Bind record static methods at top-level and replace static       */
@@ -79,7 +79,7 @@
 	 (with-access::J2SDataPropertyInit prop (val loc)
 	    (let* ((d (instantiate::J2SDeclInit
 			 (loc loc)
-			 (writable #f)
+			 (writable #t)
 			 (scope 'record)
 			 (binder 'let-opt)
 			 (id (class-element-id this el))

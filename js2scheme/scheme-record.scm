@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Mon Sep 27 14:26:54 2021 (serrano)                */
+;*    Last change :  Thu Sep 30 07:02:57 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -126,10 +126,10 @@
 				 obj args this
 				 mode return ctx)))
 		   ,(if (j2s-class-constructor-might-return? record)
-			`(if (eq? ,res ,obj)
+			`(if (or (eq? ,res ,obj) (eq? ,res (js-undefined)))
 			     ,obj
 			     (js-raise-type-error %this
-				,(format "Record constructor '~s' must return the new record" id) this))
+				,(format "Record constructor '~s' must return the new record or undefined" id) this))
 			obj)))))))
 
 ;*---------------------------------------------------------------------*/
