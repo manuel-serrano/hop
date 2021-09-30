@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug  6 14:30:50 2018                          */
-;*    Last change :  Thu Sep 30 07:25:27 2021 (serrano)                */
+;*    Last change :  Thu Sep 30 21:05:33 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Bind record static methods at top-level and replace static       */
@@ -120,8 +120,9 @@
 	    (when (isa? el J2SClassElement)
 	       (with-access::J2SClassElement el (%info)
 		  (when (isa? %info J2SDeclFun)
-		     (with-access::J2SAccess fun (loc)
-			(set! fun (J2SRef %info))))))))
+		     (with-access::J2SAccess fun (loc obj)
+			(set! fun (J2SRef %info))
+			(set! thisarg (list obj))))))))
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/

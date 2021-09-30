@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Sep 28 15:18:11 2021 (serrano)                */
+;*    Last change :  Thu Sep 30 20:46:51 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -181,9 +181,7 @@
 (define-walk-method (constant! this::J2SObjInit env nesting conf)
    (with-access::J2SObjInit this (inits cmap loc ronly)
       (if (>=fx (length inits) (config-get conf :max-objinit-optim-size))
-	  (begin
-	     (tprint "LARGE..." loc)
-	     this)
+	  this
 	  (let ((keys (map (lambda (i)
 			      (when (isa? i J2SDataPropertyInit)
 				 (with-access::J2SDataPropertyInit i (name)

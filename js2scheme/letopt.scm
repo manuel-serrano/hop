@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Fri Jul 30 09:05:36 2021 (serrano)                */
+;*    Last change :  Thu Sep 30 20:22:29 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -233,7 +233,6 @@
       (with-trace 'j2s-letopt "j2s-letopt!"
 	 (trace-item "" (j2s->list this))
 	 ;; optimize recursively
-	 ;;(for-each j2s-letopt! nodes)
 	 (for-each (lambda (d)
 		      (when (isa? d J2SDeclInit)
 			 (with-access::J2SDeclInit d (val)
@@ -669,6 +668,15 @@
 	  (with-access::J2SNew expr (clazz args)
 	     (when (every liftable? args)
 		(liftable? clazz))))
+	 ((isa? expr J2SObjInit)
+	  (with-access::J2SObjInit expr (inits)
+	     (every liftable? inits)))
+	 ((isa? expr J2SDataPropertyInit)
+	  (with-access::J2SDataPropertyInit expr (name val)
+	     (and (liftable? name) (liftable? val))))
+	 ((isa? expr J2SArray)
+	  (with-access::J2SArray expr (exprs)
+	     (every liftable? exprs)))
 	 (else
 	  #f)))
 
@@ -710,7 +718,7 @@
 		       (let ((used (get-used-decls rhs (append decls vars)))
 			     (init (car inits)))
 			  (cond
-			     ((or (liftable? rhs) head)
+			     ((or head (liftable? rhs))
 			      ;; optimize this binding but keep tracks
 			      (let ((decl (init-decl init)))
 				 (with-access::J2SInit init (rsh)
@@ -722,7 +730,7 @@
 						    (loc loc)
 						    (expr init))))
 				    (liip (cdr inits) ndecls
-				       deps res head))))
+				       deps res (and head (liftable? rhs))))))
 			     ((isa? rhs J2SFun)
 			      ;; optimize this binding but keep tracks
 			      ;; of its dependencies
@@ -737,8 +745,8 @@
 				       res
 				       head))))
 			     (else
-			      ;; do not optimize this variable and mark
-			      ;; the variables it uses are disabled
+			      ;; do not optimize this variable and disable
+			      ;; the variables it uses
 			      (let ((decl (init-decl init))
 				    (used (get-used-decls rhs
 					     (append decls vars)))
