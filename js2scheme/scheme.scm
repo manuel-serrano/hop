@@ -266,7 +266,7 @@
 	 (if (memq scope '(global %scope record))
 	     (j2s-let-decl-toplevel this mode return ctx)
 	     (error "j2s-scheme" "Should not be here (not global)"
-		(j2s->list this)))))
+		(j2s->sexp this)))))
 
    (define (j2s-scheme-export this)
       (with-access::J2SDeclInit this (exports val)
@@ -1956,7 +1956,7 @@
 	    ((not cache)
 	     (aput-inc 'object otmp prop op lhs field cache inc '() #f))
 	    ((or (not cache) (memq (j2s-type field) '(integer number)))
-	     (warning "js2scheme" "no cache entry should have been generated" (j2s->list this))
+	     (warning "js2scheme" "no cache entry should have been generated" (j2s->sexp this))
 	     (aput-inc 'object otmp prop op lhs field cache inc '() #f))
 	    (else
 	     (aput-inc 'object otmp prop op lhs field (rhs-cache rhs) inc cspecs #t)))))
@@ -2286,7 +2286,7 @@
 		   (loop expr)))
 	       (else
 		(j2s-error "j2sscheme" "Illegal assignment"
-		   (j2s->list this))))))))
+		   (j2s->sexp this))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SAccess ...                                       */
@@ -3243,7 +3243,7 @@
 		(lang 'javascript)
 		(%js-expression ,expr)
 		(body (vector
-			 ',(if (>fx (bigloo-debug) 1) (j2s->list stmt) '())
+			 ',(if (>fx (bigloo-debug) 1) (j2s->sexp stmt) '())
 			 '() '() '() ,js #f))
 		(loc ',loc))))))
 
@@ -3305,10 +3305,10 @@
 			  (duplicate::J2SLetBlock stmt
 			     (nodes (cons (loop (car nodes)) (cdr nodes)))))
 		       (error "j2s-scheme" "wrong init expr"
-			  (j2s->list node)))))
+			  (j2s->sexp node)))))
 	       (else
 		(error "j2s-scheme" "wrong init expr"
-		   (j2s->list node)))))))
+		   (j2s->sexp node)))))))
    
    (define (vector-inits n elements i offset nodes cmap)
       `(let* ((,elements (js-object-inline-elements ,n))

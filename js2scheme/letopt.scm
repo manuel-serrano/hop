@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Thu Sep 30 20:22:29 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:43:29 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -67,7 +67,7 @@
 			 (cond
 			    ((not (isa? x J2SDecl))
 			     (error "j2s-letopt" "internal error"
-				(j2s->list x)))
+				(j2s->sexp x)))
 			    ((j2s-let? x)
 			     (set! lets (cons x lets)))
 			    (else
@@ -185,10 +185,10 @@
 	       (cond
 		  ((null? n)
 		   ;; should never be reached
-		   (trace-item "<<<.1 " (j2s->list this))
+		   (trace-item "<<<.1 " (j2s->sexp this))
 		   this)
 		  ((not (get-let-inits (car n) decls))
-		   (trace-item "---.2 " (j2s->list (car n)))
+		   (trace-item "---.2 " (j2s->sexp (car n)))
 		   ;; optimize recursively
 		   (set-car! n (j2s-letopt! (car n)))
 		   ;; keep optimizing the current let block
@@ -196,23 +196,23 @@
 		   ;; keep the non-marked decls
 		   (loop (cdr n) (filter decl-maybe-opt? decls)))
 		  ((null? decls)
-		   (trace-item "---.3 " (j2s->list (car n)))
+		   (trace-item "---.3 " (j2s->sexp (car n)))
 		   ;; nothing more to be potentially optimzed
 		   (map! j2s-letopt! n)
-		   (trace-item "<<<.3 " (j2s->list (car n)))
+		   (trace-item "<<<.3 " (j2s->sexp (car n)))
 		   this)
 		  ((eq? n nodes)
-		   (trace-item "---.4 " (j2s->list (car n)))
+		   (trace-item "---.4 " (j2s->sexp (car n)))
 		   ;; got an initialization block, which can be optimized
 		   (let ((res (tail-let! this this)))
-		      (trace-item "<<<.4a " (j2s->list res))
+		      (trace-item "<<<.4a " (j2s->sexp res))
 		      res))
 		  (else
-		   (trace-item "---.5 " (j2s->list (car n)))
+		   (trace-item "---.5 " (j2s->sexp (car n)))
 		   ;; re-organize the let-block to place this inits
 		   ;; at the head of a fresh let
 		   (let ((res (tail-let! this (head-let! this n))))
-		      (trace-item "<<<.5 " (j2s->list res))
+		      (trace-item "<<<.5 " (j2s->sexp res))
 		      res)))))))
 
    (define (flatten-letblock! this::J2SLetBlock)
@@ -225,13 +225,13 @@
 		  (with-access::J2SBlock (car nodes) ((ns nodes))
 		     (set! nodes ns))
 		  (loop))))
-	 (trace-item "this=" (j2s->list this))))
+	 (trace-item "this=" (j2s->sexp this))))
    
    (with-access::J2SLetBlock this (decls nodes)
       ;; start iterating over all the LetBlock statements to find
       ;; the first decl
       (with-trace 'j2s-letopt "j2s-letopt!"
-	 (trace-item "" (j2s->list this))
+	 (trace-item "" (j2s->sexp this))
 	 ;; optimize recursively
 	 (for-each (lambda (d)
 		      (when (isa? d J2SDeclInit)
@@ -240,7 +240,7 @@
 	    decls)
 	 ;; mark all declarations
 	 (for-each (lambda (d)
-		      (trace-item "d=" (j2s->list d))
+		      (trace-item "d=" (j2s->sexp d))
 		      (init-decl! d))
 	    decls)
 	 (if (every (lambda (d)
@@ -261,7 +261,7 @@
 ;*---------------------------------------------------------------------*/
 (define (head-let! this::J2SLetBlock head::pair-nil)
    (with-trace 'j2s-letopt "head-let!"
-      (trace-item "" (j2s->list this))
+      (trace-item "" (j2s->sexp this))
       (with-access::J2SLetBlock this (loc endloc decls nodes)
 	 (let loop ((n nodes)
 		    (prev '()))
@@ -312,7 +312,7 @@
 		    (inits '()))
 	    (cond
 	       ((null? nodes)
-		(trace-item "inits.1=" (map j2s->list inits))
+		(trace-item "inits.1=" (map j2s->sexp inits))
 		(values '() inits))
 	       ((get-let-inits (car nodes) decls)
 		=>
@@ -320,7 +320,7 @@
 	       ((isa? (car nodes) J2SNop)
 		(loop (cdr nodes) inits))
 	       (else
-		(trace-item "inits.2=" (map j2s->list inits))
+		(trace-item "inits.2=" (map j2s->sexp inits))
 		(values nodes inits))))))
    
    (define (sort-inodes this::J2SLetBlock)
@@ -352,7 +352,7 @@
 		  (set! decls odecls))
 	       (trace-item "inits=" (j2s-dump-decls inits))
 	       (trace-item "decls=" (j2s-dump-decls decls))
-	       (trace-item "rest=" (map j2s->list rests))
+	       (trace-item "rest=" (map j2s->sexp rests))
 	       (values rests inits)))))
 
    (define (split-decls decls::pair)
@@ -433,7 +433,7 @@
 
    (define (init-unopt? init decls)
       (with-trace 'j2s-letopt "init-unopt?"
-	 (trace-item "init=" (j2s->list init))
+	 (trace-item "init=" (j2s->sexp init))
 	 (let* ((used (get-used-decls init decls))
 		(unopt (filter (lambda (d)
 				  (with-access::J2SDecl d (%info)
@@ -446,7 +446,7 @@
    
    ;; the main optimization loop
    (with-trace 'j2s-letopt "tail-let!"
-      (trace-item "this=" (j2s->list this))
+      (trace-item "this=" (j2s->sexp this))
       (with-access::J2SLetBlock this (decls)
 	 (multiple-value-bind (rests inits)
 	    (sort-inodes this)
@@ -906,8 +906,8 @@
 ;*---------------------------------------------------------------------*/
 (define (mark-used-noopt*! node decls)
    (with-trace 'j2s-letopt "mark-used-noopt*"
-      (trace-item "node=" (j2s->list node))
-      (trace-item "no-used*=" (map j2s->list (node-used* node decls #t)))
+      (trace-item "node=" (j2s->sexp node))
+      (trace-item "no-used*=" (map j2s->sexp (node-used* node decls #t)))
       (for-each (lambda (d)
 		   (with-trace 'j2s-letopt "mark-used-noopt"
 		      (with-access::J2SDecl d (id)

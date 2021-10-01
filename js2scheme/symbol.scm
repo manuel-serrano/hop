@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Tue Sep 28 14:54:23 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:43:11 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -1293,7 +1293,7 @@
 	 (let ((d (find-decl id env)))
 	    (unless d
 	       (tprint "PAS BON " id " loc=" loc)
-	       (tprint "this=" (j2s->list this)))
+	       (tprint "this=" (j2s->sexp this)))
 	    (set! decl d)))
       (call-default-walker)))
 

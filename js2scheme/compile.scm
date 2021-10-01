@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Tue Sep 28 15:31:12 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 11:34:11 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -479,6 +479,9 @@
       ;; misc
       (unless (memq :commonjs-export o)
 	 (set! o (cons* :commonjs-export #t o)))
+      ;; record decorator
+      (unless (memq :record-decorator o)
+	 (set! o (cons* :record-decorator #t o)))
       ;; debugging
       (when (>= (bigloo-debug) 0)
 	 (set! o (append o `(:debug ,(bigloo-debug))))

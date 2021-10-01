@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  manuel serrano                                    */
 ;*    Creation    :  Tue Jul  7 19:27:03 2020                          */
-;*    Last change :  Mon Sep 20 08:48:56 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:46:13 2021 (serrano)                */
 ;*    Copyright   :  2020-21 manuel serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Constant lifting optimization.                                   */
@@ -148,11 +148,11 @@
 		   (unless (isa? expr J2SFun)
 		      (error "cnstlift"
 			 "unexpected function transformation"
-			 (j2s->list stmt)))
+			 (j2s->sexp stmt)))
 		   (values decls expr))
 		(error "cnstlift"
 		   "unexpected function transformation"
-		   (j2s->list stmt))))))
+		   (j2s->sexp stmt))))))
 
    (with-access::J2SLetBlock this (decls nodes rec)
       ;; mark declaration depths
@@ -177,7 +177,7 @@
 				((not (isa? nval J2SFun))
 				 (error "cnstlift"
 				    "unexpected function transformation"
-				    (j2s->list nval)))))))
+				    (j2s->sexp nval)))))))
 		      ((isa? decl J2SDeclInit)
 		       (with-access::J2SDeclInit decl (val)
 			  (set! val (j2s-cnstlift-expression! val vars mode depth verb))))))

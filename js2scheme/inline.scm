@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Oct  1 07:03:08 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 13:46:08 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -650,7 +650,7 @@
 		   (set! rhs (J2SAssig (J2SRef decl) rhs))))
 	       (else
 		(error "function-glodecl" "Not support"
-		   (j2s->list  (funinfo-parent %info)))))
+		   (j2s->sexp  (funinfo-parent %info)))))
 	    (funinfo-decl-set! %info decl)
 	    (with-access::J2SProgram prgm (decls)
 	       (set! decls (cons decl decls)))))
@@ -904,7 +904,8 @@
 		   (vals (map protoinfo-method mets))
 		   (sz (apply + (map function-size vals))))
 	       (when (pair? mets)
-		  (inline-verb loc fun (map (lambda (x) '-) mets) sz limit 0 conf)
+		  (inline-verb loc fun
+		     (map (lambda (x) '-) mets) sz limit 0 conf)
 		  (when (pair? stack) 
 		     (invalidate-function-size! (car stack)))
 		  (let ((e (inline-method-call fun mets args loc
@@ -2160,7 +2161,7 @@
    (let ((fields (class-all-fields (object-class this))))
       (let loop ((i (-fx (vector-length fields) 1)))
 	 (if (=fx i -1)
-	     (error "update-parent!" "Cannot find node" (j2s->list old))
+	     (error "update-parent!" "Cannot find node" (j2s->sexp old))
 	     (let* ((f (vector-ref fields i))
 		    (info (class-field-info f)))
 		(if (and (pair? info) (member "ast" info))

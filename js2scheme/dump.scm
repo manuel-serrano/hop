@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Oct  1 07:01:21 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 13:19:54 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -26,8 +26,9 @@
 	   (j2s-dump-decls::obj ::obj)
 	   (j2s-dump-range ::obj)
 	   (j2s-dump-register-struct-info! ::symbol ::procedure)
+	   (j2s->sexp ::obj)
 	   (type->sexp typ)
-	   (generic j2s->list ::obj)
+	   (generic j2s->list ::obj ::pair-nil)
 	   (generic j2s-info->list ::obj)
 	   (generic j2ssum::long ::obj)))
 
@@ -40,6 +41,14 @@
       (comment "Dump the AST for debug")
       (proc j2s-dump)
       (optional #t)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-dump ::obj ...                                               */
+;*---------------------------------------------------------------------*/
+(define-generic (j2s-dump this::obj)
+   (call-with-output-file "/tmp/DUMP.scm"
+      (lambda (op)
+	 (pp (j2s->sexp this) op))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dump-info ...                                                    */
@@ -254,8 +263,8 @@
    
    (define (dump-hint-value val)
       (if (=fx (cdr val) (minvalfx))
-	  (cons (car val) -inf.0)
-	  val))
+	  (cons (type->sexp (car val)) -inf.0)
+	  (type->sexp val)))
    
    (if (or (>= (bigloo-debug) 2)
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:hint"))
@@ -461,17 +470,40 @@
       (else (dump-decl decls))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-dump ::obj ...                                               */
+;*    j2s->sexp ::obj ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-dump this::obj)
-   (call-with-output-file "/tmp/DUMP.scm"
-      (lambda (op)
-	 (pp/width (j2s->list this) op))))
+(define (j2s->sexp this::obj)
+   (cond
+      ((symbol? this)
+       this)
+      ((and (pair? this) (or (symbol? (cdr this)) (isa? (cdr this) J2SClass)))
+       (type->sexp this))
+      (else
+       (j2s->list this '()))))
+
+;*---------------------------------------------------------------------*/
+;*    check-stack ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (check-stack this stack)
+   (if (memq this stack)
+       (with-access::J2SNode this (loc)
+	  (error (typeof this) (format "already in stack (~a)" loc)
+	     (map (lambda (n)
+		     (with-access::J2SNode n (loc)
+			loc))
+		stack)))
+       (cons this stack)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list* ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (j2s->list* nodes stack)
+   (map (lambda (n) (j2s->list n stack)) nodes))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::obj ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s->list this)
+(define-generic (j2s->list this stack)
    `(alien :typeof ,(string->symbol (typeof this))
        :expr ,(cond
 		 ((or (string? this) (symbol? this)
@@ -479,126 +511,135 @@
 		      (number? this) (char? this))
 		  (format "~a" this))
 		 ((list? this)
-		  (format "~a" (map j2s->list this)))
+		  (format "~a" (j2s->list* this stack)))
 		 (else
 		  (format "~s" (typeof this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::object ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::object)
+(define-method (j2s->list this::object stack)
    (list (typeof this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SNode ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SNode)
+(define-method (j2s->list this::J2SNode stack)
    `(,(string->symbol (typeof this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SMeta ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SMeta)
-   (with-access::J2SMeta this (stmt meta optim debug)
-      `(,(string->symbol (typeof this)) ,meta :optim ,optim :debug ,debug
-	  ,(j2s->list stmt))))
+(define-method (j2s->list this::J2SMeta stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SMeta this (stmt meta optim debug)
+	 `(,(string->symbol (typeof this))
+	   ,meta :optim ,optim :debug ,debug
+	   ,(j2s->list stmt nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SProgram ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SProgram)
+(define-method (j2s->list this::J2SProgram stack)
+   (set! stack (list this))
    (with-access::J2SProgram this (nodes headers decls mode direct-eval exports)
       `(,(string->symbol (typeof this))
 	mode: ,mode
 	direct-eval: ,direct-eval
-	exports: ,(map j2s->list exports)
-	headers: ,(map j2s->list headers)
-	decls: ,(map j2s->list decls)
-	nodes: ,(map j2s->list nodes))))
+	exports: ,(j2s->list* exports stack)
+	headers: ,(j2s->list* headers stack)
+	decls: ,(j2s->list* decls stack)
+	nodes: ,(j2s->list* nodes stack))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SSeq ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SSeq)
-   (with-access::J2SSeq this (nodes loc)
-      `(,@(call-next-method)
-	  ,@(dump-loc loc)
-	  ,@(dump-info this)
-	  ,@(map j2s->list nodes))))
+(define-method (j2s->list this::J2SSeq stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SSeq this (nodes loc)
+	 `(,@(call-next-method)
+	     ,@(dump-loc loc)
+	     ,@(dump-info this)
+	     ,@(j2s->list* nodes nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SBlock ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SBlock)
-   (with-access::J2SBlock this (nodes loc endloc)
-      `(,(string->symbol (typeof this))
-	,@(dump-loc loc)
-	,@(dump-loc endloc :endloc)
-	,@(dump-info this)
-	,@(dump-size this)
-	,@(map j2s->list nodes))))
+(define-method (j2s->list this::J2SBlock stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SBlock this (nodes loc endloc)
+	 `(,(string->symbol (typeof this))
+	   ,@(dump-loc loc)
+	   ,@(dump-loc endloc :endloc)
+	   ,@(dump-info this)
+	   ,@(dump-size this)
+	   ,@(j2s->list* nodes nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SLetBlock ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SLetBlock)
-   (with-access::J2SLetBlock this (decls nodes loc endloc rec)
-      `(,(string->symbol (typeof this)) :rec ,rec
-	,@(dump-loc loc)
-	,@(dump-loc endloc :endloc)
-	,@(dump-info this)
-	,@(dump-size this)
-	,(map j2s->list decls) ,@(map j2s->list nodes))))
+(define-method (j2s->list this::J2SLetBlock stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SLetBlock this (decls nodes loc endloc rec)
+	 `(,(string->symbol (typeof this)) :rec ,rec
+	     ,@(dump-loc loc)
+	     ,@(dump-loc endloc :endloc)
+	     ,@(dump-info this)
+	     ,@(dump-size this)
+	     ,(j2s->list* decls nstack)
+	     ,@(j2s->list* nodes nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SVarDecls ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SVarDecls)
-   (with-access::J2SVarDecls this (decls)
-      `(,@(call-next-method) ,@(map j2s->list decls))))
+(define-method (j2s->list this::J2SVarDecls stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SVarDecls this (decls)
+	 `(,@(call-next-method) ,@(j2s->list* decls nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SAssig ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SAssig)
-   (with-access::J2SAssig this (lhs rhs loc)
-      `(,@(call-next-method) 
-	  ,@(dump-loc loc)
-	  ,@(dump-type this)
-	  ,@(dump-range this)
-	  ,@(if (isa? lhs J2SRef)
-		(with-access::J2SRef lhs (decl)
-		   (dump-vtype decl))
-		'())
-	  ,@(dump-info this)
-	  ,(j2s->list lhs)
-	  ,(j2s->list rhs))))
+(define-method (j2s->list this::J2SAssig stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SAssig this (lhs rhs loc)
+	 `(,@(call-next-method) 
+	     ,@(dump-loc loc)
+	     ,@(dump-type this)
+	     ,@(dump-range this)
+	     ,@(if (isa? lhs J2SRef)
+		   (with-access::J2SRef lhs (decl)
+		      (dump-vtype decl))
+		   '())
+	     ,@(dump-info this)
+	     ,(j2s->list lhs nstack)
+	     ,(j2s->list rhs nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SAssigOp ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SAssigOp)
+(define-method (j2s->list this::J2SAssigOp stack)
    (with-access::J2SAssigOp this (lhs rhs loc op)
       `(,@(call-next-method) ,@(dump-cache this) ,op)))
   
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPrefix ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SPrefix)
+(define-method (j2s->list this::J2SPrefix stack)
    (with-access::J2SPrefix this (lhs rhs loc op)
       `(,@(call-next-method) ,@(dump-cache this) ,@(dump-range this) ,op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPostfix ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SPostfix)
+(define-method (j2s->list this::J2SPostfix stack)
    (with-access::J2SPostfix this (lhs rhs loc op)
       `(,@(call-next-method) ,@(dump-cache this) ,@(dump-range this) ,op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SUnresolvedRef ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SUnresolvedRef)
+(define-method (j2s->list this::J2SUnresolvedRef stack)
    (with-access::J2SUnresolvedRef this (id loc)
       `(,@(call-next-method) ,@(dump-loc loc) ,id
 	  ,@(dump-type this))))
@@ -606,7 +647,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SGlobalRef ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SGlobalRef)
+(define-method (j2s->list this::J2SGlobalRef stack)
    (with-access::J2SGlobalRef this (id decl loc)
       (with-access::J2SDecl decl (id usage scope)
 	 `(,@(call-next-method)
@@ -617,474 +658,519 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SCast ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SCast)
-   (with-access::J2SCast this (expr type static)
-      `(,@(call-next-method) :type ,(type->sexp type) :static ,static
-	  ,(j2s->list expr))))
+(define-method (j2s->list this::J2SCast stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SCast this (expr type static)
+	 `(,@(call-next-method) :type ,(type->sexp type) :static ,static
+	     ,(j2s->list expr nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SCheck ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SCheck)
-   (with-access::J2SCheck this (expr type)
-      `(,@(call-next-method) :type ,type ,(j2s->list expr))))
+(define-method (j2s->list this::J2SCheck stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SCheck this (expr type)
+	 `(,@(call-next-method) :type ,(type->sexp type)
+	     ,(j2s->list expr nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SRef ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SRef)
-   (with-access::J2SRef this (decl loc)
-      (with-access::J2SDecl decl (id key scope)
-	 `(,@(call-next-method) ,id
-	     ,@(dump-loc loc)
-	     ,@(dump-scope scope)
-	     ,@(dump-key key)
-	     ,@(dump-type this)
-	     ,@(dump-vtype decl)
-	     ,@(dump-info this)
-	     ,@(dump-hint decl)
-	     ,@(dump-range this)))))
+(define-method (j2s->list this::J2SRef stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SRef this (decl loc)
+	 (with-access::J2SDecl decl (id key scope)
+	    `(,@(call-next-method) ,id
+		,@(dump-loc loc)
+		,@(dump-scope scope)
+		,@(dump-key key)
+		,@(dump-type this)
+		,@(dump-vtype decl)
+		,@(dump-info this)
+		,@(dump-hint decl)
+		,@(dump-range this))))))
  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SWithRef ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SWithRef)
-   (with-access::J2SWithRef this (id withs expr type)
-      `(,@(call-next-method) ,id ,@(dump-type this) ,withs ,(j2s->list expr))))
+(define-method (j2s->list this::J2SWithRef stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SWithRef this (id withs expr type)
+	 `(,@(call-next-method) ,id ,@(dump-type this) ,withs
+	     ,(j2s->list expr nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SSuper ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SSuper)
-   (with-access::J2SSuper this (context)
-      `(,@(call-next-method)
-	  :context ,(if (isa? context J2SClass)
-			(with-access::J2SClass context (name) name)
-			context))))
+(define-method (j2s->list this::J2SSuper stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SSuper this (context)
+	 `(,@(call-next-method)
+	     :context ,(if (isa? context J2SClass)
+			   (with-access::J2SClass context (name) name)
+			   context)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SLiteral ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SLiteral)
-   `(,@(call-next-method) ,@(dump-type this) ,@(dump-info this)))
+(define-method (j2s->list this::J2SLiteral stack)
+   (let ((nstack (check-stack this stack)))
+      `(,@(call-next-method) ,@(dump-type this) ,@(dump-info this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SLiteralValue ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SLiteralValue)
-   (with-access::J2SLiteralValue this (val)
-      `(,@(call-next-method) ,@(dump-range this) ,val)))
+(define-method (j2s->list this::J2SLiteralValue stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SLiteralValue this (val)
+	 `(,@(call-next-method) ,@(dump-range this) ,val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SLiteralCnst ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SLiteralCnst)
-   (with-access::J2SLiteralCnst this (index val)
-      `(,@(call-next-method)
-	  ,@(dump-type this)
-	  :index ,index
-	  ,(j2s->list val))))
+(define-method (j2s->list this::J2SLiteralCnst stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SLiteralCnst this (index val)
+	 `(,@(call-next-method)
+	     ,@(dump-type this)
+	     :index ,index
+	     ,(j2s->list val nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SString ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SString)
-   (with-access::J2SLiteralValue this (val)
-      `(,(string->symbol (typeof this)) ,(format "~a" val))))
+(define-method (j2s->list this::J2SString stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SLiteralValue this (val)
+	 `(,(string->symbol (typeof this)) ,(format "~a" val)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SNativeString ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SNativeString)
-   (with-access::J2SLiteralValue this (val)
-      `(,(string->symbol (typeof this)) ,(format "~a" val))))
+(define-method (j2s->list this::J2SNativeString stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SLiteralValue this (val)
+	 `(,(string->symbol (typeof this)) ,(format "~a" val)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SArray ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SArray)
-   (with-access::J2SArray this (exprs)
-      `(,@(call-next-method) ,@(map j2s->list exprs))))
+(define-method (j2s->list this::J2SArray stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SArray this (exprs)
+	 `(,@(call-next-method) ,@(j2s->list* exprs nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SSpread ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SSpread)
-   (with-access::J2SSpread this (expr)
-      `(,@(call-next-method) ,(j2s->list expr))))
+(define-method (j2s->list this::J2SSpread stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SSpread this (expr)
+	 `(,@(call-next-method) ,(j2s->list expr nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SFun)
-   (with-access::J2SFun this (name thisp argumentsp params body decl mode
-				rutype rtype optimize src 
-				need-bind-exit-return new-target idgen
-				idthis generator loc vararg constrsize)
-      (cond
-	 ((isa? decl J2SDeclFun)
-	  (with-access::J2SDeclFun decl (key usage scope val key)
-	     (unless (eq? val this)
-		(error/loc "j2s->list" (format "inconsistent J2SFun (key=~s)" key)
-		   name loc))
+(define-method (j2s->list this::J2SFun stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SFun this (name thisp argumentsp params body decl mode
+				   rutype rtype optimize src 
+				   need-bind-exit-return new-target idgen
+				   idthis generator loc vararg constrsize)
+	 (cond
+	    ((isa? decl J2SDeclFun)
+	     (with-access::J2SDeclFun decl (key usage scope val key)
+		(unless (eq? val this)
+		   (error/loc "j2s->list"
+		      (format "inconsistent J2SFun (key=~s)" key)
+		      name loc))
+		`(,@(call-next-method) ,@(if generator '(*) '())
+		    :name ,name :mode ,mode :idgen ,idgen :constrsize ,constrsize
+		    ,@(dump-loc loc)
+		    ,@(dump-key key)
+		    ,@(dump-scope scope)
+		    ,@(dump-access decl)
+		    ,@(dump-info this)
+		    ,@(dump-type this)
+		    ,@(dump-rtype this)
+		    ,@(dump-rutype this)
+		    ,@(dump-need-bind-exit-return need-bind-exit-return)
+		    ,@(if optimize '() `(:optimize ,optimize))
+		    ,@(dump-new-target new-target)
+		    ,@(dump-range this)
+		    ,@(if thisp `(:thisp ,(j2s->list thisp nstack)) '())
+		    ,@(if idthis `(:idthis ,idthis) '())
+		    ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp nstack)) '())
+		    ,@(if vararg `(:vararg ,vararg) '())
+		    ,@(if src '() `(:src #f))
+		    ,@(dump-size this)
+		    ,(j2s->list* params nstack)
+		    ,(j2s->list body nstack))))
+	    ((isa? decl J2SDecl)
+	     (with-access::J2SDecl decl (key scope)
+		`(,@(call-next-method) ,@(if generator '(*) '())
+		    :name ,name :mode ,mode :idgen ,idgen :constrsize ,constrsize
+		    ,@(dump-loc loc)
+		    ,@(dump-key key)
+		    ,@(dump-scope scope)
+		    ,@(dump-access decl)
+		    ,@(dump-info this)
+		    ,@(dump-type this)
+		    ,@(dump-rtype this)
+		    ,@(dump-rutype this)
+		    ,@(dump-need-bind-exit-return need-bind-exit-return)
+		    ,@(if optimize '() `(:optimize ,optimize))
+		    ,@(if src '() `(:src #f))
+		    ,@(dump-new-target new-target)
+		    ,@(dump-range this)
+		    ,@(if thisp `(:thisp ,(j2s->list thisp nstack)) '())
+		    ,@(if idthis `(:idthis ,idthis) '())
+		    ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp nstack)) '())
+		    ,@(if vararg `(:vararg ,vararg) '())
+		    ,(j2s->list* params nstack)
+		    ,(j2s->list body nstack))))
+	    (else
 	     `(,@(call-next-method) ,@(if generator '(*) '())
 		 :name ,name :mode ,mode :idgen ,idgen :constrsize ,constrsize
 		 ,@(dump-loc loc)
-		 ,@(dump-key key)
-		 ,@(dump-scope scope)
-		 ,@(dump-access decl)
 		 ,@(dump-info this)
 		 ,@(dump-type this)
 		 ,@(dump-rtype this)
 		 ,@(dump-rutype this)
 		 ,@(dump-need-bind-exit-return need-bind-exit-return)
 		 ,@(if optimize '() `(:optimize ,optimize))
-		 ,@(dump-new-target new-target)
-		 ,@(dump-range this)
-		 ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
-		 ,@(if idthis `(:idthis ,idthis) '())
-		 ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
-		 ,@(if vararg `(:vararg ,vararg) '())
-		 ,@(if src '() `(:src #f))
-		 ,@(dump-size this)
-		 ,(map j2s->list params)
-		 ,(j2s->list body))))
-	 ((isa? decl J2SDecl)
-	  (with-access::J2SDecl decl (key scope)
-	     `(,@(call-next-method) ,@(if generator '(*) '())
-		 :name ,name :mode ,mode :idgen ,idgen :constrsize ,constrsize
-		 ,@(dump-loc loc)
-		 ,@(dump-key key)
-		 ,@(dump-scope scope)
-		 ,@(dump-access decl)
-		 ,@(dump-info this)
-		 ,@(dump-type this)
-		 ,@(dump-rtype this)
-		 ,@(dump-rutype this)
-		 ,@(dump-need-bind-exit-return need-bind-exit-return)
-		 ,@(if optimize '() `(:optimize ,optimize))
 		 ,@(if src '() `(:src #f))
 		 ,@(dump-new-target new-target)
 		 ,@(dump-range this)
-		 ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
+		 ,@(if thisp `(:thisp ,(j2s->list thisp nstack)) '())
 		 ,@(if idthis `(:idthis ,idthis) '())
-		 ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
+		 ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp nstack)) '())
 		 ,@(if vararg `(:vararg ,vararg) '())
-		 ,(map j2s->list params)
-		 ,(j2s->list body))))
-	 (else
-	  `(,@(call-next-method) ,@(if generator '(*) '())
-	      :name ,name :mode ,mode :idgen ,idgen :constrsize ,constrsize
-	      ,@(dump-loc loc)
-	      ,@(dump-info this)
-	      ,@(dump-type this)
-	      ,@(dump-rtype this)
-	      ,@(dump-rutype this)
-	      ,@(dump-need-bind-exit-return need-bind-exit-return)
-	      ,@(if optimize '() `(:optimize ,optimize))
-	      ,@(if src '() `(:src #f))
-	      ,@(dump-new-target new-target)
-	      ,@(dump-range this)
-	      ,@(if thisp `(:thisp ,(j2s->list thisp)) '())
-	      ,@(if idthis `(:idthis ,idthis) '())
-	      ,@(if argumentsp `(:argumentsp ,(j2s->list argumentsp)) '())
-	      ,@(if vararg `(:vararg ,vararg) '())
-	      ,(map j2s->list params)
-	      ,(j2s->list body))))))
+		 ,(j2s->list* params nstack)
+		 ,(j2s->list body nstack)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SMethod ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SMethod)
-   (with-access::J2SMethod this (function method loc)
-      `(,@(call-next-method)
-	  ,@(dump-loc loc)
-	  :function ,(j2s->list function)
-	  :method ,(j2s->list method))))
+(define-method (j2s->list this::J2SMethod stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SMethod this (function method loc)
+	 `(,@(call-next-method)
+	     ,@(dump-loc loc)
+	     :function ,(j2s->list function nstack)
+	     :method ,(j2s->list method nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SBindExit ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SBindExit)
-   (with-access::J2SBindExit this (lbl stmt loc)
-      `(,@(call-next-method)
-	  ,@(dump-type this)
-	  ,@(dump-hint this)
-	  ,@(dump-loc loc)
-	  ,@(dump-range this)
-	  (,lbl) ,(j2s->list stmt))))
+(define-method (j2s->list this::J2SBindExit stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SBindExit this (lbl stmt loc)
+	 `(,@(call-next-method)
+	     ,@(dump-type this)
+	     ,@(dump-hint this)
+	     ,@(dump-loc loc)
+	     ,@(dump-range this)
+	     (,lbl)
+	     ,(j2s->list stmt nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SReturn ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SReturn)
-   (with-access::J2SReturn this (expr tail from loc)
-      `(,@(call-next-method)
-	  ,@(dump-loc loc)
-	  ,@(dump-size this)
-	  ,@(dump-from from)
-	  ,@(if (isa? from J2SFun)
-		(dump-rtype from)
-		'())
-	  ,@(if (isa? from J2SBindExit)
-		(with-access::J2SBindExit from (lbl type)
-		   (list :from lbl :type type))
-		'())
-	  ,@(dump-tail tail)
-	  ,(j2s->list expr))))
+(define-method (j2s->list this::J2SReturn stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SReturn this (expr tail from loc)
+	 `(,@(call-next-method)
+	     ,@(dump-loc loc)
+	     ,@(dump-size this)
+	     ,@(dump-from from)
+	     ,@(if (isa? from J2SFun)
+		   (dump-rtype from)
+		   '())
+	     ,@(if (isa? from J2SBindExit)
+		   (with-access::J2SBindExit from (lbl type)
+		      (list :from lbl :type (type->sexp type)))
+		   '())
+	     ,@(dump-tail tail)
+	     ,(j2s->list expr nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SReturnYield ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SReturnYield)
-   (with-access::J2SReturnYield this (expr kont)
-      `(,@(call-next-method) ,(j2s->list expr)
-	  ,(j2s->list kont))))
+(define-method (j2s->list this::J2SReturnYield stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SReturnYield this (expr kont)
+	 `(,@(call-next-method) ,(j2s->list expr nstack)
+	     ,(j2s->list kont nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SWith ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SWith)
-   (with-access::J2SWith this (obj block)
-      `(,@(call-next-method) ,(j2s->list obj) ,(j2s->list block))))
+(define-method (j2s->list this::J2SWith stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SWith this (obj block)
+	 `(,@(call-next-method) ,(j2s->list obj nstack)
+	     ,(j2s->list block nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SThrow ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SThrow)
-   (with-access::J2SThrow this (expr)
-      `(,@(call-next-method) ,(j2s->list expr))))
+(define-method (j2s->list this::J2SThrow stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SThrow this (expr)
+	 `(,@(call-next-method) ,(j2s->list expr nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2STry ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2STry)
-   (with-access::J2STry this (body catch finally)
-      `(,@(call-next-method) ,(j2s->list body)
-	  ,(j2s->list catch)
-	  ,(j2s->list finally))))
+(define-method (j2s->list this::J2STry stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2STry this (body catch finally)
+	 `(,@(call-next-method) ,(j2s->list body nstack)
+	     ,(j2s->list catch nstack)
+	     ,(j2s->list finally nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SCatch ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SCatch)
-   (with-access::J2SCatch this (param body)
-      `(,@(call-next-method) ,(j2s->list param) ,(j2s->list body))))
+(define-method (j2s->list this::J2SCatch stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SCatch this (param body)
+	 `(,@(call-next-method) ,(j2s->list param nstack)
+	     ,(j2s->list body nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SBinary ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SBinary)
-   (with-access::J2SBinary this (op rhs lhs loc)
-      `(,@(call-next-method) ,op
-	  ,@(dump-loc loc)
-	  ,@(dump-size this)
-	  ,@(dump-type this)
-	  ,@(dump-info this)
-	  ,@(dump-hint this)
-	  ,@(dump-range this)
-	  ,(j2s->list lhs) ,(j2s->list rhs))))
+(define-method (j2s->list this::J2SBinary stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SBinary this (op rhs lhs loc)
+	 `(,@(call-next-method) ,op
+	     ,@(dump-loc loc)
+	     ,@(dump-size this)
+	     ,@(dump-type this)
+	     ,@(dump-info this)
+	     ,@(dump-hint this)
+	     ,@(dump-range this)
+	     ,(j2s->list lhs nstack) ,(j2s->list rhs nstack)))))
       
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SParen ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SParen)
-   (with-access::J2SParen this (expr loc)
-      `(,@(call-next-method)
-	  ,@(dump-loc loc)
-	  ,@(dump-size this)
-	  ,@(dump-type this)
-	  ,@(dump-range this)
-	  ,@(dump-hint this)
-	  ,(j2s->list expr))))
+(define-method (j2s->list this::J2SParen stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SParen this (expr loc)
+	 `(,@(call-next-method)
+	     ,@(dump-loc loc)
+	     ,@(dump-size this)
+	     ,@(dump-type this)
+	     ,@(dump-range this)
+	     ,@(dump-hint this)
+	     ,(j2s->list expr nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SUnary ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SUnary)
-   (with-access::J2SUnary this (op expr)
-      `(,@(call-next-method) ,op
-	  ,@(dump-type this)
-	  ,@(dump-size this)
-	  ,@(dump-info this)
-	  ,@(dump-hint this)
-	  ,(j2s->list expr))))
+(define-method (j2s->list this::J2SUnary stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SUnary this (op expr)
+	 `(,@(call-next-method) ,op
+	     ,@(dump-type this)
+	     ,@(dump-size this)
+	     ,@(dump-info this)
+	     ,@(dump-hint this)
+	     ,(j2s->list expr nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SIf ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SIf)
-   (with-access::J2SIf this (test then else loc)
-      `(,@(call-next-method)
-	  ,@(dump-loc loc)
-	  ,@(dump-size this)
-	  ,@(dump-info this)
-	  ,(j2s->list test)
-	  ,(j2s->list then)
-	  ,(j2s->list else) )))
+(define-method (j2s->list this::J2SIf stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SIf this (test then else loc)
+	 `(,@(call-next-method)
+	     ,@(dump-loc loc)
+	     ,@(dump-size this)
+	     ,@(dump-info this)
+	     ,(j2s->list test nstack)
+	     ,(j2s->list then nstack)
+	     ,(j2s->list else nstack) ))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPrecache ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SPrecache)
-   (with-access::J2SPrecache this (accesses test then else)
-      `(,(class-name (object-class this))
-	,@(dump-info this)
-	,(map j2s->list accesses)
-	,(j2s->list then)
-	,(j2s->list else) )))
+(define-method (j2s->list this::J2SPrecache stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SPrecache this (accesses test then else)
+	 `(,(class-name (object-class this))
+	   ,@(dump-info this)
+	   ,(j2s->list* accesses nstack)
+	   ,(j2s->list then nstack)
+	   ,(j2s->list else nstack) ))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SCond ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SCond)
-   (with-access::J2SCond this (test then else loc)
-      `(,@(call-next-method)
-	  ,@(dump-loc loc)
-	  ,@(dump-info this)
-	  ,@(dump-size this)
-	  ,@(dump-type this)
-	  ,@(dump-range this)
-	  ,(j2s->list test)
-	  ,(j2s->list then)
-	  ,(j2s->list else) )))
+(define-method (j2s->list this::J2SCond stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SCond this (test then else loc)
+	 `(,@(call-next-method)
+	     ,@(dump-loc loc)
+	     ,@(dump-info this)
+	     ,@(dump-size this)
+	     ,@(dump-type this)
+	     ,@(dump-range this)
+	     ,(j2s->list test nstack)
+	     ,(j2s->list then nstack)
+	     ,(j2s->list else nstack) ))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SWhile ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SWhile)
-   (with-access::J2SWhile this (op test body loc)
-      `(,@(call-next-method) ,@(dump-loc loc) ,@(dump-info this)
-	  ,@(dump-size this)
-	  ,(j2s->list test) ,(j2s->list body))))
+(define-method (j2s->list this::J2SWhile stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SWhile this (op test body loc)
+	 `(,@(call-next-method) ,@(dump-loc loc) ,@(dump-info this)
+	     ,@(dump-size this)
+	     ,(j2s->list test nstack) ,(j2s->list body nstack)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SFor ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SFor)
-   (with-access::J2SFor this (init test incr body loc)
-      `(,@(call-next-method) ,@(dump-loc loc) ,@(dump-info this)
-	  ,@(dump-size this)
-	  ,(j2s->list init)
-	  ,(j2s->list test)
-	  ,(j2s->list incr)
-	  ,(j2s->list body))))
+(define-method (j2s->list this::J2SFor stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SFor this (init test incr body loc)
+	 `(,@(call-next-method) ,@(dump-loc loc) ,@(dump-info this)
+	     ,@(dump-size this)
+	     ,(j2s->list init nstack)
+	     ,(j2s->list test nstack)
+	     ,(j2s->list incr nstack)
+	     ,(j2s->list body nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SForIn ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SForIn)
-   (with-access::J2SForIn this (op lhs obj body loc)
-      `(,@(call-next-method) :op ,op ,@(dump-loc loc) ,@(dump-info this)
-	  ,@(dump-size this)
-	  ,(j2s->list lhs)
-	  ,(j2s->list obj)
-	  ,(j2s->list body))))
+(define-method (j2s->list this::J2SForIn stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SForIn this (op lhs obj body loc)
+	 `(,@(call-next-method) :op ,op ,@(dump-loc loc) ,@(dump-info this)
+	     ,@(dump-size this)
+	     ,(j2s->list lhs nstack)
+	     ,(j2s->list obj nstack)
+	     ,(j2s->list body nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SLabel ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SLabel)
-   (with-access::J2SLabel this (lhs id body)
-      `(,@(call-next-method) ,id ,(j2s->list body))))
+(define-method (j2s->list this::J2SLabel stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SLabel this (lhs id body)
+	 `(,@(call-next-method) ,id ,(j2s->list body nstack)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SBreak ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SBreak)
+(define-method (j2s->list this::J2SBreak stack)
    (with-access::J2SBreak this (loc id target)
       `(,@(call-next-method) ,id :target ,(typeof target))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SContinue ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SContinue)
+(define-method (j2s->list this::J2SContinue stack)
    (with-access::J2SContinue this (loc id)
       `(,@(call-next-method) ,id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SCall ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SCall)
-   (with-access::J2SCall this (fun thisargs args loc protocol profid)
-      `(,@(call-next-method)
-	  ,@(dump-loc loc)
-	  ,@(dump-size this)
-	  ,@(dump-type this)
-	  ,@(dump-rtype fun)
-	  ,@(dump-info this)
-	  ,@(dump-hint this)
-	  ,@(dump-range this)
-	  ,@(dump-protocol protocol)
-	  ,@(if (or (>= (bigloo-debug) 2)
-		  (string-contains (or (getenv "HOPTRACE") "") "j2s:profid"))
-		`(:profid ,profid)
-		'())
-	  ,(j2s->list fun)
-	  ,@(dump-cache this)
-	  ,@(if (pair? thisargs) `(:thisargs ,@(map j2s->list thisargs)) '())
-	  ,@(map j2s->list args))))
+(define-method (j2s->list this::J2SCall stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SCall this (fun thisargs args loc protocol profid)
+	 `(,@(call-next-method)
+	     ,@(dump-loc loc)
+	     ,@(dump-size this)
+	     ,@(dump-type this)
+	     ,@(dump-rtype fun)
+	     ,@(dump-info this)
+	     ,@(dump-hint this)
+	     ,@(dump-range this)
+	     ,@(dump-protocol protocol)
+	     ,@(if (or (>= (bigloo-debug) 2)
+		       (string-contains (or (getenv "HOPTRACE") "") "j2s:profid"))
+		   `(:profid ,profid)
+		   '())
+	     ,(j2s->list fun nstack)
+	     ,@(dump-cache this)
+	     ,@(if (pair? thisargs)
+		   `(:thisargs ,@(j2s->list* thisargs nstack)) '())
+	     ,@(j2s->list* args nstack)))))
 		  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SAccess ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SAccess)
-   (with-access::J2SAccess this (obj field loc)
-      `(,@(call-next-method)
-	  ,@(dump-loc loc)
-	  ,@(dump-size this)
-	  ,@(dump-type this)
-	  ,@(dump-info this)
-	  ,@(dump-hint this)
-	  ,@(dump-range this)
-	  ,@(dump-cache this)
-	  ,(j2s->list obj) ,(j2s->list field))))
+(define-method (j2s->list this::J2SAccess stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SAccess this (obj field loc)
+	 `(,@(call-next-method)
+	     ,@(dump-loc loc)
+	     ,@(dump-size this)
+	     ,@(dump-type this)
+	     ,@(dump-info this)
+	     ,@(dump-hint this)
+	     ,@(dump-range this)
+	     ,@(dump-cache this)
+	     ,(j2s->list obj nstack) ,(j2s->list field nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SStmtExpr ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SStmtExpr)
+(define-method (j2s->list this::J2SStmtExpr stack)
    (with-access::J2SStmtExpr this (expr loc)
       `(,@(call-next-method) ,@(dump-loc loc)
-	  ,@(dump-info this) ,(j2s->list expr))))
+	  ,@(dump-info this)
+	  ,(j2s->list expr (check-stack this stack)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SObjectInit ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SObjInit)
+(define-method (j2s->list this::J2SObjInit stack)
    (with-access::J2SObjInit this (inits ronly)
       `(,@(call-next-method)
 	  ,@(if (or (string-contains (or (getenv "HOPTRACE") "") "j2s:usage")
 		    (string-contains (or (getenv "HOPTRACE") "") "j2s:access"))
 		`(:ronly ,ronly)
 		'())
-	  ,@(map j2s->list inits))))
+	  ,@(j2s->list* inits (check-stack this stack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPropertyInit ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SPropertyInit)
+(define-method (j2s->list this::J2SPropertyInit stack)
    (with-access::J2SPropertyInit this (name)
-      `(,@(call-next-method) ,(j2s->list name))))
+      `(,@(call-next-method) ,(j2s->list name (check-stack this stack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDataPropertyInit ...                              */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SDataPropertyInit)
+(define-method (j2s->list this::J2SDataPropertyInit stack)
    (with-access::J2SDataPropertyInit this (val)
-      `(,@(call-next-method) ,(j2s->list val))))
+      `(,@(call-next-method) ,(j2s->list val (check-stack this stack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SAccessorPropertyInit ...                          */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SAccessorPropertyInit)
-   (with-access::J2SAccessorPropertyInit this (get set)
-      `(,@(call-next-method) :get ,(j2s->list get) :set ,(j2s->list set))))
+(define-method (j2s->list this::J2SAccessorPropertyInit stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SAccessorPropertyInit this (get set)
+	 `(,@(call-next-method)
+	     :get ,(j2s->list get nstack)
+	     :set ,(j2s->list set nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SDecl)
+(define-method (j2s->list this::J2SDecl stack)
+   (set! stack (check-stack this stack))
    (with-access::J2SDecl this (id key binder _scmid usage scope loc)
       `(,(string->symbol (format "~a/~a" (typeof this) binder))
 	,id
@@ -1102,7 +1188,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDeclRest ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SDeclRest)
+(define-method (j2s->list this::J2SDeclRest stack)
+   (set! stack (check-stack this stack))
    (with-access::J2SDeclRest this (id key _scmid usage alloc-policy)
       `(,(string->symbol (typeof this))
 	,id
@@ -1117,7 +1204,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDeclArguments ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SDeclArguments)
+(define-method (j2s->list this::J2SDeclArguments stack)
+   (set! stack (check-stack this stack))
    (with-access::J2SDeclArguments this (id key _scmid usage alloc-policy argid)
       `(,(string->symbol (typeof this))
 	,id
@@ -1132,57 +1220,63 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SDeclInit)
+(define-method (j2s->list this::J2SDeclInit stack)
    (with-access::J2SDeclInit this (val loc)
       `(,@(call-next-method)
 	  ,@(dump-loc loc)
-	  ,@(if (nodefval? val) '() (list (j2s->list val))))))
+	  ,@(if (nodefval? val) '()
+		(list (j2s->list val (check-stack this stack)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPragma ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SPragma)
+(define-method (j2s->list this::J2SPragma stack)
    (with-access::J2SPragma this (expr vars vals type)
       `(,@(call-next-method) ,@(dump-type this)
 	  ,@(if (pair? vars) `(:vars ,vars) '())
-	  ,@(if (pair? vals) `(:vals ,(map j2s->list vals)) '())
+	  ,@(if (pair? vals) `(:vals ,(j2s->list* vals (check-stack this stack))) '())
 	  ',expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SSequence ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SSequence)
+(define-method (j2s->list this::J2SSequence stack)
    (with-access::J2SSequence this (exprs)
-      `(,@(call-next-method) ,@(dump-type this) ,@(map j2s->list exprs))))
+      `(,@(call-next-method) ,@(dump-type this)
+	  ,@(j2s->list* exprs (check-stack this stack)))))
 		  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SNew ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SNew)
-   (with-access::J2SNew this (clazz args cache protocol)
-      `(,@(call-next-method) ,@(dump-type this)
-	  ,@(dump-protocol protocol)
-	  ,@(dump-cache this)
-	  ,(j2s->list clazz) ,@(map j2s->list args))))
+(define-method (j2s->list this::J2SNew stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SNew this (clazz args cache protocol)
+	 `(,@(call-next-method) ,@(dump-type this)
+	     ,@(dump-protocol protocol)
+	     ,@(dump-cache this)
+	     ,(j2s->list clazz nstack) ,@(j2s->list* args nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SYield ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SYield)
+(define-method (j2s->list this::J2SYield stack)
    (with-access::J2SYield this (expr)
-      `(,@(call-next-method) ,(j2s->list expr))))
+      `(,@(call-next-method) ,(j2s->list expr (check-stack this stack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SKont ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SKont)
-   (with-access::J2SKont this (param exn body)
-      `(,@(call-next-method) ,(j2s->list param) ,(j2s->list exn) ,(j2s->list body))))
+(define-method (j2s->list this::J2SKont stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SKont this (param exn body)
+	 `(,@(call-next-method) ,(j2s->list param nstack)
+	     ,(j2s->list exn nstack) ,(j2s->list body nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SHopRef ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SHopRef)
+(define-method (j2s->list this::J2SHopRef stack)
+   (set! stack (check-stack this stack))
    (with-access::J2SHopRef this (id module)
       `(,@(call-next-method) ,id ,@(dump-type this)
 	  ,@(if module (list module) '()))))
@@ -1190,51 +1284,55 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2Stilde ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2STilde)
+(define-method (j2s->list this::J2STilde stack)
    (with-access::J2STilde this (stmt)
-      `(,@(call-next-method) ,(j2s->list stmt))))
+      `(,@(call-next-method) ,(j2s->list stmt (check-stack this stack)))))
       
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDollar ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SDollar)
+(define-method (j2s->list this::J2SDollar stack)
    (with-access::J2SDollar this (node)
-      `(,@(call-next-method) ,(j2s->list node))))
+      `(,@(call-next-method) ,(j2s->list node (check-stack this stack)))))
       
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SSwitch ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SSwitch)
-   (with-access::J2SSwitch this (key cases)
-      `(,@(call-next-method) ,(j2s->list key)
-	  ,@(dump-size this)
-	  ,@(map j2s->list cases))))
+(define-method (j2s->list this::J2SSwitch stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SSwitch this (key cases)
+	 `(,@(call-next-method) ,(j2s->list key nstack)
+	     ,@(dump-size this)
+	     ,@(j2s->list* cases nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SCase ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SCase)
-   (with-access::J2SCase this (expr body cascade)
-      (append (call-next-method)
-	 (if (>= (bigloo-debug) 3) `(:cascade ,cascade) '())
-	 (dump-size this)
-	 (list (j2s->list expr) (j2s->list body)))))
+(define-method (j2s->list this::J2SCase stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SCase this (expr body cascade)
+	 (append (call-next-method)
+	    (if (>= (bigloo-debug) 3) `(:cascade ,cascade) '())
+	    (dump-size this)
+	    (list (j2s->list expr nstack) (j2s->list body nstack))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDefault ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SDefault)
+(define-method (j2s->list this::J2SDefault stack)
+   (set! stack (check-stack this stack))
    (with-access::J2SDefault this (body)
-      (list 'J2SDefault (j2s->list body))))
+      (list 'J2SDefault (j2s->list body stack))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SClass ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SClass)
+(define-method (j2s->list this::J2SClass stack)
+   (set! stack (check-stack this stack))
    (with-access::J2SClass this (name super elements decl loc need-dead-zone-check)
       `(,(string->symbol (typeof this))
 	,@(if name (list :name name) '())
-	:super ,(j2s->list super)
+	:super ,(j2s->list super stack)
 	:need-dead-zone-check ,need-dead-zone-check
 	,@(dump-loc loc)
 	,@(dump-type this)
@@ -1242,15 +1340,19 @@
 	      (with-access::J2SDecl decl (key)
 		 (append (dump-key key) (dump-vtype decl)))
 	      '())
-	,@(map j2s->list elements))))
+	,@(j2s->list* elements stack))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SClassElement ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SClassElement)
-   (with-access::J2SClassElement this (prop static type usage index)
+(define-method (j2s->list this::J2SClassElement stack)
+   (set! stack (check-stack this stack))
+   (with-access::J2SClassElement this (prop static type usage index clazz)
       (with-access::J2SPropertyInit prop (name)
-	 `(J2SClassElement :static ,static
+	 `(J2SClassElement :name ,(j2s->list name stack)
+	     :clazz 
+	     ,(with-access::J2SClass clazz (name) name)
+	     :static ,static
 	     :index ,index
 	     ,@(if (or (>= (bigloo-debug) 2)
 		       (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
@@ -1260,114 +1362,124 @@
 		       (string-contains (or (getenv "HOPTRACE") "") "j2s:usage"))
 		   `(:usage ,(usage->keys usage))
 		   '())
-	     ,(j2s->list prop)))))
+	     ,(j2s->list prop stack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDProducer ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SDProducer)
-   (with-access::J2SDProducer this (decl expr size)
-      (with-access::J2SDecl decl (id)
-	 `(,@(call-next-method) ,id ,@(dump-type this) ,size
-	     ,(j2s->list expr)))))
+(define-method (j2s->list this::J2SDProducer stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SDProducer this (decl expr size)
+	 (with-access::J2SDecl decl (id)
+	    `(,@(call-next-method) ,id ,@(dump-type this) ,size
+		,(j2s->list expr nstack))))))
 		  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDConsumer ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SDConsumer)
-   (with-access::J2SDConsumer this (expr path)
-      `(,@(call-next-method) ,@(dump-type this) ,path ,(j2s->list expr))))
+(define-method (j2s->list this::J2SDConsumer stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SDConsumer this (expr path)
+	 `(,@(call-next-method) ,@(dump-type this) ,path
+	     ,(j2s->list expr nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SCacheUpdate ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SCacheUpdate)
-   (with-access::J2SCacheUpdate this (prop cache obj)
-      `(,@(call-next-method) :cache ,cache ,prop ,(j2s->list obj))))
+(define-method (j2s->list this::J2SCacheUpdate stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SCacheUpdate this (prop cache obj)
+	 `(,@(call-next-method) :cache ,cache ,prop ,(j2s->list obj nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SCacheCheck ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SCacheCheck)
-   (with-access::J2SCacheCheck this (prop owner cache obj fields)
-      `(,@(call-next-method) ,prop :cache ,cache
-	  :owner ,(cond
-		     ((isa? owner J2SClass) (type->sexp owner))
-		     ((isa? owner J2SNode) (j2s->list owner))
-		     (else #f))
-	  ,(j2s->list obj)
-	  ,@(map j2s->list fields))))
+(define-method (j2s->list this::J2SCacheCheck stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SCacheCheck this (prop owner cache obj fields)
+	 `(,@(call-next-method) ,prop :cache ,cache
+	     :owner ,(cond
+			((isa? owner J2SClass) (type->sexp owner))
+			((isa? owner J2SNode) (j2s->list owner stack))
+			(else #f))
+	     ,(j2s->list obj nstack)
+	     ,@(j2s->list* fields nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SOptInitSeq ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SOPTInitSeq)
-   (with-access::J2SOPTInitSeq this (ref offset)
-      `(,@(call-next-method) :ref ,(j2s->list ref) :offset ,offset)))
+(define-method (j2s->list this::J2SOPTInitSeq stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SOPTInitSeq this (ref offset)
+	 `(,@(call-next-method) :ref ,(j2s->list ref nstack) :offset ,offset))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2STemplate ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2STemplate)
-   (with-access::J2STemplate this (exprs)
-      `(,@(call-next-method) ,@(map j2s->list exprs))))
+(define-method (j2s->list this::J2STemplate stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2STemplate this (exprs)
+	 `(,@(call-next-method) ,@(j2s->list* exprs nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SImport ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SImport)
-   (with-access::J2SImport this (path names)
-      `(,@(call-next-method) :path ,path
-	  :names ,@(map j2s->list names))))
+(define-method (j2s->list this::J2SImport stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SImport this (path names)
+	 `(,@(call-next-method) :path ,path
+	     :names ,@(j2s->list* names nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SImportExports ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SImportExports)
-   (with-access::J2SImportExports this (import)
-      `(,@(call-next-method)
-	  ,(with-access::J2SImport import (path)
-	      `(J2SImport :path ,path |...|)))))
+(define-method (j2s->list this::J2SImportExports stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SImportExports this (import)
+	 `(,@(call-next-method)
+	     ,(with-access::J2SImport import (path)
+		 `(J2SImport :path ,path |...|))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SImportName ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SImportName)
+(define-method (j2s->list this::J2SImportName stack)
    (with-access::J2SImportName this (loc id alias)
       `(J2SImportName ,id ,alias)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SImportRedirect ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SImportRedirect)
+(define-method (j2s->list this::J2SImportRedirect stack)
    (with-access::J2SImportRedirect this (loc id alias)
       `(J2SImportRedirect ,id ,alias)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SImportNamespace ...                               */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SImportNamespace)
+(define-method (j2s->list this::J2SImportNamespace stack)
    (with-access::J2SImportNamespace this (loc id)
       `(J2SImportNamespace ,id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SImportExport ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SImportExport)
+(define-method (j2s->list this::J2SImportExport stack)
    (with-access::J2SImportExport this (loc)
       '(J2SImportExport)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SExportVars ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SExportVars)
-   (with-access::J2SExportVars this (refs)
-      `(,@(call-next-method) ,@(map j2s->list refs))))
+(define-method (j2s->list this::J2SExportVars stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SExportVars this (refs)
+	 `(,@(call-next-method) ,@(j2s->list* refs nstack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SExport ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SExport)
+(define-method (j2s->list this::J2SExport stack)
    (with-access::J2SExport this (id alias index from writable)
       `(,@(call-next-method) ,id ,@(if (eq? alias id) '() `(:alias ,alias))
 	  index: ,index

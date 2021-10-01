@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Oct  1 07:02:42 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 11:58:19 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -189,7 +189,7 @@
 (define (decl-vtype-set! decl::J2SDecl ty::obj ctx::pair)
    (with-access::J2SDecl decl (vtype id loc)
       (unless (or (eq? vtype 'unknown) (eq? vtype ty))
-	 (tprint "PAS BON decl=" (j2s->list decl) " ty=" (type->sexp ty)
+	 (tprint "PAS BON decl=" (j2s->sexp decl) " ty=" (type->sexp ty)
 	    " vtype=" (type->sexp vtype)))
       [assert (ty) (or (eq? vtype 'unknown) (eq? vtype ty))]
       (when (or (eq? vtype 'unknown) (not (eq? vtype ty)))
@@ -234,7 +234,7 @@
 	    (unless (eq? ntype type)
 	       (unfix! ctx
 		  (format "J2SExpr.add(~a) ~a ~a/~a -> ~a"
-		     loc (j2s->list this)
+		     loc (j2s->sexp this)
 		     (type->sexp ty)
 		     (type->sexp type)
 		     (type->sexp ntype)))
@@ -245,13 +245,13 @@
 ;*    class-element-type-add! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (class-element-type-add! this::J2SClassElement ctx::pair ty)
-   (with-access::J2SClassElement this (type)
+   (with-access::J2SClassElement this (type loc)
       (unless (or (eq? ty 'unknown) (eq? type ty))
 	 (let ((ntype (merge-types type ty)))
 	    (unless (eq? ntype type)
 	       (unfix! ctx
 		  (format "J2SClassElement.add(~a) ~a ~a/~a -> ~a"
-		     loc (j2s->list this)
+		     loc (j2s->sexp this)
 		     (type->sexp ty)
 		     (type->sexp type)
 		     (type->sexp ntype)))
@@ -311,9 +311,10 @@
 ;*    extend-env ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (extend-env::pair-nil env::pair-nil decl::J2SDecl ty)
-   (if (eq? ty 'unknown)
-       env
-       (cons (cons decl ty) env)))
+   (let ((old (env-lookup env decl)))
+      (if (eq? ty 'unknown)
+	  env
+	  (cons (cons decl ty) env))))
 
 ;*---------------------------------------------------------------------*/
 ;*    env-lookup ...                                                   */
@@ -351,7 +352,7 @@
 			(unless (eq? typm 'unknown)
 			   (cons decl typm))))
 	 env1))
-   
+
    (merge2 right (merge2 left right)))
 
 ;*---------------------------------------------------------------------*/
@@ -616,7 +617,7 @@
 		       (return tyr (env-merge envn envr) (append bk bk bks)))
 		    (loop (cdr nodes) tyn envn (append bk bks)))))))
 
-   (with-trace 'j2s-tyflow "node-type ::J2SSequence"
+   (with-trace 'j2s-tyflow (format "node-type ::J2SSequence ~a" (cdr ctx))
       (with-access::J2SSequence this (exprs)
 	 (multiple-value-bind (tye env bk)
 	    (node-type* exprs env ctx)
@@ -626,10 +627,11 @@
 ;*    node-type ::J2SBindExit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SBindExit env::pair-nil ctx::pair)
-   (with-access::J2SBindExit this (stmt type loc)
-      (multiple-value-bind (typ env bk)
-	 (node-type stmt env ctx)
-	 (return type env bk))))
+   (with-trace 'j2s-tyflow (format "node-type ::J2SBindExit ~a" (cdr ctx))
+      (with-access::J2SBindExit this (stmt type loc)
+	 (multiple-value-bind (typ env bk)
+	    (node-type stmt env ctx)
+	    (return type env bk)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SHopRef ...                                        */
@@ -682,19 +684,21 @@
 ;*    node-type ::J2SRef ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SRef env::pair-nil ctx::pair)
-   (with-access::J2SRef this (decl loc)
-      (with-access::J2SDecl decl (id key vtype scope)
-	 (let ((nenv env))
-	    (when (and (isa? decl J2SDeclFun) (not (constructor-only? decl)))
-	       (set! nenv (env-nocapture env))
-	       (with-access::J2SDeclFun decl (val id)
-		  (if (isa? val J2SMethod)
-		      (escape-method val ctx)
-		      (escape-fun val ctx #f))))
-	    (if (and (memq scope '(%scope global)) (not (eq? vtype 'unknown)))
-		(expr-type-add! this nenv ctx vtype)
-		(let ((ty (env-lookup env decl)))
-		   (expr-type-add! this nenv ctx ty)))))))
+   (with-trace 'j2s-tyflow (format "node-type ::J2SRef ~a" (cdr ctx))
+      (with-access::J2SRef this (decl loc)
+	 (trace-item "loc=" loc)
+	 (with-access::J2SDecl decl (id key vtype scope)
+	    (let ((nenv env))
+	       (when (and (isa? decl J2SDeclFun) (not (constructor-only? decl)))
+		  (set! nenv (env-nocapture env))
+		  (with-access::J2SDeclFun decl (val id)
+		     (if (isa? val J2SMethod)
+			 (escape-method val ctx)
+			 (escape-fun val ctx #f))))
+	       (if (and (memq scope '(%scope global)) (not (eq? vtype 'unknown)))
+		   (expr-type-add! this nenv ctx vtype)
+		   (let ((ty (env-lookup env decl)))
+		      (expr-type-add! this nenv ctx ty))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SWithRef ...                                       */
@@ -855,97 +859,99 @@
 	       (with-access::J2SThis obj (decl)
 		  decl)))))
    
-   (with-access::J2SAssig this (lhs rhs loc)
-      (let loop ((lhs lhs))
-	 (multiple-value-bind (tyv envl lbk)
-	    (node-type lhs env ctx)
-	    (cond
-	       ;; variable assignment
-	       ((isa? lhs J2SRef)
-		(with-access::J2SRef lhs (decl)
-		   (with-access::J2SDecl decl (writable id utype)
-		      (multiple-value-bind (tyr env rbk)
-			 (node-type rhs envl ctx)
-			 (cond
-			    ((and (not writable) (not (isa? this J2SInit)))
-			     (let ((nenv (extend-env env decl tyv)))
-				(expr-type-add! this nenv ctx tyv
-				   (append lbk rbk))))
-			    ((and (not (eq? utype 'unknown))
-				  (eq? (car ctx) 'hopscript))
-			     (unless (utype-compatible? utype tyr)
-				(if (memq tyr '(unknown any object))
-				    (set! rhs (J2SCheck utype rhs))
-				    (utype-error rhs utype tyv)))
-			     (expr-type-add! this env ctx utype
-				(append lbk rbk)))
-			    (tyr
-			     (with-access::J2SRef lhs (decl loc)
-				(decl-vtype-add! decl tyr ctx)
-				(let ((nenv (extend-env env decl tyr)))
-				   (expr-type-add! this nenv ctx tyr
-				      (append lbk rbk)))))
-			    (else
-			     (return 'unknown env (append lbk rbk))))))))
-	       ((isa? lhs J2SWithRef)
-		(with-access::J2SWithRef lhs (expr)
-		   (loop expr)))
-	       ((this-assig? lhs)
-		=>
-		(lambda (decl)
-		   ;; "this" property assignment
-		   (with-access::J2SDecl decl (vtype)
-		      (let* ((ty (if (isa? vtype J2SRecord) vtype 'object))
-			     (envt (extend-env envl decl ty)))
-			 (multiple-value-bind (tyr nenv rbk)
-			    (node-type rhs envt ctx)
-			    (if tyr
-				(begin
-				   (when (class-private-element-access lhs)
-				      (class-element-access-type-add! lhs ctx tyr))
-				   (expr-type-add! this nenv ctx tyr (append lbk rbk)))
-				(return 'unknown envt (append lbk rbk))))))))
-	       (else
-		;; a non variable assignment
-		(multiple-value-bind (tyr nenv rbk)
-		   (node-type rhs envl ctx)
-		   (if tyr
-		       (begin
-			  (when (and (isa? lhs J2SAccess)
-				     (class-private-element-access lhs))
-			     (class-element-access-type-add! lhs ctx tyr))
-			  (expr-type-add! this nenv ctx tyr (append lbk rbk)))
-		       (return 'unknown env (append lbk rbk))))))))))
+   (with-trace 'j2s-tyflow (format "node-type ::J2SAssig ~a" (cdr ctx))
+      (with-access::J2SAssig this (lhs rhs loc)
+	 (let loop ((lhs lhs))
+	    (multiple-value-bind (tyv envl lbk)
+	       (node-type lhs env ctx)
+	       (cond
+		  ;; variable assignment
+		  ((isa? lhs J2SRef)
+		   (with-access::J2SRef lhs (decl)
+		      (with-access::J2SDecl decl (writable id utype)
+			 (multiple-value-bind (tyr env rbk)
+			    (node-type rhs envl ctx)
+			    (cond
+			       ((and (not writable) (not (isa? this J2SInit)))
+				(let ((nenv (extend-env env decl tyv)))
+				   (expr-type-add! this nenv ctx tyv
+				      (append lbk rbk))))
+			       ((and (not (eq? utype 'unknown))
+				     (eq? (car ctx) 'hopscript))
+				(unless (utype-compatible? utype tyr)
+				   (if (memq tyr '(unknown any object))
+				       (set! rhs (J2SCheck utype rhs))
+				       (utype-error rhs utype tyv)))
+				(expr-type-add! this env ctx utype
+				   (append lbk rbk)))
+			       (tyr
+				(with-access::J2SRef lhs (decl loc)
+				   (decl-vtype-add! decl tyr ctx)
+				   (let ((nenv (extend-env env decl tyr)))
+				      (expr-type-add! this nenv ctx tyr
+					 (append lbk rbk)))))
+			       (else
+				(return 'unknown env (append lbk rbk))))))))
+		  ((isa? lhs J2SWithRef)
+		   (with-access::J2SWithRef lhs (expr)
+		      (loop expr)))
+		  ((this-assig? lhs)
+		   =>
+		   (lambda (decl)
+		      ;; "this" property assignment
+		      (with-access::J2SDecl decl (vtype)
+			 (let* ((ty (if (isa? vtype J2SRecord) vtype 'object))
+				(envt (extend-env envl decl ty)))
+			    (multiple-value-bind (tyr nenv rbk)
+			       (node-type rhs envt ctx)
+			       (if tyr
+				   (begin
+				      (when (class-private-element-access lhs)
+					 (class-element-access-type-add! lhs ctx tyr))
+				      (expr-type-add! this nenv ctx tyr (append lbk rbk)))
+				   (return 'unknown envt (append lbk rbk))))))))
+		  (else
+		   ;; a non variable assignment
+		   (multiple-value-bind (tyr nenv rbk)
+		      (node-type rhs envl ctx)
+		      (if tyr
+			  (begin
+			     (when (and (isa? lhs J2SAccess)
+					(class-private-element-access lhs))
+				(class-element-access-type-add! lhs ctx tyr))
+			     (expr-type-add! this nenv ctx tyr (append lbk rbk)))
+			  (return 'unknown env (append lbk rbk)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SAssigOp ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SAssigOp env::pair-nil ctx::pair)
-   (with-access::J2SAssigOp this (lhs rhs op)
-      (multiple-value-bind (tyr envr bkr)
-	 (node-type-binary op lhs rhs env ctx)
-	 (cond
-	    ((isa? lhs J2SRef)
-	     ;; a variable assignment
-	     (with-access::J2SRef lhs (decl)
-		(with-access::J2SDecl decl (writable)
-		   (cond
-		      ((not writable)
-		       (multiple-value-bind (tyv envl lbk)
-			  (node-type lhs env ctx)
-			  (let ((nenv (extend-env env decl tyv)))
-			     (expr-type-add! this nenv ctx tyv
-				(append lbk bkr)))))
-		      (else
-		       (decl-vtype-add! decl tyr ctx)
-		       (let ((nenv (extend-env envr decl tyr)))
-			  (expr-type-add! this nenv ctx tyr bkr)))))))
-	    (else
-	     ;; a non variable assinment
-	     (when (and (isa? lhs J2SAccess)
-			(class-private-element-access lhs))
-		(class-element-access-type-add! lhs ctx tyr))
-	     (expr-type-add! this envr ctx tyr bkr))))))
+   (with-trace 'j2s-tyflow (format "node-type ::J2SAssigOp ~a" (cdr ctx))
+      (with-access::J2SAssigOp this (lhs rhs op)
+	 (multiple-value-bind (tyr envr bkr)
+	    (node-type-binary op lhs rhs env ctx)
+	    (cond
+	       ((isa? lhs J2SRef)
+		;; a variable assignment
+		(with-access::J2SRef lhs (decl)
+		   (with-access::J2SDecl decl (writable)
+		      (cond
+			 ((not writable)
+			  (multiple-value-bind (tyv envl lbk)
+			     (node-type lhs env ctx)
+			     (let ((nenv (extend-env env decl tyv)))
+				(expr-type-add! this nenv ctx tyv
+				   (append lbk bkr)))))
+			 (else
+			  (decl-vtype-add! decl tyr ctx)
+			  (let ((nenv (extend-env envr decl tyr)))
+			     (expr-type-add! this nenv ctx tyr bkr)))))))
+	       (else
+		;; a non variable assinment
+		(when (and (isa? lhs J2SAccess)
+			   (class-private-element-access lhs))
+		   (class-element-access-type-add! lhs ctx tyr))
+		(expr-type-add! this envr ctx tyr bkr)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SPostfix ...                                       */
@@ -1457,12 +1463,13 @@
 	 (else
 	  'object)))
    
-   (with-access::J2SNew this (clazz args loc protocol)
-      (multiple-value-bind (_ env bk)
-	 (node-type clazz env ctx)
+   (with-trace 'j2s-tyflow "node-type ::J2SNew"
+      (with-access::J2SNew this (clazz args loc protocol)
 	 (multiple-value-bind (_ env bk)
-	    (node-type-call clazz protocol 'object args env ctx)
-	    (expr-type-add! this env ctx (class-type clazz) bk)))))
+	    (node-type clazz env ctx)
+	    (multiple-value-bind (_ env bk)
+	       (node-type-call clazz protocol 'object args env ctx)
+	       (expr-type-add! this env ctx (class-type clazz) bk))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SUnary ...                                         */
@@ -1761,7 +1768,7 @@
 ;*    node-type ::J2SLetBlock ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SLetBlock env::pair-nil ctx::pair)
-   (with-trace 'j2s-tyflow "node-type ::J2SLetBlock"
+   (with-trace 'j2s-tyflow (format "node-type ::J2SLetBlock ~a" (cdr ctx))
       (with-access::J2SLetBlock this (decls nodes loc)
 	 (trace-item "loc=" loc)
 	 (let ((ienv (filter-map (lambda (d::J2SDecl)
@@ -1793,7 +1800,7 @@
 ;*    node-type ::J2SReturn ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SReturn env::pair-nil ctx::pair)
-   (with-trace 'j2sreturn "node-type ::J2SReturn"
+   (with-trace 'j2s-tyflow "node-type ::J2SReturn"
       (with-access::J2SReturn this (expr from loc)
 	 (multiple-value-bind (tye enve bke)
 	    (node-type expr env ctx)
@@ -1811,7 +1818,8 @@
 		   (let ((tyr (merge-types rtype tye)))
 		      (unless (eq? tyr rtype)
 			 (unfix! ctx
-			    (format "J2SReturn(~a) e=~a ~a/~a" loc tye tyr rtype))
+			    (format "J2SReturn(~a) e=~a ~a/~a" loc
+			       (type->sexp tye) (type->sexp tyr) (type->sexp rtype)))
 			 (set! rtype tyr)))
 		   (values 'void enve (list this))))
 	       ((isa? from J2SBindExit)
@@ -1827,7 +1835,8 @@
 		   (let ((tyr (merge-types type tye)))
 		      (unless (eq? tyr type)
 			 (unfix! ctx
-			    (format "J2SReturn(~a) e=~a ~a/~a" loc tye tyr type))
+			    (format "J2SReturn(~a) e=~a ~a/~a" loc
+			       (type->sexp tye) (type->sexp tyr) (type->sexp type)))
 			 (set! type tyr))))
 		(values 'void enve (list this)))
 	       ((isa? from J2SExpr)
@@ -1902,7 +1911,7 @@
 		(node-type-test rhs nenvt nenve)))
 	  (node-type-one-test test envt enve)))
 
-   (with-trace 'j2s-tyflow "node-type ::J2SIf"
+   (with-trace 'j2s-tyflow (format "node-type ::J2SIf ~a" (cdr ctx))
       (with-access::J2SIf this (test then else loc)
 	 (trace-item "loc=" loc)
 	 (multiple-value-bind (tyi env bki)
@@ -1995,15 +2004,17 @@
 ;*    node-type ::J2SFor ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SFor env::pair-nil ctx::pair)
-   (with-trace 'j2s-tyflow "node-type ::J2SFor"
+   (with-trace 'j2s-tyflow (format "node-type ::J2SFor ~a" (cdr ctx))
       (with-access::J2SFor this (init test incr body loc)
 	 (trace-item "loc=" loc)
 	 (let loop ((env env))
 	    (let ((octx (cdr ctx)))
 	       (trace-item "for seq loc=" loc)
+	       (trace-item "for seq octx=" octx)
 	       (multiple-value-bind (typ envb bk)
 		  (node-type-seq (list init test body incr) env ctx 'void)
 		  (let ((nenv (env-merge env envb)))
+		     (trace-item "for seq nctx=" (cdr ctx) " octx=" octx)
 		     (if (=fx octx (cdr ctx))
 			 (return typ nenv (filter-breaks bk this))
 			 (loop nenv)))))))))
@@ -2396,7 +2407,7 @@
       (when (and (eq? type from) (not (eq? type to)))
 	 (when (and (eq? from 'unknown) debug-tyflow)
 	    (tprint "*** COMPILER WARNING : unpexected `unknown' type " loc
-	       " " (j2s->list this)))
+	       " " (j2s->sexp this)))
 	 (cell-set! cell #t)
 	 (set! type to)))
    (call-default-walker))
@@ -2410,13 +2421,13 @@
       (when (and (eq? type from) (not (eq? type to)))
 	 (when (and (eq? from 'unknown) debug-tyflow)
 	    (tprint "*** COMPILER WARNING : unpexected `unknown' type " loc
-	       " " (j2s->list this)))
+	       " " (j2s->sexp this)))
 	 (cell-set! cell #t)
 	 (set! type to))
       (when (and (eq? rtype from) (not (eq? rtype to)))
 	 (when (and (eq? from 'unknown) debug-tyflow)
 	    (tprint "*** COMPILER WARNING : unpexected `unknown' type " loc
-	       " " (j2s->list this)))
+	       " " (j2s->sexp this)))
 	 (cell-set! cell #t)
 	 (set! rtype to)))
    (call-default-walker))
@@ -2465,7 +2476,7 @@
       (when (and (eq? vtype from) (not (eq? vtype to)))
 	 (when (and (eq? from 'unknown) debug-tyflow)
 	    (tprint "*** COMPILER WARNING : unpexected `unknown' type " loc
-	       " " (j2s->list this)))
+	       " " (j2s->sexp this)))
 	 (cell-set! cell #t)
 	 (set! vtype to)))
    (call-default-walker))
@@ -2504,14 +2515,14 @@
       (when (and (eq? vtype from) (not (eq? vtype to)))
 	 (when (and (eq? from 'unknown) debug-tyflow)
 	    (tprint "*** COMPILER WARNING : unpexected `unknown' type " loc
-	       " " (j2s->list this)))
+	       " " (j2s->sexp this)))
 	 (cell-set! cell #t)
 	 (set! vtype to))
       (when (and final (not (eq? vtype 'any)) (not (type-eq? vtype (j2s-type val))))
 	 (cond
 	    ((decl-usage-has? this '(uninit))
 	     (error "force-type!" "Declaration inconsistent with init"
-		(j2s->list this)))
+		(j2s->sexp this)))
 	    ((type->init vtype val)
 	     =>
 	     (lambda (v)

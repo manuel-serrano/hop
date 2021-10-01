@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.3.x/js2scheme/propcce.scm             */
+;*    serrano/prgm/project/hop/hop/js2scheme/propcce.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Tue Jun  2 07:39:18 2020 (serrano)                */
-;*    Copyright   :  2017-20 Manuel Serrano                            */
+;*    Last change :  Fri Oct  1 16:45:13 2021 (serrano)                */
+;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property common caching elimination optimization                 */
 ;*=====================================================================*/
@@ -66,7 +66,7 @@
 ;*    dump-cursor ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (dump-cursor c)
-   (ccecursor (j2s->list (ccecursor-decl c)) (j2s->list (ccecursor-access c))
+   (ccecursor (j2s->sexp (ccecursor-decl c)) (j2s->sexp (ccecursor-access c))
       (ccecursor-field c) (ccecursor-count c) (ccecursor-stamp c)
       (typeof (ccecursor-anchor c))
       (ccecursor-hookp c)))
@@ -378,7 +378,7 @@
 (define-walk-method (j2s-cachelevel1! this::J2SAccess)
    (with-access::J2SAccess this (%info cspecs obj)
       (when (cceinfo? %info)
-	 (tprint "ACCESS.. " (j2s->list this))
+	 (tprint "ACCESS.. " (j2s->sexp this))
 	 (with-access::J2SRef obj (type)
 	    (set! type 'object))
 	 (set! %info #f)

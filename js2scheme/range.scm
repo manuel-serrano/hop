@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Oct  1 07:02:49 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:44:01 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -66,7 +66,7 @@
 	       (__l ,lbl)
 	       (__lbl (if (or (string? __l) (pair? __l))
 			  __l
-			  (j2s->list __l))))
+			  (j2s->sexp __l))))
 	   (if ,pred
 	       (begin
 		  (range-debug 1 __lbl)
@@ -1265,7 +1265,7 @@
 	    ((isa? val J2SFun)
 	     (node-range-fun val (node-range-fun-decl val env conf mode fix) conf mode fix))
 	    (else
-	     (error "js2scheme" "bad declfun value" (j2s->list val))))
+	     (error "js2scheme" "bad declfun value" (j2s->sexp val))))
 	 (return *infinity-intv* (extend-env env this intvf)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1551,7 +1551,7 @@
 		       ((isa? val J2SFun)
 			(range-known-call callee val iargs env))
 		       (else
-			(error "js2scheme" "bad declfun value" (j2s->list val))))
+			(error "js2scheme" "bad declfun value" (j2s->sexp val))))
 		    (range-unknown-call callee env))))
 	    ((isa? decl J2SDeclInit)
 	     (with-access::J2SDeclInit decl (val)
@@ -1617,7 +1617,7 @@
 	 (node-range callee env conf mode fix)
 	 (return *infinity-intv* (unknown-call-env env))))
 
-   (with-debug *debug-range-call* `(node-range-call ,(j2s->list callee) ...)
+   (with-debug *debug-range-call* `(node-range-call ,(j2s->sexp callee) ...)
       "env=" (dump-env env)
       (multiple-value-bind (iargs env)
 	 (node-range-args args env conf mode fix)
@@ -1792,7 +1792,7 @@
 	 (multiple-value-bind (intr envr)
 	    (node-range right envl conf mode fix)
 	    (when *debug-range-test*
-	       (tprint "test-env-ref " (j2s->list test)))
+	       (tprint "test-env-ref " (j2s->sexp test)))
 	    (if (or (not (interval? intl)) (not (interval? intr)))
 		(values (empty-env) (empty-env))
 		(case op
@@ -2061,7 +2061,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SIf env::pair-nil conf mode::symbol fix::cell)
    (with-access::J2SIf this (test then else)
-      (with-debug *debug-range-if* `(J2SIf ,(j2s->list test) ...)
+      (with-debug *debug-range-if* `(J2SIf ,(j2s->sexp test) ...)
 	 "env=" (dump-env env)
 	 (multiple-value-bind (_ env)
 	    (node-range test env conf mode fix)
@@ -2108,7 +2108,7 @@
       (let ((denv (dump-env env))
 	    (ffix (cell-ref fix)))
 	 (when *debug-range-while*
-	    (tprint ">>> while [" ffix "] test=" (j2s->list test))
+	    (tprint ">>> while [" ffix "] test=" (j2s->sexp test))
 	    (tprint ">>> env=" denv))
 	 (let loop ((env env))
 	    (let ((ostamp (cell-ref fix)))
@@ -2118,7 +2118,7 @@
 	       (multiple-value-bind (testi teste)
 		  (node-range test env conf mode fix)
 		  (when *debug-range-while*
-		     (tprint "    [" ffix "] test=" (j2s->list test))
+		     (tprint "    [" ffix "] test=" (j2s->sexp test))
 		     (tprint "    [" ffix "] teste=" (dump-env teste)))
 		  (multiple-value-bind (testet testef)
 		     (test-envs test env conf mode fix)
@@ -2174,7 +2174,7 @@
 	 ;; (set! *debug-range-for* (eq? (caddr loc) 1835))
 	 (when (debug-for loc)
 	    (tprint ">>> for " loc
-	       " [" ffix "/" mode "] test=" (j2s->list test))
+	       " [" ffix "/" mode "] test=" (j2s->sexp test))
 	       (tprint ">>> env=" (dump-env env)))
 	 (multiple-value-bind (initi inite)
 	    (node-range init env conf mode fix)
@@ -2187,7 +2187,7 @@
 		  (multiple-value-bind (testi teste)
 		     (node-range test env conf mode fix)
 		     (when (debug-for loc)
-			(tprint "    [" ffix "] test=" (j2s->list test))
+			(tprint "    [" ffix "] test=" (j2s->sexp test))
 			(tprint "    [" ffix "] testenv=" (dump-env teste)))
 		     (multiple-value-bind (testet testef)
 			(test-envs test env conf mode fix)

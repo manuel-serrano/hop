@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Oct  1 07:38:33 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 11:35:56 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -95,8 +95,10 @@
 	     (hopc-share-directory-set! dir))
 	    (("-v?level" (help "Increase/set verbosity level (-v0 crystal silence)"))
 	     (if (string=? level "")
-		 (hop-verbose-set! (+fx 1 (hop-verbose)))
-		 (hop-verbose-set! (string->integer level))))
+		 (if (=fx (hop-verbose) 0)
+		     (hop-verbose-set! 2)
+		     (hop-verbose-set! (+fx 1 (hop-verbose))))
+		 (hop-verbose-set! (+fx 1 (string->integer level)))))
 	    (("-O?level" (help "Optimization level"))
 	     (cond
 		((string=? level "")
@@ -267,6 +269,12 @@
 	     (set! ecmascriptv 6))
 	    (("--js-es2017" (help "Enable all EcmaScript 2017 support (default)"))
 	     (set! ecmascriptv 2017))
+	    (("--js-record-decorator" (help "Enable record decorator"))
+	     (j2s-compile-options-set!
+		(cons* :record-decorator #t (j2s-compile-options))))
+	    (("--js-no-record-decorator" (help "Disable record decorator"))
+	     (j2s-compile-options-set!
+		(cons* :record-decorator #f (j2s-compile-options))))
 	    (("--js-option" ?opt ?val (help "Add JavaScript compilation option"))
 	     (j2s-compile-options-set!
 		(cons* (string->keyword opt)

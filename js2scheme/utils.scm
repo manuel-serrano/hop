@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri Oct  1 07:33:56 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:42:02 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -115,7 +115,7 @@
    (with-access::J2SNode this (loc)
       (error/loc pass
 	 (format "~a should have been eliminated" (typeof this))
-	 (j2s->list this)
+	 (j2s->sexp this)
 	 loc)))
 
 ;*---------------------------------------------------------------------*/
@@ -337,9 +337,10 @@
 			    (class-subtype? val supertype)))))))))
 
    (or (noclass-subtype? type supertype)
-       (and (isa? supertype J2SClass)
-	    (or (memq type '(any unknown obj object))
-		(and (isa? type J2SClass) (class-subtype? type supertype))))))
+       (and (isa? type J2SClass)
+	    (or (eq? type 'object)
+		(and (isa? supertype J2SClass)
+		     (class-subtype? type supertype))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-maybe-subtype? ...                                          */

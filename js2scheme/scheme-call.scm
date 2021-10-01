@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Oct  1 07:04:18 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:47:42 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1347,7 +1347,7 @@
 	     (call-fun-function profid val thisargs protocol
 		(j2s-decl-fast-id fun ctx) '() args)))
 	 (else
-	  (error "js-scheme" "Should not be here" (j2s->list fun)))))
+	  (error "js-scheme" "Should not be here" (j2s->sexp fun)))))
 
    (define (call-unknown-function protocol fun self::pair-nil args)
       (with-access::J2SCall this (loc cache profid)

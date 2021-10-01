@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Tue Sep 21 11:01:18 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:47:03 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -169,7 +169,7 @@
 	 ((isa? val J2SMethod) 
 	  (with-access::J2SMethod val (function) function))
 	 (else
-	  (error "declfun-fun" "bad val" (j2s->list val))))))
+	  (error "declfun-fun" "bad val" (j2s->sexp val))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-function-arity ...                                           */

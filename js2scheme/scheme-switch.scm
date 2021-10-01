@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon Sep 27 12:36:03 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:49:44 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript switch                      */
@@ -56,7 +56,7 @@
 		    (j2s-cast (j2s-scheme expr mode return ctx)
 		       expr (j2s-type expr) type ctx))
 	    (error "j2s-scheme::J2SSwitch" "bad literal compilation"
-	       (j2s->list expr)))
+	       (j2s->sexp expr)))
 	 (j2s-cast (j2s-scheme expr mode return ctx)
 	    expr (j2s-type expr) type ctx))
       

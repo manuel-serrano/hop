@@ -535,7 +535,7 @@
    (with-access::J2SNode obj (loc)
       (match-case loc
 	 ((at ?fname ?loc)
-	  (error/location proc msg (or str (j2s->list obj)) fname loc))
+	  (error/location proc msg (or str (j2s->sexp obj)) fname loc))
 	 (else
 	  (error proc msg obj)))))
 

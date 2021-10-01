@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Thu May 16 15:21:10 2019 (serrano)                */
-;*    Copyright   :  2013-19 Manuel Serrano                            */
+;*    Last change :  Fri Oct  1 16:42:42 2021 (serrano)                */
+;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
 ;*    -------------------------------------------------------------    */
@@ -121,7 +121,7 @@
 	     (instantiate::&io-parse-error
 		(proc "js-parser")
 		(msg msg)
-		(obj (j2s->list this))
+		(obj (j2s->sexp this))
 		(fname fname)
 		(location loc))))
 	 (else
@@ -129,4 +129,4 @@
 	     (instantiate::&io-parse-error
 		(proc "js-parser")
 		(msg msg)
-		(obj (j2s->list this))))))))
+		(obj (j2s->sexp this))))))))

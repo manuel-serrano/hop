@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Oct  1 07:00:19 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:41:35 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -3449,7 +3449,7 @@
 	     (instantiate::&io-parse-error
 		(proc "hopscript")
 		(msg msg)
-		(obj (j2s->list node))
+		(obj (j2s->sexp node))
 		(fname fname)
 		(location loc))))
 	 (else
@@ -3457,7 +3457,7 @@
 	     (instantiate::&io-parse-error
 		(proc "hopscript")
 		(msg msg)
-		(obj (j2s->list node))))))))
+		(obj (j2s->sexp node))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    destructure-fun-params ...                                       */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Oct  1 07:02:57 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:44:09 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -274,7 +274,7 @@
 			  (set! args (reverse! nvals))))
 		      (else
 		       (error "js2scheme" "internal call error"
-			  (j2s->list this))))
+			  (j2s->sexp this))))
 		   (cast-expr this rtype totype))
 		  ((null? params)
 		   (loop params '()
@@ -315,7 +315,7 @@
 		     (with-access::J2SMethod val (function method)
 			(known-fun this function)))
 		    (else
-		     (error "js2scheme" "Bad declfun value" (j2s->list val))))))
+		     (error "js2scheme" "Bad declfun value" (j2s->sexp val))))))
 	     (else
 	      (unknown-fun this)))))
       (else

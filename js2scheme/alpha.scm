@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Mon Sep 20 15:12:25 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:44:44 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -55,7 +55,7 @@
 			     (%oinfo %info)))))
 		   (else
 		    (error "j2s-alpha/proc" "Illegal expression"
-		       (j2s->list old)))))
+		       (j2s->sexp old)))))
       olds news)
    (let ((newbody (proc node)))
       (for-each (lambda (old)
@@ -68,7 +68,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::AlphaInfo ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s->list o::AlphaInfo)
+(define-method (j2s->list o::AlphaInfo stack)
    (with-access::AlphaInfo o (new)
       (if (isa? new J2SDecl)
 	  (with-access::J2SDecl new (id)

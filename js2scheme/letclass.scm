@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Tue Aug 24 13:25:12 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 13:24:29 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let class optimization. This optimization implements a single    */
@@ -62,18 +62,20 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (letclass! this::J2SInit args)
    (with-access::J2SInit this (lhs rhs loc)
-      (when (and (isa? lhs J2SRef) (isa? rhs J2SClass))
-	 (with-access::J2SRef lhs (decl)
-	    (when (isa? decl J2SDeclClass)
-	       (when (not (decl-usage-has? decl '(assig)))
-		  (with-access::J2SDeclClass decl (val binder)
-		     (when (isa? val J2SUndefined)
-			(with-access::J2SClass rhs (need-dead-zone-check)
-			   (set! binder 'let)
-			   (decl-usage-add! decl 'uninit)
-			   (set! need-dead-zone-check #t)
-			   (set! val rhs))))))))
-      (call-default-walker)))
+      (call-default-walker)
+      (if (and (isa? lhs J2SRef) (isa? rhs J2SClass))
+	  (with-access::J2SRef lhs (decl)
+	     (when (isa? decl J2SDeclClass)
+		(when (not (decl-usage-has? decl '(assig)))
+		   (with-access::J2SDeclClass decl (val binder)
+		      (when (isa? val J2SUndefined)
+			 (with-access::J2SClass rhs (need-dead-zone-check)
+			    (set! binder 'let)
+			    (decl-usage-add! decl 'uninit)
+			    (set! need-dead-zone-check #t)
+			    (set! val rhs))))))
+	     (J2SUndefined))
+	  this)))
 
 
 	  

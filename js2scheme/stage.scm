@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Fri Oct  1 07:35:42 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 11:40:12 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
@@ -69,7 +69,7 @@
    (with-access::J2SStage stage (name footer comment before after)
       (if (active? stage)
 	  (begin
-	     (when (>=fx (j2s-verbose) 1)
+	     (when (>=fx (j2s-verbose) 2)
 		(fprintf (current-error-port) "~a~3d. ~a"
 		   (config-get args :verbmargin "") count name))
 	     (when (procedure? before) (before ast))
@@ -87,11 +87,11 @@
 				 (lambda (p)
 				    (fprint p ";; -*-bee-*-")
 				    (fprint p ";; " comment)
-				    (pp/width (j2s->list nast) p)))))
+				    (pp/width (j2s->sexp nast) p)))))
 			 ((file-exists? file)
 			  (delete-file file)))))
 		(when (procedure? after) (after nast))
-		(when (>=fx (j2s-verbose) 1)
+		(when (>=fx (j2s-verbose) 2)
 		   (display footer (current-error-port)))
 		(values nast #t)))
 	  (values ast #f))))

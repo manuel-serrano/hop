@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Tue Sep 21 07:04:06 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 11:39:48 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -231,7 +231,9 @@
 
       ;; builtin decorator
       ((: (? (: "//" (or #\space #\tab))) "@record" (+ blank) "class")
-       (token 'record 'record (the-length)))
+       (if (config-get conf :record-decorator #f)
+	   (token 'record 'record (the-length))
+	   (token 'class 'class (the-length))))
 
       ;; numbers
       (#\0

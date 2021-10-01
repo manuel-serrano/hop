@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sat Jun  5 12:04:38 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:42:28 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -375,7 +375,7 @@
    (with-access::J2SBindExit this (lbl stmt)
       (cond
 	 (lbl
-	  (error "BINDEXIT" "LBLB NOT SUPPORTED" (j2s->list this)))
+	  (error "BINDEXIT" "LBLB NOT SUPPORTED" (j2s->sexp this)))
 	 ((isa? stmt J2SBlock)
 	  (cons* this "((() => "
 	     (append (j2s-js stmt tildec dollarc mode evalp ctx)
@@ -448,7 +448,7 @@
    (with-access::J2SNode obj (loc)
       (match-case loc
 	 ((at ?fname ?loc)
-	  (error/location proc msg (or str (j2s->list obj)) fname loc))
+	  (error/location proc msg (or str (j2s->sexp obj)) fname loc))
 	 (else
 	  (error proc msg obj)))))
 

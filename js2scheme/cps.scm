@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sun Sep 26 08:33:45 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:43:39 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -185,7 +185,7 @@
 				     (call-with-output-string
 					(lambda (p)
 					   (display "  ")
-					   (display (j2s->list node) p)
+					   (display (j2s->sexp node) p)
 					   (newline p)))
 				     ""))
 			      stack)
@@ -222,7 +222,7 @@
 					     (call-with-output-string
 						(lambda (p)
 						   (display "  ")
-						   (display (j2s->list node) p)
+						   (display (j2s->sexp node) p)
 						   (newline p)))
 					     ""))
 				      stack)))
@@ -256,7 +256,7 @@
 					     (call-with-output-string
 						(lambda (p)
 						   (display "  ")
-						   (display (j2s->list node) p)
+						   (display (j2s->sexp node) p)
 						   (newline p)))
 					     ""))
 				      stack)))

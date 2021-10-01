@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 27 07:35:02 2019                          */
-;*    Last change :  Fri Oct  1 07:03:21 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:46:05 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Procedure optimization.                                          */
@@ -83,12 +83,12 @@
 		     (loop (+fx i 1) #\.))))
 	    ;; dump the decorate tree
 	    (when *debug-procedure-ast-pre*
-	       (pp/width (j2s->list this) (current-output-port)))
+	       (pp/width (j2s->sexp this) (current-output-port)))
 	    ;; disable all non-optimizable functions
 	    (disable-non-optimizable this)
 	    ;; dump the decorate tree
 	    (when *debug-procedure-ast-post*
-	       (pp/width (j2s->list this) (current-output-port)))
+	       (pp/width (j2s->sexp this) (current-output-port)))
 	    ;; annotate the ast
 	    (annotate-procedure this conf))))
    this)
@@ -166,7 +166,7 @@
 ;*---------------------------------------------------------------------*/
 (define (node-init-info! this::J2SNode vals fix::cell)
    (when (isa? this J2SFun)
-      (error "node-init-info!" "Illegal type" (j2s->list this)))
+      (error "node-init-info!" "Illegal type" (j2s->sexp this)))
    (with-access::J2SNode this (%info loc)
       (unfix! fix "node-init-info!" loc)
       (set! %info (node-procedure-info vals #t))

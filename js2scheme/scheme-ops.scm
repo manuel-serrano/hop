@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Sep 29 11:26:27 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:47:16 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -249,7 +249,7 @@
 	     (ty (j2s-type expr)))
 	  (cond
 	     ((and (eq? ty 'uint32) (eq? type 'uint32))
-	      (error "j2s-unop" "uint32 cannot be negated" (j2s->list expr)))
+	      (error "j2s-unop" "uint32 cannot be negated" (j2s->sexp expr)))
 	     ((j2s-number? sexp)
 	      (if (and (eq? type 'real) (fixnum? sexp))
 		  (fixnum->flonum (negfx sexp))
@@ -289,7 +289,7 @@
 	   (bitnot loc (j2s-scheme expr mode return ctx))
 	   `(bit-notjs ,(j2s-scheme expr mode return ctx) %this)))
       ((?.)
-       (error "j2s-unop" "should not be here" (j2s->list expr)))
+       (error "j2s-unop" "should not be here" (j2s->sexp expr)))
       (else
        (epairify loc
 	  `(,op ,(j2s-scheme expr mode return ctx))))))
@@ -530,12 +530,12 @@
        (cond
 	  ((isone? rhs) `(js++ ,(box lhs (j2s-type l) ctx) %this))
 	  ((isminusone? rhs) `(js-- ,(box lhs (j2s-type l) ctx) %this))
-	  (else (error "js-binop:++" "wrong rhs" (j2s->list r)))))
+	  (else (error "js-binop:++" "wrong rhs" (j2s->sexp r)))))
       ((--)
        (cond
 	  ((isone? rhs) `(js-- ,(box lhs (j2s-type l) ctx) %this))
 	  ((isminusone? rhs) `(js++ ,(box lhs (j2s-type l) ctx) %this))
-	  (else (error "jsbinop:--" "wrong rhs" (j2s->list r)))))
+	  (else (error "jsbinop:--" "wrong rhs" (j2s->sexp r)))))
       ((<)
        `(<js ,(box lhs (j2s-type l) ctx) ,(box rhs (j2s-type r) ctx) %this))
       ((<=)
@@ -601,7 +601,7 @@
 	 ((--)
 	  (if (isone? right)
 	      `(--js ,(box left tl ctx) %this)
-	      (error "jsbinop:--" "wrong rhs" (j2s->list r))))
+	      (error "jsbinop:--" "wrong rhs" (j2s->sexp r))))
 	 ((*)
 	  `(*js ,(box left tl ctx) ,(box right tr ctx) %this))
 	 ((**)
