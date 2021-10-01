@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Sep 18 16:23:23 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 07:02:49 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1461,10 +1461,10 @@
 (define-walk-method (node-range this::J2SCall env::pair-nil conf mode::symbol fix::cell)
    (with-debug *debug-range-call* this
       "env=" (dump-env env)
-      (with-access::J2SCall this ((callee fun) thisarg args)
+      (with-access::J2SCall this ((callee fun) thisargs args)
 	 (multiple-value-bind (tty env bkt)
-	    (if (pair? thisarg)
-		(node-range (car thisarg) env conf mode fix)
+	    (if (pair? thisargs)
+		(node-range (car thisargs) env conf mode fix)
 		(values #f env))
 	    (multiple-value-bind (rrange env)
 	       (node-range-call callee args env conf mode fix)

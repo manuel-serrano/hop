@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Sep 28 06:50:17 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 07:02:42 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1174,10 +1174,10 @@
 ;*    detailed in the code below.                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SCall env::pair-nil ctx::pair)
-   (with-access::J2SCall this (fun thisarg args protocol type loc)
+   (with-access::J2SCall this (fun thisargs args protocol type loc)
       (multiple-value-bind (tty env bkt)
-	 (if (pair? thisarg)
-	     (node-type (car thisarg) env ctx)
+	 (if (pair? thisargs)
+	     (node-type (car thisargs) env ctx)
 	     (values 'unknown env '()))
 	 (multiple-value-bind (rty env bkc)
 	    (node-type-call fun protocol tty args env ctx)
@@ -1580,7 +1580,7 @@
 			      (set! env (extend-env env decl 'object))))
 			'bool)
 		       ((instanceof)
-			(when (isa? lhs J2SRef)
+			(when (isa? rhs J2SRef)
 			   (with-access::J2SRef lhs (decl)
 			      (set! env (extend-env env decl 'function))))
 			'bool)

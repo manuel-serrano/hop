@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Sep 30 06:55:34 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 07:04:18 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -106,9 +106,9 @@
 	("replace" ,j2s-jsstring-replace string (any any) %this)
 	("replace" ,j2s-jsstring-maybe-replace any (any any) %this #t)
 	("match" ,j2s-jsstring-match-string string (string) %this ,j2s-regexp-plain?)
+	("match" js-jsstring-match string (any) %this)
 	("match" ,j2s-jsstring-match-string any (string) %this ,j2s-regexp-plain?)
 	("match" ,j2s-jsstring-match-regexp any (regexp) %this ,j2s-regexp-plain?)
-	("match" js-jsstring-match string (any) %this)
 	("match" #f object (any) %this #t)
 	("match" js-jsstring-maybe-match any (any) %this #t)
 	("naturalCompare" js-jsstring-naturalcompare string (string) %this)
@@ -1031,7 +1031,7 @@
 		 (with-access::J2SString field (val)
 		    (or (and (string=? val "toString")
 			     (j2s-tostring this mode return ctx))
-			(let ((call (if (eq? (j2s-type obj) 'object)
+			(let ((call (if (type-subtype? (j2s-type obj) 'object)
 					'js-method-jsobject-call-name/cache
 					'js-method-call-name/cache)))
 			   `(,call
@@ -1178,18 +1178,18 @@
 				 (id tmp))
 			      args)))))))))
    
-   (define (call-hop-function fun::J2SHopRef thisarg args)
+   (define (call-hop-function fun::J2SHopRef thisargs args)
       `(,(j2s-scheme fun mode return ctx)
-	,@(j2s-scheme thisarg mode return ctx)
+	,@(j2s-scheme thisargs mode return ctx)
 	,@(j2s-scheme args mode return ctx)))
 
-   (define (j2s-self thisarg)
-      (map (lambda (t) (j2s-scheme t mode return ctx)) thisarg))
+   (define (j2s-self thisargs)
+      (map (lambda (t) (j2s-scheme t mode return ctx)) thisargs))
 
 
-   (define (call-arguments-function fun::J2SFun thisarg::pair-nil f %gen args)
+   (define (call-arguments-function fun::J2SFun thisargs::pair-nil f %gen args)
       (with-access::J2SFun fun (params vararg idthis loc argumentsp)
-	 (let ((self (if idthis (j2s-self thisarg) '())))
+	 (let ((self (if idthis (j2s-self thisargs) '())))
 	    (if (context-get ctx :optim-arguments)
 		(with-access::J2SDeclArguments argumentsp (alloc-policy)
 		   (if (and (eq? alloc-policy 'lazy)
@@ -1204,7 +1204,7 @@
 		`(,f ,@%gen ,@self
 		    ,@(j2s-scheme args mode return ctx))))))
    
-   (define (call-rest-function fun::J2SFun thisarg::pair-nil f %gen args)
+   (define (call-rest-function fun::J2SFun thisargs::pair-nil f %gen args)
       ;; call a function that accepts a rest argument
       (with-access::J2SFun fun (params vararg)
 	 (let loop ((params params)
@@ -1222,11 +1222,11 @@
 			      (vector ,@(j2s-scheme args mode return ctx))
 			      (lambda (,v)
 				 (,f ,@%gen
-				    ,@(j2s-self thisarg)
+				    ,@(j2s-self thisargs)
 				    ,@(reverse! actuals)
 				    ,v))))
 		       `(,f ,@%gen
-			   ,@(j2s-self thisarg)
+			   ,@(j2s-self thisargs)
 			   ,@(reverse! actuals)
 			   (js-vector->jsarray
 			      (vector ,@(j2s-scheme args mode return ctx))
@@ -1240,7 +1240,7 @@
 		   (cons (j2s-scheme (car args) mode return ctx)
 		      actuals)))))))
 
-   (define (call-fix-function fun::J2SFun thisarg::pair-nil f %gen args)
+   (define (call-fix-function fun::J2SFun thisargs::pair-nil f %gen args)
       ;; call a function that accepts a fix number of arguments
       (with-access::J2SFun fun (params vararg thisp id)
 	 (let ((lenf (length params))
@@ -1249,7 +1249,7 @@
 	       ((=fx lenf lena)
 		;; matching arity
 		`(,f ,@%gen
-		    ,@(j2s-self thisarg)
+		    ,@(j2s-self thisargs)
 		    ,@(map (lambda (a p)
 			      (with-access::J2SDecl p (utype)
 				 (j2s-scheme a mode return ctx)))
@@ -1265,11 +1265,11 @@
 		   `(let* ,(map (lambda (t a)
 				   `(,t ,(j2s-scheme a mode return ctx)))
 			      temps args)
-		       (,f ,@%gen ,@(j2s-self thisarg)
+		       (,f ,@%gen ,@(j2s-self thisargs)
 			  ,@(take temps lenf)))))
 	       (else
 		;; argument missing
-		`(,f ,@(j2s-self thisarg)
+		`(,f ,@(j2s-self thisargs)
 		    ,@(j2s-scheme args mode return ctx)
 		    ,@(make-list (-fx lenf lena) '(js-undefined))))))))
 
@@ -1297,18 +1297,18 @@
 				   (j2s-minlen val) lp))
 			    this (format "~a provided" la))))))))))
 
-   (define (call-fun-function profid fun::J2SFun thisarg::pair-nil protocol f %gen::pair-nil args::pair-nil)
+   (define (call-fun-function profid fun::J2SFun thisargs::pair-nil protocol f %gen::pair-nil args::pair-nil)
       (with-access::J2SFun fun (params vararg idthis loc argumentsp name)
 	 (case (if (eq? protocol 'bounce) 'bounce vararg)
 	    ((arguments)
 	     (call-profile profid
-		(call-arguments-function fun thisarg f %gen args)))
+		(call-arguments-function fun thisargs f %gen args)))
 	    ((rest)
 	     (call-profile profid
-		(call-rest-function fun (if idthis thisarg '()) f %gen args)))
+		(call-rest-function fun (if idthis thisargs '()) f %gen args)))
 	    (else
 	     (call-profile profid
-		(call-fix-function fun (if idthis thisarg '()) f %gen args))))))
+		(call-fix-function fun (if idthis thisargs '()) f %gen args))))))
 
    (define (call-with-function fun::J2SWithRef args)
       (with-access::J2SWithRef fun (id withs loc)
@@ -1334,17 +1334,17 @@
 	       (with-access::J2SFun val (generator)
 		  generator)))))
 
-   (define (call-known-function protocol profid fun::J2SDecl thisarg::pair-nil args)
+   (define (call-known-function protocol profid fun::J2SDecl thisargs::pair-nil args)
       (cond
 	 ((isa? fun J2SDeclFun)
 	  (let ((val (j2sdeclinit-val-fun fun))
 		(id (j2s-decl-fast-id fun ctx)))
 	     (check-hopscript-fun-arity val id args)
 	     (let ((%gen (if (typed-generator? fun) '(%gen) '())))
-		(call-fun-function profid val thisarg protocol id %gen args))))
+		(call-fun-function profid val thisargs protocol id %gen args))))
 	 ((j2s-let-opt? fun)
 	  (with-access::J2SDeclInit fun (val)
-	     (call-fun-function profid val thisarg protocol
+	     (call-fun-function profid val thisargs protocol
 		(j2s-decl-fast-id fun ctx) '() args)))
 	 (else
 	  (error "js-scheme" "Should not be here" (j2s->list fun)))))
@@ -1445,7 +1445,7 @@
 			,@self
 			,@(packargs (j2s-scheme args mode return ctx))))))))))
 
-   (define (call-chaining-function protocol fun::J2SUnary thisargs args)
+   (define (call-chaining-function protocol fun::J2SUnary thisargss args)
       (with-access::J2SCall this (loc fun)
 	 (let ((tmp (gensym '%tmp)))
 	    (epairify loc
@@ -1470,11 +1470,11 @@
       (with-access::J2SUnresolvedRef fun (id)
 	 (eq? id 'eval)))
 
-   (define (call-unresolved-function fun thisarg args)
+   (define (call-unresolved-function fun thisargs args)
       (if (is-eval? fun)
 	  (call-eval-function fun args)
 	  (call-unknown-function 'direct fun
-	     (j2s-scheme thisarg mode return ctx) args)))
+	     (j2s-scheme thisargs mode return ctx) args)))
 
    (define (call-scheme this fun args)
       `(,(j2s-scheme fun mode return ctx)
@@ -1487,29 +1487,29 @@
 	       ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))
 	  (call-scheme this fun args)))
 
-   (define (call-scheme-this this fun thisarg args)
+   (define (call-scheme-this this fun thisargs args)
       `(,(j2s-scheme fun mode return ctx)
-	,@(j2s-scheme thisarg mode return ctx)
+	,@(j2s-scheme thisargs mode return ctx)
 	,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))
 
-   (define (call-scheme-this-arity this fun thisarg args)
+   (define (call-scheme-this-arity this fun thisargs args)
       (let ((len (length args)))
 	 `(js-calln-procedure
 	     ,(j2s-scheme fun mode return ctx)
-	     ,@(j2s-scheme thisarg mode return ctx)
+	     ,@(j2s-scheme thisargs mode return ctx)
 	     (list ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))
 	 `(,(string->symbol (format "js-call~a-procedure" len))
 	   ,(j2s-scheme fun mode return ctx)
-	   ,@(j2s-scheme thisarg mode return ctx)
+	   ,@(j2s-scheme thisargs mode return ctx)
 	   ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args))))
 
-   (with-access::J2SCall this (loc profid fun thisarg args protocol cache cspecs)
+   (with-access::J2SCall this (loc profid fun thisargs args protocol cache cspecs)
       (let loop ((fun fun))
 	 (epairify loc
 	    (cond
 	       ((j2s-chaining? fun)
 		(call-chaining-function protocol fun
-		   (j2s-scheme thisarg mode return ctx) args))
+		   (j2s-scheme thisargs mode return ctx) args))
 	       ((and (isa? fun J2SAccess) (get-optional-chaining fun))
 		=>
 		(lambda (axs)
@@ -1522,10 +1522,10 @@
 		    (let ((d (when (isa? fun J2SRef)
 				(read-only-function fun))))
 		       (if (isa? d J2SDeclFun)
-			   (call-known-function protocol profid d thisarg args)
-			   (call-scheme-this this fun thisarg args))))
+			   (call-known-function protocol profid d thisargs args)
+			   (call-scheme-this this fun thisargs args))))
 		   ((procedure-this-arity)
-		    (call-scheme-this-arity this fun thisarg args))
+		    (call-scheme-this-arity this fun thisargs args))
 		   ((procedure-nothis)
 		    (call-scheme-nothis this fun args))
 		   (else
@@ -1536,7 +1536,7 @@
 		(with-access::J2SParen fun (expr)
 		   (loop expr)))
 	       ((isa? fun J2SHopRef)
-		(call-hop-function fun thisarg args))
+		(call-hop-function fun thisargs args))
 	       ((isa? fun J2SSuper)
 		(with-access::J2SSuper fun (context)
 		   (cond
@@ -1548,11 +1548,11 @@
 		       (error "hopc" "wrong super context" context)))))
 	       ((isa? fun J2SSvc)
 		(call-unknown-function protocol fun
-		   (j2s-scheme thisarg mode return ctx) args))
+		   (j2s-scheme thisargs mode return ctx) args))
 	       ((and (isa? fun J2SFun)
 		     (with-access::J2SFun fun (decl)
 			(not decl)))
-		(call-fun-function profid fun thisarg protocol
+		(call-fun-function profid fun thisargs protocol
 		   (jsfun->lambda fun mode return ctx (j2s-fun-prototype fun) #f)
 		   '()
 		   args))
@@ -1563,7 +1563,7 @@
 		   (with-access::J2SDecl decl (id scope)
 		      (cond
 			 ((not (decl-ronly? decl))
-			  (call-unresolved-function fun thisarg args))
+			  (call-unresolved-function fun thisargs args))
 			 ((find-builtin-function id args)
 			  =>
 			  (lambda (f)
@@ -1582,23 +1582,23 @@
 			 ((eq? scope '%hop)
 			  'TODO)
 			 (else
-			  (call-unresolved-function fun thisarg args))))))
+			  (call-unresolved-function fun thisargs args))))))
 	       ((isa? fun J2SUnresolvedRef)
-		(call-unresolved-function fun thisarg args))
+		(call-unresolved-function fun thisargs args))
 	       ((isa? fun J2SWithRef)
 		(call-with-function fun args))
 	       ((isa? fun J2SPragma)
 		(call-pragma fun args))
 	       ((not (isa? fun J2SRef))
 		(call-unknown-function protocol fun
-		   (j2s-scheme thisarg mode return ctx) args))
+		   (j2s-scheme thisargs mode return ctx) args))
 	       ((read-only-function fun)
 		=>
 		(lambda (fun)
-		   (call-known-function protocol profid fun thisarg args)))
+		   (call-known-function protocol profid fun thisargs args)))
 	       (else
 		(call-unknown-function protocol fun
-		   (j2s-scheme thisarg mode return ctx) args)))))))
+		   (j2s-scheme thisargs mode return ctx) args)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-tostring ...                                                 */
@@ -1640,7 +1640,7 @@
 ;*    j2s-scheme-call-spread ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-call-spread this mode return ctx)
-   (with-access::J2SCall this (loc profid fun thisarg args)
+   (with-access::J2SCall this (loc profid fun thisargs args)
       (let ((expr (spread->array-expr loc args #f)))
 	 (cond
 	    ((and (isa? fun J2SRef)
@@ -1652,13 +1652,13 @@
 		    (let ((ncall (instantiate::J2SCall
 				    (loc loc)
 				    (fun fun)
-				    (thisarg (list (J2SNull)))
+				    (thisargs (list (J2SNull)))
 				    (args exprs))))
 		       (j2s-scheme ncall mode return ctx)))
 		 (epairify loc
 		    `(js-apply %this ,(j2s-scheme fun mode return ctx)
 			,@(map (lambda (a) (j2s-scheme a mode return ctx))
-			     thisarg)
+			     thisargs)
 			,(j2s-spread->expr-list args mode return ctx)))))
 	    ((isa? fun J2SAccess)
 	     (with-access::J2SAccess fun (obj field)
@@ -1673,7 +1673,7 @@
 					 (field (instantiate::J2SString
 						   (loc loc)
 						   (val "apply")))))
-				 (thisarg (list (J2SUndefined)))
+				 (thisargs (list (J2SUndefined)))
 				 (args (list (J2SHopRef o) expr)))))
 		   `(let ((,o ,(j2s-scheme obj mode return ctx)))
 		       ,(j2s-scheme ncall mode return ctx)))))
@@ -1686,7 +1686,7 @@
 				     (field (instantiate::J2SString
 					       (loc loc)
 					       (val "apply")))))
-			     (thisarg (list (J2SUndefined)))
+			     (thisargs (list (J2SUndefined)))
 			     (args (list (J2SNull) expr)))))
 		(j2s-scheme ncall mode return ctx)))))))
 						      

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 27 07:35:02 2019                          */
-;*    Last change :  Tue Apr 14 16:23:23 2020 (serrano)                */
-;*    Copyright   :  2019-20 Manuel Serrano                            */
+;*    Last change :  Fri Oct  1 07:03:21 2021 (serrano)                */
+;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Procedure optimization.                                          */
 ;*                                                                     */
@@ -83,12 +83,12 @@
 		     (loop (+fx i 1) #\.))))
 	    ;; dump the decorate tree
 	    (when *debug-procedure-ast-pre*
-	       (pp (j2s->list this) (current-output-port)))
+	       (pp/width (j2s->list this) (current-output-port)))
 	    ;; disable all non-optimizable functions
 	    (disable-non-optimizable this)
 	    ;; dump the decorate tree
 	    (when *debug-procedure-ast-post*
-	       (pp (j2s->list this) (current-output-port)))
+	       (pp/width (j2s->list this) (current-output-port)))
 	    ;; annotate the ast
 	    (annotate-procedure this conf))))
    this)
@@ -492,15 +492,15 @@
 	     (fun-procedure-info-retvals %info)
 	     (fun-init-info! fun '() #f fix))))
    
-   (with-access::J2SCall this (fun thisarg args loc %info loc)
+   (with-access::J2SCall this (fun thisargs args loc %info loc)
       ;; initialize the call if needed
       (unless (node-procedure-info? %info)
 	 (node-init-info! this '() fix))
       ;; escape untracked this argument
-      (for-each (lambda (t) (escape! t fix)) thisarg)
+      (for-each (lambda (t) (escape! t fix)) thisargs)
       ;; evaluate all components
       (let ((funvals (eval-procedure fun fix))
-	    (thisvals (map (lambda (t) (eval-procedure t fix)) thisarg))
+	    (thisvals (map (lambda (t) (eval-procedure t fix)) thisargs))
 	    (argsvals (map (lambda (a) (eval-procedure a fix)) args)))
 	 (if (eq? funvals 'top)
 	     (begin

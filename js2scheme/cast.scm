@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Sep 28 06:51:09 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 07:02:57 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -325,9 +325,9 @@
 ;*    type-cast! ::J2SCall ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SCall totype)
-   (with-access::J2SCall this (fun args thisarg loc)
-      (when (pair? thisarg)
-	 (set-car! thisarg (type-cast! (car thisarg) 'any)))
+   (with-access::J2SCall this (fun args thisargs loc)
+      (when (pair? thisargs)
+	 (set-car! thisargs (type-cast! (car thisargs) 'any)))
       (type-call-cast! this fun args totype)))
 
 ;*---------------------------------------------------------------------*/

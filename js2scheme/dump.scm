@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Sep 26 10:42:46 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 07:01:21 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -466,7 +466,7 @@
 (define-generic (j2s-dump this::obj)
    (call-with-output-file "/tmp/DUMP.scm"
       (lambda (op)
-	 (pp (j2s->list this) op))))
+	 (pp/width (j2s->list this) op))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::obj ...                                              */
@@ -1006,7 +1006,7 @@
 ;*    j2s->list ::J2SCall ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCall)
-   (with-access::J2SCall this (fun thisarg args loc protocol profid)
+   (with-access::J2SCall this (fun thisargs args loc protocol profid)
       `(,@(call-next-method)
 	  ,@(dump-loc loc)
 	  ,@(dump-size this)
@@ -1022,7 +1022,7 @@
 		'())
 	  ,(j2s->list fun)
 	  ,@(dump-cache this)
-	  ,@(if (pair? thisarg) `(:thisarg ,@(map j2s->list thisarg)) '())
+	  ,@(if (pair? thisargs) `(:thisargs ,@(map j2s->list thisargs)) '())
 	  ,@(map j2s->list args))))
 		  
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Sep 22 08:16:44 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 07:38:33 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -549,6 +549,9 @@
 	 (hopc-long-size-set! (bigloo-config 'elong-size)))
       (unless (fixnum? (hopc-int-size))
 	 (hopc-int-size-set! (bigloo-config 'int-size)))
+
+      ;; pp-width
+      (set! *pp-width* (hopc-pp-width))
 
       ;; config report
       (when (pair? configs)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Sun Sep 26 15:59:16 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 07:00:50 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -151,14 +151,14 @@
    `(instantiate::J2SCall
        (loc loc)
        (fun ,fun)
-       (thisarg (list (J2SUndefined)))
+       (thisargs (list (J2SUndefined)))
        (args ,(if (pair? args) `(list ,@args) ''()))))
 
 (define-macro (J2SHopCall fun . args)
    `(instantiate::J2SCall
        (loc loc)
        (fun ,fun)
-       (thisarg '())
+       (thisargs '())
        (args ,(if (pair? args) `(list ,@args) ''()))))
 
 (define-macro (J2SHopCall/type type fun . args)
@@ -166,35 +166,35 @@
        (loc loc)
        (fun ,fun)
        (type ,type)
-       (thisarg '())
+       (thisargs '())
        (args ,(if (pair? args) `(list ,@args) ''()))))
 
 (define-macro (J2SCall* fun args)
    `(instantiate::J2SCall
        (loc loc)
        (fun ,fun)
-       (thisarg (list (J2SUndefined)))
+       (thisargs (list (J2SUndefined)))
        (args ,args)))
 
-(define-macro (J2SMethodCall fun thisarg . args)
+(define-macro (J2SMethodCall fun thisargs . args)
    `(instantiate::J2SCall
        (loc loc)
        (fun ,fun)
-       (thisarg ,thisarg)
+       (thisargs ,thisargs)
        (args ,(if (pair? args) `(list ,@args) ''()))))
 
-(define-macro (J2SMethodCall* fun thisarg args)
+(define-macro (J2SMethodCall* fun thisargs args)
    `(instantiate::J2SCall
        (loc loc)
        (fun ,fun)
-       (thisarg ,thisarg)
+       (thisargs ,thisargs)
        (args ,args)))
 
-(define-macro (J2SMethodCall/cache* fun thisarg args cspecs cache)
+(define-macro (J2SMethodCall/cache* fun thisargs args cspecs cache)
    `(instantiate::J2SCall
        (loc loc)
        (fun ,fun)
-       (thisarg ,thisarg)
+       (thisargs ,thisargs)
        (args ,args)
        (cspecs ,cspecs)
        (cache ,cache)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Sep 26 10:46:38 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 07:00:19 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1599,7 +1599,7 @@
 		      (loc loc)
 		      (fun fun)
 		      (protocol (args-protocol args))
-		      (thisarg (list (J2SUndefined)))
+		      (thisargs (list (J2SUndefined)))
 		      (args args))))))))
 
    (define (consume-param! idx maybe-expr?)
@@ -2363,7 +2363,7 @@
 		  (fun (instantiate::J2SHopRef
 			  (loc loc)
 			  (id 'js-template-raw)))
-		  (thisarg '())
+		  (thisargs '())
 		  (args (list (instantiate::J2SArray
 				 (loc loc)
 				 (type 'array)
@@ -2426,7 +2426,7 @@
 			     (loc loc)
 			     (fun expr)
 			     (protocol (args-protocol args))
-			     (thisarg (if (isa? expr J2SHopRef)
+			     (thisargs (if (isa? expr J2SHopRef)
 					  '()
 					  (list (J2SUndefined))))
 			     (args args))))
@@ -2435,7 +2435,7 @@
 	     (instantiate::J2SCall
 		(loc loc)
 		(fun expr)
-		(thisarg (list (J2SUndefined)))
+		(thisargs (list (J2SUndefined)))
 		(args (tag-call-arguments loc))))
 	    ((?.)
 	     (let* ((token (consume-any!))
@@ -2652,7 +2652,7 @@
 			      (loc loc)
 			      (fun fun)
 			      (protocol (args-protocol '()))
-			      (thisarg (list (J2SUndefined)))
+			      (thisargs (list (J2SUndefined)))
 			      (args '())))))
 		 (begin
 		    (token-push-back! lpar)
@@ -2672,13 +2672,13 @@
 					   (loc loc)
 					   (fun fun)
 					   (protocol (args-protocol exprs))
-					   (thisarg (list (J2SUndefined)))
+					   (thisargs (list (J2SUndefined)))
 					   (args exprs)))
 				     (instantiate::J2SCall
 					(loc loc)
 					(fun fun)
 					(protocol (args-protocol (list expr)))
-					(thisarg (list (J2SUndefined)))
+					(thisargs (list (J2SUndefined)))
 					(args (list expr)))))))
 			  (else
 			   (parse-token-error "wrong async expression" token))))))))
@@ -2854,7 +2854,7 @@
 	     (instantiate::J2SCall
 		(loc loc)
 		(fun (j2s-tag->expr tag #t))
-		(thisarg (list (J2SUndefined)))
+		(thisargs (list (J2SUndefined)))
 		(args '()))))
 	 ((HTMLCOMMENT)
 	  (let* ((tag (consume-any!))
@@ -2862,7 +2862,7 @@
 	     (instantiate::J2SCall
 		(loc (token-loc tag))
 		(fun (j2s-tag->expr (make-token tag '<!--> loc) #t))
-		(thisarg (list (J2SUndefined)))
+		(thisargs (list (J2SUndefined)))
 		(args (list (instantiate::J2SNativeString
 			       (loc loc)
 			       (val (token-value tag))))))))

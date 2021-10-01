@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Mon Sep 27 14:20:08 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 11:08:13 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -409,18 +409,6 @@
 	  clazz))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-class-constructor-might-return? ...                          */
-;*---------------------------------------------------------------------*/
-(define (j2s-class-constructor-might-return? this::J2SClass)
-   (let ((ctor (j2s-class-get-constructor this)))
-      (when ctor
-	 (with-access::J2SClassElement ctor (prop)
-	    (with-access::J2SMethodPropertyInit prop (val)
-	       (with-access::J2SFun val (need-bind-exit-return)
-		  (or need-bind-exit-return
-		      (class-method-use-return? val))))))))
-
-;*---------------------------------------------------------------------*/
 ;*    j2s-class-methods-use-super? ...                                 */
 ;*    -------------------------------------------------------------    */
 ;*    True iff at least one class methods uses "super".                */
@@ -467,6 +455,17 @@
    (cell-ref cell))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-class-constructor-might-return? ...                          */
+;*---------------------------------------------------------------------*/
+(define (j2s-class-constructor-might-return? this::J2SClass)
+   (let ((ctor (j2s-class-get-constructor this)))
+      (when ctor
+	 (with-access::J2SClassElement ctor (prop)
+	    (with-access::J2SMethodPropertyInit prop (val)
+	       (with-access::J2SFun val (need-bind-exit-return)
+		  (class-method-use-return? val)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    class-method-use-return? ...                                     */
 ;*    -------------------------------------------------------------    */
 ;*    Returns true iff the function uses "return".                     */
@@ -474,27 +473,29 @@
 (define (class-method-use-return? this::J2SFun)
    (let ((cell (make-cell #f)))
       (with-access::J2SFun this (body)
-	 (method-use-return? body cell)
+	 (method-use-return? body this cell)
 	 (cell-ref cell))))
 
 ;*---------------------------------------------------------------------*/
 ;*    method-use-return? ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (method-use-return? this::J2SNode cell)
+(define-walk-method (method-use-return? this::J2SNode fun cell)
    (or (cell-ref cell)
        (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
 ;*    method-use-return? ::J2SReturn ...                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (method-use-return? this::J2SReturn cell)
-   (cell-set! cell #t)
-   #t)
+(define-walk-method (method-use-return? this::J2SReturn fun cell)
+   (with-access::J2SReturn this (expr from)
+      (when (and (not (isa? expr J2SUndefined)) (eq? from fun))
+	 (cell-set! cell #t)
+	 #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    method-use-return? ::J2SFun ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (method-use-return? this::J2SFun cell)
+(define-method (method-use-return? this::J2SFun fun cell)
    (cell-ref cell))
 
 ;*---------------------------------------------------------------------*/

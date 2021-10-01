@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Sep 22 11:58:09 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 06:57:51 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -458,7 +458,7 @@
 	      (cspecs (default '()) (info '("nojson" "notraverse")))
 	      (fun::J2SExpr (info '("ast")))
 	      (protocol::symbol (default 'direct) (info '("notraverse")))
-	      (thisarg::pair-nil (info '("ast")))
+	      (thisargs::pair-nil (info '("ast")))
 	      (args::pair-nil (default '()) (info '("ast"))))
 	   
 	   (final-class J2STilde::J2SExpr
@@ -1125,7 +1125,7 @@
 (gen-walks J2SAccess obj field)
 (gen-walks J2SCacheCheck obj)
 (gen-walks J2SCacheUpdate obj)
-(gen-walks J2SCall fun (thisarg) (args))
+(gen-walks J2SCall fun (thisargs) (args))
 (gen-walks J2SNew clazz (args))
 (gen-walks J2SAssig lhs rhs)
 (gen-walks J2SFun body (params))

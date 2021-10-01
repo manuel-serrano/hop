@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Tue Sep 28 07:47:43 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 07:35:42 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
@@ -87,7 +87,7 @@
 				 (lambda (p)
 				    (fprint p ";; -*-bee-*-")
 				    (fprint p ";; " comment)
-				    (pp (j2s->list nast) p)))))
+				    (pp/width (j2s->list nast) p)))))
 			 ((file-exists? file)
 			  (delete-file file)))))
 		(when (procedure? after) (after nast))

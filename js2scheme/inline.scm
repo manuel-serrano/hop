@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Sep 27 13:05:09 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 07:03:08 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -913,7 +913,7 @@
 			(function-rutype
 			   (protoinfo-method (car mets))))))))))
    
-   (define (inline-ref-call this::J2SCall fun::J2SRef thisarg args loc)
+   (define (inline-ref-call this::J2SCall fun::J2SRef thisargs args loc)
       (cond
 	 ((find-inline-decl-function this fun (length args) limit stack)
 	  =>
@@ -922,7 +922,7 @@
 	     (when (pair? stack)
 		(invalidate-function-size! (car stack)))
 	     (inline-stmt->expr loc
-		(inline-function-call target thisarg args loc
+		(inline-function-call target thisargs args loc
 		   targets (if targets 0 limit) stack pmethods ingen prgm conf)
 		(function-rutype target))))
 	 ((pair? targets)
@@ -931,20 +931,20 @@
 		(when (pair? stack)
 		   (invalidate-function-size! (car stack)))
 		(inline-stmt->expr loc
-		   (inline-unknown-call fun thisarg  args loc
+		   (inline-unknown-call fun thisargs  args loc
 		      targets limit stack pmethods ingen prgm conf)
 		   (function-rutype (car targets))))))
 	 (else
 	  #f)))
 
-   (define (inline-expr-call this fun thisarg args loc)
+   (define (inline-expr-call this fun thisargs args loc)
       (let ((decl (J2SDeclInit '(ref) (gensym '%fun) fun)))
 	 (inline-stmt->expr loc
 	    (J2SLetBlock (list decl)
-	       (inline-ref-call this (J2SRef decl) thisarg args loc))
+	       (inline-ref-call this (J2SRef decl) thisargs args loc))
 	    'unknown)))
    
-   (with-access::J2SCall this (fun thisarg args type loc cache protocol)
+   (with-access::J2SCall this (fun thisargs args type loc cache protocol)
       (cond
 	 ((memq (caddr loc) blacklistloc)
 	  (call-default-walker))
@@ -963,10 +963,10 @@
 	  (or (inline-access-call this fun args loc)
 	      (call-default-walker)))
 	 ((isa? fun J2SRef)
-	  (or (inline-ref-call this fun thisarg args loc)
+	  (or (inline-ref-call this fun thisargs args loc)
 	      (call-default-walker)))
 	 ((pair? targets)
-	  (or (inline-expr-call this fun thisarg args loc)
+	  (or (inline-expr-call this fun thisargs args loc)
 	      (call-default-walker)))
 	 (else
 	  (call-default-walker)))))
@@ -1005,12 +1005,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline-function-call ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (inline-function-call val::J2SFun thisarg args::pair-nil loc
+(define (inline-function-call val::J2SFun thisargs args::pair-nil loc
 	   targets limit::long stack::pair-nil pmethods ingen prgm conf)
    (with-access::J2SFun val (body thisp params (floc loc))
       (let* ((vals (inline-args (cons thisp params)
-		      (if (pair? thisarg)
-			  (append thisarg args)
+		      (if (pair? thisargs)
+			  (append thisargs args)
 			  (cons (J2SUndefined) args))
 		      #f limit stack pmethods ingen prgm conf loc))
 	     (nbody (j2s-alpha body (cons thisp params) vals)))
@@ -1034,7 +1034,7 @@
 		    (J2SLetOpt '(ref assig) id a))))
 	 args))
 
-   (with-access::J2SCall node (thisargs args loc)
+   (with-access::J2SCall node (thisargss args loc)
       (with-access::J2SFun target (body thisp params (floc loc))
 	 (let* ((vals (cons (J2SUndefined) (inline-function-args args)))
 		(nbody (j2s-alpha body (cons thisp params) vals)))
@@ -1044,7 +1044,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline-unknown-call ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (inline-unknown-call ref::J2SRef thisarg args::pair-nil loc
+(define (inline-unknown-call ref::J2SRef thisargs args::pair-nil loc
 	   targets limit::long stack::pair-nil pmethods ingen prgm conf)
    (let loop ((targets targets))
       (if (null? targets)
@@ -1057,7 +1057,7 @@
 		    (J2SIf (J2SHopCall (J2SHopRef/rtype 'eq? 'bool)
 			      (J2SRef (with-access::J2SRef ref (decl) decl))
 			      (J2SRef (targetinfo-decl target)))
-		       (inline-function-call fun thisarg args loc
+		       (inline-function-call fun thisargs args loc
 			  #f 0 stack pmethods ingen prgm conf)
 		       (loop (cdr targets))))
 		 (loop '()))))))
@@ -1123,10 +1123,10 @@
 				  args))
 			    (loop (cdr targets))))))))))
    
-   (with-access::J2SCall node (fun thisarg args loc)
+   (with-access::J2SCall node (fun thisargs args loc)
       ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the
       ;; shape of the test that suits the tyflow analysis
-      (let ((vals (inline-closure-args (append thisarg args))))
+      (let ((vals (inline-closure-args (append thisargs args))))
 	 (inline-closure-call fun vals loc))))
 
 ;*---------------------------------------------------------------------*/
@@ -2127,10 +2127,10 @@
 ;*    collect-calls* ::J2SCall ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (collect-calls* this::J2SCall parent::J2SNode owner)
-   (with-access::J2SCall this (fun thisarg args %info loc)
+   (with-access::J2SCall this (fun thisargs args %info loc)
       (let ((next (append
 		     (collect-calls* fun this owner)
-		     (collect-calls* thisarg this owner)
+		     (collect-calls* thisargs this owner)
 		     (collect-calls* args this owner))))
 	 (if (and loc
 		  ;; dev

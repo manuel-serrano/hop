@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Tue Sep 28 06:49:33 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 07:02:35 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -657,7 +657,7 @@
 	    (fun (instantiate::J2SRef
 		    (decl orig)
 		    (loc loc)))
-	    (thisarg (list (instantiate::J2SHopRef
+	    (thisargs (list (instantiate::J2SHopRef
 			      (loc loc)
 			      (type 'any)
 			      (id idthis))))
@@ -677,7 +677,7 @@
 		    (id 'js-raise-utype-error)
 		    (rtype 'magic)
 		    (loc loc)))
-	    (thisarg (list (instantiate::J2SHopRef
+	    (thisargs (list (instantiate::J2SHopRef
 			      (loc loc)
 			      (type 'any)
 			      (id '%this))))
@@ -1054,7 +1054,7 @@
 		    (type 'function)
 		    (rtype 'bool)
 		    (id (hint-type-predicate htype))))
-	    (thisarg '())
+	    (thisargs '())
 	    (args (list (instantiate::J2SRef
 			   (loc loc)
 			   (decl param)))))))
@@ -1357,7 +1357,7 @@
 			       (when (isa? hintinfo FunHintInfo)
 				  hintinfo)))))))))))
    
-   (with-access::J2SCall this (fun args thisarg)
+   (with-access::J2SCall this (fun args thisargs)
       (set! args (map! (lambda (n) (j2s-call-hint! n concrete-type conf)) args))
       (set! fun (j2s-call-hint! fun concrete-type conf))
       (let ((hinfo (fun-hint-info fun)))
@@ -1370,7 +1370,7 @@
 			    ((not (=fx (length args) (length types)))
 			     (with-access::J2SFun val (idthis)
 				(duplicate::J2SCall this
-				   (thisarg thisarg)
+				   (thisargs thisargs)
 				   (type (fun-rtype unhinted))
 				   (fun (duplicate::J2SRef fun
 					   (type 'function)
@@ -1397,7 +1397,7 @@
 				(with-access::J2SDecl decl (usecnt)
 				   (set! usecnt (-fx usecnt 1)))
 				(duplicate::J2SCall this
-				   (thisarg thisarg)
+				   (thisargs thisargs)
 				   (type (fun-rtype hinted))
 				   (fun (duplicate::J2SRef fun
 					   (type 'function)
@@ -1421,7 +1421,7 @@
 			    (else
 			     (with-access::J2SFun val (idthis)
 				(duplicate::J2SCall this
-				   (thisarg thisarg)
+				   (thisargs thisargs)
 				   (type (fun-rtype unhinted))
 				   (fun (duplicate::J2SRef fun
 					   (type 'function)

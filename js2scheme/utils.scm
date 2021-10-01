@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Tue Sep 28 08:43:10 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 07:33:56 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -20,6 +20,7 @@
 	   __js2scheme_dump)
    
    (export (pass ::bstring)
+	   (pp/width ::obj ::output-port #!optional (width 256))
 	   (error/loc proc obj msg loc)
 	   (illegal-node ::bstring ::J2SNode)
 	   (config-get ::pair-nil ::keyword #!optional def)
@@ -87,6 +88,15 @@
 ;*---------------------------------------------------------------------*/
 (define (pass name)
    (print name))
+
+;*---------------------------------------------------------------------*/
+;*    pp/width ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (pp/width obj out #!optional (width 256))
+   (let ((w *pp-width*))
+      (set! *pp-width* width)
+      (pp obj out)
+      (set! *pp-width* w)))
 
 ;*---------------------------------------------------------------------*/
 ;*    error/loc ...                                                    */
@@ -300,8 +310,12 @@
 ;*---------------------------------------------------------------------*/
 (define (noclass-subtype? type supertype)
    (or (eq? type supertype)
-       (and (eq? supertype 'number) (memq type '(integer real)))
-       (and (eq? supertype 'object) (memq type '(array jsvector)))
+       (and (eq? supertype 'number)
+	    (memq type '(integer real)))
+       (and (eq? supertype 'object)
+	    (memq type '(array jsvector date regexp function argument promise)))
+       (and (eq? supertype 'object)
+	    (isa? type J2SClass))
        (and (eq? type 'integer) (eq? supertype 'number))
        (and (eq? type 'function) (eq? supertype 'arrow))
        (and (memq type '(record class)) (eq? supertype 'function))
@@ -690,17 +704,34 @@
 ;*    Used to find the class of an X instanceof Y expression.          */
 ;*---------------------------------------------------------------------*/
 (define (class-of rhs::J2SExpr)
-   (when (isa? rhs J2SUnresolvedRef)
-      (with-access::J2SUnresolvedRef rhs (id)
-	 (case id
-	    ((Array) 'array)
-	    ((Argument) 'argument)
-	    ((Date) 'date)
-	    ((RegExp) 'regexp)
-	    ((Object) 'object)
-	    ((Function) 'function)
-	    ((Promise) 'promise)
-	    (else 'unknown)))))
+   (cond
+      ((isa? rhs J2SUnresolvedRef)
+       (with-access::J2SUnresolvedRef rhs (id)
+	  (case id
+	     ((Array) 'array)
+	     ((Argument) 'argument)
+	     ((Date) 'date)
+	     ((RegExp) 'regexp)
+	     ((Object) 'object)
+	     ((Function) 'function)
+	     ((Promise) 'promise)
+	     (else 'object))))
+      ((is-builtin-ref? rhs 'Object)
+       'object)
+      ((is-builtin-ref? rhs 'Array)
+       'array)
+      ((is-builtin-ref? rhs 'Date)
+       'date)
+      ((is-builtin-ref? rhs 'RegExp)
+       'regexp)
+      ((is-builtin-ref? rhs 'Function)
+       'functionn)
+      ((is-builtin-ref? rhs 'Promise)
+       'promise)
+      ((is-builtin-ref? rhs 'Argument)
+       'argument)
+      ((isa? rhs J2SClass)
+       rhs)))
 
 ;*---------------------------------------------------------------------*/
 ;*    best-hint ...                                                    */

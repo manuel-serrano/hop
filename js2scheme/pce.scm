@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Fri Sep  3 10:43:54 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 07:35:23 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
@@ -61,7 +61,7 @@
 		(call-with-output-file f
 		   (lambda (p)
 		      (fprint p ";; -*-bee-*-")
-		      (pp (j2s->list nthis) p)))))
+		      (pp/width (j2s->list nthis) p)))))
 	  (with-access::J2SProgram nthis (pcache-size)
 	     (let ((counter (make-counter pcache-size)))
 		(let ((res (expand-pce! nthis counter #t)))

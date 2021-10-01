@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug  6 14:30:50 2018                          */
-;*    Last change :  Thu Sep 30 21:05:33 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 07:03:30 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Bind record static methods at top-level and replace static       */
@@ -114,7 +114,7 @@
 ;*    refstatic! ::J2SCall ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (refstatic! this::J2SCall args)
-   (with-access::J2SCall this (fun args thisarg)
+   (with-access::J2SCall this (fun args thisargs)
       (when (isa? fun J2SAccess)
 	 (let ((el (record-static-method fun)))
 	    (when (isa? el J2SClassElement)
@@ -122,7 +122,7 @@
 		  (when (isa? %info J2SDeclFun)
 		     (with-access::J2SAccess fun (loc obj)
 			(set! fun (J2SRef %info))
-			(set! thisarg (list obj))))))))
+			(set! thisargs (list obj))))))))
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/

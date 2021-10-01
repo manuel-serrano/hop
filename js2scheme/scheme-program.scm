@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Sep 28 07:24:16 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 07:03:49 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -1016,7 +1016,7 @@
 ;*    profile-cache-info-init ::J2SCall ...                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (profile-cache-info-init this::J2SCall table)
-   (with-access::J2SCall this (fun args thisarg cache loc)
+   (with-access::J2SCall this (fun args thisargs cache loc)
       (if (isa? fun J2SAccess)
 	  (begin
 	     (profile-access fun table 'get)
@@ -1024,7 +1024,7 @@
 		(profile-access fun table 'call cache)))
 	  (profile-cache-info-init fun table))
       (for-each (lambda (a) (profile-cache-info-init a table)) args)
-      (for-each (lambda (a) (profile-cache-info-init a table)) thisarg)))
+      (for-each (lambda (a) (profile-cache-info-init a table)) thisargs)))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-cache-info-init ::J2SCacheCheck ...                      */

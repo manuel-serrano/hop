@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Tue Sep 28 15:13:43 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 07:01:31 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -441,15 +441,15 @@
 ;*    rewrite-accesses! ::J2SCall ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (rewrite-accesses! this::J2SCall)
-   (with-access::J2SCall this (args fun thisarg)
+   (with-access::J2SCall this (args fun thisargs)
       (if (isa? fun J2SAccess)
 	  (with-access::J2SAccess fun (obj field)
 	     (if (isa? obj J2SRef)
 		 (let ((nfun (rewrite-accesses! fun)))
 		    (let ((node (call-default-walker)))
 		       (unless (eq? nfun fun)
-			  (with-access::J2SCall node (thisarg)
-			     (set! thisarg (list obj))))
+			  (with-access::J2SCall node (thisargs)
+			     (set! thisargs (list obj))))
 		       node))
 		 (call-default-walker)))
 	  (call-default-walker))))

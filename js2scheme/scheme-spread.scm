@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  6 16:35:12 2018                          */
-;*    Last change :  Sat Apr 11 09:45:54 2020 (serrano)                */
-;*    Copyright   :  2018-20 Manuel Serrano                            */
+;*    Last change :  Fri Oct  1 07:04:09 2021 (serrano)                */
+;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions to deal with spread syntax.                    */
 ;*=====================================================================*/
@@ -85,7 +85,7 @@
 			    (field (instantiate::J2SString
 				      (loc loc)
 				      (val "concat")))))
-		    (thisarg (list
+		    (thisargs (list
 				(instantiate::J2SArray
 				   (loc loc)
 				   (len 0)
@@ -100,7 +100,7 @@
 		     (field (instantiate::J2SString
 			       (loc loc)
 			       (val "concat")))))
-	     (thisarg (list arr))
+	     (thisargs (list arr))
 	     (args rest)))))
 
 ;*---------------------------------------------------------------------*/
