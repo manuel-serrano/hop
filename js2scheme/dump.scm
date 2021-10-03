@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Oct  1 13:19:54 2021 (serrano)                */
+;*    Last change :  Sat Oct  2 06:14:03 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -102,10 +102,10 @@
        type)
       ((isa? type J2SRecord)
        (with-access::J2SRecord type (name)
-	  (cons 'record name)))
+	  (symbol-append '|R:| name)))
       ((isa? type J2SClass)
        (with-access::J2SClass type (name)
-	  (cons 'class name)))
+	  (symbol-append '|C:| name)))
       (else
        type)))
 

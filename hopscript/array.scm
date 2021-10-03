@@ -1124,7 +1124,7 @@
       :value js-array :enumerable #f
       :hidden-class #t)
    
-   ;; tostring
+   ;; toString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.2
    (define (array-prototype-tostring this::obj)
       (let* ((o (js-toobject %this this))
@@ -3842,7 +3842,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-concat-add ...                                */
 ;*    -------------------------------------------------------------    */
-;*    This functin is used when concat is used with a non array        */
+;*    This function is used when concat is used with a non array       */
 ;*    argument.                                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-concat-add this arg %this cache)

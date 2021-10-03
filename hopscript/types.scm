@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Sep 28 13:34:50 2021 (serrano)                */
+;*    Last change :  Sun Oct  3 06:12:45 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -671,6 +671,11 @@
 	   (inline js-proxy?::bool ::obj)
 	   (js-proxy-array?::bool ::obj)
 	   (inline js-proxy-function?::bool ::obj)
+	   (inline js-map?::bool ::obj)
+	   (inline js-weakmap?::bool ::obj)
+	   (inline js-set?::bool ::obj)
+	   (inline js-weakset?::bool ::obj)
+	   
 
 	   (inline js-object-cmap ::JsObject)
 
@@ -1860,6 +1865,30 @@
    (and (%object? o)
 	(>u32 (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSPROXYFUNCTION))
 	   #u32:0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-map? ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-map? o)
+   (isa? o JsMap))
+
+;*---------------------------------------------------------------------*/
+;*    js-weakmap? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-inline (js-weakmap? o)
+   (isa? o JsMap))
+
+;*---------------------------------------------------------------------*/
+;*    js-set? ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-set? o)
+   (isa? o JsMap))
+
+;*---------------------------------------------------------------------*/
+;*    js-weakset? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-inline (js-weakset? o)
+   (isa? o JsMap))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-cmap ...                                               */

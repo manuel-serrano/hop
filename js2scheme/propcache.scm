@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sat Sep 18 09:01:17 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 17:56:41 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add caches to object property lookups                            */
@@ -127,6 +127,15 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propcache* this::J2SNode count env ccall assig infunloop shared-pcache conf)
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    propcache* ::J2SObjInit ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propcache* this::J2SObjInit count env ccall assig infunloop shared-pcache conf)
+   (with-access::J2SObjInit this (inits)
+      (if (>=fx (length inits) (config-get conf :max-objinit-optim-size))
+	  '()
+	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
 ;*    propcache* ::J2SMeta ...                                         */

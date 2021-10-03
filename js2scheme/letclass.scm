@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Fri Oct  1 13:24:29 2021 (serrano)                */
+;*    Last change :  Sat Oct  2 07:05:00 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let class optimization. This optimization implements a single    */
@@ -39,7 +39,7 @@
 (define j2s-letclass-stage
    (instantiate::J2SStageProc
       (name "letclass")
-      (comment "Function declarations optimization")
+      (comment "Class declarations optimization")
       (proc j2s-letclass)
       (optional :optim-letclass)))
 

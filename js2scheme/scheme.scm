@@ -274,10 +274,16 @@
 	    `(vector-set! %evars ,index
 		,(j2s-scheme val mode return ctx)))))
 
+   (define (j2s-let-class? this)
+      (when (and (j2s-let? this) (isa? this J2SDeclClass))
+	 (with-access::J2SDeclClass this (val)
+	    (isa? val J2SClass))))
+   
    (cond
       ((j2s-export? this) (j2s-scheme-export this))
       ((j2s-param? this) (call-next-method))
       ((j2s-let-opt? this) (j2s-scheme-let-opt this))
+      ((j2s-let-class? this) (j2s-scheme-let-opt this))
       ((j2s-let? this) (call-next-method))
       (else (j2s-scheme-var this))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Tue Sep 28 12:02:28 2021 (serrano)                */
+;*    Last change :  Sat Oct  2 19:23:00 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -37,7 +37,8 @@
 	   __hopscript_error
 	   __hopscript_generator
 	   __hopscript_worker
-	   __hopscript_spawn)
+	   __hopscript_spawn
+	   __hopscript_map)
    
    (export (js-init-set! ::JsGlobalObject)
 	   (js-init-weakset! ::JsGlobalObject)))
@@ -206,37 +207,14 @@
 
    ;; add
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.set
-   (define (js-set-add this key)
-
-      (define (get-index! this::JsMap)
-	 (with-access::JsMap this (mapdata vec cursor)
-	    (let ((idx (+fx cursor 1)))
-	       (set! cursor idx)
-	       (if (<fx idx (vector-length vec))
-		   idx
-		   (let ((nvec (copy-vector vec (*fx (vector-length vec) 2))))
-		      (vector-fill! nvec (js-absent) (vector-length vec))
-		      (set! vec nvec)
-		      idx)))))
-	 
-      (if (isa? this JsMap)
-	  (with-access::JsMap this (mapdata vec)
-	     (let ((k (if (and (flonum? key)
-			       (=fl key 0.0)
-			       (=fx (signbitfl key) 1))
-			  0.0
-			  key)))
-		(let ((idx (hashtable-get mapdata k)))
-		   (unless (fixnum? idx)
-		      (let ((idx (get-index! this)))
-			 (hashtable-put! mapdata k idx)
-			 (vector-set! vec idx k))))
-		this))
+   (define (set-add this key)
+      (if (js-set? this)
+	  (js-map-set this key #t %this)  
 	  (js-raise-type-error %this "not a Set" this)))
    
    (js-bind! %this js-set-prototype (& "add")
-      :value (js-make-function %this js-set-add
-		(js-function-arity js-set-add)
+      :value (js-make-function %this set-add
+		(js-function-arity set-add)
 		(js-function-info :name "add" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
@@ -244,8 +222,8 @@
    
    ;; clear
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.clear
-   (define (map-prototype-clear this key)
-      (if (isa? this JsMap)
+   (define (set-clear this key)
+      (if (js-set? this)
 	  (with-access::JsMap this (mapdata vec cursor)
 	     (hashtable-clear! mapdata)
 	     (set! vec (make-vector (DEFAULT-EMPTY-VECTOR-SIZE) (js-absent)))
@@ -253,8 +231,8 @@
 	  (js-raise-type-error %this "Not a Set" this)))
    
    (js-bind! %this js-set-prototype (& "clear")
-      :value (js-make-function %this map-prototype-clear
-		(js-function-arity map-prototype-clear)
+      :value (js-make-function %this set-clear
+		(js-function-arity set-clear)
 		(js-function-info :name "clear" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
@@ -268,8 +246,13 @@
 
    ;; delete
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.delete
+   (define (set-delete this key)
+      (if (js-set? this)
+	  (js-map-delete this key %this)
+	  (js-raise-type-error %this "Not a Set" this)))
+   
    (js-bind! %this js-set-prototype (& "delete")
-      :value (js-make-function %this (js-set-delete %this)
+      :value (js-make-function %this set-delete
 		(js-function-arity 1 0)
 		(js-function-info :name "delete" :len 1)
 		:prototype (js-undefined))
@@ -278,18 +261,18 @@
 
    ;; entries
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.entries
-   (define (js-set-entries this)
-      (if (isa? this JsMap)
+   (define (set-entries this)
+      (if (js-set? this)
 	  (with-access::JsMap this (vec)
 	     (js-make-vector-iterator vec
 		(lambda (%this val)
-		   (js-vector->jsarray (vector val val) %this))
+		   (js-vector->jsarray (vector (car val) (car val)) %this))
 		%this))
-	  (js-raise-type-error %this "Not a Sap" this)))
+	  (js-raise-type-error %this "Not a Set" this)))
       
    (js-bind! %this js-set-prototype (& "entries")
-      :value (js-make-function %this js-set-entries
-		(js-function-arity js-set-entries)
+      :value (js-make-function %this set-entries
+		(js-function-arity set-entries)
 		(js-function-info :name "entries" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
@@ -298,7 +281,7 @@
    ;; forEach
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.foreach
    (define (js-set-for-each this fn . thisarg)
-      (if (isa? this JsMap)
+      (if (js-set? this)
 	  (if (js-procedure? fn)
 	      (let ((t (if (pair? thisarg) (car thisarg) (js-undefined))))
 		 (with-access::JsMap this (vec)
@@ -306,7 +289,7 @@
 		       (when (<fx i (vector-length vec))
 			  (let ((v (vector-ref vec i)))
 			     (unless (js-absent? v)
-				(js-call3 %this fn t v v this)))
+				(js-call3 %this fn t (car v) (car v) this)))
 			  (loop (+fx i 1))))))
 	      (js-raise-type-error %this "Not a function" fn))
 	  (js-raise-type-error %this "not a Set" this)))
@@ -321,9 +304,14 @@
    
    ;; has
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.has
+   (define (set-has this key)
+      (if (js-set? this)
+	  (js-map-has this key %this)
+          (js-raise-type-error %this "Not a Set" this)))
+
    (js-bind! %this js-set-prototype (& "has")
-      :value (js-make-function %this (js-set-has %this)
-		(js-function-arity (js-set-has %this))
+      :value (js-make-function %this set-has
+		(js-function-arity set-has)
 		(js-function-info :name "has" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
@@ -342,7 +330,7 @@
    ;; size
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-get-set.prototype.size
    (define (js-set-size this)
-      (if (isa? this JsMap)
+      (if (js-set? this)
 	  (with-access::JsMap this (mapdata)
 	     (hashtable-size mapdata))
 	  (js-raise-type-error %this "Not a Set" this)))
@@ -358,10 +346,12 @@
    ;; values
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-map.prototype.values
    (define (js-set-values this)
-      (if (isa? this JsMap)
+      (if (js-set? this)
 	  (with-access::JsMap this (vec)
-	     (js-make-vector-iterator vec (lambda (%this val) val) %this))
+	     (js-make-vector-iterator vec
+		(lambda (%this val) (car val)) %this))
 	  (js-raise-type-error %this "Not a Set" this)))
+   
    (js-bind! %this js-set-prototype (& "values")
       :value (js-make-function %this js-set-values
 		(js-function-arity js-set-values)
@@ -388,7 +378,6 @@
 	 :value (js-ascii->jsstring "Set")
 	 :enumerable #f
 	 :configurable #t))
-      
    )
 
 ;*---------------------------------------------------------------------*/
@@ -396,60 +385,37 @@
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-weakset-prototype! %this js-set js-set-prototype)
 
-   ;; add
-   ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.add
-   (define (js-set-add this key)
-      
-      (define (get-index! this::JsMap)
-	 (with-access::JsMap this (mapdata vec cursor)
-	    (let ((idx (+fx cursor 1)))
-	       (set! cursor idx)
-	       (if (<fx idx (vector-length vec))
-		   idx
-		   (let ((nvec (copy-vector vec (*fx (vector-length vec) 2))))
-		      (vector-fill! nvec (js-absent) (vector-length vec))
-		      (set! vec nvec)
-		      idx)))))
-      
-      (cond
-	 ((not (js-object? key))
-	  (js-raise-type-error %this "not an object" key))
-	 ((isa? this JsMap)
-	  (with-access::JsMap this (mapdata vec)
-	     (let ((k (if (and (flonum? key)
-			       (=fl key 0.0)
-			       (=fx (signbitfl key) 1))
-			  0.0
-			  key)))
-		(let ((idx (hashtable-get mapdata k)))
-		   (if (fixnum? idx)
-		       (weakptr-data-set! (vector-ref vec idx) k)
-		       (let ((idx (get-index! this)))
-			  (hashtable-put! mapdata k idx)
-			  (vector-set! vec idx (make-weakptr k)))))
-		this)))
-	 (else
-	  (js-raise-type-error %this "not a Set" this))))
-   
-   (js-bind! %this js-set-prototype (& "add")
-      :value (js-make-function %this js-set-add
-		(js-function-arity js-set-add)
-		(js-function-info :name "add" :len 2)
-		:prototype (js-undefined))
-      :enumerable #f
-      :hidden-class #t)
-   
    ;; constructor
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.constructor
    (js-bind! %this js-set-prototype (& "constructor")
       :value js-set :enumerable #f
       :hidden-class #t)
 
+   ;; add
+   ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.add
+   (define (set-add this key)
+      (if (js-weakset? this)
+	  (js-weakset-add this key %this)
+	  (js-raise-type-error %this "not a WeakSet" this)))
+   
+   (js-bind! %this js-set-prototype (& "add")
+      :value (js-make-function %this set-add
+		(js-function-arity set-add)
+		(js-function-info :name "add" :len 2)
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
    ;; delete
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.delete
+   (define (set-delete this key)
+      (if (js-weakset? this)
+	  (js-weakmap-delete this key %this)
+	  (js-raise-type-error %this "Not a WeakSet" this)))
+
    (js-bind! %this js-set-prototype (& "delete")
-      :value (js-make-function %this (js-set-delete %this)
-		(js-function-arity 1 0)
+      :value (js-make-function %this set-delete
+		(js-function-arity set-delete)
 		(js-function-info :name "delete" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
@@ -457,51 +423,28 @@
 
    ;; has
    ;; https://www.ecma-international.org/ecma-262/6.0/#sec-set.prototype.has
+   (define (set-has this key)
+      (if (js-weakset? this)
+	  (js-weakmap-has this key %this)
+          (js-raise-type-error %this "Not a WeakSet" this)))
+      
    (js-bind! %this js-set-prototype (& "has")
-      :value (js-make-function %this (js-set-has %this)
+      :value (js-make-function %this set-has
 		(js-function-arity 1 0)
 		(js-function-info :name "has" :len 1)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
-
    )
 
 ;*---------------------------------------------------------------------*/
-;*    js-set-delete ...                                                */
-;*    -------------------------------------------------------------    */
-;*    https://www.ecma-international.org/ecma-262/6.0/                 */
-;*       #sec-set.prototype.delete                                     */
+;*    js-weakset-add ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (js-set-delete %this)
-   (lambda (this key)
-      (if (isa? this JsMap)
-	  (with-access::JsMap this (mapdata vec)
-	     (let ((idx (hashtable-get mapdata key)))
-		(when idx
-		   (hashtable-remove! mapdata key)
-		   (vector-set! vec idx (js-absent))
-		   #t)))
-	  (js-raise-type-error %this "not a Set" this))))
-
-;*---------------------------------------------------------------------*/
-;*    js-set-has ...                                                   */
-;*    -------------------------------------------------------------    */
-;*    https://www.ecma-international.org/ecma-262/6.0/                 */
-;*       #sec-set.prototype.has                                        */
-;*---------------------------------------------------------------------*/
-(define (js-set-has %this)
-   (lambda (this key)
-      (if (isa? this JsMap)
-          (with-access::JsMap this (mapdata)
-             (fixnum? (hashtable-get mapdata key)))
-          (js-raise-type-error %this "not a Set" this))))
-
-
-   
-   
-  
-
+(define (js-weakset-add this key %this)
+   (if (js-object? key)
+       (js-weakmap-set this key #t %this)
+       (js-raise-type-error %this "not an object" key)))
+	  
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

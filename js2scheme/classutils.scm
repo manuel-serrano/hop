@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Fri Oct  1 11:08:13 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 18:23:33 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -106,7 +106,7 @@
 (define (class-element-id::symbol clazz::J2SClass el::J2SClassElement)
    (with-access::J2SClass clazz ((classname name))
       (with-access::J2SClassElement el (prop)
-	 (with-access::J2SMethodPropertyInit prop (val name)
+	 (with-access::J2SPropertyInit prop (name)
 	    (cond
 	       ((isa? name J2SString)
 		(with-access::J2SString name ((str val))

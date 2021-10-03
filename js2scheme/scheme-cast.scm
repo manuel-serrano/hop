@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed Sep  8 12:15:29 2021 (serrano)                */
+;*    Last change :  Sun Oct  3 07:46:45 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -213,6 +213,12 @@
 	   ((scmstring ,js->scmstring)
 	    (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))
 	    (any nop)))
+     (set
+	((length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
+	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))))
+     (map
+	((length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
+	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))))
      (any
 	((int32 ,js->int32)
 	 (uint32 ,js->uint32)
@@ -420,6 +426,12 @@
 	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))
 	 (length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
 	 (any nop)))
+     (set
+	((length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
+	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))))
+     (map
+	((length ,(lambda (v expr ctx) `(js-tolength ,v %this)))
+	 (iterable ,(lambda (v expr ctx) `(js-jsobject->jsarray ,v %this)))))
      (any
 	((propname nop)
 	 (undefined nop)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Sep 17 15:39:44 2021 (serrano)                */
+;*    Last change :  Sun Oct  3 06:49:20 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -135,7 +135,6 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.14    */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-ownkeys obj %this)
-   (tprint "ownkeys=" (typeof obj))
    (cond
       ((epair? obj)
        (js-vector->jsarray (vector (& "car") (& "cdr") (& "cer")) %this))

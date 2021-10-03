@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri Oct  1 16:42:02 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 18:34:18 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -338,7 +338,7 @@
 
    (or (noclass-subtype? type supertype)
        (and (isa? type J2SClass)
-	    (or (eq? type 'object)
+	    (or (eq? supertype 'object)
 		(and (isa? supertype J2SClass)
 		     (class-subtype? type supertype))))))
 
@@ -370,7 +370,9 @@
        (noclass-subtype? type supertype)
        (and (isa? supertype J2SClass)
 	    (or (memq type '(any unknown obj object))
-		(and (isa? type J2SClass) (class-subtype? type supertype))))))
+		(and (isa? type J2SClass) (class-subtype? type supertype))))
+       (and (isa? type J2SClass)
+	    (class-subtype? type supertype))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-name ...                                                    */
@@ -413,7 +415,7 @@
 	  ((real) 'double)
 	  ((bigint) 'bignum)
 	  ((map weakmap) 'JsMap)
-	  ((set weakset) 'JsSet)
+	  ((set weakset) 'JsMap)
 	  (else type)))
       ((isa? type J2SRecord)
        (with-access::J2SRecord type (name)
@@ -513,7 +515,7 @@
 	 ((!==) '==)
 	 ((instanceof) '!instanceof)
 	 (else (error "j2s-expr-type-test" "Unknown op" op))))
-
+   
    (define (string->typename val)
       (let ((s (string->symbol val)))
 	 (if (eq? s 'boolean)
@@ -606,23 +608,20 @@
       ((is-native-test expr)
        =>
        (lambda (ref)
-	  (let ((typ (case (native-type-test expr)
-			((js-index?) 'index)
-			((fixnum?) 'integer)
-			((number?) 'number)
-			((js-jsstring?) 'string)
-			((js-array?) 'array)
-			((js-object?) 'object)
-			((js-function?) 'function)
-			((js-procedure?) 'arrow)
-			((boolean?) 'bool)
-			((js-undefined?) 'undefined)
-			((js-null?) 'null)
-			(else #f))))
-	     (if typ
-		 (with-access::J2SRef ref (decl)
-		    (values '== decl typ ref))
-		 #f))))
+	  (with-access::J2SRef ref (decl)
+	     (case (native-type-test expr)
+		((js-index?) (values '== decl 'index ref))
+		((fixnum?) (values '== decl 'integer ref))
+		((number?) (values '== decl 'number ref))
+		((js-jsstring?) (values '== decl 'string ref))
+		((js-array?) (values '== decl 'array ref))
+		((js-function?) (values '== decl 'function ref))
+		((js-procedure?) (values '== decl 'arrow ref))
+		((boolean?) (values '== decl 'bool ref))
+		((js-undefined?) (values '== decl 'undefined ref))
+		((js-null?) (values '== decl 'null ref))
+		((js-object?) (values '<= decl 'object ref))
+		(else #f)))))
       (else
        #f)))
 
@@ -716,7 +715,7 @@
 	     ((Object) 'object)
 	     ((Function) 'function)
 	     ((Promise) 'promise)
-	     (else 'object))))
+	     (else #f))))
       ((is-builtin-ref? rhs 'Object)
        'object)
       ((is-builtin-ref? rhs 'Array)

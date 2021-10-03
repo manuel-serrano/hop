@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Oct  1 11:58:19 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 17:51:54 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -162,7 +162,7 @@
    (map (lambda (e)
 	   (cons (with-access::J2SDecl (car e) (id key)
 		    (format "~a:~a" id key))
-	      (cdr e)))
+	      (type->sexp (cdr e))))
       env))
 
 ;*---------------------------------------------------------------------*/
@@ -188,9 +188,6 @@
 ;*---------------------------------------------------------------------*/
 (define (decl-vtype-set! decl::J2SDecl ty::obj ctx::pair)
    (with-access::J2SDecl decl (vtype id loc)
-      (unless (or (eq? vtype 'unknown) (eq? vtype ty))
-	 (tprint "PAS BON decl=" (j2s->sexp decl) " ty=" (type->sexp ty)
-	    " vtype=" (type->sexp vtype)))
       [assert (ty) (or (eq? vtype 'unknown) (eq? vtype ty))]
       (when (or (eq? vtype 'unknown) (not (eq? vtype ty)))
 	 (unfix! ctx (format "J2SDecl.vset(~a, ~a) vtype=~a/~a" id loc
@@ -315,6 +312,18 @@
       (if (eq? ty 'unknown)
 	  env
 	  (cons (cons decl ty) env))))
+
+;*---------------------------------------------------------------------*/
+;*    refine-env ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    add <decl x ty> only if decl is not already in env or if the     */
+;*    current type is a super type of ty.                              */
+;*---------------------------------------------------------------------*/
+(define (refine-env::pair-nil env::pair-nil decl::J2SDecl ty)
+   (let ((old (env-lookup env decl)))
+      (if (or (not old) (type-subtype? ty old) (memq old '(any unknown)))
+	  (cons (cons decl ty) env)
+	  env)))
 
 ;*---------------------------------------------------------------------*/
 ;*    env-lookup ...                                                   */
@@ -652,7 +661,7 @@
 	  (expr-type-add! this env ctx 'undefined))
 	 (else
 	  (let ((cla (class-of this)))
-	     (if (eq? cla 'unknown)
+	     (if (or (not cla) (eq? cla 'unknown))
 		 (expr-type-add! this env ctx 'any)
 		 (expr-type-add! this env ctx 'object)))))))
 
@@ -966,15 +975,11 @@
 	 (else 'number)))
    
    (with-access::J2SPostfix this (lhs rhs op type loc)
-      (when (eq? (caddr loc) '643)
-	 (tprint "------------- postctx env=" (dump-env env)))
       (multiple-value-bind (tyr envr bkr)
 	 (node-type rhs env ctx)
 	 (multiple-value-bind (tyv __ lbk)
 	    (node-type lhs env ctx)
 	    (expr-type-add! rhs envr ctx (numty tyr) bkr)
-	    (when (eq? (caddr loc) '643)
-	       (tprint "------------- postctx lhs=" tyv))
 	    (cond
 	       ((isa? lhs J2SRef)
 		;; a variable assignment
@@ -1582,13 +1587,13 @@
 		       ((== === != !== < <= > >= eq?)
 			'bool)
 		       ((in)
-			(when (isa? lhs J2SRef)
-			   (with-access::J2SRef lhs (decl)
+			(when (isa? rhs J2SRef)
+			   (with-access::J2SRef rhs (decl)
 			      (set! env (extend-env env decl 'object))))
 			'bool)
 		       ((instanceof)
 			(when (isa? rhs J2SRef)
-			   (with-access::J2SRef lhs (decl)
+			   (with-access::J2SRef rhs (decl)
 			      (set! env (extend-env env decl 'function))))
 			'bool)
 		       ((&& OR OR*)
@@ -1731,7 +1736,23 @@
    (multiple-value-bind (typf envf bkf)
       (call-default-walker)
       (expr-type-add! this envf ctx 'undefined bkf)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    node-type ::J2SCheck ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-type this::J2SCheck env::pair-nil ctx::pair)
+   (with-access::J2SCheck this (type)
+      (call-default-walker)
+      type))
+
+;*---------------------------------------------------------------------*/
+;*    node-type ::J2SCast ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-type this::J2SCast env::pair-nil ctx::pair)
+   (with-access::J2SCast this (type)
+      (call-default-walker)
+      type))
+
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SNop ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -1900,6 +1921,7 @@
 		((!= !==) (values envt (extend-env enve decl typ)))
 		((instanceof) (values (extend-env envt decl typ) enve))
 		((!instanceof) (values envt (extend-env enve decl typ)))
+		((<=) (values (refine-env envt decl typ) enve))
 		(else (values envt enve)))
 	     (values envt enve))))
    
