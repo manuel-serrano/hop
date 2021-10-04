@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/ast.scm                   */
+;*    serrano/prgm/project/hop/3.5.x/js2scheme/ast.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Aug 26 08:35:22 2021 (serrano)                */
+;*    Last change :  Thu Sep  9 08:33:29 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -605,7 +605,8 @@
 	   (j2s-global?::bool ::J2SDecl)
 	   (j2s-let-opt?::bool ::J2SDecl)
 	   (j2s-new-target?::bool ::J2SNode)
-
+	   (j2s-decl-class?::bool ::J2SDecl)
+	   
 	   (j2s-field-name::obj ::J2SNode)
 	   (inline j2s-field-length?::bool ::J2SNode)
 
@@ -704,6 +705,16 @@
    (when (isa? this J2SPragma)
       (with-access::J2SPragma this (lang expr)
 	 (and (eq? lang 'javascript) (equal? expr "new.target")))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-decl-class? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (j2s-decl-class? this::J2SDecl)
+   (when (isa? this J2SDeclClass)
+      (with-access::J2SDeclInit this (val)
+	 (when (isa? val J2SClass)
+	    (with-access::J2SClass val (need-dead-zone-check)
+	       (not need-dead-zone-check))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-access-field ...                                             */

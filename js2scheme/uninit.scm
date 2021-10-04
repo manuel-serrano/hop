@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 24 13:11:25 2019                          */
-;*    Last change :  Sat Aug 28 11:34:31 2021 (serrano)                */
+;*    Last change :  Fri Sep  3 15:34:07 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark global variables potentially used before being initialized. */
@@ -72,7 +72,9 @@
 	     (j2s-uninit-force! this args))
 	    (direct-eval
 	     (for-each (lambda (decl)
-			  (unless (isa? decl J2SDeclFun)
+			  (unless (or (isa? decl J2SDeclFun)
+				      (isa? decl J2SDeclExtern)
+				      (j2s-decl-class? decl))
 			     (decl-usage-add! decl 'uninit)))
 		decls))
 	    (else
@@ -146,9 +148,9 @@
 	     (let* ((f (vector-ref-ur fields i))
 		    (fi (class-field-info f))
 		    (v ((class-field-accessor f) this))
-		    (env (if (and (pair? fi) (member "notraverse" fi))
-			     env
-			     (uninit* v env))))
+		    (env (if (and (pair? fi) (member "ast" fi))
+			     (uninit* v env)
+			     env)))
 		(loop (-fx i 1) env))
 	     env))))
 
@@ -159,8 +161,11 @@
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (scope)
 	 (when (memq scope '(global %scope))
-	    (unless (or (decl-usage-has? decl '(uninit)) (memq decl env))
-	       (decl-usage-add! decl 'uninit)))))
+	    (unless (or (isa? decl J2SDeclFun)
+			(isa? decl J2SDeclExtern)
+			(j2s-decl-class? decl))
+	       (unless (or (decl-usage-has? decl '(uninit)) (memq decl env))
+		  (decl-usage-add! decl 'uninit))))))
    env)
 
 ;*---------------------------------------------------------------------*/
@@ -229,6 +234,7 @@
 (define-method (uninit* this::J2SFor env)
    (with-access::J2SFor this (init test incr body)
       (let* ((ienv (uninit* init env))
+	     (tenv (uninit* test ienv))
 	     (benv (uninit* body ienv)))
 	 (uninit* incr benv)
 	 (filter (lambda (d) (not (decl-usage-has? d '(uninit)))) ienv))))
@@ -588,6 +594,6 @@
 ;*    uninit-force! ::J2SDeclInit ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (uninit-force! this::J2SDeclInit)
-   (unless (isa? this J2SDeclFun)
+   (unless (or (isa? this J2SDeclFun) (j2s-decl-class? this))
       (decl-usage-add! this 'uninit))
    (call-default-walker))
