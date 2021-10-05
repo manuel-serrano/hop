@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Oct  1 17:51:54 2021 (serrano)                */
+;*    Last change :  Tue Oct  5 07:45:41 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -2312,9 +2312,11 @@
    (with-access::J2SCacheCheck this (loc obj owner)
       (cond
 	 ((and (isa? owner J2SRecord)
-	       (isa? (j2s-vtype obj) J2SRecord)
-	       (not (or (type-subtype? owner (j2s-vtype obj))
-			(type-subtype? (j2s-vtype obj) owner))))
+	       (or (and (isa? (j2s-vtype obj) J2SRecord)
+			(not (or (type-subtype? owner (j2s-vtype obj))
+				 (type-subtype? (j2s-vtype obj) owner))))
+		   (and (not (isa? (j2s-vtype obj) J2SRecord))
+			(not (memq obj '(any unknown))))))
 	  ;; inlining invalidated by the type inference
 	  (J2SBool #f))
 	 ((and (isa? owner J2SClass) (eq? (j2s-mtype obj) owner))
@@ -2404,6 +2406,15 @@
 		    (if (boolean? b)
 			(J2SBool (not b))
 			(call-default-walker))))
+		((<=)
+		 (let ((rtyp (j2s-type ref)))
+		    (cond
+		       ((type-subtype? rtyp typ)
+			(J2SBool #t))
+		       ((memq rtyp '(unknown any))
+			(call-default-walker))
+		       (else
+			(J2SBool #f)))))
 		(else
 		 (call-default-walker)))))))
 

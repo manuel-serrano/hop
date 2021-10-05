@@ -65,6 +65,9 @@
 	   (mightbe-number?::bool field::J2SExpr)
 	   (cannot-integer?::bool field::J2SExpr)
 	   
+	   (mightbe-array?::bool ::J2SExpr)
+	   (mightbe-string?::bool ::J2SExpr)
+	   
 	   (utype-ident ident utype ::pair-nil #!optional compound)
 	   (vtype-ident ident vtype ::pair-nil #!optional compound)
 	   (type-ident ident type ::pair-nil)
@@ -426,6 +429,26 @@
 	  (with-access::J2SExpr expr (hint)
 	     (let ((c (assq 'integer hint)))
 		(and (pair? c) (<fx (cdr c) 0))))))))
+
+;*---------------------------------------------------------------------*/
+;*    mightbe-array? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (mightbe-array?::bool obj::J2SExpr)
+   (with-access::J2SExpr obj (hint type)
+      (or (eq? type 'array)
+	  (let ((c (assq 'array hint)))
+	     (when (pair? c)
+		(>fx (cdr c) 0))))))
+
+;*---------------------------------------------------------------------*/
+;*    mightbe-string? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (mightbe-string?::bool obj::J2SExpr)
+   (with-access::J2SExpr obj (hint type)
+      (or (eq? type 'string)
+	  (let ((c (assq 'string hint)))
+	     (when (pair? c)
+		(>fx (cdr c) 0))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    utype-ident ...                                                  */
