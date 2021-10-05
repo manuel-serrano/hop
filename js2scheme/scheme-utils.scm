@@ -693,7 +693,7 @@
 	 ((int32)
 	  `(js-array-fixnum-ref ,obj (int32->fixnum ,prop) %this))
 	 ((fixnum int53)
-	  `(js-array-fixnum-ref ,obj (int32->fixnum ,prop) %this))
+	  `(js-array-fixnum-ref ,obj ,prop %this))
 	 (else
 	  (cond
 	     ((and (string? prop) (string=? prop "length"))

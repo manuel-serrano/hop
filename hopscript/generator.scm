@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Tue Sep 28 13:36:44 2021 (serrano)                */
+;*    Last change :  Tue Oct  5 11:51:31 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -131,7 +131,7 @@
 	 (if (isa? this JsGenerator)
 	     (with-access::JsGenerator this (%next)
 		(if (procedure? %next)
-		    (%next val exn)
+		    (%next val exn this %this)
 		    (js-generator-done)))
 	     (js-raise-type-error %this "argument not a generator ~a"
 		(typeof this))))
@@ -151,7 +151,7 @@
       (define (js-generator-construct this . args)
 	 (if (null? args)
 	     (js-make-generator
-		(lambda (val exn)
+		(lambda (val exn %gen %this)
 		   (js-generator-done))
 		js-generator-prototype
 		%this)
@@ -287,73 +287,70 @@
 ;*    js-make-map-iterator ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-make-map-iterator obj proc %this)
-   (letrec ((%gen (js-make-generator
-		     (lambda (%v %e)
-			(let ((i 0))
-			   (let loop ((%v %v) (%e %e))
-			      (let ((len (js-get obj (& "length") %this)))
-				 (if (>=fx i len)
-				     (js-generator-yield %gen
-					(js-undefined) #t
-					loop %this)
-				     (let ((val (proc i (js-get obj i %this))))
-					(set! i (+fx i 1))
-					(js-generator-yield %gen
-					   val #f
-					   loop %this)))))))
-		     (with-access::JsGlobalObject %this (js-generator-prototype)
-			js-generator-prototype)
-		     %this)))
-      %gen))
+   (js-make-generator
+      (lambda (%v %e %gen %this)
+	 (let ((i 0))
+	    (let loop ((%v %v) (%e %e))
+	       (let ((len (js-get obj (& "length") %this)))
+		  (if (>=fx i len)
+		      (js-generator-yield %gen
+			 (js-undefined) #t
+			 loop %this)
+		      (let ((val (proc i (js-get obj i %this))))
+			 (set! i (+fx i 1))
+			 (js-generator-yield %gen
+			    val #f
+			    loop %this)))))))
+      (with-access::JsGlobalObject %this (js-generator-prototype)
+	 js-generator-prototype)
+      %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-vector-iterator ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-make-vector-iterator obj::vector proc %this)
-   (letrec ((%gen (js-make-generator
-		     (lambda (%v %e)
-			(let ((l obj)
-			      (i 0))
-			   (let laap ((%v %v) (%e %e))
-			      (if (=fx i (vector-length obj))
-				  (js-generator-yield %gen
-				     (js-undefined) #t
-				     laap %this)
-				  (let ((val (vector-ref obj i)))
-				     (set! i (+fx i 1))
-				     (if (eq? val (js-absent))
-					 (laap %v %e) 
-					 (js-generator-yield %gen
-					    (proc %this val) #f
-					    laap %this)))))))
-		     (with-access::JsGlobalObject %this (js-generator-prototype)
-			js-generator-prototype)
-		     %this)))
-      %gen))
+   (js-make-generator
+      (lambda (%v %e %gen %this)
+	 (let ((l obj)
+	       (i 0))
+	    (let laap ((%v %v) (%e %e))
+	       (if (=fx i (vector-length obj))
+		   (js-generator-yield %gen
+		      (js-undefined) #t
+		      laap %this)
+		   (let ((val (vector-ref obj i)))
+		      (set! i (+fx i 1))
+		      (if (eq? val (js-absent))
+			  (laap %v %e) 
+			  (js-generator-yield %gen
+			     (proc %this val) #f
+			     laap %this)))))))
+      (with-access::JsGlobalObject %this (js-generator-prototype)
+	 js-generator-prototype)
+      %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-list-iterator ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-make-list-iterator obj::pair-nil proc %this)
-   '(letrec ((%gen (js-make-generator
-		     (lambda (%v %e)
-			(let ((l obj))
-			   (let loop ((%v %v) (%e %e))
-			      (if (null? l)
-				  (js-generator-yield %gen
-				     (js-undefined) #t
-				     loop %this)
-				  (let ((val (car l)))
-				     (set! l (cdr l))
-				     (if (eq? val (js-absent))
-					 (loop %v %e)
-					 (js-generator-yield %gen
-					    (proc %this val) #f
-					    loop %this)))))))
-		     (with-access::JsGlobalObject %this (js-generator-prototype)
-			js-generator-prototype)
-		     %this)))
-      %gen))
+   (js-make-generator
+      (lambda (%v %e %gen %this)
+	 (let ((l obj))
+	    (let loop ((%v %v) (%e %e))
+	       (if (null? l)
+		   (js-generator-yield %gen
+		      (js-undefined) #t
+		      loop %this)
+		   (let ((val (car l)))
+		      (set! l (cdr l))
+		      (if (eq? val (js-absent))
+			  (loop %v %e)
+			  (js-generator-yield %gen
+			     (proc %this val) #f
+			     loop %this)))))))
+      (with-access::JsGlobalObject %this (js-generator-prototype)
+	 js-generator-prototype)
+      %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-iterator ...                                             */
@@ -384,19 +381,19 @@
 	 (js-get-name/cache val (& "next") #f %this
 	    (vector-ref js-generator-pcache 0)))
       
-      (define (loop v e)
+      (define (loop v e g %this)
 	 (let* ((n (js-call0 %this next val))
 		(done (js-get-name/cache n (& "done") #f %this
 			 (vector-ref js-generator-pcache 2))))
 	    (if done
 		(let ((value (js-get-name/cache n (& "value") #f %this
 				(vector-ref js-generator-pcache 1))))
-		   (kont value #f))
+		   (kont value #f g %this))
 		n)))
       
       (with-access::JsGenerator gen (%next)
 	 (set! %next loop))
-      (loop (js-undefined) #f))
+      (loop (js-undefined) #f gen %this))
 
    (with-access::JsGlobalObject %this (js-symbol-iterator js-generator-pcache)
       (cond

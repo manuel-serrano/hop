@@ -3198,7 +3198,9 @@
    (with-access::J2SKont this (loc param exn body)
       (epairify loc
 	 `(lambda (,(j2s-scheme param mode return ctx)
-		   ,(j2s-scheme exn mode return ctx))
+		   ,(j2s-scheme exn mode return ctx)
+		   %gen
+		   %this)
 	     ,(j2s-scheme body mode return ctx)))))
 
 ;*---------------------------------------------------------------------*/

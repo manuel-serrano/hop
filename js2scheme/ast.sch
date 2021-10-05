@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Fri Oct  1 07:00:50 2021 (serrano)                */
+;*    Last change :  Tue Oct  5 12:21:09 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -285,6 +285,15 @@
    `(instantiate::J2SArrow
        (loc loc)
        (idthis '%_)
+       (mode 'hopscript)
+       (name ,name)
+       (params ,params)
+       (body ,body)))
+
+(define-macro (J2SArrowKont name params body . opts)
+   `(instantiate::J2SArrow
+       (loc loc)
+       (idthis '%gen)
        (mode 'hopscript)
        (name ,name)
        (params ,params)

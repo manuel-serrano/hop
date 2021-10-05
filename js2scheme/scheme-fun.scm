@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Oct  1 16:47:03 2021 (serrano)                */
+;*    Last change :  Tue Oct  5 11:52:43 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -497,8 +497,7 @@
 (define (jsfun->lambda this::J2SFun mode return ctx::struct proto ctor::bool)
 
    (define (generator-body body)
-      `(letrec ((%gen (js-make-generator (lambda (%v %e) ,body) ,proto %this)))
-	  %gen))
+      `(js-make-generator (lambda (%v %e %gen %this) ,body) ,proto %this))
 
    (define (this-body thisp body mode)
       (let ((ctx (new-compiler-context ctx optim-initseq: (not ctor))))
