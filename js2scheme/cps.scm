@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Oct  5 07:57:34 2021 (serrano)                */
+;*    Last change :  Fri Oct  1 16:43:39 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -33,16 +33,14 @@
 
    (cond-expand
       (bigloo-debug
-       (static
-	  (abstract-class Kont
-	     (node::obj read-only)
-	     (link::obj read-only)
-	     (proc::procedure read-only)
-	     (name::bstring read-only (default "")))
-	  (class KontStmt::Kont)
-	  (class KontExpr::Kont)
-	  (class KontExpr*::Kont)
-	  (class KontRef::Kont))))
+       (static (abstract-class Kont
+		  (node::obj read-only)
+		  (link::obj read-only)
+		  (proc::procedure read-only)
+		  (name::bstring read-only (default "")))
+	       (class KontStmt::Kont)
+	       (class KontExpr::Kont)
+	       (class KontExpr*::Kont))))
 
    (export j2s-cps-stage))
 
@@ -82,15 +80,6 @@
 	  (eq? proc kid)))
       (else
        (eq? obj kid))))
-
-;*---------------------------------------------------------------------*/
-;*    stmtify ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (stmtify n)
-   (if (isa? n J2SStmt)
-       n
-       (with-access::J2SExpr n (loc)
-	  (J2SStmtExpr n))))
 
 ;*---------------------------------------------------------------------*/
 ;*    KontStmt ...                                                     */
@@ -133,16 +122,6 @@
 	   (name ,(if (pair? name) (string-append "[" (car name) "]") ""))))
       (else
        proc)))
-
-;*---------------------------------------------------------------------*/
-;*    KontRef ...                                                      */
-;*---------------------------------------------------------------------*/
-(define-macro (KontRef ref . name)
-   `(instantiate::KontRef
-       (node ,ref)
-       (link #f)
-       (proc (lambda l (error "KontRef" "Illegal use" name)))
-       (name ,(if (pair? name) (string-append "[" (car name) "]")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    kcall ...                                                        */
@@ -390,22 +369,21 @@
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SYield k r kbreaks kcontinues fun)
 
+   (define (stmtify n)
+      (if (isa? n J2SStmt)
+	  n
+	  (with-access::J2SExpr n (loc)
+	     (J2SStmtExpr n))))
+   
    (define (make-yield-kont k loc)
-      (if (isa? k KontRef)
-	  ;; the continuation has already been created
-	  ;; this happens inside loops; see for instance J2SFor
-	  (with-access::KontRef k (node)
-	     node)
-	  (let ((arg (J2SParam '(call ref) (gensym '%arg) :vtype 'any))
-		(exn (J2SParam '(ref) (gensym '%exn) :vtype 'bool)))
-	     (J2SKont arg exn
-		(r (J2SIf (J2SBinary 'eq? (J2SRef exn) (J2SBool #t))
-		      (J2SThrow (J2SRef arg))
-		      (stmtify (kcall k (J2SRef arg)))))))))
+      (let ((arg (J2SParam '(call ref) (gensym '%arg) :vtype 'any))
+	    (exn (J2SParam '(ref) (gensym '%exn) :vtype 'bool)))
+	 (J2SKont arg exn
+	    (r (J2SIf (J2SBinary 'eq? (J2SRef exn) (J2SBool #t))
+		  (J2SThrow (J2SRef arg))
+		  (stmtify (kcall k (J2SRef arg))))))))
    
    (with-access::J2SYield this (loc expr generator)
-      (with-access::Kont k (name)
-	 (tprint "YIELD k=" (typeof k) " " name))
       (let ((kont (make-yield-kont k loc)))
 	 (cps expr
 	    (KontExpr (lambda (kexpr::J2SExpr)
@@ -552,7 +530,7 @@
       (cps expr
 	 (KontExpr (lambda (kexpr::J2SExpr)
 		      (kcall k (J2SStmtExpr kexpr)))
-	    this k "J2SStmtExpr")
+	    this k "expr")
 	 r kbreaks kcontinues fun)))
 
 ;*---------------------------------------------------------------------*/
@@ -761,7 +739,6 @@
 	  (let* ((name (gensym '%kfor))
 		 (bname (gensym '%kbreak))
 		 (cname (gensym '%kcontinue))
-		 (kname (gensym '%kloop))
 		 (block (J2SBlock/w-endloc))
 		 (for (J2SArrow name '() block))
 		 (decl (J2SLetOpt '(call) name for))
@@ -776,35 +753,20 @@
 			      (cps fbody
 				 (KontStmt kid this k)
 				 r kbreaks kcontinues fun))))
-		 (kloop (let ((arg (J2SParam '(call ref) (gensym '%arg)
-				      :vtype 'any))
-			      (exn (J2SParam '(ref) (gensym '%exn)
-				      :vtype 'bool)))
-			   (J2SKont arg exn
-			      (r (J2SIf
-				    (J2SBinary 'eq? (J2SRef exn) (J2SBool #t))
-				    (J2SThrow (J2SRef arg))
-				    (stmtify (kcall k (J2SRef arg))))))))
 		 (bdecl (J2SLetOpt '(call) bname break))
 		 (cdecl (J2SLetOpt '(call) cname conti))
-		 (kdecl (J2SLetOpt '(call) kname kloop))
 		 (then (J2SBlock/w-endloc body
 			  (%J2STail (J2SCall (J2SRef cdecl)) fun)))
 		 (stop (J2SBlock/w-endloc (%J2STail (J2SCall (J2SRef bdecl)) fun)))
 		 (node (J2SIf test then stop)))
-	     (with-access::J2SBlock block (nodes loc)
-		(tprint "KICI...")
+	     (with-access::J2SBlock block (nodes)
 		(set! nodes
-		   (list (cps node (KontStmt kid this
-				      k
-				      ;; (KontRef (J2SRef kdecl) "J2SFor")
-				      )
+		   (list (cps node (KontStmt kid this k)
 			    r
 			    (cons (cons this bdecl) kbreaks)
 			    (cons (cons this cdecl) kcontinues)
 			    fun))))
-	     (J2SLetBlock ;; (list decl bdecl cdecl kdecl)
-		(list decl bdecl cdecl)
+	     (J2SLetBlock (list decl bdecl cdecl)
 		(if (isa? init J2SExpr) (J2SStmtExpr init) init)
 		(%J2STail (J2SCall (J2SRef decl)) fun))))
 	 (else
