@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu Sep 23 10:28:01 2021 (serrano)                */
+;*    Last change :  Thu Oct  7 18:55:39 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -3090,8 +3090,19 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-tolowercase this)
 
+   (define (ascii-lowercase? s)
+      (let loop ((i (-fx (string-length s) 1)))
+	 (if (=fx i -1)
+	     #t
+	     (let ((c (string-ref s i)))
+		(if (and (char>=? c #\a) (char>=? c #\z))
+		    #f
+		    (loop (-fx i 1)))))))
+	    
    (define (ascii-tolowercase s)
-      (js-ascii->jsstring (string-downcase s)))
+      (if (ascii-lowercase? s)
+	  this
+	  (js-ascii->jsstring (string-downcase s))))
 
    (define (utf8-tolowercase s)
       (with-access::JsStringLiteralUTF8 this (%culen)
@@ -3179,8 +3190,19 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-touppercase this)
    
+   (define (ascii-uppercase? s)
+      (let loop ((i (-fx (string-length s) 1)))
+	 (if (=fx i -1)
+	     #t
+	     (let ((c (string-ref s i)))
+		(if (and (char>=? c #\A) (char>=? c #\Z))
+		    #f
+		    (loop (-fx i 1)))))))
+	    
    (define (ascii-touppercase s)
-      (js-ascii->jsstring (string-upcase s)))
+      (if (ascii-uppercase? s)
+	  this
+	  (js-ascii->jsstring (string-upcase s))))
 
    (define (utf8-touppercase s)
       (js-string->jsstring
