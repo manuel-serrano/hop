@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Oct  3 06:12:45 2021 (serrano)                */
+;*    Last change :  Fri Oct  8 14:58:22 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -342,7 +342,7 @@
 	      %this
 	      (%name (default (gensym 'promise))))
 	   
-	   (class JsGenerator::JsObject
+	   (final-class JsGenerator::JsObject
 	      %next)
 
 	   (final-class JsProxy::JsObject

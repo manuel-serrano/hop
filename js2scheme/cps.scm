@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Oct  5 12:14:10 2021 (serrano)                */
+;*    Last change :  Fri Oct  8 08:34:49 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -883,20 +883,34 @@
 	     (bname (gensym '%kbreak))
 	     (cname (gensym '%kcontinue))
 	     (block (J2SBlock/w-endloc))
-	     (while (J2SArrowKont name '() block))
-	     (decl (J2SLetOpt '(call) name while))
-	     (break (J2SArrowKont bname '()
+	     (warg (J2SParam '(ref) '%this :vtype 'any))
+	     (while (J2SArrowKont name (list warg) block))
+	     (wdecl (J2SLetOpt '(call) name while))
+	     (barg (J2SParam '(ref) '%this :vtype 'any))
+	     (break (J2SArrowKont bname (list barg)
 		       (J2SBlock/w-endloc
 			  (kcall k (J2SStmtExpr (J2SUndefined))))))
 	     (fbody (J2SBlock/w-endloc
-		       (J2SReturn #t (J2SMethodCall (J2SRef decl) (list (J2SHopRef '%gen))) fun)))
+		       (J2SReturn #t
+			  (J2SMethodCall (J2SRef wdecl)
+			     (list (J2SHopRef '%gen))
+			     (J2SHopRef '%this))
+			  fun)))
 	     (conti (J2SArrowKont cname '() fbody))
 	     (bdecl (J2SLetOpt '(call) bname break))
 	     (cdecl (J2SLetOpt '(call) cname conti))
 	     (then (J2SBlock/w-endloc body
-		      (%J2STail (J2SMethodCall (J2SRef cdecl) (list (J2SHopRef '%gen))) fun)))
+		      (%J2STail
+			 (J2SMethodCall (J2SRef wdecl)
+			    (list (J2SHopRef '%gen))
+			    (J2SHopRef '%this))
+			 fun)))
 	     (else (J2SBlock/w-endloc
-		      (%J2STail (J2SMethodCall (J2SRef bdecl) (list (J2SHopRef '%gen))) fun)))
+		      (%J2STail
+			 (J2SMethodCall (J2SRef bdecl)
+			    (list (J2SHopRef '%gen))
+			    (J2SHopRef '%this))
+			 fun)))
 	     (node (J2SIf test then else)))
 	 (with-access::J2SBlock block (nodes)
 	    (set! nodes
@@ -904,8 +918,11 @@
 			(cons (cons this bdecl) kbreaks)
 			(cons (cons this cdecl) kcontinues)
 			fun))))
-	 (J2SLetBlock (list decl bdecl cdecl)
-	    (J2SReturn #t (J2SMethodCall (J2SRef decl) (list (J2SHopRef '%gen)))
+	 (J2SLetBlock (list wdecl bdecl cdecl)
+	    (J2SReturn #t
+	       (J2SMethodCall (J2SRef wdecl)
+		  (list (J2SHopRef '%gen))
+		  (J2SHopRef '%this))
 	       fun)))))
       
 ;*---------------------------------------------------------------------*/

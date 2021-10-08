@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Tue Oct  5 11:51:31 2021 (serrano)                */
+;*    Last change :  Fri Oct  8 14:59:58 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -121,29 +121,34 @@
 	       (__proto__ js-function-prototype)
 	       (elements v))))
       
-      (define (js-generator-done)
+      (define (js-generator-done val exn %gen %this)
 	 (instantiateJsObject
 	    (cmap js-yield-cmap)
 	    (__proto__ (js-object-proto %this))
 	    (elements (vector (js-undefined) #t))))
       
-      (define (js-generator-next this val exn)
+      (define (js-generator-next this val)
 	 (if (isa? this JsGenerator)
 	     (with-access::JsGenerator this (%next)
-		(if (procedure? %next)
-		    (%next val exn this %this)
-		    (js-generator-done)))
+		(%next val #f this %this))
+	     (js-raise-type-error %this "argument not a generator ~a"
+		(typeof this))))
+
+      (define (js-generator-throw this val)
+	 (if (isa? this JsGenerator)
+	     (with-access::JsGenerator this (%next)
+		(%next val #t this %this))
 	     (js-raise-type-error %this "argument not a generator ~a"
 		(typeof this))))
       
-      (define (js-generator-return this val exn)
+      (define (js-generator-return this val)
 	 (if (isa? this JsGenerator)
 	     (with-access::JsGenerator this (%next)
 		(let ((done (instantiateJsObject
 			       (cmap js-yield-cmap)
 			       (__proto__ (js-object-proto %this))
 			       (elements (vector val #t)))))
-		   (set! %next #f)
+		   (set! %next js-generator-done)
 		   done))
 	     (js-raise-type-error %this "argument not a generator ~a"
 		(typeof this))))
@@ -151,8 +156,7 @@
       (define (js-generator-construct this . args)
 	 (if (null? args)
 	     (js-make-generator
-		(lambda (val exn %gen %this)
-		   (js-generator-done))
+		js-generator-done
 		js-generator-prototype
 		%this)
 	     (let* ((len (length args))
@@ -171,8 +175,7 @@
       (js-bind! %this js-gen-proto (& "next")
 	 :configurable #f :enumerable #f
 	 :value (js-make-function %this
-		   (lambda (this val)
-		      (js-generator-next this val #f))
+		   js-generator-next
 		   (js-function-arity 1 0)
 		   (js-function-info :name "next" :len 1))
 	 :hidden-class #t)
@@ -180,8 +183,7 @@
       (js-bind! %this js-gen-proto (& "return")
 	 :configurable #f :enumerable #f
 	 :value (js-make-function %this
-		   (lambda (this val)
-		      (js-generator-return this val #f))
+		   js-generator-return
 		   (js-function-arity 1 0)
 		   (js-function-info :name "return" :len 1))
 	 :hidden-class #t)
@@ -189,8 +191,7 @@
       (js-bind! %this js-gen-proto (& "throw")
 	 :configurable #f :enumerable #f
 	 :value (js-make-function %this
-		   (lambda (this val)
-		      (js-generator-next this val #t))
+		   js-generator-throw
 		   (js-function-arity 1 0)
 		   (js-function-info :name "throw" :len 1))
 	 :hidden-class #t)
@@ -374,13 +375,22 @@
 ;*    js-generator-yield* ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-generator-yield* gen val done kont %this)
-   
-   (define (yield* val js-generator-pcache)
-      
-      (define next
-	 (js-get-name/cache val (& "next") #f %this
-	    (vector-ref js-generator-pcache 0)))
-      
+
+   (define (yield*-procedure next val %this js-generator-pcache)
+      (define (loop v e g %this)
+	 (let* ((n (next val (js-undefined)))
+		(done (js-get-name/cache n (& "done") #f %this
+			 (vector-ref js-generator-pcache 2))))
+	    (if done
+		(let ((value (js-get-name/cache n (& "value") #f %this
+				(vector-ref js-generator-pcache 1))))
+		   (kont value #f g %this))
+		n)))
+      (with-access::JsGenerator gen (%next)
+	 (set! %next loop))
+      (loop (js-undefined) #f gen %this))
+
+   (define (yield*-obj next val %this js-generator-pcache)
       (define (loop v e g %this)
 	 (let* ((n (js-call0 %this next val))
 		(done (js-get-name/cache n (& "done") #f %this
@@ -390,21 +400,27 @@
 				(vector-ref js-generator-pcache 1))))
 		   (kont value #f g %this))
 		n)))
-      
       (with-access::JsGenerator gen (%next)
 	 (set! %next loop))
       (loop (js-undefined) #f gen %this))
 
+   (define (yield* val %this js-generator-pcache)
+      (let ((next (js-get-name/cache val (& "next") #f %this
+		     (vector-ref js-generator-pcache 0))))
+	 (if (and (js-procedure? next) (=fx (js-procedure-arity next) 2))
+	     (yield*-procedure (js-procedure-procedure next) val %this js-generator-pcache)
+	     (yield*-obj next val %this js-generator-pcache))))
+
    (with-access::JsGlobalObject %this (js-symbol-iterator js-generator-pcache)
       (cond
 	 ((isa? val JsGenerator)
-	  (yield* val js-generator-pcache))
+	  (yield* val %this js-generator-pcache))
 	 ((js-get val js-symbol-iterator %this)
 	  =>
 	  (lambda (g)
-	     (yield* (js-call0 %this g val) js-generator-pcache)))
+	     (yield* (js-call0 %this g val) %this js-generator-pcache)))
 	 (else
-	  (yield* val js-generator-pcache)))))
+	  (yield* val %this js-generator-pcache)))))
 
 
 ;*---------------------------------------------------------------------*/

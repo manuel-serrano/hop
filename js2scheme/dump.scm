@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat Oct  2 06:14:03 2021 (serrano)                */
+;*    Last change :  Fri Oct  8 08:30:28 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1260,8 +1260,9 @@
 ;*    j2s->list ::J2SYield ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SYield stack)
-   (with-access::J2SYield this (expr)
-      `(,@(call-next-method) ,(j2s->list expr (check-stack this stack)))))
+   (with-access::J2SYield this (expr generator)
+      `(,@(call-next-method) ,@(if generator '(*) '())
+	  ,(j2s->list expr (check-stack this stack)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SKont ...                                          */
