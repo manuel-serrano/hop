@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Oct  8 08:30:28 2021 (serrano)                */
+;*    Last change :  Tue Oct 12 11:22:02 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -709,6 +709,16 @@
 	     :context ,(if (isa? context J2SClass)
 			   (with-access::J2SClass context (name) name)
 			   context)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SKontRef ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SKontRef stack)
+   (let ((nstack (check-stack this stack)))
+      (with-access::J2SKontRef this (gen index)
+	 `(,@(call-next-method)
+	     ,@(dump-type this)
+	     ,gen ,index))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SLiteral ...                                       */

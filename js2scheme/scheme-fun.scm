@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Tue Oct  5 11:52:43 2021 (serrano)                */
+;*    Last change :  Sun Oct 10 17:23:22 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -496,8 +496,33 @@
 ;*---------------------------------------------------------------------*/
 (define (jsfun->lambda this::J2SFun mode return ctx::struct proto ctor::bool)
 
-   (define (generator-body body)
-      `(js-make-generator (lambda (%v %e %gen %this) ,body) ,proto %this))
+   (define (kont-init? this::J2SNode)
+      (when (isa? this J2SStmtExpr)
+	 (with-access::J2SStmtExpr this (expr)
+	    (when (isa? expr J2SAssig)
+	       (with-access::J2SAssig expr (lhs)
+		  (isa? lhs J2SKontRef))))))
+   
+   (define (generator-split-body body)
+      ;; this function moves the generator environment above the generator
+      ;; itself in order to avoid creting a useless closure
+      ;; see kont-alloc-temp!@cps.scm
+      (if (isa? body J2SBlock)
+	  (with-access::J2SBlock body (nodes loc endloc)
+	     (if (and (pair? nodes) (isa? (car nodes) J2SBlock))
+		 (with-access::J2SBlock (car nodes) ((inits nodes))
+		    (if (every kont-init? inits)
+			(values (car nodes) (J2SBlock* (cdr nodes)))
+			(values '() body)))
+		 (values '() body)))
+	  (values '() body)))
+   
+   (define (generator-body size init body)
+      (let ((gen `(js-make-generator ,size
+		    (lambda (%v %e %gen %this) ,body) ,proto %this)))
+	 (if (pair? init)
+	     `(let ((%gen ,gen)) ,init %gen)
+	     gen)))
 
    (define (this-body thisp body mode)
       (let ((ctx (new-compiler-context ctx optim-initseq: (not ctor))))
@@ -525,13 +550,18 @@
 			,(flatten-stmt stmt)))))
 	     (flatten-stmt (j2s-scheme body mode return ctx)))))
 
-   (with-access::J2SFun this (loc body need-bind-exit-return vararg mode params generator thisp new-target)
+   (with-access::J2SFun this (loc body need-bind-exit-return
+				vararg mode params generator thisp
+				new-target constrsize)
       (let ((body (cond
 		     (generator
-		      (with-access::J2SNode body (loc)
-			 (epairify loc
-			    (generator-body
-			       (this-body thisp body mode)))))
+		      (multiple-value-bind (init-block body-block)
+			 (generator-split-body body)
+			 (with-access::J2SNode body (loc)
+			    (epairify loc
+			       (generator-body constrsize
+				  (j2s-scheme init-block mode return ctx)
+				  (this-body thisp body-block mode))))))
 		     (need-bind-exit-return
 		      (with-access::J2SNode body (loc)
 			 (epairify loc

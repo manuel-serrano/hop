@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu Oct  7 18:55:39 2021 (serrano)                */
+;*    Last change :  Wed Oct 13 17:31:34 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1491,9 +1491,6 @@
 					   (rstart right))
 	 (let ((len (+u32 llen rlen)))
 	    (if (<u32 len (string-append-auto-normalize-threshold))
-		;; if the sum len if smaller than 18, both string
-		;; lengthes are smaller than 18 too, and there cannot
-		;; be a non normalized small string
 		(let* ((buffer (make-string (uint32->fixnum len)))
 		       (s (instantiate::JsStringLiteralASCII
 			     (length len)

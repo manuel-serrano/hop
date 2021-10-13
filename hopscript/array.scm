@@ -269,7 +269,9 @@
 ;*    code the default init slot value.                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-create-vector len)
-   (make-vector len (js-absent)))
+   (if (=fx len 0)
+       '#()
+       (make-vector len (js-absent))))
 
 ;*---------------------------------------------------------------------*/
 ;*    gc-cleanup-inline-vector! ...                                    */

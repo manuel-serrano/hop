@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri Oct  1 18:34:18 2021 (serrano)                */
+;*    Last change :  Wed Oct 13 13:41:38 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -284,7 +284,7 @@
 ;*    type-object? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (type-object? type)
-   (or (memq type '(object regexp date Promise array jsvector function arguments global this))
+   (or (memq type '(object regexp date Promise array jsvector function arguments global this map weakmap set weakset))
        (isa? type J2SClass)))
 
 ;*---------------------------------------------------------------------*/
@@ -315,7 +315,7 @@
        (and (eq? supertype 'object)
 	    (memq type '(array jsvector date regexp function argument promise)))
        (and (eq? supertype 'object)
-	    (isa? type J2SClass))
+	    (type-object? type))
        (and (eq? type 'integer) (eq? supertype 'number))
        (and (eq? type 'function) (eq? supertype 'arrow))
        (and (memq type '(record class)) (eq? supertype 'function))

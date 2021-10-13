@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Oct  1 11:35:56 2021 (serrano)                */
+;*    Last change :  Wed Oct 13 07:31:09 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -454,6 +454,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-cinstanceof #t (hopc-j2s-flags))))
 	    (("-fno-cache-instanceof" (help "Enable instanceof caching"))
 	     (hopc-j2s-flags-set! (cons* :optim-cinstanceof #f (hopc-j2s-flags))))
+	    (("-fcps-closure-alloc" (help "Enable cps closure optimization (-O3)"))
+	     (hopc-j2s-flags-set! (cons* :optim-cps-closure-alloc #t (hopc-j2s-flags))))
+	    (("-fno-cps-closure-alloc" (help "Disable cps closure optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-cps-closure-alloc #f (hopc-j2s-flags))))
 	    (("-fvector" (help "Enable array-to-vector optimization (-O3)"))
 	     (hopc-j2s-flags-set! (cons* :optim-vector #t (hopc-j2s-flags))))
 	    (("-fno-vector" (help "Disable array-to-vector optimization"))

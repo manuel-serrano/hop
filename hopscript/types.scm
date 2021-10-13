@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Oct  8 14:58:22 2021 (serrano)                */
+;*    Last change :  Sat Oct  9 06:49:55 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -343,7 +343,10 @@
 	      (%name (default (gensym 'promise))))
 	   
 	   (final-class JsGenerator::JsObject
-	      %next)
+	      %next
+	      (%env::vector read-only)
+	      (%arg* (default #unspecified))
+	      (%kont* (default #unspecified)))
 
 	   (final-class JsProxy::JsObject
 	      (handler::JsObject (default (class-nil JsObject)))
@@ -465,6 +468,7 @@
 	      (js-function-writable-cmap (default (class-nil JsConstructMap)))
 	      (js-function-writable-strict-cmap (default (class-nil JsConstructMap)))
 	      (js-function-prototype-cmap (default (class-nil JsConstructMap)))
+	      (js-generator-cmap (default (class-nil JsConstructMap)))
 	      (js-yield-cmap (default (class-nil JsConstructMap)))
 	      (js-regexp-cmap (default (class-nil JsConstructMap)))
 	      (js-regexp-exec-cmap (default (class-nil JsConstructMap)))

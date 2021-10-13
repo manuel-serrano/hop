@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Oct  1 11:34:11 2021 (serrano)                */
+;*    Last change :  Wed Oct 13 07:29:58 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -560,6 +560,8 @@
 	    (set! o (cons* :optim-vector #t o)))
 	 (unless (memq :optim-vector o)
 	    (set! o (cons* :optim-vector #t o)))
+	 (unless (memq :optim-cps-closure-alloc o)
+	    (set! o (cons* :optim-cps-closure-alloc #t o)))
 ;* 	 (unless (memq :optim-pce o)                                   */
 ;* 	    (set! o (cons* :optim-pce #t o)))                          */
 	 )

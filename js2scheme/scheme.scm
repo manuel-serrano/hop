@@ -497,6 +497,13 @@
 	     id))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SKontRef ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SKontRef mode return ctx)
+   (with-access::J2SKontRef this (loc gen index)
+      `(js-generator-ref ,gen ,index)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SCond ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SCond mode return ctx)
@@ -1679,6 +1686,10 @@
 	    ((isa? lhs J2SCast)
 	     (with-access::J2SCast lhs (expr type loc)
 		(loop expr (J2SCast type rhs))))
+	    ((isa? lhs J2SKontRef)
+	     (with-access::J2SKontRef lhs (gen index)
+		`(js-generator-set! ,gen ,index
+		    ,(j2s-scheme rhs mode return ctx))))
 	    (else
 	     (j2s-error "assignment" "Illegal assignment" this))))))
 
@@ -2101,6 +2112,25 @@
 	     (jsvector-inc op lhs rhs inc)
 	     (object-array-inc op lhs rhs inc))))
 
+   (define (kontref-inc op lhs::J2SKontRef inc::int)
+      ;; compile an expression such as e1[e2]++ when e1 is a jsvector
+      (with-access::J2SKontRef lhs (index gen loc)
+	 (let ((tmp (gensym 'tmp)))
+	    `(let ((,tmp (js-generator-ref ,gen ,index)))
+		(if (fixnum? ,tmp)
+		    ,(new-or-old tmp `(+fx/overflow ,tmp ,inc)
+			(lambda (val tmp)
+			   `(begin
+			       (js-generator-set! ,gen ,index
+				  ,(box val (j2s-type lhs) ctx))
+			       ,tmp)))
+		    ,(new-or-old tmp `(js+ ,tmp ,inc %this)
+			(lambda (val tmp)
+			   `(let ((,tmp (js-tonumber ,tmp %this)))
+			       (js-generator-set! ,gen ,index
+				   ,(box val (j2s-type lhs) ctx))
+			       ,tmp))))))))
+
    (with-access::J2SAssig this (loc lhs rhs type)
       (epairify-deep loc
 	 (let loop ((lhs lhs)
@@ -2118,6 +2148,8 @@
 	       ((isa? lhs J2SCast)
 		(with-access::J2SCast lhs (expr)
 		   (loop expr #t)))
+	       ((isa? lhs J2SKontRef)
+		(kontref-inc op lhs (if (eq? op '++) 1 -1)))
 	       (else
 		(j2s-error "j2sscheme"
 		   (format "Illegal expression \"~a\"" op)
@@ -2259,7 +2291,28 @@
 		(let ((otmp (gensym 'obj)))
 		   `(let ((,otmp ,tmpval))
 		       ,(access-assigop/otmp obj otmp op lhs rhs)))))))
-   
+
+   (define (kontref-assigop op lhs::J2SKontRef rhs::J2SExpr)
+      (with-access::J2SKontRef lhs (index gen loc)
+	 (with-access::J2SAssigOp this (type)
+	    (let ((tmp (gensym 'tmp)))
+	       `(let ((,tmp ,(js-binop2 loc op type lhs rhs mode return ctx)))
+		   (js-generator-set! ,gen ,index ,tmp)
+		   ,tmp)))))
+
+   (define (buffer-assig-concat loc type lhs rhs)
+      (with-access::J2SBinary rhs ((rlhs lhs) (rrhs rhs))
+	 (let ((buffer (j2s-as (j2s-scheme lhs mode return ctx) lhs
+			  (j2s-type lhs) type ctx)))
+	    `(begin
+		,(j2s-scheme-set! lhs this
+		    (js-binop2 loc '+ type lhs rlhs mode return ctx)
+		    buffer
+		    mode return ctx #f loc)
+		,(j2s-scheme-set! lhs this
+		    (js-binop2 loc '+ type lhs rrhs mode return ctx)
+		    buffer
+		    mode return ctx #f loc)))))
    
    (with-access::J2SAssigOp this (loc lhs rhs op type)
       (epairify-deep loc
@@ -2268,11 +2321,20 @@
 	       ((isa? lhs J2SAccess)
 		(access-assigop op lhs rhs))
 	       ((and (isa? lhs J2SRef) (not (isa? lhs J2SThis)))
-		(j2s-scheme-set! lhs this
-		   (js-binop2 loc op type lhs rhs mode return ctx)
-		   (j2s-as (j2s-scheme lhs mode return ctx) lhs
-		      (j2s-type lhs) type ctx)
-		   mode return ctx #f loc))
+		(if (and (eq? op '+)
+			 (eq? (j2s-type lhs) 'buffer)
+			 (isa? rhs J2SBinary)
+			 (with-access::J2SBinary rhs (op lhs rhs)
+			    (and (eq? op '+)
+				 (or (eq? (j2s-type lhs) 'string)
+				     (eq? (j2s-type rhs) 'string)))))
+		    ;; adding twice to the buffer is likely to be more efficient
+		    (buffer-assig-concat loc type lhs rhs)
+		    (j2s-scheme-set! lhs this
+		       (js-binop2 loc op type lhs rhs mode return ctx)
+		       (j2s-as (j2s-scheme lhs mode return ctx) lhs
+			  (j2s-type lhs) type ctx)
+		       mode return ctx #f loc)))
 	       ((isa? lhs J2SUnresolvedRef)
 		(with-access::J2SUnresolvedRef lhs (id loc)
 		   (let ((rhse (js-binop2 loc op type lhs rhs mode return ctx)))
@@ -2290,6 +2352,8 @@
 	       ((isa? lhs J2SCast)
 		(with-access::J2SCast lhs (expr type)
 		   (loop expr)))
+	       ((isa? lhs J2SKontRef)
+		(kontref-assigop op lhs rhs))
 	       (else
 		(j2s-error "j2sscheme" "Illegal assignment"
 		   (j2s->sexp this))))))))
@@ -3184,12 +3248,13 @@
    (with-access::J2SReturnYield this (loc expr kont generator)
       (epairify loc
 	 `(,(if generator 'js-generator-yield* 'js-generator-yield)
-	   %gen ,(j2s-scheme expr mode return ctx)
-	     ,(isa? kont J2SUndefined)
-	     ,(if (identity-kont? kont)
-		  #f
-		  (j2s-scheme kont mode return ctx))
-	     %this))))
+	   %gen
+	   ,(j2s-scheme expr mode return ctx)
+	   ,(isa? kont J2SUndefined)
+	   ,(if (identity-kont? kont)
+		'js-generator-done
+		(j2s-scheme kont mode return ctx))
+	   %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SKont ...                                         */

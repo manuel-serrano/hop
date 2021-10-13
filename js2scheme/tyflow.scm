@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Oct  5 07:45:41 2021 (serrano)                */
+;*    Last change :  Tue Oct 12 11:19:14 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -105,33 +105,37 @@
 		       (loop (+fx i 1)))
 		      ((config-get conf :optim-tyflow-resolve #f)
 		       ;; type check resolution
-		       (j2s-resolve! this conf ctx)
-		       (cond
-			  ((not (=fx (cdr ctx) ofix))
-			   (loop (+fx i 1)))
-			  ((config-get conf :optim-hint #f)
-			   ;; hint node-type optimization
-			   (when (>=fx j2s-verbose 3)
-			      (fprintf (current-error-port) "hint"))
-			   (let ((dups (j2s-hint! this conf)))
-			      (cond
-				 ((pair? dups)
-				  (when (>=fx j2s-verbose 3)
-				     (fprintf (current-error-port)
-					(format " [~(,)]."
-					   (map (lambda (d)
-						   (with-access::J2SDecl d (id)
-						      id))
-					      dups))))
-				  (for-each reset-type! decls)
-				  (for-each reset-type! nodes)
-				  (loop (+fx i 1)))
-				 ((force-type this 'unknown 'any #f)
-				  (when (>=fx j2s-verbose 3)
-				     (fprintf (current-error-port) "."))
-				  (loop (+fx i 1))))))
-			  ((force-type this 'unknown 'any #f)
-			   (loop (+fx i 1)))))))))
+		       (let ((reset-for-resolve (j2s-resolve! this conf ctx)))
+			  (cond
+			     ((not (=fx (cdr ctx) ofix))
+			      (loop (+fx i 1)))
+			     ((config-get conf :optim-hint #f)
+			      ;; hint node-type optimization
+			      (when (>=fx j2s-verbose 3)
+				 (fprintf (current-error-port) "hint"))
+			      (let ((dups (j2s-hint! this conf)))
+				 (cond
+				    ((pair? dups)
+				     (when (>=fx j2s-verbose 3)
+					(fprintf (current-error-port)
+					   (format " [~(,)]."
+					      (map (lambda (d)
+						      (with-access::J2SDecl d (id)
+							 id))
+						 dups))))
+				     (for-each reset-type! decls)
+				     (for-each reset-type! nodes)
+				     (loop (+fx i 1)))
+				    (reset-for-resolve
+				     (for-each reset-type! decls)
+				     (for-each reset-type! nodes)
+				     (loop (+fx i 1)))
+				    ((force-type this 'unknown 'any #f)
+				     (when (>=fx j2s-verbose 3)
+					(fprintf (current-error-port) "."))
+				     (loop (+fx i 1))))))
+			     ((force-type this 'unknown 'any #f)
+			      (loop (+fx i 1))))))))))
 	  (force-type this 'unknown 'any #t))
       (when (config-get conf :optim-hintblock)
 	 (when (>=fx (config-get conf :verbose 0) 4)
@@ -716,7 +720,13 @@
    (with-access::J2SWithRef this (expr)
       (node-type expr '() ctx)
       (expr-type-add! this env ctx 'any)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    node-type ::J2SKontRef ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (node-type this::J2SKontRef env::pair-nil ctx::pair)
+   (expr-type-add! this env ctx 'any))
+
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
@@ -2188,9 +2198,11 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-resolve! this::J2SProgram args ctx)   
    (with-access::J2SProgram this (headers decls nodes)
-      (set! headers (map! (lambda (o) (resolve! o ctx)) headers))
-      (set! decls (map! (lambda (o) (resolve! o ctx)) decls))
-      (set! nodes (map! (lambda (o) (resolve! o ctx)) nodes))))
+      (let ((ofix (cdr ctx)))
+	 (set! headers (map! (lambda (o) (resolve! o ctx)) headers))
+	 (set! decls (map! (lambda (o) (resolve! o ctx)) decls))
+	 (set! nodes (map! (lambda (o) (resolve! o ctx)) nodes))
+	 (>fx (cdr ctx) ofix))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SNode ...                                           */
@@ -2318,9 +2330,11 @@
 		   (and (not (isa? (j2s-vtype obj) J2SRecord))
 			(not (memq obj '(any unknown))))))
 	  ;; inlining invalidated by the type inference
+	  (unfix! ctx "resolve.J2SCacheCheck")
 	  (J2SBool #f))
 	 ((and (isa? owner J2SClass) (eq? (j2s-mtype obj) owner))
 	  ;; inlining validated by the type inference
+	  (unfix! ctx "resolve.J2SCacheCheck")
 	  (J2SBool #t))
 	 (else
 	  this))))
@@ -2373,7 +2387,9 @@
 		       (set! then (resolve! then ctx))
 		       (set! else (resolve! else ctx))
 		       nthis))))
-	     nthis))))
+	     (begin
+		(unfix! ctx "resolve.J2SIfCascade")
+		nthis)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SCall ...                                           */
@@ -2398,22 +2414,28 @@
 		 (let ((b (or (same-type typ (j2s-type ref))
 			      (same-type (j2s-type ref) typ))))
 		    (if (boolean? b)
-			(J2SBool b)
+			(begin
+			   (unfix! ctx "resolve.J2SCall")
+			   (J2SBool b))
 			(call-default-walker))))
 		((!=)
 		 (let ((b (or (same-type typ (j2s-type ref))
 			      (same-type (j2s-type ref) typ))))
 		    (if (boolean? b)
-			(J2SBool (not b))
+			(begin
+			   (unfix! ctx "resolve.J2SCall")
+			   (J2SBool (not b)))
 			(call-default-walker))))
 		((<=)
 		 (let ((rtyp (j2s-type ref)))
 		    (cond
 		       ((type-subtype? rtyp typ)
+			(unfix! ctx "resolve.J2SCall")
 			(J2SBool #t))
 		       ((memq rtyp '(unknown any))
 			(call-default-walker))
 		       (else
+			(unfix! ctx "resolve.J2SCall")
 			(J2SBool #f)))))
 		(else
 		 (call-default-walker)))))))
@@ -2614,7 +2636,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (reset-type! this::J2SRef)
    (with-access::J2SRef this (type)
-      (set! type 'unknown))
+      (when (eq? type 'any)
+	 (set! type 'unknown)))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -2623,7 +2646,7 @@
 (define-walk-method (reset-type! this::J2SDecl)
    (call-default-walker)
    (with-access::J2SDecl this (vtype)
-      (when (eq? vtype '(any))
+      (when (eq? vtype 'any)
 	 (set! vtype 'unknown)))
    this)
 
@@ -2644,13 +2667,23 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (reset-type! this::J2SExpr)
    (with-access::J2SExpr this (type)
-      (set! type 'unknown))
+      (when (eq? type 'any)
+	 (set! type 'unknown)))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    reset-type! ::J2SHopExpr ...                                     */
+;*    reset-type! ::J2SBindExit ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (reset-type! this::J2SExpr)
+(define-walk-method (reset-type! this::J2SBindExit)
+   (with-access::J2SBindExit this (type)
+      (when (eq? type 'any)
+	 (set! type 'unknown)))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    reset-type! ::J2SHopRef ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reset-type! this::J2SHopRef)
    this)
 
 ;*---------------------------------------------------------------------*/

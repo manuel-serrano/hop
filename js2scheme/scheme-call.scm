@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Oct  1 16:47:42 2021 (serrano)                */
+;*    Last change :  Wed Oct 13 14:31:06 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -212,6 +212,9 @@
 	("call" ,j2s-call1 any (any any) %this #t)
 	("call" ,j2s-call2 any (any any any) %this #t)
 	("call" ,j2s-call3 any (any any any any) %this #t)
+	;; generators
+	("next" js-generator-maybe-next any (any) %this #t)
+	("next" js-generator-maybe-next0 any () %this #t)
 	;; math
 	("toFixed" js-maybe-tofixed any (any) %this #t)
 	;; date

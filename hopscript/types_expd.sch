@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Fri Aug 27 14:30:28 2021 (serrano)                */
+;*    Last change :  Sat Oct  9 08:31:58 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -14,9 +14,14 @@
 ;*---------------------------------------------------------------------*/
 (define-expander define-instantiate-expander
    (lambda (x e)
-
+      
       (define (def-default clazz)
 	 `(define (,(symbol-append 'js-instantiate- clazz '-expander) x e)
+
+	     (define (epairify nx x)
+		(if (epair? x)
+		    (econs (car nx) (cdr nx) (cer x))
+		    nx))
 	     
 	     (define (builtin-name id)
 		(if (eq? id '__proto__) 'proto id))
@@ -53,10 +58,15 @@
 					     (list set nobj (cadr f)))))
 				 builtins))
 			   nobj)))
-		(e nx e))))
+		(e (epairify nx x) e))))
 
       (define (def-jsobject)
 	 `(define (js-instantiate-JsObject-expander x e)
+
+	     (define (epairify nx x)
+		(if (epair? x)
+		    (econs (car nx) (cdr nx) (cer x))
+		    nx))
 	     
 	     (define (builtin-name id)
 		(if (eq? id '__proto__) 'proto id))
@@ -83,15 +93,17 @@
 		 ;; constructor that allocates properties in a separate vector.
 		 (let ((obj (gensym 'o))
 		       (vec (gensym 'v)))
-		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
-				      ,(length elements)
-				      ,cmap
-				      ,__proto__))
-			       (,vec (js-object-alloc-elements ,obj)))
-			   ,@(map (lambda (el idx)
-				     `(vector-set! ,vec ,idx ,el))
-				elements (iota (length elements)))
-			   ,obj)
+		    (e (epairify
+			  `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
+					 ,(length elements)
+					 ,cmap
+					 ,__proto__))
+				  (,vec (js-object-alloc-elements ,obj)))
+			      ,@(map (lambda (el idx)
+					`(vector-set! ,vec ,idx ,el))
+				   elements (iota (length elements)))
+			      ,obj)
+			  x)
 		       e)))
 		((instantiateJsObject
 		    (cmap ?cmap)
@@ -103,15 +115,17 @@
 		 ;; constructor that allocates properties in a separate vector.
 		 (let ((obj (gensym 'o))
 		       (vec (gensym 'v)))
-		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
-				      ,ctorsize
-				      ,cmap
-				      ,__proto__))
-			       (,vec (js-object-alloc-elements ,obj)))
-			   ,@(map (lambda (el idx)
-				     `(vector-set! ,vec ,idx ,el))
-				elements (iota (length elements)))
-			   ,obj)
+		    (e (epairify
+			  `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
+					 ,ctorsize
+					 ,cmap
+					 ,__proto__))
+				  (,vec (js-object-alloc-elements ,obj)))
+			      ,@(map (lambda (el idx)
+					`(vector-set! ,vec ,idx ,el))
+				   elements (iota (length elements)))
+			      ,obj)
+			  x)
 		       e)))
 		((instantiateJsObject
 		    (cmap ?cmap)
@@ -123,15 +137,17 @@
 		 ;; constructor that allocates properties in a separate vector.
 		 (let ((obj (gensym 'o))
 		       (vec (gensym 'v)))
-		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
-				      ,n
-				      ,cmap
-				      ,__proto__))
-			       (,vec (js-object-alloc-elements ,obj)))
-			   ,@(map (lambda (idx)
-				     `(vector-set! ,vec ,idx (js-undefined)))
-				(iota n))
-			   ,obj)
+		    (e (epairify
+			  `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
+					 ,n
+					 ,cmap
+					 ,__proto__))
+				  (,vec (js-object-alloc-elements ,obj)))
+			      ,@(map (lambda (idx)
+					`(vector-set! ,vec ,idx (js-undefined)))
+				   (iota n))
+			      ,obj)
+			  x)
 		       e)))
 		((instantiateJsObject
 		    (cmap ?cmap)
@@ -162,16 +178,18 @@
 		 (let ((obj (gensym 'o))
 		       (vec (gensym 'v))
 		       (val (gensym 'i)))
-		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
-				      ,n
-				      ,cmap
-				      ,__proto__))
-			       (,val ,init)
-			       (,vec (js-object-alloc-elements ,obj)))
-			   ,@(map (lambda (idx)
-				     `(vector-set! ,vec ,idx ,val))
-				(iota n))
-			   ,obj)
+		    (e (epairify
+			  `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
+					 ,n
+					 ,cmap
+					 ,__proto__))
+				  (,val ,init)
+				  (,vec (js-object-alloc-elements ,obj)))
+			      ,@(map (lambda (idx)
+					`(vector-set! ,vec ,idx ,val))
+				   (iota n))
+			      ,obj)
+			  x)
 		       e)))
 		((instantiateJsObject
 		    (cmap ?cmap)
@@ -183,11 +201,13 @@
 		 ;; constructor that allocates properties in a separate vector.
 		 (let ((obj (gensym 'o))
 		       (vec (gensym 'v)))
-		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
-				      ,n
-				      ,cmap
-				      ,__proto__)))
-			   ,obj)
+		    (e (epairify
+			  `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
+					 ,n
+					 ,cmap
+					 ,__proto__)))
+			      ,obj)
+			  x)
 		       e)))
 		((instantiateJsObject
 		    (__proto__ ?__proto__)
@@ -198,11 +218,13 @@
 		 ;; constructor that allocates properties in a separate vector.
 		 (let ((obj (gensym 'o))
 		       (vec (gensym 'v)))
-		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
-				      ,n
-				      (js-make-jsconstructmap)
-				      ,__proto__)))
-			   ,obj)
+		    (e (epairify
+			  `(let* ((,obj ((@ js-make-jsobject __hopscript_types)
+					 ,n
+					 (js-make-jsconstructmap)
+					 ,__proto__)))
+			      ,obj)
+			  x)
 		       e)))
 		(else
 		 (let* ((nobj (gensym 'nobj))
@@ -228,7 +250,7 @@
 				     builtins))
 			       `(js-object-mode-inline-set! ,nobj #f)
 			       nobj)))
-		    (e nx e))))))
+		    (e (epairify nx x) e))))))
       
       (define (def clazz)
 	 (cond

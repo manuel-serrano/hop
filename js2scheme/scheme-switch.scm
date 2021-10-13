@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Oct  1 16:49:44 2021 (serrano)                */
+;*    Last change :  Wed Oct 13 13:17:02 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript switch                      */
@@ -335,9 +335,9 @@
 		       %acc))))))
 
       (epairify-deep loc
-	 (if (and need-bind-exit-break (not (in-eval? return)) (always-break? this)
-		  (memq (caddr loc) '(26006 26555 27215 27591 29673 30320
-		  32023 36350 26006 26555 27215 27591 29673 30320 32023)))
+	 (if (and need-bind-exit-break
+		  (not (in-eval? return))
+		  (always-break? this))
 	     (switch-sans-break this)
 	     (let ((switch (if (in-eval? return) (eval-switch) (comp-switch))))
 		(if need-bind-exit-break

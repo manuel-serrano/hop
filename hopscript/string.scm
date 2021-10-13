@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Aug 19 11:36:23 2021 (serrano)                */
+;*    Last change :  Tue Oct 12 11:55:01 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -737,8 +737,8 @@
    (define (string-prototype-string-values this::obj)
       ;; because of code point and code units, cannot use the generic
       ;; js-make-iterator (see generator.scm) function
-      (letrec ((%gen (js-make-generator
-			(lambda (%v %e)
+      (letrec ((%gen (js-make-generator 0
+			(lambda (%v %e %gen %this)
 			   (let* ((val (js-cast-string %this this))
 				  (len (js-jsstring-character-length val)))
 			      (let ((i #u32:0))
