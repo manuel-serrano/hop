@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Oct  1 13:46:08 2021 (serrano)                */
+;*    Last change :  Thu Oct 14 17:18:35 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -1473,10 +1473,10 @@
 
    (define (gen-check-object obj field args)
       (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool) obj)
-	 (inline-object-method-call fun obj args)
+	 (inline-object-method-call fun (j2s-alpha obj '() '()) args)
 	 (J2SMeta 'inline 0 0
 	    (J2SStmtExpr
-	       (J2SCall* (J2SAccess obj field) args)))))
+	       (J2SCall* (J2SAccess (j2s-alpha obj '() '()) field) args)))))
    
    (with-access::J2SAccess fun (obj field loc)
       ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the

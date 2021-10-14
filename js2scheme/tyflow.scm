@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Oct 14 13:56:17 2021 (serrano)                */
+;*    Last change :  Thu Oct 14 17:11:12 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -711,16 +711,7 @@
 	       (if (and (memq scope '(%scope global)) (not (eq? vtype 'unknown)))
 		   (expr-type-add! this nenv ctx vtype)
 		   (let ((ty (env-lookup env decl)))
-		      (when (and arm (string=? (symbol->string! id) "this1390"))
-			 (tprint "****** REF=" (caddr loc) " " (type->sexp ty) " " (j2s->sexp this) " ty=" (type->sexp ty))
-			 (tprint "env=" (dump-env env)))
-		      (multiple-value-bind (t e b)
-			 (expr-type-add! this nenv ctx ty)
-			 (when (and arm (string=? (symbol->string! id) "this1390"))
-			    (tprint "!***** REF=" (caddr loc) " " (type->sexp ty) " " (j2s->sexp this) " ty=" (type->sexp ty)))
-			 (return t e b)))))))))
-
-(define arm #f)
+		      (expr-type-add! this nenv ctx ty))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SWithRef ...                                       */
@@ -1747,9 +1738,6 @@
    (with-access::J2SCacheCheck this (loc obj)
       (multiple-value-bind (typf envf bkf)
 	 (node-type obj env ctx)
-	 (when (eq? (caddr loc) 7603)
-	    (tprint "########### CacheCheck: " (j2s->sexp this))
-	    (tprint "envf=" (dump-env envf)))
 	 (expr-type-add! this envf ctx 'bool bkf))))
    
 ;*---------------------------------------------------------------------*/
@@ -1963,16 +1951,8 @@
 	    (node-type test env ctx)
 	    (multiple-value-bind (envt enve)
 	       (node-type-test test env env)
-	       (when (eq? (caddr loc) 7603)
-		  (tprint ">>> ------------------------ IF " (j2s->sexp test))
-		  (tprint "env: " (dump-env envt))
-		  (set! arm #t))
 	       (multiple-value-bind (tyt envt bkt)
 		  (node-type then envt ctx)
-		  (when (eq? (caddr loc) 7603)
-		     (tprint "THEN=" (j2s->sexp then))
-		     (tprint "<<< ------------------------ IF " (j2s->sexp test))
-		     (set! arm #f))
 		  (multiple-value-bind (tye enve bke)
 		     (node-type else enve ctx)
 		     (let ((bk (append bki bke bkt)))
@@ -2346,10 +2326,10 @@
       (let ((to (j2s-type obj)))
 	 (cond
 	    ((and (isa? owner J2SRecord)
-		  (not (memq to '(any unknown)))
+		  (not (memq to '(any unknown object)))
 		  (or (and (isa? (j2s-vtype obj) J2SRecord)
-			   (not (or (type-subtype? owner (j2s-vtype obj))
-				    (type-subtype? (j2s-vtype obj) owner))))
+			   (not (or (type-subtype? owner to)
+				    (type-subtype? to owner))))
 		      (not (isa? (j2s-vtype obj) J2SRecord))))
 	     ;; inlining invalidated by the type inference
 	     (unfix! ctx "resolve.J2SCacheCheck")
