@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Oct 12 11:22:02 2021 (serrano)                */
+;*    Last change :  Thu Oct 14 14:28:44 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1407,8 +1407,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCacheCheck stack)
    (let ((nstack (check-stack this stack)))
-      (with-access::J2SCacheCheck this (prop owner cache obj fields)
-	 `(,@(call-next-method) ,prop :cache ,cache
+      (with-access::J2SCacheCheck this (loc prop owner cache obj fields)
+	 `(,@(call-next-method)
+	     ,@(dump-loc loc)
+	     ,prop :cache ,cache
 	     :owner ,(cond
 			((isa? owner J2SClass) (type->sexp owner))
 			((isa? owner J2SNode) (j2s->list owner stack))

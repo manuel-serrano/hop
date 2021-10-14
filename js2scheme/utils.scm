@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Oct 13 13:41:38 2021 (serrano)                */
+;*    Last change :  Thu Oct 14 14:34:38 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -336,7 +336,8 @@
 			 (when (isa? val J2SClass)
 			    (class-subtype? val supertype)))))))))
 
-   (or (noclass-subtype? type supertype)
+   (or (eq? supertype 'any)
+       (noclass-subtype? type supertype)
        (and (isa? type J2SClass)
 	    (or (eq? supertype 'object)
 		(and (isa? supertype J2SClass)

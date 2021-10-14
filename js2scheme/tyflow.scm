@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Oct 12 11:19:14 2021 (serrano)                */
+;*    Last change :  Thu Oct 14 13:56:17 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -711,7 +711,16 @@
 	       (if (and (memq scope '(%scope global)) (not (eq? vtype 'unknown)))
 		   (expr-type-add! this nenv ctx vtype)
 		   (let ((ty (env-lookup env decl)))
-		      (expr-type-add! this nenv ctx ty))))))))
+		      (when (and arm (string=? (symbol->string! id) "this1390"))
+			 (tprint "****** REF=" (caddr loc) " " (type->sexp ty) " " (j2s->sexp this) " ty=" (type->sexp ty))
+			 (tprint "env=" (dump-env env)))
+		      (multiple-value-bind (t e b)
+			 (expr-type-add! this nenv ctx ty)
+			 (when (and arm (string=? (symbol->string! id) "this1390"))
+			    (tprint "!***** REF=" (caddr loc) " " (type->sexp ty) " " (j2s->sexp this) " ty=" (type->sexp ty)))
+			 (return t e b)))))))))
+
+(define arm #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SWithRef ...                                       */
@@ -1735,9 +1744,13 @@
 ;*    node-type ::J2SCacheCheck ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-type this::J2SCacheCheck env::pair-nil ctx::pair)
-   (multiple-value-bind (typf envf bkf)
-      (call-default-walker)
-      (expr-type-add! this envf ctx 'bool bkf)))
+   (with-access::J2SCacheCheck this (loc obj)
+      (multiple-value-bind (typf envf bkf)
+	 (node-type obj env ctx)
+	 (when (eq? (caddr loc) 7603)
+	    (tprint "########### CacheCheck: " (j2s->sexp this))
+	    (tprint "envf=" (dump-env envf)))
+	 (expr-type-add! this envf ctx 'bool bkf))))
    
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SCacheUpdate ...                                   */
@@ -1753,7 +1766,7 @@
 (define-walk-method (node-type this::J2SCheck env::pair-nil ctx::pair)
    (with-access::J2SCheck this (type)
       (call-default-walker)
-      type))
+      (return type env '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SCast ...                                          */
@@ -1761,7 +1774,7 @@
 (define-walk-method (node-type this::J2SCast env::pair-nil ctx::pair)
    (with-access::J2SCast this (type)
       (call-default-walker)
-      type))
+      (return type env '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-type ::J2SNop ...                                           */
@@ -1950,8 +1963,16 @@
 	    (node-type test env ctx)
 	    (multiple-value-bind (envt enve)
 	       (node-type-test test env env)
+	       (when (eq? (caddr loc) 7603)
+		  (tprint ">>> ------------------------ IF " (j2s->sexp test))
+		  (tprint "env: " (dump-env envt))
+		  (set! arm #t))
 	       (multiple-value-bind (tyt envt bkt)
 		  (node-type then envt ctx)
+		  (when (eq? (caddr loc) 7603)
+		     (tprint "THEN=" (j2s->sexp then))
+		     (tprint "<<< ------------------------ IF " (j2s->sexp test))
+		     (set! arm #f))
 		  (multiple-value-bind (tye enve bke)
 		     (node-type else enve ctx)
 		     (let ((bk (append bki bke bkt)))
@@ -2322,22 +2343,23 @@
 (define-walk-method (resolve! this::J2SCacheCheck ctx::pair)
    (call-default-walker)
    (with-access::J2SCacheCheck this (loc obj owner)
-      (cond
-	 ((and (isa? owner J2SRecord)
-	       (or (and (isa? (j2s-vtype obj) J2SRecord)
-			(not (or (type-subtype? owner (j2s-vtype obj))
-				 (type-subtype? (j2s-vtype obj) owner))))
-		   (and (not (isa? (j2s-vtype obj) J2SRecord))
-			(not (memq obj '(any unknown))))))
-	  ;; inlining invalidated by the type inference
-	  (unfix! ctx "resolve.J2SCacheCheck")
-	  (J2SBool #f))
-	 ((and (isa? owner J2SClass) (eq? (j2s-mtype obj) owner))
-	  ;; inlining validated by the type inference
-	  (unfix! ctx "resolve.J2SCacheCheck")
-	  (J2SBool #t))
-	 (else
-	  this))))
+      (let ((to (j2s-type obj)))
+	 (cond
+	    ((and (isa? owner J2SRecord)
+		  (not (memq to '(any unknown)))
+		  (or (and (isa? (j2s-vtype obj) J2SRecord)
+			   (not (or (type-subtype? owner (j2s-vtype obj))
+				    (type-subtype? (j2s-vtype obj) owner))))
+		      (not (isa? (j2s-vtype obj) J2SRecord))))
+	     ;; inlining invalidated by the type inference
+	     (unfix! ctx "resolve.J2SCacheCheck")
+	     (J2SBool #f))
+	    ((and (isa? owner J2SClass) (eq? (j2s-mtype obj) owner))
+	     ;; inlining validated by the type inference
+	     (unfix! ctx "resolve.J2SCacheCheck")
+	     (J2SBool #t))
+	    (else
+	     this)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SIf ...                                             */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Fri Oct  8 19:19:47 2021 (serrano)                */
+;*    Last change :  Thu Oct 14 13:36:43 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -409,25 +409,29 @@
       (js-make-yield val done %this)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-generator-yield*-loop ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-generator-yield*-loop v e g %this)
+   (with-access::JsGenerator g (%arg* %kont*)
+      (with-access::JsGenerator %arg* (%next)
+	 (let* ((n (%next (js-undefined) #f %arg* %this))
+		(done (js-object-inline-ref n 1)))
+	    (if done
+		(let ((value (js-object-inline-ref n 0)))
+		   (%kont* value #f g %this))
+		n)))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-generator-yield* ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-generator-yield* gen val done kont %this)
 
    (define (yield*-generator val %this)
-      (define (loop v e g %this)
-	 (with-access::JsGenerator g (%arg* %kont*)
-	    (with-access::JsGenerator %arg* (%next)
-	       (let* ((n (%next (js-undefined) #f %arg* %this))
-		      (done (js-object-inline-ref n 1)))
-		  (if done
-		      (let ((value (js-object-inline-ref n 0)))
-			 (%kont* value #f g %this))
-		      n)))))
       (with-access::JsGenerator gen (%next %arg* %kont*)
-	 (set! %next loop)
+	 (set! %next js-generator-yield*-loop)
 	 (set! %arg* val)
 	 (set! %kont* kont))
-      (loop (js-undefined) #f gen %this))
+      (js-generator-yield*-loop (js-undefined) #f gen %this))
 
    (define (yield*-procedure next val %this js-generator-pcache)
       (define (loop v e g %this)
