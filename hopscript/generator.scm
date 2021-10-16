@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Thu Oct 14 13:36:43 2021 (serrano)                */
+;*    Last change :  Fri Oct 15 07:33:07 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -104,8 +104,7 @@
 			 (elements ($create-vector 1)))))
 	    (js-bind! %this proto js-symbol-iterator
 	       :value (js-make-function %this
-			 (lambda (this)
-			    this)
+			 (lambda (this) this)
 			 (js-function-arity 0 0)
 			 (js-function-info :name "@@iterator" :len 0)
 			 :prototype (js-undefined))
@@ -262,27 +261,36 @@
 		(lambda (ip)
 		   (%js-eval ip 'eval %this this %this)))))))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-put! ::JsGenerator ...                                        *} */
-;* {*    -------------------------------------------------------------    *} */
-;* {*    The first time [[PUT]] is called on a generator it is            *} */
-;* {*    de-optimized (see JS-MAKE-CONSTRUCT).                            *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-put! this::JsGenerator prop v throw %this)       */
-;*    (with-access::JsGenerator this (cmap elements)                   */
-;*       (when (isa? cmap JsConstructMap)                              */
-;* 	 ;; de-optimze the generator first                             */
-;* 	 (js-object-unmap! this))                                      */
-;*       ;; regular [[PUT]] invocation                                 */
-;*       (call-next-method)))                                          */
+;*---------------------------------------------------------------------*/
+;*    js-jsobject->jsarray ::JsObject ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (js-jsobject->jsarray o::JsGenerator %this::JsGlobalObject)
+   
+   (define (js-jsgenerator->jsarray o %this)
+      (with-access::JsGenerator o (%next)
+	 (let loop ((acc '()))
+	    (let ((n (%next (js-undefined) #f o %this)))
+	       (if (eq? (js-object-inline-ref n 1) #t)
+		   (js-vector->jsarray (list->vector (reverse! acc)) %this)
+		   (let ((val (js-object-inline-ref n 0)))
+		      (loop (cons val acc))))))))
+   
+   (with-access::JsGlobalObject %this (js-symbol-iterator)
+      (if (and #t (js-object-mode-plain? o))
+	  (js-jsgenerator->jsarray o %this)
+	  (let ((fun (js-get o js-symbol-iterator %this))
+		(acc '()))
+	     (if (js-procedure? fun)
+		 (begin
+		    (js-for-of-iterator (js-call0 %this fun o) o
+		       (lambda (e %this)
+			  (set! acc (cons e acc))) #f %this)
+		    (js-vector->jsarray (list->vector (reverse! acc)) %this))
+		 (js-raise-type-error %this "call: not an interator ~s"
+		    o))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-generator ...                                            */
-;* {*    -------------------------------------------------------------    *} */
-;* {*    Generators use a special encoding. They directly point to the    *} */
-;* {*    elements and cmap of their prototype. This optimizes "next"      *} */
-;* {*    and "throw" accesses. To preserve the semantics, JS-PUT! is      *} */
-;* {*    overriden for that class.                                        *} */
 ;*---------------------------------------------------------------------*/
 (define (js-make-generator size proc proto %this)
    (with-access::JsGlobalObject %this (js-generator-cmap)
@@ -351,25 +359,32 @@
 ;*    js-make-vector-iterator ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-make-vector-iterator obj::vector proc %this)
-   (js-make-generator 0
-      (lambda (%v %e %gen %this)
-	 (let ((l obj)
-	       (i 0))
-	    (let laap ((%v %v) (%e %e) (%gen %gen) (%this %this))
-	       (if (=fx i (vector-length obj))
-		   (js-generator-yield %gen
-		      (js-undefined) #t
-		      laap %this)
-		   (let ((val (vector-ref obj i)))
-		      (set! i (+fx i 1))
-		      (if (eq? val (js-absent))
-			  (laap %v %e %gen %this) 
-			  (js-generator-yield %gen
-			     (proc %this val) #f
-			     laap %this)))))))
-      (with-access::JsGlobalObject %this (js-generator-prototype)
-	 js-generator-prototype)
-      %this))
+   (let ((gen (js-make-generator 4
+		 (lambda (%v %e %gen %this)
+		    (let laap ((%v %v) (%e %e) (%gen %gen) (%this %this))
+		       (let ((obj (js-generator-ref %gen 0))
+			     (i (js-generator-ref %gen 1))
+			     (l (js-generator-ref %gen 2)))
+			  (if (=fx i l)
+			      (js-generator-yield %gen
+				 (js-undefined) #t
+				 laap %this)
+			      (let ((val (vector-ref obj i)))
+				 (js-generator-set! %gen 1 (+fx i 1))
+				 (if (eq? val (js-absent))
+				     (laap %v %e %gen %this)
+				     (let ((proc (js-generator-ref %gen 3)))
+					(js-generator-yield %gen
+					   (proc %this val) #f
+					   laap %this))))))))
+		 (with-access::JsGlobalObject %this (js-generator-prototype)
+		    js-generator-prototype)
+		 %this)))
+      (js-generator-set! gen 0 obj)
+      (js-generator-set! gen 1 0)
+      (js-generator-set! gen 2 (vector-length obj))
+      (js-generator-set! gen 3 proc)
+      gen))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-list-iterator ...                                        */

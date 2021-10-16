@@ -848,34 +848,31 @@
 	 ((decl-usage-has? d '(ref get new set eval))
 	  (let* ((id (j2s-decl-fast-id d ctx))
 		 (^id (j2s-decl-scm-id d ctx))
-		 (fun (jsfun->lambda val mode return ctx
-			 `(js-get ,^id
-			     ,(& "prototype" (context-program ctx))
-			     %this) #f)))
-	     `(begin
-		 (define ,id ,fun)
-		 (define ,^id
-		    ,(with-access::J2SFun val (type)
-			(if (eq? type 'procedure)
+		 (fun (jsfun->lambda val mode return ctx #f)))
+	     (with-access::J2SFun val (type generator)
+		`(begin
+		    ,@(if generator
+			  `((define ,(j2s-generator-prototype-id val)
+			       ,(j2s-generator-prototype->scheme val)))
+			  '())
+		    (define ,id ,fun)
+		    (define ,^id
+		       ,(if (eq? type 'procedure)
 			    id
 			    (let ((tmp (gensym 'p)))
-			       `(let ((,tmp ,(jsfun->lambda val mode return ctx
-						(j2s-fun-prototype val) #f)))
-				   ,(j2sfun->scheme val tmp #f mode return ctx))))))
-		 ,@(if (decl-usage-has? d '(eval))
-		       `((js-define %this ,scope ,(j2s-decl-name d ctx)
-			    (lambda (%) ,^id)
-			    (lambda (% %v) (set! ,^id %v))
-			    %source
-			    ,(caddr loc)))
-		       '()))))
+			       `(let ((,tmp ,(jsfun->lambda val mode return ctx #f)))
+				   ,(j2sfun->scheme val tmp #f mode return ctx)))))
+		    ,@(if (decl-usage-has? d '(eval))
+			  `((js-define %this ,scope ,(j2s-decl-name d ctx)
+			       (lambda (%) ,^id)
+			       (lambda (% %v) (set! ,^id %v))
+			       %source
+			       ,(caddr loc)))
+			  '())))))
 	 ((decl-usage-has? d '(call))
 	  (let ((id (j2s-decl-fast-id d ctx)))
 	     `(define ,id
-		 ,(jsfun->lambda val mode return ctx
-		     `(js-get ,id
-			 ,(& "prototype" (context-program ctx))
-			 %this) #f))))
+		 ,(jsfun->lambda val mode return ctx #f))))
 	 (else
 	  '()))))
 
@@ -883,9 +880,16 @@
 ;*    j2s-scheme ::J2SLetBlock ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SLetBlock mode return ctx)
-   
-   (define (j2s-let-decl-inner::pair-nil d::J2SDecl mode return ctx singledecl
-	      typed)
+
+   (define (j2s-bind-generator-prototype val decls)
+      (with-access::J2SFun val (generator)
+	 (if generator
+	     (cons `(,(j2s-generator-prototype-id val)
+		     ,(j2s-generator-prototype->scheme val))
+		decls)
+	     decls)))
+      
+   (define (j2s-let-decl-inner::pair-nil d::J2SDecl mode return ctx singledecl typed)
       (with-access::J2SDeclInit d (vtype loc)
 	 (let* ((ident (j2s-decl-scm-id d ctx))
 		(var (if typed (type-ident ident vtype (context-conf ctx)) ident))
@@ -897,29 +901,24 @@
 		`((,var ,(j2s-scheme val mode return ctx))))
 	       ((decl-usage-has? d '(ref get new set))
 		(with-access::J2SFun val (decl)
-		   (if (isa? decl J2SDecl)
-		       (let ((tmp (j2s-decl-fast-id d ctx))
-			     (proc (gensym 'proc))
-			     (^tmp (j2s-decl-scm-id decl ctx))
-			     (fun (jsfun->lambda val mode return ctx
-				     `(js-get ,ident
-					 ,(& "prototype" (context-program ctx))
-					 %this) #f)))
-			  `((,^tmp #unspecified)
-			    (,tmp ,fun)
-			    (,var (let ((,proc ,(j2sfun->scheme val tmp #f mode return ctx)))
-				     (set! ,^tmp ,proc)
-				     ,proc))))
-		       (let ((fun (jsfun->lambda val mode return ctx
-				     `(js-get ,ident
-					 ,(& "prototype" (context-program ctx))
-					 %this) #f))
-			     (tmp (j2s-decl-fast-id d ctx)))
-			  `((,tmp ,fun)
-			    (,var ,(j2sfun->scheme val tmp #f mode return ctx)))))))
+		   (j2s-bind-generator-prototype val
+		      (if (isa? decl J2SDecl)
+			  (let ((tmp (j2s-decl-fast-id d ctx))
+				(proc (gensym 'proc))
+				(^tmp (j2s-decl-scm-id decl ctx))
+				(fun (jsfun->lambda val mode return ctx #f)))
+			     `((,^tmp #unspecified)
+			       (,tmp ,fun)
+			       (,var (let ((,proc ,(j2sfun->scheme val tmp #f mode return ctx)))
+					(set! ,^tmp ,proc)
+					,proc))))
+			  (let ((fun (jsfun->lambda val mode return ctx #f))
+				(tmp (j2s-decl-fast-id d ctx)))
+			     `((,tmp ,fun)
+			       (,var ,(j2sfun->scheme val tmp #f mode return ctx))))))))
 	       ((decl-usage-has? d '(call))
 		`((,(j2s-decl-fast-id d ctx)
-		   ,(jsfun->lambda val mode return ctx (j2s-fun-prototype val) #f))))
+		   ,(jsfun->lambda val mode return ctx #f))))
 	       (else
 		'())))))
    

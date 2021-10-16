@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue Sep 21 18:46:33 2021 (serrano)                */
+;*    Last change :  Fri Oct 15 14:00:53 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -694,7 +694,7 @@
 	 ((and (isa? fun J2SFun) (not (isa? fun J2SSvc)))
 	  (with-access::J2SFun fun (generator vararg)
 	     (unless (or generator vararg)
-		(let ((proc (jsfun->lambda fun mode return ctx #f #f))
+		(let ((proc (jsfun->lambda fun mode return ctx #f))
 		      (iterator (symbol-append iterator '-procedure)))
 		   (match-case proc
 		      ((?lambda (?this ?v) ?body)
@@ -880,7 +880,7 @@
 	 ((and (isa? fun J2SFun) (not (isa? fun J2SSvc)))
 	  (with-access::J2SFun fun (generator vararg)
 	     (unless (or generator vararg)
-		(let ((proc (jsfun->lambda fun mode return ctx #f #f))
+		(let ((proc (jsfun->lambda fun mode return ctx #f))
 		      (sortfn (symbol-append sortfn '-procedure)))
 		   (match-case proc
 		      ((?lambda (?this ?x ?y) ?body)

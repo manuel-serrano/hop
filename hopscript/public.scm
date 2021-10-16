@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Sep 28 12:00:45 2021 (serrano)                */
+;*    Last change :  Fri Oct 15 07:26:47 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -2236,7 +2236,7 @@
 	 ((js-jsstring? x)
 	  (cond
 	     ((js-jsstring? y)
-	      (or (eq? x y) (js-jsstring=? x y)))
+	      (js-jsstring=? x y))
 	     ((js-number? y)
 	      (if (= y 0)
 		  (or (js-jsstring-null? x) (equality? (js-jsstring->number x) y))
@@ -2286,7 +2286,9 @@
 ;*       #sec-samevaluezero                                            */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-same-value-zero? x y %this::JsGlobalObject)
-   (js-equality? x y %this))
+   (or (eq? x y)
+       (and (js-jsstring? x) (js-jsstring? y) (js-jsstring=? x y))
+       (js-equality? x y %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-equal?                                                 */

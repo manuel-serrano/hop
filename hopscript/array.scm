@@ -222,8 +222,8 @@
       (fprint (current-error-port)
 	 "   ilen=" ilen " length=" length " vlen=" (vector-length vec)
 	 "\n   plain=" (js-object-mode-plain? obj)
-	 " a.inl=" (js-array-inlined? obj)
-	 " ainline=" (js-object-mode-arrayinline? obj)
+	 " inl=" (js-array-inlined? obj)
+	 " ainl=" (js-object-mode-arrayinline? obj)
 	 " aholey=" (js-object-mode-arrayholey? obj))
       (if (<fx (vector-length vec) 20)
 	  (fprint (current-error-port) "   vec=" vec)
@@ -4540,8 +4540,7 @@
    (define (inline-map o len::uint32 proc thisarg i::uint32)
       (with-access::JsArray o (vec ilen length)
 	 (let ((v (js-create-vector (vector-length vec)))
-	       (l length)
-	       (ilen ilen))
+	       (l length))
 	    (let loop ((i i))
 	       (cond
 		  ((or (>=u32 i ilen) (>=u32 i l))
@@ -4561,7 +4560,8 @@
 
    (define (vector-map o len::uint32 proc thisarg i::uint32)
       (with-access::JsArray o (vec ilen length)
-	 (let* ((l ilen)
+	 ;; vector's ilen are constant
+	 (let* ((ilen ilen)
 		(a (js-vector-alloc ilen %this))
 		(v (with-access::JsArray a ((nvec vec)) nvec)))
 	    (let loop ((i i))
@@ -5647,25 +5647,38 @@
 	    (js-object-mode-plain? this)
 	    (js-object-mode-arrayinline? this))
        (with-access::JsArray this (vec ilen length)
+;* 	  (tprint "js-array-maybe-shift0 " (vector-length vec)         */
+;* 	     " " (integer->string (vector-length vec) 16))             */
+;* 	  (when (>fx (vector-length vec) 100000)                       */
+;* 	     (tprint "WRONG ERROR...")                                 */
+;* 	     (pragma "dprint($1)" (vector-length vec)))                */
 	  (cond
 	     ((=u32 ilen 0)
 	      (js-undefined))
-	     (($js-object-vector-inline? this)
-	      ;; fast path for shifting an array. when the the array
+	     ((and ($js-object-vector-inline? this) (>u32 ilen #u32:8))
+;* 	      (tprint "inline...")                                     */
+;* 	      (tprint ">>> ilen=" ilen " len=" length)                 */
+;* 	      (js-debug-object this)                                   */
+	      ;; fast path for shifting an array. when the array
 	      ;; is builtin (the JsArray object contains the Scheme vector)
 	      ;; instead of shifting inside the Scheme array, we merely
 	      ;; shift the inner pointer to the Scheme array
 	      (let ((first ($js-jsarray-shift-builtin this))
-		    (len (-u32 ilen 1)))
-		 (set! length len)
-		 (set! ilen len)
+		    (nlen (-u32 ilen #u32:1)))
+		 (set! length nlen)
+		 (set! ilen nlen)
+;* 		 (tprint "<<< len=" nlen " vlen=" (vector-length vec)  */
+;* 		    " " (vector-map typeof vec) " first=" (typeof first)) */
 		 first))
 	     (else
+;* 	      (tprint "copy...")                                       */
 	      (with-access::JsArray this (vec length ilen)
 		 (let ((first (vector-ref vec 0))
 		       (nlen (-u32 ilen #u32:1)))
-		    (vector-copy! vec 0 vec 1)
+;* 		    (tprint ">>> vec=" (vector-map typeof vec))        */
+		    (vector-copy! vec 0 vec 1 (uint32->fixnum ilen))
 		    (vector-set! vec (uint32->fixnum nlen) (js-absent))
+;* 		    (tprint "<<< vec=" (vector-map typeof vec))        */
 		    (set! length nlen)
 		    (set! ilen nlen)
 		    first)))))
@@ -6131,7 +6144,10 @@
 			(it (js-call0 %this proc value)))
 		    (let loop ((i 0))
 		       (let* ((n (js-get it (& "next") %this))
+			      (_ (tprint ">>> n=" n))
+			      (_1 (js-debug-object n))
 			      (v (js-call0 %this n it))
+			      (_2 (tprint "<<< n=" n))
 			      (done (js-get v (& "done") %this)))
 			  (cond
 			     ((=fx i size)

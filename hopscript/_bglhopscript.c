@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Mon Sep 20 19:27:13 2021 (serrano)                */
+/*    Last change :  Fri Oct 15 18:11:45 2021 (serrano)                */
 /*    Copyright   :  2016-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -1627,12 +1627,11 @@ bgl_jsarray_shift_builtin( obj_t array ) {
    long size = VECTOR_LENGTH( BVECTOR( vec ) );
    obj_t nvec = (obj_t)(((obj_t *)vec) + 1);
 
-#if( !defined( TAG_VECTOR ) )
-   nvec->vector.header = MAKE_HEADER( VECTOR_TYPE, 0 );
-#endif		
+   BGL_TAG_VECTOR( nvec );
    nvec->vector.length = size - 1;
    nvec = BVECTOR( nvec );
-   
+
+   // assign to remember that this array is fully inlined
    *(&(o->BgL_vecz00) + 1) = nvec;
    o->BgL_vecz00 = nvec;
 
@@ -1652,9 +1651,7 @@ bgl_init_vector( obj_t vector, long len, obj_t init ) {
    } else
 #endif
    {
-#if( !defined( TAG_VECTOR ) )
-      vector->vector.header = MAKE_HEADER( VECTOR_TYPE, 0 );
-#endif
+      BGL_TAG_VECTOR( vector );
       vector->vector.length = len;
 
       bgl_fill_vector( BVECTOR( vector ), 0, len, init );
@@ -1675,9 +1672,7 @@ bgl_init_vector_sans_fill( obj_t vector, long len ) {
    } else
 #endif
    {
-#if( !defined( TAG_VECTOR ) )
-      vector->vector.header = MAKE_HEADER( VECTOR_TYPE, 0 );
-#endif
+      BGL_TAG_VECTOR( vector );
       vector->vector.length = len;
 
       return BVECTOR( vector );

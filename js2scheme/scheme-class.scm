@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Wed Sep 29 09:51:21 2021 (serrano)                */
+;*    Last change :  Fri Oct 15 13:59:41 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -917,7 +917,7 @@
 	    (set! new-target 'argument)
 	    (set! params (cons (new-target-param loc) params))))
    
-      (jsfun->lambda dup mode return ctx #f #t)))
+      (jsfun->lambda dup mode return ctx #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    super-ctor->lambda ...                                           */

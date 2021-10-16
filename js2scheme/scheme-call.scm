@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Oct 13 14:31:06 2021 (serrano)                */
+;*    Last change :  Fri Oct 15 14:01:18 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1555,10 +1555,15 @@
 	       ((and (isa? fun J2SFun)
 		     (with-access::J2SFun fun (decl)
 			(not decl)))
-		(call-fun-function profid fun thisargs protocol
-		   (jsfun->lambda fun mode return ctx (j2s-fun-prototype fun) #f)
-		   '()
-		   args))
+		(with-access::J2SFun fun (generator)
+		   (let* ((fun-sans-gen (jsfun->lambda fun mode return ctx #f))
+			  (scmfun (if generator
+				      `(let ((,(j2s-generator-prototype-id fun)
+					      ,(j2s-generator-prototype->scheme fun)))
+					  ,fun-sans-gen)
+				      fun-sans-gen)))
+		      (call-fun-function profid fun thisargs protocol
+			 scmfun '() args))))
 	       ((Array? fun)
 		(j2s-scheme (J2SNew* fun args) mode return ctx))
 	       ((isa? fun J2SGlobalRef)

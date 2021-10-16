@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Mon Apr 13 11:12:48 2020 (serrano)                */
-;*    Copyright   :  2014-20 Manuel Serrano                            */
+;*    Last change :  Fri Oct 15 08:54:34 2021 (serrano)                */
+;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
 ;*=====================================================================*/
@@ -74,6 +74,30 @@
 ;*    &begin!                                                          */
 ;*---------------------------------------------------------------------*/
 (define __js_strings (&begin!))
+
+;*---------------------------------------------------------------------*/
+;*    ignored-verify-errors ...                                        */
+;*    -------------------------------------------------------------    */
+;*    As of 30 septembre 2021, Let's encrypt DST ROOT CA X3            */
+;*    certificate has expired, which has caused many web side to       */
+;*    collapse. Apparently, the "old" Nodejs version, Hop still        */
+;*    relies on is not able to correctly handle the work around        */
+;*    the crypto crowd has invented. Checking the newer Nodejs         */
+;*    version I have the vague impression that removing the            */
+;*    expired validy check should be enough. That's what I did         */
+;*    here. I have no idea wether this is correct or not but           */
+;*    apparently it solves the problem Hop had to connect with         */
+;*    SSL servers that were using the incriminated certificate.        */
+;*                                                                     */
+;*    Extra information can be found here:                             */
+;*                                                                     */
+;*    https://letsencrypt.org/docs/dst-root-ca-x3-expiration-          */
+;*      september-2021/                                                */
+;*    https://letsencrypt.org/certificates/                            */
+;*    https://scotthelme.co.uk/lets-encrypt-old-root-expiration/       */
+;*---------------------------------------------------------------------*/
+(define ignored-verify-errors
+   '("CERT_HAS_EXPIRED"))
 
 ;*---------------------------------------------------------------------*/
 ;*    constructors                                                     */
@@ -440,7 +464,7 @@
    (define (connection-verify-error this)
       (with-access::JsSSLConnection this (ssl)
 	 (let ((err (ssl-connection-verify-error ssl)))
-	    (if (string? err)
+	    (if (and (string? err) (not (member err ignored-verify-errors)))
 		(with-access::JsGlobalObject %this (js-error)
 		   (js-new %this js-error (js-string->jsstring err)))
 		(js-null)))))

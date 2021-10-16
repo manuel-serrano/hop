@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Oct 13 17:31:34 2021 (serrano)                */
+;*    Last change :  Fri Oct 15 11:05:17 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -3092,7 +3092,7 @@
 	 (if (=fx i -1)
 	     #t
 	     (let ((c (string-ref s i)))
-		(if (and (char>=? c #\a) (char>=? c #\z))
+		(if (and (char>=? c #\A) (char<=? c #\Z))
 		    #f
 		    (loop (-fx i 1)))))))
 	    
@@ -3192,7 +3192,7 @@
 	 (if (=fx i -1)
 	     #t
 	     (let ((c (string-ref s i)))
-		(if (and (char>=? c #\A) (char>=? c #\Z))
+		(if (and (char>=? c #\a) (char<=? c #\z))
 		    #f
 		    (loop (-fx i 1)))))))
 	    

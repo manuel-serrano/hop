@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Oct 12 11:55:01 2021 (serrano)                */
+;*    Last change :  Fri Oct 15 08:41:33 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -742,7 +742,7 @@
 			   (let* ((val (js-cast-string %this this))
 				  (len (js-jsstring-character-length val)))
 			      (let ((i #u32:0))
-				 (let loop ((%v %v) (%e %e))
+				 (let loop ((%v %v) (%e %e) (%gen %gen) (%this %this))
 				    (if (>=u32 i len)
 					(js-generator-yield %gen
 					   (js-undefined) #t

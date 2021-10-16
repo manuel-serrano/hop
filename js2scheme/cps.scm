@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Oct 12 06:55:08 2021 (serrano)                */
+;*    Last change :  Fri Oct 15 14:58:28 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -1531,9 +1531,9 @@
 ;*    kont-defuse ::J2SFun ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (kont-defuse this::J2SFun env ki)
-   (with-access::J2SFun this (decl params thisp body %info name)
+   (with-access::J2SFun this (decl params thisp argumentsp body %info name)
       (set! %info (instantiate::KontInfo (%debug name)))
-      (kont-defuse body (cons* decl thisp params) %info)))
+      (kont-defuse body (cons* decl thisp argumentsp params) %info)))
 
 ;*---------------------------------------------------------------------*/
 ;*    kont-defuse ::J2SRef ...                                         */
@@ -1815,13 +1815,14 @@
 ;*    alloc-temp ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (alloc-temp p)
-   (with-access::J2SDecl p (%info loc)
-      (when (isa? %info KDeclInfo)
-	 (with-access::KDeclInfo %info (color)
-	    (J2SStmtExpr
-	       (J2SAssig
-		  (J2SKontRef '%gen color)
-		  (J2SRef p)))))))
+   (when (isa? p J2SDecl)
+      (with-access::J2SDecl p (%info loc)
+	 (when (isa? %info KDeclInfo)
+	    (with-access::KDeclInfo %info (color)
+	       (J2SStmtExpr
+		  (J2SAssig
+		     (J2SKontRef '%gen color)
+		     (J2SRef p))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    kont-alloc-temp! ::J2SKont ...                                   */
@@ -1843,18 +1844,21 @@
 ;*    kont-alloc-temp! ::J2SFun ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (kont-alloc-temp! this::J2SFun)
-   (with-access::J2SFun this (generator body thisp params loc)
+   (with-access::J2SFun this (generator body thisp params argumentsp loc)
       (with-trace 'cps "j2sfun"
-	 (if (and (any (lambda (p)
-			  (with-access::J2SDecl p (%info)
-			     (isa? %info KDeclInfo)))
-		     params))
+	 (if (any (lambda (p)
+		     (when (isa? p J2SDecl)
+			(with-access::J2SDecl p (%info)
+			   (isa? %info KDeclInfo))))
+		(cons* thisp argumentsp params))
 	     (with-access::J2SBlock body (endloc)
 		(set! body
 		   (J2SBlock
 		      ;; this block will have to be move before the
 		      ;; generator is created, see scheme-fun
-		      (J2SBlock* (filter-map alloc-temp (cons thisp params)))
+		      (J2SBlock*
+			 (filter-map alloc-temp
+			    (cons* thisp argumentsp params)))
 		      (kont-alloc-temp! body)))
 		this)
 	     (call-default-walker)))))

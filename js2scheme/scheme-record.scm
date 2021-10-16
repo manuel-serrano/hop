@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 15 07:09:51 2021                          */
-;*    Last change :  Thu Sep 30 07:02:57 2021 (serrano)                */
+;*    Last change :  Fri Oct 15 14:01:33 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Record generation                                                */
@@ -419,7 +419,7 @@
 	       (when (class-new-target? this)
 		  (set! new-target 'argument)
 		  (set! params (cons (new-target-param loc) params))))
-	    (jsfun->lambda fun mode return ctx #f #t))))
+	    (jsfun->lambda fun mode return ctx #t))))
    
    (define (j2s-record-constructor/ctor this ctor::J2SClassElement)
       (with-access::J2SClassElement ctor (prop)
@@ -492,7 +492,7 @@
 		  (with-access::J2SClassElement el (prop)
 		     (with-access::J2SMethodPropertyInit prop (val)
 			`(define ,(class-element-id this el)
-			    ,(jsfun->lambda val mode return ctx #f #f)))))
+			    ,(jsfun->lambda val mode return ctx #f)))))
 	     (j2s-class-methods this :super #f)))))
        
 ;*---------------------------------------------------------------------*/

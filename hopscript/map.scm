@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Sat Oct  2 19:25:07 2021 (serrano)                */
+;*    Last change :  Fri Oct 15 07:28:23 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -89,6 +89,8 @@
 		(unless (eq? iterable #\F)
 		   (js-map-construct %this this iterable))
 		this)))
+
+      (define eqtest (lambda (x y) (js-same-value-zero? x y %this)))
       
       (define (js-map-alloc %this constructor::JsFunction)
 	 (js-new-target-push! %this constructor)
@@ -97,7 +99,7 @@
 	    (mapdata (create-hashtable
 			:weak weak
 			:hash js-get-hashnumber
-			:eqtest (lambda (x y) (js-same-value-zero? x y %this))))
+			:eqtest eqtest))
 	    (vec (if (eq? weak 'keys)
 		     '#()
 		     (make-vector (DEFAULT-EMPTY-VECTOR-SIZE) (js-absent))))
@@ -350,7 +352,8 @@
    (define (js-map-keys this)
       (if (js-map? this)
 	  (with-access::JsMap this (vec)
-	     (js-make-vector-iterator vec (lambda (%this val) (car val)) %this))
+	     (js-make-vector-iterator vec
+		(lambda (%this val) (car val)) %this))
 	  (js-raise-type-error %this "Not a Map" this)))
       
    (js-bind! %this js-map-prototype (& "keys")
@@ -397,7 +400,8 @@
    (define (js-map-values this)
       (if (js-map? this)
 	  (with-access::JsMap this (vec)
-	     (js-make-vector-iterator vec (lambda (%this val) (cdr val)) %this))
+	     (js-make-vector-iterator vec
+		(lambda (%this val) (cdr val)) %this))
 	  (js-raise-type-error %this "Not a Map" this)))
       
    ;; @@iterator
