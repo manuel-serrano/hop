@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Tue May  4 12:43:38 2021 (serrano)                */
+;*    Last change :  Sun Oct 17 18:18:06 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -282,12 +282,23 @@
       0)
    
    (define (compile-bigloo::int fname in lang)
-      
-      (define (srfi-opts)
-	 (cond-expand
-	    (enable-libuv '("-srfi" "enable-libuv" "-srfi" "hopc"))
-	    (else '("-srfi" "hopc"))))
 
+      (define (srfi-hopc)
+	 '("-srfi" "hopc"))
+      
+      (define (srfi-libuv)
+	 (cond-expand
+	    (enable-libuv (cons* "-srfi" "enable-libuv" (srfi-hopc)))
+	    (else (srfi-hopcs))))
+      
+      (define (srfi-tls)
+	 (cond-expand
+	    (enable-tls (cons* "-srfi" "enable-tls" (srfi-libuv)))
+	    (else (srfi-libuv))))
+
+      (define (srfi-opts)
+	 (srfi-tls))
+      
       (define (compile-file opts file)
          (let* ((opts (append (cons file (srfi-opts)) opts))
                 (proc (apply run-process (hopc-bigloo) opts))

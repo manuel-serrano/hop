@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 08:18:53 2017                          */
-;*    Last change :  Sun Oct 10 10:04:45 2021 (serrano)                */
+;*    Last change :  Sun Oct 17 09:09:19 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders                                              */
@@ -31,6 +31,7 @@
 	    "types_expd.sch"
 	    "constants_expd.sch"
 	    "names_expd.sch"
+	    "tls_expd.sch"
 	    "expanders.sch")
 
    (import  __hopscript_types

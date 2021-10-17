@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Fri Oct  1 16:43:29 2021 (serrano)                */
+;*    Last change :  Sun Oct 17 10:59:30 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -991,7 +991,8 @@
 	 ;; modify the declaration lists
 	 (map! (lambda (decl)
 		  (with-access::J2SDecl decl (binder scope %info)
-		     (if (and (eq? binder 'var) (eq? scope '%scope)
+		     (if (and (eq? binder 'var)
+			      (memq scope '(%scope tls))
 			      (isa? %info DeclInfo))
 			 (with-access::DeclInfo %info (optdecl)
 			    optdecl)
@@ -1017,7 +1018,8 @@
 		   (if (isa? lhs J2SRef)
 		       (with-access::J2SRef lhs (decl)
 			  (with-access::J2SDecl decl (binder scope %info)
-			     (if (and (eq? binder 'var) (eq? scope '%scope))
+			     (if (and (eq? binder 'var)
+				      (memq scope '(%scope tls)))
 				 (if (literal? rhs env)
 				     (let ((init expr))
 					(set! expr (J2SUndefined))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Oct  1 07:03:49 2021 (serrano)                */
+;*    Last change :  Sun Oct 17 08:52:17 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -173,6 +173,14 @@
       (filter-map (lambda (hd)
 		     (match-case hd
 			((define ?id ?val) `(,id ,val))
+			((define-tls ?id ?val) #f)
+			(else #f)))
+	 headers))
+
+   (define (j2s-tls-headers headers)
+      (filter-map (lambda (hd)
+		     (match-case hd
+			((define-tls ?id ?val) hd)
 			(else #f)))
 	 headers))
    
@@ -180,6 +188,7 @@
       (filter-map (lambda (expr)
 		     (match-case expr
 			((define ?id ?val) #f)
+			((define-tls ?id ?val) #f)
 			((js-undefined) #f)
 			(else expr)))
 	 headers))
@@ -187,18 +196,23 @@
    (define (j2s-main-worker-module name cnsttable esexports esimports scmheaders scmrecords records body)
       (with-access::J2SProgram this (pcache-size call-size path
 				       globals cnsts loc)
-	 (let* ((jsmod (js-module/main this))
+	 (let* ((jsmod (js-module/main this ctx))
 		(jsthis `(with-access::JsGlobalObject %this (js-object)
 			    (js-new0 %this js-object)))
 		(thunk `(lambda ()
+			   (define-tls %this %t)
+			   (define-tls %module %m)
 			   (let* ((_ (set! __js_strings ,(j2s-jsstring-init this)))
 				  (__ (set! __js_rxcaches ,(j2s-regexp-caches-init this)))
-				  (%cnst-table ,cnsttable)
-				  (%scope (nodejs-new-scope-object %this))
 				  (this ,jsthis)
-				  ,@(j2s-let-globals globals))
+;* 				  ,@(j2s-let-globals globals)          */
+				  )
 			      ;; the sole purpose of the scmheaders split
 			      ;; is not minimize letrec* nesting level
+			      (define-tls %cnst-table ,cnsttable)
+			      (define-tls %scope (nodejs-new-scope-object %this))
+			      ,@(js-define-tls this)
+			      ,@(j2s-tls-headers scmheaders)
 			      (letrec* ,(j2s-let-headers scmheaders)
 				 ,@(j2s-expr-headers scmheaders)
 				 ,esexports
@@ -239,13 +253,14 @@
 		      `((hop-sofile-directory-set! ,(context-get ctx :libs-dir #f)))
 		      '())
 		,@(map j2s-record-predicate records)
+		,@(js-declare-tls this ctx)
 		(define (main args)
 		   (when (getenv "BIGLOOTRACE") (bigloo-debug-set! 1))
 		   (bigloo-library-path-set! ',(bigloo-library-path))
 		   (hop-port-set! -1)
 		   (hop-ssl-port-set! -1)
 		   (hopscript-install-expanders!)
-		   (multiple-value-bind (%worker %this %module)
+		   (multiple-value-bind (%worker %t %m)
 		      (js-main-worker! ,name ,(absolute path) #f
 			 nodejs-new-global-object nodejs-new-module)
 		      (js-worker-push-thunk! %worker "nodejs-toplevel"
@@ -342,7 +357,7 @@
 				    pcache-size call-size
 				    %this path globals
 				    cnsts loc name)
-      (let ((module (js-module/main this)))
+      (let ((module (js-module/main this ctx)))
 	 (epairify-deep loc
 	    `(,module 
 		,@(filter fundef? globals)
@@ -645,14 +660,60 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-module/main ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (js-module/main this::J2SProgram)
+(define (js-module/main this::J2SProgram ctx)
    (with-access::J2SProgram this (loc name)
       (epairify-deep loc
 	 `(module ,(module-name name)
 	     (eval (library hop) (library hopscript) (library nodejs))
 	     (library hop hopscript nodejs)
 	     (cond-expand (enable-libuv (library libuv)))
+	     ,@(js-module-tls this ctx)
 	     (main main)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-program-tls ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-program-tls this::J2SProgram ctx)
+   (with-access::J2SProgram this (globals decls headers)
+      (append '(%this %module %scope %cnst-table)
+	 (map (lambda (g)
+		 (match-case g
+		    ((define ?var ?-) var)
+		    (else (error "js-program" "wrong global" g))))
+	    globals)
+	 (filter-map (lambda (g)
+			(with-access::J2SDecl g (id scope)
+			   (when (eq? scope 'tls)
+			      (j2s-decl-scm-id g ctx))))
+	    (append headers decls)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-module-tls ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-module-tls this::J2SProgram ctx)
+   (let ((tls (js-program-tls this ctx)))
+      `((cond-expand
+	   (enable-tls (static ,@tls)))
+	(cond-expand
+	   (enable-tls (pragma ,@(map (lambda (g) `(,g thread-local)) tls)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-declare-tls ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-declare-tls this::J2SProgram ctx)
+   (let ((tls (js-program-tls this ctx)))
+      (map (lambda (g) `(declare-tls ,g)) tls)))
+
+;*---------------------------------------------------------------------*/
+;*    js-define-tls ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-define-tls this::J2SProgram)
+   (with-access::J2SProgram this (globals)
+      (map (lambda (g)
+	      (match-case g
+		    ((define ?var ?val) `(define-tls ,var ,val))
+		    (else (error "js-program" "wrong global" g))))
+	 globals)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-module ...                                                    */

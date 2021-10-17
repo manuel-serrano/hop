@@ -174,14 +174,15 @@
       (let ((ident (j2s-decl-scm-id this ctx)))
 	 (epairify-deep loc
 	    (cond
-	       ((memq scope '(global %scope))
+	       ((memq scope '(global %scope tls))
 		(let ((fun-name (format "function:~a:~a"
-				   (cadr loc) (caddr loc))))
+				   (cadr loc) (caddr loc)))
+		      (def (if (eq? scope 'tls) 'define-tls 'define)))
 		   (if (and (not (isa? this J2SDeclExtern)) (in-eval? return))
 		       `(js-decl-eval-put! %scope ,(j2s-decl-name this ctx)
 			   ,value ,(strict-mode? mode) %this)
 		       (if (js-need-global? this scope mode)
-			   `(define ,ident
+			   `(,def ,ident
 			       (let ((%%tmp ,value))
 				  (js-define %this %scope
 				     ,(j2s-decl-name this ctx)
@@ -194,7 +195,7 @@
 				     %source ,(caddr loc)
 				     ,@(or (hidden-class this) '()))
 				  %%tmp))
-			   `(define ,ident ,value)))))
+			   `(,def ,ident ,value)))))
 	       ((memq scope '(letblock letvar kont))
 		(if (decl-ronly? this)
 		    `(,(vtype-ident ident vtype (context-conf ctx)) ,value)
@@ -263,7 +264,7 @@
    
    (define (j2s-scheme-let-opt this)
       (with-access::J2SDeclInit this (scope id)
-	 (if (memq scope '(global %scope record))
+	 (if (memq scope '(global %scope tls record))
 	     (j2s-let-decl-toplevel this mode return ctx)
 	     (error "j2s-scheme" "Should not be here (not global)"
 		(j2s->sexp this)))))
@@ -308,7 +309,7 @@
 	    (cond
 	       ((or writable init?)
 		(cond
-		   ((and (memq scope '(global %scope)) (in-eval? return))
+		   ((and (memq scope '(global %scope tls)) (in-eval? return))
 		    `(begin
 			,(j2s-put! loc '%scope #f (j2s-vtype lhs)
 			    (& id (context-program ctx)) 'propname
@@ -433,7 +434,7 @@
 		 (epairify loc
 		    `(js-let-ref ,(j2s-decl-scm-id decl ctx) ',id ',loc %this))
 		 (j2s-decl-scm-id decl ctx)))
-	    ((and (memq scope '(global %scope export)) (in-eval? return))
+	    ((and (memq scope '(global %scope tls export)) (in-eval? return))
 	     (epairify loc
 		`(js-global-object-get-name %scope
 		    ,(& id (context-program ctx)) #f %this)))

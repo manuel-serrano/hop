@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Oct 10 09:42:01 2021 (serrano)                */
+;*    Last change :  Sun Oct 17 08:46:38 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -67,6 +67,7 @@
 	      (key (default (ast-decl-key)) (info '("notraverse")))
 	      ;; writable=#f iff decl is const
 	      (writable (default #t) (info '("notraverse")))
+	      ;; either global, %scope, tls, local, letblock, letvar, kont, export
 	      (scope::symbol (default 'local) (info '("notraverse")))
 	      (usecnt::int (default 0) (info '("notraverse")))
 	      (useinloop::bool (default #f) (info '("notraverse")))

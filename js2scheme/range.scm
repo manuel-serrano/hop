@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Oct  1 16:44:01 2021 (serrano)                */
+;*    Last change :  Sun Oct 17 10:59:51 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -2342,7 +2342,7 @@
 	       (let ((rty (min-type vtype ity)))
 		  (unless (eq? rty vtype)
 		     (let ((aty (cond
-				   ((memq scope '(%scope global))
+				   ((memq scope '(%scope global tls))
 				    (if (decl-ronly? this)
 					rty
 					(type->boxed-type rty)))

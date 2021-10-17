@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 20 14:59:28 2021                          */
-;*    Last change :  Fri Oct  1 07:03:38 2021 (serrano)                */
+;*    Last change :  Sun Oct 17 11:03:30 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    An optimization that transforms global vars into global lets.    */
@@ -82,7 +82,7 @@
 			      (with-access::J2SInit expr (lhs rhs loc)
 				 (with-access::J2SRef lhs (decl)
 				    (with-access::J2SDecl decl (scope)
-				       (if (and (memq scope '(global %scope))
+				       (if (and (memq scope '(global %scope tls))
 						(simple-expr? rhs))
 					   (let ((ds (var->let! this decl rhs)))
 					      (set-car! inits (J2SNop))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Tue Sep 28 08:39:17 2021 (serrano)                */
+;*    Last change :  Sun Oct 17 09:42:15 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -200,7 +200,8 @@
 	    :sweepable #t)
 	 (js-def-extern 'Error #t writable
 	    `(with-access::JsGlobalObject %this (js-error) js-error)
-	    :sweepable #t)
+	    :sweepable #t
+	    :scope 'tls)
 	 (js-def-extern 'SyntaxError #t writable
 	    `(with-access::JsGlobalObject %this (js-syntax-error) js-syntax-error)
 	    :sweepable #t)

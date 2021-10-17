@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Oct 15 14:58:28 2021 (serrano)                */
+;*    Last change :  Sun Oct 17 10:57:37 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -1542,7 +1542,7 @@
    (with-access::J2SRef this (decl loc)
       (with-access::J2SDecl decl (scope id)
 	 (when (and (not (isa? decl J2SDeclExtern))
-		    (not (memq scope '(%scope global)))
+		    (not (memq scope '(%scope global tls)))
 		    (not (memq decl env))
 		    (or (not (isa? decl J2SDeclInit))
 			(with-access::J2SDeclInit decl (val)

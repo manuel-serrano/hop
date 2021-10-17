@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri May 21 06:42:40 2021                          */
-;*    Last change :  Tue Oct 12 07:22:35 2021 (serrano)                */
+;*    Last change :  Sun Oct 17 10:58:21 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    FREE-VARS? is true if and only if the ast THIS uses              */
@@ -56,7 +56,7 @@
    (with-access::J2SRef this (decl loc)
       (with-access::J2SDecl decl (scope id)
 	 (when (and (not (isa? decl J2SDeclExtern))
-		    (not (memq scope '(%scope global)))
+		    (not (memq scope '(%scope global tls)))
 		    (not (memq decl env)))
 	    (cell-set! res #t)))))
 

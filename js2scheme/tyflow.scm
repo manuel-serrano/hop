@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Oct 14 17:11:12 2021 (serrano)                */
+;*    Last change :  Sun Oct 17 11:02:23 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -708,7 +708,8 @@
 		     (if (isa? val J2SMethod)
 			 (escape-method val ctx)
 			 (escape-fun val ctx #f))))
-	       (if (and (memq scope '(%scope global)) (not (eq? vtype 'unknown)))
+	       (if (and (memq scope '(%scope global tls))
+			(not (eq? vtype 'unknown)))
 		   (expr-type-add! this nenv ctx vtype)
 		   (let ((ty (env-lookup env decl)))
 		      (expr-type-add! this nenv ctx ty))))))))
@@ -1297,7 +1298,7 @@
 	 (with-access::J2SDecl decl (scope id)
 	    (with-access::J2SFun fun (rtype %info)
 	       (let* ((oenv (if (env? %info) (env-override env %info) env))
-		      (nenv (if (memq scope '(global %scope))
+		      (nenv (if (memq scope '(global %scope tls))
 				(global-call-env oenv)
 				(local-call-env oenv))))
 		  (return rtype nenv bk))))))

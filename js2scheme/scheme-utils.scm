@@ -240,7 +240,7 @@
 	 (if _scmid
 	     _scmid
 	     (let ((sid (j2s-scheme-id id
-			   (if (eq? scope '%scope)
+			   (if (memq scope '(%scope tls))
 			       '!
 			       (string->symbol
 				  (string-append "^"
@@ -299,7 +299,7 @@
       (or (not (j2s-let-opt? decl))
 	  (not (eq? scope 'record))
 	  (decl-usage-has? decl '(eval))
-	  (not (and (eq? scope '%scope) (eq? mode 'hopscript))))))
+	  (not (and (memq scope '(%scope tls)) (eq? mode 'hopscript))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    flatten-begin ...                                                */

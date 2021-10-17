@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Oct 15 13:54:50 2021 (serrano)                */
+;*    Last change :  Sun Oct 17 11:00:30 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -162,7 +162,7 @@
 			     (list def
 				`(,scmid ,(j2s-make-function this
 					     mode return ctx)))))))
-		     ((global %scope)
+		     ((global %scope tls)
 		      (global-declfun this val scmid fastid))
 		     ((export)
 		      (with-access::J2SExport (car exports) (index)
@@ -360,7 +360,7 @@
 			 #f)
 			((letblock)
 			 #f)
-			((global %scope)
+			((global %scope tls)
 			 (if (eq? vtype 'procedure)
 			     #unspecified
 			     (epairify-deep loc
@@ -394,7 +394,7 @@
 			 function)))
 	     (lam (jsfun->lambda fun mode return ctx #f)))
 	 (epairify-deep loc
-	    (if (and (memq scope '(global %scope))
+	    (if (and (memq scope '(global %scope tls))
 		     (js-need-global? this scope mode))
 		`(begin
 		    (define ,lamid ,lam)

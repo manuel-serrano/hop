@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Thu Oct 14 18:57:28 2021 (serrano)                */
+;*    Last change :  Sun Oct 17 11:02:51 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -1063,7 +1063,7 @@
        (with-access::J2SRef expr (decl)
 	  (with-access::J2SDecl decl (id scope)
 	     (and (eq? id clazz)
-		  (or (and (eq? scope '%scope)
+		  (or (and (memq scope '(%scope tls))
 			   (not (decl-usage-has? decl '(ref assig set delete uninit rest eval))))
 		      (and (isa? decl J2SDeclExtern)
 			   (not (decl-usage-has? decl '(assig set eval)))))))))

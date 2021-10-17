@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 27 07:35:02 2019                          */
-;*    Last change :  Fri Oct  1 16:46:05 2021 (serrano)                */
+;*    Last change :  Sun Oct 17 10:59:42 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Procedure optimization.                                          */
@@ -416,7 +416,7 @@
 	 (if (isa? lhs J2SRef)
 	     (with-access::J2SRef lhs (decl)
 		(with-access::J2SDecl decl (scope)
-		   (if (memq scope '(global %scope))
+		   (if (memq scope '(global %scope tls))
 		       (begin
 			  (escape! rhsv fix)
 			  (escape! decl fix)

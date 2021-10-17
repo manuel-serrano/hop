@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Tue Aug 24 11:05:24 2021 (serrano)                */
+;*    Last change :  Sun Oct 17 10:58:40 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let function optimization. This optimization implements          */
@@ -208,7 +208,7 @@
       (when (isa? rhs J2SRef)
 	 (with-access::J2SRef rhs (decl)
 	    (with-access::J2SDecl decl (scope binder id)
-	       (or (memq scope '(%scope global))
+	       (or (memq scope '(%scope global tls))
 		   (eq? binder 'param))))))
 
    (define (safe-expr? expr blacklist)

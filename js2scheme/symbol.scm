@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Oct  1 16:43:11 2021 (serrano)                */
+;*    Last change :  Sun Oct 17 11:02:11 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -853,7 +853,7 @@
 			 ((isa? ref J2SRef)
 			  (with-access::J2SRef ref (decl loc)
 			     (with-access::J2SDecl decl (scope id)
-				(if (memq scope '(global export %scope))
+				(if (memq scope '(global export %scope tls))
 				    (export-decl decl alias program loc)
 				    (export-err id loc
 				       (format "bad scope (~s)" scope))))))
