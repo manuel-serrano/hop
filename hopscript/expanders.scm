@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 08:18:53 2017                          */
-;*    Last change :  Sun Oct 17 09:09:19 2021 (serrano)                */
+;*    Last change :  Mon Oct 18 09:05:04 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders                                              */
@@ -48,5 +48,3 @@
 	    __hopscript_stringliteral)
 
    (export  (hopscript-install-expanders!)))
-
-

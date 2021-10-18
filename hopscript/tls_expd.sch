@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov 22 06:35:05 2014                          */
-;*    Last change :  Sun Oct 17 09:50:02 2021 (serrano)                */
+;*    Last change :  Mon Oct 18 08:15:49 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    thread local variables macros.                                   */
@@ -18,8 +18,10 @@
    (match-case x
       ((declare-tls ?var)
        (let ((nx `(cond-expand
-		     (enable-tls (define ,var #unspecified))
-		     (else #unspecified))))
+		     ((and enable-tls (not bigloo-eval))
+		      (define ,var #unspecified))
+		     (else
+		      #unspecified))))
 	  (if (epair? x)
 	      (e (econs (car nx) (cdr nx) (cer x)) e)
 	      (e nx e))))
@@ -33,14 +35,14 @@
    (match-case x
       ((define-tls ?var #unspecified)
        (let ((nx `(cond-expand
-		     (enable-tls #unspecified)
+		     ((and enable-tls (not bigloo-eval)) #unspecified)
 		     (else (define ,var #unspecified)))))
 	  (if (epair? x)
 	      (e (econs (car nx) (cdr nx) (cer x)) e)
 	      (e nx e))))
       ((define-tls ?var ?val)
        (let ((nx `(cond-expand
-		     (enable-tls (set! ,var ,val))
+		     ((and enable-tls (not bigloo-eval)) (set! ,var ,val))
 		     (else (define ,var ,val)))))
 	  (if (epair? x)
 	      (e (econs (car nx) (cdr nx) (cer x)) e)

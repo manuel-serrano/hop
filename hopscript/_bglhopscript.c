@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Fri Oct 15 18:11:45 2021 (serrano)                */
+/*    Last change :  Mon Oct 18 09:42:43 2021 (serrano)                */
 /*    Copyright   :  2016-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -251,12 +251,14 @@ typedef struct apool {
 /*---------------------------------------------------------------------*/
 /*    buffer fillers ...                                               */
 /*---------------------------------------------------------------------*/
-static void jsobject_fill_buffer( apool_t *pool, void *arg );
-static void jsproxy_fill_buffer( apool_t *pool, void *arg );
-static void jsfunction_fill_buffer( apool_t *pool, void *arg );
-static void jsmethod_fill_buffer( apool_t *pool, void *arg );
-static void jsprocedure_fill_buffer( apool_t *pool, void *arg );
-static void jsstringliteralascii_fill_buffer( apool_t *pool, void *arg );
+#define BMEM_STATIC
+
+BMEM_STATIC void jsobject_fill_buffer( apool_t *pool, void *arg );
+BMEM_STATIC void jsproxy_fill_buffer( apool_t *pool, void *arg );
+BMEM_STATIC void jsfunction_fill_buffer( apool_t *pool, void *arg );
+BMEM_STATIC void jsmethod_fill_buffer( apool_t *pool, void *arg );
+BMEM_STATIC void jsprocedure_fill_buffer( apool_t *pool, void *arg );
+BMEM_STATIC void jsstringliteralascii_fill_buffer( apool_t *pool, void *arg );
 
 /*---------------------------------------------------------------------*/
 /*    alloc pools                                                      */
@@ -450,7 +452,7 @@ thread_alloc_worker( void *arg ) {
 /*    static void                                                      */
 /*    jsobject_buffer_fill ...                                         */
 /*---------------------------------------------------------------------*/
-static void
+BMEM_STATIC void
 jsobject_fill_buffer( apool_t *pool, void *arg ) {
 #if HOP_ALLOC_JSOBJECT_POLICY != HOP_ALLOC_CLASSIC
    int i;
@@ -468,7 +470,7 @@ jsobject_fill_buffer( apool_t *pool, void *arg ) {
 /*    static void                                                      */
 /*    jsproxy_buffer_fill ...                                          */
 /*---------------------------------------------------------------------*/
-static void
+BMEM_STATIC void
 jsproxy_fill_buffer( apool_t *pool, void *arg ) {
 #if HOP_ALLOC_JSPROXY_POLICY != HOP_ALLOC_CLASSIC
    int i;
@@ -486,7 +488,7 @@ jsproxy_fill_buffer( apool_t *pool, void *arg ) {
 /*    static void                                                      */
 /*    jsfunction_buffer_fill ...                                       */
 /*---------------------------------------------------------------------*/
-static void
+BMEM_STATIC void
 jsfunction_fill_buffer( apool_t *pool, void *arg ) {
 #if HOP_ALLOC_JSFUNCTION_POLICY != HOP_ALLOC_CLASSIC
    int i;
@@ -504,7 +506,7 @@ jsfunction_fill_buffer( apool_t *pool, void *arg ) {
 /*    static void                                                      */
 /*    jsmethod_buffer_fill ...                                         */
 /*---------------------------------------------------------------------*/
-static void
+BMEM_STATIC void
 jsmethod_fill_buffer( apool_t *pool, void *arg ) {
 #if HOP_ALLOC_JSMETHOD_POLICY != HOP_ALLOC_CLASSIC
    int i;
@@ -521,7 +523,7 @@ jsmethod_fill_buffer( apool_t *pool, void *arg ) {
 /*    static void                                                      */
 /*    jsprocedure_buffer_fill ...                                      */
 /*---------------------------------------------------------------------*/
-static void
+BMEM_STATIC void
 jsprocedure_fill_buffer( apool_t *pool, void *arg ) {
 #if HOP_ALLOC_JSPROCEDURE_POLICY != HOP_ALLOC_CLASSIC
    int i;
@@ -538,7 +540,7 @@ jsprocedure_fill_buffer( apool_t *pool, void *arg ) {
 /*    static void                                                      */
 /*    jsstringliteralascii_buffer_fill ...                             */
 /*---------------------------------------------------------------------*/
-static void
+BMEM_STATIC void
 jsstringliteralascii_fill_buffer( apool_t *pool, void *arg ) {
 #if HOP_ALLOC_JSSTRINGLITERALASCII_POLICY != HOP_ALLOC_CLASSIC
    int i;

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Mar 28 15:09:08 2019                          */
-;*    Last change :  Sun Apr 12 13:07:06 2020 (serrano)                */
-;*    Copyright   :  2019-20 Manuel Serrano                            */
+;*    Last change :  Mon Oct 18 08:39:31 2021 (serrano)                */
+;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript constant expanders                                     */
 ;*    -------------------------------------------------------------    */
@@ -56,7 +56,7 @@
 	      (bigloo-c
 	       (free-pragma::obj ,(format "(__js_cnst_table.objs[ ~a ])" num)))
 	      (else
-	       (vector-ref-ur %cnst-table ,num)))
+	       (vector-ref %cnst-table ,num)))
 	  e))
       (else
        (error "js-cnst-table-ref" "bad syntax" x))))
