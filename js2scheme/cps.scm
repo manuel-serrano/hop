@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sun Oct 17 10:57:37 2021 (serrano)                */
+;*    Last change :  Mon Oct 18 15:20:36 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -1794,12 +1794,14 @@
    (init-graph graph)
    
    ;; stack the variables
-   (let loop ((graph graph)
-	      (stack '()))
-      (if (null? graph)
-	  (color (reverse stack))
-	  (let ((var (smallest graph)))
-	     (loop (graph-delete! graph var) (cons var stack))))))
+   (if (null? graph)
+       0
+       (let loop ((graph graph)
+		  (stack '()))
+	  (if (null? graph)
+	      (color (reverse stack))
+	      (let ((var (smallest graph)))
+		 (loop (graph-delete! graph var) (cons var stack)))))))
 
 (define (kont-color::long graph)
    (kont-color-fast graph))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Sat Oct  9 08:31:58 2021 (serrano)                */
+;*    Last change :  Mon Oct 18 15:32:57 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -251,11 +251,48 @@
 			       `(js-object-mode-inline-set! ,nobj #f)
 			       nobj)))
 		    (e (epairify nx x) e))))))
+
+      (define (def-jsgenerator)
+	 `(define (js-instantiate-JsGenerator-expander x e)
+
+	     (define (epairify nx x)
+		(if (epair? x)
+		    (econs (car nx) (cdr nx) (cer x))
+		    nx))
+	     
+	     (match-case x
+		((instantiateJsGenerator
+		    (cmap ?cmap)
+		    (elements '#())
+		    (__proto__ ?proto)
+		    (%next ?next)
+		    (%env (if (>fx ?size 0) (make-vector ?size) '#())))
+		 (let ((nx `($js-make-jsgenerator ,cmap ,proto ,size ,next)))
+		    (e (epairify nx x) e)))
+		((instantiateJsGenerator
+		    (cmap ?cmap)
+		    (elements ?elements)
+		    (__proto__ ?proto)
+		    (%next ?next)
+		    (%env ?env))
+		 (warning "instantiateJsGenerator" "unrecognized form" x)
+		 (e `(let ((o (instantiate::JsGenerator
+				 (cmap ,cmap)
+				 (elements ,elements)
+				 (%next ,next)
+				 (%env ,env))))
+			(js-object-proto-set! o ,proto)
+			o)
+		    e))
+		(else
+		 (error "def-jsgenerator" "bad form" x)))))
       
       (define (def clazz)
 	 (cond
 	    ((eq? clazz 'JsObject)
 	     (def-jsobject))
+	    ((eq? clazz 'JsGenerator)
+	     (def-jsgenerator))
 	    (else
 	     (def-default clazz))))
 

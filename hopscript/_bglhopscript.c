@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Mon Oct 18 09:42:43 2021 (serrano)                */
+/*    Last change :  Mon Oct 18 15:22:56 2021 (serrano)                */
 /*    Copyright   :  2016-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -35,6 +35,7 @@ extern obj_t BGl_JsFunctionz00zz__hopscript_typesz00;
 extern obj_t BGl_JsMethodz00zz__hopscript_typesz00;
 extern obj_t BGl_JsProcedurez00zz__hopscript_typesz00;
 extern obj_t BGl_JsStringLiteralASCIIz00zz__hopscript_typesz00;
+extern obj_t BGl_JsGeneratorz00zz__hopscript_typesz00;
 
 extern obj_t string_append( obj_t, obj_t );
 
@@ -72,6 +73,11 @@ extern obj_t string_append( obj_t, obj_t );
    sizeof( struct BgL_jsstringliteralasciiz00_bgl )
 #define JSSTRINGLITERALASCII_CLASS_INDEX \
    BGL_CLASS_INDEX( BGl_JsStringLiteralASCIIz00zz__hopscript_typesz00 )
+
+#define JSGENERATOR_SIZE \
+   sizeof( struct BgL_jsgeneratorz00_bgl )
+#define JSGENERATOR_CLASS_INDEX \
+   BGL_CLASS_INDEX( BGl_JsGeneratorz00zz__hopscript_typesz00 )
 
 extern obj_t bgl_js_profile_allocs;
 obj_t bgl_profile_pcache_tables = BNIL;
@@ -1738,3 +1744,34 @@ bgl_profile_get_pcaches() {
    return res;
 }
 
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_make_jsgenerator ...                                         */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_make_jsgenerator(obj_t constrmap, obj_t __proto__, long sz, obj_t next) {
+   long bsize = JSGENERATOR_SIZE + VECTOR_SIZE + ((sz-1) * OBJ_SIZE);
+   BgL_jsgeneratorz00_bglt o = (BgL_jsgeneratorz00_bglt)HOP_MALLOC(bsize);
+   obj_t env;
+
+   /* class initialization */
+   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSGENERATOR_CLASS_INDEX);
+
+   /* fields init */
+   o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
+   o->BgL_elementsz00 = empty_vector;
+   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsobject_mode);
+   BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);
+
+   /* vector initialization */
+   env = (obj_t)(&(o->BgL_z52envz52) + 1);
+   BGL_TAG_VECTOR(env);
+   env->vector.length = sz;
+   env = BVECTOR(env);
+
+   /* generator field initialization */
+   o->BgL_z52nextz52 = next;
+   o->BgL_z52envz52 = env;
+
+   return BNANOBJECT(o);
+}

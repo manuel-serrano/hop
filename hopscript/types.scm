@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Oct  9 06:49:55 2021 (serrano)                */
+;*    Last change :  Mon Oct 18 15:32:05 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -67,6 +67,8 @@
 	      "bgl_make_jsprocedure")
 	   ($js-make-stringliteralascii::JsStringLiteralASCII (::uint32 ::obj ::obj)
 	      "bgl_make_jsstringliteralascii")
+	   ($js-make-jsgenerator::JsGenerator (::obj ::obj ::long ::obj)
+	      "bgl_make_jsgenerator")
 	   (macro $js-object-inline-elements::vector (::JsObject)
 		  "HOP_JSOBJECT_INLINE_ELEMENTS")
 	   (macro $js-object-vector-inline?::bool (::JsArray)
