@@ -4033,8 +4033,13 @@
 	 ((=u32 lenval #u32:0)
 	  (& ""))
 	 ((=u32 lenval #u32:1)
-	  (el->jsstring (js-array-index-ref o (-u32 lenval #u32:1) %this)))
-	 (else
+	  (el->jsstring (js-array-index-ref o #u32:0 %this)))
+	 ((=u32 lenval #u32:2)
+	  (js-jsstring-append3
+	     (el->jsstring (js-array-index-ref o 0 %this))
+	     sep
+	     (el->jsstring (js-array-index-ref o 1 %this))))
+	 ((<=u32 lenval #u32:4)
 	  (let loop ((r (js-jsstring-append sep
 			   (el->jsstring
 			      (js-array-index-ref o (-u32 lenval #u32:1)
@@ -4047,7 +4052,17 @@
 		 (let ((v (js-array-index-ref o i %this)))
 		    (loop (js-jsstring-append sep
 			     (js-jsstring-append (el->jsstring v) r))
-		       (-u32 i #u32:1)))))))))
+		       (-u32 i #u32:1))))))
+	 (else
+	  (let loop ((i #u32:1)
+		     (buffer (js-jsstring-append-buffer (js-string->jsbuffer "")
+				(el->jsstring (js-array-index-ref o #u32:0 %this)))))
+	     (if (=u32 i lenval)
+		 (js-buffer->jsstring buffer)
+		 (let ((buffer (js-jsstring-append-buffer buffer sep)))
+		    (loop (+u32 i #u32:1)
+		       (js-jsstring-append-buffer buffer
+			  (el->jsstring (js-array-index-ref o i %this)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-join ...                                                */
@@ -4539,7 +4554,7 @@
    
    (define (inline-map o len::uint32 proc thisarg i::uint32)
       (with-access::JsArray o (vec ilen length)
-	 (let ((v (js-create-vector (vector-length vec)))
+	 (let ((v (js-create-vector (uint32->fixnum length)))
 	       (l length))
 	    (let loop ((i i))
 	       (cond
@@ -4557,7 +4572,31 @@
 		      (vector-set! v (uint32->fixnum i)
 			 (proc thisarg val (js-uint32-tointeger i) o %this))
 		      (loop (+u32 i 1)))))))))
-
+   
+   (define (full-inline-map o len::uint32 proc thisarg i::uint32)
+      (with-access::JsArray o (vec ilen length)
+	 (let ((a (with-access::JsGlobalObject %this (js-array-prototype js-array-cmap)
+		     ($js-make-jsarray-sans-init (uint32->fixnum ilen)
+			ilen ilen 
+			js-array-cmap
+			js-array-prototype
+			(js-array-default-mode)))))
+	    (with-access::JsArray a ((nvec vec))
+	       (let ((v nvec)
+		     (l length))
+		  (let loop ((i i))
+		     (cond
+			((or (>=u32 i ilen) (>=u32 i l))
+			 (if (=u32 i len)
+			     a
+			     ;; the array has been uninlined by the callback
+			     (array-map/array o len proc thisarg i a)))
+			(else
+			 (let ((val (vector-ref vec (uint32->fixnum i))))
+			    (vector-set! v (uint32->fixnum i)
+			       (proc thisarg val (js-uint32-tointeger i) o %this))
+			    (loop (+u32 i 1)))))))))))
+   
    (define (vector-map o len::uint32 proc thisarg i::uint32)
       (with-access::JsArray o (vec ilen length)
 	 ;; vector's ilen are constant
@@ -4571,11 +4610,21 @@
 		      (vector-set! v (uint32->fixnum i)
 			 (proc thisarg val (uint32->fixnum i) o %this))
 		      (loop (+u32 i 1))))))))
-
+   
    (with-access::JsArray this (length)
-      (if (js-vector? this)
-	  (vector-map this length proc thisarg #u32:0)
-	  (inline-map this length proc thisarg #u32:0))))
+      (cond
+	 ((=u32 length 0)
+	  (with-access::JsGlobalObject %this (js-array-prototype js-array-cmap)
+	     ($js-make-jsarray 0 #u32:0
+		js-array-cmap
+		js-array-prototype
+		(js-absent) (js-array-default-mode))))
+	 ((js-vector? this)
+	  (vector-map this length proc thisarg #u32:0))
+	 ((js-array-full-inlined? this)
+	  (full-inline-map this length proc thisarg #u32:0))
+	 (else
+	  (inline-map this length proc thisarg #u32:0)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-map-procedure ...                                       */

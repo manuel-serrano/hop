@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Tue Aug 31 13:42:14 2021 (serrano)                */
+;*    Last change :  Tue Oct 19 08:50:22 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -56,21 +56,43 @@
 	  (e `(let ((,tmp ,expr)) (js-tonumber ,tmp ,%this)) e)))
       (else
        (map (lambda (x) (e x e)) x))))
-      
+
 ;*---------------------------------------------------------------------*/
 ;*    js-tonumber-for-flonum-expander ...                              */
 ;*---------------------------------------------------------------------*/
 (define (js-tonumber-for-flonum-expander x e)
    (match-case x
       ((?- (and (? symbol?) ?expr) ?%this)
-       (e `(if (flonum? ,expr)
-	       ,expr
+       (e `(cond
+	      ((flonum? ,expr)
+	       ,expr)
+	      ((fixnum? ,expr)
+	       (fixnum->flonum ,expr))
+	      (else
 	       ((@ js-toflonum __hopscript_arithmetic)
-		((@ js-tonumber __hopscript_public) ,expr ,%this)))
+		((@ js-tonumber __hopscript_public) ,expr ,%this))))
 	  e))
       ((?- ?expr ?%this)
        (let ((tmp (gensym '%e)))
 	  (e `(let ((,tmp ,expr)) (js-tonumber-for-flonum ,tmp ,%this)) e)))
+      (else
+       (map (lambda (x) (e x e)) x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-math-floorfl-expander ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-math-floorfl-expander x e)
+   (match-case x
+      ((?- (and ?f (js-tonumber-for-flonum (and (? symbol?) ?val) %this)))
+       (e `(if (fixnum? ,val)
+	       (overflowfx ,val)
+	       ((@ js-math-floorfl __hopscript_math) ,f))
+	  e))
+      ((?- (js-tonumber-for-flonum ?val %this))
+       (let ((tmp (gensym 'tmp)))
+	  (e `(let ((,tmp ,val))
+		 (js-math-floorfl (js-tonumber-for-flonum ,tmp %this)))
+	     e)))
       (else
        (map (lambda (x) (e x e)) x))))
       

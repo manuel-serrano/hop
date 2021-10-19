@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Mon Oct 18 15:32:57 2021 (serrano)                */
+;*    Last change :  Mon Oct 18 18:25:03 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -267,7 +267,9 @@
 		    (__proto__ ?proto)
 		    (%next ?next)
 		    (%env (if (>fx ?size 0) (make-vector ?size) '#())))
-		 (let ((nx `($js-make-jsgenerator ,cmap ,proto ,size ,next)))
+		 (let ((nx `($js-make-jsgenerator ,cmap ,proto ,size ,next
+			       (bit-andu32 (js-object-default-mode)
+				  (bit-notu32 (JS-OBJECT-MODE-INLINE))))))
 		    (e (epairify nx x) e)))
 		((instantiateJsGenerator
 		    (cmap ?cmap)

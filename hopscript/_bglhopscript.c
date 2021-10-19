@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Mon Oct 18 15:22:56 2021 (serrano)                */
+/*    Last change :  Mon Oct 18 18:24:27 2021 (serrano)                */
 /*    Copyright   :  2016-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -257,14 +257,12 @@ typedef struct apool {
 /*---------------------------------------------------------------------*/
 /*    buffer fillers ...                                               */
 /*---------------------------------------------------------------------*/
-#define BMEM_STATIC
-
-BMEM_STATIC void jsobject_fill_buffer( apool_t *pool, void *arg );
-BMEM_STATIC void jsproxy_fill_buffer( apool_t *pool, void *arg );
-BMEM_STATIC void jsfunction_fill_buffer( apool_t *pool, void *arg );
-BMEM_STATIC void jsmethod_fill_buffer( apool_t *pool, void *arg );
-BMEM_STATIC void jsprocedure_fill_buffer( apool_t *pool, void *arg );
-BMEM_STATIC void jsstringliteralascii_fill_buffer( apool_t *pool, void *arg );
+static void jsobject_fill_buffer( apool_t *pool, void *arg );
+static void jsproxy_fill_buffer( apool_t *pool, void *arg );
+static void jsfunction_fill_buffer( apool_t *pool, void *arg );
+static void jsmethod_fill_buffer( apool_t *pool, void *arg );
+static void jsprocedure_fill_buffer( apool_t *pool, void *arg );
+static void jsstringliteralascii_fill_buffer( apool_t *pool, void *arg );
 
 /*---------------------------------------------------------------------*/
 /*    alloc pools                                                      */
@@ -458,7 +456,7 @@ thread_alloc_worker( void *arg ) {
 /*    static void                                                      */
 /*    jsobject_buffer_fill ...                                         */
 /*---------------------------------------------------------------------*/
-BMEM_STATIC void
+static void
 jsobject_fill_buffer( apool_t *pool, void *arg ) {
 #if HOP_ALLOC_JSOBJECT_POLICY != HOP_ALLOC_CLASSIC
    int i;
@@ -476,7 +474,7 @@ jsobject_fill_buffer( apool_t *pool, void *arg ) {
 /*    static void                                                      */
 /*    jsproxy_buffer_fill ...                                          */
 /*---------------------------------------------------------------------*/
-BMEM_STATIC void
+static void
 jsproxy_fill_buffer( apool_t *pool, void *arg ) {
 #if HOP_ALLOC_JSPROXY_POLICY != HOP_ALLOC_CLASSIC
    int i;
@@ -494,7 +492,7 @@ jsproxy_fill_buffer( apool_t *pool, void *arg ) {
 /*    static void                                                      */
 /*    jsfunction_buffer_fill ...                                       */
 /*---------------------------------------------------------------------*/
-BMEM_STATIC void
+static void
 jsfunction_fill_buffer( apool_t *pool, void *arg ) {
 #if HOP_ALLOC_JSFUNCTION_POLICY != HOP_ALLOC_CLASSIC
    int i;
@@ -512,7 +510,7 @@ jsfunction_fill_buffer( apool_t *pool, void *arg ) {
 /*    static void                                                      */
 /*    jsmethod_buffer_fill ...                                         */
 /*---------------------------------------------------------------------*/
-BMEM_STATIC void
+static void
 jsmethod_fill_buffer( apool_t *pool, void *arg ) {
 #if HOP_ALLOC_JSMETHOD_POLICY != HOP_ALLOC_CLASSIC
    int i;
@@ -529,7 +527,7 @@ jsmethod_fill_buffer( apool_t *pool, void *arg ) {
 /*    static void                                                      */
 /*    jsprocedure_buffer_fill ...                                      */
 /*---------------------------------------------------------------------*/
-BMEM_STATIC void
+static void
 jsprocedure_fill_buffer( apool_t *pool, void *arg ) {
 #if HOP_ALLOC_JSPROCEDURE_POLICY != HOP_ALLOC_CLASSIC
    int i;
@@ -546,7 +544,7 @@ jsprocedure_fill_buffer( apool_t *pool, void *arg ) {
 /*    static void                                                      */
 /*    jsstringliteralascii_buffer_fill ...                             */
 /*---------------------------------------------------------------------*/
-BMEM_STATIC void
+static void
 jsstringliteralascii_fill_buffer( apool_t *pool, void *arg ) {
 #if HOP_ALLOC_JSSTRINGLITERALASCII_POLICY != HOP_ALLOC_CLASSIC
    int i;
@@ -889,6 +887,17 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mo
    }
 }
 #endif
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_make_jsobject_bmem ...                                       */
+/*    -------------------------------------------------------------    */
+/*    Only for bmem wrapping                                           */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_make_jsobject_bmem(int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
+   return bgl_make_jsobject_sans((int)constrsize, constrmap, __proto__, mode );
+}
 
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
@@ -1321,7 +1330,7 @@ BGL_MAKE_JSPROCEDURE_SANS( obj_t procedure, long arity, obj_t __proto__ ) {
 /*---------------------------------------------------------------------*/
 #if HOP_ALLOC_JSPROCEDURE_POLICY != HOP_ALLOC_CLASSIC
 obj_t
-bgl_make_jsprocedure( obj_t procedure, long arity, obj_t __proto__ ) {
+bgl_make_jsprocedure(obj_t procedure, long arity, obj_t __proto__) {
    alloc_spin_lock( &lockprocedure );
 
    if( poolprocedure.idx < JSPROCEDURE_POOLSZ ) { 
@@ -1377,6 +1386,15 @@ bgl_make_jsprocedure( obj_t procedure, long arity, obj_t __proto__ ) {
    } 
 }
 #endif
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_make_jsprocedure_bmem ...                                    */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_make_jsprocedure_bmem(obj_t procedure, long arity, obj_t __proto__) {
+   return bgl_make_jsprocedure_sans(procedure, arity, __proto__);
+}
 
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
@@ -1749,7 +1767,7 @@ bgl_profile_get_pcaches() {
 /*    bgl_make_jsgenerator ...                                         */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_make_jsgenerator(obj_t constrmap, obj_t __proto__, long sz, obj_t next) {
+bgl_make_jsgenerator(obj_t constrmap, obj_t __proto__, long sz, obj_t next, uint32_t mode ) {
    long bsize = JSGENERATOR_SIZE + VECTOR_SIZE + ((sz-1) * OBJ_SIZE);
    BgL_jsgeneratorz00_bglt o = (BgL_jsgeneratorz00_bglt)HOP_MALLOC(bsize);
    obj_t env;
@@ -1760,7 +1778,7 @@ bgl_make_jsgenerator(obj_t constrmap, obj_t __proto__, long sz, obj_t next) {
    /* fields init */
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
    o->BgL_elementsz00 = empty_vector;
-   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)jsobject_mode);
+   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), (long)mode);
    BGL_OBJECT_WIDENING_SET(BNANOBJECT(o), __proto__);
 
    /* vector initialization */

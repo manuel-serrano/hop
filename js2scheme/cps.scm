@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Mon Oct 18 15:20:36 2021 (serrano)                */
+;*    Last change :  Tue Oct 19 07:05:44 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -292,7 +292,8 @@
 (define-walk-method (cps-fun! this::J2SFun r::procedure conf)
    (with-access::J2SFun this (generator body name constrsize loc %info)
       (if generator
-	  (let ((k (KontStmt kid this #f "J2SFun")))
+	  (let ((k (KontStmt kid this #f "J2SFun"))
+		(ydstar (has-true-yield*? body)))
 	     (set! body (blockify body (cps body k r '() '() this conf)))
 	     (if (config-get conf :optim-cps-closure-alloc #f)
 		 (let ((ki (instantiate::KontInfo (%debug name))))
@@ -304,7 +305,7 @@
 		    ;; compute the variable dependency graph
 		    (let ((graph (delete-duplicates (kont-depgraph* this '()))))
 		       ;; color the continuation free variables
-		       (set! constrsize (kont-color graph))
+		       (set! constrsize (kont-color graph ydstar))
 		       ;; allocate temporaries
 		       (kont-alloc-temp! this)
 		       this))
@@ -1408,6 +1409,16 @@
    (any (lambda (n) (isa? n J2SYield)) (yield-expr* this '() '() '())))
    
 ;*---------------------------------------------------------------------*/
+;*    has-true-yield*? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (has-true-yield*? this)
+   (any (lambda (n)
+	   (when (isa? n J2SYield)
+	      (with-access::J2SYield n (generator)
+		 generator)))
+      (yield-expr* this '() '() '())))
+   
+;*---------------------------------------------------------------------*/
 ;*    yield-expr? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (yield-expr? this kbreaks kcontinues)
@@ -1724,16 +1735,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    kont-color ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (kont-color-slow::long graph)
+(define (kont-color-slow::long graph has-yield*::bool)
    (let ((len (length graph)))
       (for-each (lambda (d c)
 		   (with-access::J2SDecl d (%info)
 		      (with-access::KDeclInfo %info (color)
 			 (set! color c))))
-	 graph (iota len))
-      len))
+	 graph (iota len (if has-yield* 2 0)))
+      (+fx len (if has-yield* 2 0))))
 		   
-(define (kont-color-fast::long graph)
+(define (kont-color-fast::long graph has-yield*::bool)
 
    (define (init-graph graph)
       (for-each (lambda (d)
@@ -1768,7 +1779,7 @@
 
    (define (find-color deps)
       (let loop ((deps deps)
-		 (c 0))
+		 (c (if has-yield* 2 0)))
 	 (if (null? deps)
 	     c
 	     (with-access::J2SDecl (car deps) (%info)
@@ -1778,7 +1789,6 @@
 		       (loop (cdr deps) c)))))))
 
    (define (color stack)
-      (tprint "stack=" (map (lambda (d) (with-access::J2SDecl d (id) id)) stack))
       (let loop ((stack stack)
 		 (maxc 0))
 	 (if (pair? stack)
@@ -1795,7 +1805,7 @@
    
    ;; stack the variables
    (if (null? graph)
-       0
+       (if has-yield* 2 0)
        (let loop ((graph graph)
 		  (stack '()))
 	  (if (null? graph)
@@ -1803,8 +1813,8 @@
 	      (let ((var (smallest graph)))
 		 (loop (graph-delete! graph var) (cons var stack)))))))
 
-(define (kont-color::long graph)
-   (kont-color-fast graph))
+(define (kont-color::long graph has-yield*::bool)
+   (kont-color-fast graph has-yield*))
 
 ;*---------------------------------------------------------------------*/
 ;*    kont-alloc-temp! ...                                             */

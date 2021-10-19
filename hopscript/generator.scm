@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Fri Oct 15 07:33:07 2021 (serrano)                */
+;*    Last change :  Tue Oct 19 07:13:08 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -45,7 +45,8 @@
 	   (js-make-map-iterator ::object ::procedure ::JsGlobalObject)
 	   (js-make-vector-iterator ::vector ::procedure ::JsGlobalObject)
 	   (js-make-list-iterator ::pair-nil ::procedure ::JsGlobalObject)
-	   (js-generator-yield ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)
+	   (inline js-make-yield ::obj ::bool ::JsGlobalObject)
+	   (inline js-generator-yield ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)
 	   (js-generator-yield* ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)
 	   (js-generator-maybe-next ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-generator-maybe-next0 ::obj ::JsGlobalObject ::obj)))
@@ -124,7 +125,7 @@
 	       (cmap (js-make-jsconstructmap))
 	       (__proto__ js-function-prototype)
 	       (elements v))))
-      
+
       (define (js-generator-next this val)
 	 (if (isa? this JsGenerator)
 	     (with-access::JsGenerator this (%next)
@@ -320,10 +321,10 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-make-yield val done %this)
    (with-access::JsGlobalObject %this (js-yield-cmap)
-      (instantiateJsObject
-	 (cmap js-yield-cmap)
-	 (__proto__ (js-object-proto %this))
-	 (elements (vector val done)))))
+      (let ((o (js-make-jsobject 2 js-yield-cmap (js-object-proto %this))))
+	 (js-object-inline-set! o 0 val)
+	 (js-object-inline-set! o 1 done)
+	 o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-yield-set! ...                                                */
@@ -418,7 +419,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-generator-yield ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-generator-yield gen val done kont %this)
+(define-inline (js-generator-yield gen val done kont %this)
    (with-access::JsGenerator gen (%next)
       (set! %next kont)
       (js-make-yield val done %this)))
@@ -427,7 +428,8 @@
 ;*    js-generator-yield*-loop ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-generator-yield*-loop v e g %this)
-   (with-access::JsGenerator g (%arg* %kont*)
+   (let ((%arg* (js-generator-ref g 0))
+	 (%kont* (js-generator-ref g 1)))
       (with-access::JsGenerator %arg* (%next)
 	 (let* ((n (%next (js-undefined) #f %arg* %this))
 		(done (js-object-inline-ref n 1)))
@@ -442,10 +444,10 @@
 (define (js-generator-yield* gen val done kont %this)
 
    (define (yield*-generator val %this)
-      (with-access::JsGenerator gen (%next %arg* %kont*)
+      (with-access::JsGenerator gen (%next)
 	 (set! %next js-generator-yield*-loop)
-	 (set! %arg* val)
-	 (set! %kont* kont))
+	 (js-generator-set! gen 0 val)
+	 (js-generator-set! gen 1 kont))
       (js-generator-yield*-loop (js-undefined) #f gen %this))
 
    (define (yield*-procedure next val %this js-generator-pcache)

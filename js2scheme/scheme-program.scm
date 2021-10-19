@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Oct 18 07:41:10 2021 (serrano)                */
+;*    Last change :  Tue Oct 19 16:47:40 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -738,8 +738,8 @@
    (with-access::J2SProgram this (globals)
       (map (lambda (g)
 	      (match-case g
-		    ((define ?var ?val) `(define-tls ,var ,val))
-		    (else (error "js-program" "wrong global" g))))
+		 ((define ?var ?val) `(define-tls ,var ,val))
+		 (else (error "js-program" "wrong global" g))))
 	 globals)))
 
 ;*---------------------------------------------------------------------*/

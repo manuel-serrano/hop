@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Oct 15 11:05:17 2021 (serrano)                */
+;*    Last change :  Tue Oct 19 18:18:08 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1641,6 +1641,8 @@
        (cond
 	  ((js-jsstring-normalized? right)
 	   (js-jsstring-append-buffer-ascii left right))
+	  ((js-jsstring-substring? right)
+	   (js-jsstring-append-buffer-substring-ascii left right))
 	  ((<u32 (js-jsstring-length right) (string-append-auto-normalize-threshold))
 	   (js-jsstring-normalize-ASCII! right)
 	   (js-jsstring-append-buffer-ascii left right))
@@ -1666,6 +1668,30 @@
 		       ;; enlarge the buffer
 		       (blit-string! buffer 0 nbuf 0 (uint32->fixnum llen))
 		       (blit-string! rright 0 nbuf (uint32->fixnum llen)
+			  (uint32->fixnum rlen))
+		       (set! llen nlen)
+		       (set! buffer nbuf)
+		       left)))))
+       (js-jsstring-append left right)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-append-buffer-substring-ascii ...                    */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-append-buffer-substring-ascii::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
+   (if (js-jsstring-buffer? left)
+       (with-access::JsStringLiteralBuffer left ((llen length) (buffer left))
+	  (with-access::JsStringLiteral right ((rlen length) (rright left) (rstart right))
+	     (let ((nlen (+u32 llen rlen)))
+		(if (<u32 nlen (fixnum->uint32 (string-length buffer)))
+		    (begin
+		       (blit-string! rright rstart buffer (uint32->fixnum llen)
+			  (uint32->fixnum rlen))
+		       (set! llen nlen)
+		       left)
+		    (let ((nbuf (make-string (*fx (uint32->fixnum nlen) 2))))
+		       ;; enlarge the buffer
+		       (blit-string! buffer 0 nbuf 0 (uint32->fixnum llen))
+		       (blit-string! rright rstart nbuf (uint32->fixnum llen)
 			  (uint32->fixnum rlen))
 		       (set! llen nlen)
 		       (set! buffer nbuf)
