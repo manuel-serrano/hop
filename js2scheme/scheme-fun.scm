@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Oct 17 11:00:30 2021 (serrano)                */
+;*    Last change :  Wed Oct 20 11:51:51 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -73,30 +73,31 @@
 	  expr)))
 
    (define (global-declfun this val scmid fastid)
-      (with-access::J2SDeclFun this (loc id vtype val)
-	 (with-access::J2SFun val (generator)
-	    `(begin
-		,@(if generator
-		      `(,(beautiful-define
-			    `(define ,(j2s-generator-prototype-id val)
-			       ,(j2s-generator-prototype->scheme val))))
-		      '())
-		,(beautiful-define
-		    `(define ,fastid
-			,(jsfun->lambda val mode return ctx
-			    (decl-usage-has? this '(new)))))
-		,@(if (optimized-ctor this ctx)
-		      `(,(beautiful-define
-			    `(define ,(j2s-fast-constructor-id id)
-				,(j2sfun->ctor val mode return ctx this))))
-		      '())
-		,@(cond
-		     ((eq? vtype 'procedure)
-		      `((define ,scmid ,fastid)))
-		     ((j2s-fun-no-closure? this)
-		      '())
-		     (else
-		      (list (j2s-scheme-closure this mode return ctx))))))))
+      (with-access::J2SDeclFun this (loc id vtype)
+	 (let ((val (declfun-fun this)))
+	    (with-access::J2SFun val (generator)
+	       `(begin
+		   ,@(if generator
+			 `(,(beautiful-define
+			       `(define ,(j2s-generator-prototype-id val)
+				   ,(j2s-generator-prototype->scheme val))))
+			 '())
+		   ,(beautiful-define
+		       `(define ,fastid
+			   ,(jsfun->lambda val mode return ctx
+			       (decl-usage-has? this '(new)))))
+		   ,@(if (optimized-ctor this ctx)
+			 `(,(beautiful-define
+			       `(define ,(j2s-fast-constructor-id id)
+				   ,(j2sfun->ctor val mode return ctx this))))
+			 '())
+		   ,@(cond
+			((eq? vtype 'procedure)
+			 `((define ,scmid ,fastid)))
+			((j2s-fun-no-closure? this)
+			 '())
+			(else
+			 (list (j2s-scheme-closure this mode return ctx)))))))))
 
    (define (regular-declfun this val scmid fastid)
       (with-access::J2SDeclFun this (loc id vtype)
