@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Oct 20 08:14:52 2021 (serrano)                */
+;*    Last change :  Wed Oct 20 09:11:00 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -290,17 +290,25 @@
 ;*    cps-fun! ::J2SFun ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cps-fun! this::J2SFun r::procedure conf)
-   (with-access::J2SFun this (generator body name constrsize loc %info)
+   (with-access::J2SFun this (generator body name constrsize loc
+				decl params thisp argumentsp %info)
       (if generator
 	  (let ((k (KontStmt kid this #f "J2SFun"))
-		(ydstar (has-true-yield*? body)))
+		(ydstar (has-yield*? body)))
 	     (set! body (blockify body (cps body k r '() '() this conf)))
 	     (if (config-get conf :optim-cps-closure-alloc #f)
-		 (let ((ki (instantiate::KontInfo (%debug name))))
+		 (let* ((defp params)
+			(defa (if argumentsp (cons argumentsp defp) defp))
+			(deft (if thisp (cons thisp defa) defa))
+			(defd (if decl (cons decl deft) deft))
+			(ki (instantiate::KontInfo (%debug name))))
 		    (set! %info ki)
 		    ;; continuation def/use variables
 		    (kont-defuse body '() ki)
 		    ;; propagate defuse to callers
+		    (with-access::KontInfo ki (def use)
+		       (set! def (append defd def)))
+;* 		       (set! use (filter (lambda (d) (not (memq d defd))) use))) */
 		    (kont-propagate body ki)
 		    ;; compute the variable dependency graph
 		    (let ((graph (delete-duplicates (kont-depgraph* this '()))))
@@ -1403,19 +1411,17 @@
 		    (cps seq k r kbreaks kcontinues fun conf))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    has-true-yield? ...                                              */
+;*    has-yield*? ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (has-true-yield? this)
-   (any (lambda (n) (isa? n J2SYield)) (yield-expr* this '() '() '())))
-   
-;*---------------------------------------------------------------------*/
-;*    has-true-yield*? ...                                             */
-;*---------------------------------------------------------------------*/
-(define (has-true-yield*? this)
+(define (has-yield*? this)
    (any (lambda (n)
-	   (when (isa? n J2SYield)
-	      (with-access::J2SYield n (generator)
-		 generator)))
+	   (cond
+	      ((isa? n J2SYield)
+	       (with-access::J2SYield n (generator)
+		  generator))
+	      ((isa? n J2SReturnYield)
+	       (with-access::J2SReturnYield n (generator)
+		  generator))))
       (yield-expr* this '() '() '())))
    
 ;*---------------------------------------------------------------------*/
@@ -1449,6 +1455,12 @@
 	  '())
 	 (else
 	  (list this)))))
+
+;*---------------------------------------------------------------------*/
+;*    yield-expr* ::J2SReturnYield ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (yield-expr* this::J2SReturnYield kbreaks kcontinues localrets)
+   (list this))
 
 ;*---------------------------------------------------------------------*/
 ;*    yield-expr* ::J2SBindExit ...                                    */
@@ -1535,16 +1547,21 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (kont-defuse this::J2SKont env ki)
    (with-access::J2SKont this (body param exn %info loc)
-      (set! %info (instantiate::KontInfo (%debug loc)))
-      (kont-defuse body (list param exn) %info)))
+      (let ((def (list param exn)))
+	 (set! %info (instantiate::KontInfo (%debug loc) (def def)))
+	 (kont-defuse body def %info))))
 
 ;*---------------------------------------------------------------------*/
 ;*    kont-defuse ::J2SFun ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (kont-defuse this::J2SFun env ki)
    (with-access::J2SFun this (decl params thisp argumentsp body %info name)
-      (set! %info (instantiate::KontInfo (%debug name)))
-      (kont-defuse body (cons* decl thisp argumentsp params) %info)))
+      (let* ((defp params)
+	     (defa (if argumentsp (cons argumentsp defp) defp))
+	     (deft (if thisp (cons thisp defa) defa))
+	     (def (if decl (cons decl deft) deft)))
+	 (set! %info (instantiate::KontInfo (%debug name) (def def)))
+	 (kont-defuse body def %info))))
 
 ;*---------------------------------------------------------------------*/
 ;*    kont-defuse ::J2SRef ...                                         */
@@ -1575,6 +1592,8 @@
 			 (with-access::J2SDeclInit d (val)
 			    (kont-defuse val denv ki))))
 	    decls)
+	 (with-access::KontInfo ki (def)
+	    (set! def (append decls def)))
 	 (for-each (lambda (node) (kont-defuse node benv ki)) nodes))))
    
 ;*---------------------------------------------------------------------*/
@@ -1603,6 +1622,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (kont-defuse this::J2SCatch env ki)
    (with-access::J2SCatch this (param body)
+      (with-access::KontInfo ki (def)
+	 (set! def (cons param def)))
       (kont-defuse body (cons param env) ki)))
 
 ;*---------------------------------------------------------------------*/
@@ -1856,26 +1877,23 @@
 ;*    kont-alloc-temp! ::J2SFun ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (kont-alloc-temp! this::J2SFun)
-   (with-access::J2SFun this (generator body thisp params argumentsp %info loc)
+   (with-access::J2SFun this (generator body thisp params argumentsp %info loc name)
       (with-trace 'cps "j2sfun"
-	 (if (any (lambda (p)
-		     (when (isa? p J2SDecl)
+	 (let ((temps (append '() ;(cons* thisp argumentsp params)
+			 (with-access::KontInfo %info (use) use))))
+	    (if (any (lambda (p)
 			(with-access::J2SDecl p (%info)
-			   (isa? %info KDeclInfo))))
-		(append (cons* thisp argumentsp params)
-		   (with-access::KontInfo %info (use) use)))
-	     (with-access::J2SBlock body (endloc)
-		(set! body
-		   (J2SBlock
-		      ;; this block will have to be move before the
-		      ;; generator is created, see scheme-fun
-		      (J2SBlock*
-			 (filter-map alloc-temp
-			    (append (cons* thisp argumentsp params)
-			       (with-access::KontInfo %info (use) use))))
-		      (kont-alloc-temp! body)))
-		this)
-	     (call-default-walker)))))
+			   (isa? %info KDeclInfo)))
+		   temps)
+		(with-access::J2SBlock body (endloc)
+		   (set! body
+		      (J2SBlock
+			 ;; this block will have to be move before the
+			 ;; generator is created, see scheme-fun
+			 (J2SBlock* (filter-map alloc-temp temps))
+			 (kont-alloc-temp! body)))
+		   this)
+		(call-default-walker))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    kont-alloc-temp! ::J2SRef ...                                    */
