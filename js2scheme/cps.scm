@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Oct 19 07:05:44 2021 (serrano)                */
+;*    Last change :  Wed Oct 20 08:14:52 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -1856,13 +1856,14 @@
 ;*    kont-alloc-temp! ::J2SFun ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (kont-alloc-temp! this::J2SFun)
-   (with-access::J2SFun this (generator body thisp params argumentsp loc)
+   (with-access::J2SFun this (generator body thisp params argumentsp %info loc)
       (with-trace 'cps "j2sfun"
 	 (if (any (lambda (p)
 		     (when (isa? p J2SDecl)
 			(with-access::J2SDecl p (%info)
 			   (isa? %info KDeclInfo))))
-		(cons* thisp argumentsp params))
+		(append (cons* thisp argumentsp params)
+		   (with-access::KontInfo %info (use) use)))
 	     (with-access::J2SBlock body (endloc)
 		(set! body
 		   (J2SBlock
@@ -1870,7 +1871,8 @@
 		      ;; generator is created, see scheme-fun
 		      (J2SBlock*
 			 (filter-map alloc-temp
-			    (cons* thisp argumentsp params)))
+			    (append (cons* thisp argumentsp params)
+			       (with-access::KontInfo %info (use) use))))
 		      (kont-alloc-temp! body)))
 		this)
 	     (call-default-walker)))))

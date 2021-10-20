@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Mon Oct 18 08:35:47 2021 (serrano)                */
+/*    Last change :  Wed Oct 20 07:54:12 2021 (serrano)                */
 /*    Copyright   :  2015-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -13,28 +13,19 @@
 /*---------------------------------------------------------------------*/
 /*    module imports                                                   */
 /*---------------------------------------------------------------------*/
-#:tprint("doc.1");
 const path = require( "path" );
-#:tprint("doc.2");
 const fs = require( "fs" );
-#:tprint("doc.3");
 const markdown = require( hop.markdown );
-#:tprint("doc.4");
 const fontifier = require( hop.fontifier );
-#:tprint("doc.5");
 const hopdoc = require( "hopdoc" )
-#:tprint("doc.6");
 const docxml = require( "./xml.js" );
-#:tprint("doc.7");
 
 /*---------------------------------------------------------------------*/
 /*    global parameters                                                */
 /*---------------------------------------------------------------------*/
 const PWD = process.cwd();
-#:tprint("doc.8");
 const ROOT = process.cwd();
 const DOC = path.join( ROOT, "doc.json" );
-#:tprint("doc.9");
 
 const doc = fs.existsSync( DOC ) ? require( DOC ) : undefined;
 
@@ -43,12 +34,10 @@ const chapters = doc ?
 	 c.entries = chapterEntries( c );
 	 return c;
       } ) : [];
-#:tprint("doc.10");
 
 function P( file ) {
    return path.normalize( "./" + file );
 }
-#:tprint("doc.11");
    
 const css = [ P( "hss/doc.css" ),
 	      P( "hss/markdown.css" ),
@@ -57,7 +46,6 @@ const css = [ P( "hss/doc.css" ),
 const jscript = [ P( "lib/jquery/js/jquery.min.js" ),
 		  P( "lib/bootstrap/js/bootstrap.min.js" ) ];
 const favicon = P( "favicon.png" );
-#:tprint("doc.12");
 
 const alias = {
    "user.md": "api",
@@ -67,7 +55,6 @@ const alias = {
    "tree.md": "widget",
    "spage.md": "widget"
 }
-#:tprint("doc.13");
 
 /*---------------------------------------------------------------------*/
 /*    findChapter ...                                                  */

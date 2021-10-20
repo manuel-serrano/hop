@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 24 16:22:25 2018                          */
-;*    Last change :  Tue Sep 14 10:53:28 2021 (serrano)                */
+;*    Last change :  Wed Oct 20 08:08:33 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Cache instanceof tests.                                          */
@@ -72,7 +72,8 @@
       (let ((cache (get-cache prgm)))
 	 (J2SIf (J2SCacheCheck 'instanceof cache #f obj)
 	    (J2SReturn #t (J2SBool #t) be)
-	    (J2SIf this
+	    (J2SIf (duplicate::J2SBinary this
+		      (lhs (duplicate::J2SRef obj)))
 	       (J2SBlock/w-endloc
 		  (J2SStmtExpr (J2SCacheUpdate 'instanceof cache obj))
 		  (J2SReturn #t (J2SBool #t) be))
