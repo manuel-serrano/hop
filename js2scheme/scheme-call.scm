@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Oct 15 14:01:18 2021 (serrano)                */
+;*    Last change :  Thu Oct 21 14:30:31 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -306,7 +306,19 @@
 	  ,(j2s-ref-arguments-argid (cadr args))
 	  ,(j2s-scheme (cadr args) mode return conf)
 	  ,(cadddr args)))
-   
+
+   (define (def-vector obj args mode return conf)
+      (with-access::J2SArray (cadr args) (exprs)
+	 `(js-call-with-stack-vector
+	     (vector ,@(map (lambda (e) (j2s-scheme e mode return conf)) exprs))
+	     (lambda (%vec)
+		(js-function-maybe-apply-vec ,(caddr args)
+		   ,(j2s-scheme obj mode return conf)
+		   ,(j2s-scheme (car args) mode return conf)
+		   %vec
+		   ,(fixnum->uint32 (length exprs))
+		   ,(cadddr args))))))
+
    (cond
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (loc decl)
@@ -335,6 +347,8 @@
 		  (def obj args mode return conf)))))
       ((and (isa? (cadr args) J2SRef) (j2s-ref-arguments-lazy? (cadr args)))
        (def-arguments obj args mode return conf))
+      ((isa? (cadr args) J2SArray)
+       (def-vector obj args mode return conf))
       (else
        (def obj args mode return conf))))
 

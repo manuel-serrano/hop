@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Sep 28 08:39:58 2021 (serrano)                */
+;*    Last change :  Thu Oct 21 14:40:30 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -86,6 +86,7 @@
 	   (js-function-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-apply-array ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-apply-vec ::JsGlobalObject ::obj ::obj ::vector ::uint32)
+	   (js-function-maybe-apply-vec ::JsGlobalObject ::obj ::obj ::vector ::uint32 ::obj)
 	   (js-function-maybe-apply ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-maybe-call0 ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-function-maybe-call1 ::JsGlobalObject ::obj ::obj ::obj ::obj)
@@ -1307,6 +1308,24 @@
 	  (vector->sublist vec (uint32->fixnum ilen))))
       (else
        (js-raise-type-error %this "apply: argument not a function ~s" this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-function-maybe-apply-vec ...                                  */
+;*---------------------------------------------------------------------*/
+(define (js-function-maybe-apply-vec %this this thisarg vec ilen::uint32 cache)
+   (let loop ((this this))
+      (cond
+	 ((js-procedure? this)
+	  (js-function-apply-vec %this this thisarg vec ilen))
+	 ((js-object? this)
+	  (let ((argarray (js-vector->jsarray (vector-copy vec) %this)))
+	     (with-access::JsGlobalObject %this (js-function-pcache)
+		(js-call2 %this
+		   (js-get-jsobject-name/cache this (& "apply") #f %this
+		      (or cache (js-pcache-ref js-function-pcache 3)))
+		   this thisarg argarray))))
+	 (else
+	  (loop (js-toobject %this this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-maybe-apply ...                                      */

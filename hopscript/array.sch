@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
-;*    Last change :  Sat Oct 16 07:20:51 2021 (serrano)                */
+;*    Last change :  Thu Oct 21 14:37:59 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
@@ -219,6 +219,13 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (js-call-with-stack-vector vec proc)
    (match-case vec
+      ((vector)
+       (match-case proc
+	  ((lambda (?v) . ?body)
+	   `(,proc '#()))
+	  (else
+	   (error "js-call-with-stack-vector" "bad form"
+	      `(js-call-with-stack-vector ,vec ,proc)))))
       ((vector . ?args)
        (match-case proc
 	  ((lambda (?v) . ?body)
