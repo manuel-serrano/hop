@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Oct 13 13:17:02 2021 (serrano)                */
+;*    Last change :  Thu Oct 21 14:18:57 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript switch                      */
@@ -395,6 +395,13 @@
 (define-walk-method (break? this::J2SIf switch default)
    (with-access::J2SIf this (then else)
       (and (break? then switch default) (break? else switch default))))
+
+;*---------------------------------------------------------------------*/
+;*    break? ::J2STry ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (break? this::J2STry switch default)
+   (with-access::J2SIf this (then else)
+      #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    switch-unbreak! ...                                              */

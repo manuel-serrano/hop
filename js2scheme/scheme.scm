@@ -349,8 +349,10 @@
 ;*    j2s-scheme ::J2SDeclExtern ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclExtern mode return ctx)
-   (with-access::J2SDeclExtern this (loc id name val bind writable)
+   (with-access::J2SDeclExtern this (loc id val bind writable usecnt)
       (cond
+	 ((=fx usecnt 0)
+	  #unspecified)
 	 (bind
           (j2s-scheme-decl this (j2s-scheme val mode return ctx)
 	     writable mode return ctx))
