@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Oct 18 18:25:12 2021 (serrano)                */
+;*    Last change :  Thu Oct 21 13:10:41 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -699,7 +699,10 @@
 	   
 	   (inline jsindex12-max::uint32)
 	   
-	   (gencmapid::uint32))
+	   (gencmapid::uint32)
+
+	   (inline js-generator-inline-ref ::JsGenerator ::long)
+	   (inline js-generator-inline-set! ::JsGenerator ::long ::obj))
    
    (pragma (js-not-a-cmap side-effect-free)
 	   (js-null side-effect-free)
@@ -1960,4 +1963,26 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-proxy-target-set! o t)
    (object-widening-set! o t))
+
+;*---------------------------------------------------------------------*/
+;*    js-generator-inline-ref ...                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-generator-inline-ref o::JsGenerator idx::long)
+   (cond-expand
+      ((and bigloo-c (not disable-inline))
+       (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsgeneratorz00_bglt)(COBJECT($1)))->BgL_z52envz52))) + 1))), $2 )" o idx))
+      (else
+       (with-access::JsGenerator o (%env)
+	  (vector-ref %env idx)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-generator-inline-set! ...                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-generator-inline-set! o::JsGenerator idx::long val::obj)
+   (cond-expand
+      ((and bigloo-c (not disable-inline))
+       (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsgeneratorz00_bglt)(COBJECT($1)))->BgL_z52envz52))) + 1))), $2, $3 )" o idx val))
+      (else
+       (with-access::JsGenerator o (%env)
+	  (vector-set! %env idx val)))))
 

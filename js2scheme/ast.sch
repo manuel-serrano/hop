@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Tue Oct 12 10:03:20 2021 (serrano)                */
+;*    Last change :  Thu Oct 21 07:43:16 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -703,8 +703,9 @@
        (cache ,cache)
        (obj ,obj)))
 
-(define-macro (J2SKontRef gen index)
+(define-macro (J2SKontRef gen index id)
    `(instantiate::J2SKontRef
        (loc loc)
        (gen ,gen)
-       (index ,index)))
+       (index ,index)
+       (id ,id)))

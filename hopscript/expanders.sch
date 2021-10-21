@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Tue Oct 19 09:07:22 2021 (serrano)                */
+;*    Last change :  Thu Oct 21 07:40:50 2021 (serrano)                */
 ;*    Copyright   :  2006-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -256,6 +256,11 @@
    (eval `(define-expander js-jsobject->jsarray
 	     ,js-jsobject->jsarray-expander))
 
+   (eval `(define-expander js-generator-ref
+	     ,js-generator-ref-expander))
+   (eval `(define-expander js-generator-set!
+	     ,js-generator-set!-expander))
+   
    (eval `(define-expander declare-tls
 	     ,js-declare-tls-expander))
    (eval `(define-expander define-tls

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Oct 20 09:11:00 2021 (serrano)                */
+;*    Last change :  Wed Oct 20 12:00:34 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -30,13 +30,9 @@
    (include "ast.sch" "usage.sch")
 
    (static (final-class %J2STail::J2SReturn)
-	   (final-class KontInfo
-	      %debug
-	      (def::pair-nil (default '()))
-	      (use::pair-nil (default '())))
 	   (final-class KDeclInfo
-	      deps::pair-nil
-	      (gdeps::pair-nil (default '()))
+	      (free::bool (default #f))
+	      (def::bool (default #f))
 	      (color::int (default -1))))
 
    (cond-expand
@@ -151,6 +147,43 @@
 	      (e `(,kont ,arg) e))))
 	 (else
 	  (error "kcall" "bad form" x)))))
+
+;*---------------------------------------------------------------------*/
+;*    ktrampoline ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    This function is only to reduce the number of generated          */
+;*    continuations. Using it is optional.                             */
+;*    -------------------------------------------------------------    */
+;*    If a continuation merely jump to another continuation, return    */
+;*    that trampoline continuation.                                    */
+;*---------------------------------------------------------------------*/
+(define (ktrampoline body::J2SStmt)
+   
+   (define (ishopref? expr i)
+      (when (isa? expr J2SHopRef)
+	 (with-access::J2SHopRef expr (id)
+	    (eq? id id))))
+
+   (define (iskontcall? expr)
+      (when (isa? expr J2SCall)
+	 (with-access::J2SCall expr (fun thisargs args)
+	    (when (and (pair? thisargs)
+		       (null? (cdr thisargs))
+		       (pair? args)
+		       (null? (cdr args)))
+	       (and (ishopref? (car thisargs) '%gen)
+		    (ishopref? (car args) '%this))))))
+   
+   (when (isa? body J2SSeq)
+      (with-access::J2SSeq body (nodes)
+	 (when (and (pair? nodes) (pair? (cdr nodes)) (null? (cddr nodes)))
+	    (when (isa? (car nodes) J2SNop)
+	       (when (isa? (cadr nodes) J2SReturn)
+		  (with-access::J2SReturn (cadr nodes) (expr)
+		     (when (iskontcall? expr)
+			(with-access::J2SCall expr (fun thisargs)
+			   (when (isa? fun J2SRef)
+			      expr))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    assert-kont ...                                                  */
@@ -297,26 +330,55 @@
 		(ydstar (has-yield*? body)))
 	     (set! body (blockify body (cps body k r '() '() this conf)))
 	     (if (config-get conf :optim-cps-closure-alloc #f)
-		 (let* ((defp params)
-			(defa (if argumentsp (cons argumentsp defp) defp))
-			(deft (if thisp (cons thisp defa) defa))
-			(defd (if decl (cons decl deft) deft))
-			(ki (instantiate::KontInfo (%debug name))))
-		    (set! %info ki)
-		    ;; continuation def/use variables
-		    (kont-defuse body '() ki)
-		    ;; propagate defuse to callers
-		    (with-access::KontInfo ki (def use)
-		       (set! def (append defd def)))
-;* 		       (set! use (filter (lambda (d) (not (memq d defd))) use))) */
-		    (kont-propagate body ki)
-		    ;; compute the variable dependency graph
-		    (let ((graph (delete-duplicates (kont-depgraph* this '()))))
-		       ;; color the continuation free variables
-		       (set! constrsize (kont-color graph ydstar))
-		       ;; allocate temporaries
-		       (kont-alloc-temp! this)
-		       this))
+		 (let ((temps (delete-duplicates! (collect-temps* this) eq?)))
+		    ;; collect all locals used in the generator
+		    (for-each (lambda (d)
+				 (with-access::J2SDecl d (%info)
+				    (set! %info (instantiate::KDeclInfo))))
+		       temps)
+		    (tprint name " used: "
+		       (map (lambda (d)
+			       (with-access::J2SDecl d (%info id)
+				  id))
+			  temps))
+		    ;; mark all locals appearing free in a closure
+		    (mark-free body '())
+		    ;; mark the generator arguments
+		    (for-each (lambda (d)
+				 (when (isa? d J2SDecl)
+				    (mark-def! d)))
+		       (cons* decl thisp argumentsp params))
+		    ;; retain free variables
+		    (let ((frees (filter is-free? temps)))
+		       (tprint name " free: "
+			  (map (lambda (d)
+				  (with-access::J2SDecl d (%info id)
+				     id))
+			     frees))
+		       (let* ((temps (filter (lambda (d)
+						(or (is-def? d)
+						    (if (decl-usage-has? d '(assig))
+							(begin
+							   (mark-ignored! d)
+							   #f)
+							#t)))
+					frees))
+			      (sz (length temps)))
+			  (tprint name " temps: "
+			     (map (lambda (d)
+				     (with-access::J2SDecl d (%info id)
+					id))
+				temps))
+			  ;; color the continuation variables
+			  (set! constrsize (kont-color temps ydstar))
+			  ;; allocate temporaries
+			  (kont-alloc-temp! this 
+			     (filter (lambda (d)
+					(with-access::J2SDecl d (%info)
+					   (with-access::KDeclInfo %info (def)
+					      (not def))))
+				temps))
+			  this)))
 		 (begin
 		    (set! constrsize 0)
 		    this)))
@@ -590,31 +652,56 @@
 ;*    cps ::J2SIf ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SIf k r kbreaks kcontinues fun conf)
-   (assert-kont k KontStmt this)
-   (with-access::J2SIf this (loc test then else)
-      (let* ((name (gensym '%kif))
-	     (kthis (J2SParam '(ref) '%this :vtype 'any))
-	     (kfun (J2SArrowKont name (list kthis)
-		      (J2SBlock/w-endloc (kcall k (J2SNop)))))
-	     (kdecl (J2SLetOpt '(call) name kfun))
-	     (kif (KontStmt (lambda (n)
-			       (J2SSeq
-				  n
-				  (J2SReturn #t
-				     (J2SMethodCall (J2SRef kdecl)
-					(list (J2SHopRef '%gen))
-					(J2SHopRef '%this))
-				     fun)))
-		     this k)))
-	 (cps test
-	    (KontExpr (lambda (ktest::J2SExpr)
-			 (J2SLetRecBlock #f (list kdecl)
+   
+   (define (cps-if-tramp this tramp)
+      (with-access::J2SIf this (loc test then else)
+	 (let ((kont (KontStmt (lambda (n)
+				  (J2SSeq n (J2SReturn #t tramp fun)))
+			this k)))
+	    (cps test
+	       (KontExpr (lambda (ktest::J2SExpr)
 			    (duplicate::J2SIf this
 			       (test ktest)
-			       (then (cps then kif r kbreaks kcontinues fun conf))
-			       (else (cps else kif r kbreaks kcontinues fun conf)))))
-	       this k)
-	    r kbreaks kcontinues fun conf))))
+			       (then (cps then kont r kbreaks kcontinues fun conf))
+			       (else (cps else kont r kbreaks kcontinues fun conf))))
+		  this k)
+	       r kbreaks kcontinues fun conf))))
+   
+   (define (cps-if-cont this kbody)
+      (with-access::J2SIf this (loc test then else)
+	 (let* ((name (gensym '%kif))
+		(kthis (J2SParam '(ref) '%this :vtype 'any))
+		(kfun (J2SArrowKont name (list kthis)
+			 (J2SBlock/w-endloc kbody)))
+		(kdecl (J2SLetOpt '(call) name kfun))
+		(kont (KontStmt (lambda (n)
+				   (J2SSeq
+				      n
+				      (J2SReturn #t
+					 (J2SMethodCall (J2SRef kdecl)
+					    (list (J2SHopRef '%gen))
+					    (J2SHopRef '%this))
+					 fun)))
+			 this k)))
+	    (cps test
+	       (KontExpr (lambda (ktest::J2SExpr)
+			    (J2SLetRecBlock #f (list kdecl)
+			       (duplicate::J2SIf this
+				  (test ktest)
+				  (then (cps then kont r kbreaks kcontinues fun conf))
+				  (else (cps else kont r kbreaks kcontinues fun conf)))))
+		  this k)
+	       r kbreaks kcontinues fun conf))))
+   
+   (assert-kont k KontStmt this)
+   (with-access::J2SIf this (loc test then else)
+      (let* ((kbody (kcall k (J2SNop)))
+	     (tramp (ktrampoline kbody)))
+	 (if tramp
+	     ;; optimized version without new continuation
+	     (cps-if-tramp this tramp)
+	     ;; normat
+	     (cps-if-cont this kbody)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SDecl ...                                                */
@@ -925,13 +1012,13 @@
 (define-method (cps this::J2SWhile k r kbreaks kcontinues fun conf)
    (assert-kont k KontStmt this)
    (with-access::J2SWhile this (test body loc)
-      (let* ((name (gensym '%kwhile))
+      (let* ((kname (gensym '%kwhile))
 	     (bname (gensym '%kbreak))
 	     (cname (gensym '%kcontinue))
 	     (block (J2SBlock/w-endloc))
 	     (warg (J2SParam '(ref) '%this :vtype 'any))
-	     (while (J2SArrowKont name (list warg) block))
-	     (wdecl (J2SLetOpt '(call) name while))
+	     (while (J2SArrowKont kname (list warg) block))
+	     (wdecl (J2SLetOpt '(call) kname while))
 	     (barg (J2SParam '(ref) '%this :vtype 'any))
 	     (break (J2SArrowKont bname (list barg)
 		       (J2SBlock/w-endloc
@@ -1536,389 +1623,265 @@
 (define-walk-method (retthrow! this::J2SMethod decl env)
    this)
 
+
 ;*---------------------------------------------------------------------*/
-;*    kont-defuse ...                                                  */
+;*    collect-temps* ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (kont-defuse this::J2SNode env::pair-nil ki::KontInfo)
+(define-walk-method (collect-temps* this::J2SNode)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    kont-defuse ::J2SKont ...                                        */
+;*    is-global-or-fun? ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (kont-defuse this::J2SKont env ki)
-   (with-access::J2SKont this (body param exn %info loc)
-      (let ((def (list param exn)))
-	 (set! %info (instantiate::KontInfo (%debug loc) (def def)))
-	 (kont-defuse body def %info))))
+(define (is-global-or-fun? decl)
+
+   (define (is-fun-decl? decl)
+      (when (isa? decl J2SDeclInit)
+	 (with-access::J2SDeclInit decl (val)
+	    (when (isa? val J2SFun)
+	       (not (decl-usage-has? decl '(assig)))))))
+   
+   (with-access::J2SDecl decl (scope)
+      (or (isa? decl J2SDeclExtern)
+	  (memq scope '(%scope global tls))
+	  (is-fun-decl? decl))))
 
 ;*---------------------------------------------------------------------*/
-;*    kont-defuse ::J2SFun ...                                         */
+;*    collect-temps* ::J2SRef ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (kont-defuse this::J2SFun env ki)
-   (with-access::J2SFun this (decl params thisp argumentsp body %info name)
-      (let* ((defp params)
-	     (defa (if argumentsp (cons argumentsp defp) defp))
-	     (deft (if thisp (cons thisp defa) defa))
-	     (def (if decl (cons decl deft) deft)))
-	 (set! %info (instantiate::KontInfo (%debug name) (def def)))
-	 (kont-defuse body def %info))))
-
-;*---------------------------------------------------------------------*/
-;*    kont-defuse ::J2SRef ...                                         */
-;*---------------------------------------------------------------------*/
-(define-walk-method (kont-defuse this::J2SRef env ki)
+(define-walk-method (collect-temps* this::J2SRef)
    (with-access::J2SRef this (decl loc)
-      (with-access::J2SDecl decl (scope id)
-	 (when (and (not (isa? decl J2SDeclExtern))
-		    (not (memq scope '(%scope global tls)))
-		    (not (memq decl env))
-		    (or (not (isa? decl J2SDeclInit))
-			(with-access::J2SDeclInit decl (val)
-			   (or (decl-usage-has? decl '(assig))
-			       (not (isa? val J2SFun))))))
-	    (with-access::KontInfo ki (use)
-	       (unless (memq decl use)
-		  (set! use (cons decl use))))))))
+      (if (is-global-or-fun? decl)
+	  '()
+	  (list decl))))
 
 ;*---------------------------------------------------------------------*/
-;*    kont-defuse ::J2SLetBlock ...                                    */
+;*    mark-def! ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (kont-defuse this::J2SLetBlock env ki)
-   (with-access::J2SLetBlock this (decls nodes rec)
-      (let* ((benv (append decls env))
-	     (denv (if rec benv env)))
+(define (mark-def!::J2SDecl d)
+   (with-access::J2SDecl d (%info)
+      (when (isa? %info KDeclInfo)
+	 (with-access::KDeclInfo %info (def)
+	    (set! def #t))))
+   d)
+
+;*---------------------------------------------------------------------*/
+;*    mark-ignored! ...                                                */
+;*---------------------------------------------------------------------*/
+(define (mark-ignored!::J2SDecl d)
+   (with-access::J2SDecl d (%info)
+      (set! %info #f))
+   d)
+
+;*---------------------------------------------------------------------*/
+;*    is-free? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (is-free? d)
+   (when (isa? d J2SDecl)
+      (with-access::J2SDecl d (%info)
+	 (when (isa? %info KDeclInfo)
+	    (with-access::KDeclInfo %info (free)
+	       free)))))
+   
+;*---------------------------------------------------------------------*/
+;*    is-def? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (is-def? d)
+   (when (isa? d J2SDecl)
+      (with-access::J2SDecl d (%info)
+	 (when (isa? %info KDeclInfo)
+	    (with-access::KDeclInfo %info (def)
+	       def)))))
+   
+;*---------------------------------------------------------------------*/
+;*    mark-free ::J2SNode ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-free this::J2SNode env)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    mark-free ::J2SRef ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-free this::J2SRef env)
+   (with-access::J2SRef this (decl loc)
+      (with-access::J2SDecl decl (scope %info id)
+	 (unless (is-global-or-fun? decl)
+	    (with-access::KDeclInfo %info (free)
+	       (unless (or free (memq decl env))
+		  (set! free #t)))))))
+
+;*---------------------------------------------------------------------*/
+;*    mark-free ::J2SKont ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-free this::J2SKont env)
+   (with-access::J2SKont this (body param exn loc)
+      (let ((nenv (list (mark-def! param) (mark-def! exn))))
+	 (mark-free body nenv))))
+
+;*---------------------------------------------------------------------*/
+;*    mark-free ::J2SFun ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-free this::J2SFun env)
+   (with-access::J2SFun this (decl params thisp argumentsp body)
+      (let* ((envp (map! mark-def! params))
+	     (enva (if argumentsp (cons (mark-def! argumentsp) envp) envp))
+	     (envt (if thisp (cons (mark-def! thisp) enva) enva))
+	     (nenv (if decl (cons (mark-def! decl) envt) envt)))
+	 (mark-free body nenv))))
+
+;*---------------------------------------------------------------------*/
+;*    mark-free ::J2SLetBlock ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-free this::J2SLetBlock env)
+   (with-access::J2SLetBlock this (decls nodes)
+      (let ((nenv (append (map! mark-def! decls) env)))
 	 (for-each (lambda (d)
 		      (when (isa? d J2SDeclInit)
 			 (with-access::J2SDeclInit d (val)
-			    (kont-defuse val denv ki))))
+			    (mark-free val nenv))))
 	    decls)
-	 (with-access::KontInfo ki (def)
-	    (set! def (append decls def)))
-	 (for-each (lambda (node) (kont-defuse node benv ki)) nodes))))
+	 (for-each (lambda (node) (mark-free node nenv)) nodes))))
    
 ;*---------------------------------------------------------------------*/
-;*    kont-defuse ::J2SBlock ...                                       */
+;*    mark-free ::J2SBlock ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (kont-defuse this::J2SBlock env ki)
+(define-walk-method (mark-free this::J2SBlock env)
    (with-access::J2SBlock this (nodes)
       (let loop ((env env)
 		 (nodes nodes))
-	 (cond
-	    ((null? nodes)
-	     #f)
-	    ((isa? (car nodes) J2SDeclInit)
-	     (with-access::J2SDeclInit (car nodes) (val)
-		(let ((env (cons (car nodes) env)))
-		   (kont-defuse val (cons (car nodes) env) ki)
-		   (loop env (cdr nodes)))))
-	    ((isa? (car nodes) J2SDecl)
-	     (loop (cons (car nodes) env) (cdr nodes)))
-	    (else
-	     (kont-defuse (car nodes) env ki)
-	     (loop env (cdr nodes)))))))
+	 (when (pair? nodes)
+	    (let ((n (car nodes)))
+	       (cond
+		  ((isa? n J2SDeclInit)
+		   (with-access::J2SDeclInit n (val)
+		      (let ((nenv (cons (mark-def! n) env)))
+			 (mark-free val nenv)
+			 (loop nenv (cdr nodes)))))
+		  ((isa? n J2SDecl)
+		   (let ((nenv (cons (mark-def! n) env)))
+		      (loop nenv (cdr nodes))))
+		  (else
+		   (mark-free n env)
+		   (loop env (cdr nodes)))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    kont-defuse ::J2SCatch ...                                       */
+;*    mark-free ::J2SCatch ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (kont-defuse this::J2SCatch env ki)
+(define-method (mark-free this::J2SCatch env)
    (with-access::J2SCatch this (param body)
-      (with-access::KontInfo ki (def)
-	 (set! def (cons param def)))
-      (kont-defuse body (cons param env) ki)))
+      (let ((nenv (cons (mark-def! param) env)))
+	 (mark-free body nenv))))
 
-;*---------------------------------------------------------------------*/
-;*    kont-propagate ...                                               */
-;*---------------------------------------------------------------------*/
-(define (kont-propagate this::J2SNode ki)
-   (let ((cell (make-cell #t)))
-      (let loop ()
-	 (cell-set! cell #t)
-	 (propagate this ki cell '())
-	 (unless (cell-ref cell)
-	    (loop)))))
-
-;*---------------------------------------------------------------------*/
-;*    propagate ...                                                    */
-;*---------------------------------------------------------------------*/
-(define-walk-method (propagate this::J2SNode ki::KontInfo fix::cell stk::pair-nil)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    propagate ::J2SKont ...                                          */
-;*---------------------------------------------------------------------*/
-(define-walk-method (propagate this::J2SKont ki fix stk)
-   (with-access::J2SKont this (%info body)
-      (with-access::KontInfo %info (use)
-	 ;; traverse the continuation first to accumulate its defuse
-	 (propagate body %info fix stk)
-	 ;; propagate to this, i.e., the continuation caller
-	 (with-access::KontInfo ki ((this-use use) (this-def def))
-	    (let ((callee-use (filter (lambda (d)
-					 (and (not (memq d this-def))
-					      (not (memq d this-use))))
-				 use)))
-	       (when (pair? callee-use) (cell-set! fix #f))
-	       (set! this-use (append this-use callee-use))
-	       (tprint "prop kont "
-		  (with-access::KontInfo ki (%debug) %debug)
-		  " "
-		  (map (lambda (d) (with-access::J2SDecl d (id) id))
-		     this-use)))))))
-
-;*---------------------------------------------------------------------*/
-;*    propagate ::J2SFun ...                                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (propagate this::J2SFun ki fix stk)
-   (unless (memq this stk)
-      (with-access::J2SFun this (%info body name)
-	 (with-access::KontInfo %info (use)
-	    ;; traverse the continuation first to accumulate its defuse
-	    (propagate body %info fix (cons this stk))
-	    ;; propagate to this, i.e., the continuation caller
-	    (with-access::KontInfo ki ((this-use use) (this-def def))
-	       (let ((callee-use (filter (lambda (d)
-					    (and (not (memq d this-def))
-						 (not (memq d this-use))))
-				    use)))
-		  (when (pair? callee-use) (cell-set! fix #f))
-		  (set! this-use (append this-use callee-use))
-		  (tprint "prop kfun "
-		     (with-access::KontInfo ki (%debug) %debug)
-		     " " (map (lambda (d) (with-access::J2SDecl d (id) id))
-			    this-use))))))))
-
-;*---------------------------------------------------------------------*/
-;*    propagate ::J2SCall ...                                          */
-;*---------------------------------------------------------------------*/
-(define-walk-method (propagate this::J2SCall ki fix stk)
-   (with-access::J2SCall this (fun thisargs args)
-      (call-default-walker)
-      (when (isa? fun J2SRef)
-	 (with-access::J2SRef fun (decl)
-	    (when (isa? decl J2SDeclInit)
-	       (with-access::J2SDeclInit decl (val %info)
-		  (when (isa? %info KontInfo)
-		     (with-access::KontInfo ki ((this-use use) (this-def def))
-			(with-access::KontInfo %info (use)
-			   (let ((callee-use (filter (lambda (d)
-							(and (not (memq d this-def))
-							     (not (memq d this-use))))
-						use)))
-			      (when (pair? callee-use) (cell-set! fix #f))
-
-			      (set! this-use (append this-use callee-use))))))))))))
-
-;*---------------------------------------------------------------------*/
-;*    mark-dependencies! ...                                           */
-;*---------------------------------------------------------------------*/
-(define (mark-dependencies! %info::KontInfo)
-   (with-access::KontInfo %info (use)
-      (tprint "mark-dep " (map (lambda (d) (with-access::J2SDecl d (id) id))
-			    use))
-      (for-each (lambda (d)
-		   (with-access::J2SDecl d (%info id)
-		      (if (isa? %info KDeclInfo)
-			  (with-access::KDeclInfo %info (deps)
-			     (for-each (lambda (o)
-					  (unless (or (eq? o d) (memq o deps))
-					     (set! deps (cons o deps))))
-				use))
-			  (set! %info
-			     (instantiate::KDeclInfo
-				(deps (delete d use)))))))
-	 use)))
-   
-;*---------------------------------------------------------------------*/
-;*    kont-depgraph* ...                                               */
-;*---------------------------------------------------------------------*/
-(define-walk-method (kont-depgraph* this::J2SNode graph)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    kont-depgraph* ::J2SKont ...                                     */
-;*---------------------------------------------------------------------*/
-(define-walk-method (kont-depgraph* this::J2SKont graph)
-   (with-access::J2SKont this (%info)
-      (mark-dependencies! %info)
-      (with-access::KontInfo %info (use)
-	 (append use graph))))
-   
-;*---------------------------------------------------------------------*/
-;*    kont-depgraph* ::J2SFun ...                                      */
-;*---------------------------------------------------------------------*/
-(define-walk-method (kont-depgraph* this::J2SFun graph)
-   (with-access::J2SFun this (%info loc name)
-      (tprint "dep fun name=" name)
-      (mark-dependencies! %info)
-      (with-access::KontInfo %info (use)
-	 (append use graph))))
-   
 ;*---------------------------------------------------------------------*/
 ;*    kont-color ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (kont-color-slow::long graph has-yield*::bool)
-   (let ((len (length graph)))
+(define (kont-color::long use has-yield*::bool)
+   (let ((len (length use)))
       (for-each (lambda (d c)
-		   (with-access::J2SDecl d (%info)
+		   (with-access::J2SDecl d (id %info)
 		      (with-access::KDeclInfo %info (color)
 			 (set! color c))))
-	 graph (iota len (if has-yield* 2 0)))
+	 use (iota len (if has-yield* 2 0)))
       (+fx len (if has-yield* 2 0))))
 		   
-(define (kont-color-fast::long graph has-yield*::bool)
-
-   (define (init-graph graph)
-      (for-each (lambda (d)
-		   (with-access::J2SDecl d (%info)
-		      (with-access::KDeclInfo %info (deps gdeps)
-			 (set! gdeps (reverse deps)))))
-	 graph))
-
-   (define (smallest graph)
-      (let loop ((graph (cdr graph))
-		 (var (car graph))
-		 (degree (+fx (length graph) 1)))
-	 (if (null? graph)
-	     var
-	     (with-access::J2SDecl (car graph) (%info)
-		(with-access::KDeclInfo %info (gdeps)
-		   (let ((d (length gdeps)))
-		      (if (<fx d degree)
-			  (loop (cdr graph) (car graph) d)
-			  (loop (cdr graph) var degree))))))))
-
-   (define (graph-delete! graph var)
-      (let loop ((graph graph))
-	 (if (pair? graph)
-	     (if (eq? (car graph) var)
-		 (cdr graph)
-		 (with-access::J2SDecl (car graph) (%info)
-		    (with-access::KDeclInfo %info (gdeps)
-		       (set! gdeps (remq! var gdeps))
-		       (cons (car graph) (loop (cdr graph))))))
-	     '())))
-
-   (define (find-color deps)
-      (let loop ((deps deps)
-		 (c (if has-yield* 2 0)))
-	 (if (null? deps)
-	     c
-	     (with-access::J2SDecl (car deps) (%info)
-		(with-access::KDeclInfo %info (color)
-		   (if (>=fx color c)
-		       (loop (cdr deps) (+fx color 1))
-		       (loop (cdr deps) c)))))))
-
-   (define (color stack)
-      (let loop ((stack stack)
-		 (maxc 0))
-	 (if (pair? stack)
-	     (with-access::J2SDecl (car stack) (%info id)
-		(tprint "find-color id=" id
-		   " deps=" (map (lambda (d) (with-access::J2SDecl d (id) id)) stack))
-		(with-access::KDeclInfo %info (deps color)
-		   (set! color (find-color deps))
-		   (loop (cdr stack) (if (>fx color maxc) color maxc))))
-	     (+fx maxc 1))))
-
-   ;; duplicate the deps into gdeps for stacking the variables
-   (init-graph graph)
-   
-   ;; stack the variables
-   (if (null? graph)
-       (if has-yield* 2 0)
-       (let loop ((graph graph)
-		  (stack '()))
-	  (if (null? graph)
-	      (color (reverse stack))
-	      (let ((var (smallest graph)))
-		 (loop (graph-delete! graph var) (cons var stack)))))))
-
-(define (kont-color::long graph has-yield*::bool)
-   (kont-color-fast graph has-yield*))
-
-;*---------------------------------------------------------------------*/
-;*    kont-alloc-temp! ...                                             */
-;*---------------------------------------------------------------------*/
-(define-walk-method (kont-alloc-temp! this::J2SNode)
-   (with-trace 'cps (typeof this)
-      (call-default-walker)))
-
 ;*---------------------------------------------------------------------*/
 ;*    alloc-temp ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (alloc-temp p)
    (when (isa? p J2SDecl)
-      (with-access::J2SDecl p (%info loc)
+      (with-access::J2SDecl p (%info loc id)
 	 (when (isa? %info KDeclInfo)
-	    (with-access::KDeclInfo %info (color)
-	       (J2SStmtExpr
-		  (J2SAssig
-		     (J2SKontRef '%gen color)
-		     (J2SRef p))))))))
+	    (with-access::KDeclInfo %info (free color)
+	       (when free
+		  (when (=fx color -1)
+		     (error "alloc-temp" (format "wrong color (~s)" id) loc))
+		  (J2SStmtExpr
+		     (J2SAssig
+			(J2SKontRef '%gen color id)
+			(J2SRef p)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    kont-alloc-temp! ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (kont-alloc-temp! this::J2SNode extra)
+   (with-trace 'cps (typeof this)
+      (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
 ;*    kont-alloc-temp! ::J2SKont ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (kont-alloc-temp! this::J2SKont)
+(define-walk-method (kont-alloc-temp! this::J2SKont extra)
    (with-access::J2SKont this (param exn body loc)
-      (if (or (with-access::J2SDecl param (%info) (isa? %info KDeclInfo))
-	      (with-access::J2SDecl exn (%info) (isa? %info KDeclInfo)))
+      (if (or (is-free? param) (is-free? exn))
 	  (begin
-	     '(set! body
+	     (set! body
 		(J2SBlock*/w-endloc
 		   (append
 		      (filter-map alloc-temp (list param exn))
-		      (list (kont-alloc-temp! body)))))
+		      (list (kont-alloc-temp! body extra)))))
 	     this)
 	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
 ;*    kont-alloc-temp! ::J2SFun ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (kont-alloc-temp! this::J2SFun)
-   (with-access::J2SFun this (generator body thisp params argumentsp %info loc name)
+(define-walk-method (kont-alloc-temp! this::J2SFun extra)
+   (with-access::J2SFun this (generator body decl thisp params argumentsp %info loc name)
       (with-trace 'cps "j2sfun"
-	 (let ((temps (append '() ;(cons* thisp argumentsp params)
-			 (with-access::KontInfo %info (use) use))))
-	    (if (any (lambda (p)
-			(with-access::J2SDecl p (%info)
-			   (isa? %info KDeclInfo)))
-		   temps)
+	 (let ((temps (append (if generator extra '())
+			 (cons* decl thisp argumentsp params))))
+	    (tprint "   FUN=" name " " generator " tmps="
+	       (filter-map (lambda (p)
+			      (when (isa? p J2SDecl)
+				 (with-access::J2SDecl p (id %info)
+				    (when (isa? %info KDeclInfo)
+				       id))))
+		  temps))
+	    (if (any is-free? temps)
 		(with-access::J2SBlock body (endloc)
 		   (set! body
 		      (J2SBlock
 			 ;; this block will have to be move before the
 			 ;; generator is created, see scheme-fun
 			 (J2SBlock* (filter-map alloc-temp temps))
-			 (kont-alloc-temp! body)))
+			 (kont-alloc-temp! body extra)))
 		   this)
 		(call-default-walker))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    kont-alloc-temp! ::J2SRef ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (kont-alloc-temp! this::J2SRef)
+(define-walk-method (kont-alloc-temp! this::J2SRef extra)
    (with-trace 'cps (typeof this)
       (with-access::J2SRef this (decl loc)
-	 (with-access::J2SDecl decl (%info)
+	 (with-access::J2SDecl decl (%info id)
 	    (if (isa? %info KDeclInfo)
-		(with-access::KDeclInfo %info (color)
-		   (J2SKontRef '%gen color))
+		(with-access::KDeclInfo %info (color free)
+		   (if free
+		       (begin
+			  (when (=fx color -1)
+			     (error "kont-alloc-temp!"
+				(format "wrong color (~s)" id) loc))
+			  (J2SKontRef '%gen color id))
+		       this))
 		this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    kont-alloc-temp! ::J2SDeclInit ...                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (kont-alloc-temp! this::J2SDeclInit)
+(define-walk-method (kont-alloc-temp! this::J2SDeclInit extra)
    (with-trace 'cps (typeof this)
-      (with-access::J2SDeclInit this (val %info loc)
+      (with-access::J2SDeclInit this (val %info loc id)
 	 (trace-item "val=" (typeof val))
-	 (set! val (kont-alloc-temp! val))
+	 (set! val (kont-alloc-temp! val extra))
 	 (when (isa? %info KDeclInfo)
-	    (with-access::KDeclInfo %info (color)
-	       (set! val
-		  (J2SSequence
-		     (J2SAssig (J2SKontRef '%gen color) val)
-		     (J2SUndefined)))))
+	    (with-access::KDeclInfo %info (color free)
+	       (when free
+		  (when (=fx color -1)
+		     (error "kont-alloc-temp!"
+			(format "wrong color (~s)" id) loc))
+		  (set! val
+		     (J2SSequence
+			(J2SAssig (J2SKontRef '%gen color id) val)
+			(J2SUndefined))))))
 	 this)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Oct 17 10:59:51 2021 (serrano)                */
+;*    Last change :  Wed Oct 20 15:32:29 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -2218,11 +2218,13 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SForIn env::pair-nil conf mode::symbol fix::cell)
    (with-access::J2SForIn this (lhs obj body op)
-      (let ((decl (if (isa? lhs J2SRef)
-		      (with-access::J2SRef lhs (decl) decl)
-		      (with-access::J2SGlobalRef lhs (decl) decl))))
-	 (decl-vrange-add! decl *infinity-intv* fix)
-	 (let loop ((env (extend-env env decl *infinity-intv*)))
+      (let ((decl (cond
+		     ((isa? lhs J2SRef)
+		      (with-access::J2SRef lhs (decl) decl))
+		     ((isa? lhs J2SGlobalRef)
+		      (with-access::J2SGlobalRef lhs (decl) decl)))))
+	 (when decl (decl-vrange-add! decl *infinity-intv* fix))
+	 (let loop ((env (if decl (extend-env env decl *infinity-intv*) env)))
 	    (let ((ofix (cell-ref fix)))
 	       (multiple-value-bind (typ envb bk)
 		  (node-range-seq (list obj body) env conf mode fix)

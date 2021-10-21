@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Tue Oct 19 07:13:08 2021 (serrano)                */
+;*    Last change :  Thu Oct 21 07:41:10 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -40,8 +40,6 @@
 	   (js-generator-done ::obj ::obj ::JsGenerator ::JsGlobalObject)
 	   (js-make-generator::JsGenerator ::long ::procedure ::JsObject ::JsGlobalObject)
 	   (js-make-iterator ::obj ::JsGlobalObject)
-	   (inline js-generator-ref ::JsGenerator ::long)
-	   (inline js-generator-set! ::JsGenerator ::long ::obj)
 	   (js-make-map-iterator ::object ::procedure ::JsGlobalObject)
 	   (js-make-vector-iterator ::vector ::procedure ::JsGlobalObject)
 	   (js-make-list-iterator ::pair-nil ::procedure ::JsGlobalObject)
@@ -302,20 +300,6 @@
 	 (%next proc)
 	 (%env (if (>fx size 0) (make-vector size) '#())))))
 
-;*---------------------------------------------------------------------*/
-;*    js-generator-ref ...                                             */
-;*---------------------------------------------------------------------*/
-(define-inline (js-generator-ref obj::JsGenerator idx)
-   (with-access::JsGenerator obj (%env)
-      (vector-ref %env idx)))
-   
-;*---------------------------------------------------------------------*/
-;*    js-generator-set! ...                                            */
-;*---------------------------------------------------------------------*/
-(define-inline (js-generator-set! obj::JsGenerator idx val)
-   (with-access::JsGenerator obj (%env)
-      (vector-set! %env idx val)))
-   
 ;*---------------------------------------------------------------------*/
 ;*    js-make-yield ...                                                */
 ;*---------------------------------------------------------------------*/

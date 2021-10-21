@@ -501,8 +501,8 @@
 ;*    j2s-scheme ::J2SKontRef ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SKontRef mode return ctx)
-   (with-access::J2SKontRef this (loc gen index)
-      `(js-generator-ref ,gen ,index)))
+   (with-access::J2SKontRef this (loc gen index id)
+      `(js-generator-ref ,gen ,index ,(symbol->string! id))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SCond ...                                         */
@@ -871,9 +871,16 @@
 			       ,(caddr loc)))
 			  '())))))
 	 ((decl-usage-has? d '(call))
-	  (let ((id (j2s-decl-fast-id d ctx)))
-	     `(define ,id
-		 ,(jsfun->lambda val mode return ctx #f))))
+	  (with-access::J2SFun val (generator)
+	     (let ((id (j2s-decl-fast-id d ctx)))
+		(if generator
+		    `(begin
+			(define ,(j2s-generator-prototype-id val)
+			   ,(j2s-generator-prototype->scheme val))
+			(define ,id
+			   ,(jsfun->lambda val mode return ctx #f)))
+		    `(define ,id
+			,(jsfun->lambda val mode return ctx #f))))))
 	 (else
 	  '()))))
 
@@ -918,8 +925,9 @@
 			     `((,tmp ,fun)
 			       (,var ,(j2sfun->scheme val tmp #f mode return ctx))))))))
 	       ((decl-usage-has? d '(call))
-		`((,(j2s-decl-fast-id d ctx)
-		   ,(jsfun->lambda val mode return ctx #f))))
+		(j2s-bind-generator-prototype val
+		   `((,(j2s-decl-fast-id d ctx)
+		      ,(jsfun->lambda val mode return ctx #f)))))
 	       (else
 		'())))))
    
@@ -1469,6 +1477,9 @@
 				   :optim #f
 				   :cachefun #f)
 			       ,(liip (cdr withs))))))))
+	    ((isa? lhs J2SKontRef)
+	     (with-access::J2SKontRef lhs (index gen loc)
+		'#unspecified))
 	    (else
 	     (j2s-error "js2scheme" "Illegal lhs" this)))))
    
@@ -1687,9 +1698,10 @@
 	     (with-access::J2SCast lhs (expr type loc)
 		(loop expr (J2SCast type rhs))))
 	    ((isa? lhs J2SKontRef)
-	     (with-access::J2SKontRef lhs (gen index)
+	     (with-access::J2SKontRef lhs (gen index id)
 		`(js-generator-set! ,gen ,index
-		    ,(j2s-scheme rhs mode return ctx))))
+		    ,(j2s-scheme rhs mode return ctx)
+		    ,(symbol->string! id))))
 	    (else
 	     (j2s-error "assignment" "Illegal assignment" this))))))
 
@@ -2114,21 +2126,23 @@
 
    (define (kontref-inc op lhs::J2SKontRef inc::int)
       ;; compile an expression such as e1[e2]++ when e1 is a jsvector
-      (with-access::J2SKontRef lhs (index gen loc)
+      (with-access::J2SKontRef lhs (index gen id loc)
 	 (let ((tmp (gensym 'tmp)))
-	    `(let ((,tmp (js-generator-ref ,gen ,index)))
+	    `(let ((,tmp (js-generator-ref ,gen ,index ,(symbol->string! id))))
 		(if (fixnum? ,tmp)
 		    ,(new-or-old tmp `(+fx/overflow ,tmp ,inc)
 			(lambda (val tmp)
 			   `(begin
 			       (js-generator-set! ,gen ,index
-				  ,(box val (j2s-type lhs) ctx))
+				  ,(box val (j2s-type lhs) ctx)
+				  ,(symbol->string! id))
 			       ,tmp)))
 		    ,(new-or-old tmp `(js+ ,tmp ,inc %this)
 			(lambda (val tmp)
 			   `(let ((,tmp (js-tonumber ,tmp %this)))
 			       (js-generator-set! ,gen ,index
-				   ,(box val (j2s-type lhs) ctx))
+				  ,(box val (j2s-type lhs) ctx)
+				  ,(symbol->string! id))
 			       ,tmp))))))))
 
    (with-access::J2SAssig this (loc lhs rhs type)
@@ -2293,11 +2307,11 @@
 		       ,(access-assigop/otmp obj otmp op lhs rhs)))))))
 
    (define (kontref-assigop op lhs::J2SKontRef rhs::J2SExpr)
-      (with-access::J2SKontRef lhs (index gen loc)
+      (with-access::J2SKontRef lhs (index gen loc id)
 	 (with-access::J2SAssigOp this (type)
 	    (let ((tmp (gensym 'tmp)))
 	       `(let ((,tmp ,(js-binop2 loc op type lhs rhs mode return ctx)))
-		   (js-generator-set! ,gen ,index ,tmp)
+		   (js-generator-set! ,gen ,index ,tmp ,(symbol->string! id))
 		   ,tmp)))))
 
    (define (buffer-assig-concat loc type lhs rhs)

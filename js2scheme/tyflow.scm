@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Oct 17 11:02:23 2021 (serrano)                */
+;*    Last change :  Wed Oct 20 15:31:18 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -2063,13 +2063,15 @@
    (with-trace 'j2s-tyflow "node-type ::J2SForIn"
       (with-access::J2SForIn this (lhs obj body op loc)
 	 (trace-item "loc=" loc)
-	 (let ((decl (if (isa? lhs J2SRef)
-			 (with-access::J2SRef lhs (decl) decl)
-			 (with-access::J2SGlobalRef lhs (decl) decl)))
+	 (let ((decl (cond
+			((isa? lhs J2SRef)
+			 (with-access::J2SRef lhs (decl) decl))
+			((isa? lhs J2SGlobalRef)
+			 (with-access::J2SGlobalRef lhs (decl) decl))))
 	       (ty (if (eq? op 'in) 'string 'any)))
-	    (decl-vtype-add! decl ty ctx)
+	    (when decl (decl-vtype-add! decl ty ctx))
 	    (expr-type-add! lhs env ctx ty '())
-	    (let loop ((env (extend-env env decl ty)))
+	    (let loop ((env (if decl (extend-env env decl ty) env)))
 	       (let ((octx (cdr ctx)))
 		  (trace-item "for seq loc=" loc)
 		  (multiple-value-bind (typ envb bk)
@@ -2078,8 +2080,8 @@
 			((not (=fx octx (cdr ctx)))
 			 (loop (env-merge env envb)))
 			((eq? op 'in)
-			 (decl-vtype-add! decl 'undefined ctx)
-			 (return typ (extend-env envb decl 'any)
+			 (when decl (decl-vtype-add! decl 'undefined ctx))
+			 (return typ (if decl (extend-env envb decl 'any) env)
 			    (filter-breaks bk this)))
 			(else
 			 (return typ envb

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Oct 17 08:46:38 2021 (serrano)                */
+;*    Last change :  Thu Oct 21 07:41:59 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -348,7 +348,8 @@
 
 	   (final-class J2SKontRef::J2SExpr
 	      (gen::obj read-only)
-	      (index::int read-only))
+	      (index::int read-only)
+	      (id::symbol read-only))
 	   
 	   (final-class J2SThis::J2SRef)
 	   
