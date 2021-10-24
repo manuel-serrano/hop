@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Oct 21 13:10:41 2021 (serrano)                */
+;*    Last change :  Sun Oct 24 10:49:58 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -347,6 +347,11 @@
 	   (final-class JsGenerator::JsObject
 	      %next
 	      (%env::vector read-only))
+
+	   (abstract-class JsYield::JsObject
+	      ;; only used for stack allocation, (see public_expd.sch)
+	      %val
+	      %done)
 
 	   (final-class JsProxy::JsObject
 	      (handler::JsObject (default (class-nil JsObject)))

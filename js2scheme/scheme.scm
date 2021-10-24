@@ -349,9 +349,9 @@
 ;*    j2s-scheme ::J2SDeclExtern ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclExtern mode return ctx)
-   (with-access::J2SDeclExtern this (loc id val bind writable usecnt)
+   (with-access::J2SDeclExtern this (loc id val bind writable usecnt sweepable)
       (cond
-	 ((=fx usecnt 0)
+	 ((and (=fx usecnt 0) (memq sweepable '(always scheme)))
 	  #unspecified)
 	 (bind
           (j2s-scheme-decl this (j2s-scheme val mode return ctx)
@@ -898,6 +898,28 @@
 		     ,(j2s-generator-prototype->scheme val))
 		decls)
 	     decls)))
+
+   (define (j2s-stack-allocation-type val)
+      (let loop ((expr val))
+	 (cond
+	    ((isa? expr J2SCast)
+	     (with-access::J2SCast expr (expr)
+		(loop expr)))
+	    ((isa? expr J2SParen)
+	     (with-access::J2SCast expr (expr)
+		(loop expr)))
+	    ((isa? expr J2SPragma)
+	     (with-access::J2SPragma expr (expr)
+		(cond
+		   ((equal? expr '(js-make-stack-yield))
+		    (values 'yield '(js-make-yield #unspecified #f %this)))
+		   (else
+		    (error "j2s-let-decl-stack-allocation"
+		       "Illegal pragma form"
+		       (j2s->sexp val))))))
+	    (else
+	     (error "j2s-let-decl-stack-allocation" "Illegal form"
+		(j2s->sexp val))))))
       
    (define (j2s-let-decl-inner::pair-nil d::J2SDecl mode return ctx singledecl typed)
       (with-access::J2SDeclInit d (vtype loc)
@@ -938,6 +960,18 @@
 	 ((null? decls)
 	  (epairify loc
 	     `(begin ,@(j2s-nodes* loc nodes mode return ctx))))
+	 ((decl-usage-has? (car decls) '(&ref))
+	  ;; an optimized stack allocation (see for instance genyield)
+	  (with-access::J2SDeclInit (car decls) (id val)
+	     (let ((id (symbol-append '& id)))
+		(multiple-value-bind (atype arg)
+		   (j2s-stack-allocation-type val)
+		   (set! val (J2SHopRef/type id 'object))
+		   (decl-usage-rem! (car decls) '&ref)
+		   (epairify loc
+		      `(,(symbol-append 'js-call-with-stack- atype)
+			,arg (lambda (,id)
+				,(j2s-scheme this mode return ctx))))))))
 	 ((and (pair? decls)
 	       (null? (cdr decls))
 	       (pair? nodes)

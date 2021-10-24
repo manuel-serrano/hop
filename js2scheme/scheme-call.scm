@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Oct 21 14:30:31 2021 (serrano)                */
+;*    Last change :  Sun Oct 24 09:55:55 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1699,6 +1699,24 @@
 				 (args (list (J2SHopRef o) expr)))))
 		   `(let ((,o ,(j2s-scheme obj mode return ctx)))
 		       ,(j2s-scheme ncall mode return ctx)))))
+	    ((isa? fun J2SHopRef)
+	     (if (isa? expr J2SArray)
+		 ;; fun(...[x,y,z])
+		 (with-access::J2SArray expr (exprs)
+		    (let ((ncall (instantiate::J2SCall
+				    (loc loc)
+				    (fun fun)
+				    (thisargs (list (J2SNull)))
+				    (args exprs))))
+		       (j2s-scheme ncall mode return ctx)))
+		 (epairify loc
+		    `(js-call-with-stack-list
+			,(j2s-spread->expr-list args mode return ctx)
+			(lambda (%lst)
+			   (,(j2s-scheme fun mode return ctx)
+			    ,@(map (lambda (a) (j2s-scheme a mode return ctx))
+				 thisargs)
+			    %lst))))))
 	    (else
 	     (let ((ncall (instantiate::J2SCall
 			     (loc loc)

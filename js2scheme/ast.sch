@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Thu Oct 21 07:43:16 2021 (serrano)                */
+;*    Last change :  Sun Oct 24 08:31:14 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -160,6 +160,13 @@
        (fun ,fun)
        (thisargs '())
        (args ,(if (pair? args) `(list ,@args) ''()))))
+
+(define-macro (J2SHopCall* fun args)
+   `(instantiate::J2SCall
+       (loc loc)
+       (fun ,fun)
+       (thisargs '())
+       (args ,args)))
 
 (define-macro (J2SHopCall/type type fun . args)
    `(instantiate::J2SCall

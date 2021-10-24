@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Tue Oct 19 08:50:22 2021 (serrano)                */
+;*    Last change :  Sun Oct 24 10:37:39 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -287,3 +287,27 @@
 	  (e `(let ((,f ,fun)) (js-new ,%this ,f ,@args)) e)))
       (else
        (error "js-new" "bad form" x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-call-with-stack-yield ...                                     */
+;*    -------------------------------------------------------------    */
+;*    Yield values stack allocation (when supported by the back-end).  */
+;*---------------------------------------------------------------------*/
+(define (js-call-with-stack-yield-expander x e)
+   (match-case x
+      ((?- (and ?yield (js-make-yield ?val ?done ?%this))
+	  (and ?proc (lambda (?y) . ?body)))
+       (cond-expand
+	  ((and bigloo-c (config have-c99-stack-alloc #t) (not devel) (not debug))
+	   (let ((tmp (gensym 'aux)))
+	      (e `(let ()
+		     (pragma ,(format "struct BgL_jsyieldz00_bgl ~a;" tmp))
+		     (let ((,y (pragma::JsObject ,(format "BNANOBJECT(~a)" tmp))))
+			(js-init-yield! ,y %this)
+			,@body))
+		 e)))
+	  (else
+	   (e `(,proc ,yield) e))))
+      (else
+       (error "js-call-with-stack-yield" "bad form" ',x))))
+

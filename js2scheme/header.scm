@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Sun Oct 17 09:42:15 2021 (serrano)                */
+;*    Last change :  Fri Oct 22 07:10:26 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -58,7 +58,7 @@
 	      #!key
 	      (type 'unknown) (hidden-class #t)
 	      (scope '%scope) (raise-on-write #f)
-	      (sweepable #f))
+	      (sweepable 'scheme))
       (instantiate::J2SDeclExtern
 	 (loc loc)
 	 (id js)
@@ -139,31 +139,31 @@
 	    `(with-access::JsGlobalObject %this (js-vector) js-vector))
 	 (js-def-extern 'Uint8Array #t writable
 	    `(with-access::JsGlobalObject %this (js-uint8array) js-uint8array)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'Int8Array #t writable
 	    `(with-access::JsGlobalObject %this (js-int8array) js-int8array)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'Uint16Array #t writable
 	    `(with-access::JsGlobalObject %this (js-uint16array) js-uint16array)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'Int16Array #t writable
 	    `(with-access::JsGlobalObject %this (js-int16array) js-int16array)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'Uint32Array #t writable
 	    `(with-access::JsGlobalObject %this (js-uint32array) js-uint32array)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'BigInt64Array #t writable
 	    `(with-access::JsGlobalObject %this (js-bigint64array) js-bigint64array)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'BigUint64Array #t writable
 	    `(with-access::JsGlobalObject %this (js-biguint64array) js-biguint64array)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'Float32Array #t writable
 	    `(with-access::JsGlobalObject %this (js-float32array) js-float32array)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'Float64Array #t writable
 	    `(with-access::JsGlobalObject %this (js-float64array) js-float64array)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'String #t writable
 	    `(with-access::JsGlobalObject %this (js-string) js-string))
 	 (js-def-extern 'RegExp #t writable
@@ -176,53 +176,53 @@
 	    `(with-access::JsGlobalObject %this (js-date) js-date))
 	 (js-def-extern 'Promise #t writable
 	    `(with-access::JsGlobalObject %this (js-promise) js-promise)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'Symbol #t writable
 	    `(with-access::JsGlobalObject %this (js-symbol) js-symbol)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'Number #t writable
 	    `(with-access::JsGlobalObject %this (js-number) js-number)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'BigInt #t writable
 	    `(with-access::JsGlobalObject %this (js-bigint) js-bigint)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'Map #t writable
 	    `(js-get %this (& "Map") %scope)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'WeakMap #t writable
 	    `(js-get %this (& "WeakMap") %scope)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'Set #t writable
 	    `(js-get %this (& "Set") %scope)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'WeakSet #t writable
 	    `(js-get %this (& "WeakSet") %scope)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'Error #t writable
 	    `(with-access::JsGlobalObject %this (js-error) js-error)
-	    :sweepable #t
+	    :sweepable 'always
 	    :scope 'tls)
 	 (js-def-extern 'SyntaxError #t writable
 	    `(with-access::JsGlobalObject %this (js-syntax-error) js-syntax-error)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'TypeError #t writable
 	    `(with-access::JsGlobalObject %this (js-type-error) js-type-error)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'URIError #t writable
 	    `(with-access::JsGlobalObject %this (js-uri-error) js-uri-error)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'EvalError #t writable
 	    `(with-access::JsGlobalObject %this (js-eval-error) js-eval-error)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'RangeError #t writable
 	    `(with-access::JsGlobalObject %this (js-range-error) js-range-error)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'ReferenceError #t writable
 	    `(with-access::JsGlobalObject %this (js-reference-error) js-reference-error)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (js-def-extern 'JSON #t writable
 	    `(with-access::JsGlobalObject %this (js-json) js-json)
-	    :sweepable #t)
+	    :sweepable 'always)
 	 (if (or (string=? id "console.js") (string=? id "node_stdio.js"))
 	     (instantiate::J2SUndefined
 		(type 'undefined)
@@ -269,7 +269,8 @@
 		,(unless (string=? path "console")
 		    `(nodejs-bind-export! %this %this
 			%scope
-			,(& "console" prog)))))
+			,(& "console" prog))))
+	    :sweepable 'never)
 	 (instantiate::J2SUndefined
 	    (type 'undefined)
 	    (loc loc)))))

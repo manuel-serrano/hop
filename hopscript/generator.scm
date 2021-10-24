@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Thu Oct 21 07:41:10 2021 (serrano)                */
+;*    Last change :  Sun Oct 24 17:32:42 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript generators                   */
@@ -44,6 +44,7 @@
 	   (js-make-vector-iterator ::vector ::procedure ::JsGlobalObject)
 	   (js-make-list-iterator ::pair-nil ::procedure ::JsGlobalObject)
 	   (inline js-make-yield ::obj ::bool ::JsGlobalObject)
+	   (inline js-init-yield!::JsObject ::JsObject ::JsGlobalObject)
 	   (inline js-generator-yield ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)
 	   (js-generator-yield* ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)
 	   (js-generator-maybe-next ::obj ::obj ::JsGlobalObject ::obj)
@@ -299,6 +300,16 @@
 	 (__proto__ proto)
 	 (%next proc)
 	 (%env (if (>fx size 0) (make-vector size) '#())))))
+
+;*---------------------------------------------------------------------*/
+;*    js-init-yield! ...                                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-init-yield! yield::JsObject %this)
+   (with-access::JsGlobalObject %this (js-yield-cmap)
+      (js-object-proto-set! yield (js-object-proto %this))
+      (js-object-mode-set! yield (js-object-default-mode))
+      (with-access::JsObject yield (cmap) (set! cmap js-yield-cmap))
+      yield))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-yield ...                                                */

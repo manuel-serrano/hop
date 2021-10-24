@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.4.x/js2scheme/sweep.scm               */
+;*    serrano/prgm/project/hop/hop/js2scheme/sweep.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu May 13 09:25:26 2021 (serrano)                */
+;*    Last change :  Fri Oct 22 07:11:59 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removal                                                */
@@ -237,7 +237,8 @@
       (set! headers (filter (lambda (n)
 			       (if (isa? n J2SDeclExtern)
 				   (with-access::J2SDeclExtern n (%info sweepable)
-				      (or (eq? %info stamp) (not sweepable)))
+				      (or (eq? %info stamp)
+					  (not (eq? sweepable 'always))))
 				   #t))
 		       headers))
       (for-each (lambda (n) (sweep! n rems stamp)) nodes)

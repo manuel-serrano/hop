@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Oct 21 07:41:59 2021 (serrano)                */
+;*    Last change :  Fri Oct 22 07:12:37 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -67,7 +67,8 @@
 	      (key (default (ast-decl-key)) (info '("notraverse")))
 	      ;; writable=#f iff decl is const
 	      (writable (default #t) (info '("notraverse")))
-	      ;; either global, %scope, tls, local, letblock, letvar, kont, export
+	      ;; either: global, %scope, tls, local, letblock, letvar,
+	      ;;   kont, export
 	      (scope::symbol (default 'local) (info '("notraverse")))
 	      (usecnt::int (default 0) (info '("notraverse")))
 	      (useinloop::bool (default #f) (info '("notraverse")))
@@ -122,7 +123,9 @@
 	      (raise-on-write::bool read-only (default #f))
 	      ;; extern are sweepable (i.e., removable) when not used
 	      ;; by the code generator to optimize expressions
-	      (sweepable::bool read-only (default #f))
+	      ;; the value is a symbol a tell when it can be sweeped
+	      ;; its value are: never, scheme, always
+	      (sweepable::symbol read-only (default 'scheme))
 	      (configurable::bool read-only (default #t)))
 
 	   (final-class J2SDeclImport::J2SDecl

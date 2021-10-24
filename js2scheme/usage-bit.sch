@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Dec 14 17:16:48 2019                          */
-;*    Last change :  Thu Jun  4 11:58:20 2020 (serrano)                */
-;*    Copyright   :  2019-20 Manuel Serrano                            */
+;*    Last change :  Sun Oct 24 10:19:17 2021 (serrano)                */
+;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Usage bit names                                                  */
 ;*    -------------------------------------------------------------    */
@@ -21,6 +21,7 @@
 ;*      uninit: variable potentially used before initialization        */
 ;*      rest: is a rest argument                                       */
 ;*      method: a method of the object is called (e.g. o.f())          */
+;*      &ref: a variable whose stack address is used                   */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -49,6 +50,7 @@
       ((uninit) #u32:1024)
       ((rest) #u32:2048)
       ((method) #u32:4096)
+      ((&ref) #u32:8192)
       (else (error "usage-key->bit" "Illegal key" key))))
 
 ;*---------------------------------------------------------------------*/
@@ -69,5 +71,6 @@
       ((#u32:1024) 'uninit)
       ((#u32:2048) 'rest)
       ((#u32:4096) 'method)
+      ((#u32:8192) '&ref)
       (else (error "usage-bit->key" "Illegal key" bit))))
    
