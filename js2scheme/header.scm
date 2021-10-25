@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Fri Oct 22 07:10:26 2021 (serrano)                */
+;*    Last change :  Mon Oct 25 15:07:18 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -93,6 +93,7 @@
 		      :type 'function :scope '%hop))
 	 (%import-meta (js-def-extern '%import-meta #t #f 
 			  `(nodejs-import-meta %worker %this %module ,path)
+			  :sweepable 'never
 			  :type 'object :scope '%hop))
 	 (writable (with-access::J2SProgram prog (mode)
 		      (not (eq? mode 'hopscript))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Sep 20 17:22:44 2021 (serrano)                */
+;*    Last change :  Mon Oct 25 15:41:53 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1804,6 +1804,7 @@
 		     (scope (nodejs-new-scope-object %this))
 		     (mod (nodejs-new-module (if js-main filename ".")
 			     (or srcalias filename) worker %this)))
+		  (js-put! scope (& "module") mod #f %this)
 		  ;; prehooking
 		  (when (procedure? prehook)
 		     (prehook %this this scope mod))
