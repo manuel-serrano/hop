@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Oct 15 08:41:33 2021 (serrano)                */
+;*    Last change :  Mon Oct 25 11:37:16 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -738,18 +738,18 @@
       ;; because of code point and code units, cannot use the generic
       ;; js-make-iterator (see generator.scm) function
       (letrec ((%gen (js-make-generator 0
-			(lambda (%v %e %gen %this)
+			(lambda (%v %e %gen %yield %this)
 			   (let* ((val (js-cast-string %this this))
 				  (len (js-jsstring-character-length val)))
 			      (let ((i #u32:0))
-				 (let loop ((%v %v) (%e %e) (%gen %gen) (%this %this))
+				 (let loop ((%v %v) (%e %e) (%gen %gen) (%yield %yield) (%this %this))
 				    (if (>=u32 i len)
-					(js-generator-yield %gen
+					(js-generator-yield %gen %yield
 					   (js-undefined) #t
 					   loop %this)
 					(let ((char (js-jsstring-character-ref val i)))
 					   (set! i (+u32 i #u32:1))
-					   (js-generator-yield %gen
+					   (js-generator-yield %gen %yield
 					      char #f
 					      loop %this)))))))
 			(with-access::JsGlobalObject %this (js-generator-prototype)

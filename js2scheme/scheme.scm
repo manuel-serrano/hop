@@ -954,6 +954,17 @@
 		      ,(jsfun->lambda val mode return ctx #f)))))
 	       (else
 		'())))))
+
+   (define (move-stack-decl! decl::J2SDecl decls::pair-nil)
+      ;; move decl after the last &ref decls
+      (let loop ((decls decls))
+	 (cond
+	    ((null? decls)
+	     (list decl))
+	    ((decl-usage-has? (car decls) '(&ref))
+	     (cons (car decls) (loop (cdr decls))))
+	    (else
+	     (cons decl decls)))))
    
    (with-access::J2SLetBlock this (loc decls nodes rec)
       (cond
@@ -968,6 +979,7 @@
 		   (j2s-stack-allocation-type val)
 		   (set! val (J2SHopRef/type id 'object))
 		   (decl-usage-rem! (car decls) '&ref)
+		   (set! decls (move-stack-decl! (car decls) (cdr decls)))
 		   (epairify loc
 		      `(,(symbol-append 'js-call-with-stack- atype)
 			,arg (lambda (,id)
@@ -3299,6 +3311,7 @@
       (epairify loc
 	 `(,(if generator 'js-generator-yield* 'js-generator-yield)
 	   %gen
+	   %yield
 	   ,(j2s-scheme expr mode return ctx)
 	   ,(isa? kont J2SUndefined)
 	   ,(if (identity-kont? kont)
@@ -3315,6 +3328,7 @@
 	 `(lambda (,(j2s-scheme param mode return ctx)
 		   ,(j2s-scheme exn mode return ctx)
 		   %gen
+		   %yield
 		   %this)
 	     ,(j2s-scheme body mode return ctx)))))
 

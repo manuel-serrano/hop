@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Sun Oct 24 10:37:39 2021 (serrano)                */
+;*    Last change :  Mon Oct 25 08:04:30 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -298,11 +298,12 @@
       ((?- (and ?yield (js-make-yield ?val ?done ?%this))
 	  (and ?proc (lambda (?y) . ?body)))
        (cond-expand
-	  ((and bigloo-c (config have-c99-stack-alloc #t) (not devel) (not debug))
+	  ((and bigloo-c (not devel) (not debug))
 	   (let ((tmp (gensym 'aux)))
 	      (e `(let ()
 		     (pragma ,(format "struct BgL_jsyieldz00_bgl ~a;" tmp))
-		     (let ((,y (pragma::JsObject ,(format "BNANOBJECT(~a)" tmp))))
+		     ($bgl-init-jsyield-object! (pragma::obj ,(format "(obj_t)(&~a)" tmp)))
+		     (let ((,y (pragma::obj ,(format "(obj_t)BNANOBJECT(&~a)" tmp))))
 			(js-init-yield! ,y %this)
 			,@body))
 		 e)))

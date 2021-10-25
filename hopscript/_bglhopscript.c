@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Mon Oct 18 18:24:27 2021 (serrano)                */
+/*    Last change :  Mon Oct 25 13:42:15 2021 (serrano)                */
 /*    Copyright   :  2016-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -104,6 +104,9 @@ static obj_t jsstringliteralascii_not_a_string_cache;
 static uint32_t jsstringliteralascii_normalize_threshold;
 
 static obj_t empty_vector;
+
+// yield objects have two fields, value and done
+#define JSYIELD_OBJECT_CONSTRSIZE 2
 
 /*---------------------------------------------------------------------*/
 /*    type alias                                                       */
@@ -765,13 +768,14 @@ BGL_MAKE_JSOBJECT_SANS( int constrsize, obj_t constrmap, obj_t __proto__, uint32
    long bsize = JSOBJECT_SIZE + VECTOR_SIZE + ( (constrsize-1) * OBJ_SIZE );
    BgL_jsobjectz00_bglt o = (BgL_jsobjectz00_bglt)HOP_MALLOC( bsize );
    obj_t vector;
-   int i;
 
    // class initialization
    BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSOBJECT_CLASS_INDEX );
    
    // fields init
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
+   o->BgL_elementsz00 = empty_vector;
+
    BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)mode );
    BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), __proto__ );
    
@@ -784,9 +788,7 @@ BGL_MAKE_JSOBJECT_SANS( int constrsize, obj_t constrmap, obj_t __proto__, uint32
    vector->vector.length = constrsize;
    vector = BVECTOR( vector );
    
-   o->BgL_elementsz00 = empty_vector;
-
-   for( i = 0; i < constrsize; i++ ) {
+   for( int i = 0; i < constrsize; i++ ) {
       VECTOR_SET( vector, i, BUNSPEC );
    }
 
@@ -1791,5 +1793,40 @@ bgl_make_jsgenerator(obj_t constrmap, obj_t __proto__, long sz, obj_t next, uint
    o->BgL_z52nextz52 = next;
    o->BgL_z52envz52 = env;
 
+   return BNANOBJECT(o);
+}
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_init_jsyield_object ...                                      */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_init_jsyield_object(obj_t p) {
+   BgL_jsobjectz00_bglt o = (BgL_jsobjectz00_bglt)p;
+   obj_t vector;
+
+   // class initialization
+   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSOBJECT_CLASS_INDEX);
+
+   // fields init
+   o->BgL_elementsz00 = empty_vector;
+   BGL_OBJECT_HEADER_SIZE_SET(BNANOBJECT(o), jsobject_mode);
+   
+   // elements initialization
+   vector = (obj_t)(&(o->BgL_elementsz00) + 1);
+
+#if(!defined(TAG_VECTOR))
+   vector->vector.header = MAKE_HEADER(VECTOR_TYPE, 0);
+#endif		
+   vector->vector.length = JSYIELD_OBJECT_CONSTRSIZE;
+
+#if(defined(DEBUG))
+   vector = BVECTOR( vector );
+
+   for( int i = 0; i < 2; i++ ) {
+      VECTOR_SET( vector, i, BUNSPEC );
+   }
+#endif
+   
    return BNANOBJECT(o);
 }

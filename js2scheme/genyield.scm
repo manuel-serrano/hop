@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sun Oct 24 10:19:57 2021 (serrano)                */
+;*    Last change :  Mon Oct 25 08:15:29 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Yield heap->stack allocation                                     */
@@ -110,23 +110,23 @@
    (define (yield-stack-alloc this::J2SDecl)
       (with-access::J2SDecl this (loc id)
 	 (J2SLetOptVUtype 'object '(ref &ref) (gensym id)
-	    (J2SPragma '(js-make-stack-yield)))))
+	    (J2SPragma/type 'object '(js-make-stack-yield)))))
 
    (define (maybe-next-call this::J2SCall decl)
       (with-access::J2SCall this (fun args loc protocol)
 	 (if (eq? protocol 'spread)
 	     (with-access::J2SAccess fun (obj)
 		(with-access::J2SSpread (car args) (expr)
-		   (J2SHopCall
-		      (J2SHopRef 'js-generator-maybe-next-spread)
-		      obj (J2SRef decl) expr (J2SHopRef '%this))))
+		   (J2SHopCall/type 'any
+		      (J2SHopRef 'js-generator-maybe-stack-next-spread)
+		      obj (J2SRef decl :type 'object) expr (J2SHopRef '%this))))
 	     (with-access::J2SAccess fun (obj)
-		(J2SHopCall*
+		(J2SHopCall*/type 'any
 		   (J2SHopRef
 		      (string->symbol
-			 (format "js-generator-maybe-next~a"
+			 (format "js-generator-maybe-stack-next~a"
 			    (length args))))
-		   (cons* obj (J2SRef decl)
+		   (cons* obj (J2SRef decl :type 'object)
 		      (append args (list (J2SHopRef '%this)))))))))
    
    (with-access::J2SLetBlock this (decls)
@@ -139,9 +139,10 @@
 	 (call-default-walker)
 	 (for-each (lambda (decl)
 		      (when (stackable? decl)
-			 (with-access::J2SDeclInit decl (val)
+			 (with-access::J2SDeclInit decl (val vtype)
 			    (let ((ndecl (yield-stack-alloc decl)))
 			       (set! decls (cons ndecl decls))
+			       (set! vtype 'object)
 			       (set! val (maybe-next-call val ndecl))))))
 	    decls))
       this))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Wed Oct 20 11:51:51 2021 (serrano)                */
+;*    Last change :  Mon Oct 25 08:42:41 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -533,7 +533,7 @@
    
    (define (generator-body size init body)
       (let ((gen `(js-make-generator ,size
-		     (lambda (%v %e %gen %this) ,body)
+		     (lambda (%v %e %gen %yield %this) ,body)
 		     ,(j2s-generator-prototype-id this)
 		     %this)))
 	 (if (pair? init)
