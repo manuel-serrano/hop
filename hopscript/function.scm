@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Oct 21 14:40:30 2021 (serrano)                */
+;*    Last change :  Tue Oct 26 08:20:54 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -31,6 +31,7 @@
 	   __hopscript_worker
 	   __hopscript_array
 	   __hopscript_arguments
+	   __hopscript_proxy
 	   __hopscript_profile)
    
    (export (js-init-function! ::JsGlobalObject)
@@ -341,7 +342,7 @@
 					 js-function-strict-prototype
 					 js-function js-function-pcache)
       (set! js-function-pcache
-	 ((@ js-make-pcache-table __hopscript_property) 5 "function"))
+	 ((@ js-make-pcache-table __hopscript_property) 6 "function"))
       
       (let ((proc (lambda l (js-undefined)))
 	    (js-object-prototype (js-object-proto %this)))
@@ -1337,10 +1338,17 @@
 	  (js-function-apply %this this thisarg argarray cache))
 	 ((js-object? this)
 	  (with-access::JsGlobalObject %this (js-function-pcache)
-	     (js-call2 %this
-		(js-get-jsobject-name/cache this (& "apply") #f %this
-		   (or cache (js-pcache-ref js-function-pcache 3)))
-		this thisarg argarray)))
+	     (js-method-call-name/cache %this this (& "apply")
+		(or cache (js-pcache-ref js-function-pcache 3))
+		(js-pcache-ref js-function-pcache 5)
+		0
+		'(pmap cmap vtable poly)
+		'(imap vtable)
+		thisarg argarray)))
+;* 	     (js-call2 %this                                           */
+;* 		(js-get-jsobject-name/cache this (& "apply") #f %this  */
+;* 		   (or cache (js-pcache-ref js-function-pcache 3)))    */
+;* 		this thisarg argarray)))                               */
 	 (else
 	  (loop (js-toobject %this this))))))
 
@@ -1353,7 +1361,8 @@
        (with-access::JsGlobalObject %this (js-function-pcache)
 	  (js-call1 %this
 	     (js-get-jsobject-name/cache this (& "call") #f %this
-		(or cache (js-pcache-ref js-function-pcache 4)))
+		(or cache (js-pcache-ref js-function-pcache 4))
+		'(imap emap cmap vtable))
 	     this thisarg))))
 
 ;*---------------------------------------------------------------------*/

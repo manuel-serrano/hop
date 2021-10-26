@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Sep 22 16:24:56 2021 (serrano)                */
+;*    Last change :  Tue Oct 26 08:46:12 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -912,7 +912,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Used to access an object's descriptor                            */
 ;*---------------------------------------------------------------------*/
-(define (js-pcache-update-descriptor! pcache::JsPropertyCache i o::JsObject)
+(define (js-pcache-update-descriptor! pcache::JsPropertyCache i o::JsObject ow::JsObject)
    (with-access::JsObject o ((omap cmap))
       (with-access::JsPropertyCache pcache (imap cmap pmap emap amap aindex owner)
 	 (js-validate-pmap-pcache! pcache)
@@ -920,7 +920,7 @@
 	 (set! emap (js-not-a-pmap))
 	 (set! amap omap)
 	 (set! aindex i)
-	 (set! owner o))))
+	 (set! owner ow))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache-update-next-direct! ...                                */
@@ -2539,19 +2539,24 @@
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point))
       (set! cntmiss (+u32 #u32:1 cntmiss)))
 
+   (when (eq? name (& "Value"))
+      (tprint "miss.1=" name))
    (let loop ((obj o))
       (jsobject-find obj o name
 	 ;; map search
 	 (lambda (obj i)
 	    (with-access::JsPropertyCache cache (index owner cntmiss)
 	       (let ((el-or-desc (js-object-ref obj i)))
+		  (when (eq? name (& "Value"))
+		     (tprint "miss.2=" name " " (typeof el-or-desc)
+			" " (eq? o obj)))
 		  (js-assert-object obj "js-get-jsobject-name/cache-miss")
 		  (cond
 		     ((isa? el-or-desc JsPropertyDescriptor)
 		      ;; accessor property
 		      (if (eq? o obj)
 			  (js-pcache-update-accessor! cache i o)
-			  (js-pcache-update-descriptor! cache i obj))
+			  (js-pcache-update-descriptor! cache i o obj))
 		      (js-property-value o obj name el-or-desc %this))
 		     ((eq? o obj)
 		      ;; direct access to the direct object
@@ -2872,7 +2877,7 @@
 		      (unless (eq? cmap (js-not-a-cmap))
 			 (if (eq? o propobj)
 			     (js-pcache-update-accessor! cache index propobj)
-			     (js-pcache-update-descriptor! cache index propobj)))))
+			     (js-pcache-update-descriptor! cache index o propobj)))))
 		(%set o v)
 		v)
 	     ;; 8.12.4, setp 2.a

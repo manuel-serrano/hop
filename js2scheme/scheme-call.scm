@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sun Oct 24 09:55:55 2021 (serrano)                */
+;*    Last change :  Tue Oct 26 10:52:38 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -252,7 +252,7 @@
 	("setUTCMinutes" ,j2s-date-setutcminutes date (any any any) #t #t)
 	;; map
 	("has" js-map-has map (any) %this #f ,j2s-map-plain?)
-	("has" js-map-has weakmap (any) %this #f ,j2s-weakmap-plain?)
+	("has" js-weakmap-has weakmap (any) %this #f ,j2s-weakmap-plain?)
 	("get" js-map-get map (any) %this #f ,j2s-map-plain?)
 	("get" js-weakmap-get weakmap (any) %this #f ,j2s-weakmap-plain?)
 	("set" js-map-set map (any any) %this #f ,j2s-map-plain?)

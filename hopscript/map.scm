@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Fri Oct 15 07:28:23 2021 (serrano)                */
+;*    Last change :  Tue Oct 26 11:12:52 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -97,12 +97,13 @@
 	 (instantiateJsMap
 	    (__proto__ (js-get constructor (& "prototype") %this))
 	    (mapdata (create-hashtable
+			:size 64
 			:weak weak
 			:hash js-get-hashnumber
 			:eqtest eqtest))
 	    (vec (if (eq? weak 'keys)
 		     '#()
-		     (make-vector (DEFAULT-EMPTY-VECTOR-SIZE) (js-absent))))
+		     (make-vector 16 (js-absent))))
 	    (cursor -1)))
       
       (define js-map-prototype
@@ -215,11 +216,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-hashnumber ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-get-hashnumber key)
-   (if (js-jsstring? key)
+(define (js-get-hashnumber key)
+   (cond
+      ((js-jsstring? key)
        (let ((s (js-jsstring->string key)))
-	  ($string-hash s 0 (string-length s)))
-       (get-hashnumber key)))
+	  ($string-hash s 0 (string-length s))))
+      ((fixnum? key)
+       key)
+      (else
+       (get-hashnumber key))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hashkey ...                                                      */
