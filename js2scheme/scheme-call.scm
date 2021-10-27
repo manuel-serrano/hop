@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Oct 26 10:52:38 2021 (serrano)                */
+;*    Last change :  Wed Oct 27 16:47:26 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -939,17 +939,17 @@
 		  (else
 		   (error "js2scheme" "illegal builtin method" m)))))))
 
-   (define (call-super-record-method fun::J2SAccess args::pair-nil clazz::J2SClass)
-      (with-access::J2SAccess fun (obj field)
+   (define (call-super-record-method fun::J2SAccess args::pair-nil superclazz::J2SClass)
+      (with-access::J2SAccess fun (obj field loc)
 	 (with-access::J2SString field (val)
 	    (let ((el (j2s-class-find-element (j2s-vtype obj) val)))
 	       (when (isa? el J2SClassElement)
-		  (with-access::J2SClassElement el (prop static clazz)
+		  (with-access::J2SClassElement el (prop static)
 		     (when (and (not static) (isa? prop J2SMethodPropertyInit))
 			(with-access::J2SMethodPropertyInit prop (val)
 			   (with-access::J2SFun val (params)
 			      (when (=fx (length params) (length args))
-				 `(,(class-element-id clazz el)
+				 `(,(class-element-id superclazz el)
 				   this
 				   ,@(map (lambda (a)
 					     (j2s-scheme a mode return ctx))
@@ -1032,16 +1032,20 @@
 					  el)))))))))
 	     =>
 	     (lambda (el)
-		(with-access::J2SClassElement el (index prop)
-		   (with-access::J2SMethodPropertyInit prop (name)
-		      (with-access::J2SString name ((str val))
-			 (let ((o (j2s-as (j2s-scheme obj mode return ctx)
-				     obj (j2s-type obj) 'any ctx)))
-			    `(js-method-jsrecord-call-index ,o ,index
-				,str
-				,@(map (lambda (arg)
-					  (j2s-scheme arg mode return ctx))
-				     args))))))))
+		(with-access::J2SClassElement el (prop)
+		   (let ((index (class-class-method-index (j2s-vtype self) el))) 
+		      (when (=fx index -1)
+			 (error "j2scheme" "Wrong index for call"
+			    (j2s->sexp this)))
+		      (with-access::J2SMethodPropertyInit prop (name)
+			 (with-access::J2SString name ((str val))
+			    (let ((o (j2s-as (j2s-scheme obj mode return ctx)
+					obj (j2s-type obj) 'any ctx)))
+			       `(js-method-jsrecord-call-index ,o ,index
+				   ,str
+				   ,@(map (lambda (arg)
+					     (j2s-scheme arg mode return ctx))
+					args)))))))))
 	    ((and ccache (= (context-get ctx :debug 0) 0) ccspecs)
 	     (cond
 		((isa? field J2SString)
@@ -1557,8 +1561,6 @@
 	       ((isa? fun J2SSuper)
 		(with-access::J2SSuper fun (context)
 		   (cond
-;* 		      ((isa? context J2SRecord)                        */
-;* 		       (j2s-scheme-record-call-super this mode return ctx)) */
 		      ((isa? context J2SClass)
 		       (j2s-scheme-class-call-super this mode return ctx))
 		      (else
