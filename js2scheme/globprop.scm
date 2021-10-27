@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Oct  1 07:01:31 2021 (serrano)                */
+;*    Last change :  Tue Oct 26 15:04:52 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global properties optimization (constant propagation).           */
@@ -276,15 +276,11 @@
 		   (set! rhs (J2SRef ndecl))
 		   (set-cdr! c (list ndecl))))
 	       ((propinfo-needcheckp %info)
-		(let ((ndecl (J2SDeclGlobal 'let-opt
-				'(ref init)
-				(gensym val)))
-		      ;; MS CARE UTYPE
-		      ;; (ndeclo (J2SLetOptVUtype 'bool '(ref init assig)
+		(let ((ndecl (J2SDecl/scope 'tls 'let-opt '(ref init) (gensym val)))
 		      (ndeclo (J2SLetOptVtype 'bool '(ref init assig)
 				 (gensym val) (J2SBool #f))))
 		   (with-access::J2SDeclInit ndeclo (scope)
-		      (set! scope 'global))
+		      (set! scope 'tls))
 		   (set-cdr! c (list ndecl ndeclo))
 		   (J2SSequence
 		      (J2SInit (J2SRef ndecl) rhs)
@@ -300,14 +296,13 @@
 		(let ((ndecl (J2SLetOptRo '(ref init)
 				(gensym val)
 				rhs)))
-		   (with-access::J2SDecl ndecl (scope)
-		      (set! scope 'global))
+		   (with-access::J2SDecl ndecl (scope id)
+		      (set! scope 'tls))
 		   (set-cdr! c (list ndecl))
 		   (J2SSequence
 		      (J2SAssig lhs (J2SRef ndecl)))))
 	       (else
-		(let ((ndecl (J2SDeclGlobal 'let '(ref init)
-				(gensym val))))
+		(let ((ndecl (J2SDecl/scope 'tls 'let '(ref init) (gensym val))))
 		   (set-cdr! c (list ndecl))
 		   (J2SSequence
 		      (J2SInit (J2SRef ndecl) rhs)
@@ -350,8 +345,7 @@
 		      (set! val (J2SRef ndecl))
 		      init))
 		  (else
-		   (let* ((ndecl (J2SDeclGlobal 'let '(ref init)
-				    (gensym str)))
+		   (let* ((ndecl (J2SDeclGlobal 'let '(ref init) (gensym str)))
 			  (init (J2SInit (J2SRef ndecl) val)))
 		      (set-cdr! c (list ndecl))
 		      (set! val (J2SRef ndecl))

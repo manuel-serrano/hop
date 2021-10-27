@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Mon Oct 25 11:05:42 2021 (serrano)                */
+;*    Last change :  Tue Oct 26 18:06:58 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -330,59 +330,61 @@
 	  (let ((k (KontStmt kid this #f "J2SFun"))
 		(ydstar (has-yield*? body)))
 	     (set! body (blockify body (cps body k r '() '() this conf)))
-	     (if (config-get conf :optim-cps-closure-alloc #f)
-		 (let ((temps (delete-duplicates! (collect-temps* this) eq?)))
-		    ;; collect all locals used in the generator
-		    (for-each (lambda (d)
-				 (with-access::J2SDecl d (%info)
-				    (set! %info (instantiate::KDeclInfo))))
-		       temps)
-		    (tprint name " used: "
-		       (map (lambda (d)
-			       (with-access::J2SDecl d (%info id)
-				  id))
-			  temps))
-		    ;; mark all locals appearing free in a closure
-		    (mark-free body '())
-		    ;; mark the generator arguments
-		    (for-each (lambda (d)
-				 (when (isa? d J2SDecl)
-				    (mark-def! d)))
-		       (cons* decl thisp argumentsp params))
-		    ;; retain free variables
-		    (let ((frees (filter is-free? temps)))
-		       (tprint name " free: "
-			  (map (lambda (d)
-				  (with-access::J2SDecl d (%info id)
-				     id))
-			     frees))
-		       (let* ((temps (filter (lambda (d)
-						(or (is-def? d)
-						    (if (decl-usage-has? d '(assig))
-							(begin
-							   (mark-ignored! d)
-							   #f)
-							#t)))
-					frees))
-			      (sz (length temps)))
-			  (tprint name " temps: "
+	     (let ((temps (delete-duplicates! (collect-temps* this) eq?)))
+		;; collect all locals used in the generator
+		(for-each (lambda (d)
+			     (with-access::J2SDecl d (%info)
+				(set! %info (instantiate::KDeclInfo))))
+		   temps)
+		(tprint name " used: "
+		   (map (lambda (d)
+			   (with-access::J2SDecl d (%info id)
+			      id))
+		      temps))
+		;; cps has introduced new closures, the variable "escape"
+		;; property must be recomputed.
+		(mark-free body '())
+		(if (config-get conf :optim-cps-closure-alloc #f)
+		    (begin
+		       ;; mark the generator arguments
+		       (for-each (lambda (d)
+				    (when (isa? d J2SDecl)
+				       (mark-def! d)))
+			  (cons* decl thisp argumentsp params))
+		       ;; retain free variables
+		       (let ((frees (filter is-free? temps)))
+			  (tprint name " free: "
 			     (map (lambda (d)
 				     (with-access::J2SDecl d (%info id)
 					id))
-				temps))
-			  ;; color the continuation variables
-			  (set! constrsize (kont-color temps ydstar))
-			  ;; allocate temporaries
-			  (kont-alloc-temp! this 
-			     (filter (lambda (d)
-					(with-access::J2SDecl d (%info)
-					   (with-access::KDeclInfo %info (def)
-					      (not def))))
-				temps))
-			  this)))
-		 (begin
-		    (set! constrsize 0)
-		    this)))
+				frees))
+			  (let* ((temps (filter (lambda (d)
+						   (or (is-def? d)
+						       (if (decl-usage-has? d '(assig))
+							   (begin
+							      (mark-ignored! d)
+							      #f)
+							   #t)))
+					   frees))
+				 (sz (length temps)))
+			     (tprint name " temps: "
+				(map (lambda (d)
+					(with-access::J2SDecl d (%info id)
+					   id))
+				   temps))
+			     ;; color the continuation variables
+			     (set! constrsize (kont-color temps ydstar))
+			     ;; allocate temporaries
+			     (kont-alloc-temp! this 
+				(filter (lambda (d)
+					   (with-access::J2SDecl d (%info)
+					      (with-access::KDeclInfo %info (def)
+						 (not def))))
+				   temps))
+			     this)))
+		    (begin
+		       (set! constrsize 0)
+		       this))))
 	  (begin
 	     (cps-fun! body r conf)
 	     this))))
@@ -480,9 +482,17 @@
 	    (r (J2SIf (J2SBinary 'eq? (J2SRef exn) (J2SBool #t))
 		  (J2SThrow (J2SRef arg))
 		  (stmtify (kcall k (J2SRef arg))))))))
+
+   (define (make-yield*-kont k loc)
+      (let ((arg (J2SParam '(call ref) (gensym '%arg) :vtype 'any))
+	    (exn (J2SParam '(ref) (gensym '%exn) :vtype 'bool)))
+	 (J2SKont arg exn
+	    (stmtify (kcall k (J2SRef arg))))))
    
    (with-access::J2SYield this (loc expr generator)
-      (let ((kont (make-yield-kont k loc)))
+      (let ((kont (if generator
+		      (make-yield*-kont k loc)
+		      (make-yield-kont k loc))))
 	 (cps expr
 	    (KontExpr (lambda (kexpr::J2SExpr)
 			 (J2SReturnYield kexpr kont generator))
@@ -1670,7 +1680,7 @@
 	       free)))))
    
 ;*---------------------------------------------------------------------*/
-;*    is-def? ...                                                     */
+;*    is-def? ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (is-def? d)
    (when (isa? d J2SDecl)
@@ -1690,10 +1700,13 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark-free this::J2SRef env)
    (with-access::J2SRef this (decl loc)
-      (with-access::J2SDecl decl (scope %info id)
+      (with-access::J2SDecl decl (scope %info id escape)
 	 (unless (is-global-or-fun? decl)
+	    (unless (isa? %info KDeclInfo)
+	       (tprint "PAS KDECL..." id " " loc))
 	    (with-access::KDeclInfo %info (free)
 	       (unless (or free (memq decl env))
+		  (set! escape #t)
 		  (set! free #t)))))))
 
 ;*---------------------------------------------------------------------*/

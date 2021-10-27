@@ -4201,8 +4201,11 @@
       (let ((final length))
 	 (cond
 	    ((js-object-mode-arrayinline? this)
-	     ($vector-fill! vec 0 (uint32->fixnum length) value)
-	     (set! ilen length))
+	     (if (=u32 ilen length)
+		 ($vector-fill! vec 0 (uint32->fixnum length) value)
+		 (begin
+		    (set! vec (make-vector (uint32->fixnum length) value))
+		    (set! ilen length))))
 	    (else
 	     (let loop ((i #u32:0))
 		(if (<u32 i final)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Mon Oct 25 08:04:30 2021 (serrano)                */
+;*    Last change :  Wed Oct 27 07:25:10 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -310,5 +310,4 @@
 	  (else
 	   (e `(,proc ,yield) e))))
       (else
-       (error "js-call-with-stack-yield" "bad form" ',x))))
-
+       (error "js-call-with-stack-yield" "bad form" x))))

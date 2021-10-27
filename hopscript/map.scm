@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 25 13:32:40 2019                          */
-;*    Last change :  Tue Oct 26 11:12:52 2021 (serrano)                */
+;*    Last change :  Tue Oct 26 14:51:22 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript MAP object.                  */
@@ -103,7 +103,7 @@
 			:eqtest eqtest))
 	    (vec (if (eq? weak 'keys)
 		     '#()
-		     (make-vector 16 (js-absent))))
+		     (make-vector (DEFAULT-EMPTY-VECTOR-SIZE) (js-absent))))
 	    (cursor -1)))
       
       (define js-map-prototype

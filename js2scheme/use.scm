@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Mon Sep 20 09:20:55 2021 (serrano)                */
+;*    Last change :  Wed Oct 27 07:59:19 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -522,7 +522,7 @@
 		      (with-access::J2SDecl p (%info)
 			 (set! %info this)))
 	    params))
-      (j2s-use body 'ref deval (if generator 'dummy-to-escape-all-tmps this))))
+      (j2s-use body 'ref deval this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-use ::J2SForIn ...                                           */

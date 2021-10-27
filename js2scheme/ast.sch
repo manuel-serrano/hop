@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Mon Oct 25 14:45:24 2021 (serrano)                */
+;*    Last change :  Tue Oct 26 15:06:52 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -455,13 +455,16 @@
        (usage (usage ,_usage))
        (id ,id)))
 
-(define-macro (J2SDeclGlobal binder _usage id)
+(define-macro (J2SDecl/scope scope binder _usage id)
    `(instantiate::J2SDecl
        (loc loc)
        (binder ,binder)
-       (scope 'global)
+       (scope ,scope)
        (usage (usage ,_usage))
        (id ,id)))
+
+(define-macro (J2SDeclGlobal binder _usage id)
+   `(J2SDecl/scope 'global ,binder ,_usage ,id))
 
 (define-macro (J2SParam _usage id . opts)
    `(instantiate::J2SDecl

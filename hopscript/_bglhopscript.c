@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Tue Oct 26 12:40:48 2021 (serrano)                */
+/*    Last change :  Wed Oct 27 07:19:13 2021 (serrano)                */
 /*    Copyright   :  2016-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -36,6 +36,7 @@ extern obj_t BGl_JsMethodz00zz__hopscript_typesz00;
 extern obj_t BGl_JsProcedurez00zz__hopscript_typesz00;
 extern obj_t BGl_JsStringLiteralASCIIz00zz__hopscript_typesz00;
 extern obj_t BGl_JsGeneratorz00zz__hopscript_typesz00;
+extern obj_t BGl_JsYieldz00zz__hopscript_typesz00;
 
 extern obj_t string_append( obj_t, obj_t );
 
@@ -43,6 +44,8 @@ extern obj_t string_append( obj_t, obj_t );
    sizeof( struct BgL_jsobjectz00_bgl )
 #define JSOBJECT_CLASS_INDEX \
    BGL_CLASS_INDEX( BGl_JsObjectz00zz__hopscript_typesz00 )
+#define JSYIELD_CLASS_INDEX \
+   BGL_CLASS_INDEX( BGl_JsYieldz00zz__hopscript_typesz00 )
 
 #define JSPROXY_SIZE \
    sizeof( struct BgL_jsproxyz00_bgl )
@@ -1812,7 +1815,7 @@ bgl_init_jsyield_object(obj_t p) {
    obj_t vector;
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSOBJECT_CLASS_INDEX);
+   BGL_OBJECT_CLASS_NUM_SET(BNANOBJECT(o), JSYIELD_CLASS_INDEX);
 
    // fields init
    o->BgL_elementsz00 = empty_vector;

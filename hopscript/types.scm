@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Oct 25 12:41:26 2021 (serrano)                */
+;*    Last change :  Wed Oct 27 07:21:23 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -1195,11 +1195,10 @@
 ;*    js-object-inline-length ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-inline-length o::JsObject)
-   (unless (or (not (js-object-mode-inline? o))
-	       (or (js-jsobject? o) (isa? o JsRecord)))
-      (tprint "PAS BON " (typeof o)))
+   ;; JsYield is mentionned here for C stack allocation, although this
+   ;; type is actually never used (see _bglhopscript.c)
    [assert (o) (or (not (js-object-mode-inline? o))
-		   (or (js-jsobject? o) (isa? o JsRecord)))]
+		   (or (js-jsobject? o) (isa? o JsRecord) (isa? o JsYield)))]
    (if (js-object-mode-inline? o)
        (vector-length (js-object-inline-elements o))
        0))

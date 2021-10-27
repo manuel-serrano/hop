@@ -226,10 +226,14 @@
    (define (j2s-scheme-let this)
       (with-access::J2SDecl this (loc scope id utype)
 	 (epairify loc
-	    (if (memq scope '(global))
-		`(define ,(j2s-decl-scm-id this ctx) ,(decl-init-val this))
+	    (case scope
+	       ((global)
+		`(define ,(j2s-decl-scm-id this ctx) ,(decl-init-val this)))
+	       ((tls)
+		`(define-tls ,(j2s-decl-scm-id this ctx) ,(decl-init-val this)))
+	       (else
 		(let ((var (j2s-decl-scm-id this ctx)))
-		   `(,var ,(decl-init-val this)))))))
+		   `(,var ,(decl-init-val this))))))))
 
    (cond
       ((j2s-let? this)
@@ -3307,17 +3311,17 @@
 		      (with-access::J2SRef expr (decl)
 			 (eq? decl param))))))))
    
-   (with-access::J2SReturnYield this (loc expr kont generator)
-      (epairify loc
-	 `(,(if generator 'js-generator-yield* 'js-generator-yield)
-	   %gen
-	   %yield
-	   ,(j2s-scheme expr mode return ctx)
-	   ,(isa? kont J2SUndefined)
-	   ,(if (identity-kont? kont)
-		'js-generator-done
-		(j2s-scheme kont mode return ctx))
-	   %this))))
+    (with-access::J2SReturnYield this (loc expr kont generator)
+       (epairify loc
+	  `(,(if generator 'js-generator-yield* 'js-generator-yield)
+	    %gen
+	    %yield
+	    ,(j2s-scheme expr mode return ctx)
+	    ,(isa? kont J2SUndefined)
+	    ,(if (identity-kont? kont)
+		 'js-generator-done
+		 (j2s-scheme kont mode return ctx))
+	    %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SKont ...                                         */
