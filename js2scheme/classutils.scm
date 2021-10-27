@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 19 16:28:44 2021                          */
-;*    Last change :  Fri Oct  1 18:23:33 2021 (serrano)                */
+;*    Last change :  Wed Oct 27 19:04:32 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Class related utility functions                                  */
@@ -38,7 +38,8 @@
 	   (j2s-class-static-methods::pair-nil ::J2SClass)
 	   (j2s-class-methods::pair-nil ::J2SClass #!key (super #t))
 
-	   (j2s-class-find-element ::J2SClass ::bstring #!key (super #t))
+	   (j2s-class-find-super-element ::J2SClass ::bstring)
+	   (j2s-class-find-element ::J2SClass ::bstring)
 	   (j2s-class-element-private? ::J2SClassElement)
 	   
 	   (j2s-class-get-property ::J2SClass ::bstring)
@@ -248,9 +249,11 @@
 		els)))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-class-find-element ...                                       */
+;*    j2s-class-find-super-element ...                                 */
+;*    -------------------------------------------------------------    */
+;*    Find an element starting from the root super class.              */
 ;*---------------------------------------------------------------------*/
-(define (j2s-class-find-element clazz field #!key (super #t))
+(define (j2s-class-find-super-element clazz field)
    
    (define (class-get-field-in-class clazz)
       (with-access::J2SClass clazz (elements)
@@ -267,6 +270,29 @@
 	 (if (isa? super J2SClass)
 	     (or (loop super) (class-get-field-in-class clazz))
 	     (class-get-field-in-class clazz)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-class-find-element ...                                       */
+;*    -------------------------------------------------------------    */
+;*    Find an element starting from the class elements.                */
+;*---------------------------------------------------------------------*/
+(define (j2s-class-find-element clazz field)
+   
+   (define (class-get-field-in-class clazz)
+      (with-access::J2SClass clazz (elements)
+	 (find (lambda (el)
+		  (with-access::J2SClassElement el (prop)
+		     (with-access::J2SPropertyInit prop (name)
+			(when (isa? name J2SString)
+			   (with-access::J2SString name (val)
+			      (string=? val field))))))
+	    elements)))
+   
+   (let loop ((clazz clazz))
+      (or (class-get-field-in-class clazz)
+	  (let ((super (j2s-class-super-val clazz)))
+	     (when (isa? super J2SClass)
+		(loop super))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-class-element-private? ...                                   */

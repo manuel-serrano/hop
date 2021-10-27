@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug  6 14:30:50 2018                          */
-;*    Last change :  Fri Oct  1 07:03:30 2021 (serrano)                */
+;*    Last change :  Wed Oct 27 19:04:03 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Bind record static methods at top-level and replace static       */
@@ -152,7 +152,7 @@
 	       (with-access::J2SDeclClass decl ((clazz val) %info)
 		  (when (isa? clazz J2SRecord)
 		     (with-access::J2SString field (val)
-			(let ((el (j2s-class-find-element clazz val :super #f)))
+			(let ((el (j2s-class-find-super-element clazz val)))
 			   (when (isa? el J2SClassElement)
 			      (with-access::J2SClassElement el (prop static %info)
 				 (when (and static

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sun Oct 17 11:02:11 2021 (serrano)                */
+;*    Last change :  Wed Oct 27 19:05:30 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -1575,7 +1575,7 @@
 	       (if (not (isa? clazz J2SClass))
 		   (err val loc)
 		   (let* ((pname (class-private-field-name val clazz))
-			  (el (j2s-class-find-element clazz pname :super #f)))
+			  (el (j2s-class-find-super-element clazz pname)))
 		      (if el
 			  (begin
 			     (set! val pname)

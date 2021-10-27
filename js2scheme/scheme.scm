@@ -2689,7 +2689,7 @@
 		    (isa? (car fields) J2SString)
 		    (null? (cdr fields)))
 	    (with-access::J2SString (car fields) (val)
-	       (let ((el (j2s-class-find-element (j2s-vtype obj) val)))
+	       (let ((el (j2s-class-find-super-element (j2s-vtype obj) val)))
 		  (with-access::J2SRecord owner (cmap name)
 		     (when el
 			(with-access::J2SClassElement el (prop static)
@@ -2714,7 +2714,7 @@
 		    (isa? (car fields) J2SString)
 		    (null? (cdr fields)))
 	    (with-access::J2SString (car fields) (val)
-	       (let ((el (j2s-class-find-element (j2s-vtype obj) val)))
+	       (let ((el (j2s-class-find-super-element (j2s-vtype obj) val)))
 		  (with-access::J2SRecord owner (cmap name)
 		     (when el
 			(with-access::J2SRef obj (%info)
