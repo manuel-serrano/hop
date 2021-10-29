@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Sun Aug  8 08:39:41 2021 (serrano)                */
+;*    Last change :  Fri Oct 29 07:50:51 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -44,6 +44,7 @@
 	   (*js::obj ::obj ::obj ::JsGlobalObject)
 	   (**js::obj ::obj ::obj ::JsGlobalObject)
 	   (/js::obj ::obj ::obj ::JsGlobalObject)
+	   (/jsfl::double ::obj ::obj ::JsGlobalObject)
 	   (negjs ::obj)
 
 	   (inline +l!fl::real ::real ::double)
@@ -272,6 +273,23 @@
       ((bignum? x)
        (if (bignum? y)
 	   (/bx x y)
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	      y)))
+      (else
+       (/fl (toflonum x %this) (toflonum y %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    /jsfl ...                                                        */
+;*    -------------------------------------------------------------    */
+;*    whatever types, divide two numbers and return a double.          */ 
+;*---------------------------------------------------------------------*/
+(define (/jsfl::double x::obj y::obj %this)
+   (cond
+      ((and (flonum? x) (flonum? y))
+       (/fl x y))
+      ((bignum? x)
+       (if (bignum? y)
+	   (bignum->flonum (/bx x y))
 	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
 	      y)))
       (else

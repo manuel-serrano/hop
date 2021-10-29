@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec  6 16:35:12 2018                          */
-;*    Last change :  Fri Oct  1 07:04:09 2021 (serrano)                */
+;*    Last change :  Fri Oct 29 09:43:19 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions to deal with spread syntax.                    */
@@ -145,23 +145,44 @@
 ;*    j2s-iterable->list ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-iterable->list expr mode return conf)
+
+   (define (alloc-lazy? expr)
+      (when (isa? expr J2SRef)
+	 (with-access::J2SRef expr (decl)
+	    (cond
+	       ((isa? decl J2SDeclRest)
+		(with-access::J2SDeclRest decl (alloc-policy)
+		   (eq? alloc-policy 'lazy)))
+	       ((isa? decl J2SDeclArguments)
+		(with-access::J2SDeclArguments decl (alloc-policy)
+		   (eq? alloc-policy 'lazy)))
+	       (else #f)))))
+	       
    (with-access::J2SExpr expr (type)
       (case type
 	 ((array)
-	  `(jsarray->list
-	      ,(j2s-scheme expr mode return conf)
-	      %this))
+	  (if (alloc-lazy? expr)
+	      `(vector->list
+		  ,(j2s-scheme expr mode return conf))
+	      `(jsarray->list
+		  ,(j2s-scheme expr mode return conf)
+		  %this)))
 	 ((string)
 	  `(jsstring->list
 	      ,(j2s-scheme expr mode return conf)
 	      %this))
 	 ((arguments)
-	  (if (j2s-ref-arguments-lazy? expr)
+	  (cond
+	     ((alloc-lazy? expr)
 	      `(vector->list
-		  ,(j2s-ref-arguments-argid expr))
+		  ,(j2s-ref-arguments-argid expr)))
+	     ((j2s-ref-arguments-lazy? expr)
+	      `(vector->list
+		  ,(j2s-ref-arguments-argid expr)))
+	     (else
 	      `(js-iterable->list
 		  ,(j2s-scheme expr mode return conf)
-		  %this)))
+		  %this))))
 	 (else
 	  `(js-iterable->list
 	      ,(j2s-scheme expr mode return conf)

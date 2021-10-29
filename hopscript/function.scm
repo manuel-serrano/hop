@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Oct 26 08:20:54 2021 (serrano)                */
+;*    Last change :  Fri Oct 29 09:41:00 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -1345,10 +1345,6 @@
 		'(pmap cmap vtable poly)
 		'(imap vtable)
 		thisarg argarray)))
-;* 	     (js-call2 %this                                           */
-;* 		(js-get-jsobject-name/cache this (& "apply") #f %this  */
-;* 		   (or cache (js-pcache-ref js-function-pcache 3)))    */
-;* 		this thisarg argarray)))                               */
 	 (else
 	  (loop (js-toobject %this this))))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Oct  1 16:47:16 2021 (serrano)                */
+;*    Last change :  Fri Oct 29 08:10:25 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1897,7 +1897,12 @@
    (define (positive? n)
       (with-access::J2SExpr n (range)
 	 (and (interval? range) (>= (interval-min range) #l0))))
-   
+
+   (define (/js x y)
+      (if (eq? type 'real)
+	  `(/jsfl ,x ,y %this)
+	  `(/js ,x ,y %this)))
+	  
    (define (div-power2 k)
       (let ((n (gensym 'n)))
 	 (case (j2s-type lhs)
@@ -1926,7 +1931,7 @@
 		     ,(if (positive? lhs)
 			  `(bit-rsh ,n ,k)
 			  `(/pow2fx ,n ,k))
-		     (/js ,n ,(bit-lsh 1 k) %this)))))))
+		     ,(/js n (bit-lsh 1 k))))))))
 
    (define (div-power2fl k)
       (let ((n (gensym 'n)))
@@ -1956,7 +1961,7 @@
 		     ,(if (positive? lhs)
 			  `(fixnum->flonum (bit-rsh ,n ,k))
 			  `(fixnum->flonum (/pow2fx ,n ,k)))
-		     (/js ,n ,(bit-lsh 1 k) %this)))))))
+		     ,(/js n (bit-lsh 1 k))))))))
 
    (define (divs32 left right tl tr)
       (cond
@@ -2031,11 +2036,11 @@
 	 ((or (eq? tl 'real) (eq? tr 'real))
 	  `(/fl ,(todouble left tl ctx) ,(todouble right tr ctx)))
 	 ((eq? tr 'integer)
-	  `(/js ,(todouble left tl ctx) ,(asreal right tr)))
+	  (/js (todouble left tl ctx) (asreal right tr)))
 	 ((eq? type 'real)
 	  (if-flonums? left tl right tr
 	     `(/fl ,left ,right)
-	     `(/js ,left ,right %this)))
+	     (/js left right)))
 	 (else
 	  (if-fixnums? left tl right tr
 	     `(if (and (not (=fx ,right 0))
@@ -2044,7 +2049,7 @@
 		  (/fl ,(asreal left 'bint) ,(asreal right 'bint)))
 	     (if-flonums? left tl right tr
 		`(/fl ,left ,right)
-		`(/js ,left ,right %this))))))
+		(/js left right))))))
 
    (define (divjs left right tl tr)
       (cond
@@ -2077,13 +2082,13 @@
 	 ((eq? type 'real)
 	  (if-flonums? left tl right tr
 	     `(/fl ,left ,right)
-	     `(/js ,left ,right %this)))
+	     (/js left right)))
 	 (else
 	  (if-fixnums? left tl right tr
 	     `(/integer ,(asreal left 'bint) ,(asreal right 'bint))
 	     (if-flonums? left tl right tr
 		`(/fl ,left ,right)
-		`(/js ,left ,right %this))))))
+		(/js left right))))))
    
    (let ((k (power2 rhs)))
       (if (and k (not (memq type '(int32 uint32))))
@@ -3332,8 +3337,12 @@
 	  `(js-number-touint32
 	      ,(binop-flip (symbol-append op '/overflow) left right flip)))
 	 ((real)
-	  `(js-toflonum
-	      ,(binop-flip (symbol-append op '/overflow) left right flip)))
+	  (case op
+	     ((* + -)
+	      (binop-flip (symbol-append op '/overflowfl) left right flip))
+	     (else
+	      `(js-toflonum
+		  ,(binop-flip (symbol-append op '/overflow) left right flip)))))
 	 (else
 	  (if (memq op '(++ --))
 	      (binop-any-any op type left right flip)

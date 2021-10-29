@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Wed Aug 11 18:17:33 2021 (serrano)                */
+;*    Last change :  Fri Oct 29 08:23:31 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
@@ -64,6 +64,7 @@
 	  (inline +s32/overflow::obj ::int32 ::int32)
 	  (inline +u32/overflow::obj ::uint32 ::uint32)
 	  (+/overflow::obj ::obj ::obj)
+	  (+/overflowfl::double ::obj ::obj)
 	  (+/overflow!::obj ::obj ::obj)
 	  
 	  (inline --fx/overflow::obj ::obj ::obj)
@@ -72,12 +73,14 @@
 	  (inline -s32/overflow::obj ::int32 ::int32)
 	  (inline -u32/overflow::obj ::uint32 ::uint32)
 	  (-/overflow::obj ::obj ::obj)
+	  (-/overflowfl::double ::obj ::obj)
 	  (-/overflow!::obj ::obj ::obj)
 	  
 	  (inline *fx/overflow::obj ::obj ::obj)
 	  (inline *s32/overflow::obj ::int32 ::int32)
 	  (inline *u32/overflow::obj ::uint32 ::uint32)
 	  (*/overflow::obj ::obj ::obj)
+	  (*/overflowfl::obj ::obj ::obj)
 	  (*/overflow!::obj ::obj ::obj)))))
 
 ;*---------------------------------------------------------------------*/
@@ -392,7 +395,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    todouble ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (todouble::double x)
+(define-inline (todouble::double x)
    (cond
       ((fixnum? x) (fixnum->flonum x))
       ((int32? x) (int32->flonum x))
@@ -506,6 +509,12 @@
 	  (+fl y (todouble x)))
 	 (else
 	  (+fl (todouble x) (todouble y))))))
+
+;*---------------------------------------------------------------------*/
+;*    +/overflowfl ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (+/overflowfl::double x::obj y::obj)
+   (+fl (todouble x) (todouble y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    +/overflow! ...                                                  */
@@ -630,6 +639,12 @@
 	  (-fl (todouble x) (todouble y)))))
 
 ;*---------------------------------------------------------------------*/
+;*    -/overflowfl ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (-/overflowfl::double x::obj y::obj)
+   (-fl (todouble x) (todouble y)))
+
+;*---------------------------------------------------------------------*/
 ;*    -/overflow! ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (-/overflow! x y)
@@ -748,6 +763,12 @@
 		 (*fx/overflow ll rl)
 		 (*fl (todouble x) (todouble y))))
 	  (*fl (todouble x) (todouble y)))))
+
+;*---------------------------------------------------------------------*/
+;*    */overflowfl ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (*/overflowfl x y)
+   (*fl (todouble x) (todouble y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    */overflow! ...                                                  */

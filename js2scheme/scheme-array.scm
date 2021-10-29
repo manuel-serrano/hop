@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Oct 15 14:00:53 2021 (serrano)                */
+;*    Last change :  Fri Oct 29 07:06:11 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -54,7 +54,9 @@
 	   (j2s-array-concat1 obj args mode return conf)
 	   (j2s-array-maybe-concat1 obj args mode return conf)
 	   (j2s-array-sort obj args mode return conf)
-	   (j2s-array-maybe-sort obj args mode return conf)))
+	   (j2s-array-maybe-sort obj args mode return conf)
+	   (j2s-array-reduce obj args mode return conf)
+	   (j2s-array-maybe-reduce obj args mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-builtin-method ...                                     */
@@ -898,7 +900,7 @@
 	     obj (j2s-scheme fun mode return ctx) %this cache))))
 
    (match-case args
-      ((?fun ?%this ?cache) (sort  obj fun %this cache))
+      ((?fun ?%this ?cache) (sort obj fun %this cache))
       (else #f)))
 	   
 ;*---------------------------------------------------------------------*/
@@ -913,5 +915,57 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-maybe-sort obj args mode return ctx)
    (array-sort 'js-array-maybe-sort
+      obj args mode return ctx))
+
+;*---------------------------------------------------------------------*/
+;*    array-reduce ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (array-reduce reducefn obj args mode return ctx)
+   
+   (define (j2s-reduce js-reduce obj proc init %this cache)
+      `(,js-reduce ,(j2s-scheme obj mode return ctx) ,proc ,init ,%this ,cache))
+   
+   (define (reduce obj fun init %this cache)
+      (cond
+	 ((and (isa? fun J2SFun) (not (isa? fun J2SSvc)))
+	  (with-access::J2SFun fun (generator vararg)
+	     (unless (or generator vararg)
+		(let ((proc (jsfun->lambda fun mode return ctx #f))
+		      (reducefn (symbol-append reducefn '-procedure)))
+		   (match-case proc
+		      ((?lambda (?this ?x ?y) ?body)
+		       (j2s-reduce reducefn obj
+			  `(lambda (,this ,x ,y) ,body)
+			  (j2s-scheme init mode return ctx)
+			  %this cache))
+		      ((labels ((?id (?this ?x ?y) ?body)) ?id)
+		       (j2s-reduce reducefn obj
+			  `(labels ((,id (,this ,x ,y) ,body)) ,id)
+			  (j2s-scheme init mode return ctx)
+			  %this cache))
+		      (else
+		       #f))))))
+	 (else
+	  (j2s-reduce reducefn
+	     obj
+	     (j2s-scheme fun mode return ctx)
+	     (j2s-scheme init mode return ctx) %this cache))))
+
+   (match-case args
+      ((?fun ?init ?%this ?cache) (reduce obj fun init %this cache))
+      (else #f)))
+	   
+;*---------------------------------------------------------------------*/
+;*    j2s-array-reduce ...                                             */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-reduce obj args mode return ctx)
+   (array-reduce 'js-array-reduce
+      obj args mode return ctx))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-maybe-reduce ...                                       */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-maybe-reduce obj args mode return ctx)
+   (array-reduce 'js-array-maybe-reduce
       obj args mode return ctx))
 

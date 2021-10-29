@@ -181,11 +181,16 @@
 	   (js-array-prototype-maybe-slice1 this start ::JsGlobalObject)
 	   (js-array-maybe-slice2 ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-shift0 ::obj ::JsGlobalObject ::obj)
+	   (js-array-reduce ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-reduce ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-reduce-procedure this::JsArray proc::procedure ::obj ::JsGlobalObject cache)
+	   (js-array-maybe-reduce-procedure this::obj proc::procedure ::obj ::JsGlobalObject cache)
 	   (js-array-sort ::JsArray ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-sort ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-sort-procedure this::JsArray proc::procedure ::JsGlobalObject cache)
 	   (js-array-maybe-sort-procedure this::obj proc::procedure ::JsGlobalObject cache)
 	   (js-array-maybe-some ::obj ::obj ::obj ::JsGlobalObject ::obj)
+
 	   (js-iterator-to-array ::obj ::long ::JsGlobalObject)
 	   (js-call-with-stack-vector ::vector ::procedure)
 	   
@@ -206,7 +211,9 @@
 	   (js-array-filter-map-procedure (args-noescape proc))
 	   (js-array-maybe-filter-map-procedure (args-noescape proc))
 	   (js-array-sort-procedure (args-noescape proc))
-	   (js-array-maybe-sort-procedure (args-noescape proc))))
+	   (js-array-maybe-sort-procedure (args-noescape proc))
+	   (js-array-reduce-procedure (args-noescape proc))
+	   (js-array-maybe-reduce-procedure (args-noescape proc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -2032,35 +2039,10 @@
    ;; reduce
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.21
    (define (array-prototype-reduce this::obj proc . init)
-      
-      (define (reduce/accumulator o len::uint32 i::uint32 accumulator)
-	 (let loop ((i i)
-		    (acc accumulator))
-	    (if (<u32 i len)
-		(let ((pv (js-get-property-value o o i %this)))
-		   (if (js-absent? pv)
-		       (loop (+u32 i #u32:1) acc)
-		       (let ((v pv))
-			  (loop (+u32 i #u32:1)
-			     (js-call2-4 %this proc (js-undefined) acc v
-				(js-uint32-tointeger i) o)))))
-		acc)))
-      
-      (let* ((o (js-toobject %this this))
-	     (len::uint32 (js-get-lengthu32 o %this)))
-	 (if (not (js-procedure? proc))
-	     (js-raise-type-error %this "not a procedure ~s" proc)
-	     ;; find the accumulator init value
-	     (if (null? init)
-		 (let loop ((i #u32:0))
-		    (if (<u32 i len)
-			(let ((pv (js-get-property-value o o i %this)))
-			   (if (js-absent? pv)
-			       (loop (+u32 i #u32:1))
-			       (reduce/accumulator o len (+u32 i #u32:1) pv)))
-			(js-raise-type-error %this
-			   "reduce: cannot find accumulator ~s" this)))
-		 (reduce/accumulator o len #u32:0 (car init))))))
+      (let ((o (js-toobject %this this)))
+	 (if (null? init)
+	     (js-array-prototype-reduce-sans o proc %this)
+	     (js-array-prototype-reduce o proc (car init) %this))))
    
    (js-bind! %this js-array-prototype (& "reduce")
       :value (js-make-function %this array-prototype-reduce
@@ -6063,6 +6045,183 @@
 		(js-get-name/cache this (& "sort") #f %this
 		   (or cache (js-pcache-ref js-array-pcache 18)))
 		this jsproc)))))
+
+;*---------------------------------------------------------------------*/
+;*    object-reduce/accumulator-procedure2 ...                         */
+;*---------------------------------------------------------------------*/
+(define (object-reduce/accumulator-procedure2 o proc len::uint32 i::uint32 accumulator %this)
+   (let loop ((i i)
+	      (acc accumulator))
+      (if (<u32 i len)
+	  (let ((pv (js-get-property-value o o i %this)))
+	     (if (js-absent? pv)
+		 (loop (+u32 i #u32:1) acc)
+		 (let ((v pv))
+		    (loop (+u32 i #u32:1) (proc (js-undefined) acc v)))))
+	  acc)))
+
+;*---------------------------------------------------------------------*/
+;*    vector-reduce/accumulator-procedure2 ...                         */
+;*---------------------------------------------------------------------*/
+(define (vector-reduce/accumulator-procedure2 o proc len::uint32 i::uint32 accumulator %this)
+   (with-access::JsArray o (vec)
+      (let loop ((i i)
+		 (acc accumulator))
+	 (if (<u32 i len)
+	     (let ((v (vector-ref vec (uint32->fixnum i))))
+		(loop (+u32 i #u32:1) (proc (js-undefined) acc v)))
+	     acc))))
+
+;*---------------------------------------------------------------------*/
+;*    object-reduce/accumulator ...                                    */
+;*---------------------------------------------------------------------*/
+(define (object-reduce/accumulator o proc len::uint32 i::uint32 accumulator %this)
+   (with-access::JsProcedure proc (arity procedure)
+      (if (=fx arity 3)
+	  (object-reduce/accumulator-procedure2
+	     o procedure len i accumulator %this)
+	  (let loop ((i i)
+		     (acc accumulator))
+	     (if (<u32 i len)
+		 (let ((pv (js-get-property-value o o i %this)))
+		    (if (js-absent? pv)
+			(loop (+u32 i #u32:1) acc)
+			(let ((v pv))
+			   (loop (+u32 i #u32:1)
+			      (js-call2-4 %this proc (js-undefined) acc v
+				 (js-uint32-tointeger i) o)))))
+		 acc)))))
+
+;*---------------------------------------------------------------------*/
+;*    vector-reduce/accumulator ...                                    */
+;*---------------------------------------------------------------------*/
+(define (vector-reduce/accumulator o proc len::uint32 i::uint32 accumulator %this)
+   (with-access::JsProcedure proc (arity procedure)
+      (if (=fx arity 3)
+	  (vector-reduce/accumulator-procedure2
+	     o procedure len i accumulator %this)
+	  (with-access::JsArray o (vec)
+	     (let loop ((i i)
+			(acc accumulator))
+		(if (<u32 i len)
+		    (let ((v (vector-ref vec (uint32->fixnum i))))
+		       (loop (+u32 i #u32:1)
+			  (js-call2-4 %this proc (js-undefined) acc v
+			     (js-uint32-tointeger i) o)))
+		    acc))))))
+
+;*---------------------------------------------------------------------*/
+;*    reduce/accumulator ...                                           */
+;*---------------------------------------------------------------------*/
+(define (reduce/accumulator o proc len::uint32 i::uint32 accumulator %this)
+   (if (and (js-array? o) (js-object-mode-arrayinline? o))
+       (vector-reduce/accumulator o proc len i accumulator %this)
+       (object-reduce/accumulator o proc len i accumulator %this)))
+       
+;*---------------------------------------------------------------------*/
+;*    reduce/accumulator-procedure2 ...                                */
+;*---------------------------------------------------------------------*/
+(define (reduce/accumulator-procedure2 o proc len::uint32 i::uint32 accumulator %this)
+   (if (and (js-array? o) (js-object-mode-arrayinline? o))
+       (vector-reduce/accumulator-procedure2 o proc len i accumulator %this)
+       (object-reduce/accumulator-procedure2 o proc len i accumulator %this)))
+       
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-reduce-sans ...                               */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-reduce-sans this proc %this)
+   (let ((len::uint32 (js-get-lengthu32 this %this)))
+      (if (not (js-procedure? proc))
+	  (js-raise-type-error %this "not a procedure ~s" proc)
+	  ;; find the accumulator init value
+	  (let loop ((i #u32:0))
+	     (if (<u32 i len)
+		 (let ((pv (js-get-property-value this this i %this)))
+		    (if (js-absent? pv)
+			(loop (+u32 i #u32:1))
+			(reduce/accumulator this proc len (+u32 i #u32:1) pv %this)))
+		 (js-raise-type-error %this
+		    "reduce: cannot find accumulator ~s" this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-reduce ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-reduce this proc init %this)
+   (let ((len::uint32 (js-get-lengthu32 this %this)))
+      (if (not (js-procedure? proc))
+	  (js-raise-type-error %this "not a procedure ~s" proc)
+	  (reduce/accumulator this proc len #u32:0 init %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-reduce-procedure2 ...                         */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-reduce-procedure2 this::JsArray proc init %this)
+   (let ((len::uint32 (js-array-length this)))
+      (reduce/accumulator-procedure2 this proc len #u32:0 init %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-reduce ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-array-reduce this::JsArray fn init %this cache)
+   (if (js-object-mode-plain? this)
+       (js-array-prototype-reduce this fn init %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call2 %this
+	     (js-get-jsobject-name/cache this (& "reduce") #f %this
+		(or cache (js-pcache-ref js-array-pcache 18)))
+	     this fn init))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-reduce ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-reduce this::obj fn init %this cache)
+   (if (js-array? this)
+       (js-array-prototype-reduce this fn init %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call2 %this
+	     (js-get-name/cache this (& "reduce") #f %this
+		(or cache (js-pcache-ref js-array-pcache 18)))
+	     this fn init))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-reduce-procedure ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-array-reduce-procedure this::JsArray fn init %this cache)
+   (if (and (js-array? this)
+	    (js-object-mode-plain? this)
+	    (=fx (procedure-arity fn) 3))
+       (js-array-prototype-reduce-procedure2 this fn init %this)
+       (let* ((fn ($dup-procedure fn))
+	      (jsproc (js-make-function %this
+			 (lambda (_this x y i o) (fn _this x y i o))
+			 (js-function-arity 4 0)
+			 (js-function-info :name "fn" :len 4)
+			 :constrsize 0
+			 :alloc js-object-alloc)))
+	  (with-access::JsGlobalObject %this (js-array-pcache)
+	     (js-call2 %this
+		(js-get-jsobject-name/cache this (& "reduce") #f %this
+		   (or cache (js-pcache-ref js-array-pcache 18)))
+		this jsproc init)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-reduce-procedure ...                              */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-reduce-procedure this::obj fn init %this cache)
+   (if (js-array? this)
+       (js-array-reduce-procedure this fn init %this cache)
+       (let* ((fn ($dup-procedure fn))
+	      (jsproc (js-make-function %this
+			 (lambda (_this x y i o) (fn _this x y i o))
+			 (js-function-arity 4 0)
+			 (js-function-info :name "fn" :len 4)
+			 :constrsize 0
+			 :alloc js-object-alloc)))
+	  (with-access::JsGlobalObject %this (js-array-pcache)
+	     (js-call2 %this
+		(js-get-name/cache this (& "reduce") #f %this
+		   (or cache (js-pcache-ref js-array-pcache 18)))
+		this jsproc init)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    vector-indexof ...                                               */

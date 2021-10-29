@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Oct 14 14:28:44 2021 (serrano)                */
+;*    Last change :  Fri Oct 29 10:43:09 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -751,8 +751,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SString stack)
    (let ((nstack (check-stack this stack)))
-      (with-access::J2SLiteralValue this (val)
-	 `(,(string->symbol (typeof this)) ,(format "~a" val)))))
+      (with-access::J2SString this (val private)
+	 `(,(string->symbol (typeof this))
+	   ,@(if private `(:private #t) '())
+	     ,(format "~a" val)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SNativeString ...                                  */

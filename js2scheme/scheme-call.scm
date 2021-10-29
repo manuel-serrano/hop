@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Oct 27 18:56:45 2021 (serrano)                */
+;*    Last change :  Fri Oct 29 07:03:29 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -206,6 +206,8 @@
 	("reverse" js-array-reverse array () %this #f ,j2s-array-plain?)
 	("reverse" js-array-maybe-reverse any () %this #t)
 	("some" js-array-maybe-some any (any (any #unspecified)) %this #t ,j2s-array-plain?)
+	("reduce" ,j2s-array-reduce array (any any) %this #t ,j2s-array-plain?)
+	("reduce" ,j2s-array-maybe-reduce any (any any) %this #t ,j2s-array-plain?)
 	;; functions
 	("apply",j2s-apply any (any any) %this #t)
 	("call" ,j2s-call0 any (any) %this #t)
@@ -1059,7 +1061,7 @@
 			       ,j2s-unresolved-call-workspace
 			       ,(j2s-as (j2s-scheme obj mode return ctx)
 				   obj (j2s-type obj) 'any ctx)
-			       ,(& val (context-program ctx))
+			       ,(& field (context-program ctx))
 			       ,(js-pcache ccache)
 			       ,(js-pcache ocache)
 			       ,(loc->point loc)
@@ -1547,6 +1549,10 @@
 			   (call-scheme-this this fun thisargs args))))
 		   ((procedure-this-arity)
 		    (call-scheme-this-arity this fun thisargs args))
+		   ((spread-procedure-this)
+		    (j2s-scheme-call-spread-procedure-this this mode return ctx))
+		   ((spread-procedure-this-arity)
+		    (j2s-scheme-call-spread-procedure-this-arity this mode return ctx))
 		   ((procedure-nothis)
 		    (call-scheme-nothis this fun args))
 		   (else
@@ -1664,7 +1670,7 @@
 ;*    j2s-scheme-call-spread ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-call-spread this mode return ctx)
-   (with-access::J2SCall this (loc profid fun thisargs args)
+   (with-access::J2SCall this (loc profid fun thisargs args protocol)
       (let ((expr (spread->array-expr loc args #f)))
 	 (cond
 	    ((and (isa? fun J2SRef)
@@ -1680,10 +1686,21 @@
 				    (args exprs))))
 		       (j2s-scheme ncall mode return ctx)))
 		 (epairify loc
-		    `(js-apply %this ,(j2s-scheme fun mode return ctx)
-			,@(map (lambda (a) (j2s-scheme a mode return ctx))
-			     thisargs)
-			,(j2s-spread->expr-list args mode return ctx)))))
+		    (case protocol
+		       ((spread) 
+			`(js-apply %this ,(j2s-scheme fun mode return ctx)
+			    ,@(map (lambda (a) (j2s-scheme a mode return ctx))
+				 thisargs)
+			    ,(j2s-spread->expr-list args mode return ctx)))
+		       ((spread-procedure-this-arity)
+			`(apply ,(j2s-scheme fun mode return ctx)
+			    ,@(map (lambda (a) (j2s-scheme a mode return ctx))
+				 thisargs)
+			    ,(j2s-spread->expr-list args mode return ctx)))
+		       (else
+			(error "j2s-schemd-call-spread"
+			   "protocol not implemented"
+			   protocol))))))
 	    ((isa? fun J2SAccess)
 	     (with-access::J2SAccess fun (obj field)
 		(let* ((o (gensym 'o))
@@ -1731,6 +1748,20 @@
 			     (thisargs (list (J2SUndefined)))
 			     (args (list (J2SNull) expr)))))
 		(j2s-scheme ncall mode return ctx)))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme-call-spread-procedure-this ...                        */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-call-spread-procedure-this this mode return ctx)
+   (error "j2s-scheme-call-spread-procedure-this" "not implemented"
+      (j2s->sexp this))
+   (j2s-scheme-call-spread this mode return ctx))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme-call-spread-procedure-this-arity ...                  */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-call-spread-procedure-this-arity this mode return ctx)
+   (j2s-scheme-call-spread this mode return ctx))
 						      
 ;*---------------------------------------------------------------------*/
 ;*    decl-only-call? ...                                              */
