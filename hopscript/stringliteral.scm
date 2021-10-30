@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Oct 19 18:18:08 2021 (serrano)                */
+;*    Last change :  Sat Oct 30 15:10:15 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -148,6 +148,8 @@
 	   (js-jsstring-localecompare ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-localecompare ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-trim ::JsStringLiteral ::JsGlobalObject)
+	   (js-jsstring-trimend ::JsStringLiteral ::JsGlobalObject)
+	   (js-jsstring-trimstart ::JsStringLiteral ::JsGlobalObject)
 	   (js-jsstring-maybe-trim ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-fromcharcode ::obj ::JsGlobalObject)
 	   (js-jsstring-escape ::JsStringLiteral)
@@ -4646,6 +4648,28 @@
 		this)))
 	 (else
 	  (loop (js-toobject %this this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-trimend ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-trimend this %this)
+   (let ((s (js-jsstring->string this)))
+      (multiple-value-bind (start end)
+	 (trim-whitespaces s #f #t #f)
+	 (if start
+	     (js-substring s start end %this)
+	     this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-trimstart ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-trimstart this %this)
+   (let ((s (js-jsstring->string this)))
+      (multiple-value-bind (start end)
+	 (trim-whitespaces s #t #f #f)
+	 (if start
+	     (js-substring s start end %this)
+	     this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-fromcharcode ...                                     */

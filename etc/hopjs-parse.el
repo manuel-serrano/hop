@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  1 07:14:59 2018                          */
-;*    Last change :  Tue Oct 26 18:28:16 2021 (serrano)                */
+;*    Last change :  Fri Oct 29 12:08:19 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hopjs JavaScript/HTML parser                                     */
@@ -45,7 +45,7 @@
 	 (alnum+ (rxor "[[:alnum:][:multibyte:]]"))
 	 (id_part_sans "[[:nonascii:]]")
 	 (id_part "[[:alnum:][:multibyte:][:nonascii:]$_]")
-	 (id_start "[[:alpha:][:multibyte:][:nonascii:]$_]")
+	 (id_start "[[:alpha:][:multibyte:][:nonascii:]$_#]")
 	 (scmid_part "[^ (){}\"]")
 	 (scmid_start "#[:]")
 	 (cssid_part "[[:alnum:][:multibyte:][:nonascii:]$_#-]")

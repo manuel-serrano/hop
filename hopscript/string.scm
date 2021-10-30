@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Oct 25 11:37:16 2021 (serrano)                */
+;*    Last change :  Sat Oct 30 15:08:01 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -715,6 +715,32 @@
       :value (js-make-function %this trim
 		(js-function-arity trim)
 		(js-function-info :name "trim" :len 0)
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
+   ;; trimEnd
+   ;; https://tc39.es/ecma262/multipage/text-processing.html#sec-string.prototype.trimend
+   (define (trimend this::obj)
+      (js-jsstring-trimend (js-cast-string-normalize! %this this) %this))
+   
+   (js-bind! %this obj (& "trimEnd")
+      :value (js-make-function %this trimend
+		(js-function-arity trimend)
+		(js-function-info :name "trimEnd" :len 0)
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
+   ;; trimStart
+   ;; https://tc39.es/ecma262/multipage/text-processing.html#sec-string.prototype.trimstart
+   (define (trimstart this::obj)
+      (js-jsstring-trimstart (js-cast-string-normalize! %this this) %this))
+   
+   (js-bind! %this obj (& "trimStart")
+      :value (js-make-function %this trimstart
+		(js-function-arity trimstart)
+		(js-function-info :name "trimStart" :len 0)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
