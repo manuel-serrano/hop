@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Oct 30 15:08:01 2021 (serrano)                */
+;*    Last change :  Sun Oct 31 06:46:26 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -589,6 +589,20 @@
       :value (js-make-function %this replace
 		(js-function-arity replace)
 		(js-function-info :name "replace" :len 2)
+		:prototype (js-undefined))
+      :enumerable #f
+      :hidden-class #t)
+   
+   ;; replaceAll
+   ;; https://tc39.es/ecma262/multipage/text-processing.html#sec-string.prototype.replaceall
+   (define (replace-all this::obj searchvalue replacevalue)
+      (js-jsstring-prototype-replace-all (js-cast-string %this this)
+	 searchvalue replacevalue %this))
+      
+   (js-bind! %this obj (& "replaceAll")
+      :value (js-make-function %this replace-all
+		(js-function-arity replace-all)
+		(js-function-info :name "replaceAll" :len 2)
 		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)

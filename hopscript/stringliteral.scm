@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sat Oct 30 15:10:15 2021 (serrano)                */
+;*    Last change :  Sun Oct 31 06:47:38 2021 (serrano)                */
 ;*    Copyright   :  2014-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -138,6 +138,7 @@
 	   (js-jsstring-replace-string ::obj ::bool ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-replace ::obj ::bool ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-prototype-replace ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-prototype-replace-all ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-replace ::obj ::bool ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-jsstring-match ::JsStringLiteral ::obj ::JsGlobalObject)
 	   (js-jsstring-match-regexp-from-string ::JsStringLiteral ::JsStringLiteral ::JsRegExp ::JsGlobalObject)
@@ -4294,6 +4295,58 @@
 	     (js-get-name/cache this (& "replace") #f %this
 		(or cache (js-pcache-ref js-string-pcache 13)))
 	     this searchvalue replacevalue)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-replace-string-all ...                               */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-replace-string-all this::obj need22 searchstr replacevalue %this)
+   (let loop ((this this))
+      (let ((s (js-jsstring-replace-string this
+		  need22 searchstr replacevalue %this)))
+	 (if (eq? s this)
+	     s
+	     (loop s)))))
+      
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-replace-all ...                                      */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11    */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-replace-all this::obj need22 searchvalue replacevalue %this)
+   
+   (define (fun1? v)
+      (when (js-procedure? v)
+	 (with-access::JsProcedure v (procedure)
+	    (correct-arity? procedure 2))))
+   
+   (define (fun1 v)
+      (with-access::JsProcedure v (procedure)
+	 procedure))
+   
+   (cond
+      ((isa? searchvalue JsRegExp)
+       (js-jsstring-replace this need22 searchvalue replacevalue %this))
+      ((js-jsstring? searchvalue)
+       (js-jsstring-replace-string-all this need22 searchvalue replacevalue %this))
+      (else
+       (js-jsstring-replace-string-all this need22 (js-tojsstring searchvalue %this) replacevalue %this)
+       )))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-prototype-replace-all ...                            */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-prototype-replace-all this searchvalue replacevalue %this)
+   (let loop ((this this))
+      (cond
+	 ((js-jsstring? this)
+	  (js-jsstring-replace-all this #t searchvalue replacevalue %this))
+	 ((isa? this JsString)
+	  (with-access::JsString this (val)
+	     (loop val)))
+	 ((js-object? this)
+	  (loop (js-tojsstring this %this)))
+	 (else
+	  (loop (js-tojsstring (js-toobject %this this) %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-match-regexp ...                                     */
