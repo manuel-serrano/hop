@@ -684,7 +684,12 @@
    (define (maybe-string? prop typrop)
       (and (not (number? prop))
 	   (not (type-number? typrop))
-	   (not (eq? typrop 'array))))
+	   (not (memq typrop '(array object)))))
+
+   (define (maybe-number? prop typrop)
+      (or (number? prop)
+	  (type-number? typrop)
+	  (not (memq typrop '(string object)))))
 
    (define (js-array-get obj prop typrop)
       (case typrop
@@ -778,6 +783,14 @@
 			 'js-get-jsobject/name-cache
 			 'js-get/name-cache)
 		      ,tmp ,prop %this))))
+	     ((maybe-number? prop typrop)
+	      (let ((o (gensym '%obj))
+		    (p (gensym '%prop)))
+		 `(let ((,o ,obj)
+			(,p ,(box prop typrop ctx)))
+		     (if (js-array? ,o)
+			 (js-array-ref ,o ,p %this)
+			 ,(js-get obj p '%this)))))
 	     (else
 	      (js-get obj prop '%this))))
 	 ((string? propstr)
@@ -794,6 +807,14 @@
 		 (if (js-array? ,o)
 		     ,(js-array-get o p typrop)
 		     ,(js-get o p '%this)))))
+	 ((maybe-number? prop typrop)
+	  (let ((o (gensym '%obj))
+		(p (gensym '%prop)))
+	     `(let ((,o ,obj)
+		    (,p ,(box prop typrop ctx)))
+		 (if (js-array? ,o)
+		     (js-array-ref ,o ,p %this)
+		     ,(js-get obj p '%this)))))
 	 ((memq typrop '(int32 uint32))
 	  (js-get obj (box prop typrop ctx) '%this))
 	 (else
@@ -827,7 +848,12 @@
    (define (maybe-string? prop typrop)
       (and (not (number? prop))
 	   (not (type-number? typrop))
-	   (not (eq? typrop 'array))))
+	   (not (memq typrop '(array object)))))
+   
+   (define (maybe-number? prop typrop)
+      (or (number? prop)
+	  (type-number? typrop)
+	  (not (memq typrop '(string object)))))
 
    (if (boxed-type? tyval)
        (if (number? val)
@@ -919,7 +945,7 @@
 			      ,(js-pcache cache) ,(loc->point loc)
 			      ',cspecs
 			      ,cachefun))))
-		 ((memq typrop '(int32 uint32))
+		 ((memq typrop '(int32 uint32 int53 integer))
 		  `(maybe-array-set! ,obj ,(box prop typrop ctx)
 		      ,val ,mode %this))
 		 ((or (number? prop) (null? cspecs))

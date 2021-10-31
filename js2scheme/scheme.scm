@@ -1189,9 +1189,15 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SStmtExpr mode return ctx)
    (with-access::J2SStmtExpr this (expr)
-      (if (isa? expr J2SIf)
-	  (j2s-scheme expr mode return ctx)
-	  (return (j2s-scheme expr mode return ctx)))))
+      (cond
+	 ((isa? expr J2SIf)
+	  (j2s-scheme expr mode return ctx))
+	 ((isa? expr J2SCall)
+	  (with-access::J2SCall expr (%info)
+	     (set! %info 'void))
+	  (return (j2s-scheme expr mode return ctx)))
+	 (else
+	  (return (j2s-scheme expr mode return ctx))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SIf ...                                           */

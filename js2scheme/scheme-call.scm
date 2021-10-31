@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Oct 29 07:03:29 2021 (serrano)                */
+;*    Last change :  Sun Oct 31 09:01:20 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -48,7 +48,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    builtin-method ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-struct builtin-method jsname met ttype args %this cache predicate)
+(define-struct builtin-method jsname met ttype args %this cache predicate this)
 (define-struct builtin-function id scmid args %this)
 
 ;*---------------------------------------------------------------------*/
@@ -59,18 +59,39 @@
    (map (lambda (e)
 	   (match-case e
 	      ((?jsname ?met ?ttype ?args ?%this)
-	       (builtin-method jsname met ttype args %this #f #f))
+	       (builtin-method jsname met ttype args %this #f #f #f))
 	      ((?jsname ?met ?ttype ?args ?%this ?cache)
-	       (builtin-method jsname met ttype args %this cache #f))
+	       (builtin-method jsname met ttype args %this cache #f #f))
 	      ((?jsname ?met ?ttype ?args ?%this ?cache ?pred)
-	       (builtin-method jsname met ttype args %this cache pred))
+	       (builtin-method jsname met ttype args %this cache pred #f))
+	      ((?jsname ?met ?ttype ?args ?%this ?cache :this ?this)
+	       (builtin-method jsname met ttype args %this cache #f this))
+	      ((?jsname ?met ?ttype ?args ?%this ?cache ?pred :this ?this)
+	       (builtin-method jsname met ttype args %this cache pred this))
 	      (else
 	       (error "hopc" "bad builtin method specification" e))))
       `(;; string and array methods
 	("indexOf" js-array-indexof0 array (any) %this #t)
+	("indexOf" js-jsstring-indexof string (string any) %this #f)
 	("indexOf" js-jsstring-indexof0 string (string) %this #f)
-	("indexOf" js-array-indexof array (any (any 0)) %this #t)
-	("indexOf" js-jsstring-indexof string (string (any 0)) %this #f)
+	("indexOf" js-array-indexof array (any any) %this #t)
+	("indexOf" js-array-indexof0 array (any) %this #t)
+	("indexOf" js-array-maybe-indexof any (string any) %this #t)
+	("indexOf" js-array-maybe-indexof any (object any) %this #t)
+	("indexOf" js-array-maybe-indexof any (number any) %this #t)
+	("indexOf" js-array-maybe-indexof any (integer any) %this #t)
+	("indexOf" js-array-maybe-indexof any (real any) %this #t)
+	("indexOf" js-array-maybe-indexof any (uint32 any) %this #t)
+	("indexOf" js-array-maybe-indexof any (int32 any) %this #t)
+	("indexOf" js-array-maybe-indexof0 any (string) %this #t)
+	("indexOf" js-array-maybe-indexof0 any (object) %this #t)
+	("indexOf" js-array-maybe-indexof0 any (number) %this #t)
+	("indexOf" js-array-maybe-indexof0 any (integer) %this #t)
+	("indexOf" js-array-maybe-indexof0 any (real) %this #t)
+	("indexOf" js-array-maybe-indexof0 any (uint32) %this #t)
+	("indexOf" js-array-maybe-indexof0 any (int32) %this #t)
+	("indexOf" js-jsstring-maybe-indexof any (any any) %this #t)
+	("indexOf" js-jsstring-maybe-indexof0 any (any) %this #t)
 	;; string methods
 	("fromCharCode" ,js-jsstring-fromcharcode String (any) %this)
 	("charAt" ,j2s-jsstring-charat string (any) %this)
@@ -79,8 +100,6 @@
 	("charCodeAt" js-jsstring-maybe-charcodeat any (any) %this #t)
 	("codePointAt" ,j2s-jsstring-codepointat string (any) %this)
 	("codePointAt" js-jsstring-maybe-codepointat any (any) %this #t)
-	("indexOf" js-jsstring-maybe-indexof any (any (any 0)) %this #t)
-	("indexOf" js-jsstring-maybe-indexof0 any (any) %this #t)
 	("lastIndexOf" js-jsstring-lastindexof string (string (any +nan.0)) %this)
 	("lastIndexOf" js-jsstring-maybe-lastindexof string (any (any +nan.0)) %this #t)
 	("substring" ,j2s-jsstring-substring string (any) %this #f)
@@ -129,9 +148,12 @@
 	("exec" js-regexp-prototype-exec regexp (any) %this #f ,j2s-regexp-plain?)
 	("exec" js-regexp-prototype-maybe-exec any (any) %this #t ,j2s-regexp-plain?)
 	;; array methods
+	("concat" ,j2s-array-concat0 array () %this #t ,j2s-array-plain?)
 	("concat" ,j2s-array-concat1 array (array) %this #t ,j2s-array-plain?)
+	("concat" ,j2s-array-maybe-concat0 any () %this #t ,j2s-array-plain?)
 	("concat" ,j2s-array-maybe-concat1 any (any) %this #t ,j2s-array-plain?)
 	("concat" js-array-concat array (array . any) %this #f ,j2s-array-plain?)
+	("concat" js-array-maybe-concat any (any . any) %this #t ,j2s-array-plain?)
 	("concat" js-array-maybe-concat any (any . any) %this #t ,j2s-array-plain?)
 	("sort" ,j2s-array-sort array (any) %this #t ,j2s-array-plain?)
 	("sort" ,j2s-array-maybe-sort any (any) %this #t ,j2s-array-plain?)
@@ -202,6 +224,7 @@
 	("slice" js-array-maybe-slice0 any () %this #t)
 	("slice" js-array-maybe-slice1 any (any) %this #t)
 	("slice" js-array-maybe-slice2 any (any any) %this #t)
+	("splice" ,j2s-array-maybe-splice2 any (any any) %this #t :this #t)
 	("shift" js-array-maybe-shift0 any () %this #t)
 	("reverse" js-array-reverse array () %this #f ,j2s-array-plain?)
 	("reverse" js-array-maybe-reverse any () %this #t)
@@ -896,22 +919,23 @@
 		   ;; builtin procedure
 		   (cond
 		      ((>=fx arity 0)
-		       (met obj
-			  (append args
-			     (if (=fx len arity)
-				 '()
-				 (let* ((lopt (length opt))
-					(nopt (-fx arity len)))
-				    (map cadr (list-tail opt (-fx lopt nopt)))))
-			     (if (builtin-method-%this m)
-				 '(%this)
-				 '())
-			     (if (builtin-method-cache m)
-				 (if cache
-				     `((js-pcache-ref %pcache ,cache))
-				     '(#f))
-				 '()))
-			  mode return ctx))
+		       (let ((margs (append args
+				       (if (=fx len arity)
+					   '()
+					   (let* ((lopt (length opt))
+						  (nopt (-fx arity len)))
+					      (map cadr (list-tail opt (-fx lopt nopt)))))
+				       (if (builtin-method-%this m)
+					   '(%this)
+					   '())
+				       (if (builtin-method-cache m)
+					   (if cache
+					       `((js-pcache-ref %pcache ,cache))
+					       '(#f))
+					   '()))))
+			  (if (builtin-method-this m)
+			      (met this obj margs mode return ctx)
+			      (met obj margs mode return ctx))))
 		      ((=fx arity -2)
 		       ;; untested
 		       (met obj '() args

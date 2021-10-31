@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Oct 29 07:06:11 2021 (serrano)                */
+;*    Last change :  Sun Oct 31 09:31:12 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -51,12 +51,15 @@
 	   (j2s-array-flatmap obj args mode return conf)
 	   (j2s-array-maybe-flatmap obj args mode return conf)
 	   (j2s-array-maybe-join obj args mode return conf)
+	   (j2s-array-concat0 obj args mode return conf)
+	   (j2s-array-maybe-concat0 obj args mode return conf)
 	   (j2s-array-concat1 obj args mode return conf)
 	   (j2s-array-maybe-concat1 obj args mode return conf)
 	   (j2s-array-sort obj args mode return conf)
 	   (j2s-array-maybe-sort obj args mode return conf)
 	   (j2s-array-reduce obj args mode return conf)
-	   (j2s-array-maybe-reduce obj args mode return conf)))
+	   (j2s-array-maybe-reduce obj args mode return conf)
+	   (j2s-array-maybe-splice2 ::J2SCall obj args mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-builtin-method ...                                     */
@@ -634,11 +637,6 @@
 	       ((boxed-type? (j2s-type rhs))
 		(with-access::J2SExpr rhs (loc)
 		   (loop (J2SCast 'any rhs))))
-;* 		(with-access::J2SExpr rhs (loc type)                   */
-;* 		   (let ((tmp (gensym)))                               */
-;* 		      `(let ((,tmp ,(j2s-scheme rhs mode return ctx))) */
-;* 			  ,(loop (J2SCast 'any (J2SHopRef/type tmp type))) */
-;* 			  ,tmp))))                                     */
 	       ((eq? (j2s-type field) 'uint32)
 		`(js-vector-index-set! ,(j2s-scheme obj mode return ctx)
 		    ,(j2s-scheme-as-uint32 field mode return ctx)
@@ -824,6 +822,40 @@
        #f)))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-array-concat0 ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-concat0 obj args mode return ctx)
+   (cond
+      ((isa? obj J2SArray)
+       (with-access::J2SArray obj (exprs)
+	  (cond
+	     ((null? exprs)
+	      `(js-array-concat0-empty
+		  ,@args))
+	     ((null? (cdr exprs))
+	      `(js-array-concat0-create
+		  ,(j2s-scheme (car exprs) mode return ctx)
+		  ,@args))
+	     (else
+	      `(js-array-concat0 ,(j2s-scheme obj mode return ctx)
+		  ,@args)))))
+      (else
+       `(js-array-concat0 ,(j2s-scheme obj mode return ctx)
+	   ,@args))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-maybe-concat0 ...                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-maybe-concat0 obj args mode return ctx)
+   (let ((arg (j2s-scheme (car args) mode return ctx)))
+      (cond
+	 ((isa? obj J2SArray)
+	  (j2s-array-concat0 obj args mode return ctx))
+	 (else
+	  `(js-array-maybe-concat0 ,(j2s-scheme obj mode return ctx)
+	      ,@args)))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-array-concat1 ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-concat1 obj args mode return ctx)
@@ -968,4 +1000,19 @@
 (define (j2s-array-maybe-reduce obj args mode return ctx)
    (array-reduce 'js-array-maybe-reduce
       obj args mode return ctx))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-maybe-splice2 ...                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-maybe-splice2 this::J2SCall obj args mode return ctx)
+   (with-access::J2SCall this (%info)
+      `(,(if (eq? %info 'void)
+	     'js-array-maybe-splice2-sans-result
+	     'js-array-maybe-splice2)
+	,(j2s-scheme obj mode return ctx)
+	,(j2s-scheme (car args) mode return ctx)
+	,(j2s-scheme (cadr args) mode return ctx)
+	,(j2s-scheme (caddr args) mode return ctx)
+	,(j2s-scheme (cadddr args) mode return ctx))))
+       
 

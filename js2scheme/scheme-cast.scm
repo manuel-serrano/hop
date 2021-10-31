@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sun Oct  3 07:46:45 2021 (serrano)                */
+;*    Last change :  Sun Oct 31 11:17:25 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -934,12 +934,18 @@
 	  `(js-tojsstring ,sexp %this))))
 
    (define (torecord sexp)
-      `(if (,(class-predicate-id to) ,sexp)
-	   ,sexp
-	   (js-raise-type-error %this
-	      ,(format "Not ~s instance: ~~a"
-		  (with-access::J2SRecord to (name) name))
-	      ,sexp)))
+      (let ((o (gensym 'o)))
+	 `(let loop ((,o ,sexp))
+	     (cond
+		((,(class-predicate-id to) ,o)
+		 ,o)
+		((js-proxy? ,o)
+		 (loop (js-proxy-target ,o)))
+		(else
+		 (js-raise-type-error %this
+		    ,(format "Not ~s instance: ~~a"
+			(with-access::J2SRecord to (name) name))
+		    ,o))))))
    
    (define (default sexp expr fromid toid ctx)
       (if (or (eq? fromid toid) (eq? toid '*))

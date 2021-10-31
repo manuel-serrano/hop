@@ -129,6 +129,10 @@
 	   (jsarray->vector::vector ::JsArray ::JsGlobalObject)
 	   (js-array-concat ::obj args::pair-nil ::JsGlobalObject)
 	   (js-array-maybe-concat ::obj args::pair-nil ::JsGlobalObject ::obj)
+	   (js-array-concat0 ::JsArray ::JsGlobalObject ::obj)
+	   (js-array-concat0-empty ::JsGlobalObject ::obj)
+	   (js-array-concat0-create ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-concat0 ::obj ::JsGlobalObject ::obj)
 	   (js-array-concat1 ::JsArray ::JsArray ::JsGlobalObject ::obj)
 	   (js-array-concat1-empty ::JsArray ::JsGlobalObject ::obj)
 	   (js-array-concat1-create ::obj ::JsArray ::JsGlobalObject ::obj)
@@ -175,11 +179,15 @@
 	   (js-array-maybe-reverse ::obj ::JsGlobalObject ::obj)
 	   (js-array-indexof ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-indexof0 ::JsArray ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-indexof0 ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-indexof ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-prototype-slice ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-array-maybe-slice0 ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-slice1 ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-prototype-maybe-slice1 this start ::JsGlobalObject)
 	   (js-array-maybe-slice2 ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-splice2 ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-maybe-splice2-sans-result ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-shift0 ::obj ::JsGlobalObject ::obj)
 	   (js-array-reduce ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-reduce ::obj ::obj ::obj ::JsGlobalObject ::obj)
@@ -3850,6 +3858,60 @@
 	     this arg))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-array-concat0 ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-array-concat0 this::JsArray %this cache)
+   
+   (define (array-concat0 this %this)
+      (with-access::JsArray this ((avec vec) (ailen ilen))
+	 (let ((arr (js-array-construct-alloc/lengthu32 %this ailen)))
+	    (with-access::JsArray arr ((vdst vec) ilen)
+	       (vector-copy! vdst 0 avec 0 (uint32->fixnum ailen))
+	       (set! ilen ailen))
+	    arr)))
+   
+   (if (js-array-inlined? this)
+       (array-concat0 this %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call0 %this
+	     (js-get-jsobject-name/cache this (& "concat") #f %this
+		(or cache (js-pcache-ref js-array-pcache 15)))
+	     this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-concat0-empty ...                                       */
+;*    -------------------------------------------------------------    */
+;*    Concat from an empty array.                                      */
+;*---------------------------------------------------------------------*/
+(define (js-array-concat0-empty %this cache)
+   (js-array-construct-alloc/lengthu32 %this #u32:0))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-concat0-create ...                                      */
+;*    -------------------------------------------------------------    */
+;*    Concat from a literal array of one element.                      */
+;*---------------------------------------------------------------------*/
+(define (js-array-concat0-create el::obj %this cache)
+   (let ((arr (js-array-construct-alloc/lengthu32 %this #u32:1)))
+      (with-access::JsArray arr (vec length ilen)
+	 (set! length #u32:1)
+	 (set! ilen #u32:1)
+	 (vector-set! vec 0 el)
+	 arr)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-concat0 ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-concat0 this::obj %this cache)
+   (if (js-array? this)
+       (js-array-concat0 this %this cache)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call0 %this
+	     (js-get-name/cache this (& "concat") #f %this
+		(or cache (js-pcache-ref js-array-pcache 16)))
+	     this))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-array-concat1 ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-array-concat1 this::JsArray arg::JsArray %this cache)
@@ -3886,9 +3948,10 @@
    (define (array-concat1-empty arg %this)
       (with-access::JsArray arg ((avec vec) (ailen ilen))
 	 (let ((arr (js-array-construct-alloc/lengthu32 %this ailen)))
-	    (with-access::JsArray arr ((vdst vec) ilen)
+	    (with-access::JsArray arr ((vdst vec) ilen length)
 	       (vector-copy! vdst 0 avec 0 (uint32->fixnum ailen))
-	       (set! ilen ailen))
+	       (set! ilen ailen)
+	       (set! length ailen))
 	    arr)))
 
    (if (js-array-inlined? arg)
@@ -5674,6 +5737,119 @@
 	     (js-array-slice this start end %this))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-array-maybe-splice2 ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-splice2 this start end %this::JsGlobalObject cache)
+   (cond
+      ((and (js-array? this)
+	    (js-object-mode-plain? this)
+	    (js-object-mode-arrayinline? this)
+	    (fixnum? start)
+	    (fixnum? end))
+       (js-array-inlined-splice2 this start end %this))
+      (else
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call2 %this
+	     (js-get-name/cache this (& "splice") #f %this
+		(or cache (js-pcache-ref js-array-pcache 17)))
+	     this start end)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-inlined-splice2 ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-array-inlined-splice2 this start end %this::JsGlobalObject)
+   
+   (define (vector-splice this len actualstart actualdeletecount)
+      (with-access::JsArray this (vec ilen length)
+	 (let* ((alen (vector-length vec))
+		(rlen (+fx actualstart actualdeletecount))
+		(nlen (-fx len actualdeletecount))
+		(cstart (+fx actualstart actualdeletecount))
+		(vres (js-create-vector actualdeletecount))
+		(res (js-species->jsarray this vres %this)))
+	    ;; populate the result vector
+	    (when (<fx actualstart alen)
+	       ;; from the inlined vector
+	       (vector-copy! vres 0 vec actualstart
+		  (minfx alen (+fx actualstart actualdeletecount))))
+	    (when (>fx actualdeletecount (-fx alen actualstart))
+	       ;;  from the prototype object
+	       (let loop ((k (+fx actualstart (-fx alen actualstart))))
+		  (when (<fx k actualdeletecount)
+		     (let ((o (js-get this k %this)))
+			(vector-set! vres k o)
+			(loop (+fx k 1))))))
+	    ;; modify the source array
+	    (if (<=fx nlen 0)
+		(begin
+		   (set! vec '#())
+		   (set! ilen 0)
+		   (set! length 0))
+		(begin
+		   ;; shift the vector
+		   (set! ilen (fixnum->uint32 nlen))
+		   (set! length (fixnum->uint32 nlen))
+		   (vector-copy! vec (-fx nlen (-fx len cstart))
+		      vec cstart len)))
+	    res)))
+   
+   (let* ((len (uint32->fixnum (js-get-lengthu32 this %this)))
+	  (actualstart (if (<fx start 0)
+			   (maxfx (+fx len start) 0)
+			   (minfx start len)))
+	  (actualdeletecount (min (maxfx (js-tointeger end %this) 0)
+				(-fx len actualstart))))
+      (vector-splice this len actualstart actualdeletecount)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-splice2-sans-result ...                           */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-splice2-sans-result this start end %this::JsGlobalObject cache)
+   (cond
+      ((and (js-array? this)
+	    (js-object-mode-plain? this)
+	    (js-object-mode-arrayinline? this)
+	    (fixnum? start)
+	    (fixnum? end))
+       (js-array-inlined-splice2-sans-result this start end %this))
+      (else
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call2 %this
+	     (js-get-name/cache this (& "splice") #f %this
+		(or cache (js-pcache-ref js-array-pcache 17)))
+	     this start end)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-inlined-splice2-sans-result ...                         */
+;*---------------------------------------------------------------------*/
+(define (js-array-inlined-splice2-sans-result this start end %this::JsGlobalObject)
+   
+   (define (vector-splice this len actualstart actualdeletecount)
+      (with-access::JsArray this (vec ilen length)
+	 (let* ((nlen (-fx len actualdeletecount))
+		(cstart (+fx actualstart actualdeletecount)))
+	    ;; modify the source array
+	    (if (<=fx nlen 0)
+		(begin
+		   (set! vec '#())
+		   (set! ilen 0)
+		   (set! length 0))
+		(begin
+		   ;; shift the vector
+		   (set! ilen (fixnum->uint32 nlen))
+		   (set! length (fixnum->uint32 nlen))
+		   (vector-copy! vec (-fx nlen (-fx len cstart))
+		      vec cstart len))))))
+   
+   (let* ((len (uint32->fixnum (js-get-lengthu32 this %this)))
+	  (actualstart (if (<fx start 0)
+			   (maxfx (+fx len start) 0)
+			   (minfx start len)))
+	  (actualdeletecount (min (maxfx (js-tointeger end %this) 0)
+				(-fx len actualstart))))
+      (vector-splice this len actualstart actualdeletecount)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-shift0 ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-array-maybe-shift0 this %this cache)
@@ -5681,18 +5857,10 @@
 	    (js-object-mode-plain? this)
 	    (js-object-mode-arrayinline? this))
        (with-access::JsArray this (vec ilen length)
-;* 	  (tprint "js-array-maybe-shift0 " (vector-length vec)         */
-;* 	     " " (integer->string (vector-length vec) 16))             */
-;* 	  (when (>fx (vector-length vec) 100000)                       */
-;* 	     (tprint "WRONG ERROR...")                                 */
-;* 	     (pragma "dprint($1)" (vector-length vec)))                */
 	  (cond
 	     ((=u32 ilen 0)
 	      (js-undefined))
 	     ((and ($js-object-vector-inline? this) (>u32 ilen #u32:8))
-;* 	      (tprint "inline...")                                     */
-;* 	      (tprint ">>> ilen=" ilen " len=" length)                 */
-;* 	      (js-debug-object this)                                   */
 	      ;; fast path for shifting an array. when the array
 	      ;; is builtin (the JsArray object contains the Scheme vector)
 	      ;; instead of shifting inside the Scheme array, we merely
@@ -5701,18 +5869,13 @@
 		    (nlen (-u32 ilen #u32:1)))
 		 (set! length nlen)
 		 (set! ilen nlen)
-;* 		 (tprint "<<< len=" nlen " vlen=" (vector-length vec)  */
-;* 		    " " (vector-map typeof vec) " first=" (typeof first)) */
 		 first))
 	     (else
-;* 	      (tprint "copy...")                                       */
 	      (with-access::JsArray this (vec length ilen)
 		 (let ((first (vector-ref vec 0))
 		       (nlen (-u32 ilen #u32:1)))
-;* 		    (tprint ">>> vec=" (vector-map typeof vec))        */
 		    (vector-copy! vec 0 vec 1 (uint32->fixnum ilen))
 		    (vector-set! vec (uint32->fixnum nlen) (js-absent))
-;* 		    (tprint "<<< vec=" (vector-map typeof vec))        */
 		    (set! length nlen)
 		    (set! ilen nlen)
 		    first)))))
@@ -6226,15 +6389,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    vector-indexof ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (vector-indexof::long arr vec el k::long len::long)
+(define-inline (vector-indexof::long arr vec el k::long len::long)
    (let loop ((k k))
       (cond
-	 ((>=fx k len)
-	  -1)
-	 ((js-strict-equal? (vector-ref vec k) el)
-	  k)
-	 (else
-	  (loop (+fx k 1))))))
+	 ((>=fx k len) -1)
+	 ((js-strict-equal? (vector-ref vec k) el) k)
+	 (else (loop (+fx k 1))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    vector-holey-indexof ...                                         */
@@ -6260,8 +6420,6 @@
 ;*    The THIS argument is intentionally not required to be a JsArray  */
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-indexof this::JsObject el indx %this)
-   
-   
    
    (define (array-indexof::int arr k::uint32 len::uint32)
       (let ((k (js-uint32-tointeger k))
@@ -6331,6 +6489,40 @@
 		(or cache (js-pcache-ref js-array-pcache 10)))
 	     o el indx))))
 
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-indexof ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-indexof this search position %this cache)
+   (with-access::JsGlobalObject %this (js-string-pcache)
+      (let loop ((this this))
+	 (cond
+	    ((js-array? this)
+	     (js-array-indexof this search position %this cache))
+	    ((js-object? this)
+	     (js-call2 %this
+		(js-get-jsobject-name/cache this (& "indexOf") #f %this
+		   (or cache (js-pcache-ref js-string-pcache 23)))
+		this search position))
+	    (else
+	     (loop (js-toobject %this this)))))))
+   
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-indexof0 ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-indexof0 this search %this cache)
+   (with-access::JsGlobalObject %this (js-string-pcache)
+      (let loop ((this this))
+	 (cond
+	    ((js-array? this)
+	     (js-array-indexof0 this search %this cache))
+	    ((js-object? this)
+	     (js-call1 %this
+		(js-get-jsobject-name/cache this (& "indexOf") #f %this
+		   (or cache (js-pcache-ref js-string-pcache 23)))
+		this search))
+	    (else
+	     (loop (js-toobject %this this)))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-iterator-to-array ...                                         */
 ;*    -------------------------------------------------------------    */
