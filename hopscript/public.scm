@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Oct 18 07:57:14 2021 (serrano)                */
+;*    Last change :  Tue Nov  2 14:55:27 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1824,18 +1824,20 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-tonumber obj %this::JsGlobalObject)
    (cond
-      ((number? obj)
+      ((js-number? obj)
        obj)
-      ((eq? obj (js-undefined))
-       +nan.0)
-      ((eq? obj (js-null))
-       0)
+      ((string? obj)
+       (js-string->number obj %this))
+      ((bignum? obj)
+       (js-bigint->number obj))
       ((eq? obj #t)
        1)
       ((eq? obj #f)
        0)
-      ((string? obj)
-       (js-string->number obj %this))
+      ((eq? obj (js-undefined))
+       +nan.0)
+      ((eq? obj (js-null))
+       0)
       (else
        (bigloo-type-error "toNumber" "JsObject" obj))))
 

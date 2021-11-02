@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Oct 20 15:31:18 2021 (serrano)                */
+;*    Last change :  Tue Nov  2 10:07:26 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1322,6 +1322,8 @@
 		(cond
 		   ((is-builtin-ref? callee 'Array)
 		    (return 'array env bk))
+		   ((is-builtin-ref? callee 'BigInt)
+		    (return 'bigint env bk))
 		   ((and (decl-ronly? decl) (isa? val J2SFun))
 		    (type-known-call callee val args env bk))
 		   ((and (decl-ronly? decl) (isa? val J2SMethod))

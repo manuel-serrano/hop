@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Oct 29 08:10:25 2021 (serrano)                */
+;*    Last change :  Tue Nov  2 10:38:53 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2079,6 +2079,12 @@
 	  `(/fl ,(todouble left tl ctx) ,(todouble right tr ctx)))
 	 ((eq? tr 'integer)
 	  `(/integer ,(todouble left tl ctx) ,(asreal right tr)))
+	 ((eq? tr 'bigint)
+	  (if (eq? tl 'bigint)
+	      `(/bx ,left ,right)
+	      `(/jsbx ,left ,right %this)))
+	 ((eq? tl 'bigint)
+	  `(/bxjs ,left ,right %this))
 	 ((eq? type 'real)
 	  (if-flonums? left tl right tr
 	     `(/fl ,left ,right)
@@ -2199,6 +2205,15 @@
 		       (j2s-cast `(%$$NZ ,(tonumber32 left tl ctx)
 				     ,(tonumber32 right tr ctx))
 			  lhs (number type) type ctx))))
+		  ((eq? tr 'bigint)
+		   (if (eq? tl 'bigint)
+		       (j2s-cast `(remainderbx ,left ,right)
+			  lhs (number type) type ctx)
+		       (j2s-cast `(%$$NX ,left ,right %this)
+			  lhs (number type) type ctx)))
+		  ((eq? tl 'bigint)
+		   (j2s-cast `(%$$XN ,left ,right %this)
+		      lhs (number type) type ctx))
 		  ((eq? type 'real)
 		   (cond
 		      ((and (eq? tl 'real) (eq? tr 'real))
@@ -2230,9 +2245,7 @@
 				     ,(tonumber64 right tr ctx))
 			  lhs (number type) type ctx))
 		      (else
-		       (j2s-cast `(%$$__ ,(tonumber64 left tl ctx)
-				     ,(tonumber64 right tr ctx)
-				     %this)
+		       (j2s-cast `(%$$__ ,left ,right %this)
 			  lhs (number type) type ctx))))
 		  (else
 		   (cond
@@ -2246,8 +2259,7 @@
 				     ,(tonumber32 right tr ctx))
 			  lhs (number type) type ctx))
 		      (else
-		       (j2s-cast `(%$$__ ,(tonumber32 left tl ctx)
-				     ,(tonumber32 right tr ctx) %this)
+		       (j2s-cast `(%$$__ ,left ,right %this)
 			  lhs (number type) type ctx))))))))))
 
 ;*---------------------------------------------------------------------*/

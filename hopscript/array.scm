@@ -1233,8 +1233,8 @@
 	 ;; step 10
 	 (when (and (< from to) (< to (+ from count)))
 	    (set! direction -1)
-	    (set! from (- (+ from count) 1))
-	    (set! o (- (- to count) 1)))
+	    (set! to (+ from count))
+	    (set! from (- to target)))
 	 (if (and (js-array? o) (js-array-inlined? o))
 	     (with-access::JsArray o (vec)
 		(let loop ((from (->fixnum from))
@@ -1245,8 +1245,8 @@
 		      (let ((fromval (vector-ref vec from)))
 			 (vector-set! vec to fromval))
 		      ;; step 12.3
-		      (loop (+ from direction)
-			 (+ to direction)
+		      (loop (+fx from direction)
+			 (+fx to direction)
 			 (-fx count 1)))))
 	     (let loop ((from from)
 			(to to)
@@ -1260,8 +1260,8 @@
 			     (js-put! o toi fromval #f %this))
 			  ;; step 12.3
 			  (js-delete! o toi #t %this))
-		      (loop (+ from direction)
-			 (+ to direction)
+		      (loop (+fx from direction)
+			 (+fx to direction)
 			 (-fx count 1))))))
 	 o))
 

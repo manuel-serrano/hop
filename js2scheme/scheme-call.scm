@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sun Oct 31 09:01:20 2021 (serrano)                */
+;*    Last change :  Tue Nov  2 10:47:33 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -32,6 +32,7 @@
 	   __js2scheme_scheme-string
 	   __js2scheme_scheme-regexp
 	   __js2scheme_scheme-math
+	   __js2scheme_scheme-bigint
 	   __js2scheme_scheme-object
 	   __js2scheme_scheme-json
 	   __js2scheme_scheme-date
@@ -298,6 +299,7 @@
 	(parseInt js-parseint-any (any) %this)
 	(parseInt js-parseint (any any) %this)
 	(parseFloat js-parsefloat (any) %this)
+	(Number js-bigint->number (bigint) #f)
 	(Number js-tonumber (any) %this)
 	(isNaN nanfl? (real) #f)
 	(isNaN js-number-isnan? (number) #f)
@@ -310,7 +312,15 @@
 	(unescape js-jsstring-maybe-unescape (any) #t)
 	(TypeError js-type-error1 (any) #t)
 	(TypeError js-type-error2 (any any) #t)
-	(TypeError js-type-error (any any any) #t))))
+	(TypeError js-type-error (any any any) #t)
+	(BigInt (lambda (x) x) (bigint) #f)
+	(BigInt js-integer-tobigint (integer) #f)
+	(BigInt fixnum->bignum (int53) #f)
+	(BigInt js-uint32-tobigint (uint32) #f)
+	(BigInt js-int32-tobigint (int32) #f)
+	(BigInt flonum->bignum (real) #f)
+	(BigInt js-any-tobigint (any) #f)
+	)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-apply ...                                                    */
@@ -655,7 +665,7 @@
 	  #f)
 	 ((isa? decl J2SDeclFun)
 	  (when (decl-ronly? decl) decl))
-	 ((and (isa? decl J2SDeclInit) (j2s-let-opt? decl) )
+	 ((and (isa? decl J2SDeclInit) (j2s-let-opt? decl))
 	  (with-access::J2SDeclInit decl (val)
 	     (when (and (isa? val J2SFun)
 			(decl-ronly? decl)
@@ -663,6 +673,14 @@
 		decl)))
 	 (else
 	  #f))))
+
+;*---------------------------------------------------------------------*/
+;*    read-only-extern ...                                             */
+;*---------------------------------------------------------------------*/
+(define (read-only-extern ref::J2SRef)
+   (with-access::J2SRef ref (decl)
+      (when (and (isa? decl J2SDeclExtern) (decl-ronly? decl))
+	 decl)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-plain? ...                                             */
@@ -725,6 +743,15 @@
    (let ((weakmap (context-weakmap ctx)))
       (if (isa? map J2SDeclExtern)
 	  (decl-only-call? weakmap)
+	  #t)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-bigint-plain? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-bigint-plain? mode return ctx)
+   (let ((bigint (context-bigint ctx)))
+      (if (isa? map J2SDeclExtern)
+	  (decl-only-call? bigint)
 	  #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -846,6 +873,18 @@
 	    ((null? args) arity)
 	    ((pair? args) (loop (+fx arity 1) (cdr args)))
 	    (else (negfx (+fx arity 1))))))
+
+   (define (call-builtin-extern f args)
+      `(,(builtin-function-scmid f)
+	,@(map (lambda (arg param)
+		  (j2s-as 
+		     (j2s-scheme arg mode return ctx)
+		     arg
+		     (j2s-type arg)
+		     param ctx))
+	     args
+	     (builtin-function-args f))
+	,@(if (builtin-function-%this f) '(%this) '())))
    
    (define (call-builtin-method obj::J2SExpr field::J2SExpr args cache cspecs)
       (let ((m (find-builtin-method obj field args)))
@@ -997,6 +1036,9 @@
    (define (Math? self)
       (is-builtin-ref? self 'Math))
    
+   (define (BigInt? self)
+      (is-builtin-ref? self 'BigInt))
+   
    (define (Json? self)
       (is-builtin-ref? self 'JSON))
 
@@ -1027,6 +1069,10 @@
 	     (lambda (expr) expr))
 	    ((and (Math? self)
 		  (j2s-math-builtin-method fun args this mode return ctx))
+	     =>
+	     (lambda (expr) expr))
+	    ((and (BigInt? self)
+		  (j2s-bigint-builtin-method fun args this mode return ctx))
 	     =>
 	     (lambda (expr) expr))
 	    ((and (Json? self)
@@ -1621,18 +1667,7 @@
 			 ((find-builtin-function id args)
 			  =>
 			  (lambda (f)
-			     `(,(builtin-function-scmid f)
-			       ,@(map (lambda (arg param)
-					 (j2s-as 
-					    (j2s-scheme arg mode return ctx)
-					    arg
-					    (j2s-type arg)
-					    param ctx))
-				    args
-				    (builtin-function-args f))
-			       ,@(if (builtin-function-%this f)
-				     '(%this)
-				     '()))))
+			     (call-builtin-extern f args)))
 			 ((eq? scope '%hop)
 			  'TODO)
 			 (else
@@ -1650,6 +1685,13 @@
 		=>
 		(lambda (fun)
 		   (call-known-function protocol profid fun thisargs args)))
+	       ((and (read-only-extern fun)
+		     (with-access::J2SRef fun (decl)
+			(with-access::J2SDecl decl (id)
+			   (find-builtin-function id args))))
+		=>
+		(lambda (f)
+		   (call-builtin-extern f args)))
 	       (else
 		(call-unknown-function protocol fun
 		   (j2s-scheme thisargs mode return ctx) args)))))))

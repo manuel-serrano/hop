@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Fri Oct 29 07:50:51 2021 (serrano)                */
+;*    Last change :  Tue Nov  2 09:51:03 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -45,6 +45,8 @@
 	   (**js::obj ::obj ::obj ::JsGlobalObject)
 	   (/js::obj ::obj ::obj ::JsGlobalObject)
 	   (/jsfl::double ::obj ::obj ::JsGlobalObject)
+	   (/jsbx::bignum ::obj ::bignum ::JsGlobalObject)
+	   (/bxjs::bignum ::bignum ::obj ::JsGlobalObject)
 	   (negjs ::obj)
 
 	   (inline +l!fl::real ::real ::double)
@@ -68,6 +70,8 @@
 	   (%$$FF::double ::double ::double)
 	   (%$$NF::double ::obj ::double)
 	   (%$$FN::double ::double ::obj)
+	   (%$$NX ::obj ::bignum ::JsGlobalObject)
+	   (%$$XN ::bignum ::obj ::JsGlobalObject)
 	   (%$$__ x y ::JsGlobalObject)
 	   
 	   (bit-lshjs::obj ::obj ::obj ::JsGlobalObject)
@@ -172,10 +176,10 @@
       ((bignum? x)
        (if (bignum? y)
 	   (+bx x y)
-	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (+js)"
 	      y)))
       ((bignum? y)
-       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (+js)"
 	  x))
       (else
        (let* ((nx (js-tonumber x %this))
@@ -206,10 +210,10 @@
       ((bignum? x)
        (if (bignum? y)
 	   (-bx x y)
-	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (-js)"
 	      y)))
       ((bignum? y)
-       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (-js)"
 	  x))
       (else
        (let* ((nx (js-tonumber x %this))
@@ -228,10 +232,10 @@
       ((bignum? x)
        (if (bignum? y)
 	   (*bx x y)
-	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (*js)"
 	      y)))
       ((bignum? y)
-       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (*js)"
 	  x))
       (else
        (let* ((nx (js-tonumber x %this))
@@ -251,10 +255,10 @@
       ((bignum? x)
        (if (bignum? y)
 	   (exptbx x y)
-	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (**js)"
 	      y)))
       ((bignum? y)
-       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (**js)"
 	  x))
       (else
        (let* ((nx (js-tonumber x %this))
@@ -273,7 +277,7 @@
       ((bignum? x)
        (if (bignum? y)
 	   (/bx x y)
-	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (/js)"
 	      y)))
       (else
        (/fl (toflonum x %this) (toflonum y %this)))))
@@ -290,10 +294,32 @@
       ((bignum? x)
        (if (bignum? y)
 	   (bignum->flonum (/bx x y))
-	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (/jsfl)"
 	      y)))
       (else
        (/fl (toflonum x %this) (toflonum y %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    /jsbx ...                                                        */
+;*    -------------------------------------------------------------    */
+;*    divides a value by a bignum.                                     */ 
+;*---------------------------------------------------------------------*/
+(define (/jsbx::bignum x::obj y::bignum %this)
+   (if (bignum? x)
+       (/bx x y)
+       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (/jsbx)"
+	  x)))
+
+;*---------------------------------------------------------------------*/
+;*    /bxjs ...                                                        */
+;*    -------------------------------------------------------------    */
+;*    divides bignum by a a value.                                     */ 
+;*---------------------------------------------------------------------*/
+(define (/bxjs::bignum x::bignum y::obj %this)
+   (if (bignum? y)
+       (/bx x y)
+       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (/bxjs)"
+	  y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    toflonum ...                                                     */
@@ -405,6 +431,26 @@
        (%$$NZ lnum rnum))))
 
 ;*---------------------------------------------------------------------*/
+;*    %$$NX ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (%$$NX x y::bignum %this)
+   (if (bignum? x)
+       (remainderbx x y)
+       (js-raise-type-error %this
+	  "Cannot mix BigInt and other types, use explicit conversions (%)"
+	  x)))
+   
+;*---------------------------------------------------------------------*/
+;*    %$$XN ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (%$$XN x::bignum y %this)
+   (if (bignum? y)
+       (remainderbx x y)
+       (js-raise-type-error %this
+	  "Cannot mix BigInt and other types, use explicit conversions (%)"
+	  x)))
+   
+;*---------------------------------------------------------------------*/
 ;*    %$$__ ...                                                        */
 ;*---------------------------------------------------------------------*/
 (define (%$$__ x y %this)
@@ -415,11 +461,11 @@
        (if (bignum? y)
 	   (remainderbx x y)
 	   (js-raise-type-error %this
-	      "Cannot mix BigInt and other types, use explicit conversions"
+	      "Cannot mix BigInt and other types, use explicit conversions (%)"
 	      y)))
       ((bignum? y)
        (js-raise-type-error %this
-	  "Cannot mix BigInt and other types, use explicit conversions"
+	  "Cannot mix BigInt and other types, use explicit conversions (%)"
 	  x))
       (else
        (let ((lnum (js-tonumber x %this))
@@ -865,10 +911,10 @@
 	 ((bignum? left)
 	  (if (bignum? right)
 	      (+bx left right)
-	      (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions"
+	      (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (js-slow+)"
 		 right)))
 	 ((bignum? right)
-	  (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+	  (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (js-slow+)"
 	     left))
 	 (else
 	  (let* ((left (js-tonumber left %this))
@@ -928,24 +974,24 @@
 	  ((fixnum? right)
 	   (*fl left (fixnum->flonum right)))
 	  ((bignum? right)
-	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions"
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (js*)"
 	      right))
 	  (else
 	   (* left (js-tonumber right %this)))))
       ((flonum? right)
        (cond
 	  ((bignum? right)
-	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions"
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (js*)"
 	      right))
 	  (else
 	   (* (js-tonumber left %this) right))))
       ((bignum? left)
        (if (bignum? right)
 	   (*bx left right)
-	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions"
+	   (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (js*)"
 	      right)))
       ((bignum? right)
-       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit converspions"
+       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (js*)"
 	  left))
       (else
        (let* ((lnum (js-tonumber left %this))

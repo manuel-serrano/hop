@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Oct  1 07:02:35 2021 (serrano)                */
+;*    Last change :  Tue Nov  2 07:07:44 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -27,7 +27,8 @@
 	   __js2scheme_alpha
 	   __js2scheme_node-size
 	   __js2scheme_usage
-	   __js2scheme_scheme-utils)
+	   __js2scheme_scheme-utils
+	   __js2scheme_classutils)
 
    (static (class FunHintInfo
 	      hinted
@@ -1022,23 +1023,28 @@
 ;*---------------------------------------------------------------------*/
 ;*    hint-type-predicate ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (hint-type-predicate::symbol type::symbol)
-   (case type
-      ((number) 'number?)
-      ((integer) 'fixnum?)
-      ((string) 'js-jsstring?)
-      ((array) 'js-array?)
-      ((jsvector) 'js-vector?)
-      ((object) 'js-object?)
-      ((function) 'js-function?)
-      ((service) 'js-service?)
-      ((arrow) 'js-procedure?)
-      ((bool) 'boolean?)
-      ((undefined) 'js-undefined?)
-      ((null) 'js-null?)
-      ((regexp) 'js-regexp?)
-      ((real) 'flonum?)
-      (else (error "hint-type-predicate" "Unknown hint type predicate" type))))
+(define (hint-type-predicate::symbol type)
+   (cond
+      ((eq? type 'number) 'number?)
+      ((eq? type 'integer) 'fixnum?)
+      ((eq? type 'string) 'js-jsstring?)
+      ((eq? type 'array) 'js-array?)
+      ((eq? type 'jsvector) 'js-vector?)
+      ((eq? type 'object) 'js-object?)
+      ((eq? type 'function) 'js-function?)
+      ((eq? type 'service) 'js-service?)
+      ((eq? type 'arrow) 'js-procedure?)
+      ((eq? type 'bool) 'boolean?)
+      ((eq? type 'undefined) 'js-undefined?)
+      ((eq? type 'null) 'js-null?)
+      ((eq? type 'regexp) 'js-regexp?)
+      ((eq? type 'real) 'flonum?)
+      ((isa? type J2SRecord) (class-predicate-id type))
+      ((isa? type J2SClass) 'js-object?)
+      (else
+       (error "hint-type-predicate"
+	  (format "Unknown hint type predicate (~a)" (typeof type))
+	  (type->sexp type)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    test-hint-decls ...                                              */
