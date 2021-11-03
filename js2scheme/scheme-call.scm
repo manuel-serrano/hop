@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Nov  2 10:47:33 2021 (serrano)                */
+;*    Last change :  Wed Nov  3 15:13:10 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -354,6 +354,22 @@
 		   ,(fixnum->uint32 (length exprs))
 		   ,(cadddr args))))))
 
+   (define (is-concat-apply? this::J2SExpr)
+      
+      (define (is-array-prototype? this::J2SExpr)
+	 (when (isa? this J2SAccess)
+	    (with-access::J2SAccess this (obj field)
+	       (when (and (is-builtin-ref? obj 'Array) (isa? field J2SString))
+		  (with-access::J2SString field (val)
+		     (string=? val "prototype"))))))
+      
+      (when (isa? this J2SAccess)
+	 (with-access::J2SAccess this (obj field)
+	    (when (and (is-array-prototype? obj)
+		       (isa? field J2SString))
+	       (with-access::J2SString field (val)
+		  (string=? val "concat"))))))
+
    (cond
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (loc decl)
@@ -384,6 +400,13 @@
        (def-arguments obj args mode return conf))
       ((isa? (cadr args) J2SArray)
        (def-vector obj args mode return conf))
+      ((is-concat-apply? obj)
+       (if (and (isa? (car args) J2SArray)
+		(with-access::J2SArray (car args) (len)
+		   (=fx len 0)))
+	   `(js-array-concat-apply ,(j2s-scheme (cadr args) mode return conf)
+	       ,(caddr args))
+	   (def obj args mode return conf)))
       (else
        (def obj args mode return conf))))
 

@@ -128,6 +128,7 @@
 	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
 	   (jsarray->vector::vector ::JsArray ::JsGlobalObject)
 	   (js-array-concat ::obj args::pair-nil ::JsGlobalObject)
+	   (js-array-concat-apply vec::JsArray ::JsGlobalObject)
 	   (js-array-maybe-concat ::obj args::pair-nil ::JsGlobalObject ::obj)
 	   (js-array-concat0 ::JsArray ::JsGlobalObject ::obj)
 	   (js-array-concat0-empty ::JsGlobalObject ::obj)
@@ -209,6 +210,7 @@
    (export (js-array-alloc-ctor::JsArray ::JsGlobalObject ::JsFunction))
 
    (pragma (js-array-concat (args-noescape args))
+	   (js-array-concat-apply (args-noescape vec))
 	   (js-array-maybe-concat (args-noescape args))
 	   (js-array-map-procedure (args-noescape proc))
 	   (js-array-maybe-map-procedure (args-noescape proc))
@@ -3787,6 +3789,63 @@
 		    (js-array-fixnum-set! arr (uint32->fixnum i) (car l) #f %this)
 		    (loop (cdr l) (+u32 i #u32:1)))))))))
 
+;*---------------------------------------------------------------------*/
+;*    js-array-contact-apply ...                                       */
+;*    -------------------------------------------------------------    */
+;*    Used to append to arrays contained in the argument without       */
+;*    using apply.                                                     */
+;*---------------------------------------------------------------------*/
+(define (js-array-concat-apply this::JsArray %this)
+   
+   (define (alllen this)
+      (if (js-array-inlined? this)
+	  (with-access::JsArray this (ilen vec)
+	     (let ((vec vec))
+		(let loop ((alen #u32:0)
+			   (i (-fx (uint32->fixnum ilen) 1)))
+		   (if (=fx i -1)
+		       (uint32->fixnum alen)
+		       (let ((a (vector-ref vec i)))
+			  (if (js-array? a)
+			      (if (js-array-inlined? a)
+				  (loop (+u32 alen (js-array-length a))
+				     (-fx i 1))
+				  -1)
+			      (loop (+u32 alen #u32:1)
+				 (-fx i 1))))))))
+	  -1))
+   
+   (let ((alen (alllen this)))
+      (if (<fx alen 0)
+	  ;; slow path, one argument is not an inlined array
+	  (js-array-concat (js-array-construct-alloc-small %this #u32:0)
+	     (jsarray->list this %this)
+	     %this)
+	  (with-access::JsGlobalObject %this (js-array-cmap js-array-prototype)
+	     (let ((arr ($js-make-jsarray-sans-init alen
+			   (fixnum->uint32 alen)
+			   (fixnum->uint32 alen)
+			   js-array-cmap
+			   js-array-prototype
+			   (js-array-default-mode))))
+		(with-access::JsArray this (ilen vec)
+		   (let ((srcilen (uint32->fixnum ilen))
+			 (srcvec vec))
+		      (with-access::JsArray arr (vec)
+			 (let ((vdst vec))
+			    (let loop ((i 0)
+				       (w 0))
+			       (if (=fx i srcilen)
+				   arr
+				   (let ((a (vector-ref srcvec i)))
+				      (if (js-array? a)
+					  (with-access::JsArray a (vec ilen)
+					     (vector-copy! vdst w vec 0 (uint32->fixnum ilen))
+					     (loop (+fx i 1) (+fx w (uint32->fixnum ilen))))
+					  (begin
+					     (vector-set! vdst w a)
+					     (loop (+fx i 1) (+fx w 1))))))))))))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-concat ...                                        */
 ;*---------------------------------------------------------------------*/

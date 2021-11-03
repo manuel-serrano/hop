@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Tue Nov  2 09:51:03 2021 (serrano)                */
+;*    Last change :  Wed Nov  3 10:50:46 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -47,6 +47,8 @@
 	   (/jsfl::double ::obj ::obj ::JsGlobalObject)
 	   (/jsbx::bignum ::obj ::bignum ::JsGlobalObject)
 	   (/bxjs::bignum ::bignum ::obj ::JsGlobalObject)
+	   (*jsbx::bignum ::obj ::bignum ::JsGlobalObject)
+	   (*bxjs::bignum ::bignum ::obj ::JsGlobalObject)
 	   (negjs ::obj)
 
 	   (inline +l!fl::real ::real ::double)
@@ -77,6 +79,9 @@
 	   (bit-lshjs::obj ::obj ::obj ::JsGlobalObject)
 	   (bit-rshjs::obj ::obj ::obj ::JsGlobalObject)
 	   (bit-urshjs::obj ::obj ::obj ::JsGlobalObject)
+
+	   (bit-rshjsbx::bignum ::obj ::long ::JsGlobalObject)
+	   (bit-lshjsbx::bignum ::obj ::long ::JsGlobalObject)
 	   
 	   (bit-andjs::obj ::obj ::obj ::JsGlobalObject)
 	   (bit-orjs::obj ::obj ::obj ::JsGlobalObject)
@@ -241,6 +246,28 @@
        (let* ((nx (js-tonumber x %this))
 	      (ny (js-tonumber y %this)))
 	  (*/overflow nx ny)))))
+
+;*---------------------------------------------------------------------*/
+;*    *jsbx ...                                                        */
+;*    -------------------------------------------------------------    */
+;*    divides a value by a bignum.                                     */ 
+;*---------------------------------------------------------------------*/
+(define (*jsbx::bignum x::obj y::bignum %this)
+   (if (bignum? x)
+       (*bx x y)
+       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (*jsbx)"
+	  x)))
+
+;*---------------------------------------------------------------------*/
+;*    *bxjs ...                                                        */
+;*    -------------------------------------------------------------    */
+;*    divides bignum by a a value.                                     */ 
+;*---------------------------------------------------------------------*/
+(define (*bxjs::bignum x::bignum y::obj %this)
+   (if (bignum? y)
+       (*bx x y)
+       (js-raise-type-error %this "Cannot mix BigInt and other types, use explicit conversions (*bxjs)"
+	  y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    **js ...                                                         */
@@ -577,6 +604,26 @@
 	  (rnum (js-touint32 y %this))
 	  (shiftcount (bit-andu32 rnum #u32:31)))
       (js-uint32-tointeger (bit-urshu32 lnum (uint32->fixnum shiftcount)))))
+
+;*---------------------------------------------------------------------*/
+;*    bit-rshjsbx ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (bit-rshjsbx x y::long %this)
+   (if (bignum? x)
+       (bit-rshbx x y)
+       (js-raise-type-error %this
+	  "Cannot mix BigInt and other types, use explicit conversions (%)"
+	  x)))
+
+;*---------------------------------------------------------------------*/
+;*    bit-lshjsbx ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (bit-lshjsbx x y::long %this)
+   (if (bignum? x)
+       (bit-lshbx x y)
+       (js-raise-type-error %this
+	  "Cannot mix BigInt and other types, use explicit conversions (%)"
+	  x)))
 
 ;*---------------------------------------------------------------------*/
 ;*    bit-andjs ...                                                    */
