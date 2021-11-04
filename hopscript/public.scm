@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Nov  2 14:55:27 2021 (serrano)                */
+;*    Last change :  Thu Nov  4 09:44:19 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1838,6 +1838,8 @@
        +nan.0)
       ((eq? obj (js-null))
        0)
+      ((number? obj)
+       obj)
       (else
        (bigloo-type-error "toNumber" "JsObject" obj))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Nov  3 10:03:42 2021 (serrano)                */
+;*    Last change :  Thu Nov  4 09:58:41 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2366,7 +2366,8 @@
 				     ,(tonumber64 right tr ctx))
 			  lhs (number type) type ctx))
 		      (else
-		       (j2s-cast `(%$$__ ,left ,right %this)
+		       (j2s-cast `(%$$__ ,(tonumber64 left tl ctx)
+				     ,(tonumber64 right tr ctx) %this)
 			  lhs (number type) type ctx))))
 		  (else
 		   (cond
@@ -2380,7 +2381,8 @@
 				     ,(tonumber32 right tr ctx))
 			  lhs (number type) type ctx))
 		      (else
-		       (j2s-cast `(%$$__ ,left ,right %this)
+		       (j2s-cast `(%$$__ ,(tonumber32 left tl ctx)
+				     ,(tonumber32 right tr ctx) %this)
 			  lhs (number type) type ctx))))))))))
 
 ;*---------------------------------------------------------------------*/
