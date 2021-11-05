@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Wed Nov  3 10:50:46 2021 (serrano)                */
+;*    Last change :  Thu Nov  4 18:42:56 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -87,6 +87,9 @@
 	   (bit-orjs::obj ::obj ::obj ::JsGlobalObject)
 	   (bit-xorjs::obj ::obj ::obj ::JsGlobalObject)
 	   (bit-notjs::obj ::obj ::JsGlobalObject)
+
+	   (inline bit-maskxn::bignum ::bignum ::long)
+	   (inline bit-masknn::bignum ::obj ::long ::JsGlobalObject)
 	   
 	   (<js::bool ::obj ::obj ::JsGlobalObject)
 	   (>js::bool ::obj ::obj ::JsGlobalObject)
@@ -663,6 +666,22 @@
 (define (bit-notjs expr %this)
    (let ((num (js-toint32 expr %this)))
       (js-int32-tointeger (bit-nots32 num))))
+
+;*---------------------------------------------------------------------*/
+;*    bit-maskxn ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (bit-maskxn x n)
+   (bit-maskbx x n))
+
+;*---------------------------------------------------------------------*/
+;*    bit-maskxn ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (bit-masknn x n %this)
+   (if (bignum? x)
+       (bit-maskbx x n)
+       (js-raise-type-error %this
+	  "Cannot mix BigInt and other types, use explicit conversions (%)"
+	  x)))
 
 ;*---------------------------------------------------------------------*/
 ;*    <js                                                              */

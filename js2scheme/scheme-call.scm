@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Wed Nov  3 15:13:10 2021 (serrano)                */
+;*    Last change :  Fri Nov  5 07:54:02 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -158,7 +158,7 @@
 	("concat" js-array-maybe-concat any (any . any) %this #t ,j2s-array-plain?)
 	("sort" ,j2s-array-sort array (any) %this #t ,j2s-array-plain?)
 	("sort" ,j2s-array-maybe-sort any (any) %this #t ,j2s-array-plain?)
-	("fill" js-array-fill1 array (any) %this #t ,j2s-array-plain?)
+	("fill" ,j2s-array-fill1 array (any) %this #t ,j2s-array-plain?)
 	("fill" js-array-fill1 jsvector (any) %this #t)
 	("fill" js-array-maybe-fill1 any (any) %this #t ,j2s-array-plain?)
 	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this #t ,j2s-array-plain?)
@@ -185,12 +185,12 @@
 	("map" ,j2s-array-maybe-map any (any any) %this #t ,j2s-array-plain?)
 	("filter" ,j2s-array-filter array (function) %this #t ,j2s-array-plain?)
 	("filter" ,j2s-array-filter array (function any) %this #t ,j2s-array-plain?)
-	("filter" ,j2s-array-maybe-filter any (function) %this #t ,j2s-array-plain?)
-	("filter" ,j2s-array-maybe-filter any (any) %this #t ,j2s-array-plain?)
-	("filter" ,j2s-array-maybe-filter any (function any) %this #t ,j2s-array-plain?)
 	("filter" ,j2s-array-filter array (arrow) %this #t ,j2s-array-plain?)
 	("filter" ,j2s-array-filter array (arrow any) %this #t ,j2s-array-plain?)
+	("filter" ,j2s-array-maybe-filter any (function) %this #t ,j2s-array-plain?)
 	("filter" ,j2s-array-maybe-filter any (arrow) %this #t ,j2s-array-plain?)
+	("filter" ,j2s-array-maybe-filter any (any) %this #t ,j2s-array-plain?)
+	("filter" ,j2s-array-maybe-filter any (function any) %this #t ,j2s-array-plain?)
 	("filter" ,j2s-array-maybe-filter any (arrow any) %this #t ,j2s-array-plain?)
 	("filterMap" ,j2s-array-filter-map array (function) %this #t ,j2s-array-plain?)
 	("filterMap" ,j2s-array-filter-map array (function any) %this #t ,j2s-array-plain?)

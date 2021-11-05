@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Nov  4 09:58:41 2021 (serrano)                */
+;*    Last change :  Thu Nov  4 17:30:28 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2243,147 +2243,157 @@
       ;; the library function will always return an int
       (if (eq? totype 'uint32) 'integer 'number))
    
-   (with-tmp lhs rhs mode return ctx
-      (lambda (left right)
-	 (let ((tl (j2s-type lhs))
-	       (tr (j2s-type rhs)))
-	    (epairify loc
-	       (cond
-		  ((and (eq? tl 'int32) (eq? tr 'int32))
+   (define (%bx lhs rhs tl tr mode return ctx)
+      (let ((bitrsh (j2s-exp2bx rhs mode return ctx))
+	    (left (j2s-scheme lhs mode return ctx)))
+	 (cond
+	    ((and (eq? tl 'bigint) (eq? tr 'bigint))
+	     (if bitrsh
+		 `(bit-maskxn ,left ,bitrsh)
+		 `(remaindenbx ,left ,(j2s-scheme rhs mode return ctx))))
+	    ((eq? tr 'bigint)
+	     (if bitrsh
+		 `(bit-masknn ,left ,bitrsh %this)
+		 `(%$$NX ,left ,(j2s-scheme rhs mode return ctx) %this)))
+	    (else
+	     `(%$$XN ,left ,(j2s-scheme rhs mode return ctx) %this)))))
+
+   (let ((tl (j2s-type lhs))
+	 (tr (j2s-type rhs)))
+      (if (or (eq? tl 'bigint) (eq? tr 'bigint))
+	  (%bx lhs rhs tl tr mode return ctx)
+	  (with-tmp lhs rhs mode return ctx
+	     (lambda (left right)
+		(epairify loc
 		   (cond
-		      ((inrange-positive? rhs)
-		       (j2s-cast `(remainders32 ,left ,right)
-			  rhs 'int32 type ctx))
-		      ((=s32 right #s32:0)
-		       +nan.0)
-		      (else
-		       (remainders32-minus-zero left right
-			  type lhs rhs mode return ctx))))
-		  ((and (eq? tl 'uint32) (eq? tr 'uint32))
-		   (cond
-		      ((inrange-positive? rhs)
-		       (j2s-cast `(remainderu32 ,left ,right)
-			  lhs 'uint32 type ctx))
-		      (else
-		       `(if (=u32 ,right #u32:0)
-			    +nan.0
-			    ,(j2s-cast `(remainderu32 ,left ,right)
-				lhs 'uint32 type ctx)))))
-		  ((and (eq? tl 'integer) (eq? tr 'integer))
-		   (with-tmp lhs rhs mode return ctx
-		      (lambda (left right)
-			 (cond
-			    ((and (j2s-number? right) (= right 0))
-			     +nan.0)
-			    ((m64? (context-conf ctx))
-			     (j2s-cast `(%$$II ,left ,right)
-				#f (number type) type ctx))
-			    ((and (inrange-int32? lhs) (inrange-int32? rhs))
-			     (j2s-cast `(%$$II ,left ,right)
-				#f (number type) type ctx))
-			    (else
-			     (j2s-cast `(%$$NN ,left ,right)
-				#f (number type) type ctx))))))
-		  ((and (eq? tr 'uint32) (inrange-positive? lhs))
-		   (cond
-		      ((inrange-int32? rhs)
+		      ((and (eq? tl 'int32) (eq? tr 'int32))
 		       (cond
-			  ((memq tl '(int32 uint32 bint))
-			   (if (or (inrange-int30? rhs) (inrange-int30? lhs))
-			       (j2s-cast
-				  `(remainderfx ,(asfixnum left tl)
-				      ,(asfixnum right tr))
-				  lhs 'int30 type ctx)
-			       (j2s-cast
-				  `(remainderfx ,(asfixnum left tl)
-				      ,(asfixnum right tr))
-				  lhs 'bint type ctx)))
-			  ((eq? (number type) 'integer)
-			   `(if (fixnum? ,left)
-				,(j2s-cast
-				    `(remainderfx ,left ,(asfixnum right tr))
-				    lhs 'bint type ctx)
-				,(j2s-cast `(%$$NZ ,(tonumber left tl ctx)
-					       ,(tonumber right tr ctx))
-				    lhs (number type) type ctx)))
+			  ((inrange-positive? rhs)
+			   (j2s-cast `(remainders32 ,left ,right)
+			      rhs 'int32 type ctx))
+			  ((=s32 right #s32:0)
+			   +nan.0)
 			  (else
+			   (remainders32-minus-zero left right
+			      type lhs rhs mode return ctx))))
+		      ((and (eq? tl 'uint32) (eq? tr 'uint32))
+		       (cond
+			  ((inrange-positive? rhs)
+			   (j2s-cast `(remainderu32 ,left ,right)
+			      lhs 'uint32 type ctx))
+			  (else
+			   `(if (=u32 ,right #u32:0)
+				+nan.0
+				,(j2s-cast `(remainderu32 ,left ,right)
+				    lhs 'uint32 type ctx)))))
+		      ((and (eq? tl 'integer) (eq? tr 'integer))
+		       (with-tmp lhs rhs mode return ctx
+			  (lambda (left right)
+			     (cond
+				((and (j2s-number? right) (= right 0))
+				 +nan.0)
+				((m64? (context-conf ctx))
+				 (j2s-cast `(%$$II ,left ,right)
+				    #f (number type) type ctx))
+				((and (inrange-int32? lhs) (inrange-int32? rhs))
+				 (j2s-cast `(%$$II ,left ,right)
+				    #f (number type) type ctx))
+				(else
+				 (j2s-cast `(%$$NN ,left ,right)
+				    #f (number type) type ctx))))))
+		      ((and (eq? tr 'uint32) (inrange-positive? lhs))
+		       (cond
+			  ((inrange-int32? rhs)
+			   (cond
+			      ((memq tl '(int32 uint32 bint))
+			       (if (or (inrange-int30? rhs) (inrange-int30? lhs))
+				   (j2s-cast
+				      `(remainderfx ,(asfixnum left tl)
+					  ,(asfixnum right tr))
+				      lhs 'int30 type ctx)
+				   (j2s-cast
+				      `(remainderfx ,(asfixnum left tl)
+					  ,(asfixnum right tr))
+				      lhs 'bint type ctx)))
+			      ((eq? (number type) 'integer)
+			       `(if (fixnum? ,left)
+				    ,(j2s-cast
+					`(remainderfx ,left ,(asfixnum right tr))
+					lhs 'bint type ctx)
+				    ,(j2s-cast `(%$$NZ ,(tonumber left tl ctx)
+						   ,(tonumber right tr ctx))
+					lhs (number type) type ctx)))
+			      (else
+			       `(if (fixnum? ,left)
+				    ,(j2s-cast `(remainderfx ,left
+						   ,(asfixnum right tr))
+					lhs 'bint type ctx)
+				    ,(j2s-cast `(%$$NZ ,(tonumber left tl ctx)
+						   ,(tonumber right tr ctx))
+					lhs (number type) type ctx)))))
+			  ((m64? (context-conf ctx))
 			   `(if (fixnum? ,left)
 				,(j2s-cast `(remainderfx ,left
 					       ,(asfixnum right tr))
-				    lhs 'bint type ctx)
-				,(j2s-cast `(%$$NZ ,(tonumber left tl ctx)
-					       ,(tonumber right tr ctx))
-				    lhs (number type) type ctx)))))
+				    lhs (number type) type ctx)
+				,(j2s-cast `(%$$NZ ,(tonumber64 left tl ctx)
+					       ,(tonumber64 right tr ctx))
+				    lhs (number type) type ctx)))
+			  (else
+			   (j2s-cast `(%$$NZ ,(tonumber32 left tl ctx)
+					 ,(tonumber32 right tr ctx))
+			      lhs (number type) type ctx))))
+		      ((eq? type 'real)
+		       (cond
+			  ((and (eq? tl 'real) (eq? tr 'real))
+			   `(%$$FF ,left ,right))
+			  ((eq? tl 'real)
+			   (cond
+			      ((and (m64? (context-conf ctx)) (eq? tr 'int53))
+			       `(%$$FF ,left (fixnum->flonum ,right)))
+			      (else
+			       `(%$$FN ,left ,(tonumber right tr ctx)))))
+			  ((eq? tr 'real)
+			   (cond
+			      ((and (m64? (context-conf ctx)) (eq? tl 'int53))
+			       `(%$$FF (fixnum->flonum ,left) ,right))
+			      (else
+			       `(%$$NF ,(tonumber left tl ctx) ,right))))
+			  (else
+			   (j2s-cast `(%$$NN ,(tonumber left tl ctx)
+					 ,(tonumber right tr ctx))
+			      lhs (number type) type ctx))))
 		      ((m64? (context-conf ctx))
-		       `(if (fixnum? ,left)
-			    ,(j2s-cast `(remainderfx ,left
-					   ,(asfixnum right tr))
-				lhs (number type) type ctx)
-			    ,(j2s-cast `(%$$NZ ,(tonumber64 left tl ctx)
-					   ,(tonumber64 right tr ctx))
-				lhs (number type) type ctx)))
-		      (else
-		       (j2s-cast `(%$$NZ ,(tonumber32 left tl ctx)
-				     ,(tonumber32 right tr ctx))
-			  lhs (number type) type ctx))))
-		  ((eq? tr 'bigint)
-		   (if (eq? tl 'bigint)
-		       (j2s-cast `(remainderbx ,left ,right)
-			  lhs (number type) type ctx)
-		       (j2s-cast `(%$$NX ,left ,right %this)
-			  lhs (number type) type ctx)))
-		  ((eq? tl 'bigint)
-		   (j2s-cast `(%$$XN ,left ,right %this)
-		      lhs (number type) type ctx))
-		  ((eq? type 'real)
-		   (cond
-		      ((and (eq? tl 'real) (eq? tr 'real))
-		       `(%$$FF ,left ,right))
-		      ((eq? tl 'real)
 		       (cond
-			  ((and (m64? (context-conf ctx)) (eq? tr 'int53))
-			   `(%$$FF ,left (fixnum->flonum ,right)))
+			  ((and (j2s-number? right) (not (= right 0)))
+			   (j2s-cast `(%$$NZ ,(tonumber64 left tl ctx)
+					 ,(tonumber64 right tr ctx))
+			      lhs (number type) type ctx))
+			  ((and (type-integer? tl) (type-integer? tr))
+			   (j2s-cast `(%$$II ,(tonumber64 left tl ctx)
+					 ,(tonumber64 right tr ctx))
+			      lhs (number type) type ctx))
 			  (else
-			   `(%$$FN ,left ,(tonumber right tr ctx)))))
-		      ((eq? tr 'real)
+			   (j2s-cast `(%$$__ ,(tonumber64 left tl ctx)
+					 ,(tonumber64 right tr ctx) %this)
+			      lhs (number type) type ctx))))
+		      (else
 		       (cond
-			  ((and (m64? (context-conf ctx)) (eq? tl 'int53))
-			   `(%$$FF (fixnum->flonum ,left) ,right))
+			  ((and (j2s-number? right) (not (= right 0)))
+			   (j2s-cast `(%$$NZ ,(tonumber32 left tl ctx)
+					 ,(tonumber32 right tr ctx))
+			      lhs (number type) type ctx))
+			  ((and (type-integer? tl) (type-integer? tr)
+				(inrange-int32? lhs) (inrange-int32? rhs))
+			   (j2s-cast `(%$$II ,(tonumber32 left tl ctx)
+					 ,(tonumber32 right tr ctx))
+			      lhs (number type) type ctx))
 			  (else
-			   `(%$$NF ,(tonumber left tl ctx) ,right))))
-		      (else
-		       (j2s-cast `(%$$NN ,(tonumber left tl ctx)
-				     ,(tonumber right tr ctx))
-			  lhs (number type) type ctx))))
-		  ((m64? (context-conf ctx))
-		   (cond
-		      ((and (j2s-number? right) (not (= right 0)))
-		       (j2s-cast `(%$$NZ ,(tonumber64 left tl ctx)
-				     ,(tonumber64 right tr ctx))
-			  lhs (number type) type ctx))
-		      ((and (type-integer? tl) (type-integer? tr))
-		       (j2s-cast `(%$$II ,(tonumber64 left tl ctx)
-				     ,(tonumber64 right tr ctx))
-			  lhs (number type) type ctx))
-		      (else
-		       (j2s-cast `(%$$__ ,(tonumber64 left tl ctx)
-				     ,(tonumber64 right tr ctx) %this)
-			  lhs (number type) type ctx))))
-		  (else
-		   (cond
-		      ((and (j2s-number? right) (not (= right 0)))
-		       (j2s-cast `(%$$NZ ,(tonumber32 left tl ctx)
-				     ,(tonumber32 right tr ctx))
-			  lhs (number type) type ctx))
-		      ((and (type-integer? tl) (type-integer? tr)
-			    (inrange-int32? lhs) (inrange-int32? rhs))
-		       (j2s-cast `(%$$II ,(tonumber32 left tl ctx)
-				     ,(tonumber32 right tr ctx))
-			  lhs (number type) type ctx))
-		      (else
-		       (j2s-cast `(%$$__ ,(tonumber32 left tl ctx)
-				     ,(tonumber32 right tr ctx) %this)
-			  lhs (number type) type ctx))))))))))
+			   (j2s-cast `(%$$__ ,(tonumber32 left tl ctx)
+					 ,(tonumber32 right tr ctx) %this)
+			      lhs (number type) type ctx)))))))))))
+
+
 
 ;*---------------------------------------------------------------------*/
 ;*    remainders32-minus-zero ...                                      */

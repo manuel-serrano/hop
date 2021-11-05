@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Oct 31 09:31:12 2021 (serrano)                */
+;*    Last change :  Fri Nov  5 07:54:22 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -55,6 +55,7 @@
 	   (j2s-array-maybe-concat0 obj args mode return conf)
 	   (j2s-array-concat1 obj args mode return conf)
 	   (j2s-array-maybe-concat1 obj args mode return conf)
+	   (j2s-array-fill1 obj args mode return conf)
 	   (j2s-array-sort obj args mode return conf)
 	   (j2s-array-maybe-sort obj args mode return conf)
 	   (j2s-array-reduce obj args mode return conf)
@@ -753,8 +754,16 @@
 ;*    j2s-array-map ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (j2s-array-map obj args mode return ctx)
-   (j2s-array-iterator 'js-array-map
-      obj args mode return ctx))
+   (let ((r (j2s-array-iterator 'js-array-map
+	       obj args mode return ctx)))
+      (match-case r
+	 ((js-array-map-procedure
+	     (js-array-filter-procedure ?obj ?procf ?thisargs ?%this ?cachef)
+	     ?procm ?thisargs ?%this ?cachem)
+	  `(js-array-filter-map2-procedure ,obj ,procf ,procm
+	      ,thisargs ,%this ,cachef ,cachem))
+	 (else
+	  r))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-maybe-map ...                                          */
@@ -900,6 +909,22 @@
 	 (else
 	  `(js-array-maybe-concat1 ,(j2s-scheme obj mode return ctx)
 	      ,arg ,@(cdr args))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-fill1 ...                                              */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-fill1 obj args mode return ctx)
+   (let ((obj (j2s-scheme obj mode return ctx))
+	 (arg (j2s-scheme (car args) mode return ctx)))
+      (match-case obj
+	 ((js-array-construct-alloc/length ?%this ?len)
+	  `(js-array-construct-alloc-init/length ,%this ,len ,arg))
+	 ((js-array-construct-alloc ?%this ?len)
+	  `(js-array-construct-alloc-init/length ,%this ,len ,arg))
+	 ((js-array-construct-alloc-small ?%this ?len)
+	  `(js-array-construct-alloc-init/length ,%this (uint32->fixnum ,len) ,arg))
+	 (else
+	  `(js-array-fill1 ,obj ,arg ,@(cdr args))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    array-sort ...                                                   */

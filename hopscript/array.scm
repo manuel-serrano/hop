@@ -120,6 +120,7 @@
 	   (js-array-construct1::JsArray ::JsGlobalObject ::JsArray ::obj)
 	   (js-array-construct-alloc ::JsGlobalObject ::obj)
 	   (js-array-construct-alloc/length ::JsGlobalObject ::obj)
+	   (js-array-construct-alloc-init/length ::JsGlobalObject ::obj ::obj)
 	   (inline js-array-construct-alloc-small::JsArray ::JsGlobalObject ::uint32)
 	   (inline js-array-construct-alloc-small-sans-init::JsArray ::JsGlobalObject ::uint32)
 	   (inline js-array-construct-alloc/lengthu32::JsArray ::JsGlobalObject ::uint32)
@@ -164,6 +165,7 @@
 	   (js-array-maybe-filter-map this proc thisarg %this cache)
 	   (js-array-filter-map-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-filter-map-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
+	   (js-array-filter-map2-procedure ::JsArray procf::procedure procm::procedure ::obj ::JsGlobalObject ::obj ::obj)
 	   (js-array-flatmap ::JsArray ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-maybe-flatmap ::obj ::obj ::obj ::JsGlobalObject ::obj)
 	   (js-array-flatmap-procedure ::JsArray proc::procedure ::obj ::JsGlobalObject ::obj)
@@ -302,6 +304,8 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (DEFAULT-EMPTY-ARRAY-SIZE) 4)
 
+(define-inline (LARGE-ARRAY-SIZE::uint32)
+   #u32:8192)
 (define-inline (MAX-EXPANDABLE-ARRAY-SIZE::uint32)
    (bit-lshu32 #u32:1 20))
 (define-inline (MAX-EXPANDABLE-ARRAY-SIZE/2::uint32)
@@ -2417,6 +2421,19 @@
        (js-array-construct/length %this (js-array-alloc %this) len)))
        
 ;*---------------------------------------------------------------------*/
+;*    js-array-construct-alloc-init/length ...                         */
+;*---------------------------------------------------------------------*/
+(define (js-array-construct-alloc-init/length %this::JsGlobalObject len init)
+   (if (and (>=fx len 0) (<fx len 1024))
+       (let ((v (js-array-construct-alloc-small-sans-init-len %this (fixnum->uint32 len))))
+	  (with-access::JsArray v (vec)
+	     ($vector-fill! vec 0 len init))
+	  v)
+       (let ((v (js-array-construct/length %this (js-array-alloc %this) len)))
+	  (js-array-prototype-fill1 v init %this)
+	  v)))
+       
+;*---------------------------------------------------------------------*/
 ;*    js-array-construct-alloc ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-array-construct-alloc %this::JsGlobalObject item-or-len)
@@ -3034,6 +3051,12 @@
 			 "cannot assign to read only property \"~a\" array" idx)
 		      #f)))))))
 
+   (define (expand-len len idx)
+      (let ((candidate (if (>fx len (uint32->fixnum (LARGE-ARRAY-SIZE)))
+			   (+fx len (/fx len 4))
+			   (*fx len 2))))
+	 (max candidate (+fx (uint32->fixnum idx) 1))))
+   
    (with-access::JsArray o (vec ilen length)
       (let ((idx::uint32 (js-toindex p)))
 	 (cond
@@ -3085,13 +3108,14 @@
 		  (array-extensible? o)
 		  ;; MS: 21 aug 2020
 		  ;; used to be (js-object-mode-arrayinline? o) only
-		  (or (js-object-mode-arrayinline? o) (js-object-mode-arrayholey? o)))
+		  (or (js-object-mode-arrayinline? o)
+		      (js-object-mode-arrayholey? o)))
 	     (js-object-mode-hasnumeralprop-set! o #t)
 	     ;; extend the inlined vector
 	     (with-access::JsArray o (length vec ilen)
 		;; use max when vector-length == 0
 		(let* ((len (vector-length vec))
-		       (nlen (max (*fx len 2) (+fx (uint32->fixnum idx) 1)))
+		       (nlen (expand-len len idx))
 		       (nvec (copy-vector-fill! vec nlen (js-absent))))
 		   (cond-expand (profile (profile-vector-extension nlen len)))
 		   (gc-cleanup-inline-vector! o vec)
@@ -3110,10 +3134,11 @@
 		  (js-object-mode-arrayinline? o)
 		  (<u32 idx (MAX-EXPANDABLE-ARRAY-SIZE)))
 	     (let* ((len (vector-length vec))
-		    (nlen (max (*fx len 2) (+fx (uint32->fixnum idx) 1)))
+		    (nlen (expand-len len idx))
 		    (nvec (copy-vector-fill! vec nlen (js-absent))))
 		 (cond-expand (profile (profile-vector-extension nlen len)))
 		 (with-access::JsArray o (vec)
+		    (gc-cleanup-inline-vector! o vec)
 		    (set! vec nvec))
 		 (js-array-put! o p v throw %this)))
 	    ((and (js-isindex? idx) (js-vector? o))
@@ -4305,11 +4330,13 @@
       (let ((final length))
 	 (cond
 	    ((js-object-mode-arrayinline? this)
-	     (if (=u32 ilen length)
-		 ($vector-fill! vec 0 (uint32->fixnum length) value)
-		 (begin
-		    (set! vec (make-vector (uint32->fixnum length) value))
-		    (set! ilen length))))
+	     (cond
+		((<=u32 (fixnum->uint32 (vector-length vec)) final)
+		 (set! ilen final)
+		 ($vector-fill! vec 0 (uint32->fixnum final) value))
+		(else
+		 (set! vec (make-vector (uint32->fixnum final) value))
+		 (set! ilen final))))
 	    (else
 	     (let loop ((i #u32:0))
 		(if (<u32 i final)
@@ -4318,7 +4345,7 @@
 			   (vector-set! vec (uint32->fixnum i) value)    
 			   (js-put! this i value #f %this))
 		       (loop (+u32 i #u32:1)))
-		    (when (>u32 i length)
+		    (when (>u32 i final)
 		       (js-put-length! this (js-uint32-tointeger i) #f #f %this))))))
 	 this)))
 
@@ -5381,6 +5408,80 @@
 		(js-get-name/cache this (& "filterMap") #f %this
 		   (or cache (js-pcache-ref js-array-pcache 12)))
 		this jsproc thisarg)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototype-filter-map2-procedure ...                     */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-filter-map2-procedure this::JsArray procf::procedure procm thisarg %this)
+   
+   (define (array-filter-map/array o len procf procm t i::uint32 j::uint32 a %this)
+      (let loop ((i i)
+		 (j::uint32 j))
+	 (if (<u32 i len)
+	     (let ((pv (js-get-property-value o o i %this)))
+		(if (js-absent? pv)
+		    (with-access::JsArray a (ilen)
+		       (when (js-object-mode-arrayinline? a)
+			  (js-object-mode-arrayinline-set! a #f)
+			  (if (>u32 i 0)
+			      (set! ilen (-u32 i #u32:1))
+			      (set! ilen #u32:0)))
+		       (loop (+u32 i 1) j))
+		    (let* ((v pv)
+			   (nj (js-toname j %this))
+			   (r (procf t v (js-uint32-tointeger i) o %this)))
+		       (if (js-totest r)
+			   (let* ((r (procm t v (js-uint32-tointeger i) o %this))
+				  (newdesc (instantiate::JsValueDescriptor
+					      (name nj)
+					      (value r)
+					      (writable #t)
+					      (enumerable #t)
+					      (configurable #t))))
+			      ;; 6
+			      (js-define-own-property a nj newdesc #f %this)
+			      (loop (+u32 i 1) (+u32 j 1)))
+			   (loop (+u32 i 1) j)))))
+	     a)))
+   
+   (define (vector-filter-map o len::uint32 procf procm t i::uint32 %this)
+      (with-access::JsArray o (vec ilen length)
+	 (let ((v (js-create-vector (vector-length vec))))
+	    (let loop ((i i)
+		       (j 0))
+	       (cond
+		  ((>=u32 i ilen)
+		   (let ((a (js-species->jsarray this v %this)))
+		      (with-access::JsArray a (length ilen)
+			 (set! length j)
+			 (set! ilen j)
+			 (if (js-object-mode-arrayinline? o)
+			     a
+			     (array-filter-map/array o len procf procm t i j a %this)))))
+		  (else
+		   (let* ((val (vector-ref vec (uint32->fixnum i)))
+			  (res (procf t val (js-uint32-tointeger i) o %this)))
+		      (cond
+			 ((js-totest res)
+			  (let ((res (procm t val (js-uint32-tointeger i) o %this)))
+			     (vector-set! v (uint32->fixnum j) res))
+			  (loop (+u32 i 1) (+u32 j 1)))
+			 (else
+			  (loop (+u32 i 1) j))))))))))
+   
+   (with-access::JsArray this (length)
+      (vector-filter-map this length procf procm thisarg #u32:0 %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-filter-map2-procedure ...                               */
+;*---------------------------------------------------------------------*/
+(define (js-array-filter-map2-procedure this::JsArray procf procm thisarg %this cachef cachem)
+   (if (js-object-mode-plain? this)
+       (js-array-prototype-filter-map2-procedure this procf procm thisarg %this)
+       ;; proc is a stack allocated procedure
+       (js-array-map-procedure 
+	  (js-array-filter-procedure this procf thisarg %this cachef)
+	  procm thisarg %this cachem)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-prototype-push ...                                      */

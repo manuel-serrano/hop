@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Oct 29 10:43:09 2021 (serrano)                */
+;*    Last change :  Fri Nov  5 08:34:04 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -1114,7 +1114,8 @@
 	     ,(j2s->list fun nstack)
 	     ,@(dump-cache this)
 	     ,@(if (pair? thisargs)
-		   `(:thisargs ,@(j2s->list* thisargs nstack)) '())
+		   `(:thisargs ,@(j2s->list* thisargs nstack))
+		   '())
 	     ,@(j2s->list* args nstack)))))
 		  
 ;*---------------------------------------------------------------------*/
