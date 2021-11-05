@@ -3823,7 +3823,7 @@
 (define (js-array-concat-apply this::JsArray %this)
    
    (define (alllen this)
-      (if (js-array-inlined? this)
+      (if (js-object-mode-arrayinline? this)
 	  (with-access::JsArray this (ilen vec)
 	     (let ((vec vec))
 		(let loop ((alen #u32:0)
@@ -3832,7 +3832,7 @@
 		       (uint32->fixnum alen)
 		       (let ((a (vector-ref vec i)))
 			  (if (js-array? a)
-			      (if (js-array-inlined? a)
+			      (if (js-object-mode-arrayinline? a)
 				  (loop (+u32 alen (js-array-length a))
 				     (-fx i 1))
 				  -1)
@@ -3922,7 +3922,7 @@
 ;*    argument.                                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-concat-add this arg %this cache)
-   (if (js-array-inlined? this)
+   (if (js-object-mode-arrayinline? this)
        (with-access::JsArray this ((tvec vec) (tilen ilen))
 	  (let* ((ailen #u32:1)
 		 (new-len (+fx/overflow (uint32->fixnum tilen)
@@ -4014,7 +4014,8 @@
 		  (set! ilen (uint32->fixnum (+u32 tilen ailen))))
 	       arr))))
    
-   (if (and (js-array-inlined? this) (js-array-inlined? arg))
+   (if (and (js-object-mode-arrayinline? this)
+	    (js-object-mode-arrayinline? arg))
        (array-concat1 this arg %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call1 %this
@@ -4038,7 +4039,7 @@
 	       (set! length ailen))
 	    arr)))
 
-   (if (js-array-inlined? arg)
+   (if (js-object-mode-arrayinline? arg)
        (array-concat1-empty arg %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (let ((this (js-empty-vector->jsarray %this)))
@@ -4064,7 +4065,7 @@
 	       (set! ilen (+u32 #u32:1 ailen)))
 	    arr)))
    
-   (if (js-array-inlined? arg)
+   (if (js-object-mode-arrayinline? arg)
        (array-concat1-create el arg %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (let ((this (js-vector->jsarray (vector el) %this)))
