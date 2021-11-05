@@ -3953,8 +3953,8 @@
 	       (vector-copy! vdst 0 avec 0 (uint32->fixnum ailen))
 	       (set! ilen ailen))
 	    arr)))
-   
-   (if (js-array-inlined? this)
+
+   (if (js-object-mode-arrayinline? this)
        (array-concat0 this %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call0 %this
