@@ -865,9 +865,10 @@
 ;*    js-array-index-noinl-ref ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-array-index-noinl-ref arr::JsArray idx::uint32 %this)
-   (with-access::JsArray arr (vec ilen)
+   (with-access::JsArray arr (vec ilen length)
       (cond
 	 ((and (js-object-mode-arrayholey? arr)
+	       (<u32 idx length)
 	       (<u32 idx (fixnum->uint32 (vector-length vec))))
 	  (let ((v (vector-ref vec (uint32->fixnum idx))))
 	     (if (js-absent? v)
