@@ -733,7 +733,7 @@
 			    (js-undefined))
 		       (let ((tmp (gensym 'o)))
 			  `(let ((,tmp ,obj))
-			      (loop tmp)))))))))
+			      ,(loop tmp)))))))))
    
    (let ((propstr (match-case prop
 		     ((& ?str . ?-) str)
@@ -898,7 +898,7 @@
 			       ,obj))
 		       (let ((tmp (gensym 'o)))
 			  `(let ((,tmp ,obj))
-			      (loop tmp)))))))))
+			      ,(loop tmp)))))))))
    
    (if (boxed-type? tyval)
        (if (number? val)
