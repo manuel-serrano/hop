@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Nov  5 08:34:04 2021 (serrano)                */
+;*    Last change :  Mon Nov  8 07:14:59 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -751,8 +751,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SString stack)
    (let ((nstack (check-stack this stack)))
-      (with-access::J2SString this (val private)
+      (with-access::J2SString this (val private loc)
 	 `(,(string->symbol (typeof this))
+	   ,@(dump-loc loc)
 	   ,@(if private `(:private #t) '())
 	     ,(format "~a" val)))))
 

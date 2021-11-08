@@ -667,6 +667,16 @@
 (define (js-pcache cache)
    `(js-pcache-ref %pcache ,cache))
 
+
+;*---------------------------------------------------------------------*/
+;*    record-private-field? ...                                        */
+;*---------------------------------------------------------------------*/
+(define (record-private-field? field)
+   (with-access::J2SString field (private)
+      (if (isa? private J2SClassElement)
+	  (with-access::J2SClassElement private (clazz)
+	     (isa? clazz J2SRecord)))))      
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-get ...                                                      */
 ;*---------------------------------------------------------------------*/
@@ -709,6 +719,21 @@
 	      `(js-array-ref ,obj ,prop %this))
 	     (else
 	      `(js-array-noindex-ref ,obj ,prop %this))))))
+
+   (define (record-private-access obj field)
+      (with-access::J2SString field (private val)
+	 (if (isa? private J2SClassElement)
+	     (with-access::J2SClassElement private (clazz)
+		(let loop ((obj obj))
+		   (if (symbol? obj)
+		       `(if (,(class-predicate-id clazz) ,obj)
+			    (js-object-inline-ref ,obj
+			       ,(j2s-class-instance-get-property-index
+				   clazz val))
+			    (js-undefined))
+		       (let ((tmp (gensym 'o)))
+			  `(let ((,tmp ,obj))
+			      (loop tmp)))))))))
    
    (let ((propstr (match-case prop
 		     ((& ?str . ?-) str)
@@ -766,6 +791,8 @@
 		     ((type-object? tyobj)
 		      `(js-get-jsobject-name/cache ,obj ,prop #f %this
 			  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
+		     ((record-private-field? field)
+		      (record-private-access obj field))
 		     (else
 		      `(js-get-name/cache ,obj ,prop #f %this
 			  ,(js-pcache cache) ,(loc->point loc) ',cspecs)))))
@@ -855,6 +882,24 @@
 	  (type-number? typrop)
 	  (not (memq typrop '(string object)))))
 
+   (define (record-private-assig obj field val loc)
+      (with-access::J2SString field (private (str val))
+	 (if (isa? private J2SClassElement)
+	     (with-access::J2SClassElement private (clazz)
+		(let loop ((obj obj))
+		   (if (symbol? obj)
+		       `(if (,(class-predicate-id clazz) ,obj)
+			    (js-object-inline-set! ,obj
+			       ,(j2s-class-instance-get-property-index
+				   clazz str)
+			       ,val)
+			    (js-raise-type-error/loc %this ',loc
+			       ,(format "[[PUT]], sealed object ~a" str)
+			       ,obj))
+		       (let ((tmp (gensym 'o)))
+			  `(let ((,tmp ,obj))
+			      (loop tmp)))))))))
+   
    (if (boxed-type? tyval)
        (if (number? val)
 	   `(begin
@@ -924,27 +969,28 @@
 	     ((eq? tyobj 'arguments)
 	      `(js-put! ,obj ,prop ,val ,mode %this))
 	     ((and cache cspecs)
-	      (when (and (string? propstr) (>fx (string-length propstr) 0) (char=? (string-ref propstr 0) #\#))
-		 (when (isa? tyobj J2SRecord)
-		    (tprint "PAS BON: " loc " " obj " " (type->sexp tyobj) " " propstr " " (typeof propstr))))
 	      (cond
 		 ((string? propstr)
-		  (if (string=? propstr "length")
+		  (cond
+		     ((string=? propstr "length")
 		      `(js-put-length! ,obj ,val
-			  ,mode ,(js-pcache cache) %this)
-		      (if (type-object? tyobj)
-			  `(js-put-jsobject-name/cache! ,obj ,prop
-			      ,val
-			      ,mode %this
-			      ,(js-pcache cache)
-			      ,(loc->point loc) ',cspecs
-			      ,cachefun)
-			  `(js-put-name/cache! ,obj ,prop
-			      ,val
-			      ,mode %this
-			      ,(js-pcache cache) ,(loc->point loc)
-			      ',cspecs
-			      ,cachefun))))
+			  ,mode ,(js-pcache cache) %this))
+		     ((type-object? tyobj)
+		      `(js-put-jsobject-name/cache! ,obj ,prop
+			  ,val
+			  ,mode %this
+			  ,(js-pcache cache)
+			  ,(loc->point loc) ',cspecs
+			  ,cachefun))
+		     ((record-private-field? field)
+		      (record-private-assig obj field val loc))
+		     (else
+		      `(js-put-name/cache! ,obj ,prop
+			  ,val
+			  ,mode %this
+			  ,(js-pcache cache) ,(loc->point loc)
+			  ',cspecs
+			  ,cachefun))))
 		 ((memq typrop '(int32 uint32 int53 integer))
 		  `(maybe-array-set! ,obj ,(box prop typrop ctx)
 		      ,val ,mode %this))
