@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Nov  5 07:54:02 2021 (serrano)                */
+;*    Last change :  Mon Nov  8 07:41:37 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -232,6 +232,8 @@
 	("some" js-array-maybe-some any (any (any #unspecified)) %this #t ,j2s-array-plain?)
 	("reduce" ,j2s-array-reduce array (any any) %this #t ,j2s-array-plain?)
 	("reduce" ,j2s-array-maybe-reduce any (any any) %this #t ,j2s-array-plain?)
+	("copyWithin" ,j2s-array-copywithin array (any any any) %this #t ,j2s-array-plain?)
+	("copyWithin" js-array-maybe-copywithin any (any any any) %this #t ,j2s-array-plain?)
 	;; functions
 	("apply",j2s-apply any (any any) %this #t)
 	("call" ,j2s-call0 any (any) %this #t)

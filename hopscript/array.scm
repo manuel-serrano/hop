@@ -201,6 +201,9 @@
 	   (js-array-sort-procedure this::JsArray proc::procedure ::JsGlobalObject cache)
 	   (js-array-maybe-sort-procedure this::obj proc::procedure ::JsGlobalObject cache)
 	   (js-array-maybe-some ::obj ::obj ::obj ::JsGlobalObject ::obj)
+	   (js-array-copywithin ::JsArray ::obj ::obj ::obj ::JsGlobalObject cache)
+	   (js-array-copywithin-fixnum ::JsArray ::obj ::obj ::obj ::JsGlobalObject cache)
+	   (js-array-maybe-copywithin ::JsArray ::obj ::obj ::obj ::JsGlobalObject cache)
 
 	   (js-iterator-to-array ::obj ::long ::JsGlobalObject)
 	   (js-call-with-stack-vector ::vector ::procedure)
@@ -1219,58 +1222,7 @@
    ;; copyWithin
    ;; https://www.ecma-international.org/ecma-262/7.0/#sec-array.prototype.copywithin
    (define (array-prototype-copywithin this::obj target start end)
-      (let* ((o (js-toobject %this this))
-	     (len (js-get-length o %this))
-	     (relativetarget (js-tointeger target %this))
-	     (to (if (< relativetarget 0)
-		     (max (+ len relativetarget) 0)
-		     (min relativetarget len)))
-	     (relativestart (js-tointeger start %this))
-	     (from (if (< relativestart 0)
-		       (max (+ len relativestart) 0)
-		       (min relativestart len)))
-	     (relativeend (if (eq? end (js-undefined))
-			      len
-			      (js-tointeger end %this)))
-	     (final (if (< relativeend 0)
-			(max (+ len relativeend) 0)
-			(min relativeend len)))
-	     (count (min (- final from) (- len to)))
-	     (direction 1))
-	 ;; step 10
-	 (when (and (< from to) (< to (+ from count)))
-	    (set! direction -1)
-	    (set! to (+ from count))
-	    (set! from (- to target)))
-	 (if (and (js-array? o) (js-array-inlined? o))
-	     (with-access::JsArray o (vec)
-		(let loop ((from (->fixnum from))
-			   (to (->fixnum to))
-			   (count count))
-		   (when (>fx count 0)
-		      ;; step 12.d
-		      (let ((fromval (vector-ref vec from)))
-			 (vector-set! vec to fromval))
-		      ;; step 12.3
-		      (loop (+fx from direction)
-			 (+fx to direction)
-			 (-fx count 1)))))
-	     (let loop ((from from)
-			(to to)
-			(count count))
-		(when (>fx count 0)
-		   (let ((toi (js-tointeger to %this))
-			 (fromi (js-tointeger from %this)))
-		      (if (js-has-property o fromi %this)
-			  ;; step 12.d
-			  (let ((fromval (js-get o fromi %this)))
-			     (js-put! o toi fromval #f %this))
-			  ;; step 12.3
-			  (js-delete! o toi #t %this))
-		      (loop (+fx from direction)
-			 (+fx to direction)
-			 (-fx count 1))))))
-	 o))
+      (js-array-prototype-copywithin this target start end %this))
 
    (js-bind! %this js-array-prototype (& "copyWithin")
       :value (js-make-function %this array-prototype-copywithin
@@ -6500,7 +6452,7 @@
 ;*    js-array-maybe-reduce ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-array-maybe-reduce this::obj fn init %this cache)
-   (if (js-array? this)
+   (if (and (js-array? this) (js-object-mode-plain? this))
        (js-array-prototype-reduce this fn init %this)
        (with-access::JsGlobalObject %this (js-array-pcache)
 	  (js-call2 %this
@@ -6684,7 +6636,179 @@
 		this search))
 	    (else
 	     (loop (js-toobject %this this)))))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    js-array-inline-copywithin ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-array-inline-copywithin o::JsArray target start end %this)
+   (let* ((len (js-uint32-tointeger (js-array-length o)))
+	  (relativetarget (js-tointeger target %this))
+	  (to (if (< relativetarget 0)
+		  (max (+ len relativetarget) 0)
+		  (min relativetarget len)))
+	  (relativestart (js-tointeger start %this))
+	  (from (if (< relativestart 0)
+		    (max (+ len relativestart) 0)
+		    (min relativestart len)))
+	  (relativeend (if (eq? end (js-undefined))
+			   len
+			   (js-tointeger end %this)))
+	  (final (if (< relativeend 0)
+		     (max (+ len relativeend) 0)
+		     (min relativeend len)))
+	  (count (min (- final from) (- len to)))
+	  (direction 1))
+      ;; step 10
+      (when (and (< from to) (< to (+ from count)))
+	 (set! direction -1)
+	 (set! to (+ from count))
+	 (set! from (- to target)))
+      (with-access::JsArray o (vec)
+	 (let loop ((from (->fixnum from))
+		    (to (->fixnum to))
+		    (count count))
+	    (when (>fx count 0)
+	       ;; step 12.d
+	       (let ((fromval (vector-ref vec from)))
+		  (vector-set! vec to fromval))
+	       ;; step 12.3
+	       (loop (+fx from direction)
+		  (+fx to direction)
+		  (-fx count 1)))))
+      o))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-inline-copywithin-fixnum ...                            */
+;*---------------------------------------------------------------------*/
+(define (js-array-inline-copywithin-fixnum o::JsArray target start end %this)
+   (with-access::JsArray o (length)
+      (let* ((len (uint32->fixnum length))
+	     (relativetarget target)
+	     (to (if (<fx relativetarget 0)
+		     (maxfx (+fx len relativetarget) 0)
+		     (minfx relativetarget len)))
+	     (relativestart start)
+	     (from (if (<fx relativestart 0)
+		       (maxfx (+fx len relativestart) 0)
+		       (min relativestart len)))
+	     (relativeend end)
+	     (final (if (<fx relativeend 0)
+			(maxfx (+fx len relativeend) 0)
+			(minfx relativeend len)))
+	     (count (min (-fx final from) (-fx len to)))
+	     (direction 1))
+	 ;; step 10
+	 (when (and (<fx from to) (<fx to (+fx from count)))
+	    (set! direction -1)
+	    (set! to (+fx from count))
+	    (set! from (-fx to target)))
+	 (with-access::JsArray o (vec)
+	    (let loop ((from from)
+		       (to to)
+		       (count count))
+	       (when (>fx count 0)
+		  ;; step 12.d
+		  (let ((fromval (vector-ref vec from)))
+		     (vector-set! vec to fromval))
+		  ;; step 12.3
+		  (loop (+fx from direction)
+		     (+fx to direction)
+		     (-fx count 1)))))
+	 o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-prototytpe-copywithin ...                               */
+;*---------------------------------------------------------------------*/
+(define (js-array-prototype-copywithin this::obj target start end %this)
+   (let* ((o (js-toobject %this this))
+	  (len (js-get-length o %this))
+	  (relativetarget (js-tointeger target %this))
+	  (to (if (< relativetarget 0)
+		  (max (+ len relativetarget) 0)
+		  (min relativetarget len)))
+	  (relativestart (js-tointeger start %this))
+	  (from (if (< relativestart 0)
+		    (max (+ len relativestart) 0)
+		    (min relativestart len)))
+	  (relativeend (if (eq? end (js-undefined))
+			   len
+			   (js-tointeger end %this)))
+	  (final (if (< relativeend 0)
+		     (max (+ len relativeend) 0)
+		     (min relativeend len)))
+	  (count (min (- final from) (- len to)))
+	  (direction 1))
+      ;; step 10
+      (when (and (< from to) (< to (+ from count)))
+	 (set! direction -1)
+	 (set! to (+ from count))
+	 (set! from (- to target)))
+      (if (and (js-array? o) (js-array-inlined? o))
+	  (with-access::JsArray o (vec)
+	     (let loop ((from (->fixnum from))
+			(to (->fixnum to))
+			(count count))
+		(when (>fx count 0)
+		   ;; step 12.d
+		   (let ((fromval (vector-ref vec from)))
+		      (vector-set! vec to fromval))
+		   ;; step 12.3
+		   (loop (+fx from direction)
+		      (+fx to direction)
+		      (-fx count 1)))))
+	  (let loop ((from from)
+		     (to to)
+		     (count count))
+	     (when (>fx count 0)
+		(let ((toi (js-tointeger to %this))
+		      (fromi (js-tointeger from %this)))
+		   (if (js-has-property o fromi %this)
+		       ;; step 12.d
+		       (let ((fromval (js-get o fromi %this)))
+			  (js-put! o toi fromval #f %this))
+		       ;; step 12.3
+		       (js-delete! o toi #t %this))
+		   (loop (+fx from direction)
+		      (+fx to direction)
+		      (-fx count 1))))))
+      o))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-copywithin ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-array-copywithin o::JsArray target start end %this cache)
+   (if (js-object-mode-plain? o)
+       (js-array-inline-copywithin o target start end %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call3 %this
+	     (js-get-jsobject-name/cache o (& "copywithin") #f %this
+		(or cache (js-pcache-ref js-array-pcache 10)))
+	     o target start end ))))
+;
+;*---------------------------------------------------------------------*/
+;*    js-array-copywithin-fixnum ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-array-copywithin-fixnum o::JsArray target start end %this cache)
+   (if (js-object-mode-plain? o)
+       (js-array-inline-copywithin-fixnum o target start end %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call3 %this
+	     (js-get-jsobject-name/cache o (& "copywithin") #f %this
+		(or cache (js-pcache-ref js-array-pcache 10)))
+	     o target start end ))))
+;
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-copywithin ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-copywithin o target start end %this cache)
+   (if (and (js-array? o) (js-object-mode-plain? o))
+       (js-array-inline-copywithin o target start end %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call3 %this
+	     (js-get-jsobject-name/cache o (& "copywithin") #f %this
+		(or cache (js-pcache-ref js-array-pcache 10)))
+	     o target start end ))))
+;
 ;*---------------------------------------------------------------------*/
 ;*    js-iterator-to-array ...                                         */
 ;*    -------------------------------------------------------------    */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Nov  5 07:54:22 2021 (serrano)                */
+;*    Last change :  Mon Nov  8 07:43:16 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -60,7 +60,8 @@
 	   (j2s-array-maybe-sort obj args mode return conf)
 	   (j2s-array-reduce obj args mode return conf)
 	   (j2s-array-maybe-reduce obj args mode return conf)
-	   (j2s-array-maybe-splice2 ::J2SCall obj args mode return conf)))
+	   (j2s-array-maybe-splice2 ::J2SCall obj args mode return conf)
+	   (j2s-array-copywithin obj args mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-builtin-method ...                                     */
@@ -1039,5 +1040,35 @@
 	,(j2s-scheme (cadr args) mode return ctx)
 	,(j2s-scheme (caddr args) mode return ctx)
 	,(j2s-scheme (cadddr args) mode return ctx))))
-       
 
+;*---------------------------------------------------------------------*/
+;*    j2s-array-copywithin ...                                         */
+;*---------------------------------------------------------------------*/
+(define (j2s-array-copywithin obj args mode return ctx)
+   
+   (define (fix? val)
+      (cond
+	 ((isa? val J2SCast)
+	  (with-access::J2SCast val (expr)
+	     (fix? expr)))
+	 ((isa? val J2SParen)
+	  (with-access::J2SParen val (expr)
+	     (fix? expr)))
+	 ((eq? (j2s-type val) 'int32)
+	  (inrange-int32? val))
+	 ((memq (j2s-type val) '(uint32 int53))
+	  (or (inrange-int32? val)) (m64? (context-conf ctx)))
+	 (else
+	  #f)))
+   
+   (let ((fix* (and (fix? (car args)) (fix? (cadr args)) (fix? (caddr args)))))
+      `(,(if fix*
+	     'js-array-copywithin-fixnum
+	     'js-array-copywithin)
+	,(j2s-scheme obj mode return ctx)
+	,(j2s-scheme (car args) mode return ctx)
+	,(j2s-scheme (cadr args) mode return ctx)
+	,(j2s-scheme (caddr args) mode return ctx)
+	,(j2s-scheme (cadddr args) mode return ctx)
+	,@(cddddr args))))
+       
