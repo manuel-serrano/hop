@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Nov  4 09:44:19 2021 (serrano)                */
+;*    Last change :  Tue Nov  9 12:58:36 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1775,7 +1775,10 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.5         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-totest obj)
-   (if (boolean? obj) obj (js-toboolean-no-boolean obj)))
+   (cond
+      ((boolean? obj) obj)
+      ((js-null-or-undefined? obj) #f)
+      (else (js-toboolean-no-boolean obj))))
       
 ;*---------------------------------------------------------------------*/
 ;*    js-totest-likely-object ...                                      */
@@ -1795,8 +1798,7 @@
    (cond
       ((js-null-or-undefined? obj) #f)
       ((boolean? obj) obj)
-      ((js-jsstring? obj) (js-jsstring-toboolean obj))
-      ((object? obj) #t)
+      ((object? obj) (if (js-jsstring? obj) (js-jsstring-toboolean obj) #t))
       ((fixnum? obj) (not (=fx obj 0)))
       ((flonum? obj) (not (or (=fl obj 0.0) (nanfl? obj))))
       ((bignum? obj) (not (=bx obj #z0)))
@@ -1809,12 +1811,11 @@
 ;*---------------------------------------------------------------------*/
 (define (js-toboolean-no-boolean obj)
    (cond
-      ((js-null-or-undefined? obj) #f)
+      ((object? obj) (if (js-jsstring? obj) (js-jsstring-toboolean obj) #t))
       ((fixnum? obj) (not (=fx obj 0)))
-      ((js-jsstring? obj) (js-jsstring-toboolean obj))
-      ((object? obj) #t)
       ((flonum? obj) (not (or (=fl obj 0.0) (nanfl? obj))))
       ((bignum? obj) (not (=bx obj #z0)))
+      ((js-null-or-undefined? obj) #f)
       (else #t)))
 
 ;*---------------------------------------------------------------------*/
