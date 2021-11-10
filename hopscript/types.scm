@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Oct 27 07:21:23 2021 (serrano)                */
+;*    Last change :  Wed Nov 10 09:20:42 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -496,6 +496,8 @@
 	      #!key (%id (gencmapid))
 	      single ctor
 	      (methods '#()) (props '#()))
+	   
+	   (js-jsconstructmap-size::long ::JsConstructMap)
 
 	   (inline js-object-default-mode::uint32)
 	   (inline js-globalobject-default-mode::uint32)
@@ -778,7 +780,14 @@
       (methods methods)
       (props props)
       (ctor ctor)))
-   
+
+;*---------------------------------------------------------------------*/
+;*    js-jsconstructmap-size ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-jsconstructmap-size::long this::JsConstructMap)
+   (with-access::JsConstructMap this (props)
+      (vector-length props)))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-object-default-mode ...                                       */
 ;*---------------------------------------------------------------------*/

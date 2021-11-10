@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Fri Oct 15 13:59:41 2021 (serrano)                */
+;*    Last change :  Wed Nov 10 07:33:54 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -113,26 +113,29 @@
 			  (iota (length args)))))
 	     `(let ,(map list names args)
 		 ,(proc names)))))
-   
-   `(cond
-       ((isa? ,ecla JsClass)
-	,(let-args (map (lambda (a) (j2s-scheme a mode return ctx)) args)
-	    (lambda (args)
-	       `(with-access::JsClass ,ecla (constructor)
-		  (if (js-function-new-target? ,ecla)
-		      (js-call-procedure constructor ,eobj new-target ,@args)
-		      (js-call-procedure constructor ,eobj ,@args))))))
-       ((isa? ,ecla JsFunction)
-	,(let ((res (gensym 'res)))
-	   `(begin
-	       (js-new-target-push! %this new-target)
-	       (let ((,res ,(j2s-scheme-call-fun-constructor ecla eobj args loc mode return ctx)))
-		  (js-new-target-pop! %this)
-		  ,res))))
-       (else
-	(js-raise-type-error/loc %this ',loc
-	   "Class extends value \"~a\" is not a constructor or null"
-	   ,ecla))))
+
+   `(let loop ((,ecla ,ecla))
+       (cond
+	  ((isa? ,ecla JsClass)
+	   ,(let-args (map (lambda (a) (j2s-scheme a mode return ctx)) args)
+	       (lambda (args)
+		  `(with-access::JsClass ,ecla (constructor)
+		      (if (js-function-new-target? ,ecla)
+			  (js-call-procedure constructor ,eobj new-target ,@args)
+			  (js-call-procedure constructor ,eobj ,@args))))))
+	  ((isa? ,ecla JsFunction)
+	   ,(let ((res (gensym 'res)))
+	       `(begin
+		   (js-new-target-push! %this new-target)
+		   (let ((,res ,(j2s-scheme-call-fun-constructor ecla eobj args loc mode return ctx)))
+		      (js-new-target-pop! %this)
+		      ,res))))
+	  ((js-proxy-function? ,ecla)
+	   (loop (js-proxy-target ,ecla)))
+	  (else
+	   (js-raise-type-error/loc %this ',loc
+	      "Class extends value \"~a\" is not a constructor or null"
+	      ,ecla)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-class-new ...                                         */
@@ -303,6 +306,7 @@
 	 (let* ((clazz (class-class-id this))
 		(ctorf (class-constructor-id this))
 		(proto (class-prototype-id this))
+		(constrmp (gensym 'cmap))
 		(alloc (cond
 			  ((not super)
 			   'js-object-alloc/new-target)
@@ -310,25 +314,31 @@
 			   `(with-access::JsFunction ,super (alloc) alloc))
 			  (else
 			   `(lambda (%this ctor)
-			       (with-access::JsFunction ,super (alloc)
-				  (let ((o (alloc %this ctor)))
-				     (js-new-target-push! %this ctor)
-				     o))))))
+			       (let loop ((super ,super))
+				  (if (js-proxy-function? super)
+				      (loop (js-proxy-target super))
+				      (with-access::JsFunction super (alloc)
+					 (let ((o (alloc %this ctor)))
+					    (js-new-target-push! %this ctor)
+					    o))))))))
 		(constrmap (if cmap
 			       (j2s-scheme cmap mode return ctx)
 			       '(with-access::JsGlobalObject %this (js-initial-cmap)
 				 js-initial-cmap)))
 		(constrsz (cond
+			     (super
+			      `(js-jsconstructmap-size ,constrmp))
 			     (cmap
 			      constrsize)
-			     (super
-			      `(with-access::JsFunction ,super (constrsize)
-				  constrsize))
 			     (else
 			      1))))
 	    (j2s-scheme-class-put-info! this :scm-cache-constructor constructor)
 	    `(letrec* ((,ctorf ,constructor)
 		       (,proto ,(class-prototype this super))
+		       (,constrmp ,(if super
+				       `(js-function-maybe-extend-cmap
+					   %super ,constrmap)
+				       constrmap))
 		       (,clazz (js-make-function %this ,function
 				  ,aritye
 				  (js-function-info
@@ -345,7 +355,7 @@
 						    js-function-prototype)
 						  super)
 				  :constrsize ,constrsz
-				  :constrmap ,constrmap))
+				  :constrmap ,constrmp))
 		       ,@(if name `((,(j2s-class-id this ctx) ,clazz)) '()))
 		,@(filter-map (lambda (m) (bind-static this clazz m)) elements)
 		,@(filter-map (lambda (m) (bind-prototype this proto m)) elements)
@@ -363,7 +373,7 @@
 		 ,(proc '%super)))
 	    ((j2s-class-super-val this)
 	     `(let* ((%super ,(j2s-scheme super mode return ctx))
-		     (%super-prototype (js-function-prototype-get %super %super
+		     (%super-prototype (js-function-maybe-prototype-get %super %super
 					  ,(& "prototype" (context-program ctx))
 					  %this)))
 		 ,(proc '%super)))

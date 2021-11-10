@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Oct 29 09:41:00 2021 (serrano)                */
+;*    Last change :  Wed Nov 10 07:34:04 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -81,6 +81,7 @@
 	      ::procedure ::int loc)
 	   
 	   (inline js-function-prototype-get ::obj ::JsFunction ::obj ::JsGlobalObject)
+	   (js-function-maybe-prototype-get ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-function-setup-prototype!::JsObject ::JsGlobalObject ::JsFunction)
 	   
 	   (js-function-apply-vec ::JsGlobalObject ::JsProcedure ::obj ::vector ::uint32)
@@ -92,7 +93,8 @@
 	   (js-function-maybe-call0 ::JsGlobalObject ::obj ::obj ::obj)
 	   (js-function-maybe-call1 ::JsGlobalObject ::obj ::obj ::obj ::obj)
 	   (js-function-maybe-call2 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj)
-	   (js-function-maybe-call3 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj)))
+	   (js-function-maybe-call3 ::JsGlobalObject ::obj ::obj ::obj ::obj ::obj ::obj)
+	   (js-function-maybe-extend-cmap::JsConstructMap fun cmap::JsConstructMap)))
 
 ;*---------------------------------------------------------------------*/
 ;*    &begin!                                                          */
@@ -886,6 +888,20 @@
       prototype))
 
 ;*---------------------------------------------------------------------*/
+;*    js-function-maybe-prototype-get ...                              */
+;*---------------------------------------------------------------------*/
+(define (js-function-maybe-prototype-get obj owner propname %this)
+   (let loop ((owner owner))
+      (cond
+	 ((js-function? owner)
+	  (js-function-prototype-get obj owner propname %this))
+	 ((js-proxy-function? owner)
+	  (loop (js-proxy-target owner)))
+	 (else
+	  (js-raise-type-error %this "prototype: not a function ~s"
+	     (js-typeof owner %this))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-function-prototype-set ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-function-prototype-set obj v owner::JsFunction propname %this)
@@ -1555,6 +1571,25 @@
        (error "js-function-arity"
 	  "illegal arity" (vector req opl protocol)))))
 
+;*---------------------------------------------------------------------*/
+;*    js-function-maybe-extend-cmap ...                                */
+;*    -------------------------------------------------------------    */
+;*    This function is used when declaring a class to merge to         */
+;*    cmap of the super class and the newly defined class. This is     */
+;*    require to handle correctly super class private fields.          */
+;*    See js2scheme/scheme-class.scm                                   */
+;*---------------------------------------------------------------------*/
+(define (js-function-maybe-extend-cmap::JsConstructMap this cmap::JsConstructMap)
+   (let loop ((this this))
+      (cond
+	 ((js-function? this)
+	  (with-access::JsFunction this (constrmap)
+	     (merge-cmap! cmap constrmap)))
+	 ((js-proxy-function? this)
+	  (loop (js-proxy-target this)))
+	 (else
+	  cmap))))
+	 
 ;*---------------------------------------------------------------------*/
 ;*    &end!                                                            */
 ;*---------------------------------------------------------------------*/

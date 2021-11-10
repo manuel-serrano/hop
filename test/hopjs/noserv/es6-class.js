@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/trashcan/es6-class.js                                    */
+/*    serrano/prgm/project/hop/hop/test/hopjs/noserv/es6-class.js      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep  2 01:49:55 2017                          */
-/*    Last change :  Sat Sep 18 06:50:39 2021 (serrano)                */
+/*    Last change :  Wed Nov 10 09:39:14 2021 (serrano)                */
 /*    Copyright   :  2017-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 classes                                   */
@@ -997,3 +997,68 @@ assert.ok( kangaxB(), "kangaxB" );
 
 console.log( "   kangaxC()" );
 assert.ok( kangaxC(), "kangaxC" );
+
+/*---------------------------------------------------------------------*/
+/*    private fields                                                   */
+/*---------------------------------------------------------------------*/
+function priv(useproxy) {
+   const classHandler = {
+      construct(target, args) {
+      	 return new target(...args);
+      }
+   }
+
+   function registerClass(c) {
+      if (useproxy) {
+      	 return new Proxy(c, classHandler);
+      } else {
+	 return c;
+      }
+   }
+
+   const ClassWithPrivateField = registerClass(class a {
+     name;					       
+     #privateField;
+     constructor() {
+     	this.name = "a";
+    	this.#privateField = 42;
+    	if (new.target === ClassWithPrivateField) {
+       	   Object.seal(this);
+    	}
+     }
+     toString() {
+     	if (!(this instanceof ClassWithPrivateField)) {
+	   throw "type error";
+     	}
+     	return `#privateField=${this.#privateField}`;
+     }});
+
+   const SubClass = registerClass(class b extends ClassWithPrivateField {
+      #subPrivateField;
+      constructor() {
+    	 super();
+     	 this.name = "b";
+    	 if (new.target === SubClass) Object.seal(this);
+    	 this.#subPrivateField = 23;
+      }
+      toString() {
+     	 if (!(this instanceof SubClass)) {
+	    throw "type error";
+     	 }
+     	 return `#subPrivateField=${this.#subPrivateField} ${super.toString()}`;
+      }});
+   
+   const insta = new ClassWithPrivateField();
+   const instb = new SubClass();
+   
+   return (insta.toString() === "#privateField=42")
+      && (instb.toString() === "#subPrivateField=23 #privateField=42")
+      && (insta.name === "a")
+      && (instb.name === "b");
+}
+
+console.log("   private fields");
+assert.ok(priv(false), "priv(false)");
+assert.ok(priv(true), "priv(true)");
+
+

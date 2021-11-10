@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Nov  9 12:58:36 2021 (serrano)                */
+;*    Last change :  Wed Nov 10 09:51:14 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1664,23 +1664,25 @@
 ;*    js-ordinary-instanceof? ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-ordinary-instanceof? %this v f)
-   (with-access::JsFunction f (prototype)
-      (let ((o prototype))
-	 (let loop ((v v))
-	    (let ((nv (js-object-proto v)))
-	       (cond
-		  ((eq? o nv)
-		   #t)
-		  ((eq? nv (js-null))
+   (if (js-proxy-function? f)
+       (js-ordinary-instanceof? %this v (js-proxy-target f))
+       (with-access::JsFunction f (prototype)
+	  (let ((o prototype))
+	     (let loop ((v v))
+		(let ((nv (js-object-proto v)))
 		   (cond
-		      ((eq? (object-class v) JsProxy)
-		       (loop (js-proxy-target v)))
-		      ((not (js-object? o))
-		       (js-raise-type-error %this "instanceof: no prototype ~s" v))
+		      ((eq? o nv)
+		       #t)
+		      ((eq? nv (js-null))
+		       (cond
+			  ((eq? (object-class v) JsProxy)
+			   (loop (js-proxy-target v)))
+			  ((not (js-object? o))
+			   (js-raise-type-error %this "instanceof: no prototype ~s" v))
+			  (else
+			   #f)))
 		      (else
-		       #f)))
-		  (else
-		   (loop nv))))))))
+		       (loop nv)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-instanceof? ...                                      */

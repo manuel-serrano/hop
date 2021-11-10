@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Oct 26 08:46:12 2021 (serrano)                */
+;*    Last change :  Wed Nov 10 08:50:21 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -66,6 +66,7 @@
 	   
 	   (inline property-name::JsStringLiteral ::struct)
 
+	   (merge-cmap!::JsConstructMap ::JsConstructMap ::JsConstructMap)
 	   (js-names->cmap::JsConstructMap ::vector ::bool)
 	   (js-strings->cmap::JsConstructMap ::vector)
 	   (js-object-literal-init! ::JsObject)
@@ -1034,6 +1035,54 @@
 	    (lock (make-spinlock "JsConstructMap"))
 	    (props newprops)
 	    (methods newmethods)))))
+
+;*---------------------------------------------------------------------*/
+;*    merge-cmap! ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    Add all the properties of src in target if not alread there.     */
+;*    This function is invoked by JS-FUNCTION-MAYBE-EXTEND-CMAP to     */
+;*    merge the cmap of a class and the cmap of its super class.       */
+;*---------------------------------------------------------------------*/
+(define (merge-cmap!::JsConstructMap target::JsConstructMap src::JsConstructMap)
+   
+   (define (memq-prop vec prop)
+      (let ((name (prop-name prop)))
+	 (let loop ((i (-fx (vector-length vec) 1)))
+	    (cond
+	       ((=fx i -1) #f)
+	       ((eq? (prop-name (vector-ref vec i)) name) #t)
+	       (else (loop (-fx i 1)))))))
+   
+   (with-access::JsConstructMap target ((tprops props) (tmets methods))
+      (with-access::JsConstructMap src ((sprops props) (smets methods))
+	 (let ((nprops '())
+	       (nmets '()))
+	    (let loop ((i (-fx (vector-length sprops) 1)))
+	       (when (>=fx i 0)
+		  (let ((prop (vector-ref sprops i))
+			(met (vector-ref smets i)))
+		     (unless (memq-prop tprops prop)
+			(set! nprops (cons prop nprops))
+			(set! nmets (cons met nmets))))
+		  (loop (-fx i 1))))
+	    (if (pair? nprops)
+		(let* ((nlen (length nprops))
+		       (rprops (make-vector (+fx (vector-length tprops) nlen)))
+		       (rmets (make-vector (+fx (vector-length tprops) nlen))))
+		   (vector-copy! rprops nlen tprops 0 (vector-length tprops))
+		   (vector-copy! rmets nlen tprops 0 (vector-length tmets))
+		   (let loop ((i (-fx nlen 1))
+			      (nprops nprops))
+		      (if (null? nprops)
+			  (begin
+			     (set! tprops rprops)
+			     (set! tmets rmets)
+			     target)
+			  (begin
+			     (vector-set! rprops i (car nprops))
+			     (vector-set! rmets i (car nmets))
+			     (loop (-fx i 1) (cdr nprops))))))
+		target)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cmap-find-transition ...                                         */
