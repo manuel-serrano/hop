@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Fri Oct  1 16:44:44 2021 (serrano)                */
+;*    Last change :  Thu Nov 11 14:48:47 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -286,7 +286,10 @@
 		   ((isa? new J2SExpr)
 		    (alpha new))
 		   (else
-		    (error "alpha" "new must be a decl or an expr" new))))
+		    (error "alpha"
+		       (format "ref: new must be a decl or an expr (~a)"
+			  (typeof new))
+		       new))))
 	     (duplicate::J2SRef this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -311,7 +314,10 @@
 		   ((isa? new J2SExpr)
 		    (alpha new))
 		   (else
-		    (error "alpha" "new must be a decl or an expr" new))))
+		    (error "alpha"
+		       (format "this: new must be a decl or an expr (~a)"
+			  (typeof new))
+		       new))))
 	     (duplicate::J2SThis this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -336,7 +342,10 @@
 		   ((isa? new J2SExpr)
 		    (alpha new))
 		   (else
-		    (error "alpha" "new must be a decl or an expr" new))))
+		    (error "alpha"
+		       (format "super: new must be a decl or an expr (~a)"
+			  (typeof new))
+		       new))))
 	     (duplicate::J2SSuper this)))))
 
 ;*---------------------------------------------------------------------*/

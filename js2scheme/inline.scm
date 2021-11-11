@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Oct 14 17:18:35 2021 (serrano)                */
+;*    Last change :  Thu Nov 11 14:59:58 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -1419,10 +1419,30 @@
 			      #f limit
 			      (cons val stack) pmethods ingen prgm conf)))))))))
 
-   (define (inline-method obj::J2SRef field callee args cache loc kont)
-      (if (isa? (protoinfo-owner callee) J2SRecord)
-	  (inline-record-method obj field callee args cache loc kont)
-	  (inline-object-method obj field callee args cache loc kont)))
+   (define (inline-expr-method obj::J2SExpr field callee args cache loc kont)
+      (let ((val (protoinfo-method callee)))
+	 (with-access::J2SFun val (body thisp params (floc loc))
+	    (let ((vals (inline-args params args
+			   #f limit stack pmethods ingen prgm conf loc))
+		  (decl (J2SLetOpt '(ref) (gensym 'thisXXX) obj)))
+	       (cache-check cache loc (protoinfo-owner callee) obj field kont
+		  (LetBlock floc (cons decl (filter (lambda (b) (isa? b J2SDecl)) vals))
+		     (J2SMetaInl (cons val stack)
+			(config-get conf :optim 0)
+			(inline!
+			   (j2s-alpha body
+			      (cons thisp params) (cons decl vals))
+			   #f limit
+			   (cons val stack) pmethods ingen prgm conf))))))))
+
+   (define (inline-method obj field callee args cache loc kont)
+      (cond
+	 ((not (isa? obj J2SRef))
+	  (inline-expr-method obj field callee args cache loc kont))
+	 ((isa? (protoinfo-owner callee) J2SRecord)
+	  (inline-record-method obj field callee args cache loc kont))
+	 (else
+	  (inline-object-method obj field callee args cache loc kont))))
    
    (define (inline-object-method-call fun self args)
       (with-access::J2SAccess fun (field cspecs)
@@ -1441,12 +1461,6 @@
 			 (let loop ((cs caches))
 			    (if (null? cs)
 				(J2SNop)
-;* 			     (J2SSeq*                                  */
-;* 				(map (lambda (c)                       */
-;* 					(J2SStmtExpr                   */
-;* 					   (J2SCacheUpdate 'proto-reset */
-;* 					      (car c) self)))           */
-;* 				   caches))                            */
 				(let ((v (get-svar (cdar cs))))
 				   ;; see the compilation of 
 				   (J2SIf
@@ -1458,10 +1472,7 @@
 						    (if (eq? c (car cs))
 							(J2SCacheUpdate 'proto-method
 							   (car c) self)
-							(J2SUndefined)
-;* 						     (J2SCacheUpdate 'proto-reset */
-;* 							(car c) self)   */
-							)))
+							(J2SUndefined))))
 					    caches))
 				      (loop (cdr cs)))))))
 		      (J2SReturn #t (J2SRef r))))
