@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 20 07:58:36 2021                          */
-;*    Last change :  Mon Sep 20 08:12:26 2021 (serrano)                */
+;*    Last change :  Thu Nov 11 13:17:20 2021 (serrano)                */
 ;*    Copyright   :  2021 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Loop constant lifting                                            */
@@ -53,24 +53,24 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-loopcnst-program! this::J2SProgram conf)
    (with-access::J2SProgram this (headers decls nodes)
-      (for-each (lambda (n) (loopcnst! n conf)) decls)
-      (for-each (lambda (n) (loopcnst! n conf)) nodes)
+      (for-each (lambda (n) (loopcnst! n '() conf)) decls)
+      (for-each (lambda (n) (loopcnst! n '() conf)) nodes)
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    loopcnst! ::J2SNode ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (loopcnst! this::J2SNode conf)
+(define-walk-method (loopcnst! this::J2SNode env conf)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    loopcnst! ::J2SFor ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (loopcnst! this::J2SFor conf)
+(define-walk-method (loopcnst! this::J2SFor env conf)
    (with-access::J2SFor this (init test incr body loc)
-      (let ((cnsts (append (collect-constants* test '())
-		      (collect-constants* body '())
-		      (collect-constants* incr '()))))
+      (let ((cnsts (append (collect-constants* test env)
+		      (collect-constants* body env)
+		      (collect-constants* incr env))))
 	 (if (null? cnsts)
 	     (call-default-walker)
 	     (let ((decls (map (lambda (c)
@@ -84,10 +84,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    loopcnst! ::J2SWhile ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (loopcnst! this::J2SWhile conf)
+(define-walk-method (loopcnst! this::J2SWhile env conf)
    (with-access::J2SWhile this (test body loc)
-      (let ((cnsts (append (collect-constants* test '())
-		      (collect-constants* body '()))))
+      (let ((cnsts (append (collect-constants* test env)
+		      (collect-constants* body env))))
 	 (if (null? cnsts)
 	     (call-default-walker)
 	     (let ((decls (map (lambda (c)
@@ -98,19 +98,20 @@
 		(J2SLetRecBlock #f decls this))))))
 
 ;*---------------------------------------------------------------------*/
+;*    loopcnst! ::J2SLetBlock ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (loopcnst! this::J2SLetBlock env conf)
+   (with-access::J2SLetBlock this (decls nodes)
+      (let ((nenv (append decls env)))
+	 (set! decls (map (lambda (d) (loopcnst! d nenv conf)) decls))
+	 (set! nodes (map (lambda (n) (loopcnst! n nenv conf)) nodes))
+	 this)))
+
+;*---------------------------------------------------------------------*/
 ;*    collect-constants* ::J2SNode ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-constants* this::J2SNode env)
    (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    collect-constants* ::J2SLetBlock ...                             */
-;*---------------------------------------------------------------------*/
-(define-walk-method (collect-constants* this::J2SLetBlock env)
-   (with-access::J2SLetBlock this (decls nodes)
-      (let ((nenv (append decls env)))
-	 (append (append-map (lambda (d) (collect-constants* d nenv)) decls)
-	    (append-map (lambda (n) (collect-constants* n nenv)) nodes)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-constants* ::J2SExpr ...                                 */
@@ -186,7 +187,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (constant? this::J2SRef env)
    (with-access::J2SRef this (decl)
-      (unless (memq decl env)
+      (when (memq decl env)
 	 (with-access::J2SDecl decl (escape)
 	    (unless escape
 	       (not (decl-usage-has? decl '(assig))))))))
