@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/hop/js2scheme/range.scm                 */
+;*    /tmp/JSRECORDS/local.icfp21/hop/js2scheme/range.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Jan  4 05:46:44 2020 (serrano)                */
+;*    Last change :  Thu Nov 11 14:06:17 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1719,7 +1719,8 @@
 			  (>= (interval-min intl) 0))
 		     ;; a negative divider may produce -0.0
 		     (expr-range-add! this env fix intr)
-		     (expr-range-add! this env fix *infinity-intv*))))
+		     (expr-range-add! this env fix *infinity-intv*))
+		 (return #unspecified env)))
 	    ((<<)
 	     (expr-range-add! this env fix (interval-shiftl intl intr)))
 	    ((>>)
