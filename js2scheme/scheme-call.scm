@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon Nov  8 07:41:37 2021 (serrano)                */
+;*    Last change :  Thu Nov 11 16:22:25 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -1612,10 +1612,6 @@
 
    (define (call-scheme-this-arity this fun thisargs args)
       (let ((len (length args)))
-	 `(js-calln-procedure
-	     ,(j2s-scheme fun mode return ctx)
-	     ,@(j2s-scheme thisargs mode return ctx)
-	     (list ,@(map (lambda (a) (j2s-scheme a mode return ctx)) args)))
 	 `(,(string->symbol (format "js-call~a-procedure" len))
 	   ,(j2s-scheme fun mode return ctx)
 	   ,@(j2s-scheme thisargs mode return ctx)

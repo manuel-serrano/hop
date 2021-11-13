@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue Nov  2 16:15:36 2021 (serrano)                */
+;*    Last change :  Sat Nov 13 09:03:06 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Bigint functions.           */
@@ -69,24 +69,24 @@
 		(when (=fx (length args) 2)
 		   (cond
 		      ((eq? (car args) 'uint32)
-		       `(js-bigint-asintn
+		       `(js-bigint-asuintn
 			   ,(uint32->fixnum
 			       (j2s-scheme (car args) mode return conf))
 			   ,(j2s-scheme (cadr args) mode return conf)
 			   %this))
 		      ((eq? (car args) 'int32)
-		       `(js-bigint-asintn
+		       `(js-bigint-asuintn
 			   ,(int32->fixnum
 			       (j2s-scheme (car args) mode return conf))
 			   ,(j2s-scheme (cadr args) mode return conf)
 			   %this))
 		      ((eq? (car args) 'int53)
-		       `(js-bigint-asintn
+		       `(js-bigint-asuintn
 			   ,(j2s-scheme (car args) mode return conf)
 			   ,(j2s-scheme (cadr args) mode return conf)
 			   %this))
 		      (else
-		       `(js-bigint-asintn
+		       `(js-bigint-asuintn
 			   ,(j2s-scheme (car args) mode return conf)
 			   ,(j2s-scheme (cadr args) mode return conf)
 			   %this)))))

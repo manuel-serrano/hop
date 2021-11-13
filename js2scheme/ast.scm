@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Oct 22 07:12:37 2021 (serrano)                */
+;*    Last change :  Sat Nov 13 09:09:50 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -620,6 +620,7 @@
 	   (j2s-export?::bool ::J2SDecl)
 	   (j2s-global?::bool ::J2SDecl)
 	   (j2s-let-opt?::bool ::J2SDecl)
+	   (j2s-let-class?::bool ::J2SDecl)
 	   (j2s-new-target?::bool ::J2SNode)
 	   (j2s-decl-class?::bool ::J2SDecl)
 	   (j2s-decl-record?::bool ::J2SDecl)
@@ -714,6 +715,14 @@
 	 ((let-opt let-forin) #t)
 	 ((let var param class record export) #f)
 	 (else (error "j2s-let-opt?" "wrong binder" (vector loc id binder))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-let-class? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-let-class? this)
+   (when (and (j2s-let? this) (isa? this J2SDeclClass))
+      (with-access::J2SDeclClass this (val)
+	 (isa? val J2SClass))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-new-target? ...                                              */

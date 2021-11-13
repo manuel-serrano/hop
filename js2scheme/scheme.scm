@@ -279,11 +279,6 @@
 	    `(vector-set! %evars ,index
 		,(j2s-scheme val mode return ctx)))))
 
-   (define (j2s-let-class? this)
-      (when (and (j2s-let? this) (isa? this J2SDeclClass))
-	 (with-access::J2SDeclClass this (val)
-	    (isa? val J2SClass))))
-   
    (cond
       ((j2s-export? this) (j2s-scheme-export this))
       ((j2s-param? this) (call-next-method))
@@ -1022,7 +1017,7 @@
 	  ;; inner letblock, create a let block
 	  (let* ((ds (append-map (lambda (d)
 				    (cond
-				       ((j2s-let-opt? d)
+				       ((or (j2s-let-opt? d) (j2s-let-class? d))
 					(j2s-let-decl-inner d
 					   mode return ctx
 					   (null? (cdr decls))

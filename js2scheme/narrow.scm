@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Wed Sep 22 16:01:20 2021 (serrano)                */
+;*    Last change :  Sat Nov 13 09:22:20 2021 (serrano)                */
 ;*    Copyright   :  2015-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -187,7 +187,7 @@
 ;*    j2s-narrow-fun! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-narrow-fun! o::J2SFun)
-   (with-access::J2SFun o (body loc)
+   (with-access::J2SFun o (body loc name)
       ;; find the variables used but not initialized
       (when #f 
 	 (j2s-narrow-fun/w-init! o))
@@ -242,7 +242,6 @@
 	 (j2s-find-init-blocks rhs block fun)
 	 (when (isa? lhs J2SRef)
 	    (with-access::J2SRef lhs (decl)
-	       ;;(unless (or (j2s-let? decl) (j2s-param? decl))
 	       (unless (j2s-param? decl)
 		  ;; skip let/const declarations
 		  (with-access::J2SDecl decl (%info %%dump binder id)
@@ -303,6 +302,12 @@
       (with-access::J2SBlock this (nodes)
 	 (for-each (lambda (b) (j2s-mark-narrowable b nblocks inloop fun yield))
 	    nodes))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-mark-narrowable ::J2SLetBlock ...                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-mark-narrowable this::J2SLetBlock blocks inloop fun yield)
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-mark-narrowable ::J2SRef ...                                 */
@@ -496,7 +501,7 @@
 (define-walk-method (j2s-lift-inits! this::J2SLetBlock)
    
    (define (lift? node::J2SNode decls)
-      ;; lift everything init that is not an initialization of one decls
+      ;; lift every init that is not an initialization of one decls
       (or (not (isa? node J2SStmtExpr))
 	  (with-access::J2SStmtExpr node (expr)
 	     (or (not (isa? expr J2SInit))

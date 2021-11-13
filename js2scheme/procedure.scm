@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 27 07:35:02 2019                          */
-;*    Last change :  Fri Oct 29 09:32:50 2021 (serrano)                */
+;*    Last change :  Thu Nov 11 16:26:07 2021 (serrano)                */
 ;*    Copyright   :  2019-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Procedure optimization.                                          */
@@ -681,6 +681,22 @@
 		   (and (=fx (length params) arity) (not vararg))))
 	 funs))
    
+   (define (missing-arities? funs::pair arity)
+      ;; all arities are the same but arguments are missing
+      (when (or (null? (cdr funs))
+		(apply =
+		   (map (lambda (f)
+			   (with-access::J2SFun f (params vararg)
+			      (if vararg -1 (length params))))
+		      funs)))
+	 (with-access::J2SFun (car funs) (params vararg)
+	    (and (<fx arity (length params)) (not vararg)))))
+
+   (define (extra-args args fun)
+      (with-access::J2SFun fun (params loc)
+	 (map (lambda (i) (J2SUndefined))
+	    (iota (-fx (length params) (length args))))))
+   
    (with-access::J2SCall this (fun loc protocol args)
       (with-access::J2SExpr fun (%info)
 	 (cond
@@ -689,13 +705,22 @@
 		(cond
 		   ((node-procedure-info-optimizablep %info)
 		    (let ((nprotocol
-			     (if (correct-arities? (node-procedure-info-vals %info)
+			     (cond
+				((correct-arities? (node-procedure-info-vals %info)
 				    (length args))
-				 'procedure-this
-				 'procedure-this-arity)))
-		    (if (eq? protocol 'spread)
-			(set! protocol (symbol-append 'spread- nprotocol))
-			(set! protocol nprotocol))))
+				 'procedure-this)
+				((missing-arities? (node-procedure-info-vals %info)
+				    (length args))
+				 (set! args
+				    (append args
+				       (extra-args args
+					  (car (node-procedure-info-vals %info)))))
+				 'procedure-this)
+				(else
+				 'procedure-this-arity))))
+		       (if (eq? protocol 'spread)
+			   (set! protocol (symbol-append 'spread- nprotocol))
+			   (set! protocol nprotocol))))
 		   ((not (eq? protocol 'spread))
 		    (set! protocol
 		       (if (correct-arities? (node-procedure-info-vals %info)
@@ -705,9 +730,15 @@
 	    ((fun-procedure-info? %info)
 	     (when (fun-procedure-info-optimizablep %info)
 		(set! protocol
-		   (if (correct-arities? (list fun) (length args))
-		       'procedure-this
-		       'procedure-this-arity))))))
+		   (cond
+		      ((correct-arities? (list fun) (length args))
+		       'procedure-this)
+		      ((missing-arities? (list fun) (length args))
+		       ;; add the missing values
+		       (set! args (append args (extra-args args fun)))
+		       'procedure-this)
+		      (else
+		       'procedure-this-arity)))))))
       (when (>=fx (config-get conf :verbose 0) 3)
 	 (case protocol
 	    ((procedure-this)

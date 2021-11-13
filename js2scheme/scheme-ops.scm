@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Nov  4 17:30:28 2021 (serrano)                */
+;*    Last change :  Sat Nov 13 09:00:16 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2250,7 +2250,7 @@
 	    ((and (eq? tl 'bigint) (eq? tr 'bigint))
 	     (if bitrsh
 		 `(bit-maskxn ,left ,bitrsh)
-		 `(remaindenbx ,left ,(j2s-scheme rhs mode return ctx))))
+		 `(remainderbx ,left ,(j2s-scheme rhs mode return ctx))))
 	    ((eq? tr 'bigint)
 	     (if bitrsh
 		 `(bit-masknn ,left ,bitrsh %this)
