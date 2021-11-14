@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Sun Nov 14 07:18:35 2021 (serrano)                */
+/*    Last change :  Sun Nov 14 17:40:21 2021 (serrano)                */
 /*    Copyright   :  2016-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -1577,10 +1577,10 @@ static obj_t empty_vector = BVECTOR(&(_empty_vector.length));
 /*    BGL_MAKE_JSARRAY_SANS_INIT                                       */
 /*---------------------------------------------------------------------*/
 #if (!defined(TAG_VECTOR))
-#define BGL_TAG_VECTOR(vector) \
-   vector->vector.header = MAKE_HEADER(VECTOR_TYPE, 0)
+#define BGL_TAG_VECTOR(_vec) \
+   _vec->vector.header = MAKE_HEADER(VECTOR_TYPE, 0)
 #else
-#define BGL_TAG_VECTOR(vector) \
+#define BGL_TAG_VECTOR(_vec) \
    0
 #endif
 
