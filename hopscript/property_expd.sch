@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Sep 22 16:23:01 2021 (serrano)                */
+;*    Last change :  Sun Nov 14 11:19:56 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -1101,8 +1101,8 @@
 			 `(if (eq? (js-pcache-cmap ,ccache) (js-uncachable-pmap))
 			      ,(if (memq 'pmap-inline ccspecs)
 				   `(begin
-				       (with-access::JsPropertyCache ,ccache (function)
-					  (set! function #f))
+;* 				       (with-access::JsPropertyCache ,ccache (function) */
+;* 					  (set! function #f))          */
 				       ,(calln-uncachable %this ocspecs obj prop args ccache ocache loc))
 				   (calln-uncachable %this ocspecs obj prop args ccache ocache loc))
 			      ,(calln-miss %this obj prop args ccache ocache loc ccspecs ocspecs))
@@ -1120,8 +1120,8 @@
 			 `(if (eq? %cmap (js-pcache-pmap ,ccache))
 			      (begin
 				 (js-profile-log-cache ,ccache :pmap #t)
-				 (with-access::JsPropertyCache ,ccache (function)
-				    (set! function (procedure-attr (js-pcache-method ,ccache))))
+;* 				 (with-access::JsPropertyCache ,ccache (function) */
+;* 				    (set! function (procedure-attr (js-pcache-method ,ccache)))) */
 				 ((js-pcache-method ,ccache) ,obj ,@args))
 			      ,(loop (cdr cs))))
 			((cmap)
@@ -1165,8 +1165,8 @@
 					(let ((proc (vector-ref vtable vidx)))
 					   (js-profile-log-cache ,ccache
 					      :vtable #t)
-					   (with-access::JsPropertyCache ,ccache (function)
-					      (set! function (procedure-attr proc)))
+;* 					   (with-access::JsPropertyCache ,ccache (function) */
+;* 					      (set! function (procedure-attr proc))) */
 					   (proc ,obj ,@args))
 					,(loop (cdr cs))))))))
 			(else
@@ -1210,7 +1210,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-method-jsrecord-call-index-expander ...                       */
 ;*    -------------------------------------------------------------    */
-;*    Use to call record methods. The name argument is ignore, it is   */
+;*    Use to call record methods. The name argument is ignores, it is  */
 ;*    generated only for lisibility of the Scheme file.                */
 ;*---------------------------------------------------------------------*/
 (define (js-method-jsrecord-call-index-expander x e)

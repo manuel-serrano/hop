@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Nov 10 09:51:14 2021 (serrano)                */
+;*    Last change :  Sun Nov 14 11:59:12 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -194,6 +194,7 @@
 	   (js-toboolean::bool ::obj)
 	   (js-toboolean-no-boolean::bool ::obj)
 	   (generic js-tonumber ::obj ::JsGlobalObject)
+	   (generic js-tonumeric ::obj ::JsGlobalObject)
 	   (macro js-tointeger obj %this)
 	   (generic js-tointeger ::obj ::JsGlobalObject)
 	   (js-touint16::uint16 ::obj ::JsGlobalObject)
@@ -1845,6 +1846,30 @@
        obj)
       (else
        (bigloo-type-error "toNumber" "JsObject" obj))))
+
+;*---------------------------------------------------------------------*/
+;*    js-tonumeric ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-generic (js-tonumeric obj %this::JsGlobalObject)
+   (cond
+      ((js-number? obj)
+       obj)
+      ((string? obj)
+       (js-string->number obj %this))
+      ((bignum? obj)
+       obj)
+      ((eq? obj #t)
+       1)
+      ((eq? obj #f)
+       0)
+      ((eq? obj (js-undefined))
+       +nan.0)
+      ((eq? obj (js-null))
+       0)
+      ((number? obj)
+       obj)
+      (else
+       (bigloo-type-error "toNumeric" "JsObject" obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tointeger ...                                                 */

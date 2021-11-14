@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sun Oct 31 11:17:25 2021 (serrano)                */
+;*    Last change :  Sun Nov 14 12:06:13 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -621,7 +621,7 @@
 (define (js->number v expr ctx)
    (if (memq (j2s-type expr) '(uint32 int32 integer bint number))
        v
-       `(js-tonumber ,v %this)))
+       `(js-tonumeric ,v %this)))
 
 (define (js->string v expr ctx)
    (match-case v

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Oct  3 06:49:20 2021 (serrano)                */
+;*    Last change :  Sun Nov 14 07:49:13 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -292,6 +292,15 @@
 		    (cmap (js-make-jsconstructmap))
 		    (__proto__ %proto)
 		    (elements (make-vector size)))))
+;*       (tprint "THIS...")                                            */
+;*       (tprint "THIS=" (typeof (car (list %this)))                   */
+;* 	 " " (object-class (car (list %this))))                        */
+;*       (js-object-mode-set! %this (js-globalobject-default-mode))    */
+;*       (tprint "THIS=" (typeof (car (list %this)))                   */
+;* 	 " mode=" (js-object-mode %this) " " (js-globalobject-default-mode) */
+;* 	 " " (object-class %this))                                     */
+;*       (js-object-proto-set! %this %proto)                           */
+;*       (tprint "THIS=" (typeof (car (list %this))) " " (isa? (car (list %this)) JsGlobalObject)) */
       ;; local constant strings
       (js-init-names!)
       (unless (vector? __js_strings) (set! __js_strings (&init!)))
@@ -1161,6 +1170,15 @@
 (define-method (js-tonumber obj::JsObject %this)
    (let ((v (js-toprimitive obj 'number %this)))
       (js-tonumber (js-toprimitive obj 'number %this) %this)))
+   
+;*---------------------------------------------------------------------*/
+;*    js-tonumeric ::JsObject ...                                      */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.3          */
+;*---------------------------------------------------------------------*/
+(define-method (js-tonumeric obj::JsObject %this)
+   (let ((v (js-toprimitive obj 'number %this)))
+      (js-tonumeric (js-toprimitive obj 'number %this) %this)))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-tointeger ::JsObject ...                                      */

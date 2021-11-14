@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Nov 10 09:20:42 2021 (serrano)                */
+;*    Last change :  Sun Nov 14 10:55:56 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -75,8 +75,8 @@
 		  "HOP_JSARRAY_VECTOR_INLINEP")
 	   (macro $bgl-object-class-set!::long (::JsObject ::long)
 		  "BGL_OBJECT_CLASS_NUM_SET")
-	   (macro $bgl-class-index::long (::class)
-		  "BGL_CLASS_INDEX"))
+	   (macro $bgl-class-num::long (::class)
+		  "BGL_CLASS_NUM"))
    
    (export (class WorkerHopThread::hopthread
 	      (%loop (default #f))
@@ -763,7 +763,7 @@
 (define-inline (js-make-jsrecord constrsize constrmap __proto__ clazz)
    (let ((mode (js-record-default-mode)))
       (let ((o ($js-make-jsobject constrsize constrmap __proto__ mode)))
-	 ($bgl-object-class-set! o ($bgl-class-index clazz))
+	 ($bgl-object-class-set! o ($bgl-class-num clazz))
 	 (js-object-mode-set! o mode)
 	 o)))
 	   

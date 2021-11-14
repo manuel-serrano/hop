@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sat Nov 13 09:00:16 2021 (serrano)                */
+;*    Last change :  Sun Nov 14 12:04:25 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -242,7 +242,7 @@
 	     ((type-number? (j2s-type expr))
 	      (epairify loc sexp))
 	     (else
-	      (epairify loc `(js-tonumber ,sexp %this))))))
+	      (epairify loc `(js-tonumeric ,sexp %this))))))
       ((-)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7
        (let ((sexp (j2s-scheme expr mode return ctx))
@@ -279,10 +279,10 @@
 	      (epairify loc (j2s-as `(- ,sexp) expr 'number type ctx)))
 	     ((memq type '(int32 uint32 int53))
 	      (epairify loc
-		 (j2s-as `(- (js-tonumber ,sexp %this)) expr 'any type ctx)))
+		 (j2s-as `(- (js-tonumeric ,sexp %this)) expr 'any type ctx)))
 	     (else
 	      (epairify loc
-		 (j2s-as `(negjs (js-tonumber ,sexp %this)) exp 'any type ctx))))))
+		 (j2s-as `(negjs (js-tonumeric ,sexp %this)) exp 'any type ctx))))))
       ((~)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.8
        (if (eq? type 'int32)
@@ -1821,8 +1821,8 @@
 			  (asreal right 'real)
 			  #f)
 		       (binop-any-any '* type
-			  (tonumber left tl ctx)
-			  (tonumber right tr ctx)
+			  (tonumeric left tl ctx)
+			  (tonumeric right tr ctx)
 			  #f)))
 		   ((or (is-hint? lhs 'real) (is-hint? rhs 'real))
 		    (if-flonums? left tl right tr
@@ -2320,28 +2320,28 @@
 				    ,(j2s-cast
 					`(remainderfx ,left ,(asfixnum right tr))
 					lhs 'bint type ctx)
-				    ,(j2s-cast `(%$$NZ ,(tonumber left tl ctx)
-						   ,(tonumber right tr ctx))
+				    ,(j2s-cast `(%$$NZ ,(tonumeric left tl ctx)
+						   ,(tonumeric right tr ctx))
 					lhs (number type) type ctx)))
 			      (else
 			       `(if (fixnum? ,left)
 				    ,(j2s-cast `(remainderfx ,left
 						   ,(asfixnum right tr))
 					lhs 'bint type ctx)
-				    ,(j2s-cast `(%$$NZ ,(tonumber left tl ctx)
-						   ,(tonumber right tr ctx))
+				    ,(j2s-cast `(%$$NZ ,(tonumeric left tl ctx)
+						   ,(tonumeric right tr ctx))
 					lhs (number type) type ctx)))))
 			  ((m64? (context-conf ctx))
 			   `(if (fixnum? ,left)
 				,(j2s-cast `(remainderfx ,left
 					       ,(asfixnum right tr))
 				    lhs (number type) type ctx)
-				,(j2s-cast `(%$$NZ ,(tonumber64 left tl ctx)
-					       ,(tonumber64 right tr ctx))
+				,(j2s-cast `(%$$NZ ,(tonumeric64 left tl ctx)
+					       ,(tonumeric64 right tr ctx))
 				    lhs (number type) type ctx)))
 			  (else
-			   (j2s-cast `(%$$NZ ,(tonumber32 left tl ctx)
-					 ,(tonumber32 right tr ctx))
+			   (j2s-cast `(%$$NZ ,(tonumeric32 left tl ctx)
+					 ,(tonumeric32 right tr ctx))
 			      lhs (number type) type ctx))))
 		      ((eq? type 'real)
 		       (cond
@@ -2352,45 +2352,45 @@
 			      ((and (m64? (context-conf ctx)) (eq? tr 'int53))
 			       `(%$$FF ,left (fixnum->flonum ,right)))
 			      (else
-			       `(%$$FN ,left ,(tonumber right tr ctx)))))
+			       `(%$$FN ,left ,(tonumeric right tr ctx)))))
 			  ((eq? tr 'real)
 			   (cond
 			      ((and (m64? (context-conf ctx)) (eq? tl 'int53))
 			       `(%$$FF (fixnum->flonum ,left) ,right))
 			      (else
-			       `(%$$NF ,(tonumber left tl ctx) ,right))))
+			       `(%$$NF ,(tonumeric left tl ctx) ,right))))
 			  (else
-			   (j2s-cast `(%$$NN ,(tonumber left tl ctx)
-					 ,(tonumber right tr ctx))
+			   (j2s-cast `(%$$NN ,(tonumeric left tl ctx)
+					 ,(tonumeric right tr ctx))
 			      lhs (number type) type ctx))))
 		      ((m64? (context-conf ctx))
 		       (cond
 			  ((and (j2s-number? right) (not (= right 0)))
-			   (j2s-cast `(%$$NZ ,(tonumber64 left tl ctx)
-					 ,(tonumber64 right tr ctx))
+			   (j2s-cast `(%$$NZ ,(tonumeric64 left tl ctx)
+					 ,(tonumeric64 right tr ctx))
 			      lhs (number type) type ctx))
 			  ((and (type-integer? tl) (type-integer? tr))
-			   (j2s-cast `(%$$II ,(tonumber64 left tl ctx)
-					 ,(tonumber64 right tr ctx))
+			   (j2s-cast `(%$$II ,(tonumeric64 left tl ctx)
+					 ,(tonumeric64 right tr ctx))
 			      lhs (number type) type ctx))
 			  (else
-			   (j2s-cast `(%$$__ ,(tonumber64 left tl ctx)
-					 ,(tonumber64 right tr ctx) %this)
+			   (j2s-cast `(%$$__ ,(tonumeric64 left tl ctx)
+					 ,(tonumeric64 right tr ctx) %this)
 			      lhs (number type) type ctx))))
 		      (else
 		       (cond
 			  ((and (j2s-number? right) (not (= right 0)))
-			   (j2s-cast `(%$$NZ ,(tonumber32 left tl ctx)
-					 ,(tonumber32 right tr ctx))
+			   (j2s-cast `(%$$NZ ,(tonumeric32 left tl ctx)
+					 ,(tonumeric32 right tr ctx))
 			      lhs (number type) type ctx))
 			  ((and (type-integer? tl) (type-integer? tr)
 				(inrange-int32? lhs) (inrange-int32? rhs))
-			   (j2s-cast `(%$$II ,(tonumber32 left tl ctx)
-					 ,(tonumber32 right tr ctx))
+			   (j2s-cast `(%$$II ,(tonumeric32 left tl ctx)
+					 ,(tonumeric32 right tr ctx))
 			      lhs (number type) type ctx))
 			  (else
-			   (j2s-cast `(%$$__ ,(tonumber32 left tl ctx)
-					 ,(tonumber32 right tr ctx) %this)
+			   (j2s-cast `(%$$__ ,(tonumeric32 left tl ctx)
+					 ,(tonumeric32 right tr ctx) %this)
 			      lhs (number type) type ctx)))))))))))
 
 
@@ -2580,18 +2580,18 @@
 	  (else (error "toflonum" "Cannot convert type" type))))))
 
 ;*---------------------------------------------------------------------*/
-;*    tonumber ...                                                     */
+;*    tonumeric ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (tonumber val type::symbol ctx)
+(define (tonumeric val type::symbol ctx)
    (if (m64? (context-conf ctx))
-       (tonumber64 val type ctx)
-       (tonumber32 val type ctx)))
+       (tonumeric64 val type ctx)
+       (tonumeric32 val type ctx)))
        
 ;*---------------------------------------------------------------------*/
-;*    tonumber32 ...                                                   */
+;*    tonumeric32 ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (tonumber32 val type::symbol ctx)
-   (box32 val type ctx (lambda (val) `(js-tonumber ,val %this))))
+(define (tonumeric32 val type::symbol ctx)
+   (box32 val type ctx (lambda (val) `(js-tonumeric ,val %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    toint32 ...                                                      */
@@ -2710,10 +2710,10 @@
       (else val)))
 
 ;*---------------------------------------------------------------------*/
-;*    tonumber64 ...                                                   */
+;*    tonumeric64 ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (tonumber64 val type::symbol ctx)
-   (box64 val type ctx (lambda (val) `(js-tonumber ,val %this))))
+(define (tonumeric64 val type::symbol ctx)
+   (box64 val type ctx (lambda (val) `(js-tonumeric ,val %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    todouble ...                                                     */
@@ -3305,9 +3305,9 @@
 	     left right flip)
 	  (if (memq type '(int32 uint32 integer bint real number))
 	      (binop-number-number op type
-		 left (tonumber right tr ctx) flip)
+		 left (tonumeric right tr ctx) flip)
 	      (binop-any-any op type
-		 left (tonumber right tr ctx) flip))))))
+		 left (tonumeric right tr ctx) flip))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    binop-bigint-xxx ...                                             */

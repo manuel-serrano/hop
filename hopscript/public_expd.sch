@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Wed Oct 27 07:25:10 2021 (serrano)                */
+;*    Last change :  Sun Nov 14 12:03:34 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -54,6 +54,22 @@
       ((?- ?expr ?%this)
        (let ((tmp (gensym '%e)))
 	  (e `(let ((,tmp ,expr)) (js-tonumber ,tmp ,%this)) e)))
+      (else
+       (map (lambda (x) (e x e)) x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-tonumeric-expander ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-tonumeric-expander x e)
+   (match-case x
+      ((?- (and (? symbol?) ?expr) ?%this)
+       (e `(if (js-number? ,expr)
+	       ,expr
+	       ((@ js-tonumeric __hopscript_public) ,expr ,%this))
+	  e))
+      ((?- ?expr ?%this)
+       (let ((tmp (gensym '%e)))
+	  (e `(let ((,tmp ,expr)) (js-tonumeric ,tmp ,%this)) e)))
       (else
        (map (lambda (x) (e x e)) x))))
 

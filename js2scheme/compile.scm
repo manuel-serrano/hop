@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sun Oct 24 08:11:44 2021 (serrano)                */
+;*    Last change :  Sun Nov 14 09:43:00 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -296,6 +296,7 @@
       j2s-return-stage
       j2s-cps-stage
       j2s-any-stage
+      j2s-constant-stage
       j2s-cast-stage
       j2s-newtarget-stage
       j2s-scheme-stage))

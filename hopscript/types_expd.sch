@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Thu Oct 21 07:39:28 2021 (serrano)                */
+;*    Last change :  Sun Nov 14 07:46:27 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -143,9 +143,11 @@
 					 ,cmap
 					 ,__proto__))
 				  (,vec (js-object-alloc-elements ,obj)))
-			      ,@(map (lambda (idx)
-					`(vector-set! ,vec ,idx (js-undefined)))
-				   (iota n))
+			      ,@(if (>fx n 32)
+				    `((vector-fill! ,vec (js-undefined)))
+				    (map (lambda (idx)
+					    `(vector-set! ,vec ,idx (js-undefined)))
+				       (iota n)))
 			      ,obj)
 			  x)
 		       e)))
