@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Wed Nov 10 07:33:54 2021 (serrano)                */
+;*    Last change :  Wed Nov 17 18:27:22 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -310,6 +310,13 @@
 		(alloc (cond
 			  ((not super)
 			   'js-object-alloc/new-target)
+			  ((isa? (j2s-class-super-val this) J2SRecord)
+			   `(with-access::JsFunction ,super (alloc)
+			       (lambda (%this ctor)
+				  (let ((o (alloc %this ctor)))
+				     (js-object-mode-extensible-set! o #t)
+				     (js-object-mode-sealed-set! o #f)
+				     o))))
 			  ((isa? (j2s-class-super-val this) J2SClass)
 			   `(with-access::JsFunction ,super (alloc) alloc))
 			  (else
@@ -319,6 +326,8 @@
 				      (loop (js-proxy-target super))
 				      (with-access::JsFunction super (alloc)
 					 (let ((o (alloc %this ctor)))
+					    (js-object-mode-extensible-set! o #t)
+					    (js-object-mode-sealed-set! o #f)
 					    (js-new-target-push! %this ctor)
 					    o))))))))
 		(constrmap (if cmap

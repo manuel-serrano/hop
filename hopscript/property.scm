@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Nov 10 08:50:21 2021 (serrano)                */
+;*    Last change :  Wed Nov 17 17:18:31 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1963,10 +1963,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.7       */
 ;*---------------------------------------------------------------------*/
 (define (js-in? obj name %this)
-   (cond
-      ((not (js-object? obj))
-       (js-raise-type-error %this "in: not an object ~s" obj))
-      ((eq? (object-class obj) JsObject)
+   (if (not (js-object? obj))
+       (js-raise-type-error %this "in: not an object ~s" obj)
        (let loop ((obj obj))
 	  (jsobject-find obj obj name
 	     ;; cmap search
@@ -1979,12 +1977,15 @@
 	     (lambda (o) #f)
 	     ;; prototype search
 	     (lambda (__proto__)
-		(if (and (js-object? __proto__)
+		(cond
+		   ((not (or (eq? (object-class obj) JsObject)
+			     (isa? obj JsRecord)))
+		    (js-has-property __proto__ name %this))
+		   ((and (js-object? __proto__)
 			 (eq? (object-class __proto__) JsObject))
-		    (loop __proto__)
-		    (js-has-property __proto__ name %this))))))
-      (else
-       (js-has-property obj name %this))))
+		    (loop __proto__))
+		   (else
+		    (js-has-property __proto__ name %this))))))))
 
 (define (js-in?/debug obj name %this loc)
    (if (not (js-object? obj))
