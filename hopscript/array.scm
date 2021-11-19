@@ -6382,9 +6382,11 @@
 			(acc accumulator))
 		(if (<u32 i len)
 		    (let ((v (vector-ref vec (uint32->fixnum i))))
-		       (loop (+u32 i #u32:1)
-			  (js-call2-4 %this proc (js-undefined) acc v
-			     (js-uint32-tointeger i) o)))
+		       (if (js-absent? v)
+			   (loop (+u32 i #u32:1) acc)
+			   (loop (+u32 i #u32:1)
+			      (js-call2-4 %this proc (js-undefined) acc v
+				 (js-uint32-tointeger i) o))))
 		    acc))))))
 
 ;*---------------------------------------------------------------------*/
