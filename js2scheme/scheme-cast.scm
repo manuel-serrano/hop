@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sun Nov 14 12:06:13 2021 (serrano)                */
+;*    Last change :  Sat Nov 20 09:34:48 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -67,7 +67,7 @@
 	 (any ,js-int32->integer)))
      (uint32
 	((uint29 nop)
-	 (int32 uint32->int32)
+	 (int32 ,js-uint32->int32)
 	 (length nop)
 	 (int53 ,js-uint32->fixnum)
 	 (integer ,js-uint32->fixnum)
@@ -511,7 +511,13 @@
 ;*    uint32->xxx ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-uint32->int32 v expr ctx)
-   (if (uint32? v) (uint32->int32 v) `(uint32->int32 ,v)))
+   (if (uint32? v)
+       (uint32->int32 v)
+       (match-case v
+	  ((int32->uint32 ?x)
+	   x)
+	  (else
+	   `(uint32->int32 ,v)))))
 
 (define (js-uint32->integer v expr ctx)
    (let ((conf (context-conf ctx)))

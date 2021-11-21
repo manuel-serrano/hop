@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Thu Nov  4 18:42:56 2021 (serrano)                */
+;*    Last change :  Fri Nov 19 18:51:55 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -959,9 +959,13 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
 ;*---------------------------------------------------------------------*/
 (define (js+ left right %this::JsGlobalObject)
-   (if (and (js-number? left) (js-number? right))
-       (+/overflow left right)
-       (js-slow+ left right %this)))
+   (cond
+      ((fixnums? left right)
+       (+fx/overflow left right))
+      ((and (js-number? left) (js-number? right))
+       (+/overflow left right))
+      (else
+       (js-slow+ left right %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-slow+ ...                                                     */
@@ -1012,11 +1016,15 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.2       */
 ;*---------------------------------------------------------------------*/
 (define (js- left right %this::JsGlobalObject)
-   (if (and (js-number? left) (js-number? right))
-       (-/overflow left right)
+   (cond
+      ((fixnums? left right)
+       (-fx/overflow left right))
+      ((and (js-number? left) (js-number? right))
+       (-/overflow left right))
+      (else
        (let* ((lnum (js-tonumber left %this))
 	      (rnum (js-tonumber right %this)))
-	  (-/overflow lnum rnum))))
+	  (-/overflow lnum rnum)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js* ...                                                          */

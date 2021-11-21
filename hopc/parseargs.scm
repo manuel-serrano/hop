@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Nov 13 09:42:15 2021 (serrano)                */
+;*    Last change :  Sun Nov 21 06:53:44 2021 (serrano)                */
 ;*    Copyright   :  2004-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -474,6 +474,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-method #t (hopc-j2s-flags))))
 	    (("-fno-method" (help "Disable method optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-method #f (hopc-j2s-flags))))
+	    (("-ftestreduce" (help "Enable test reduction optimization (-O2)"))
+	     (hopc-j2s-flags-set! (cons* :optim-testreduce #t (hopc-j2s-flags))))
+	    (("-fno-testreduce" (help "Disable test reduction optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-testreduce #f (hopc-j2s-flags))))
 	    (("-fprofile" ?log (help "Profile log file optimization"))
 	     (hopc-j2s-flags-set! (cons* :profile-log log (hopc-j2s-flags)))
 	     (hopc-j2s-flags-set! (cons* :optim-cspecs #t (hopc-j2s-flags))))

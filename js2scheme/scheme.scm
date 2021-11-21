@@ -1513,7 +1513,7 @@
 		      (j2s-scheme field mode return ctx)
 		      (j2s-type field)
 		      name 'any (strict-mode? mode) ctx #t
-		      :optim #f
+		      :optim (when (is-hint? obj 'array) 'array)
 		      :cachefun #f))))
 	    ((isa? lhs J2SWithRef)
 	     (with-access::J2SWithRef lhs (id withs expr loc)

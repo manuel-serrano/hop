@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sun Nov 14 09:43:00 2021 (serrano)                */
+;*    Last change :  Sun Nov 21 06:53:00 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -79,7 +79,8 @@
 	   __js2scheme_newtarget
 	   __js2scheme_procedure
 	   __js2scheme_strbuffer
-	   __js2scheme_cnstlift)
+	   __js2scheme_cnstlift
+	   __js2scheme_testreduce)
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
@@ -211,6 +212,7 @@
 	  j2s-globprop-stage
 	  j2s-uninit-globprop-stage
 	  j2s-globvar-stage
+	  j2s-testreduce-stage
 	  j2s-cspecs-stage
 	  j2s-method-stage
 	  j2s-return-stage
@@ -537,6 +539,8 @@
 	    (set! o (cons* :optim-cnstlift #t o)))
 	 (unless (memq :optim-strbuffer o)
 	    (set! o (cons* :optim-strbuffer #t o)))
+	 (unless (memq :optim-testreduce o)
+	    (set! o (cons* :optim-testreduce #t o)))
 	 )
       (when (>=fx l 3)
 	 (unless (memq :max-objinit-optim-size o)

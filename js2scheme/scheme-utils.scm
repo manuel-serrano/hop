@@ -798,19 +798,23 @@
 			  ,(js-pcache cache) ,(loc->point loc) ',cspecs)))))
 	     ((memq typrop '(int32 uint32))
 	      (js-get obj (box prop typrop ctx) '%this))
-	     ((and (maybe-string? prop typrop) (symbol? obj))
-	      `(,(if (eq? tyobj 'object)
-		     'js-get-jsobject/name-cache
-		     'js-get/name-cache)
-		,obj ,prop %this))
-	     ((maybe-string? prop typrop)
-	      (let ((tmp (gensym '%tmp)))
-		 `(let ((,tmp ,obj))
-		     (,(if (eq? tyobj 'object)
+	     ((and (maybe-string? prop typrop)
+		   (or (not (maybe-number? prop typrop))
+		       (not (is-hint? field 'integer))))
+	      (if (symbol? obj)
+		  `(,(if (eq? tyobj 'object)
 			 'js-get-jsobject/name-cache
 			 'js-get/name-cache)
-		      ,tmp ,prop %this))))
-	     ((maybe-number? prop typrop)
+		    ,obj ,prop %this)
+		  (let ((tmp (gensym '%tmp)))
+		     `(let ((,tmp ,obj))
+			 (,(if (eq? tyobj 'object)
+			       'js-get-jsobject/name-cache
+			       'js-get/name-cache)
+			  ,tmp ,prop %this)))))
+	     ((and (maybe-number? prop typrop)
+		   (or (not (maybe-string? prop typrop))
+		       (not (is-hint? field 'string))))
 	      (let ((o (gensym '%obj))
 		    (p (gensym '%prop)))
 		 `(let ((,o ,obj)
@@ -1011,7 +1015,10 @@
 			  ,(loc->point loc) ,(loc->src loc))))
 		 (else
 		  `(js-put! ,obj ,prop ,val ,mode %this))))
-	     ((and field (eq? optim 'array) (mightbe-number? field))
+	     ((and field
+		   (or (and (eq? optim 'array) (mightbe-number? field))
+		       (and (maybe-number? field typrop)
+			    (is-hint? field 'integer))))
 	      (maybe-array-set! (box prop typrop ctx) val))
 	     (else
 	      (cond

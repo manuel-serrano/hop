@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Nov 14 12:04:25 2021 (serrano)                */
+;*    Last change :  Sat Nov 20 09:27:11 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -967,6 +967,11 @@
 			       `(and (eq? ,(asfixnum left tl) ,right)
 				     (>=fx ,right 0)))
 			   `(js-eqil?
+			       ,(box left tl ctx)
+			       ,(box right tr ctx))))
+		      ((and (inrange-int32? lhs) (context-get ctx :=fx-as-eq #f))
+		       `(or (eq? ,(asfixnum left tl) ,right)
+			    (js-eqil?
 			       ,(box left tl ctx)
 			       ,(box right tr ctx))))
 		      (else

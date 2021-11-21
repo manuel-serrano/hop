@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Tue Nov  2 07:07:44 2021 (serrano)                */
+;*    Last change :  Fri Nov 19 19:06:41 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -397,8 +397,12 @@
 (define-walk-method (j2s-hint this::J2SDeclInit hints)
    (with-access::J2SDeclInit this (val vtype hint loc id)
       (let ((ty (j2s-type val)))
-	 (when (symbol? ty)
-	    (add-hints! this `((,ty . 3)))))
+	 (when (and (symbol? ty) (not (memq ty '(unknown any))))
+	    (add-hints! this `((,ty . 3))))
+	 (when (isa? val J2SRef)
+	    (with-access::J2SRef val (decl)
+	       (with-access::J2SDecl decl (hint)
+		  (add-hints! this hint)))))
       (let ((bc (if (decl-usage-has? this '(get))
 		    100
 		    (multiple-value-bind (bt bc)
@@ -424,7 +428,7 @@
 			(j2s-hint obj `((array . 5) (string . 5) (object . 2) (integer . ,(minvalfx))))
 			(j2s-hint obj `((array . 5) (string . ,(minvalfx)) (object . 2) (integer . ,(minvalfx)))))
 		    (j2s-hint obj '((object . 5))))))
-	    ((isa? field J2SNumber)
+	    ((or (isa? field J2SNumber) (type-number? (j2s-type field)))
 	     (if maybe-string
 		 (j2s-hint obj '((array . 5) (string . 5)))
 		 (j2s-hint obj `((array . 5) (string . ,(minvalfx))))))
@@ -434,8 +438,8 @@
 	    (else
 	     (j2s-hint field '((string . 2) (integer . 2)))
 	     (if maybe-string
-		 (j2s-hint obj '((object . 5)))
-		 (j2s-hint obj `((object . 5) (string . ,(minvalfx))))))))))
+		 (j2s-hint obj '((object . 5) (array . 5)))
+		 (j2s-hint obj `((object . 5) (array . 5) (string . ,(minvalfx))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SAccess ...                                         */
@@ -1055,6 +1059,7 @@
       (with-access::J2SDecl param (loc)
 	 (instantiate::J2SCall
 	    (loc loc)
+	    (type 'bool)
 	    (fun (instantiate::J2SHopRef
 		    (loc loc)
 		    (type 'function)
@@ -1083,6 +1088,7 @@
 		(instantiate::J2SBinary
 		   (loc loc)
 		   (op '&&)
+		   (type 'bool)
 		   (lhs (test-hint-decl (car decls) htype))
 		   (rhs (loop (cdr decls) (cdr htypes))))))))))
 
@@ -1550,7 +1556,7 @@
 	  (with-access::J2SDeclInit p (loc)
 	     (duplicate::J2SDeclInit p
 		(key (ast-decl-key))
-		(hint '())
+		;; (hint '())
 		(vtype type)
 		(itype type)
 		(val (J2SRef p loc :type type))))
