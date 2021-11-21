@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 07:35:40 2017                          */
-;*    Last change :  Sun Nov 14 12:03:34 2021 (serrano)                */
+;*    Last change :  Sun Nov 21 10:44:57 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript public expanders                                       */
@@ -58,22 +58,6 @@
        (map (lambda (x) (e x e)) x))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-tonumeric-expander ...                                        */
-;*---------------------------------------------------------------------*/
-(define (js-tonumeric-expander x e)
-   (match-case x
-      ((?- (and (? symbol?) ?expr) ?%this)
-       (e `(if (js-number? ,expr)
-	       ,expr
-	       ((@ js-tonumeric __hopscript_public) ,expr ,%this))
-	  e))
-      ((?- ?expr ?%this)
-       (let ((tmp (gensym '%e)))
-	  (e `(let ((,tmp ,expr)) (js-tonumeric ,tmp ,%this)) e)))
-      (else
-       (map (lambda (x) (e x e)) x))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-tonumber-for-flonum-expander ...                              */
 ;*---------------------------------------------------------------------*/
 (define (js-tonumber-for-flonum-expander x e)
@@ -91,6 +75,38 @@
       ((?- ?expr ?%this)
        (let ((tmp (gensym '%e)))
 	  (e `(let ((,tmp ,expr)) (js-tonumber-for-flonum ,tmp ,%this)) e)))
+      (else
+       (map (lambda (x) (e x e)) x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-tonumeric-expander ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-tonumeric-expander x e)
+   (match-case x
+      ((?- (and (? symbol?) ?expr) ?%this)
+       (e `(if (js-number? ,expr)
+	       ,expr
+	       ((@ js-tonumeric __hopscript_public) ,expr ,%this))
+	  e))
+      ((?- ?expr ?%this)
+       (let ((tmp (gensym '%e)))
+	  (e `(let ((,tmp ,expr)) (js-tonumeric ,tmp ,%this)) e)))
+      (else
+       (map (lambda (x) (e x e)) x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-tonumeric-for-fixnum-expander ...                             */
+;*---------------------------------------------------------------------*/
+(define (js-tonumeric-for-fixnum-expander x e)
+   (match-case x
+      ((?- (and (? symbol?) ?expr) ?%this)
+       (e `(if (fixnum? ,expr)
+	       ,expr
+	       ((@ js-tonumeric __hopscript_public) ,expr ,%this))
+	  e))
+      ((?- ?expr ?%this)
+       (let ((tmp (gensym '%e)))
+	  (e `(let ((,tmp ,expr)) (js-tonumeric ,tmp ,%this)) e)))
       (else
        (map (lambda (x) (e x e)) x))))
 

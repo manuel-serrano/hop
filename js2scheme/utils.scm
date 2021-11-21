@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sun Oct 17 11:02:51 2021 (serrano)                */
+;*    Last change :  Sun Nov 21 09:58:48 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -64,6 +64,7 @@
 	   
 	   (best-hint::pair ::J2SExpr)
 	   (is-hint?::bool ::J2SExpr ::symbol)
+	   (is-not-hint?::bool ::J2SExpr ::symbol)
 	   
 	   (string-method-type name #!optional (default '(any any)))
 	   (string-static-method-type name #!optional (default '(any any)))
@@ -760,6 +761,17 @@
 (define (is-hint? this::J2SExpr type)
    (eq? type (car (best-hint this))))
 
+;*---------------------------------------------------------------------*/
+;*    is-not-hint? ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    Is hint unlikely                                                 */
+;*---------------------------------------------------------------------*/
+(define (is-not-hint? this::J2SExpr type)
+   (with-access::J2SExpr this (hint)
+      (let ((h (assq type hint)))
+	 (when (pair? h)
+	    (=fx (cdr h) (minvalfx))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    assoc-method-type ...                                            */
 ;*    -------------------------------------------------------------    */

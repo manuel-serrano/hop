@@ -1788,6 +1788,13 @@
       (if cast
 	  (j2s-cast lhse lhs tylhs type ctx)
 	  (j2s-as lhse lhs tylhs type ctx)))
+
+   (define (tune-cast-for-inc expr)
+      (match-case expr
+	 ((js-tonumeric ?expr ?this)
+	  `(js-tonumeric-for-fixnum ,expr ,this))
+	 (else
+	  expr)))
    
    (define (ref-inc op lhs::J2SRef rhs::J2SExpr type cast loc)
       (let* ((prev (when (eq? retval 'old) (gensym 'prev)))
@@ -1795,7 +1802,8 @@
 	 (if (eq? retval 'old)
 	     (with-access::J2SBinary rhs ((rlhs lhs))
 		(set! rlhs (J2SHopRef/type prev type))
-		`(let ((,prev ,(coerce cast lhse lhs (j2s-type lhs) type ctx)))
+		`(let ((,prev ,(tune-cast-for-inc
+				  (coerce cast lhse lhs (j2s-type lhs) type ctx))))
 		    ,(j2s-scheme-set! lhs rhs
 			(j2s-scheme rhs mode return ctx)
 			prev mode return ctx #f loc)))
