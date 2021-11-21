@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Nov 21 08:54:14 2021 (serrano)                */
+;*    Last change :  Sun Nov 21 19:56:43 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2717,7 +2717,7 @@
       (else
        (if (fixnum? val)
 	   (fixnum->int32 val)
-	   `(if (fixnum? ,val) (fixnum->int32 ,val) (js-toint32 ,val %this))))))
+	   `(js-toint32 ,val %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    touint32 ...                                                     */
@@ -2737,7 +2737,7 @@
       (else
        (if (fixnum? val)
 	   (fixnum->uint32 val)
-	   `(if (fixnum? ,val) (fixnum->uint32 ,val) (js-touint32 ,val %this))))))
+	   `(js-touint32 ,val %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    double->uint32 ...                                               */

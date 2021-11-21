@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Fri Oct 29 08:23:32 2021 (serrano)                */
+;*    Last change :  Sun Nov 21 18:13:54 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -75,6 +75,7 @@
 	  (-/overflow!::obj ::obj ::obj)
 	  
 	  (inline *fx/overflow::obj ::long ::long)
+	  (inline *fx/overflow-sans-zero::obj ::long ::long)
 	  (inline *s32/overflow::obj ::int32 ::int32)
 	  (inline *u32/overflow::obj ::uint32 ::uint32)
 	  (*/overflow ::obj ::obj)
@@ -636,10 +637,41 @@
 	      r))))))
 
 ;*---------------------------------------------------------------------*/
+;*    *fx/overflow-sans-zero ...                                       */
+;*---------------------------------------------------------------------*/
+(define-inline (*fx/overflow-sans-zero x::long y::long)
+   (cond-expand
+      ((and bigloo-c (config have-overflow #t))
+       (let ((res::long 0))
+	  (cond
+	     ((pragma::bool "__builtin_smull_overflow((long)$1, (long)$2, &$3)"
+		 x y (pragma res))
+	      (pragma::real "DOUBLE_TO_REAL(((double)($1)) * ((double)($2)))"
+		 x y))
+	     (else
+	      (overflow53 res)))))
+      (else
+       (let ((r (* x y)))
+	  (cond
+	     ((fixnum? r)
+	      (if (=fx r 0)
+		  (overflow53 r)))
+	     ((flonum? r)
+	      r)
+	     ((bignum? r)
+	      (bignum->flonum r))
+	     ((elong? r)
+	      (elong->flonum r))
+	     ((llong? r)
+	      (llong->flonum r))
+	     (else
+	      r))))))
+
+;*---------------------------------------------------------------------*/
 ;*    *s32/overflow ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (*s32/overflow x::int32 y::int32)
-   (*fx/overflow (int32->fixnum x) (int32->fixnum y)))
+   (*fx/overflow-sans-zero (int32->fixnum x) (int32->fixnum y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *u32/overflow ...                                                */
