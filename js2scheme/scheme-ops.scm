@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Nov 21 19:56:43 2021 (serrano)                */
+;*    Last change :  Tue Nov 23 08:01:59 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -3253,6 +3253,9 @@
 	  (asreal left tl) right flip))
       (else
        (cond
+	  ((and (eq? tr 'int53) (m64? (context-conf ctx)))
+	   (binop-fixnum-fixnum/ctx ctx op type
+	      left right flip))
 	  ((inrange-int30? rhs)
 	   (binop-fixnum-fixnum/ctx ctx op type
 	      left (asfixnum right tr) flip))
@@ -3282,7 +3285,7 @@
 ;*    binop-integer-xxx ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (binop-integer-xxx op type lhs tl left rhs tr right ctx flip)
-   (if (m64? (context-conf ctx))
+   (if (and (m64? (context-conf ctx)) (inrange-int53? lhs))
        (binop-bint-xxx op type lhs tl left rhs tr right ctx flip)
        (case tr
 	  ((int32)
@@ -3309,6 +3312,12 @@
 	       (binop-number-number op type
 		  left (box right tr ctx) flip))))
 	  ((bint)
+	   `(if (fixnum? ,left)
+		,(binop-fixnum-fixnum op type
+		   left right flip)
+		,(binop-number-number op type
+		    left right flip)))
+	  ((int53)
 	   `(if (fixnum? ,left)
 		,(binop-fixnum-fixnum op type
 		   left right flip)
@@ -3341,7 +3350,7 @@
 	       (binop-uint32-uint32 op type
 		  (asuint32 left tl) (coerceuint32 right tr ctx) flip))
 	      (else
-	       `(if (fixnum? ,right)
+	       `(if (fixnums? ,left ,right)
 		    ,(binop-fixnum-fixnum op type
 			left right flip)
 		    ,(binop-any-any op type

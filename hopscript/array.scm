@@ -6835,10 +6835,7 @@
 			(it (js-call0 %this proc value)))
 		    (let loop ((i 0))
 		       (let* ((n (js-get it (& "next") %this))
-			      (_ (tprint ">>> n=" n))
-			      (_1 (js-debug-object n))
 			      (v (js-call0 %this n it))
-			      (_2 (tprint "<<< n=" n))
 			      (done (js-get v (& "done") %this)))
 			  (cond
 			     ((=fx i size)

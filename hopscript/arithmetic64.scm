@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Nov 21 18:13:54 2021 (serrano)                */
+;*    Last change :  Mon Nov 22 20:28:49 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -671,7 +671,18 @@
 ;*    *s32/overflow ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (*s32/overflow x::int32 y::int32)
-   (*fx/overflow-sans-zero (int32->fixnum x) (int32->fixnum y)))
+;*    (*fx/overflow-sans-zero (int32->fixnum x) (int32->fixnum y))     */
+   (cond-expand
+      ((and bigloo-c (config have-overflow #t))
+       (let ((res::long 0))
+	  ;; left align the 32bit numbers (64-53-1)=10
+	  (if (pragma::bool "__builtin_smull_overflow($1 << 10, $2, &$3)"
+		 x y (pragma res))
+	      (pragma::real "DOUBLE_TO_REAL(((double)($1))*((double)($2)))"
+		 x y)
+	      (pragma::obj "BINT(($1) >> 10)" res))))
+      (else
+       (*fx/overflow-sans-zero (int32->fixnum x) (int32->fixnum y)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *u32/overflow ...                                                */

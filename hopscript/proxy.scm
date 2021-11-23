@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec  2 20:51:44 2018                          */
-;*    Last change :  Thu Sep  2 08:36:44 2021 (serrano)                */
+;*    Last change :  Tue Nov 23 08:40:28 2021 (serrano)                */
 ;*    Copyright   :  2018-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript proxy objects.               */
@@ -83,10 +83,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-debug-object obj::JsProxy #!optional (msg ""))
    (with-access::JsProxy obj (handler)
-      (fprint (current-error-port) ">>> JsProxy" msg)
-      (fprint (current-error-port) ">>> target: ")
+      (call-next-method)
+      (fprint (current-error-port) ">>>>> target: ")
       (js-debug-object (js-proxy-target obj))
-      (fprint (current-error-port) ">>> handler: ")
+      (fprint (current-error-port) ">>>>> handler: ")
       (js-debug-object handler)))
 
 ;*---------------------------------------------------------------------*/

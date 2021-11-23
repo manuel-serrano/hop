@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Nov 14 10:55:56 2021 (serrano)                */
+;*    Last change :  Mon Nov 22 21:39:49 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -1173,8 +1173,6 @@
 (define-inline (js-object-inline-elements o::JsObject)
    (cond-expand
       ((and bigloo-c (not disable-inline))
-       [assert (o) (or (not (js-object-mode-inline? o))
-		       (or (js-jsobject? o) (isa? o JsRecord)))]
        (if (js-object-mode-inline? o)
 	   ($js-object-inline-elements o)
 	   '#()))
@@ -1204,10 +1202,6 @@
 ;*    js-object-inline-length ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-inline-length o::JsObject)
-   ;; JsYield is mentionned here for C stack allocation, although this
-   ;; type is actually never used (see _bglhopscript.c)
-   [assert (o) (or (not (js-object-mode-inline? o))
-		   (or (js-jsobject? o) (isa? o JsRecord) (isa? o JsYield)))]
    (if (js-object-mode-inline? o)
        (vector-length (js-object-inline-elements o))
        0))

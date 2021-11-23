@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Nov 14 07:49:13 2021 (serrano)                */
+;*    Last change :  Tue Nov 23 08:49:06 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -1206,7 +1206,6 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.7     */
 ;*---------------------------------------------------------------------*/
 (define (object-defineproperties %this::JsGlobalObject this _obj _properties)
-   
    
    (define (vfor-each proc vec)
       (let ((len (vector-length vec)))

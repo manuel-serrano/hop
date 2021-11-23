@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Nov 17 17:18:31 2021 (serrano)                */
+;*    Last change :  Tue Nov 23 09:14:51 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1278,7 +1278,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    jsobject-map-find ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-macro (jsobject-map-find o p succeed fail)
+(define-macro (jsobject-map-find o p succeed fail . proxy)
    (let ((i (gensym 'i))
 	 (cmap (gensym 'cmap))
 	 (loop (gensym 'loop)))
@@ -1288,9 +1288,11 @@
 		(let ,loop ((,i (-fx (vector-length props) 1)))
 		     (cond
 			((=fx ,i -1)
-			 (if (js-proxy? ,o)
-			     (,succeed ,o (js-proxy-property-descriptor-index ,o ,p))
-			     (,fail)))
+			 ,(if (or (null? proxy) (car proxy))
+			      `(if (js-proxy? ,o)
+				   (,succeed ,o (js-proxy-property-descriptor-index ,o ,p))
+				   (,fail))
+			      `(,fail)))
 			((eq? (prop-name (vector-ref props ,i)) ,p)
 			 (,succeed ,o ,i))
 			(else
@@ -1323,7 +1325,7 @@
 ;*    Contrary to other object property search, the property key       */
 ;*    has not always been transformed yet into a name.                 */
 ;*---------------------------------------------------------------------*/
-(define-macro (jsobject-hash-find o p succeed fail)
+(define-macro (jsobject-hash-find o p succeed fail . proxy)
    (let ((hash (gensym 'hash))
 	 (prop (gensym 'prop))
 	 (name (gensym 'name)))
@@ -1332,8 +1334,10 @@
 	     (cond
 		(,prop
 		 (,succeed ,o ,prop))
-		((js-proxy? ,o)
-		 (,succeed ,o (make-cell (js-proxy-property-descriptor-index ,o ,p))))
+		,@(if (or (null? proxy) (car proxy))
+		   `(((js-proxy? ,o)
+		      (,succeed ,o (make-cell (js-proxy-property-descriptor-index ,o ,p)))))
+		   '())
 		(else
 		 (set! ,p (js-toname ,p %this))
 		 (,fail)))))))
@@ -1361,7 +1365,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    jsobject-properties-find ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-macro (jsobject-properties-find o p succeed fail)
+(define-macro (jsobject-properties-find o p succeed fail . proxy)
    (let ((desc (gensym 'desc))
 	 (name (gensym 'name))
 	 (prop (gensym 'properties))
@@ -1369,11 +1373,13 @@
 	 (loop (gensym 'loop)))
       `(let ((,prop (with-access::JsObject ,o (elements) elements)))
 	  (let ,loop ((,i (-fx (vector-length ,prop) 1)))
-	     (if (=fx ,i -1)
-		 (if (js-proxy? ,o)
-		     (let ((,i (js-proxy-property-descriptor-index ,o ,p)))
-			(,succeed ,o (vector-ref ,prop ,i) ,i))
-		     (,fail))
+	       (if (=fx ,i -1)
+		   ,(if (or (null? proxy) (car proxy))
+			`(if (js-proxy? ,o)
+			     (let ((,i (js-proxy-property-descriptor-index ,o ,p)))
+				(,succeed ,o (vector-ref ,prop ,i) ,i))
+			     (,fail))
+			`(,fail))
 		 (let ((,desc (vector-ref ,prop ,i)))
 		    (with-access::JsPropertyDescriptor ,desc ((,name name))
 		       (if (eq? ,name ,p)
@@ -1448,6 +1454,63 @@
 				    (,(car loop) __proto__))
 				 (,notfound ,base)))
 			 `(,notfound ,base))))))))
+
+   (if (and (symbol? o) (symbol? base))
+       (let ((obj (gensym 'obj)))
+	  `(let ((,obj ,o))
+	      ,(if (symbol? name)
+		   (find obj name)
+		   (let ((nm (gensym 'name)))
+		      `(let ((,nm ,name))
+			  ,(find obj nm))))))
+       (error "jsobject-find" "arguments must be a symbol" (cons obj base))))
+
+;*---------------------------------------------------------------------*/
+;*    jsobject-find/w-proxy ...                                        */
+;*    -------------------------------------------------------------    */
+;*    A variant that does not check proxy objects.                     */
+;*---------------------------------------------------------------------*/
+(define-macro (jsobject-find/w-proxy o base name foundinmap foundinhash foundinprop notfound . loop)
+
+   (define (find obj name)
+      `(with-access::JsObject ,obj (cmap)
+	  (cond
+	     ((js-object-mapped? ,obj)
+	      (jsobject-map-find ,obj ,name ,foundinmap
+		 (lambda ()
+		    ,(if (pair? loop)
+			 `(let ((__proto__ (js-object-proto ,obj)))
+			     (if (js-object? __proto__)
+				 (begin
+				    (js-object-mode-isprotoof-set! __proto__ #t)
+				    (,(car loop) __proto__))
+				 (,notfound ,base)))
+			 `(,notfound ,base)))
+		 #f))
+	     ((js-object-hashed? ,obj)
+	      (jsobject-hash-find ,obj ,name ,foundinhash
+		 (lambda ()
+		    ,(if (pair? loop)
+			 `(let ((__proto__ (js-object-proto ,obj)))
+			     (if (js-object? __proto__)
+				 (begin
+				    (js-object-mode-isprotoof-set! __proto__ #t)
+				    (,(car loop) __proto__))
+				 (,notfound ,base)))
+			 `(,notfound ,base)))
+		 #f))
+	     (else
+	      (jsobject-properties-find ,obj ,name ,foundinprop
+		 (lambda ()
+		    ,(if (pair? loop)
+			 `(let ((__proto__ (js-object-proto ,obj)))
+			     (if (js-object? __proto__)
+				 (begin
+				    (js-object-mode-isprotoof-set! __proto__ #t)
+				    (,(car loop) __proto__))
+				 (,notfound ,base)))
+			 `(,notfound ,base)))
+		 #f)))))
 
    (if (and (symbol? o) (symbol? base))
        (let ((obj (gensym 'obj)))
@@ -1966,7 +2029,7 @@
    (if (not (js-object? obj))
        (js-raise-type-error %this "in: not an object ~s" obj)
        (let loop ((obj obj))
-	  (jsobject-find obj obj name
+	  (jsobject-find/w-proxy obj obj name
 	     ;; cmap search
 	     (lambda (owner i) #t)
 	     ;; hash seach
@@ -1980,7 +2043,7 @@
 		(cond
 		   ((not (or (eq? (object-class obj) JsObject)
 			     (isa? obj JsRecord)))
-		    (js-has-property __proto__ name %this))
+		    (js-has-property obj name %this))
 		   ((and (js-object? __proto__)
 			 (eq? (object-class __proto__) JsObject))
 		    (loop __proto__))
