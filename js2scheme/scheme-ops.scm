@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Nov 25 07:56:59 2021 (serrano)                */
+;*    Last change :  Thu Nov 25 15:33:52 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1089,8 +1089,7 @@
 		  (else
 		   (if (inrange-int32? lhs)
 		       (if (context-get ctx :=fx-as-eq #f)
-			   `(or (eq? ,(asfixnum left tl) ,right)
-				(js-equal? ,(asfixnum left tl) ,right %this))
+			   `(js-equal-fixnum? ,(asfixnum left tl) ,right %this)
 			   `(if (fixnum? ,right)
 				(=fx ,(asfixnum left tl) ,right)
 				(js-equal? ,(asfixnum left tl) ,right %this)))

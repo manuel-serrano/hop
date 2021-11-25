@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Nov 11 14:59:58 2021 (serrano)                */
+;*    Last change :  Thu Nov 25 15:25:24 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -1486,7 +1486,7 @@
       (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool) obj)
 	 (inline-object-method-call fun (j2s-alpha obj '() '()) args)
 	 (J2SMeta 'inline 0 0
-	    (J2SStmtExpr
+	    (J2SReturn #t
 	       (J2SCall* (J2SAccess (j2s-alpha obj '() '()) field) args)))))
    
    (with-access::J2SAccess fun (obj field loc)

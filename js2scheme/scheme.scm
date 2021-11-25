@@ -386,6 +386,8 @@
 		   (set! cexpr (car (last-pair exprs)))
 		   (set-car! (last-pair exprs) this)
 		   (j2s-scheme expr mode return ctx))))
+	    ((isa? expr J2SBindExit)
+	     (j2s-scheme (bindexit-cast expr this) mode return ctx))
 	    (else
 	     (j2s-cast (j2s-scheme expr mode return ctx)
 		expr (j2s-type expr) type ctx))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Nov 19 19:06:41 2021 (serrano)                */
+;*    Last change :  Thu Nov 25 15:40:59 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -157,7 +157,7 @@
 	    hints))))
    
 ;*---------------------------------------------------------------------*/
-;*    add-hints! ...                                                   */
+;*    add-hints! ::J2SDecl ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (add-hints! decl::J2SDecl hints::pair-nil)
    
@@ -249,6 +249,7 @@
 	   (j2s-hint lhs `((integer . 2) (real . 2) (string . ,(minvalfx))))
 	   (j2s-hint rhs `((string . ,(minvalfx)))))))
       ((< <= >= >)
+       
        (case (j2s-type lhs)
 	  ((real)
 	   (j2s-hint lhs '())
