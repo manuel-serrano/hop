@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Nov 25 19:38:33 2021 (serrano)                */
+;*    Last change :  Thu Nov 25 19:43:03 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -656,7 +656,6 @@
 	   (inline js-not-a-index::long)
 	   (inline js-not-a-string-cache::pair)
 	   
-	   (inline js-%object?::bool ::obj)
 	   (inline js-object?::bool ::obj)
 	   (inline js-jsobject?::bool ::obj)
 	   (inline js-object-mapped?::bool ::JsObject)
@@ -1677,15 +1676,6 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-not-a-vtable::vector)
    *js-not-a-vtable*)
-
-;*---------------------------------------------------------------------*/
-;*    js-%object? ...                                                  */
-;*    -------------------------------------------------------------    */
-;*    Used when inlining methods. Should require to swap CMAP and      */
-;*    PROTO in object representation (25Nov2021).                      */
-;*---------------------------------------------------------------------*/
-(define-inline (js-%object? o)
-   (%object? o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object? ...                                                   */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Nov 25 19:37:51 2021 (serrano)                */
+;*    Last change :  Thu Nov 25 19:42:55 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -1304,7 +1304,7 @@
 			  (J2SIf (J2SHopCall
 				    (if (eq? guard 'array)
 					(J2SHopRef/rtype 'js-array? 'bool)
-					(J2SHopRef/rtype 'js-%object? 'bool))
+					(J2SHopRef/rtype 'js-object? 'bool))
 				    (J2SRef decl))
 			     (inline-object-method-call fun decl args loc guard)
 			     (J2SMeta 'inline 0 0
@@ -1317,7 +1317,7 @@
 			  (J2SIf (J2SHopCall
 				    (if (eq? guard 'array)
 					(J2SHopRef/rtype 'js-array? 'bool)
-					(J2SHopRef/rtype 'js-%object? 'bool))
+					(J2SHopRef/rtype 'js-object? 'bool))
 				    (J2SRef decl))
 			     (inline-object-method-call fun decl args loc guard)
 			     (J2SMeta 'inline 0 0
@@ -1483,7 +1483,7 @@
 			    (cons (cons cache (car callees)) caches)))))))))
 
    (define (gen-check-object obj field args)
-      (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-%object? 'bool) obj)
+      (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool) obj)
 	 (inline-object-method-call fun (j2s-alpha obj '() '()) args)
 	 (J2SMeta 'inline 0 0
 	    (J2SReturn #t
