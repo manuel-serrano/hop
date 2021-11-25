@@ -1899,8 +1899,7 @@
 				 (lambda (val tmp)
 				    `(begin
 					,(j2s-put! loc otmp #f tyobj
-					    fexpr
-					    (j2s-type field)
+					    fexpr (j2s-type field)
 					    val 'number
 					    #t ctx
 					    #f :optim 'array)
@@ -1917,8 +1916,7 @@
 				      (lambda (val tmp)
 					 `(begin
 					     ,(j2s-put! loc otmp #f tyobj
-						 fexpr
-						 (j2s-type field)
+						 fexpr (j2s-type field)
 						 val 'number
 						 #t ctx
 						 #f :optim 'array)
@@ -1936,10 +1934,63 @@
 		    (else
 		     (let ((ptmp (gensym)))
 			`(let ((,ptmp ,(j2s-scheme field mode return ctx)))
-			    (loop (instantiate::J2SHopRef
-				     (loc loc)
-				     (id ptmp)
-				     (type (j2s-type field))))))))))))
+			    ,(loop (instantiate::J2SHopRef
+				      (loc loc)
+				      (id ptmp)
+				      (type (j2s-type field))))))))))))
+
+   (define (aput-inc-jsrecord fexpr scmlhs rhs tyobj otmp prop op lhs field::J2SExpr inc loc)
+      (let ((tmp (gensym 'aput)))
+	 `(let ((,tmp ,scmlhs))
+	     ,(if (eq? (j2s-type lhs) '(int53))
+		  (let ((tref (instantiate::J2SHopRef
+				 (loc loc)
+				 (id tmp)
+				 (type 'bint))))
+		     (new-or-old tmp
+			(js-binop2 loc '++ 'number
+			   tref rhs mode return ctx)
+			(lambda (val tmp)
+			   `(begin
+			       ,(j2s-put! loc otmp #f tyobj
+				   fexpr (j2s-type field)
+				   val 'number
+				   #t ctx
+				   #f)
+			       ,tmp))))
+		  `(if (fixnum? ,tmp)
+		       ,(let ((tref (instantiate::J2SHopRef
+				       (loc loc)
+				       (id tmp)
+				       (type 'bint))))
+			   (new-or-old tmp
+			      (js-binop2 loc '++ 'number
+				 tref rhs mode return ctx)
+			      (lambda (val tmp)
+				 `(begin
+				     ,(j2s-put! loc otmp #f tyobj
+					 fexpr (j2s-type field)
+					 val 'number
+					 #t ctx
+					 #f)
+				     ,tmp))))
+		       ,(let* ((tmp2 (gensym 'tmp))
+			       (tref (instantiate::J2SHopRef
+					(loc loc)
+					(id tmp2)
+					(type 'number))))
+			   `(let ((,tmp2 (js-tonumber ,tmp %this)))
+			       ,(new-or-old tmp2
+				   (js-binop2 loc '++ 'any
+				      tref rhs mode return ctx)
+				   (lambda (val tmp)
+				      `(begin
+					  ,(j2s-put! loc otmp #f tyobj
+					      fexpr (j2s-type field)
+					      val 'number
+					      #t ctx
+					      #f)
+					  ,tmp))))))))))
    
    (define (aput-inc tyobj otmp prop op lhs field::J2SExpr cache inc cs cache-missp::bool)
       (with-access::J2SAccess lhs (loc obj cspecs (loca loc) type cache)
@@ -1960,6 +2011,8 @@
 	    (cond
 	       ((eq? tyobj 'jsvector)
 		(aput-inc-jsvector fexpr scmlhs rhs tyobj otmp prop op lhs field inc loc))
+	       ((isa? tyobj J2SRecord)
+		(aput-inc-jsrecord fexpr scmlhs rhs tyobj otmp prop op lhs field inc loc))
 	       ((type-fixnum? type)
 		(let* ((tmp (gensym 'aput))
 		       (tref (instantiate::J2SHopRef

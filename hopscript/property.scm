@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Nov 23 09:14:51 2021 (serrano)                */
+;*    Last change :  Thu Nov 25 07:51:36 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2527,6 +2527,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-get/name-cache o prop::obj %this::JsGlobalObject)
    (cond
+      ((and (fixnum? prop) (js-array? o))
+       (js-array-ref o prop %this))
       ((js-object? o)
        (%js-get-jsobject/name-cache o prop %this))
       (else

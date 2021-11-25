@@ -903,7 +903,7 @@
 		       (let ((tmp (gensym 'o)))
 			  `(let ((,tmp ,obj))
 			      ,(loop tmp)))))))))
-   
+
    (if (boxed-type? tyval)
        (if (number? val)
 	   `(begin
