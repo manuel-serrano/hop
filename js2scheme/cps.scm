@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Oct 26 18:06:58 2021 (serrano)                */
+;*    Last change :  Sat Nov 27 10:33:56 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -336,11 +336,11 @@
 			     (with-access::J2SDecl d (%info)
 				(set! %info (instantiate::KDeclInfo))))
 		   temps)
-		(tprint name " used: "
-		   (map (lambda (d)
-			   (with-access::J2SDecl d (%info id)
-			      id))
-		      temps))
+;* 		(tprint name " used: "                                 */
+;* 		   (map (lambda (d)                                    */
+;* 			   (with-access::J2SDecl d (%info id)          */
+;* 			      id))                                     */
+;* 		      temps))                                          */
 		;; cps has introduced new closures, the variable "escape"
 		;; property must be recomputed.
 		(mark-free body '())
@@ -353,11 +353,11 @@
 			  (cons* decl thisp argumentsp params))
 		       ;; retain free variables
 		       (let ((frees (filter is-free? temps)))
-			  (tprint name " free: "
-			     (map (lambda (d)
-				     (with-access::J2SDecl d (%info id)
-					id))
-				frees))
+;* 			  (tprint name " free: "                       */
+;* 			     (map (lambda (d)                          */
+;* 				     (with-access::J2SDecl d (%info id) */
+;* 					id))                           */
+;* 				frees))                                */
 			  (let* ((temps (filter (lambda (d)
 						   (or (is-def? d)
 						       (if (decl-usage-has? d '(assig))
@@ -367,11 +367,11 @@
 							   #t)))
 					   frees))
 				 (sz (length temps)))
-			     (tprint name " temps: "
-				(map (lambda (d)
-					(with-access::J2SDecl d (%info id)
-					   id))
-				   temps))
+;* 			     (tprint name " temps: "                   */
+;* 				(map (lambda (d)                       */
+;* 					(with-access::J2SDecl d (%info id) */
+;* 					   id))                        */
+;* 				   temps))                             */
 			     ;; color the continuation variables
 			     (set! constrsize (kont-color temps ydstar))
 			     ;; allocate temporaries
@@ -1702,8 +1702,6 @@
    (with-access::J2SRef this (decl loc)
       (with-access::J2SDecl decl (scope %info id escape)
 	 (unless (is-global-or-fun? decl)
-	    (unless (isa? %info KDeclInfo)
-	       (tprint "PAS KDECL..." id " " loc))
 	    (with-access::KDeclInfo %info (free)
 	       (unless (or free (memq decl env))
 		  (set! escape #t)
@@ -1829,13 +1827,13 @@
       (with-trace 'cps "j2sfun"
 	 (let ((temps (append (if generator extra '())
 			 (cons* decl thisp argumentsp params))))
-	    (tprint "   FUN=" name " " generator " tmps="
-	       (filter-map (lambda (p)
-			      (when (isa? p J2SDecl)
-				 (with-access::J2SDecl p (id %info)
-				    (when (isa? %info KDeclInfo)
-				       id))))
-		  temps))
+;* 	    (tprint "   FUN=" name " " generator " tmps="              */
+;* 	       (filter-map (lambda (p)                                 */
+;* 			      (when (isa? p J2SDecl)                   */
+;* 				 (with-access::J2SDecl p (id %info)    */
+;* 				    (when (isa? %info KDeclInfo)       */
+;* 				       id))))                          */
+;* 		  temps))                                              */
 	    (if (any is-free? temps)
 		(with-access::J2SBlock body (endloc)
 		   (set! body
