@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Nov 14 11:19:56 2021 (serrano)                */
+;*    Last change :  Sat Nov 27 08:58:11 2021 (serrano)                */
 ;*    Copyright   :  2016-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -625,9 +625,9 @@
 		       ((or no-vtable-cache no-vtable-cache-get)
 			(loop (cdr cs)))
 		       (else
-			`(with-access::JsConstructMap %cmap (vlen vtable %id)
+			`(with-access::JsConstructMap %cmap (vtable %id)
 			    (let ((vidx (js-pcache-vindex ,cache)))
-			       (if (and (<fx vidx vlen)
+			       (if (and (<fx vidx (vector-length vtable))
 					(fixnum? (vector-ref vtable vidx)))
 				   (let ((idx (vector-ref vtable vidx)))
 				      (js-profile-log-cache ,cache
@@ -641,9 +641,10 @@
 		       ((or no-vtable-cache no-vtable-cache-get)
 			(loop (cdr cs)))
 		       (else
-			`(with-access::JsConstructMap %cmap (vlen vtable %id)
-			    (let ((vidx (js-pcache-vindex ,cache)))
-			       (if (and (<fx vidx vlen)
+			`(with-access::JsConstructMap %cmap (vtable %id)
+			    (let ((vtable vtable)
+				  (vidx (js-pcache-vindex ,cache)))
+			       (if (and (<fx vidx (vector-length vtable))
 					(js-function? (vector-ref vtable vidx)))
 				   (let ((fun (vector-ref vtable vidx)))
 				      (js-profile-log-cache ,cache
@@ -986,9 +987,10 @@
 			    ((or no-vtable-cache no-vtable-cache-put)
 			     (loop (cdr cs)))
 			    (else
-			     `(with-access::JsConstructMap %cmap (vlen vtable)
-				 (let ((vidx (js-pcache-vindex ,cache)))
-				    (if (and (<fx vidx vlen)
+			     `(with-access::JsConstructMap %cmap (vtable)
+				 (let ((vtable vtable)
+				       (vidx (js-pcache-vindex ,cache)))
+				    (if (and (<fx vidx (vector-length vtable))
 					     (pair? (vector-ref vtable vidx)))
 					(let ((idx (car (vector-ref vtable vidx)))
 					      (ncmap (cdr (vector-ref vtable vidx))))
@@ -1134,7 +1136,7 @@
 				 ,(loop (cdr cs)))))
 			((poly)
 			 `(with-access::JsPropertyCache ,ccache (cntmiss)
-			     (if (>u32 cntmiss #u32:1024)
+			     (if (>u32 cntmiss #u32:4096)
 				 ,(calln-uncachable %this ocspecs obj prop args ccache ocache loc)
 				 ,(loop (cdr cs)))))
 			((vtable)
@@ -1143,14 +1145,16 @@
 			    ((or no-vtable-cache no-vtable-cache-call)
 			     (loop (cdr cs)))
 			    (else
-			     `(with-access::JsConstructMap %cmap (vlen vtable)
-				 (let ((vidx (js-pcache-vindex ,ccache)))
-				    (if (and (<fx vidx vlen)
-					     (procedure? (vector-ref vtable vidx)))
+			     `(with-access::JsConstructMap %cmap (vtable)
+				 (let ((vidx (js-pcache-vindex ,ccache))
+				       (proc #unspecified))
+				    (if (and (<fx vidx (vector-length vtable))
+					     (begin
+						(set! proc (vector-ref vtable vidx))
+						(procedure? proc)))
 					(begin
-					   (js-profile-log-cache ,ccache
-					      :vtable #t)
-					   ((vector-ref vtable vidx) ,obj ,@args))
+					   (js-profile-log-cache ,ccache :vtable #t)
+					   (proc ,obj ,@args))
 					,(loop (cdr cs))))))))
 			((vtable-inline)
 			 ;; vtable method call
@@ -1158,13 +1162,16 @@
 			    ((or no-vtable-cache no-vtable-cache-call)
 			     (loop (cdr cs)))
 			    (else
-			     `(with-access::JsConstructMap %cmap (vlen vtable)
-				 (let ((vidx (js-pcache-vindex ,ccache)))
-				    (if (and (<fx vidx vlen)
-					     (procedure? (vector-ref vtable vidx)))
-					(let ((proc (vector-ref vtable vidx)))
-					   (js-profile-log-cache ,ccache
-					      :vtable #t)
+			     `(with-access::JsConstructMap %cmap (vtable)
+				 (let ((vtable vtable)
+				       (vidx (js-pcache-vindex ,ccache))
+				       (proc #unspecified))
+				    (if (and (<fx vidx (vector-length vtable))
+					     (begin
+						(set! proc (vector-ref vtable vidx))
+						(procedure? proc)))
+					(begin
+					   (js-profile-log-cache ,ccache :vtable #t)
 ;* 					   (with-access::JsPropertyCache ,ccache (function) */
 ;* 					      (set! function (procedure-attr proc))) */
 					   (proc ,obj ,@args))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Nov 25 07:51:36 2021 (serrano)                */
+;*    Last change :  Sat Nov 27 08:55:06 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -570,12 +570,12 @@
 ;*    js-debug-cmap ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-debug-cmap cmap #!optional (msg ""))
-   (with-access::JsConstructMap cmap (%id props methods transitions vlen)
+   (with-access::JsConstructMap cmap (%id props methods transitions vtable)
       (fprint (current-error-port) "~~ " msg (typeof cmap)
 	 " %id=" %id
 	 " prop.vlen=" (vector-length props)
 	 " met.vlen=" (vector-length methods)
-	 " vtable.len=" vlen
+	 " vtable.len=" (vector-length vtable)
 	 "\n  props=" (vector-map js-debug-prop props)
 	 "\n  transitions="
 	 (map (lambda (tr)
@@ -1137,31 +1137,27 @@
 ;*---------------------------------------------------------------------*/
 (define (reset-cmap-vtable! omap::JsConstructMap)
    (synchronize js-cache-vtable-lock
-      (with-access::JsConstructMap omap (vtable vlen)
-	 (set! vlen 0)
+      (with-access::JsConstructMap omap (vtable)
 	 (set! vtable '#()))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-cmap-vtable-add! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-cmap-vtable-add! o::JsConstructMap idx::long obj cache::JsPropertyCache)
-   (with-access::JsConstructMap o (vlen vcache vtable %id)
-      (with-access::JsPropertyCache cache (pctable point)
+   (with-access::JsConstructMap o (vtable %id)
+      (with-access::JsPropertyCache cache (point)
 	 (synchronize js-cache-vtable-lock
-	    (let ((l vlen))
+	    (let ((l (vector-length vtable)))
 	       (cond
 		  ((=fx l 0)
-		   (set! vlen (+fx idx 1))
 		   (set! vtable (make-vector (+fx idx 1) #unspecified))
 		   (log-vtable! idx vtable '#()))
 		  ((>=fx idx l)
 		   (let ((old vtable))
-		      (set! vlen (+fx idx 1))
 		      (set! vtable (copy-vector vtable (+fx idx 1)))
 		      (log-vtable! idx vtable old)
 		      (vector-fill! vtable #unspecified l))))
 	       (vector-set! vtable idx obj)
-	       (set! vcache pctable)
 	       obj)))))
 
 ;*---------------------------------------------------------------------*/
@@ -4797,13 +4793,16 @@
 		(js-apply %this f obj args)))
 	    (else
 	     ;; cache miss
-	     (with-access::JsConstructMap omap (vlen vtable %id)
-		(if (and (<fx vindex vlen)
-			 (procedure? (vector-ref vtable vindex)))
-		    (let ((m (vector-ref vtable vindex)))
-		       (apply m obj args))
-		    (js-method-jsobject-call/cache-miss %this obj name args
-		       ccache ocache point ccspecs ocspecs))))))))
+	     (with-access::JsConstructMap omap (vtable %id)
+		(let ((vtable vtable))
+		   (if (<fx vindex (vector-length vtable))
+		       (let ((proc (vector-ref vtable vindex)))
+			  (if (procedure? proc)
+			      (apply proc obj args)
+			      (js-method-jsobject-call/cache-miss %this obj name args
+				 ccache ocache point ccspecs ocspecs)))
+		       (js-method-jsobject-call/cache-miss %this obj name args
+			  ccache ocache point ccspecs ocspecs)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-method-jsobject-call/cache-miss ...                           */

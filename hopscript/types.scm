@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Nov 25 19:43:03 2021 (serrano)                */
+;*    Last change :  Sat Nov 27 07:30:21 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -32,7 +32,8 @@
 
    (extern (include "bglhopscript_malloc.h"))
 
-   (extern ($js-init-jsalloc::int (::uint32)
+   (extern (macro $pointer?::bool (::obj) "POINTERP")
+	   ($js-init-jsalloc::int (::uint32)
 	      "bgl_init_jsalloc")
 	   ($js-init-worker-jsalloc::int ()
 	      "bgl_init_worker_jsalloc")
@@ -170,9 +171,7 @@
 	      (detachlocs::pair-nil (default '()))
 	      (ctor::obj (default #f))
 	      (single::bool read-only (default #f))
-	      (vlen::long (default 0))
 	      (vtable::vector (default '#()))
-	      (vcache::obj (default #f))
 	      (mptable::vector (default '#()))
 	      (mntable::vector (default '#()))
 	      (parent::JsConstructMap (default (class-nil JsConstructMap))))
@@ -1681,7 +1680,9 @@
 ;*    js-object? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object? o)
-   (and (%object? o)
+   (and (cond-expand
+	   (bigloo-c ($pointer? o))
+	   (else (%object? o)))
 	(=u32 (JS-OBJECT-MODE-JSOBJECTTAG)
 	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSOBJECTTAG)))))
 
