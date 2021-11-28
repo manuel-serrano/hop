@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/hop/hopscript/_bglhopscript.c           */
+/*    .../JSRECORDS/local.icfp21/src/hop/hopscript/_bglhopscript.c     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Wed Apr 29 17:41:08 2020 (serrano)                */
+/*    Last change :  Sun Nov 28 09:14:22 2021 (serrano)                */
 /*    Copyright   :  2016-21 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -40,38 +40,38 @@ extern obj_t string_append( obj_t, obj_t );
 
 #define JSOBJECT_SIZE \
    sizeof( struct BgL_jsobjectz00_bgl )
-#define JSOBJECT_CLASS_INDEX \
-   BGL_CLASS_INDEX( BGl_JsObjectz00zz__hopscript_typesz00 )
+#define JSOBJECT_CLASS_NUM \
+   BGL_CLASS_NUM( BGl_JsObjectz00zz__hopscript_typesz00 )
 
 #define JSPROXY_SIZE \
    sizeof( struct BgL_jsproxyz00_bgl )
-#define JSPROXY_CLASS_INDEX \
-   BGL_CLASS_INDEX( BGl_JsProxyz00zz__hopscript_typesz00 )
+#define JSPROXY_CLASS_NUM \
+   BGL_CLASS_NUM( BGl_JsProxyz00zz__hopscript_typesz00 )
 
 #define JSFUNCTION_SIZE \
    sizeof( struct BgL_jsfunctionz00_bgl )
-#define JSFUNCTION_CLASS_INDEX \
-   BGL_CLASS_INDEX( BGl_JsFunctionz00zz__hopscript_typesz00 )
+#define JSFUNCTION_CLASS_NUM \
+   BGL_CLASS_NUM( BGl_JsFunctionz00zz__hopscript_typesz00 )
 
 #define JSMETHOD_SIZE \
    sizeof( struct BgL_jsmethodz00_bgl )
-#define JSMETHOD_CLASS_INDEX \
-   BGL_CLASS_INDEX( BGl_JsMethodz00zz__hopscript_typesz00 )
+#define JSMETHOD_CLASS_NUM \
+   BGL_CLASS_NUM( BGl_JsMethodz00zz__hopscript_typesz00 )
 
 #define JSPROCEDURE_SIZE \
    sizeof( struct BgL_jsprocedurez00_bgl )
-#define JSPROCEDURE_CLASS_INDEX \
-   BGL_CLASS_INDEX( BGl_JsProcedurez00zz__hopscript_typesz00 )
+#define JSPROCEDURE_CLASS_NUM \
+   BGL_CLASS_NUM( BGl_JsProcedurez00zz__hopscript_typesz00 )
 
 #define JSARRAY_SIZE \
    sizeof( struct BgL_jsarrayz00_bgl )
-#define JSARRAY_CLASS_INDEX \
-   BGL_CLASS_INDEX( BGl_JsArrayz00zz__hopscript_typesz00 )
+#define JSARRAY_CLASS_NUM \
+   BGL_CLASS_NUM( BGl_JsArrayz00zz__hopscript_typesz00 )
 
 #define JSSTRINGLITERALASCII_SIZE \
    sizeof( struct BgL_jsstringliteralasciiz00_bgl )
-#define JSSTRINGLITERALASCII_CLASS_INDEX \
-   BGL_CLASS_INDEX( BGl_JsStringLiteralASCIIz00zz__hopscript_typesz00 )
+#define JSSTRINGLITERALASCII_CLASS_NUM \
+   BGL_CLASS_NUM( BGl_JsStringLiteralASCIIz00zz__hopscript_typesz00 )
 
 extern obj_t bgl_js_profile_allocs;
 obj_t bgl_profile_pcache_tables = BNIL;
@@ -760,7 +760,7 @@ BGL_MAKE_JSOBJECT_SANS( int constrsize, obj_t constrmap, obj_t __proto__, uint32
    int i;
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSOBJECT_CLASS_INDEX );
+   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSOBJECT_CLASS_NUM );
    
    // fields init
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
@@ -904,7 +904,7 @@ BGL_MAKE_JSPROXY_SANS( obj_t target, obj_t handler,
    BgL_jsproxyz00_bglt o = (BgL_jsproxyz00_bglt)HOP_MALLOC( bsize );
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSPROXY_CLASS_INDEX );
+   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSPROXY_CLASS_NUM );
    
    // fields init
    BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)mode );
@@ -1018,7 +1018,7 @@ BGL_MAKE_JSFUNCTION_SANS( obj_t procedure,
    BgL_jsfunctionz00_bglt o = (BgL_jsfunctionz00_bglt)HOP_MALLOC( JSFUNCTION_SIZE );
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSFUNCTION_CLASS_INDEX );
+   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSFUNCTION_CLASS_NUM );
 
    // immutable fields init
    BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)jsfunction_mode );
@@ -1154,7 +1154,7 @@ BGL_MAKE_JSMETHOD_SANS( obj_t procedure, obj_t method,
    BgL_jsmethodz00_bglt o = (BgL_jsmethodz00_bglt)HOP_MALLOC( JSMETHOD_SIZE );
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSMETHOD_CLASS_INDEX );
+   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSMETHOD_CLASS_NUM );
 
    // immutable fields init
    BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)jsmethod_mode );
@@ -1284,7 +1284,7 @@ BGL_MAKE_JSPROCEDURE_SANS( obj_t procedure, long arity, obj_t __proto__ ) {
    BgL_jsprocedurez00_bglt o = (BgL_jsprocedurez00_bglt)HOP_MALLOC( JSPROCEDURE_SIZE );
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSPROCEDURE_CLASS_INDEX );
+   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSPROCEDURE_CLASS_NUM );
 
    // immutable fields init
    BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), __proto__ );
@@ -1382,7 +1382,7 @@ BGL_MAKE_JSSTRINGLITERALASCII_SANS( uint32_t len, obj_t left, obj_t right ) {
    BgL_jsstringliteralasciiz00_bglt o = (BgL_jsstringliteralasciiz00_bglt)HOP_MALLOC( JSSTRINGLITERALASCII_SIZE );
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSSTRINGLITERALASCII_CLASS_INDEX );
+   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSSTRINGLITERALASCII_CLASS_NUM );
 
    // field init
    o->BgL_lengthz00 = len;
@@ -1561,7 +1561,7 @@ bgl_make_jsarray_sans_init( long size, uint32_t len, uint32_t ilen, obj_t constr
    int i;
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSARRAY_CLASS_INDEX );
+   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSARRAY_CLASS_NUM );
    
    // fields init
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
