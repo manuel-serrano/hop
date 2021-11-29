@@ -6508,11 +6508,17 @@
 ;*    vector-indexof ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-inline (vector-indexof::long arr vec el k::long len::long)
-   (let loop ((k k))
-      (cond
-	 ((>=fx k len) -1)
-	 ((js-strict-equal? (vector-ref vec k) el) k)
-	 (else (loop (+fx k 1))))))
+   (if (fixnum? el)
+       (let loop ((k k))
+	  (cond
+	     ((>=fx k len) -1)
+	     ((eq? (vector-ref vec k) el) k)
+	     (else (loop (+fx k 1)))))
+       (let loop ((k k))
+	  (cond
+	     ((>=fx k len) -1)
+	     ((js-strict-equal? (vector-ref vec k) el) k)
+	     (else (loop (+fx k 1)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    vector-holey-indexof ...                                         */
@@ -6578,6 +6584,18 @@
 		 (array-indexof this k len)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-array-indexof ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-array-indexof o::JsArray el indx %this cache)
+   (if (js-object-mode-plain? o)
+       (js-array-prototype-indexof o el indx %this)
+       (with-access::JsGlobalObject %this (js-array-pcache)
+	  (js-call2 %this
+	     (js-get-jsobject-name/cache o (& "indexOf") #f %this
+		(or cache (js-pcache-ref js-array-pcache 10)))
+	     o el indx))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-array-indexof0 ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-array-indexof0 o::JsArray el %this cache)
@@ -6594,18 +6612,6 @@
 	     (js-get-jsobject-name/cache o (& "indexOf") #f %this
 		(or cache (js-pcache-ref js-array-pcache 10)))
 	     o el)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-array-indexof ...                                             */
-;*---------------------------------------------------------------------*/
-(define (js-array-indexof o::JsArray el indx %this cache)
-   (if (js-object-mode-plain? o)
-       (js-array-prototype-indexof o el indx %this)
-       (with-access::JsGlobalObject %this (js-array-pcache)
-	  (js-call2 %this
-	     (js-get-jsobject-name/cache o (& "indexOf") #f %this
-		(or cache (js-pcache-ref js-array-pcache 10)))
-	     o el indx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-indexof ...                                       */

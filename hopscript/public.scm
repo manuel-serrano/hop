@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Nov 14 11:59:12 2021 (serrano)                */
+;*    Last change :  Mon Nov 29 07:20:30 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -2309,7 +2309,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.4       */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-strict-equal? o1 o2)
-   (or (and (eq? o1 o2) (not (flonum? o1))) (js-eq-no-eq? o1 o2)))
+   (or (and (eq? o1 o2) (not (flonum? o1)))
+       (and (not (fixnums? o1 o2)) (js-eq-no-eq? o1 o2))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-eq-no-eq? ...                                                 */
