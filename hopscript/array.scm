@@ -664,6 +664,15 @@
       js-array))
 
 ;*---------------------------------------------------------------------*/
+;*    array-expand-len ...                                             */
+;*---------------------------------------------------------------------*/
+(define (array-expand-len len idx)
+   (let ((candidate (if (>fx len (uint32->fixnum (LARGE-ARRAY-SIZE)))
+			(+fx len (/fx len 4))
+			(*fx len 2))))
+      (max candidate (+fx (uint32->fixnum idx) 1))))
+
+;*---------------------------------------------------------------------*/
 ;*    *JS-ARRAY-MARK* ...                                              */
 ;*---------------------------------------------------------------------*/
 (define *JS-ARRAY-MARK* 0)
@@ -3004,12 +3013,6 @@
 			 "cannot assign to read only property \"~a\" array" idx)
 		      #f)))))))
 
-   (define (expand-len len idx)
-      (let ((candidate (if (>fx len (uint32->fixnum (LARGE-ARRAY-SIZE)))
-			   (+fx len (/fx len 4))
-			   (*fx len 2))))
-	 (max candidate (+fx (uint32->fixnum idx) 1))))
-   
    (with-access::JsArray o (vec ilen length)
       (let ((idx::uint32 (js-toindex p)))
 	 (cond
@@ -3068,7 +3071,7 @@
 	     (with-access::JsArray o (length vec ilen)
 		;; use max when vector-length == 0
 		(let* ((len (vector-length vec))
-		       (nlen (expand-len len idx))
+		       (nlen (array-expand-len len idx))
 		       (nvec (copy-vector-fill! vec nlen (js-absent))))
 		   (cond-expand (profile (profile-vector-extension nlen len)))
 		   (gc-cleanup-inline-vector! o vec)
@@ -3087,7 +3090,7 @@
 		  (js-object-mode-arrayinline? o)
 		  (<u32 idx (MAX-EXPANDABLE-ARRAY-SIZE)))
 	     (let* ((len (vector-length vec))
-		    (nlen (expand-len len idx))
+		    (nlen (array-expand-len len idx))
 		    (nvec (copy-vector-fill! vec nlen (js-absent))))
 		 (cond-expand (profile (profile-vector-extension nlen len)))
 		 (with-access::JsArray o (vec)
@@ -5447,34 +5450,57 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-prototype-push o::JsArray item %this::JsGlobalObject)
    (with-access::JsArray o (length ilen vec)
+      
+      (define (default n)
+	 (if (<u32 length #u32:4294967295)
+	     (js-array-put! o (uint32->fixnum n) item #f %this)
+	     (js-put! o n item #f %this))
+	 (if (=u32 (+u32 n #u32:1) #u32:0)
+	     (js-raise-range-error %this "illegal length: ~s"
+		(js-tostring #l4294967296 %this))
+	     (js-uint32-tointeger (+u32 #u32:1 n))))
+      
+      (define (push n)
+	 (let ((len (vector-length vec)))
+	    (cond
+	       ((and (<u32 ilen (fixnum->uint32 len))
+		     (or (js-object-mode-arrayinline? o)
+			 (not (js-has-fixnum-property o (uint32->fixnum n) %this))))
+		(let ((idx (+u32 n 1)))
+		   (vector-set! vec (uint32->fixnum n) item)
+		   (set! ilen idx)
+		   (set! length idx)
+		   (js-uint32-tointeger idx)))
+	       ((and (=fx len 0)
+		     (not (js-has-fixnum-property o 0 %this)))
+		(set! vec (js-create-vector (DEFAULT-EMPTY-ARRAY-SIZE)))
+		(set! ilen #u32:1)
+		(set! length #u32:1)
+		(vector-set! vec 0 item)
+		1)
+	       ((and (=u32 n ilen) (js-object-mode-arrayinline? o))
+		;; fast path
+		(js-object-mode-hasnumeralprop-set! o #t)
+		;; extend the inlined vector
+		(with-access::JsArray o (length vec ilen)
+		   ;; use max when vector-length == 0
+		   (let* ((nlen (array-expand-len len n))
+			  (nvec (copy-vector-fill! vec nlen (js-absent))))
+		      (cond-expand (profile (profile-vector-extension nlen len)))
+		      (gc-cleanup-inline-vector! o vec)
+		      (set! vec nvec))
+		   (let ((idx (+u32 n 1)))
+		      (vector-set! vec (uint32->fixnum n) item)
+		      (set! ilen idx)
+		      (set! length idx)
+		      (js-uint32-tointeger idx))))
+	       (else
+		(default n)))))
+      
       (let ((n length))
-	 (cond
-	    ((and (=u32 n ilen)
-		  (<u32 ilen (fixnum->uint32 (vector-length vec)))
-		  (or (js-object-mode-arrayinline? o)
-		      (not (js-has-fixnum-property o (uint32->fixnum n) %this))))
-	     (let ((idx (+u32 n 1)))
-		(vector-set! vec (uint32->fixnum n) item)
-		(set! ilen idx)
-		(set! length idx)
-		(js-uint32-tointeger idx)))
-	    ((and (=fx (vector-length vec) 0)
-		  (=uint32 n #u32:0)
-		  (not (js-has-fixnum-property o 0 %this)))
-	     (set! vec (js-create-vector (DEFAULT-EMPTY-ARRAY-SIZE)))
-	     (set! ilen #u32:1)
-	     (set! length #u32:1)
-	     (vector-set! vec 0 item)
-	     1)
-	    (else
-	     (if (<u32 length #u32:4294967295)
-		 (js-array-put! o (uint32->fixnum n) item #f %this)
-		 (js-put! o n item #f %this))
-	     (if (=u32 (+u32 n #u32:1) #u32:0)
-		 (js-raise-range-error %this
-		    "illegal length: ~s"
-		    (js-tostring #l4294967296 %this))
-		 (js-uint32-tointeger (+u32 #u32:1 n))))))))
+	 (if (=u32 n ilen)
+	     (push n)
+	     (default n)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-push ...                                                */
