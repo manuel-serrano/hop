@@ -664,6 +664,16 @@
       js-array))
 
 ;*---------------------------------------------------------------------*/
+;*    vector-blit! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (vector-blit! target tstart source sstart send)
+   (let loop ((i sstart)
+	      (j tstart))
+      (when (<fx i send)
+	 (vector-set-ur! target j (vector-ref-ur source i))
+	 (loop (+fx i 1) (+fx j 1)))))
+
+;*---------------------------------------------------------------------*/
 ;*    array-expand-len ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (array-expand-len len idx)
@@ -1449,7 +1459,7 @@
 	       ;; populate the result vector
 	       (when (<fx actualstart alen)
 		  ;; from the inlined vector
-		  (vector-copy! vres 0 vec actualstart
+		  (vector-blit! vres 0 vec actualstart
 		     (minfx alen (+fx actualstart actualdeletecount))))
  	       (when (>fx actualdeletecount (-fx alen actualstart))
 		  ;;  from the protype object
@@ -1465,8 +1475,8 @@
 		   (let ((tmp (make-vector nlen)))
 		      (cond-expand
 			 (profile (profile-vector-extension nlen len)))
-		      (vector-copy! tmp 0 vec 0 actualstart)
-		      (vector-copy! tmp (-fx nlen (-fx len cstart))
+		      (vector-blit! tmp 0 vec 0 actualstart)
+		      (vector-blit! tmp (-fx nlen (-fx len cstart))
 			 vec cstart len)
 		      (set! ilen (fixnum->uint32 nlen))
 		      (set! vec tmp)))
@@ -1550,7 +1560,7 @@
 		   (nlen (+u32 vlength (fixnum->uint32 litems)))
 		   (nvec ($create-vector (uint32->fixnum nlen))))
 	       ;; copy the existing inlined elements
-	       (vector-copy! nvec litems vec)
+	       (vector-blit! nvec litems vec 0 (vector-length vec))
 	       ;; insert the new elements
 	       (let ((i 0))
 		  (for-each (lambda (el)
@@ -2510,7 +2520,7 @@
        (let ((v (js-vector-alloc (fixnum->uint32 (vector-length vec)) %this)))
 	  (tprint "WARNING js-species->jsarray VECTOR " (vector-length vec))
 	  (with-access::JsArray v ((nvec vec))
-	     (vector-copy! nvec 0 vec 0 (vector-length vec))
+	     (vector-blit! nvec 0 vec 0 (vector-length vec))
 	     v))
        (js-vector->jsarray/proto vec (js-object-proto this) %this)))
 
@@ -2835,7 +2845,7 @@
 	    (let* ((len (vector-length elements))
 		   (nvec (make-vector (+fx len (uint32->fixnum ilen)))))
 	       (vector-fill-properties! arr nvec)
-	       (vector-copy! nvec (uint32->fixnum ilen) elements 0)
+	       (vector-blit! nvec (uint32->fixnum ilen) elements 0 len)
 	       (set! elements nvec)
 	       (set! ilen #u32:0)
 	       (js-array-mark-invalidate!)))
@@ -2934,7 +2944,7 @@
 		   (vlen (js-array-holey-elements-length arr))
 		   (nvec (make-vector (+fx len vlen))))
 	       (vector-fill-holey-properties arr nvec vlen)
-	       (vector-copy! nvec vlen elements 0)
+	       (vector-blit! nvec vlen elements 0 len)
 	       (set! elements nvec)
 	       (js-array-mark-invalidate!)))
 	 arr)))
@@ -3698,7 +3708,7 @@
 		       (when (>fx (+fx i alen) (vector-length vdst))
 			  (set! vdst
 			     (copy-vector vdst (*fx (+fx i alen) 2))))
-		       (vector-copy! vdst i vsrc 0 alen)
+		       (vector-blit! vdst i vsrc 0 alen)
 		       (set! ilen (fixnum->uint32 (+fx i alen)))
 		       (if (> slen lsrc)
 			   (copy-array-slow dst (+fx i lsrc) src lsrc slen)
@@ -3734,7 +3744,7 @@
 	  (with-access::JsArray arr (vec ilen length)
 	     (let ((vdst vec))
 		(with-access::JsArray o ((ovec vec) (oilen ilen))
-		   (vector-copy! vdst 0 ovec 0 (uint32->fixnum oilen))
+		   (vector-blit! vdst 0 ovec 0 (uint32->fixnum oilen))
 		   (let loop ((l l)
 			      (i (uint32->fixnum oilen)))
 		      (if (null? l)
@@ -3743,7 +3753,7 @@
 			     (set! length (fixnum->uint32 new-len))
 			     arr)
 			  (with-access::JsArray (car l) (vec ilen)
-			     (vector-copy! vdst i vec 0 (uint32->fixnum ilen))
+			     (vector-blit! vdst i vec 0 (uint32->fixnum ilen))
 			     (loop (cdr l) (+fx i (uint32->fixnum ilen)))))))))
 	  (with-access::JsArray arr (vec ilen)
 	     ;; fill the vector
@@ -3821,7 +3831,7 @@
 				   (let ((a (vector-ref srcvec i)))
 				      (if (js-array? a)
 					  (with-access::JsArray a (vec ilen)
-					     (vector-copy! vdst w vec 0 (uint32->fixnum ilen))
+					     (vector-blit! vdst w vec 0 (uint32->fixnum ilen))
 					     (loop (+fx i 1) (+fx w (uint32->fixnum ilen))))
 					  (begin
 					     (vector-set! vdst w a)
@@ -3852,7 +3862,7 @@
 	     (arr (js-array-construct-alloc/length %this new-len)))
 	 (with-access::JsArray arr ((vdst vec) ilen)
 	    (vector-set! vdst 0 this)
-	    (vector-copy! vdst 1 avec 0 (uint32->fixnum ailen))
+	    (vector-blit! vdst 1 avec 0 (uint32->fixnum ailen))
 	    (set! ilen (fixnum->uint32 new-len)))
 	 arr)))
 
@@ -3885,7 +3895,7 @@
 			     (uint32->fixnum ailen)))
 		 (arr (js-array-species-create %this this new-len)))
 	     (with-access::JsArray arr ((vdst vec) ilen)
-		(vector-copy! vdst 0
+		(vector-blit! vdst 0
 		   tvec 0 (uint32->fixnum tilen))
 		(vector-set! vdst (uint32->fixnum tilen)
 		   arg)
@@ -3906,7 +3916,7 @@
       (with-access::JsArray this ((avec vec) (ailen ilen))
 	 (let ((arr (js-array-construct-alloc/lengthu32 %this ailen)))
 	    (with-access::JsArray arr ((vdst vec) ilen)
-	       (vector-copy! vdst 0 avec 0 (uint32->fixnum ailen))
+	       (vector-blit! vdst 0 avec 0 (uint32->fixnum ailen))
 	       (set! ilen ailen))
 	    arr)))
 
@@ -3963,9 +3973,9 @@
 			       (uint32->fixnum ailen)))
 		   (arr (js-array-species-create %this this new-len)))
 	       (with-access::JsArray arr ((vdst vec) ilen)
-		  (vector-copy! vdst 0
+		  (vector-blit! vdst 0
 		     tvec 0 (uint32->fixnum tilen))
-		  (vector-copy! vdst (uint32->fixnum tilen)
+		  (vector-blit! vdst (uint32->fixnum tilen)
 		     avec 0 (uint32->fixnum ailen))
 		  (set! ilen (uint32->fixnum (+u32 tilen ailen))))
 	       arr))))
@@ -3990,7 +4000,7 @@
       (with-access::JsArray arg ((avec vec) (ailen ilen))
 	 (let ((arr (js-array-construct-alloc/lengthu32 %this ailen)))
 	    (with-access::JsArray arr ((vdst vec) ilen length)
-	       (vector-copy! vdst 0 avec 0 (uint32->fixnum ailen))
+	       (vector-blit! vdst 0 avec 0 (uint32->fixnum ailen))
 	       (set! ilen ailen)
 	       (set! length ailen))
 	    arr)))
@@ -4017,7 +4027,7 @@
 		(arr (js-array-construct-alloc/length %this new-len)))
 	    (with-access::JsArray arr ((vdst vec) ilen)
 	       (vector-set! vdst 0 el)
-	       (vector-copy! vdst 1 avec 0 (uint32->fixnum ailen))
+	       (vector-blit! vdst 1 avec 0 (uint32->fixnum ailen))
 	       (set! ilen (+u32 #u32:1 ailen)))
 	    arr)))
    
@@ -4803,7 +4813,7 @@
 			   (loop (+u32 i #u32:1) j))
 			  ((js-object-mode-arrayinline? val)
 			   (with-access::JsArray val (vec)
-			      (vector-copy! fvec (uint32->fixnum j)
+			      (vector-blit! fvec (uint32->fixnum j)
 				 vec 0 (uint32->fixnum l)))
 			   (loop (+u32 i #u32:1) (+u32 j l)))
 			  (else
@@ -5473,7 +5483,7 @@
 		   (js-uint32-tointeger idx)))
 	       ((and (=fx len 0)
 		     (not (js-has-fixnum-property o 0 %this)))
-		(set! vec (js-create-vector (DEFAULT-EMPTY-ARRAY-SIZE)))
+		(set! vec (make-vector (DEFAULT-EMPTY-ARRAY-SIZE)))
 		(set! ilen #u32:1)
 		(set! length #u32:1)
 		(vector-set! vec 0 item)
@@ -5776,7 +5786,7 @@
        (with-access::JsArray this (ilen vec)
 	  (let ((o (js-array-species-create %this this (uint32->fixnum ilen))))
 	     (with-access::JsArray o ((vdst vec) (idst ilen))
-		(vector-copy! vdst 0 vec 0 (uint32->fixnum ilen))
+		(vector-blit! vdst 0 vec 0 (uint32->fixnum ilen))
 		(set! idst ilen))
 	     o))
        (with-access::JsGlobalObject %this (js-array-pcache)
@@ -5870,7 +5880,7 @@
 		(let* ((l (-fx final k))
 		       (o (js-array-species-create %this this l)))
 		   (with-access::JsArray o ((vdst vec) (idst ilen))
-		      (vector-copy! vdst 0 vec k final)
+		      (vector-blit! vdst 0 vec k final)
 		      (set! idst l))
 		   o)))
 	    (else
@@ -5910,7 +5920,7 @@
 	    ;; populate the result vector
 	    (when (<fx actualstart alen)
 	       ;; from the inlined vector
-	       (vector-copy! vres 0 vec actualstart
+	       (vector-blit! vres 0 vec actualstart
 		  (minfx alen (+fx actualstart actualdeletecount))))
 	    (when (>fx actualdeletecount (-fx alen actualstart))
 	       ;;  from the prototype object
