@@ -6544,7 +6544,7 @@
 ;*    vector-indexof ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-inline (vector-indexof::long arr vec el k::long len::long)
-   (if (fixnum? el)
+   (if (and (fixnum? el) (not (=fx el 0)))
        (let loop ((k k))
 	  (cond
 	     ((>=fx k len) -1)
