@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Nov 27 07:30:21 2021 (serrano)                */
+;*    Last change :  Tue Nov 30 08:09:52 2021 (serrano)                */
 ;*    Copyright   :  2013-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -1681,7 +1681,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object? o)
    (and (cond-expand
-	   (bigloo-c ($pointer? o))
+	   ((and bigloo-c bigloo-unsafe) ($pointer? o))
 	   (else (%object? o)))
 	(=u32 (JS-OBJECT-MODE-JSOBJECTTAG)
 	   (bit-andu32 (js-object-mode o) (JS-OBJECT-MODE-JSOBJECTTAG)))))
