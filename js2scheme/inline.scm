@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Nov 25 19:42:55 2021 (serrano)                */
+;*    Last change :  Tue Nov 30 13:47:40 2021 (serrano)                */
 ;*    Copyright   :  2017-21 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function/Method inlining optimization                            */
@@ -1080,9 +1080,11 @@
 	    n)))
    
    (define (cache-check c loc obj field kont inline::J2SStmt)
-      (J2SIf (J2SCacheCheck 'proto-method c #f obj field)
-	 inline
-	 (kont)))
+      (if (private-field? field)
+	  inline
+	  (J2SIf (J2SCacheCheck 'proto-method c #f obj field)
+	     inline
+	     (kont))))
    
    (define (get-svar callee)
       (if (protoinfo-svar callee)
@@ -1147,9 +1149,11 @@
 	    n)))
    
    (define (cache-check c loc obj field kont inline::J2SStmt)
-      (J2SIf (J2SCacheCheck 'proto-method c #f obj field)
-	 inline
-	 (kont)))
+      (if (private-field? field)
+	  inline
+	  (J2SIf (J2SCacheCheck 'proto-method c #f obj field)
+	     inline
+	     (kont))))
    
    (define (get-svar callee)
       (if (protoinfo-svar callee)
@@ -1345,10 +1349,13 @@
 	    (set! pcache-size (+fx pcache-size 1))
 	    n)))
 
+   
    (define (cache-check c loc owner obj field kont inline::J2SStmt)
-      (J2SIf (J2SCacheCheck 'proto-method c owner obj field)
-	 inline
-	 (kont)))
+      (if (private-field? field)
+	  inline
+	  (J2SIf (J2SCacheCheck 'proto-method c owner obj field)
+	     inline
+	     (kont))))
 
    (define (get-svar callee)
       (if (protoinfo-svar callee)
@@ -2318,3 +2325,11 @@
 	     (with-access::J2SDecl decl (escape)
 		(unless escape
 		   (not (decl-usage-has? decl '(assig eval)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    private-field? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (private-field? field)
+   (when (isa? field J2SString)
+      (with-access::J2SString field (private)
+	 private)))
