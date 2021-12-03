@@ -50,7 +50,7 @@ the following:
 ```shell
 $ docker load < hop-docker-image-4may2018.tgz
 $ docker import hop-docker-4may2018.tgz -- hop
-```  
+```
 
 Running the image
 =================
